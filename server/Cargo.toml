@@ -12,4 +12,7 @@ path = "src/main.rs"
 name = "rust_server"
 
 [dependencies]
-actix-web = "3.3.2"
+actix-rt = "2.2.0"
+actix-web = "4.0.0-beta.5"
+reqwest = "0.11.3"
+tokio = "1.6.0"
