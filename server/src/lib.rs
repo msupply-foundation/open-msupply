@@ -9,9 +9,17 @@ async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
+async fn post_requisition() -> HttpResponse {
+    HttpResponse::Ok().finish()
+}
+
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
-    let server = HttpServer::new(|| App::new().route("/health_check", web::get().to(health_check)))
-        .listen(listener)?
-        .run();
+    let server = HttpServer::new(|| {
+        App::new()
+            .route("/health_check", web::get().to(health_check))
+            .route("/requisition", web::post().to(post_requisition))
+    })
+    .listen(listener)?
+    .run();
     Ok(server)
 }
