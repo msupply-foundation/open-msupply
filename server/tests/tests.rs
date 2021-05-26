@@ -1,8 +1,10 @@
 //! tests/health_check.rs
-use rust_server::startup::run;
-
+use sqlx::{Connection, PgConnection};
 use std::net::TcpListener;
 use uuid::Uuid;
+
+use rust_server::configuration::get_configuration;
+use rust_server::startup::run;
 
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
@@ -32,6 +34,11 @@ async fn health_check_works() {
 #[actix_rt::test]
 async fn requisition_returns_a_200_for_valid_form_data() {
     let address = spawn_app();
+    let configuration = get_configuration().expect("Failed to read configuration");
+    let connection_string = configuration.database.connection_string();
+    let _connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres.");
     let client = reqwest::Client::new();
     let body = format!(
         "id={}&from_id={}&to_id={}",
