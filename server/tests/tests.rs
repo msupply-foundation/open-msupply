@@ -2,6 +2,7 @@
 use rust_server::startup::run;
 
 use std::net::TcpListener;
+use uuid::Uuid;
 
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
@@ -32,12 +33,13 @@ async fn health_check_works() {
 async fn requisition_returns_a_200_for_valid_form_data() {
     let address = spawn_app();
     let client = reqwest::Client::new();
+    let body = format!(
+        "id={}&from_id={}&to_id={}",
+        Uuid::new_v4(),
+        Uuid::new_v4(),
+        Uuid::new_v4()
+    );
 
-    let id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-    let from_id = "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy";
-    let to_id = "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz";
-
-    let body = format!("id={}&from_id={}&to_id={}", id, from_id, to_id);
 
     let response = client
         .post(&format!("{}/requisition", &address))
@@ -55,17 +57,31 @@ async fn requisition_returns_a_400_when_data_is_missing() {
     let address = spawn_app();
     let client = reqwest::Client::new();
 
-    let id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-    let from_id = "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy";
-    let to_id = "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz";
-
     let test_cases = vec![
-        (format!("id={}", id), "missing from_id and to_id"),
-        (format!("from_id={}", from_id), "missing id and to_id"),
-        (format!("to_id={}", to_id), "missing id and from_id"),
-        (format!("id={}&from_id={}", id, from_id), "missing to_id"),
-        (format!("id={}&to_id={}", id, to_id), "missing from_id"),
-        (format!("from_id={}&to_id={}", from_id, to_id), "missing id"),
+        (
+            format!("id={}", Uuid::new_v4()),
+            "missing from_id and to_id",
+        ),
+        (
+            format!("from_id={}", Uuid::new_v4()),
+            "missing id and to_id",
+        ),
+        (
+            format!("to_id={}", Uuid::new_v4()),
+            "missing id and from_id",
+        ),
+        (
+            format!("id={}&from_id={}", Uuid::new_v4(), Uuid::new_v4()),
+            "missing to_id",
+        ),
+        (
+            format!("id={}&to_id={}", Uuid::new_v4(), Uuid::new_v4()),
+            "missing from_id",
+        ),
+        (
+            format!("from_id={}&to_id={}", Uuid::new_v4(), Uuid::new_v4()),
+            "missing id",
+        ),
     ];
 
     for (invalid_body, error_message) in test_cases {
