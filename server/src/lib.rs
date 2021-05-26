@@ -5,11 +5,18 @@ use actix_web::{web, App, HttpResponse, HttpServer};
 
 use std::net::TcpListener;
 
+#[derive(serde::Deserialize)]
+struct RequisitionData {
+    id: String,
+    from: String,
+    to: String
+}
+
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
-async fn post_requisition() -> HttpResponse {
+async fn post_requisition(_requisition_data: web::Form<RequisitionData>) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
