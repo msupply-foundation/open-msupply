@@ -1,6 +1,5 @@
 //! tests/health_check.rs
-
-use rust_server::run;
+use rust_server::startup::run;
 
 use std::net::TcpListener;
 
