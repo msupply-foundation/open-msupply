@@ -1,6 +1,6 @@
 //! src/main.rs
-use rust_server::startup::run;
 use rust_server::configuration::get_configuration;
+use rust_server::startup::run;
 
 use std::net::TcpListener;
 

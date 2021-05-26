@@ -47,7 +47,6 @@ async fn requisition_returns_a_200_for_valid_form_data() {
         Uuid::new_v4()
     );
 
-
     let response = client
         .post(&format!("{}/requisition", &address))
         .header("Content-Type", "application/x-www-form-urlencoded")
