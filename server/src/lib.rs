@@ -8,8 +8,8 @@ use std::net::TcpListener;
 #[derive(serde::Deserialize)]
 struct RequisitionData {
     id: String,
-    from: String,
-    to: String
+    from_id: String,
+    to_id: String,
 }
 
 async fn health_check() -> HttpResponse {

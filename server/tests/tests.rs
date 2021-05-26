@@ -33,7 +33,12 @@ async fn health_check_works() {
 async fn requisition_returns_a_200_for_valid_form_data() {
     let address = spawn_app();
     let client = reqwest::Client::new();
-    let body = "id=x&from=y&to=z";
+
+    let id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+    let from_id = "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy";
+    let to_id = "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz";
+
+    let body = format!("id={}&from_id={}&to_id={}", id, from_id, to_id);
 
     let response = client
         .post(&format!("{}/requisition", &address))
@@ -50,13 +55,18 @@ async fn requisition_returns_a_200_for_valid_form_data() {
 async fn requisition_returns_a_400_when_data_is_missing() {
     let address = spawn_app();
     let client = reqwest::Client::new();
+
+    let id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+    let from_id = "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy";
+    let to_id = "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz";
+
     let test_cases = vec![
-        ("id=x", "missing the from store and the to store"),
-        ("from=y", "missing the id and the to store"),
-        ("to=z", "missing the id and the from store"),
-        ("id=x&from=y", "missing the to store"),
-        ("id=x&to=z", "missing the from store"),
-        ("from=y&to=z", "missing the id"),
+        (format!("id={}", id), "missing from_id and to_id"),
+        (format!("from_id={}", from_id), "missing id and to_id"),
+        (format!("to_id={}", to_id), "missing id and from_id"),
+        (format!("id={}&from_id={}", id, from_id), "missing to_id"),
+        (format!("id={}&to_id={}", id, to_id), "missing from_id"),
+        (format!("from_id={}&to_id={}", from_id, to_id), "missing id"),
     ];
 
     for (invalid_body, error_message) in test_cases {
