@@ -14,6 +14,18 @@ pub async fn post_requisition(
     requisition: web::Form<RequisitionData>,
     connection_pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, HttpResponse> {
+    let request_id = Uuid::new_v4();
+    log::info!(
+        "request_id {} - Adding new requisition '{}' from '{}' to '{}'",
+        request_id,
+        requisition.id,
+        requisition.from_id,
+        requisition.to_id,
+    );
+    log::info!(
+        "request_id {} - Saving new requisition details in the database",
+        request_id
+    );
     sqlx::query!(
         r#"
         INSERT INTO requisition (id, from_id, to_id)
@@ -26,8 +38,16 @@ pub async fn post_requisition(
     .execute(connection_pool.get_ref())
     .await
     .map_err(|e| {
-        eprintln!("Failed to execute query: {}", e);
+        log::error!(
+            "request_id {} - Failed to execute query: {:?}",
+            request_id,
+            e
+        );
         HttpResponse::InternalServerError().finish()
     })?;
+    log::info!(
+        "request_id {} - New requisition details in the database have been saved",
+        request_id
+    );
     Ok(HttpResponse::Ok().finish())
 }
