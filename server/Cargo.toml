@@ -12,22 +12,23 @@ path = "src/main.rs"
 name = "rust_server"
 
 [dependencies]
+actix-web = "=4.0.0-beta.5"
+actix-http = "=3.0.0-beta.5"
+actix-service = "=2.0.0-beta.5"
 actix-rt = "2.2.0"
-actix-web = "4.0.0-beta.5"
-reqwest = "0.11.3"
-tokio = "1.6.0"
-serde = { version = "1", features = ["derive"]}
 config = "0.11.0"
-uuid = { version = "0.8", features = ["v4"]}
+reqwest = "0.11.3"
+serde = { version = "1", features = ["derive"]}
+tokio = "1.6.0"
+uuid = { version = "0.8", features = ["serde", "v4"]}
 
 [dependencies.sqlx]
 version = "0.5.1"
 default-features = false
 features = [
-    "runtime-actix-rustls",
     "macros",
+    "migrate",
     "postgres",
-    "uuid",
-    "chrono",
-    "migrate"
+    "runtime-actix-rustls",
+    "uuid"
 ]
