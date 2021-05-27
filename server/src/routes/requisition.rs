@@ -1,13 +1,13 @@
 //! src/routes/requisition.rs
 use actix_web::{web, HttpResponse};
-use uuid::Uuid;
 use sqlx::PgPool;
+use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct RequisitionData {
     id: Uuid,
     from_id: Uuid,
-    to_id: Uuid
+    to_id: Uuid,
 }
 
 pub async fn post_requisition(
