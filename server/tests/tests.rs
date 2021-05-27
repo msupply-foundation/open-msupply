@@ -1,28 +1,42 @@
 //! tests/health_check.rs
-use sqlx::{Connection, PgConnection};
+use rust_server::configuration::get_configuration;
+use rust_server::startup::run;
+use sqlx::PgPool;
 use std::net::TcpListener;
 use uuid::Uuid;
 
-use rust_server::configuration::get_configuration;
-use rust_server::startup::run;
+pub struct TestApp {
+    pub address: String,
+    pub connection_pool: PgPool,
+}
 
-fn spawn_app() -> String {
+async fn spawn_app() -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let server = run(listener).expect("Failed to bind address");
+    let address = format!("http://127.0.0.1:{}", port);
+
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+        .await
+        .expect("Failed to connect to Postgres.");
+
+    let server = run(listener, connection_pool.clone()).expect("Failed to bind address");
 
     let _ = tokio::spawn(server);
 
-    format!("http://127.0.0.1:{}", port)
+    TestApp {
+        address,
+        connection_pool,
+    }
 }
 
 #[actix_rt::test]
 async fn health_check_works() {
-    let address = spawn_app();
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
 
     let response = client
-        .get(&format!("{}/health_check", &address))
+        .get(&format!("{}/health_check", &app.address))
         .send()
         .await
         .expect("Failed to execute request.");
@@ -33,22 +47,17 @@ async fn health_check_works() {
 
 #[actix_rt::test]
 async fn requisition_returns_a_200_for_valid_form_data() {
-    let address = spawn_app();
-    let configuration = get_configuration().expect("Failed to read configuration");
-    let connection_string = configuration.database.connection_string();
-    let _connection = PgConnection::connect(&connection_string)
-        .await
-        .expect("Failed to connect to Postgres.");
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
-    let body = format!(
-        "id={}&from_id={}&to_id={}",
-        Uuid::new_v4(),
-        Uuid::new_v4(),
-        Uuid::new_v4()
-    );
+
+    let id = Uuid::new_v4();
+    let from_id = Uuid::new_v4();
+    let to_id = Uuid::new_v4();
+
+    let body = format!("id={}&from_id={}&to_id={}", id, from_id, to_id);
 
     let response = client
-        .post(&format!("{}/requisition", &address))
+        .post(&format!("{}/requisition", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -56,43 +65,38 @@ async fn requisition_returns_a_200_for_valid_form_data() {
         .expect("Failed to execute request.");
 
     assert_eq!(200, response.status().as_u16());
+
+    let saved = sqlx::query!("SELECT id, from_id, to_id FROM requisition")
+        .fetch_one(&app.connection_pool)
+        .await
+        .expect("Failed to fetch saved subscription.");
+
+    assert_eq!(saved.id, id);
+    assert_eq!(saved.from_id, from_id);
+    assert_eq!(saved.to_id, to_id);
 }
 
 #[actix_rt::test]
 async fn requisition_returns_a_400_when_data_is_missing() {
-    let address = spawn_app();
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
 
+    let id = Uuid::new_v4();
+    let from_id = Uuid::new_v4();
+    let to_id = Uuid::new_v4();
+
     let test_cases = vec![
-        (
-            format!("id={}", Uuid::new_v4()),
-            "missing from_id and to_id",
-        ),
-        (
-            format!("from_id={}", Uuid::new_v4()),
-            "missing id and to_id",
-        ),
-        (
-            format!("to_id={}", Uuid::new_v4()),
-            "missing id and from_id",
-        ),
-        (
-            format!("id={}&from_id={}", Uuid::new_v4(), Uuid::new_v4()),
-            "missing to_id",
-        ),
-        (
-            format!("id={}&to_id={}", Uuid::new_v4(), Uuid::new_v4()),
-            "missing from_id",
-        ),
-        (
-            format!("from_id={}&to_id={}", Uuid::new_v4(), Uuid::new_v4()),
-            "missing id",
-        ),
+        (format!("id={}", id), "missing from_id and to_id"),
+        (format!("from_id={}", from_id), "missing id and to_id"),
+        (format!("to_id={}", to_id), "missing id and from_id"),
+        (format!("id={}&from_id={}", to_id, from_id), "missing to_id"),
+        (format!("id={}&to_id={}", id, to_id), "missing from_id"),
+        (format!("from_id={}&to_id={}", from_id, to_id), "missing id"),
     ];
 
     for (invalid_body, error_message) in test_cases {
         let response = client
-            .post(&format!("{}/requisition", &address))
+            .post(&format!("{}/requisition", &app.address))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(invalid_body)
             .send()
