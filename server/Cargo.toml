@@ -27,6 +27,7 @@ env_logger = "0.8.3"
 log = "0.4.14"
 tracing-futures = "0.2.5"
 tracing-bunyan-formatter = "0.2.4"
+tracing-log = "0.1.2"
 
 [dependencies.sqlx]
 version = "0.5.1"
