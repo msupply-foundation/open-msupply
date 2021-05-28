@@ -1,0 +1,17 @@
+{
+  "db": "PostgreSQL",
+  "8ea0d95185dd974c495b97212e3ef37480dbfb9038c21132c649e0f0bf11055e": {
+    "query": "\n        INSERT INTO requisition (id, from_id, to_id)\n        VALUES ($1, $2, $3)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}
