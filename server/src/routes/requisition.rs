@@ -1,7 +1,6 @@
 //! src/routes/requisition.rs
 use actix_web::{web, HttpResponse};
 use sqlx::PgPool;
-use tracing_futures::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -11,24 +10,24 @@ pub struct RequisitionData {
     to_id: Uuid,
 }
 
-pub async fn post_requisition(
-    requisition: web::Form<RequisitionData>,
-    connection_pool: web::Data<PgPool>,
-) -> Result<HttpResponse, HttpResponse> {
-    let request_id = Uuid::new_v4();
-
-    let request_span = tracing::info_span!(
-        "Adding new requisition",
-        %request_id,
+#[tracing::instrument(
+    name = "Adding new requisition",
+    skip(requisition, pool),
+    fields(
         id = %requisition.id,
         from_id = %requisition.from_id,
         to_id = %requisition.to_id
-    );
+    )
+)]
+#[tracing::instrument(
+    name = "Saving new requisition in the database",
+    skip(requisition, pool)
+)]
 
-    let _request_span_guard = request_span.enter();
-
-    let query_span = tracing::info_span!("Saving new requisition in the database",);
-
+pub async fn insert_requisition(
+    pool: &PgPool,
+    requisition: &RequisitionData,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO requisition (id, from_id, to_id)
@@ -38,13 +37,21 @@ pub async fn post_requisition(
         requisition.from_id,
         requisition.to_id
     )
-    .execute(connection_pool.as_ref())
-    .instrument(query_span)
+    .execute(pool)
     .await
     .map_err(|e| {
         tracing::error!("Failed to execute query: {:?}", e);
-        HttpResponse::InternalServerError().finish()
+        e
     })?;
+    Ok(())
+}
 
+pub async fn post_requisition(
+    requisition: web::Form<RequisitionData>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, HttpResponse> {
+    insert_requisition(&pool, &requisition)
+        .await
+        .map_err(|_| HttpResponse::InternalServerError().finish())?;
     Ok(HttpResponse::Ok().finish())
 }
