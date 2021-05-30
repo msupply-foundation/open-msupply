@@ -11,7 +11,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
 # Builder stage
-FROM rust:1.49 AS BUILDER
+FROM rust AS builder
 WORKDIR app
 COPY --from=cacher /app/target target
 COPY --from=cacher /usr/local/cargo /usr/local/cargo
