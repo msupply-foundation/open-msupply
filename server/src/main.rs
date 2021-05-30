@@ -1,13 +1,13 @@
 //! src/main.rs
-use rust_server::configuration::get_configuration;
-use rust_server::startup::run;
-use rust_server::telemetry::{get_subscriber, init_subscriber};
+use omsupply_server::configuration::get_configuration;
+use omsupply_server::startup::run;
+use omsupply_server::telemetry::{get_subscriber, init_subscriber};
 use sqlx::PgPool;
 use std::net::TcpListener;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let subscriber = get_subscriber("rust_server".into(), "info".into(), std::io::stdout);
+    let subscriber = get_subscriber("omsupply_server".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to read configuration.");
