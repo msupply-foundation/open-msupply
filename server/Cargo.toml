@@ -1,5 +1,5 @@
 [package]
-name = "rust_server"
+name = "omsupply_server"
 version = "0.1.0"
 authors = ["will"]
 edition = "2018"
@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "rust_server"
+name = "omsupply_server"
 
 [dependencies]
 actix-web = "=4.0.0-beta.5"

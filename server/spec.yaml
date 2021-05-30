@@ -1,14 +1,14 @@
 #! spec.yaml
-name: rust-server
+name: omsupply-server
 region: fra
 services:
-  - name: rust-server
+  - name: omsupply-server
     dockerfile_path: Dockerfile
     source_dir: .
     github:
       branch: master 
       deploy_on_push: true
-      repo: wlthomson/rust-server
+      repo: wlthomson/omsupply-server
     health_check: 
       http_path: /health_check
     http_port: 8000
@@ -18,7 +18,7 @@ services:
       - path: /
 databases:
   - engine: PG
-    name: omsupply
+    name: omsupply-database
     num_nodes: 1
     size: db-a-dev-database
     version: "12"

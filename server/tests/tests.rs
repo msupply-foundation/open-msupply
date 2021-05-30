@@ -1,8 +1,8 @@
 //! tests/health_check.rs
 use once_cell::sync::Lazy;
-use rust_server::configuration::{get_configuration, DatabaseSettings};
-use rust_server::startup::run;
-use rust_server::telemetry::{get_subscriber, init_subscriber};
+use omsupply_server::configuration::{get_configuration, DatabaseSettings};
+use omsupply_server::startup::run;
+use omsupply_server::telemetry::{get_subscriber, init_subscriber};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;

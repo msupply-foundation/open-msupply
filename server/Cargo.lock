@@ -1188,6 +1188,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "omsupply_server"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-rt",
+ "actix-service",
+ "actix-web",
+ "config",
+ "log",
+ "once_cell",
+ "reqwest",
+ "serde 1.0.126",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "tracing-actix-web",
+ "tracing-bunyan-formatter",
+ "tracing-futures",
+ "tracing-log",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1508,30 +1532,6 @@ name = "rust-ini"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e52c148ef37f8c375d49d5a73aa70713125b7f19095948a923f80afdeb22ec2"
-
-[[package]]
-name = "rust_server"
-version = "0.1.0"
-dependencies = [
- "actix-http",
- "actix-rt",
- "actix-service",
- "actix-web",
- "config",
- "log",
- "once_cell",
- "reqwest",
- "serde 1.0.126",
- "sqlx",
- "tokio",
- "tracing",
- "tracing-actix-web",
- "tracing-bunyan-formatter",
- "tracing-futures",
- "tracing-log",
- "tracing-subscriber",
- "uuid",
-]
 
 [[package]]
 name = "rustc_version"

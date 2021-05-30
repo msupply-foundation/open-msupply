@@ -7,4 +7,4 @@ database:
   port: 5432
   username: "postgres"
   password: "password"
-  database_name: "omsupply"
+  database_name: "omsupply-database"
