@@ -1,0 +1,16 @@
+[package]
+name = "omsupply_server"
+version = "0.1.0"
+authors = ["will"]
+edition = "2018"
+
+[[bin]]
+path = "src/main.rs"
+name = "omsupply_server"
+
+[dependencies]
+actix-cors = "0.5.4"
+actix-web = "3.3.2"
+env_logger = "0.8.3"
+juniper = "0.15.5"
+juniper_actix = "0.2.4"
