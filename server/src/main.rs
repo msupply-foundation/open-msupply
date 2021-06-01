@@ -21,8 +21,8 @@ pub struct Requisition {
 pub struct RequisitionLine {
     id: String,
     requisition_id: String,
-    item_id: String,
-    quantity: f64,
+    item_name: String,
+    item_quantity: f64,
 }
 
 #[derive(Default, Clone)]
@@ -44,14 +44,14 @@ pub fn generate_requisitions() -> HashMap<String, Requisition> {
                 RequisitionLine {
                     id: "requisition_line_a".to_string(),
                     requisition_id: "requisition_a".to_string(),
-                    item_id: "item_a".to_string(),
-                    quantity: 1.0,
+                    item_name: "item_a".to_string(),
+                    item_quantity: 1.0,
                 },
                 RequisitionLine {
                     id: "requisition_line_b".to_string(),
                     requisition_id: "requisition_a".to_string(),
-                    item_id: "item_b".to_string(),
-                    quantity: 2.0,
+                    item_name: "item_b".to_string(),
+                    item_quantity: 2.0,
                 },
             ],
         },
@@ -67,14 +67,14 @@ pub fn generate_requisitions() -> HashMap<String, Requisition> {
                 RequisitionLine {
                     id: "requisition_line_c".to_string(),
                     requisition_id: "requisition_b".to_string(),
-                    item_id: "item_a".to_string(),
-                    quantity: 3.0,
+                    item_name: "item_a".to_string(),
+                    item_quantity: 3.0,
                 },
                 RequisitionLine {
                     id: "requisition_line_d".to_string(),
                     requisition_id: "requisition_b".to_string(),
-                    item_id: "item_b".to_string(),
-                    quantity: 4.0,
+                    item_name: "item_b".to_string(),
+                    item_quantity: 4.0,
                 },
             ],
         },
@@ -86,11 +86,11 @@ pub fn generate_requisitions() -> HashMap<String, Requisition> {
             id: "requisition_c".to_string(),
             from_id: "store_b".to_string(),
             to_id: "store_c".to_string(),
-            requisition_lines:     vec![RequisitionLine {
+            requisition_lines: vec![RequisitionLine {
                 id: "requisition_line_d".to_string(),
                 requisition_id: "requisition_c".to_string(),
-                item_id: "item_a".to_string(),
-                quantity: 5.0,
+                item_name: "item_a".to_string(),
+                item_quantity: 5.0,
             }],
         },
     );
