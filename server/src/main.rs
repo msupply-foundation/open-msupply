@@ -4,7 +4,7 @@ use std::{env};
 
 use actix_cors::Cors;
 use actix_web::{http::header, middleware, web, App, Error, HttpResponse, HttpServer};
-use juniper::{graphql_object, EmptyMutation, EmptySubscription, GraphQLObject, RootNode};
+use juniper::{graphql_object, EmptySubscription, GraphQLObject, RootNode};
 use juniper_actix::{graphql_handler};
 use sqlx::PgPool;
 
@@ -139,6 +139,17 @@ impl Database {
         Database { connection_pool }
     }
 
+    pub async fn insert_requisition(&self, id: String, from_id: String, to_id: String) -> Result<Requisition, sqlx::Error> {
+        insert_requisition(&self.connection_pool, id.to_string(), from_id.to_string(), to_id.to_string()).await?;
+
+        Ok(Requisition {
+            id: id,
+            from_id: from_id,
+            to_id: to_id,
+            requisition_lines: vec![]
+        })
+    }
+
     pub async fn get_requisition(&self, id: String) -> Result<Requisition, sqlx::Error> {
         let requisition_row = select_requisition(&self.connection_pool, id.to_string()).await?;
         let requisition_line_rows = select_requisition_lines(&self.connection_pool, id.to_string()).await?;
@@ -174,12 +185,20 @@ impl Query {
     }
 }
 
-type Schema = RootNode<'static, Query, EmptyMutation<Database>, EmptySubscription<Database>>;
+struct Mutations;
+#[graphql_object(context = Database)]
+impl Mutations {
+    async fn insert_requisition(database: &Database, id: String, from_id: String, to_id: String) -> Requisition {
+        database.insert_requisition(id, from_id, to_id).await.unwrap()
+    }
+}
+
+type Schema = RootNode<'static, Query, Mutations, EmptySubscription<Database>>;
 
 fn schema() -> Schema {
     Schema::new(
         Query,
-        EmptyMutation::<Database>::new(),
+        Mutations,
         EmptySubscription::<Database>::new(),
     )
 }
