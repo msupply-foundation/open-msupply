@@ -271,12 +271,9 @@ async fn graphql_route(
     req: actix_web::HttpRequest,
     payload: actix_web::web::Payload,
     schema: web::Data<Schema>,
+    connection_pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, Error> {
-    let connection_pool =
-        PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
-            .await
-            .expect("Failed to connect to database");
-    let context = Database::new(connection_pool).await;
+    let context = Database::new(connection_pool.get_ref().clone()).await; 
     graphql_handler(&schema, &context, req, payload).await
 }
 
@@ -285,8 +282,7 @@ async fn main() -> std::io::Result<()> {
     env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    let connection_pool =
-    PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
+    let connection_pool = PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
         .await
         .expect("Failed to connect to database");
 
@@ -297,6 +293,7 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .data(schema())
+            .app_data(connection_pool.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
             .wrap(
