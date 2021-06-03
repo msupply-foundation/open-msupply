@@ -1,11 +1,11 @@
 //! src/main.rs
 
-use std::{env};
+use std::env;
 
 use actix_cors::Cors;
 use actix_web::{http::header, middleware, web, App, Error, HttpResponse, HttpServer};
 use juniper::{graphql_object, EmptySubscription, GraphQLObject, RootNode};
-use juniper_actix::{graphql_handler};
+use juniper_actix::graphql_handler;
 use sqlx::PgPool;
 
 #[derive(Clone, GraphQLObject)]
@@ -31,26 +31,31 @@ pub struct Database {
     connection_pool: PgPool,
 }
 
-struct RequisitionRow { 
+struct RequisitionRow {
     id: String,
     from_id: String,
-    to_id: String
+    to_id: String,
 }
 
 struct RequisitionLineRow {
     id: String,
     requisition_id: String,
     item_name: String,
-    item_quantity: f32
+    item_quantity: f32,
 }
 
-async fn select_requisition(connection_pool: &PgPool, id: String) -> Result<RequisitionRow, sqlx::Error> {
-    let requisition_row = sqlx::query_as!(RequisitionRow,
+async fn select_requisition(
+    connection_pool: &PgPool,
+    id: String,
+) -> Result<RequisitionRow, sqlx::Error> {
+    let requisition_row = sqlx::query_as!(
+        RequisitionRow,
         r#"
         SELECT id, from_id, to_id
         FROM requisition
         WHERE id = $1
-        "#, id
+        "#,
+        id
     )
     .fetch_one(connection_pool)
     .await?;
@@ -59,13 +64,18 @@ async fn select_requisition(connection_pool: &PgPool, id: String) -> Result<Requ
 }
 
 #[allow(dead_code)]
-async fn select_requisition_line(connection_pool: &PgPool, id: String) -> Result<RequisitionLineRow, sqlx::Error> {
-    let requisition_line = sqlx::query_as!(RequisitionLineRow,
+async fn select_requisition_line(
+    connection_pool: &PgPool,
+    id: String,
+) -> Result<RequisitionLineRow, sqlx::Error> {
+    let requisition_line = sqlx::query_as!(
+        RequisitionLineRow,
         r#"
         SELECT id, requisition_id, item_name, item_quantity
         FROM requisition_line
         WHERE id = $1
-        "#, id
+        "#,
+        id
     )
     .fetch_one(connection_pool)
     .await?;
@@ -73,13 +83,18 @@ async fn select_requisition_line(connection_pool: &PgPool, id: String) -> Result
     Ok(requisition_line)
 }
 
-async fn select_requisition_lines(connection_pool: &PgPool, requisition_id: String) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
-    let requisition_lines = sqlx::query_as!(RequisitionLineRow,
+async fn select_requisition_lines(
+    connection_pool: &PgPool,
+    requisition_id: String,
+) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
+    let requisition_lines = sqlx::query_as!(
+        RequisitionLineRow,
         r#"
         SELECT id, requisition_id, item_name, item_quantity
         FROM requisition_line 
         WHERE requisition_id = $1
-        "#, requisition_id
+        "#,
+        requisition_id
     )
     .fetch_all(connection_pool)
     .await?;
@@ -87,28 +102,42 @@ async fn select_requisition_lines(connection_pool: &PgPool, requisition_id: Stri
     Ok(requisition_lines)
 }
 
-async fn insert_requisition(connection_pool: &PgPool, requisition: &Requisition) -> Result<(), sqlx::Error> {
+async fn insert_requisition(
+    connection_pool: &PgPool,
+    requisition: &Requisition,
+) -> Result<(), sqlx::Error> {
     match requisition {
-        Requisition { id, from_id, to_id, .. } => { sqlx::query!(
-            r#"
+        Requisition {
+            id, from_id, to_id, ..
+        } => {
+            sqlx::query!(
+                r#"
             INSERT INTO requisition (id, from_id, to_id)
             VALUES ($1, $2, $3)
             "#,
-            id,
-            from_id,
-            to_id
-        )
-        .execute(connection_pool)
-        .await?;
+                id,
+                from_id,
+                to_id
+            )
+            .execute(connection_pool)
+            .await?;
         }
     }
 
     Ok(())
 }
 
-async fn insert_requisition_line(connection_pool: &PgPool, requisition_line: &RequisitionLine) -> Result<(), sqlx::Error> {
+async fn insert_requisition_line(
+    connection_pool: &PgPool,
+    requisition_line: &RequisitionLine,
+) -> Result<(), sqlx::Error> {
     match requisition_line {
-        RequisitionLine { id, requisition_id, item_name, item_quantity } => {
+        RequisitionLine {
+            id,
+            requisition_id,
+            item_name,
+            item_quantity,
+        } => {
             sqlx::query!(
                 r#"
                 INSERT INTO requisition_line (id, requisition_id, item_name, item_quantity)
@@ -136,7 +165,7 @@ async fn insert_mock_data(connection_pool: &PgPool) -> Result<(), sqlx::Error> {
     };
 
     let requisition_b = Requisition {
-        id:  "requisition_b".to_string(),
+        id: "requisition_b".to_string(),
         from_id: "store_a".to_string(),
         to_id: "store_c".to_string(),
         requisition_lines: vec![],
@@ -166,13 +195,13 @@ async fn insert_mock_data(connection_pool: &PgPool) -> Result<(), sqlx::Error> {
     let requisition_line_c = RequisitionLine {
         id: "requisition_line_c".to_string(),
         requisition_id: "requisition_b".to_string(),
-        item_name: "item_a".to_string(), 
+        item_name: "item_a".to_string(),
         item_quantity: 3.0,
     };
 
     let requisition_line_d = RequisitionLine {
         id: "requisition_line_d".to_string(),
-        requisition_id: "requisition_b".to_string(), 
+        requisition_id: "requisition_b".to_string(),
         item_name: "item_b".to_string(),
         item_quantity: 4.0,
     };
@@ -183,7 +212,7 @@ async fn insert_mock_data(connection_pool: &PgPool) -> Result<(), sqlx::Error> {
         item_name: "item_a".to_string(),
         item_quantity: 5.0,
     };
-    
+
     insert_requisition(connection_pool, &requisition_a).await?;
     insert_requisition(connection_pool, &requisition_b).await?;
     insert_requisition(connection_pool, &requisition_c).await?;
@@ -202,25 +231,32 @@ impl Database {
         Database { connection_pool }
     }
 
-    pub async fn insert_requisition(&self, requisition: Requisition) -> Result<Requisition, sqlx::Error> {
+    pub async fn insert_requisition(
+        &self,
+        requisition: Requisition,
+    ) -> Result<Requisition, sqlx::Error> {
         insert_requisition(&self.connection_pool, &requisition).await?;
         Ok(requisition)
     }
 
     pub async fn get_requisition(&self, id: String) -> Result<Requisition, sqlx::Error> {
         let requisition_row = select_requisition(&self.connection_pool, id.to_string()).await?;
-        let requisition_line_rows = select_requisition_lines(&self.connection_pool, id.to_string()).await?;
+        let requisition_line_rows =
+            select_requisition_lines(&self.connection_pool, id.to_string()).await?;
 
         let requisition = Requisition {
             id: requisition_row.id,
             from_id: requisition_row.from_id,
             to_id: requisition_row.to_id,
-            requisition_lines: requisition_line_rows.into_iter().map(|line| RequisitionLine {
-                id: line.id,
-                requisition_id: line.requisition_id,
-                item_name: line.item_name,
-                item_quantity: line.item_quantity as f64
-            }).collect()
+            requisition_lines: requisition_line_rows
+                .into_iter()
+                .map(|line| RequisitionLine {
+                    id: line.id,
+                    requisition_id: line.requisition_id,
+                    item_name: line.item_name,
+                    item_quantity: line.item_quantity as f64,
+                })
+                .collect(),
         };
 
         Ok(requisition)
@@ -245,12 +281,17 @@ impl Query {
 struct Mutations;
 #[graphql_object(context = Database)]
 impl Mutations {
-    async fn insert_requisition(database: &Database, id: String, from_id: String, to_id: String) -> Requisition {
+    async fn insert_requisition(
+        database: &Database,
+        id: String,
+        from_id: String,
+        to_id: String,
+    ) -> Requisition {
         let requisition = Requisition {
             id: id,
             from_id: from_id,
             to_id: to_id,
-            requisition_lines: vec![]
+            requisition_lines: vec![],
         };
 
         database.insert_requisition(requisition).await.unwrap()
@@ -260,11 +301,7 @@ impl Mutations {
 type Schema = RootNode<'static, Query, Mutations, EmptySubscription<Database>>;
 
 fn schema() -> Schema {
-    Schema::new(
-        Query,
-        Mutations,
-        EmptySubscription::<Database>::new(),
-    )
+    Schema::new(Query, Mutations, EmptySubscription::<Database>::new())
 }
 
 async fn graphql_route(
@@ -273,7 +310,7 @@ async fn graphql_route(
     schema: web::Data<Schema>,
     connection_pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, Error> {
-    let context = Database::new(connection_pool.get_ref().clone()).await; 
+    let context = Database::new(connection_pool.get_ref().clone()).await;
     graphql_handler(&schema, &context, req, payload).await
 }
 
@@ -282,9 +319,10 @@ async fn main() -> std::io::Result<()> {
     env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    let connection_pool = PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
-        .await
-        .expect("Failed to connect to database");
+    let connection_pool =
+        PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
+            .await
+            .expect("Failed to connect to database");
 
     insert_mock_data(&connection_pool)
         .await
