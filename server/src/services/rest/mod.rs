@@ -1,5 +1,7 @@
 //! src/services/rest/mod.rs
 
-mod config;
+pub mod config;
+pub mod routes;
 
 pub use config::*;
+pub use routes::*;

@@ -1,8 +1,8 @@
 //! src/services/graphql/mod.rs
 
-mod config;
-mod routes;
-mod schema;
+pub mod config;
+pub mod routes;
+pub mod schema;
 
 pub use config::*;
 pub use routes::*;
