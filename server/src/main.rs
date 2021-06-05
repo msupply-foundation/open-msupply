@@ -16,9 +16,9 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let database = DatabaseConnection::new_with_data(
-        PgPool::connect("postgres://postgres:password@localhost/omsupply-DatabaseConnection")
+        PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
             .await
-            .expect("Failed to connect to DatabaseConnection"),
+            .expect("Failed to connect to omsupply-database"),
     )
     .await;
 
