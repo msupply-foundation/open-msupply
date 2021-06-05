@@ -1,4 +1,4 @@
-//! src/database/tables.rs
+//! src/utils/database/schema.rs
 
 #[derive(Clone)]
 pub struct RequisitionRow {

@@ -1,4 +1,4 @@
-//! src/graphql/schema.rs
+//! src/services/graphql/schema/types.rs
 
 use juniper::{GraphQLInputObject, GraphQLObject};
 
