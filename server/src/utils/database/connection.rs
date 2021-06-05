@@ -1,30 +1,30 @@
-//! src/database/database.rs
+//! src/utils/database/connection.rs
 
-use crate::database::mock::{generate_requisition_data, generate_requisition_line_data};
-use crate::database::tables::{RequisitionLineRow, RequisitionRow};
+use crate::utils::database::schema::{RequisitionLineRow, RequisitionRow};
+use crate::utils::mocks;
 
 use sqlx::PgPool;
 
 #[derive(Clone)]
-pub struct Database {
+pub struct DatabaseConnection {
     pool: PgPool,
 }
 
-impl Database {
-    pub async fn new(pool: PgPool) -> Database {
-        Database { pool }
+impl DatabaseConnection {
+    pub async fn new(pool: PgPool) -> DatabaseConnection {
+        DatabaseConnection { pool }
     }
 
-    pub async fn new_with_data(pool: PgPool) -> Database {
-        let database = Database { pool };
+    pub async fn new_with_data(pool: PgPool) -> DatabaseConnection {
+        let database = DatabaseConnection { pool };
 
         database
-            .insert_requisitions(generate_requisition_data())
+            .insert_requisitions(mocks::requisition::generate_requisition_data())
             .await
             .expect("Failed to insert mock requisition data");
 
         database
-            .insert_requisition_lines(generate_requisition_line_data())
+            .insert_requisition_lines(mocks::requisition_line::generate_requisition_line_data())
             .await
             .expect("Failed to insert mock requisition line data");
 
@@ -93,7 +93,7 @@ impl Database {
             &self
                 .insert_requisition(&requisition)
                 .await
-                .expect("Failed to insert requisition into database");
+                .expect("Failed to insert requisition into DatabaseConnection");
         }
 
         Ok(())
@@ -127,7 +127,7 @@ impl Database {
             &self
                 .insert_requisition_line(&requisition_line)
                 .await
-                .expect("Failed to insert requisition line into database");
+                .expect("Failed to insert requisition line into DatabaseConnection");
         }
 
         Ok(())
