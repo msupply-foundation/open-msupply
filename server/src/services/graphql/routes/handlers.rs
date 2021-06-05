@@ -3,7 +3,7 @@
 use crate::services::graphql::schema::Schema;
 use crate::utils::database::DatabaseConnection;
 
-pub async fn graphql_route(
+pub async fn graphql(
     req: actix_web::HttpRequest,
     payload: actix_web::web::Payload,
     schema: actix_web::web::Data<Schema>,

@@ -7,7 +7,6 @@ use utils::database::DatabaseConnection;
 
 use actix_cors::Cors;
 use actix_web::{http::header, middleware, App, HttpServer};
-
 use sqlx::PgPool;
 use std::env;
 
@@ -38,6 +37,7 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .configure(services::graphql::config)
+            .configure(services::rest::config)
     });
 
     server
