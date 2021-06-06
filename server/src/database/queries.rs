@@ -4,7 +4,7 @@ use crate::database::schema::{RequisitionLineRow, RequisitionRow};
 
 pub async fn insert_requisition(
     pool: &sqlx::PgPool,
-    requisition: &RequisitionRow
+    requisition: &RequisitionRow,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
@@ -12,7 +12,7 @@ pub async fn insert_requisition(
         VALUES ($1, $2, $3)
         "#,
         requisition.id,
-        requisition.from_id, 
+        requisition.from_id,
         requisition.to_id
     )
     .execute(pool)
@@ -23,7 +23,7 @@ pub async fn insert_requisition(
 
 pub async fn insert_requisitions(
     pool: &sqlx::PgPool,
-    requisitions: Vec<RequisitionRow>
+    requisitions: Vec<RequisitionRow>,
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
     for requisition in &requisitions {
@@ -45,7 +45,7 @@ pub async fn insert_requisitions(
 
 pub async fn insert_requisition_line(
     pool: &sqlx::PgPool,
-    requisition_line: &RequisitionLineRow
+    requisition_line: &RequisitionLineRow,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
@@ -65,9 +65,9 @@ pub async fn insert_requisition_line(
 
 pub async fn insert_requisition_lines(
     pool: &sqlx::PgPool,
-    requisition_lines: Vec<RequisitionLineRow>
+    requisition_lines: Vec<RequisitionLineRow>,
 ) -> Result<(), sqlx::Error> {
-        // TODO: aggregate into single query.
+    // TODO: aggregate into single query.
     for requisition_line in &requisition_lines {
         sqlx::query!(
             r#"

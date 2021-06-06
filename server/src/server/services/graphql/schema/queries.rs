@@ -1,7 +1,7 @@
 //! src/services/graphql/queries.rs
 
-use crate::server::graphql::{Requisition, RequisitionLine};
 use crate::database::DatabaseConnection;
+use crate::server::graphql::{Requisition, RequisitionLine};
 
 use juniper::graphql_object;
 pub struct Queries;

@@ -1,7 +1,7 @@
 //! src/services/graphql/mutations.rs
 
-use crate::server::graphql::{InputRequisitionLine, Requisition, RequisitionLine};
 use crate::database::{DatabaseConnection, RequisitionLineRow, RequisitionRow};
+use crate::server::graphql::{InputRequisitionLine, Requisition, RequisitionLine};
 
 pub struct Mutations;
 #[juniper::graphql_object(context = DatabaseConnection)]
