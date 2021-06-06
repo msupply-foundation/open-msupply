@@ -3,6 +3,13 @@
 use juniper::{GraphQLInputObject, GraphQLObject};
 
 #[derive(Clone, GraphQLObject)]
+// An item.
+pub struct Item {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Clone, GraphQLObject)]
 // A requisition.
 pub struct Requisition {
     pub id: String,
