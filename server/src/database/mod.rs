@@ -4,6 +4,6 @@ pub mod connection;
 pub mod queries;
 pub mod schema;
 
-pub use connection::*;
-pub use queries::*;
-pub use schema::*;
+pub use self::connection::*;
+pub use self::queries::*;
+pub use self::schema::*;

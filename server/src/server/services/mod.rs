@@ -3,5 +3,5 @@
 pub mod graphql;
 pub mod rest;
 
-pub use graphql::*;
-pub use rest::*;
+pub use self::graphql::*;
+pub use self::rest::*;

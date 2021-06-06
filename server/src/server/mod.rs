@@ -2,6 +2,6 @@ pub mod middleware;
 pub mod services;
 pub mod startup;
 
-pub use middleware::*;
-pub use services::*;
-pub use startup::*;
+pub use self::middleware::*;
+pub use self::services::*;
+pub use self::startup::*;
