@@ -14,3 +14,9 @@ pub struct RequisitionLineRow {
     pub item_name: String,
     pub item_quantity: f32,
 }
+
+#[derive(Clone)]
+pub struct ItemRow {
+    pub id: String,
+    pub item_name: String,
+}
