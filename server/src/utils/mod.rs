@@ -1,7 +1,7 @@
 //! src/utils/mod.rs
 
-pub mod database;
-pub mod mocks;
+pub mod configuration;
+pub mod mock;
 
-pub use database::*;
-pub use mocks::*;
+pub use configuration::*;
+pub use mock::*;

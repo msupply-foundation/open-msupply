@@ -1,48 +1,37 @@
 //! src/main.rs
 
-mod services;
+mod database;
+mod server;
 mod utils;
 
-use utils::database::DatabaseConnection;
-
-use actix_cors::Cors;
-use actix_web::{http::header, middleware, App, HttpServer};
-use sqlx::PgPool;
-use std::env;
+use std::{env, io};
+use std::net::TcpListener;
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> io::Result<()> {
     env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    let database = DatabaseConnection::new_with_data(
-        PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
+    let listener =
+        TcpListener::bind("127.0.0.1:8080").expect("Failed to bind server to address");
+
+    let database = database::DatabaseConnection::new(
+        sqlx::PgPool::connect("postgres://postgres:password@localhost/omsupply-database")
             .await
             .expect("Failed to connect to omsupply-database"),
     )
     .await;
 
-    let server = HttpServer::new(move || {
-        App::new()
-            .data(database.clone())
-            .wrap(middleware::Compress::default())
-            .wrap(middleware::Logger::default())
-            .wrap(
-                Cors::default()
-                    .allowed_origin("http://127.0.0.1:8080")
-                    .allowed_methods(vec!["POST", "GET"])
-                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-                    .allowed_header(header::CONTENT_TYPE)
-                    .supports_credentials()
-                    .max_age(3600),
-            )
-            .configure(services::graphql::config)
-            .configure(services::rest::config)
-    });
-
-    server
-        .bind("127.0.0.1:8080")
-        .expect("Failed to bind server to address")
-        .run()
+    // TODO: replace mock data with tests
+    database
+        .create_requisitions(utils::mock::mock_requisitions())
         .await
+        .expect("Failed to insert mock requisition data");
+
+    database
+        .create_requisition_lines(utils::mock::mock_requisition_lines())
+        .await
+        .expect("Failed to insert mock requisition line data");
+
+    server::run(listener, database)?.await
 }

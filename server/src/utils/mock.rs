@@ -1,8 +1,28 @@
-//! src/utils/mocks/requisition_line.rs
+use crate::database::schema::{RequisitionLineRow, RequisitionRow};
 
-use crate::utils::database::schema::RequisitionLineRow;
+pub fn mock_requisitions() -> Vec<RequisitionRow> {
+    let requisition_a = RequisitionRow {
+        id: "requisition_a".to_string(),
+        from_id: "store_a".to_string(),
+        to_id: "store_b".to_string(),
+    };
 
-pub fn generate_requisition_line_data() -> Vec<RequisitionLineRow> {
+    let requisition_b = RequisitionRow {
+        id: "requisition_b".to_string(),
+        from_id: "store_a".to_string(),
+        to_id: "store_c".to_string(),
+    };
+
+    let requisition_c = RequisitionRow {
+        id: "requisition_c".to_string(),
+        from_id: "store_b".to_string(),
+        to_id: "store_c".to_string(),
+    };
+
+    vec![requisition_a, requisition_b, requisition_c]
+}
+
+pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     let requisition_line_a = RequisitionLineRow {
         id: "requisition_line_a".to_string(),
         requisition_id: "requisition_a".to_string(),

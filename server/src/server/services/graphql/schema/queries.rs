@@ -1,7 +1,7 @@
 //! src/services/graphql/queries.rs
 
-use crate::services::graphql::{Requisition, RequisitionLine};
-use crate::utils::database::DatabaseConnection;
+use crate::server::graphql::{Requisition, RequisitionLine};
+use crate::database::DatabaseConnection;
 
 use juniper::graphql_object;
 pub struct Queries;
@@ -13,10 +13,10 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the requisition")))]
     pub async fn requisition(database: &DatabaseConnection, id: String) -> Requisition {
-        let requisition_row = database.select_requisition(id.to_string()).await.unwrap();
+        let requisition_row = database.get_requisition(id.to_string()).await.unwrap();
 
         let requisition_line_rows = database
-            .select_requisition_lines(id.to_string())
+            .get_requisition_lines(id.to_string())
             .await
             .unwrap();
 
