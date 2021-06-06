@@ -15,6 +15,19 @@
       "nullable": []
     }
   },
+  "427397a53fd592d3928fc066fe37ba80ec9529cf8d6a7747e7cf8d2dbc7bfa6b": {
+    "query": "\n        INSERT INTO item (id, item_name)\n        VALUES ($1, $2)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "669aac04c9919e271847bb2723cd993608154ce70cc52d3f1040a4450e3ba03b": {
     "query": "\n            INSERT INTO requisition (id, from_id, to_id)\n            VALUES ($1, $2, $3)\n            ",
     "describe": {
@@ -41,6 +54,45 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "98a2772e5729f0cbfe961559e79068f5c28cf6ec5e898db26f69fcd505c75d99": {
+    "query": "\n            INSERT INTO item (id, item_name)\n            VALUES ($1, $2)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "a7f851b40f87e0feedd1f432933a7f35cf675b1f5b0f42e1163c42a68fec83c7": {
+    "query": "\n            SELECT id, item_name\n            FROM item\n            WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
     }
   },
   "b40bbf00f56f600bedded436b3ce82350aa73f416b4b7704d4eb18ce080dece0": {
