@@ -1,4 +1,3 @@
--- Add migration script here
 -- Create requisition line table 
 CREATE TABLE requisition_line (
     id TEXT NOT NULL,
