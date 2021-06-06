@@ -78,6 +78,10 @@ impl DatabaseConnection {
         queries::select_item(&self.pool, id).await
     }
 
+    pub async fn get_item_line(&self, id: String) -> Result<ItemLineRow, sqlx::Error> {
+        queries::select_item_line(&self.pool, id).await
+    }
+
     pub async fn get_requisition(&self, id: String) -> Result<RequisitionRow, sqlx::Error> {
         queries::select_requisition(&self.pool, id).await
     }
