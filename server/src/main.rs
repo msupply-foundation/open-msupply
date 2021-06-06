@@ -26,7 +26,10 @@ async fn main() -> io::Result<()> {
     let database = database::DatabaseConnection::new(pool).await;
 
     // TODO: replace mock data with tests
-    database.insert_mock_data().await.expect("Failed to insert mock data");
+    database
+        .insert_mock_data()
+        .await
+        .expect("Failed to insert mock data");
 
     server::run(listener, database)?.await
 }
