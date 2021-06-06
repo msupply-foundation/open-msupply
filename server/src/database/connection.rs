@@ -45,6 +45,14 @@ impl DatabaseConnection {
         queries::select_requisition(&self.pool, id).await
     }
 
+    #[allow(dead_code)]
+    pub async fn get_requisition_line(
+        &self,
+        id: String,
+    ) -> Result<RequisitionLineRow, sqlx::Error> {
+        queries::select_requisition_line(&self.pool, id).await
+    }
+
     pub async fn get_requisition_lines(
         &self,
         requisition_id: String,
