@@ -1,6 +1,6 @@
 //! src/database/queries.rs
 
-use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow};
 
 pub async fn insert_item(pool: &sqlx::PgPool, item: &ItemRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -27,6 +27,49 @@ pub async fn insert_items(pool: &sqlx::PgPool, items: Vec<ItemRow>) -> Result<()
             "#,
             item.id,
             item.item_name
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
+}
+
+pub async fn insert_item_line(
+    pool: &sqlx::PgPool,
+    item_line: &ItemLineRow,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO item_line (id, item_id, batch, quantity)
+        VALUES ($1, $2, $3, $4)
+        "#,
+        item_line.id,
+        item_line.item_id,
+        item_line.batch,
+        item_line.quantity
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn insert_item_lines(
+    pool: &sqlx::PgPool,
+    item_lines: Vec<ItemLineRow>,
+) -> Result<(), sqlx::Error> {
+    // TODO: aggregate into single query.
+    for item_line in &item_lines {
+        sqlx::query!(
+            r#"
+            INSERT INTO item_line (id, item_id, batch, quantity)
+            VALUES ($1, $2, $3, $4)
+            "#,
+            item_line.id,
+            item_line.item_id,
+            item_line.batch,
+            item_line.quantity
         )
         .execute(pool)
         .await?;
@@ -133,6 +176,22 @@ pub async fn select_item(pool: &sqlx::PgPool, id: String) -> Result<ItemRow, sql
     .await?;
 
     Ok(item)
+}
+
+pub async fn select_item_line(pool: &sqlx::PgPool, id: String) -> Result<ItemLineRow, sqlx::Error> {
+    let item_line = sqlx::query_as!(
+        ItemLineRow,
+        r#"
+            SELECT id, item_id, batch, quantity
+            from item_line
+            where id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(item_line)
 }
 
 pub async fn select_requisition(
