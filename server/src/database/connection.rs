@@ -1,7 +1,7 @@
 //! src/utils/database/connection.rs
 
 use crate::database::queries;
-use crate::database::schema::{RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
 
 #[derive(Clone)]
 pub struct DatabaseConnection {
@@ -39,6 +39,10 @@ impl DatabaseConnection {
         requisition_lines: Vec<RequisitionLineRow>,
     ) -> Result<(), sqlx::Error> {
         queries::insert_requisition_lines(&self.pool, requisition_lines).await
+    }
+
+    pub async fn get_item(&self, id: String) -> Result<ItemRow, sqlx::Error> {
+        queries::select_item(&self.pool, id).await
     }
 
     pub async fn get_requisition(&self, id: String) -> Result<RequisitionRow, sqlx::Error> {
