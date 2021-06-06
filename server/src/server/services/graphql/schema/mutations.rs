@@ -1,8 +1,8 @@
 //! src/services/graphql/mutations.rs
 
 use crate::database::{DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow};
-use crate::server::Item;
 use crate::server::graphql::{InputRequisitionLine, Requisition, RequisitionLine};
+use crate::server::Item;
 
 pub struct Mutations;
 #[juniper::graphql_object(context = DatabaseConnection)]
@@ -11,14 +11,10 @@ impl Mutations {
         id(description = "id of the item"),
         name(description = "name of the item"),
     ))]
-    async fn insert_name(
-        database: &DatabaseConnection,
-        id: String,
-        name: String,
-    ) -> Item {
+    async fn insert_name(database: &DatabaseConnection, id: String, name: String) -> Item {
         let item_row = ItemRow {
             id: id.clone(),
-            item_name: name.clone()
+            item_name: name.clone(),
         };
 
         database
@@ -28,7 +24,7 @@ impl Mutations {
 
         Item {
             id: item_row.id,
-            name: item_row.item_name
+            name: item_row.item_name,
         }
     }
 
