@@ -1,11 +1,37 @@
 //! src/services/graphql/mutations.rs
 
-use crate::database::{DatabaseConnection, RequisitionLineRow, RequisitionRow};
+use crate::database::{DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::server::Item;
 use crate::server::graphql::{InputRequisitionLine, Requisition, RequisitionLine};
 
 pub struct Mutations;
 #[juniper::graphql_object(context = DatabaseConnection)]
 impl Mutations {
+    #[graphql(arguments(
+        id(description = "id of the item"),
+        name(description = "name of the item"),
+    ))]
+    async fn insert_name(
+        database: &DatabaseConnection,
+        id: String,
+        name: String,
+    ) -> Item {
+        let item_row = ItemRow {
+            id: id.clone(),
+            item_name: name.clone()
+        };
+
+        database
+            .create_item(&item_row)
+            .await
+            .expect("Failed to insert item into database");
+
+        Item {
+            id: item_row.id,
+            name: item_row.item_name
+        }
+    }
+
     #[graphql(arguments(
         id(description = "id of the requisition"),
         from_id(description = "id of the sending store"),
