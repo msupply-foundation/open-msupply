@@ -13,14 +13,17 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the requisition")))]
     pub async fn requisition(database: &DatabaseConnection, id: String) -> Requisition {
-        let requisition_row = database.get_requisition(id.to_string()).await.unwrap();
+        let requisition_row = database
+            .get_requisition(id.to_string())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
         let requisition_line_rows = database
             .get_requisition_lines(id.to_string())
             .await
-            .unwrap();
+            .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", id));
 
-        let requisition = Requisition {
+        Requisition {
             id: requisition_row.id,
             from_id: requisition_row.from_id,
             to_id: requisition_row.to_id,
@@ -32,8 +35,6 @@ impl Queries {
                     item_quantity: line.item_quantity as f64,
                 })
                 .collect(),
-        };
-
-        requisition
+        }
     }
 }
