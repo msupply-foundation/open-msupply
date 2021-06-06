@@ -1,0 +1,169 @@
+{
+  "db": "PostgreSQL",
+  "1e50c0b49a45dda344a7d8298afb4acb1ce7c4635bb67659d4be02e6322028fe": {
+    "query": "\n        INSERT INTO requisition_line (id, requisition_id, item_name, item_quantity)\n        VALUES ($1, $2, $3, $4)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Float4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "669aac04c9919e271847bb2723cd993608154ce70cc52d3f1040a4450e3ba03b": {
+    "query": "\n            INSERT INTO requisition (id, from_id, to_id)\n            VALUES ($1, $2, $3)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "8ea0d95185dd974c495b97212e3ef37480dbfb9038c21132c649e0f0bf11055e": {
+    "query": "\n        INSERT INTO requisition (id, from_id, to_id)\n        VALUES ($1, $2, $3)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b40bbf00f56f600bedded436b3ce82350aa73f416b4b7704d4eb18ce080dece0": {
+    "query": "\n        SELECT id, requisition_id, item_name, item_quantity\n        FROM requisition_line \n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "requisition_id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_quantity",
+          "type_info": "Float4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "cd46e76b4bbc30e5da6aef28700681710b522f3137d764ce4d55a5905f38f9c1": {
+    "query": "\n            SELECT id, from_id, to_id\n            FROM requisition\n            WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "from_id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "to_id",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "d0c32815b39f53ffc491fb9316af69bb9ff1a01716b24677d3bfbeaf6d1142d1": {
+    "query": "\n        SELECT id, requisition_id, item_name, item_quantity\n        FROM requisition_line \n        WHERE requisition_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "requisition_id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_quantity",
+          "type_info": "Float4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "e55b80d5eb776c72280bf48870f8a12a1eedee87a9853dba62dd544261bd1440": {
+    "query": "\n            INSERT INTO requisition_line (id, requisition_id, item_name, item_quantity)\n            VALUES ($1, $2, $3, $4)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Float4"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}
