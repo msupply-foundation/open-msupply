@@ -1,0 +1,3 @@
+#! configuration/local.yaml
+server:
+  host: 127.0.01
