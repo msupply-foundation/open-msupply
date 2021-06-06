@@ -2,7 +2,7 @@
 
 use crate::database::mocks;
 use crate::database::queries;
-use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow};
 
 #[derive(Clone)]
 pub struct DatabaseConnection {
@@ -36,6 +36,14 @@ impl DatabaseConnection {
 
     pub async fn create_items(&self, items: Vec<ItemRow>) -> Result<(), sqlx::Error> {
         queries::insert_items(&self.pool, items).await
+    }
+
+    pub async fn create_item_line(&self, item_line: &ItemLineRow) -> Result<(), sqlx::Error> {
+        queries::insert_item_line(&self.pool, item_line).await
+    }
+
+    pub async fn create_item_lines(&self, item_lines: Vec<ItemLineRow>) -> Result<(), sqlx::Error> {
+        queries::insert_item_lines(&self.pool, item_lines).await
     }
 
     pub async fn create_requisition(
