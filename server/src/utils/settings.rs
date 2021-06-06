@@ -31,7 +31,7 @@ impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
-            self.username, self.password, self.port, self.host, self.database_name
+            self.username, self.password, self.host, self.port, self.database_name
         )
     }
 }
