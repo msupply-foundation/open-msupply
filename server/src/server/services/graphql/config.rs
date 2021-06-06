@@ -1,7 +1,7 @@
 //! src/services/graphql/config.rs
 
-use crate::server::services::graphql::routes::{paths, handlers};
-use crate::server::services::graphql::schema::{Schema, Queries, Mutations, Subscriptions};
+use crate::server::services::graphql::routes::{handlers, paths};
+use crate::server::services::graphql::schema::{Mutations, Queries, Schema, Subscriptions};
 
 pub fn config(cfg: &mut actix_web::web::ServiceConfig) {
     let schema = Schema::new(Queries, Mutations, Subscriptions::new());

@@ -2,14 +2,11 @@ use crate::database::DatabaseConnection;
 use crate::server::middleware;
 use crate::server::services;
 
-use actix_web::{App, HttpServer};
 use actix_web::dev::Server;
+use actix_web::{App, HttpServer};
 use std::net::TcpListener;
 
-pub fn run(
-    listener: TcpListener,
-    database: DatabaseConnection,
-) -> Result<Server, std::io::Error> {
+pub fn run(listener: TcpListener, database: DatabaseConnection) -> Result<Server, std::io::Error> {
     Ok(HttpServer::new(move || {
         App::new()
             .data(database.clone())
