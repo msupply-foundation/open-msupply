@@ -42,6 +42,21 @@
       "nullable": []
     }
   },
+  "6f5d06abb59fc07547796e9f3bd911c84bf01383533b8f01b36cda659eeefdef": {
+    "query": "\n        INSERT INTO item_line (id, item_id, batch, quantity)\n        VALUES ($1, $2, $3, $4)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Float4"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "8ea0d95185dd974c495b97212e3ef37480dbfb9038c21132c649e0f0bf11055e": {
     "query": "\n        INSERT INTO requisition (id, from_id, to_id)\n        VALUES ($1, $2, $3)\n        ",
     "describe": {
@@ -133,6 +148,44 @@
       ]
     }
   },
+  "b9939a139063bc3b54ec36a1de412eb1e36ed8bbf90ca13d181a707acb9eb8cb": {
+    "query": "\n            SELECT id, item_id, batch, quantity\n            from item_line\n            where id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "batch",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "quantity",
+          "type_info": "Float4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "cd46e76b4bbc30e5da6aef28700681710b522f3137d764ce4d55a5905f38f9c1": {
     "query": "\n            SELECT id, from_id, to_id\n            FROM requisition\n            WHERE id = $1\n        ",
     "describe": {
@@ -201,6 +254,21 @@
         false,
         false
       ]
+    }
+  },
+  "e4acff1162727db4b163aa08b7b911e9da3a06cec0bfeb611b35def654cad302": {
+    "query": "\n            INSERT INTO item_line (id, item_id, batch, quantity)\n            VALUES ($1, $2, $3, $4)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Float4"
+        ]
+      },
+      "nullable": []
     }
   },
   "e55b80d5eb776c72280bf48870f8a12a1eedee87a9853dba62dd544261bd1440": {
