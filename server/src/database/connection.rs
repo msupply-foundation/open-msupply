@@ -1,5 +1,6 @@
 //! src/utils/database/connection.rs
 
+use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
 
@@ -11,6 +12,30 @@ pub struct DatabaseConnection {
 impl DatabaseConnection {
     pub async fn new(pool: sqlx::PgPool) -> DatabaseConnection {
         DatabaseConnection { pool }
+    }
+
+    pub async fn insert_mock_data(&self) -> Result<(), sqlx::Error> {
+        self.create_items(mocks::mock_items())
+            .await
+            .expect("Failed to insert mock item data");
+
+        self.create_requisitions(mocks::mock_requisitions())
+            .await
+            .expect("Failed to insert mock requisition data");
+
+        self.create_requisition_lines(mocks::mock_requisition_lines())
+            .await
+            .expect("Failed to insert mock requisition line data");
+
+        Ok(())
+    }
+
+    pub async fn create_item(&self, item: &ItemRow) -> Result<(), sqlx::Error> {
+        queries::insert_item(&self.pool, item).await
+    }
+
+    pub async fn create_items(&self, items: Vec<ItemRow>) -> Result<(), sqlx::Error> {
+        queries::insert_items(&self.pool, items).await
     }
 
     pub async fn create_requisition(
