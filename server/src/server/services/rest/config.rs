@@ -1,6 +1,6 @@
 //! src/services/rest/config.rs
 
-use crate::services::rest::routes;
+use crate::server::rest::routes;
 
 pub fn config(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(actix_web::web::scope("/").route(

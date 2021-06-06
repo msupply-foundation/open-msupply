@@ -1,7 +1,7 @@
 //! src/services/graphql/routes.rs
 
-use crate::services::graphql::schema::Schema;
-use crate::utils::database::DatabaseConnection;
+use crate::server::graphql::schema::Schema;
+use crate::database::DatabaseConnection;
 
 pub async fn graphql(
     req: actix_web::HttpRequest,

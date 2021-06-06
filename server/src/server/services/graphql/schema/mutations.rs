@@ -1,7 +1,7 @@
 //! src/services/graphql/mutations.rs
 
-use crate::services::graphql::{InputRequisitionLine, Requisition, RequisitionLine};
-use crate::utils::database::{DatabaseConnection, RequisitionLineRow, RequisitionRow};
+use crate::server::graphql::{InputRequisitionLine, Requisition, RequisitionLine};
+use crate::database::{DatabaseConnection, RequisitionLineRow, RequisitionRow};
 
 pub struct Mutations;
 #[juniper::graphql_object(context = DatabaseConnection)]
@@ -26,7 +26,7 @@ impl Mutations {
         };
 
         database
-            .insert_requisition(&requisition_row)
+            .create_requisition(&requisition_row)
             .await
             .expect("Failed to insert requisition into DatabaseConnection");
 
@@ -52,7 +52,7 @@ impl Mutations {
 
         for requisition_line_row in requisition_line_rows {
             database
-                .insert_requisition_line(&requisition_line_row)
+                .create_requisition_line(&requisition_line_row)
                 .await
                 .unwrap();
         }
