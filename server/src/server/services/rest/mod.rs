@@ -3,5 +3,5 @@
 pub mod config;
 pub mod routes;
 
-pub use config::*;
-pub use routes::*;
+pub use self::config::*;
+pub use self::routes::*;

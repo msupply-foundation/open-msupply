@@ -5,7 +5,7 @@ pub mod environment;
 pub mod mock;
 pub mod settings;
 
-pub use configuration::*;
-pub use environment::*;
-pub use mock::*;
-pub use settings::*;
+pub use self::configuration::*;
+pub use self::environment::*;
+pub use self::mock::*;
+pub use self::settings::*;

@@ -3,5 +3,5 @@
 pub mod handlers;
 pub mod paths;
 
-pub use handlers::*;
-pub use paths::*;
+pub use self::handlers::*;
+pub use self::paths::*;
