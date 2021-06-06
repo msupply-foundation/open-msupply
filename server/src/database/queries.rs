@@ -1,6 +1,39 @@
 //! src/database/queries.rs
 
-use crate::database::schema::{RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
+
+pub async fn insert_item(pool: &sqlx::PgPool, item: &ItemRow) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO item (id, item_name)
+        VALUES ($1, $2)
+        "#,
+        item.id,
+        item.item_name
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn insert_items(pool: &sqlx::PgPool, items: Vec<ItemRow>) -> Result<(), sqlx::Error> {
+    // TODO: aggregate into single query.
+    for item in &items {
+        sqlx::query!(
+            r#"
+            INSERT INTO item (id, item_name)
+            VALUES ($1, $2)
+            "#,
+            item.id,
+            item.item_name
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
+}
 
 pub async fn insert_requisition(
     pool: &sqlx::PgPool,
@@ -84,6 +117,22 @@ pub async fn insert_requisition_lines(
     }
 
     Ok(())
+}
+
+pub async fn select_item(pool: &sqlx::PgPool, id: String) -> Result<ItemRow, sqlx::Error> {
+    let item = sqlx::query_as!(
+        ItemRow,
+        r#"
+            SELECT id, item_name
+            FROM item
+            WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(item)
 }
 
 pub async fn select_requisition(
