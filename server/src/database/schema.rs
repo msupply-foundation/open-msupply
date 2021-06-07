@@ -23,6 +23,14 @@ pub struct TransactionRow {
 }
 
 #[derive(Clone)]
+pub struct TransactionLineRow {
+    pub id: String,
+    pub transaction_id: String,
+    pub item_id: String,
+    pub item_line_id: String,
+}
+
+#[derive(Clone)]
 pub struct ItemRow {
     pub id: String,
     pub item_name: String,
