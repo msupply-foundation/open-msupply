@@ -10,6 +10,14 @@ pub struct Item {
 }
 
 #[derive(Clone, GraphQLObject)]
+// An item line.
+pub struct ItemLine {
+    pub id: String,
+    pub batch: String,
+    pub quantity: f64,
+}
+
+#[derive(Clone, GraphQLObject)]
 // A requisition.
 pub struct Requisition {
     pub id: String,
