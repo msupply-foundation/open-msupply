@@ -1,6 +1,6 @@
 //! src/utils/database/schema.rs
 
-#[derive(clone)]
+#[derive(Clone)]
 pub struct NameRow {
     pub id: String,
     pub name: String,
