@@ -38,10 +38,12 @@ impl DatabaseConnection {
         queries::insert_items(&self.pool, items).await
     }
 
+    #[allow(dead_code)]
     pub async fn create_item_line(&self, item_line: &ItemLineRow) -> Result<(), sqlx::Error> {
         queries::insert_item_line(&self.pool, item_line).await
     }
 
+    #[allow(dead_code)]
     pub async fn create_item_lines(&self, item_lines: Vec<ItemLineRow>) -> Result<(), sqlx::Error> {
         queries::insert_item_lines(&self.pool, item_lines).await
     }
