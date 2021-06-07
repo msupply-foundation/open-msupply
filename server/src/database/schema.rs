@@ -22,6 +22,12 @@ pub struct RequisitionLineRow {
 }
 
 #[derive(Clone)]
+pub struct StoreRow {
+    pub id: String,
+    pub name_id: String,
+}
+
+#[derive(Clone)]
 pub struct TransactionRow {
     pub id: String,
     pub name_id: String,
