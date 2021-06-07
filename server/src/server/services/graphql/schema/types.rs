@@ -30,7 +30,7 @@ pub struct Requisition {
 // A requisition line.
 pub struct RequisitionLine {
     pub id: String,
-    pub item_name: String,
+    pub item_id: String,
     pub item_quantity: f64,
 }
 
@@ -38,6 +38,6 @@ pub struct RequisitionLine {
 // A input requisition line.
 pub struct InputRequisitionLine {
     pub id: String,
-    pub item_name: String,
+    pub item_id: String,
     pub item_quantity: f64,
 }
