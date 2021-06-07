@@ -25,8 +25,8 @@ impl Queries {
 
         Requisition {
             id: requisition_row.id,
-            from_id: requisition_row.name_id,
-            to_id: requisition_row.store_id,
+            name_id: requisition_row.name_id,
+            store_id: requisition_row.store_id,
             requisition_lines: requisition_line_rows
                 .into_iter()
                 .map(|line| RequisitionLine {

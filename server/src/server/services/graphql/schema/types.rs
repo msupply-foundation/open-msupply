@@ -21,8 +21,8 @@ pub struct ItemLine {
 // A requisition.
 pub struct Requisition {
     pub id: String,
-    pub from_id: String,
-    pub to_id: String,
+    pub name_id: String,
+    pub store_id: String,
     pub requisition_lines: Vec<RequisitionLine>,
 }
 
