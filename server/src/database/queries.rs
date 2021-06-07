@@ -84,12 +84,12 @@ pub async fn insert_requisition(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO requisition (id, from_id, to_id)
+        INSERT INTO requisition (id, name_id, store_id)
         VALUES ($1, $2, $3)
         "#,
         requisition.id,
-        requisition.from_id,
-        requisition.to_id
+        requisition.name_id,
+        requisition.store_id
     )
     .execute(pool)
     .await?;
@@ -105,12 +105,12 @@ pub async fn insert_requisitions(
     for requisition in &requisitions {
         sqlx::query!(
             r#"
-            INSERT INTO requisition (id, from_id, to_id)
+            INSERT INTO requisition (id, name_id, store_id)
             VALUES ($1, $2, $3)
             "#,
             requisition.id,
-            requisition.from_id,
-            requisition.to_id
+            requisition.name_id,
+            requisition.store_id
         )
         .execute(pool)
         .await?;
@@ -201,7 +201,7 @@ pub async fn select_requisition(
     let requisition = sqlx::query_as!(
         RequisitionRow,
         r#"
-            SELECT id, from_id, to_id
+            SELECT id, name_id, store_id
             FROM requisition
             WHERE id = $1
         "#,
