@@ -42,8 +42,8 @@ impl Mutations {
     ) -> Requisition {
         let requisition_row = RequisitionRow {
             id: id.clone(),
-            from_id: from_id.clone(),
-            to_id: to_id.clone(),
+            name_id: from_id.clone(),
+            store_id: to_id.clone(),
         };
 
         database
@@ -80,8 +80,8 @@ impl Mutations {
 
         Requisition {
             id: requisition_row.id,
-            from_id: requisition_row.from_id,
-            to_id: requisition_row.to_id,
+            from_id: requisition_row.name_id,
+            to_id: requisition_row.store_id,
             requisition_lines,
         }
     }
