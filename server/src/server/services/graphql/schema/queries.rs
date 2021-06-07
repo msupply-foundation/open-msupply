@@ -31,7 +31,7 @@ impl Queries {
                 .into_iter()
                 .map(|line| RequisitionLine {
                     id: line.id,
-                    item_name: line.item_name,
+                    item_id: line.item_id,
                     item_quantity: line.item_quantity as f64,
                 })
                 .collect(),
