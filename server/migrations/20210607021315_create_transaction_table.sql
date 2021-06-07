@@ -4,5 +4,5 @@ CREATE TABLE transaction (
     constraint pk_transaction PRIMARY KEY(id),
     -- TODO: add foreign key to name table
     name_id TEXT NOT NULL,
-    invoice_number INTEGER NOT NULL,
+    invoice_number INTEGER NOT NULL
 )
