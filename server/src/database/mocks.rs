@@ -22,20 +22,20 @@ pub fn mock_items() -> Vec<ItemRow> {
 pub fn mock_requisitions() -> Vec<RequisitionRow> {
     let requisition_a = RequisitionRow {
         id: "requisition_a".to_string(),
-        from_id: "store_a".to_string(),
-        to_id: "store_b".to_string(),
+        name_id: "name_store_a".to_string(),
+        store_id: "store_b".to_string(),
     };
 
     let requisition_b = RequisitionRow {
         id: "requisition_b".to_string(),
-        from_id: "store_a".to_string(),
-        to_id: "store_c".to_string(),
+        name_id: "name_store_a".to_string(),
+        store_id: "store_c".to_string(),
     };
 
     let requisition_c = RequisitionRow {
         id: "requisition_c".to_string(),
-        from_id: "store_b".to_string(),
-        to_id: "store_c".to_string(),
+        name_id: "name_store_b".to_string(),
+        store_id: "store_c".to_string(),
     };
 
     vec![requisition_a, requisition_b, requisition_c]
