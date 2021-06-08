@@ -125,13 +125,14 @@ pub async fn insert_requisition_line(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO requisition_line (id, requisition_id, item_id, item_quantity)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)
+        VALUES ($1, $2, $3, $4, $5)
         "#,
         requisition_line.id,
         requisition_line.requisition_id,
         requisition_line.item_id,
-        requisition_line.item_quantity,
+        requisition_line.actual_quantity,
+        requisition_line.suggested_quantity
     )
     .execute(pool)
     .await?;
@@ -147,13 +148,14 @@ pub async fn insert_requisition_lines(
     for requisition_line in &requisition_lines {
         sqlx::query!(
             r#"
-            INSERT INTO requisition_line (id, requisition_id, item_id, item_quantity)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)
+            VALUES ($1, $2, $3, $4, $5)
             "#,
             requisition_line.id,
             requisition_line.requisition_id,
             requisition_line.item_id,
-            requisition_line.item_quantity,
+            requisition_line.actual_quantity,
+            requisition_line.suggested_quantity
         )
         .execute(pool)
         .await?;
@@ -220,7 +222,7 @@ pub async fn select_requisition_line(
     let requisition_line = sqlx::query_as!(
         RequisitionLineRow,
         r#"
-        SELECT id, requisition_id, item_id, item_quantity
+        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity
         FROM requisition_line 
         WHERE id = $1
         "#,
@@ -239,7 +241,7 @@ pub async fn select_requisition_lines(
     let requisition_lines = sqlx::query_as!(
         RequisitionLineRow,
         r#"
-        SELECT id, requisition_id, item_id, item_quantity
+        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity
         FROM requisition_line 
         WHERE requisition_id = $1
         "#,
