@@ -2,7 +2,9 @@
 
 use crate::database::mocks;
 use crate::database::queries;
-use crate::database::schema::{ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow};
+use crate::database::schema::{
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+};
 
 #[derive(Clone)]
 pub struct DatabaseConnection {

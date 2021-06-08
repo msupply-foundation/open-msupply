@@ -1,6 +1,8 @@
 //! src/database/queries.rs
 
-use crate::database::schema::{NameRow, ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow, StoreRow};
+use crate::database::schema::{
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+};
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -18,24 +20,24 @@ pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), s
 }
 
 pub async fn insert_stores(pool: &sqlx::PgPool, stores: Vec<StoreRow>) -> Result<(), sqlx::Error> {
-        // TODO: aggregate into single query.
-        for store in &stores {
-            sqlx::query!(
-                r#"
+    // TODO: aggregate into single query.
+    for store in &stores {
+        sqlx::query!(
+            r#"
                 INSERT INTO store (id, name_id)
                 VALUES ($1, $2)
                 "#,
-                store.id,
-                store.name_id
-            )
-            .execute(pool)
-            .await?;
-        }
-    
-        Ok(())
+            store.id,
+            store.name_id
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
 }
 
-pub async fn insert_name(pool: &sqlx::PgPool,  name: &NameRow) -> Result<(), sqlx::Error> {
+pub async fn insert_name(pool: &sqlx::PgPool, name: &NameRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO name (id, name)
@@ -51,21 +53,21 @@ pub async fn insert_name(pool: &sqlx::PgPool,  name: &NameRow) -> Result<(), sql
 }
 
 pub async fn insert_names(pool: &sqlx::PgPool, names: Vec<NameRow>) -> Result<(), sqlx::Error> {
-        // TODO: aggregate into single query.
-        for name in &names {
-            sqlx::query!(
-                r#"
+    // TODO: aggregate into single query.
+    for name in &names {
+        sqlx::query!(
+            r#"
                 INSERT INTO name (id, name)
                 VALUES ($1, $2)
                 "#,
-                name.id,
-                name.name
-            )
-            .execute(pool)
-            .await?;
-        }
-    
-        Ok(())
+            name.id,
+            name.name
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
 }
 
 pub async fn insert_item(pool: &sqlx::PgPool, item: &ItemRow) -> Result<(), sqlx::Error> {
