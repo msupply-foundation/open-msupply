@@ -9,6 +9,6 @@
 -- item_name: name of the item.
 
 CREATE TABLE item (
-    id VARCHAR(255) NOT NULL PRIMARY KEY(id),
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
     item_name VARCHAR(255) NOT NULL
 )

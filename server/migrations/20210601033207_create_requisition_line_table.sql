@@ -19,5 +19,5 @@ CREATE TABLE requisition_line (
     requisition_id VARCHAR(255) NOT NULL,
     item_id VARCHAR(255) NOT NULL,
     actual_quantity DOUBLE PRECISION NOT NULL,
-    suggested_quantity DOUBLE PRECISION NOT NULL, 
+    suggested_quantity DOUBLE PRECISION NOT NULL
 )

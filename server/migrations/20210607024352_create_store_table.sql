@@ -7,6 +7,5 @@
 
 CREATE TABLE store (
     id TEXT NOT NULL PRIMARY KEY,
-    name_id VARCHAR(255) NOT NULL,
-
+    name_id VARCHAR(255) NOT NULL
 )
