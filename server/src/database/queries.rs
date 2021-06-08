@@ -41,11 +41,12 @@ pub async fn insert_item_line(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO item_line (id, item_id, batch, quantity)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO item_line (id, item_id, store_id, batch, quantity)
+        VALUES ($1, $2, $3, $4, $5)
         "#,
         item_line.id,
         item_line.item_id,
+        item_line.store_id,
         item_line.batch,
         item_line.quantity
     )
@@ -63,13 +64,14 @@ pub async fn insert_item_lines(
     for item_line in &item_lines {
         sqlx::query!(
             r#"
-            INSERT INTO item_line (id, item_id, batch, quantity)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO item_line (id, item_id, store_id, batch, quantity)
+            VALUES ($1, $2, $3, $4, $5)
             "#,
             item_line.id,
             item_line.item_id,
+            item_line.store_id,
             item_line.batch,
-            item_line.quantity
+            item_line.quantity,
         )
         .execute(pool)
         .await?;
@@ -184,7 +186,7 @@ pub async fn select_item_line(pool: &sqlx::PgPool, id: String) -> Result<ItemLin
     let item_line = sqlx::query_as!(
         ItemLineRow,
         r#"
-            SELECT id, item_id, batch, quantity
+            SELECT id, item_id, store_id, batch, quantity
             from item_line
             where id = $1
         "#,
