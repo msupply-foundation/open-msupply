@@ -1,15 +1,14 @@
 {
   "db": "PostgreSQL",
-  "1e50c0b49a45dda344a7d8298afb4acb1ce7c4635bb67659d4be02e6322028fe": {
-    "query": "\n        INSERT INTO requisition_line (id, requisition_id, item_name, item_quantity)\n        VALUES ($1, $2, $3, $4)\n        ",
+  "1ccf697524f85bf6591c7e10e2d52d171935ffe08814f9b6ad10ad3cf4c7e3b7": {
+    "query": "\n        INSERT INTO requisition (id, name_id, store_id)\n        VALUES ($1, $2, $3)\n        ",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
-          "Text",
-          "Text",
-          "Float4"
+          "Varchar",
+          "Varchar",
+          "Varchar"
         ]
       },
       "nullable": []
@@ -21,51 +20,142 @@
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
-          "Text"
+          "Varchar",
+          "Varchar"
         ]
       },
       "nullable": []
     }
   },
-  "669aac04c9919e271847bb2723cd993608154ce70cc52d3f1040a4450e3ba03b": {
-    "query": "\n            INSERT INTO requisition (id, from_id, to_id)\n            VALUES ($1, $2, $3)\n            ",
+  "5cf775ad664635a8ca144a45921fc5e4783e9169c3a68c51516ba3aaae15bd6c": {
+    "query": "\n            SELECT id, item_id, store_id, batch, quantity\n            from item_line\n            where id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "store_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "batch",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 4,
+          "name": "quantity",
+          "type_info": "Float8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "829a324f988a19b55471625ee30f469e106cbf1535e203d1f7e454d1c8a56656": {
+    "query": "\n        INSERT INTO item_line (id, item_id, store_id, batch, quantity)\n        VALUES ($1, $2, $3, $4, $5)\n        ",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
           "Text",
-          "Text",
-          "Text"
+          "Float8"
         ]
       },
       "nullable": []
     }
   },
-  "6f5d06abb59fc07547796e9f3bd911c84bf01383533b8f01b36cda659eeefdef": {
-    "query": "\n        INSERT INTO item_line (id, item_id, batch, quantity)\n        VALUES ($1, $2, $3, $4)\n        ",
+  "87f8295dd8b890dba4a78abe66c25a0d34fbccbcda77da5b2081298ffa968513": {
+    "query": "\n        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n        FROM requisition_line \n        WHERE requisition_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "requisition_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "actual_quantity",
+          "type_info": "Float8"
+        },
+        {
+          "ordinal": 4,
+          "name": "suggested_quantity",
+          "type_info": "Float8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "8c6a3b1d5cae2845a6bf18f41de5ae51a9690d5d3c5d4a839f5d09aa76ddd071": {
+    "query": "\n            INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)\n            VALUES ($1, $2, $3, $4, $5)\n            ",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
-          "Text",
-          "Text",
-          "Float4"
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Float8"
         ]
       },
       "nullable": []
     }
   },
-  "8ea0d95185dd974c495b97212e3ef37480dbfb9038c21132c649e0f0bf11055e": {
-    "query": "\n        INSERT INTO requisition (id, from_id, to_id)\n        VALUES ($1, $2, $3)\n        ",
+  "9766f3bf89fd522eba1825e9992a6b9b16b920aee05d2537773833ce71a45969": {
+    "query": "\n            INSERT INTO requisition (id, name_id, store_id)\n            VALUES ($1, $2, $3)\n            ",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
-          "Text",
-          "Text"
+          "Varchar",
+          "Varchar",
+          "Varchar"
         ]
       },
       "nullable": []
@@ -77,8 +167,8 @@
       "columns": [],
       "parameters": {
         "Left": [
-          "Text",
-          "Text"
+          "Varchar",
+          "Varchar"
         ]
       },
       "nullable": []
@@ -91,12 +181,12 @@
         {
           "ordinal": 0,
           "name": "id",
-          "type_info": "Text"
+          "type_info": "Varchar"
         },
         {
           "ordinal": 1,
           "name": "item_name",
-          "type_info": "Text"
+          "type_info": "Varchar"
         }
       ],
       "parameters": {
@@ -110,67 +200,98 @@
       ]
     }
   },
-  "b40bbf00f56f600bedded436b3ce82350aa73f416b4b7704d4eb18ce080dece0": {
-    "query": "\n        SELECT id, requisition_id, item_name, item_quantity\n        FROM requisition_line \n        WHERE id = $1\n        ",
+  "b50cd2447226b57e3f41c305e4a01c3a10570644ac0ba8f2d2275e067b294943": {
+    "query": "\n        INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)\n        VALUES ($1, $2, $3, $4, $5)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Float8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b80660d13401e427762a9bc1c726b025d7cb45162374c305c06eaa80310f0918": {
+    "query": "\n            SELECT id, name_id, store_id\n            FROM requisition\n            WHERE id = $1\n        ",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
           "name": "id",
-          "type_info": "Text"
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "store_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "c5553fc0ddcbcecac595eda77cc99f64321cc17c4b008998edd43eec1fde7d1d": {
+    "query": "\n            INSERT INTO item_line (id, item_id, store_id, batch, quantity)\n            VALUES ($1, $2, $3, $4, $5)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Text",
+          "Float8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "c88fbc29cef1094de8d04b7fce63009653979e256a62a64d9a4c3b675ad0fe54": {
+    "query": "\n        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n        FROM requisition_line \n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
         },
         {
           "ordinal": 1,
           "name": "requisition_id",
-          "type_info": "Text"
+          "type_info": "Varchar"
         },
         {
           "ordinal": 2,
-          "name": "item_name",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 3,
-          "name": "item_quantity",
-          "type_info": "Float4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "b9939a139063bc3b54ec36a1de412eb1e36ed8bbf90ca13d181a707acb9eb8cb": {
-    "query": "\n            SELECT id, item_id, batch, quantity\n            from item_line\n            where id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 1,
           "name": "item_id",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "batch",
-          "type_info": "Text"
+          "type_info": "Varchar"
         },
         {
           "ordinal": 3,
-          "name": "quantity",
-          "type_info": "Float4"
+          "name": "actual_quantity",
+          "type_info": "Float8"
+        },
+        {
+          "ordinal": 4,
+          "name": "suggested_quantity",
+          "type_info": "Float8"
         }
       ],
       "parameters": {
@@ -182,108 +303,9 @@
         false,
         false,
         false,
-        false
-      ]
-    }
-  },
-  "cd46e76b4bbc30e5da6aef28700681710b522f3137d764ce4d55a5905f38f9c1": {
-    "query": "\n            SELECT id, from_id, to_id\n            FROM requisition\n            WHERE id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 1,
-          "name": "from_id",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "to_id",
-          "type_info": "Text"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
         false,
         false
       ]
-    }
-  },
-  "d0c32815b39f53ffc491fb9316af69bb9ff1a01716b24677d3bfbeaf6d1142d1": {
-    "query": "\n        SELECT id, requisition_id, item_name, item_quantity\n        FROM requisition_line \n        WHERE requisition_id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 1,
-          "name": "requisition_id",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "item_name",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 3,
-          "name": "item_quantity",
-          "type_info": "Float4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "e4acff1162727db4b163aa08b7b911e9da3a06cec0bfeb611b35def654cad302": {
-    "query": "\n            INSERT INTO item_line (id, item_id, batch, quantity)\n            VALUES ($1, $2, $3, $4)\n            ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Text",
-          "Text",
-          "Float4"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "e55b80d5eb776c72280bf48870f8a12a1eedee87a9853dba62dd544261bd1440": {
-    "query": "\n            INSERT INTO requisition_line (id, requisition_id, item_name, item_quantity)\n            VALUES ($1, $2, $3, $4)\n            ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Text",
-          "Text",
-          "Float4"
-        ]
-      },
-      "nullable": []
     }
   }
 }
