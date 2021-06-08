@@ -52,6 +52,7 @@ pub struct ItemRow {
 pub struct ItemLineRow {
     pub id: String,
     pub item_id: String,
+    pub store_id: String,
     pub batch: String,
-    pub quantity: f32,
+    pub quantity: f64,
 }
