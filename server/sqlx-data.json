@@ -14,6 +14,32 @@
       "nullable": []
     }
   },
+  "2f65ca07c6bc0f4ea2b9902ab24abac8bcc66b73688d3f75904c4e1d001574e2": {
+    "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
   "427397a53fd592d3928fc066fe37ba80ec9529cf8d6a7747e7cf8d2dbc7bfa6b": {
     "query": "\n        INSERT INTO item (id, item_name)\n        VALUES ($1, $2)\n        ",
     "describe": {
@@ -22,6 +48,19 @@
         "Left": [
           "Varchar",
           "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "55e537fab6f8a0bb615fa41fe33a8d7b34567c4e15b56106b7fafa0edec42772": {
+    "query": "\n        INSERT INTO name (id, name)\n        VALUES ($1, $2)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text"
         ]
       },
       "nullable": []
@@ -306,6 +345,19 @@
         false,
         false
       ]
+    }
+  },
+  "e97dde3ea670d36ba792b8e7c79d5f2b62cc7906aa2b88e1314481f3e9036b86": {
+    "query": "\n                INSERT INTO name (id, name)\n                VALUES ($1, $2)\n                ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text"
+        ]
+      },
+      "nullable": []
     }
   }
 }
