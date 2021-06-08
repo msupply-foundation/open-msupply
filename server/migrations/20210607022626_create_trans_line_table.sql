@@ -13,8 +13,8 @@
 -- item_line_ID: id of the item_line associated with this trans_line (null for placeholders, service items).
 
 CREATE TABLE trans_line (
-    id VARCHAR(255) NOT NULL PRIMARY KEY(id),
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
     transaction_id VARCHAR(255) NOT NULL,
     item_id VARCHAR(255) NOT NULL,
-    item_line_id VARCHAR(255),
+    item_line_id VARCHAR(255)
 )

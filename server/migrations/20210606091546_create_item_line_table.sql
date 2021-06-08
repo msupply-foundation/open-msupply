@@ -15,7 +15,7 @@
 -- quantity: quantity of stock represented by the item_line.
 
 CREATE TABLE item_line (
-    id VARCHAR(255) NOT NULL PRIMARY KEY(id),
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
     item_id VARCHAR(255) NOT NULL,
     store_id VARCHAR(255) NOT NULL,
     batch TEXT NOT NULL,
