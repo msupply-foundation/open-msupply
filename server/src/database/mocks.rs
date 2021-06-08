@@ -5,15 +5,20 @@ use crate::database::schema::{
 pub fn mock_stores() -> Vec<StoreRow> {
     let store_a = StoreRow {
         id: "store_a".to_string(),
-        name_id: "name_id_store_a".to_string(),
+        name_id: "name_store_a".to_string(),
     };
 
     let store_b = StoreRow {
         id: "store_b".to_string(),
-        name_id: "name_id_store_b".to_string(),
+        name_id: "name_store_b".to_string(),
     };
 
-    vec![store_a, store_b]
+    let store_c = StoreRow {
+        id: "store_c".to_string(),
+        name_id: "name_store_c".to_string(),
+    };
+
+    vec![store_a, store_b, store_c]
 }
 
 pub fn mock_names() -> Vec<NameRow> {
@@ -27,7 +32,12 @@ pub fn mock_names() -> Vec<NameRow> {
         name: "Store B".to_string(),
     };
 
-    vec![name_a, name_b]
+    let name_c = NameRow {
+        id: "name_store_c".to_string(),
+        name: "Store C".to_string(),
+    };
+
+    vec![name_a, name_b, name_c]
 }
 
 pub fn mock_items() -> Vec<ItemRow> {
@@ -132,7 +142,7 @@ pub fn mock_requisitions() -> Vec<RequisitionRow> {
 
 pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     let requisition_line_a = RequisitionLineRow {
-        id: "requisition_line_a".to_string(),
+        id: "requisition_a_line_a".to_string(),
         requisition_id: "requisition_a".to_string(),
         item_id: "item_a".to_string(),
         actual_quantity: 1.0,
@@ -140,7 +150,7 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     };
 
     let requisition_line_b = RequisitionLineRow {
-        id: "requisition_line_b".to_string(),
+        id: "requisition_a_line_b".to_string(),
         requisition_id: "requisition_a".to_string(),
         item_id: "item_b".to_string(),
         actual_quantity: 2.0,
@@ -148,7 +158,7 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     };
 
     let requisition_line_c = RequisitionLineRow {
-        id: "requisition_line_c".to_string(),
+        id: "requisition_b_line_a".to_string(),
         requisition_id: "requisition_b".to_string(),
         item_id: "item_a".to_string(),
         actual_quantity: 3.0,
@@ -156,7 +166,7 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     };
 
     let requisition_line_d = RequisitionLineRow {
-        id: "requisition_line_d".to_string(),
+        id: "requisition_b_line_b".to_string(),
         requisition_id: "requisition_b".to_string(),
         item_id: "item_b".to_string(),
         actual_quantity: 4.0,
@@ -164,7 +174,7 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     };
 
     let requisition_line_e = RequisitionLineRow {
-        id: "requisition_line_e".to_string(),
+        id: "requisition_c_line_a".to_string(),
         requisition_id: "requisition_c".to_string(),
         item_id: "item_a".to_string(),
         actual_quantity: 5.0,
