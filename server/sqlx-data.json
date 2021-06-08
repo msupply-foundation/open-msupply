@@ -1,5 +1,31 @@
 {
   "db": "PostgreSQL",
+  "0d52523b7c7579631781004dbec67dcb1a69e2e2f9077eca28779d74bc224b7f": {
+    "query": "\n                INSERT INTO store (id, name_id)\n                VALUES ($1, $2)\n                ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "1208f508ba2e4690981e33289349db4dc02faa0ee744157a384f4ca2746ce6e0": {
+    "query": "\n        INSERT INTO store (id, name_id)\n        VALUES ($1, $2)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "1ccf697524f85bf6591c7e10e2d52d171935ffe08814f9b6ad10ad3cf4c7e3b7": {
     "query": "\n        INSERT INTO requisition (id, name_id, store_id)\n        VALUES ($1, $2, $3)\n        ",
     "describe": {
@@ -301,6 +327,32 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "c576ea129f1816e5cfd0fc7f645d01729b903921b9994156fc9023ed61e05506": {
+    "query": "\n            SELECT id, name_id\n            FROM store\n            WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
     }
   },
   "c88fbc29cef1094de8d04b7fce63009653979e256a62a64d9a4c3b675ad0fe54": {

@@ -1,6 +1,39 @@
 //! src/database/queries.rs
 
-use crate::database::schema::{NameRow, ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{NameRow, ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow, StoreRow};
+
+pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO store (id, name_id)
+        VALUES ($1, $2)
+        "#,
+        store.id,
+        store.name_id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn insert_stores(pool: &sqlx::PgPool, stores: Vec<StoreRow>) -> Result<(), sqlx::Error> {
+        // TODO: aggregate into single query.
+        for store in &stores {
+            sqlx::query!(
+                r#"
+                INSERT INTO store (id, name_id)
+                VALUES ($1, $2)
+                "#,
+                store.id,
+                store.name_id
+            )
+            .execute(pool)
+            .await?;
+        }
+    
+        Ok(())
+}
 
 pub async fn insert_name(pool: &sqlx::PgPool,  name: &NameRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -197,6 +230,22 @@ pub async fn insert_requisition_lines(
     }
 
     Ok(())
+}
+
+pub async fn select_store(pool: &sqlx::PgPool, id: String) -> Result<StoreRow, sqlx::Error> {
+    let store = sqlx::query_as!(
+        StoreRow,
+        r#"
+            SELECT id, name_id
+            FROM store
+            WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(store)
 }
 
 pub async fn select_name(pool: &sqlx::PgPool, id: String) -> Result<NameRow, sqlx::Error> {
