@@ -1,9 +1,23 @@
--- Create item_line table 
+-- Create item_line table.
+--
+-- CREATE TABLE item_line (
+--   ID ALPHA PRIMARY KEY,
+--   item_ID ALPHA,
+--   store_ID ALPHA,  
+--   batch TEXT,
+--   quantity REAL
+-- );
+--
+-- ID: unique id of the item_line.
+-- item_id: id of the associated item.
+-- store_id: id of the store the item_line represents stock of.
+-- batch: name of the batch represented by the item_line.
+-- quantity: quantity of stock represented by the item_line.
+
 CREATE TABLE item_line (
-    id TEXT NOT NULL,
-    CONSTRAINT pk_item_line PRIMARY KEY(id),
-    item_id TEXT NOT NULL,
-    CONSTRAINT fk_item FOREIGN KEY(item_id) REFERENCES item(id),
+    id VARCHAR(255) NOT NULL PRIMARY KEY(id),
+    item_id VARCHAR(255) NOT NULL,
+    store_id VARCHAR(255) NOT NULL,
     batch TEXT NOT NULL,
-    quantity REAL NOT NULL
+    quantity DOUBLE PRECISION NOT NULL
 )
