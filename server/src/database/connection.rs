@@ -21,6 +21,10 @@ impl DatabaseConnection {
             .await
             .expect("Failed to insert mock name data");
 
+        self.create_stores(mocks::mock_stores())
+            .await
+            .expect("Failed to insert mock store data");
+
         self.create_items(mocks::mock_items())
             .await
             .expect("Failed to insert mock item data");
