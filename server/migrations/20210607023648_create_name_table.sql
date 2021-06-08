@@ -1,6 +1,11 @@
--- Create name table
+-- Create name table.
+--
+-- CREATE TABLE trans_line (
+--   ID ALPHA PRIMARY KEY,
+--   name TEXT
+-- );
+
 CREATE TABLE name (
-    id TEXT NOT NULL,
-    constraint pk_name PRIMARY KEY(id),
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
     name TEXT NOT NULL
 )
