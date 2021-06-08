@@ -17,6 +17,10 @@ impl DatabaseConnection {
     }
 
     pub async fn insert_mock_data(&self) -> Result<(), sqlx::Error> {
+        self.create_names(mocks::mock_names())
+            .await
+            .expect("Failed to insert mock name data");
+
         self.create_items(mocks::mock_items())
             .await
             .expect("Failed to insert mock item data");
