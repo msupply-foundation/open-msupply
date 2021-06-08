@@ -1,4 +1,18 @@
-use crate::database::schema::{ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow, StoreRow};
+
+pub fn mock_stores() -> Vec<StoreRow> {
+    let store_a = StoreRow {
+        id: "store_a".to_string(),
+        name_id: "name_id_store_a".to_string()
+    };
+
+    let store_b = StoreRow {
+        id: "store_b".to_string(),
+        name_id: "name_id_store_b".to_string()
+    };
+
+    vec![store_a, store_b]
+}
 
 pub fn mock_items() -> Vec<ItemRow> {
     let item_a = ItemRow {
