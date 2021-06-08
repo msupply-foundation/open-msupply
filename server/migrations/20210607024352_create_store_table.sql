@@ -1,7 +1,12 @@
--- Create store table
+-- Create store table.
+--
+-- CREATE TABLE store (
+--   ID ALPHA PRIMARY KEY,
+--   name_ID ALPHA
+-- );
+
 CREATE TABLE store (
-    id TEXT NOT NULL,
-    CONSTRAINT pk_store PRIMARY KEY(id),
-    name_id TEXT NOT NULL,
-    CONSTRAINT fk_name FOREIGN KEY(name_id) REFERENCES name(id)
+    id TEXT NOT NULL PRIMARY KEY,
+    name_id VARCHAR(255) NOT NULL,
+
 )
