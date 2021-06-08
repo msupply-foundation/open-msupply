@@ -23,7 +23,7 @@ impl Mutations {
 
         Item {
             id: item_row.id,
-            name: item_row.item_name,
+            item_name: item_row.item_name,
         }
     }
 
@@ -56,7 +56,8 @@ impl Mutations {
             .map(|line| RequisitionLine {
                 id: line.id,
                 item_id: line.item_id,
-                item_quantity: line.item_quantity,
+                actual_quantity: line.actual_quantity,
+                suggested_quantity: line.suggested_quantity
             })
             .collect();
 
@@ -67,7 +68,8 @@ impl Mutations {
                 id: line.id,
                 requisition_id: id.clone(),
                 item_id: line.item_id,
-                item_quantity: line.item_quantity as f32,
+                actual_quantity: line.actual_quantity,
+                suggested_quantity: line.suggested_quantity
             })
             .collect();
 
