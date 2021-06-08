@@ -32,7 +32,8 @@ impl Queries {
                 .map(|line| RequisitionLine {
                     id: line.id,
                     item_id: line.item_id,
-                    item_quantity: line.item_quantity as f64,
+                    actual_quantity: line.actual_quantity,
+                    suggested_quantity: line.suggested_quantity
                 })
                 .collect(),
         }
@@ -47,7 +48,7 @@ impl Queries {
 
         Item {
             id: item_row.id,
-            name: item_row.item_name,
+            item_name: item_row.item_name,
         }
     }
 
@@ -60,8 +61,10 @@ impl Queries {
 
         ItemLine {
             id: item_line_row.id,
+            item_id: item_line_row.item_id,
+            store_id: item_line_row.store_id,
             batch: item_line_row.batch,
-            quantity: item_line_row.quantity as f64,
+            quantity: item_line_row.quantity,
         }
     }
 }
