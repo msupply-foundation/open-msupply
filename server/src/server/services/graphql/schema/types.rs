@@ -6,13 +6,15 @@ use juniper::{GraphQLInputObject, GraphQLObject};
 // An item.
 pub struct Item {
     pub id: String,
-    pub name: String,
+    pub item_name: String,
 }
 
 #[derive(Clone, GraphQLObject)]
 // An item line.
 pub struct ItemLine {
     pub id: String,
+    pub item_id: String,
+    pub store_id: String,
     pub batch: String,
     pub quantity: f64,
 }
@@ -31,7 +33,8 @@ pub struct Requisition {
 pub struct RequisitionLine {
     pub id: String,
     pub item_id: String,
-    pub item_quantity: f64,
+    pub actual_quantity: f64,
+    pub suggested_quantity: f64,
 }
 
 #[derive(Clone, GraphQLInputObject)]
@@ -39,5 +42,6 @@ pub struct RequisitionLine {
 pub struct InputRequisitionLine {
     pub id: String,
     pub item_id: String,
-    pub item_quantity: f64,
+    pub actual_quantity: f64,
+    pub suggested_quantity: f64,
 }
