@@ -1,7 +1,7 @@
 //! src/services/graphql/queries.rs
 
 use crate::database::DatabaseConnection;
-use crate::server::graphql::{Item, ItemLine, Requisition, RequisitionLine};
+use crate::server::graphql::{Item, ItemLine, Name, Requisition, RequisitionLine};
 
 use juniper::graphql_object;
 pub struct Queries;
@@ -9,6 +9,19 @@ pub struct Queries;
 impl Queries {
     pub fn apiVersion() -> String {
         "1.0".to_string()
+    }
+
+    #[graphql(arguments(id(description = "id of the name")))]
+    pub async fn name(database: &DatabaseConnection, id: String) -> Name {
+        let name_row = database
+            .get_name(id.to_string())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get name {}", id));
+
+        Name {
+            id: name_row.id,
+            name: name_row.name,
+        }
     }
 
     #[graphql(arguments(id(description = "id of the requisition")))]
