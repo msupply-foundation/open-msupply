@@ -1,6 +1,14 @@
--- Create item table 
+-- Create item table.
+--
+-- CREATE TABLE item (
+--   ID ALPHA PRIMARY KEY,
+--   item_name ALPHA
+-- );
+--
+-- ID: unique id of the item.
+-- item_name: name of the item.
+
 CREATE TABLE item (
-    id TEXT NOT NULL,
-    CONSTRAINT pk_item PRIMARY KEY(id),
-    item_name TEXT NOT NULL
+    id VARCHAR(255) NOT NULL PRIMARY KEY(id),
+    item_name VARCHAR(255) NOT NULL
 )
