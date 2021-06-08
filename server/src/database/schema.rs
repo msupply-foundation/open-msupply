@@ -35,7 +35,7 @@ pub struct TransactRow {
 }
 
 #[derive(Clone)]
-pub struct TransactionLineRow {
+pub struct TransLineRow {
     pub id: String,
     pub transaction_id: String,
     pub item_id: String,
