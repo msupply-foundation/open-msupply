@@ -23,6 +23,7 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     let item_line_a = ItemLineRow {
         id: "item_a_line_a".to_string(),
         item_id: "item_a".to_string(),
+        store_id: "store_a".to_string(),
         batch: "item_a_batch_a".to_string(),
         quantity: 1.0,
     };
@@ -30,13 +31,15 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     let item_line_b = ItemLineRow {
         id: "item_a_line_b".to_string(),
         item_id: "item_a".to_string(),
-        batch: "item_a_batch_a".to_string(),
+        store_id: "store_a".to_string(),
+        batch: "item_a_batch_b".to_string(),
         quantity: 2.0,
     };
 
     let item_line_c = ItemLineRow {
         id: "item_b_line_a".to_string(),
         item_id: "item_b".to_string(),
+        store_id: "store_a".to_string(),
         batch: "item_b_batch_a".to_string(),
         quantity: 3.0,
     };
@@ -44,6 +47,7 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     let item_line_d = ItemLineRow {
         id: "item_b_line_b".to_string(), 
         item_id: "item_b".to_string(),
+        store_id: "store_a".to_string(),
         batch: "item_b_batch_b".to_string(),
         quantity: 4.0,
     };
@@ -51,6 +55,7 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     let item_line_e = ItemLineRow {
         id: "item_c_line_a".to_string(),
         item_id: "item_c".to_string(),
+        store_id: "store_a".to_string(),
         batch: "item_c_batch_a".to_string(),
         quantity: 5.0,
     };
@@ -58,6 +63,7 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     let item_line_f = ItemLineRow {
         id: "item_c_line_a".to_string(),
         item_id: "item_c".to_string(),
+        store_id: "store_a".to_string(),
         batch: "item_c_batch_a".to_string(),
         quantity: 6.0,
     };
