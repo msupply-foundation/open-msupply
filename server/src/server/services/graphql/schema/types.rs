@@ -10,6 +10,13 @@ pub struct Name {
 }
 
 #[derive(Clone, GraphQLObject)]
+// A store.
+pub struct Store {
+    pub id: String,
+    pub name_id: String,
+}
+
+#[derive(Clone, GraphQLObject)]
 // An item.
 pub struct Item {
     pub id: String,
