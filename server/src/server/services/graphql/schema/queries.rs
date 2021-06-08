@@ -33,7 +33,7 @@ impl Queries {
                     id: line.id,
                     item_id: line.item_id,
                     actual_quantity: line.actual_quantity,
-                    suggested_quantity: line.suggested_quantity
+                    suggested_quantity: line.suggested_quantity,
                 })
                 .collect(),
         }

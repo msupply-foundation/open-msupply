@@ -1,4 +1,4 @@
-use crate::database::schema::{ItemRow, ItemLineRow, RequisitionLineRow, RequisitionRow};
+use crate::database::schema::{ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow};
 
 pub fn mock_items() -> Vec<ItemRow> {
     let item_a = ItemRow {
@@ -45,7 +45,7 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     };
 
     let item_line_d = ItemLineRow {
-        id: "item_b_line_b".to_string(), 
+        id: "item_b_line_b".to_string(),
         item_id: "item_b".to_string(),
         store_id: "store_a".to_string(),
         batch: "item_b_batch_b".to_string(),
@@ -68,7 +68,14 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
         quantity: 6.0,
     };
 
-    vec![item_line_a, item_line_b, item_line_c, item_line_d, item_line_e, item_line_f]
+    vec![
+        item_line_a,
+        item_line_b,
+        item_line_c,
+        item_line_d,
+        item_line_e,
+        item_line_f,
+    ]
 }
 
 pub fn mock_requisitions() -> Vec<RequisitionRow> {
@@ -99,7 +106,7 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
         requisition_id: "requisition_a".to_string(),
         item_id: "item_a".to_string(),
         actual_quantity: 1.0,
-        suggested_quantity: 1.0
+        suggested_quantity: 1.0,
     };
 
     let requisition_line_b = RequisitionLineRow {
@@ -116,7 +123,6 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
         item_id: "item_a".to_string(),
         actual_quantity: 3.0,
         suggested_quantity: 3.0,
-
     };
 
     let requisition_line_d = RequisitionLineRow {
