@@ -28,7 +28,7 @@ pub struct StoreRow {
 }
 
 #[derive(Clone)]
-pub struct TransactionRow {
+pub struct TransactRow {
     pub id: String,
     pub name_id: String,
     pub invoice_number: i32,
