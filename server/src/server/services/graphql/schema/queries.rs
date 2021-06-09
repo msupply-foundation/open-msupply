@@ -1,7 +1,7 @@
 //! src/services/graphql/queries.rs
 
 use crate::database::DatabaseConnection;
-use crate::server::graphql::{Item, ItemLine, Name, Requisition, RequisitionLine};
+use crate::server::graphql::{Item, ItemLine, Name, Requisition, RequisitionLine, Store};
 
 use juniper::graphql_object;
 pub struct Queries;
@@ -21,6 +21,27 @@ impl Queries {
         Name {
             id: name_row.id,
             name: name_row.name,
+        }
+    }
+
+    #[graphql(arguments(id(description = "id of the store")))]
+    pub async fn store(database: &DatabaseConnection, id: String) -> Store {
+        let store_row: StoreRow = database
+            .get_store(id.to_string())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get store {}", id));
+
+        let name_row: NameRow = database
+            .get_name(store_row.name_id.to_string())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get name for store {}", id));
+
+        Store {
+            id: store_row.id,
+            name: Name {
+                id: name_row.id,
+                name: name_row.name,
+            },
         }
     }
 
