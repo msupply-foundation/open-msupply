@@ -51,6 +51,14 @@ pub struct RequisitionLine {
     pub suggested_quantity: f64,
 }
 
+#[derive(Clone, GraphQLObject)]
+// A transaction.
+pub struct Transact {
+    pub id: String,
+    pub name_id: String,
+    pub invoice_number: i32
+}
+
 #[derive(Clone, GraphQLInputObject)]
 // A input requisition line.
 pub struct InputRequisitionLine {
