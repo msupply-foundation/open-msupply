@@ -3,7 +3,7 @@
 use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransactRow
 };
 
 #[derive(Clone)]
@@ -139,5 +139,21 @@ impl DatabaseConnection {
         requisition_id: String,
     ) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
         queries::select_requisition_lines(&self.pool, requisition_id).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_transact(
+        &self,
+        id: String,
+    ) -> Result<TransactRow, sqlx::Error> {
+        queries::select_transact(&self.pool, id).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_transacts(
+        &self,
+        name_id: String,
+    ) -> Result<Vec<TransactRow>, sqlx::Error> {
+        queries::select_transacts(&self.pool, name_id).await
     }
 }

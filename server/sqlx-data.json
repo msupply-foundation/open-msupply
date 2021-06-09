@@ -40,6 +40,38 @@
       "nullable": []
     }
   },
+  "26b07af74809a759db3256f50be93ab61c21c997c2eaeee8ec8604de37c8a843": {
+    "query": "\n        SELECT id, name_id, invoice_number\n        FROM transact \n        WHERE name_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "2f65ca07c6bc0f4ea2b9902ab24abac8bcc66b73688d3f75904c4e1d001574e2": {
     "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = $1\n        ",
     "describe": {
@@ -237,6 +269,38 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "9ea7ca3d4a0ee82a2cfeaa607262990fafd04ded70e4bd4f1fcfdfe2b6dc9890": {
+    "query": "\n        SELECT id, name_id, invoice_number\n        FROM transact \n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
     }
   },
   "a7f851b40f87e0feedd1f432933a7f35cf675b1f5b0f42e1163c42a68fec83c7": {
