@@ -56,7 +56,17 @@ pub struct RequisitionLine {
 pub struct Transact {
     pub id: String,
     pub name_id: String,
-    pub invoice_number: i32
+    pub invoice_number: i32,
+    pub trans_lines: Vec<TransLine>,
+}
+
+#[derive(Clone, GraphQLObject)]
+// A transaction line
+pub struct TransLine {
+    pub id: String,
+    pub transaction_id: String,
+    pub item_id: String,
+    pub item_line_id: String,
 }
 
 #[derive(Clone, GraphQLInputObject)]
