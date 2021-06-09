@@ -1,10 +1,12 @@
 //! src/services/graphql/mod.rs
 
+mod context;
 mod mutations;
 mod queries;
 mod subscriptions;
 mod types;
 
+pub use self::context::*;
 pub use self::mutations::*;
 pub use self::queries::*;
 pub use self::subscriptions::*;

@@ -1,5 +1,5 @@
 //! src/services/graphql/context.rs
 
-use crate::utils::database::DatabaseConnection;
+use crate::database::DatabaseConnection;
 
 impl juniper::Context for DatabaseConnection {}
