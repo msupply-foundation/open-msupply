@@ -371,7 +371,10 @@ pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<Transact
     Ok(transact)
 }
 
-pub async fn select_transacts(pool: &sqlx::PgPool, name_id: String) -> Result<Vec<TransactRow>, sqlx::Error> {
+pub async fn select_transacts(
+    pool: &sqlx::PgPool,
+    name_id: String,
+) -> Result<Vec<TransactRow>, sqlx::Error> {
     let transacts: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
         r#"
