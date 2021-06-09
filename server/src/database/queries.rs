@@ -1,7 +1,7 @@
 //! src/database/queries.rs
 
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransactRow,
 };
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
@@ -353,4 +353,36 @@ pub async fn select_requisition_lines(
     .await?;
 
     Ok(requisition_lines)
+}
+
+pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<TransactRow, sqlx::Error> {
+    let transact: TransactRow = sqlx::query_as!(
+        TransactRow,
+        r#"
+        SELECT id, name_id, invoice_number
+        FROM transact 
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(transact)
+}
+
+pub async fn select_transacts(pool: &sqlx::PgPool, name_id: String) -> Result<Vec<TransactRow>, sqlx::Error> {
+    let transacts: Vec<TransactRow> = sqlx::query_as!(
+        TransactRow,
+        r#"
+        SELECT id, name_id, invoice_number
+        FROM transact 
+        WHERE name_id = $1
+        "#,
+        name_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(transacts)
 }
