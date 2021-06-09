@@ -13,7 +13,7 @@ pub struct Name {
 // A store.
 pub struct Store {
     pub id: String,
-    pub name_id: String,
+    pub name: Name,
 }
 
 #[derive(Clone, GraphQLObject)]
