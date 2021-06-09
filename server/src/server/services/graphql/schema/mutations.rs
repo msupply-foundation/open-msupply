@@ -29,21 +29,21 @@ impl Mutations {
 
     #[graphql(arguments(
         id(description = "id of the requisition"),
-        from_id(description = "id of the sending store"),
-        to_id(description = "id of the receiving store"),
+        name_id(description = "id of the receiving store"),
+        store_id(description = "id of the sending store"),
         requisition_lines(description = "requisition lines attached to the requisition")
     ))]
     async fn insert_requisition(
         database: &DatabaseConnection,
         id: String,
-        from_id: String,
-        to_id: String,
+        name_id: String,
+        store_id: String,
         requisition_lines: Vec<InputRequisitionLine>,
     ) -> Requisition {
         let requisition_row = RequisitionRow {
             id: id.clone(),
-            name_id: from_id.clone(),
-            store_id: to_id.clone(),
+            name_id: name_id.clone(),
+            store_id: store_id.clone(),
         };
 
         database
