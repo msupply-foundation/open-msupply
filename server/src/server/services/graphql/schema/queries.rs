@@ -1,5 +1,8 @@
 //! src/services/graphql/queries.rs
 
+use crate::database::schema::{
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+};
 use crate::database::DatabaseConnection;
 use crate::server::graphql::{Item, ItemLine, Name, Requisition, RequisitionLine, Store};
 
@@ -13,7 +16,7 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the name")))]
     pub async fn name(database: &DatabaseConnection, id: String) -> Name {
-        let name_row = database
+        let name_row: NameRow = database
             .get_name(id.to_string())
             .await
             .unwrap_or_else(|_| panic!("Failed to get name {}", id));
@@ -47,12 +50,12 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the requisition")))]
     pub async fn requisition(database: &DatabaseConnection, id: String) -> Requisition {
-        let requisition_row = database
+        let requisition_row: RequisitionRow = database
             .get_requisition(id.to_string())
             .await
             .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
-        let requisition_line_rows = database
+        let requisition_line_rows: Vec<RequisitionLineRow> = database
             .get_requisition_lines(id.to_string())
             .await
             .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", id));
@@ -75,7 +78,7 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the item")))]
     pub async fn item(database: &DatabaseConnection, id: String) -> Item {
-        let item_row = database
+        let item_row: ItemRow = database
             .get_item(id.to_string())
             .await
             .unwrap_or_else(|_| panic!("Failed to get item {}", id));
@@ -88,7 +91,7 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the item line")))]
     pub async fn item_line(database: &DatabaseConnection, id: String) -> ItemLine {
-        let item_line_row = database
+        let item_line_row: ItemLineRow = database
             .get_item_line(id.to_string())
             .await
             .unwrap_or_else(|_| panic!("Failed to get item line {}", id));
