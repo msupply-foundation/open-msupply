@@ -8,12 +8,12 @@ pub struct Mutations;
 impl Mutations {
     #[graphql(arguments(
         id(description = "id of the item"),
-        name(description = "name of the item"),
+        item_name(description = "name of the item"),
     ))]
-    async fn insert_item(database: &DatabaseConnection, id: String, name: String) -> Item {
+    async fn insert_item(database: &DatabaseConnection, id: String, item_name: String) -> Item {
         let item_row = ItemRow {
             id: id.clone(),
-            item_name: name.clone(),
+            item_name: item_name.clone(),
         };
 
         database
