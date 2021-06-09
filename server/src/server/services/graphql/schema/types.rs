@@ -1,5 +1,8 @@
 //! src/services/graphql/schema/types.rs
 
+use crate::database::DatabaseConnection;
+
+use juniper::graphql_object;
 use juniper::{GraphQLInputObject, GraphQLObject};
 
 #[derive(Clone, GraphQLObject)]
@@ -33,13 +36,44 @@ pub struct ItemLine {
     pub quantity: f64,
 }
 
-#[derive(Clone, GraphQLObject)]
+#[derive(Clone)]
 // A requisition.
 pub struct Requisition {
     pub id: String,
     pub name_id: String,
     pub store_id: String,
-    pub requisition_lines: Vec<RequisitionLine>,
+}
+
+#[graphql_object(Context = DatabaseConnection)]
+impl Requisition {
+    pub fn id(&self) -> String {
+        self.id.to_string()
+    }
+
+    pub fn name_id(&self) -> String {
+        self.name_id.to_string()
+    }
+
+    pub fn store_id(&self) -> String {
+        self.store_id.to_string()
+    }
+
+    pub async fn requisition_lines(&self, database: &DatabaseConnection) -> Vec<RequisitionLine> {
+        let requisition_line_rows = database
+            .get_requisition_lines(self.id.to_string())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", self.id));
+
+        requisition_line_rows
+            .into_iter()
+            .map(|line| RequisitionLine {
+                id: line.id,
+                item_id: line.item_id,
+                actual_quantity: line.actual_quantity,
+                suggested_quantity: line.suggested_quantity,
+            })
+            .collect()
+    }
 }
 
 #[derive(Clone, GraphQLObject)]

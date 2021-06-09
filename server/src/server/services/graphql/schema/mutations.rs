@@ -84,7 +84,6 @@ impl Mutations {
             id: requisition_row.id,
             name_id: requisition_row.name_id,
             store_id: requisition_row.store_id,
-            requisition_lines,
         }
     }
 }

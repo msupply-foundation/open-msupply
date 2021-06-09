@@ -1,10 +1,8 @@
 //! src/services/graphql/queries.rs
 
-use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
-};
+use crate::database::schema::{ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow};
 use crate::database::DatabaseConnection;
-use crate::server::graphql::{Item, ItemLine, Name, Requisition, RequisitionLine, Store};
+use crate::server::graphql::{Item, ItemLine, Name, Requisition, Store};
 
 use juniper::graphql_object;
 pub struct Queries;
@@ -55,24 +53,10 @@ impl Queries {
             .await
             .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
-        let requisition_line_rows: Vec<RequisitionLineRow> = database
-            .get_requisition_lines(id.to_string())
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", id));
-
         Requisition {
             id: requisition_row.id,
             name_id: requisition_row.name_id,
             store_id: requisition_row.store_id,
-            requisition_lines: requisition_line_rows
-                .into_iter()
-                .map(|line| RequisitionLine {
-                    id: line.id,
-                    item_id: line.item_id,
-                    actual_quantity: line.actual_quantity,
-                    suggested_quantity: line.suggested_quantity,
-                })
-                .collect(),
         }
     }
 
