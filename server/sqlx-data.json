@@ -329,6 +329,44 @@
       ]
     }
   },
+  "b2f482737cfe915500c65c14e58387f27f2938c8fa841c55c6195060e938d25c": {
+    "query": "\n        SELECT id, transaction_id, item_id, item_line_id\n        FROM trans_line\n        WHERE transaction_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "transaction_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_line_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
   "b50cd2447226b57e3f41c305e4a01c3a10570644ac0ba8f2d2275e067b294943": {
     "query": "\n        INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)\n        VALUES ($1, $2, $3, $4, $5)\n        ",
     "describe": {
@@ -474,6 +512,44 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "ed61a336aecf3ef66f9a1e4f00a7312d754cf7baa3ed20cee188b29a4f2ed26a": {
+    "query": "\n        SELECT id, transaction_id, item_id, item_line_id\n        FROM trans_line\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "transaction_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_line_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
     }
   }
 }
