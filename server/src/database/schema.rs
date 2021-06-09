@@ -40,7 +40,7 @@ pub struct TransLineRow {
     pub id: String,
     pub transaction_id: String,
     pub item_id: String,
-    pub item_line_id: String,
+    pub item_line_id: Option<String>,
 }
 
 #[derive(Clone)]

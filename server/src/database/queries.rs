@@ -1,7 +1,8 @@
 //! src/database/queries.rs
 
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransactRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransLineRow,
+    TransactRow,
 };
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
@@ -388,4 +389,42 @@ pub async fn select_transacts(
     .await?;
 
     Ok(transacts)
+}
+
+pub async fn select_trans_line(
+    pool: &sqlx::PgPool,
+    id: String,
+) -> Result<TransLineRow, sqlx::Error> {
+    let trans_line: TransLineRow = sqlx::query_as!(
+        TransLineRow,
+        r#"
+        SELECT id, transaction_id, item_id, item_line_id
+        FROM trans_line
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(trans_line)
+}
+
+pub async fn select_trans_lines(
+    pool: &sqlx::PgPool,
+    transact_id: String,
+) -> Result<Vec<TransLineRow>, sqlx::Error> {
+    let trans_lines: Vec<TransLineRow> = sqlx::query_as!(
+        TransLineRow,
+        r#"
+        SELECT id, transaction_id, item_id, item_line_id
+        FROM trans_line
+        WHERE transaction_id = $1
+        "#,
+        transact_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(trans_lines)
 }
