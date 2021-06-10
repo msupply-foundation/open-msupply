@@ -67,8 +67,6 @@ impl Mutations {
                 .expect("Failed to insert requisition_line into database")
         }
 
-        Requisition {
-            requisition_row
-        }
+        Requisition { requisition_row }
     }
 }
