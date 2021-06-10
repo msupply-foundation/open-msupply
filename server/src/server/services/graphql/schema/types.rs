@@ -1,9 +1,9 @@
 //! src/services/graphql/schema/types.rs
 
-use crate::database::DatabaseConnection;
+use crate::database::{DatabaseConnection};
+use crate::database::schema::{RequisitionRow, RequisitionLineRow, ItemLineRow, ItemRow, NameRow, StoreRow, TransactRow, TransLineRow};
 
-use juniper::graphql_object;
-use juniper::{GraphQLInputObject, GraphQLObject};
+use juniper::{GraphQLInputObject, graphql_object};
 
 #[derive(Clone)]
 // A name.
