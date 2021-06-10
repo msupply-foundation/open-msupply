@@ -30,6 +30,10 @@ impl DatabaseConnection {
             .await
             .expect("Failed to insert mock item data");
 
+        self.create_item_lines(mocks::mock_item_lines())
+            .await
+            .expect("Failed to insert mock item line data");
+
         self.create_requisitions(mocks::mock_requisitions())
             .await
             .expect("Failed to insert mock requisition data");
