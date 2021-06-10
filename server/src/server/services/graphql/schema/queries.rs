@@ -1,10 +1,10 @@
 //! src/services/graphql/queries.rs
 
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransLineRow, TransactRow,
 };
 use crate::database::DatabaseConnection;
-use crate::server::graphql::{Item, ItemLine, Name, Requisition, Store, Transact};
+use crate::server::graphql::{Item, ItemLine, Name, Requisition, Store, TransLine, Transact};
 
 use juniper::graphql_object;
 pub struct Queries;
@@ -42,6 +42,16 @@ impl Queries {
             .unwrap_or_else(|_| panic!("Failed to get transaction {}", id));
 
         Transact { transact_row }
+    }
+
+    #[graphql(arguments(id(description = "id of the transaction line")))]
+    pub async fn trans_line(database: &DatabaseConnection, id: String) -> TransLine {
+        let trans_line_row: TransLineRow = database
+            .get_trans_line(id.to_string())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get transaction line {}", id));
+
+        TransLine { trans_line_row }
     }
 
     #[graphql(arguments(id(description = "id of the requisition")))]
