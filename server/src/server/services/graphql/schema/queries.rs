@@ -63,12 +63,6 @@ impl Queries {
             .await
             .unwrap_or_else(|_| panic!("Failed to get item line {}", id));
 
-        ItemLine {
-            id: item_line_row.id,
-            item_id: item_line_row.item_id,
-            store_id: item_line_row.store_id,
-            batch: item_line_row.batch,
-            quantity: item_line_row.quantity,
-        }
+        ItemLine { item_line_row }
     }
 }
