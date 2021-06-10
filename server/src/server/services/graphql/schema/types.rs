@@ -1,12 +1,12 @@
 //! src/services/graphql/schema/types.rs
 
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransLineRow,
-    TransactRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+    StoreRow, TransLineRow, TransactRow,
 };
 use crate::database::DatabaseConnection;
 
-use juniper::{graphql_object, GraphQLInputObject};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 
 #[derive(Clone)]
 // A name.
@@ -110,6 +110,14 @@ impl ItemLine {
     }
 }
 
+#[derive(GraphQLEnum)]
+pub enum RequisitionType {
+    #[graphql(name = "request")]
+    Request,
+    #[graphql(name = "response")]
+    Response,
+}
+
 #[derive(Clone)]
 // A requisition.
 pub struct Requisition {
@@ -148,6 +156,13 @@ impl Requisition {
             });
 
         Store { store_row }
+    }
+
+    pub fn type_of(&self) -> RequisitionType {
+        match self.requisition_row.type_of {
+            RequisitionRowType::Request => RequisitionType::Request,
+            RequisitionRowType::Response => RequisitionType::Response,
+        }
     }
 
     pub async fn requisition_lines(&self, database: &DatabaseConnection) -> Vec<RequisitionLine> {
