@@ -19,10 +19,7 @@ impl Queries {
             .await
             .unwrap_or_else(|_| panic!("Failed to get name {}", id));
 
-        Name {
-            id: name_row.id,
-            name: name_row.name,
-        }
+        Name { name_row }
     }
 
     #[graphql(arguments(id(description = "id of the store")))]
