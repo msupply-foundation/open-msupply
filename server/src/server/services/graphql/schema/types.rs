@@ -5,14 +5,22 @@ use crate::database::DatabaseConnection;
 use juniper::graphql_object;
 use juniper::{GraphQLInputObject, GraphQLObject};
 
-#[derive(Clone, GraphQLObject)]
+#[derive(Clone)]
 // A name.
 pub struct Name {
-    pub id: String,
-    pub name: String,
+    pub name_row: NameRow
 }
 
-#[derive(Clone, GraphQLObject)]
+#[graphql_object(Context = DatabaseConnection)]
+impl Name {
+    pub fn id(&self) -> String {
+        self.name_row.id.clone()
+    }
+
+    pub fn name(&self) -> String {
+        self.name_row.id.clone()
+    }
+}
 // A store.
 pub struct Store {
     pub id: String,
