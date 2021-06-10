@@ -21,10 +21,7 @@ impl Mutations {
             .await
             .expect("Failed to insert item into database");
 
-        Item {
-            id: item_row.id,
-            item_name: item_row.item_name,
-        }
+        Item { item_row }
     }
 
     #[graphql(arguments(

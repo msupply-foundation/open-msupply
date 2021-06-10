@@ -28,13 +28,22 @@ pub struct Store {
 }
 
 #[derive(Clone, GraphQLObject)]
+#[derive(Clone)]
 // An item.
 pub struct Item {
-    pub id: String,
-    pub item_name: String,
+    pub item_row: ItemRow
 }
 
-#[derive(Clone, GraphQLObject)]
+#[graphql_object(Context = DatabaseConnection)]
+impl Item {
+    pub fn id(&self) -> String {
+        self.item_row.id.clone()
+    }
+
+    pub fn item_name(&self) -> String {
+        self.item_row.item_name.clone()
+    }
+}
 // An item line.
 pub struct ItemLine {
     pub id: String,

@@ -67,10 +67,7 @@ impl Queries {
             .await
             .unwrap_or_else(|_| panic!("Failed to get item {}", id));
 
-        Item {
-            id: item_row.id,
-            item_name: item_row.item_name,
-        }
+        Item { item_row }
     }
 
     #[graphql(arguments(id(description = "id of the item line")))]
