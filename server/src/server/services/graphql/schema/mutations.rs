@@ -1,7 +1,7 @@
 //! src/services/graphql/mutations.rs
 
 use crate::database::{DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow};
-use crate::server::graphql::{InputRequisitionLine, Item, Requisition, RequisitionLine};
+use crate::server::graphql::{InputRequisitionLine, Item, Requisition};
 
 pub struct Mutations;
 #[juniper::graphql_object(context = DatabaseConnection)]
@@ -46,17 +46,7 @@ impl Mutations {
         database
             .create_requisition(&requisition_row)
             .await
-            .expect("Failed to insert requisition into DatabaseConnection");
-
-        let requisition_lines: Vec<RequisitionLine> = requisition_lines
-            .into_iter()
-            .map(|line| RequisitionLine {
-                id: line.id,
-                item_id: line.item_id,
-                actual_quantity: line.actual_quantity,
-                suggested_quantity: line.suggested_quantity,
-            })
-            .collect();
+            .expect("Failed to insert requisition into database");
 
         let requisition_line_rows: Vec<RequisitionLineRow> = requisition_lines
             .clone()
@@ -74,13 +64,11 @@ impl Mutations {
             database
                 .create_requisition_line(&requisition_line_row)
                 .await
-                .unwrap();
+                .expect("Failed to insert requisition_line into database")
         }
 
         Requisition {
-            id: requisition_row.id,
-            name_id: requisition_row.name_id,
-            store_id: requisition_row.store_id,
+            requisition_row
         }
     }
 }

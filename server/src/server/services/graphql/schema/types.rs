@@ -109,39 +109,46 @@ impl ItemLine {
 #[derive(Clone)]
 // A requisition.
 pub struct Requisition {
-    pub id: String,
-    pub name_id: String,
-    pub store_id: String,
+    pub requisition_row: RequisitionRow
 }
 
 #[graphql_object(Context = DatabaseConnection)]
 impl Requisition {
     pub fn id(&self) -> String {
-        self.id.to_string()
+        self.requisition_row.id.clone()
     }
 
-    pub fn name_id(&self) -> String {
-        self.name_id.to_string()
+    pub async fn name(&self, database: &DatabaseConnection) -> Name {
+        let name_row = database
+            .get_name(self.requisition_row.name_id.clone())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get store for item line {}", self.requisition_row.id));
+
+        Name { 
+            name_row
+        }
     }
 
-    pub fn store_id(&self) -> String {
-        self.store_id.to_string()
+    pub async fn store(&self, database: &DatabaseConnection) -> Store {
+        let store_row = database
+            .get_store(self.requisition_row.store_id.clone())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get store for item line {}", self.requisition_row.id));
+
+        Store { 
+            store_row
+        }
     }
 
     pub async fn requisition_lines(&self, database: &DatabaseConnection) -> Vec<RequisitionLine> {
         let requisition_line_rows = database
-            .get_requisition_lines(self.id.to_string())
+            .get_requisition_lines(self.requisition_row.id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", self.id));
+            .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", self.requisition_row.id));
 
         requisition_line_rows
             .into_iter()
-            .map(|line| RequisitionLine {
-                id: line.id,
-                item_id: line.item_id,
-                actual_quantity: line.actual_quantity,
-                suggested_quantity: line.suggested_quantity,
-            })
+            .map(|requisition_line_row| RequisitionLine { requisition_line_row })
             .collect()
     }
 }
