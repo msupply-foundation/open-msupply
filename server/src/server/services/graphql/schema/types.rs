@@ -62,13 +62,48 @@ impl Item {
         self.item_row.item_name.clone()
     }
 }
+
+#[derive(Clone)]
 // An item line.
 pub struct ItemLine {
-    pub id: String,
-    pub item_id: String,
-    pub store_id: String,
-    pub batch: String,
-    pub quantity: f64,
+    pub item_line_row: ItemLineRow
+}
+
+#[graphql_object(Context = DatabaseConnection)]
+impl ItemLine {
+    pub fn id(&self) -> String {
+        self.item_line_row.id.clone()
+    }
+
+    pub async fn item(&self, database: &DatabaseConnection) -> Item {
+        let item_row = database
+            .get_item(self.item_line_row.item_id.clone())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get item for item line {}", self.item_line_row.id));
+
+        Item { 
+            item_row
+        }
+    }
+
+    pub async fn store(&self, database: &DatabaseConnection) -> Store {
+        let store_row = database
+            .get_store(self.item_line_row.store_id.clone())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get store for item line {}", self.item_line_row.id));
+
+        Store { 
+            store_row
+        }
+    } 
+
+    pub fn batch(&self) -> String {
+        self.item_line_row.batch.clone()
+    }
+
+    pub fn quantity(&self) -> f64 {
+        self.item_line_row.quantity
+    }
 }
 
 #[derive(Clone)]
