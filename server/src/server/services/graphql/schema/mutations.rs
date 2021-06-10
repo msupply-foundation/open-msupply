@@ -1,7 +1,9 @@
 //! src/services/graphql/mutations.rs
 
-use crate::database::{DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow};
-use crate::server::graphql::{InputRequisitionLine, Item, Requisition};
+use crate::database::{
+    DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+};
+use crate::server::graphql::{InputRequisitionLine, Item, Requisition, RequisitionType};
 
 pub struct Mutations;
 #[juniper::graphql_object(context = DatabaseConnection)]
@@ -28,6 +30,7 @@ impl Mutations {
         id(description = "id of the requisition"),
         name_id(description = "id of the receiving store"),
         store_id(description = "id of the sending store"),
+        type_of(description = "type of the requisition"),
         requisition_lines(description = "requisition lines attached to the requisition")
     ))]
     async fn insert_requisition(
@@ -35,12 +38,17 @@ impl Mutations {
         id: String,
         name_id: String,
         store_id: String,
+        type_of: RequisitionType,
         requisition_lines: Vec<InputRequisitionLine>,
     ) -> Requisition {
         let requisition_row = RequisitionRow {
             id: id.clone(),
             name_id: name_id.clone(),
             store_id: store_id.clone(),
+            type_of: match type_of {
+                RequisitionType::Request => RequisitionRowType::Request,
+                RequisitionType::Response => RequisitionRowType::Response,
+            },
         };
 
         database
