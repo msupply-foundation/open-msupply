@@ -6,11 +6,20 @@ pub struct NameRow {
     pub name: String,
 }
 
+#[derive(sqlx::Type)]
+#[sqlx(rename = "requisition_type", rename_all = "lowercase")]
+#[derive(Clone)]
+pub enum RequisitionRowType {
+    Request,
+    Response,
+}
+
 #[derive(Clone)]
 pub struct RequisitionRow {
     pub id: String,
     pub name_id: String,
     pub store_id: String,
+    pub type_of: RequisitionRowType,
 }
 
 #[derive(Clone)]
