@@ -1,5 +1,5 @@
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow,
 };
 
 pub fn mock_stores() -> Vec<StoreRow> {
@@ -101,10 +101,10 @@ pub fn mock_item_lines() -> Vec<ItemLineRow> {
     };
 
     let item_line_f = ItemLineRow {
-        id: "item_c_line_a".to_string(),
+        id: "item_c_line_b".to_string(),
         item_id: "item_c".to_string(),
         store_id: "store_a".to_string(),
-        batch: "item_c_batch_a".to_string(),
+        batch: "item_c_batch_b".to_string(),
         quantity: 6.0,
     };
 
@@ -123,21 +123,52 @@ pub fn mock_requisitions() -> Vec<RequisitionRow> {
         id: "requisition_a".to_string(),
         name_id: "name_store_a".to_string(),
         store_id: "store_b".to_string(),
+        type_of: RequisitionRowType::Request,
     };
 
     let requisition_b = RequisitionRow {
         id: "requisition_b".to_string(),
-        name_id: "name_store_a".to_string(),
-        store_id: "store_c".to_string(),
+        name_id: "name_store_b".to_string(),
+        store_id: "store_a".to_string(),
+        type_of: RequisitionRowType::Response,
     };
 
     let requisition_c = RequisitionRow {
         id: "requisition_c".to_string(),
-        name_id: "name_store_b".to_string(),
+        name_id: "name_store_a".to_string(),
         store_id: "store_c".to_string(),
+        type_of: RequisitionRowType::Request,
     };
 
-    vec![requisition_a, requisition_b, requisition_c]
+    let requisition_d = RequisitionRow {
+        id: "requisition_d".to_string(),
+        name_id: "name_store_c".to_string(),
+        store_id: "store_a".to_string(),
+        type_of: RequisitionRowType::Response,
+    };
+
+    let requisition_e = RequisitionRow {
+        id: "requisition_e".to_string(),
+        name_id: "name_store_b".to_string(),
+        store_id: "store_c".to_string(),
+        type_of: RequisitionRowType::Request,
+    };
+
+    let requisition_f = RequisitionRow {
+        id: "requisition_f".to_string(),
+        name_id: "name_store_c".to_string(),
+        store_id: "store_b".to_string(),
+        type_of: RequisitionRowType::Response,
+    };
+
+    vec![
+        requisition_a,
+        requisition_b,
+        requisition_c,
+        requisition_d,
+        requisition_e,
+        requisition_f,
+    ]
 }
 
 pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {

@@ -1,8 +1,8 @@
 //! src/database/queries.rs
 
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransLineRow,
-    TransactRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+    StoreRow, TransLineRow, TransactRow,
 };
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
@@ -176,12 +176,13 @@ pub async fn insert_requisitions(
     for requisition in &requisitions {
         sqlx::query!(
             r#"
-            INSERT INTO requisition (id, name_id, store_id)
-            VALUES ($1, $2, $3)
+            INSERT INTO requisition (id, name_id, store_id, type_of)
+            VALUES ($1, $2, $3, $4)
             "#,
             requisition.id,
             requisition.name_id,
-            requisition.store_id
+            requisition.store_id,
+            requisition.type_of.clone() as RequisitionRowType
         )
         .execute(pool)
         .await?;
@@ -306,7 +307,7 @@ pub async fn select_requisition(
     let requisition = sqlx::query_as!(
         RequisitionRow,
         r#"
-            SELECT id, name_id, store_id
+            SELECT id, name_id, store_id, type_of AS "type_of!: RequisitionRowType"
             FROM requisition
             WHERE id = $1
         "#,
