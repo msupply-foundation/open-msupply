@@ -39,11 +39,7 @@ impl Queries {
             .await
             .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
-        Requisition {
-            id: requisition_row.id,
-            name_id: requisition_row.name_id,
-            store_id: requisition_row.store_id,
-        }
+        Requisition { requisition_row }
     }
 
     #[graphql(arguments(id(description = "id of the item")))]
