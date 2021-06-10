@@ -1,14 +1,17 @@
 //! src/services/graphql/schema/types.rs
 
-use crate::database::{DatabaseConnection};
-use crate::database::schema::{RequisitionRow, RequisitionLineRow, ItemLineRow, ItemRow, NameRow, StoreRow, TransactRow, TransLineRow};
+use crate::database::schema::{
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransLineRow,
+    TransactRow,
+};
+use crate::database::DatabaseConnection;
 
-use juniper::{GraphQLInputObject, graphql_object};
+use juniper::{graphql_object, GraphQLInputObject};
 
 #[derive(Clone)]
 // A name.
 pub struct Name {
-    pub name_row: NameRow
+    pub name_row: NameRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -25,31 +28,29 @@ impl Name {
 #[derive(Clone)]
 // A store.
 pub struct Store {
-    pub store_row: StoreRow    
+    pub store_row: StoreRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
-impl Store  {
+impl Store {
     pub fn id(&self) -> String {
         self.store_row.id.clone()
     }
 
-    pub async fn name(&self,  database: &DatabaseConnection) -> Name {
+    pub async fn name(&self, database: &DatabaseConnection) -> Name {
         let name_row = database
             .get_name(self.store_row.name_id.clone())
             .await
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
 
-        Name { 
-            name_row 
-        }
-    }    
+        Name { name_row }
+    }
 }
 
 #[derive(Clone)]
 // An item.
 pub struct Item {
-    pub item_row: ItemRow
+    pub item_row: ItemRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -66,7 +67,7 @@ impl Item {
 #[derive(Clone)]
 // An item line.
 pub struct ItemLine {
-    pub item_line_row: ItemLineRow
+    pub item_line_row: ItemLineRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -79,23 +80,26 @@ impl ItemLine {
         let item_row = database
             .get_item(self.item_line_row.item_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get item for item line {}", self.item_line_row.id));
+            .unwrap_or_else(|_| {
+                panic!("Failed to get item for item line {}", self.item_line_row.id)
+            });
 
-        Item { 
-            item_row
-        }
+        Item { item_row }
     }
 
     pub async fn store(&self, database: &DatabaseConnection) -> Store {
         let store_row = database
             .get_store(self.item_line_row.store_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get store for item line {}", self.item_line_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for item line {}",
+                    self.item_line_row.id
+                )
+            });
 
-        Store { 
-            store_row
-        }
-    } 
+        Store { store_row }
+    }
 
     pub fn batch(&self) -> String {
         self.item_line_row.batch.clone()
@@ -109,7 +113,7 @@ impl ItemLine {
 #[derive(Clone)]
 // A requisition.
 pub struct Requisition {
-    pub requisition_row: RequisitionRow
+    pub requisition_row: RequisitionRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -122,33 +126,46 @@ impl Requisition {
         let name_row = database
             .get_name(self.requisition_row.name_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get store for item line {}", self.requisition_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for item line {}",
+                    self.requisition_row.id
+                )
+            });
 
-        Name { 
-            name_row
-        }
+        Name { name_row }
     }
 
     pub async fn store(&self, database: &DatabaseConnection) -> Store {
         let store_row = database
             .get_store(self.requisition_row.store_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get store for item line {}", self.requisition_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for item line {}",
+                    self.requisition_row.id
+                )
+            });
 
-        Store { 
-            store_row
-        }
+        Store { store_row }
     }
 
     pub async fn requisition_lines(&self, database: &DatabaseConnection) -> Vec<RequisitionLine> {
         let requisition_line_rows = database
             .get_requisition_lines(self.requisition_row.id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get lines for requisition {}", self.requisition_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get lines for requisition {}",
+                    self.requisition_row.id
+                )
+            });
 
         requisition_line_rows
             .into_iter()
-            .map(|requisition_line_row| RequisitionLine { requisition_line_row })
+            .map(|requisition_line_row| RequisitionLine {
+                requisition_line_row,
+            })
             .collect()
     }
 }
@@ -156,7 +173,7 @@ impl Requisition {
 #[derive(Clone)]
 // A requisition line.
 pub struct RequisitionLine {
-    pub requisition_line_row: RequisitionLineRow
+    pub requisition_line_row: RequisitionLineRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -167,13 +184,16 @@ impl RequisitionLine {
 
     pub async fn item(&self, database: &DatabaseConnection) -> Item {
         let item_row = database
-        .get_item(self.requisition_line_row.item_id.clone())
-        .await
-        .unwrap_or_else(|_| panic!("Failed to get item for item line {}", self.requisition_line_row.id));
+            .get_item(self.requisition_line_row.item_id.clone())
+            .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item for item line {}",
+                    self.requisition_line_row.id
+                )
+            });
 
-        Item { 
-            item_row
-        }
+        Item { item_row }
     }
 
     pub fn actual_quantity(&self) -> f64 {
@@ -188,7 +208,7 @@ impl RequisitionLine {
 #[derive(Clone)]
 // A transaction.
 pub struct Transact {
-    pub transact_row: TransactRow
+    pub transact_row: TransactRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -204,17 +224,22 @@ impl Transact {
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id));
 
         Name { name_row }
-    } 
+    }
 
     pub fn invoice_number(&self) -> i32 {
         self.transact_row.invoice_number
-    }    
+    }
 
     pub async fn trans_lines(&self, database: &DatabaseConnection) -> Vec<TransLine> {
         let trans_line_rows: Vec<TransLineRow> = database
             .get_trans_lines(self.transact_row.id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get trans_lines for transact {}", self.transact_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get trans_lines for transact {}",
+                    self.transact_row.id
+                )
+            });
 
         trans_line_rows
             .into_iter()
@@ -226,7 +251,7 @@ impl Transact {
 #[derive(Clone)]
 // A transaction line
 pub struct TransLine {
-    pub trans_line_row: TransLineRow
+    pub trans_line_row: TransLineRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
@@ -239,7 +264,12 @@ impl TransLine {
         let transact_row: TransactRow = database
             .get_transact(self.trans_line_row.transaction_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get transact for trans_line {}", self.trans_line_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get transact for trans_line {}",
+                    self.trans_line_row.id
+                )
+            });
 
         Transact { transact_row }
     }
@@ -248,11 +278,14 @@ impl TransLine {
         let item_row = database
             .get_item(self.trans_line_row.item_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get item for trans_line {}", self.trans_line_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item for trans_line {}",
+                    self.trans_line_row.id
+                )
+            });
 
-        Item { 
-            item_row
-        }
+        Item { item_row }
     }
 
     pub async fn item_line(&self, database: &DatabaseConnection) -> ItemLine {
@@ -260,11 +293,14 @@ impl TransLine {
         let item_line_row = database
             .get_item_line(self.trans_line_row.item_line_id.clone().unwrap())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get item_line for trans_line {}", self.trans_line_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item_line for trans_line {}",
+                    self.trans_line_row.id
+                )
+            });
 
-        ItemLine { 
-            item_line_row
-        }
+        ItemLine { item_line_row }
     }
 }
 
