@@ -21,13 +21,31 @@ impl Name {
         self.name_row.id.clone()
     }
 }
+
+#[derive(Clone)]
 // A store.
 pub struct Store {
-    pub id: String,
-    pub name: Name,
+    pub store_row: StoreRow    
 }
 
-#[derive(Clone, GraphQLObject)]
+#[graphql_object(Context = DatabaseConnection)]
+impl Store  {
+    pub fn id(&self) -> String {
+        self.store_row.id.clone()
+    }
+
+    pub async fn name(&self,  database: &DatabaseConnection) -> Name {
+        let name_row = database
+            .get_name(self.store_row.name_id.clone())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
+
+        Name { 
+            name_row 
+        }
+    }    
+}
+
 #[derive(Clone)]
 // An item.
 pub struct Item {

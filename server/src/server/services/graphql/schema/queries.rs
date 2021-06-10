@@ -29,18 +29,7 @@ impl Queries {
             .await
             .unwrap_or_else(|_| panic!("Failed to get store {}", id));
 
-        let name_row: NameRow = database
-            .get_name(store_row.name_id.to_string())
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get name for store {}", id));
-
-        Store {
-            id: store_row.id,
-            name: Name {
-                id: name_row.id,
-                name: name_row.name,
-            },
-        }
+        Store { store_row }
     }
 
     #[graphql(arguments(id(description = "id of the requisition")))]
