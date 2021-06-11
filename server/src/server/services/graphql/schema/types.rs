@@ -41,7 +41,7 @@ impl Store {
         let name_row = database
             .get_name(self.store_row.name_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
+            .unwrap_or_else(|_| panic!("Failed to get name for transaction {}", self.store_row.id));
 
         Name { name_row }
     }
@@ -221,42 +221,65 @@ impl RequisitionLine {
 }
 
 #[derive(GraphQLEnum)]
-pub enum TransactType {
-    #[graphql(name = "ci")]
-    CI,
-    #[graphql(name = "si")]
-    SI,
+pub enum TransactionType {
+    #[graphql(name = "customer_invoice")]
+    CustomerInvoice,
+    #[graphql(name = "customer_credit")]
+    CustomerCredit,
+    #[graphql(name = "supplier_invoice")]
+    SupplierInvoice,
+    #[graphql(name = "supplier_credit")]
+    SupplierCredit,
+    #[graphql(name = "repack")]
+    Repack,
+    #[graphql(name = "build")]    
+    Build,
+    #[graphql(name = "receipt")]    
+    Receipt,    
+    #[graphql(name = "payment")]
+    Payment
 }
 
 #[derive(Clone)]
 // A transaction.
-pub struct Transact {
-    pub transact_row: TransactRow,
+pub struct Transaction {
+    pub transaction_row: TransactionRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
-impl Transact {
+impl Transaction {
     pub fn id(&self) -> String {
-        self.transact_row.id.to_string()
+        self.transaction_row.id.to_string()
     }
 
     pub async fn name(&self, database: &DatabaseConnection) -> Name {
         let name_row = database
-            .get_name(self.transact_row.name_id.clone())
+            .get_name(self.transaction_row.name_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get name for transaction {}",
+                    self.transaction_row.id
+                )
+            });
 
         Name { name_row }
     }
 
     pub fn invoice_number(&self) -> i32 {
-        self.transact_row.invoice_number
+        self.transaction_row.invoice_number
     }
 
-    pub fn type_of(&self) -> TransactType {
-        match self.transact_row.type_of {
-            TransactRowType::CI => TransactType::CI,
-            TransactRowType::SI => TransactType::SI,
+    pub fn type_of(&self) -> TransactionType {
+        match self.transaction_row.type_of {
+            TransactionRowType::CustomerInvoice => TransactionType::CustomerInvoice,
+            TransactionRowType::CustomerCredit => TransactionType::CustomerCredit,
+            TransactionRowType::SupplierInvoice => TransactionType::SupplierInvoice,
+            TransactionRowType::SupplierCredit => TransactionType::SupplierCredit,
+            TransactionRowType::Repack => TransactionType::Repack,
+            TransactionRowType::Build => TransactionType::Build,
+            TransactionRowType::Receipt => TransactionType::Receipt,
+            TransactionRowType::Payment => TransactionType::Payment,
         }
     }
 
@@ -266,8 +289,8 @@ impl Transact {
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get trans_lines for transact {}",
-                    self.transact_row.id
+                    "Failed to get transaction_lines for transaction {}",
+                    self.transaction_row.id
                 )
             });
 
@@ -290,18 +313,18 @@ impl TransLine {
         self.trans_line_row.id.clone()
     }
 
-    pub async fn transaction(&self, database: &DatabaseConnection) -> Transact {
-        let transact_row: TransactRow = database
-            .get_transact(self.trans_line_row.transaction_id.clone())
+    pub async fn transaction(&self, database: &DatabaseConnection) -> Transaction {
+        let transaction_row: TransactionRow = database
+            .get_transaction(self.transaction_line_row.transaction_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get transact for trans_line {}",
-                    self.trans_line_row.id
+                    "Failed to get transaction for transaction_line {}",
+                    self.transaction_line_row.id
                 )
             });
 
-        Transact { transact_row }
+        Transaction { transaction_row }
     }
 
     pub async fn item(&self, database: &DatabaseConnection) -> Item {
