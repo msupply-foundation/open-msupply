@@ -2,7 +2,7 @@
 
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransLineRow, TransactRow,
+    StoreRow, TransLineRow, TransactRow, TransactRowType,
 };
 use crate::database::DatabaseConnection;
 
@@ -220,6 +220,14 @@ impl RequisitionLine {
     }
 }
 
+#[derive(GraphQLEnum)]
+pub enum TransactType {
+    #[graphql(name = "ci")]
+    CI,
+    #[graphql(name = "si")]
+    SI,
+}
+
 #[derive(Clone)]
 // A transaction.
 pub struct Transact {
@@ -243,6 +251,13 @@ impl Transact {
 
     pub fn invoice_number(&self) -> i32 {
         self.transact_row.invoice_number
+    }
+
+    pub fn type_of(&self) -> TransactType {
+        match self.transact_row.type_of {
+            TransactRowType::CI => TransactType::CI,
+            TransactRowType::SI => TransactType::SI,
+        }
     }
 
     pub async fn trans_lines(&self, database: &DatabaseConnection) -> Vec<TransLine> {
