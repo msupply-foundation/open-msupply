@@ -2,7 +2,7 @@
 
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransLineRow, TransactRow, TransactRowType,
+    StoreRow, TransactionLineRow, TransactionRow, TransactionRowType,
 };
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
@@ -161,7 +161,7 @@ pub async fn insert_requisition(
         requisition.id,
         requisition.name_id,
         requisition.store_id,
-        requisition.type_of as RequisitionRowType
+        requisition.type_of.clone() as RequisitionRowType
     )
     .execute(pool)
     .await?;
@@ -183,7 +183,7 @@ pub async fn insert_requisitions(
             requisition.id,
             requisition.name_id,
             requisition.store_id,
-            requisition.type_of as RequisitionRowType
+            requisition.type_of.clone() as RequisitionRowType
         )
         .execute(pool)
         .await?;

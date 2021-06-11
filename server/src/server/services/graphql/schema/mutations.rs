@@ -46,8 +46,12 @@ impl Mutations {
             name_id: name_id.clone(),
             store_id: store_id.clone(),
             type_of: match type_of {
+                RequisitionType::Imprest => RequisitionRowType::Imprest,
+                RequisitionType::StockHistory => RequisitionRowType::StockHistory,
                 RequisitionType::Request => RequisitionRowType::Request,
                 RequisitionType::Response => RequisitionRowType::Response,
+                RequisitionType::Supply => RequisitionRowType::Supply,
+                RequisitionType::Report => RequisitionRowType::Report,
             },
         };
 

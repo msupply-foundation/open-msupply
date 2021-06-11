@@ -10,8 +10,12 @@ pub struct NameRow {
 #[sqlx(rename = "requisition_type", rename_all = "lowercase")]
 #[derive(Clone)]
 pub enum RequisitionRowType {
+    Imprest,
+    StockHistory,
     Request,
     Response,
+    Supply,
+    Report,
 }
 
 #[derive(Clone)]
