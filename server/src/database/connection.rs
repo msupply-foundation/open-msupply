@@ -147,13 +147,16 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn get_transact(&self, id: String) -> Result<TransactRow, sqlx::Error> {
-        queries::select_transact(&self.pool, id).await
+    pub async fn get_transaction(&self, id: String) -> Result<TransactionRow, sqlx::Error> {
+        queries::select_transaction(&self.pool, id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transacts(&self, name_id: String) -> Result<Vec<TransactRow>, sqlx::Error> {
-        queries::select_transacts(&self.pool, name_id).await
+    pub async fn get_transactions(
+        &self,
+        name_id: String,
+    ) -> Result<Vec<TransactionRow>, sqlx::Error> {
+        queries::select_transactions(&self.pool, name_id).await
     }
 
     #[allow(dead_code)]

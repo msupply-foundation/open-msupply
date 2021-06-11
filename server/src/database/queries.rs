@@ -358,12 +358,15 @@ pub async fn select_requisition_lines(
     Ok(requisition_lines)
 }
 
-pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<TransactRow, sqlx::Error> {
-    let transact: TransactRow = sqlx::query_as!(
-        TransactRow,
+pub async fn select_transaction(
+    pool: &sqlx::PgPool,
+    id: String,
+) -> Result<TransactionRow, sqlx::Error> {
+    let transaction: TransactionRow = sqlx::query_as!(
+        TransactionRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
-        FROM transact 
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactionRowType"
+        FROM transaction
         WHERE id = $1
         "#,
         id
@@ -371,18 +374,18 @@ pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<Transact
     .fetch_one(pool)
     .await?;
 
-    Ok(transact)
+    Ok(transaction)
 }
 
-pub async fn select_transacts(
+pub async fn select_transactions(
     pool: &sqlx::PgPool,
     name_id: String,
-) -> Result<Vec<TransactRow>, sqlx::Error> {
-    let transacts: Vec<TransactRow> = sqlx::query_as!(
-        TransactRow,
+) -> Result<Vec<TransactionRow>, sqlx::Error> {
+    let transactions: Vec<TransactionRow> = sqlx::query_as!(
+        TransactionRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
-        FROM transact 
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactionRowType"
+        FROM transaction
         WHERE name_id = $1
         "#,
         name_id
@@ -390,7 +393,7 @@ pub async fn select_transacts(
     .fetch_all(pool)
     .await?;
 
-    Ok(transacts)
+    Ok(transactions)
 }
 
 pub async fn select_trans_line(

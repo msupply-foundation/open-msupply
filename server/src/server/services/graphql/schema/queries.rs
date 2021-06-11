@@ -35,13 +35,13 @@ impl Queries {
     }
 
     #[graphql(arguments(id(description = "id of the transaction")))]
-    pub async fn transact(database: &DatabaseConnection, id: String) -> Transact {
-        let transact_row: TransactRow = database
-            .get_transact(id.to_string())
+    pub async fn transaction(database: &DatabaseConnection, id: String) -> Transaction {
+        let transaction_row: TransactionRow = database
+            .get_transaction(id.to_string())
             .await
             .unwrap_or_else(|_| panic!("Failed to get transaction {}", id));
 
-        Transact { transact_row }
+        Transaction { transaction_row }
     }
 
     #[graphql(arguments(id(description = "id of the transaction line")))]
