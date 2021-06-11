@@ -26,22 +26,8 @@
       "nullable": []
     }
   },
-  "1ccf697524f85bf6591c7e10e2d52d171935ffe08814f9b6ad10ad3cf4c7e3b7": {
-    "query": "\n        INSERT INTO requisition (id, name_id, store_id)\n        VALUES ($1, $2, $3)\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Varchar"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "26b07af74809a759db3256f50be93ab61c21c997c2eaeee8ec8604de37c8a843": {
-    "query": "\n        SELECT id, name_id, invoice_number\n        FROM transact \n        WHERE name_id = $1\n        ",
+  "143e3d425b3d51515e58c9a289dc8b840a4fd0bd17db4a13e7a49cd4da9da9b5": {
+    "query": "\n        SELECT id, name_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n        FROM transact \n        WHERE name_id = $1\n        ",
     "describe": {
       "columns": [
         {
@@ -58,6 +44,21 @@
           "ordinal": 2,
           "name": "invoice_number",
           "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "type_of!: TransactRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_type",
+              "kind": {
+                "Enum": [
+                  "ci",
+                  "si"
+                ]
+              }
+            }
+          }
         }
       ],
       "parameters": {
@@ -66,6 +67,7 @@
         ]
       },
       "nullable": [
+        false,
         false,
         false,
         false
@@ -161,6 +163,54 @@
       },
       "nullable": [
         false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "63e94c43f722dd18be1d43fec7680103d3892bee0b3007a5951bf25e62c93605": {
+    "query": "\n        SELECT id, name_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n        FROM transact \n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "type_of!: TransactRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_type",
+              "kind": {
+                "Enum": [
+                  "ci",
+                  "si"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
         false,
         false,
         false,
@@ -303,38 +353,6 @@
         ]
       },
       "nullable": []
-    }
-  },
-  "9ea7ca3d4a0ee82a2cfeaa607262990fafd04ded70e4bd4f1fcfdfe2b6dc9890": {
-    "query": "\n        SELECT id, name_id, invoice_number\n        FROM transact \n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "name_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "invoice_number",
-          "type_info": "Int4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false
-      ]
     }
   },
   "a7f851b40f87e0feedd1f432933a7f35cf675b1f5b0f42e1163c42a68fec83c7": {
@@ -505,6 +523,31 @@
   },
   "cc98ed36ab4b64cc6a985e694e7c538cf4ebbb70512082c7378a92904ee7cee0": {
     "query": "\n            INSERT INTO requisition (id, name_id, store_id, type_of)\n            VALUES ($1, $2, $3, $4)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          {
+            "Custom": {
+              "name": "requisition_type",
+              "kind": {
+                "Enum": [
+                  "request",
+                  "response"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "e3dca261ad1f56e64ddb5aa35bd496ed561261a02b3f3a2e54e1299cad6b41cb": {
+    "query": "\n        INSERT INTO requisition (id, name_id, store_id, type_of)\n        VALUES ($1, $2, $3, $4)\n        ",
     "describe": {
       "columns": [],
       "parameters": {

@@ -2,7 +2,7 @@
 
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransLineRow, TransactRow,
+    StoreRow, TransLineRow, TransactRow, TransactRowType,
 };
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
@@ -155,12 +155,13 @@ pub async fn insert_requisition(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO requisition (id, name_id, store_id)
-        VALUES ($1, $2, $3)
+        INSERT INTO requisition (id, name_id, store_id, type_of)
+        VALUES ($1, $2, $3, $4)
         "#,
         requisition.id,
         requisition.name_id,
-        requisition.store_id
+        requisition.store_id,
+        requisition.type_of as RequisitionRowType
     )
     .execute(pool)
     .await?;
@@ -182,7 +183,7 @@ pub async fn insert_requisitions(
             requisition.id,
             requisition.name_id,
             requisition.store_id,
-            requisition.type_of.clone() as RequisitionRowType
+            requisition.type_of as RequisitionRowType
         )
         .execute(pool)
         .await?;
@@ -361,7 +362,7 @@ pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<Transact
     let transact: TransactRow = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact 
         WHERE id = $1
         "#,
@@ -380,7 +381,7 @@ pub async fn select_transacts(
     let transacts: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact 
         WHERE name_id = $1
         "#,
