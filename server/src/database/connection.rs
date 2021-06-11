@@ -3,8 +3,8 @@
 use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransLineRow,
-    TransactRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
+    TransactionLineRow, TransactionRow,
 };
 
 #[derive(Clone)]
@@ -160,15 +160,18 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn get_trans_line(&self, id: String) -> Result<TransLineRow, sqlx::Error> {
-        queries::select_trans_line(&self.pool, id).await
+    pub async fn get_transaction_line(
+        &self,
+        id: String,
+    ) -> Result<TransactionLineRow, sqlx::Error> {
+        queries::select_transaction_line(&self.pool, id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_trans_lines(
+    pub async fn get_transaction_lines(
         &self,
         transact_id: String,
-    ) -> Result<Vec<TransLineRow>, sqlx::Error> {
-        queries::select_trans_lines(&self.pool, transact_id).await
+    ) -> Result<Vec<TransactionLineRow>, sqlx::Error> {
+        queries::select_transaction_lines(&self.pool, transact_id).await
     }
 }

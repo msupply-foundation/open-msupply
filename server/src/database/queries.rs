@@ -396,15 +396,15 @@ pub async fn select_transactions(
     Ok(transactions)
 }
 
-pub async fn select_trans_line(
+pub async fn select_transaction_line(
     pool: &sqlx::PgPool,
     id: String,
-) -> Result<TransLineRow, sqlx::Error> {
-    let trans_line: TransLineRow = sqlx::query_as!(
-        TransLineRow,
+) -> Result<TransactionLineRow, sqlx::Error> {
+    let transaction_line: TransactionLineRow = sqlx::query_as!(
+        TransactionLineRow,
         r#"
         SELECT id, transaction_id, item_id, item_line_id
-        FROM trans_line
+        FROM transaction_line
         WHERE id = $1
         "#,
         id
@@ -412,24 +412,24 @@ pub async fn select_trans_line(
     .fetch_one(pool)
     .await?;
 
-    Ok(trans_line)
+    Ok(transaction_line)
 }
 
-pub async fn select_trans_lines(
+pub async fn select_transaction_lines(
     pool: &sqlx::PgPool,
-    transact_id: String,
-) -> Result<Vec<TransLineRow>, sqlx::Error> {
-    let trans_lines: Vec<TransLineRow> = sqlx::query_as!(
-        TransLineRow,
+    transaction_id: String,
+) -> Result<Vec<TransactionLineRow>, sqlx::Error> {
+    let transaction_lines: Vec<TransactionLineRow> = sqlx::query_as!(
+        TransactionLineRow,
         r#"
         SELECT id, transaction_id, item_id, item_line_id
-        FROM trans_line
+        FROM transaction_line
         WHERE transaction_id = $1
         "#,
-        transact_id
+        transaction_id
     )
     .fetch_all(pool)
     .await?;
 
-    Ok(trans_lines)
+    Ok(transaction_lines)
 }
