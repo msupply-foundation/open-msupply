@@ -2,7 +2,7 @@
 
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransLineRow, TransactRow, TransactRowType,
+    StoreRow, TransactionLineRow, TransactionRow, TransactionRowType,
 };
 use crate::database::DatabaseConnection;
 
@@ -112,10 +112,18 @@ impl ItemLine {
 
 #[derive(GraphQLEnum)]
 pub enum RequisitionType {
+    #[graphql(name = "imprest")]
+    Imprest,
+    #[graphql(name = "stock_history")]
+    StockHistory,
     #[graphql(name = "request")]
     Request,
     #[graphql(name = "response")]
     Response,
+    #[graphql(name = "supply")]
+    Supply,
+    #[graphql(name = "report")]
+    Report,
 }
 
 #[derive(Clone)]
@@ -160,8 +168,12 @@ impl Requisition {
 
     pub fn type_of(&self) -> RequisitionType {
         match self.requisition_row.type_of {
+            RequisitionRowType::Imprest => RequisitionType::Imprest,
+            RequisitionRowType::StockHistory => RequisitionType::StockHistory,
             RequisitionRowType::Request => RequisitionType::Request,
             RequisitionRowType::Response => RequisitionType::Response,
+            RequisitionRowType::Supply => RequisitionType::Supply,
+            RequisitionRowType::Report => RequisitionType::Report,
         }
     }
 
@@ -232,12 +244,12 @@ pub enum TransactionType {
     SupplierCredit,
     #[graphql(name = "repack")]
     Repack,
-    #[graphql(name = "build")]    
+    #[graphql(name = "build")]
     Build,
-    #[graphql(name = "receipt")]    
-    Receipt,    
+    #[graphql(name = "receipt")]
+    Receipt,
     #[graphql(name = "payment")]
-    Payment
+    Payment,
 }
 
 #[derive(Clone)]
