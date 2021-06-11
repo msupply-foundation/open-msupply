@@ -283,9 +283,9 @@ impl Transaction {
         }
     }
 
-    pub async fn trans_lines(&self, database: &DatabaseConnection) -> Vec<TransLine> {
-        let trans_line_rows: Vec<TransLineRow> = database
-            .get_trans_lines(self.transact_row.id.clone())
+    pub async fn transaction_lines(&self, database: &DatabaseConnection) -> Vec<TransactionLine> {
+        let transaction_line_rows: Vec<TransactionLineRow> = database
+            .get_transaction_lines(self.transaction_row.id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -294,23 +294,25 @@ impl Transaction {
                 )
             });
 
-        trans_line_rows
+        transaction_line_rows
             .into_iter()
-            .map(|trans_line_row| TransLine { trans_line_row })
+            .map(|transaction_line_row| TransactionLine {
+                transaction_line_row,
+            })
             .collect()
     }
 }
 
 #[derive(Clone)]
 // A transaction line
-pub struct TransLine {
-    pub trans_line_row: TransLineRow,
+pub struct TransactionLine {
+    pub transaction_line_row: TransactionLineRow,
 }
 
 #[graphql_object(Context = DatabaseConnection)]
-impl TransLine {
+impl TransactionLine {
     pub fn id(&self) -> String {
-        self.trans_line_row.id.clone()
+        self.transaction_line_row.id.clone()
     }
 
     pub async fn transaction(&self, database: &DatabaseConnection) -> Transaction {
@@ -329,12 +331,12 @@ impl TransLine {
 
     pub async fn item(&self, database: &DatabaseConnection) -> Item {
         let item_row = database
-            .get_item(self.trans_line_row.item_id.clone())
+            .get_item(self.transaction_line_row.item_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get item for trans_line {}",
-                    self.trans_line_row.id
+                    "Failed to get item for transaction_line {}",
+                    self.transaction_line_row.id
                 )
             });
 
@@ -344,12 +346,12 @@ impl TransLine {
     pub async fn item_line(&self, database: &DatabaseConnection) -> ItemLine {
         // Handle optional item_line_id correctly.
         let item_line_row = database
-            .get_item_line(self.trans_line_row.item_line_id.clone().unwrap())
+            .get_item_line(self.transaction_line_row.item_line_id.clone().unwrap())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get item_line for trans_line {}",
-                    self.trans_line_row.id
+                    "Failed to get item_line for transaction_line {}",
+                    self.transaction_line_row.id
                 )
             });
 
