@@ -3,8 +3,8 @@
 use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow,
-    TransactionLineRow, TransactionRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransactLineRow,
+    TransactRow,
 };
 
 #[derive(Clone)]
@@ -147,31 +147,25 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn get_transaction(&self, id: String) -> Result<TransactionRow, sqlx::Error> {
-        queries::select_transaction(&self.pool, id).await
+    pub async fn get_transact(&self, id: String) -> Result<TransactRow, sqlx::Error> {
+        queries::select_transact(&self.pool, id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transactions(
-        &self,
-        name_id: String,
-    ) -> Result<Vec<TransactionRow>, sqlx::Error> {
-        queries::select_transactions(&self.pool, name_id).await
+    pub async fn get_transacts(&self, name_id: String) -> Result<Vec<TransactRow>, sqlx::Error> {
+        queries::select_transacts(&self.pool, name_id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transaction_line(
-        &self,
-        id: String,
-    ) -> Result<TransactionLineRow, sqlx::Error> {
-        queries::select_transaction_line(&self.pool, id).await
+    pub async fn get_transact_line(&self, id: String) -> Result<TransactLineRow, sqlx::Error> {
+        queries::select_transact_line(&self.pool, id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transaction_lines(
+    pub async fn get_transact_lines(
         &self,
         transact_id: String,
-    ) -> Result<Vec<TransactionLineRow>, sqlx::Error> {
-        queries::select_transaction_lines(&self.pool, transact_id).await
+    ) -> Result<Vec<TransactLineRow>, sqlx::Error> {
+        queries::select_transact_lines(&self.pool, transact_id).await
     }
 }

@@ -26,60 +26,6 @@
       "nullable": []
     }
   },
-  "22173db652d21765fdb38457fb49a0e0a1c3b71653598f6477513bb930c1da16": {
-    "query": "\n        SELECT id, name_id, invoice_number, type_of AS \"type_of!: TransactionRowType\"\n        FROM transaction\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "name_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "invoice_number",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 3,
-          "name": "type_of!: TransactionRowType",
-          "type_info": {
-            "Custom": {
-              "name": "transaction_type",
-              "kind": {
-                "Enum": [
-                  "customer_invoice",
-                  "customer_credit",
-                  "supplier_invoice",
-                  "supplier_credit",
-                  "repack",
-                  "build",
-                  "receipt",
-                  "payment"
-                ]
-              }
-            }
-          }
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "2f65ca07c6bc0f4ea2b9902ab24abac8bcc66b73688d3f75904c4e1d001574e2": {
     "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = $1\n        ",
     "describe": {
@@ -117,6 +63,44 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "47be57f194dfde22adaa415edf5bb647ec815ef0577edc895490addb6d887ab3": {
+    "query": "\n        SELECT id, transact_id, item_id, item_line_id\n        FROM transact_line\n        WHERE transact_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "transact_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_line_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
     }
   },
   "55e537fab6f8a0bb615fa41fe33a8d7b34567c4e15b56106b7fafa0edec42772": {
@@ -169,6 +153,98 @@
       },
       "nullable": [
         false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "65beb02a05f5d4ecca18692daeb6049b28ca3804c764dca170921bc90c4545e0": {
+    "query": "\n        SELECT id, transact_id, item_id, item_line_id\n        FROM transact_line\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "transact_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_line_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "6c5041f7d30bf3fef405a4d3044ac6bcc56d7283caddfffa69c8e57958ed36d6": {
+    "query": "\n        SELECT id, name_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n        FROM transact\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "type_of!: TransactRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_type",
+              "kind": {
+                "Enum": [
+                  "customer_invoice",
+                  "customer_credit",
+                  "supplier_invoice",
+                  "supplier_credit",
+                  "repack",
+                  "build",
+                  "receipt",
+                  "payment"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
         false,
         false,
         false,
@@ -304,44 +380,6 @@
       "nullable": []
     }
   },
-  "9489dab991f85038f4d934e82695dbb900da4570301cba9805f900b6a6e566b0": {
-    "query": "\n        SELECT id, transaction_id, item_id, item_line_id\n        FROM transaction_line\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "transaction_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "item_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 3,
-          "name": "item_line_id",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        true
-      ]
-    }
-  },
   "98a2772e5729f0cbfe961559e79068f5c28cf6ec5e898db26f69fcd505c75d99": {
     "query": "\n            INSERT INTO item (id, item_name)\n            VALUES ($1, $2)\n            ",
     "describe": {
@@ -353,44 +391,6 @@
         ]
       },
       "nullable": []
-    }
-  },
-  "9bb9de25712a4f5c3b292ac7dfd8b73685915b41e6f73dacb451bb5061ef9950": {
-    "query": "\n        SELECT id, transaction_id, item_id, item_line_id\n        FROM transaction_line\n        WHERE transaction_id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "transaction_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "item_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 3,
-          "name": "item_line_id",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        true
-      ]
     }
   },
   "a7f851b40f87e0feedd1f432933a7f35cf675b1f5b0f42e1163c42a68fec83c7": {
@@ -550,60 +550,6 @@
       "nullable": []
     }
   },
-  "dfeb835f8cf007c400c09e55879a59a99085e2eaa583827a6cbc01e780350409": {
-    "query": "\n        SELECT id, name_id, invoice_number, type_of AS \"type_of!: TransactionRowType\"\n        FROM transaction\n        WHERE name_id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "name_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "invoice_number",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 3,
-          "name": "type_of!: TransactionRowType",
-          "type_info": {
-            "Custom": {
-              "name": "transaction_type",
-              "kind": {
-                "Enum": [
-                  "customer_invoice",
-                  "customer_credit",
-                  "supplier_invoice",
-                  "supplier_credit",
-                  "repack",
-                  "build",
-                  "receipt",
-                  "payment"
-                ]
-              }
-            }
-          }
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "e3dca261ad1f56e64ddb5aa35bd496ed561261a02b3f3a2e54e1299cad6b41cb": {
     "query": "\n        INSERT INTO requisition (id, name_id, store_id, type_of)\n        VALUES ($1, $2, $3, $4)\n        ",
     "describe": {
@@ -644,6 +590,60 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "e9f5322d3e12a03b41323ad8442b8d11bc82db2a1b6f7fa0de72c6e92245fde4": {
+    "query": "\n        SELECT id, name_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n        FROM transact\n        WHERE name_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "type_of!: TransactRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_type",
+              "kind": {
+                "Enum": [
+                  "customer_invoice",
+                  "customer_credit",
+                  "supplier_invoice",
+                  "supplier_credit",
+                  "repack",
+                  "build",
+                  "receipt",
+                  "payment"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
     }
   }
 }

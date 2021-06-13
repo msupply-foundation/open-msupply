@@ -1,7 +1,7 @@
 -- Create requisition line table.
 
 CREATE TABLE requisition_line (
-    -- Unique id assigned to each transaction.
+    -- Unique id assigned to each requisiton_line.
     id VARCHAR(255) NOT NULL PRIMARY KEY,
     -- Id of the parent requisition.
     requisition_id VARCHAR(255) NOT NULL,

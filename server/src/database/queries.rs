@@ -2,7 +2,7 @@
 
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransactionLineRow, TransactionRow, TransactionRowType,
+    StoreRow, TransactLineRow, TransactRow, TransactRowType,
 };
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
@@ -358,15 +358,12 @@ pub async fn select_requisition_lines(
     Ok(requisition_lines)
 }
 
-pub async fn select_transaction(
-    pool: &sqlx::PgPool,
-    id: String,
-) -> Result<TransactionRow, sqlx::Error> {
-    let transaction: TransactionRow = sqlx::query_as!(
-        TransactionRow,
+pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<TransactRow, sqlx::Error> {
+    let transact: TransactRow = sqlx::query_as!(
+        TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactionRowType"
-        FROM transaction
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        FROM transact
         WHERE id = $1
         "#,
         id
@@ -374,18 +371,18 @@ pub async fn select_transaction(
     .fetch_one(pool)
     .await?;
 
-    Ok(transaction)
+    Ok(transact)
 }
 
-pub async fn select_transactions(
+pub async fn select_transacts(
     pool: &sqlx::PgPool,
     name_id: String,
-) -> Result<Vec<TransactionRow>, sqlx::Error> {
-    let transactions: Vec<TransactionRow> = sqlx::query_as!(
-        TransactionRow,
+) -> Result<Vec<TransactRow>, sqlx::Error> {
+    let transacts: Vec<TransactRow> = sqlx::query_as!(
+        TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactionRowType"
-        FROM transaction
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        FROM transact
         WHERE name_id = $1
         "#,
         name_id
@@ -393,18 +390,18 @@ pub async fn select_transactions(
     .fetch_all(pool)
     .await?;
 
-    Ok(transactions)
+    Ok(transacts)
 }
 
-pub async fn select_transaction_line(
+pub async fn select_transact_line(
     pool: &sqlx::PgPool,
     id: String,
-) -> Result<TransactionLineRow, sqlx::Error> {
-    let transaction_line: TransactionLineRow = sqlx::query_as!(
-        TransactionLineRow,
+) -> Result<TransactLineRow, sqlx::Error> {
+    let transact_line: TransactLineRow = sqlx::query_as!(
+        TransactLineRow,
         r#"
-        SELECT id, transaction_id, item_id, item_line_id
-        FROM transaction_line
+        SELECT id, transact_id, item_id, item_line_id
+        FROM transact_line
         WHERE id = $1
         "#,
         id
@@ -412,24 +409,24 @@ pub async fn select_transaction_line(
     .fetch_one(pool)
     .await?;
 
-    Ok(transaction_line)
+    Ok(transact_line)
 }
 
-pub async fn select_transaction_lines(
+pub async fn select_transact_lines(
     pool: &sqlx::PgPool,
-    transaction_id: String,
-) -> Result<Vec<TransactionLineRow>, sqlx::Error> {
-    let transaction_lines: Vec<TransactionLineRow> = sqlx::query_as!(
-        TransactionLineRow,
+    transact_id: String,
+) -> Result<Vec<TransactLineRow>, sqlx::Error> {
+    let transact_lines: Vec<TransactLineRow> = sqlx::query_as!(
+        TransactLineRow,
         r#"
-        SELECT id, transaction_id, item_id, item_line_id
-        FROM transaction_line
-        WHERE transaction_id = $1
+        SELECT id, transact_id, item_id, item_line_id
+        FROM transact_line
+        WHERE transact_id = $1
         "#,
-        transaction_id
+        transact_id
     )
     .fetch_all(pool)
     .await?;
 
-    Ok(transaction_lines)
+    Ok(transact_lines)
 }
