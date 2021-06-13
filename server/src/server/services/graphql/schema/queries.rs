@@ -1,12 +1,10 @@
 //! src/services/graphql/queries.rs
 
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactionLineRow, TransactionRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactLineRow, TransactRow,
 };
 use crate::database::DatabaseConnection;
-use crate::server::graphql::{
-    Item, ItemLine, Name, Requisition, Store, Transaction, TransactionLine,
-};
+use crate::server::graphql::{Item, ItemLine, Name, Requisition, Store, Transact, TransactLine};
 
 use juniper::graphql_object;
 pub struct Queries;
@@ -36,26 +34,24 @@ impl Queries {
         Store { store_row }
     }
 
-    #[graphql(arguments(id(description = "id of the transaction")))]
-    pub async fn transaction(database: &DatabaseConnection, id: String) -> Transaction {
-        let transaction_row: TransactionRow = database
-            .get_transaction(id.to_string())
+    #[graphql(arguments(id(description = "id of the transact")))]
+    pub async fn transact(database: &DatabaseConnection, id: String) -> Transact {
+        let transact_row: TransactRow = database
+            .get_transact(id.to_string())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get transaction {}", id));
+            .unwrap_or_else(|_| panic!("Failed to get transact {}", id));
 
-        Transaction { transaction_row }
+        Transact { transact_row }
     }
 
-    #[graphql(arguments(id(description = "id of the transaction line")))]
-    pub async fn transaction_line(database: &DatabaseConnection, id: String) -> TransactionLine {
-        let transaction_line_row: TransactionLineRow = database
-            .get_transaction_line(id.to_string())
+    #[graphql(arguments(id(description = "id of the transact line")))]
+    pub async fn transact_line(database: &DatabaseConnection, id: String) -> TransactLine {
+        let transact_line_row: TransactLineRow = database
+            .get_transact_line(id.to_string())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get transaction line {}", id));
+            .unwrap_or_else(|_| panic!("Failed to get transact line {}", id));
 
-        TransactionLine {
-            transaction_line_row,
-        }
+        TransactLine { transact_line_row }
     }
 
     #[graphql(arguments(id(description = "id of the requisition")))]
