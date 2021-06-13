@@ -44,7 +44,7 @@ pub struct StoreRow {
 #[derive(sqlx::Type)]
 #[sqlx(rename = "transact_type", rename_all = "lowercase")]
 #[derive(Clone)]
-pub enum TransactionRowType {
+pub enum TransactRowType {
     CustomerInvoice,
     CustomerCredit,
     SupplierInvoice,
@@ -56,17 +56,17 @@ pub enum TransactionRowType {
 }
 
 #[derive(Clone)]
-pub struct TransactionRow {
+pub struct TransactRow {
     pub id: String,
     pub name_id: String,
     pub invoice_number: i32,
-    pub type_of: TransactionRowType,
+    pub type_of: TransactRowType,
 }
 
 #[derive(Clone)]
-pub struct TransactionLineRow {
+pub struct TransactLineRow {
     pub id: String,
-    pub transaction_id: String,
+    pub transact_id: String,
     pub item_id: String,
     pub item_line_id: Option<String>,
 }
