@@ -1,5 +1,3 @@
-//! src/services/graphql/queries.rs
-
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactionLineRow, TransactionRow,
 };

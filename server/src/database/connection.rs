@@ -1,5 +1,3 @@
-//! src/utils/database/connection.rs
-
 use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{

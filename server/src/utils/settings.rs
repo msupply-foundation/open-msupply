@@ -1,5 +1,3 @@
-//! src/utils/settings.rs
-
 #[derive(serde::Deserialize)]
 pub struct Settings {
     pub server: ServerSettings,
