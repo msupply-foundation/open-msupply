@@ -11,10 +11,7 @@ impl Mutations {
         item_name(description = "name of the item"),
     ))]
     async fn insert_item(database: &DatabaseConnection, id: String, item_name: String) -> Item {
-        let item_row = ItemRow {
-            id: id.clone(),
-            item_name: item_name.clone(),
-        };
+        let item_row = ItemRow { id, item_name };
 
         database
             .create_item(&item_row)
@@ -41,8 +38,8 @@ impl Mutations {
     ) -> Requisition {
         let requisition_row = RequisitionRow {
             id: id.clone(),
-            name_id: name_id.clone(),
-            store_id: store_id.clone(),
+            name_id,
+            store_id,
             type_of: match type_of {
                 RequisitionType::Imprest => RequisitionRowType::Imprest,
                 RequisitionType::StockHistory => RequisitionRowType::StockHistory,
@@ -59,7 +56,6 @@ impl Mutations {
             .expect("Failed to insert requisition into database");
 
         let requisition_line_rows: Vec<RequisitionLineRow> = requisition_lines
-            .clone()
             .into_iter()
             .map(|line| RequisitionLineRow {
                 id: line.id,
