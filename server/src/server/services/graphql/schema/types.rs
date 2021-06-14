@@ -7,7 +7,6 @@ use crate::database::DatabaseConnection;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 
 #[derive(Clone)]
-// A name.
 pub struct Name {
     pub name_row: NameRow,
 }
@@ -24,7 +23,6 @@ impl Name {
 }
 
 #[derive(Clone)]
-// A store.
 pub struct Store {
     pub store_row: StoreRow,
 }
@@ -46,7 +44,6 @@ impl Store {
 }
 
 #[derive(Clone)]
-// An item.
 pub struct Item {
     pub item_row: ItemRow,
 }
@@ -63,7 +60,6 @@ impl Item {
 }
 
 #[derive(Clone)]
-// An item line.
 pub struct ItemLine {
     pub item_line_row: ItemLineRow,
 }
@@ -125,7 +121,6 @@ pub enum RequisitionType {
 }
 
 #[derive(Clone)]
-// A requisition.
 pub struct Requisition {
     pub requisition_row: RequisitionRow,
 }
@@ -196,7 +191,6 @@ impl Requisition {
 }
 
 #[derive(Clone)]
-// A requisition line.
 pub struct RequisitionLine {
     pub requisition_line_row: RequisitionLineRow,
 }
@@ -251,7 +245,6 @@ pub enum TransactionType {
 }
 
 #[derive(Clone)]
-// A transaction.
 pub struct Transaction {
     pub transaction_row: TransactionRow,
 }
@@ -314,7 +307,6 @@ impl Transaction {
 }
 
 #[derive(Clone)]
-// A transaction line
 pub struct TransactionLine {
     pub transaction_line_row: TransactionLineRow,
 }
@@ -370,7 +362,6 @@ impl TransactionLine {
 }
 
 #[derive(Clone, GraphQLInputObject)]
-// A input requisition line.
 pub struct InputRequisitionLine {
     pub id: String,
     pub item_id: String,
