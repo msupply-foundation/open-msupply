@@ -1,6 +1,7 @@
 //! src/utils/configuration.rs
 
 use crate::utils::{Environment, Settings};
+use std::borrow::Cow;
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let mut settings = config::Config::default();
@@ -10,6 +11,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     settings.merge(config::File::from(configuration_directory.join("base")).required(true))?;
 
     let environment: Environment = std::env::var("APP_ENVIRONMENT")
+        .map(Cow::from)
         .unwrap_or_else(|_| "local".into())
         .parse()
         .expect("Failed to parse APP_ENVIRONMENT");
