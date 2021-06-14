@@ -1,6 +1,4 @@
-use crate::database::{
-    DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-};
+use crate::database::{DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow};
 use crate::server::graphql::{InputRequisitionLine, Item, Requisition, RequisitionType};
 
 pub struct Mutations;
@@ -40,14 +38,7 @@ impl Mutations {
             id: id.clone(),
             name_id,
             store_id,
-            type_of: match type_of {
-                RequisitionType::Imprest => RequisitionRowType::Imprest,
-                RequisitionType::StockHistory => RequisitionRowType::StockHistory,
-                RequisitionType::Request => RequisitionRowType::Request,
-                RequisitionType::Response => RequisitionRowType::Response,
-                RequisitionType::Supply => RequisitionRowType::Supply,
-                RequisitionType::Report => RequisitionRowType::Report,
-            },
+            type_of: type_of.into(),
         };
 
         database
