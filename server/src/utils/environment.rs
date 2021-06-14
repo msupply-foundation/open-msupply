@@ -1,5 +1,3 @@
-//! src/utils/environment.rs
-
 use std::str::FromStr;
 
 pub enum Environment {

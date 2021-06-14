@@ -1,5 +1,3 @@
-//! src/database/queries.rs
-
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
     StoreRow, TransactionLineRow, TransactionRow, TransactionRowType,

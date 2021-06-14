@@ -1,5 +1,3 @@
-//! src/services/graphql/mutations.rs
-
 use crate::database::{
     DatabaseConnection, ItemRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
 };

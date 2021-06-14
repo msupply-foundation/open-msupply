@@ -1,5 +1,3 @@
-//! src/utils/configuration.rs
-
 use crate::utils::{Environment, Settings};
 use std::borrow::Cow;
 

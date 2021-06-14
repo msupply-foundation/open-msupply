@@ -1,5 +1,3 @@
-//! src/services/graphql/mod.rs
-
 mod context;
 mod mutations;
 mod queries;
