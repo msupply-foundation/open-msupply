@@ -18,9 +18,9 @@ pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), s
     Ok(())
 }
 
-pub async fn insert_stores(pool: &sqlx::PgPool, stores: Vec<StoreRow>) -> Result<(), sqlx::Error> {
+pub async fn insert_stores(pool: &sqlx::PgPool, stores: &[StoreRow]) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for store in &stores {
+    for store in stores {
         sqlx::query!(
             r#"
                 INSERT INTO store (id, name_id)
@@ -51,9 +51,9 @@ pub async fn insert_name(pool: &sqlx::PgPool, name: &NameRow) -> Result<(), sqlx
     Ok(())
 }
 
-pub async fn insert_names(pool: &sqlx::PgPool, names: Vec<NameRow>) -> Result<(), sqlx::Error> {
+pub async fn insert_names(pool: &sqlx::PgPool, names: &[NameRow]) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for name in &names {
+    for name in names {
         sqlx::query!(
             r#"
                 INSERT INTO name (id, name)
@@ -84,9 +84,9 @@ pub async fn insert_item(pool: &sqlx::PgPool, item: &ItemRow) -> Result<(), sqlx
     Ok(())
 }
 
-pub async fn insert_items(pool: &sqlx::PgPool, items: Vec<ItemRow>) -> Result<(), sqlx::Error> {
+pub async fn insert_items(pool: &sqlx::PgPool, items: &[ItemRow]) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for item in &items {
+    for item in items {
         sqlx::query!(
             r#"
             INSERT INTO item (id, item_name)
@@ -125,10 +125,10 @@ pub async fn insert_item_line(
 
 pub async fn insert_item_lines(
     pool: &sqlx::PgPool,
-    item_lines: Vec<ItemLineRow>,
+    item_lines: &[ItemLineRow],
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for item_line in &item_lines {
+    for item_line in item_lines {
         sqlx::query!(
             r#"
             INSERT INTO item_line (id, item_id, store_id, batch, quantity)
@@ -169,10 +169,10 @@ pub async fn insert_requisition(
 
 pub async fn insert_requisitions(
     pool: &sqlx::PgPool,
-    requisitions: Vec<RequisitionRow>,
+    requisitions: &[RequisitionRow],
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for requisition in &requisitions {
+    for requisition in requisitions {
         sqlx::query!(
             r#"
             INSERT INTO requisition (id, name_id, store_id, type_of)
@@ -213,10 +213,10 @@ pub async fn insert_requisition_line(
 
 pub async fn insert_requisition_lines(
     pool: &sqlx::PgPool,
-    requisition_lines: Vec<RequisitionLineRow>,
+    requisition_lines: &[RequisitionLineRow],
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for requisition_line in &requisition_lines {
+    for requisition_line in requisition_lines {
         sqlx::query!(
             r#"
             INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)

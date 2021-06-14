@@ -16,27 +16,27 @@ impl DatabaseConnection {
     }
 
     pub async fn insert_mock_data(&self) -> Result<(), sqlx::Error> {
-        self.create_names(mocks::mock_names())
+        self.create_names(&mocks::mock_names())
             .await
             .expect("Failed to insert mock name data");
 
-        self.create_stores(mocks::mock_stores())
+        self.create_stores(&mocks::mock_stores())
             .await
             .expect("Failed to insert mock store data");
 
-        self.create_items(mocks::mock_items())
+        self.create_items(&mocks::mock_items())
             .await
             .expect("Failed to insert mock item data");
 
-        self.create_item_lines(mocks::mock_item_lines())
+        self.create_item_lines(&mocks::mock_item_lines())
             .await
             .expect("Failed to insert mock item line data");
 
-        self.create_requisitions(mocks::mock_requisitions())
+        self.create_requisitions(&mocks::mock_requisitions())
             .await
             .expect("Failed to insert mock requisition data");
 
-        self.create_requisition_lines(mocks::mock_requisition_lines())
+        self.create_requisition_lines(&mocks::mock_requisition_lines())
             .await
             .expect("Failed to insert mock requisition line data");
 
@@ -49,7 +49,7 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn create_stores(&self, stores: Vec<StoreRow>) -> Result<(), sqlx::Error> {
+    pub async fn create_stores(&self, stores: &[StoreRow]) -> Result<(), sqlx::Error> {
         queries::insert_stores(&self.pool, stores).await
     }
 
@@ -59,7 +59,7 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn create_names(&self, names: Vec<NameRow>) -> Result<(), sqlx::Error> {
+    pub async fn create_names(&self, names: &[NameRow]) -> Result<(), sqlx::Error> {
         queries::insert_names(&self.pool, names).await
     }
 
@@ -67,7 +67,7 @@ impl DatabaseConnection {
         queries::insert_item(&self.pool, item).await
     }
 
-    pub async fn create_items(&self, items: Vec<ItemRow>) -> Result<(), sqlx::Error> {
+    pub async fn create_items(&self, items: &[ItemRow]) -> Result<(), sqlx::Error> {
         queries::insert_items(&self.pool, items).await
     }
 
@@ -77,7 +77,7 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn create_item_lines(&self, item_lines: Vec<ItemLineRow>) -> Result<(), sqlx::Error> {
+    pub async fn create_item_lines(&self, item_lines: &[ItemLineRow]) -> Result<(), sqlx::Error> {
         queries::insert_item_lines(&self.pool, item_lines).await
     }
 
@@ -90,7 +90,7 @@ impl DatabaseConnection {
 
     pub async fn create_requisitions(
         &self,
-        requisitions: Vec<RequisitionRow>,
+        requisitions: &[RequisitionRow],
     ) -> Result<(), sqlx::Error> {
         queries::insert_requisitions(&self.pool, requisitions).await
     }
@@ -104,7 +104,7 @@ impl DatabaseConnection {
 
     pub async fn create_requisition_lines(
         &self,
-        requisition_lines: Vec<RequisitionLineRow>,
+        requisition_lines: &[RequisitionLineRow],
     ) -> Result<(), sqlx::Error> {
         queries::insert_requisition_lines(&self.pool, requisition_lines).await
     }
