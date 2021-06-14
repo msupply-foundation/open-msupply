@@ -120,6 +120,32 @@ pub enum RequisitionType {
     Report,
 }
 
+impl From<RequisitionRowType> for RequisitionType {
+    fn from(requisition_row_type: RequisitionRowType) -> RequisitionType {
+        match requisition_row_type {
+            RequisitionRowType::Imprest => RequisitionType::Imprest,
+            RequisitionRowType::StockHistory => RequisitionType::StockHistory,
+            RequisitionRowType::Request => RequisitionType::Request,
+            RequisitionRowType::Response => RequisitionType::Response,
+            RequisitionRowType::Supply => RequisitionType::Supply,
+            RequisitionRowType::Report => RequisitionType::Report,
+        }
+    }
+}
+
+impl From<RequisitionType> for RequisitionRowType {
+    fn from(requisition_type: RequisitionType) -> RequisitionRowType {
+        match requisition_type {
+            RequisitionType::Imprest => RequisitionRowType::Imprest,
+            RequisitionType::StockHistory => RequisitionRowType::StockHistory,
+            RequisitionType::Request => RequisitionRowType::Request,
+            RequisitionType::Response => RequisitionRowType::Response,
+            RequisitionType::Supply => RequisitionRowType::Supply,
+            RequisitionType::Report => RequisitionRowType::Report,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Requisition {
     pub requisition_row: RequisitionRow,
