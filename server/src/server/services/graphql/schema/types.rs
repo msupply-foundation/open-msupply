@@ -186,14 +186,7 @@ impl Requisition {
     }
 
     pub fn type_of(&self) -> RequisitionType {
-        match self.requisition_row.type_of {
-            RequisitionRowType::Imprest => RequisitionType::Imprest,
-            RequisitionRowType::StockHistory => RequisitionType::StockHistory,
-            RequisitionRowType::Request => RequisitionType::Request,
-            RequisitionRowType::Response => RequisitionType::Response,
-            RequisitionRowType::Supply => RequisitionType::Supply,
-            RequisitionRowType::Report => RequisitionType::Report,
-        }
+        self.requisition_row.type_of.clone().into()
     }
 
     pub async fn requisition_lines(&self, database: &DatabaseConnection) -> Vec<RequisitionLine> {
