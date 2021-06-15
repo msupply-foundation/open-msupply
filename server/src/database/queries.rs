@@ -1,5 +1,3 @@
-//! src/database/queries.rs
-
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
     StoreRow, TransactLineRow, TransactRow, TransactRowType,
@@ -20,9 +18,9 @@ pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), s
     Ok(())
 }
 
-pub async fn insert_stores(pool: &sqlx::PgPool, stores: Vec<StoreRow>) -> Result<(), sqlx::Error> {
+pub async fn insert_stores(pool: &sqlx::PgPool, stores: &[StoreRow]) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for store in &stores {
+    for store in stores {
         sqlx::query!(
             r#"
                 INSERT INTO store (id, name_id)
@@ -53,9 +51,9 @@ pub async fn insert_name(pool: &sqlx::PgPool, name: &NameRow) -> Result<(), sqlx
     Ok(())
 }
 
-pub async fn insert_names(pool: &sqlx::PgPool, names: Vec<NameRow>) -> Result<(), sqlx::Error> {
+pub async fn insert_names(pool: &sqlx::PgPool, names: &[NameRow]) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for name in &names {
+    for name in names {
         sqlx::query!(
             r#"
                 INSERT INTO name (id, name)
@@ -86,9 +84,9 @@ pub async fn insert_item(pool: &sqlx::PgPool, item: &ItemRow) -> Result<(), sqlx
     Ok(())
 }
 
-pub async fn insert_items(pool: &sqlx::PgPool, items: Vec<ItemRow>) -> Result<(), sqlx::Error> {
+pub async fn insert_items(pool: &sqlx::PgPool, items: &[ItemRow]) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for item in &items {
+    for item in items {
         sqlx::query!(
             r#"
             INSERT INTO item (id, item_name)
@@ -127,10 +125,10 @@ pub async fn insert_item_line(
 
 pub async fn insert_item_lines(
     pool: &sqlx::PgPool,
-    item_lines: Vec<ItemLineRow>,
+    item_lines: &[ItemLineRow],
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for item_line in &item_lines {
+    for item_line in item_lines {
         sqlx::query!(
             r#"
             INSERT INTO item_line (id, item_id, store_id, batch, quantity)
@@ -171,10 +169,10 @@ pub async fn insert_requisition(
 
 pub async fn insert_requisitions(
     pool: &sqlx::PgPool,
-    requisitions: Vec<RequisitionRow>,
+    requisitions: &[RequisitionRow],
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for requisition in &requisitions {
+    for requisition in requisitions {
         sqlx::query!(
             r#"
             INSERT INTO requisition (id, name_id, store_id, type_of)
@@ -215,10 +213,10 @@ pub async fn insert_requisition_line(
 
 pub async fn insert_requisition_lines(
     pool: &sqlx::PgPool,
-    requisition_lines: Vec<RequisitionLineRow>,
+    requisition_lines: &[RequisitionLineRow],
 ) -> Result<(), sqlx::Error> {
     // TODO: aggregate into single query.
-    for requisition_line in &requisition_lines {
+    for requisition_line in requisition_lines {
         sqlx::query!(
             r#"
             INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)
@@ -237,7 +235,7 @@ pub async fn insert_requisition_lines(
     Ok(())
 }
 
-pub async fn select_store(pool: &sqlx::PgPool, id: String) -> Result<StoreRow, sqlx::Error> {
+pub async fn select_store(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sqlx::Error> {
     let store = sqlx::query_as!(
         StoreRow,
         r#"
@@ -253,7 +251,7 @@ pub async fn select_store(pool: &sqlx::PgPool, id: String) -> Result<StoreRow, s
     Ok(store)
 }
 
-pub async fn select_name(pool: &sqlx::PgPool, id: String) -> Result<NameRow, sqlx::Error> {
+pub async fn select_name(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx::Error> {
     let name = sqlx::query_as!(
         NameRow,
         r#"
@@ -269,7 +267,7 @@ pub async fn select_name(pool: &sqlx::PgPool, id: String) -> Result<NameRow, sql
     Ok(name)
 }
 
-pub async fn select_item(pool: &sqlx::PgPool, id: String) -> Result<ItemRow, sqlx::Error> {
+pub async fn select_item(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx::Error> {
     let item = sqlx::query_as!(
         ItemRow,
         r#"
@@ -285,7 +283,7 @@ pub async fn select_item(pool: &sqlx::PgPool, id: String) -> Result<ItemRow, sql
     Ok(item)
 }
 
-pub async fn select_item_line(pool: &sqlx::PgPool, id: String) -> Result<ItemLineRow, sqlx::Error> {
+pub async fn select_item_line(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineRow, sqlx::Error> {
     let item_line = sqlx::query_as!(
         ItemLineRow,
         r#"
@@ -303,7 +301,7 @@ pub async fn select_item_line(pool: &sqlx::PgPool, id: String) -> Result<ItemLin
 
 pub async fn select_requisition(
     pool: &sqlx::PgPool,
-    id: String,
+    id: &str,
 ) -> Result<RequisitionRow, sqlx::Error> {
     let requisition = sqlx::query_as!(
         RequisitionRow,
@@ -322,7 +320,7 @@ pub async fn select_requisition(
 
 pub async fn select_requisition_line(
     pool: &sqlx::PgPool,
-    id: String,
+    id: &str,
 ) -> Result<RequisitionLineRow, sqlx::Error> {
     let requisition_line = sqlx::query_as!(
         RequisitionLineRow,
@@ -341,7 +339,7 @@ pub async fn select_requisition_line(
 
 pub async fn select_requisition_lines(
     pool: &sqlx::PgPool,
-    requisition_id: String,
+    requisition_id: &str,
 ) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
     let requisition_lines = sqlx::query_as!(
         RequisitionLineRow,
@@ -358,7 +356,7 @@ pub async fn select_requisition_lines(
     Ok(requisition_lines)
 }
 
-pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<TransactRow, sqlx::Error> {
+pub async fn select_transact(pool: &sqlx::PgPool, id: &str) -> Result<TransactRow, sqlx::Error> {
     let transact: TransactRow = sqlx::query_as!(
         TransactRow,
         r#"
@@ -376,7 +374,7 @@ pub async fn select_transact(pool: &sqlx::PgPool, id: String) -> Result<Transact
 
 pub async fn select_transacts(
     pool: &sqlx::PgPool,
-    name_id: String,
+    name_id: &str,
 ) -> Result<Vec<TransactRow>, sqlx::Error> {
     let transacts: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
@@ -395,7 +393,7 @@ pub async fn select_transacts(
 
 pub async fn select_transact_line(
     pool: &sqlx::PgPool,
-    id: String,
+    id: &str,
 ) -> Result<TransactLineRow, sqlx::Error> {
     let transact_line: TransactLineRow = sqlx::query_as!(
         TransactLineRow,
@@ -414,7 +412,7 @@ pub async fn select_transact_line(
 
 pub async fn select_transact_lines(
     pool: &sqlx::PgPool,
-    transact_id: String,
+    transact_id: &str,
 ) -> Result<Vec<TransactLineRow>, sqlx::Error> {
     let transact_lines: Vec<TransactLineRow> = sqlx::query_as!(
         TransactLineRow,

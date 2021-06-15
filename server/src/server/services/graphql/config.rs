@@ -1,5 +1,3 @@
-//! src/services/graphql/config.rs
-
 use crate::server::services::graphql::routes::{handlers, paths};
 use crate::server::services::graphql::schema::{Mutations, Queries, Schema, Subscriptions};
 

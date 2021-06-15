@@ -1,5 +1,3 @@
-//! src/services/rest/config.rs
-
 use crate::server::rest::routes;
 
 pub fn config(cfg: &mut actix_web::web::ServiceConfig) {

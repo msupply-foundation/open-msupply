@@ -1,6 +1,5 @@
-//! src/utils/environment.rs
+use std::str::FromStr;
 
-use std::convert::TryFrom;
 pub enum Environment {
     Local,
     Production,
@@ -15,17 +14,19 @@ impl Environment {
     }
 }
 
-impl TryFrom<String> for Environment {
-    type Error = String;
+impl FromStr for Environment {
+    type Err = String;
 
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        match s.to_lowercase().as_str() {
-            "local" => Ok(Self::Local),
-            "production" => Ok(Self::Production),
-            other => Err(format!(
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.eq_ignore_ascii_case("local") {
+            Ok(Self::Local)
+        } else if s.eq_ignore_ascii_case("production") {
+            Ok(Self::Production)
+        } else {
+            Err(format!(
                 "{} is not a supported environment. Use either `local` or `production`.",
-                other
-            )),
+                s
+            ))
         }
     }
 }

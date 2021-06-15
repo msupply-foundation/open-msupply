@@ -1,5 +1,3 @@
-//! src/services/graphql/routes.rs
-
 use crate::database::DatabaseConnection;
 use crate::server::graphql::schema::Schema;
 

@@ -1,5 +1,3 @@
-//! src/services/graphql/routes/mod.rs
-
 pub mod handlers;
 pub mod paths;
 

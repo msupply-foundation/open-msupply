@@ -1,5 +1,3 @@
-//! src/utils/database/schema.rs
-
 #[derive(Clone)]
 pub struct NameRow {
     pub id: String,
