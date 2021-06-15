@@ -263,6 +263,36 @@ pub enum TransactType {
     Payment,
 }
 
+impl From<TransactRowType> for TransactType {
+    fn from(transact_row_type: TransactRowType) -> TransactType {
+        match transact_row_type {
+            TransactRowType::CustomerInvoice => TransactType::CustomerInvoice,
+            TransactRowType::CustomerCredit => TransactType::CustomerCredit,
+            TransactRowType::SupplierInvoice => TransactType::SupplierInvoice,
+            TransactRowType::SupplierCredit => TransactType::SupplierCredit,
+            TransactRowType::Repack => TransactType::Repack,
+            TransactRowType::Build => TransactType::Build,
+            TransactRowType::Receipt => TransactType::Receipt,
+            TransactRowType::Payment => TransactType::Payment,
+        }
+    }
+}
+
+impl From<TransactType> for TransactRowType {
+    fn from(transact_type: TransactType) -> TransactRowType {
+        match transact_type {
+            TransactType::CustomerInvoice => TransactRowType::CustomerInvoice,
+            TransactType::CustomerCredit => TransactRowType::CustomerCredit,
+            TransactType::SupplierInvoice => TransactRowType::SupplierInvoice,
+            TransactType::SupplierCredit => TransactRowType::SupplierCredit,
+            TransactType::Repack => TransactRowType::Repack,
+            TransactType::Build => TransactRowType::Build,
+            TransactType::Receipt => TransactRowType::Receipt,
+            TransactType::Payment => TransactRowType::Payment,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Transact {
     pub transact_row: TransactRow,
@@ -288,16 +318,7 @@ impl Transact {
     }
 
     pub fn type_of(&self) -> TransactType {
-        match self.transact_row.type_of {
-            TransactRowType::CustomerInvoice => TransactType::CustomerInvoice,
-            TransactRowType::CustomerCredit => TransactType::CustomerCredit,
-            TransactRowType::SupplierInvoice => TransactType::SupplierInvoice,
-            TransactRowType::SupplierCredit => TransactType::SupplierCredit,
-            TransactRowType::Repack => TransactType::Repack,
-            TransactRowType::Build => TransactType::Build,
-            TransactRowType::Receipt => TransactType::Receipt,
-            TransactRowType::Payment => TransactType::Payment,
-        }
+        self.transact_row.type_of.clone().into()
     }
 
     pub async fn transact_lines(&self, database: &DatabaseConnection) -> Vec<TransactLine> {
