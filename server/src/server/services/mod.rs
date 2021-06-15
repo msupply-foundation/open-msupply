@@ -1,5 +1,3 @@
-//! src/services/mod.rs
-
 pub mod graphql;
 pub mod rest;
 

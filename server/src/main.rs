@@ -1,5 +1,3 @@
-//! src/main.rs
-
 mod database;
 mod server;
 mod utils;

@@ -1,5 +1,3 @@
-//! src/server/middleware.rs
-
 pub fn compress() -> actix_web::middleware::Compress {
     actix_web::middleware::Compress::default()
 }
