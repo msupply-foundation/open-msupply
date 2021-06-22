@@ -255,7 +255,7 @@ pub async fn insert_requisition_lines(
     Ok(())
 }
 
-pub async fn select_user_account(
+pub async fn select_user_account_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<UserAccountRow, sqlx::Error> {
@@ -274,7 +274,7 @@ pub async fn select_user_account(
     Ok(user_account)
 }
 
-pub async fn select_store(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sqlx::Error> {
+pub async fn select_store_by_id(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sqlx::Error> {
     let store = sqlx::query_as!(
         StoreRow,
         r#"
@@ -290,7 +290,7 @@ pub async fn select_store(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sql
     Ok(store)
 }
 
-pub async fn select_name(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx::Error> {
+pub async fn select_name_by_id(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx::Error> {
     let name = sqlx::query_as!(
         NameRow,
         r#"
@@ -306,7 +306,7 @@ pub async fn select_name(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx:
     Ok(name)
 }
 
-pub async fn select_item(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx::Error> {
+pub async fn select_item_by_id(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx::Error> {
     let item = sqlx::query_as!(
         ItemRow,
         r#"
@@ -322,7 +322,7 @@ pub async fn select_item(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx:
     Ok(item)
 }
 
-pub async fn select_item_line(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineRow, sqlx::Error> {
+pub async fn select_item_line_by_id(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineRow, sqlx::Error> {
     let item_line = sqlx::query_as!(
         ItemLineRow,
         r#"
@@ -338,7 +338,7 @@ pub async fn select_item_line(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineR
     Ok(item_line)
 }
 
-pub async fn select_requisition(
+pub async fn select_requisition_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<RequisitionRow, sqlx::Error> {
@@ -357,7 +357,7 @@ pub async fn select_requisition(
     Ok(requisition)
 }
 
-pub async fn select_requisition_line(
+pub async fn select_requisition_line_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<RequisitionLineRow, sqlx::Error> {
@@ -376,7 +376,7 @@ pub async fn select_requisition_line(
     Ok(requisition_line)
 }
 
-pub async fn select_requisition_lines(
+pub async fn select_requisition_lines_by_requisition_id(
     pool: &sqlx::PgPool,
     requisition_id: &str,
 ) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
@@ -395,7 +395,7 @@ pub async fn select_requisition_lines(
     Ok(requisition_lines)
 }
 
-pub async fn select_transact(pool: &sqlx::PgPool, id: &str) -> Result<TransactRow, sqlx::Error> {
+pub async fn select_transact_by_id(pool: &sqlx::PgPool, id: &str) -> Result<TransactRow, sqlx::Error> {
     let transact: TransactRow = sqlx::query_as!(
         TransactRow,
         r#"
@@ -411,7 +411,7 @@ pub async fn select_transact(pool: &sqlx::PgPool, id: &str) -> Result<TransactRo
     Ok(transact)
 }
 
-pub async fn select_transacts(
+pub async fn select_transacts_by_name_id(
     pool: &sqlx::PgPool,
     name_id: &str,
 ) -> Result<Vec<TransactRow>, sqlx::Error> {
@@ -430,7 +430,7 @@ pub async fn select_transacts(
     Ok(transacts)
 }
 
-pub async fn select_transact_line(
+pub async fn select_transact_line_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<TransactLineRow, sqlx::Error> {
@@ -449,7 +449,7 @@ pub async fn select_transact_line(
     Ok(transact_line)
 }
 
-pub async fn select_transact_lines(
+pub async fn select_transact_lines_by_transact_id(
     pool: &sqlx::PgPool,
     transact_id: &str,
 ) -> Result<Vec<TransactLineRow>, sqlx::Error> {
