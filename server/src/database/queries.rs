@@ -417,23 +417,44 @@ pub async fn select_transact_by_id(
     Ok(transact)
 }
 
-pub async fn select_transacts_by_name_id(
+pub async fn select_customer_invoices_by_name_id(
     pool: &sqlx::PgPool,
     name_id: &str,
 ) -> Result<Vec<TransactRow>, sqlx::Error> {
-    let transacts: Vec<TransactRow> = sqlx::query_as!(
+    let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
         r#"
         SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
-        WHERE name_id = $1
+        WHERE type_of = $1 AND name_id = $2
         "#,
+        TransactRowType.CustomerInvoice,
         name_id
     )
     .fetch_all(pool)
     .await?;
 
-    Ok(transacts)
+    Ok(customer_invoices)
+}
+
+pub async fn select_customer_invoices_by_store_id(
+    pool: &sqlx::PgPool,
+    store_id: &str,
+) -> Result<Vec<TransactRow>, sqlx::Error> {
+    let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
+        TransactRow,
+        r#"
+        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        FROM transact
+        WHERE type_of = $1 AND store_id = $2
+        "#,
+        TransactRowType.CustomerInvoice,
+        name_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(customer_invoices)
 }
 
 pub async fn select_transact_line_by_id(

@@ -163,11 +163,19 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn get_transacts_by_name_id(
+    pub async fn get_customer_invoices_by_name_id(
         &self,
         name_id: &str,
     ) -> Result<Vec<TransactRow>, sqlx::Error> {
-        queries::select_transacts_by_name_id(&self.pool, name_id).await
+        queries::select_customer_invoices_by_name_id(&self.pool, name_id).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_customer_invoices_by_store_id(
+        &self,
+        store_id: &str,
+    ) -> Result<Vec<TransactRow>, sqlx::Error> {
+        queries::select_customer_invoices_by_store_id(&self.pool, store_id).await
     }
 
     #[allow(dead_code)]
