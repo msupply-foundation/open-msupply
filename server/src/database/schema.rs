@@ -1,4 +1,12 @@
 #[derive(Clone)]
+pub struct UserAccountRow {
+    pub id: String,
+    pub username: String,
+    pub password: String,
+    pub email: Option<String>,
+}
+
+#[derive(Clone)]
 pub struct NameRow {
     pub id: String,
     pub name: String,

@@ -1,7 +1,27 @@
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransactLineRow, TransactRow, TransactRowType,
+    StoreRow, TransactLineRow, TransactRow, TransactRowType, UserAccountRow,
 };
+
+pub async fn insert_user_acount(
+    pool: &sqlx::PgPool,
+    user_account: &UserAccountRow,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO user_account (id, username, password, email)
+        VALUES ($1, $2, $3, $4)
+        "#,
+        user_account.id,
+        user_account.username,
+        user_account.password,
+        user_account.email,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -235,6 +255,25 @@ pub async fn insert_requisition_lines(
     Ok(())
 }
 
+pub async fn select_user_account(
+    pool: &sqlx::PgPool,
+    id: &str,
+) -> Result<UserAccountRow, sqlx::Error> {
+    let user_account = sqlx::query_as!(
+        UserAccountRow,
+        r#"
+            SELECT id, username, password, email
+            FROM user_account
+            WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(user_account)
+}
+
 pub async fn select_store(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sqlx::Error> {
     let store = sqlx::query_as!(
         StoreRow,
@@ -326,7 +365,7 @@ pub async fn select_requisition_line(
         RequisitionLineRow,
         r#"
         SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity
-        FROM requisition_line 
+        FROM requisition_line
         WHERE id = $1
         "#,
         id
@@ -345,7 +384,7 @@ pub async fn select_requisition_lines(
         RequisitionLineRow,
         r#"
         SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity
-        FROM requisition_line 
+        FROM requisition_line
         WHERE requisition_id = $1
         "#,
         requisition_id
