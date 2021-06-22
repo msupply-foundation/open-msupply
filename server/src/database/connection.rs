@@ -2,7 +2,7 @@ use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransactLineRow,
-    TransactRow,
+    TransactRow, UserAccountRow,
 };
 
 #[derive(Clone)]
@@ -41,6 +41,14 @@ impl DatabaseConnection {
             .expect("Failed to insert mock requisition line data");
 
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_user_account(
+        &self,
+        user_account: &UserAccountRow,
+    ) -> Result<(), sqlx::Error> {
+        queries::insert_user_acount(&self.pool, user_account).await
     }
 
     #[allow(dead_code)]
@@ -107,6 +115,11 @@ impl DatabaseConnection {
         requisition_lines: &[RequisitionLineRow],
     ) -> Result<(), sqlx::Error> {
         queries::insert_requisition_lines(&self.pool, requisition_lines).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_user_account(&self, id: &str) -> Result<UserAccountRow, sqlx::Error> {
+        queries::select_user_account(&self.pool, id).await
     }
 
     pub async fn get_store(&self, id: &str) -> Result<StoreRow, sqlx::Error> {
