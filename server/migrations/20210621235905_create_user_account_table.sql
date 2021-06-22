@@ -10,5 +10,5 @@ CREATE TABLE user_account (
     -- User password, stored as salted MD5 hash.
     password TEXT NOT NULL,
     -- Email address of the user.
-    email VARCHAR(255),
+    email VARCHAR(255)
 )
