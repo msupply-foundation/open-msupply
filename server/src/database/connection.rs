@@ -143,7 +143,10 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn get_requisition_line_by_id(&self, id: &str) -> Result<RequisitionLineRow, sqlx::Error> {
+    pub async fn get_requisition_line_by_id(
+        &self,
+        id: &str,
+    ) -> Result<RequisitionLineRow, sqlx::Error> {
         queries::select_requisition_line_by_id(&self.pool, id).await
     }
 
@@ -160,7 +163,10 @@ impl DatabaseConnection {
     }
 
     #[allow(dead_code)]
-    pub async fn get_transacts_by_name_id(&self, name_id: &str) -> Result<Vec<TransactRow>, sqlx::Error> {
+    pub async fn get_transacts_by_name_id(
+        &self,
+        name_id: &str,
+    ) -> Result<Vec<TransactRow>, sqlx::Error> {
         queries::select_transacts_by_name_id(&self.pool, name_id).await
     }
 
