@@ -322,7 +322,10 @@ pub async fn select_item_by_id(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow,
     Ok(item)
 }
 
-pub async fn select_item_line_by_id(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineRow, sqlx::Error> {
+pub async fn select_item_line_by_id(
+    pool: &sqlx::PgPool,
+    id: &str,
+) -> Result<ItemLineRow, sqlx::Error> {
     let item_line = sqlx::query_as!(
         ItemLineRow,
         r#"
@@ -395,7 +398,10 @@ pub async fn select_requisition_lines_by_requisition_id(
     Ok(requisition_lines)
 }
 
-pub async fn select_transact_by_id(pool: &sqlx::PgPool, id: &str) -> Result<TransactRow, sqlx::Error> {
+pub async fn select_transact_by_id(
+    pool: &sqlx::PgPool,
+    id: &str,
+) -> Result<TransactRow, sqlx::Error> {
     let transact: TransactRow = sqlx::query_as!(
         TransactRow,
         r#"
