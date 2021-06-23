@@ -426,9 +426,8 @@ pub async fn select_customer_invoices_by_name_id(
         r#"
         SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
-        WHERE type_of = $1 AND name_id = $2
+        WHERE type_of = 'customer_invoice' AND name_id = $1
         "#,
-        TransactRowType.CustomerInvoice,
         name_id
     )
     .fetch_all(pool)
@@ -446,10 +445,9 @@ pub async fn select_customer_invoices_by_store_id(
         r#"
         SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
-        WHERE type_of = $1 AND store_id = $2
+        WHERE type_of = 'customer_invoice' AND store_id = $1
         "#,
-        TransactRowType.CustomerInvoice,
-        name_id
+        store_id
     )
     .fetch_all(pool)
     .await?;
