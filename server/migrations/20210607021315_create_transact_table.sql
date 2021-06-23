@@ -14,10 +14,14 @@ CREATE TYPE transact_type AS ENUM (
 CREATE TABLE transact (
     -- Unique id assigned to each transact.
     id VARCHAR(255) NOT NULL PRIMARY KEY,
-    -- Id of the customer or supplier associated with the transact.
+    -- For customer invoices, the id of the receiving customer.
+    -- For supplier invoices, the id of the sending supplier.
     name_id VARCHAR(255) NOT NULL,
+    -- For customer invoices, the id of the issuing store.
+    -- For supplier invoices, the id of the receiving store.
+    store_id VARCHAR(255) NOT NULL,
     -- Invoice number assigned to the transact.
     invoice_number INTEGER NOT NULL,
     -- Type of the transact.
     type_of transact_type NOT NULL
-)
+)
