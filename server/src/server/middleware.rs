@@ -7,5 +7,7 @@ pub fn logger() -> actix_web::middleware::Logger {
 }
 
 pub fn cors() -> actix_cors::Cors {
-    actix_cors::Cors::default().supports_credentials()
+    actix_cors::Cors::default()
+        .supports_credentials()
+        .allowed_origin("http://localhost:8000")
 }
