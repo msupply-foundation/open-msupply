@@ -41,6 +41,25 @@ impl Store {
 
         Name { name_row }
     }
+
+    pub async fn customer_invoices(&self, database: &DatabaseConnection) -> Vec<Transact> {
+        let customer_invoice_rows = database
+            .get_customer_invoices_by_store_id(&self.store_row.id)
+            .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get customer invoices for store {}",
+                    self.store_row.id
+                )
+            });
+
+        customer_invoice_rows
+            .into_iter()
+            .map(|customer_invoice_row| Transact {
+                transact_row: customer_invoice_row,
+            })
+            .collect()
+    }
 }
 
 #[derive(Clone)]
