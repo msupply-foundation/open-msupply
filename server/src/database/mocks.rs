@@ -1,5 +1,6 @@
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow,
+    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+    StoreRow, TransactLineRow, TransactRow, TransactRowType,
 };
 
 pub fn mock_stores() -> Vec<StoreRow> {
@@ -218,5 +219,62 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
         requisition_line_c,
         requisition_line_d,
         requisition_line_e,
+    ]
+}
+
+pub fn mock_transactions() -> Vec<TransactRow> {
+    let transact_a = TransactRow {
+        id: "transact_a".to_string(),
+        name_id: "name_store_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 1,
+        type_of: TransactRowType::CustomerInvoice,
+    };
+
+    let transact_b = TransactRow {
+        id: "transact_b".to_string(),
+        name_id: "name_store_b".to_string(),
+        store_id: "store_b".to_string(),
+        invoice_number: 1,
+        type_of: TransactRowType::CustomerInvoice,
+    };
+
+    vec![transact_a, transact_b]
+}
+
+pub fn mock_transact_lines() -> Vec<TransactLineRow> {
+    let transact_a_line_a = TransactLineRow {
+        id: "transact_a_line_a".to_string(),
+        transact_id: "transact_a".to_string(),
+        item_id: "item_a".to_string(),
+        item_line_id: Some("item_a_line_a".to_string()),
+    };
+
+    let transact_a_line_b = TransactLineRow {
+        id: "transact_a_line_b".to_string(),
+        transact_id: "transact_a".to_string(),
+        item_id: "item_b".to_string(),
+        item_line_id: Some("item_b_line_a".to_string()),
+    };
+
+    let transact_b_line_a = TransactLineRow {
+        id: "transact_b_line_a".to_string(),
+        transact_id: "transact_b".to_string(),
+        item_id: "item_a".to_string(),
+        item_line_id: Some("item_a_line_a".to_string()),
+    };
+
+    let transact_b_line_b = TransactLineRow {
+        id: "transact_b_line_b".to_string(),
+        transact_id: "transact_b".to_string(),
+        item_id: "item_b".to_string(),
+        item_line_id: Some("item_b_line_a".to_string()),
+    };
+
+    vec![
+        transact_a_line_a,
+        transact_a_line_b,
+        transact_b_line_a,
+        transact_b_line_b,
     ]
 }
