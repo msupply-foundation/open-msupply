@@ -51,6 +51,7 @@ pub struct StoreRow {
 #[sqlx(rename = "transact_type", rename_all = "lowercase")]
 #[derive(Clone)]
 pub enum TransactRowType {
+    #[sqlx(rename = "customer_invoice")]
     CustomerInvoice,
     CustomerCredit,
     SupplierInvoice,
