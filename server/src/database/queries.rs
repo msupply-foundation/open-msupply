@@ -449,7 +449,7 @@ pub async fn select_transact_by_id(
     let transact: TransactRow = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
         WHERE id = $1
         "#,
@@ -468,7 +468,7 @@ pub async fn select_customer_invoices_by_name_id(
     let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
         WHERE type_of = 'customer_invoice' AND name_id = $1
         "#,
@@ -487,7 +487,7 @@ pub async fn select_customer_invoices_by_store_id(
     let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
         WHERE type_of = 'customer_invoice' AND store_id = $1
         "#,
