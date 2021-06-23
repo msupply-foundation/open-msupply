@@ -13,6 +13,7 @@ pub fn run(listener: TcpListener, database: DatabaseConnection) -> Result<Server
             .wrap(middleware::compress())
             .wrap(middleware::logger())
             .wrap(middleware::cors())
+            .configure(services::graphiql::config)
             .configure(services::graphql::config)
             .configure(services::rest::config)
     })

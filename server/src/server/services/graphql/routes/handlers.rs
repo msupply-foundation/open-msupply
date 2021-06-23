@@ -13,13 +13,3 @@ pub async fn graphql(
     log::info!("Authorization: {}", authorization.unwrap());
     juniper_actix::graphql_handler(&schema, &context, req, payload).await
 }
-
-pub async fn graphiql() -> impl actix_web::Responder {
-    let graphiql = juniper::http::graphiql::graphiql_source(
-        super::paths::GRAPHQL,
-        Some("ws://localhost:8080/subscriptions"),
-    );
-    actix_web::HttpResponse::Ok()
-        .content_type("text/html")
-        .body(graphiql)
-}
