@@ -1530,8 +1530,10 @@ dependencies = [
  "actix-web",
  "config",
  "env_logger",
+ "futures-util",
  "juniper",
  "juniper_actix",
+ "log",
  "serde 1.0.126",
  "sqlx",
 ]

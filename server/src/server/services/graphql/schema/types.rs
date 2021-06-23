@@ -20,6 +20,25 @@ impl Name {
     pub fn name(&self) -> &str {
         &self.name_row.id
     }
+
+    pub async fn customer_invoices(&self, database: &DatabaseConnection) -> Vec<Transact> {
+        let customer_invoice_rows = database
+            .get_customer_invoices_by_name_id(&self.name_row.id)
+            .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get customer invoices for name {}",
+                    self.name_row.id
+                )
+            });
+
+        customer_invoice_rows
+            .into_iter()
+            .map(|customer_invoice_row| Transact {
+                transact_row: customer_invoice_row,
+            })
+            .collect()
+    }
 }
 
 #[derive(Clone)]
@@ -35,11 +54,30 @@ impl Store {
 
     pub async fn name(&self, database: &DatabaseConnection) -> Name {
         let name_row = database
-            .get_name(&self.store_row.name_id)
+            .get_name_by_id(&self.store_row.name_id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
 
         Name { name_row }
+    }
+
+    pub async fn customer_invoices(&self, database: &DatabaseConnection) -> Vec<Transact> {
+        let customer_invoice_rows = database
+            .get_customer_invoices_by_store_id(&self.store_row.id)
+            .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get customer invoices for store {}",
+                    self.store_row.id
+                )
+            });
+
+        customer_invoice_rows
+            .into_iter()
+            .map(|customer_invoice_row| Transact {
+                transact_row: customer_invoice_row,
+            })
+            .collect()
     }
 }
 
@@ -72,7 +110,7 @@ impl ItemLine {
 
     pub async fn item(&self, database: &DatabaseConnection) -> Item {
         let item_row = database
-            .get_item(&self.item_line_row.item_id)
+            .get_item_by_id(&self.item_line_row.item_id)
             .await
             .unwrap_or_else(|_| {
                 panic!("Failed to get item for item line {}", self.item_line_row.id)
@@ -83,7 +121,7 @@ impl ItemLine {
 
     pub async fn store(&self, database: &DatabaseConnection) -> Store {
         let store_row = database
-            .get_store(&self.item_line_row.store_id)
+            .get_store_by_id(&self.item_line_row.store_id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -159,7 +197,7 @@ impl Requisition {
 
     pub async fn name(&self, database: &DatabaseConnection) -> Name {
         let name_row = database
-            .get_name(&self.requisition_row.name_id)
+            .get_name_by_id(&self.requisition_row.name_id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -173,7 +211,7 @@ impl Requisition {
 
     pub async fn store(&self, database: &DatabaseConnection) -> Store {
         let store_row = database
-            .get_store(&self.requisition_row.store_id)
+            .get_store_by_id(&self.requisition_row.store_id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -191,7 +229,7 @@ impl Requisition {
 
     pub async fn requisition_lines(&self, database: &DatabaseConnection) -> Vec<RequisitionLine> {
         let requisition_line_rows = database
-            .get_requisition_lines(&self.requisition_row.id)
+            .get_requisition_lines_by_requisition_id(&self.requisition_row.id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -222,7 +260,7 @@ impl RequisitionLine {
 
     pub async fn item(&self, database: &DatabaseConnection) -> Item {
         let item_row = database
-            .get_item(&self.requisition_line_row.item_id)
+            .get_item_by_id(&self.requisition_line_row.item_id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -306,7 +344,7 @@ impl Transact {
 
     pub async fn name(&self, database: &DatabaseConnection) -> Name {
         let name_row = database
-            .get_name(&self.transact_row.name_id)
+            .get_name_by_id(&self.transact_row.name_id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id));
 
@@ -323,7 +361,7 @@ impl Transact {
 
     pub async fn transact_lines(&self, database: &DatabaseConnection) -> Vec<TransactLine> {
         let transact_line_rows: Vec<TransactLineRow> = database
-            .get_transact_lines(&self.transact_row.id)
+            .get_transact_lines_by_transact_id(&self.transact_row.id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -352,7 +390,7 @@ impl TransactLine {
 
     pub async fn transact(&self, database: &DatabaseConnection) -> Transact {
         let transact_row: TransactRow = database
-            .get_transact(&self.transact_line_row.transact_id)
+            .get_transact_by_id(&self.transact_line_row.transact_id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -366,7 +404,7 @@ impl TransactLine {
 
     pub async fn item(&self, database: &DatabaseConnection) -> Item {
         let item_row = database
-            .get_item(&self.transact_line_row.item_id)
+            .get_item_by_id(&self.transact_line_row.item_id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
@@ -381,7 +419,7 @@ impl TransactLine {
     pub async fn item_line(&self, database: &DatabaseConnection) -> ItemLine {
         // Handle optional item_line_id correctly.
         let item_line_row = database
-            .get_item_line(self.transact_line_row.item_line_id.as_ref().unwrap())
+            .get_item_line_by_id(self.transact_line_row.item_line_id.as_ref().unwrap())
             .await
             .unwrap_or_else(|_| {
                 panic!(

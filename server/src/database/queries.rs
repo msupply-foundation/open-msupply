@@ -1,7 +1,27 @@
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransactLineRow, TransactRow, TransactRowType,
+    StoreRow, TransactLineRow, TransactRow, TransactRowType, UserAccountRow,
 };
+
+pub async fn insert_user_acount(
+    pool: &sqlx::PgPool,
+    user_account: &UserAccountRow,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO user_account (id, username, password, email)
+        VALUES ($1, $2, $3, $4)
+        "#,
+        user_account.id,
+        user_account.username,
+        user_account.password,
+        user_account.email,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
 
 pub async fn insert_store(pool: &sqlx::PgPool, store: &StoreRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -235,7 +255,70 @@ pub async fn insert_requisition_lines(
     Ok(())
 }
 
-pub async fn select_store(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sqlx::Error> {
+pub async fn insert_transact(
+    pool: &sqlx::PgPool,
+    transact: &TransactRow,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+            INSERT INTO transact (id, name_id, store_id, invoice_number, type_of)
+            VALUES ($1, $2, $3, $4, $5)
+            "#,
+        transact.id,
+        transact.name_id,
+        transact.store_id,
+        transact.invoice_number,
+        transact.type_of.clone() as TransactRowType
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn insert_transacts(
+    pool: &sqlx::PgPool,
+    transacts: &[TransactRow],
+) -> Result<(), sqlx::Error> {
+    for transact in transacts {
+        sqlx::query!(
+            r#"
+            INSERT INTO transact (id, name_id, store_id, invoice_number, type_of)
+            VALUES ($1, $2, $3, $4, $5)
+            "#,
+            transact.id,
+            transact.name_id,
+            transact.store_id,
+            transact.invoice_number,
+            transact.type_of.clone() as TransactRowType
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
+}
+
+pub async fn select_user_account_by_id(
+    pool: &sqlx::PgPool,
+    id: &str,
+) -> Result<UserAccountRow, sqlx::Error> {
+    let user_account = sqlx::query_as!(
+        UserAccountRow,
+        r#"
+            SELECT id, username, password, email
+            FROM user_account
+            WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(user_account)
+}
+
+pub async fn select_store_by_id(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sqlx::Error> {
     let store = sqlx::query_as!(
         StoreRow,
         r#"
@@ -251,7 +334,7 @@ pub async fn select_store(pool: &sqlx::PgPool, id: &str) -> Result<StoreRow, sql
     Ok(store)
 }
 
-pub async fn select_name(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx::Error> {
+pub async fn select_name_by_id(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx::Error> {
     let name = sqlx::query_as!(
         NameRow,
         r#"
@@ -267,7 +350,7 @@ pub async fn select_name(pool: &sqlx::PgPool, id: &str) -> Result<NameRow, sqlx:
     Ok(name)
 }
 
-pub async fn select_item(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx::Error> {
+pub async fn select_item_by_id(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx::Error> {
     let item = sqlx::query_as!(
         ItemRow,
         r#"
@@ -283,7 +366,10 @@ pub async fn select_item(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow, sqlx:
     Ok(item)
 }
 
-pub async fn select_item_line(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineRow, sqlx::Error> {
+pub async fn select_item_line_by_id(
+    pool: &sqlx::PgPool,
+    id: &str,
+) -> Result<ItemLineRow, sqlx::Error> {
     let item_line = sqlx::query_as!(
         ItemLineRow,
         r#"
@@ -299,7 +385,7 @@ pub async fn select_item_line(pool: &sqlx::PgPool, id: &str) -> Result<ItemLineR
     Ok(item_line)
 }
 
-pub async fn select_requisition(
+pub async fn select_requisition_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<RequisitionRow, sqlx::Error> {
@@ -318,7 +404,7 @@ pub async fn select_requisition(
     Ok(requisition)
 }
 
-pub async fn select_requisition_line(
+pub async fn select_requisition_line_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<RequisitionLineRow, sqlx::Error> {
@@ -326,7 +412,7 @@ pub async fn select_requisition_line(
         RequisitionLineRow,
         r#"
         SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity
-        FROM requisition_line 
+        FROM requisition_line
         WHERE id = $1
         "#,
         id
@@ -337,7 +423,7 @@ pub async fn select_requisition_line(
     Ok(requisition_line)
 }
 
-pub async fn select_requisition_lines(
+pub async fn select_requisition_lines_by_requisition_id(
     pool: &sqlx::PgPool,
     requisition_id: &str,
 ) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
@@ -345,7 +431,7 @@ pub async fn select_requisition_lines(
         RequisitionLineRow,
         r#"
         SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity
-        FROM requisition_line 
+        FROM requisition_line
         WHERE requisition_id = $1
         "#,
         requisition_id
@@ -356,11 +442,14 @@ pub async fn select_requisition_lines(
     Ok(requisition_lines)
 }
 
-pub async fn select_transact(pool: &sqlx::PgPool, id: &str) -> Result<TransactRow, sqlx::Error> {
+pub async fn select_transact_by_id(
+    pool: &sqlx::PgPool,
+    id: &str,
+) -> Result<TransactRow, sqlx::Error> {
     let transact: TransactRow = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
         WHERE id = $1
         "#,
@@ -372,26 +461,45 @@ pub async fn select_transact(pool: &sqlx::PgPool, id: &str) -> Result<TransactRo
     Ok(transact)
 }
 
-pub async fn select_transacts(
+pub async fn select_customer_invoices_by_name_id(
     pool: &sqlx::PgPool,
     name_id: &str,
 ) -> Result<Vec<TransactRow>, sqlx::Error> {
-    let transacts: Vec<TransactRow> = sqlx::query_as!(
+    let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
         TransactRow,
         r#"
-        SELECT id, name_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
         FROM transact
-        WHERE name_id = $1
+        WHERE type_of = 'customer_invoice' AND name_id = $1
         "#,
         name_id
     )
     .fetch_all(pool)
     .await?;
 
-    Ok(transacts)
+    Ok(customer_invoices)
 }
 
-pub async fn select_transact_line(
+pub async fn select_customer_invoices_by_store_id(
+    pool: &sqlx::PgPool,
+    store_id: &str,
+) -> Result<Vec<TransactRow>, sqlx::Error> {
+    let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
+        TransactRow,
+        r#"
+        SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
+        FROM transact
+        WHERE type_of = 'customer_invoice' AND store_id = $1
+        "#,
+        store_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(customer_invoices)
+}
+
+pub async fn select_transact_line_by_id(
     pool: &sqlx::PgPool,
     id: &str,
 ) -> Result<TransactLineRow, sqlx::Error> {
@@ -410,7 +518,7 @@ pub async fn select_transact_line(
     Ok(transact_line)
 }
 
-pub async fn select_transact_lines(
+pub async fn select_transact_lines_by_transact_id(
     pool: &sqlx::PgPool,
     transact_id: &str,
 ) -> Result<Vec<TransactLineRow>, sqlx::Error> {

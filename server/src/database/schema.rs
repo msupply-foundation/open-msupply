@@ -1,4 +1,12 @@
 #[derive(Clone)]
+pub struct UserAccountRow {
+    pub id: String,
+    pub username: String,
+    pub password: String,
+    pub email: Option<String>,
+}
+
+#[derive(Clone)]
 pub struct NameRow {
     pub id: String,
     pub name: String,
@@ -43,6 +51,7 @@ pub struct StoreRow {
 #[sqlx(rename = "transact_type", rename_all = "lowercase")]
 #[derive(Clone)]
 pub enum TransactRowType {
+    #[sqlx(rename = "customer_invoice")]
     CustomerInvoice,
     CustomerCredit,
     SupplierInvoice,
@@ -57,6 +66,7 @@ pub enum TransactRowType {
 pub struct TransactRow {
     pub id: String,
     pub name_id: String,
+    pub store_id: String,
     pub invoice_number: i32,
     pub type_of: TransactRowType,
 }

@@ -13,6 +13,44 @@
       "nullable": []
     }
   },
+  "0e7a084c575b061d015a355b052e4327f04afdd4e34f039ce5d8c8acf1ee6f4a": {
+    "query": "\n            SELECT id, username, password, email\n            FROM user_account\n            WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "email",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
   "1208f508ba2e4690981e33289349db4dc02faa0ee744157a384f4ca2746ce6e0": {
     "query": "\n        INSERT INTO store (id, name_id)\n        VALUES ($1, $2)\n        ",
     "describe": {
@@ -320,48 +358,19 @@
       "nullable": []
     }
   },
-  "87f8295dd8b890dba4a78abe66c25a0d34fbccbcda77da5b2081298ffa968513": {
-    "query": "\n        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n        FROM requisition_line \n        WHERE requisition_id = $1\n        ",
+  "8c28825e3aac290f2ff652a365b3396404d9d003d4e7a0e9850d64aed8de5df0": {
+    "query": "\n        INSERT INTO user_account (id, username, password, email)\n        VALUES ($1, $2, $3, $4)\n        ",
     "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "requisition_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "item_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 3,
-          "name": "actual_quantity",
-          "type_info": "Float8"
-        },
-        {
-          "ordinal": 4,
-          "name": "suggested_quantity",
-          "type_info": "Float8"
-        }
-      ],
+      "columns": [],
       "parameters": {
         "Left": [
-          "Text"
+          "Varchar",
+          "Varchar",
+          "Text",
+          "Varchar"
         ]
       },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
+      "nullable": []
     }
   },
   "8c6a3b1d5cae2845a6bf18f41de5ae51a9690d5d3c5d4a839f5d09aa76ddd071": {
@@ -477,8 +486,8 @@
       ]
     }
   },
-  "c88fbc29cef1094de8d04b7fce63009653979e256a62a64d9a4c3b675ad0fe54": {
-    "query": "\n        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n        FROM requisition_line \n        WHERE id = $1\n        ",
+  "c5c4ec48c3114dc0203e6c7062b7eae8fd3e2ad427d8447e73e6ab50f7afd248": {
+    "query": "\n        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n        FROM requisition_line\n        WHERE requisition_id = $1\n        ",
     "describe": {
       "columns": [
         {
@@ -639,6 +648,50 @@
         ]
       },
       "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "facf2e75279d8361e9c7452fd0ea8fa4342929babe19ea1dba34553a345a2d75": {
+    "query": "\n        SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n        FROM requisition_line\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "requisition_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "actual_quantity",
+          "type_info": "Float8"
+        },
+        {
+          "ordinal": 4,
+          "name": "suggested_quantity",
+          "type_info": "Float8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
         false,
         false,
         false,

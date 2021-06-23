@@ -2,7 +2,7 @@ use crate::database::mocks;
 use crate::database::queries;
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StoreRow, TransactLineRow,
-    TransactRow,
+    TransactRow, UserAccountRow,
 };
 
 #[derive(Clone)]
@@ -41,6 +41,14 @@ impl DatabaseConnection {
             .expect("Failed to insert mock requisition line data");
 
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_user_account(
+        &self,
+        user_account: &UserAccountRow,
+    ) -> Result<(), sqlx::Error> {
+        queries::insert_user_acount(&self.pool, user_account).await
     }
 
     #[allow(dead_code)]
@@ -109,58 +117,85 @@ impl DatabaseConnection {
         queries::insert_requisition_lines(&self.pool, requisition_lines).await
     }
 
-    pub async fn get_store(&self, id: &str) -> Result<StoreRow, sqlx::Error> {
-        queries::select_store(&self.pool, id).await
+    pub async fn create_transact(&self, transact: &TransactRow) -> Result<(), sqlx::Error> {
+        queries::insert_transact(&self.pool, transact).await
     }
 
-    pub async fn get_name(&self, id: &str) -> Result<NameRow, sqlx::Error> {
-        queries::select_name(&self.pool, id).await
-    }
-
-    pub async fn get_item(&self, id: &str) -> Result<ItemRow, sqlx::Error> {
-        queries::select_item(&self.pool, id).await
-    }
-
-    pub async fn get_item_line(&self, id: &str) -> Result<ItemLineRow, sqlx::Error> {
-        queries::select_item_line(&self.pool, id).await
-    }
-
-    pub async fn get_requisition(&self, id: &str) -> Result<RequisitionRow, sqlx::Error> {
-        queries::select_requisition(&self.pool, id).await
+    pub async fn create_transacts(&self, transacts: &[TransactRow]) -> Result<(), sqlx::Error> {
+        queries::insert_transacts(&self.pool, transacts).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_requisition_line(&self, id: &str) -> Result<RequisitionLineRow, sqlx::Error> {
-        queries::select_requisition_line(&self.pool, id).await
+    pub async fn get_user_account_by_id(&self, id: &str) -> Result<UserAccountRow, sqlx::Error> {
+        queries::select_user_account_by_id(&self.pool, id).await
     }
 
-    pub async fn get_requisition_lines(
+    pub async fn get_store_by_id(&self, id: &str) -> Result<StoreRow, sqlx::Error> {
+        queries::select_store_by_id(&self.pool, id).await
+    }
+
+    pub async fn get_name_by_id(&self, id: &str) -> Result<NameRow, sqlx::Error> {
+        queries::select_name_by_id(&self.pool, id).await
+    }
+
+    pub async fn get_item_by_id(&self, id: &str) -> Result<ItemRow, sqlx::Error> {
+        queries::select_item_by_id(&self.pool, id).await
+    }
+
+    pub async fn get_item_line_by_id(&self, id: &str) -> Result<ItemLineRow, sqlx::Error> {
+        queries::select_item_line_by_id(&self.pool, id).await
+    }
+
+    pub async fn get_requisition_by_id(&self, id: &str) -> Result<RequisitionRow, sqlx::Error> {
+        queries::select_requisition_by_id(&self.pool, id).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_requisition_line_by_id(
+        &self,
+        id: &str,
+    ) -> Result<RequisitionLineRow, sqlx::Error> {
+        queries::select_requisition_line_by_id(&self.pool, id).await
+    }
+
+    pub async fn get_requisition_lines_by_requisition_id(
         &self,
         requisition_id: &str,
     ) -> Result<Vec<RequisitionLineRow>, sqlx::Error> {
-        queries::select_requisition_lines(&self.pool, requisition_id).await
+        queries::select_requisition_lines_by_requisition_id(&self.pool, requisition_id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transact(&self, id: &str) -> Result<TransactRow, sqlx::Error> {
-        queries::select_transact(&self.pool, id).await
+    pub async fn get_transact_by_id(&self, id: &str) -> Result<TransactRow, sqlx::Error> {
+        queries::select_transact_by_id(&self.pool, id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transacts(&self, name_id: &str) -> Result<Vec<TransactRow>, sqlx::Error> {
-        queries::select_transacts(&self.pool, name_id).await
+    pub async fn get_customer_invoices_by_name_id(
+        &self,
+        name_id: &str,
+    ) -> Result<Vec<TransactRow>, sqlx::Error> {
+        queries::select_customer_invoices_by_name_id(&self.pool, name_id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transact_line(&self, id: &str) -> Result<TransactLineRow, sqlx::Error> {
-        queries::select_transact_line(&self.pool, id).await
+    pub async fn get_customer_invoices_by_store_id(
+        &self,
+        store_id: &str,
+    ) -> Result<Vec<TransactRow>, sqlx::Error> {
+        queries::select_customer_invoices_by_store_id(&self.pool, store_id).await
     }
 
     #[allow(dead_code)]
-    pub async fn get_transact_lines(
+    pub async fn get_transact_line_by_id(&self, id: &str) -> Result<TransactLineRow, sqlx::Error> {
+        queries::select_transact_line_by_id(&self.pool, id).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_transact_lines_by_transact_id(
         &self,
         transact_id: &str,
     ) -> Result<Vec<TransactLineRow>, sqlx::Error> {
-        queries::select_transact_lines(&self.pool, transact_id).await
+        queries::select_transact_lines_by_transact_id(&self.pool, transact_id).await
     }
 }
