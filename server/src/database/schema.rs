@@ -65,6 +65,7 @@ pub enum TransactRowType {
 pub struct TransactRow {
     pub id: String,
     pub name_id: String,
+    pub store_id: String,
     pub invoice_number: i32,
     pub type_of: TransactRowType,
 }
