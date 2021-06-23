@@ -255,6 +255,50 @@ pub async fn insert_requisition_lines(
     Ok(())
 }
 
+pub async fn insert_transact(
+    pool: &sqlx::PgPool,
+    transact: &TransactRow,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+            INSERT INTO transact (id, name_id, store_id, invoice_number, type_of)
+            VALUES ($1, $2, $3, $4, $5)
+            "#,
+        transact.id,
+        transact.name_id,
+        transact.store_id,
+        transact.invoice_number,
+        transact.type_of.clone() as TransactRowType
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn insert_transacts(
+    pool: &sqlx::PgPool,
+    transacts: &[TransactRow],
+) -> Result<(), sqlx::Error> {
+    for transact in transacts {
+        sqlx::query!(
+            r#"
+            INSERT INTO transact (id, name_id, store_id, invoice_number, type_of)
+            VALUES ($1, $2, $3, $4, $5)
+            "#,
+            transact.id,
+            transact.name_id,
+            transact.store_id,
+            transact.invoice_number,
+            transact.type_of.clone() as TransactRowType
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
+}
+
 pub async fn select_user_account_by_id(
     pool: &sqlx::PgPool,
     id: &str,

@@ -117,6 +117,14 @@ impl DatabaseConnection {
         queries::insert_requisition_lines(&self.pool, requisition_lines).await
     }
 
+    pub async fn create_transact(&self, transact: &TransactRow) -> Result<(), sqlx::Error> {
+        queries::insert_transact(&self.pool, transact).await
+    }
+
+    pub async fn create_transacts(&self, transacts: &[TransactRow]) -> Result<(), sqlx::Error> {
+        queries::insert_transacts(&self.pool, transacts).await
+    }
+
     #[allow(dead_code)]
     pub async fn get_user_account_by_id(&self, id: &str) -> Result<UserAccountRow, sqlx::Error> {
         queries::select_user_account_by_id(&self.pool, id).await
