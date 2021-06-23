@@ -7,6 +7,7 @@ pub fn config(cfg: &mut actix_web::web::ServiceConfig) {
         actix_web::web::scope(paths::GRAPHQL)
             .data(schema)
             .route("", actix_web::web::post().to(handlers::graphql))
-            .route("", actix_web::web::get().to(handlers::graphql)),
+            .route("", actix_web::web::get().to(handlers::graphql))
+            .route("graphiql", actix_web::web::get().to(handlers::graphiql)),
     );
 }
