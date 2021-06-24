@@ -1,6 +1,6 @@
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-    StoreRow, TransactLineRow, TransactRow, TransactRowType, UserAccountRow,
+    StoreRow, TransactLineRow, TransactLineRowType, TransactRow, TransactRowType, UserAccountRow,
 };
 
 pub async fn insert_user_acount(
@@ -506,7 +506,7 @@ pub async fn select_transact_line_by_id(
     let transact_line: TransactLineRow = sqlx::query_as!(
         TransactLineRow,
         r#"
-        SELECT id, transact_id, item_id, item_line_id
+        SELECT id, transact_id, type_of AS "type_of!: TransactLineRowType", item_id, item_line_id
         FROM transact_line
         WHERE id = $1
         "#,
@@ -525,7 +525,7 @@ pub async fn select_transact_lines_by_transact_id(
     let transact_lines: Vec<TransactLineRow> = sqlx::query_as!(
         TransactLineRow,
         r#"
-        SELECT id, transact_id, item_id, item_line_id
+        SELECT id, transact_id, type_of AS "type_of!: TransactLineRowType", item_id, item_line_id
         FROM transact_line
         WHERE transact_id = $1
         "#,
