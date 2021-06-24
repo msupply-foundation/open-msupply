@@ -1,5 +1,5 @@
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+    ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
     StoreRow, TransactLineRow, TransactRow, TransactRowType,
 };
 
@@ -45,16 +45,19 @@ pub fn mock_items() -> Vec<ItemRow> {
     let item_a = ItemRow {
         id: "item_a".to_string(),
         item_name: "Item A".to_string(),
+	type_of: ItemRowType::General,
     };
 
     let item_b = ItemRow {
         id: "item_b".to_string(),
         item_name: "Item B".to_string(),
+	type_of: ItemRowType::General,
     };
 
     let item_c = ItemRow {
         id: "item_c".to_string(),
         item_name: "Item C".to_string(),
+	type_of: ItemRowType::General,
     };
 
     vec![item_a, item_b, item_c]
