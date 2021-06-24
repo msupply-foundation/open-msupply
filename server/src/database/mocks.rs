@@ -222,7 +222,7 @@ pub fn mock_requisition_lines() -> Vec<RequisitionLineRow> {
     ]
 }
 
-pub fn mock_transactions() -> Vec<TransactRow> {
+pub fn mock_transacts() -> Vec<TransactRow> {
     let transact_a = TransactRow {
         id: "transact_a".to_string(),
         name_id: "name_store_a".to_string(),
