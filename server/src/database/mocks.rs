@@ -246,6 +246,7 @@ pub fn mock_transact_lines() -> Vec<TransactLineRow> {
     let transact_a_line_a = TransactLineRow {
         id: "transact_a_line_a".to_string(),
         transact_id: "transact_a".to_string(),
+	type_of: crate::database::TransactLineRowType::StockOut,
         item_id: "item_a".to_string(),
         item_line_id: Some("item_a_line_a".to_string()),
     };
@@ -253,6 +254,7 @@ pub fn mock_transact_lines() -> Vec<TransactLineRow> {
     let transact_a_line_b = TransactLineRow {
         id: "transact_a_line_b".to_string(),
         transact_id: "transact_a".to_string(),
+	type_of: crate::database::TransactLineRowType::StockOut,
         item_id: "item_b".to_string(),
         item_line_id: Some("item_b_line_a".to_string()),
     };
@@ -260,6 +262,7 @@ pub fn mock_transact_lines() -> Vec<TransactLineRow> {
     let transact_b_line_a = TransactLineRow {
         id: "transact_b_line_a".to_string(),
         transact_id: "transact_b".to_string(),
+	type_of: crate::database::TransactLineRowType::StockOut,
         item_id: "item_a".to_string(),
         item_line_id: Some("item_a_line_a".to_string()),
     };
@@ -267,6 +270,7 @@ pub fn mock_transact_lines() -> Vec<TransactLineRow> {
     let transact_b_line_b = TransactLineRow {
         id: "transact_b_line_b".to_string(),
         transact_id: "transact_b".to_string(),
+	type_of: crate::database::TransactLineRowType::StockOut,
         item_id: "item_b".to_string(),
         item_line_id: Some("item_b_line_a".to_string()),
     };
