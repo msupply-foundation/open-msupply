@@ -1,5 +1,5 @@
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+    ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
     StoreRow, TransactLineRow, TransactLineRowType, TransactRow, TransactRowType, UserAccountRow,
 };
 
@@ -92,11 +92,12 @@ pub async fn insert_names(pool: &sqlx::PgPool, names: &[NameRow]) -> Result<(), 
 pub async fn insert_item(pool: &sqlx::PgPool, item: &ItemRow) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO item (id, item_name)
-        VALUES ($1, $2)
+        INSERT INTO item (id, item_name, type_of)
+        VALUES ($1, $2, $3)
         "#,
         item.id,
-        item.item_name
+        item.item_name,
+        item.type_of.clone() as ItemRowType,
     )
     .execute(pool)
     .await?;
@@ -109,11 +110,12 @@ pub async fn insert_items(pool: &sqlx::PgPool, items: &[ItemRow]) -> Result<(), 
     for item in items {
         sqlx::query!(
             r#"
-            INSERT INTO item (id, item_name)
-            VALUES ($1, $2)
+            INSERT INTO item (id, item_name, type_of)
+            VALUES ($1, $2, $3)
             "#,
             item.id,
-            item.item_name
+            item.item_name,
+	    item.type_of.clone() as ItemRowType,
         )
         .execute(pool)
         .await?;
@@ -354,7 +356,7 @@ pub async fn select_item_by_id(pool: &sqlx::PgPool, id: &str) -> Result<ItemRow,
     let item = sqlx::query_as!(
         ItemRow,
         r#"
-            SELECT id, item_name
+            SELECT id, item_name, type_of AS "type_of!: ItemRowType"
             FROM item
             WHERE id = $1
         "#,
