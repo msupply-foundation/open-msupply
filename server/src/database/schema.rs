@@ -13,14 +13,20 @@ pub struct NameRow {
 }
 
 #[derive(sqlx::Type)]
-#[sqlx(rename = "requisition_type", rename_all = "lowercase")]
+#[sqlx(rename = "requisition_type")]
 #[derive(Clone)]
 pub enum RequisitionRowType {
+    #[sqlx(rename = "imprest")]
     Imprest,
+    #[sqlx(rename = "stock_history")]
     StockHistory,
+    #[sqlx(rename = "request")]
     Request,
+    #[sqlx(rename = "response")]
     Response,
+    #[sqlx(rename = "supply")]
     Supply,
+    #[sqlx(rename = "report")]
     Report,
 }
 
@@ -48,17 +54,24 @@ pub struct StoreRow {
 }
 
 #[derive(sqlx::Type)]
-#[sqlx(rename = "transact_type", rename_all = "lowercase")]
+#[sqlx(rename = "transact_type")]
 #[derive(Clone)]
 pub enum TransactRowType {
     #[sqlx(rename = "customer_invoice")]
     CustomerInvoice,
+    #[sqlx(rename = "customer_credit")]
     CustomerCredit,
+    #[sqlx(rename = "supplier_invoice")]
     SupplierInvoice,
+    #[sqlx(rename = "supplier_credit")]
     SupplierCredit,
+    #[sqlx(rename = "repack")]
     Repack,
+    #[sqlx(rename = "build")]
     Build,
+    #[sqlx(rename = "receipt")]
     Receipt,
+    #[sqlx(rename = "payment")]
     Payment,
 }
 
