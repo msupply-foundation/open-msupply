@@ -1,5 +1,5 @@
 use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+    ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
     StoreRow, TransactLineRow, TransactRow, TransactRowType,
 };
 use crate::database::DatabaseConnection;
@@ -78,6 +78,36 @@ impl Store {
                 transact_row: customer_invoice_row,
             })
             .collect()
+    }
+}
+
+#[derive(GraphQLEnum)]
+pub enum ItemType {
+    #[graphql(name = "general")]
+    General,
+    #[graphql(name = "service")]
+    Service,
+    #[graphql(name = "cross_reference")]
+    CrossReference,
+}
+
+impl From<ItemRowType> for ItemType {
+    fn from(item_type: ItemRowType) -> ItemType {
+        match item_type {
+            ItemRowType::General =>  ItemType::General,
+	    ItemRowType::Service => ItemType::Service,
+	    ItemRowType::CrossReference => ItemType::CrossReference,
+        }
+    }
+}
+
+impl From<ItemType> for ItemRowType {
+    fn from(item_type: ItemType) -> ItemRowType {
+        match item_type {
+            ItemType::General =>  ItemRowType::General,
+	    ItemType::Service => ItemRowType::Service,
+	    ItemType::CrossReference => ItemRowType::CrossReference,
+        }
     }
 }
 
