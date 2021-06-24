@@ -1,12 +1,12 @@
 [package]
-name = "omsupply_server"
+name = "remote_server"
 version = "0.1.0"
 authors = ["will"]
 edition = "2018"
 
 [[bin]]
 path = "src/main.rs"
-name = "omsupply_server"
+name = "remote_server"
 
 [dependencies]
 actix-cors = "0.5.4"
