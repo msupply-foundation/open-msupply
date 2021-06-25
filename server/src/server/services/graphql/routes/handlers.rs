@@ -1,6 +1,6 @@
-use crate::database::DatabaseConnection;
+use crate::database::connection::DatabaseConnection;
 use crate::server::authorization::Authorization;
-use crate::server::graphql::schema::Schema;
+use crate::server::services::graphql::schema::Schema;
 
 pub async fn graphql(
     req: actix_web::HttpRequest,

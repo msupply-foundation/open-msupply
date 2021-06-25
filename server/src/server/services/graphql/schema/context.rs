@@ -1,3 +1,3 @@
-use crate::database::DatabaseConnection;
+use crate::database::connection::DatabaseConnection;
 
 impl juniper::Context for DatabaseConnection {}

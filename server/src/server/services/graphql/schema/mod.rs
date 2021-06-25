@@ -1,13 +1,11 @@
-mod context;
-mod mutations;
-mod queries;
-mod subscriptions;
-mod types;
+pub mod context;
+pub mod mutations;
+pub mod queries;
+pub mod subscriptions;
+pub mod types;
 
-pub use self::context::*;
-pub use self::mutations::*;
-pub use self::queries::*;
-pub use self::subscriptions::*;
-pub use self::types::*;
+pub use mutations::Mutations;
+pub use queries::Queries;
+pub use subscriptions::Subscriptions;
 
 pub type Schema = juniper::RootNode<'static, Queries, Mutations, Subscriptions>;
