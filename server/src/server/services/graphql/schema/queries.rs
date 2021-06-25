@@ -1,84 +1,104 @@
-use crate::database::schema::{
-    ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactLineRow, TransactRow,
-};
-use crate::database::DatabaseConnection;
-use crate::server::graphql::{Item, ItemLine, Name, Requisition, Store, Transact, TransactLine};
+use crate::database;
+use crate::server::services::graphql;
 
-use juniper::graphql_object;
+use juniper;
+
 pub struct Queries;
-#[graphql_object(context = DatabaseConnection)]
+
+#[juniper::graphql_object(context = database::connection::DatabaseConnection)]
 impl Queries {
     pub fn apiVersion() -> String {
         "1.0".to_string()
     }
 
     #[graphql(arguments(id(description = "id of the name")))]
-    pub async fn name(database: &DatabaseConnection, id: String) -> Name {
-        let name_row: NameRow = database
+    pub async fn name(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::Name {
+        let name_row: database::schema::NameRow = database
             .get_name_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get name {}", id));
 
-        Name { name_row }
+        graphql::schema::types::Name { name_row }
     }
 
     #[graphql(arguments(id(description = "id of the store")))]
-    pub async fn store(database: &DatabaseConnection, id: String) -> Store {
-        let store_row: StoreRow = database
+    pub async fn store(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::Store {
+        let store_row: database::schema::StoreRow = database
             .get_store_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get store {}", id));
 
-        Store { store_row }
+        graphql::schema::types::Store { store_row }
     }
 
     #[graphql(arguments(id(description = "id of the transact")))]
-    pub async fn transact(database: &DatabaseConnection, id: String) -> Transact {
-        let transact_row: TransactRow = database
+    pub async fn transact(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::Transact {
+        let transact_row: database::schema::TransactRow = database
             .get_transact_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get transact {}", id));
 
-        Transact { transact_row }
+        graphql::schema::types::Transact { transact_row }
     }
 
     #[graphql(arguments(id(description = "id of the transact line")))]
-    pub async fn transact_line(database: &DatabaseConnection, id: String) -> TransactLine {
-        let transact_line_row: TransactLineRow = database
+    pub async fn transact_line(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::TransactLine {
+        let transact_line_row: database::schema::TransactLineRow = database
             .get_transact_line_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get transact line {}", id));
 
-        TransactLine { transact_line_row }
+        graphql::schema::types::TransactLine { transact_line_row }
     }
 
     #[graphql(arguments(id(description = "id of the requisition")))]
-    pub async fn requisition(database: &DatabaseConnection, id: String) -> Requisition {
-        let requisition_row: RequisitionRow = database
+    pub async fn requisition(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::Requisition {
+        let requisition_row: database::schema::RequisitionRow = database
             .get_requisition_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
-        Requisition { requisition_row }
+        graphql::schema::types::Requisition { requisition_row }
     }
 
     #[graphql(arguments(id(description = "id of the item")))]
-    pub async fn item(database: &DatabaseConnection, id: String) -> Item {
-        let item_row: ItemRow = database
+    pub async fn item(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::Item {
+        let item_row: database::schema::ItemRow = database
             .get_item_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get item {}", id));
 
-        Item { item_row }
+        graphql::schema::types::Item { item_row }
     }
 
     #[graphql(arguments(id(description = "id of the item line")))]
-    pub async fn item_line(database: &DatabaseConnection, id: String) -> ItemLine {
-        let item_line_row: ItemLineRow = database
+    pub async fn item_line(
+        database: &database::connection::DatabaseConnection,
+        id: String,
+    ) -> graphql::schema::types::ItemLine {
+        let item_line_row: database::schema::ItemLineRow = database
             .get_item_line_by_id(&id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get item line {}", id));
 
-        ItemLine { item_line_row }
+        graphql::schema::types::ItemLine { item_line_row }
     }
 }

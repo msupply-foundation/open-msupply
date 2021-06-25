@@ -101,7 +101,7 @@ pub enum TransactLineRowType {
     #[sqlx(rename = "non_stock")]
     NonStock,
     #[sqlx(rename = "service")]
-    Service
+    Service,
 }
 
 #[derive(Clone)]
