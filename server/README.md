@@ -1,37 +1,51 @@
-# omsupply-remote
+# remote-server
 
-## Dependencies (Mac)
+mSupply remote server is a component of the Open mSupply system:
 
-- [Rust](https://rustup.rs).
-- [Docker](https://docs.docker.com/get-docker/).
+- Hosts the remote server web interface and exposes RESTful and GraphQL APIs for mSupply data.
+- Synchronises with central servers which implement `v5` of the mSupply sync API.
+- Exposes a dynamic plugin system for customising and extending functionality.
 
-## Dependencies (Windows 10)
+## Dependencies
 
-- [Docker](https://docs.docker.com/get-docker/).
-- [WSL2](https://docs.docker.com/docker-for-windows/wsl/).
-- [Ubuntu](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
-- [VS Code](https://code.visualstudio.com/docs/remote/wsl-tutorial).
+### Windows
 
-## Extra dependencies for WSL2/Ubuntu
+  - Install [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and [Ubuntu 20.04 LTS](https://www.microsoft.com/en-nz/p/ubuntu-2004-lts/9n6svws3rx71).
+  - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install) for `Windows Subsystem for Linux` users.
+  - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-windows/wsl) for WLS2.
 
-- [Rust] `sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`.
+### MacOS
 
-- [psql] `sudo apt install postgres -y`.
-- [cc] `sudo apt install build-essential -y`.
-- `sudo apt install libpq-dev -y`.
-- `sudo apt install pkg-config -y`.
-- `sudo apt install libssl-dev -y`.
+  - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
+  - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-mac/install/) for Mac.
+
+### Optional
+
+- Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image).
+
 
 ## Getting started
 
-- Build sqlx: `cargo install sqlx-cli --no-default-features --features postgres`.
-- Initialise Postgres container: `scripts/init_db.sh`.
-- Migrate tables: `export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate run`.
-- Build dependencies and server: `cargo build`.
-- Start omsupply remote server: `cargo run`.
+- Install [sqlx-cli](https://crates.io/crates/sqlx-cli/0.1.0-beta.1):
 
-## Setup pgAdmin (for Postgres)
+```
+cargo install sqlx-cli --no-default-features --features postgres
+```
 
-- Install docker image: `docker pull dpage/pgadmin4`.
-- Run pgAdmin container: `docker run -p 80:80 -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' -d dpage/pgadmin4`.
-- Add new connection: use "proper" local IP address, not 127.0.0.1.
+- Pull the latest [Postgres]() image and initialise the Docker container:
+
+```
+./scripts/init_db.sh
+```
+
+- Migrate database tables:
+
+```
+export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate run
+```
+
+- Build and start the remote server:
+
+```
+cargo run
+```
