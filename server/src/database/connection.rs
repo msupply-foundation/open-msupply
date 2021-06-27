@@ -6,7 +6,10 @@ pub struct DatabaseConnection {
 }
 
 impl DatabaseConnection {
-    pub async fn new(pool: sqlx::PgPool) -> DatabaseConnection {
+    pub async fn new(connection_string: &str) -> DatabaseConnection {
+        let pool = sqlx::PgPool::connect(connection_string)
+            .await
+            .expect("Failed to connect to omsupply-database");
         DatabaseConnection { pool }
     }
 
