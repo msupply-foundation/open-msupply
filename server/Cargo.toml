@@ -13,6 +13,7 @@ name = "remote_server"
 
 [dependencies]
 actix-cors = "0.5.4"
+actix-rt = "1.1.0"
 actix-web = "3.3.2"
 config = "0.11.0"
 env_logger = "0.8.3"
