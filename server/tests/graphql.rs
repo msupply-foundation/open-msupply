@@ -1,29 +1,44 @@
+mod mocks;
+
+use remote_server::server;
+
 #[cfg(test)]
 mod graphql {
-    use remote_server::database;
-    use remote_server::server;
-    use remote_server::util;
+    use super::mocks;
+    use super::server;
 
     #[actix_rt::test]
-    async fn get_requisition_by_id_returns_200() {
-        let configuration = util::configuration::get_configuration()
-            .expect("Failed to parse configuration settings");
+    async fn get_requisition_by_id_is_success() {
+        let database = mocks::get_test_database().await;
 
-        let database = database::connection::DatabaseConnection::new(
-            &configuration.database.connection_string(),
-        )
-        .await;
-
-        // TODO: only insert required data.
         database
-            .insert_mock_data()
+            .create_name(&mocks::get_name_store_a())
             .await
-            .expect("Failed to insert mock data");
+            .expect("Failed to insert name_store_a");
+
+        database
+            .create_name(&mocks::get_name_store_b())
+            .await
+            .expect("Failed to insert name_store_b");
+
+        database
+            .create_store(&mocks::get_store_a())
+            .await
+            .expect("Failed to insert store_a");
+
+        database
+            .create_store(&mocks::get_store_b())
+            .await
+            .expect("Failed to insert store_b");
+
+        database
+            .create_requisition(&mocks::get_request_requisition_a_to_b())
+            .await
+            .expect("Failed to insert request_requisition_a_to_b");
 
         let mut app = actix_web::test::init_service(
             actix_web::App::new()
                 .data(database.clone())
-                .wrap(server::middleware::logger())
                 .configure(server::services::graphql::config),
         )
         .await;
