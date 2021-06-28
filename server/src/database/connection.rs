@@ -2,7 +2,7 @@ use crate::database;
 
 #[derive(Clone)]
 pub struct DatabaseConnection {
-    pool: sqlx::PgPool,
+    pub pool: sqlx::PgPool,
 }
 
 impl DatabaseConnection {
