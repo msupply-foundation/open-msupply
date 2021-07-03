@@ -1,4 +1,4 @@
 pub mod connection;
-pub mod mocks;
+pub mod mock;
 pub mod queries;
 pub mod schema;
