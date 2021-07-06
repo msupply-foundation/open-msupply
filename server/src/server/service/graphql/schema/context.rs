@@ -1,3 +1,3 @@
-use crate::server::data::Registry;
+use crate::server::data::RepositoryRegistry;
 
-impl juniper::Context for Registry {}
+impl juniper::Context for RepositoryRegistry {}

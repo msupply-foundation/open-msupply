@@ -6,16 +6,17 @@ use crate::database::schema::{
     ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
     RequisitionRowType, StoreRow, TransactLineRow, TransactRow, TransactRowType,
 };
-use crate::server::data::Registry;
+use crate::server::data::RepositoryRegistry;
 
 use juniper;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Name {
     pub name_row: NameRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl Name {
     pub fn id(&self) -> &str {
         &self.name_row.id
@@ -25,9 +26,9 @@ impl Name {
         &self.name_row.id
     }
 
-    pub async fn customer_invoices(&self, registry: &Registry) -> Vec<Transact> {
-        let customer_invoice_repository: &CustomerInvoiceRepository =
-            &registry.customer_invoice_repository;
+    pub async fn customer_invoices(&self, registry: &RepositoryRegistry) -> Vec<Transact> {
+        let customer_invoice_repository: Arc<dyn CustomerInvoiceRepository> =
+            registry.customer_invoice_repository.clone();
 
         let customer_invoice_rows = customer_invoice_repository
             .find_many_by_name_id(&self.name_row.id)
@@ -53,14 +54,14 @@ pub struct Store {
     pub store_row: StoreRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl Store {
     pub fn id(&self) -> &str {
         &self.store_row.id
     }
 
-    pub async fn name(&self, registry: &Registry) -> Name {
-        let name_repository: &NameRepository = &registry.name_repository;
+    pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
+        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.store_row.name_id)
@@ -70,9 +71,9 @@ impl Store {
         Name { name_row }
     }
 
-    pub async fn customer_invoices(&self, registry: &Registry) -> Vec<Transact> {
-        let customer_invoice_repository: &CustomerInvoiceRepository =
-            &registry.customer_invoice_repository;
+    pub async fn customer_invoices(&self, registry: &RepositoryRegistry) -> Vec<Transact> {
+        let customer_invoice_repository: Arc<dyn CustomerInvoiceRepository> =
+            registry.customer_invoice_repository.clone();
 
         let customer_invoice_rows: Vec<TransactRow> = customer_invoice_repository
             .find_many_by_store_id(&self.store_row.id)
@@ -128,7 +129,7 @@ pub struct Item {
     pub item_row: ItemRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl Item {
     pub fn id(&self) -> &str {
         &self.item_row.id
@@ -137,6 +138,10 @@ impl Item {
     pub fn item_name(&self) -> &str {
         &self.item_row.item_name
     }
+
+    pub fn type_of(&self) -> ItemType {
+        self.item_row.type_of.clone().into()
+    }
 }
 
 #[derive(Clone)]
@@ -144,14 +149,14 @@ pub struct ItemLine {
     pub item_line_row: ItemLineRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl ItemLine {
     pub fn id(&self) -> &str {
         &self.item_line_row.id
     }
 
-    pub async fn item(&self, registry: &Registry) -> Item {
-        let item_repository: &ItemRepository = &registry.item_repository;
+    pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
+        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.item_line_row.item_id)
@@ -163,8 +168,8 @@ impl ItemLine {
         Item { item_row }
     }
 
-    pub async fn store(&self, registry: &Registry) -> Store {
-        let store_repository: &StoreRepository = &registry.store_repository;
+    pub async fn store(&self, registry: &RepositoryRegistry) -> Store {
+        let store_repository: Arc<dyn StoreRepository> = registry.store_repository.clone();
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&self.item_line_row.store_id)
@@ -235,14 +240,14 @@ pub struct Requisition {
     pub requisition_row: RequisitionRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl Requisition {
     pub fn id(&self) -> &str {
         &self.requisition_row.id
     }
 
-    pub async fn name(&self, registry: &Registry) -> Name {
-        let name_repository: &NameRepository = &registry.name_repository;
+    pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
+        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.requisition_row.name_id)
@@ -257,8 +262,8 @@ impl Requisition {
         Name { name_row }
     }
 
-    pub async fn store(&self, registry: &Registry) -> Store {
-        let store_repository: &StoreRepository = &registry.store_repository;
+    pub async fn store(&self, registry: &RepositoryRegistry) -> Store {
+        let store_repository: Arc<dyn StoreRepository> = registry.store_repository.clone();
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&self.requisition_row.store_id)
@@ -277,9 +282,9 @@ impl Requisition {
         self.requisition_row.type_of.clone().into()
     }
 
-    pub async fn requisition_lines(&self, registry: &Registry) -> Vec<RequisitionLine> {
-        let requisition_line_repository: &RequisitionLineRepository =
-            &registry.requisition_line_repository;
+    pub async fn requisition_lines(&self, registry: &RepositoryRegistry) -> Vec<RequisitionLine> {
+        let requisition_line_repository: Arc<dyn RequisitionLineRepository> =
+            registry.requisition_line_repository.clone();
 
         let requisition_line_rows: Vec<RequisitionLineRow> = requisition_line_repository
             .find_many_by_requisition_id(&self.requisition_row.id)
@@ -305,14 +310,14 @@ pub struct RequisitionLine {
     pub requisition_line_row: RequisitionLineRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl RequisitionLine {
     pub fn id(&self) -> &str {
         &self.requisition_line_row.id
     }
 
-    pub async fn item(&self, registry: &Registry) -> Item {
-        let item_repository: &ItemRepository = &registry.item_repository;
+    pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
+        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.requisition_line_row.item_id)
@@ -391,14 +396,14 @@ pub struct Transact {
     pub transact_row: TransactRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl Transact {
     pub fn id(&self) -> String {
         self.transact_row.id.to_string()
     }
 
-    pub async fn name(&self, registry: &Registry) -> Name {
-        let name_repository: &NameRepository = &registry.name_repository;
+    pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
+        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.transact_row.name_id)
@@ -416,8 +421,8 @@ impl Transact {
         self.transact_row.type_of.clone().into()
     }
 
-    pub async fn transact_lines(&self, registry: &Registry) -> Vec<TransactLine> {
-        let transact_line_repository: &TransactLineRepository = &registry.transact_line_repository;
+    pub async fn transact_lines(&self, registry: &RepositoryRegistry) -> Vec<TransactLine> {
+        let transact_line_repository: Arc<dyn TransactLineRepository> = registry.transact_line_repository.clone();
 
         let transact_line_rows: Vec<TransactLineRow> = transact_line_repository
             .find_many_by_transact_id(&self.transact_row.id)
@@ -441,14 +446,14 @@ pub struct TransactLine {
     pub transact_line_row: TransactLineRow,
 }
 
-#[juniper::graphql_object(Context = Registry)]
+#[juniper::graphql_object(Context = RepositoryRegistry)]
 impl TransactLine {
     pub fn id(&self) -> &str {
         &self.transact_line_row.id
     }
 
-    pub async fn transact(&self, registry: &Registry) -> Transact {
-        let transact_repository: &TransactRepository = &registry.transact_repository;
+    pub async fn transact(&self, registry: &RepositoryRegistry) -> Transact {
+        let transact_repository: Arc<dyn TransactRepository> = registry.transact_repository.clone();
 
         let transact_row: TransactRow = transact_repository
             .find_one_by_id(&self.transact_line_row.transact_id)
@@ -463,8 +468,8 @@ impl TransactLine {
         Transact { transact_row }
     }
 
-    pub async fn item(&self, registry: &Registry) -> Item {
-        let item_repository: &ItemRepository = &registry.item_repository;
+    pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
+        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.transact_line_row.item_id)
@@ -479,8 +484,9 @@ impl TransactLine {
         Item { item_row }
     }
 
-    pub async fn item_line(&self, registry: &Registry) -> ItemLine {
-        let item_line_repository: &ItemLineRepository = &registry.item_line_repository;
+    pub async fn item_line(&self, registry: &RepositoryRegistry) -> ItemLine {
+        let item_line_repository: Arc<dyn ItemLineRepository> =
+            registry.item_line_repository.clone();
 
         // Handle optional item_line_id correctly.
         let item_line_row: ItemLineRow = item_line_repository
