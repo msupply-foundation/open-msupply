@@ -1,6 +1,6 @@
 #[derive(sqlx::Type)]
 #[sqlx(rename = "requisition_type")]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum RequisitionRowType {
     #[sqlx(rename = "imprest")]
     Imprest,

@@ -1,19 +1,25 @@
-use crate::database::repository::Repository;
+use crate::database::repository::{
+    PgSqlxRepository, Repository, RepositoryError, TransactLineRepository,
+};
 use crate::database::schema::{TransactLineRow, TransactLineRowType};
 
+use async_trait::async_trait;
+
 #[derive(Clone)]
-pub struct TransactLineRepository {
+pub struct TransactLinePgSqlxRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for TransactLineRepository {}
-
-impl TransactLineRepository {
-    pub fn new(pool: sqlx::PgPool) -> TransactLineRepository {
-        TransactLineRepository { pool }
+impl Repository for TransactLinePgSqlxRepository {}
+impl PgSqlxRepository for TransactLinePgSqlxRepository {
+    fn new(pool: sqlx::PgPool) -> TransactLinePgSqlxRepository {
+        TransactLinePgSqlxRepository { pool }
     }
+}
 
-    pub async fn insert_one(&self, transact_line: &TransactLineRow) -> Result<(), sqlx::Error> {
+#[async_trait]
+impl TransactLineRepository for TransactLinePgSqlxRepository {
+    async fn insert_one(&self, transact_line: &TransactLineRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO transact_line (id, transact_id, type_of, item_id, item_line_id)
@@ -31,7 +37,7 @@ impl TransactLineRepository {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, id: &str) -> Result<TransactLineRow, sqlx::Error> {
+    async fn find_one_by_id(&self, id: &str) -> Result<TransactLineRow, RepositoryError> {
         let transact_line: TransactLineRow = sqlx::query_as!(
             TransactLineRow,
             r#"
@@ -47,10 +53,10 @@ impl TransactLineRepository {
         Ok(transact_line)
     }
 
-    pub async fn find_many_by_transact_id(
+    async fn find_many_by_transact_id(
         &self,
         transact_id: &str,
-    ) -> Result<Vec<TransactLineRow>, sqlx::Error> {
+    ) -> Result<Vec<TransactLineRow>, RepositoryError> {
         let transact_lines: Vec<TransactLineRow> = sqlx::query_as!(
             TransactLineRow,
             r#"

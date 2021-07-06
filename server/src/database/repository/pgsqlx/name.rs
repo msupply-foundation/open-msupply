@@ -1,19 +1,23 @@
-use crate::database::repository::Repository;
+use crate::database::repository::{NameRepository, PgSqlxRepository, Repository, RepositoryError};
 use crate::database::schema::NameRow;
 
+use async_trait::async_trait;
+
 #[derive(Clone)]
-pub struct NameRepository {
+pub struct NamePgSqlxRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for NameRepository {}
-
-impl NameRepository {
-    pub fn new(pool: sqlx::PgPool) -> NameRepository {
-        NameRepository { pool }
+impl Repository for NamePgSqlxRepository {}
+impl PgSqlxRepository for NamePgSqlxRepository {
+    fn new(pool: sqlx::PgPool) -> NamePgSqlxRepository {
+        NamePgSqlxRepository { pool }
     }
+}
 
-    pub async fn insert_one(&self, name: &NameRow) -> Result<(), sqlx::Error> {
+#[async_trait]
+impl NameRepository for NamePgSqlxRepository {
+    async fn insert_one(&self, name: &NameRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO name (id, name)
@@ -28,7 +32,7 @@ impl NameRepository {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, id: &str) -> Result<NameRow, sqlx::Error> {
+    async fn find_one_by_id(&self, id: &str) -> Result<NameRow, RepositoryError> {
         let name = sqlx::query_as!(
             NameRow,
             r#"

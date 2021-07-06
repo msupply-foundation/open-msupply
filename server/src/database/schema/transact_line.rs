@@ -1,6 +1,6 @@
 #[derive(sqlx::Type)]
 #[sqlx(rename = "transact_line_type")]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum TransactLineRowType {
     #[sqlx(rename = "stock_out")]
     StockOut,
