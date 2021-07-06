@@ -1,6 +1,6 @@
 #[derive(sqlx::Type)]
 #[sqlx(rename = "transact_type")]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum TransactRowType {
     #[sqlx(rename = "customer_invoice")]
     CustomerInvoice,

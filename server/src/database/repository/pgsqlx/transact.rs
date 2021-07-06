@@ -1,19 +1,25 @@
-use crate::database::repository::Repository;
+use crate::database::repository::{
+    CustomerInvoiceRepository, PgSqlxRepository, Repository, RepositoryError, TransactRepository,
+};
 use crate::database::schema::{TransactRow, TransactRowType};
 
+use async_trait::async_trait;
+
 #[derive(Clone)]
-pub struct TransactRepository {
+pub struct TransactPgSqlxRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for TransactRepository {}
-
-impl TransactRepository {
-    pub fn new(pool: sqlx::PgPool) -> TransactRepository {
-        TransactRepository { pool }
+impl Repository for TransactPgSqlxRepository {}
+impl PgSqlxRepository for TransactPgSqlxRepository {
+    fn new(pool: sqlx::PgPool) -> TransactPgSqlxRepository {
+        TransactPgSqlxRepository { pool }
     }
+}
 
-    pub async fn insert_one(&self, transact: TransactRow) -> Result<(), sqlx::Error> {
+#[async_trait]
+impl TransactRepository for TransactPgSqlxRepository {
+    async fn insert_one(&self, transact: &TransactRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO transact (id, name_id, store_id, invoice_number, type_of)
@@ -31,7 +37,7 @@ impl TransactRepository {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, id: &str) -> Result<TransactRow, sqlx::Error> {
+    async fn find_one_by_id(&self, id: &str) -> Result<TransactRow, RepositoryError> {
         let transact: TransactRow = sqlx::query_as!(
             TransactRow,
             r#"
@@ -49,21 +55,23 @@ impl TransactRepository {
 }
 
 #[derive(Clone)]
-pub struct CustomerInvoiceRepository {
+pub struct CustomerInvoicePgSqlxRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for CustomerInvoiceRepository {}
-
-impl CustomerInvoiceRepository {
-    pub fn new(pool: sqlx::PgPool) -> CustomerInvoiceRepository {
-        CustomerInvoiceRepository { pool }
+impl Repository for CustomerInvoicePgSqlxRepository {}
+impl PgSqlxRepository for CustomerInvoicePgSqlxRepository {
+    fn new(pool: sqlx::PgPool) -> CustomerInvoicePgSqlxRepository {
+        CustomerInvoicePgSqlxRepository { pool }
     }
+}
 
-    pub async fn find_many_by_name_id(
+#[async_trait]
+impl CustomerInvoiceRepository for CustomerInvoicePgSqlxRepository {
+    async fn find_many_by_name_id(
         &self,
         name_id: &str,
-    ) -> Result<Vec<TransactRow>, sqlx::Error> {
+    ) -> Result<Vec<TransactRow>, RepositoryError> {
         let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
             TransactRow,
             r#"
@@ -80,10 +88,10 @@ impl CustomerInvoiceRepository {
         Ok(customer_invoices)
     }
 
-    pub async fn find_many_by_store_id(
+    async fn find_many_by_store_id(
         &self,
         store_id: &str,
-    ) -> Result<Vec<TransactRow>, sqlx::Error> {
+    ) -> Result<Vec<TransactRow>, RepositoryError> {
         let customer_invoices: Vec<TransactRow> = sqlx::query_as!(
             TransactRow,
             r#"
