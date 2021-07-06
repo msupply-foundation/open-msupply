@@ -1,3 +1,3 @@
-use crate::server::data::Registry;
+use crate::server::data::RepositoryRegistry;
 
-pub type Subscriptions = juniper::EmptySubscription<Registry>;
+pub type Subscriptions = juniper::EmptySubscription<RepositoryRegistry>;

@@ -1,3 +1,3 @@
 mod registry;
 
-pub use registry::Registry;
+pub use registry::RepositoryRegistry;

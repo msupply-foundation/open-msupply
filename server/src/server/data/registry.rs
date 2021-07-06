@@ -1,16 +1,19 @@
 use crate::database;
 
-// TODO: implement with hash maps to dynamic trait objects.
+use std::sync::Arc;
+
 #[derive(Clone)]
-pub struct Registry {
-    pub customer_invoice_repository: database::repository::CustomerInvoiceRepository,
-    pub item_repository: database::repository::ItemRepository,
-    pub item_line_repository: database::repository::ItemLineRepository,
-    pub name_repository: database::repository::NameRepository,
-    pub requisition_repository: database::repository::RequisitionRepository,
-    pub requisition_line_repository: database::repository::RequisitionLineRepository,
-    pub store_repository: database::repository::StoreRepository,
-    pub transact_repository: database::repository::TransactRepository,
-    pub transact_line_repository: database::repository::TransactLineRepository,
-    pub user_account_repository: database::repository::UserAccountRepository,
+pub struct RepositoryRegistry {
+    // TODO: implement with hash maps to dynamic trait objects.
+    // pub repositories: CHashMap<String, Arc<dyn database::repository::Repository>>
+    pub customer_invoice_repository: Arc<dyn database::repository::CustomerInvoiceRepository>,
+    pub item_repository: Arc<dyn database::repository::ItemRepository>,
+    pub item_line_repository: Arc<dyn database::repository::ItemLineRepository>,
+    pub name_repository: Arc<dyn database::repository::NameRepository>,
+    pub requisition_repository: Arc<dyn database::repository::RequisitionRepository>,
+    pub requisition_line_repository: Arc<dyn database::repository::RequisitionLineRepository>,
+    pub store_repository: Arc<dyn database::repository::StoreRepository>,
+    pub transact_repository: Arc<dyn database::repository::TransactRepository>,
+    pub transact_line_repository: Arc<dyn database::repository::TransactLineRepository>,
+    pub user_account_repository: Arc<dyn database::repository::UserAccountRepository>,
 }

@@ -2,13 +2,16 @@ use crate::database::repository::{
     ItemRepository, RequisitionLineRepository, RequisitionRepository,
 };
 use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
-use crate::server::data::Registry;
+use crate::server::data::RepositoryRegistry;
 use crate::server::service::graphql::schema::types::{
     InputRequisitionLine, Item, ItemType, Requisition, RequisitionType,
 };
 
+use juniper;
+use std::sync::Arc;
+
 pub struct Mutations;
-#[juniper::graphql_object(context = Registry)]
+#[juniper::graphql_object(context = RepositoryRegistry)]
 impl Mutations {
     #[graphql(arguments(
         id(description = "id of the item"),
@@ -16,7 +19,7 @@ impl Mutations {
         type_of(description = "type of the item"),
     ))]
     async fn insert_item(
-        registry: &Registry,
+        registry: &RepositoryRegistry,
         id: String,
         item_name: String,
         type_of: ItemType,
@@ -27,7 +30,7 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let item_repository: &ItemRepository = &registry.item_repository;
+        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
 
         item_repository
             .insert_one(&item_row)
@@ -45,7 +48,7 @@ impl Mutations {
         requisition_lines(description = "requisition lines attached to the requisition")
     ))]
     async fn insert_requisition(
-        registry: &Registry,
+        registry: &RepositoryRegistry,
         id: String,
         name_id: String,
         store_id: String,
@@ -59,9 +62,9 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let requisition_repository: &RequisitionRepository = &registry.requisition_repository;
-        let requisition_line_repository: &RequisitionLineRepository =
-            &registry.requisition_line_repository;
+        let requisition_repository: Arc<dyn RequisitionRepository> = registry.requisition_repository.clone();
+        let requisition_line_repository: Arc<dyn RequisitionLineRepository> =
+            registry.requisition_line_repository.clone();
 
         requisition_repository
             .insert_one(&requisition_row)
