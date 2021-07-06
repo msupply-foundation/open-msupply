@@ -5,7 +5,7 @@ mod rest {
     #[actix_rt::test]
     async fn health_check_returns_200() {
         let mut app = actix_web::test::init_service(
-            actix_web::App::new().configure(server::services::rest::config),
+            actix_web::App::new().configure(server::service::rest::config),
         )
         .await;
 
