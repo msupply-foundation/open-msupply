@@ -30,7 +30,10 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
+        let item_repository: Arc<dyn ItemRepository> = match &registry.item_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find item repository"),
+        };
 
         item_repository
             .insert_one(&item_row)
@@ -62,9 +65,17 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let requisition_repository: Arc<dyn RequisitionRepository> = registry.requisition_repository.clone();
+        let requisition_repository: Arc<dyn RequisitionRepository> =
+            match &registry.requisition_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find requisition repository"),
+            };
+
         let requisition_line_repository: Arc<dyn RequisitionLineRepository> =
-            registry.requisition_line_repository.clone();
+            match &registry.requisition_line_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find requisition line repository"),
+            };
 
         requisition_repository
             .insert_one(&requisition_row)
