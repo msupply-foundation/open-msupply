@@ -1,6 +1,8 @@
 use remote_server::database;
 // use remote_server::util;
 
+use std::collections::HashMap;
+
 // use sqlx::{Connection, Executor, PgConnection};
 
 // pub async fn get_test_database() -> database::connection::DatabaseConnection {
@@ -66,11 +68,18 @@ pub fn get_store_b() -> database::schema::StoreRow {
     }
 }
 
-pub fn get_request_requisition_a_to_b() -> database::schema::RequisitionRow {
-    database::schema::RequisitionRow {
-        id: "requisition_a".to_string(),
-        name_id: "name_store_a".to_string(),
-        store_id: "store_b".to_string(),
-        type_of: database::schema::RequisitionRowType::Request,
-    }
+pub fn get_request_requisition_a_to_b() -> HashMap<String, database::schema::RequisitionRow> {
+    let mut requisitions = HashMap::new();
+
+    requisitions.insert(
+        String::from("requisition_a"),
+        database::schema::RequisitionRow {
+            id: "requisition_a".to_string(),
+            name_id: "name_store_a".to_string(),
+            store_id: "store_b".to_string(),
+            type_of: database::schema::RequisitionRowType::Request,
+        },
+    );
+
+    requisitions
 }

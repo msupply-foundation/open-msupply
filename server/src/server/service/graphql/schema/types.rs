@@ -28,7 +28,10 @@ impl Name {
 
     pub async fn customer_invoices(&self, registry: &RepositoryRegistry) -> Vec<Transact> {
         let customer_invoice_repository: Arc<dyn CustomerInvoiceRepository> =
-            registry.customer_invoice_repository.clone();
+            match &registry.customer_invoice_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find customer invoice repository"),
+            };
 
         let customer_invoice_rows = customer_invoice_repository
             .find_many_by_name_id(&self.name_row.id)
@@ -61,19 +64,24 @@ impl Store {
     }
 
     pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
-        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
+        let name_repository: Arc<dyn NameRepository> = match &registry.name_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find name repository"),
+        };
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.store_row.name_id)
             .await
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
-
         Name { name_row }
     }
 
     pub async fn customer_invoices(&self, registry: &RepositoryRegistry) -> Vec<Transact> {
         let customer_invoice_repository: Arc<dyn CustomerInvoiceRepository> =
-            registry.customer_invoice_repository.clone();
+            match &registry.customer_invoice_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find customer invoice repository"),
+            };
 
         let customer_invoice_rows: Vec<TransactRow> = customer_invoice_repository
             .find_many_by_store_id(&self.store_row.id)
@@ -156,7 +164,10 @@ impl ItemLine {
     }
 
     pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
-        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
+        let item_repository: Arc<dyn ItemRepository> = match &registry.item_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find customer invoice repository"),
+        };
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.item_line_row.item_id)
@@ -169,7 +180,10 @@ impl ItemLine {
     }
 
     pub async fn store(&self, registry: &RepositoryRegistry) -> Store {
-        let store_repository: Arc<dyn StoreRepository> = registry.store_repository.clone();
+        let store_repository: Arc<dyn StoreRepository> = match &registry.store_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find name repository"),
+        };
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&self.item_line_row.store_id)
@@ -247,7 +261,10 @@ impl Requisition {
     }
 
     pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
-        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
+        let name_repository: Arc<dyn NameRepository> = match &registry.name_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find name repository"),
+        };
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.requisition_row.name_id)
@@ -263,7 +280,10 @@ impl Requisition {
     }
 
     pub async fn store(&self, registry: &RepositoryRegistry) -> Store {
-        let store_repository: Arc<dyn StoreRepository> = registry.store_repository.clone();
+        let store_repository: Arc<dyn StoreRepository> = match &registry.store_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find store repository"),
+        };
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&self.requisition_row.store_id)
@@ -284,7 +304,10 @@ impl Requisition {
 
     pub async fn requisition_lines(&self, registry: &RepositoryRegistry) -> Vec<RequisitionLine> {
         let requisition_line_repository: Arc<dyn RequisitionLineRepository> =
-            registry.requisition_line_repository.clone();
+            match &registry.requisition_line_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find requisition line repository"),
+            };
 
         let requisition_line_rows: Vec<RequisitionLineRow> = requisition_line_repository
             .find_many_by_requisition_id(&self.requisition_row.id)
@@ -317,7 +340,10 @@ impl RequisitionLine {
     }
 
     pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
-        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
+        let item_repository: Arc<dyn ItemRepository> = match &registry.item_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find item repository"),
+        };
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.requisition_line_row.item_id)
@@ -403,7 +429,10 @@ impl Transact {
     }
 
     pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
-        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
+        let name_repository: Arc<dyn NameRepository> = match &registry.name_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find name repository"),
+        };
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.transact_row.name_id)
@@ -422,7 +451,11 @@ impl Transact {
     }
 
     pub async fn transact_lines(&self, registry: &RepositoryRegistry) -> Vec<TransactLine> {
-        let transact_line_repository: Arc<dyn TransactLineRepository> = registry.transact_line_repository.clone();
+        let transact_line_repository: Arc<dyn TransactLineRepository> =
+            match &registry.transact_line_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find transact line repositiory"),
+            };
 
         let transact_line_rows: Vec<TransactLineRow> = transact_line_repository
             .find_many_by_transact_id(&self.transact_row.id)
@@ -453,7 +486,10 @@ impl TransactLine {
     }
 
     pub async fn transact(&self, registry: &RepositoryRegistry) -> Transact {
-        let transact_repository: Arc<dyn TransactRepository> = registry.transact_repository.clone();
+        let transact_repository: Arc<dyn TransactRepository> = match &registry.transact_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find transact repositiory"),
+        };
 
         let transact_row: TransactRow = transact_repository
             .find_one_by_id(&self.transact_line_row.transact_id)
@@ -469,7 +505,10 @@ impl TransactLine {
     }
 
     pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
-        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
+        let item_repository: Arc<dyn ItemRepository> = match &registry.item_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find item repository"),
+        };
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.transact_line_row.item_id)
@@ -485,8 +524,11 @@ impl TransactLine {
     }
 
     pub async fn item_line(&self, registry: &RepositoryRegistry) -> ItemLine {
-        let item_line_repository: Arc<dyn ItemLineRepository> =
-            registry.item_line_repository.clone();
+        let item_line_repository: Arc<dyn ItemLineRepository> = match &registry.item_line_repository
+        {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find item line repository"),
+        };
 
         // Handle optional item_line_id correctly.
         let item_line_row: ItemLineRow = item_line_repository

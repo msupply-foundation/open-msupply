@@ -1,8 +1,11 @@
+use crate::database::repository::{
+    ItemLineRepository, ItemRepository, NameRepository, RequisitionRepository, StoreRepository,
+    TransactLineRepository, TransactRepository,
+};
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactLineRow, TransactRow,
 };
 use crate::server::data::RepositoryRegistry;
-use crate::database::repository::{ItemLineRepository, ItemRepository, NameRepository, RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository};
 use crate::server::service::graphql::schema::types::{
     Item, ItemLine, Name, Requisition, Store, Transact, TransactLine,
 };
@@ -20,7 +23,10 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the name")))]
     pub async fn name(registry: &RepositoryRegistry, id: String) -> Name {
-        let name_repository: Arc<dyn NameRepository> = registry.name_repository.clone();
+        let name_repository: Arc<dyn NameRepository> = match &registry.name_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find name repository"),
+        };
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&id)
@@ -32,7 +38,10 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the store")))]
     pub async fn store(registry: &RepositoryRegistry, id: String) -> Store {
-        let store_repository: Arc<dyn StoreRepository> = registry.store_repository.clone();
+        let store_repository: Arc<dyn StoreRepository> = match &registry.store_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find store repository"),
+        };
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&id)
@@ -44,7 +53,10 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the transact")))]
     pub async fn transact(registry: &RepositoryRegistry, id: String) -> Transact {
-        let transact_repository: Arc<dyn TransactRepository> = registry.transact_repository.clone();
+        let transact_repository: Arc<dyn TransactRepository> = match &registry.transact_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find transact repository"),
+        };
 
         let transact_row: TransactRow = transact_repository
             .find_one_by_id(&id)
@@ -57,7 +69,10 @@ impl Queries {
     #[graphql(arguments(id(description = "id of the transact line")))]
     pub async fn transact_line(registry: &RepositoryRegistry, id: String) -> TransactLine {
         let transact_line_repository: Arc<dyn TransactLineRepository> =
-            registry.transact_line_repository.clone();
+            match &registry.transact_line_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find transact line repository"),
+            };
 
         let transact_line_row: TransactLineRow = transact_line_repository
             .find_one_by_id(&id)
@@ -70,7 +85,10 @@ impl Queries {
     #[graphql(arguments(id(description = "id of the requisition")))]
     pub async fn requisition(registry: &RepositoryRegistry, id: String) -> Requisition {
         let requisition_repository: Arc<dyn RequisitionRepository> =
-            registry.requisition_repository.clone();
+            match &registry.requisition_repository {
+                Some(repository) => Arc::clone(repository),
+                None => panic!("Failed to find requisition repository"),
+            };
 
         let requisition_row: RequisitionRow = requisition_repository
             .find_one_by_id(&id)
@@ -82,7 +100,10 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the item")))]
     pub async fn item(registry: &RepositoryRegistry, id: String) -> Item {
-        let item_repository: Arc<dyn ItemRepository> = registry.item_repository.clone();
+        let item_repository: Arc<dyn ItemRepository> = match &registry.item_repository {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find item repository"),
+        };
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&id)
@@ -94,8 +115,11 @@ impl Queries {
 
     #[graphql(arguments(id(description = "id of the item line")))]
     pub async fn item_line(registry: &RepositoryRegistry, id: String) -> ItemLine {
-        let item_line_repository: Arc<dyn ItemLineRepository> =
-            registry.item_line_repository.clone();
+        let item_line_repository: Arc<dyn ItemLineRepository> = match &registry.item_line_repository
+        {
+            Some(repository) => Arc::clone(repository),
+            None => panic!("Failed to find item line repository"),
+        };
 
         let item_line_row: ItemLineRow = item_line_repository
             .find_one_by_id(&id)

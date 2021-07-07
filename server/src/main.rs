@@ -59,16 +59,16 @@ async fn main() -> std::io::Result<()> {
     ));
 
     let registry = server::data::RepositoryRegistry {
-        customer_invoice_repository,
-        item_repository,
-        item_line_repository,
-        name_repository,
-        requisition_repository,
-        requisition_line_repository,
-        store_repository,
-        transact_repository,
-        transact_line_repository,
-        user_account_repository,
+        customer_invoice_repository: Some(customer_invoice_repository),
+        item_repository: Some(item_repository),
+        item_line_repository: Some(item_line_repository),
+        name_repository: Some(name_repository),
+        requisition_repository: Some(requisition_repository),
+        requisition_line_repository: Some(requisition_line_repository),
+        store_repository: Some(store_repository),
+        transact_repository: Some(transact_repository),
+        transact_line_repository: Some(transact_line_repository),
+        user_account_repository: Some(user_account_repository),
     };
 
     let listener = std::net::TcpListener::bind(configuration.server.address())
