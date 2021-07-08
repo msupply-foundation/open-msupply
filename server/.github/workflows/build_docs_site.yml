@@ -15,4 +15,4 @@ jobs:
           # Provide personal access token
           TOKEN: ${{ secrets.ZOLAGENERATEDOCS }}
           # build directory
-          BUILD_DIR: ./docs
+          BUILD_DIR: docs
