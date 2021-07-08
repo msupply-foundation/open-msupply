@@ -1,6 +1,17 @@
 +++
-title = "Transfers"
-template = "index.html"
+title = "Special cases"
+description = "Special cases"
+date = 2021-05-01T19:30:00+00:00
+updated = 2021-05-01T19:30:00+00:00
+draft = false
+weight = 30
+sort_by = "weight"
+template = "docs/page.html"
+
+[extra]
+lead = "Special cases"
+toc = true
+top = false
 +++
 
 1. [Transfers](#transfers)
