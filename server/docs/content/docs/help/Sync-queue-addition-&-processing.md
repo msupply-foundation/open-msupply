@@ -1,6 +1,17 @@
 +++
-title = "Sync queue addition and processing"
-template = "index.html"
+title = "Sync queue"
+description = "Sync queue addition & processing"
+date = 2021-05-01T19:30:00+00:00
+updated = 2021-05-01T19:30:00+00:00
+draft = false
+weight = 30
+sort_by = "weight"
+template = "docs/page.html"
+
+[extra]
+lead = "Sync queue"
+toc = true
+top = false
 +++
 
 # Sync queue table
