@@ -1,6 +1,6 @@
 +++
-title = "Help"
-description = "Help with installing, using and configuring Open mSupply."
+title = "Sync"
+description = "Get help with the Open mSupply synchronisation system."
 date = 2025-05-01T19:00:00+00:00
 updated = 2021-05-01T19:00:00+00:00
 template = "docs/section.html"
