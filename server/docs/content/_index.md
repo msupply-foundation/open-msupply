@@ -1,10 +1,9 @@
 +++
 title = "Open mSupply"
 
-# The homepage contents
 [extra]
 lead = '<b>Open mSupply</b> is ....'
-url = "/docs/getting-started/introduction/"
+url = "/docs/getting-started/introduction"
 url_button = "Get started"
 repo_version = "GitHub v0.1.0"
 repo_license = "Open-source MIT License."
