@@ -1,4 +1,4 @@
-use crate::database::repository::{PgSqlxRepository, RepositoryError, StoreRepository, Repository};
+use crate::database::repository::{PgSqlxRepository, Repository, RepositoryError, StoreRepository};
 use crate::database::schema::StoreRow;
 
 use async_trait::async_trait;
