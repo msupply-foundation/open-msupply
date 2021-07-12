@@ -1,25 +1,17 @@
-use crate::database::repository::{
-    PgSqlxRepository, Repository, RepositoryError, RequisitionRepository,
-};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::{RequisitionRow, RequisitionRowType};
 
-use async_trait::async_trait;
-
 #[derive(Clone)]
-pub struct RequisitionPgSqlxRepository {
+pub struct RequisitionRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for RequisitionPgSqlxRepository {}
-impl PgSqlxRepository for RequisitionPgSqlxRepository {
-    fn new(pool: sqlx::PgPool) -> RequisitionPgSqlxRepository {
-        RequisitionPgSqlxRepository { pool }
+impl RequisitionRepository {
+    pub fn new(pool: sqlx::PgPool) -> RequisitionRepository {
+        RequisitionRepository { pool }
     }
-}
 
-#[async_trait]
-impl RequisitionRepository for RequisitionPgSqlxRepository {
-    async fn insert_one(&self, requisition: &RequisitionRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, requisition: &RequisitionRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO requisition (id, name_id, store_id, type_of)
@@ -36,7 +28,7 @@ impl RequisitionRepository for RequisitionPgSqlxRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<RequisitionRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<RequisitionRow, RepositoryError> {
         let requisition = sqlx::query_as!(
             RequisitionRow,
             r#"

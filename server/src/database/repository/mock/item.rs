@@ -1,27 +1,20 @@
-use crate::database::repository::{ItemRepository, MockRepository, Repository, RepositoryError};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::ItemRow;
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
-pub struct ItemMockRepository {
+pub struct ItemRepository {
     mock_data: Arc<Mutex<HashMap<String, ItemRow>>>,
 }
 
-impl Repository for ItemMockRepository {}
-impl MockRepository for ItemMockRepository {}
-
-impl ItemMockRepository {
-    pub fn new(mock_data: Arc<Mutex<HashMap<String, ItemRow>>>) -> ItemMockRepository {
-        ItemMockRepository { mock_data }
+impl ItemRepository {
+    pub fn new(mock_data: Arc<Mutex<HashMap<String, ItemRow>>>) -> ItemRepository {
+        ItemRepository { mock_data }
     }
-}
 
-#[async_trait]
-impl ItemRepository for ItemMockRepository {
-    async fn insert_one(&self, item: &ItemRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, item: &ItemRow) -> Result<(), RepositoryError> {
         self.mock_data
             .lock()
             .unwrap()
@@ -30,7 +23,7 @@ impl ItemRepository for ItemMockRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
         match self.mock_data.lock().unwrap().get(&String::from(id)) {
             Some(item) => Ok(item.clone()),
             None => Err(RepositoryError {

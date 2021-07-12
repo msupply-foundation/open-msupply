@@ -36,3 +36,6 @@ features = [
     "migrate",
     "offline"
 ]
+
+[features]
+mock = []

@@ -1,25 +1,17 @@
-use crate::database::repository::{
-    ItemLineRepository, PgSqlxRepository, Repository, RepositoryError,
-};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::ItemLineRow;
 
-use async_trait::async_trait;
-
 #[derive(Clone)]
-pub struct ItemLinePgSqlxRepository {
+pub struct ItemLineRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for ItemLinePgSqlxRepository {}
-impl PgSqlxRepository for ItemLinePgSqlxRepository {
-    fn new(pool: sqlx::PgPool) -> ItemLinePgSqlxRepository {
-        ItemLinePgSqlxRepository { pool }
+impl ItemLineRepository {
+    pub fn new(pool: sqlx::PgPool) -> ItemLineRepository {
+        ItemLineRepository { pool }
     }
-}
 
-#[async_trait]
-impl ItemLineRepository for ItemLinePgSqlxRepository {
-    async fn insert_one(&self, item_line: &ItemLineRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, item_line: &ItemLineRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO item_line (id, item_id, store_id, batch, quantity)
@@ -37,7 +29,7 @@ impl ItemLineRepository for ItemLinePgSqlxRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<ItemLineRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<ItemLineRow, RepositoryError> {
         let item_line = sqlx::query_as!(
             ItemLineRow,
             r#"
