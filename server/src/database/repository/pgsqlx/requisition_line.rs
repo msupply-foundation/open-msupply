@@ -1,25 +1,17 @@
-use crate::database::repository::{
-    PgSqlxRepository, Repository, RepositoryError, RequisitionLineRepository,
-};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::RequisitionLineRow;
 
-use async_trait::async_trait;
-
 #[derive(Clone)]
-pub struct RequisitionLinePgSqlxRepository {
+pub struct RequisitionLineRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for RequisitionLinePgSqlxRepository {}
-impl PgSqlxRepository for RequisitionLinePgSqlxRepository {
-    fn new(pool: sqlx::PgPool) -> RequisitionLinePgSqlxRepository {
-        RequisitionLinePgSqlxRepository { pool }
+impl RequisitionLineRepository {
+    pub fn new(pool: sqlx::PgPool) -> RequisitionLineRepository {
+        RequisitionLineRepository { pool }
     }
-}
 
-#[async_trait]
-impl RequisitionLineRepository for RequisitionLinePgSqlxRepository {
-    async fn insert_one(
+    pub async fn insert_one(
         &self,
         requisition_line: &RequisitionLineRow,
     ) -> Result<(), RepositoryError> {
@@ -40,7 +32,7 @@ impl RequisitionLineRepository for RequisitionLinePgSqlxRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<RequisitionLineRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<RequisitionLineRow, RepositoryError> {
         let requisition_line = sqlx::query_as!(
             RequisitionLineRow,
             r#"
@@ -56,7 +48,7 @@ impl RequisitionLineRepository for RequisitionLinePgSqlxRepository {
         Ok(requisition_line)
     }
 
-    async fn find_many_by_requisition_id(
+    pub async fn find_many_by_requisition_id(
         &self,
         requisition_id: &str,
     ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {

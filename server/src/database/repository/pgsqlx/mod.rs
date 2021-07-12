@@ -1,4 +1,4 @@
-use crate::database::repository::{Repository, RepositoryError};
+use crate::database::repository::RepositoryError;
 
 mod item;
 mod item_line;
@@ -10,19 +10,15 @@ mod transact;
 mod transact_line;
 mod user_account;
 
-pub use item::ItemPgSqlxRepository;
-pub use item_line::ItemLinePgSqlxRepository;
-pub use name::NamePgSqlxRepository;
-pub use requisition::RequisitionPgSqlxRepository;
-pub use requisition_line::RequisitionLinePgSqlxRepository;
-pub use store::StorePgSqlxRepository;
-pub use transact::{CustomerInvoicePgSqlxRepository, TransactPgSqlxRepository};
-pub use transact_line::TransactLinePgSqlxRepository;
-pub use user_account::UserAccountPgSqlxRepository;
-
-pub trait PgSqlxRepository: Repository {
-    fn new(pool: sqlx::PgPool) -> Self;
-}
+pub use item::ItemRepository;
+pub use item_line::ItemLineRepository;
+pub use name::NameRepository;
+pub use requisition::RequisitionRepository;
+pub use requisition_line::RequisitionLineRepository;
+pub use store::StoreRepository;
+pub use transact::{CustomerInvoiceRepository, TransactRepository};
+pub use transact_line::TransactLineRepository;
+pub use user_account::UserAccountRepository;
 
 impl From<sqlx::Error> for RepositoryError {
     fn from(err: sqlx::Error) -> Self {

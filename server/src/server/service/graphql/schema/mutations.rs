@@ -30,7 +30,7 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let item_repository: Arc<dyn ItemRepository> = match &registry.item_repository {
+        let item_repository: Arc<ItemRepository> = match &registry.item_repository {
             Some(repository) => Arc::clone(repository),
             None => panic!("Failed to find item repository"),
         };
@@ -65,13 +65,13 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let requisition_repository: Arc<dyn RequisitionRepository> =
+        let requisition_repository: Arc<RequisitionRepository> =
             match &registry.requisition_repository {
                 Some(repository) => Arc::clone(repository),
                 None => panic!("Failed to find requisition repository"),
             };
 
-        let requisition_line_repository: Arc<dyn RequisitionLineRepository> =
+        let requisition_line_repository: Arc<RequisitionLineRepository> =
             match &registry.requisition_line_repository {
                 Some(repository) => Arc::clone(repository),
                 None => panic!("Failed to find requisition line repository"),

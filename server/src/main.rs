@@ -1,8 +1,8 @@
+#![cfg_attr(feature = "mock", allow(unused_imports))]
+
 use remote_server::database;
 use remote_server::server;
 use remote_server::util;
-
-use remote_server::database::repository::PgSqlxRepository;
 
 use log::info;
 use tokio::sync::mpsc::channel;
@@ -11,6 +11,12 @@ use tokio::time::{delay_for, interval, Duration};
 
 use std::sync::Arc;
 
+#[cfg(feature = "mock")]
+fn main() -> Result<(), &'static str> {
+    Err("Compiled with the mock feature enabled, server not supported in this mode")
+}
+
+#[cfg(not(feature = "mock"))]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "info");
@@ -24,42 +30,33 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to connect to database");
 
     let customer_invoice_repository = Arc::new(
-        database::repository::CustomerInvoicePgSqlxRepository::new(pool.clone()),
+        database::repository::CustomerInvoiceRepository::new(pool.clone()),
     );
 
-    let item_repository = Arc::new(database::repository::ItemPgSqlxRepository::new(
-        pool.clone(),
-    ));
+    let item_repository = Arc::new(database::repository::ItemRepository::new(pool.clone()));
 
-    let item_line_repository = Arc::new(database::repository::ItemLinePgSqlxRepository::new(
-        pool.clone(),
-    ));
+    let item_line_repository =
+        Arc::new(database::repository::ItemLineRepository::new(pool.clone()));
 
-    let name_repository = Arc::new(database::repository::NamePgSqlxRepository::new(
-        pool.clone(),
-    ));
+    let name_repository = Arc::new(database::repository::NameRepository::new(pool.clone()));
 
-    let requisition_repository = Arc::new(database::repository::RequisitionPgSqlxRepository::new(
+    let requisition_repository = Arc::new(database::repository::RequisitionRepository::new(
         pool.clone(),
     ));
 
     let requisition_line_repository = Arc::new(
-        database::repository::RequisitionLinePgSqlxRepository::new(pool.clone()),
+        database::repository::RequisitionLineRepository::new(pool.clone()),
     );
 
-    let store_repository = Arc::new(database::repository::StorePgSqlxRepository::new(
+    let store_repository = Arc::new(database::repository::StoreRepository::new(pool.clone()));
+
+    let transact_repository = Arc::new(database::repository::TransactRepository::new(pool.clone()));
+
+    let transact_line_repository = Arc::new(database::repository::TransactLineRepository::new(
         pool.clone(),
     ));
 
-    let transact_repository = Arc::new(database::repository::TransactPgSqlxRepository::new(
-        pool.clone(),
-    ));
-
-    let transact_line_repository = Arc::new(
-        database::repository::TransactLinePgSqlxRepository::new(pool.clone()),
-    );
-
-    let user_account_repository = Arc::new(database::repository::UserAccountPgSqlxRepository::new(
+    let user_account_repository = Arc::new(database::repository::UserAccountRepository::new(
         pool.clone(),
     ));
 
