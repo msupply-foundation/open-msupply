@@ -7,7 +7,6 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-
 #[derive(Clone)]
 pub struct TransactMockRepository {
     mock_data: Arc<Mutex<HashMap<String, TransactRow>>>,
