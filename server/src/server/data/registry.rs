@@ -1,6 +1,7 @@
 use crate::database;
 
 use std::sync::Arc;
+use std::sync::Mutex;
 
 #[derive(Clone)]
 pub struct RepositoryRegistry {
@@ -18,4 +19,5 @@ pub struct RepositoryRegistry {
     pub transact_repository: Option<Arc<dyn database::repository::TransactRepository>>,
     pub transact_line_repository: Option<Arc<dyn database::repository::TransactLineRepository>>,
     pub user_account_repository: Option<Arc<dyn database::repository::UserAccountRepository>>,
+    pub sync_sender: Arc<Mutex<tokio::sync::mpsc::Sender<()>>>,
 }
