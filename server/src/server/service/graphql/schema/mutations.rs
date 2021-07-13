@@ -8,7 +8,6 @@ use crate::server::service::graphql::schema::types::{
 };
 
 use juniper;
-use std::sync::Arc;
 
 pub struct Mutations;
 #[juniper::graphql_object(context = RepositoryRegistry)]
@@ -30,10 +29,7 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let item_repository: Arc<ItemRepository> = match &registry.item_repository {
-            Some(repository) => Arc::clone(repository),
-            None => panic!("Failed to find item repository"),
-        };
+        let item_repository = registry.get::<ItemRepository>();
 
         item_repository
             .insert_one(&item_row)
@@ -65,17 +61,8 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let requisition_repository: Arc<RequisitionRepository> =
-            match &registry.requisition_repository {
-                Some(repository) => Arc::clone(repository),
-                None => panic!("Failed to find requisition repository"),
-            };
-
-        let requisition_line_repository: Arc<RequisitionLineRepository> =
-            match &registry.requisition_line_repository {
-                Some(repository) => Arc::clone(repository),
-                None => panic!("Failed to find requisition line repository"),
-            };
+        let requisition_repository = registry.get::<RequisitionRepository>();
+        let requisition_line_repository = registry.get::<RequisitionLineRepository>();
 
         requisition_repository
             .insert_one(&requisition_row)

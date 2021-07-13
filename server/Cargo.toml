@@ -12,6 +12,7 @@ path = "src/main.rs"
 name = "remote_server"
 
 [dependencies]
+anymap = "0.12"
 actix-cors = "0.5.4"
 actix-rt = "1.1.0"
 actix-web = "3.3.2" # When updating this to 4 (when it comes out), the tokio dependency will need to be bumped to at least 1.3.

@@ -1,3 +1,4 @@
+#![allow(where_clauses_object_safety)]
 #![cfg_attr(feature = "mock", allow(unused_imports))]
 
 use remote_server::database;
@@ -29,34 +30,25 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to database");
 
-    let customer_invoice_repository = Arc::new(
-        database::repository::CustomerInvoiceRepository::new(pool.clone()),
-    );
-
-    let item_repository = Arc::new(database::repository::ItemRepository::new(pool.clone()));
-
-    let item_line_repository =
-        Arc::new(database::repository::ItemLineRepository::new(pool.clone()));
-
-    let name_repository = Arc::new(database::repository::NameRepository::new(pool.clone()));
-
-    let requisition_repository = Arc::new(database::repository::RequisitionRepository::new(
+    let mut repositories = anymap::Map::new();
+    repositories.insert(database::repository::CustomerInvoiceRepository::new(
         pool.clone(),
     ));
-
-    let requisition_line_repository = Arc::new(
-        database::repository::RequisitionLineRepository::new(pool.clone()),
-    );
-
-    let store_repository = Arc::new(database::repository::StoreRepository::new(pool.clone()));
-
-    let transact_repository = Arc::new(database::repository::TransactRepository::new(pool.clone()));
-
-    let transact_line_repository = Arc::new(database::repository::TransactLineRepository::new(
+    repositories.insert(database::repository::ItemRepository::new(pool.clone()));
+    repositories.insert(database::repository::ItemLineRepository::new(pool.clone()));
+    repositories.insert(database::repository::NameRepository::new(pool.clone()));
+    repositories.insert(database::repository::RequisitionRepository::new(
         pool.clone(),
     ));
-
-    let user_account_repository = Arc::new(database::repository::UserAccountRepository::new(
+    repositories.insert(database::repository::RequisitionLineRepository::new(
+        pool.clone(),
+    ));
+    repositories.insert(database::repository::StoreRepository::new(pool.clone()));
+    repositories.insert(database::repository::TransactRepository::new(pool.clone()));
+    repositories.insert(database::repository::TransactLineRepository::new(
+        pool.clone(),
+    ));
+    repositories.insert(database::repository::UserAccountRepository::new(
         pool.clone(),
     ));
 
@@ -67,16 +59,7 @@ async fn main() -> std::io::Result<()> {
     let (mut sync_sender, mut sync_receiver) = channel(1);
 
     let registry = server::data::RepositoryRegistry {
-        customer_invoice_repository: Some(customer_invoice_repository),
-        item_repository: Some(item_repository),
-        item_line_repository: Some(item_line_repository),
-        name_repository: Some(name_repository),
-        requisition_repository: Some(requisition_repository),
-        requisition_line_repository: Some(requisition_line_repository),
-        store_repository: Some(store_repository),
-        transact_repository: Some(transact_repository),
-        transact_line_repository: Some(transact_line_repository),
-        user_account_repository: Some(user_account_repository),
+        repositories,
         // Arc and Mutex are both unfortunate requirements here because we need to mutate the
         // Sender later which the extractor doesn’t help us with, but all up it’s not a big deal.
         // Should be possible to remove them both later.
