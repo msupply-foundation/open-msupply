@@ -1,14 +1,11 @@
--- Create user table.
+-- Create user table
 
 CREATE EXTENSION pgcrypto;
 
 CREATE TABLE user_account (
-    -- Unique id assigned to each user.
-    id VARCHAR(255) NOT NULL PRIMARY KEY,
-    -- Unique username associated with this user.
-    username VARCHAR(255) NOT NULL,
-    -- User password, stored as salted MD5 hash.
-    password TEXT NOT NULL,
-    -- Email address of the user.
-    email VARCHAR(255)
+    id varchar(255) NOT NULL PRIMARY KEY,
+    username varchar(255) NOT NULL,
+    -- Password is stored as salted MD5 hash
+    password text NOT NULL,
+    email varchar(255)
 )

@@ -1,4 +1,4 @@
--- Create requisition line foreign key constraints.
+-- Create requisition line foreign key constraints
 
 BEGIN;
 ALTER TABLE requisition_line ADD CONSTRAINT fk_requisition FOREIGN KEY(requisition_id) REFERENCES requisition(id);
