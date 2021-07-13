@@ -11,5 +11,5 @@ CREATE TABLE sync_out (
     record_id varchar(255) NOT NULL,
     store_id varchar(255) NOT NULL,
     site_id integer NOT NULL,
-    action sync_out_action_type NOT NULL,
+    action sync_out_action_type NOT NULL
 )
