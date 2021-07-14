@@ -16,7 +16,7 @@ echo "Format checking staged rust files..."; echo
 
 # Iterate staged rust source files to check for incorrectly formatted code.
 COMMIT_OK=0
-for file in $(git diff --name-only --staged | grep -E "*.rs"); do
+for file in $(git diff --name-only --staged --diff-filter=d | grep -E "*.rs"); do
 	echo -n  "$file - "	
 	rustfmt --check "$file" >/dev/null
 	if [ $? -eq 0 ]; then 
