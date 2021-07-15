@@ -19,38 +19,37 @@ impl<'a> ContextExt for Context<'a> {
     }
 }
 
-pub fn config(cfg: &mut actix_web::web::ServiceConfig) {
-    let schema = Schema::build(
-        schema::Queries,
-        schema::Mutations,
-        async_graphql::EmptySubscription,
-    )
-    .finish();
-    cfg.service(
-        actix_web::web::scope("/graphql")
-            .data(schema)
-            .route("", actix_web::web::post().to(graphql))
-            // It’s nicest to have the playground on the same URL, but if it’s a GET request and
-            // there’s a `query` parameter, we want it to be treated as a GraphQL query. The
-            // simplest way of doing this is to just require no query string for playground access.
-            .route(
-                "",
-                actix_web::web::get()
-                    .guard(fn_guard(|head| head.uri.query().is_none()))
-                    .to(playground),
-            )
-            .route("", actix_web::web::get().to(graphql)),
-    );
+pub fn config(
+    registry: Data<RepositoryRegistry>,
+) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
+    |cfg| {
+        let schema = Schema::build(
+            schema::Queries,
+            schema::Mutations,
+            async_graphql::EmptySubscription,
+        )
+        .data(registry)
+        .finish();
+        cfg.service(
+            actix_web::web::scope("/graphql")
+                .data(schema)
+                .route("", actix_web::web::post().to(graphql))
+                // It’s nicest to have the playground on the same URL, but if it’s a GET request and
+                // there’s a `query` parameter, we want it to be treated as a GraphQL query. The
+                // simplest way of doing this is to just require no query string for playground access.
+                .route(
+                    "",
+                    actix_web::web::get()
+                        .guard(fn_guard(|head| head.uri.query().is_none()))
+                        .to(playground),
+                )
+                .route("", actix_web::web::get().to(graphql)),
+        );
+    }
 }
 
-async fn graphql(
-    schema: Data<Schema>,
-    registry: Data<RepositoryRegistry>,
-    req: Request,
-) -> Response {
-    let mut req = req.into_inner();
-    req.data.insert(registry);
-    schema.execute(req).await.into()
+async fn graphql(schema: Data<Schema>, req: Request) -> Response {
+    schema.execute(req.into_inner()).await.into()
 }
 
 async fn playground() -> Result<HttpResponse> {
