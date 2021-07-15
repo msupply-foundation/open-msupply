@@ -1,4 +1,3 @@
-pub mod context;
 pub mod mutations;
 pub mod queries;
 pub mod subscriptions;
@@ -8,4 +7,4 @@ pub use mutations::Mutations;
 pub use queries::Queries;
 pub use subscriptions::Subscriptions;
 
-pub type Schema = juniper::RootNode<'static, Queries, Mutations, Subscriptions>;
+pub type Schema = async_graphql::Schema<Queries, Mutations, Subscriptions>;

@@ -6,27 +6,27 @@ use crate::database::schema::{
     ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
     RequisitionRowType, StoreRow, TransactLineRow, TransactRow, TransactRowType,
 };
-use crate::server::data::RepositoryRegistry;
+use crate::server::service::graphql::ContextExt;
 
-use juniper;
+use async_graphql::{Context, Enum, InputObject, Object};
 
 #[derive(Clone)]
 pub struct Name {
     pub name_row: NameRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl Name {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.name_row.id
     }
 
-    pub fn name(&self) -> &str {
+    pub async fn name(&self) -> &str {
         &self.name_row.id
     }
 
-    pub async fn customer_invoices(&self, registry: &RepositoryRegistry) -> Vec<Transact> {
-        let customer_invoice_repository = registry.get::<CustomerInvoiceRepository>();
+    pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Transact> {
+        let customer_invoice_repository = ctx.get_repository::<CustomerInvoiceRepository>();
 
         let customer_invoice_rows = customer_invoice_repository
             .find_many_by_name_id(&self.name_row.id)
@@ -52,14 +52,14 @@ pub struct Store {
     pub store_row: StoreRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl Store {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.store_row.id
     }
 
-    pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
-        let name_repository = registry.get::<NameRepository>();
+    pub async fn name(&self, ctx: &Context<'_>) -> Name {
+        let name_repository = ctx.get_repository::<NameRepository>();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.store_row.name_id)
@@ -68,8 +68,8 @@ impl Store {
         Name { name_row }
     }
 
-    pub async fn customer_invoices(&self, registry: &RepositoryRegistry) -> Vec<Transact> {
-        let customer_invoice_repository = registry.get::<CustomerInvoiceRepository>();
+    pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Transact> {
+        let customer_invoice_repository = ctx.get_repository::<CustomerInvoiceRepository>();
 
         let customer_invoice_rows: Vec<TransactRow> = customer_invoice_repository
             .find_many_by_store_id(&self.store_row.id)
@@ -90,7 +90,7 @@ impl Store {
     }
 }
 
-#[derive(juniper::GraphQLEnum)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum ItemType {
     #[graphql(name = "general")]
     General,
@@ -125,17 +125,17 @@ pub struct Item {
     pub item_row: ItemRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl Item {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.item_row.id
     }
 
-    pub fn item_name(&self) -> &str {
+    pub async fn item_name(&self) -> &str {
         &self.item_row.item_name
     }
 
-    pub fn type_of(&self) -> ItemType {
+    pub async fn type_of(&self) -> ItemType {
         self.item_row.type_of.clone().into()
     }
 }
@@ -145,14 +145,14 @@ pub struct ItemLine {
     pub item_line_row: ItemLineRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl ItemLine {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.item_line_row.id
     }
 
-    pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
-        let item_repository = registry.get::<ItemRepository>();
+    pub async fn item(&self, ctx: &Context<'_>) -> Item {
+        let item_repository = ctx.get_repository::<ItemRepository>();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.item_line_row.item_id)
@@ -164,8 +164,8 @@ impl ItemLine {
         Item { item_row }
     }
 
-    pub async fn store(&self, registry: &RepositoryRegistry) -> Store {
-        let store_repository = registry.get::<StoreRepository>();
+    pub async fn store(&self, ctx: &Context<'_>) -> Store {
+        let store_repository = ctx.get_repository::<StoreRepository>();
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&self.item_line_row.store_id)
@@ -180,16 +180,16 @@ impl ItemLine {
         Store { store_row }
     }
 
-    pub fn batch(&self) -> &str {
+    pub async fn batch(&self) -> &str {
         &self.item_line_row.batch
     }
 
-    pub fn quantity(&self) -> f64 {
+    pub async fn quantity(&self) -> f64 {
         self.item_line_row.quantity
     }
 }
 
-#[derive(juniper::GraphQLEnum)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionType {
     #[graphql(name = "imprest")]
     Imprest,
@@ -236,14 +236,14 @@ pub struct Requisition {
     pub requisition_row: RequisitionRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl Requisition {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.requisition_row.id
     }
 
-    pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
-        let name_repository = registry.get::<NameRepository>();
+    pub async fn name(&self, ctx: &Context<'_>) -> Name {
+        let name_repository = ctx.get_repository::<NameRepository>();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.requisition_row.name_id)
@@ -258,8 +258,8 @@ impl Requisition {
         Name { name_row }
     }
 
-    pub async fn store(&self, registry: &RepositoryRegistry) -> Store {
-        let store_repository = registry.get::<StoreRepository>();
+    pub async fn store(&self, ctx: &Context<'_>) -> Store {
+        let store_repository = ctx.get_repository::<StoreRepository>();
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&self.requisition_row.store_id)
@@ -274,12 +274,12 @@ impl Requisition {
         Store { store_row }
     }
 
-    pub fn type_of(&self) -> RequisitionType {
+    pub async fn type_of(&self) -> RequisitionType {
         self.requisition_row.type_of.clone().into()
     }
 
-    pub async fn requisition_lines(&self, registry: &RepositoryRegistry) -> Vec<RequisitionLine> {
-        let requisition_line_repository = registry.get::<RequisitionLineRepository>();
+    pub async fn requisition_lines(&self, ctx: &Context<'_>) -> Vec<RequisitionLine> {
+        let requisition_line_repository = ctx.get_repository::<RequisitionLineRepository>();
 
         let requisition_line_rows: Vec<RequisitionLineRow> = requisition_line_repository
             .find_many_by_requisition_id(&self.requisition_row.id)
@@ -305,14 +305,14 @@ pub struct RequisitionLine {
     pub requisition_line_row: RequisitionLineRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl RequisitionLine {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.requisition_line_row.id
     }
 
-    pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
-        let item_repository = registry.get::<ItemRepository>();
+    pub async fn item(&self, ctx: &Context<'_>) -> Item {
+        let item_repository = ctx.get_repository::<ItemRepository>();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.requisition_line_row.item_id)
@@ -327,16 +327,16 @@ impl RequisitionLine {
         Item { item_row }
     }
 
-    pub fn actual_quantity(&self) -> f64 {
+    pub async fn actual_quantity(&self) -> f64 {
         self.requisition_line_row.actual_quantity
     }
 
-    pub fn suggested_quantity(&self) -> f64 {
+    pub async fn suggested_quantity(&self) -> f64 {
         self.requisition_line_row.suggested_quantity
     }
 }
 
-#[derive(juniper::GraphQLEnum)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TransactType {
     #[graphql(name = "customer_invoice")]
     CustomerInvoice,
@@ -391,14 +391,14 @@ pub struct Transact {
     pub transact_row: TransactRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl Transact {
-    pub fn id(&self) -> String {
+    pub async fn id(&self) -> String {
         self.transact_row.id.to_string()
     }
 
-    pub async fn name(&self, registry: &RepositoryRegistry) -> Name {
-        let name_repository = registry.get::<NameRepository>();
+    pub async fn name(&self, ctx: &Context<'_>) -> Name {
+        let name_repository = ctx.get_repository::<NameRepository>();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&self.transact_row.name_id)
@@ -408,16 +408,16 @@ impl Transact {
         Name { name_row }
     }
 
-    pub fn invoice_number(&self) -> i32 {
+    pub async fn invoice_number(&self) -> i32 {
         self.transact_row.invoice_number
     }
 
-    pub fn type_of(&self) -> TransactType {
+    pub async fn type_of(&self) -> TransactType {
         self.transact_row.type_of.clone().into()
     }
 
-    pub async fn transact_lines(&self, registry: &RepositoryRegistry) -> Vec<TransactLine> {
-        let transact_line_repository = registry.get::<TransactLineRepository>();
+    pub async fn transact_lines(&self, ctx: &Context<'_>) -> Vec<TransactLine> {
+        let transact_line_repository = ctx.get_repository::<TransactLineRepository>();
 
         let transact_line_rows: Vec<TransactLineRow> = transact_line_repository
             .find_many_by_transact_id(&self.transact_row.id)
@@ -441,14 +441,14 @@ pub struct TransactLine {
     pub transact_line_row: TransactLineRow,
 }
 
-#[juniper::graphql_object(Context = RepositoryRegistry)]
+#[Object]
 impl TransactLine {
-    pub fn id(&self) -> &str {
+    pub async fn id(&self) -> &str {
         &self.transact_line_row.id
     }
 
-    pub async fn transact(&self, registry: &RepositoryRegistry) -> Transact {
-        let transact_repository = registry.get::<TransactRepository>();
+    pub async fn transact(&self, ctx: &Context<'_>) -> Transact {
+        let transact_repository = ctx.get_repository::<TransactRepository>();
 
         let transact_row: TransactRow = transact_repository
             .find_one_by_id(&self.transact_line_row.transact_id)
@@ -463,8 +463,8 @@ impl TransactLine {
         Transact { transact_row }
     }
 
-    pub async fn item(&self, registry: &RepositoryRegistry) -> Item {
-        let item_repository = registry.get::<ItemRepository>();
+    pub async fn item(&self, ctx: &Context<'_>) -> Item {
+        let item_repository = ctx.get_repository::<ItemRepository>();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&self.transact_line_row.item_id)
@@ -479,8 +479,8 @@ impl TransactLine {
         Item { item_row }
     }
 
-    pub async fn item_line(&self, registry: &RepositoryRegistry) -> ItemLine {
-        let item_line_repository = registry.get::<ItemLineRepository>();
+    pub async fn item_line(&self, ctx: &Context<'_>) -> ItemLine {
+        let item_line_repository = ctx.get_repository::<ItemLineRepository>();
 
         // Handle optional item_line_id correctly.
         let item_line_row: ItemLineRow = item_line_repository
@@ -497,7 +497,7 @@ impl TransactLine {
     }
 }
 
-#[derive(Clone, juniper::GraphQLInputObject)]
+#[derive(Clone, InputObject)]
 pub struct InputRequisitionLine {
     pub id: String,
     pub item_id: String,
