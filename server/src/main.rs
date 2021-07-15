@@ -74,7 +74,6 @@ async fn main() -> std::io::Result<()> {
             .data(registry.clone())
             .wrap(server::middleware::logger())
             .wrap(server::middleware::compress())
-            .configure(server::service::graphiql::config)
             .configure(server::service::graphql::config)
             .configure(server::service::rest::config)
     })
