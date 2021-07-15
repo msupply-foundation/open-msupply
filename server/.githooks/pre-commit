@@ -3,7 +3,9 @@
 # Pre-commit hook for preventing commits with incorrectly formatted 
 # rust code.
 #
-# To enable this hook, copy it to `./.git/hooks/pre-commit`.
+# To enable this hook, copy it to `./.git/hooks/pre-commit` or symlink it:
+#
+#     ln -s ../../.githooks/pre-commit .git/hooks/
 
 # Set hooks.norustfmt to true to ignore rust formatting checks.
 if [ "$(git config --type=bool hooks.norustfmt)" = "true" ]; then 
@@ -14,7 +16,7 @@ echo "Format checking staged rust files..."; echo
 
 # Iterate staged rust source files to check for incorrectly formatted code.
 COMMIT_OK=0
-for file in $(git diff --name-only --staged | grep -E "*.rs"); do
+for file in $(git diff --name-only --staged --diff-filter=d | grep -E "*.rs"); do
 	echo -n  "$file - "	
 	rustfmt --check "$file" >/dev/null
 	if [ $? -eq 0 ]; then 
