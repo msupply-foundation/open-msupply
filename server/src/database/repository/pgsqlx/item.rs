@@ -1,23 +1,17 @@
-use crate::database::repository::{ItemRepository, PgSqlxRepository, Repository, RepositoryError};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::{ItemRow, ItemRowType};
 
-use async_trait::async_trait;
-
 #[derive(Clone)]
-pub struct ItemPgSqlxRepository {
+pub struct ItemRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for ItemPgSqlxRepository {}
-impl PgSqlxRepository for ItemPgSqlxRepository {
-    fn new(pool: sqlx::PgPool) -> ItemPgSqlxRepository {
-        ItemPgSqlxRepository { pool }
+impl ItemRepository {
+    pub fn new(pool: sqlx::PgPool) -> ItemRepository {
+        ItemRepository { pool }
     }
-}
 
-#[async_trait]
-impl ItemRepository for ItemPgSqlxRepository {
-    async fn insert_one(&self, item: &ItemRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, item: &ItemRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO item (id, item_name, type_of)
@@ -33,7 +27,7 @@ impl ItemRepository for ItemPgSqlxRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
         let item = sqlx::query_as!(
             ItemRow,
             r#"

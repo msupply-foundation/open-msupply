@@ -368,6 +368,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
 
 [[package]]
+name = "anymap"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33954243bd79057c2de7338850b85983a44588021f8a5fee574a8888c6de4344"
+
+[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1780,6 +1786,7 @@ dependencies = [
  "actix-cors",
  "actix-rt",
  "actix-web",
+ "anymap",
  "async-trait",
  "config",
  "env_logger",
@@ -1789,6 +1796,7 @@ dependencies = [
  "log",
  "serde 1.0.126",
  "sqlx",
+ "tokio",
  "uuid",
 ]
 

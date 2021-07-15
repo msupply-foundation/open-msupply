@@ -1,31 +1,20 @@
-use crate::database::repository::{
-    MockRepository, Repository, RepositoryError, RequisitionRepository,
-};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::RequisitionRow;
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
-pub struct RequisitionMockRepository {
+pub struct RequisitionRepository {
     mock_data: Arc<Mutex<HashMap<String, RequisitionRow>>>,
 }
 
-impl Repository for RequisitionMockRepository {}
-impl MockRepository for RequisitionMockRepository {}
-
-impl RequisitionMockRepository {
-    pub fn new(
-        mock_data: Arc<Mutex<HashMap<String, RequisitionRow>>>,
-    ) -> RequisitionMockRepository {
-        RequisitionMockRepository { mock_data }
+impl RequisitionRepository {
+    pub fn new(mock_data: Arc<Mutex<HashMap<String, RequisitionRow>>>) -> RequisitionRepository {
+        RequisitionRepository { mock_data }
     }
-}
 
-#[async_trait]
-impl RequisitionRepository for RequisitionMockRepository {
-    async fn insert_one(&self, requisition: &RequisitionRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, requisition: &RequisitionRow) -> Result<(), RepositoryError> {
         self.mock_data
             .lock()
             .unwrap()
@@ -34,7 +23,7 @@ impl RequisitionRepository for RequisitionMockRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<RequisitionRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<RequisitionRow, RepositoryError> {
         match self.mock_data.lock().unwrap().get(&String::from(id)) {
             Some(requisition) => Ok(requisition.clone()),
             None => Err(RepositoryError {

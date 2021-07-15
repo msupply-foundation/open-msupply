@@ -1,7 +1,12 @@
+#![allow(where_clauses_object_safety)]
+
 mod mocks;
 
 use remote_server::database;
 use remote_server::server;
+
+#[cfg(not(feature = "mock"))]
+compile_error!("Please run tests with --features=mock");
 
 #[cfg(test)]
 mod graphql {
@@ -23,21 +28,14 @@ mod graphql {
             Mutex<HashMap<String, database::schema::RequisitionRow>>,
         > = Arc::new(Mutex::new(requisition_mock_data));
 
-        let requisition_repository: Arc<database::repository::RequisitionMockRepository> = Arc::new(
-            database::repository::RequisitionMockRepository::new(requisition_repository_mock_data),
-        );
+        let mut repositories = anymap::Map::new();
+        repositories.insert(database::repository::RequisitionRepository::new(
+            requisition_repository_mock_data,
+        ));
 
         let registry = server::data::RepositoryRegistry {
-            customer_invoice_repository: None,
-            item_repository: None,
-            item_line_repository: None,
-            name_repository: None,
-            requisition_repository: Some(requisition_repository),
-            requisition_line_repository: None,
-            store_repository: None,
-            transact_repository: None,
-            transact_line_repository: None,
-            user_account_repository: None,
+            repositories,
+            sync_sender: Arc::new(Mutex::new(tokio::sync::mpsc::channel(1).0)),
         };
 
         let mut app = actix_web::test::init_service(

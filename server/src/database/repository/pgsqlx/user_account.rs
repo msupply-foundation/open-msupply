@@ -1,25 +1,17 @@
-use crate::database::repository::{
-    PgSqlxRepository, Repository, RepositoryError, UserAccountRepository,
-};
+use crate::database::repository::RepositoryError;
 use crate::database::schema::UserAccountRow;
 
-use async_trait::async_trait;
-
 #[derive(Clone)]
-pub struct UserAccountPgSqlxRepository {
+pub struct UserAccountRepository {
     pool: sqlx::PgPool,
 }
 
-impl Repository for UserAccountPgSqlxRepository {}
-impl PgSqlxRepository for UserAccountPgSqlxRepository {
-    fn new(pool: sqlx::PgPool) -> UserAccountPgSqlxRepository {
-        UserAccountPgSqlxRepository { pool }
+impl UserAccountRepository {
+    pub fn new(pool: sqlx::PgPool) -> UserAccountRepository {
+        UserAccountRepository { pool }
     }
-}
 
-#[async_trait]
-impl UserAccountRepository for UserAccountPgSqlxRepository {
-    async fn insert_one(&self, user_account: &UserAccountRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, user_account: &UserAccountRow) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO user_account (id, username, password, email)
@@ -36,7 +28,7 @@ impl UserAccountRepository for UserAccountPgSqlxRepository {
         Ok(())
     }
 
-    async fn find_one_by_id(&self, id: &str) -> Result<UserAccountRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, id: &str) -> Result<UserAccountRow, RepositoryError> {
         let user_account = sqlx::query_as!(
             UserAccountRow,
             r#"
