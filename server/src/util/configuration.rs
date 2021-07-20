@@ -9,15 +9,17 @@ static APP_ENVIRONMENT_VAR: &str = "APP_ENVIRONMENT";
 static DEFAULT_APP_ENVIRONMENT: &str = LOCAL_ENVIRONMENT;
 
 pub fn get_configuration() -> Result<Settings, ConfigError> {
-    let mut settings = Config::default();
-    let base_path = std::env::current_dir().map_err(|err| ConfigError::Message(err.to_string()))?;
-    let configuration_directory = base_path.join(CONFIGURATION_DIRECTORY_PATH);
+    let mut configuration = Config::default();
 
-    settings.merge(File::from(configuration_directory.join(BASE_CONFIGURATION_FILE_PATH)).required(true))?;
+    let current_directory_path = std::env::current_dir().map_err(|err| ConfigError::Message(err.to_string()))?;
 
-    let extra_file = std::env::var(APP_ENVIRONMENT_VAR).unwrap_or_else(|_| DEFAULT_APP_ENVIRONMENT.into());
+    let configuration_directory = current_directory_path.join(CONFIGURATION_DIRECTORY_PATH);
 
-    settings.merge(File::from(configuration_directory.join(extra_file)).required(true))?;
+    configuration.merge(File::from(configuration_directory.join(BASE_CONFIGURATION_FILE_PATH)).required(true))?;
 
-    settings.try_into()
+    let app_environment_file_path = std::env::var(APP_ENVIRONMENT_VAR).unwrap_or_else(|_| DEFAULT_APP_ENVIRONMENT.into());
+
+    configuration.merge(File::from(configuration_directory.join(app_environment_file_path)).required(true))?;
+
+    configuration.try_into()
 }
