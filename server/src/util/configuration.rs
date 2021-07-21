@@ -1,7 +1,7 @@
 use crate::util::settings::Settings;
 use config::{Config, ConfigError, File};
 
-static CONFIGURATION_FOLDER: &str = "configuration";
+static CONFIGURATION_DIRECTORY: &str = "configuration";
 static BASE_FILE: &str = "base";
 static DEFAULT_EXTRA_FILE: &str = "local";
 
