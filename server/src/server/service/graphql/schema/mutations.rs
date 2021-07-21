@@ -2,26 +2,23 @@ use crate::database::repository::{
     ItemRepository, RequisitionLineRepository, RequisitionRepository,
 };
 use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
-use crate::server::data::RepositoryRegistry;
 use crate::server::service::graphql::schema::types::{
     InputRequisitionLine, Item, ItemType, Requisition, RequisitionType,
 };
+use crate::server::service::graphql::ContextExt;
 
-use juniper;
+use async_graphql::{Context, Object};
 
 pub struct Mutations;
-#[juniper::graphql_object(context = RepositoryRegistry)]
+
+#[Object]
 impl Mutations {
-    #[graphql(arguments(
-        id(description = "id of the item"),
-        item_name(description = "name of the item"),
-        type_of(description = "type of the item"),
-    ))]
     async fn insert_item(
-        registry: &RepositoryRegistry,
-        id: String,
-        item_name: String,
-        type_of: ItemType,
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the item")] id: String,
+        #[graphql(desc = "name of the item")] item_name: String,
+        #[graphql(desc = "type of the item")] type_of: ItemType,
     ) -> Item {
         let item_row = ItemRow {
             id,
@@ -29,7 +26,7 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let item_repository = registry.get::<ItemRepository>();
+        let item_repository = ctx.get_repository::<ItemRepository>();
 
         item_repository
             .insert_one(&item_row)
@@ -39,20 +36,16 @@ impl Mutations {
         Item { item_row }
     }
 
-    #[graphql(arguments(
-        id(description = "id of the requisition"),
-        name_id(description = "id of the receiving store"),
-        store_id(description = "id of the sending store"),
-        type_of(description = "type of the requisition"),
-        requisition_lines(description = "requisition lines attached to the requisition")
-    ))]
     async fn insert_requisition(
-        registry: &RepositoryRegistry,
-        id: String,
-        name_id: String,
-        store_id: String,
-        type_of: RequisitionType,
-        requisition_lines: Vec<InputRequisitionLine>,
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the requisition")] id: String,
+        #[graphql(desc = "id of the receiving store")] name_id: String,
+        #[graphql(desc = "id of the sending store")] store_id: String,
+        #[graphql(desc = "type of the requisition")] type_of: RequisitionType,
+        #[graphql(desc = "requisition lines attached to the requisition")] requisition_lines: Vec<
+            InputRequisitionLine,
+        >,
     ) -> Requisition {
         let requisition_row = RequisitionRow {
             id: id.clone(),
@@ -61,8 +54,8 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let requisition_repository = registry.get::<RequisitionRepository>();
-        let requisition_line_repository = registry.get::<RequisitionLineRepository>();
+        let requisition_repository = ctx.get_repository::<RequisitionRepository>();
+        let requisition_line_repository = ctx.get_repository::<RequisitionLineRepository>();
 
         requisition_repository
             .insert_one(&requisition_row)

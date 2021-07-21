@@ -38,10 +38,11 @@ mod graphql {
             sync_sender: Arc::new(Mutex::new(tokio::sync::mpsc::channel(1).0)),
         };
 
+        let registry = actix_web::web::Data::new(registry);
         let mut app = actix_web::test::init_service(
             actix_web::App::new()
                 .data(registry.clone())
-                .configure(server::service::graphql::config),
+                .configure(server::service::graphql::config(registry)),
         )
         .await;
 
