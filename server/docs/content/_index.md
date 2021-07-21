@@ -2,9 +2,9 @@
 title = "Open mSupply"
 
 [extra]
-lead = '<b>Open mSupply</b> A new, free desktop app for health supply chains.
+lead = '<b>Open mSupply</b> A new, free desktop app for health supply chains.'
 url = "/docs/getting-started/introduction"
-url_button = "Get started"
+url_button = "Onward to the dev docs!"
 repo_version = "GitHub v0.1.0"
 repo_license = "Open-source MIT License."
 repo_url = "https://dev.msupply.foundation"
