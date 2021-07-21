@@ -1,3 +1,1 @@
-use crate::server::data::RepositoryRegistry;
-
-pub type Subscriptions = juniper::EmptySubscription<RepositoryRegistry>;
+pub type Subscriptions = async_graphql::EmptySubscription;
