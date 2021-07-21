@@ -1,1 +1,1 @@
-# msupply-client
+# openmsupply-client
