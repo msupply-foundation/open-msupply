@@ -14,6 +14,9 @@ static PRODUCTION_CONFIGURATION_FILE_PATH: &str = PRODUCTION_ENVIRONMENT;
 static APP_ENVIRONMENT_VAR: &str = "APP_ENVIRONMENT";
 static DEFAULT_APP_ENVIRONMENT: &str = LOCAL_ENVIRONMENT;
 
+static CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
+static CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
+
 pub fn get_configuration() -> Result<Settings, SettingsError> {
     let mut configuration = Config::default();
 
@@ -38,6 +41,11 @@ pub fn get_configuration() -> Result<Settings, SettingsError> {
 
     configuration.merge(
         File::from(configuration_directory.join(app_environment_file_path)).required(true),
+    )?;
+
+    configuration.merge(
+        config::Environment::with_prefix(CONFIGURATION_ENVIRONMENT_PREFIX)
+            .separator(CONFIGURATION_ENVIRONMENT_SEPARATOR),
     )?;
 
     configuration
