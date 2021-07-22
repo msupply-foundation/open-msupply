@@ -23,7 +23,7 @@ export const useServiceContext = () => {
   return context;
 };
 
-export const ServiceProvider = (props) => {
+export const ServiceProvider: React.FC = props => {
   const value = useService();
   return <Context.Provider value={value}>{props.children}</Context.Provider>;
 };

@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ModuleFederationPlugin = require('webpack').container.ModuleFederationPlugin;
 const path = require('path');
 const deps = require('./package.json').dependencies;
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
   entry: './src/index',
@@ -19,7 +19,7 @@ module.exports = {
     open: true,
   },
   resolve: {
-    extensions: ['.js', '.mjs', '.jsx', '.css'],
+    extensions: ['.js', '.mjs', '.jsx', '.css', '.ts', '.tsx'],
   },
   output: {
     publicPath: 'auto',
@@ -33,31 +33,21 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.js$/,
         type: 'javascript/auto',
         resolve: {
           fullySpecified: false,
         },
       },
       {
-        test: /\.tsx?$/,
+        test: /\.[t|j]sx?$/,
+        loader: 'swc-loader',
         exclude: /node_modules/,
-        use: {
-          loader: 'swc-loader',
-        },
-      },
-      {
-        test: /\.jsx?$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
-        options: {
-          presets: ['@babel/preset-react'],
-        },
       },
     ],
   },
   plugins: [
-    new BundleAnalyzerPlugin(),
+    // new BundleAnalyzerPlugin(),
     new ModuleFederationPlugin({
       name: 'host',
       filename: 'remoteEntry.js',
