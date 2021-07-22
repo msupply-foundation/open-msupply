@@ -1,5 +1,9 @@
 use config::ConfigError;
-use std::{env::VarError, fmt::{Debug, Display, Formatter, Result as FmtResult}};
+use std::{
+    env::VarError,
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    io::Error as IoError,
+};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
@@ -47,7 +51,7 @@ impl DatabaseSettings {
 pub enum SettingsError {
     Config(ConfigError),
     Environment(VarError),
-    Path(String),
+    File(IoError),
 }
 
 impl Debug for SettingsError {
@@ -55,7 +59,7 @@ impl Debug for SettingsError {
         match self {
             SettingsError::Config(err) => write!(f, "{:?}", err),
             SettingsError::Environment(err) => write!(f, "{:?}", err),
-            SettingsError::Path(s) => write!(f, "{:?}", s),
+            SettingsError::File(err) => write!(f, "{:?}", err),
         }
     }
 }
@@ -65,19 +69,25 @@ impl Display for SettingsError {
         match self {
             SettingsError::Config(err) => write!(f, "{}", err),
             SettingsError::Environment(err) => write!(f, "{}", err),
-            SettingsError::Path(s) => write!(f, "{}", s),
+            SettingsError::File(err) => write!(f, "{}", err),
         }
-    }
-}
-
-impl From<VarError> for SettingsError {
-    fn from(err: VarError) -> SettingsError {
-        SettingsError::Environment(err)
     }
 }
 
 impl From<ConfigError> for SettingsError {
     fn from(err: ConfigError) -> SettingsError {
         SettingsError::Config(err)
+    }
+}
+
+impl From<IoError> for SettingsError {
+    fn from(err: IoError) -> SettingsError {
+        SettingsError::File(err)
+    }
+}
+
+impl From<VarError> for SettingsError {
+    fn from(err: VarError) -> SettingsError {
+        SettingsError::Environment(err)
     }
 }
