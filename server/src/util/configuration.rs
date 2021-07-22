@@ -1,26 +1,20 @@
-use crate::util::environment::Environment;
 use crate::util::settings::Settings;
+use config::{Config, ConfigError, File};
 
-use std::borrow::Cow;
+static CONFIGURATION_DIRECTORY: &str = "configuration";
+static BASE_FILE: &str = "base";
+static DEFAULT_EXTRA_FILE: &str = "local";
 
-pub fn get_configuration() -> Result<Settings, config::ConfigError> {
-    let mut settings = config::Config::default();
-    let base_path = std::env::current_dir().expect("Failed to determine current directory");
-    let configuration_directory = base_path.join("configuration");
+pub fn get_configuration() -> Result<Settings, ConfigError> {
+    let mut settings = Config::default();
+    let base_path = std::env::current_dir().map_err(|err| ConfigError::Message(err.to_string()))?;
+    let configuration_directory = base_path.join(CONFIGURATION_FOLDER);
 
-    settings.merge(config::File::from(configuration_directory.join("base")).required(true))?;
+    settings.merge(File::from(configuration_directory.join(BASE_FILE)).required(true))?;
 
-    let environment: Environment = std::env::var("APP_ENVIRONMENT")
-        .map(Cow::from)
-        .unwrap_or_else(|_| "local".into())
-        .parse()
-        .expect("Failed to parse APP_ENVIRONMENT");
+    let extra_file = std::env::var("APP_ENVIRONMENT").unwrap_or_else(|_| DEFAULT_EXTRA_FILE.into());
 
-    settings.merge(
-        config::File::from(configuration_directory.join(environment.as_str())).required(true),
-    )?;
-
-    settings.merge(config::Environment::with_prefix("app").separator("__"))?;
+    settings.merge(File::from(configuration_directory.join(extra_file)).required(true))?;
 
     settings.try_into()
 }
