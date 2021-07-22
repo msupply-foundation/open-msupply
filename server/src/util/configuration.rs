@@ -36,9 +36,10 @@ pub fn get_configuration_environment() -> Environment {
 
 pub fn get_configuration() -> Result<Settings, SettingsError> {
     let mut configuration = Config::default();
-    configuration.merge(get_configuration_base_file()?)?;
-    configuration.merge(get_configuration_app_file()?)?;
-    configuration.merge(get_configuration_environment())?;
+    configuration
+        .merge(get_configuration_base_file()?)?
+        .merge(get_configuration_app_file()?)?
+        .merge(get_configuration_environment())?;
     configuration
         .try_into()
         .map_err(|err| SettingsError::Config(err))
