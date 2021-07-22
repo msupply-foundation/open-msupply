@@ -14,11 +14,12 @@
   "devDependencies": {
     "@swc/cli": "^0.1.46",
     "@swc/core": "^1.2.66",
+    "@types/react": "^17.0.14",
     "lerna": "^3.22.1",
     "swc-loader": "^0.1.14",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-dev-server": "4.0.0-beta.3"
   },
-  "name": "front-end",
+  "name": "openmsupply-client",
   "dependencies": {}
 }

@@ -1,6 +1,6 @@
 {
   "name": "@openmsupply-client/common",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "main": "./src/index.js",
   "peerDependencies": {
@@ -15,5 +15,8 @@
     "graphql-request": "^3.4.0",
     "react-redux": "^7.2.4",
     "redux": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/material-ui": "^0.21.9"
   }
 }

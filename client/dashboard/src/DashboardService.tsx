@@ -1,4 +1,9 @@
-import { Container, Grid, makeStyles, Typography } from '@openmsupply-client/common';
+import {
+  Container,
+  Grid,
+  makeStyles,
+  Typography,
+} from '@openmsupply-client/common';
 import React from 'react';
 import Widget from './Widget';
 import { useServiceContext } from 'host/Service';
@@ -25,7 +30,7 @@ const SalesTodayWidget = () => (
   </Widget>
 );
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   appBarSpacer: theme.mixins.toolbar,
   content: {
     flexGrow: 1,

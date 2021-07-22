@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ModuleFederationPlugin = require('webpack').container.ModuleFederationPlugin;
+const ModuleFederationPlugin =
+  require('webpack').container.ModuleFederationPlugin;
 const path = require('path');
 const deps = require('./package.json').dependencies;
 module.exports = {
@@ -15,25 +16,15 @@ module.exports = {
     chunkFilename: '[id].[contenthash].js',
   },
   resolve: {
-    extensions: ['.js', '.mjs', '.jsx', '.css'],
+    extensions: ['.js', '.ts', '.tsx', '.css'],
   },
 
   module: {
     rules: [
       {
-        test: /\.m?js$/,
-        type: 'javascript/auto',
-        resolve: {
-          fullySpecified: false,
-        },
-      },
-      {
-        test: /\.jsx?$/,
-        loader: 'babel-loader',
+        test: /\.[t|j]sx?$/,
+        loader: 'swc-loader',
         exclude: /node_modules/,
-        options: {
-          presets: ['@babel/preset-react'],
-        },
       },
     ],
   },
