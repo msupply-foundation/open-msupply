@@ -72,7 +72,8 @@ export const makeStore = () => {
   // Create a store with the root reducer function being the one exposed by the manager.
   const store = configureStore({
     reducer: reducerManager.reduce,
-    middleware: getDefaultMiddleware => getDefaultMiddleware().concat(ApiSlice.middleware),
+    middleware: getDefaultMiddleware =>
+      getDefaultMiddleware().concat(ApiSlice.middleware),
   });
 
   // Optional: Put the reducer manager on the store so it is easily accessible
