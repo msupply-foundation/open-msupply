@@ -1,0 +1,19 @@
+{
+  "name": "@openmsupply-client/common",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.js",
+  "peerDependencies": {
+    "react": "^16.13.0"
+  },
+  "dependencies": {
+    "@material-ui/core": "^4.9.10",
+    "@material-ui/data-grid": "^4.0.0-alpha.33",
+    "@material-ui/icons": "^4.9.1",
+    "@reduxjs/toolkit": "^1.6.0",
+    "graphql": "^15.5.1",
+    "graphql-request": "^3.4.0",
+    "react-redux": "^7.2.4",
+    "redux": "^4.1.0"
+  }
+}
