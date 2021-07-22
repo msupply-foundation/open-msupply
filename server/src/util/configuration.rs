@@ -11,9 +11,7 @@ const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
 const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
 
 pub fn get_configuration_directory() -> Result<PathBuf, SettingsError> {
-    let configuration_directory = env::current_dir()
-        .map_err(|err| SettingsError::Path(err.to_string()))?
-        .join(CONFIGURATION_DIRECTORY_PATH);
+    let configuration_directory = env::current_dir()?.join(CONFIGURATION_DIRECTORY_PATH);
     Ok(configuration_directory)
 }
 
