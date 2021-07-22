@@ -1,7 +1,5 @@
-use crate::util::environment::EnvironmentError;
-
 use config::ConfigError;
-use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use std::{env::VarError, fmt::{Debug, Display, Formatter, Result as FmtResult}};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
@@ -48,7 +46,7 @@ impl DatabaseSettings {
 
 pub enum SettingsError {
     Config(ConfigError),
-    Environment(EnvironmentError),
+    Environment(VarError),
     Path(String),
 }
 
@@ -72,8 +70,8 @@ impl Display for SettingsError {
     }
 }
 
-impl From<EnvironmentError> for SettingsError {
-    fn from(err: EnvironmentError) -> SettingsError {
+impl From<VarError> for SettingsError {
+    fn from(err: VarError) -> SettingsError {
         SettingsError::Environment(err)
     }
 }

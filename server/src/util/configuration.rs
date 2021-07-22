@@ -1,53 +1,46 @@
-use crate::util::environment::{
-    Environment, LOCAL as LOCAL_ENVIRONMENT, PRODUCTION as PRODUCTION_ENVIRONMENT,
-};
+use crate::util::environment::{AppEnvironment, EnvironmentVariable};
 use crate::util::settings::{Settings, SettingsError};
 
-use config::{Config, File};
-use std::{borrow::Cow, env};
+use config::{Config, Environment, File, FileSourceFile};
+use std::{env, path::PathBuf};
 
-static CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
-static BASE_CONFIGURATION_FILE_PATH: &str = "base";
-static LOCAL_CONFIGURATION_FILE_PATH: &str = LOCAL_ENVIRONMENT;
-static PRODUCTION_CONFIGURATION_FILE_PATH: &str = PRODUCTION_ENVIRONMENT;
+const CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
+const CONFIGURATION_BASE_FILE_PATH: &str = "base";
 
-static APP_ENVIRONMENT_VAR: &str = "APP_ENVIRONMENT";
-static DEFAULT_APP_ENVIRONMENT: &str = LOCAL_ENVIRONMENT;
+const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
+const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
 
-static CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
-static CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
+pub fn get_configuration_directory() -> Result<PathBuf, SettingsError> {
+    let configuration_directory = env::current_dir()
+        .map_err(|err| SettingsError::Path(err.to_string()))?
+        .join(CONFIGURATION_DIRECTORY_PATH);
+    Ok(configuration_directory)
+}
+
+pub fn get_configuration_base_file() -> Result<File<FileSourceFile>, SettingsError> {
+    let configuration_directory = get_configuration_directory()?;
+    let base_file =
+        File::from(configuration_directory.join(CONFIGURATION_BASE_FILE_PATH)).required(true);
+    Ok(base_file)
+}
+
+pub fn get_configuration_app_file() -> Result<File<FileSourceFile>, SettingsError> {
+    let configuration_directory = get_configuration_directory()?;
+    let app_file =
+        File::from(configuration_directory.join(AppEnvironment::try_get()?)).required(true);
+    Ok(app_file)
+}
+
+pub fn get_configuration_environment() -> Environment {
+    Environment::with_prefix(CONFIGURATION_ENVIRONMENT_PREFIX)
+        .separator(CONFIGURATION_ENVIRONMENT_SEPARATOR)
+}
 
 pub fn get_configuration() -> Result<Settings, SettingsError> {
     let mut configuration = Config::default();
-
-    let current_directory_path =
-        env::current_dir().map_err(|err| SettingsError::Path(err.to_string()))?;
-
-    let configuration_directory = current_directory_path.join(CONFIGURATION_DIRECTORY_PATH);
-
-    configuration.merge(
-        File::from(configuration_directory.join(BASE_CONFIGURATION_FILE_PATH)).required(true),
-    )?;
-
-    let environment: Environment = env::var(APP_ENVIRONMENT_VAR)
-        .map(Cow::from)
-        .unwrap_or_else(|_| DEFAULT_APP_ENVIRONMENT.into())
-        .parse()?;
-
-    let app_environment_file_path = match environment {
-        Environment::Local => LOCAL_CONFIGURATION_FILE_PATH,
-        Environment::Production => PRODUCTION_CONFIGURATION_FILE_PATH,
-    };
-
-    configuration.merge(
-        File::from(configuration_directory.join(app_environment_file_path)).required(true),
-    )?;
-
-    configuration.merge(
-        config::Environment::with_prefix(CONFIGURATION_ENVIRONMENT_PREFIX)
-            .separator(CONFIGURATION_ENVIRONMENT_SEPARATOR),
-    )?;
-
+    configuration.merge(get_configuration_base_file()?)?;
+    configuration.merge(get_configuration_app_file()?)?;
+    configuration.merge(get_configuration_environment())?;
     configuration
         .try_into()
         .map_err(|err| SettingsError::Config(err))
