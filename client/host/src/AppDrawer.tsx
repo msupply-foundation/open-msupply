@@ -18,7 +18,7 @@ import clsx from 'clsx';
 
 import { Link, useMatch } from 'react-router-dom';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   toolbarIcon: {
     display: 'flex',
     alignItems: 'center',
@@ -48,10 +48,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ListItemLink = (props) => {
+interface ListItemLinkProps {
+  to: string;
+  icon: JSX.Element;
+  text?: string;
+}
+
+const ListItemLink: React.FC<ListItemLinkProps> = props => {
   const selected = useMatch(props.to);
   const CustomLink = React.useMemo(
-    () => React.forwardRef((linkProps, ref) => <Link ref={ref} to={props.to} {...linkProps} />),
+    () =>
+      React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
+        <Link ref={ref} to={props.to} {...linkProps} />
+      )),
     [props.to]
   );
 
@@ -72,14 +81,22 @@ const Menu = () => (
   </List>
 );
 
-const AppDrawer = (props) => {
+interface AppDrawerProps {
+  drawer: any;
+  open?: boolean;
+}
+
+const AppDrawer: React.FC<AppDrawerProps> = props => {
   const classes = useStyles();
 
   return (
     <Drawer
       variant="permanent"
       classes={{
-        paper: clsx(classes.drawerPaper, !props.drawer.open && classes.drawerPaperClose),
+        paper: clsx(
+          classes.drawerPaper,
+          !props.drawer.open && classes.drawerPaperClose
+        ),
       }}
       open={props.open}
     >

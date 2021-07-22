@@ -25,7 +25,7 @@ const useGlobalStyles = makeStyles(
   { name: 'ViewportGlobals' }
 );
 
-const Viewport = (props) => {
+const Viewport: React.FC = props => {
   useGlobalStyles();
 
   return (
