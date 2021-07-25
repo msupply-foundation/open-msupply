@@ -28,11 +28,10 @@
   },
   "lint-staged": {
     "*.{json,css,md}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*.{js,ts}": [
-      "eslint --fix"
+      "eslint ."
     ]
   },
   "name": "openmsupply-client",
