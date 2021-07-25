@@ -12,6 +12,9 @@ module.exports = {
     ecmaVersion: 12,
     sourceType: 'module',
   },
-  plugins: ['react', '@typescript-eslint'],
-  rules: {},
+  settings: { react: { version: 'detect' } },
+  plugins: ['react', , '@typescript-eslint'],
+  rules: {
+    'require-jsdoc': 0,
+  },
 };
