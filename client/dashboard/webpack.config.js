@@ -52,7 +52,7 @@ module.exports = {
           requiredVersion: deps['react-dom'],
         },
         '@openmsupply-client/common': {
-          import: path.join(__dirname, '../common'), // '@openmsupply-client/common',
+          import: '@openmsupply-client/common/src',
           requiredVersion: require('../common/package.json').version,
         },
       },
