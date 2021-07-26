@@ -4,7 +4,8 @@
     "start": "lerna run --scope @openmsupply-*/* --parallel start",
     "build": "lerna run --scope @openmsupply-client/* build",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
-    "clean": "lerna run --scope @openmsupply-client/* --parallel clean"
+    "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
+    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc"
   },
   "workspaces": {
     "packages": [
