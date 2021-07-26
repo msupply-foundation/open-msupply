@@ -1,18 +1,16 @@
 use crate::database::repository::RepositoryError;
-use crate::database::schema::RequisitionLineRow;
+use crate::database::schema::{DatabaseRow, RequisitionLineRow};
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct RequisitionLineRepository {
-    mock_data: Arc<Mutex<HashMap<String, RequisitionLineRow>>>,
+    mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>>,
 }
 
 impl RequisitionLineRepository {
-    pub fn new(
-        mock_data: Arc<Mutex<HashMap<String, RequisitionLineRow>>>,
-    ) -> RequisitionLineRepository {
+    pub fn new(mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>>) -> RequisitionLineRepository {
         RequisitionLineRepository { mock_data }
     }
 
@@ -21,17 +19,16 @@ impl RequisitionLineRepository {
         requisition_line: &RequisitionLineRow,
     ) -> Result<(), RepositoryError> {
         self.mock_data.lock().unwrap().insert(
-            String::from(requisition_line.id.clone()),
-            requisition_line.clone(),
+            requisition_line.id.to_string(),
+            DatabaseRow::RequisitionLine(requisition_line.clone()),
         );
-
         Ok(())
     }
 
     pub async fn find_one_by_id(&self, id: &str) -> Result<RequisitionLineRow, RepositoryError> {
-        match self.mock_data.lock().unwrap().get(&String::from(id)) {
-            Some(requisition_line) => Ok(requisition_line.clone()),
-            None => Err(RepositoryError {
+        match self.mock_data.lock().unwrap().get(&id.to_string()) {
+            Some(DatabaseRow::RequisitionLine(requisition_line)) => Ok(requisition_line.clone()),
+            _ => Err(RepositoryError {
                 msg: String::from(format!("Failed to find requisition_line {}", id)),
             }),
         }
@@ -42,12 +39,18 @@ impl RequisitionLineRepository {
         requisition_id: &str,
     ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
         let mut requisition_lines = vec![];
-        for (_id, requisition_line) in self.mock_data.lock().unwrap().clone().into_iter() {
-            if requisition_line.requisition_id == requisition_id {
-                requisition_lines.push(requisition_line);
-            }
-        }
-
+        self.mock_data
+            .lock()
+            .unwrap()
+            .clone()
+            .into_iter()
+            .for_each(|(_id, row)| {
+                if let DatabaseRow::RequisitionLine(requisition_line) = row {
+                    if requisition_line.requisition_id == requisition_id {
+                        requisition_lines.push(requisition_line);
+                    }
+                }
+            });
         Ok(requisition_lines)
     }
 }
