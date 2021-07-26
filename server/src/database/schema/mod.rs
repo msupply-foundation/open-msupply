@@ -8,6 +8,19 @@ mod transact;
 mod transact_line;
 mod user_account;
 
+#[derive(Clone)]
+pub enum DatabaseRow {
+    Item(ItemRow),
+    ItemLine(ItemLineRow),
+    Name(NameRow),
+    Requisition(RequisitionRow),
+    RequisitionLine(RequisitionLineRow),
+    Store(StoreRow),
+    Transact(TransactRow),
+    TransactLine(TransactLineRow),
+    UserAccount(UserAccountRow),
+}
+
 pub use item::{ItemRow, ItemRowType};
 pub use item_line::ItemLineRow;
 pub use name::NameRow;
