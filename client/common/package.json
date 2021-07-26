@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.js",
+  "scripts": {
+    "tsc": "tsc"
+  },
   "peerDependencies": {
     "react": "^16.13.0"
   },

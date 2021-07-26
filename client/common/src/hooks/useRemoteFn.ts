@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable camelcase */
 import { useState, useEffect } from 'react';
 import { useRemoteScript } from './useRemoteScript';
 
@@ -9,6 +11,8 @@ declare global {
     init(prop: string): void;
     get(prop: string): () => { default: string };
   }
+  function alert(message: string): void;
+  const window: any;
 }
 
 export const loadAndInjectDeps = (scope: any, module: string) => {
