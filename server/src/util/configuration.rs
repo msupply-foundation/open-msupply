@@ -1,20 +1,76 @@
-use crate::util::settings::Settings;
-use config::{Config, ConfigError, File};
+use crate::util::environment::{AppEnvironment, EnvironmentVariable};
+use crate::util::settings::{Settings, SettingsError};
 
-static CONFIGURATION_DIRECTORY: &str = "configuration";
-static BASE_FILE: &str = "base";
-static DEFAULT_EXTRA_FILE: &str = "local";
+use config::{Config, Environment, File, FileSourceFile};
+use std::{env, path::PathBuf};
 
-pub fn get_configuration() -> Result<Settings, ConfigError> {
-    let mut settings = Config::default();
-    let base_path = std::env::current_dir().map_err(|err| ConfigError::Message(err.to_string()))?;
-    let configuration_directory = base_path.join(CONFIGURATION_FOLDER);
+const CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
+const CONFIGURATION_BASE_FILE_PATH: &str = "base";
 
-    settings.merge(File::from(configuration_directory.join(BASE_FILE)).required(true))?;
+const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
+const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
 
-    let extra_file = std::env::var("APP_ENVIRONMENT").unwrap_or_else(|_| DEFAULT_EXTRA_FILE.into());
+/// Gets directory storing configuration files.
+///
+/// All configuration files should be stored in the same directory.
+pub fn get_configuration_directory() -> Result<PathBuf, SettingsError> {
+    let configuration_directory = env::current_dir()?.join(CONFIGURATION_DIRECTORY_PATH);
+    Ok(configuration_directory)
+}
 
-    settings.merge(File::from(configuration_directory.join(extra_file)).required(true))?;
+/// Gets base configuration file.
+///
+/// The base configuration file stores configuration properties which are common between local and
+/// production environments.
+pub fn get_configuration_base_file() -> Result<File<FileSourceFile>, SettingsError> {
+    let configuration_directory = get_configuration_directory()?;
+    let base_file =
+        File::from(configuration_directory.join(CONFIGURATION_BASE_FILE_PATH)).required(true);
+    Ok(base_file)
+}
 
-    settings.try_into()
+/// Gets application configuration file.
+///
+/// The application configuration file stores environment-specific configuration properties. Valid
+/// environments are `local` and `production`.
+pub fn get_configuration_app_file() -> Result<File<FileSourceFile>, SettingsError> {
+    let configuration_directory = get_configuration_directory()?;
+    let app_file =
+        File::from(configuration_directory.join(AppEnvironment::try_get()?)).required(true);
+    Ok(app_file)
+}
+
+/// Gets environment configuration values.
+///
+/// In some instances it may be desirable to override the `local` and `production` defaults with
+/// custom values. These can be defined using environment variables with the `app_` prefix and
+/// with the `__` separator in place of dot notation.
+///
+/// For example, the following runs the application using the `local` configuration with the
+/// `database.port` value set to `5433`:
+///
+/// ```
+/// APP_ENVIRONMENT=local APP_DATABASE__PORT=5433 cargo run
+/// ```
+pub fn get_configuration_environment() -> Environment {
+    Environment::with_prefix(CONFIGURATION_ENVIRONMENT_PREFIX)
+        .separator(CONFIGURATION_ENVIRONMENT_SEPARATOR)
+}
+
+/// Gets app configuration.
+///
+/// App configuration varies based on whether the app is being run in a `local` or `production`
+/// environment. Configuration files should be stored in a unique configuration directory, and
+/// should define setting values for `base`, `local` and `production` environments.
+///
+/// Individual settings properties can be also manually defined as environment variables: see
+/// `get_configuration_environment` for details.
+pub fn get_configuration() -> Result<Settings, SettingsError> {
+    let mut configuration: Config = Config::default();
+    configuration
+        .merge(get_configuration_base_file()?)?
+        .merge(get_configuration_app_file()?)?
+        .merge(get_configuration_environment())?;
+    let settings: Settings = configuration.try_into()?;
+    Ok(settings)
 }
