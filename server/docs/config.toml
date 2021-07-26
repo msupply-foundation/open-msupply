@@ -1,5 +1,5 @@
 # The URL the site will be built for
-base_url = "https://openmsupply.github.io/remote-server"
+base_url = "https://dev.msupply.foundation"
 
 title = "Open mSupply"
 
@@ -18,3 +18,16 @@ highlight_code = true
 
 [extra]
 # Put all your custom variables here
+
+# Menu items
+[[extra.menu.main]]
+name = "Developer Docs"
+section = "docs"
+url = "/docs/getting-started/"
+weight = 10
+
+[[extra.menu.main]]
+name = "Developer Blog"
+section = "blog"
+url = "/blog/"
+weight = 20

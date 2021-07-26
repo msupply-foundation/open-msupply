@@ -5,24 +5,28 @@ use crate::database::repository::{
 use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactLineRow, TransactRow,
 };
-use crate::server::data::RepositoryRegistry;
 use crate::server::service::graphql::schema::types::{
     Item, ItemLine, Name, Requisition, Store, Transact, TransactLine,
 };
+use crate::server::service::graphql::ContextExt;
 
-use juniper;
+use async_graphql::{Context, Object};
 
 pub struct Queries;
 
-#[juniper::graphql_object(context = RepositoryRegistry)]
+#[Object]
 impl Queries {
-    pub fn apiVersion() -> String {
+    #[allow(non_snake_case)]
+    pub async fn apiVersion(&self) -> String {
         "1.0".to_string()
     }
 
-    #[graphql(arguments(id(description = "id of the name")))]
-    pub async fn name(registry: &RepositoryRegistry, id: String) -> Name {
-        let name_repository = registry.get::<NameRepository>();
+    pub async fn name(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the name")] id: String,
+    ) -> Name {
+        let name_repository = ctx.get_repository::<NameRepository>();
 
         let name_row: NameRow = name_repository
             .find_one_by_id(&id)
@@ -32,9 +36,12 @@ impl Queries {
         Name { name_row }
     }
 
-    #[graphql(arguments(id(description = "id of the store")))]
-    pub async fn store(registry: &RepositoryRegistry, id: String) -> Store {
-        let store_repository = registry.get::<StoreRepository>();
+    pub async fn store(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the store")] id: String,
+    ) -> Store {
+        let store_repository = ctx.get_repository::<StoreRepository>();
 
         let store_row: StoreRow = store_repository
             .find_one_by_id(&id)
@@ -44,9 +51,12 @@ impl Queries {
         Store { store_row }
     }
 
-    #[graphql(arguments(id(description = "id of the transact")))]
-    pub async fn transact(registry: &RepositoryRegistry, id: String) -> Transact {
-        let transact_repository = registry.get::<TransactRepository>();
+    pub async fn transact(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the transact")] id: String,
+    ) -> Transact {
+        let transact_repository = ctx.get_repository::<TransactRepository>();
 
         let transact_row: TransactRow = transact_repository
             .find_one_by_id(&id)
@@ -56,9 +66,12 @@ impl Queries {
         Transact { transact_row }
     }
 
-    #[graphql(arguments(id(description = "id of the transact line")))]
-    pub async fn transact_line(registry: &RepositoryRegistry, id: String) -> TransactLine {
-        let transact_line_repository = registry.get::<TransactLineRepository>();
+    pub async fn transact_line(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the transact line")] id: String,
+    ) -> TransactLine {
+        let transact_line_repository = ctx.get_repository::<TransactLineRepository>();
 
         let transact_line_row: TransactLineRow = transact_line_repository
             .find_one_by_id(&id)
@@ -68,9 +81,12 @@ impl Queries {
         TransactLine { transact_line_row }
     }
 
-    #[graphql(arguments(id(description = "id of the requisition")))]
-    pub async fn requisition(registry: &RepositoryRegistry, id: String) -> Requisition {
-        let requisition_repository = registry.get::<RequisitionRepository>();
+    pub async fn requisition(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the requisition")] id: String,
+    ) -> Requisition {
+        let requisition_repository = ctx.get_repository::<RequisitionRepository>();
 
         let requisition_row: RequisitionRow = requisition_repository
             .find_one_by_id(&id)
@@ -80,9 +96,12 @@ impl Queries {
         Requisition { requisition_row }
     }
 
-    #[graphql(arguments(id(description = "id of the item")))]
-    pub async fn item(registry: &RepositoryRegistry, id: String) -> Item {
-        let item_repository = registry.get::<ItemRepository>();
+    pub async fn item(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the item")] id: String,
+    ) -> Item {
+        let item_repository = ctx.get_repository::<ItemRepository>();
 
         let item_row: ItemRow = item_repository
             .find_one_by_id(&id)
@@ -92,9 +111,12 @@ impl Queries {
         Item { item_row }
     }
 
-    #[graphql(arguments(id(description = "id of the item line")))]
-    pub async fn item_line(registry: &RepositoryRegistry, id: String) -> ItemLine {
-        let item_line_repository = registry.get::<ItemLineRepository>();
+    pub async fn item_line(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the item line")] id: String,
+    ) -> ItemLine {
+        let item_line_repository = ctx.get_repository::<ItemLineRepository>();
 
         let item_line_row: ItemLineRow = item_line_repository
             .find_one_by_id(&id)
