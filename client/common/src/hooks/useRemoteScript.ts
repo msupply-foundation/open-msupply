@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export const useRemoteScript = url => {
+export const useRemoteScript = (url: string) => {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
