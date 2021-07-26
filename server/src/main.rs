@@ -69,13 +69,13 @@ async fn main() -> std::io::Result<()> {
     let listener = std::net::TcpListener::bind(configuration.server.address())
         .expect("Failed to bind server to address");
 
+    let registry = actix_web::web::Data::new(registry);
     let http_server = actix_web::HttpServer::new(move || {
         actix_web::App::new()
-            .data(registry.clone())
+            .app_data(registry.clone())
             .wrap(server::middleware::logger())
             .wrap(server::middleware::compress())
-            .configure(server::service::graphiql::config)
-            .configure(server::service::graphql::config)
+            .configure(server::service::graphql::config(registry.clone()))
             .configure(server::service::rest::config)
     })
     .listen(listener)?
