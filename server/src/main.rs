@@ -154,28 +154,6 @@ async fn main() -> std::io::Result<()> {
     #[cfg(feature = "mock")]
     let repositories: RepositoryMap = get_repositories();
 
-    let mut repositories = anymap::Map::new();
-    repositories.insert(database::repository::CustomerInvoiceRepository::new(
-        pool.clone(),
-    ));
-    repositories.insert(database::repository::ItemRepository::new(pool.clone()));
-    repositories.insert(database::repository::ItemLineRepository::new(pool.clone()));
-    repositories.insert(database::repository::NameRepository::new(pool.clone()));
-    repositories.insert(database::repository::RequisitionRepository::new(
-        pool.clone(),
-    ));
-    repositories.insert(database::repository::RequisitionLineRepository::new(
-        pool.clone(),
-    ));
-    repositories.insert(database::repository::StoreRepository::new(pool.clone()));
-    repositories.insert(database::repository::TransactRepository::new(pool.clone()));
-    repositories.insert(database::repository::TransactLineRepository::new(
-        pool.clone(),
-    ));
-    repositories.insert(database::repository::UserAccountRepository::new(
-        pool.clone(),
-    ));
-
     // We use a single-element channel so that we can only have one sync pending at a time.
     // We consume this at the *start* of sync, so we could schedule a sync while syncing.
     // Worst-case scenario, we produce an infinite stream of sync instructions and always go
