@@ -168,7 +168,7 @@ async fn main() -> std::io::Result<()> {
         sync_sender: Arc::new(std::sync::Mutex::new(sync_sender.clone())),
     };
 
-    let listener = std::net::TcpListener::bind(configuration.server.address())
+    let listener = std::net::TcpListener::bind(settings.server.address())
         .expect("Failed to bind server to address");
 
     let registry = actix_web::web::Data::new(registry);
