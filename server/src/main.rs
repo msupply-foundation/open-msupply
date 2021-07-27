@@ -190,7 +190,7 @@ async fn main() -> std::io::Result<()> {
     // straight from one sync to the next, but that’s OK.
     let (mut sync_sender, mut sync_receiver) = channel(1);
 
-    let registry = server::data::RepositoryRegistry {
+    let registry = RepositoryRegistry {
         repositories,
         // Arc and Mutex are both unfortunate requirements here because we need to mutate the
         // Sender later which the extractor doesn’t help us with, but all up it’s not a big deal.
