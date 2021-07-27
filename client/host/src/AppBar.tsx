@@ -10,7 +10,7 @@ import {
 import clsx from 'clsx';
 import { useServiceContext } from './Service';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   toolbar: {
     paddingRight: 24,
   },
@@ -44,7 +44,7 @@ interface AppBarProps {
   drawer: any;
 }
 
-const AppBar: React.FC<AppBarProps> = (props) => {
+const AppBar: React.FC<AppBarProps> = props => {
   const classes = useStyles();
   const serviceContext = useServiceContext();
 
@@ -59,11 +59,20 @@ const AppBar: React.FC<AppBarProps> = (props) => {
           color="inherit"
           aria-label="open drawer"
           onClick={props.drawer.openDrawer}
-          className={clsx(classes.menuButton, props.drawer.open && classes.menuButtonHidden)}
+          className={clsx(
+            classes.menuButton,
+            props.drawer.open && classes.menuButtonHidden
+          )}
         >
           <MenuIcon />
         </IconButton>
-        <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+        <Typography
+          component="h1"
+          variant="h6"
+          color="inherit"
+          noWrap
+          className={classes.title}
+        >
           {serviceContext.title}
         </Typography>
       </Toolbar>

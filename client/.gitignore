@@ -9,6 +9,7 @@ lerna-debug.log*
 
 # Compiled release
 **/build/*
+**/dist/*
 
 # Dependency directories
 node_modules/
@@ -19,3 +20,6 @@ typings/
 # TypeScript cache
 *.tsbuildinfo
 .DS_Store
+
+# Package stats
+**/stats.json
