@@ -1,7 +1,11 @@
-import React from 'react';
-interface AppBarProps {
-    drawer: any;
+/// <reference types="react" />
+interface Drawer {
+    open: boolean;
+    openDrawer: () => void;
 }
-declare const AppBar: React.FC<AppBarProps>;
+interface AppBarProps {
+    drawer: Drawer;
+}
+declare const AppBar: (props: AppBarProps) => JSX.Element;
 export default AppBar;
 //# sourceMappingURL=AppBar.d.ts.map
