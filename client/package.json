@@ -6,6 +6,7 @@
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc"
+    "prepare": "husky install"
   },
   "workspaces": {
     "packages": [
@@ -25,6 +26,14 @@
     "swc-loader": "^0.1.14",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-dev-server": "4.0.0-beta.3"
+  },
+  "lint-staged": {
+    "*.{json,css,md}": [
+      "prettier --write"
+    ],
+    "*.{js,ts}": [
+      "eslint ."
+    ]
   },
   "name": "openmsupply-client",
   "dependencies": {
