@@ -9,16 +9,5 @@ import Person from '@material-ui/icons/Person';
 import Receipt from '@material-ui/icons/Receipt';
 import Search from '@material-ui/icons/Search';
 export { Menu as MenuIcon } from './Menu';
-export {
-  Check,
-  ChevronLeft,
-  Clear,
-  Close,
-  Dashboard,
-  Edit,
-  Notifications,
-  Person,
-  Receipt,
-  Search,
-};
-// # sourceMappingURL=index.d.ts.map
+export { Check, ChevronLeft, Clear, Close, Dashboard, Edit, Notifications, Person, Receipt, Search, };
+//# sourceMappingURL=index.d.ts.map

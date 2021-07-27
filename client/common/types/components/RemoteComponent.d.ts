@@ -1,8 +1,9 @@
 /// <reference types="react" />
-export declare const RemoteComponent: ({ url, scope, module, ...rest }: {
-    [x: string]: any;
-    url: any;
-    scope: any;
-    module: any;
-}) => JSX.Element;
+interface RemoteComponentProps {
+    url: string;
+    scope: string;
+    module: string;
+}
+export declare const RemoteComponent: ({ url, scope, module, ...rest }: RemoteComponentProps) => JSX.Element;
+export {};
 //# sourceMappingURL=RemoteComponent.d.ts.map
