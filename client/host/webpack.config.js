@@ -75,7 +75,6 @@ module.exports = {
         },
         {
           '@openmsupply-client/common': {
-            import: path.join(__dirname, '../common'), // '@openmsupply-client/common',
             requiredVersion: require('../common/package.json').version,
           },
         },
