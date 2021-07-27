@@ -1,23 +1,23 @@
-export declare function createReducerManager(initialReducers: any): {
-    getReducerMap: () => any;
-    reduce: (state: any, action: any) => import("redux").CombinedState<{
-        [x: string]: unknown;
-    }>;
-    add: (key: any, reducer: any) => void;
-    remove: (key: any) => void;
-};
-export declare const makeStore: () => import("@reduxjs/toolkit").EnhancedStore<import("redux").CombinedState<{
-    [x: string]: unknown;
-}>, any, [import("redux-thunk").ThunkMiddleware<import("redux").CombinedState<{
-    [x: string]: unknown;
-}>, import("redux").AnyAction, null> | import("redux-thunk").ThunkMiddleware<import("redux").CombinedState<{
-    [x: string]: unknown;
-}>, import("redux").AnyAction, undefined>]>;
-export declare const store: import("@reduxjs/toolkit").EnhancedStore<import("redux").CombinedState<{
-    [x: string]: unknown;
-}>, any, [import("redux-thunk").ThunkMiddleware<import("redux").CombinedState<{
-    [x: string]: unknown;
-}>, import("redux").AnyAction, null> | import("redux-thunk").ThunkMiddleware<import("redux").CombinedState<{
-    [x: string]: unknown;
-}>, import("redux").AnyAction, undefined>]>;
+import { CombinedState, Middleware } from 'redux';
+import { EnhancedStore } from '@reduxjs/toolkit';
+export interface Action {
+    type: string;
+    payload?: string | boolean | number;
+}
+export declare type Reducers = Record<string, Reducer>;
+export declare type Reducer = (state: State | undefined, action: Action) => State;
+export declare type State = Record<string, any>;
+interface ReducerManager {
+    getReducerMap: () => Reducers;
+    reduce: (state: State | undefined, action: Action) => CombinedState<State>;
+    add: (key: string, reducer: Reducer) => void;
+    remove: (key: string) => void;
+}
+export declare function createReducerManager(initialReducers: Reducers): ReducerManager;
+interface FederatedStore extends EnhancedStore<State, Action, Middleware<State>[]> {
+    reducerManager?: ReducerManager;
+}
+export declare const makeStore: () => FederatedStore;
+export declare const store: FederatedStore;
+export {};
 //# sourceMappingURL=store.d.ts.map
