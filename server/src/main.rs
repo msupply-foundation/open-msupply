@@ -1,8 +1,5 @@
 #![allow(where_clauses_object_safety)]
 
-use remote_server::database;
-use remote_server::server;
-use remote_server::util;
 #[cfg(not(feature = "mock"))]
 use sqlx::PgPool;
 
@@ -25,15 +22,10 @@ use remote_server::{
         TransactRepository, UserAccountRepository,
     },
     server::{
+        self,
         data::{RepositoryMap, RepositoryRegistry},
-        middleware::{compress as compress_middleware, logger as logger_middleware},
-        service::{graphql::config as graphql_config, rest::config as rest_config},
     },
-    util::{
-        configuration,
-        settings::Settings,
-        sync::{self, SyncReceiverActor, SyncSenderActor},
-    },
+    util::{configuration, settings::Settings},
 };
 
 use log::info;
