@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react';
 
-interface HtmlElement {
+export interface HtmlElement {
   appendChild(element: HtmlElement): void;
   removeChild(element: HtmlElement): void;
   async?: boolean;
@@ -13,6 +13,7 @@ interface HtmlElement {
 declare global {
   const document: {
     createElement: (element: string) => HtmlElement;
+    getElementById: (element: string) => HtmlElement;
     head: HtmlElement;
   };
 }
