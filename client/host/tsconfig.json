@@ -6,6 +6,7 @@
   "compilerOptions": {
     "declaration": true,
     "declarationDir": "./types",
-    "declarationMap": true
+    "declarationMap": true,
+    "emitDeclarationOnly": true
   }
 }
