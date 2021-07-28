@@ -75,7 +75,6 @@ module.exports = {
         },
         {
           '@openmsupply-client/common': {
-            import: '@openmsupply-client/common/src',
             requiredVersion: require('../common/package.json').version,
           },
         },
