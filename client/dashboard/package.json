@@ -22,8 +22,7 @@
     "start": "webpack-cli serve",
     "build": "webpack --mode production",
     "serve": "serve dist -p 3004",
-    "clean": "rm -rf dist",
-    "tsc": "tsc"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "history": "^5.0.0",
