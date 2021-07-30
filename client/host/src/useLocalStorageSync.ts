@@ -1,17 +1,23 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
 
-declare global {
-  const localStorage: {
-    getItem: (key: string) => string;
-    setItem: (key: string, object: any) => void;
-  };
-}
+type LocalStorageSetter<T> = {
+  value: T | null;
+  setItem: (storageObject: T) => void;
+};
 
-export const useLocalStorageSync = (key: string) => {
-  const loadFromLocalStorage = () => JSON.parse(localStorage.getItem(key));
+export const useLocalStorageSync = <T>(key: string): LocalStorageSetter<T> => {
+  const loadFromLocalStorage = (): T | null => {
+    const storedValue = localStorage.getItem(key);
+    if (!storedValue) {
+      return null;
+    } else {
+      return JSON.parse(storedValue);
+    }
+  };
   const [value, setValue] = React.useState(loadFromLocalStorage);
-  const setItem = (value: any) => {
+
+  const setItem = (value: T) => {
     localStorage.setItem(key, JSON.stringify(value));
     setValue(value);
   };
