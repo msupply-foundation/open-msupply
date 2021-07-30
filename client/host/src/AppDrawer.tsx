@@ -11,7 +11,6 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
   Receipt as ReceiptIcon,
-  Person as UserIcon,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';

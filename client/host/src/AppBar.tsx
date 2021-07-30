@@ -41,8 +41,9 @@ const useStyles = makeStyles(theme => ({
 }));
 
 interface Drawer {
-  open: boolean;
+  open: boolean | null;
   openDrawer: () => void;
+  closeDrawer: () => void;
 }
 interface AppBarProps {
   drawer: Drawer;

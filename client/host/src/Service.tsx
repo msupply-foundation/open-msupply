@@ -1,10 +1,5 @@
 import * as React from 'react';
 
-export const Context = React.createContext<ServiceContext>({
-  setService: (service: Service) => {},
-  title: '',
-});
-
 export interface Service {
   title: string;
 }
@@ -12,6 +7,12 @@ export interface ServiceContext {
   setService: (service: Service) => void;
   title: string;
 }
+
+export const Context = React.createContext<ServiceContext>({
+  setService: () => {},
+  title: '',
+});
+
 const useService = () => {
   const [service, setService] = React.useState<Service>({ title: '' });
 
@@ -21,7 +22,7 @@ const useService = () => {
   };
 };
 
-export const useServiceContext = () => {
+export const useServiceContext = (): ServiceContext => {
   const context = React.useContext(Context);
 
   if (context === undefined) {
@@ -33,13 +34,7 @@ export const useServiceContext = () => {
   return context;
 };
 
-interface ServiceProviderProps {
-  children?: JSX.Element | JSX.Element[];
-}
-
-export const ServiceProvider = ({
-  children,
-}: ServiceProviderProps): JSX.Element => {
+export const ServiceProvider: React.FC = ({ children }): JSX.Element => {
   const value = useService();
   return <Context.Provider value={value}>{children}</Context.Provider>;
 };

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { FC } from 'react';
 import Host from './Host';
 
-const App = () => <Host />;
+const App: FC = () => {
+  return <Host />;
+};
 
 export default App;

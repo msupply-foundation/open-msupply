@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { useRemoteScript } from '../hooks/useRemoteScript';
 import { loadAndInjectDeps } from '../hooks/useRemoteFn';
 
@@ -8,12 +8,12 @@ interface RemoteComponentProps {
   module: string;
 }
 
-export const RemoteComponent = ({
+export const RemoteComponent: FC<RemoteComponentProps> = ({
   url,
   scope,
   module,
   ...rest
-}: RemoteComponentProps): JSX.Element => {
+}: RemoteComponentProps) => {
   const { ready, failed } = useRemoteScript(url);
 
   if (!url) {
