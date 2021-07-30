@@ -1,6 +1,23 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react';
 
-export const useRemoteScript = url => {
+export interface HtmlElement {
+  appendChild(element: HtmlElement): void;
+  removeChild(element: HtmlElement): void;
+  async?: boolean;
+  src?: string;
+  type?: string;
+  onload: () => void;
+  onerror: () => void;
+}
+declare global {
+  const document: {
+    createElement: (element: string) => HtmlElement;
+    getElementById: (element: string) => HtmlElement;
+    head: HtmlElement;
+  };
+}
+export const useRemoteScript = (url: string) => {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 

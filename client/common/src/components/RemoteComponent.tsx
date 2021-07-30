@@ -2,7 +2,18 @@ import React from 'react';
 import { useRemoteScript } from '../hooks/useRemoteScript';
 import { loadAndInjectDeps } from '../hooks/useRemoteFn';
 
-export const RemoteComponent = ({ url, scope, module, ...rest }) => {
+interface RemoteComponentProps {
+  url: string;
+  scope: string;
+  module: string;
+}
+
+export const RemoteComponent = ({
+  url,
+  scope,
+  module,
+  ...rest
+}: RemoteComponentProps): JSX.Element => {
   const { ready, failed } = useRemoteScript(url);
 
   if (!url) {

@@ -1,7 +1,21 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable camelcase */
 import { useState, useEffect } from 'react';
 import { useRemoteScript } from './useRemoteScript';
 
-export const loadAndInjectDeps = (scope, module) => {
+declare global {
+  function __webpack_init_sharing__(prop: string): Promise<void>;
+  const __webpack_share_scopes__: { default: string };
+  function init(x: string): Promise<void>;
+  interface Window {
+    init(prop: string): void;
+    get(prop: string): () => { default: string };
+  }
+  function alert(message: string): void;
+  const window: any;
+}
+
+export const loadAndInjectDeps = (scope: any, module: string) => {
   return async () => {
     // Initializes the share scope. This fills it with known provided modules from this build and all remotes
     await __webpack_init_sharing__('default');
@@ -18,7 +32,7 @@ const placeholderFn = () => {
   alert('fn is still loading!');
 };
 
-export const useRemoteFn = (url, scope, module) => {
+export const useRemoteFn = (url: string, scope: any, module: any) => {
   const { ready, failed } = useRemoteScript(url);
   const [fn, setFn] = useState(() => placeholderFn);
 

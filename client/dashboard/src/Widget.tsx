@@ -1,7 +1,12 @@
 import React from 'react';
-import { CircularProgress, makeStyles, Paper, Box } from '@openmsupply-client/common';
+import {
+  CircularProgress,
+  makeStyles,
+  Paper,
+  Box,
+} from '@openmsupply-client/common';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   paper: {
     padding: theme.spacing(2),
     display: 'flex',
@@ -15,7 +20,12 @@ const Loading = () => (
   </Box>
 );
 
-const Widget = (props) => {
+interface WidgetProps {
+  children: JSX.Element | JSX.Element[];
+  height?: number | string;
+}
+
+const Widget = (props: WidgetProps): JSX.Element => {
   const classes = useStyles();
   return (
     <Paper style={{ height: props.height }} className={classes.paper}>

@@ -5,6 +5,7 @@
     "build": "lerna run --scope @openmsupply-client/* build",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
+    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "prepare": "husky install"
   },
   "workspaces": {
@@ -35,5 +36,7 @@
     ]
   },
   "name": "openmsupply-client",
-  "dependencies": {}
+  "dependencies": {
+    "@types/react-dom": "^17.0.9"
+  }
 }
