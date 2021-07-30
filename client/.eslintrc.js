@@ -21,6 +21,9 @@ module.exports = {
   plugins: ['react', , '@typescript-eslint'],
   rules: {
     'require-jsdoc': 0,
+    'react/display-name': 'off',
+    'react/prop-types': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
     'spaced-comment': [
       'error',
       'always',
