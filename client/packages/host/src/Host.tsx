@@ -40,11 +40,6 @@ const Host: FC = () => {
                 <Routes>
                   <Route path="dashboard/*" element={<DashboardService />} />
                   <Route path="invoices/*" element={<div />} />
-                  {/* <Route path="profile/*" element={<ProfilePage />} />
-                  <Route path="redux_toolkit_invoices/*" element={<ReduxToolKitInvoiceService />} />
-                  <Route path="mobx_invoices/*" element={<MobXInvoiceService />} />
-                  <Route path="mst_invoices/*" element={<MSTInvoiceService />} />
-                  <Route path="mobx_rq_invoices/*" element={<InvoiceMobXRQService />} /> */}
                   <Route
                     path="*"
                     element={<Navigate to="/dashboard" replace />}
