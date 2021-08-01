@@ -11,7 +11,6 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
   Receipt as ReceiptIcon,
-  Person as UserIcon,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
@@ -81,8 +80,13 @@ const Menu = () => (
   </List>
 );
 
+interface Drawer {
+  open: boolean | null;
+  closeDrawer: () => void;
+  openDrawer: () => void;
+}
 interface AppDrawerProps {
-  drawer: any;
+  drawer: Drawer;
   open?: boolean;
 }
 

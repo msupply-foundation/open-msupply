@@ -41,14 +41,15 @@ const useStyles = makeStyles(theme => ({
 }));
 
 interface Drawer {
-  open: boolean;
+  open: boolean | null;
   openDrawer: () => void;
+  closeDrawer: () => void;
 }
 interface AppBarProps {
   drawer: Drawer;
 }
 
-const AppBar = (props: AppBarProps): JSX.Element => {
+const AppBar: React.FC<AppBarProps> = props => {
   const classes = useStyles();
   const serviceContext = useServiceContext();
 

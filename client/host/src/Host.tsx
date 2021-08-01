@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { Box, ReduxProvider } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
@@ -7,18 +7,10 @@ import Viewport from './Viewport';
 import { useLocalStorageSync } from './useLocalStorageSync';
 import { ServiceProvider } from './Service';
 
-// const InvoiceMobXRQService = React.lazy(() => import('mobx_rq_invoices/InvoiceMobXRQService'));
-// const MSTInvoiceService = React.lazy(() => import('mst_invoices/MSTInvoiceService'));
-// const MobXInvoiceService = React.lazy(() => import('mobx_invoices/MobXInvoiceService'));
-// const ReduxToolKitInvoiceService = React.lazy(
-//   () => import('redux_toolkit_invoices/ReduxToolkitInvoiceService')
-// );
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
-// const InvoiceService = React.lazy(() => import('invoices/InvoiceService'));
-// const ProfilePage = React.lazy(() => import('profile/ProfilePage'));
 
 const useDrawer = () => {
-  const { value, setItem } = useLocalStorageSync(
+  const { value, setItem } = useLocalStorageSync<boolean>(
     '@openmsupply-client/appdrawer/open'
   );
 
@@ -33,7 +25,7 @@ const useDrawer = () => {
   };
 };
 
-const Host = () => {
+const Host: FC = () => {
   const drawer = useDrawer();
 
   return (
