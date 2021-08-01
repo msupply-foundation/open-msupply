@@ -25,7 +25,7 @@ interface WidgetProps {
   height?: number | string;
 }
 
-const Widget = (props: WidgetProps): JSX.Element => {
+const Widget: React.FC<WidgetProps> = props => {
   const classes = useStyles();
   return (
     <Paper style={{ height: props.height }} className={classes.paper}>

@@ -43,7 +43,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
   const classes = useStyles();
   const serviceContext = useServiceContext();
   React.useEffect(() => {
