@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const LoadingApp = () => {
+export const LoadingApp: React.FC = () => {
   const classes = useStyles();
   return (
     <div className={classes.root}>
