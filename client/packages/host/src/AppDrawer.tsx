@@ -80,8 +80,13 @@ const Menu = () => (
   </List>
 );
 
+interface Drawer {
+  open: boolean | null;
+  closeDrawer: () => void;
+  openDrawer: () => void;
+}
 interface AppDrawerProps {
-  drawer: any;
+  drawer: Drawer;
   open?: boolean;
 }
 
