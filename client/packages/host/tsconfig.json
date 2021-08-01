@@ -1,6 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
   "outDir": "./dist",
-  "rootDir": "./src",
-  "strict": false
+  "rootDir": "./src"
 }
