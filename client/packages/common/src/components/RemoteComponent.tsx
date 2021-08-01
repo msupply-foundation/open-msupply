@@ -13,7 +13,7 @@ export const RemoteComponent: FC<RemoteComponentProps> = ({
   scope,
   module,
   ...rest
-}: RemoteComponentProps) => {
+}) => {
   const { ready, failed } = useRemoteScript(url);
 
   if (!url) {
