@@ -49,7 +49,7 @@ interface AppBarProps {
   drawer: Drawer;
 }
 
-const AppBar = (props: AppBarProps): JSX.Element => {
+const AppBar: React.FC<AppBarProps> = props => {
   const classes = useStyles();
   const serviceContext = useServiceContext();
 
