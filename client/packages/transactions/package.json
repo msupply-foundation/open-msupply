@@ -28,9 +28,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "graphql": "^15.5.1",
+    "graphql-request": "^3.5.0",
     "history": "^5.0.0",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
+    "react-query": "^3.19.1",
     "react-router": "6.0.0-beta.0",
     "react-router-dom": "6.0.0-beta.0"
   }
