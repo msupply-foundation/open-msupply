@@ -27,7 +27,7 @@ const TransactionQueryResolvers = {
 const TransactionMutationResolvers = {
   updateTransaction: (_, { transaction: { id: filterId, ...patch } }) => {
     const idx = TransactionData.findIndex(({ id }) => id === filterId);
-    Transaction[idx] = { ...TransactionData[idx], ...patch };
+    TransactionData[idx] = { ...TransactionData[idx], ...patch };
 
     return TransactionData[idx];
   },
