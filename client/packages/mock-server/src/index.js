@@ -1,37 +1,37 @@
 import { ApolloServer, gql } from 'apollo-server';
 import { ItemQueries, ItemType, ItemResolvers } from './schema/Item';
 import {
-  InvoiceMutations,
-  InvoiceQueries,
-  InvoiceQueryResolvers,
-  InvoicesMutationResolvers,
-  InvoiceType,
-  InvoiceInput,
-} from './schema/Invoices';
+  TransactionMutations,
+  TransactionQueries,
+  TransactionQueryResolvers,
+  TransactionMutationResolvers,
+  TransactionType,
+  TransactionInput,
+} from './schema/Transaction';
 
 const typeDefs = gql`
   ${ItemType}
-  ${InvoiceType}
+  ${TransactionType}
 
-  ${InvoiceInput}
+  ${TransactionInput}
 
   type Query {
     ${ItemQueries}
-    ${InvoiceQueries}
+    ${TransactionQueries}
   }
 
   type Mutation {
-    ${InvoiceMutations}
+    ${TransactionMutations}
   }
 `;
 
 const resolvers = {
   Query: {
     ...ItemResolvers,
-    ...InvoiceQueryResolvers,
+    ...TransactionQueryResolvers,
   },
   Mutation: {
-    ...InvoicesMutationResolvers,
+    ...TransactionMutationResolvers,
   },
 };
 
