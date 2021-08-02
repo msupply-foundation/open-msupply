@@ -1,15 +1,18 @@
 import React from 'react';
 import {
-  makeStyles,
+  Customers,
+  Dashboard,
   Drawer,
-  IconButton,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
-  ChevronLeft as ChevronLeftIcon,
-  Dashboard as DashboardIcon,
-  Receipt as ReceiptIcon,
+  MSupplyGuy,
+  Messages,
+  Reports,
+  Stock,
+  Suppliers,
+  Tools,
+  makeStyles,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
@@ -20,12 +23,31 @@ import { Theme } from '@openmsupply-client/common/src/styles/theme';
 const useStyles = makeStyles((theme: Theme) => ({
   toolbarIcon: {
     display: 'flex',
+    height: 120,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'flex-end',
     padding: '0 8px',
     ...theme.mixins.toolbar,
   },
+  drawerMenuItem: {
+    width: 168,
+    margin: '20px 0',
+    padding: '4px 8px',
+    '&:hover': {
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      boxShadow:
+        '0 8px 16px 0 rgb(96 97 112 / 16%), 0 2px 4px 0 rgb(40 41 61 / 4%)',
+    },
+  },
+  drawerMenuItemSelected: {
+    backgroundColor: '#fff!important',
+    borderRadius: 16,
+    boxShadow:
+      '0 8px 16px 0 rgb(96 97 112 / 16%), 0 2px 4px 0 rgb(40 41 61 / 4%)',
+  },
   drawerPaper: {
+    backgroundColor: theme.palette.background?.drawer,
     position: 'relative',
     whiteSpace: 'nowrap',
     width: 240,
@@ -45,9 +67,12 @@ const useStyles = makeStyles((theme: Theme) => ({
       width: theme.spacing(9),
     },
   },
+  mSupplyGuy: { height: 60, width: 45 },
+  mSupplyGuySmall: { height: 40, width: 30 },
 }));
 
 interface ListItemLinkProps {
+  classes: Record<string, string>;
   to: string;
   icon: JSX.Element;
   text?: string;
@@ -62,21 +87,63 @@ const ListItemLink: React.FC<ListItemLinkProps> = props => {
       )),
     [props.to]
   );
+  const className = clsx(
+    props.classes['drawerMenuItem'],
+    !!selected && props.classes['drawerMenuItemSelected']
+  );
 
   return (
     <li>
-      <ListItem selected={!!selected} button component={CustomLink}>
-        <ListItemIcon>{props.icon}</ListItemIcon>
+      <ListItem
+        selected={!!selected}
+        button
+        component={CustomLink}
+        className={className}
+      >
+        {props.icon}
         <ListItemText primary={props.text} />
       </ListItem>
     </li>
   );
 };
 
-const Menu = () => (
+interface MenuProps {
+  classes: Record<string, string>;
+}
+const Menu: React.FC<MenuProps> = ({ classes }) => (
   <List>
-    <ListItemLink to="dashboard" icon={<DashboardIcon />} text="Dashboard" />
-    <ListItemLink to="invoices" icon={<ReceiptIcon />} text="Invoices" />
+    <ListItemLink
+      to="dashboard"
+      icon={<Dashboard />}
+      text="Dashboard"
+      classes={classes}
+    />
+    <ListItemLink
+      to="customers"
+      icon={<Customers />}
+      text="Customers"
+      classes={classes}
+    />
+    <ListItemLink
+      to="suppliers"
+      icon={<Suppliers />}
+      text="Suppliers"
+      classes={classes}
+    />
+    <ListItemLink to="stock" icon={<Stock />} text="Stock" classes={classes} />
+    <ListItemLink to="tools" icon={<Tools />} text="Tools" classes={classes} />
+    <ListItemLink
+      to="reports"
+      icon={<Reports />}
+      text="Reports"
+      classes={classes}
+    />
+    <ListItemLink
+      to="messages"
+      icon={<Messages />}
+      text="Messages"
+      classes={classes}
+    />
   </List>
 );
 
@@ -92,6 +159,7 @@ interface AppDrawerProps {
 
 const AppDrawer: React.FC<AppDrawerProps> = props => {
   const classes = useStyles();
+  const { drawer } = props;
 
   return (
     <Drawer
@@ -105,11 +173,14 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
       open={props.open}
     >
       <div className={classes.toolbarIcon}>
-        <IconButton onClick={props.drawer.closeDrawer}>
-          <ChevronLeftIcon />
-        </IconButton>
+        <MSupplyGuy
+          onClick={props.drawer.closeDrawer}
+          classes={{
+            root: drawer.open ? classes.mSupplyGuy : classes.mSupplyGuySmall,
+          }}
+        />
       </div>
-      <Menu />
+      <Menu classes={classes} />
     </Drawer>
   );
 };
