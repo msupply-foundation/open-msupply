@@ -9,6 +9,12 @@ module.exports = {
     'google',
     'prettier',
   ],
+  overrides: [
+    {
+      files: ['*.js', '*.jsx'],
+      plugins: ['plugin:react/recommended', 'google', 'prettier'],
+    },
+  ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
