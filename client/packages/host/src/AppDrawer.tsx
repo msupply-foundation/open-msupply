@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   makeStyles,
-  Divider,
   Drawer,
   IconButton,
   List,
@@ -16,8 +15,9 @@ import {
 import clsx from 'clsx';
 
 import { Link, useMatch } from 'react-router-dom';
+import { Theme } from '@openmsupply-client/common/src/styles/theme';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme: Theme) => ({
   toolbarIcon: {
     display: 'flex',
     alignItems: 'center',
@@ -109,7 +109,6 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
           <ChevronLeftIcon />
         </IconButton>
       </div>
-      <Divider />
       <Menu />
     </Drawer>
   );

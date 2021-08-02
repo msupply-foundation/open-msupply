@@ -9,6 +9,7 @@ import Person from '@material-ui/icons/Person';
 import Receipt from '@material-ui/icons/Receipt';
 import Search from '@material-ui/icons/Search';
 
+export { MSupplyGuy } from './MSupplyGuy';
 export { Menu as MenuIcon } from './Menu';
 export {
   Check,
