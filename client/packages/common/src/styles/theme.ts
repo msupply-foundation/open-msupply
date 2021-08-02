@@ -1,17 +1,26 @@
 import {
-  PaletteColorOptions,
   Theme as MuiTheme,
   ThemeOptions as MuiThemeOptions,
 } from '@material-ui/core/styles';
 import createTheme from '@material-ui/core/styles/createTheme';
-import { PaletteOptions as MuiPaletteOptions } from '@material-ui/core/styles/createPalette';
+import {
+  PaletteOptions as MuiPaletteOptions,
+  TypeBackground as MuiTypeBackground,
+} from '@material-ui/core/styles/createPalette';
 
 type Modify<T, R> = Omit<T, keyof R> & R;
+
+export type TypeBackground = Modify<
+  MuiTypeBackground,
+  {
+    drawer: string;
+  }
+>;
 
 export type PaletteOptions = Modify<
   MuiPaletteOptions,
   {
-    menuBackground: PaletteColorOptions;
+    background?: Partial<TypeBackground>;
   }
 >;
 
@@ -31,8 +40,10 @@ export type Theme = Modify<
 
 const themeOptions: ThemeOptions = {
   palette: {
-    menuBackground: { main: '#f2f2f5' },
     primary: { 500: '#e95c2f' },
+    background: {
+      drawer: '#f2f2f5',
+    },
   },
 };
 
