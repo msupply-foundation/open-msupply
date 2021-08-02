@@ -8,6 +8,9 @@ import { useLocalStorageSync } from './useLocalStorageSync';
 import { ServiceProvider } from './Service';
 
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
+const TransactionService = React.lazy(
+  () => import('transactions/TransactionService')
+);
 
 const useDrawer = () => {
   const { value, setItem } = useLocalStorageSync<boolean>(
@@ -39,7 +42,10 @@ const Host: FC = () => {
               <React.Suspense fallback={'Loading'}>
                 <Routes>
                   <Route path="dashboard/*" element={<DashboardService />} />
-                  <Route path="invoices/*" element={<div />} />
+                  <Route
+                    path="transactions/*"
+                    element={<TransactionService />}
+                  />
                   <Route
                     path="*"
                     element={<Navigate to="/dashboard" replace />}

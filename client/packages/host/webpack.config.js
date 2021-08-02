@@ -19,7 +19,7 @@ module.exports = {
       'Access-Control-Allow-Headers':
         'X-Requested-With, content-type, Authorization',
     },
-    // open: true,
+    open: true,
   },
   resolve: {
     extensions: ['.js', '.css', '.ts', '.tsx'],
@@ -48,15 +48,8 @@ module.exports = {
       name: 'host',
       filename: 'remoteEntry.js',
       remotes: {
-        // invoices: 'invoices@http://localhost:3005/remoteEntry.js',
         dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
-        // profile: 'profile@http://localhost:3006/remoteEntry.js',
-        host: 'host@http://localhost:3003/remoteEntry.js',
-        redux_toolkit_invoices:
-          'redux_toolkit_invoices@http://localhost:3009/remoteEntry.js',
-        // mobx_invoices: 'mobx_invoices@http://localhost:3011/remoteEntry.js',
-        // mst_invoices: 'mst_invoices@http://localhost:3012/remoteEntry.js',
-        // mobx_rq_invoices: 'mobx_rq_invoices@http://localhost:3013/remoteEntry.js',
+        transactions: 'transactions@http://localhost:3005/remoteEntry.js',
       },
       exposes: {
         './Host': './src/Host',
