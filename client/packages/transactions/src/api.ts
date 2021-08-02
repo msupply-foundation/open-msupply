@@ -80,12 +80,20 @@ export const useDraftDocument = <DocumentType>(
   const { data } = useQuery(key, queryFn);
 
   const { mutateAsync } = useMutation(mutateFn, {
+    // TODO: onError to rollback
     onSuccess: () => {
       queryClient.invalidateQueries(key);
     },
   });
 
   useEffect(() => {
+    // TODO: This could overwrite some existing data. React query will already
+    // do a diff on the existing `data`, so when a refetch occurs, i.e. when the window
+    // is refocused, the data we are caching will be diffed with the refetched server data,
+    // and if there's no difference, it won't change. However if it *did* change, then it would
+    // be completely overwritten. We'd likely need a more complex data structure to be able to compare
+    // new changes from the server and current draft changes to merge them together and/or show the
+    // user the changes and let them resolve it.
     setDraft(data);
   }, [data]);
 
@@ -95,5 +103,6 @@ export const useDraftDocument = <DocumentType>(
     }
   };
 
+  // TODO: Wrap `setDraft` in auto-save functionality? Throttled, debounced? Timer? Optional?
   return { draft, setDraft, save };
 };
