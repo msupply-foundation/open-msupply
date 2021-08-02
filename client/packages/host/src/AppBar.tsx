@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  AppBar as MuiAppBar,
   makeStyles,
   IconButton,
   MenuIcon,
@@ -15,6 +14,7 @@ const useStyles = makeStyles(theme => ({
     paddingRight: 24,
   },
   appBar: {
+    position: 'absolute',
     zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
@@ -22,8 +22,8 @@ const useStyles = makeStyles(theme => ({
     }),
   },
   appBarShift: {
-    marginLeft: 240,
-    width: `calc(100% - 240px)`,
+    marginLeft: 200,
+    width: `calc(100% - 200px)`,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
@@ -54,8 +54,7 @@ const AppBar: React.FC<AppBarProps> = props => {
   const serviceContext = useServiceContext();
 
   return (
-    <MuiAppBar
-      position="absolute"
+    <div
       className={clsx(classes.appBar, props.drawer.open && classes.appBarShift)}
     >
       <Toolbar className={classes.toolbar}>
@@ -81,7 +80,7 @@ const AppBar: React.FC<AppBarProps> = props => {
           {serviceContext.title}
         </Typography>
       </Toolbar>
-    </MuiAppBar>
+    </div>
   );
 };
 export default AppBar;
