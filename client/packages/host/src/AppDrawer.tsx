@@ -76,7 +76,11 @@ const ListItemLink: React.FC<ListItemLinkProps> = props => {
 const Menu = () => (
   <List>
     <ListItemLink to="dashboard" icon={<DashboardIcon />} text="Dashboard" />
-    <ListItemLink to="invoices" icon={<ReceiptIcon />} text="Invoices" />
+    <ListItemLink
+      to="transactions"
+      icon={<ReceiptIcon />}
+      text="Transactions"
+    />
   </List>
 );
 

@@ -4,6 +4,7 @@ const ModuleFederationPlugin =
   require('webpack').container.ModuleFederationPlugin;
 const path = require('path');
 const deps = require('./package.json').dependencies;
+
 module.exports = {
   entry: './src/index',
   mode: 'development',
@@ -34,8 +35,6 @@ module.exports = {
       name: 'dashboard',
       filename: 'remoteEntry.js',
       remotes: {
-        // invoices: 'invoices@http://localhost:3005/remoteEntry.js',
-        // requisitions: 'requisitions@http://localhost:3007/remoteEntry.js',
         host: 'host@http://localhost:3003/remoteEntry.js',
         dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
       },
