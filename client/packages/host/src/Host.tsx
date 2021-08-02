@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Box, ReduxProvider } from '@openmsupply-client/common';
+import { Box, ReduxProvider, ThemeProvider } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
@@ -31,24 +31,26 @@ const Host: FC = () => {
   return (
     <ReduxProvider>
       <ServiceProvider>
-        <BrowserRouter>
-          <Viewport>
-            <Box display="flex" flex={1}>
-              <AppBar drawer={drawer} />
-              <AppDrawer drawer={drawer} />
-              <React.Suspense fallback={'Loading'}>
-                <Routes>
-                  <Route path="dashboard/*" element={<DashboardService />} />
-                  <Route path="invoices/*" element={<div />} />
-                  <Route
-                    path="*"
-                    element={<Navigate to="/dashboard" replace />}
-                  />
-                </Routes>
-              </React.Suspense>
-            </Box>
-          </Viewport>
-        </BrowserRouter>
+        <ThemeProvider>
+          <BrowserRouter>
+            <Viewport>
+              <Box display="flex" flex={1}>
+                <AppBar drawer={drawer} />
+                <AppDrawer drawer={drawer} />
+                <React.Suspense fallback={'Loading'}>
+                  <Routes>
+                    <Route path="dashboard/*" element={<DashboardService />} />
+                    <Route path="invoices/*" element={<div />} />
+                    <Route
+                      path="*"
+                      element={<Navigate to="/dashboard" replace />}
+                    />
+                  </Routes>
+                </React.Suspense>
+              </Box>
+            </Viewport>
+          </BrowserRouter>
+        </ThemeProvider>
       </ServiceProvider>
     </ReduxProvider>
   );

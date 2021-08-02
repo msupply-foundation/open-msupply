@@ -1,6 +1,6 @@
 import React from 'react';
 import { CircularProgress, Typography } from './index';
-import { makeStyles } from '../components';
+import { makeStyles } from '../styles';
 
 const useStyles = makeStyles(theme => ({
   root: {
