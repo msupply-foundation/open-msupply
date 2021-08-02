@@ -28,7 +28,7 @@ const mutationFn = async (updated: Transaction): Promise<Transaction> => {
 
 const TransactionService: FC = () => {
   const { draft, setDraft, save } = useDraftDocument<Transaction>(
-    'key',
+    'transaction',
     queryFn,
     mutationFn
   );

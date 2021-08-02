@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import {
   QueryClient,
   QueryClientProvider,
+  ReactQueryDevtools,
   Box,
   ReduxProvider,
 } from '@openmsupply-client/common';
@@ -65,6 +66,7 @@ const Host: FC = () => {
           </BrowserRouter>
         </ServiceProvider>
       </ReduxProvider>
+      <ReactQueryDevtools initialIsOpen />
     </QueryClientProvider>
   );
 };
