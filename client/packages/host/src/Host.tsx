@@ -31,7 +31,7 @@ const useDrawer = () => {
 };
 
 const Heading: FC = props => (
-  <Typography style={{ margin: '100px 50px' }}>{props.children}</Typography>
+  <Typography style={{ margin: '100px 50px' }}>[ {props.children} ]</Typography>
 );
 const Host: FC = () => {
   const drawer = useDrawer();
