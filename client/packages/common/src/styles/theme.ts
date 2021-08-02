@@ -40,7 +40,7 @@ export type Theme = Modify<
 
 const themeOptions: ThemeOptions = {
   palette: {
-    primary: { 500: '#e95c2f' },
+    primary: { 500: '#e95c30' },
     background: {
       drawer: '#f2f2f5',
     },

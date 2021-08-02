@@ -36,7 +36,9 @@ const useStyles = makeStyles((theme: Theme) => ({
     padding: '4px 8px',
     width: 168,
     '& > svg': {
+      height: 20,
       marginRight: 8,
+      width: 20,
     },
     '&:hover': {
       backgroundColor: '#fff',
