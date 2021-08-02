@@ -66,7 +66,11 @@ interface DraftDocumentState<DocumentType> {
  * stock which might effect many columns. Possibly the draft could be a more complex class instance or
  * we use a more functional approach and have functions i.e. updateDaysOfStock(draft, newValue)
  *
- * - Just use redux :thinking: :shrug:
+ * - Might be nice/easy/better/worse? to be able to more globally access the current draft. For example,
+ * the draft hook will be used at the 'root' of some page, and will be required to be drilled down through
+ * components which want to know the current draft values. It's not too difficult to make the value 'global'
+ * i.e. can use context, or a simple state management tool like Jotai or Recoil or..
+ * - Just use redux :thinking: :shrug: :lol:
  */
 
 export const useDraftDocument = <DocumentType>(
