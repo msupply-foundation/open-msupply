@@ -14,7 +14,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 
 module.exports = {
   entry: './src/index',
-  mode: isDevelopment ? 'development' : 'production',
+  mode: 'development',
   devServer: {
     static: path.join(__dirname, 'dist'),
     port: 3005,
@@ -25,13 +25,9 @@ module.exports = {
     publicPath: 'auto',
     chunkFilename: '[id].[contenthash].js',
   },
-  optimization: {
-    runtimeChunk: 'single',
-  },
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.css'],
   },
-
   module: {
     rules: [
       {
@@ -63,8 +59,13 @@ module.exports = {
         },
       },
     }),
+    // Chunks: ['main'] explained here:
+    // https://github.com/module-federation/module-federation-examples/issues/358#issuecomment-844455904
+    // Seems if there is more than one bundle being served HMR stops working. Can't use optimization: single
+    // as that causes MF to stop working.
     new HtmlWebpackPlugin({
       template: './public/index.html',
+      chunks: ['main'],
     }),
     isDevelopment && new webpack.HotModuleReplacementPlugin(),
     isDevelopment && new ReactRefreshWebpackPlugin(),
