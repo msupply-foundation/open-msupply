@@ -29,10 +29,15 @@ const useStyles = makeStyles((theme: Theme) => ({
     padding: '0 8px',
     ...theme.mixins.toolbar,
   },
+  drawerMenu: { paddingLeft: 15 },
   drawerMenuItem: {
-    width: 168,
+    height: 32,
     margin: '20px 0',
     padding: '4px 8px',
+    width: 168,
+    '& > svg': {
+      marginRight: 8,
+    },
     '&:hover': {
       backgroundColor: '#fff',
       borderRadius: 16,
@@ -50,11 +55,13 @@ const useStyles = makeStyles((theme: Theme) => ({
     backgroundColor: theme.palette.background?.drawer,
     position: 'relative',
     whiteSpace: 'nowrap',
-    width: 240,
+    width: 200,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
+    borderRadius: 8,
+    boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.32), 0 0 2px 0 rgba(0, 0, 0, 0.04)',
   },
   drawerPaperClose: {
     overflowX: 'hidden',
@@ -111,7 +118,7 @@ interface MenuProps {
   classes: Record<string, string>;
 }
 const Menu: React.FC<MenuProps> = ({ classes }) => (
-  <List>
+  <List className={classes['drawerMenu']}>
     <ListItemLink
       to="dashboard"
       icon={<Dashboard />}
