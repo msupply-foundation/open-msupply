@@ -12,7 +12,7 @@ use {
             StoreRow, TransactLineRow, TransactRow, UserAccountRow,
         },
     },
-    std::{collections::HashMap, sync::Mutex},
+    std::collections::HashMap,
 };
 
 use remote_server::{
@@ -22,18 +22,25 @@ use remote_server::{
         TransactRepository, UserAccountRepository,
     },
     server::{
-        self,
         data::{RepositoryMap, RepositoryRegistry},
+        middleware::{compress as compress_middleware, logger as logger_middleware},
+        service::{graphql::config as graphql_config, rest::config as rest_config},
     },
     util::{configuration, settings::Settings},
 };
 
+use actix_web::{web::Data, App, HttpServer};
 use log::info;
+use std::{
+    env,
+    net::TcpListener,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tokio::sync::mpsc::channel;
 use tokio::sync::mpsc::error::TrySendError;
-use tokio::time::{delay_for, interval, Duration};
+use tokio::time::{delay_for, interval};
 
-use std::sync::Arc;
 #[cfg(not(feature = "mock"))]
 async fn get_repositories(settings: &Settings) -> RepositoryMap {
     let pool: PgPool = PgPool::connect(&settings.database.connection_string())
@@ -142,7 +149,7 @@ pub fn get_repositories() -> RepositoryMap {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "info");
+    env::set_var("RUST_LOG", "info");
     env_logger::init();
 
     let settings: Settings =
@@ -165,20 +172,20 @@ async fn main() -> std::io::Result<()> {
         // Arc and Mutex are both unfortunate requirements here because we need to mutate the
         // Sender later which the extractor doesn’t help us with, but all up it’s not a big deal.
         // Should be possible to remove them both later.
-        sync_sender: Arc::new(std::sync::Mutex::new(sync_sender.clone())),
+        sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
-    let listener = std::net::TcpListener::bind(settings.server.address())
-        .expect("Failed to bind server to address");
+    let listener =
+        TcpListener::bind(settings.server.address()).expect("Failed to bind server to address");
 
-    let registry = actix_web::web::Data::new(registry);
-    let http_server = actix_web::HttpServer::new(move || {
-        actix_web::App::new()
+    let registry = Data::new(registry);
+    let http_server = HttpServer::new(move || {
+        App::new()
             .app_data(registry.clone())
-            .wrap(server::middleware::logger())
-            .wrap(server::middleware::compress())
-            .configure(server::service::graphql::config(registry.clone()))
-            .configure(server::service::rest::config)
+            .wrap(logger_middleware())
+            .wrap(compress_middleware())
+            .configure(graphql_config(registry.clone()))
+            .configure(rest_config)
     })
     .listen(listener)?
     .run();
