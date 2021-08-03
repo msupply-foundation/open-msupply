@@ -11,6 +11,7 @@ module.exports = {
   mode: 'development',
   devServer: {
     static: path.join(__dirname, 'dist'),
+    public: 'http://localhost:3003/',
     port: 3003,
     historyApiFallback: true,
     headers: {
@@ -25,7 +26,7 @@ module.exports = {
     extensions: ['.js', '.css', '.ts', '.tsx'],
   },
   output: {
-    publicPath: 'auto',
+    publicPath: 'http://localhost:3003/',
     chunkFilename: '[id].[contenthash].js',
   },
   optimization: {
