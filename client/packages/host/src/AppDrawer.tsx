@@ -216,7 +216,6 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
   const { drawer } = props;
 
   const toggleDrawer = () => {
-    console.info('*** click ***', drawer.open, props.open);
     if (!!drawer.open) drawer.closeDrawer();
     else drawer.openDrawer();
   };

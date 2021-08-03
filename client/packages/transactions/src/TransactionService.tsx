@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
 import {
@@ -108,9 +108,8 @@ const columns = [
 ];
 
 const Transactions: FC = () => {
-  const { data, isLoading } = useQuery(['transaction', 'list'], listQuery, {
-    enabled: true,
-  });
+  const { data, isLoading } = useQuery(['transaction', 'list'], listQuery);
+
   const navigate = useNavigate();
 
   return isLoading ? null : (
@@ -121,7 +120,6 @@ const Transactions: FC = () => {
         hideFooterPagination
         hideFooterRowCount
         checkboxSelection
-        onSelectionModelChange={model => console.log(model)}
         hideFooterSelectedRowCount
         onRowClick={params => {
           navigate(`/transactions/${params.id}`);
