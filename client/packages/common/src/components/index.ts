@@ -1,4 +1,5 @@
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
 import ListItemText from '@material-ui/core/ListItemText';
 
@@ -7,4 +8,4 @@ export { DataGrid } from '@material-ui/data-grid';
 export { RemoteComponent } from './RemoteComponent';
 export * from './icons';
 export * from './layout';
-export { CircularProgress, ListItemText, Typography };
+export { CircularProgress, Divider, ListItemText, Typography };

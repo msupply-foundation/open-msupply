@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Customers,
   Dashboard,
+  Divider,
   Drawer,
   IconButton,
   List,
@@ -9,7 +10,10 @@ import {
   ListItemText,
   MSupplyGuy,
   Messages,
+  Power,
+  Radio,
   Reports,
+  Settings,
   Stock,
   Suppliers,
   Tools,
@@ -30,7 +34,13 @@ const useStyles = makeStyles((theme: Theme) => ({
     padding: '0 8px',
     ...theme.mixins.toolbar,
   },
-  drawerMenu: { paddingLeft: 15 },
+  drawerMenu: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    justifyContent: 'space-between',
+    paddingLeft: 15,
+  },
   drawerMenuItem: {
     height: 32,
     margin: '20px 0',
@@ -55,8 +65,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     }),
     borderRadius: 8,
     boxShadow: theme.shadows[7],
-    '& a': { borderRadius: 16, padding: '4px 8px', width: 168 },
-    '& a > div': { marginLeft: 8 },
+    '& li > a': { borderRadius: 16, padding: '4px 8px', width: 168 },
+    '& li > a > div': { marginLeft: 8 },
   },
   drawerPaperClose: {
     overflowX: 'hidden',
@@ -68,8 +78,9 @@ const useStyles = makeStyles((theme: Theme) => ({
     [theme.breakpoints.up('sm')]: {
       width: theme.spacing(9),
     },
-    '& a': { borderRadius: 20, height: 40, padding: 10, width: 40 },
-    '& a > div': { display: 'none' },
+    '& li > a': { borderRadius: 20, height: 40, padding: 10, width: 40 },
+    '& li > a > div': { display: 'none' },
+    '& ul > hr': { display: 'none' },
   },
   mSupplyGuy: { height: 60, width: 45 },
   mSupplyGuySmall: { height: 40, width: 30 },
@@ -97,15 +108,17 @@ const ListItemLink: React.FC<ListItemLinkProps> = props => {
   );
 
   return (
-    <ListItem
-      selected={!!selected}
-      button
-      component={CustomLink}
-      className={className}
-    >
-      {props.icon}
-      <ListItemText primary={props.text} />
-    </ListItem>
+    <li>
+      <ListItem
+        selected={!!selected}
+        button
+        component={CustomLink}
+        className={className}
+      >
+        {props.icon}
+        <ListItemText primary={props.text} />
+      </ListItem>
+    </li>
   );
 };
 
@@ -113,40 +126,70 @@ interface MenuProps {
   classes: Record<string, string>;
 }
 const Menu: React.FC<MenuProps> = ({ classes }) => (
-  <List className={classes['drawerMenu']}>
-    <ListItemLink
-      to="dashboard"
-      icon={<Dashboard />}
-      text="Dashboard"
-      classes={classes}
-    />
-    <ListItemLink
-      to="customers"
-      icon={<Customers />}
-      text="Customers"
-      classes={classes}
-    />
-    <ListItemLink
-      to="suppliers"
-      icon={<Suppliers />}
-      text="Suppliers"
-      classes={classes}
-    />
-    <ListItemLink to="stock" icon={<Stock />} text="Stock" classes={classes} />
-    <ListItemLink to="tools" icon={<Tools />} text="Tools" classes={classes} />
-    <ListItemLink
-      to="reports"
-      icon={<Reports />}
-      text="Reports"
-      classes={classes}
-    />
-    <ListItemLink
-      to="messages"
-      icon={<Messages />}
-      text="Messages"
-      classes={classes}
-    />
-  </List>
+  <div className={classes['drawerMenu']}>
+    <List>
+      <ListItemLink
+        to="dashboard"
+        icon={<Dashboard />}
+        text="Dashboard"
+        classes={classes}
+      />
+      <ListItemLink
+        to="customers"
+        icon={<Customers />}
+        text="Customers"
+        classes={classes}
+      />
+      <ListItemLink
+        to="suppliers"
+        icon={<Suppliers />}
+        text="Suppliers"
+        classes={classes}
+      />
+      <ListItemLink
+        to="stock"
+        icon={<Stock />}
+        text="Stock"
+        classes={classes}
+      />
+      <ListItemLink
+        to="tools"
+        icon={<Tools />}
+        text="Tools"
+        classes={classes}
+      />
+      <ListItemLink
+        to="reports"
+        icon={<Reports />}
+        text="Reports"
+        classes={classes}
+      />
+      <ListItemLink
+        to="messages"
+        icon={<Messages />}
+        text="Messages"
+        classes={classes}
+      />
+    </List>
+    <List>
+      <Divider
+        style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
+      />
+      <ListItemLink to="sync" icon={<Radio />} text="Stock" classes={classes} />
+      <ListItemLink
+        to="admin"
+        icon={<Settings />}
+        text="Admin"
+        classes={classes}
+      />
+      <ListItemLink
+        to="logout"
+        icon={<Power />}
+        text="Logout"
+        classes={classes}
+      />
+    </List>
+  </div>
 );
 
 interface Drawer {
