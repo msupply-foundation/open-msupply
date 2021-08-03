@@ -3,6 +3,7 @@ import {
   Customers,
   Dashboard,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -23,7 +24,7 @@ import { Theme } from '@openmsupply-client/common/src/styles/theme';
 const useStyles = makeStyles((theme: Theme) => ({
   toolbarIcon: {
     display: 'flex',
-    height: 120,
+    height: 90,
     justifyContent: 'center',
     alignItems: 'center',
     padding: '0 8px',
@@ -162,6 +163,12 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
   const classes = useStyles();
   const { drawer } = props;
 
+  const toggleDrawer = () => {
+    console.info('*** click ***', drawer.open, props.open);
+    if (!!drawer.open) drawer.closeDrawer();
+    else drawer.openDrawer();
+  };
+
   return (
     <Drawer
       variant="permanent"
@@ -174,12 +181,14 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
       open={props.open}
     >
       <div className={classes.toolbarIcon}>
-        <MSupplyGuy
-          onClick={props.drawer.closeDrawer}
-          classes={{
-            root: drawer.open ? classes.mSupplyGuy : classes.mSupplyGuySmall,
-          }}
-        />
+        <IconButton onClick={toggleDrawer}>
+          <MSupplyGuy
+            onClick={toggleDrawer}
+            classes={{
+              root: drawer.open ? classes.mSupplyGuy : classes.mSupplyGuySmall,
+            }}
+          />
+        </IconButton>
       </div>
       <Menu classes={classes} />
     </Drawer>
