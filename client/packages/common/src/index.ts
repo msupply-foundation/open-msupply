@@ -5,6 +5,7 @@ export * from './components';
 export * from './hooks';
 export * from './store';
 export * from 'react-query';
+export * from './styles';
 
 export { utils };
 export { request, gql };
