@@ -107,27 +107,27 @@ const columns = [
   },
 ];
 
-const Transactions = () => {
+const Transactions: FC = () => {
   const { data, isLoading } = useQuery(['transaction', 'list'], listQuery, {
     enabled: true,
   });
   const navigate = useNavigate();
 
-  return (
-    !isLoading && (
-      <div style={{ minWidth: '100%' }}>
-        <DataGrid
-          rows={data}
-          columns={columns}
-          hideFooterPagination
-          hideFooterRowCount
-          hideFooterSelectedRowCount
-          onRowClick={params => {
-            navigate(`/transactions/${params.id}`);
-          }}
-        />
-      </div>
-    )
+  return isLoading ? null : (
+    <div style={{ marginTop: 70, minWidth: '100%' }}>
+      <DataGrid
+        rows={data}
+        columns={columns}
+        hideFooterPagination
+        hideFooterRowCount
+        checkboxSelection
+        onSelectionModelChange={model => console.log(model)}
+        hideFooterSelectedRowCount
+        onRowClick={params => {
+          navigate(`/transactions/${params.id}`);
+        }}
+      />
+    </div>
   );
 };
 
