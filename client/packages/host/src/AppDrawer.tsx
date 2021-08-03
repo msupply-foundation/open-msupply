@@ -79,7 +79,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     [theme.breakpoints.up('sm')]: {
       width: theme.spacing(9),
     },
-    '& li > a': { borderRadius: 20, height: 40, padding: 10, width: 40 },
+    '& li > a': { borderRadius: 20, height: 32, padding: 10, width: 40 },
     '& li > a > div': { display: 'none' },
     '& ul > hr': { display: 'none' },
   },
