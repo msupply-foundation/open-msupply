@@ -33,25 +33,15 @@ const useStyles = makeStyles((theme: Theme) => ({
   drawerMenuItem: {
     height: 32,
     margin: '20px 0',
-    padding: '4px 8px',
-    width: 168,
-    '& > svg': {
-      height: 20,
-      marginRight: 8,
-      width: 20,
-    },
+    '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
-      backgroundColor: '#fff',
-      borderRadius: 16,
-      boxShadow:
-        '0 8px 16px 0 rgb(96 97 112 / 16%), 0 2px 4px 0 rgb(40 41 61 / 4%)',
+      backgroundColor: theme.palette.background?.white,
+      boxShadow: theme.shadows[8],
     },
   },
   drawerMenuItemSelected: {
-    backgroundColor: '#fff!important',
-    borderRadius: 16,
-    boxShadow:
-      '0 8px 16px 0 rgb(96 97 112 / 16%), 0 2px 4px 0 rgb(40 41 61 / 4%)',
+    backgroundColor: `${theme.palette.background?.white}!important`,
+    boxShadow: theme.shadows[4],
   },
   drawerPaper: {
     backgroundColor: theme.palette.background?.drawer,
@@ -63,7 +53,9 @@ const useStyles = makeStyles((theme: Theme) => ({
       duration: theme.transitions.duration.enteringScreen,
     }),
     borderRadius: 8,
-    boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.32), 0 0 2px 0 rgba(0, 0, 0, 0.04)',
+    boxShadow: theme.shadows[7],
+    '& a': { borderRadius: 16, padding: '4px 8px', width: 168 },
+    '& a > div': { marginLeft: 8 },
   },
   drawerPaperClose: {
     overflowX: 'hidden',
@@ -75,6 +67,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     [theme.breakpoints.up('sm')]: {
       width: theme.spacing(9),
     },
+    '& a': { borderRadius: 20, height: 40, padding: 10, width: 40 },
+    '& a > div': { display: 'none' },
   },
   mSupplyGuy: { height: 60, width: 45 },
   mSupplyGuySmall: { height: 40, width: 30 },
@@ -102,17 +96,15 @@ const ListItemLink: React.FC<ListItemLinkProps> = props => {
   );
 
   return (
-    <li>
-      <ListItem
-        selected={!!selected}
-        button
-        component={CustomLink}
-        className={className}
-      >
-        {props.icon}
-        <ListItemText primary={props.text} />
-      </ListItem>
-    </li>
+    <ListItem
+      selected={!!selected}
+      button
+      component={CustomLink}
+      className={className}
+    >
+      {props.icon}
+      <ListItemText primary={props.text} />
+    </ListItem>
   );
 };
 
