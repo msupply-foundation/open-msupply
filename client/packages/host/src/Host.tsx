@@ -1,10 +1,12 @@
 import React, { FC } from 'react';
 import {
-  QueryClient,
-  QueryClientProvider,
-  ReactQueryDevtools,
   Box,
   ReduxProvider,
+  ThemeProvider,
+  Typography,
+  QueryClient,
+  ReactQueryDevtools,
+  QueryClientProvider,
 } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
@@ -36,38 +38,71 @@ const useDrawer = () => {
   };
 };
 
+const Heading: FC = props => (
+  <Typography style={{ margin: '100px 50px' }}>[ {props.children} ]</Typography>
+);
 const Host: FC = () => {
   const drawer = useDrawer();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ReduxProvider>
+    <ReduxProvider>
+      <QueryClientProvider client={queryClient}>
         <ServiceProvider>
-          <BrowserRouter>
-            <Viewport>
-              <Box display="flex" flex={1}>
-                <AppBar drawer={drawer} />
-                <AppDrawer drawer={drawer} />
-                <React.Suspense fallback={'Loading'}>
-                  <Routes>
-                    <Route path="dashboard/*" element={<DashboardService />} />
-                    <Route
-                      path="transactions/*"
-                      element={<TransactionService />}
-                    />
-                    <Route
-                      path="*"
-                      element={<Navigate to="/dashboard" replace />}
-                    />
-                  </Routes>
-                </React.Suspense>
-              </Box>
-            </Viewport>
-          </BrowserRouter>
+          <ThemeProvider>
+            <BrowserRouter>
+              <Viewport>
+                <Box display="flex" flex={1}>
+                  <AppBar drawer={drawer} />
+                  <AppDrawer drawer={drawer} />
+                  <React.Suspense fallback={'Loading'}>
+                    <Routes>
+                      <Route
+                        path="dashboard/*"
+                        element={<DashboardService />}
+                      />
+                      <Route
+                        path="customers/*"
+                        element={<Heading>customers</Heading>}
+                      />
+                      <Route
+                        path="suppliers/*"
+                        element={<Heading>suppliers</Heading>}
+                      />
+                      <Route
+                        path="stock/*"
+                        element={<Heading>stock</Heading>}
+                      />
+                      <Route
+                        path="tools/*"
+                        element={<Heading>tools</Heading>}
+                      />
+                      <Route
+                        path="reports/*"
+                        element={<Heading>reports</Heading>}
+                      />
+                      <Route
+                        path="messages/*"
+                        element={<Heading>messages</Heading>}
+                      />
+                      <Route
+                        path="transactions/*"
+                        element={<TransactionService />}
+                      />
+
+                      <Route
+                        path="*"
+                        element={<Navigate to="/dashboard" replace />}
+                      />
+                    </Routes>
+                  </React.Suspense>
+                </Box>
+              </Viewport>
+            </BrowserRouter>
+          </ThemeProvider>
         </ServiceProvider>
-      </ReduxProvider>
-      <ReactQueryDevtools initialIsOpen />
-    </QueryClientProvider>
+        <ReactQueryDevtools initialIsOpen />
+      </QueryClientProvider>
+    </ReduxProvider>
   );
 };
 
