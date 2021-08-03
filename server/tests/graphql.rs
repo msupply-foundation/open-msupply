@@ -1,39 +1,47 @@
 #![allow(where_clauses_object_safety)]
 
-mod mocks;
+use remote_server::database::{
+    mock,
+    repository::RequisitionRepository,
+    schema::{DatabaseRow, RequisitionRow},
+};
 
-use remote_server::database;
-use remote_server::server;
+use remote_server::server::{
+    data::{RepositoryMap, RepositoryRegistry},
+    service::graphql as graphql_service,
+};
+
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 #[cfg(not(feature = "mock"))]
-compile_error!("Please run tests with --features=mock");
+compile_error!("Tests must be run with --features=mock");
 
 #[cfg(test)]
 mod graphql {
-    use super::database;
-    use super::mocks;
-    use super::server;
-
-    use std::collections::HashMap;
-    use std::sync::{Arc, Mutex};
+    use super::{
+        graphql_service, mock, Arc, DatabaseRow, HashMap, Mutex, RepositoryMap, RepositoryRegistry,
+        RequisitionRepository, RequisitionRow,
+    };
 
     #[actix_rt::test]
     async fn get_requisition_by_id_is_success() {
-        let mut requisition_mock_data: HashMap<String, database::schema::RequisitionRow> =
-            HashMap::new();
+        let mut mock_data: HashMap<String, DatabaseRow> = HashMap::new();
 
-        requisition_mock_data.extend(mocks::get_request_requisition_a_to_b());
+        let mock_requisitions: Vec<RequisitionRow> = mock::mock_requisitions();
+        for requisition in mock_requisitions {
+            mock_data.insert(
+                requisition.id.to_string(),
+                DatabaseRow::Requisition(requisition.clone()),
+            );
+        }
 
-        let requisition_repository_mock_data: Arc<
-            Mutex<HashMap<String, database::schema::RequisitionRow>>,
-        > = Arc::new(Mutex::new(requisition_mock_data));
+        let mut repositories: RepositoryMap = RepositoryMap::new();
+        let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
 
-        let mut repositories = anymap::Map::new();
-        repositories.insert(database::repository::RequisitionRepository::new(
-            requisition_repository_mock_data,
-        ));
+        repositories.insert(RequisitionRepository::new(Arc::clone(&mock_data)));
 
-        let registry = server::data::RepositoryRegistry {
+        let registry = RepositoryRegistry {
             repositories,
             sync_sender: Arc::new(Mutex::new(tokio::sync::mpsc::channel(1).0)),
         };
@@ -42,10 +50,11 @@ mod graphql {
         let mut app = actix_web::test::init_service(
             actix_web::App::new()
                 .data(registry.clone())
-                .configure(server::service::graphql::config(registry)),
+                .configure(graphql_service::config(registry)),
         )
         .await;
 
+        // TODO: parameterise gql test payloads and expected results.
         let payload = r#"{"query":"{requisition(id:\"requisition_a\"){id}}"}"#.as_bytes();
 
         let req = actix_web::test::TestRequest::post()
