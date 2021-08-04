@@ -5,8 +5,8 @@ import React, { FC } from 'react';
 // this package as a remote in their webpack config and imported through:
 // React.lazy(() => import("template/service"))
 
-const Service: FC = () => {
-  return <span>This is a remote service</span>;
+const CustomerContainer: FC = () => {
+  return <span>This is the customer service!</span>;
 };
 
-export default Service;
+export default CustomerContainer;

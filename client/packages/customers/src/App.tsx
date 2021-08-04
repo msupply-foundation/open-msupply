@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { LoadingApp } from '@openmsupply-client/common';
-import TransactionService from './Service';
+import TransactionService from './CustomerContainer';
 
 const App: FC = () => (
   <React.Suspense fallback={<LoadingApp />}>
