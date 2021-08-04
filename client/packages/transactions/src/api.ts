@@ -8,9 +8,9 @@ import {
   QueryKey,
 } from '@openmsupply-client/common';
 
-export const query = gql`
-  {
-    transaction(id: "1") {
+export const getQuery = (): string => gql`
+  query transaction($id: String!) {
+    transaction(id: $id) {
       id
       date
       customer
@@ -86,7 +86,7 @@ export const useDraftDocument = <DocumentType>(
   const { mutateAsync } = useMutation(mutateFn, {
     // TODO: onError to rollback
     onSuccess: () => {
-      queryClient.invalidateQueries(key);
+      queryClient.invalidateQueries('transaction');
     },
   });
 
