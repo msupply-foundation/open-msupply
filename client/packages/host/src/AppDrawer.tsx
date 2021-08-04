@@ -18,11 +18,13 @@ import {
   Suppliers,
   Tools,
   makeStyles,
+  ReceiptIcon,
+  ReactRouterLink,
+  useMatch,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
 
-import { Link, useMatch } from 'react-router-dom';
 import { Theme } from '@openmsupply-client/common/src/styles/theme';
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -94,11 +96,12 @@ interface ListItemLinkProps {
 }
 
 const ListItemLink: React.FC<ListItemLinkProps> = props => {
-  const selected = useMatch(props.to);
+  const selected = useMatch({ path: props.to + '/*' });
+
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
-        <Link ref={ref} to={props.to} {...linkProps} />
+        <ReactRouterLink ref={ref} to={props.to} {...linkProps} />
       )),
     [props.to]
   );
@@ -170,6 +173,12 @@ const Menu: React.FC<MenuProps> = ({ classes }) => (
         text="Messages"
         classes={classes}
       />
+      <ListItemLink
+        to="transactions"
+        icon={<ReceiptIcon />}
+        text="Transactions"
+        classes={classes}
+      />
     </List>
     <List>
       <Divider
@@ -207,7 +216,6 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
   const { drawer } = props;
 
   const toggleDrawer = () => {
-    console.info('*** click ***', drawer.open, props.open);
     if (!!drawer.open) drawer.closeDrawer();
     else drawer.openDrawer();
   };

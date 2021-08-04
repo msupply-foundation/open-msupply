@@ -28,6 +28,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "graphql": "^15.5.1",
+    "graphql-request": "^3.5.0",
     "history": "^5.0.0",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
