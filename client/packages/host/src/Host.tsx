@@ -5,9 +5,13 @@ import {
   ThemeProvider,
   Typography,
   QueryClient,
+  ReactQueryDevtools,
   QueryClientProvider,
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
 } from '@openmsupply-client/common';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
@@ -99,6 +103,7 @@ const Host: FC = () => {
             </BrowserRouter>
           </ThemeProvider>
         </ServiceProvider>
+        <ReactQueryDevtools initialIsOpen />
       </QueryClientProvider>
     </ReduxProvider>
   );
