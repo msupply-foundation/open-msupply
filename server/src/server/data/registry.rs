@@ -1,3 +1,4 @@
+use crate::util::sync::SyncSenderActor;
 use anymap::{any::CloneAny, Map};
 use std::sync::{Arc, Mutex};
 
@@ -6,7 +7,7 @@ pub type AnyRepository = dyn CloneAny + Send + Sync;
 
 #[derive(Clone)]
 pub struct RepositoryRegistry {
-    pub sync_sender: Arc<Mutex<tokio::sync::mpsc::Sender<()>>>,
+    pub sync_sender: Arc<Mutex<SyncSenderActor>>,
     pub repositories: RepositoryMap,
 }
 
