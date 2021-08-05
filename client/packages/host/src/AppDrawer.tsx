@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   drawerMenuItem: {
     height: 32,
-    margin: '20px 0',
+    margin: '16px 0',
     '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
       backgroundColor: theme.palette.background?.white,
@@ -67,6 +67,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     }),
     borderRadius: 8,
     boxShadow: theme.shadows[7],
+    '& li': { height: 45, display: 'flex', alignItems: 'center' },
     '& li > a': { borderRadius: 16, padding: '4px 8px', width: 168 },
     '& li > a > div': { marginLeft: 8 },
   },
@@ -184,7 +185,7 @@ const Menu: React.FC<MenuProps> = ({ classes }) => (
       <Divider
         style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
       />
-      <ListItemLink to="sync" icon={<Radio />} text="Stock" classes={classes} />
+      <ListItemLink to="sync" icon={<Radio />} text="Sync" classes={classes} />
       <ListItemLink
         to="admin"
         icon={<Settings />}
