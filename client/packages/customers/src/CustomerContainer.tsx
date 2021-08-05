@@ -1,19 +1,12 @@
 import React, { FC } from 'react';
-import { Routes, Route } from '@openmsupply-client/common';
 
-const TransactionService = React.lazy(
-  () => import('transactions/TransactionService')
-);
+// This is a remote service which is exposed by this package.
+// This component can be imported by another remote who declares
+// this package as a remote in their webpack config and imported through:
+// React.lazy(() => import("template/service"))
 
 const CustomerContainer: FC = () => {
-  return (
-    <Routes>
-      <Route
-        path="customers/customer-invoice"
-        element={<TransactionService />}
-      />
-    </Routes>
-  );
+  return <span>This is the customer service!</span>;
 };
 
 export default CustomerContainer;
