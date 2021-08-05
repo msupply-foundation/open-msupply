@@ -21,8 +21,9 @@ import {
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
+import { AppTheme } from '@openmsupply-client/common/src/styles/theme';
 
-const useStyles = makeStyles((theme: any) => ({
+const useStyles = makeStyles((theme: AppTheme) => ({
   toolbarIcon: {
     display: 'flex',
     height: 90,

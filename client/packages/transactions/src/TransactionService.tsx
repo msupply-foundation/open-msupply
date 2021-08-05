@@ -1,14 +1,8 @@
 import React, { FC } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
-import {
-  Routes,
-  Route,
-  useQuery,
-  DataGrid,
-  useNavigate,
-  useParams,
-} from '@openmsupply-client/common';
+import { useQuery, DataGrid } from '@openmsupply-client/common';
+import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 
 interface Transaction {
   customer: string;
