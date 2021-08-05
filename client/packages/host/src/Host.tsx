@@ -20,6 +20,9 @@ import { ServiceProvider } from './Service';
 
 const queryClient = new QueryClient();
 
+const CustomerContainer = React.lazy(
+  () => import('customers/CustomerContainer')
+);
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
 const TransactionService = React.lazy(
   () => import('transactions/TransactionService')
@@ -65,7 +68,7 @@ const Host: FC = () => {
                       />
                       <Route
                         path="customers/*"
-                        element={<Heading>customers</Heading>}
+                        element={<CustomerContainer />}
                       />
                       <Route
                         path="suppliers/*"
