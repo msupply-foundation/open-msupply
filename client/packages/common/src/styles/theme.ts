@@ -1,9 +1,10 @@
 import { MixinsOptions as MuiMixinsOptions } from '@material-ui/core/styles/createMixins';
 import {
+  createTheme,
   Theme as MuiTheme,
   ThemeOptions as MuiThemeOptions,
-} from '@material-ui/core/styles';
-import createTheme from '@material-ui/core/styles/createTheme';
+} from '@material-ui/core';
+
 import {
   PaletteOptions as MuiPaletteOptions,
   TypeBackground as MuiTypeBackground,
@@ -45,7 +46,7 @@ export type ThemeOptions = Modify<
   }
 >;
 
-export type Theme = Modify<
+export type AppTheme = Modify<
   MuiTheme,
   {
     mixins: MixinsOptions;
