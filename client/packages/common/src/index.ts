@@ -3,7 +3,7 @@ import * as utils from './utils';
 
 import { Link as ReactRouterLink } from 'react-router-dom';
 
-export * from './components';
+export * from './ui';
 export * from './hooks';
 export * from './store';
 export * from 'react-query';
