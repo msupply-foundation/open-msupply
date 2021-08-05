@@ -25,11 +25,13 @@
   "scripts": {
     "start": "webpack-cli serve",
     "build": "webpack --mode production",
-    "serve": "serve dist -p 3006",
+    "serve": "serve dist -p 3007",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "history": "^5.0.0",
     "react": "^16.13.0",
-    "react-dom": "^16.13.0"
+    "react-dom": "^16.13.0",
+    "react-router-dom": "^6.0.0-beta.0"
   }
 }
