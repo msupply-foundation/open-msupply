@@ -2,6 +2,7 @@ import React from 'react';
 import { makeStyles, Toolbar, Typography } from '@openmsupply-client/common';
 import clsx from 'clsx';
 import { useServiceContext } from './Service';
+import { LanguageMenu } from './LanguageMenu';
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -54,6 +55,7 @@ const AppBar: React.FC<AppBarProps> = props => {
         >
           {serviceContext.title}
         </Typography>
+        <LanguageMenu />
       </Toolbar>
     </div>
   );

@@ -11,3 +11,4 @@ export { Settings } from './Settings';
 export { Stock } from './Stock';
 export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
+export { Translate as TranslateIcon } from '@material-ui/icons';

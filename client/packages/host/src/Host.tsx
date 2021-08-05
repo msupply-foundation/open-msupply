@@ -1,4 +1,6 @@
 import React, { FC } from 'react';
+import { IntlProvider } from 'react-intl';
+
 import {
   Box,
   ReduxProvider,
@@ -16,7 +18,7 @@ import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
 import { useLocalStorageSync } from './useLocalStorageSync';
-import { ServiceProvider } from './Service';
+import { ServiceProvider, useServiceContext } from './Service';
 
 const queryClient = new QueryClient();
 
@@ -46,64 +48,67 @@ const Heading: FC = props => (
 );
 const Host: FC = () => {
   const drawer = useDrawer();
+  const serviceContext = useServiceContext();
 
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
-        <ServiceProvider>
-          <ThemeProvider>
-            <BrowserRouter>
-              <Viewport>
-                <Box display="flex" flex={1}>
-                  <AppBar drawer={drawer} />
-                  <AppDrawer drawer={drawer} />
-                  <React.Suspense fallback={'Loading'}>
-                    <Routes>
-                      <Route
-                        path="dashboard/*"
-                        element={<DashboardService />}
-                      />
-                      <Route
-                        path="customers/*"
-                        element={<Heading>customers</Heading>}
-                      />
-                      <Route
-                        path="suppliers/*"
-                        element={<Heading>suppliers</Heading>}
-                      />
-                      <Route
-                        path="stock/*"
-                        element={<Heading>stock</Heading>}
-                      />
-                      <Route
-                        path="tools/*"
-                        element={<Heading>tools</Heading>}
-                      />
-                      <Route
-                        path="reports/*"
-                        element={<Heading>reports</Heading>}
-                      />
-                      <Route
-                        path="messages/*"
-                        element={<Heading>messages</Heading>}
-                      />
-                      <Route
-                        path="transactions/*"
-                        element={<TransactionService />}
-                      />
+        <IntlProvider locale={serviceContext.locale} defaultLocale="en">
+          <ServiceProvider>
+            <ThemeProvider>
+              <BrowserRouter>
+                <Viewport>
+                  <Box display="flex" flex={1}>
+                    <AppBar drawer={drawer} />
+                    <AppDrawer drawer={drawer} />
+                    <React.Suspense fallback={'Loading'}>
+                      <Routes>
+                        <Route
+                          path="dashboard/*"
+                          element={<DashboardService />}
+                        />
+                        <Route
+                          path="customers/*"
+                          element={<Heading>customers</Heading>}
+                        />
+                        <Route
+                          path="suppliers/*"
+                          element={<Heading>suppliers</Heading>}
+                        />
+                        <Route
+                          path="stock/*"
+                          element={<Heading>stock</Heading>}
+                        />
+                        <Route
+                          path="tools/*"
+                          element={<Heading>tools</Heading>}
+                        />
+                        <Route
+                          path="reports/*"
+                          element={<Heading>reports</Heading>}
+                        />
+                        <Route
+                          path="messages/*"
+                          element={<Heading>messages</Heading>}
+                        />
+                        <Route
+                          path="transactions/*"
+                          element={<TransactionService />}
+                        />
 
-                      <Route
-                        path="*"
-                        element={<Navigate to="/dashboard" replace />}
-                      />
-                    </Routes>
-                  </React.Suspense>
-                </Box>
-              </Viewport>
-            </BrowserRouter>
-          </ThemeProvider>
-        </ServiceProvider>
-        <ReactQueryDevtools initialIsOpen />
+                        <Route
+                          path="*"
+                          element={<Navigate to="/dashboard" replace />}
+                        />
+                      </Routes>
+                    </React.Suspense>
+                  </Box>
+                </Viewport>
+              </BrowserRouter>
+            </ThemeProvider>
+          </ServiceProvider>
+          <ReactQueryDevtools initialIsOpen />
+        </IntlProvider>
       </QueryClientProvider>
     </ReduxProvider>
   );

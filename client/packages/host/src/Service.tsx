@@ -1,20 +1,26 @@
 import * as React from 'react';
 
 export interface Service {
+  locale: string;
   title: string;
 }
 export interface ServiceContext {
+  locale: string;
   setService: (service: Service) => void;
   title: string;
 }
 
 export const Context = React.createContext<ServiceContext>({
+  locale: 'en',
   setService: () => {},
   title: '',
 });
 
 const useService = () => {
-  const [service, setService] = React.useState<Service>({ title: '' });
+  const [service, setService] = React.useState<Service>({
+    locale: 'en',
+    title: '',
+  });
 
   return {
     ...service,

@@ -87,7 +87,7 @@ interface FederatedStore
   reducerManager?: ReducerManager;
 }
 
-export const makeStore = () => {
+export const makeStore = (): FederatedStore => {
   const reducerManager = createReducerManager(staticReducers as Reducers);
 
   // Create a store with the root reducer function being the one exposed by the manager.
