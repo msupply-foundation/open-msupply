@@ -2,16 +2,13 @@ import React, { FC } from 'react';
 import {
   Box,
   ReduxProvider,
-  ThemeProvider,
+  AppThemeProvider,
   Typography,
   QueryClient,
   ReactQueryDevtools,
   QueryClientProvider,
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
 } from '@openmsupply-client/common';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
@@ -54,7 +51,7 @@ const Host: FC = () => {
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
         <ServiceProvider>
-          <ThemeProvider>
+          <AppThemeProvider>
             <BrowserRouter>
               <Viewport>
                 <Box display="flex" flex={1}>
@@ -104,7 +101,7 @@ const Host: FC = () => {
                 </Box>
               </Viewport>
             </BrowserRouter>
-          </ThemeProvider>
+          </AppThemeProvider>
         </ServiceProvider>
         <ReactQueryDevtools initialIsOpen />
       </QueryClientProvider>
