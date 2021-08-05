@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Customers,
   Dashboard,
   Divider,
   Drawer,
@@ -22,6 +21,7 @@ import {
   ReactRouterLink,
   useMatch,
 } from '@openmsupply-client/common';
+import CustomersNav from 'customers/Nav';
 
 import clsx from 'clsx';
 
@@ -128,21 +128,18 @@ const ListItemLink: React.FC<ListItemLinkProps> = props => {
 interface MenuProps {
   classes: Record<string, string>;
 }
+
 const Menu: React.FC<MenuProps> = ({ classes }) => (
   <div className={classes['drawerMenu']}>
     <List>
+      <CustomersNav />
       <ListItemLink
         to="dashboard"
         icon={<Dashboard />}
         text="Dashboard"
         classes={classes}
       />
-      <ListItemLink
-        to="customers"
-        icon={<Customers />}
-        text="Customers"
-        classes={classes}
-      />
+
       <ListItemLink
         to="suppliers"
         icon={<Suppliers />}
@@ -234,7 +231,6 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
       <div className={classes.toolbarIcon}>
         <IconButton onClick={toggleDrawer}>
           <MSupplyGuy
-            onClick={toggleDrawer}
             classes={{
               root: drawer.open ? classes.mSupplyGuy : classes.mSupplyGuySmall,
             }}

@@ -13,7 +13,3 @@ declare module 'customers/CustomerContainer' {
 declare module 'customers/CustomerContainer' {
   export default function (): JSX.Element;
 }
-
-declare module 'customers/Nav' {
-  export default function (): JSX.Element;
-}
