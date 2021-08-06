@@ -3,7 +3,7 @@ import {
   createTheme,
   Theme as MuiTheme,
   ThemeOptions as MuiThemeOptions,
-} from '@material-ui/core';
+} from '@material-ui/core/styles';
 
 import {
   PaletteOptions as MuiPaletteOptions,
