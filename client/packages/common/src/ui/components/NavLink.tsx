@@ -4,9 +4,7 @@ import clsx from 'clsx';
 import { ListItem, ListItemText } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { AppTheme } from '../../styles/theme';
-
-const ReactRouterLink = Link;
+import { AppTheme } from '../../styles';
 
 const useStyles = makeStyles((theme: AppTheme) => ({
   drawerMenuItem: {
@@ -38,7 +36,7 @@ export const AppNavLink: FC<ListItemLinkProps> = props => {
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
-        <ReactRouterLink ref={ref} to={props.to} {...linkProps} />
+        <Link ref={ref} to={props.to} {...linkProps} />
       )),
     [props.to]
   );
