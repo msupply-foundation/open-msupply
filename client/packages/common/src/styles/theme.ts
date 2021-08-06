@@ -46,7 +46,7 @@ export type ThemeOptions = Modify<
   }
 >;
 
-export type AppTheme = Modify<
+export type ApplicationTheme = Modify<
   MuiTheme,
   {
     mixins: MixinsOptions;
