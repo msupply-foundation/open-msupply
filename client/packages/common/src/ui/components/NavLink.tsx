@@ -8,7 +8,7 @@ import { useMatch, Link } from 'react-router-dom';
 const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
-    margin: '20px 0',
+    marginTop: '20px',
     '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
       backgroundColor: theme.palette.background.white,
@@ -22,7 +22,6 @@ const useStyles = makeStyles(theme => ({
 }));
 
 interface ListItemLinkProps {
-  classes: Record<string, string>;
   to: string;
   icon: JSX.Element;
   text?: string;
@@ -30,7 +29,7 @@ interface ListItemLinkProps {
 
 export const AppNavLink: FC<ListItemLinkProps> = props => {
   const classes = useStyles();
-  const selected = useMatch({ path: props.to + '/*' });
+  const selected = useMatch({ path: props.to });
 
   const CustomLink = React.useMemo(
     () =>
