@@ -7,12 +7,13 @@ import {
   QueryClient,
   ReactQueryDevtools,
   QueryClientProvider,
+  useDrawer,
 } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
-import { useLocalStorageSync } from './useLocalStorageSync';
+
 import { ServiceProvider } from './Service';
 
 const queryClient = new QueryClient();
@@ -21,25 +22,6 @@ const CustomerContainer = React.lazy(
   () => import('customers/CustomerContainer')
 );
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
-const TransactionService = React.lazy(
-  () => import('transactions/TransactionService')
-);
-
-const useDrawer = () => {
-  const { value, setItem } = useLocalStorageSync<boolean>(
-    '@openmsupply-client/appdrawer/open'
-  );
-
-  return {
-    open: value,
-    closeDrawer() {
-      setItem(false);
-    },
-    openDrawer() {
-      setItem(true);
-    },
-  };
-};
 
 const Heading: FC = props => (
   <Typography style={{ margin: '100px 50px' }}>[ {props.children} ]</Typography>
@@ -86,10 +68,6 @@ const Host: FC = () => {
                       <Route
                         path="messages/*"
                         element={<Heading>messages</Heading>}
-                      />
-                      <Route
-                        path="transactions/*"
-                        element={<TransactionService />}
                       />
 
                       <Route

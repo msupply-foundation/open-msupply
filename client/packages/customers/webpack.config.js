@@ -42,11 +42,12 @@ module.exports = {
       // from other remote packages to refer to this package.
       name: 'customers',
       filename: 'remoteEntry.js',
+      remotes: {
+        transactions: 'transactions@http://localhost:3005/remoteEntry.js',
+      },
       exposes: {
-        // ${UPDATE} : Expose all of this packages components here.
-        // They can be imported from other remotes through the syntax
-        // React.lazy(() => import('${name of this service}/${key of an exposed component}'))
         './CustomerContainer': './src/CustomerContainer',
+        './Nav': './src/Nav',
       },
       // Shared dependencies can be updated, but these defaults should suffice.
       // These defaults will share to all other remotes, all of the dependencies in this packages

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Customers,
   Dashboard,
   Divider,
   Drawer,
@@ -16,11 +15,11 @@ import {
   Suppliers,
   Tools,
   makeStyles,
-  ReceiptIcon,
   AppNavLink,
 } from '@openmsupply-client/common';
-
 import clsx from 'clsx';
+
+const CustomersNav = React.lazy(() => import('customers/Nav'));
 
 const useStyles = makeStyles(theme => ({
   toolbarIcon: {
@@ -89,62 +88,24 @@ interface MenuProps {
 const Menu: React.FC<MenuProps> = ({ classes }) => (
   <div className={classes['drawerMenu']}>
     <List>
-      <AppNavLink
-        to="dashboard"
-        icon={<Dashboard />}
-        text="Dashboard"
-        classes={classes}
-      />
-      <AppNavLink
-        to="customers"
-        icon={<Customers />}
-        text="Customers"
-        classes={classes}
-      />
-      <AppNavLink
-        to="suppliers"
-        icon={<Suppliers />}
-        text="Suppliers"
-        classes={classes}
-      />
-      <AppNavLink to="stock" icon={<Stock />} text="Stock" classes={classes} />
-      <AppNavLink to="tools" icon={<Tools />} text="Tools" classes={classes} />
-      <AppNavLink
-        to="reports"
-        icon={<Reports />}
-        text="Reports"
-        classes={classes}
-      />
-      <AppNavLink
-        to="messages"
-        icon={<Messages />}
-        text="Messages"
-        classes={classes}
-      />
-      <AppNavLink
-        to="transactions"
-        icon={<ReceiptIcon />}
-        text="Transactions"
-        classes={classes}
-      />
+      <React.Suspense fallback={null}>
+        <CustomersNav />
+      </React.Suspense>
+      <AppNavLink to="dashboard" icon={<Dashboard />} text="Dashboard" />
+
+      <AppNavLink to="suppliers" icon={<Suppliers />} text="Suppliers" />
+      <AppNavLink to="stock" icon={<Stock />} text="Stock" />
+      <AppNavLink to="tools" icon={<Tools />} text="Tools" />
+      <AppNavLink to="reports" icon={<Reports />} text="Reports" />
+      <AppNavLink to="messages" icon={<Messages />} text="Messages" />
     </List>
     <List>
       <Divider
         style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
       />
-      <AppNavLink to="sync" icon={<Radio />} text="Stock" classes={classes} />
-      <AppNavLink
-        to="admin"
-        icon={<Settings />}
-        text="Admin"
-        classes={classes}
-      />
-      <AppNavLink
-        to="logout"
-        icon={<Power />}
-        text="Logout"
-        classes={classes}
-      />
+      <AppNavLink to="sync" icon={<Radio />} text="Stock" />
+      <AppNavLink to="admin" icon={<Settings />} text="Admin" />
+      <AppNavLink to="logout" icon={<Power />} text="Logout" />
     </List>
   </div>
 );
