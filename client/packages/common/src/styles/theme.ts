@@ -17,7 +17,6 @@ declare module '@material-ui/core/styles/createPalette' {
 
 const themeOptions = {
   mixins: { icon: { medium: { height: 20, width: 20 } } },
-  status: { danger: 'a', X: ':)' },
   palette: {
     primary: { 500: '#e95c30' },
     background: {
