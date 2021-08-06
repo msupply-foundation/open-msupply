@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 
 import clsx from 'clsx';
-import { makeStyles, ListItem, ListItemText } from '@material-ui/core';
+import { ListItem, ListItemText } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { AppTheme } from '../../styles/theme';
 
