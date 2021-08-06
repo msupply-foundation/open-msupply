@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { IntlProvider } from 'react-intl';
+// import { FormattedDate } from 'react-intl'
 
 import {
   Box,
@@ -13,12 +13,16 @@ import {
   Routes,
   Route,
   Navigate,
+  IntlProvider,
+  useFormatMessage,
 } from '@openmsupply-client/common';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
 import { useLocalStorageSync } from './useLocalStorageSync';
-import { ServiceProvider, useServiceContext } from './Service';
+import { ServiceProvider } from './Service';
+
+import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 const queryClient = new QueryClient();
 
@@ -43,23 +47,37 @@ const useDrawer = () => {
   };
 };
 
-const Heading: FC = props => (
-  <Typography style={{ margin: '100px 50px' }}>[ {props.children} ]</Typography>
-);
+const Heading: FC<{ locale: string }> = props => {
+  const formatMessage = useFormatMessage();
+  return (
+    <div style={{ margin: '100px 50px' }}>
+      <span>
+        <Typography>Current locale: {props.locale}</Typography>
+        {formatMessage('app.welcome', { name: 'Doofus!' })}
+        {/* today is <FormattedDate value={date} year="numeric"
+          month="long"
+          day="numeric"
+          weekday="long" /> */}
+      </span>
+      <Typography >[ {props.children} ]</Typography>
+    </div>
+  );
+}
+
 const Host: FC = () => {
   const drawer = useDrawer();
-  const serviceContext = useServiceContext();
+  const [locale, setLocale] = React.useState<SupportedLocales>('fr')
 
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
-        <IntlProvider locale={serviceContext.locale} defaultLocale="en">
+        <IntlProvider locale={locale}>
           <ServiceProvider>
             <ThemeProvider>
               <BrowserRouter>
                 <Viewport>
                   <Box display="flex" flex={1}>
-                    <AppBar drawer={drawer} />
+                    <AppBar drawer={drawer} setLocale={setLocale} locale={locale} />
                     <AppDrawer drawer={drawer} />
                     <React.Suspense fallback={'Loading'}>
                       <Routes>
@@ -69,27 +87,27 @@ const Host: FC = () => {
                         />
                         <Route
                           path="customers/*"
-                          element={<Heading>customers</Heading>}
+                          element={<Heading locale={locale}>customers</Heading>}
                         />
                         <Route
                           path="suppliers/*"
-                          element={<Heading>suppliers</Heading>}
+                          element={<Heading locale={locale}>suppliers</Heading>}
                         />
                         <Route
                           path="stock/*"
-                          element={<Heading>stock</Heading>}
+                          element={<Heading locale={locale}>stock</Heading>}
                         />
                         <Route
                           path="tools/*"
-                          element={<Heading>tools</Heading>}
+                          element={<Heading locale={locale}>tools</Heading>}
                         />
                         <Route
                           path="reports/*"
-                          element={<Heading>reports</Heading>}
+                          element={<Heading locale={locale}>reports</Heading>}
                         />
                         <Route
                           path="messages/*"
-                          element={<Heading>messages</Heading>}
+                          element={<Heading locale={locale}>messages</Heading>}
                         />
                         <Route
                           path="transactions/*"

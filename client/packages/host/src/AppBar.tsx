@@ -3,6 +3,7 @@ import { makeStyles, Toolbar, Typography } from '@openmsupply-client/common';
 import clsx from 'clsx';
 import { useServiceContext } from './Service';
 import { LanguageMenu } from './LanguageMenu';
+import { SupportedLocales } from '../../common/src/intl/intlHelpers';
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -11,11 +12,12 @@ const useStyles = makeStyles(theme => ({
   appBar: {
     left: 72,
     position: 'absolute',
-    zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
+    width: 'calc(100% - 72px)',
+    zIndex: theme.zIndex.drawer + 1,
   },
   appBarShift: {
     marginLeft: 128,
@@ -35,6 +37,8 @@ interface Drawer {
 }
 interface AppBarProps {
   drawer: Drawer;
+  locale: SupportedLocales;
+  setLocale: (locale: SupportedLocales) => void;
 }
 
 const AppBar: React.FC<AppBarProps> = props => {
@@ -55,7 +59,7 @@ const AppBar: React.FC<AppBarProps> = props => {
         >
           {serviceContext.title}
         </Typography>
-        <LanguageMenu />
+        <LanguageMenu setLocale={props.setLocale} locale={props.locale} />
       </Toolbar>
     </div>
   );
