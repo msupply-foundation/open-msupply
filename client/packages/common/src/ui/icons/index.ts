@@ -5,6 +5,7 @@ export { Menu as MenuIcon } from './Menu';
 export { Receipt as ReceiptIcon } from '@material-ui/icons';
 export { Messages } from './Messages';
 export { Power } from './Power';
+export { Radio } from './Radio';
 export { Reports } from './Reports';
 export { Settings } from './Settings';
 export { Stock } from './Stock';
