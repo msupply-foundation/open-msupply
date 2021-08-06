@@ -1,13 +1,11 @@
 import * as React from 'react';
 
 export interface Service {
-  locale: string;
-  title: string;
+  locale?: string;
+  title?: string;
 }
-export interface ServiceContext {
-  locale: string;
+export interface ServiceContext extends Service {
   setService: (service: Service) => void;
-  title: string;
 }
 
 export const Context = React.createContext<ServiceContext>({
@@ -22,9 +20,13 @@ const useService = () => {
     title: '',
   });
 
+  const updateService = (newService: Service) => {
+    setService({...service, ...newService});
+  }
+
   return {
     ...service,
-    setService,
+    setService: updateService,
   };
 };
 

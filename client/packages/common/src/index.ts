@@ -5,6 +5,7 @@ import { Link as ReactRouterLink } from 'react-router-dom';
 
 export * from './components';
 export * from './hooks';
+export * from './intl';
 export * from './store';
 export * from 'react-query';
 export * from 'react-query/devtools';
