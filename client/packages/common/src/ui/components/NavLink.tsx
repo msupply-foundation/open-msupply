@@ -4,20 +4,19 @@ import clsx from 'clsx';
 import { ListItem, ListItemText } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { AppTheme } from '../../styles';
 
-const useStyles = makeStyles((theme: AppTheme) => ({
+const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
     margin: '20px 0',
     '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
-      backgroundColor: theme.palette.background?.white,
+      backgroundColor: theme.palette.background.white,
       boxShadow: theme.shadows[8],
     },
   },
   drawerMenuItemSelected: {
-    backgroundColor: `${theme.palette.background?.white}!important`,
+    backgroundColor: `${theme.palette.background.white}!important`,
     boxShadow: theme.shadows[4],
   },
 }));
