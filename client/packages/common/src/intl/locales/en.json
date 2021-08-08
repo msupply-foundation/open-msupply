@@ -1,11 +1,11 @@
 {
-    "app.Stock": "Stock",
     "app.admin": "Admin",
     "app.customers": "Customers",
     "app.dashboard": "Dashboard",
     "app.logout": "Logout",
     "app.messages": "Messages",
     "app.reports": "Reports",
+    "app.stock": "Stock",
     "app.suppliers": "Suppliers",
     "app.sync": "Sync",
     "app.tools": "Tools",
