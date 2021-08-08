@@ -12,6 +12,7 @@ export const IntlProvider: React.FC<Omit<React.ComponentProps<typeof ReactIntlPr
     const { locale } = props;
     const [messages, setMessages] = React.useState<LocaleMessages | null>(null)
     React.useEffect(() => {
+        // importMessages(locale as SupportedLocales).then(setMessages);
         const messages = importMessages(locale as SupportedLocales);
         setMessages(messages);
     }, [locale])

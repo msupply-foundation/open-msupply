@@ -20,7 +20,7 @@ import {
   makeStyles,
   ReceiptIcon,
   ReactRouterLink,
-  useMatch,
+  useFormatMessage, useMatch,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
@@ -98,7 +98,6 @@ interface ListItemLinkProps {
 
 const ListItemLink: React.FC<ListItemLinkProps> = props => {
   const selected = useMatch({ path: props.to + '/*' });
-
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
@@ -129,78 +128,81 @@ const ListItemLink: React.FC<ListItemLinkProps> = props => {
 interface MenuProps {
   classes: Record<string, string>;
 }
-const Menu: React.FC<MenuProps> = ({ classes }) => (
-  <div className={classes['drawerMenu']}>
-    <List>
-      <ListItemLink
-        to="dashboard"
-        icon={<Dashboard />}
-        text="Dashboard"
-        classes={classes}
-      />
-      <ListItemLink
-        to="customers"
-        icon={<Customers />}
-        text="Customers"
-        classes={classes}
-      />
-      <ListItemLink
-        to="suppliers"
-        icon={<Suppliers />}
-        text="Suppliers"
-        classes={classes}
-      />
-      <ListItemLink
-        to="stock"
-        icon={<Stock />}
-        text="Stock"
-        classes={classes}
-      />
-      <ListItemLink
-        to="tools"
-        icon={<Tools />}
-        text="Tools"
-        classes={classes}
-      />
-      <ListItemLink
-        to="reports"
-        icon={<Reports />}
-        text="Reports"
-        classes={classes}
-      />
-      <ListItemLink
-        to="messages"
-        icon={<Messages />}
-        text="Messages"
-        classes={classes}
-      />
-      <ListItemLink
-        to="transactions"
-        icon={<ReceiptIcon />}
-        text="Transactions"
-        classes={classes}
-      />
-    </List>
-    <List>
-      <Divider
-        style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
-      />
-      <ListItemLink to="sync" icon={<Radio />} text="Sync" classes={classes} />
-      <ListItemLink
-        to="admin"
-        icon={<Settings />}
-        text="Admin"
-        classes={classes}
-      />
-      <ListItemLink
-        to="logout"
-        icon={<Power />}
-        text="Logout"
-        classes={classes}
-      />
-    </List>
-  </div>
-);
+const Menu: React.FC<MenuProps> = ({ classes }) => {
+  const formatMessage = useFormatMessage();
+  return (
+    <div className={classes['drawerMenu']}>
+      <List>
+        <ListItemLink
+          to="dashboard"
+          icon={<Dashboard />}
+          text={formatMessage("app.dashboard")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="customers"
+          icon={<Customers />}
+          text={formatMessage("app.customers")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="suppliers"
+          icon={<Suppliers />}
+          text={formatMessage("app.suppliers")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="stock"
+          icon={<Stock />}
+          text={formatMessage("app.stock")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="tools"
+          icon={<Tools />}
+          text={formatMessage("app.tools")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="reports"
+          icon={<Reports />}
+          text={formatMessage("app.reports")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="messages"
+          icon={<Messages />}
+          text={formatMessage("app.messages")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="transactions"
+          icon={<ReceiptIcon />}
+          text={formatMessage("app.transactions")}
+          classes={classes}
+        />
+      </List>
+      <List>
+        <Divider
+          style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
+        />
+        <ListItemLink to="sync" icon={<Radio />} text={formatMessage("app.sync")} classes={classes} />
+        <ListItemLink
+          to="admin"
+          icon={<Settings />}
+          text={formatMessage("app.admin")}
+          classes={classes}
+        />
+        <ListItemLink
+          to="logout"
+          icon={<Power />}
+          text={formatMessage("app.logout")}
+          classes={classes}
+        />
+      </List>
+    </div>
+  );
+}
 
 interface Drawer {
   open: boolean | null;
