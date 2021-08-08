@@ -66,7 +66,7 @@ const Heading: FC<{ locale: string }> = props => {
 
 const Host: FC = () => {
   const drawer = useDrawer();
-  const [locale, setLocale] = React.useState<SupportedLocales>('fr')
+  const [locale, setLocale] = React.useState<SupportedLocales>('en')
 
   return (
     <ReduxProvider>
