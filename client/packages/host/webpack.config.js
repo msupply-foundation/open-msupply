@@ -4,7 +4,8 @@ const ModuleFederationPlugin =
   require('webpack').container.ModuleFederationPlugin;
 const path = require('path');
 const deps = require('./package.json').dependencies;
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
   entry: './src/index',
@@ -44,7 +45,7 @@ module.exports = {
     ],
   },
   plugins: [
-    // new BundleAnalyzerPlugin(),
+    new BundleAnalyzerPlugin(),
     new ModuleFederationPlugin({
       name: 'host',
       filename: 'remoteEntry.js',

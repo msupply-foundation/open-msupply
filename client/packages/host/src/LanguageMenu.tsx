@@ -8,12 +8,14 @@ import {
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 // import { useServiceContext } from './Service';
-interface LanguageMenuProps { setLocale: (locale: SupportedLocales) => void, locale: SupportedLocales };
+interface LanguageMenuProps {
+  locale: SupportedLocales;
+}
 
-export const LanguageMenu: React.FC<LanguageMenuProps> = ({ setLocale, locale }) => {
+export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   // const serviceContext = useServiceContext();
-  // const {setLocale} = useIntlProvider(); 
+  // const {setLocale} = useIntlProvider();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -25,7 +27,7 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({ setLocale, locale })
 
   const setLanguage = (locale: SupportedLocales) => {
     // serviceContext.setService({ locale });
-    setLocale(locale);
+    document.cookie = `locale=${locale}`;
     handleClose();
   };
 
@@ -40,9 +42,15 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({ setLocale, locale })
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem selected={locale === 'en'} onClick={() => setLanguage('en')}>English</MenuItem>
-        <MenuItem selected={locale === 'fr'} onClick={() => setLanguage('fr')}>French</MenuItem>
-        <MenuItem selected={locale === 'pt'} onClick={() => setLanguage('pt')}>Portuguese</MenuItem>
+        <MenuItem selected={locale === 'en'} onClick={() => setLanguage('en')}>
+          English
+        </MenuItem>
+        <MenuItem selected={locale === 'fr'} onClick={() => setLanguage('fr')}>
+          French
+        </MenuItem>
+        <MenuItem selected={locale === 'pt'} onClick={() => setLanguage('pt')}>
+          Portuguese
+        </MenuItem>
       </Menu>
     </div>
   );
