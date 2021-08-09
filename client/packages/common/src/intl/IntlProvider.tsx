@@ -1,14 +1,14 @@
 import React from 'react';
 import { IntlProvider as ReactIntlProvider } from 'react-intl';
 import {
-  // LocaleMessages,
+  LocaleMessages,
   SupportedLocales,
   importMessages,
 } from './intlHelpers';
 
 export const IntlProvider: React.FC<
   Omit<React.ComponentProps<typeof ReactIntlProvider>, 'messages'> & {
-    messages?: Record<string, string>; // LocaleMessages;
+    messages?: LocaleMessages;
   }
 > = props => {
   const { locale } = props;

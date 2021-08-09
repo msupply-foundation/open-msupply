@@ -3,12 +3,10 @@ import {
   Grid,
   makeStyles,
   Typography,
-  useLocalisationContext,
 } from '@openmsupply-client/common';
-import React, { useEffect } from 'react';
+import React from 'react';
 import Widget from './Widget';
 import { useServiceContext } from 'host/Service';
-import { getMessages } from './locales';
 
 // const RecentInvoices = React.lazy(() => import('invoices/RecentInvoicesWidget'));
 // const SalesDeposits = React.lazy(() => import('requisitions/DepositsWidget'));
@@ -51,13 +49,6 @@ const Dashboard: React.FC = () => {
   React.useEffect(() => {
     serviceContext.setService({ title: 'Dashboard' });
   }, []);
-
-  const localisationContext = useLocalisationContext();
-  useEffect(
-    () =>
-      localisationContext.addMessages(getMessages(localisationContext.locale)),
-    [localisationContext.locale]
-  );
 
   return (
     <main className={classes.content}>
