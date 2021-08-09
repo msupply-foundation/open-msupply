@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ModuleFederationPlugin =
   require('webpack').container.ModuleFederationPlugin;
@@ -41,6 +40,16 @@ module.exports = {
         test: /\.[t|j]sx?$/,
         loader: 'swc-loader',
         exclude: /node_modules/,
+        options: {
+          jsc: {
+            parser: {
+              dynamicImport: true,
+              syntax: 'typescript',
+              tsx: true,
+            },
+            target: 'es2015',
+          },
+        },
       },
     ],
   },

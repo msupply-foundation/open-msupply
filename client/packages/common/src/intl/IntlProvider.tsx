@@ -16,9 +16,7 @@ export const IntlProvider: React.FC<
     null
   );
   React.useEffect(() => {
-    // importMessages(locale as SupportedLocales).then(setMessages);
-    const messages = importMessages(locale as SupportedLocales);
-    setMessages(messages);
+    importMessages(locale as SupportedLocales).then(setMessages);
   }, [locale]);
 
   return messages ? (
