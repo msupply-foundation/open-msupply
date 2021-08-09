@@ -27,6 +27,9 @@ import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelper
 
 const queryClient = new QueryClient();
 
+const CustomerContainer = React.lazy(
+  () => import('customers/CustomerContainer')
+);
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
 const TransactionService = React.lazy(
   () => import('transactions/TransactionService')
@@ -96,7 +99,7 @@ const Host: FC = () => {
                         />
                         <Route
                           path="customers/*"
-                          element={<Heading locale={locale}>customers</Heading>}
+                          element={<CustomerContainer />}
                         />
                         <Route
                           path="suppliers/*"
@@ -122,7 +125,6 @@ const Host: FC = () => {
                           path="transactions/*"
                           element={<TransactionService />}
                         />
-
                         <Route
                           path="*"
                           element={<Navigate to="/dashboard" replace />}
