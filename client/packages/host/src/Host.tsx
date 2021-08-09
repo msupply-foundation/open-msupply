@@ -1,6 +1,4 @@
 import React, { FC } from 'react';
-// import { FormattedDate } from 'react-intl'
-// import { useIntl } from 'react-intl';
 import {
   Box,
   ReduxProvider,
