@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 // import { FormattedDate } from 'react-intl'
-
+// import { useIntl } from 'react-intl';
 import {
   Box,
   ReduxProvider,
@@ -10,18 +10,19 @@ import {
   ReactQueryDevtools,
   QueryClientProvider,
   BrowserRouter,
+  utils,
   Routes,
   Route,
   Navigate,
-  IntlProvider,
+  // IntlProvider,
   useFormatMessage,
+  LocalisationProvider,
 } from '@openmsupply-client/common';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
 import { useLocalStorageSync } from './useLocalStorageSync';
 import { ServiceProvider } from './Service';
-
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 const queryClient = new QueryClient();
@@ -49,6 +50,10 @@ const useDrawer = () => {
 
 const Heading: FC<{ locale: string }> = props => {
   const formatMessage = useFormatMessage();
+  // const intl = useIntl();
+  // console.info('******************** messages *******************');
+  // console.info(intl.messages);
+  // intl.messages = { 'app.admin': 'Admin' };
   return (
     <div style={{ margin: '100px 50px' }}>
       <span>
@@ -59,25 +64,24 @@ const Heading: FC<{ locale: string }> = props => {
           day="numeric"
           weekday="long" /> */}
       </span>
-      <Typography >[ {props.children} ]</Typography>
+      <Typography>[ {props.children} ]</Typography>
     </div>
   );
-}
+};
 
 const Host: FC = () => {
   const drawer = useDrawer();
-  const [locale, setLocale] = React.useState<SupportedLocales>('en')
-
+  const locale = (utils.readCookie('locale') || 'en') as SupportedLocales;
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
-        <IntlProvider locale={locale}>
+        <LocalisationProvider locale={locale}>
           <ServiceProvider>
             <ThemeProvider>
               <BrowserRouter>
                 <Viewport>
                   <Box display="flex" flex={1}>
-                    <AppBar drawer={drawer} setLocale={setLocale} locale={locale} />
+                    <AppBar drawer={drawer} locale={locale} />
                     <AppDrawer drawer={drawer} />
                     <React.Suspense fallback={'Loading'}>
                       <Routes>
@@ -126,7 +130,7 @@ const Host: FC = () => {
             </ThemeProvider>
           </ServiceProvider>
           <ReactQueryDevtools initialIsOpen />
-        </IntlProvider>
+        </LocalisationProvider>
       </QueryClientProvider>
     </ReduxProvider>
   );

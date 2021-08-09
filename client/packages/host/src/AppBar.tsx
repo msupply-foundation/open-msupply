@@ -38,7 +38,6 @@ interface Drawer {
 interface AppBarProps {
   drawer: Drawer;
   locale: SupportedLocales;
-  setLocale: (locale: SupportedLocales) => void;
 }
 
 const AppBar: React.FC<AppBarProps> = props => {
@@ -59,7 +58,7 @@ const AppBar: React.FC<AppBarProps> = props => {
         >
           {serviceContext.title}
         </Typography>
-        <LanguageMenu setLocale={props.setLocale} locale={props.locale} />
+        <LanguageMenu locale={props.locale} />
       </Toolbar>
     </div>
   );
