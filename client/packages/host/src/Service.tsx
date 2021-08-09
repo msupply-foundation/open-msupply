@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 export interface Service {
-  locale?: string;
   title?: string;
 }
 export interface ServiceContext extends Service {
@@ -9,24 +8,18 @@ export interface ServiceContext extends Service {
 }
 
 export const Context = React.createContext<ServiceContext>({
-  locale: 'en',
   setService: () => {},
   title: '',
 });
 
 const useService = () => {
   const [service, setService] = React.useState<Service>({
-    locale: 'en',
     title: '',
   });
 
-  const updateService = (newService: Service) => {
-    setService({...service, ...newService});
-  }
-
   return {
     ...service,
-    setService: updateService,
+    setService,
   };
 };
 
