@@ -14,9 +14,8 @@ import {
   Routes,
   Route,
   Navigate,
-  // IntlProvider,
+  IntlProvider,
   useFormatMessage,
-  LocalisationProvider,
 } from '@openmsupply-client/common';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
@@ -50,10 +49,6 @@ const useDrawer = () => {
 
 const Heading: FC<{ locale: string }> = props => {
   const formatMessage = useFormatMessage();
-  // const intl = useIntl();
-  // console.info('******************** messages *******************');
-  // console.info(intl.messages);
-  // intl.messages = { 'app.admin': 'Admin' };
   return (
     <div style={{ margin: '100px 50px' }}>
       <span>
@@ -75,7 +70,7 @@ const Host: FC = () => {
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
-        <LocalisationProvider locale={locale}>
+        <IntlProvider locale={locale}>
           <ServiceProvider>
             <ThemeProvider>
               <BrowserRouter>
@@ -130,7 +125,7 @@ const Host: FC = () => {
             </ThemeProvider>
           </ServiceProvider>
           <ReactQueryDevtools initialIsOpen />
-        </LocalisationProvider>
+        </IntlProvider>
       </QueryClientProvider>
     </ReduxProvider>
   );
