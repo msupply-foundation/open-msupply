@@ -14,9 +14,6 @@ interface LanguageMenuProps {
 
 export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  // const serviceContext = useServiceContext();
-  // const {setLocale} = useIntlProvider();
-
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -26,9 +23,9 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
   };
 
   const setLanguage = (locale: SupportedLocales) => {
-    // serviceContext.setService({ locale });
     document.cookie = `locale=${locale}`;
     handleClose();
+    window.location.reload();
   };
 
   return (

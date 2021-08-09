@@ -15,6 +15,7 @@ import {
   Route,
   Navigate,
   IntlProvider,
+  useFormatDate,
   useFormatMessage,
 } from '@openmsupply-client/common';
 import AppDrawer from './AppDrawer';
@@ -49,15 +50,24 @@ const useDrawer = () => {
 
 const Heading: FC<{ locale: string }> = props => {
   const formatMessage = useFormatMessage();
+  const formatDate = useFormatDate();
+  const date = new Date();
   return (
     <div style={{ margin: '100px 50px' }}>
       <span>
         <Typography>Current locale: {props.locale}</Typography>
-        {formatMessage('app.welcome', { name: 'Doofus!' })}
-        {/* today is <FormattedDate value={date} year="numeric"
-          month="long"
-          day="numeric"
-          weekday="long" /> */}
+        <Typography>
+          {formatMessage('app.welcome', { name: '<your name here>' })}
+        </Typography>
+        <Typography>
+          Today is{' '}
+          {formatDate(date, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+          })}
+        </Typography>
       </span>
       <Typography>[ {props.children} ]</Typography>
     </div>
