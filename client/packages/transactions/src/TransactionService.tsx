@@ -116,7 +116,7 @@ const Transactions: FC = () => {
         checkboxSelection
         hideFooterSelectedRowCount
         onRowClick={params => {
-          navigate(`/transactions/${params.id}`);
+          navigate(`/customers/customer-invoice/${params.id}`);
         }}
       />
     </div>
@@ -126,8 +126,8 @@ const Transactions: FC = () => {
 const TransactionService: FC = () => {
   return (
     <Routes>
-      <Route path="*" element={<Transactions />} />
-      <Route path=":id" element={<Transaction />} />
+      <Route path="/customer-invoice" element={<Transactions />} />
+      <Route path="/customer-invoice/:id" element={<Transaction />} />
     </Routes>
   );
 };
