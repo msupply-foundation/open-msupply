@@ -4,9 +4,9 @@ import clsx from 'clsx';
 import { ListItem, ListItemText } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { AppTheme } from '../../styles';
+import { ApplicationTheme } from '../../styles';
 
-const useStyles = makeStyles((theme: AppTheme) => ({
+const useStyles = makeStyles((theme: ApplicationTheme) => ({
   drawerMenuItem: {
     height: 32,
     margin: '20px 0',
