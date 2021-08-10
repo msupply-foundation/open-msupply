@@ -18,12 +18,11 @@ import {
   makeStyles,
   ReceiptIcon,
   AppNavLink,
-  ApplicationTheme,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
 
-const useStyles = makeStyles((theme: ApplicationTheme) => ({
+const useStyles = makeStyles(theme => ({
   toolbarIcon: {
     display: 'flex',
     height: 90,
@@ -44,16 +43,16 @@ const useStyles = makeStyles((theme: ApplicationTheme) => ({
     margin: '20px 0',
     '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
-      backgroundColor: theme.palette.background?.white,
+      backgroundColor: theme.palette.background.white,
       boxShadow: theme.shadows[8],
     },
   },
   drawerMenuItemSelected: {
-    backgroundColor: `${theme.palette.background?.white}!important`,
+    backgroundColor: `${theme.palette.background.white}!important`,
     boxShadow: theme.shadows[4],
   },
   drawerPaper: {
-    backgroundColor: theme.palette.background?.drawer,
+    backgroundColor: theme.palette.background.drawer,
     position: 'relative',
     whiteSpace: 'nowrap',
     width: 200,
