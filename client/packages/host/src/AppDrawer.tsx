@@ -6,8 +6,6 @@ import {
   Drawer,
   IconButton,
   List,
-  ListItem,
-  ListItemText,
   MSupplyGuy,
   Messages,
   Power,
@@ -19,15 +17,13 @@ import {
   Tools,
   makeStyles,
   ReceiptIcon,
-  ReactRouterLink,
-  useMatch,
+  AppNavLink,
+  ApplicationTheme,
 } from '@openmsupply-client/common';
 
 import clsx from 'clsx';
 
-import { Theme } from '@openmsupply-client/common/src/styles/theme';
-
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles((theme: ApplicationTheme) => ({
   toolbarIcon: {
     display: 'flex',
     height: 90,
@@ -88,92 +84,45 @@ const useStyles = makeStyles((theme: Theme) => ({
   mSupplyGuySmall: { height: 40, width: 30 },
 }));
 
-interface ListItemLinkProps {
-  classes: Record<string, string>;
-  to: string;
-  icon: JSX.Element;
-  text?: string;
-}
-
-const ListItemLink: React.FC<ListItemLinkProps> = props => {
-  const selected = useMatch({ path: props.to + '/*' });
-
-  const CustomLink = React.useMemo(
-    () =>
-      React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
-        <ReactRouterLink ref={ref} to={props.to} {...linkProps} />
-      )),
-    [props.to]
-  );
-  const className = clsx(
-    props.classes['drawerMenuItem'],
-    !!selected && props.classes['drawerMenuItemSelected']
-  );
-
-  return (
-    <li>
-      <ListItem
-        selected={!!selected}
-        button
-        component={CustomLink}
-        className={className}
-      >
-        {props.icon}
-        <ListItemText primary={props.text} />
-      </ListItem>
-    </li>
-  );
-};
-
 interface MenuProps {
   classes: Record<string, string>;
 }
 const Menu: React.FC<MenuProps> = ({ classes }) => (
   <div className={classes['drawerMenu']}>
     <List>
-      <ListItemLink
+      <AppNavLink
         to="dashboard"
         icon={<Dashboard />}
         text="Dashboard"
         classes={classes}
       />
-      <ListItemLink
+      <AppNavLink
         to="customers"
         icon={<Customers />}
         text="Customers"
         classes={classes}
       />
-      <ListItemLink
+      <AppNavLink
         to="suppliers"
         icon={<Suppliers />}
         text="Suppliers"
         classes={classes}
       />
-      <ListItemLink
-        to="stock"
-        icon={<Stock />}
-        text="Stock"
-        classes={classes}
-      />
-      <ListItemLink
-        to="tools"
-        icon={<Tools />}
-        text="Tools"
-        classes={classes}
-      />
-      <ListItemLink
+      <AppNavLink to="stock" icon={<Stock />} text="Stock" classes={classes} />
+      <AppNavLink to="tools" icon={<Tools />} text="Tools" classes={classes} />
+      <AppNavLink
         to="reports"
         icon={<Reports />}
         text="Reports"
         classes={classes}
       />
-      <ListItemLink
+      <AppNavLink
         to="messages"
         icon={<Messages />}
         text="Messages"
         classes={classes}
       />
-      <ListItemLink
+      <AppNavLink
         to="transactions"
         icon={<ReceiptIcon />}
         text="Transactions"
@@ -184,14 +133,14 @@ const Menu: React.FC<MenuProps> = ({ classes }) => (
       <Divider
         style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
       />
-      <ListItemLink to="sync" icon={<Radio />} text="Stock" classes={classes} />
-      <ListItemLink
+      <AppNavLink to="sync" icon={<Radio />} text="Stock" classes={classes} />
+      <AppNavLink
         to="admin"
         icon={<Settings />}
         text="Admin"
         classes={classes}
       />
-      <ListItemLink
+      <AppNavLink
         to="logout"
         icon={<Power />}
         text="Logout"
