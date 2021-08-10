@@ -8,7 +8,7 @@ import { useMatch, Link } from 'react-router-dom';
 const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
-    marginTop: '20px',
+    marginTop: 20,
     '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
       backgroundColor: theme.palette.background.white,
