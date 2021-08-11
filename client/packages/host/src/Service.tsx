@@ -1,11 +1,10 @@
 import * as React from 'react';
 
 export interface Service {
-  title: string;
+  title?: string;
 }
-export interface ServiceContext {
+export interface ServiceContext extends Service {
   setService: (service: Service) => void;
-  title: string;
 }
 
 export const Context = React.createContext<ServiceContext>({
@@ -14,7 +13,9 @@ export const Context = React.createContext<ServiceContext>({
 });
 
 const useService = () => {
-  const [service, setService] = React.useState<Service>({ title: '' });
+  const [service, setService] = React.useState<Service>({
+    title: '',
+  });
 
   return {
     ...service,

@@ -27,6 +27,16 @@ module.exports = {
         test: /\.[t|j]sx?$/,
         loader: 'swc-loader',
         exclude: /node_modules/,
+        options: {
+          jsc: {
+            parser: {
+              dynamicImport: true,
+              syntax: 'typescript',
+              tsx: true,
+            },
+            target: 'es2015',
+          },
+        },
       },
     ],
   },
