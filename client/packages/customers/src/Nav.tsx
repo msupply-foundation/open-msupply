@@ -3,9 +3,11 @@ import { useMatch } from 'react-router-dom';
 import {
   Customers,
   Collapse,
+  Invoice,
   List,
   useDrawer,
   AppNavLink,
+  useFormatMessage,
 } from '@openmsupply-client/common';
 
 const useNestedNav = (path: string) => {
@@ -22,16 +24,25 @@ const useNestedNav = (path: string) => {
 
 const Nav: FC = () => {
   const { isActive } = useNestedNav('customer/*');
-
+  const formatMessage = useFormatMessage();
   return (
     <>
-      <AppNavLink to="customers" icon={<Customers />} text="Customers" />
+      <AppNavLink
+        to="customers"
+        icon={<Customers />}
+        text={formatMessage('app.customers')}
+      />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             to="/customers/customer-invoice"
-            icon={<span style={{ width: 20 }} />}
-            text="Customer Invoices"
+            icon={<Invoice />}
+            text={formatMessage('app.customer_invoices')}
+          />
+          <AppNavLink
+            to="/customers/customer-requisition"
+            icon={<Invoice />}
+            text="Requisitions"
           />
         </List>
       </Collapse>

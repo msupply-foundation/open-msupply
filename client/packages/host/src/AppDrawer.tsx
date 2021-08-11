@@ -13,7 +13,7 @@ import {
   Settings,
   Stock,
   Suppliers,
-  Tools,
+  Invoice,
   makeStyles,
   useFormatMessage,
   AppNavLink,
@@ -92,15 +92,14 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
   return (
     <div className={classes['drawerMenu']}>
       <List>
-        <React.Suspense fallback={null}>
-          <CustomersNav />
-        </React.Suspense>
         <AppNavLink
           to="dashboard"
           icon={<Dashboard />}
           text={formatMessage('app.dashboard')}
         />
-
+        <React.Suspense fallback={null}>
+          <CustomersNav />
+        </React.Suspense>
         <AppNavLink
           to="suppliers"
           icon={<Suppliers />}
@@ -113,7 +112,7 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
         />
         <AppNavLink
           to="tools"
-          icon={<Tools />}
+          icon={<Invoice />}
           text={formatMessage('app.tools')}
         />
         <AppNavLink
