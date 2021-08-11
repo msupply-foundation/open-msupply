@@ -2,24 +2,22 @@ import React, { FC } from 'react';
 import {
   Box,
   ReduxProvider,
-  ThemeProvider,
+  AppThemeProvider,
   Typography,
   QueryClient,
   ReactQueryDevtools,
   QueryClientProvider,
-  BrowserRouter,
-  utils,
-  Routes,
-  Route,
-  Navigate,
+  readCookie,
   IntlProvider,
   useFormatDate,
   useFormatMessage,
+  useDrawer,
 } from '@openmsupply-client/common';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
-import { useLocalStorageSync } from './useLocalStorageSync';
+
 import { ServiceProvider } from './Service';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
@@ -29,25 +27,6 @@ const CustomerContainer = React.lazy(
   () => import('customers/CustomerContainer')
 );
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
-const TransactionService = React.lazy(
-  () => import('transactions/TransactionService')
-);
-
-const useDrawer = () => {
-  const { value, setItem } = useLocalStorageSync<boolean>(
-    '@openmsupply-client/appdrawer/open'
-  );
-
-  return {
-    open: value,
-    closeDrawer() {
-      setItem(false);
-    },
-    openDrawer() {
-      setItem(true);
-    },
-  };
-};
 
 const Heading: FC<{ locale: string }> = props => {
   const formatMessage = useFormatMessage();
@@ -77,13 +56,13 @@ const Heading: FC<{ locale: string }> = props => {
 
 const Host: FC = () => {
   const drawer = useDrawer();
-  const locale = (utils.readCookie('locale') || 'en') as SupportedLocales;
+  const locale = (readCookie('locale') || 'en') as SupportedLocales;
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
         <IntlProvider locale={locale}>
           <ServiceProvider>
-            <ThemeProvider>
+            <AppThemeProvider>
               <BrowserRouter>
                 <Viewport>
                   <Box display="flex" flex={1}>
@@ -120,10 +99,6 @@ const Host: FC = () => {
                           element={<Heading locale={locale}>messages</Heading>}
                         />
                         <Route
-                          path="transactions/*"
-                          element={<TransactionService />}
-                        />
-                        <Route
                           path="*"
                           element={<Navigate to="/dashboard" replace />}
                         />
@@ -132,7 +107,7 @@ const Host: FC = () => {
                   </Box>
                 </Viewport>
               </BrowserRouter>
-            </ThemeProvider>
+            </AppThemeProvider>
           </ServiceProvider>
           <ReactQueryDevtools initialIsOpen />
         </IntlProvider>

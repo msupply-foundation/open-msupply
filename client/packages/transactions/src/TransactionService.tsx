@@ -1,14 +1,8 @@
 import React, { FC } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
-import {
-  Routes,
-  Route,
-  useQuery,
-  DataGrid,
-  useNavigate,
-  useParams,
-} from '@openmsupply-client/common';
+import { useQuery, DataGrid } from '@openmsupply-client/common';
+import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 
 interface Transaction {
   customer: string;
@@ -122,7 +116,7 @@ const Transactions: FC = () => {
         checkboxSelection
         hideFooterSelectedRowCount
         onRowClick={params => {
-          navigate(`/transactions/${params.id}`);
+          navigate(`/customers/customer-invoice/${params.id}`);
         }}
       />
     </div>
@@ -132,8 +126,8 @@ const Transactions: FC = () => {
 const TransactionService: FC = () => {
   return (
     <Routes>
-      <Route path="*" element={<Transactions />} />
-      <Route path=":id" element={<Transaction />} />
+      <Route path="/customer-invoice" element={<Transactions />} />
+      <Route path="/customer-invoice/:id" element={<Transaction />} />
     </Routes>
   );
 };
