@@ -11,7 +11,6 @@ import {
   IntlProvider,
   useFormatDate,
   useFormatMessage,
-  useDrawer,
 } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
@@ -55,7 +54,6 @@ const Heading: FC<{ locale: string }> = props => {
 };
 
 const Host: FC = () => {
-  const drawer = useDrawer();
   const locale = (readCookie('locale') || 'en') as SupportedLocales;
   return (
     <ReduxProvider>
@@ -66,8 +64,8 @@ const Host: FC = () => {
               <BrowserRouter>
                 <Viewport>
                   <Box display="flex" flex={1}>
-                    <AppBar drawer={drawer} locale={locale} />
-                    <AppDrawer drawer={drawer} />
+                    <AppBar locale={locale} />
+                    <AppDrawer />
                     <React.Suspense fallback={'Loading'}>
                       <Routes>
                         <Route

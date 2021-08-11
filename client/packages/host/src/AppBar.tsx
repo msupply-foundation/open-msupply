@@ -1,5 +1,10 @@
 import React from 'react';
-import { makeStyles, Toolbar, Typography } from '@openmsupply-client/common';
+import {
+  makeStyles,
+  Toolbar,
+  Typography,
+  useDrawer,
+} from '@openmsupply-client/common';
 import clsx from 'clsx';
 import { useServiceContext } from './Service';
 import { LanguageMenu } from './LanguageMenu';
@@ -32,22 +37,17 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-interface Drawer {
-  open: boolean | null;
-}
 interface AppBarProps {
-  drawer: Drawer;
   locale: SupportedLocales;
 }
 
 const AppBar: React.FC<AppBarProps> = props => {
   const classes = useStyles();
   const serviceContext = useServiceContext();
+  const { isOpen } = useDrawer();
 
   return (
-    <div
-      className={clsx(classes.appBar, props.drawer.open && classes.appBarShift)}
-    >
+    <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
       <Toolbar className={classes.toolbar}>
         <Typography
           component="h1"
