@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 
 import clsx from 'clsx';
-import { ListItem, ListItemText } from '@material-ui/core';
+import { ListItem, ListItemText, Tooltip } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { useMatch, Link } from 'react-router-dom';
 
@@ -45,15 +45,17 @@ export const AppNavLink: FC<ListItemLinkProps> = props => {
 
   return (
     <li>
-      <ListItem
-        selected={!!selected}
-        button
-        component={CustomLink}
-        className={className}
-      >
-        {props.icon}
-        <ListItemText primary={props.text} />
-      </ListItem>
+      <Tooltip title={props.text || ''}>
+        <ListItem
+          selected={!!selected}
+          button
+          component={CustomLink}
+          className={className}
+        >
+          {props.icon}
+          <ListItemText primary={props.text} />
+        </ListItem>
+      </Tooltip>
     </li>
   );
 };
