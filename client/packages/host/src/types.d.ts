@@ -9,3 +9,7 @@ declare module 'transactions/TransactionService' {
 declare module 'customers/CustomerContainer' {
   export default function (): JSX.Element;
 }
+
+declare module 'customers/Nav' {
+  export default function (): JSX.Element;
+}
