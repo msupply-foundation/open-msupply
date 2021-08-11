@@ -17,6 +17,7 @@ import {
   makeStyles,
   useFormatMessage,
   AppNavLink,
+  useDrawer,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 
@@ -150,24 +151,10 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
     </div>
   );
 };
-interface Drawer {
-  open: boolean | null;
-  closeDrawer: () => void;
-  openDrawer: () => void;
-}
-interface AppDrawerProps {
-  drawer: Drawer;
-  open?: boolean;
-}
 
-const AppDrawer: React.FC<AppDrawerProps> = props => {
+const AppDrawer: React.FC = () => {
   const classes = useStyles();
-  const { drawer } = props;
-
-  const toggleDrawer = () => {
-    if (!!drawer.open) drawer.closeDrawer();
-    else drawer.openDrawer();
-  };
+  const drawer = useDrawer();
 
   return (
     <Drawer
@@ -175,16 +162,18 @@ const AppDrawer: React.FC<AppDrawerProps> = props => {
       classes={{
         paper: clsx(
           classes.drawerPaper,
-          !props.drawer.open && classes.drawerPaperClose
+          !drawer.isOpen && classes.drawerPaperClose
         ),
       }}
-      open={props.open}
+      open={drawer.isOpen}
     >
       <div className={classes.toolbarIcon}>
-        <IconButton onClick={toggleDrawer}>
+        <IconButton onClick={drawer.toggle}>
           <MSupplyGuy
             classes={{
-              root: drawer.open ? classes.mSupplyGuy : classes.mSupplyGuySmall,
+              root: drawer.isOpen
+                ? classes.mSupplyGuy
+                : classes.mSupplyGuySmall,
             }}
           />
         </IconButton>
