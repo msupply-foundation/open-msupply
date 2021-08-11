@@ -13,7 +13,7 @@ import {
   Settings,
   Stock,
   Suppliers,
-  Invoice,
+  Tools,
   makeStyles,
   useFormatMessage,
   AppNavLink,
@@ -112,7 +112,7 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
         />
         <AppNavLink
           to="tools"
-          icon={<Invoice />}
+          icon={<Tools />}
           text={formatMessage('app.tools')}
         />
         <AppNavLink
