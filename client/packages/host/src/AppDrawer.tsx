@@ -37,10 +37,6 @@ const useStyles = makeStyles(theme => ({
     height: '100%',
     justifyContent: 'space-between',
     paddingLeft: 15,
-    // indent sub-menus
-    '&  ul ul': {
-      marginLeft: 10,
-    },
   },
   drawerMenuItem: {
     height: 32,

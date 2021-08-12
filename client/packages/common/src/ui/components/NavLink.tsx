@@ -22,21 +22,24 @@ const useStyles = makeStyles(theme => ({
 }));
 
 interface ListItemLinkProps {
-  to: string;
-  icon: JSX.Element;
+  end?: boolean; // denotes lowest level menu item, using terminology from useMatch
+  icon?: JSX.Element;
   text?: string;
+  to: string;
 }
 
 export const AppNavLink: FC<ListItemLinkProps> = props => {
   const classes = useStyles();
-  const selected = useMatch({ path: props.to });
+  const { end, icon = <span style={{ width: 20 }} />, text, to } = props;
+  const path = !end || to.endsWith('*') ? to : `${to}/*`;
+  const selected = useMatch({ path });
 
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
-        <Link ref={ref} to={props.to} {...linkProps} />
+        <Link ref={ref} to={to} {...linkProps} />
       )),
-    [props.to]
+    [to]
   );
   const className = clsx(
     classes['drawerMenuItem'],
@@ -45,15 +48,15 @@ export const AppNavLink: FC<ListItemLinkProps> = props => {
 
   return (
     <li>
-      <Tooltip title={props.text || ''}>
+      <Tooltip title={text || ''}>
         <ListItem
           selected={!!selected}
           button
           component={CustomLink}
           className={className}
         >
-          {props.icon}
-          <ListItemText primary={props.text} />
+          {icon}
+          <ListItemText primary={text} />
         </ListItem>
       </Tooltip>
     </li>

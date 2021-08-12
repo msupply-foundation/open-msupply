@@ -1,6 +1,5 @@
 export { Customers } from './Customers';
 export { Dashboard } from './Dashboard';
-export { Invoice } from './Invoice';
 export { MSupplyGuy } from './MSupplyGuy';
 export { Menu as MenuIcon } from './Menu';
 export { Receipt as ReceiptIcon } from '@material-ui/icons';
