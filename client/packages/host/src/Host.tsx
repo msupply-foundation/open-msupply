@@ -7,19 +7,16 @@ import {
   QueryClient,
   ReactQueryDevtools,
   QueryClientProvider,
-  readCookie,
   IntlProvider,
   useFormatDate,
+  useLocalisation,
   useTranslation,
-  useDrawer,
 } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
-
 import { ServiceProvider } from './Service';
-import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 const queryClient = new QueryClient();
 
@@ -55,7 +52,7 @@ const Heading: FC<{ locale: string }> = props => {
 };
 
 const Host: FC = () => {
-  const locale = (readCookie('locale') || 'en') as SupportedLocales;
+  const { locale } = useLocalisation();
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
