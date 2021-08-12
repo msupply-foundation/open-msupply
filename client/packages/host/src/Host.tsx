@@ -10,7 +10,7 @@ import {
   readCookie,
   IntlProvider,
   useFormatDate,
-  useFormatMessage,
+  useTranslation,
   useDrawer,
 } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -29,7 +29,7 @@ const CustomerContainer = React.lazy(
 const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
 
 const Heading: FC<{ locale: string }> = props => {
-  const formatMessage = useFormatMessage();
+  const t = useTranslation();
   const formatDate = useFormatDate();
   const date = new Date();
   return (
@@ -37,7 +37,7 @@ const Heading: FC<{ locale: string }> = props => {
       <span>
         <Typography>Current locale: {props.locale}</Typography>
         <Typography>
-          {formatMessage('app.welcome', { name: '<your name here>' })}
+          {t('app.welcome', { name: '<your name here>' })}
         </Typography>
         <Typography>
           Today is{' '}
