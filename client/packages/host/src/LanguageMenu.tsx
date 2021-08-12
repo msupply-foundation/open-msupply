@@ -4,6 +4,7 @@ import {
   Menu,
   MenuItem,
   TranslateIcon,
+  useLocalisation,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
@@ -12,7 +13,7 @@ interface LanguageMenuProps {
   locale: SupportedLocales;
 }
 
-export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
+export const LanguageMenu: React.FC<LanguageMenuProps> = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -22,10 +23,10 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
     setAnchorEl(null);
   };
 
-  const setLanguage = (locale: SupportedLocales) => {
-    document.cookie = `locale=${locale}`;
+  const { locale, setLocale } = useLocalisation();
+  const setLanguage = (language: SupportedLocales) => {
+    setLocale(language);
     handleClose();
-    window.location.reload();
   };
 
   return (
