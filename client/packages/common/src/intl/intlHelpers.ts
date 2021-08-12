@@ -8,7 +8,7 @@ export type SupportedLocales = 'en' | 'fr' | 'pt';
 export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
 
-export const useFormatMessage = (): ((
+export const useTranslation = (): ((
   id: LocaleKey, // only accepts valid keys, not any string
   values?: Record<string, PrimitiveType>
 ) => string) => {
