@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 
 const useNestedNav = (path: string) => {
-  const { open } = useDrawer();
+  const { isOpen } = useDrawer();
   const match = useMatch(path);
   const [expanded, setExpanded] = React.useState(false);
 
@@ -18,7 +18,7 @@ const useNestedNav = (path: string) => {
     setExpanded(!!match);
   }, [match]);
 
-  return { isActive: open && expanded };
+  return { isActive: isOpen && expanded };
 };
 
 const Nav: FC = () => {
