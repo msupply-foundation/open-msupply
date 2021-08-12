@@ -3,7 +3,6 @@ import { useMatch } from 'react-router-dom';
 import {
   Customers,
   Collapse,
-  Invoice,
   List,
   useDrawer,
   AppNavLink,
@@ -35,13 +34,13 @@ const Nav: FC = () => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
+            end={true}
             to="/customers/customer-invoice"
-            icon={<Invoice />}
             text={formatMessage('app.customer_invoices')}
           />
           <AppNavLink
+            end={true}
             to="/customers/customer-requisition"
-            icon={<Invoice />}
             text="Requisitions"
           />
         </List>
