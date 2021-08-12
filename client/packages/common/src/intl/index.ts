@@ -1,5 +1,5 @@
 import { useIntl } from 'react-intl';
-import { useFormatDate, useFormatMessage } from './intlHelpers';
+import { useFormatDate, useTranslation } from './intlHelpers';
 import { IntlProvider } from './IntlProvider';
 
-export { IntlProvider, useIntl, useFormatDate, useFormatMessage };
+export { IntlProvider, useIntl, useFormatDate, useTranslation };

@@ -6,6 +6,7 @@ import {
   List,
   useDrawer,
   AppNavLink,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 const useNestedNav = (path: string) => {
@@ -22,16 +23,25 @@ const useNestedNav = (path: string) => {
 
 const Nav: FC = () => {
   const { isActive } = useNestedNav('customer/*');
-
+  const t = useTranslation();
   return (
     <>
-      <AppNavLink to="customers" icon={<Customers />} text="Customers" />
+      <AppNavLink
+        to="customers"
+        icon={<Customers />}
+        text={t('app.customers')}
+      />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
+            end={true}
             to="/customers/customer-invoice"
-            icon={<span style={{ width: 20 }} />}
-            text="Customer Invoices"
+            text={t('app.customer_invoices')}
+          />
+          <AppNavLink
+            end={true}
+            to="/customers/customer-requisition"
+            text="Requisitions"
           />
         </List>
       </Collapse>

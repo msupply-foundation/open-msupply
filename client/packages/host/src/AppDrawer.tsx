@@ -15,7 +15,7 @@ import {
   Suppliers,
   Tools,
   makeStyles,
-  useFormatMessage,
+  useTranslation,
   AppNavLink,
   useDrawer,
 } from '@openmsupply-client/common';
@@ -89,64 +89,39 @@ interface MenuProps {
   classes: Record<string, string>;
 }
 const Menu: React.FC<MenuProps> = ({ classes }) => {
-  const formatMessage = useFormatMessage();
+  const t = useTranslation();
   return (
     <div className={classes['drawerMenu']}>
       <List>
+        <AppNavLink
+          to="dashboard"
+          icon={<Dashboard />}
+          text={t('app.dashboard')}
+        />
         <React.Suspense fallback={null}>
           <CustomersNav />
         </React.Suspense>
         <AppNavLink
-          to="dashboard"
-          icon={<Dashboard />}
-          text={formatMessage('app.dashboard')}
-        />
-
-        <AppNavLink
           to="suppliers"
           icon={<Suppliers />}
-          text={formatMessage('app.suppliers')}
+          text={t('app.suppliers')}
         />
-        <AppNavLink
-          to="stock"
-          icon={<Stock />}
-          text={formatMessage('app.stock')}
-        />
-        <AppNavLink
-          to="tools"
-          icon={<Tools />}
-          text={formatMessage('app.tools')}
-        />
-        <AppNavLink
-          to="reports"
-          icon={<Reports />}
-          text={formatMessage('app.reports')}
-        />
+        <AppNavLink to="stock" icon={<Stock />} text={t('app.stock')} />
+        <AppNavLink to="tools" icon={<Tools />} text={t('app.tools')} />
+        <AppNavLink to="reports" icon={<Reports />} text={t('app.reports')} />
         <AppNavLink
           to="messages"
           icon={<Messages />}
-          text={formatMessage('app.messages')}
+          text={t('app.messages')}
         />
       </List>
       <List>
         <Divider
           style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
         />
-        <AppNavLink
-          to="sync"
-          icon={<Radio />}
-          text={formatMessage('app.sync')}
-        />
-        <AppNavLink
-          to="admin"
-          icon={<Settings />}
-          text={formatMessage('app.admin')}
-        />
-        <AppNavLink
-          to="logout"
-          icon={<Power />}
-          text={formatMessage('app.logout')}
-        />
+        <AppNavLink to="sync" icon={<Radio />} text={t('app.sync')} />
+        <AppNavLink to="admin" icon={<Settings />} text={t('app.admin')} />
+        <AppNavLink to="logout" icon={<Power />} text={t('app.logout')} />
       </List>
     </div>
   );
