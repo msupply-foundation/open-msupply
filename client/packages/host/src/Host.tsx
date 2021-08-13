@@ -64,7 +64,7 @@ const Host: FC = () => {
             <BrowserRouter>
               <Viewport>
                 <Box display="flex" flex={1}>
-                  <AppBar locale={locale} />
+                  <AppBar />
                   <AppDrawer />
                   <React.Suspense fallback={'Loading'}>
                     <Routes>
