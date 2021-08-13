@@ -2,6 +2,8 @@
   "app.admin": "Admin",
   "app.customers": "Customers",
   "app.customer_invoices": "Customer Invoices",
+  "app.customer_invoice": "Customer Invoice #{id}",
+  "app.customer_requisitions": "Requisitions",
   "app.dashboard": "Dashboard",
   "app.logout": "Logout",
   "app.messages": "Messages",

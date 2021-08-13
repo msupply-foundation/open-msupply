@@ -4,9 +4,9 @@ import {
   Toolbar,
   Typography,
   useDrawer,
+  useHostContext,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
-import { useServiceContext } from './Service';
 import { LanguageMenu } from './LanguageMenu';
 import { SupportedLocales } from '../../common/src/intl/intlHelpers';
 
@@ -43,7 +43,7 @@ interface AppBarProps {
 
 const AppBar: React.FC<AppBarProps> = props => {
   const classes = useStyles();
-  const serviceContext = useServiceContext();
+  const { title } = useHostContext();
   const { isOpen } = useDrawer();
 
   return (
@@ -56,7 +56,7 @@ const AppBar: React.FC<AppBarProps> = props => {
           noWrap
           className={classes.title}
         >
-          {serviceContext.title}
+          {title}
         </Typography>
         <LanguageMenu locale={props.locale} />
       </Toolbar>
