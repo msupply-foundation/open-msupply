@@ -3,10 +3,11 @@ import {
   Grid,
   makeStyles,
   Typography,
+  useHostContext,
+  useTranslation,
 } from '@openmsupply-client/common';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Widget from './Widget';
-import { useServiceContext } from 'host/Service';
 
 // const RecentInvoices = React.lazy(() => import('invoices/RecentInvoicesWidget'));
 // const SalesDeposits = React.lazy(() => import('requisitions/DepositsWidget'));
@@ -45,10 +46,10 @@ const useStyles = makeStyles(theme => ({
 
 const Dashboard: React.FC = () => {
   const classes = useStyles();
-  const serviceContext = useServiceContext();
-  React.useEffect(() => {
-    serviceContext.setService({ title: 'Dashboard' });
-  }, []);
+  const { setTitle } = useHostContext();
+  const t = useTranslation();
+
+  useEffect(() => setTitle(t('app.dashboard')), []);
 
   return (
     <main className={classes.content}>

@@ -41,7 +41,7 @@ const Nav: FC = () => {
           <AppNavLink
             end={true}
             to="/customers/customer-requisition"
-            text="Requisitions"
+            text={t('app.customer_requisitions')}
           />
         </List>
       </Collapse>

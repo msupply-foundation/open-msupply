@@ -56,7 +56,6 @@ module.exports = {
         // ${UPDATE} : Expose all of this packages components here.
         // They can be imported from other remotes through the syntax
         // React.lazy(() => import('${name of this service}/${key of an exposed component}'))
-        './Service': './src/Service',
       },
       // Shared dependencies can be updated, but these defaults should suffice.
       // These defaults will share to all other remotes, all of the dependencies in this packages

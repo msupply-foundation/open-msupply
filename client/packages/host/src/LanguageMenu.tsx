@@ -4,11 +4,10 @@ import {
   Menu,
   MenuItem,
   TranslateIcon,
-  useLocalisation,
+  useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
-// import { useServiceContext } from './Service';
 interface LanguageMenuProps {
   locale: SupportedLocales;
 }
@@ -23,7 +22,7 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = () => {
     setAnchorEl(null);
   };
 
-  const { locale, setLocale } = useLocalisation();
+  const { locale, setLocale } = useHostContext();
   const setLanguage = (language: SupportedLocales) => {
     setLocale(language);
     handleClose();
