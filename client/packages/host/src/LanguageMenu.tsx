@@ -8,11 +8,11 @@ import {
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
-interface LanguageMenuProps {
-  locale: SupportedLocales;
+interface LanguageMenuItemProps {
+  language: SupportedLocales;
 }
 
-export const LanguageMenu: React.FC<LanguageMenuProps> = () => {
+export const LanguageMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -27,6 +27,17 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = () => {
     setLocale(language);
     handleClose();
   };
+  const LanguageMenuItem: React.FC<LanguageMenuItemProps> = ({
+    children,
+    language,
+  }) => {
+    const selected = language === locale;
+    return (
+      <MenuItem selected={selected} onClick={() => setLanguage(language)}>
+        {children}
+      </MenuItem>
+    );
+  };
 
   return (
     <div>
@@ -39,15 +50,9 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem selected={locale === 'en'} onClick={() => setLanguage('en')}>
-          English
-        </MenuItem>
-        <MenuItem selected={locale === 'fr'} onClick={() => setLanguage('fr')}>
-          French
-        </MenuItem>
-        <MenuItem selected={locale === 'pt'} onClick={() => setLanguage('pt')}>
-          Portuguese
-        </MenuItem>
+        <LanguageMenuItem language="en">English</LanguageMenuItem>
+        <LanguageMenuItem language="fr">French</LanguageMenuItem>
+        <LanguageMenuItem language="pt">Portuguese</LanguageMenuItem>
       </Menu>
     </div>
   );

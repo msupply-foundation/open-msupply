@@ -8,7 +8,6 @@ import {
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 import { LanguageMenu } from './LanguageMenu';
-import { SupportedLocales } from '../../common/src/intl/intlHelpers';
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -37,11 +36,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-interface AppBarProps {
-  locale: SupportedLocales;
-}
-
-const AppBar: React.FC<AppBarProps> = props => {
+const AppBar: React.FC = () => {
   const classes = useStyles();
   const { title } = useHostContext();
   const { isOpen } = useDrawer();
@@ -58,7 +53,7 @@ const AppBar: React.FC<AppBarProps> = props => {
         >
           {title}
         </Typography>
-        <LanguageMenu locale={props.locale} />
+        <LanguageMenu />
       </Toolbar>
     </div>
   );
