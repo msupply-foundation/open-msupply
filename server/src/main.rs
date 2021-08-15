@@ -64,7 +64,7 @@ async fn get_repositories(settings: &Settings) -> RepositoryMap {
 }
 
 #[cfg(feature = "mock")]
-async pub fn get_repositories(_: &Settings) -> RepositoryMap {
+async fn get_repositories(_: &Settings) -> RepositoryMap {
     let mut mock_data: HashMap<String, DatabaseRow> = HashMap::new();
 
     let mock_names: Vec<NameRow> = mock::mock_names();
