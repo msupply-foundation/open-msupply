@@ -22,14 +22,14 @@ use remote_server::{
         TransactRepository, UserAccountRepository,
     },
     server::{
-        data::{RepositoryMap, RepositoryRegistry},
+        data::{ActorRegistry, RepositoryMap, RepositoryRegistry},
         middleware::{compress as compress_middleware, logger as logger_middleware},
         service::{graphql::config as graphql_config, rest::config as rest_config},
     },
     util::{
         configuration,
         settings::Settings,
-        sync::{self, SyncReceiverActor, SyncSenderActor},
+        sync::{self, SyncConnection, SyncReceiverActor, SyncSenderActor},
     },
 };
 
@@ -64,7 +64,7 @@ async fn get_repositories(settings: &Settings) -> RepositoryMap {
 }
 
 #[cfg(feature = "mock")]
-pub fn get_repositories() -> RepositoryMap {
+async pub fn get_repositories(_: &Settings) -> RepositoryMap {
     let mut mock_data: HashMap<String, DatabaseRow> = HashMap::new();
 
     let mock_names: Vec<NameRow> = mock::mock_names();
@@ -155,53 +155,44 @@ async fn main() -> std::io::Result<()> {
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
-    #[cfg(not(feature = "mock"))]
     let repositories: RepositoryMap = get_repositories(&settings).await;
 
-    #[cfg(feature = "mock")]
-    let repositories: RepositoryMap = get_repositories();
-
+    let sync_connection = SyncConnection::new(&settings.sync);
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
-        sync::get_sync_actors();
+        sync::get_sync_actors(sync_connection);
 
-    let registry = RepositoryRegistry {
-        repositories,
-        // Arc and Mutex are both unfortunate requirements here because we need to mutate the
-        // Sender later which the extractor doesn’t help us with, but all up it’s not a big deal.
-        // Should be possible to remove them both later.
+    let repository_registry = RepositoryRegistry { repositories };
+    let actor_registry = ActorRegistry {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
+
+    let repository_registry_data = Data::new(repository_registry);
+    let actor_registry_data = Data::new(actor_registry);
 
     let listener =
         TcpListener::bind(settings.server.address()).expect("Failed to bind server to address");
 
-    let registry = Data::new(registry);
     let http_server = HttpServer::new(move || {
         App::new()
-            .app_data(registry.clone())
+            .app_data(repository_registry_data.clone())
+            .app_data(actor_registry_data.clone())
             .wrap(logger_middleware())
             .wrap(compress_middleware())
-            .configure(graphql_config(registry.clone()))
+            .configure(graphql_config(repository_registry_data.clone()))
             .configure(rest_config)
     })
     .listen(listener)?
     .run();
 
-    let scheduler = async {
-        let sync_interval_duration: Duration = Duration::from_secs(60);
-        sync_sender.schedule_send(sync_interval_duration).await;
-    };
-
-    let sync = async {
-        let sync_delay_duration: Duration = Duration::from_secs(10);
-        sync_receiver.listen(sync_delay_duration).await;
-    };
-
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
     tokio::select! {
         result = http_server => result,
-        () = sync => unreachable!("Sync receiver unexpectedly died!?"),
-        () = scheduler => unreachable!("Sync scheduler unexpectedly died!?"),
+        () = async {
+          sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
+        } => unreachable!("Sync receiver unexpectedly died!?"),
+        () = async {
+          sync_receiver.listen().await;
+        } => unreachable!("Sync scheduler unexpectedly died!?"),
     }
 }
