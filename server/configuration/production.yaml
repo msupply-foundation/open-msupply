@@ -1,2 +1,4 @@
 server:
   host: 0.0.0.0
+sync:
+  host: 0.0.0.0
