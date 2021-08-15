@@ -15,19 +15,27 @@ top = false
 +++
 
 ## Welcome
-Thanks for visiting our developer documentation.
 
-If you're looking for "How to use mSupply" documentation, you're in the wrong place. For "old" mSupply they're [here](https://docs.msupply.org.nz/) and for Open mSupply they're not ready yet. Stay tuned.
+Thanks for visiting the Open mSupply developer documentation.
+
+If you're looking for "How to use mSupply" documentation, you're in the wrong place. We're still
+working on the Open mSupply documentation (stay tuned!), but documentation for previous versions of
+mSupply can be found [here](https://docs.msupply.org.nz/)
 
 ## Contributing
-We realise you might read these docs for a number of reasons:
+
+We understand that you may be reading these docs for a number of reasons:
+
 * You might just be interested.
-* You might have forked mSupply and want to know how to modify it. 
+* You might have forked mSupply and want to know how to modify it.
 * You might be considering extending mSupply by writing a plugin.
 * Or you might be considering contributing, to the main code base.
 
-Any of those reasons are welcome, and we hope these docs help you. Please make an issue for errors you find, and ideally make a branch & a PR to fix the error. Thanks!
+
+Any and all of the above reasons are welcome! We also welcome documentation contributions, so feel
+free to make an issue and pull request to fix any errors you find. We hope these docs help you!
 
 ## Getting Started
 
-Have a read of the [Key Concepts page →](key-concepts/) to get an understanding of the mSupply ecosystem.
+Have a read of the [Key Concepts page →](key-concepts/) to get an understanding of the mSupply
+ecosystem.
