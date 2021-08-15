@@ -2,9 +2,12 @@
 
 #[cfg(test)]
 mod sync {
-    use remote_server::util::sync::{
-        SyncConnection, SyncCredentials, SyncQueueAcknowledgement, SyncQueueBatch, SyncQueueRecord,
-        SyncQueueRecordAction, SyncQueueRecordData, SyncServer,
+    use remote_server::util::{
+        settings::SyncSettings,
+        sync::{
+            SyncConnection, SyncQueueAcknowledgement, SyncQueueBatch, SyncQueueRecord,
+            SyncQueueRecordAction, SyncQueueRecordData,
+        },
     };
 
     use httpmock::prelude::{MockServer, GET, POST};
@@ -18,6 +21,15 @@ mod sync {
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
+
+        let mock_sync_settings = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: mock_username.clone(),
+            password: mock_password.clone(),
+            interval: 0,
+        };
+
         let mock_authorization_header =
 	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
 	    .to_owned();
@@ -36,10 +48,9 @@ mod sync {
                 .body(serde_json::to_string(&mock_initialize_body).unwrap());
         });
 
-        let configuration = SyncServer::from_url(mock_server_url);
-        let credentials = SyncCredentials::new(mock_username, mock_password);
-        let sync_connection = SyncConnection::new(configuration, credentials);
-        let initialize_body = sync_connection.initialize().await;
+        let sync_connection = SyncConnection::new(&mock_sync_settings);
+
+        let initialize_body = sync_connection.initialize().await.unwrap();
 
         assert_eq!(
             serde_json::to_string(&initialize_body).unwrap(),
@@ -54,6 +65,15 @@ mod sync {
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
+
+        let mock_sync_settings = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: mock_username.clone(),
+            password: mock_password.clone(),
+            interval: 0,
+        };
+
         let mock_authorization_header =
 	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
 	    .to_owned();
@@ -92,10 +112,9 @@ mod sync {
                 .body(serde_json::to_string(&mock_queued_records_body).unwrap());
         });
 
-        let configuration = SyncServer::from_url(mock_server_url);
-        let credentials = SyncCredentials::new(mock_username, mock_password);
-        let sync_connection = SyncConnection::new(configuration, credentials);
-        let queued_records_body = sync_connection.queued_records().await;
+        let sync_connection = SyncConnection::new(&mock_sync_settings);
+
+        let queued_records_body = sync_connection.queued_records().await.unwrap();
 
         assert_eq!(
             serde_json::to_string(&queued_records_body).unwrap(),
@@ -110,6 +129,14 @@ mod sync {
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
+
+        let mock_sync_settings = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: mock_username.clone(),
+            password: mock_password.clone(),
+            interval: 0,
+        };
 
         let mock_authorization_header =
 	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
@@ -146,13 +173,12 @@ mod sync {
                 .body(serde_json::to_string(&mock_acknowledge_records_body).unwrap());
         });
 
-        let configuration = SyncServer::from_url(mock_server_url);
-        let credentials = SyncCredentials::new(mock_username, mock_password);
-        let sync_connection = SyncConnection::new(configuration, credentials);
+        let sync_connection = SyncConnection::new(&mock_sync_settings);
 
         sync_connection
             .acknowledge_records(&mock_acknowledge_records_data)
-            .await;
+            .await
+            .unwrap();
 
         mock_acknowledge_records.assert();
     }
