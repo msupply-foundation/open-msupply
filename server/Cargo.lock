@@ -2125,6 +2125,7 @@ dependencies = [
  "log",
  "reqwest",
  "serde 1.0.126",
+ "sha2",
  "sqlx",
  "tokio",
  "uuid",
