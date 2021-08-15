@@ -1,2 +1,4 @@
 server:
   host: 127.0.01
+sync:
+  host: 172.20.48.1
