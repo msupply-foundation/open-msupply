@@ -14,5 +14,6 @@
   "app.tools": "Outils",
   "app.transactions": "Transactions",
   "app.welcome": "Bonjour, {name}!",
+  "breadcrumb.item": "#{id}",
   "button.ok": "Ok"
 }
