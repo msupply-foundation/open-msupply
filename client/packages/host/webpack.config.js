@@ -65,7 +65,6 @@ module.exports = {
       },
       exposes: {
         './Host': './src/Host',
-        './Service': './src/Service',
       },
       shared: [
         {
@@ -84,8 +83,6 @@ module.exports = {
             requiredVersion: require('../common/package.json').version,
           },
         },
-        // Workaround explanation: https://www.youtube.com/watch?v=-LNcpralkjM&t=540
-        './src/Service',
       ],
     }),
     new HtmlWebpackPlugin({

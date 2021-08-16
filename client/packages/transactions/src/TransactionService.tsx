@@ -27,7 +27,6 @@ const mutationFn = async (updated: Transaction): Promise<Transaction> => {
 
 const Transaction: FC = () => {
   const { id } = useParams();
-
   const { draft, setDraft, save } = useDraftDocument<Transaction>(
     ['transaction', id],
     queryFn(id ?? ''),
@@ -103,7 +102,6 @@ const columns = [
 
 const Transactions: FC = () => {
   const { data, isLoading } = useQuery(['transaction', 'list'], listQuery);
-
   const navigate = useNavigate();
 
   return isLoading ? null : (
@@ -123,13 +121,11 @@ const Transactions: FC = () => {
   );
 };
 
-const TransactionService: FC = () => {
-  return (
-    <Routes>
-      <Route path="/customer-invoice" element={<Transactions />} />
-      <Route path="/customer-invoice/:id" element={<Transaction />} />
-    </Routes>
-  );
-};
+const TransactionService: FC = () => (
+  <Routes>
+    <Route path="/customer-invoice" element={<Transactions />} />
+    <Route path="/customer-invoice/:id" element={<Transaction />} />
+  </Routes>
+);
 
 export default TransactionService;
