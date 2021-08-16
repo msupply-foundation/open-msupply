@@ -4,7 +4,6 @@ import {
   makeStyles,
   Typography,
   useHostContext,
-  useTranslation,
 } from '@openmsupply-client/common';
 import React, { useEffect } from 'react';
 import Widget from './Widget';
@@ -46,10 +45,9 @@ const useStyles = makeStyles(theme => ({
 
 const Dashboard: React.FC = () => {
   const classes = useStyles();
-  const { setTitle } = useHostContext();
-  const t = useTranslation();
+  const { setTitleKey } = useHostContext();
 
-  useEffect(() => setTitle(t('app.dashboard')), []);
+  useEffect(() => setTitleKey('app.dashboard'), []);
 
   return (
     <main className={classes.content}>

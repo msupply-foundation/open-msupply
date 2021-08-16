@@ -1,8 +1,4 @@
-import {
-  Typography,
-  useHostContext,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Typography, useHostContext } from '@openmsupply-client/common';
 import React, { FC, useEffect } from 'react';
 import { useMatch } from 'react-router-dom';
 
@@ -17,8 +13,7 @@ const RequsitionsService: React.FC = () => (
 );
 
 const CustomerContainer: FC = () => {
-  const t = useTranslation();
-  const { setTitle } = useHostContext();
+  const { setTitleKey } = useHostContext();
   const isInvoice = useMatch('/customers/customer-invoice/*');
   const isRequsition = useMatch('/customers/customer-requisition/*');
   const titleKey = isInvoice
@@ -27,7 +22,7 @@ const CustomerContainer: FC = () => {
     ? 'app.customer_requisitions'
     : 'app.customers';
 
-  useEffect(() => setTitle(t(titleKey)), [titleKey]);
+  useEffect(() => setTitleKey(titleKey), [titleKey]);
   switch (titleKey) {
     case 'app.customer_invoices':
       return <TransactionService />;
