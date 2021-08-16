@@ -42,7 +42,6 @@ const AppBar: React.FC = () => {
   const { titleKey } = useHostContext();
   const { isOpen } = useDrawer();
   const t = useTranslation();
-  console.log('====>', t('app.dashboard'));
 
   return (
     <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
