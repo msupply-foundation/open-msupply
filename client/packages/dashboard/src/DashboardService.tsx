@@ -1,11 +1,10 @@
+import React from 'react';
 import {
   Container,
   Grid,
   makeStyles,
   Typography,
-  useHostContext,
 } from '@openmsupply-client/common';
-import React, { useEffect } from 'react';
 import Widget from './Widget';
 
 // const RecentInvoices = React.lazy(() => import('invoices/RecentInvoicesWidget'));
@@ -45,9 +44,6 @@ const useStyles = makeStyles(theme => ({
 
 const Dashboard: React.FC = () => {
   const classes = useStyles();
-  const { setTitleKey } = useHostContext();
-
-  useEffect(() => setTitleKey('app.dashboard'), []);
 
   return (
     <main className={classes.content}>

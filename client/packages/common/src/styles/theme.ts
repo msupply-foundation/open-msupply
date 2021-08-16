@@ -31,6 +31,12 @@ const themeOptions = {
       lineHeight: 1.71,
       color: '#1c1c28',
     },
+    fontFamily: 'Inter',
+    h6: {
+      fontFamily: 'Inter',
+      fontSize: 16,
+      color: '#555770',
+    },
   },
 };
 
