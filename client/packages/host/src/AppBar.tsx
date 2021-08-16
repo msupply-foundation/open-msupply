@@ -1,14 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  ArrowLeft,
   makeStyles,
+  styled,
   Toolbar,
   Typography,
   useDrawer,
-  useHostContext,
   useTranslation,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 import { LanguageMenu } from './LanguageMenu';
+import { Link, useLocation } from 'react-router-dom';
+import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
+
+const Breadcrumb = styled(Link)({
+  color: 'inherit',
+  fontWeight: 'bold',
+  textDecoration: 'none',
+});
+
+const ArrowIcon = styled(ArrowLeft)({
+  marginRight: 8,
+});
+
+const H6 = styled(Typography)({
+  flexGrow: 1,
+});
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -32,29 +49,62 @@ const useStyles = makeStyles(theme => ({
       duration: theme.transitions.duration.enteringScreen,
     }),
   },
-  title: {
-    flexGrow: 1,
-  },
 }));
+
+interface urlPart {
+  path: string;
+  key: LocaleKey;
+}
+
+const Breadcrumbs: React.FC = () => {
+  const t = useTranslation();
+  const location = useLocation();
+  const [urlParts, setUrlParts] = useState<urlPart[]>([]);
+
+  React.useEffect(() => {
+    const parts = location.pathname.split('/');
+    const urlParts: urlPart[] = [];
+
+    parts.reduce((fullPath, part) => {
+      if (part === '') return '';
+      const path = `/${fullPath}/${part}`;
+      urlParts.push({ path, key: `app.${part}` as LocaleKey });
+      return path;
+    }, '');
+    setUrlParts(urlParts);
+  }, [location]);
+
+  const crumbs = urlParts.map((part, index) => {
+    if (index === urlParts.length - 1) {
+      return <span key={part.key}>{t(part.key)}</span>;
+    }
+
+    return (
+      <>
+        <Breadcrumb to={part.path} key={part.key}>
+          {t(part.key)}
+        </Breadcrumb>
+        {' / '}
+      </>
+    );
+  });
+
+  return (
+    <H6 variant="h6" color="inherit" noWrap>
+      {crumbs}
+    </H6>
+  );
+};
 
 const AppBar: React.FC = () => {
   const classes = useStyles();
-  const { titleKey } = useHostContext();
   const { isOpen } = useDrawer();
-  const t = useTranslation();
 
   return (
     <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
       <Toolbar className={classes.toolbar}>
-        <Typography
-          component="h1"
-          variant="h6"
-          color="inherit"
-          noWrap
-          className={classes.title}
-        >
-          {t(titleKey)}
-        </Typography>
+        <ArrowIcon />
+        <Breadcrumbs />
         <LanguageMenu />
       </Toolbar>
     </div>
