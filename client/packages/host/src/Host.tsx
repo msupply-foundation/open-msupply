@@ -11,7 +11,6 @@ import {
   IntlProvider,
   useFormatDate,
   useTranslation,
-  useDrawer,
 } from '@openmsupply-client/common';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';

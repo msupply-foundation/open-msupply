@@ -7,7 +7,8 @@
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "prepare": "husky install",
-    "pre-commit-lint": "yarn compile && yarn lint-staged"
+    "pre-commit-lint": "yarn compile && yarn lint-staged",
+    "test": "jest --config ./jest.config.js"
   },
   "workspaces": {
     "packages": [
@@ -17,14 +18,20 @@
   "devDependencies": {
     "@swc/cli": "^0.1.46",
     "@swc/core": "^1.2.66",
+    "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^12.0.0",
+    "@types/jest": "^27.0.1",
     "@types/react": "^17.0.14",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
     "eslint": "^7.31.0",
     "eslint-config-google": "^0.14.0",
+    "eslint-plugin-jest-dom": "^3.9.0",
     "eslint-plugin-react": "^7.24.0",
+    "jest": "^27.0.6",
     "lerna": "^3.22.1",
     "swc-loader": "^0.1.14",
+    "ts-jest": "^27.0.4",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-dev-server": "4.0.0-beta.3"
   },
