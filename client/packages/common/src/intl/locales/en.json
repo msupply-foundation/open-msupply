@@ -2,6 +2,8 @@
   "app.admin": "Admin",
   "app.customers": "Customers",
   "app.customer_invoices": "Customer Invoices",
+  "app.customer-invoice": "Customer Invoices",
+  "app.customer-requisition": "Requisitions",
   "app.dashboard": "Dashboard",
   "app.logout": "Logout",
   "app.messages": "Messages",
@@ -12,5 +14,6 @@
   "app.tools": "Tools",
   "app.transactions": "Transactions",
   "app.welcome": "Hello, {name}!",
+  "breadcrumb.item": "#{id}",
   "button.ok": "ok"
 }
