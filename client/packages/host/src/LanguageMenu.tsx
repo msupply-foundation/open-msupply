@@ -4,15 +4,16 @@ import {
   Menu,
   MenuItem,
   TranslateIcon,
+  useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
-// import { useServiceContext } from './Service';
-interface LanguageMenuProps {
-  locale: SupportedLocales;
+interface LanguageMenuItemProps {
+  children: string;
+  language: SupportedLocales;
 }
 
-export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
+export const LanguageMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -22,11 +23,23 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
     setAnchorEl(null);
   };
 
-  const setLanguage = (locale: SupportedLocales) => {
-    document.cookie = `locale=${locale}`;
+  const { locale, setLocale } = useHostContext();
+  const setLanguage = (language: SupportedLocales) => {
+    setLocale(language);
     handleClose();
-    window.location.reload();
   };
+
+  const LanguageMenuItem = React.forwardRef(
+    (props: LanguageMenuItemProps, _ref) => {
+      const { children, language } = props;
+      const selected = language === locale;
+      return (
+        <MenuItem selected={selected} onClick={() => setLanguage(language)}>
+          {children}
+        </MenuItem>
+      );
+    }
+  );
 
   return (
     <div>
@@ -39,15 +52,9 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({ locale }) => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem selected={locale === 'en'} onClick={() => setLanguage('en')}>
-          English
-        </MenuItem>
-        <MenuItem selected={locale === 'fr'} onClick={() => setLanguage('fr')}>
-          French
-        </MenuItem>
-        <MenuItem selected={locale === 'pt'} onClick={() => setLanguage('pt')}>
-          Portuguese
-        </MenuItem>
+        <LanguageMenuItem language="en">English</LanguageMenuItem>
+        <LanguageMenuItem language="fr">French</LanguageMenuItem>
+        <LanguageMenuItem language="pt">Portuguese</LanguageMenuItem>
       </Menu>
     </div>
   );
