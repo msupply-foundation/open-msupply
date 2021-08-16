@@ -5,6 +5,7 @@ import {
   Typography,
   useDrawer,
   useHostContext,
+  useTranslation,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 import { LanguageMenu } from './LanguageMenu';
@@ -38,8 +39,10 @@ const useStyles = makeStyles(theme => ({
 
 const AppBar: React.FC = () => {
   const classes = useStyles();
-  const { title } = useHostContext();
+  const { titleKey } = useHostContext();
   const { isOpen } = useDrawer();
+  const t = useTranslation();
+  console.log('====>', t('app.dashboard'));
 
   return (
     <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
@@ -51,7 +54,7 @@ const AppBar: React.FC = () => {
           noWrap
           className={classes.title}
         >
-          {title}
+          {t(titleKey)}
         </Typography>
         <LanguageMenu />
       </Toolbar>

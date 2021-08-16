@@ -9,11 +9,12 @@ export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
 
 export const useTranslation = (): ((
-  id: LocaleKey, // only accepts valid keys, not any string
+  id?: LocaleKey, // only accepts valid keys, not any string
   values?: Record<string, PrimitiveType>
 ) => string) => {
   const intl = useIntl();
-  return (id, values) => intl.formatMessage({ id: id as string }, values);
+  return (id, values) =>
+    id ? intl.formatMessage({ id: id as string }, values) : '';
 };
 
 export const useFormatDate = (): ((

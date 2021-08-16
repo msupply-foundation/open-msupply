@@ -1,12 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
-import {
-  useQuery,
-  DataGrid,
-  useHostContext,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { useQuery, DataGrid, useHostContext } from '@openmsupply-client/common';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 
 interface Transaction {
@@ -32,15 +27,14 @@ const mutationFn = async (updated: Transaction): Promise<Transaction> => {
 
 const Transaction: FC = () => {
   const { id } = useParams();
-  const { setTitle } = useHostContext();
-  const t = useTranslation();
+  const { setTitleKey } = useHostContext();
   const { draft, setDraft, save } = useDraftDocument<Transaction>(
     ['transaction', id],
     queryFn(id ?? ''),
     mutationFn
   );
 
-  useEffect(() => setTitle(t('app.customer_invoice', { id })), []);
+  useEffect(() => setTitleKey('app.customer_invoice'), []);
 
   return draft ? (
     <div style={{ marginTop: 100 }}>

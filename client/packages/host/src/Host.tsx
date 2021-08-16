@@ -16,6 +16,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
+import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 const queryClient = new QueryClient();
 
@@ -27,10 +28,13 @@ const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
 const Heading: FC<{ locale: string }> = props => {
   const t = useTranslation();
   const formatDate = useFormatDate();
-  const { setTitle } = useHostContext();
+  const { setTitleKey } = useHostContext();
   const date = new Date();
 
-  useEffect(() => setTitle(`${props.children}`), [props.children]);
+  useEffect(
+    () => setTitleKey(`app.${props.children}` as LocaleKey),
+    [props.children]
+  );
 
   return (
     <div style={{ margin: '100px 50px' }}>

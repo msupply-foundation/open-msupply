@@ -9,6 +9,7 @@ import {
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 interface LanguageMenuItemProps {
+  children: string;
   language: SupportedLocales;
 }
 
@@ -27,17 +28,16 @@ export const LanguageMenu: React.FC = () => {
     setLocale(language);
     handleClose();
   };
-  const LanguageMenuItem: React.FC<LanguageMenuItemProps> = ({
-    children,
-    language,
-  }) => {
+
+  const LanguageMenuItem = React.forwardRef((props: LanguageMenuItemProps) => {
+    const { children, language } = props;
     const selected = language === locale;
     return (
       <MenuItem selected={selected} onClick={() => setLanguage(language)}>
         {children}
       </MenuItem>
     );
-  };
+  });
 
   return (
     <div>
