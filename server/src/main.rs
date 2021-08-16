@@ -28,7 +28,10 @@ async fn main() -> std::io::Result<()> {
 
     let pool: sqlx::PgPool = sqlx::PgPool::connect(&configuration.database.connection_string())
         .await
-        .expect("Failed to connect to database");
+        .expect("Failed to initialize database");
+    pool.acquire()
+        .await
+        .expect("Failed to acquire database connection");
 
     let mut repositories = anymap::Map::new();
     repositories.insert(database::repository::CustomerInvoiceRepository::new(
