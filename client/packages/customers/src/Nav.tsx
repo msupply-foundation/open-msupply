@@ -36,12 +36,12 @@ const Nav: FC = () => {
           <AppNavLink
             end={true}
             to="/customers/customer-invoice"
-            text={t('app.customer_invoices')}
+            text={t('app.customer-invoice')}
           />
           <AppNavLink
             end={true}
             to="/customers/customer-requisition"
-            text={t('app.customer_requisitions')}
+            text={t('app.customer-requisition')}
           />
         </List>
       </Collapse>

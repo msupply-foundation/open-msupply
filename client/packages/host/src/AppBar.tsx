@@ -54,6 +54,7 @@ const useStyles = makeStyles(theme => ({
 interface urlPart {
   path: string;
   key: LocaleKey;
+  value: string;
 }
 
 const Breadcrumbs: React.FC = () => {
@@ -68,7 +69,7 @@ const Breadcrumbs: React.FC = () => {
     parts.reduce((fullPath, part) => {
       if (part === '') return '';
       const path = `/${fullPath}/${part}`;
-      urlParts.push({ path, key: `app.${part}` as LocaleKey });
+      urlParts.push({ path, key: `app.${part}` as LocaleKey, value: part });
       return path;
     }, '');
     setUrlParts(urlParts);
@@ -76,16 +77,17 @@ const Breadcrumbs: React.FC = () => {
 
   const crumbs = urlParts.map((part, index) => {
     if (index === urlParts.length - 1) {
-      return <span key={part.key}>{t(part.key)}</span>;
+      const title = /^\d+$/.test(part.value)
+        ? t('breadcrumb.item', { id: part.value })
+        : t(part.key);
+      return <span key={part.key}>{title}</span>;
     }
 
     return (
-      <>
-        <Breadcrumb to={part.path} key={part.key}>
-          {t(part.key)}
-        </Breadcrumb>
+      <span key={part.key}>
+        <Breadcrumb to={part.path}>{t(part.key)}</Breadcrumb>
         {' / '}
-      </>
+      </span>
     );
   });
 
