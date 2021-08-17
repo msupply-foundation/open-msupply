@@ -4,6 +4,7 @@ module.exports = {
     es2021: true,
   },
   extends: [
+    'plugin:jest-dom/recommended',
     'plugin:react/recommended',
     'plugin:@typescript-eslint/recommended',
     'google',
