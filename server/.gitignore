@@ -6,6 +6,3 @@
 \#*#
 .\#*
 .DS_Store
-
-# Ignore the generated doc files
-/docs/public
