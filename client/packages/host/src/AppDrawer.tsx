@@ -21,7 +21,11 @@ import {
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 
-const CustomersNav = React.lazy(() => import('customers/Nav'));
+const CustomersNav = React.lazy(() =>
+  process.env['NODE_ENV'] === 'test'
+    ? import('../../customers/src/Nav')
+    : import('customers/Nav')
+);
 
 const useStyles = makeStyles(theme => ({
   toolbarIcon: {
@@ -42,7 +46,7 @@ const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
     margin: '16px 0',
-    '& svg': { ...theme.mixins.icon.medium },
+    '& svg': { ...theme.mixins.icon?.medium },
     '&:hover': {
       backgroundColor: theme.palette.background.white,
       boxShadow: theme.shadows[8],
@@ -130,10 +134,13 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
 const AppDrawer: React.FC = () => {
   const classes = useStyles();
   const drawer = useDrawer();
+  const t = useTranslation();
 
   return (
     <Drawer
+      data-testid="drawer"
       variant="permanent"
+      aria-expanded={drawer.isOpen}
       classes={{
         paper: clsx(
           classes.drawerPaper,
@@ -143,7 +150,10 @@ const AppDrawer: React.FC = () => {
       open={drawer.isOpen}
     >
       <div className={classes.toolbarIcon}>
-        <IconButton onClick={drawer.toggle}>
+        <IconButton
+          aria-label={t('button.open-the-menu')}
+          onClick={drawer.toggle}
+        >
           <MSupplyGuy
             classes={{
               root: drawer.isOpen
