@@ -13,3 +13,12 @@ declare module 'customers/CustomerContainer' {
 declare module 'customers/Nav' {
   export default function (): JSX.Element;
 }
+
+
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      NODE_ENV?: string;
+    }
+  }
+}
