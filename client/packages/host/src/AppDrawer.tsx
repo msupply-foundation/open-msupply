@@ -46,7 +46,7 @@ const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
     margin: '16px 0',
-    '& svg': { ...theme.mixins.icon?.medium },
+    '& svg': { ...theme.mixins.icon.medium },
     '&:hover': {
       backgroundColor: theme.palette.background.white,
       boxShadow: theme.shadows[8],
