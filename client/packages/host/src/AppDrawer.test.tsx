@@ -1,21 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import AppDrawer from './AppDrawer';
-import { AppThemeProvider } from '@openmsupply-client/common';
-import { BrowserRouter } from 'react-router-dom';
-import { IntlTestProvider } from '@openmsupply-client/common/src/intl';
+import { TestingProvider } from '@openmsupply-client/common';
 import { act } from 'react-dom/test-utils';
 
 describe('AppDrawer', () => {
   it('Expands when clicking the expand button', () => {
     render(
-      <AppThemeProvider>
-        <IntlTestProvider>
-          <BrowserRouter>
-            <AppDrawer />
-          </BrowserRouter>
-        </IntlTestProvider>
-      </AppThemeProvider>
+      <TestingProvider>
+        <AppDrawer />
+      </TestingProvider>
     );
 
     const button = screen.getByRole('button', { name: /Open the menu/i });
@@ -29,13 +23,9 @@ describe('AppDrawer', () => {
   });
   it('Text changes visibility when the menu is collapsed/expanded', () => {
     render(
-      <AppThemeProvider>
-        <IntlTestProvider>
-          <BrowserRouter>
-            <AppDrawer />
-          </BrowserRouter>
-        </IntlTestProvider>
-      </AppThemeProvider>
+      <TestingProvider>
+        <AppDrawer />
+      </TestingProvider>
     );
 
     const button = screen.getByRole('button', { name: /Open the menu/i });

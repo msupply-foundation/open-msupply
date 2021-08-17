@@ -1,0 +1,36 @@
+import { create } from '@storybook/theming/create';
+
+export default create({
+  base: 'light',
+
+  colorPrimary: '#e95c30',
+  colorSecondary: '#e95c30',
+
+  // UI
+  appBg: '#555770',
+  appContentBg: 'white',
+  appBorderColor: 'white',
+  appBorderRadius: 4,
+
+  // Typography
+  fontBase: '"Open Sans", sans-serif',
+  fontCode: 'monospace',
+
+  // Text colors
+  textColor: 'white',
+  textInverseColor: 'rgba(255,255,255,0.9)',
+
+  brandTitle: 'mSupply Foundation',
+  brandUrl: 'http://msupply.foundation',
+  brandImage: 'http://msupply.foundation/images/12.png',
+
+  barTextColor: '#f2f2f5',
+  barSelectedColor: 'black',
+  barBg: '#e95c30',
+
+  // Form colors
+  inputBg: 'blue',
+  inputBorder: 'blue',
+  inputTextColor: 'blue',
+  inputBorderRadius: 4,
+});

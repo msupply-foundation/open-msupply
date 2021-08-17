@@ -8,7 +8,9 @@
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "prepare": "husky install",
     "pre-commit-lint": "yarn compile && yarn lint-staged",
-    "test": "jest --config ./jest.config.js"
+    "test": "jest --config ./jest.config.js",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "workspaces": {
     "packages": [
@@ -16,6 +18,13 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@storybook/addon-actions": "^6.3.7",
+    "@storybook/addon-essentials": "^6.3.7",
+    "@storybook/addon-links": "^6.3.7",
+    "@storybook/addons": "^6.3.7",
+    "@storybook/react": "^6.3.7",
+    "@storybook/theming": "^6.3.7",
     "@swc/cli": "^0.1.46",
     "@swc/core": "^1.2.66",
     "@testing-library/jest-dom": "^5.14.1",
@@ -25,12 +34,15 @@
     "@types/react": "^17.0.14",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
+    "babel-loader": "^8.2.2",
     "eslint": "^7.31.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jest-dom": "^3.9.0",
     "eslint-plugin-react": "^7.24.0",
     "jest": "^27.0.6",
     "lerna": "^3.22.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "swc-loader": "^0.1.14",
     "ts-jest": "^27.0.4",
     "webpack-bundle-analyzer": "^4.4.2",
