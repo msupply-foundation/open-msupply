@@ -15,5 +15,6 @@
   "app.transactions": "Transactions",
   "app.welcome": "Hello, {name}!",
   "breadcrumb.item": "#{id}",
-  "button.ok": "ok"
+  "button.ok": "ok",
+  "button.open-the-menu": "Abra o menu"
 }
