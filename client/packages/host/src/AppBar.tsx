@@ -38,12 +38,14 @@ const useStyles = makeStyles(theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    width: 'calc(100% - 72px)',
-    zIndex: theme.zIndex.drawer + 1,
+    width: '100vw',
+    zIndex: theme.zIndex.drawer - 1,
+    height: 90,
+    boxShadow: theme.shadows[1],
+    ...theme.mixins.header,
   },
   appBarShift: {
     marginLeft: 128,
-    width: `calc(100% - 200px)`,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
