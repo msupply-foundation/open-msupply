@@ -5,9 +5,9 @@ pub struct RepositoryError {
 
 #[cfg_attr(feature = "mock", path = "mock/mod.rs")]
 #[cfg_attr(not(feature = "mock"), path = "pgsqlx/mod.rs")]
-mod implementation;
+mod repository;
 
-pub use implementation::{
+pub use repository::{
     CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
     RequisitionLineRepository, RequisitionRepository, StoreRepository, TransactLineRepository,
     TransactRepository, UserAccountRepository,

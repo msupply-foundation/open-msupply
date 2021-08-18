@@ -1,32 +1,31 @@
 use crate::database::repository::RepositoryError;
-use crate::database::schema::RequisitionRow;
+use crate::database::schema::{DatabaseRow, RequisitionRow};
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct RequisitionRepository {
-    mock_data: Arc<Mutex<HashMap<String, RequisitionRow>>>,
+    mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>>,
 }
 
 impl RequisitionRepository {
-    pub fn new(mock_data: Arc<Mutex<HashMap<String, RequisitionRow>>>) -> RequisitionRepository {
+    pub fn new(mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>>) -> RequisitionRepository {
         RequisitionRepository { mock_data }
     }
 
     pub async fn insert_one(&self, requisition: &RequisitionRow) -> Result<(), RepositoryError> {
-        self.mock_data
-            .lock()
-            .unwrap()
-            .insert(String::from(requisition.id.clone()), requisition.clone());
-
+        self.mock_data.lock().unwrap().insert(
+            requisition.id.to_string(),
+            DatabaseRow::Requisition(requisition.clone()),
+        );
         Ok(())
     }
 
     pub async fn find_one_by_id(&self, id: &str) -> Result<RequisitionRow, RepositoryError> {
-        match self.mock_data.lock().unwrap().get(&String::from(id)) {
-            Some(requisition) => Ok(requisition.clone()),
-            None => Err(RepositoryError {
+        match self.mock_data.lock().unwrap().get(&id.to_string()) {
+            Some(DatabaseRow::Requisition(requisition)) => Ok(requisition.clone()),
+            _ => Err(RepositoryError {
                 msg: String::from(format!("Failed to find requisition {}", id)),
             }),
         }
