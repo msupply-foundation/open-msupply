@@ -49,9 +49,8 @@ pub fn get_configuration_app_file() -> Result<File<FileSourceFile>, SettingsErro
 /// For example, the following runs the application using the `local` configuration with the
 /// `database.port` value set to `5433`:
 ///
-/// ```
 /// APP_ENVIRONMENT=local APP_DATABASE__PORT=5433 cargo run
-/// ```
+///
 pub fn get_configuration_environment() -> Environment {
     Environment::with_prefix(CONFIGURATION_ENVIRONMENT_PREFIX)
         .separator(CONFIGURATION_ENVIRONMENT_SEPARATOR)
