@@ -34,7 +34,7 @@ const Transaction: FC = () => {
   );
 
   return draft ? (
-    <div style={{ marginTop: 100 }}>
+    <>
       <div>
         <input
           value={draft?.customer}
@@ -49,7 +49,7 @@ const Transaction: FC = () => {
       <div>
         <button onClick={() => save()}>OK</button>
       </div>
-    </div>
+    </>
   ) : null;
 };
 
@@ -105,7 +105,7 @@ const Transactions: FC = () => {
   const navigate = useNavigate();
 
   return isLoading ? null : (
-    <div style={{ marginTop: 70, minWidth: '100%' }}>
+    <div style={{ marginTop: 10, minWidth: '100%' }}>
       <DataGrid
         rows={data}
         columns={columns}

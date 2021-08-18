@@ -2,6 +2,10 @@ import { createTheme } from '@material-ui/core/styles';
 
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
+    header: {
+      backgroundColor: string;
+      borderBottom: string;
+    };
     icon: {
       medium: { width: number; height: number };
     };
@@ -10,17 +14,20 @@ declare module '@material-ui/core/styles/createMixins' {
 
 declare module '@material-ui/core/styles/createPalette' {
   interface TypeBackground {
-    drawer: string;
+    menu: string;
     white: string;
   }
 }
 
 const themeOptions = {
-  mixins: { icon: { medium: { height: 20, width: 20 } } },
+  mixins: {
+    header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
+    icon: { medium: { height: 20, width: 20 } },
+  },
   palette: {
     primary: { 500: '#e95c30' },
     background: {
-      drawer: '#f2f2f5',
+      menu: '#f2f2f5',
       white: '#fff',
     },
   },
@@ -41,5 +48,6 @@ const themeOptions = {
 };
 
 const theme = createTheme(themeOptions);
-
+theme.shadows[1] =
+  '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
 export default theme;
