@@ -26,20 +26,20 @@ use remote_server::{
         middleware::{compress as compress_middleware, logger as logger_middleware},
         service::{graphql::config as graphql_config, rest::config as rest_config},
     },
-    util::{configuration, settings::Settings},
+    util::{
+        configuration,
+        settings::Settings,
+        sync::{self, SyncReceiverActor, SyncSenderActor},
+    },
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use log::info;
 use std::{
     env,
     net::TcpListener,
     sync::{Arc, Mutex},
     time::Duration,
 };
-use tokio::sync::mpsc::channel;
-use tokio::sync::mpsc::error::TrySendError;
-use tokio::time::{delay_for, interval};
 
 #[cfg(not(feature = "mock"))]
 async fn get_repositories(settings: &Settings) -> RepositoryMap {
@@ -161,11 +161,8 @@ async fn main() -> std::io::Result<()> {
     #[cfg(feature = "mock")]
     let repositories: RepositoryMap = get_repositories();
 
-    // We use a single-element channel so that we can only have one sync pending at a time.
-    // We consume this at the *start* of sync, so we could schedule a sync while syncing.
-    // Worst-case scenario, we produce an infinite stream of sync instructions and always go
-    // straight from one sync to the next, but that’s OK.
-    let (mut sync_sender, mut sync_receiver) = channel(1);
+    let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
+        sync::get_sync_actors();
 
     let registry = RepositoryRegistry {
         repositories,
@@ -191,36 +188,20 @@ async fn main() -> std::io::Result<()> {
     .run();
 
     let scheduler = async {
-        let mut interval = interval(Duration::from_secs(10));
-        loop {
-            interval.tick().await;
-            info!(target: "scheduler", "10 seconds have passed since last tick, scheduling sync");
-            // This implementation is purely tick-based, not taking into account how long sync
-            // takes, whether manual sync has been triggered and so the schedule should be
-            // adjusted, whether it failed and should be tried again sooner, &c. If you want to
-            // take any of these into account, create another channel from sync → scheduler.
-            match sync_sender.try_send(()) {
-                Ok(()) => info!(target: "scheduler", "sync successfully scheduled"),
-                Err(TrySendError::Full(())) => info!(target: "scheduler", "sync already pending"),
-                Err(TrySendError::Closed(())) => unreachable!("sync died!?"),
-            }
-        }
+        let sync_interval_duration: Duration = Duration::from_secs(60);
+        sync_sender.schedule_send(sync_interval_duration).await;
     };
 
     let sync = async {
-        while let Some(()) = sync_receiver.recv().await {
-            info!(target: "sync", "Someone requested a sync, pretending to do it…");
-            delay_for(Duration::from_secs(2)).await;
-            info!(target: "sync", "Done!");
-        }
-        unreachable!("sync channel senders all died!?");
+        let sync_delay_duration: Duration = Duration::from_secs(10);
+        sync_receiver.listen(sync_delay_duration).await;
     };
 
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
     tokio::select! {
         result = http_server => result,
-        () = sync => unreachable!("sync is not supposed to finish"),
-        () = scheduler => unreachable!("scheduler is not supposed to finish"),
+        () = sync => unreachable!("Sync receiver unexpectedly died!?"),
+        () = scheduler => unreachable!("Sync scheduler unexpectedly died!?"),
     }
 }
