@@ -1,4 +1,3 @@
-import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Collapse from '@material-ui/core/Collapse';
@@ -11,7 +10,6 @@ export * from './LoadingApp';
 export * from './RemoteComponent';
 export { AppNavLink } from './NavLink';
 export {
-  AppBar,
   Button,
   CircularProgress,
   Collapse,
