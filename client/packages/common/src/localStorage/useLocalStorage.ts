@@ -1,6 +1,6 @@
+import React, { useEffect } from 'react';
 import { LocalStorageKey } from './keys';
 import LocalStorage from './LocalStorage';
-import React from 'react';
 
 /**
  * Simple custom hook which will be seeded by the value within
@@ -21,6 +21,14 @@ export const useLocalStorage = <T>(
   const [value, setValue] = React.useState(
     LocalStorage.getItem<T>(key, defaultValue)
   );
+
+  useEffect(() => {
+    return LocalStorage.addListener<T>((updatedKey, value) => {
+      if (updatedKey === key) {
+        setValue(value);
+      }
+    });
+  }, []);
 
   const setItem = (value: T) => {
     localStorage.setItem(key, JSON.stringify(value));

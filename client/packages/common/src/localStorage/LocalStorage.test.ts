@@ -1,6 +1,10 @@
 import LocalStorage from './LocalStorage';
 
 describe('LocalStorage', () => {
+  beforeEach(() => {
+    LocalStorage.clearListeners();
+  });
+
   it('Gets null when no value is set for the key', () => {
     const value = LocalStorage.getItem('/appdrawer/open');
     expect(value).toEqual(null);
@@ -13,5 +17,24 @@ describe('LocalStorage', () => {
     LocalStorage.setItem('/appdrawer/open', {});
     const value = LocalStorage.getItem('/appdrawer/open');
     expect(value).toEqual({});
+  });
+  it('Registered listeners are called when an item is set', () => {
+    const mocked = jest.fn();
+    LocalStorage.addListener(mocked);
+    LocalStorage.setItem('/appdrawer/open', {});
+
+    expect(mocked).toBeCalledTimes(1);
+  });
+  it('Registered listeners are removed correctly', () => {
+    const mocked = jest.fn();
+    const remove = LocalStorage.addListener(mocked);
+    const numberOfListenersBefore = LocalStorage.listeners.size;
+
+    remove();
+
+    const numberOfListenersAfter = LocalStorage.listeners.size;
+
+    expect(numberOfListenersBefore).toBe(1);
+    expect(numberOfListenersAfter).toBe(0);
   });
 });
