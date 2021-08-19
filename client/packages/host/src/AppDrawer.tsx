@@ -18,6 +18,8 @@ import {
   useTranslation,
   AppNavLink,
   useDrawer,
+  useMediaQuery,
+  useTheme,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 
@@ -57,7 +59,7 @@ const useStyles = makeStyles(theme => ({
     boxShadow: theme.shadows[4],
   },
   drawerPaper: {
-    backgroundColor: theme.palette.background.drawer,
+    backgroundColor: theme.palette.background.menu,
     position: 'relative',
     whiteSpace: 'nowrap',
     width: 200,
@@ -135,6 +137,14 @@ const AppDrawer: React.FC = () => {
   const classes = useStyles();
   const drawer = useDrawer();
   const t = useTranslation();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  React.useEffect(() => {
+    if (drawer.hasUserSet) return;
+    if (isSmallScreen && drawer.isOpen) drawer.close();
+    if (!isSmallScreen && !drawer.isOpen) drawer.open();
+  }, [isSmallScreen]);
 
   return (
     <Drawer
