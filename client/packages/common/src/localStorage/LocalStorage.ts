@@ -1,4 +1,4 @@
-import { LocalStorageKey } from './keys';
+import { LocalStorageRecord, LocalStorageKey } from './keys';
 
 /**
  * Simple interface over a browser localStorage.
@@ -36,14 +36,20 @@ class LocalStorage {
     return `${this.AppPrefix}${key}`;
   }
 
-  setItem(key: LocalStorageKey, value: unknown): void {
+  setItem<StorageKey extends Extract<LocalStorageKey, string>>(
+    key: StorageKey,
+    value: LocalStorageRecord[StorageKey]
+  ): void {
     const stringified = JSON.stringify(value);
     localStorage.setItem(this.createStorageKey(key), stringified);
 
     this.listeners.forEach(listener => listener(key, value));
   }
 
-  getItem<T>(key: LocalStorageKey, defaultValue: T | null = null): T | null {
+  getItem<StorageKey extends Extract<LocalStorageKey, string>>(
+    key: StorageKey,
+    defaultValue: LocalStorageRecord[StorageKey] | null = null
+  ): LocalStorageRecord[StorageKey] | null {
     const item = localStorage.getItem(this.createStorageKey(key));
 
     if (typeof item !== 'string') {

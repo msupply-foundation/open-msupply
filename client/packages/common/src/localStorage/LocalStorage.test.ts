@@ -10,18 +10,18 @@ describe('LocalStorage', () => {
     expect(value).toEqual(null);
   });
   it('Gets the default value passed when no value is set for the key', () => {
-    const value = LocalStorage.getItem('/appdrawer/open', 'test');
-    expect(value).toEqual('test');
+    const value = LocalStorage.getItem('/appdrawer/open', true);
+    expect(value).toEqual(true);
   });
   it('Sets and Gets a value correctly', () => {
-    LocalStorage.setItem('/appdrawer/open', {});
+    LocalStorage.setItem('/appdrawer/open', true);
     const value = LocalStorage.getItem('/appdrawer/open');
-    expect(value).toEqual({});
+    expect(value).toEqual(true);
   });
   it('Registered listeners are called when an item is set', () => {
     const mocked = jest.fn();
     LocalStorage.addListener(mocked);
-    LocalStorage.setItem('/appdrawer/open', {});
+    LocalStorage.setItem('/appdrawer/open', true);
 
     expect(mocked).toBeCalledTimes(1);
   });
