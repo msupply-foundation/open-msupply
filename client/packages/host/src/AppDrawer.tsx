@@ -22,7 +22,7 @@ import {
 import clsx from 'clsx';
 
 const CustomersNav = React.lazy(() =>
-  process.env['NODE_ENV'] === 'test'
+  process.env['NODE_ENV'] !== 'production'
     ? import('../../customers/src/Nav')
     : import('customers/Nav')
 );
