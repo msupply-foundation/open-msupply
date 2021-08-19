@@ -22,6 +22,18 @@ impl ItemRepository {
         Ok(())
     }
 
+    pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let mut items = vec![];
+        self.mock_data.lock().unwrap().clone().into_iter().for_each(
+            |(_id, row): (String, DatabaseRow)| {
+                if let DatabaseRow::Item(item) = row {
+                    items.push(item);
+                }
+            },
+        );
+        Ok(items)
+    }
+
     pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
         match self.mock_data.lock().unwrap().get(&id.to_string()) {
             Some(DatabaseRow::Item(item)) => Ok(item.clone()),
