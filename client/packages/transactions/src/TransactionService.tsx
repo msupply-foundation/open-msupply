@@ -1,8 +1,10 @@
 import React, { FC } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
-import { useQuery, DataGrid } from '@openmsupply-client/common';
+import { useQuery /* , DataGrid */ } from '@openmsupply-client/common';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
+import { Table } from './Table';
+import { columns } from './columns';
 
 interface Transaction {
   customer: string;
@@ -72,49 +74,17 @@ const listQuery = async () => {
   return transactions;
 };
 
-const columns = [
-  {
-    field: 'id',
-    headerName: 'ID',
-    flex: 1,
-  },
-  {
-    field: 'date',
-    headerName: 'Date',
-    flex: 1,
-  },
-  {
-    field: 'customer',
-    headerName: 'Customer',
-    flex: 1,
-  },
-  {
-    field: 'supplier',
-    headerName: 'Supplier',
-    flex: 1,
-  },
-  {
-    field: 'total',
-    headerName: 'Total',
-    flex: 1,
-  },
-];
-
 const Transactions: FC = () => {
   const { data, isLoading } = useQuery(['transaction', 'list'], listQuery);
   const navigate = useNavigate();
 
   return isLoading ? null : (
     <div style={{ marginTop: 10, minWidth: '100%' }}>
-      <DataGrid
-        rows={data}
+      <Table
         columns={columns}
-        hideFooterPagination
-        hideFooterRowCount
-        checkboxSelection
-        hideFooterSelectedRowCount
-        onRowClick={params => {
-          navigate(`/customers/customer-invoice/${params.id}`);
+        data={data}
+        onRowClick={row => {
+          navigate(`/customers/customer-invoice/${row.id}`);
         }}
       />
     </div>
