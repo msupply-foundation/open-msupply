@@ -8,10 +8,6 @@ import { LocalStorageKey } from './keys';
  * which variables are in use under what keys and for ease
  * of de/serializing.
  *
- * TODO: Implement an observer pattern to allow for reactivity within
- * the ui whenever localStorage key/value pairs are updated through this
- * interface.
- *
  */
 
 type Listener<T> = (key: LocalStorageKey, value: T) => void;
