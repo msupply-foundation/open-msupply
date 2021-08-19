@@ -14,8 +14,27 @@ import { LocalStorageKey } from './keys';
  *
  */
 
+type Listener<T> = (key: LocalStorageKey, value: T) => void;
+
 class LocalStorage {
+  listeners = new Map();
+
   AppPrefix = '@openmsupply-client';
+
+  addListener<T>(fn: Listener<T>) {
+    const symbol = Symbol();
+    this.listeners.set(symbol, fn);
+
+    return () => this.removeListener(symbol);
+  }
+
+  removeListener(symbol: symbol) {
+    this.listeners.delete(symbol);
+  }
+
+  clearListeners() {
+    this.listeners = new Map();
+  }
 
   createStorageKey(key: LocalStorageKey): string {
     return `${this.AppPrefix}${key}`;
@@ -24,11 +43,22 @@ class LocalStorage {
   setItem(key: LocalStorageKey, value: unknown): void {
     const stringified = JSON.stringify(value);
     localStorage.setItem(this.createStorageKey(key), stringified);
+
+    this.listeners.forEach(listener => listener(key, value));
   }
 
-  getItem<T>(key: LocalStorageKey, defaultValue: T | null = null): T {
+  getItem<T>(key: LocalStorageKey, defaultValue: T | null = null): T | null {
     const item = localStorage.getItem(this.createStorageKey(key));
-    return JSON.parse(item ?? '') ?? defaultValue;
+
+    if (typeof item !== 'string') {
+      return defaultValue;
+    }
+
+    try {
+      return JSON.parse(item);
+    } catch {
+      return defaultValue;
+    }
   }
 }
 
