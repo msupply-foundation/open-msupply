@@ -40,6 +40,11 @@ class LocalStorage {
     key: StorageKey,
     value: LocalStorageRecord[StorageKey]
   ): void {
+    const existingValue = this.getItem(key);
+
+    // Short circuit exit if values are unchanged
+    if (existingValue === value) return;
+
     const stringified = JSON.stringify(value);
     localStorage.setItem(this.createStorageKey(key), stringified);
 

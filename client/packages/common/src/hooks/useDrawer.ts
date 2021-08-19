@@ -24,3 +24,9 @@ export const useDrawer = create<DrawerController>(set => {
 useDrawer.subscribe(({ hasUserSet, isOpen }) => {
   if (hasUserSet) LocalStorage.setItem('/appdrawer/open', isOpen);
 });
+
+LocalStorage.addListener<boolean>((key, value) => {
+  if (key === '/appdrawer/open') {
+    useDrawer.setState(state => ({ ...state, isOpen: value }));
+  }
+});
