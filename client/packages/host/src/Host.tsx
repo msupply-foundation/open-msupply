@@ -60,45 +60,47 @@ const Host: FC = () => {
           <AppThemeProvider>
             <BrowserRouter>
               <Viewport>
+                <AppBar />
                 <Box display="flex" flex={1}>
-                  <AppBar />
                   <AppDrawer />
-                  <React.Suspense fallback={'Loading'}>
-                    <Routes>
-                      <Route
-                        path="dashboard/*"
-                        element={<DashboardService />}
-                      />
-                      <Route
-                        path="customers/*"
-                        element={<CustomerContainer />}
-                      />
-                      <Route
-                        path="suppliers/*"
-                        element={<Heading locale={locale}>suppliers</Heading>}
-                      />
-                      <Route
-                        path="stock/*"
-                        element={<Heading locale={locale}>stock</Heading>}
-                      />
-                      <Route
-                        path="tools/*"
-                        element={<Heading locale={locale}>tools</Heading>}
-                      />
-                      <Route
-                        path="reports/*"
-                        element={<Heading locale={locale}>reports</Heading>}
-                      />
-                      <Route
-                        path="messages/*"
-                        element={<Heading locale={locale}>messages</Heading>}
-                      />
-                      <Route
-                        path="*"
-                        element={<Navigate to="/dashboard" replace />}
-                      />
-                    </Routes>
-                  </React.Suspense>
+                  <Box flex={1} style={{ marginTop: 90 }}>
+                    <React.Suspense fallback={'Loading'}>
+                      <Routes>
+                        <Route
+                          path="dashboard/*"
+                          element={<DashboardService />}
+                        />
+                        <Route
+                          path="customers/*"
+                          element={<CustomerContainer />}
+                        />
+                        <Route
+                          path="suppliers/*"
+                          element={<Heading locale={locale}>suppliers</Heading>}
+                        />
+                        <Route
+                          path="stock/*"
+                          element={<Heading locale={locale}>stock</Heading>}
+                        />
+                        <Route
+                          path="tools/*"
+                          element={<Heading locale={locale}>tools</Heading>}
+                        />
+                        <Route
+                          path="reports/*"
+                          element={<Heading locale={locale}>reports</Heading>}
+                        />
+                        <Route
+                          path="messages/*"
+                          element={<Heading locale={locale}>messages</Heading>}
+                        />
+                        <Route
+                          path="*"
+                          element={<Navigate to="/dashboard" replace />}
+                        />
+                      </Routes>
+                    </React.Suspense>
+                  </Box>
                 </Box>
               </Viewport>
             </BrowserRouter>

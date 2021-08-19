@@ -7,9 +7,7 @@ const TransactionService = React.lazy(
 );
 
 const RequisitionService: React.FC = () => (
-  <Typography style={{ marginLeft: 25, marginTop: 75 }}>
-    coming soon..
-  </Typography>
+  <Typography style={{ margin: 25 }}>coming soon..</Typography>
 );
 
 const CustomerContainer: FC = () => {
