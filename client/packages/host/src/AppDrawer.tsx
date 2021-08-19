@@ -136,6 +136,7 @@ const AppDrawer: React.FC = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   React.useEffect(() => {
+    if (drawer.isSet) return;
     if (isSmallScreen && drawer.isOpen) drawer.close();
     if (!isSmallScreen && !drawer.isOpen) drawer.open();
   }, [isSmallScreen]);
