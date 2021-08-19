@@ -47,7 +47,7 @@ describe('useDrawer', () => {
     render(<UseDrawerExample />);
 
     act(() => {
-      fireEvent.click(screen.getByTestId('button'));
+      fireEvent.click(screen.getByTestId('button2'));
     });
 
     expect(localStorage.getItem('@openmsupply-client/appdrawer/open')).toBe(

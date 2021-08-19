@@ -1,11 +1,31 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import AppDrawer from './AppDrawer';
-import { TestingProvider } from '@openmsupply-client/common';
+import {
+  setScreenSize_ONLY_FOR_TESTING,
+  TestingProvider,
+} from '@openmsupply-client/common';
 import { act } from 'react-dom/test-utils';
 
 describe('AppDrawer', () => {
-  it('Expands when clicking the expand button', () => {
+  it('Collapses when clicking the drawer open/close button for the first time on a large screen', () => {
+    render(
+      <TestingProvider>
+        <AppDrawer />
+      </TestingProvider>
+    );
+
+    const button = screen.getByRole('button', { name: /Open the menu/i });
+    const drawer = screen.getByTestId('drawer');
+
+    act(() => {
+      fireEvent.click(button);
+    });
+
+    expect(drawer).toHaveAttribute('aria-expanded', 'false');
+  });
+  it('expands when clicking the drawer open/close button for the first time on a small screen', () => {
+    setScreenSize_ONLY_FOR_TESTING(1279);
     render(
       <TestingProvider>
         <AppDrawer />
@@ -29,10 +49,6 @@ describe('AppDrawer', () => {
     );
 
     const button = screen.getByRole('button', { name: /Open the menu/i });
-
-    act(() => {
-      fireEvent.click(button);
-    });
 
     let rootNavigationElements = [
       screen.getByText(/dashboard/i),
