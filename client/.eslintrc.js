@@ -28,6 +28,7 @@ module.exports = {
   settings: { react: { version: 'detect' } },
   plugins: ['react', , '@typescript-eslint'],
   rules: {
+    camelcase: ['error', { allow: ['_ONLY_FOR_TESTING'] }],
     'require-jsdoc': 0,
     'react/display-name': 'off',
     'react/prop-types': 'off',
