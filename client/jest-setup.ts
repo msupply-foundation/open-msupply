@@ -1,3 +1,4 @@
+import { setScreenSize_ONLY_FOR_TESTING } from '@openmsupply-client/common';
 import '@testing-library/jest-dom';
 
 let mockStorage: Record<string, string> = {};
@@ -18,4 +19,19 @@ afterAll(() => {
 
 beforeEach(() => {
   mockStorage = {};
+});
+
+/**
+ * Before each test, create a matching media for the width
+ * of the screen. This ensures hooks like `isSmallScreen`
+ * correctly return a value. Breakpoints here:
+ * https://material-ui.com/customization/breakpoints/
+ *
+ * This will set the screen to larger than the md breakpoint
+ * after each test.
+ *
+ *
+ */
+beforeEach(() => {
+  setScreenSize_ONLY_FOR_TESTING(1280);
 });
