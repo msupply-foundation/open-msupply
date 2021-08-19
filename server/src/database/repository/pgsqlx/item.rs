@@ -27,6 +27,20 @@ impl ItemRepository {
         Ok(())
     }
 
+    pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let items = sqlx::query_as!(
+            ItemRow,
+            r#"
+            SELECT id, item_name, type_of AS "type_of!: ItemRowType"
+            FROM item
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(items)
+    }
+
     pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
         let item = sqlx::query_as!(
             ItemRow,
