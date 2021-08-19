@@ -1,6 +1,7 @@
 use crate::database::repository::RepositoryError;
 use crate::database::schema::{DatabaseRow, UserAccountRow};
 
+use log::info;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -15,6 +16,10 @@ impl UserAccountRepository {
     }
 
     pub async fn insert_one(&self, user_account: &UserAccountRow) -> Result<(), RepositoryError> {
+        info!(
+            "Inserting user_account record (user_account.id={})",
+            user_account.id
+        );
         self.mock_data.lock().unwrap().insert(
             user_account.id.to_string(),
             DatabaseRow::UserAccount(user_account.clone()),
@@ -23,10 +28,14 @@ impl UserAccountRepository {
     }
 
     pub async fn find_one_by_id(&self, id: &str) -> Result<UserAccountRow, RepositoryError> {
+        info!("Querying user_account {}", id);
         match self.mock_data.lock().unwrap().get(&id.to_string()) {
             Some(DatabaseRow::UserAccount(user_account)) => Ok(user_account.clone()),
             _ => Err(RepositoryError {
-                msg: String::from(format!("Failed to find user_account {}", id)),
+                msg: String::from(format!(
+                    "Failed to find user_account record (user_account.id={})",
+                    id
+                )),
             }),
         }
     }

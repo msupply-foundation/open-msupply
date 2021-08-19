@@ -1,6 +1,7 @@
 use crate::database::repository::RepositoryError;
 use crate::database::schema::{DatabaseRow, ItemRow};
 
+use log::info;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -15,6 +16,7 @@ impl ItemRepository {
     }
 
     pub async fn insert_one(&self, item: &ItemRow) -> Result<(), RepositoryError> {
+        info!("Inserting item record (item.id={})", item.id);
         self.mock_data
             .lock()
             .unwrap()
@@ -23,10 +25,11 @@ impl ItemRepository {
     }
 
     pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
+        info!("Querying item record (item.id={})", id);
         match self.mock_data.lock().unwrap().get(&id.to_string()) {
             Some(DatabaseRow::Item(item)) => Ok(item.clone()),
             _ => Err(RepositoryError {
-                msg: String::from(format!("Failed to find item {}", id)),
+                msg: String::from(format!("Failed to find item record (item.id={})", id)),
             }),
         }
     }
