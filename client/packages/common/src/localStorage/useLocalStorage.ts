@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { LocalStorageKey } from './keys';
+import { LocalStorageKey, LocalStorageRecord } from './keys';
 import LocalStorage from './LocalStorage';
 
 /**
@@ -9,29 +9,30 @@ import LocalStorage from './LocalStorage';
  * Will update localStorage whenever the state changes.
  */
 
-type LocalStorageSetter<T> = [
-  value: T | null,
-  setItem: (storageObject: T) => void
-];
+type LocalStorageSetter<T> = [value: T | null, setItem: (value: T) => void];
 
-export const useLocalStorage = <T>(
-  key: LocalStorageKey,
-  defaultValue: T | null = null
-): LocalStorageSetter<T> => {
+export const useLocalStorage = <
+  StorageKey extends Extract<LocalStorageKey, string>
+>(
+  key: StorageKey,
+  defaultValue: LocalStorageRecord[StorageKey] | null = null
+): LocalStorageSetter<LocalStorageRecord[StorageKey]> => {
   const [value, setValue] = React.useState(
-    LocalStorage.getItem<T>(key, defaultValue)
+    LocalStorage.getItem(key, defaultValue)
   );
 
   useEffect(() => {
-    return LocalStorage.addListener<T>((updatedKey, value) => {
-      if (updatedKey === key) {
-        setValue(value);
+    return LocalStorage.addListener<LocalStorageRecord[StorageKey]>(
+      (updatedKey, value) => {
+        if (updatedKey === key) {
+          setValue(value);
+        }
       }
-    });
+    );
   }, []);
 
-  const setItem = (value: T) => {
-    localStorage.setItem(key, JSON.stringify(value));
+  const setItem = (value: LocalStorageRecord[StorageKey]) => {
+    LocalStorage.setItem(key, value);
     setValue(value);
   };
 

@@ -1,1 +1,5 @@
-export type LocalStorageKey = '/appdrawer/open';
+export type LocalStorageRecord = {
+  '/appdrawer/open': boolean;
+};
+
+export type LocalStorageKey = keyof LocalStorageRecord;
