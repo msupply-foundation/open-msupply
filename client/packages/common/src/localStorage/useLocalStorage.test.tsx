@@ -31,9 +31,8 @@ describe('useLocalStorage', () => {
 
     act(() => {
       fireEvent.click(screen.getByRole('button'));
+      LocalStorage.setItem('/appdrawer/open', true);
     });
-
-    LocalStorage.setItem('/appdrawer/open', true);
 
     const node = screen.getByText('true');
 
