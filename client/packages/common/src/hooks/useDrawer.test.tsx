@@ -1,7 +1,8 @@
-import { useDrawer } from '.';
+import { useDrawer } from './useDrawer';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
+import LocalStorage from '../localStorage/LocalStorage';
 
 describe('useDrawer', () => {
   const UseDrawerExample = () => {
@@ -50,8 +51,6 @@ describe('useDrawer', () => {
       fireEvent.click(screen.getByTestId('button2'));
     });
 
-    expect(localStorage.getItem('@openmsupply-client/appdrawer/open')).toBe(
-      'true'
-    );
+    expect(LocalStorage.getItem('/appdrawer/open')).toBe(true);
   });
 });
