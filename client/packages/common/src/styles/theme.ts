@@ -1,4 +1,5 @@
 import { createTheme } from '@material-ui/core/styles';
+import shadows, { Shadows } from '@material-ui/core/styles/shadows';
 
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
@@ -31,6 +32,11 @@ const themeOptions = {
       white: '#fff',
     },
   },
+  shadows: [
+    'none',
+    '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)',
+    ...shadows.slice(2),
+  ] as Shadows,
   typography: {
     body1: {
       fontFamily: 'Inter',
@@ -48,6 +54,5 @@ const themeOptions = {
 };
 
 const theme = createTheme(themeOptions);
-theme.shadows[1] =
-  '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
+
 export default theme;
