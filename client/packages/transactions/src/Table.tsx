@@ -41,6 +41,7 @@ export const Table: React.FC<TableProps> = ({
   // console.log('-------------------------------------------');
 
   const classes = useStyles();
+  const hasRowClick = !!onRowClick;
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     useTable({
       columns,
@@ -71,6 +72,7 @@ export const Table: React.FC<TableProps> = ({
               <TableRow
                 {...row.getRowProps()}
                 onClick={() => onRowClick && onRowClick(row)}
+                hover={hasRowClick}
               >
                 {row.cells.map(cell => {
                   return (
@@ -78,7 +80,7 @@ export const Table: React.FC<TableProps> = ({
                       {...cell.getCellProps()}
                       className={clsx(
                         classes.bodyCell,
-                        onRowClick && classes.clickable
+                        hasRowClick && classes.clickable
                       )}
                     >
                       {cell.render('Cell')}
