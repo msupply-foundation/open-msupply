@@ -4,6 +4,7 @@ module.exports = {
     es2021: true,
   },
   extends: [
+    'plugin:jest-dom/recommended',
     'plugin:react/recommended',
     'plugin:@typescript-eslint/recommended',
     'google',
@@ -23,6 +24,7 @@ module.exports = {
     ecmaVersion: 12,
     sourceType: 'module',
   },
+
   settings: { react: { version: 'detect' } },
   plugins: ['react', , '@typescript-eslint'],
   rules: {

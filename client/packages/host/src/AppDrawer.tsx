@@ -23,7 +23,11 @@ import {
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
 
-const CustomersNav = React.lazy(() => import('customers/Nav'));
+const CustomersNav = React.lazy(() =>
+  process.env['NODE_ENV'] !== 'production'
+    ? import('../../customers/src/Nav')
+    : import('customers/Nav')
+);
 
 const useStyles = makeStyles(theme => ({
   toolbarIcon: {
@@ -132,6 +136,7 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
 const AppDrawer: React.FC = () => {
   const classes = useStyles();
   const drawer = useDrawer();
+  const t = useTranslation();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -143,7 +148,9 @@ const AppDrawer: React.FC = () => {
 
   return (
     <Drawer
+      data-testid="drawer"
       variant="permanent"
+      aria-expanded={drawer.isOpen}
       classes={{
         paper: clsx(
           classes.drawerPaper,
@@ -153,7 +160,10 @@ const AppDrawer: React.FC = () => {
       open={drawer.isOpen}
     >
       <div className={classes.toolbarIcon}>
-        <IconButton onClick={drawer.toggle}>
+        <IconButton
+          aria-label={t('button.open-the-menu')}
+          onClick={drawer.toggle}
+        >
           <MSupplyGuy
             classes={{
               root: drawer.isOpen
