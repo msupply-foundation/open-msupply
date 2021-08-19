@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import React, { FC } from 'react';
 import { AppThemeProvider } from '@openmsupply-client/common';
 import { IntlTestProvider } from '../intl/IntlTestProvider';
