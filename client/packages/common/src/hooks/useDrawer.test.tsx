@@ -53,4 +53,16 @@ describe('useDrawer', () => {
 
     expect(LocalStorage.getItem('/appdrawer/open')).toBe(true);
   });
+
+  it('is updated when updated local storage through the API interface', () => {
+    render(<UseDrawerExample />);
+
+    act(() => {
+      LocalStorage.setItem('/appdrawer/open', true);
+    });
+
+    const node = screen.getByText('true');
+
+    expect(node).toBeInTheDocument();
+  });
 });
