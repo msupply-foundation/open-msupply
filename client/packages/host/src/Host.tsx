@@ -8,6 +8,7 @@ import {
   ReactQueryDevtools,
   QueryClientProvider,
   IntlProvider,
+  styled,
   useFormatDate,
   useHostContext,
   useTranslation,
@@ -17,6 +18,11 @@ import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
 
+const Content = styled(Box)({
+  marginTop: 90,
+  overflowY: 'scroll',
+  height: '100vh',
+});
 const queryClient = new QueryClient();
 
 const CustomerContainer = React.lazy(
@@ -63,7 +69,7 @@ const Host: FC = () => {
                 <AppBar />
                 <Box display="flex" flex={1}>
                   <AppDrawer />
-                  <Box flex={1} style={{ marginTop: 90 }}>
+                  <Content flex={1}>
                     <React.Suspense fallback={'Loading'}>
                       <Routes>
                         <Route
@@ -100,7 +106,7 @@ const Host: FC = () => {
                         />
                       </Routes>
                     </React.Suspense>
-                  </Box>
+                  </Content>
                 </Box>
               </Viewport>
             </BrowserRouter>

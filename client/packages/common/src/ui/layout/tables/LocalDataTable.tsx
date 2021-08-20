@@ -40,7 +40,7 @@ const renderSortIcon: React.FC<ColumnInstance> = column => {
   return !!column.isSortedDesc ? <SortDesc /> : <SortAsc />;
 };
 
-export const RemoteDataTable: React.FC<TableProps> = ({
+export const LocalDataTable: React.FC<TableProps> = ({
   columns,
   data = [],
   onRowClick,
