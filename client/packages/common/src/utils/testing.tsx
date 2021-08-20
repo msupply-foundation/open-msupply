@@ -34,6 +34,6 @@ function createMatchMedia(width: number) {
   });
 }
 
-export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number) => {
+export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number): void => {
   window.matchMedia = createMatchMedia(screenSize);
 };

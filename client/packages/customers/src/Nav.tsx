@@ -27,22 +27,28 @@ const Nav: FC = () => {
   return (
     <>
       <AppNavLink
+        end={!isActive}
         to="customers"
         icon={<Customers />}
         text={t('app.customers')}
       />
       <Collapse in={isActive}>
         <List>
-          <AppNavLink
-            end={true}
-            to="/customers/customer-invoice"
-            text={t('app.customer-invoice')}
-          />
-          <AppNavLink
-            end={true}
-            to="/customers/customer-requisition"
-            text={t('app.customer-requisition')}
-          />
+          {isActive && (
+            <>
+              <AppNavLink
+                end={true}
+                to="/customers/customer-invoice"
+                text={t('app.customer-invoice')}
+              />
+
+              <AppNavLink
+                end={true}
+                to="/customers/customer-requisition"
+                text={t('app.customer-requisition')}
+              />
+            </>
+          )}
         </List>
       </Collapse>
     </>
