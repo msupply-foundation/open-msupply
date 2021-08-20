@@ -8,11 +8,11 @@ pub struct SyncCredentials {
 }
 
 impl SyncCredentials {
-    pub fn new(username: String, password: String) -> SyncCredentials {
-        SyncCredentials {
-            username,
-            password: auth::sha256(password),
-        }
+    pub fn new(username: &str, password: &str) -> SyncCredentials {
+        let username = username.to_owned();
+        let password = auth::sha256(password);
+
+        SyncCredentials { username, password }
     }
 }
 

@@ -20,8 +20,8 @@ impl SyncConnection {
     pub fn new(settings: &SyncSettings) -> SyncConnection {
         let host = settings.host.clone();
         let port = settings.port.clone();
-        let username = settings.username.clone();
-        let password = settings.password.clone();
+        let username = &settings.username;
+        let password = &settings.password;
 
         let client = Client::new();
         let server = SyncServer::new(host, port);

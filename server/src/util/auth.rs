@@ -1,6 +1,7 @@
 use sha2::{Digest, Sha256};
 
-pub fn sha256(plaintext: String) -> String {
+
+pub fn sha256(plaintext: &str) -> String {
     format!("{:x}", Sha256::digest(plaintext.as_bytes()))
 }
 
