@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
-import { useQuery /* , DataGrid */ } from '@openmsupply-client/common';
+import { RemoteDataTable, useQuery } from '@openmsupply-client/common';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
-import { Table } from './Table';
 import { columns } from './columns';
 
 interface Transaction {
@@ -80,7 +79,7 @@ const Transactions: FC = () => {
 
   return isLoading ? null : (
     <div style={{ marginTop: 10, minWidth: '100%' }}>
-      <Table
+      <RemoteDataTable
         columns={columns}
         data={data}
         onRowClick={row => {

@@ -11,7 +11,7 @@ import {
   TableRow,
   TableContainer,
   Table as MuiTable,
-} from '@openmsupply-client/common';
+} from '@material-ui/core';
 
 const useStyles = makeStyles(theme => ({
   bodyCell: {
@@ -31,7 +31,7 @@ interface TableProps {
   onRowClick?: (row: Row) => void;
 }
 
-export const Table: React.FC<TableProps> = ({
+export const RemoteDataTable: React.FC<TableProps> = ({
   columns,
   data = [],
   onRowClick,
