@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { ListItem, ListItemText, Tooltip } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { useMatch, Link } from 'react-router-dom';
+import { useDrawer } from '../../hooks/useDrawer';
 
 const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
@@ -28,11 +29,24 @@ interface ListItemLinkProps {
   to: string;
 }
 
+const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
+  // This nav menu item should be selected when lower level elements
+  // are selected. For example, the route /customer-invoices/{id} should
+  // highlight the nav menu item for customer-invoices.
+  const highlightLowerLevels = !end || to.endsWith('*');
+
+  // If we need to highlight on lower levels, append a wildcard.
+  const path = highlightLowerLevels ? to : `${to}/*`;
+
+  const selected = useMatch({ path });
+  return !!selected;
+};
+
 export const AppNavLink: FC<ListItemLinkProps> = props => {
   const classes = useStyles();
-  const { end, icon = <span style={{ width: 20 }} />, text, to } = props;
-  const path = !end || to.endsWith('*') ? to : `${to}/*`;
-  const selected = useMatch({ path });
+  const { end, icon = <span style={{ width: 2 }} />, text, to } = props;
+  const drawer = useDrawer();
+  const selected = useSelectedNavMenuItem(to, !!end);
 
   const CustomLink = React.useMemo(
     () =>
@@ -48,9 +62,9 @@ export const AppNavLink: FC<ListItemLinkProps> = props => {
 
   return (
     <li>
-      <Tooltip title={text || ''}>
+      <Tooltip disableHoverListener={drawer.isOpen} title={text || ''}>
         <ListItem
-          selected={!!selected}
+          selected={selected}
           button
           component={CustomLink}
           className={className}
