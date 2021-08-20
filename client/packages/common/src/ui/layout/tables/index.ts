@@ -1,3 +1,4 @@
+import { LocalDataTable } from './LocalDataTable';
 import { RemoteDataTable } from './RemoteDataTable';
 
-export { RemoteDataTable };
+export { LocalDataTable, RemoteDataTable };
