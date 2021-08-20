@@ -6,7 +6,6 @@
     "@babel/core": "7.14.6",
     "@babel/preset-react": "7.14.5",
     "@pmmmwh/react-refresh-webpack-plugin": "https://github.com/pmmmwh/react-refresh-webpack-plugin",
-    "@types/react-table": "^7.7.2",
     "babel-loader": "8.2.2",
     "eslint-config-prettier": "^8.3.0",
     "find-up": "5.0.0",
@@ -34,7 +33,6 @@
     "history": "^5.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-router-dom": "^6.0.0-beta.0",
-    "react-table": "^7.7.0"
+    "react-router-dom": "^6.0.0-beta.0"
   }
 }
