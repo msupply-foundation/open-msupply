@@ -35,7 +35,7 @@ const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // highlight the nav menu item for customer-invoices.
   const highlightLowerLevels = !end || to.endsWith('*');
 
-  // If we need to highlight on lower levels, append a wildcard.
+  // If we need to highlight the higher levels append a wildcard to the match path.
   const path = highlightLowerLevels ? to : `${to}/*`;
 
   const selected = useMatch({ path });
