@@ -30,6 +30,8 @@ module.exports = {
   rules: {
     'require-jsdoc': 0,
     'react/display-name': 'off',
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': 'error',
     'react/prop-types': 'off',
     '@typescript-eslint/no-empty-function': 'off',
     'spaced-comment': [
