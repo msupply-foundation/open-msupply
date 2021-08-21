@@ -1,6 +1,7 @@
 pub mod schema;
 
 use actix_web::{guard::fn_guard, web::Data, HttpResponse, Result};
+use async_graphql::dataloader::DataLoader;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::Context;
 use async_graphql_actix_web::{Request, Response};
@@ -8,19 +9,28 @@ use async_graphql_actix_web::{Request, Response};
 use self::schema::Schema;
 use crate::server::data::RepositoryRegistry;
 
+use crate::database::loader::ItemLoader;
+
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 trait ContextExt {
     fn get_repository<T: anymap::any::CloneAny + Send + Sync>(&self) -> &T;
+    fn get_loader(&self) -> &DataLoader<ItemLoader>;
 }
 
 impl<'a> ContextExt for Context<'a> {
     fn get_repository<T: anymap::any::CloneAny + Send + Sync>(&self) -> &T {
         self.data_unchecked::<Data<RepositoryRegistry>>().get::<T>()
     }
+
+    fn get_loader(&self) -> &DataLoader<ItemLoader> {
+        let loader = self.data_unchecked::<Data<DataLoader<ItemLoader>>>();
+        loader
+    }
 }
 
 pub fn config(
     repository_registry: Data<RepositoryRegistry>,
+    loader: Data<DataLoader<ItemLoader>>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let schema = Schema::build(
@@ -29,6 +39,7 @@ pub fn config(
             async_graphql::EmptySubscription,
         )
         .data(repository_registry)
+        .data(loader)
         .finish();
         cfg.service(
             actix_web::web::scope("/graphql")
