@@ -4,7 +4,7 @@ import { RouteBuilder } from './formatters';
 describe('Formatters', () => {
   it('builds a route with an appended wildcard', () => {
     expect(
-      RouteBuilder.create(AppRoute.CustomerInvoice)
+      RouteBuilder.create(AppRoute.Customers)
         .addPart(AppRoute.CustomerInvoice)
         .addWildCard()
         .build()
