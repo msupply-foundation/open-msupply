@@ -16,10 +16,13 @@ use {
 };
 
 use remote_server::{
-    database::repository::{
-        CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
-        RequisitionLineRepository, RequisitionRepository, StoreRepository, TransactLineRepository,
-        TransactRepository, UserAccountRepository,
+    database::{
+        loader::ItemLoader,
+        repository::{
+            CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
+            RequisitionLineRepository, RequisitionRepository, StoreRepository,
+            TransactLineRepository, TransactRepository, UserAccountRepository,
+        },
     },
     server::{
         data::{ActorRegistry, RepositoryMap, RepositoryRegistry},
@@ -34,6 +37,7 @@ use remote_server::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
+use async_graphql::dataloader::DataLoader;
 use std::{
     env,
     net::TcpListener,
@@ -147,6 +151,30 @@ async fn get_repositories(_: &Settings) -> RepositoryMap {
     repositories
 }
 
+#[cfg(not(feature = "mock"))]
+pub async fn get_item_repository(settings: &Settings) -> ItemRepository {
+    let pool: PgPool = PgPool::connect(&settings.database.connection_string())
+        .await
+        .expect("Failed to connect to database");
+
+    let item_repository = ItemRepository::new(pool.clone());
+
+    item_repository
+}
+
+#[cfg(feature = "mock")]
+pub async fn get_item_repository(_settings: &Settings) -> ItemRepository {
+    let mut mock_data: HashMap<String, DatabaseRow> = HashMap::new();
+    let mock_items: Vec<ItemRow> = mock::mock_items();
+    for item in mock_items {
+        mock_data.insert(item.id.to_string(), DatabaseRow::Item(item.clone()));
+    }
+    let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
+    let item_repository = ItemRepository::new(Arc::clone(&mock_data));
+
+    item_repository
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env::set_var("RUST_LOG", "info");
@@ -156,17 +184,20 @@ async fn main() -> std::io::Result<()> {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     let repositories: RepositoryMap = get_repositories(&settings).await;
+    let item_repository: ItemRepository = get_item_repository(&settings).await;
 
     let sync_connection = SyncConnection::new(&settings.sync);
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors(sync_connection);
 
     let repository_registry = RepositoryRegistry { repositories };
+    let loader = DataLoader::new(ItemLoader { item_repository });
     let actor_registry = ActorRegistry {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
     let repository_registry_data = Data::new(repository_registry);
+    let loader_data = Data::new(loader);
     let actor_registry_data = Data::new(actor_registry);
 
     let listener =
@@ -178,7 +209,10 @@ async fn main() -> std::io::Result<()> {
             .app_data(actor_registry_data.clone())
             .wrap(logger_middleware())
             .wrap(compress_middleware())
-            .configure(graphql_config(repository_registry_data.clone()))
+            .configure(graphql_config(
+                repository_registry_data.clone(),
+                loader_data.clone(),
+            ))
             .configure(rest_config)
     })
     .listen(listener)?

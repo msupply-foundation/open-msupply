@@ -312,11 +312,23 @@ impl RequisitionLine {
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_repository = ctx.get_repository::<ItemRepository>();
+        let item_loader = ctx.get_loader();
 
-        let item_row: ItemRow = item_repository
-            .find_one_by_id(&self.requisition_line_row.item_id)
+        let item_row: ItemRow = item_loader
+            .load_one(self.requisition_line_row.item_id.clone())
             .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item for item line {}",
+                    self.requisition_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get item for item line {}",
+                    self.requisition_line_row.id
+                )
+            })
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get item for item line {}",

@@ -56,4 +56,20 @@ impl ItemRepository {
 
         Ok(item)
     }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
+        let items = sqlx::query_as!(
+            ItemRow,
+            r#"
+            SELECT id, item_name, type_of AS "type_of!: ItemRowType"
+            FROM item
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(items)
+    }
 }
