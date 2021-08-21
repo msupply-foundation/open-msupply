@@ -11,7 +11,9 @@ import {
   useFormatDate,
   useHostContext,
   useTranslation,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
@@ -53,6 +55,7 @@ const Heading: FC<{ locale: string }> = props => {
 
 const Host: FC = () => {
   const { locale } = useHostContext();
+
   return (
     <ReduxProvider>
       <QueryClientProvider client={queryClient}>
@@ -67,31 +70,45 @@ const Host: FC = () => {
                     <React.Suspense fallback={'Loading'}>
                       <Routes>
                         <Route
-                          path="dashboard/*"
+                          path={RouteBuilder.create(AppRoute.Dashboard)
+                            .addWildCard()
+                            .build()}
                           element={<DashboardService />}
                         />
                         <Route
-                          path="customers/*"
+                          path={RouteBuilder.create(AppRoute.Customers)
+                            .addWildCard()
+                            .build()}
                           element={<CustomerContainer />}
                         />
                         <Route
-                          path="suppliers/*"
+                          path={RouteBuilder.create(AppRoute.Suppliers)
+                            .addWildCard()
+                            .build()}
                           element={<Heading locale={locale}>suppliers</Heading>}
                         />
                         <Route
-                          path="stock/*"
+                          path={RouteBuilder.create(AppRoute.Stock)
+                            .addWildCard()
+                            .build()}
                           element={<Heading locale={locale}>stock</Heading>}
                         />
                         <Route
-                          path="tools/*"
+                          path={RouteBuilder.create(AppRoute.Tools)
+                            .addWildCard()
+                            .build()}
                           element={<Heading locale={locale}>tools</Heading>}
                         />
                         <Route
-                          path="reports/*"
+                          path={RouteBuilder.create(AppRoute.Reports)
+                            .addWildCard()
+                            .build()}
                           element={<Heading locale={locale}>reports</Heading>}
                         />
                         <Route
-                          path="messages/*"
+                          path={RouteBuilder.create(AppRoute.Messages)
+                            .addWildCard()
+                            .build()}
                           element={<Heading locale={locale}>messages</Heading>}
                         />
                         <Route
