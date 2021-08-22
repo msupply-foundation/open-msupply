@@ -1,14 +1,19 @@
-use crate::database::repository::{
-    CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
-    RequisitionLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
+use crate::{
+    database::{
+        loader::ItemLoader,
+        repository::{
+            CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
+            RequisitionLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
+        },
+        schema::{
+            ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
+            RequisitionRowType, StoreRow, TransactLineRow, TransactRow, TransactRowType,
+        },
+    },
+    server::service::graphql::ContextExt,
 };
-use crate::database::schema::{
-    ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
-    RequisitionRowType, StoreRow, TransactLineRow, TransactRow, TransactRowType,
-};
-use crate::server::service::graphql::ContextExt;
 
-use async_graphql::{Context, Enum, InputObject, Object};
+use async_graphql::{dataloader::DataLoader, Context, Enum, InputObject, Object};
 
 #[derive(Clone)]
 pub struct Name {
@@ -152,13 +157,17 @@ impl ItemLine {
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_repository = ctx.get_repository::<ItemRepository>();
+        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
-        let item_row: ItemRow = item_repository
-            .find_one_by_id(&self.item_line_row.item_id)
+        let item_row: ItemRow = item_loader
+            .load_one(self.item_line_row.item_id.clone())
             .await
             .unwrap_or_else(|_| {
-                panic!("Failed to get item for item line {}", self.item_line_row.id)
+                panic!("Failed to get item for item_line {}", self.item_line_row.id)
+            })
+            .ok_or_else(|| panic!("Failed to get item for item_line {}", self.item_line_row.id))
+            .unwrap_or_else(|_| {
+                panic!("Failed to get item for item_line {}", self.item_line_row.id)
             });
 
         Item { item_row }
@@ -312,26 +321,26 @@ impl RequisitionLine {
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_loader = ctx.get_loader();
+        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
         let item_row: ItemRow = item_loader
             .load_one(self.requisition_line_row.item_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get item for item line {}",
+                    "Failed to get item for requisition_line {}",
                     self.requisition_line_row.id
                 )
             })
             .ok_or_else(|| {
                 panic!(
-                    "Failed to get item for item line {}",
+                    "Failed to get item for requisition_line {}",
                     self.requisition_line_row.id
                 )
             })
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get item for item line {}",
+                    "Failed to get item for requisition_line {}",
                     self.requisition_line_row.id
                 )
             });

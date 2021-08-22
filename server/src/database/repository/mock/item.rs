@@ -53,7 +53,7 @@ impl ItemRepository {
     }
 
     pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
-        info!("Querying multiple item records");
+        info!("Querying multiple item records (item.id={:?})", ids);
         let mut items = vec![];
         ids.iter().for_each(|id| {
             if let Some(DatabaseRow::Item(item)) = self.mock_data.lock().unwrap().get(id) {
