@@ -43,6 +43,25 @@ impl RequisitionLineRepository {
         }
     }
 
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+        info!(
+            "Querying multiple requisition_line records (requisition_line.id=({:?})",
+            ids
+        );
+        let mut requisition_lines = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::RequisitionLine(requisition_line)) =
+                self.mock_data.lock().unwrap().get(id)
+            {
+                requisition_lines.push(requisition_line.clone());
+            }
+        });
+        Ok(requisition_lines)
+    }
+
     pub async fn find_many_by_requisition_id(
         &self,
         requisition_id: &str,
