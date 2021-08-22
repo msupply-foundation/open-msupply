@@ -1,9 +1,9 @@
 use crate::{
     database::{
-        loader::{ItemLineLoader, ItemLoader},
+        loader::{ItemLineLoader, ItemLoader, NameLoader},
         repository::{
-            CustomerInvoiceRepository, ItemRepository, NameRepository, RequisitionLineRepository,
-            StoreRepository, TransactLineRepository, TransactRepository,
+            CustomerInvoiceRepository, ItemRepository, RequisitionLineRepository, StoreRepository,
+            TransactLineRepository, TransactRepository,
         },
         schema::{
             ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
@@ -64,12 +64,15 @@ impl Store {
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
+        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
 
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&self.store_row.name_id)
+        let name_row: NameRow = name_loader
+            .load_one(self.store_row.name_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
+            .unwrap_or_else(|_| panic!("Failed to get name for store {}", self.store_row.id))
+            .ok_or_else(|| panic!("Failed to get name for store {}", self.store_row.id))
+            .unwrap_or_else(|_| panic!("Failed to get name for store {}", self.store_row.id));
+
         Name { name_row }
     }
 
@@ -252,14 +255,26 @@ impl Requisition {
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
+        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
 
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&self.requisition_row.name_id)
+        let name_row: NameRow = name_loader
+            .load_one(self.requisition_row.name_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get store for item line {}",
+                    "Failed to get name for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get name for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get name for requisition {}",
                     self.requisition_row.id
                 )
             });
@@ -419,11 +434,13 @@ impl Transact {
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
+        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
 
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&self.transact_row.name_id)
+        let name_row: NameRow = name_loader
+            .load_one(self.transact_row.name_id.clone())
             .await
+            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id))
+            .ok_or_else(|| panic!("Failed to get name for transact {}", self.transact_row.id))
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id));
 
         Name { name_row }

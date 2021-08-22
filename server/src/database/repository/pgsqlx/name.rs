@@ -41,4 +41,20 @@ impl NameRepository {
 
         Ok(name)
     }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
+        let names = sqlx::query_as!(
+            NameRow,
+            r#"
+            SELECT id, name
+            FROM name
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(names)
+    }
 }
