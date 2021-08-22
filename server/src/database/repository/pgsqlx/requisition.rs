@@ -43,4 +43,23 @@ impl RequisitionRepository {
 
         Ok(requisition)
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<RequisitionRow>, RepositoryError> {
+        let requisitions = sqlx::query_as!(
+            RequisitionRow,
+            r#"
+            SELECT id, name_id, store_id, type_of AS "type_of!: RequisitionRowType"
+            FROM requisition
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(requisitions)
+    }
 }

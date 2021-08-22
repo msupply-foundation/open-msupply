@@ -17,7 +17,7 @@ use {
 
 use remote_server::{
     database::{
-        loader::{ItemLineLoader, ItemLoader},
+        loader::{ItemLineLoader, ItemLoader, RequisitionLoader},
         repository::{
             CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
             RequisitionLineRepository, RequisitionRepository, StoreRepository,
@@ -167,8 +167,15 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let item_line_loader = DataLoader::new(ItemLineLoader {
         item_line_repository,
     });
+
+    let requisition_repository = RequisitionRepository::new(pool.clone());
+    let requisition_loader = DataLoader::new(RequisitionLoader {
+        requisition_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
+    loaders.insert(requisition_loader);
 
     loaders
 }
@@ -192,6 +199,14 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         );
     }
 
+    let mock_requisitions: Vec<RequisitionRow> = mock::mock_requisitions();
+    for requisition in mock_requisitions {
+        mock_data.insert(
+            requisition.id.to_string(),
+            DatabaseRow::Requisition(requisition.clone()),
+        );
+    }
+
     let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
 
     let item_repository = ItemRepository::new(Arc::clone(&mock_data));
@@ -202,8 +217,14 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         item_line_repository,
     });
 
+    let requisition_repository = RequisitionRepository::new(Arc::clone(&mock_data));
+    let requisition_loader = DataLoader::new(RequisitionLoader {
+        requisition_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
+    loaders.insert(requisition_loader);
 
     loaders
 }
