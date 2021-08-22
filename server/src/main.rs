@@ -25,7 +25,7 @@ use remote_server::{
         },
     },
     server::{
-        data::{ActorRegistry, RepositoryMap, RepositoryRegistry},
+        data::{ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap, RepositoryRegistry},
         middleware::{compress as compress_middleware, logger as logger_middleware},
         service::{graphql::config as graphql_config, rest::config as rest_config},
     },
@@ -37,6 +37,7 @@ use remote_server::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
+
 use async_graphql::dataloader::DataLoader;
 use std::{
     env,
@@ -152,27 +153,40 @@ async fn get_repositories(_: &Settings) -> RepositoryMap {
 }
 
 #[cfg(not(feature = "mock"))]
-pub async fn get_item_repository(settings: &Settings) -> ItemRepository {
+pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let pool: PgPool = PgPool::connect(&settings.database.connection_string())
         .await
         .expect("Failed to connect to database");
 
-    let item_repository = ItemRepository::new(pool.clone());
+    let mut loaders: LoaderMap = LoaderMap::new();
 
-    item_repository
+    let item_repository = ItemRepository::new(pool.clone());
+    let item_loader = DataLoader::new(ItemLoader { item_repository });
+
+    loaders.insert(item_loader);
+
+    loaders
 }
 
 #[cfg(feature = "mock")]
-pub async fn get_item_repository(_settings: &Settings) -> ItemRepository {
+pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
+    let mut loaders = LoaderMap::new();
+
     let mut mock_data: HashMap<String, DatabaseRow> = HashMap::new();
+
     let mock_items: Vec<ItemRow> = mock::mock_items();
     for item in mock_items {
         mock_data.insert(item.id.to_string(), DatabaseRow::Item(item.clone()));
     }
-    let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
-    let item_repository = ItemRepository::new(Arc::clone(&mock_data));
 
-    item_repository
+    let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
+
+    let item_repository = ItemRepository::new(Arc::clone(&mock_data));
+    let item_loader = DataLoader::new(ItemLoader { item_repository });
+
+    loaders.insert(item_loader);
+
+    loaders
 }
 
 #[actix_web::main]
@@ -184,20 +198,20 @@ async fn main() -> std::io::Result<()> {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     let repositories: RepositoryMap = get_repositories(&settings).await;
-    let item_repository: ItemRepository = get_item_repository(&settings).await;
+    let loaders: LoaderMap = get_loaders(&settings).await;
 
     let sync_connection = SyncConnection::new(&settings.sync);
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors(sync_connection);
 
     let repository_registry = RepositoryRegistry { repositories };
-    let loader = DataLoader::new(ItemLoader { item_repository });
+    let loader_registry = LoaderRegistry { loaders };
     let actor_registry = ActorRegistry {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
     let repository_registry_data = Data::new(repository_registry);
-    let loader_data = Data::new(loader);
+    let loader_registry_data = Data::new(loader_registry);
     let actor_registry_data = Data::new(actor_registry);
 
     let listener =
@@ -211,7 +225,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(compress_middleware())
             .configure(graphql_config(
                 repository_registry_data.clone(),
-                loader_data.clone(),
+                loader_registry_data.clone(),
             ))
             .configure(rest_config)
     })
