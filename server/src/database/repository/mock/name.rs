@@ -33,4 +33,15 @@ impl NameRepository {
             }),
         }
     }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
+        info!("Querying multiple name records (name.id=({:?})", ids);
+        let mut names = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::Name(name)) = self.mock_data.lock().unwrap().get(id) {
+                names.push(name.clone());
+            }
+        });
+        Ok(names)
+    }
 }
