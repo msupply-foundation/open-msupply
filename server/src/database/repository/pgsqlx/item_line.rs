@@ -44,4 +44,23 @@ impl ItemLineRepository {
 
         Ok(item_line)
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ItemLineRow>, RepositoryError> {
+        let item_lines = sqlx::query_as!(
+            ItemLineRow,
+            r#"
+            SELECT id, item_id, store_id, batch, quantity
+            from item_line
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(item_lines)
+    }
 }

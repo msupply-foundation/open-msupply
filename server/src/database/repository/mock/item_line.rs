@@ -36,4 +36,21 @@ impl ItemLineRepository {
             }),
         }
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ItemLineRow>, RepositoryError> {
+        info!(
+            "Querying multiple item_line records (item_line.id=({:?})",
+            ids
+        );
+        let mut item_lines = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::ItemLine(item_line)) = self.mock_data.lock().unwrap().get(id) {
+                item_lines.push(item_line.clone());
+            }
+        });
+        Ok(item_lines)
+    }
 }

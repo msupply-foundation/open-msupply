@@ -1,9 +1,9 @@
 use crate::{
     database::{
-        loader::ItemLoader,
+        loader::{ItemLineLoader, ItemLoader},
         repository::{
-            CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
-            RequisitionLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            CustomerInvoiceRepository, ItemRepository, NameRepository, RequisitionLineRepository,
+            StoreRepository, TransactLineRepository, TransactRepository,
         },
         schema::{
             ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
@@ -501,12 +501,26 @@ impl TransactLine {
     }
 
     pub async fn item_line(&self, ctx: &Context<'_>) -> ItemLine {
-        let item_line_repository = ctx.get_repository::<ItemLineRepository>();
+        let item_line_loader = ctx.get_loader::<DataLoader<ItemLineLoader>>();
 
         // Handle optional item_line_id correctly.
-        let item_line_row: ItemLineRow = item_line_repository
-            .find_one_by_id(self.transact_line_row.item_line_id.as_ref().unwrap())
+        let item_line_id = self.transact_line_row.item_line_id.as_ref().unwrap();
+
+        let item_line_row: ItemLineRow = item_line_loader
+            .load_one(item_line_id.to_owned())
             .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item_line for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get item_line for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get item_line for transact_line {}",
