@@ -1,4 +1,4 @@
-import { LocalDataTable } from './LocalDataTable';
-import { RemoteDataTable } from './RemoteDataTable';
+export * from './LocalDataTable';
+export * from './RemoteDataTable';
 
-export { LocalDataTable, RemoteDataTable };
+export const DEFAULT_PAGE_SIZE = 25;

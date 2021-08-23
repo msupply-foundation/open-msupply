@@ -12,4 +12,14 @@ declare module 'react-table' {
       UseGroupByColumnProps<D>,
       UseResizeColumnsColumnProps<D>,
       UseSortByColumnProps<D> {}
+  export interface TableOptions<D extends Record<string, unknown>>
+    extends UseExpandedOptions<D>,
+      UseFiltersOptions<D>,
+      UseGlobalFiltersOptions<D>,
+      UseGroupByOptions<D>,
+      UsePaginationOptions<D>,
+      UseResizeColumnsOptions<D>,
+      UseRowSelectOptions<D>,
+      UseRowStateOptions<D>,
+      UseSortByOptions<D> {}
 }
