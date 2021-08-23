@@ -1,6 +1,6 @@
 +++
-title = "Filtering, pagination and sorting"
-description = "Description of all API filtering pagination and sorting mechanisms"
+title = "Filtering"
+description = "Description of all API filtering"
 date = 2021-05-01T19:30:00+00:00
 updated = 2021-05-01T19:30:00+00:00
 draft = false
@@ -12,27 +12,29 @@ template = "docs/page.html"
 toc = true
 +++
 
-## Filtering
-
 This API exposes a parameter on each query accepting a Filter object.
 
-### Parameter shape
+### The filter object
 
-The filter object accepts a field, comparison operator and value.
+The filter object is a set of Key:Value pairs, where each key is a field of the node returned by the query, and the value is an object with a [comparison operator](#comparison-operators) and value to filter by.
 
 ```
 {
-   [field]: {
+   [fieldOne]: {
+        [comparisonOperator]: [value]
+    },
+    ...,
+    [fieldN]: {
         [comparisonOperator]: [value]
     }
 }
 ```
 
-Field: Any field on the object returns from the query.
-Comparison operators: See below for available operators.
-Value: A value to filter the result set by.
+- Field: Any field on the object returns from the query.
+- Comparison operator: See below for available operators.
+- Value: A value to filter the result set by.
 
-The filter object can accept more than one field to filter by, however each additional field can be considered an `AND`.
+The filter object can accept more than one field to filter by. Each additional field will filter the result set as if it were an `AND`.
 
 ### Comparison operators
 
@@ -88,11 +90,3 @@ TODO: Shape of error
     }
 }
 ```
-
-## Pagination
-
-TODO
-
-## Sorting
-
-TODO
