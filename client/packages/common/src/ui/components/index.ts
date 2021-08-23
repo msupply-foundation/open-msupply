@@ -6,6 +6,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Typography from '@material-ui/core/Typography';
 
+export * from './errors';
 export * from './LoadingApp';
 export * from './RemoteComponent';
 export { AppNavLink } from './NavLink';
