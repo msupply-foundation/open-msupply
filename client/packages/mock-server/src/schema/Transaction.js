@@ -8,13 +8,17 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
   total: `${faker.commerce.price()}`,
 }));
 
-const TransactionType = `
+const TransactionTypes = `
     type Transaction {
         id: String
         date: String
         customer: String
         supplier: String
         total: String
+    }
+    type TransactionResponse { 
+      data: [Transaction],
+      totalLength: Int
     }
   `;
 
@@ -47,7 +51,7 @@ const getTransactionData = (first, offset, sort, desc) => {
     const sortData = getDataSorter(sort, desc);
     data.sort(sortData);
   }
-  return data.slice(offset, offset + first);
+  return { totalLength: data.length, data: data.slice(offset, offset + first) };
 };
 
 const TransactionQueryResolvers = {
@@ -76,7 +80,7 @@ const TransactionMutationResolvers = {
 };
 
 const TransactionQueries = `
-    transactions(first: Int, offset: Int, sort: String, desc: Boolean): [Transaction]
+    transactions(first: Int, offset: Int, sort: String, desc: Boolean): TransactionResponse
     transaction(id: String!): Transaction
 `;
 
@@ -98,7 +102,7 @@ const TransactionInput = `
 
 export {
   TransactionMutations,
-  TransactionType,
+  TransactionTypes,
   TransactionQueryResolvers,
   TransactionQueries,
   TransactionMutationResolvers,

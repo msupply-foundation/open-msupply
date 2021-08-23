@@ -1,17 +1,22 @@
 import React, { FC } from 'react';
 import { request } from 'graphql-request';
 import { getQuery, mutation, useDraftDocument } from './api';
-import { RemoteDataTable, useQuery } from '@openmsupply-client/common';
+import {
+  QueryProps,
+  RemoteDataTable,
+  useQuery,
+  useFormatDate,
+} from '@openmsupply-client/common';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
-import { columns } from './columns';
+import { getColumns } from './columns';
 
-interface Transaction {
+export type Transaction = {
   customer: string;
   supplier: string;
   total: string;
   id: string;
   date: string;
-}
+};
 
 const queryFn = (id: string) => async (): Promise<Transaction> => {
   const result = await request('http://localhost:4000', getQuery(), { id });
@@ -54,39 +59,52 @@ const Transaction: FC = () => {
   ) : null;
 };
 
-const listQuery = async () => {
-  const { transactions } = await request(
-    'http://localhost:4000',
-    `
-    query Query {
-    transactions {
-      id
-      date
-      customer
-      supplier
-      total
-    }
-}
-  `
-  );
-
-  return transactions;
-};
-
 const Transactions: FC = () => {
-  const { data, isLoading } = useQuery(['transaction', 'list'], listQuery);
-  const navigate = useNavigate();
+  const queryProps = { first: 10, offset: 0, sort: undefined, desc: false };
+  const listQuery = async () => {
+    const { first, offset, sort, desc } = queryProps;
+    const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
+    const { transactions } = await request(
+      'http://localhost:4000',
+      `
+      query Query {
+        transactions(first: ${first}, offset: ${offset}${sortParameters}) {
+          data {
+            id
+            date
+            customer
+            supplier
+            total
+          }
+          totalLength
+      }
+    }`
+    );
 
-  return isLoading ? null : (
-    <div style={{ marginTop: 10, minWidth: '100%' }}>
-      <RemoteDataTable
-        columns={columns}
-        data={data}
-        onRowClick={row => {
-          navigate(`/customers/customer-invoice/${row.id}`);
-        }}
-      />
-    </div>
+    return transactions;
+  };
+
+  const { refetch } = useQuery(['transaction', 'list'], listQuery, {
+    enabled: false,
+  });
+
+  const navigate = useNavigate();
+  const formatDate = useFormatDate();
+  const columns = getColumns(formatDate);
+  const fetchData = (props: QueryProps) => {
+    queryProps.first = props.first;
+    queryProps.offset = props.offset;
+    return refetch();
+  };
+
+  return (
+    <RemoteDataTable<Transaction>
+      columns={columns}
+      onFetchData={fetchData}
+      onRowClick={row => {
+        navigate(`/customers/customer-invoice/${row.id}`);
+      }}
+    />
   );
 };
 
