@@ -22,6 +22,7 @@ import {
   useTheme,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
+import { AppRoute } from '@openmsupply-client/config';
 
 const CustomersNav = React.lazy(() =>
   process.env['NODE_ENV'] !== 'production'
@@ -100,7 +101,7 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
     <div className={classes['drawerMenu']}>
       <List>
         <AppNavLink
-          to="dashboard"
+          to={AppRoute.Dashboard}
           icon={<Dashboard />}
           text={t('app.dashboard')}
         />
@@ -108,15 +109,27 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
           <CustomersNav />
         </React.Suspense>
         <AppNavLink
-          to="suppliers"
+          to={AppRoute.Suppliers}
           icon={<Suppliers />}
           text={t('app.suppliers')}
         />
-        <AppNavLink to="stock" icon={<Stock />} text={t('app.stock')} />
-        <AppNavLink to="tools" icon={<Tools />} text={t('app.tools')} />
-        <AppNavLink to="reports" icon={<Reports />} text={t('app.reports')} />
         <AppNavLink
-          to="messages"
+          to={AppRoute.Stock}
+          icon={<Stock />}
+          text={t('app.stock')}
+        />
+        <AppNavLink
+          to={AppRoute.Tools}
+          icon={<Tools />}
+          text={t('app.tools')}
+        />
+        <AppNavLink
+          to={AppRoute.Reports}
+          icon={<Reports />}
+          text={t('app.reports')}
+        />
+        <AppNavLink
+          to={AppRoute.Messages}
           icon={<Messages />}
           text={t('app.messages')}
         />
@@ -125,9 +138,17 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
         <Divider
           style={{ backgroundColor: '#555770', marginLeft: 8, width: 152 }}
         />
-        <AppNavLink to="sync" icon={<Radio />} text={t('app.sync')} />
-        <AppNavLink to="admin" icon={<Settings />} text={t('app.admin')} />
-        <AppNavLink to="logout" icon={<Power />} text={t('app.logout')} />
+        <AppNavLink to={AppRoute.Sync} icon={<Radio />} text={t('app.sync')} />
+        <AppNavLink
+          to={AppRoute.Admin}
+          icon={<Settings />}
+          text={t('app.admin')}
+        />
+        <AppNavLink
+          to={AppRoute.Logout}
+          icon={<Power />}
+          text={t('app.logout')}
+        />
       </List>
     </div>
   );

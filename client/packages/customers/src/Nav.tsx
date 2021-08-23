@@ -7,7 +7,9 @@ import {
   useDrawer,
   AppNavLink,
   useTranslation,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 
 const useNestedNav = (path: string) => {
   const { isOpen } = useDrawer();
@@ -22,33 +24,34 @@ const useNestedNav = (path: string) => {
 };
 
 const Nav: FC = () => {
-  const { isActive } = useNestedNav('customer/*');
+  const { isActive } = useNestedNav(
+    RouteBuilder.create(AppRoute.Customers).addWildCard().build()
+  );
   const t = useTranslation();
   return (
     <>
       <AppNavLink
         end={!isActive}
-        to="customers"
+        to={AppRoute.Customers}
         icon={<Customers />}
         text={t('app.customers')}
       />
       <Collapse in={isActive}>
         <List>
-          {isActive && (
-            <>
-              <AppNavLink
-                end={true}
-                to="/customers/customer-invoice"
-                text={t('app.customer-invoice')}
-              />
-
-              <AppNavLink
-                end={true}
-                to="/customers/customer-requisition"
-                text={t('app.customer-requisition')}
-              />
-            </>
-          )}
+          <AppNavLink
+            end={true}
+            to={RouteBuilder.create(AppRoute.Customers)
+              .addPart(AppRoute.CustomerInvoice)
+              .build()}
+            text={t('app.customer-invoice')}
+          />
+          <AppNavLink
+            end={true}
+            to={RouteBuilder.create(AppRoute.Customers)
+              .addPart(AppRoute.CustomerRequisition)
+              .build()}
+            text={t('app.customer-requisition')}
+          />
         </List>
       </Collapse>
     </>
