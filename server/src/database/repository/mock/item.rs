@@ -1,33 +1,35 @@
 use crate::database::repository::RepositoryError;
-use crate::database::schema::ItemRow;
+use crate::database::schema::{DatabaseRow, ItemRow};
 
+use log::info;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct ItemRepository {
-    mock_data: Arc<Mutex<HashMap<String, ItemRow>>>,
+    mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>>,
 }
 
 impl ItemRepository {
-    pub fn new(mock_data: Arc<Mutex<HashMap<String, ItemRow>>>) -> ItemRepository {
+    pub fn new(mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>>) -> ItemRepository {
         ItemRepository { mock_data }
     }
 
     pub async fn insert_one(&self, item: &ItemRow) -> Result<(), RepositoryError> {
+        info!("Inserting item record (item.id={})", item.id);
         self.mock_data
             .lock()
             .unwrap()
-            .insert(String::from(item.id.clone()), item.clone());
-
+            .insert(item.id.to_string(), DatabaseRow::Item(item.clone()));
         Ok(())
     }
 
     pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
-        match self.mock_data.lock().unwrap().get(&String::from(id)) {
-            Some(item) => Ok(item.clone()),
-            None => Err(RepositoryError {
-                msg: String::from(format!("Failed to find item {}", id)),
+        info!("Querying item record (item.id={})", id);
+        match self.mock_data.lock().unwrap().get(&id.to_string()) {
+            Some(DatabaseRow::Item(item)) => Ok(item.clone()),
+            _ => Err(RepositoryError {
+                msg: String::from(format!("Failed to find item record (item.id={})", id)),
             }),
         }
     }

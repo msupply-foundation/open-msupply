@@ -20,7 +20,7 @@ impl<'a> ContextExt for Context<'a> {
 }
 
 pub fn config(
-    registry: Data<RepositoryRegistry>,
+    repository_registry: Data<RepositoryRegistry>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let schema = Schema::build(
@@ -28,7 +28,7 @@ pub fn config(
             schema::Mutations,
             async_graphql::EmptySubscription,
         )
-        .data(registry)
+        .data(repository_registry)
         .finish();
         cfg.service(
             actix_web::web::scope("/graphql")

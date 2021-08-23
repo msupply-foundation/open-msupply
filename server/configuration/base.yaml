@@ -1,5 +1,10 @@
 server:
   port: 8000
+sync:
+  port: 2048
+  username: "username"
+  password: "password"
+  interval: 300
 database:
   host: "localhost"
   port: 5432

@@ -1,10 +1,10 @@
-use std::sync::Arc;
-use std::sync::Mutex;
+use anymap::{any::CloneAny, Map};
 
-#[derive(Clone)]
+pub type RepositoryMap = Map<AnyRepository>;
+pub type AnyRepository = dyn CloneAny + Send + Sync;
+
 pub struct RepositoryRegistry {
-    pub repositories: anymap::Map<dyn anymap::any::CloneAny + Send + Sync>,
-    pub sync_sender: Arc<Mutex<tokio::sync::mpsc::Sender<()>>>,
+    pub repositories: RepositoryMap,
 }
 
 impl RepositoryRegistry {

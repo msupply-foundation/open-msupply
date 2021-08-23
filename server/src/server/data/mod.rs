@@ -1,3 +1,5 @@
-mod registry;
+mod repository;
+mod actor;
 
-pub use registry::RepositoryRegistry;
+pub use repository::{RepositoryMap, RepositoryRegistry};
+pub use actor::ActorRegistry;

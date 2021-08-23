@@ -1,8 +1,9 @@
+use crate::server::data::ActorRegistry;
+
 use actix_web::{
     web::{get, scope, Data, ServiceConfig},
     HttpRequest, HttpResponse, Result,
 };
-use tokio::sync::mpsc::error::TrySendError;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -16,12 +17,9 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse> {
     Ok(HttpResponse::Ok().finish())
 }
 
-async fn schedule_sync(
-    registry: Data<crate::server::data::RepositoryRegistry>,
-) -> Result<HttpResponse> {
-    Ok(match registry.sync_sender.lock().unwrap().try_send(()) {
-        Ok(()) => HttpResponse::Ok().body("sync scheduled"),
-        Err(TrySendError::Full(())) => HttpResponse::Ok().body("sync already pending"),
-        Err(TrySendError::Closed(())) => HttpResponse::InternalServerError().body("sync died!?"),
-    })
+async fn schedule_sync(actor_registry: Data<ActorRegistry>) -> Result<HttpResponse> {
+    let sync_sender = &actor_registry.sync_sender;
+    sync_sender.lock().unwrap().send();
+
+    Ok(HttpResponse::Ok().body(""))
 }
