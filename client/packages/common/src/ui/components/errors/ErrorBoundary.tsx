@@ -1,10 +1,10 @@
 import React, { ReactNode, ErrorInfo, JSXElementConstructor } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
-import Bugsnag from '@bugsnag/js';
+// import Bugsnag from '@bugsnag/js';
 
-Bugsnag.start({
-  apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
-});
+// Bugsnag.start({
+//   apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
+// });
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ErrorBoundaryProps {
@@ -28,7 +28,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    Bugsnag.notify(error);
+    // Bugsnag.notify(error);
     this.setState({ hasError: true, error, errorInfo });
   }
 
