@@ -44,6 +44,25 @@ impl TransactRepository {
 
         Ok(transact)
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TransactRow>, RepositoryError> {
+        let transacts = sqlx::query_as!(
+            TransactRow,
+            r#"
+            SELECT id, name_id, store_id, invoice_number, type_of AS "type_of!: TransactRowType"
+            FROM transact
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(transacts)
+    }
 }
 
 #[derive(Clone)]

@@ -1,9 +1,8 @@
 use crate::{
     database::{
-        loader::{ItemLineLoader, ItemLoader, NameLoader, StoreLoader},
+        loader::{ItemLineLoader, ItemLoader, NameLoader, StoreLoader, TransactLoader},
         repository::{
             CustomerInvoiceRepository, RequisitionLineRepository, TransactLineRepository,
-            TransactRepository,
         },
         schema::{
             ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
@@ -510,11 +509,23 @@ impl TransactLine {
     }
 
     pub async fn transact(&self, ctx: &Context<'_>) -> Transact {
-        let transact_repository = ctx.get_repository::<TransactRepository>();
+        let transact_loader = ctx.get_loader::<DataLoader<TransactLoader>>();
 
-        let transact_row: TransactRow = transact_repository
-            .find_one_by_id(&self.transact_line_row.transact_id)
+        let transact_row: TransactRow = transact_loader
+            .load_one(self.transact_line_row.transact_id.clone())
             .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get transact for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get transact for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get transact for transact_line {}",

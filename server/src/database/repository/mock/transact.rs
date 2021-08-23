@@ -36,6 +36,23 @@ impl TransactRepository {
             }),
         }
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TransactRow>, RepositoryError> {
+        info!(
+            "Querying multiple transact records (transact.id=({:?})",
+            ids
+        );
+        let mut transacts = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::Transact(transact)) = self.mock_data.lock().unwrap().get(id) {
+                transacts.push(transact.clone());
+            }
+        });
+        Ok(transacts)
+    }
 }
 
 #[derive(Clone)]
