@@ -108,7 +108,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       );
       setIsLoading(false);
     });
-  }, [pageSize, pageIndex]); // , pageCount]);
+  }, [pageSize, pageIndex]);
 
   useEffect(() => setIsLoading(!tableData), [tableData]);
 
