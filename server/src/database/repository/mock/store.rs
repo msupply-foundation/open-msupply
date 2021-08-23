@@ -33,4 +33,15 @@ impl StoreRepository {
             }),
         }
     }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
+        info!("Querying multiple store records (store.id=({:?})", ids);
+        let mut stores = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::Store(store)) = self.mock_data.lock().unwrap().get(id) {
+                stores.push(store.clone());
+            }
+        });
+        Ok(stores)
+    }
 }

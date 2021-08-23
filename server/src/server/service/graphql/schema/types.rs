@@ -1,9 +1,9 @@
 use crate::{
     database::{
-        loader::{ItemLineLoader, ItemLoader, NameLoader},
+        loader::{ItemLineLoader, ItemLoader, NameLoader, StoreLoader},
         repository::{
-            CustomerInvoiceRepository, RequisitionLineRepository, StoreRepository,
-            TransactLineRepository, TransactRepository,
+            CustomerInvoiceRepository, RequisitionLineRepository, TransactLineRepository,
+            TransactRepository,
         },
         schema::{
             ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
@@ -177,14 +177,26 @@ impl ItemLine {
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Store {
-        let store_repository = ctx.get_repository::<StoreRepository>();
+        let store_loader = ctx.get_loader::<DataLoader<StoreLoader>>();
 
-        let store_row: StoreRow = store_repository
-            .find_one_by_id(&self.item_line_row.store_id)
+        let store_row: StoreRow = store_loader
+            .load_one(self.item_line_row.store_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get store for item line {}",
+                    "Failed to get store for item_line {}",
+                    self.item_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get store for item_line {}",
+                    self.item_line_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for item_line {}",
                     self.item_line_row.id
                 )
             });
@@ -283,14 +295,26 @@ impl Requisition {
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Store {
-        let store_repository = ctx.get_repository::<StoreRepository>();
+        let store_loader = ctx.get_loader::<DataLoader<StoreLoader>>();
 
-        let store_row: StoreRow = store_repository
-            .find_one_by_id(&self.requisition_row.store_id)
+        let store_row: StoreRow = store_loader
+            .load_one(self.requisition_row.store_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get store for item line {}",
+                    "Failed to get store for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get store for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for requisition {}",
                     self.requisition_row.id
                 )
             });
