@@ -35,8 +35,7 @@ pub fn get_configuration_base_file() -> Result<File<FileSourceFile>, SettingsErr
 /// environments are `local` and `production`.
 pub fn get_configuration_app_file() -> Result<File<FileSourceFile>, SettingsError> {
     let configuration_directory = get_configuration_directory()?;
-    let app_file =
-        File::from(configuration_directory.join(AppEnvironment::try_get()?)).required(true);
+    let app_file = File::from(configuration_directory.join(AppEnvironment::get())).required(true);
     Ok(app_file)
 }
 
