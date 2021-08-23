@@ -1,13 +1,16 @@
 import React, { FC } from 'react';
+import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 import { request } from 'graphql-request';
+
 import { getQuery, mutation, useDraftDocument } from './api';
 import {
   QueryProps,
   RemoteDataTable,
+  RouteBuilder,
   useQuery,
   useFormatDate,
 } from '@openmsupply-client/common';
-import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
+import { AppRoute } from '@openmsupply-client/config';
 import { getColumns } from './columns';
 
 export type Transaction = {
@@ -108,11 +111,21 @@ const Transactions: FC = () => {
   );
 };
 
-const TransactionService: FC = () => (
-  <Routes>
-    <Route path="/customer-invoice" element={<Transactions />} />
-    <Route path="/customer-invoice/:id" element={<Transaction />} />
-  </Routes>
-);
+const TransactionService: FC = () => {
+  const customerInvoicesRoute = RouteBuilder.create(
+    AppRoute.CustomerInvoice
+  ).build();
+
+  const customerInvoiceRoute = RouteBuilder.create(AppRoute.CustomerInvoice)
+    .addPart(':id')
+    .build();
+
+  return (
+    <Routes>
+      <Route path={customerInvoicesRoute} element={<Transactions />} />
+      <Route path={customerInvoiceRoute} element={<Transaction />} />
+    </Routes>
+  );
+};
 
 export default TransactionService;
