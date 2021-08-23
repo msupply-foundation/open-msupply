@@ -48,5 +48,5 @@ export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-databas
 
 ```
 SQLX_OFFLINE=true cargo build # optionally force build in offline mode
-cargo run
+APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
 ```
