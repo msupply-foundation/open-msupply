@@ -31,6 +31,7 @@ const Nav: FC = () => {
   return (
     <>
       <AppNavLink
+        end={!isActive}
         to={AppRoute.Customers}
         icon={<Customers />}
         text={t('app.customers')}
