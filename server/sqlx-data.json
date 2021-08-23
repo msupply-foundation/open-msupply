@@ -812,6 +812,66 @@
       ]
     }
   },
+  "bd50d9874cf39623b16424902fd7076b8942b25fd507cf9ca8342588f1b703d3": {
+    "query": "\n            SELECT id, name_id, store_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n            FROM transact\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "store_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 4,
+          "name": "type_of!: TransactRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_type",
+              "kind": {
+                "Enum": [
+                  "customer_invoice",
+                  "customer_credit",
+                  "supplier_invoice",
+                  "supplier_credit",
+                  "repack",
+                  "build",
+                  "receipt",
+                  "payment"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "c5553fc0ddcbcecac595eda77cc99f64321cc17c4b008998edd43eec1fde7d1d": {
     "query": "\n            INSERT INTO item_line (id, item_id, store_id, batch, quantity)\n            VALUES ($1, $2, $3, $4, $5)\n            ",
     "describe": {

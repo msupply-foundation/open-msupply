@@ -19,7 +19,7 @@ use remote_server::{
     database::{
         loader::{
             ItemLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
-            StoreLoader,
+            StoreLoader, TransactLoader,
         },
         repository::{
             CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
@@ -187,12 +187,18 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let store_repository = StoreRepository::new(pool.clone());
     let store_loader = DataLoader::new(StoreLoader { store_repository });
 
+    let transact_repository = TransactRepository::new(pool.clone());
+    let transact_loader = DataLoader::new(TransactLoader {
+        transact_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);
     loaders.insert(store_loader);
+    loaders.insert(transact_loader);
 
     loaders
 }
@@ -242,6 +248,14 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         mock_data.insert(store.id.to_string(), DatabaseRow::Store(store.clone()));
     }
 
+    let mock_transacts: Vec<TransactRow> = mock::mock_transacts();
+    for transact in mock_transacts {
+        mock_data.insert(
+            transact.id.to_string(),
+            DatabaseRow::Transact(transact.clone()),
+        );
+    }
+
     let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
 
     let item_repository = ItemRepository::new(Arc::clone(&mock_data));
@@ -268,12 +282,18 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     let store_repository = StoreRepository::new(Arc::clone(&mock_data));
     let store_loader = DataLoader::new(StoreLoader { store_repository });
 
+    let transact_repository = TransactRepository::new(Arc::clone(&mock_data));
+    let transact_loader = DataLoader::new(TransactLoader {
+        transact_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);
     loaders.insert(store_loader);
+    loaders.insert(transact_loader);
 
     loaders
 }
