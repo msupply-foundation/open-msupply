@@ -9,12 +9,22 @@ use std::{
 pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
+    pub sync: SyncSettings,
 }
 
 #[derive(serde::Deserialize)]
 pub struct ServerSettings {
-    pub port: u16,
     pub host: String,
+    pub port: u16,
+}
+
+#[derive(serde::Deserialize)]
+pub struct SyncSettings {
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
+    pub interval: u64,
 }
 
 impl ServerSettings {

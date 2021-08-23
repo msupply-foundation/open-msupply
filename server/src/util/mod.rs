@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod configuration;
 pub mod environment;
 pub mod settings;
