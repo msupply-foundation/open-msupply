@@ -10,14 +10,20 @@ mSupply remote server is a component of the Open mSupply system:
 
 ### Windows
 
-  - Install [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and [Ubuntu 20.04 LTS](https://www.microsoft.com/en-nz/p/ubuntu-2004-lts/9n6svws3rx71).
-  - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install) for `Windows Subsystem for Linux` users.
-  - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-windows/wsl) for WLS2.
+- Install [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and [Ubuntu 20.04 LTS](https://www.microsoft.com/en-nz/p/ubuntu-2004-lts/9n6svws3rx71).
+- Follow the [Rust installation guide](https://www.rust-lang.org/tools/install) for `Windows Subsystem for Linux` users.
+- Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-windows/wsl) for WLS2.
 
 ### MacOS
 
-  - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
-  - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-mac/install/) for Mac.
+- Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
+- Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-mac/install/) for Mac.
+
+### Ubuntu
+
+- Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
+- Follow the [Docker Desktop installation guide](https://docs.docker.com/engine/install/) for Linux.
+- Install pkg-config `sudo apt install pkg-config` (needed to install/compile sqlx-cli)
 
 ### Optional
 
@@ -48,5 +54,5 @@ export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-databas
 
 ```
 SQLX_OFFLINE=true cargo build # optionally force build in offline mode
-cargo run
+APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
 ```

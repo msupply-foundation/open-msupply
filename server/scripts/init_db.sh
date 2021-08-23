@@ -8,7 +8,12 @@ DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
 DB_NAME="${POSTGRES_DB:=omsupply-database}"
 DB_PORT="${POSTGRES_PORT:=5432}"
 
-docker run \
+DOCKER_CMD="docker"
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    DOCKER_CMD="sudo docker"
+fi
+
+$DOCKER_CMD run \
     -e POSTGRES_USER=${DB_USER} \
     -e POSTGRES_PASSWORD=${DB_PASSWORD} \
     -e POSTGRES_DB=${DB_NAME} \

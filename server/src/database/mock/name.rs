@@ -21,14 +21,6 @@ pub fn mock_name_store_c() -> NameRow {
     }
 }
 
-pub fn mock_store_names() -> Vec<NameRow> {
-    vec![
-        mock_name_store_a(),
-        mock_name_store_b(),
-        mock_name_store_c(),
-    ]
-}
-
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_store_a(),
