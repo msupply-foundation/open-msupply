@@ -1,17 +1,25 @@
 import React, { FC } from 'react';
-import { request } from 'graphql-request';
-import { getQuery, mutation, useDraftDocument } from './api';
-import { useQuery, DataGrid, RouteBuilder } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
+import { request } from 'graphql-request';
 
-interface Transaction {
+import { getQuery, mutation, useDraftDocument } from './api';
+import {
+  QueryProps,
+  RemoteDataTable,
+  RouteBuilder,
+  useQuery,
+  useFormatDate,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { getColumns } from './columns';
+
+export type Transaction = {
   customer: string;
   supplier: string;
   total: string;
   id: string;
   date: string;
-}
+};
 
 const queryFn = (id: string) => async (): Promise<Transaction> => {
   const result = await request('http://localhost:4000', getQuery(), { id });
@@ -54,71 +62,52 @@ const Transaction: FC = () => {
   ) : null;
 };
 
-const listQuery = async () => {
-  const { transactions } = await request(
-    'http://localhost:4000',
-    `
-    query Query {
-    transactions {
-      id
-      date
-      customer
-      supplier
-      total
-    }
-}
-  `
-  );
-
-  return transactions;
-};
-
-const columns = [
-  {
-    field: 'id',
-    headerName: 'ID',
-    flex: 1,
-  },
-  {
-    field: 'date',
-    headerName: 'Date',
-    flex: 1,
-  },
-  {
-    field: 'customer',
-    headerName: 'Customer',
-    flex: 1,
-  },
-  {
-    field: 'supplier',
-    headerName: 'Supplier',
-    flex: 1,
-  },
-  {
-    field: 'total',
-    headerName: 'Total',
-    flex: 1,
-  },
-];
-
 const Transactions: FC = () => {
-  const { data, isLoading } = useQuery(['transaction', 'list'], listQuery);
-  const navigate = useNavigate();
+  const queryProps = { first: 10, offset: 0, sort: undefined, desc: false };
+  const listQuery = async () => {
+    const { first, offset, sort, desc } = queryProps;
+    const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
+    const { transactions } = await request(
+      'http://localhost:4000',
+      `
+      query Query {
+        transactions(first: ${first}, offset: ${offset}${sortParameters}) {
+          data {
+            id
+            date
+            customer
+            supplier
+            total
+          }
+          totalLength
+      }
+    }`
+    );
 
-  return isLoading ? null : (
-    <div style={{ marginTop: 10, minWidth: '100%' }}>
-      <DataGrid
-        rows={data}
-        columns={columns}
-        hideFooterPagination
-        hideFooterRowCount
-        checkboxSelection
-        hideFooterSelectedRowCount
-        onRowClick={params => {
-          navigate(`/customers/customer-invoice/${params.id}`);
-        }}
-      />
-    </div>
+    return transactions;
+  };
+
+  const { refetch } = useQuery(['transaction', 'list'], listQuery, {
+    enabled: false,
+  });
+
+  const navigate = useNavigate();
+  const formatDate = useFormatDate();
+  const columns = getColumns(formatDate);
+  const fetchData = (props: QueryProps) => {
+    queryProps.first = props.first;
+    queryProps.offset = props.offset;
+    return refetch();
+  };
+
+  return (
+    <RemoteDataTable<Transaction>
+      columns={columns}
+      onFetchData={fetchData}
+      onRowClick={row => {
+        navigate(`/customers/customer-invoice/${row.id}`);
+      }}
+    />
   );
 };
 

@@ -1,5 +1,6 @@
 import { createTheme } from '@material-ui/core/styles';
 import shadows, { Shadows } from '@material-ui/core/styles/shadows';
+import { CSSProperties } from 'react';
 
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
@@ -14,9 +15,18 @@ declare module '@material-ui/core/styles/createMixins' {
 }
 
 declare module '@material-ui/core/styles/createPalette' {
+  interface Palette {
+    darkGrey: string;
+  }
   interface TypeBackground {
     menu: string;
     white: string;
+  }
+}
+
+declare module '@material-ui/core/styles/createTypography' {
+  interface Typography {
+    th: CSSProperties;
   }
 }
 
@@ -26,6 +36,7 @@ const themeOptions = {
     icon: { medium: { height: 20, width: 20 } },
   },
   palette: {
+    darkGrey: '#555770',
     primary: { 500: '#e95c30' },
     background: {
       menu: '#f2f2f5',
@@ -45,6 +56,7 @@ const themeOptions = {
       color: '#1c1c28',
     },
     fontFamily: 'Inter',
+    th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
       fontFamily: 'Inter',
       fontSize: 16,

@@ -5,13 +5,13 @@ import {
   TransactionQueries,
   TransactionQueryResolvers,
   TransactionMutationResolvers,
-  TransactionType,
+  TransactionTypes,
   TransactionInput,
 } from './schema/Transaction';
 
 const typeDefs = gql`
   ${ItemType}
-  ${TransactionType}
+  ${TransactionTypes}
 
   ${TransactionInput}
 
