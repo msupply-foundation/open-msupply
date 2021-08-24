@@ -786,6 +786,65 @@
       ]
     }
   },
+  "a7db1d6dcc9a911008b2fbeb1251caebc21262de205c54032c8805c8ddcf7dd1": {
+    "query": "\n            SELECT id, transact_id, type_of AS \"type_of!: TransactLineRowType\", item_id, item_line_id\n            FROM transact_line\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "transact_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "type_of!: TransactLineRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_line_type",
+              "kind": {
+                "Enum": [
+                  "stock_out",
+                  "stock_in",
+                  "placeholder",
+                  "cash_in",
+                  "cash_out",
+                  "non_stock",
+                  "service"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "item_line_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
   "b7e9de5276037042baeb17780b4251d6af51356036293d2a1f4d62c96c1a0123": {
     "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = $1\n            ",
     "describe": {
