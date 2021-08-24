@@ -1,4 +1,10 @@
-use crate::database::repository::RepositoryError;
+use {
+    crate::{
+        database::repository::RepositoryError, server::data::RepositoryMap,
+        util::settings::Settings,
+    },
+    sqlx::PgPool,
+};
 
 mod item;
 mod item_line;
@@ -47,4 +53,25 @@ impl From<sqlx::Error> for RepositoryError {
 
         RepositoryError { msg }
     }
+}
+
+pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
+    let pool: PgPool = PgPool::connect(&settings.database.connection_string())
+        .await
+        .expect("Failed to connect to database");
+
+    let mut repositories: RepositoryMap = RepositoryMap::new();
+
+    repositories.insert(CustomerInvoiceRepository::new(pool.clone()));
+    repositories.insert(ItemRepository::new(pool.clone()));
+    repositories.insert(ItemLineRepository::new(pool.clone()));
+    repositories.insert(NameRepository::new(pool.clone()));
+    repositories.insert(RequisitionRepository::new(pool.clone()));
+    repositories.insert(RequisitionLineRepository::new(pool.clone()));
+    repositories.insert(StoreRepository::new(pool.clone()));
+    repositories.insert(TransactRepository::new(pool.clone()));
+    repositories.insert(TransactLineRepository::new(pool.clone()));
+    repositories.insert(UserAccountRepository::new(pool.clone()));
+
+    repositories
 }
