@@ -2,10 +2,13 @@ import { Box, Typography, Button } from '@material-ui/core';
 import React, { FC } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
 import UnhappyMan from '../../icons/UnhappyMan';
+import { useTranslation } from '../../..';
 
 export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
   onClearError,
 }) => {
+  const t = useTranslation();
+
   return (
     <Box
       display="flex"
@@ -16,9 +19,11 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
       flex={1}
     >
       <UnhappyMan />
-      <Typography variant="h3">Oops! Somethings gone wrong.</Typography>
+      <Typography style={{ padding: 20 }} variant="h3">
+        {t('error.something-wrong')}
+      </Typography>
       <Button color="primary" variant="contained" onClick={onClearError}>
-        Try again!
+        {t('button.try-again')}
       </Button>
     </Box>
   );
