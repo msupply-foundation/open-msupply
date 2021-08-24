@@ -1,0 +1,14 @@
+{
+  "jsc": {
+    "externalHelpers": false,
+    "parser": {
+      "dynamicImport": true,
+      "syntax": "typescript",
+      "tsx": true,
+      "decorators": true
+    }
+  },
+  "module": {
+    "type": "commonjs"
+  }
+}
