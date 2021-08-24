@@ -708,6 +708,44 @@
       "nullable": []
     }
   },
+  "93f5b22dcef5bdcffde68f1d049089982c4c8b2b1cdc380bd3df305a3b731afe": {
+    "query": "\n            SELECT id, username, password, email\n            FROM user_account\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "email",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
   "94e6f8c5aacf67e3fed26675e7d8ce690d588e9712ee8708d7d7bb207dcbaaad": {
     "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = ANY($1)\n            ",
     "describe": {
