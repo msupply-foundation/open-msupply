@@ -19,7 +19,7 @@ use remote_server::{
     database::{
         loader::{
             ItemLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
-            StoreLoader, TransactLoader,
+            StoreLoader, TransactLineLoader, TransactLoader,
         },
         repository::{
             CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
@@ -40,7 +40,6 @@ use remote_server::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
-
 use async_graphql::dataloader::DataLoader;
 use std::{
     env,
@@ -192,6 +191,11 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
         transact_repository,
     });
 
+    let transact_line_repository = TransactLineRepository::new(pool.clone());
+    let transact_line_loader = DataLoader::new(TransactLineLoader {
+        transact_line_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
@@ -199,6 +203,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(name_loader);
     loaders.insert(store_loader);
     loaders.insert(transact_loader);
+    loaders.insert(transact_line_loader);
 
     loaders
 }
@@ -256,6 +261,14 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         );
     }
 
+    let mock_transact_lines: Vec<TransactLineRow> = mock::mock_transact_lines();
+    for transact_line in mock_transact_lines {
+        mock_data.insert(
+            transact_line.id.to_string(),
+            DatabaseRow::TransactLine(transact_line.clone()),
+        );
+    }
+
     let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
 
     let item_repository = ItemRepository::new(Arc::clone(&mock_data));
@@ -287,6 +300,11 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         transact_repository,
     });
 
+    let transact_line_repository = TransactLineRepository::new(Arc::clone(&mock_data));
+    let transact_line_loader = DataLoader::new(TransactLineLoader {
+        transact_line_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
@@ -294,6 +312,7 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     loaders.insert(name_loader);
     loaders.insert(store_loader);
     loaders.insert(transact_loader);
+    loaders.insert(transact_line_loader);
 
     loaders
 }

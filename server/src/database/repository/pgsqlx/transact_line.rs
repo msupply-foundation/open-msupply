@@ -45,6 +45,25 @@ impl TransactLineRepository {
         Ok(transact_line)
     }
 
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TransactLineRow>, RepositoryError> {
+        let transact_lines = sqlx::query_as!(
+            TransactLineRow,
+            r#"
+            SELECT id, transact_id, type_of AS "type_of!: TransactLineRowType", item_id, item_line_id
+            FROM transact_line
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(transact_lines)
+    }
+
     pub async fn find_many_by_transact_id(
         &self,
         transact_id: &str,

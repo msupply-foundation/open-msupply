@@ -5,6 +5,7 @@ mod requisition;
 mod requisition_line;
 mod store;
 mod transact;
+mod transact_line;
 
 pub use item::ItemLoader;
 pub use item_line::ItemLineLoader;
@@ -13,3 +14,4 @@ pub use requisition::RequisitionLoader;
 pub use requisition_line::RequisitionLineLoader;
 pub use store::StoreLoader;
 pub use transact::TransactLoader;
+pub use transact_line::TransactLineLoader;
