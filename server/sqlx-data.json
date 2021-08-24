@@ -883,6 +883,47 @@
       ]
     }
   },
+  "abfb88e361775f8379a79c78b3c3b910268f6fa84c114005ec930b09b6b62fee": {
+    "query": "\n            SELECT id, item_name, type_of AS \"type_of!: ItemRowType\"\n            FROM item\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "type_of!: ItemRowType",
+          "type_info": {
+            "Custom": {
+              "name": "item_type",
+              "kind": {
+                "Enum": [
+                  "general",
+                  "service",
+                  "cross_reference"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "b7e9de5276037042baeb17780b4251d6af51356036293d2a1f4d62c96c1a0123": {
     "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = $1\n            ",
     "describe": {
