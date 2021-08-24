@@ -43,4 +43,23 @@ impl UserAccountRepository {
 
         Ok(user_account)
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        let user_accounts = sqlx::query_as!(
+            UserAccountRow,
+            r#"
+            SELECT id, username, password, email
+            FROM user_account
+            WHERE id = ANY($1)
+            "#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(user_accounts)
+    }
 }

@@ -19,7 +19,7 @@ use remote_server::{
     database::{
         loader::{
             ItemLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
-            StoreLoader, TransactLineLoader, TransactLoader,
+            StoreLoader, TransactLineLoader, TransactLoader, UserAccountLoader,
         },
         repository::{
             CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
@@ -196,6 +196,11 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
         transact_line_repository,
     });
 
+    let user_account_repository = UserAccountRepository::new(pool.clone());
+    let user_account_loader = DataLoader::new(UserAccountLoader {
+        user_account_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
@@ -204,6 +209,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(store_loader);
     loaders.insert(transact_loader);
     loaders.insert(transact_line_loader);
+    loaders.insert(user_account_loader);
 
     loaders
 }
@@ -269,6 +275,14 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         );
     }
 
+    let mock_user_accounts: Vec<UserAccountRow> = mock::mock_user_accounts();
+    for user_account in mock_user_accounts {
+        mock_data.insert(
+            user_account.id.to_string(),
+            DatabaseRow::UserAccount(user_account.clone()),
+        );
+    }
+
     let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
 
     let item_repository = ItemRepository::new(Arc::clone(&mock_data));
@@ -305,6 +319,11 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         transact_line_repository,
     });
 
+    let user_account_repository = UserAccountRepository::new(Arc::clone(&mock_data));
+    let user_account_loader = DataLoader::new(UserAccountLoader {
+        user_account_repository,
+    });
+
     loaders.insert(item_loader);
     loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
@@ -313,6 +332,7 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     loaders.insert(store_loader);
     loaders.insert(transact_loader);
     loaders.insert(transact_line_loader);
+    loaders.insert(user_account_loader);
 
     loaders
 }

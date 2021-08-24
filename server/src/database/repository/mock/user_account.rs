@@ -39,4 +39,23 @@ impl UserAccountRepository {
             }),
         }
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        info!(
+            "Querying multiple user_account records (user_account.id=({:?})",
+            ids
+        );
+        let mut user_accounts = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::UserAccount(user_account)) =
+                self.mock_data.lock().unwrap().get(id)
+            {
+                user_accounts.push(user_account.clone());
+            }
+        });
+        Ok(user_accounts)
+    }
 }
