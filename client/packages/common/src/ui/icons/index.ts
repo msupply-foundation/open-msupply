@@ -9,6 +9,8 @@ export { Power } from './Power';
 export { Radio } from './Radio';
 export { Reports } from './Reports';
 export { Settings } from './Settings';
+export { SortAsc } from './SortAsc';
+export { SortDesc } from './SortDesc';
 export { Stock } from './Stock';
 export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
