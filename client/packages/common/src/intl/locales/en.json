@@ -16,5 +16,7 @@
   "app.welcome": "Hello, {name}!",
   "breadcrumb.item": "#{id}",
   "button.ok": "ok",
-  "button.open-the-menu": "Open the menu"
+  "button.open-the-menu": "Open the menu",
+  "button.try-again": "Try again",
+  "error.something-wrong": "Oops! Somethings gone wrong."
 }
