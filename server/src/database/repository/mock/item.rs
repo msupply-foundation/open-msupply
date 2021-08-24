@@ -24,6 +24,24 @@ impl ItemRepository {
         Ok(())
     }
 
+    pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let filter_item = |row: &DatabaseRow| -> Option<ItemRow> {
+            if let DatabaseRow::Item(item) = row {
+                Some(item.clone())
+            } else {
+                None
+            }
+        };
+
+        Ok(self
+            .mock_data
+            .lock()
+            .unwrap()
+            .values()
+            .filter_map(filter_item)
+            .collect())
+    }
+
     pub async fn find_one_by_id(&self, id: &str) -> Result<ItemRow, RepositoryError> {
         info!("Querying item record (item.id={})", id);
         match self.mock_data.lock().unwrap().get(&id.to_string()) {

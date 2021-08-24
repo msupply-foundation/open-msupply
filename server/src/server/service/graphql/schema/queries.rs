@@ -111,6 +111,20 @@ impl Queries {
         Item { item_row }
     }
 
+    pub async fn items(&self, ctx: &Context<'_>) -> Vec<Item> {
+        let item_repository = ctx.get_repository::<ItemRepository>();
+
+        let item_rows: Vec<ItemRow> = item_repository
+            .find_all()
+            .await
+            .unwrap_or_else(|_| panic!("Failed to get items"));
+
+        item_rows
+            .into_iter()
+            .map(|item_row| Item { item_row })
+            .collect()
+    }
+
     pub async fn item_line(
         &self,
         ctx: &Context<'_>,
