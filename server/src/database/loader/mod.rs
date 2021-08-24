@@ -1,3 +1,7 @@
+#[cfg_attr(feature = "mock", path = "mock.rs")]
+#[cfg_attr(not(feature = "mock"), path = "pgsqlx.rs")]
+mod loader;
+
 mod item;
 mod item_line;
 mod name;
@@ -10,6 +14,7 @@ mod user_account;
 
 pub use item::ItemLoader;
 pub use item_line::ItemLineLoader;
+pub use loader::get_loaders;
 pub use name::NameLoader;
 pub use requisition::RequisitionLoader;
 pub use requisition_line::RequisitionLineLoader;
