@@ -1,3 +1,4 @@
+export * from './hooks';
 export * from './RemoteDataTable';
 
 export const DEFAULT_PAGE_SIZE = 25;

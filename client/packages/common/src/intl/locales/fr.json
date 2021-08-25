@@ -18,5 +18,10 @@
   "button.ok": "Ok",
   "button.open-the-menu": "Ouvrir le menu",
   "button.try-again": "Try again",
-  "error.something-wrong": "Oops! Somethings gone wrong."
+  "error.something-wrong": "Oops! Somethings gone wrong.",
+  "label.customer": "Client",
+  "label.date": "Date",
+  "label.id": "ID",
+  "label.supplier": "Fournisseur",
+  "label.total": "Total"
 }
