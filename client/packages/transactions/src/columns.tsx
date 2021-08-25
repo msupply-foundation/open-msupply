@@ -1,7 +1,13 @@
+import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { Column } from 'react-table';
 import { Transaction } from './TransactionService';
+import type { PrimitiveType } from 'intl-messageformat';
 
 export const getColumns = (
+  t: (
+    id?: LocaleKey, // only accepts valid keys, not any string
+    values?: Record<string, PrimitiveType>
+  ) => string,
   formatDate: (
     value: number | Date,
     options?: Intl.DateTimeFormatOptions & { format?: string }
@@ -16,7 +22,7 @@ export const getColumns = (
     accessor: (row: Transaction) => formatDate(new Date(row.date)),
   },
   {
-    Header: 'Customer',
+    Header: t('label.customer'),
     accessor: 'customer',
   },
   {

@@ -8,10 +8,10 @@ import {
   RemoteDataTable,
   RouteBuilder,
   useQuery,
-  useFormatDate,
+  useColumns,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { getColumns } from './columns';
 
 export type Transaction = {
   customer: string;
@@ -92,8 +92,14 @@ const Transactions: FC = () => {
   });
 
   const navigate = useNavigate();
-  const formatDate = useFormatDate();
-  const columns = getColumns(formatDate);
+  const getColumns = useColumns();
+  const columns = getColumns<Transaction>([
+    { label: 'label.id', key: 'id' },
+    { label: 'label.date', key: 'date', format: ColumnFormat.date },
+    { label: 'label.customer', key: 'customer' },
+    { label: 'label.supplier', key: 'supplier' },
+    { label: 'label.total', key: 'total' },
+  ]);
   const fetchData = (props: QueryProps) => {
     queryProps.first = props.first;
     queryProps.offset = props.offset;

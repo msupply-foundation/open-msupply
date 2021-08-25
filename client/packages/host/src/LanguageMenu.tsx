@@ -29,17 +29,15 @@ export const LanguageMenu: React.FC = () => {
     handleClose();
   };
 
-  const LanguageMenuItem = React.forwardRef(
-    (props: LanguageMenuItemProps, _ref) => {
-      const { children, language } = props;
-      const selected = language === locale;
-      return (
-        <MenuItem selected={selected} onClick={() => setLanguage(language)}>
-          {children}
-        </MenuItem>
-      );
-    }
-  );
+  const LanguageMenuItem = React.forwardRef((props: LanguageMenuItemProps) => {
+    const { children, language } = props;
+    const selected = language === locale;
+    return (
+      <MenuItem selected={selected} onClick={() => setLanguage(language)}>
+        {children}
+      </MenuItem>
+    );
+  });
 
   return (
     <div>
