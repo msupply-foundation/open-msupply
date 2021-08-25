@@ -1,5 +1,6 @@
 {
   "private": true,
+  "main": "./src/index.ts",
   "scripts": {
     "start": "lerna run --scope @openmsupply-*/* --parallel start",
     "build": "lerna run --scope @openmsupply-client/* build",

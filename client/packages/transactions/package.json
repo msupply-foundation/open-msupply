@@ -2,6 +2,7 @@
   "name": "@openmsupply-client/transactions",
   "version": "0.0.0",
   "private": true,
+  "main": "./src/index.ts",
   "devDependencies": {
     "@babel/core": "7.14.6",
     "@babel/preset-react": "7.14.5",
@@ -28,6 +29,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
     "graphql": "^15.5.1",
     "graphql-request": "^3.5.0",
     "history": "^5.0.0",
