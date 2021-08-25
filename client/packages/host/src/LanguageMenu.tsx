@@ -3,7 +3,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  TranslateIcon,
+  Translate,
   useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
@@ -42,7 +42,7 @@ export const LanguageMenu: React.FC = () => {
   return (
     <div>
       <IconButton onClick={handleClick}>
-        <TranslateIcon />
+        <Translate />
       </IconButton>
       <Menu
         anchorEl={anchorEl}

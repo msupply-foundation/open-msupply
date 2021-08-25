@@ -94,7 +94,7 @@ const Transactions: FC = () => {
   const navigate = useNavigate();
   const getColumns = useColumns();
   const columns = getColumns<Transaction>([
-    { label: 'label.id', key: 'id' },
+    { label: 'label.id', key: 'id', sortable: false },
     { label: 'label.date', key: 'date', format: ColumnFormat.date },
     { label: 'label.customer', key: 'customer' },
     { label: 'label.supplier', key: 'supplier' },
