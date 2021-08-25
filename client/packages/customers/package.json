@@ -2,6 +2,7 @@
   "name": "@openmsupply-client/customers",
   "version": "0.0.0",
   "private": true,
+  "main": "./src/index.ts",
   "devDependencies": {
     "@babel/core": "7.14.6",
     "@babel/preset-react": "7.14.5",
@@ -28,6 +29,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
+    "@openmsupply-client/transactions": "^0.0.0",
     "history": "^5.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

@@ -28,9 +28,11 @@ const Content = styled(Box)({
 const queryClient = new QueryClient();
 
 const CustomerContainer = React.lazy(
-  () => import('customers/CustomerContainer')
+  () => import('@openmsupply-client/customers/src/CustomerContainer')
 );
-const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
+const DashboardService = React.lazy(
+  () => import('@openmsupply-client/dashboard/src/DashboardService')
+);
 
 const Heading: FC<{ locale: string }> = props => {
   const t = useTranslation();

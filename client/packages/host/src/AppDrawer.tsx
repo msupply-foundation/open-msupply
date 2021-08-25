@@ -24,10 +24,8 @@ import {
 import clsx from 'clsx';
 import { AppRoute } from '@openmsupply-client/config';
 
-const CustomersNav = React.lazy(() =>
-  process.env['NODE_ENV'] !== 'production'
-    ? import('../../customers/src/Nav')
-    : import('customers/Nav')
+const CustomersNav = React.lazy(
+  () => import('@openmsupply-client/customers/src/Nav')
 );
 
 const useStyles = makeStyles(theme => ({
