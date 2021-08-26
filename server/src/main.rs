@@ -1,5 +1,8 @@
 #![allow(where_clauses_object_safety)]
 
+#[macro_use]
+extern crate diesel;
+
 use remote_server::{
     database::repository::repository::get_repositories,
     server::{
