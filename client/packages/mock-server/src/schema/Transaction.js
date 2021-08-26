@@ -33,8 +33,8 @@ const parseValue = (object, key) => {
 };
 
 const getDataSorter = (sortKey, desc) => (a, b) => {
-  var valueA = parseValue(a, sortKey);
-  var valueB = parseValue(b, sortKey);
+  const valueA = parseValue(a, sortKey);
+  const valueB = parseValue(b, sortKey);
 
   if (valueA < valueB) {
     return desc ? 1 : -1;
