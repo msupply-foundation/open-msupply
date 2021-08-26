@@ -1,4 +1,4 @@
-import { Column } from 'react-table';
+import { Column, IdType } from 'react-table';
 
 import { useFormatDate, useTranslation } from '../../../../intl';
 import { LocaleKey } from '../../../../intl/intlHelpers';
@@ -14,6 +14,7 @@ export interface ColumnDefinition<T> {
   label: LocaleKey;
   format?: ColumnFormat;
   key: keyof T;
+  sortable?: boolean; // defaults to tru
 }
 
 export const useColumns =
@@ -25,10 +26,12 @@ export const useColumns =
     const formatDate = useFormatDate();
 
     return columns.map(column => {
-      const Header = t(column.label);
+      const { key, label, sortable = true } = column;
+      const Header = t(label);
       const accessor = getAccessor<T>(column, formatDate);
+      const disableSortBy = !sortable;
 
-      return { Header, accessor };
+      return { accessor, disableSortBy, Header, id: key as IdType<T> };
     });
   };
 

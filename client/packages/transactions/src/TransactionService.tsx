@@ -7,6 +7,7 @@ import {
   QueryProps,
   RemoteDataTable,
   RouteBuilder,
+  SortingRule,
   useQuery,
   useColumns,
   ColumnFormat,
@@ -63,10 +64,15 @@ const Transaction: FC = () => {
 };
 
 const Transactions: FC = () => {
-  const queryProps = { first: 10, offset: 0, sort: undefined, desc: false };
+  const queryProps = { first: 10, offset: 0, sort: undefined, desc: false } as {
+    first: number;
+    offset: number;
+    sort?: string;
+    desc?: boolean;
+  };
   const listQuery = async () => {
     const { first, offset, sort, desc } = queryProps;
-    const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
+    const sortParameters = sort ? `, sort: "${sort}", desc: ${!!desc}` : '';
     const { transactions } = await request(
       'http://localhost:4000',
       `
@@ -100,15 +106,24 @@ const Transactions: FC = () => {
     { label: 'label.supplier', key: 'supplier' },
     { label: 'label.total', key: 'total' },
   ]);
-  const fetchData = (props: QueryProps) => {
+  const initialSortBy: SortingRule<Transaction>[] = [
+    { id: 'date', desc: true },
+  ];
+  const fetchData = (props: QueryProps<Transaction>) => {
     queryProps.first = props.first;
     queryProps.offset = props.offset;
+    if (props.sortBy && props.sortBy.length) {
+      const sortBy = props.sortBy[0];
+      queryProps.sort = sortBy?.id;
+      queryProps.desc = sortBy?.desc;
+    }
     return refetch();
   };
 
   return (
     <RemoteDataTable<Transaction>
       columns={columns}
+      initialSortBy={initialSortBy}
       onFetchData={fetchData}
       onRowClick={row => {
         navigate(`/customers/customer-invoice/${row.id}`);

@@ -25,7 +25,8 @@ const TransactionTypes = `
 const parseValue = (object, key) => {
   const value = object[key];
   if (typeof value === 'string') {
-    if (!Number.isNaN(value)) return Number.parseFloat(value);
+    const valueAsNumber = Number.parseFloat(value);
+    if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
     return value.toUpperCase(); // ignore case
   }
   return value;

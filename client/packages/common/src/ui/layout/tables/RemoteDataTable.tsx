@@ -5,6 +5,7 @@ import {
   Column,
   ColumnInstance,
   Row,
+  SortingRule,
   usePagination,
   useSortBy,
   useTable,
@@ -29,11 +30,11 @@ import {
 import { SortAsc, SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';
 
-export interface QueryProps {
+export { SortingRule };
+export interface QueryProps<D> {
   first: number;
   offset: number;
-  sort?: string;
-  desc?: boolean;
+  sortBy?: SortingRule<D>[];
 }
 
 export interface QueryResponse<T> {
@@ -58,7 +59,8 @@ const useStyles = makeStyles(theme => ({
 
 interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
-  onFetchData: (props: QueryProps) => Promise<QueryObserverResult<T>>;
+  initialSortBy?: SortingRule<T>[]; // note that the column header is used in the id field
+  onFetchData: (props: QueryProps<T>) => Promise<QueryObserverResult<T>>;
   onRowClick?: <T extends Record<string, unknown>>(row: Row<T>) => void;
 }
 
@@ -72,6 +74,7 @@ const renderSortIcon = <D extends Record<string, unknown>>(
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
+  initialSortBy,
   onFetchData,
   onRowClick,
 }: TableProps<T> & { children?: ReactNode }): JSX.Element => {
@@ -83,34 +86,63 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   const [isLoading, setIsLoading] = useState(false);
 
   const hasRowClick = !!onRowClick;
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable(
-      {
-        columns,
-        data: tableData,
-        manualPagination: true,
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    state: { sortBy },
+  } = useTable(
+    {
+      columns,
+      data: tableData,
+      manualPagination: true,
+      manualSortBy: true,
+      pageCount,
+      initialState: {
+        pageIndex,
+        pageSize,
+        sortBy: initialSortBy,
       },
-      useSortBy,
-      usePagination
-    );
+    },
+    useSortBy,
+    usePagination
+  );
   const gotoPage = (page: number) => setPageIndex(page);
-
-  useEffect(() => {
-    setIsLoading(true);
+  const refetch = () =>
     onFetchData({
       offset: pageIndex * pageSize,
       first: pageSize,
+      sortBy,
     }).then((result: QueryObserverResult) => {
       const { data: response } = result;
-      setTableData((response as QueryResponse<T>).data);
+      setTableData((response as QueryResponse<T>)?.data || []);
       setPageCount(
         Math.ceil((response as QueryResponse<T>).totalLength || 0) / pageSize
       );
       setIsLoading(false);
     });
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    refetch();
   }, [pageSize, pageIndex]);
 
-  useEffect(() => setIsLoading(!tableData), [tableData]);
+  // used with local data only
+  // useEffect(() => setIsLoading(!tableData), [tableData]);
+  // { id: 'Client', desc: false }
+
+  useEffect(() => {
+    if (isLoading) return;
+    console.info('sort', sortBy);
+    setIsLoading(true);
+    setPageIndex(0);
+    refetch();
+    setIsLoading(false);
+  }, [sortBy]);
 
   return isLoading ? (
     <Box className={classes.loadingIndicatorContainer}>
@@ -122,17 +154,20 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <TableRow {...getHeaderGroupProps()}>
-              {headers.map(column => (
-                <TableCell
-                  {...column.getHeaderProps(column.getSortByToggleProps())}
-                  className={classes.headerCell}
-                >
-                  <Grid container>
-                    {column.render('Header')}
-                    {renderSortIcon(column)}
-                  </Grid>
-                </TableCell>
-              ))}
+              {headers.map(column => {
+                console.info('props ==>', column.getSortByToggleProps());
+                return (
+                  <TableCell
+                    {...column.getHeaderProps(column.getSortByToggleProps())}
+                    className={classes.headerCell}
+                  >
+                    <Grid container>
+                      {column.render('Header')}
+                      {renderSortIcon(column)}
+                    </Grid>
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableHead>
