@@ -14,7 +14,7 @@ export interface ColumnDefinition<T> {
   label: LocaleKey;
   format?: ColumnFormat;
   key: keyof T;
-  sortable?: boolean; // defaults to tru
+  sortable?: boolean; // defaults to true
 }
 
 export const useColumns =
@@ -30,10 +30,33 @@ export const useColumns =
       const Header = t(label);
       const accessor = getAccessor<T>(column, formatDate);
       const disableSortBy = !sortable;
+      const sortType = getSortType<T>(column);
+      const sortInverted = column.format === ColumnFormat.date;
+      const sortDescFirst = column.format === ColumnFormat.date;
 
-      return { accessor, disableSortBy, Header, id: key as IdType<T> };
+      return {
+        accessor,
+        disableSortBy,
+        Header,
+        id: key as IdType<T>,
+        sortDescFirst,
+        sortInverted,
+        sortType,
+      };
     });
   };
+
+const getSortType = <T>(column: ColumnDefinition<T>) => {
+  switch (column.format) {
+    case ColumnFormat.date:
+      return 'datetime';
+    case ColumnFormat.real:
+    case ColumnFormat.integer:
+      return 'numeric';
+    default:
+      return 'alphanumeric';
+  }
+};
 
 const getAccessor = <T>(
   column: ColumnDefinition<T>,

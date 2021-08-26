@@ -59,7 +59,7 @@ const useStyles = makeStyles(theme => ({
 
 interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
-  initialSortBy?: SortingRule<T>[]; // note that the column header is used in the id field
+  initialSortBy?: SortingRule<T>[];
   onFetchData: (props: QueryProps<T>) => Promise<QueryObserverResult<T>>;
   onRowClick?: <T extends Record<string, unknown>>(row: Row<T>) => void;
 }
@@ -137,7 +137,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
 
   useEffect(() => {
     if (isLoading) return;
-    console.info('sort', sortBy);
     setIsLoading(true);
     setPageIndex(0);
     refetch();
@@ -155,7 +154,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <TableRow {...getHeaderGroupProps()}>
               {headers.map(column => {
-                console.info('props ==>', column.getSortByToggleProps());
                 return (
                   <TableCell
                     {...column.getHeaderProps(column.getSortByToggleProps())}
