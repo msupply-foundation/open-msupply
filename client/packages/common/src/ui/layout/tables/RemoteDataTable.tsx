@@ -153,19 +153,17 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <TableRow {...getHeaderGroupProps()}>
-              {headers.map(column => {
-                return (
-                  <TableCell
-                    {...column.getHeaderProps(column.getSortByToggleProps())}
-                    className={classes.headerCell}
-                  >
-                    <Grid container>
-                      {column.render('Header')}
-                      {renderSortIcon(column)}
-                    </Grid>
-                  </TableCell>
-                );
-              })}
+              {headers.map(column => (
+                <TableCell
+                  {...column.getHeaderProps(column.getSortByToggleProps())}
+                  className={classes.headerCell}
+                >
+                  <Grid container>
+                    {column.render('Header')}
+                    {renderSortIcon(column)}
+                  </Grid>
+                </TableCell>
+              ))}
             </TableRow>
           ))}
         </TableHead>
