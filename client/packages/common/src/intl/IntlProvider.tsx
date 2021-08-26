@@ -19,8 +19,9 @@ export const IntlProvider: React.FC<
     importMessages(locale as SupportedLocales).then(setMessages);
   }, [locale]);
 
-  // hack to avoid US date formats
-  const intlLocale = locale === 'en' ? 'en-NZ' : locale;
+  // to ensure local date formatting, use the full locale otherwise 'en' === 'en-US'
+  const re = new RegExp(`^${locale}-[A-Z]+$`);
+  const intlLocale = re.test(navigator.language) ? navigator.language : locale;
 
   return messages ? (
     <ReactIntlProvider locale={intlLocale} messages={messages} key={locale}>
