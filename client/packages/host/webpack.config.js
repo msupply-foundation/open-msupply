@@ -1,17 +1,22 @@
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+const webpack = require('webpack');
+const HotModuleReplacementPlugin = webpack.HotModuleReplacementPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ModuleFederationPlugin =
-  require('webpack').container.ModuleFederationPlugin;
+const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
 const path = require('path');
 const deps = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 module.exports = {
   entry: './src/index',
-  mode: 'development',
+  mode: isDevelopment ? 'development' : 'production',
   devServer: {
+    hot: true,
     static: path.join(__dirname, 'dist'),
-    public: 'http://localhost:3003/',
+
     port: 3003,
     historyApiFallback: true,
     headers: {
@@ -27,7 +32,8 @@ module.exports = {
   },
   output: {
     publicPath: 'http://localhost:3003/',
-    chunkFilename: '[id].[contenthash].js',
+    filename: '[name].bundle.js',
+    chunkFilename: '[name].[id].[contenthash].js',
   },
   optimization: {
     splitChunks: {
@@ -54,7 +60,24 @@ module.exports = {
     ],
   },
   plugins: [
-    new BundleAnalyzerPlugin(),
+    new HotModuleReplacementPlugin(),
+
+    new ReactRefreshWebpackPlugin(),
+
+    new BundleAnalyzerPlugin({
+      /**
+       * In "server" mode analyzer will start HTTP server to show bundle report.
+       * In "static" mode single HTML file with bundle report will be generated.
+       * In "json" mode single JSON file with bundle report will be generated
+       */
+      analyzerMode: 'server',
+    }),
+
+    new HtmlWebpackPlugin({
+      favicon: './public/favicon.ico',
+      template: './public/index.html',
+    }),
+
     new ModuleFederationPlugin({
       name: 'host',
       filename: 'remoteEntry.js',
@@ -84,10 +107,6 @@ module.exports = {
           },
         },
       ],
-    }),
-    new HtmlWebpackPlugin({
-      favicon: './public/favicon.ico',
-      template: './public/index.html',
     }),
   ],
 };
