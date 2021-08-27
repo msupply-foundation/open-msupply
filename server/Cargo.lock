@@ -2062,9 +2062,9 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.9.3"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3711dfd91a1081d2458ad2d06ea30a8755256e74038be2ad927d94e1c955ca8"
+checksum = "64d31059f22935e6c31830db5249ba2b7ecd54fd73a9909286f0a67aa55c2fbd"
 dependencies = [
  "cc",
  "pkg-config",
@@ -2843,7 +2843,6 @@ dependencies = [
  "env_logger",
  "futures-util",
  "httpmock",
- "libsqlite3-sys",
  "log",
  "r2d2",
  "reqwest",
@@ -3311,6 +3310,7 @@ dependencies = [
  "hmac",
  "itoa",
  "libc",
+ "libsqlite3-sys",
  "log",
  "md-5",
  "memchr",

@@ -23,7 +23,7 @@ pub enum TransactRowType {
     Payment,
 }
 
-#[derive(Clone, Queryable, Insertable)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
 #[table_name = "transact"]
 pub struct TransactRow {
     pub id: String,

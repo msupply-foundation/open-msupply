@@ -21,7 +21,7 @@ pub enum TransactLineRowType {
     Service,
 }
 
-#[derive(Clone, Queryable, Insertable)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
 #[table_name = "transact_line"]
 pub struct TransactLineRow {
     pub id: String,
