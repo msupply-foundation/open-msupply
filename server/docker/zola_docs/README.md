@@ -6,7 +6,7 @@ You'll need to build docker image and then run it, steps (all from repo root fol
 
 https://docs.docker.com/get-docker/
 
-<ins>buid image</ins>
+<ins>build image</ins>
 
 (only need to do this once, unless image configurations change)
 
