@@ -34,17 +34,38 @@ type DBBackendConnection = PgConnection;
 
 impl From<diesel::result::Error> for RepositoryError {
     fn from(err: diesel::result::Error) -> Self {
-        let msg = String::from(match err {
-            diesel::result::Error::InvalidCString(_) => "DIESEL_INVALID_C_STRING",
-            diesel::result::Error::DatabaseError(..) => "DIESEL_DATABASE_ERROR",
-            diesel::result::Error::NotFound => "DIESEL_NOT_FOUND",
-            diesel::result::Error::QueryBuilderError(_) => "DIESEL_QUERY_BUILDER_ERROR",
-            diesel::result::Error::DeserializationError(_) => "DIESEL_DESERIALIZATION_ERROR",
-            diesel::result::Error::SerializationError(_) => "DIESEL_SERIALIZATION_ERROR",
-            diesel::result::Error::RollbackTransaction => "DIESEL_ROLLBACK_TRANSACTION",
-            diesel::result::Error::AlreadyInTransaction => "DIESEL_ALREADY_IN_TRANSACTION",
-            _ => "DIESEL_UNKNOWN",
-        });
+        let msg = match err {
+            diesel::result::Error::InvalidCString(_) => "DIESEL_INVALID_C_STRING".to_string(),
+            diesel::result::Error::DatabaseError(err, _) => {
+                let err_str = match err {
+                    diesel::result::DatabaseErrorKind::UniqueViolation => "UNIQUE_VIOLATION",
+                    diesel::result::DatabaseErrorKind::ForeignKeyViolation => {
+                        "FOREIGN_KEY_VIOLATION"
+                    }
+                    diesel::result::DatabaseErrorKind::UnableToSendCommand => {
+                        "UNABLE_TO_SEND_COMMAND"
+                    }
+                    diesel::result::DatabaseErrorKind::SerializationFailure => {
+                        "SERIALIZATION_FAILURE"
+                    }
+                    _ => "UNKNOWN",
+                };
+                format!("DIESEL_DATABASE_ERROR_{}", err_str)
+            }
+            diesel::result::Error::NotFound => "DIESEL_NOT_FOUND".to_string(),
+            diesel::result::Error::QueryBuilderError(_) => "DIESEL_QUERY_BUILDER_ERROR".to_string(),
+            diesel::result::Error::DeserializationError(_) => {
+                "DIESEL_DESERIALIZATION_ERROR".to_string()
+            }
+            diesel::result::Error::SerializationError(_) => {
+                "DIESEL_SERIALIZATION_ERROR".to_string()
+            }
+            diesel::result::Error::RollbackTransaction => "DIESEL_ROLLBACK_TRANSACTION".to_string(),
+            diesel::result::Error::AlreadyInTransaction => {
+                "DIESEL_ALREADY_IN_TRANSACTION".to_string()
+            }
+            _ => "DIESEL_UNKNOWN".to_string(),
+        };
 
         RepositoryError { msg }
     }
