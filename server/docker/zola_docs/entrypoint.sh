@@ -5,7 +5,7 @@ cd docs
 git config --global url."https://".insteadOf git://
 git config --global url."https://github.com/".insteadOf git@github.com:
 git submodule update --init --recursive
-zola build --output-dir ../docs_dev
+zola serve --interface 0.0.0.0 
 
 /bin/bash
 # set -e
