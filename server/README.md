@@ -47,7 +47,7 @@ cargo install sqlx-cli --no-default-features --features postgres
 - Migrate database tables:
 
 ```
-export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate run
+export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate --source migrations/pg run
 ```
 
 - Build and start the remote server:
