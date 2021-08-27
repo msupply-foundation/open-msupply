@@ -19,7 +19,7 @@ pub enum RequisitionRowType {
     Report,
 }
 
-#[derive(Clone, Queryable, Insertable)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
 #[table_name = "requisition"]
 pub struct RequisitionRow {
     pub id: String,

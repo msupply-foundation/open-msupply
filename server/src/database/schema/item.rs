@@ -3,7 +3,7 @@ use diesel_derive_enum::DbEnum;
 
 #[derive(sqlx::Type)]
 #[sqlx(rename = "item_type")]
-#[derive(DbEnum, Clone, Debug)]
+#[derive(DbEnum, Clone, Debug, PartialEq, Eq)]
 pub enum ItemRowType {
     #[sqlx(rename = "general")]
     General,
@@ -13,7 +13,7 @@ pub enum ItemRowType {
     CrossReference,
 }
 
-#[derive(Clone, Insertable, Queryable)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq)]
 #[table_name = "item"]
 pub struct ItemRow {
     pub id: String,
