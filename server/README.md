@@ -29,7 +29,6 @@ mSupply remote server is a component of the Open mSupply system:
 
 - Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image).
 
-
 ## Getting started
 
 - Install [sqlx-cli](https://crates.io/crates/sqlx-cli/0.1.0-beta.1):
@@ -56,3 +55,7 @@ export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-databas
 SQLX_OFFLINE=true cargo build # optionally force build in offline mode
 APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
 ```
+
+## Building docs
+
+Docs are built via github action, but can build local version with docker: [how to build docs locally](docker/zola_docs/README.md)
