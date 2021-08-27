@@ -17,17 +17,23 @@ docker build -t zola_remote_docs ./docker/zola_docs/.
 <ins>run image</ins>
 
 ```BASH
-docker run -v $(pwd):/home zola_remote_docs
+docker run -ti -p 1111:1111 -v $(pwd):/home zola_remote_docs
 ```
 
-That's it, you should see build docs in `docs_dev` folder, open index file to see. Re-run to rebuild
+Should see it now on localhost:1111 and should refresh as per normal local `zola serve`
+
+To close container when you finished:
+
+<kbd><kbd>Ctrl</kbd>+<kbd>c</kbd>
+
+then 
+
+```BASH
+exit
+```
 
 `$(pwd)` can be replaced with your local repo folder on non linux/mac systems
 
 <ins>docker image maintenance</ins>
 
-Can run the following to bash into the image and run commands
-
-`docker run -ti -v $(pwd):/home zola_remote_docs`
-
-After that update entrypoint.sh file, then rebuild image and check by running
+After <kbd><kbd>Ctrl</kbd>+<kbd>c</kbd> from docker serve, you are in bash of running container, so can do some command and replicate them to entrypoint.sh (then rebuild and run again)

@@ -13,7 +13,7 @@ RUN wget -q -O - \
 | tar xzf - -C /usr/local/bin
 
 COPY entrypoint.sh /entrypoint.sh
-
+WORKDIR /home2
 WORKDIR /home
 
 ENTRYPOINT ["/entrypoint.sh"]
