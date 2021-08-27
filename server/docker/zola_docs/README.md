@@ -22,7 +22,7 @@ docker run -ti -p 1111:1111 -v $(pwd):/home zola_remote_docs
 
 The docs should now be accessible on localhost:1111 and update automatically in the same manner as if `zola serve` were being run locally.
 
-To close container when you finished:
+To close container:
 
 <kbd><kbd>Ctrl</kbd>+<kbd>c</kbd>
 
