@@ -4,11 +4,19 @@ import { request } from 'graphql-request';
 
 import { getQuery, mutation, useDraftDocument } from './api';
 import {
+  Book,
+  Button,
+  Download,
+  MenuDots,
+  Portal,
+  Printer,
   QueryProps,
   RemoteDataTable,
   RouteBuilder,
   useQuery,
   useFormatDate,
+  useHostContext,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { getColumns } from './columns';
@@ -64,9 +72,11 @@ const Transaction: FC = () => {
 
 const Transactions: FC = () => {
   const queryProps = { first: 10, offset: 0, sort: undefined, desc: false };
+  const { appBarButtonsRef } = useHostContext();
   const listQuery = async () => {
     const { first, offset, sort, desc } = queryProps;
     const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
+
     const { transactions } = await request(
       'http://localhost:4000',
       `
@@ -93,6 +103,7 @@ const Transactions: FC = () => {
 
   const navigate = useNavigate();
   const formatDate = useFormatDate();
+  const t = useTranslation();
   const columns = getColumns(formatDate);
   const fetchData = (props: QueryProps) => {
     queryProps.first = props.first;
@@ -101,13 +112,23 @@ const Transactions: FC = () => {
   };
 
   return (
-    <RemoteDataTable<Transaction>
-      columns={columns}
-      onFetchData={fetchData}
-      onRowClick={row => {
-        navigate(`/customers/customer-invoice/${row.id}`);
-      }}
-    />
+    <>
+      <Portal container={appBarButtonsRef.current}>
+        <>
+          <Button startIcon={<Book />}>{t('button.docs')}</Button>
+          <Button startIcon={<Download />}>{t('button.export')}</Button>
+          <Button startIcon={<Printer />}>{t('button.print')}</Button>
+          <Button startIcon={<MenuDots />}>{t('button.more')}</Button>
+        </>
+      </Portal>
+      <RemoteDataTable<Transaction>
+        columns={columns}
+        onFetchData={fetchData}
+        onRowClick={row => {
+          navigate(`/customers/customer-invoice/${row.id}`);
+        }}
+      />
+    </>
   );
 };
 
