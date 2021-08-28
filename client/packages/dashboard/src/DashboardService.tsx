@@ -7,10 +7,6 @@ import {
 } from '@openmsupply-client/common';
 import Widget from './Widget';
 
-// const RecentInvoices = React.lazy(() => import('invoices/RecentInvoicesWidget'));
-// const SalesDeposits = React.lazy(() => import('requisitions/DepositsWidget'));
-// const SalesToday = React.lazy(() => import('requisitions/TodayWidget'));
-
 const RecentInvoiceWidget = () => (
   <Widget height="500px">
     <Typography>RecentInvoices</Typography>

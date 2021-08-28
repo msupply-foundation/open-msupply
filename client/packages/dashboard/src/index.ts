@@ -1,1 +1,1 @@
-import("./bootstrap");
+export { default as DashboardService } from './DashboardService';
