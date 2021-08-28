@@ -23,9 +23,7 @@
     "webpack-dev-server": "4.0.0"
   },
   "scripts": {
-    "start": "webpack-cli serve",
-    "serve": "serve dist -p 3007",
-    "clean": "rm -rf dist"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@openmsupply-client/common": "^0.0.1",
