@@ -25,7 +25,6 @@
   },
   "scripts": {
     "start": "webpack-cli serve",
-    "build": "webpack --mode production",
     "//": "${UPDATE} - Update this port number with the port number added to your packages webpack config.",
     "serve": "serve dist -p 3006",
     "clean": "rm -rf dist"
