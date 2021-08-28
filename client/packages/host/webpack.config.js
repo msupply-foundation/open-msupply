@@ -2,9 +2,9 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const webpack = require('webpack');
 const HotModuleReplacementPlugin = webpack.HotModuleReplacementPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
+// const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
 const path = require('path');
-const deps = require('./package.json').dependencies;
+// const deps = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
