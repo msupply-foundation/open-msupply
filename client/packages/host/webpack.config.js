@@ -70,7 +70,7 @@ module.exports = {
        * In "static" mode single HTML file with bundle report will be generated.
        * In "json" mode single JSON file with bundle report will be generated
        */
-      analyzerMode: 'server',
+      analyzerMode: 'disabled',
     }),
 
     new HtmlWebpackPlugin({
@@ -78,35 +78,35 @@ module.exports = {
       template: './public/index.html',
     }),
 
-    new ModuleFederationPlugin({
-      name: 'host',
-      filename: 'remoteEntry.js',
-      remotes: {
-        customers: 'customers@http://localhost:3007/remoteEntry.js',
-        dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
-        transactions: 'transactions@http://localhost:3005/remoteEntry.js',
-      },
-      exposes: {
-        './Host': './src/Host',
-      },
-      shared: [
-        {
-          ...deps,
-          react: {
-            singleton: true,
-            requiredVersion: deps.react,
-          },
-          'react-dom': {
-            singleton: true,
-            requiredVersion: deps['react-dom'],
-          },
-        },
-        {
-          '@openmsupply-client/common': {
-            requiredVersion: require('../common/package.json').version,
-          },
-        },
-      ],
-    }),
+    // new ModuleFederationPlugin({
+    //   name: 'host',
+    //   filename: 'remoteEntry.js',
+    //   remotes: {
+    //     customers: 'customers@http://localhost:3007/remoteEntry.js',
+    //     dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
+    //     transactions: 'transactions@http://localhost:3005/remoteEntry.js',
+    //   },
+    //   exposes: {
+    //     './Host': './src/Host',
+    //   },
+    //   shared: [
+    //     {
+    //       ...deps,
+    //       react: {
+    //         singleton: true,
+    //         requiredVersion: deps.react,
+    //       },
+    //       'react-dom': {
+    //         singleton: true,
+    //         requiredVersion: deps['react-dom'],
+    //       },
+    //     },
+    //     {
+    //       '@openmsupply-client/common': {
+    //         requiredVersion: require('../common/package.json').version,
+    //       },
+    //     },
+    //   ],
+    // }),
   ],
 };
