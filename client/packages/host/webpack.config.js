@@ -32,8 +32,7 @@ module.exports = {
   },
   output: {
     publicPath: 'http://localhost:3003/',
-    filename: '[name].bundle.js',
-    chunkFilename: '[name].[id].[contenthash].js',
+    chunkFilename: '[id].[contenthash].js',
   },
   optimization: {
     splitChunks: {
