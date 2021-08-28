@@ -1,9 +1,9 @@
 {
+  "name": "openmsupply-client",
   "private": true,
-  "main": "./src/index.ts",
   "scripts": {
-    "start": "lerna run --scope @openmsupply-client/host --parallel start",
-    "build": "lerna run --scope @openmsupply-client/host build",
+    "start": "lerna run --scope @openmsupply-client/* --parallel start",
+    "build": "lerna run --scope @openmsupply-client/* build",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc",
@@ -19,7 +19,6 @@
     ]
   },
   "devDependencies": {
-    "@babel/core": "^7.15.0",
     "@storybook/addon-actions": "^6.3.7",
     "@storybook/addon-essentials": "^6.3.7",
     "@storybook/addon-links": "^6.3.7",
@@ -36,7 +35,6 @@
     "@types/react": "^17.0.14",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
-    "babel-loader": "^8.2.2",
     "eslint": "^7.31.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jest-dom": "^3.9.0",
@@ -44,9 +42,7 @@
     "jest": "^27.0.6",
     "lerna": "^3.22.1",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "swc-loader": "^0.1.14",
-    "webpack-bundle-analyzer": "^4.4.2"
+    "react-dom": "^17.0.2"
   },
   "lint-staged": {
     "src/**/*.+(js|json|ts|tsx)": [
@@ -56,7 +52,6 @@
       "prettier --write"
     ]
   },
-  "name": "openmsupply-client",
   "dependencies": {
     "@types/react-dom": "^17.0.9",
     "react-intl": "^5.20.6"
