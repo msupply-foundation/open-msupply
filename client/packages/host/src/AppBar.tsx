@@ -6,6 +6,7 @@ import {
   Toolbar,
   Typography,
   useDrawer,
+  useHostContext,
   useTranslation,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
@@ -46,6 +47,7 @@ const useStyles = makeStyles(theme => ({
   },
   appBarShift: {
     marginLeft: 128,
+    width: 'calc(100% - 178px)',
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
@@ -103,6 +105,7 @@ const Breadcrumbs: React.FC = () => {
 const AppBar: React.FC = () => {
   const classes = useStyles();
   const { isOpen } = useDrawer();
+  const { appBarButtonsRef } = useHostContext();
 
   return (
     <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
@@ -110,6 +113,7 @@ const AppBar: React.FC = () => {
         <ArrowIcon />
         <Breadcrumbs />
         <LanguageMenu />
+        <div ref={appBarButtonsRef}></div>
       </Toolbar>
     </div>
   );
