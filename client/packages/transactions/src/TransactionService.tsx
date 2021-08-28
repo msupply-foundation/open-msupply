@@ -16,6 +16,7 @@ import {
   useQuery,
   useFormatDate,
   useHostContext,
+  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -73,6 +74,7 @@ const Transaction: FC = () => {
 const Transactions: FC = () => {
   const queryProps = { first: 10, offset: 0, sort: undefined, desc: false };
   const { appBarButtonsRef } = useHostContext();
+  const { info, success, warning } = useNotification();
   const listQuery = async () => {
     const { first, offset, sort, desc } = queryProps;
     const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
@@ -115,10 +117,29 @@ const Transactions: FC = () => {
     <>
       <Portal container={appBarButtonsRef.current}>
         <>
-          <Button startIcon={<Book />}>{t('button.docs')}</Button>
-          <Button startIcon={<Download />}>{t('button.export')}</Button>
-          <Button startIcon={<Printer />}>{t('button.print')}</Button>
-          <Button startIcon={<MenuDots />}>{t('button.more')}</Button>
+          <Button
+            startIcon={<Book />}
+            onClick={() =>
+              (window.location.href = 'https://docs.msupply.foundation')
+            }
+          >
+            {t('button.docs')}
+          </Button>
+          <Button
+            startIcon={<Download />}
+            onClick={success('Downloaded successfully')}
+          >
+            {t('button.export')}
+          </Button>
+          <Button startIcon={<Printer />} onClick={info('No printer detected')}>
+            {t('button.print')}
+          </Button>
+          <Button
+            startIcon={<MenuDots />}
+            onClick={warning('Do not press this button')}
+          >
+            {t('button.more')}
+          </Button>
         </>
       </Portal>
       <RemoteDataTable<Transaction>
