@@ -18,6 +18,8 @@
     "noImplicitThis": true,
     "alwaysStrict": true,
 
+    "noEmit": true,
+
     "noUnusedLocals": true,
     "noUnusedParameters": true,
 
