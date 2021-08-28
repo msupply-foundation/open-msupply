@@ -1,6 +1,5 @@
 import { createTheme } from '@material-ui/core/styles';
 import shadows, { Shadows } from '@material-ui/core/styles/shadows';
-import { CSSProperties } from 'react';
 
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
@@ -64,7 +63,6 @@ const themeOptions = {
     },
   },
 };
-
 const theme = createTheme(themeOptions);
 
 export default theme;

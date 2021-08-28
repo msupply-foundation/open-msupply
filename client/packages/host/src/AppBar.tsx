@@ -27,31 +27,33 @@ const H6 = styled(Typography)({
   flexGrow: 1,
 });
 
-const useStyles = makeStyles(theme => ({
-  toolbar: {
-    paddingRight: 24,
-  },
-  appBar: {
-    left: 72,
-    position: 'absolute',
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    width: '100vw',
-    zIndex: theme.zIndex.drawer - 1,
-    height: 90,
-    boxShadow: theme.shadows[1],
-    ...theme.mixins.header,
-  },
-  appBarShift: {
-    marginLeft: 128,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-}));
+const useStyles = makeStyles(theme => {
+  return {
+    toolbar: {
+      paddingRight: 24,
+    },
+    appBar: {
+      left: 72,
+      position: 'absolute',
+      transition: theme.transitions?.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      width: '100vw',
+      zIndex: theme.zIndex?.drawer - 1,
+      height: 90,
+      boxShadow: theme.shadows?.[1],
+      ...theme.mixins?.header,
+    },
+    appBarShift: {
+      marginLeft: 128,
+      transition: theme.transitions?.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    },
+  };
+});
 
 interface urlPart {
   path: string;

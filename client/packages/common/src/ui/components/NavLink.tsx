@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 
 import clsx from 'clsx';
 import { ListItem, ListItemText, Tooltip } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import makeStyles from '@material-ui/styles/makeStyles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '../../hooks/useDrawer';
 
@@ -10,15 +10,15 @@ const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
     marginTop: 20,
-    '& svg': { ...theme.mixins.icon.medium },
+    '& svg': { ...theme.mixins?.icon.medium },
     '&:hover': {
-      backgroundColor: theme.palette.background.white,
-      boxShadow: theme.shadows[8],
+      backgroundColor: theme.palette?.background.white,
+      boxShadow: theme.shadows?.[8],
     },
   },
   drawerMenuItemSelected: {
-    backgroundColor: `${theme.palette.background.white}!important`,
-    boxShadow: theme.shadows[4],
+    backgroundColor: `${theme.palette?.background.white}!important`,
+    boxShadow: theme.shadows?.[4],
   },
 }));
 
