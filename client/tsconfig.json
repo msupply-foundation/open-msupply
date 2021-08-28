@@ -1,4 +1,5 @@
 {
+  "files": ["./types/react-table-config.d.ts"],
   "compilerOptions": {
     "resolveJsonModule": true,
     "target": "es5",

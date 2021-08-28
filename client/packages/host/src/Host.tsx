@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import {
   Box,
-  ReduxProvider,
   AppThemeProvider,
   Typography,
   QueryClient,
@@ -65,75 +64,73 @@ const Host: FC = () => {
   const { locale } = useHostContext();
 
   return (
-    <ReduxProvider>
-      <QueryClientProvider client={queryClient}>
-        <IntlProvider locale={locale}>
-          <AppThemeProvider>
-            <BrowserRouter>
-              <Viewport>
-                <AppBar />
-                <Box display="flex" flex={1}>
-                  <AppDrawer />
-                  <Content flex={1}>
-                    <React.Suspense fallback={'Loading'}>
-                      <Routes>
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Dashboard)
-                            .addWildCard()
-                            .build()}
-                          element={<DashboardService />}
-                        />
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Customers)
-                            .addWildCard()
-                            .build()}
-                          element={<CustomerContainer />}
-                        />
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Suppliers)
-                            .addWildCard()
-                            .build()}
-                          element={<Heading locale={locale}>suppliers</Heading>}
-                        />
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Stock)
-                            .addWildCard()
-                            .build()}
-                          element={<Heading locale={locale}>stock</Heading>}
-                        />
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Tools)
-                            .addWildCard()
-                            .build()}
-                          element={<Heading locale={locale}>tools</Heading>}
-                        />
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Reports)
-                            .addWildCard()
-                            .build()}
-                          element={<Heading locale={locale}>reports</Heading>}
-                        />
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Messages)
-                            .addWildCard()
-                            .build()}
-                          element={<Heading locale={locale}>messages</Heading>}
-                        />
-                        <Route
-                          path="*"
-                          element={<Navigate to="/dashboard" replace />}
-                        />
-                      </Routes>
-                    </React.Suspense>
-                  </Content>
-                </Box>
-              </Viewport>
-            </BrowserRouter>
-          </AppThemeProvider>
-          <ReactQueryDevtools initialIsOpen />
-        </IntlProvider>
-      </QueryClientProvider>
-    </ReduxProvider>
+    <QueryClientProvider client={queryClient}>
+      <IntlProvider locale={locale}>
+        <AppThemeProvider>
+          <BrowserRouter>
+            <Viewport>
+              <AppBar />
+              <Box display="flex" flex={1}>
+                <AppDrawer />
+                <Content flex={1}>
+                  <React.Suspense fallback={'Loading'}>
+                    <Routes>
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Dashboard)
+                          .addWildCard()
+                          .build()}
+                        element={<DashboardService />}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Customers)
+                          .addWildCard()
+                          .build()}
+                        element={<CustomerContainer />}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Suppliers)
+                          .addWildCard()
+                          .build()}
+                        element={<Heading locale={locale}>suppliers</Heading>}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Stock)
+                          .addWildCard()
+                          .build()}
+                        element={<Heading locale={locale}>stock</Heading>}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Tools)
+                          .addWildCard()
+                          .build()}
+                        element={<Heading locale={locale}>tools</Heading>}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Reports)
+                          .addWildCard()
+                          .build()}
+                        element={<Heading locale={locale}>reports</Heading>}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.Messages)
+                          .addWildCard()
+                          .build()}
+                        element={<Heading locale={locale}>messages</Heading>}
+                      />
+                      <Route
+                        path="*"
+                        element={<Navigate to="/dashboard" replace />}
+                      />
+                    </Routes>
+                  </React.Suspense>
+                </Content>
+              </Box>
+            </Viewport>
+          </BrowserRouter>
+        </AppThemeProvider>
+        <ReactQueryDevtools initialIsOpen />
+      </IntlProvider>
+    </QueryClientProvider>
   );
 };
 
