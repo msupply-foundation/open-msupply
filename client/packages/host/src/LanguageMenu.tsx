@@ -42,7 +42,7 @@ export const LanguageMenu: React.FC = () => {
 
   return (
     <div>
-      <IconButton onClick={handleClick}></IconButton>
+      <IconButton onClick={handleClick} size="large"></IconButton>
       <Menu
         anchorEl={anchorEl}
         keepMounted

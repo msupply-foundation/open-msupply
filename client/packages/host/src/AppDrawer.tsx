@@ -35,7 +35,7 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
     padding: '0 8px',
-    ...theme.mixins.toolbar,
+    ...theme.mixins?.toolbar,
   },
   drawerMenu: {
     display: 'flex',
@@ -47,40 +47,40 @@ const useStyles = makeStyles(theme => ({
   drawerMenuItem: {
     height: 32,
     margin: '16px 0',
-    '& svg': { ...theme.mixins.icon.medium },
+    '& svg': { ...theme.mixins?.icon.medium },
     '&:hover': {
-      backgroundColor: theme.palette.background.white,
-      boxShadow: theme.shadows[8],
+      backgroundColor: theme.palette?.background.white,
+      boxShadow: theme.shadows?.[8],
     },
   },
   drawerMenuItemSelected: {
-    backgroundColor: `${theme.palette.background.white}!important`,
-    boxShadow: theme.shadows[4],
+    backgroundColor: `${theme.palette?.background.white}!important`,
+    boxShadow: theme.shadows?.[4],
   },
   drawerPaper: {
-    backgroundColor: theme.palette.background.menu,
+    backgroundColor: theme.palette?.background.menu,
     position: 'relative',
     whiteSpace: 'nowrap',
     width: 200,
-    transition: theme.transitions.create('width', {
+    transition: theme.transitions?.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
     borderRadius: 8,
-    boxShadow: theme.shadows[7],
+    boxShadow: theme.shadows?.[7],
     '& li': { height: 45, display: 'flex', alignItems: 'center' },
     '& li > a': { borderRadius: 16, padding: '4px 8px', width: 168 },
     '& li > a > div': { marginLeft: 8 },
   },
   drawerPaperClose: {
     overflowX: 'hidden',
-    transition: theme.transitions.create('width', {
+    transition: theme.transitions?.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    width: theme.spacing(7),
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(9),
+    width: theme?.spacing?.(7),
+    [theme.breakpoints?.up('sm')]: {
+      width: theme?.spacing?.(9),
     },
     '& li > a': { borderRadius: 20, height: 40, padding: 10, width: 40 },
     '& li > a > div': { display: 'none' },
@@ -153,11 +153,12 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
 };
 
 const AppDrawer: React.FC = () => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('xl'));
+
   const classes = useStyles();
   const drawer = useDrawer();
   const t = useTranslation();
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -182,6 +183,7 @@ const AppDrawer: React.FC = () => {
         <IconButton
           aria-label={t('button.open-the-menu')}
           onClick={drawer.toggle}
+          size="large"
         >
           <MSupplyGuy
             classes={{

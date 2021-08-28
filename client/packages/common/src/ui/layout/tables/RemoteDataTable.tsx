@@ -16,7 +16,6 @@ import {
   Box,
   CircularProgress,
   Grid,
-  makeStyles,
   TableBody,
   TableCell,
   TableHead,
@@ -25,6 +24,8 @@ import {
   TablePagination,
   Table as MuiTable,
 } from '@material-ui/core';
+
+import makeStyles from '@material-ui/styles/makeStyles';
 
 import { SortAsc, SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';
@@ -50,7 +51,7 @@ const useStyles = makeStyles(theme => ({
     cursor: 'pointer',
   },
   headerCell: {
-    ...theme.typography.th,
+    ...theme.typography?.th,
   },
   loadingIndicator: { marginLeft: 'auto', marginRight: 'auto' },
   loadingIndicatorContainer: { display: 'flex', marginTop: 50 },
