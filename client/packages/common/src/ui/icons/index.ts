@@ -13,3 +13,4 @@ export { SortDesc } from './SortDesc';
 export { Stock } from './Stock';
 export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
+export { Translate } from './Translate';

@@ -3,6 +3,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Translate,
   useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
@@ -28,21 +29,21 @@ export const LanguageMenu: React.FC = () => {
     handleClose();
   };
 
-  const LanguageMenuItem = React.forwardRef(
-    (props: LanguageMenuItemProps, _ref) => {
-      const { children, language } = props;
-      const selected = language === locale;
-      return (
-        <MenuItem selected={selected} onClick={() => setLanguage(language)}>
-          {children}
-        </MenuItem>
-      );
-    }
-  );
+  const LanguageMenuItem = (props: LanguageMenuItemProps) => {
+    const { children, language } = props;
+    const selected = language === locale;
+    return (
+      <MenuItem selected={selected} onClick={() => setLanguage(language)}>
+        {children}
+      </MenuItem>
+    );
+  };
 
   return (
     <div>
-      <IconButton onClick={handleClick} size="large"></IconButton>
+      <IconButton onClick={handleClick}>
+        <Translate />
+      </IconButton>
       <Menu
         anchorEl={anchorEl}
         keepMounted

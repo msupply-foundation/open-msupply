@@ -5,9 +5,7 @@ import theme from './theme';
 
 declare module '@material-ui/styles/defaultTheme' {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface DefaultTheme extends Theme {
-    josh: string;
-  }
+  interface DefaultTheme extends Theme {}
 }
 
 const ThemeProvider: React.FC = ({ children }) => (
