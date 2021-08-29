@@ -39,6 +39,6 @@ impl RequisitionRepository {
         use crate::database::schema::diesel_schema::requisition::dsl::*;
         let connection = get_connection(&self.pool)?;
         let result = requisition.filter(id.eq(requisition_id)).first(&connection);
-        return result.map_err(|err| RepositoryError::from(err));
+        result.map_err(|err| RepositoryError::from(err))
     }
 }
