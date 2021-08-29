@@ -154,7 +154,7 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
 
 const AppDrawer: React.FC = () => {
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('xl'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const classes = useStyles();
   const drawer = useDrawer();

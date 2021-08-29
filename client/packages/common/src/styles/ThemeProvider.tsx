@@ -1,10 +1,6 @@
 import React from 'react';
-import {
-  ThemeProvider as MuiThemeProvider,
-  StyledEngineProvider,
-} from '@material-ui/core/styles';
-import { Theme } from '@material-ui/core/styles/createTheme';
-// import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
+import { StyledEngineProvider, Theme } from '@material-ui/core/styles';
+import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
 import theme from './theme';
 
 declare module '@material-ui/styles/defaultTheme' {
