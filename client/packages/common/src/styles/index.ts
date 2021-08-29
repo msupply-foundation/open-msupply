@@ -1,5 +1,5 @@
 import AppThemeProvider from './ThemeProvider';
-import { styled } from '@material-ui/styles';
+import { styled } from '@material-ui/core/styles';
 import { useTheme } from '@material-ui/core/styles';
 import makeStyles from '@material-ui/styles/makeStyles';
 import CssBaseline from '@material-ui/core/CssBaseline';
