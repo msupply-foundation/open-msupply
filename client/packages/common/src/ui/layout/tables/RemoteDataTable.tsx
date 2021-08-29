@@ -51,7 +51,7 @@ const useStyles = makeStyles(theme => ({
     cursor: 'pointer',
   },
   headerCell: {
-    ...theme.typography?.th,
+    ...theme.typography.th,
   },
   loadingIndicator: { marginLeft: 'auto', marginRight: 'auto' },
   loadingIndicatorContainer: { display: 'flex', marginTop: 50 },

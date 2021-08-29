@@ -35,19 +35,19 @@ const useStyles = makeStyles(theme => {
     appBar: {
       left: 72,
       position: 'absolute',
-      transition: theme.transitions?.create(['width', 'margin'], {
+      transition: theme.transitions.create(['width', 'margin'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
       }),
       width: '100vw',
-      zIndex: theme.zIndex?.drawer - 1,
+      zIndex: theme.zIndex.drawer - 1,
       height: 90,
-      boxShadow: theme.shadows?.[1],
-      ...theme.mixins?.header,
+      boxShadow: theme.shadows[1],
+      ...theme.mixins.header,
     },
     appBarShift: {
       marginLeft: 128,
-      transition: theme.transitions?.create(['width', 'margin'], {
+      transition: theme.transitions.create(['width', 'margin'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.enteringScreen,
       }),
