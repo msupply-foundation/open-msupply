@@ -1,4 +1,6 @@
-use crate::database::repository::RepositoryError;
+use crate::{
+    database::repository::RepositoryError, server::data::RepositoryMap, util::settings::Settings,
+};
 
 mod item;
 mod item_line;
@@ -20,11 +22,11 @@ pub use transact::{CustomerInvoiceRepository, TransactRepository};
 pub use transact_line::TransactLineRepository;
 pub use user_account::UserAccountRepository;
 
-use diesel::prelude::*;
-use diesel::r2d2::ConnectionManager;
-use r2d2::{Pool, PooledConnection};
-
-use crate::{server::data::RepositoryMap, util::settings::Settings};
+use diesel::{
+    prelude::*,
+    r2d2::{ConnectionManager, Pool, PooledConnection},
+    result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
+};
 
 #[cfg(feature = "dieselsqlite")]
 type DBBackendConnection = SqliteConnection;
@@ -32,38 +34,26 @@ type DBBackendConnection = SqliteConnection;
 #[cfg(feature = "dieselpg")]
 type DBBackendConnection = PgConnection;
 
-impl From<diesel::result::Error> for RepositoryError {
-    fn from(err: diesel::result::Error) -> Self {
+impl From<DieselError> for RepositoryError {
+    fn from(err: DieselError) -> Self {
         let msg = match err {
-            diesel::result::Error::InvalidCString(_) => "DIESEL_INVALID_C_STRING".to_string(),
-            diesel::result::Error::DatabaseError(err, _) => {
+            DieselError::InvalidCString(_) => "DIESEL_INVALID_C_STRING".to_string(),
+            DieselError::DatabaseError(err, _) => {
                 let err_str = match err {
-                    diesel::result::DatabaseErrorKind::UniqueViolation => "UNIQUE_VIOLATION",
-                    diesel::result::DatabaseErrorKind::ForeignKeyViolation => {
-                        "FOREIGN_KEY_VIOLATION"
-                    }
-                    diesel::result::DatabaseErrorKind::UnableToSendCommand => {
-                        "UNABLE_TO_SEND_COMMAND"
-                    }
-                    diesel::result::DatabaseErrorKind::SerializationFailure => {
-                        "SERIALIZATION_FAILURE"
-                    }
+                    DieselDatabaseErrorKind::UniqueViolation => "UNIQUE_VIOLATION",
+                    DieselDatabaseErrorKind::ForeignKeyViolation => "FOREIGN_KEY_VIOLATION",
+                    DieselDatabaseErrorKind::UnableToSendCommand => "UNABLE_TO_SEND_COMMAND",
+                    DieselDatabaseErrorKind::SerializationFailure => "SERIALIZATION_FAILURE",
                     _ => "UNKNOWN",
                 };
                 format!("DIESEL_DATABASE_ERROR_{}", err_str)
             }
-            diesel::result::Error::NotFound => "DIESEL_NOT_FOUND".to_string(),
-            diesel::result::Error::QueryBuilderError(_) => "DIESEL_QUERY_BUILDER_ERROR".to_string(),
-            diesel::result::Error::DeserializationError(_) => {
-                "DIESEL_DESERIALIZATION_ERROR".to_string()
-            }
-            diesel::result::Error::SerializationError(_) => {
-                "DIESEL_SERIALIZATION_ERROR".to_string()
-            }
-            diesel::result::Error::RollbackTransaction => "DIESEL_ROLLBACK_TRANSACTION".to_string(),
-            diesel::result::Error::AlreadyInTransaction => {
-                "DIESEL_ALREADY_IN_TRANSACTION".to_string()
-            }
+            DieselError::NotFound => "DIESEL_NOT_FOUND".to_string(),
+            DieselError::QueryBuilderError(_) => "DIESEL_QUERY_BUILDER_ERROR".to_string(),
+            DieselError::DeserializationError(_) => "DIESEL_DESERIALIZATION_ERROR".to_string(),
+            DieselError::SerializationError(_) => "DIESEL_SERIALIZATION_ERROR".to_string(),
+            DieselError::RollbackTransaction => "DIESEL_ROLLBACK_TRANSACTION".to_string(),
+            DieselError::AlreadyInTransaction => "DIESEL_ALREADY_IN_TRANSACTION".to_string(),
             _ => "DIESEL_UNKNOWN".to_string(),
         };
 

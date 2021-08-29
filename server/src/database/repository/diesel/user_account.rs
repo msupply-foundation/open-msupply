@@ -1,12 +1,14 @@
-use crate::database::repository::repository::get_connection;
-use crate::database::repository::RepositoryError;
-use crate::database::schema::UserAccountRow;
-
-use diesel::prelude::*;
-use diesel::r2d2::ConnectionManager;
-use r2d2::Pool;
-
 use super::DBBackendConnection;
+
+use crate::database::{
+    repository::{repository::get_connection, RepositoryError},
+    schema::UserAccountRow,
+};
+
+use diesel::{
+    prelude::*,
+    r2d2::{ConnectionManager, Pool},
+};
 
 #[derive(Clone)]
 pub struct UserAccountRepository {
