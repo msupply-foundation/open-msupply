@@ -14,10 +14,8 @@ const StyledButton = styled(MuiButton)(({ theme }: { theme: Theme }) => ({
   boxShadow: theme.shadows[1],
 }));
 
-const Button: React.FC<ButtonProps> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { variant, ...otherProps } = props;
-  return <StyledButton variant="contained" {...otherProps} />;
-};
+const Button: React.FC<ButtonProps> = props => (
+  <StyledButton {...props} variant="contained" />
+);
 
 export default Button;
