@@ -4,7 +4,6 @@ import { request } from 'graphql-request';
 
 import { getQuery, mutation, useDraftDocument } from './api';
 import {
-  Book,
   Button,
   Download,
   MenuDots,
@@ -117,14 +116,6 @@ const Transactions: FC = () => {
     <>
       <Portal container={appBarButtonsRef.current}>
         <>
-          <Button
-            startIcon={<Book />}
-            onClick={() =>
-              (window.location.href = 'https://docs.msupply.foundation')
-            }
-          >
-            {t('button.docs')}
-          </Button>
           <Button
             startIcon={<Download />}
             onClick={success('Downloaded successfully')}
