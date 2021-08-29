@@ -9,13 +9,11 @@ import { act } from 'react-dom/test-utils';
 
 describe('AppDrawer', () => {
   it('Collapses when clicking the drawer open/close button for the first time on a large screen', () => {
-    const { debug } = render(
+    render(
       <TestingProvider>
         <AppDrawer />
       </TestingProvider>
     );
-
-    debug();
 
     const button = screen.getByRole('button', { name: /Open the menu/i });
     const drawer = screen.getByTestId('drawer');
