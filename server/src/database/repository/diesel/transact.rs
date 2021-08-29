@@ -33,7 +33,7 @@ impl TransactRepository {
         use crate::database::schema::diesel_schema::transact::dsl::*;
         let connection = get_connection(&self.pool)?;
         let result = transact.filter(id.eq(transact_id)).first(&connection);
-        return result.map_err(|err| RepositoryError::from(err));
+        result.map_err(|err| RepositoryError::from(err))
     }
 }
 
@@ -60,7 +60,7 @@ impl CustomerInvoiceRepository {
                     .and(name_id.eq(name)),
             )
             .get_results(&connection);
-        return result.map_err(|err| RepositoryError::from(err));
+        result.map_err(|err| RepositoryError::from(err))
     }
 
     pub async fn find_many_by_store_id(
@@ -76,6 +76,6 @@ impl CustomerInvoiceRepository {
                     .and(store_id.eq(store)),
             )
             .get_results(&connection);
-        return result.map_err(|err| RepositoryError::from(err));
+        result.map_err(|err| RepositoryError::from(err))
     }
 }

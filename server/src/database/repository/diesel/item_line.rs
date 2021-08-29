@@ -36,6 +36,6 @@ impl ItemLineRepository {
             .filter(id.eq(item_line_id))
             //.select((id, item_id, store_id, batch, quantity))
             .first(&connection);
-        return result.map_err(|err| RepositoryError::from(err));
+        result.map_err(|err| RepositoryError::from(err))
     }
 }
