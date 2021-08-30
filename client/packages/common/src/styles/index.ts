@@ -1,5 +1,5 @@
 import { AppGlobalStyles } from './AppGlobalStyles';
-import { useRtl, useAppTheme } from './hooks';
+import { useAppTheme } from './useAppTheme';
 import AppThemeProvider from './ThemeProvider';
 import { styled } from '@material-ui/core/styles';
 import { useTheme } from '@material-ui/core/styles';
@@ -14,7 +14,6 @@ export {
   styled,
   useMediaQuery,
   useTheme,
-  useRtl,
   useAppTheme,
   AppGlobalStyles,
 };

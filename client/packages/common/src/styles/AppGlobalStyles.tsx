@@ -1,6 +1,6 @@
 import { GlobalStyles } from '@material-ui/core';
 import React, { FC } from 'react';
-import { useRtl } from './hooks';
+import { useRtl } from '../intl/intlHelpers';
 
 export const AppGlobalStyles: FC = props => {
   const isRtl = useRtl();
