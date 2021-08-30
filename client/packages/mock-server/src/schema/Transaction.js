@@ -46,7 +46,15 @@ const getDataSorter = (sortKey, desc) => (a, b) => {
   return 0;
 };
 
-const getTransactionData = (first, offset, sort, desc) => {
+const delay = async ms =>
+  new Promise(resolve =>
+    setTimeout(() => {
+      resolve('');
+    }, ms)
+  );
+
+const getTransactionData = async (first, offset, sort, desc) => {
+  await delay(1000 * Math.random() + 200);
   const data = TransactionData.slice();
   if (sort) {
     const sortData = getDataSorter(sort, desc);

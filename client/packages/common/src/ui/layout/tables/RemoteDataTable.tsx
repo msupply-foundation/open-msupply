@@ -10,7 +10,6 @@ import {
   useSortBy,
   useTable,
 } from 'react-table';
-import { QueryObserverResult } from 'react-query';
 import clsx from 'clsx';
 
 import {
@@ -59,9 +58,12 @@ const useStyles = makeStyles(theme => ({
 
 interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
+  data?: T[];
   initialSortBy?: SortingRule<T>[];
-  onFetchData: (props: QueryProps<T>) => Promise<QueryObserverResult<T>>;
+  isLoading?: boolean;
+  onFetchData: (props: QueryProps<T>) => void;
   onRowClick?: <T extends Record<string, unknown>>(row: Row<T>) => void;
+  totalLength?: number;
 }
 
 const renderSortIcon = <D extends Record<string, unknown>>(
@@ -74,17 +76,17 @@ const renderSortIcon = <D extends Record<string, unknown>>(
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
+  data = [],
   initialSortBy,
+  isLoading = false,
   onFetchData,
   onRowClick,
+  totalLength = 0,
 }: TableProps<T> & { children?: ReactNode }): JSX.Element => {
   const classes = useStyles();
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageCount, setPageCount] = useState(0);
-  const [tableData, setTableData] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const pageCount = Math.ceil(totalLength / pageSize);
   const hasRowClick = !!onRowClick;
   const {
     getTableProps,
@@ -96,7 +98,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   } = useTable(
     {
       columns,
-      data: tableData,
+      data,
       manualPagination: true,
       manualSortBy: true,
       pageCount,
@@ -109,38 +111,22 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     useSortBy,
     usePagination
   );
+
   const gotoPage = (page: number) => setPageIndex(page);
   const refetch = () =>
     onFetchData({
       offset: pageIndex * pageSize,
       first: pageSize,
       sortBy,
-    }).then((result: QueryObserverResult) => {
-      const { data: response } = result;
-      setTableData((response as QueryResponse<T>)?.data || []);
-      setPageCount(
-        Math.ceil((response as QueryResponse<T>)?.totalLength || 0) / pageSize
-      );
-      setIsLoading(false);
     });
 
   useEffect(() => {
-    if (isLoading) return;
-
-    setIsLoading(true);
     refetch();
   }, [pageSize, pageIndex]);
 
-  // used with local data only
-  // useEffect(() => setIsLoading(!tableData), [tableData]);
-  // { id: 'Client', desc: false }
-
   useEffect(() => {
-    if (isLoading) return;
-    setIsLoading(true);
     setPageIndex(0);
     refetch();
-    setIsLoading(false);
   }, [sortBy]);
 
   return isLoading ? (
