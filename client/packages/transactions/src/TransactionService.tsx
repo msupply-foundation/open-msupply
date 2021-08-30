@@ -4,6 +4,11 @@ import { request } from 'graphql-request';
 
 import { getQuery, mutation, useDraftDocument } from './api';
 import {
+  Button,
+  Download,
+  MenuDots,
+  Portal,
+  Printer,
   QueryProps,
   RemoteDataTable,
   RouteBuilder,
@@ -11,6 +16,8 @@ import {
   useQuery,
   useColumns,
   ColumnFormat,
+  useHostContext,
+  useNotification,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -70,9 +77,12 @@ const Transactions: FC = () => {
     sort?: string;
     desc?: boolean;
   };
+  const { appBarButtonsRef } = useHostContext();
+  const { info, success, warning } = useNotification();
   const listQuery = async () => {
     const { first, offset, sort, desc } = queryProps;
-    const sortParameters = sort ? `, sort: "${sort}", desc: ${!!desc}` : '';
+    const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
+
     const { transactions } = await request(
       'http://localhost:4000',
       `
@@ -121,14 +131,35 @@ const Transactions: FC = () => {
   };
 
   return (
-    <RemoteDataTable<Transaction>
-      columns={columns}
-      initialSortBy={initialSortBy}
-      onFetchData={fetchData}
-      onRowClick={row => {
-        navigate(`/customers/customer-invoice/${row.id}`);
-      }}
-    />
+    <>
+      <Portal container={appBarButtonsRef.current}>
+        <>
+          <Button
+            icon={<Download />}
+            labelKey="button.export"
+            onClick={success('Downloaded successfully')}
+          />
+          <Button
+            icon={<Printer />}
+            labelKey="button.print"
+            onClick={info('No printer detected')}
+          />
+          <Button
+            icon={<MenuDots />}
+            labelKey="button.more"
+            onClick={warning('Do not press this button')}
+          />
+        </>
+      </Portal>
+      <RemoteDataTable<Transaction>
+        columns={columns}
+        initialSortBy={initialSortBy}
+        onFetchData={fetchData}
+        onRowClick={row => {
+          navigate(`/customers/customer-invoice/${row.id}`);
+        }}
+      />
+    </>
   );
 };
 
