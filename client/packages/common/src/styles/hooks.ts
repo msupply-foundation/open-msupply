@@ -6,7 +6,7 @@ import theme from './theme';
 
 export const useRtl = (): boolean => {
   const { locale } = useHostContext();
-  const isRtl = locale !== 'en';
+  const isRtl = locale === 'ab';
   return isRtl;
 };
 
