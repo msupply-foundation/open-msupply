@@ -5,7 +5,7 @@ import { StyledEngineProvider } from '@material-ui/core/styles';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
-import { AppGlobalStyles } from './AppGlobalStyles';
+import { RTLProvider } from './RTLProvider';
 
 const cacheRtl = createCache({
   key: 'rtl',
@@ -28,8 +28,9 @@ const ThemeProvider: React.FC = ({ children }) => {
   return (
     <CacheProvider value={cacheRtl}>
       <StyledEngineProvider injectFirst>
-        <AppGlobalStyles />
-        <MuiThemeProvider theme={appTheme}>{children}</MuiThemeProvider>
+        <RTLProvider>
+          <MuiThemeProvider theme={appTheme}>{children}</MuiThemeProvider>
+        </RTLProvider>
       </StyledEngineProvider>
     </CacheProvider>
   );
