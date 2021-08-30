@@ -4,7 +4,7 @@ import type { PrimitiveType } from 'intl-messageformat';
 // "import type" ensures en messages aren't bundled by default
 import * as sourceOfTruth from './locales/en.json';
 
-export type SupportedLocales = 'en' | 'fr' | 'pt';
+export type SupportedLocales = 'en' | 'fr' | 'pt' | 'ab';
 export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
 
@@ -45,6 +45,10 @@ export const importMessages = (
         /* webpackMode: "lazy", webpackChunkName: "pt_json" */
         './locales/pt.json'
       );
+    case 'ab':
+      return import(
+        /* webpackMode: "lazy", webpackChunkName: "ab_json" */
+        './locales/ab.json'
+      );
   }
 };
-
