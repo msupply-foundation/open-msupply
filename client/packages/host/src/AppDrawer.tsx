@@ -3,7 +3,7 @@ import {
   Dashboard,
   Divider,
   Drawer,
-  IconButton,
+  UnstyledIconButton,
   List,
   MSupplyGuy,
   Messages,
@@ -155,7 +155,6 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
 const AppDrawer: React.FC = () => {
   const classes = useStyles();
   const drawer = useDrawer();
-  const t = useTranslation();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -179,18 +178,21 @@ const AppDrawer: React.FC = () => {
       open={drawer.isOpen}
     >
       <div className={classes.toolbarIcon}>
-        <IconButton
-          aria-label={t('button.open-the-menu')}
+        <UnstyledIconButton
+          titleKey={
+            drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
+          }
           onClick={drawer.toggle}
-        >
-          <MSupplyGuy
-            classes={{
-              root: drawer.isOpen
-                ? classes.mSupplyGuy
-                : classes.mSupplyGuySmall,
-            }}
-          />
-        </IconButton>
+          icon={
+            <MSupplyGuy
+              classes={{
+                root: drawer.isOpen
+                  ? classes.mSupplyGuy
+                  : classes.mSupplyGuySmall,
+              }}
+            />
+          }
+        />
       </div>
       <Menu classes={classes} />
     </Drawer>

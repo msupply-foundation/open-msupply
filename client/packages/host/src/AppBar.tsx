@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import {
   ArrowLeft,
+  Book,
+  Button,
   makeStyles,
   styled,
   Toolbar,
   Typography,
   useDrawer,
+  useHostContext,
   useTranslation,
 } from '@openmsupply-client/common';
 import clsx from 'clsx';
@@ -24,13 +27,18 @@ const ArrowIcon = styled(ArrowLeft)({
 });
 
 const H6 = styled(Typography)({
-  flexGrow: 1,
+  flexGrow: 0,
 });
 
+const ButtonContainer = styled('div')({
+  display: 'flex',
+  flex: 1,
+  justifyContent: 'flex-end',
+});
+
+const StyledToolbar = styled(Toolbar)({ paddingRight: 0 });
+
 const useStyles = makeStyles(theme => ({
-  toolbar: {
-    paddingRight: 24,
-  },
   appBar: {
     left: 72,
     position: 'absolute',
@@ -38,7 +46,7 @@ const useStyles = makeStyles(theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    width: '100vw',
+    width: 'calc(100% - 72px)',
     zIndex: theme.zIndex.drawer - 1,
     height: 90,
     boxShadow: theme.shadows[1],
@@ -46,6 +54,7 @@ const useStyles = makeStyles(theme => ({
   },
   appBarShift: {
     marginLeft: 128,
+    width: 'calc(100% - 200px)',
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
@@ -103,14 +112,22 @@ const Breadcrumbs: React.FC = () => {
 const AppBar: React.FC = () => {
   const classes = useStyles();
   const { isOpen } = useDrawer();
+  const { appBarButtonsRef } = useHostContext();
 
   return (
     <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
-      <Toolbar className={classes.toolbar}>
+      <StyledToolbar>
         <ArrowIcon />
         <Breadcrumbs />
-        <LanguageMenu />
-      </Toolbar>
+        <ButtonContainer ref={appBarButtonsRef}>
+          <Button
+            icon={<Book />}
+            labelKey="button.docs"
+            onClick={() => (location.href = 'https://docs.msupply.foundation')}
+          />
+          <LanguageMenu />
+        </ButtonContainer>
+      </StyledToolbar>
     </div>
   );
 };
