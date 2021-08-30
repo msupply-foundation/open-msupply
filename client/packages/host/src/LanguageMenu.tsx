@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  IconButton,
+  Button,
   Menu,
   MenuItem,
   Translate,
@@ -41,9 +41,11 @@ export const LanguageMenu: React.FC = () => {
 
   return (
     <div>
-      <IconButton onClick={handleClick}>
-        <Translate />
-      </IconButton>
+      <Button
+        onClick={handleClick}
+        icon={<Translate />}
+        labelKey="button.language"
+      />
       <Menu
         anchorEl={anchorEl}
         keepMounted
