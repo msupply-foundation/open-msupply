@@ -1,0 +1,20 @@
+{
+    "app.admin": "مشرف",
+    "app.customers": "عملاء",
+    "app.customer_invoices": "فواتير العميل",
+    "app.customer-invoice": "فاتورة العميل",
+    "app.customer-requisition": "طلبات الشراء",
+    "app.dashboard": "لوحة القيادة",
+    "app.logout": "تسجيل خروج",
+    "app.messages": "رسائل",
+    "app.reports": "التقارير",
+    "app.stock": "الأوراق المالية",
+    "app.suppliers": "الموردين",
+    "app.sync": "تزامن",
+    "app.tools": "أدوات",
+    "app.transactions": "المعاملات",
+    "app.welcome": "أهلا،",
+    "breadcrumb.item": "#{id}",
+    "button.ok": "نعم",
+    "button.open-the-menu": "افتح القائمة"
+}

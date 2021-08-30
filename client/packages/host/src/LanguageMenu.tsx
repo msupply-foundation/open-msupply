@@ -53,6 +53,7 @@ export const LanguageMenu: React.FC = () => {
         <LanguageMenuItem language="en">English</LanguageMenuItem>
         <LanguageMenuItem language="fr">French</LanguageMenuItem>
         <LanguageMenuItem language="pt">Portuguese</LanguageMenuItem>
+        <LanguageMenuItem language="ab">Arabic</LanguageMenuItem>
       </Menu>
     </div>
   );
