@@ -81,7 +81,7 @@ const Transactions: FC = () => {
   const { info, success, warning } = useNotification();
   const listQuery = async () => {
     const { first, offset, sort, desc } = queryProps;
-    const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
+    const sortParameters = sort ? `, sort: "${sort}", desc: ${!!desc}` : '';
 
     const { transactions } = await request(
       'http://localhost:4000',

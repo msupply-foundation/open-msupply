@@ -2754,18 +2754,6 @@
     schema-utils "^2.6.5"
     source-map "^0.7.3"
 
-"@pmmmwh/react-refresh-webpack-plugin@^0.5.0-beta.8":
-  version "0.5.0-rc.5"
-  resolved "https://github.com/pmmmwh/react-refresh-webpack-plugin#319e650147c74127c7a4d92328a692f5233efc15"
-  dependencies:
-    ansi-html "^0.0.7"
-    core-js-pure "^3.8.1"
-    error-stack-parser "^2.0.6"
-    html-entities "^2.1.0"
-    loader-utils "^2.0.0"
-    schema-utils "^3.0.0"
-    source-map "^0.7.3"
-
 "@polka/url@^1.0.0-next.17":
   version "1.0.0-next.17"
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.17.tgz#25fdbdfd282c2f86ddf3fcefbd98be99cd2627e2"
@@ -6671,7 +6659,7 @@ core-js-compat@^3.14.0, core-js-compat@^3.16.0, core-js-compat@^3.8.1:
     browserslist "^4.16.8"
     semver "7.0.0"
 
-core-js-pure@^3.10.2, core-js-pure@^3.16.0, core-js-pure@^3.8.1, core-js-pure@^3.8.2:
+core-js-pure@^3.10.2, core-js-pure@^3.16.0, core-js-pure@^3.8.2:
   version "3.16.3"
   resolved "https://registry.yarnpkg.com/core-js-pure/-/core-js-pure-3.16.3.tgz#41ccb9b6027535f8dd51a0af004c1c7f0a8c9ca7"
   integrity sha512-6In+2RwN0FT5yK0ZnhDP5rco/NnuuFZhHauQizZiHo5lDnqAvq8Phxcpy3f+prJOqtKodt/cftBl/GTOW0kiqQ==
@@ -9314,7 +9302,7 @@ html-entities@^1.2.0, html-entities@^1.2.1:
   resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-1.4.0.tgz#cfbd1b01d2afaf9adca1b10ae7dffab98c71d2dc"
   integrity sha512-8nxjcBcd8wovbeKx7h3wTji4e6+rhaVuPNpMqwWgnHh+N9ToqsCs6XztWRBPQ+UtzsoMAdKZtUENoVzU/EMtZA==
 
-html-entities@^2.1.0, html-entities@^2.3.2:
+html-entities@^2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-2.3.2.tgz#760b404685cb1d794e4f4b744332e3b00dcfe488"
   integrity sha512-c3Ab/url5ksaT0WyleslpBEthOzWhrjQbg75y7XUsfSzi3Dgzt0l8w5e7DylRn15MTlMMD58dTfzddNS2kcAjQ==
