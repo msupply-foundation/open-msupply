@@ -3,7 +3,6 @@ import {
   Button,
   Menu,
   MenuItem,
-  TranslateIcon,
   useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';

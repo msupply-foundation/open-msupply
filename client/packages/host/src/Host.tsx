@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import {
   Box,
-  ReduxProvider,
   AppThemeProvider,
   Typography,
   QueryClient,
@@ -31,9 +30,11 @@ const Content = styled(Box)({
 const queryClient = new QueryClient();
 
 const CustomerContainer = React.lazy(
-  () => import('customers/CustomerContainer')
+  () => import('@openmsupply-client/customers/src/CustomerContainer')
 );
-const DashboardService = React.lazy(() => import('dashboard/DashboardService'));
+const DashboardService = React.lazy(
+  () => import('@openmsupply-client/dashboard/src/DashboardService')
+);
 
 const Heading: FC<{ locale: string }> = props => {
   const t = useTranslation();
@@ -67,7 +68,6 @@ const Host: FC = () => {
 
   return (
     <ErrorBoundary Fallback={GenericErrorFallback}>
-      <ReduxProvider>
         <QueryClientProvider client={queryClient}>
           <IntlProvider locale={locale}>
             <AppThemeProvider>
@@ -143,7 +143,6 @@ const Host: FC = () => {
             <ReactQueryDevtools initialIsOpen />
           </IntlProvider>
         </QueryClientProvider>
-      </ReduxProvider>
     </ErrorBoundary>
   );
 };
