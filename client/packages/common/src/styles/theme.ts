@@ -1,4 +1,4 @@
-import { createTheme } from '@material-ui/core/styles';
+import { createTheme, Direction } from '@material-ui/core/styles';
 
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
@@ -29,6 +29,7 @@ declare module '@material-ui/core/styles/createTypography' {
 }
 
 const themeOptions = {
+  direction: 'rtl' as Direction,
   mixins: {
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
