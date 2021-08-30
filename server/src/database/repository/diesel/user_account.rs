@@ -38,7 +38,7 @@ impl UserAccountRepository {
     ) -> Result<UserAccountRow, RepositoryError> {
         use crate::database::schema::diesel_schema::user_account::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = user_account.filter(id.eq(account_id)).first(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+        let result = user_account.filter(id.eq(account_id)).first(&connection)?;
+        Ok(result)
     }
 }

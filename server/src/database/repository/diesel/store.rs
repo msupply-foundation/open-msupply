@@ -32,7 +32,7 @@ impl StoreRepository {
     pub async fn find_one_by_id(&self, store_id: &str) -> Result<StoreRow, RepositoryError> {
         use crate::database::schema::diesel_schema::store::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = store.filter(id.eq(store_id)).first(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+        let result = store.filter(id.eq(store_id)).first(&connection)?;
+        Ok(result)
     }
 }

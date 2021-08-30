@@ -32,7 +32,7 @@ impl NameRepository {
     pub async fn find_one_by_id(&self, name_id: &str) -> Result<NameRow, RepositoryError> {
         use crate::database::schema::diesel_schema::name_table::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = name_table.filter(id.eq(name_id)).first(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+        let result = name_table.filter(id.eq(name_id)).first(&connection)?;
+        Ok(result)
     }
 }
