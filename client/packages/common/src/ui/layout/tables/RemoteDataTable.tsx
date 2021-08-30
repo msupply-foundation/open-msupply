@@ -119,7 +119,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       const { data: response } = result;
       setTableData((response as QueryResponse<T>)?.data || []);
       setPageCount(
-        Math.ceil((response as QueryResponse<T>).totalLength || 0) / pageSize
+        Math.ceil((response as QueryResponse<T>)?.totalLength || 0) / pageSize
       );
       setIsLoading(false);
     });
