@@ -33,13 +33,13 @@ impl ItemRepository {
         use crate::database::schema::diesel_schema::item::dsl::*;
         let connection = get_connection(&self.pool)?;
         let result = item.load(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+        Ok(result?)
     }
 
     pub async fn find_one_by_id(&self, item_id: &str) -> Result<ItemRow, RepositoryError> {
         use crate::database::schema::diesel_schema::item::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = item.filter(id.eq(item_id)).first(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+        let result = item.filter(id.eq(item_id)).first(&connection)?;
+        Ok(result)
     }
 }

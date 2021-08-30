@@ -59,8 +59,8 @@ impl CustomerInvoiceRepository {
                     .eq(TransactRowType::CustomerInvoice)
                     .and(name_id.eq(name)),
             )
-            .get_results(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+            .get_results(&connection)?;
+        Ok(result)
     }
 
     pub async fn find_many_by_store_id(
@@ -75,7 +75,7 @@ impl CustomerInvoiceRepository {
                     .eq(TransactRowType::CustomerInvoice)
                     .and(store_id.eq(store)),
             )
-            .get_results(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+            .get_results(&connection)?;
+        Ok(result)
     }
 }

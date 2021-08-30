@@ -38,9 +38,8 @@ impl RequisitionLineRepository {
     ) -> Result<RequisitionLineRow, RepositoryError> {
         use crate::database::schema::diesel_schema::requisition_line::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = requisition_line.filter(id.eq(row_id)).first(&connection);
-
-        result.map_err(|err| RepositoryError::from(err))
+        let result = requisition_line.filter(id.eq(row_id)).first(&connection)?;
+        Ok(result)
     }
 
     pub async fn find_many_by_requisition_id(
@@ -51,7 +50,7 @@ impl RequisitionLineRepository {
         let connection = get_connection(&self.pool)?;
         let result = requisition_line
             .filter(requisition_id.eq(req_id))
-            .load(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+            .load(&connection)?;
+        Ok(result)
     }
 }

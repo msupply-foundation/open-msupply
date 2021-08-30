@@ -47,7 +47,7 @@ impl TransactLineRepository {
         let connection = get_connection(&self.pool)?;
         let result = transact_line
             .filter(transact_id.eq(trans_id))
-            .get_results(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+            .get_results(&connection)?;
+        Ok(result)
     }
 }

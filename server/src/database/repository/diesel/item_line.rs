@@ -32,10 +32,7 @@ impl ItemLineRepository {
     pub async fn find_one_by_id(&self, item_line_id: &str) -> Result<ItemLineRow, RepositoryError> {
         use crate::database::schema::diesel_schema::item_line::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = item_line
-            .filter(id.eq(item_line_id))
-            //.select((id, item_id, store_id, batch, quantity))
-            .first(&connection);
-        result.map_err(|err| RepositoryError::from(err))
+        let result = item_line.filter(id.eq(item_line_id)).first(&connection)?;
+        Ok(result)
     }
 }
