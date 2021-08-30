@@ -16,5 +16,5 @@ export { SortDesc } from './SortDesc';
 export { Stock } from './Stock';
 export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
-export { Translate as TranslateIcon } from '@material-ui/icons';
+export { Translate } from './Translate';
 export { UnhappyMan } from './UnhappyMan';

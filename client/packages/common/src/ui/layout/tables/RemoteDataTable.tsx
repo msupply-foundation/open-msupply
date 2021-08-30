@@ -5,11 +5,11 @@ import {
   Column,
   ColumnInstance,
   Row,
+  SortingRule,
   usePagination,
   useSortBy,
   useTable,
 } from 'react-table';
-import { QueryObserverResult } from 'react-query';
 import clsx from 'clsx';
 
 import {
@@ -29,11 +29,11 @@ import {
 import { SortAsc, SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';
 
-export interface QueryProps {
+export { SortingRule };
+export interface QueryProps<D> {
   first: number;
   offset: number;
-  sort?: string;
-  desc?: boolean;
+  sortBy?: SortingRule<D>[];
 }
 
 export interface QueryResponse<T> {
@@ -58,8 +58,12 @@ const useStyles = makeStyles(theme => ({
 
 interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
-  onFetchData: (props: QueryProps) => Promise<QueryObserverResult<T>>;
+  data?: T[];
+  initialSortBy?: SortingRule<T>[];
+  isLoading?: boolean;
+  onFetchData: (props: QueryProps<T>) => void;
   onRowClick?: <T extends Record<string, unknown>>(row: Row<T>) => void;
+  totalLength?: number;
 }
 
 const renderSortIcon = <D extends Record<string, unknown>>(
@@ -72,45 +76,58 @@ const renderSortIcon = <D extends Record<string, unknown>>(
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
+  data = [],
+  initialSortBy,
+  isLoading = false,
   onFetchData,
   onRowClick,
+  totalLength = 0,
 }: TableProps<T> & { children?: ReactNode }): JSX.Element => {
   const classes = useStyles();
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageCount, setPageCount] = useState(0);
-  const [tableData, setTableData] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const pageCount = Math.ceil(totalLength / pageSize);
   const hasRowClick = !!onRowClick;
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable(
-      {
-        columns,
-        data: tableData,
-        manualPagination: true,
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    state: { sortBy },
+  } = useTable(
+    {
+      columns,
+      data,
+      manualPagination: true,
+      manualSortBy: true,
+      pageCount,
+      initialState: {
+        pageIndex,
+        pageSize,
+        sortBy: initialSortBy,
       },
-      useSortBy,
-      usePagination
-    );
-  const gotoPage = (page: number) => setPageIndex(page);
+    },
+    useSortBy,
+    usePagination
+  );
 
-  useEffect(() => {
-    setIsLoading(true);
+  const gotoPage = (page: number) => setPageIndex(page);
+  const refetch = () =>
     onFetchData({
       offset: pageIndex * pageSize,
       first: pageSize,
-    }).then((result: QueryObserverResult) => {
-      const { data: response } = result;
-      setTableData((response as QueryResponse<T>).data);
-      setPageCount(
-        Math.ceil((response as QueryResponse<T>).totalLength || 0) / pageSize
-      );
-      setIsLoading(false);
+      sortBy,
     });
+
+  useEffect(() => {
+    refetch();
   }, [pageSize, pageIndex]);
 
-  useEffect(() => setIsLoading(!tableData), [tableData]);
+  useEffect(() => {
+    setPageIndex(0);
+    refetch();
+  }, [sortBy]);
 
   return isLoading ? (
     <Box className={classes.loadingIndicatorContainer}>

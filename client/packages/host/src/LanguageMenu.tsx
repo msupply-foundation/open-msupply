@@ -3,6 +3,7 @@ import {
   Button,
   Menu,
   MenuItem,
+  Translate,
   useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
@@ -29,11 +30,15 @@ export const LanguageMenu: React.FC = () => {
   };
 
   const LanguageMenuItem = React.forwardRef(
-    (props: LanguageMenuItemProps, _ref) => {
+    (props: LanguageMenuItemProps, ref: React.ForwardedRef<HTMLLIElement>) => {
       const { children, language } = props;
       const selected = language === locale;
       return (
-        <MenuItem selected={selected} onClick={() => setLanguage(language)}>
+        <MenuItem
+          selected={selected}
+          onClick={() => setLanguage(language)}
+          ref={ref}
+        >
           {children}
         </MenuItem>
       );
@@ -44,7 +49,7 @@ export const LanguageMenu: React.FC = () => {
     <div>
       <Button
         onClick={handleClick}
-        icon={<TranslateIcon />}
+        icon={<Translate />}
         labelKey="button.language"
       />
       <Menu
