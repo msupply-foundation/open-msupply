@@ -43,9 +43,11 @@ export const LanguageMenu: React.FC = () => {
 
   return (
     <div>
-      <Button onClick={handleClick} startIcon={<TranslateIcon />}>
-        Language
-      </Button>
+      <Button
+        onClick={handleClick}
+        icon={<TranslateIcon />}
+        labelKey="button.language"
+      />
       <Menu
         anchorEl={anchorEl}
         keepMounted
