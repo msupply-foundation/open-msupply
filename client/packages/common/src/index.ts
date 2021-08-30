@@ -6,6 +6,5 @@ export * from './utils';
 export * from './ui';
 export * from './hooks';
 export * from './intl';
-export * from './store';
 export * from './styles';
 export * from './localStorage';
