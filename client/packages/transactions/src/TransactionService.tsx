@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 import { request } from 'graphql-request';
 
@@ -71,18 +71,14 @@ const Transaction: FC = () => {
 };
 
 const Transactions: FC = () => {
-  const queryProps = { first: 10, offset: 0, sort: undefined, desc: false } as {
-    first: number;
-    offset: number;
-    sort?: string;
-    desc?: boolean;
-  };
   const { appBarButtonsRef } = useHostContext();
   const { info, success, warning } = useNotification();
-  const listQuery = async () => {
-    const { first, offset, sort, desc } = queryProps;
-    const sortParameters = sort ? `, sort: "${sort}", desc: ${!!desc}` : '';
-
+  const listQuery = async (queryParams: QueryProps<Transaction>) => {
+    const { first, offset, sortBy } = queryParams;
+    const sortParameters =
+      sortBy && sortBy.length
+        ? `, sort: "${sortBy[0]?.id}", desc: ${!!sortBy[0]?.desc}`
+        : '';
     const { transactions } = await request(
       'http://localhost:4000',
       `
@@ -103,10 +99,14 @@ const Transactions: FC = () => {
     return transactions;
   };
 
-  const { refetch } = useQuery(['transaction', 'list'], listQuery, {
-    enabled: false,
+  const [queryProps, setQueryProps] = useState<QueryProps<Transaction>>({
+    first: 10,
+    offset: 0,
   });
-
+  const { data: response, isLoading } = useQuery(
+    ['transaction', 'list', queryProps],
+    () => listQuery(queryProps)
+  );
   const navigate = useNavigate();
   const getColumns = useColumns();
   const columns = getColumns<Transaction>([
@@ -119,16 +119,6 @@ const Transactions: FC = () => {
   const initialSortBy: SortingRule<Transaction>[] = [
     { id: 'date', desc: true },
   ];
-  const fetchData = (props: QueryProps<Transaction>) => {
-    queryProps.first = props.first;
-    queryProps.offset = props.offset;
-    if (props.sortBy && props.sortBy.length) {
-      const sortBy = props.sortBy[0];
-      queryProps.sort = sortBy?.id;
-      queryProps.desc = sortBy?.desc;
-    }
-    return refetch();
-  };
 
   return (
     <>
@@ -153,11 +143,14 @@ const Transactions: FC = () => {
       </Portal>
       <RemoteDataTable<Transaction>
         columns={columns}
+        data={response?.data || []}
         initialSortBy={initialSortBy}
-        onFetchData={fetchData}
+        isLoading={isLoading}
+        onFetchData={setQueryProps}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);
         }}
+        totalLength={response?.totalLength || 0}
       />
     </>
   );
