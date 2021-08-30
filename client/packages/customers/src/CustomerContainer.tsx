@@ -4,7 +4,7 @@ import { RouteBuilder, Typography } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const TransactionService = React.lazy(
-  () => import('transactions/TransactionService')
+  () => import('@openmsupply-client/transactions/src/TransactionService')
 );
 
 const RequisitionService: React.FC = () => (
