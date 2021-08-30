@@ -16,7 +16,6 @@ import {
   useFormatDate,
   useHostContext,
   useNotification,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { getColumns } from './columns';
@@ -104,7 +103,6 @@ const Transactions: FC = () => {
 
   const navigate = useNavigate();
   const formatDate = useFormatDate();
-  const t = useTranslation();
   const columns = getColumns(formatDate);
   const fetchData = (props: QueryProps) => {
     queryProps.first = props.first;
@@ -117,20 +115,20 @@ const Transactions: FC = () => {
       <Portal container={appBarButtonsRef.current}>
         <>
           <Button
-            startIcon={<Download />}
+            icon={<Download />}
+            labelKey="button.export"
             onClick={success('Downloaded successfully')}
-          >
-            {t('button.export')}
-          </Button>
-          <Button startIcon={<Printer />} onClick={info('No printer detected')}>
-            {t('button.print')}
-          </Button>
+          />
           <Button
-            startIcon={<MenuDots />}
+            icon={<Printer />}
+            labelKey="button.print"
+            onClick={info('No printer detected')}
+          />
+          <Button
+            icon={<MenuDots />}
+            labelKey="button.more"
             onClick={warning('Do not press this button')}
-          >
-            {t('button.more')}
-          </Button>
+          />
         </>
       </Portal>
       <RemoteDataTable<Transaction>

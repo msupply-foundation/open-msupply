@@ -113,7 +113,6 @@ const AppBar: React.FC = () => {
   const classes = useStyles();
   const { isOpen } = useDrawer();
   const { appBarButtonsRef } = useHostContext();
-  const t = useTranslation();
 
   return (
     <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
@@ -122,13 +121,10 @@ const AppBar: React.FC = () => {
         <Breadcrumbs />
         <ButtonContainer ref={appBarButtonsRef}>
           <Button
-            startIcon={<Book />}
-            onClick={() =>
-              (window.location.href = 'https://docs.msupply.foundation')
-            }
-          >
-            {t('button.docs')}
-          </Button>
+            icon={<Book />}
+            labelKey="button.docs"
+            onClick={() => (location.href = 'https://docs.msupply.foundation')}
+          />
           <LanguageMenu />
         </ButtonContainer>
       </StyledToolbar>
