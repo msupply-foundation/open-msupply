@@ -12,15 +12,13 @@
   "dependencies": {
     "@bugsnag/js": "^7.11.0",
     "@material-ui/core": "^4.9.10",
-    "@reduxjs/toolkit": "^1.6.0",
+    "@openmsupply-client/config": "^0.0.0",
     "graphql": "^15.5.1",
     "graphql-request": "^3.4.0",
     "history": "^5.0.0",
     "react-query": "^3.19.1",
-    "react-redux": "^7.2.4",
     "react-router-dom": "^6.0.0-beta.0",
     "react-table": "^7.7.0",
-    "redux": "^4.1.0",
     "zustand": "^3.5.7"
   },
   "devDependencies": {
