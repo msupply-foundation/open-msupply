@@ -1,6 +1,13 @@
 import { useIntl } from 'react-intl';
-import { useFormatDate, useTranslation } from './intlHelpers';
+import { useFormatDate, useTranslation, useRtl } from './intlHelpers';
 import { IntlProvider } from './IntlProvider';
-import { IntlTestProvider } from './IntlTestProvider'
+import { IntlTestProvider } from './IntlTestProvider';
 
-export { IntlProvider, useIntl, useFormatDate, useTranslation,IntlTestProvider };
+export {
+  useRtl,
+  IntlProvider,
+  useIntl,
+  useFormatDate,
+  useTranslation,
+  IntlTestProvider,
+};

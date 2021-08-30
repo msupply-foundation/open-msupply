@@ -1,14 +1,8 @@
 import { Direction } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
 import { useState, useEffect } from 'react';
-import { useHostContext } from '../hooks';
 import theme from './theme';
-
-export const useRtl = (): boolean => {
-  const { locale } = useHostContext();
-  const isRtl = locale === 'ab';
-  return isRtl;
-};
+import { useRtl } from '../intl/intlHelpers';
 
 export const useAppTheme = (): Theme => {
   const [currentTheme, setTheme] = useState(theme);

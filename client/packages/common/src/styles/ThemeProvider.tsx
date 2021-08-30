@@ -4,7 +4,7 @@ import { CacheProvider } from '@emotion/react';
 import { StyledEngineProvider } from '@material-ui/core/styles';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
-import { useAppTheme } from './hooks';
+import { useAppTheme } from './useAppTheme';
 import { AppGlobalStyles } from './AppGlobalStyles';
 
 const cacheRtl = createCache({
