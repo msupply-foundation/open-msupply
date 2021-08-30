@@ -1,5 +1,12 @@
 import { createTheme, Direction } from '@material-ui/core/styles';
 
+/**
+ * Our theme uses module augmentation when customising the theme to ensure
+ * types are correct throughout the app.
+ *
+ * See: https://material-ui.com/guides/typescript/#customization-of-theme
+ */
+
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
     header: {
