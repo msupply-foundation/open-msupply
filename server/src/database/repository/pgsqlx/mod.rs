@@ -34,7 +34,7 @@ impl From<sqlx::Error> for RepositoryError {
             sqlx::Error::Io(_) => "SQLX_ERROR_IO",
             sqlx::Error::Tls(_) => "SQLX_ERROR_TLS",
             sqlx::Error::Protocol(_) => "SQLX_ERROR_PROTOCOL",
-            sqlx::Error::RowNotFound => "SQLX_ERROR_ROW_NOT_FOUND",
+            sqlx::Error::RowNotFound => return RepositoryError::UniqueViolation,
             sqlx::Error::ColumnIndexOutOfBounds { index: _, len: _ } => {
                 "SQLX_ERROR_COLUMN_INDEX_OUT_OF_BOUNDS"
             }
@@ -51,7 +51,7 @@ impl From<sqlx::Error> for RepositoryError {
             _ => "SQLX_ERROR_UNKNOWN",
         });
 
-        RepositoryError { msg }
+        RepositoryError::DBError { msg }
     }
 }
 

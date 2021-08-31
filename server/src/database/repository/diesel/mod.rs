@@ -40,8 +40,12 @@ impl From<DieselError> for RepositoryError {
             DieselError::InvalidCString(_) => "DIESEL_INVALID_C_STRING".to_string(),
             DieselError::DatabaseError(err, _) => {
                 let err_str = match err {
-                    DieselDatabaseErrorKind::UniqueViolation => "UNIQUE_VIOLATION",
-                    DieselDatabaseErrorKind::ForeignKeyViolation => "FOREIGN_KEY_VIOLATION",
+                    DieselDatabaseErrorKind::UniqueViolation => {
+                        return RepositoryError::UniqueViolation
+                    }
+                    DieselDatabaseErrorKind::ForeignKeyViolation => {
+                        return RepositoryError::ForeignKeyViolation
+                    }
                     DieselDatabaseErrorKind::UnableToSendCommand => "UNABLE_TO_SEND_COMMAND",
                     DieselDatabaseErrorKind::SerializationFailure => "SERIALIZATION_FAILURE",
                     _ => "UNKNOWN",
@@ -57,14 +61,14 @@ impl From<DieselError> for RepositoryError {
             _ => "DIESEL_UNKNOWN".to_string(),
         };
 
-        RepositoryError { msg }
+        RepositoryError::DBError { msg }
     }
 }
 
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<PooledConnection<ConnectionManager<DBBackendConnection>>, RepositoryError> {
-    pool.get().map_err(|_| RepositoryError {
+    pool.get().map_err(|_| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
     })
 }
