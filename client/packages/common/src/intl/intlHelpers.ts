@@ -55,7 +55,7 @@ export const importMessages = (
     case 'ar':
       return import(
         /* webpackMode: "lazy", webpackChunkName: "ab_json" */
-        './locales/ab.json'
+        './locales/ar.json'
       );
   }
 };
