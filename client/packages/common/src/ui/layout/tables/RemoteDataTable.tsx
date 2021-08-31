@@ -16,7 +16,6 @@ import {
   Box,
   CircularProgress,
   Grid,
-  makeStyles,
   TableBody,
   TableCell,
   TableHead,
@@ -25,6 +24,8 @@ import {
   TablePagination,
   Table as MuiTable,
 } from '@material-ui/core';
+
+import makeStyles from '@material-ui/styles/makeStyles';
 
 import { SortAsc, SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';

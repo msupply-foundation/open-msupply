@@ -25,7 +25,7 @@ describe('AppDrawer', () => {
     expect(drawer).toHaveAttribute('aria-expanded', 'false');
   });
   it('expands when clicking the drawer open/close button for the first time on a small screen', () => {
-    setScreenSize_ONLY_FOR_TESTING(1279);
+    setScreenSize_ONLY_FOR_TESTING(1199);
     render(
       <TestingProvider>
         <AppDrawer />

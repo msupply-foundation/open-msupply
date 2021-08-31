@@ -153,10 +153,10 @@ const Menu: React.FC<MenuProps> = ({ classes }) => {
 };
 
 const AppDrawer: React.FC = () => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const classes = useStyles();
   const drawer = useDrawer();
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;

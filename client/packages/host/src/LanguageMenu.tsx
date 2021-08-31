@@ -52,6 +52,7 @@ export const LanguageMenu: React.FC = () => {
         icon={<Translate />}
         labelKey="button.language"
       />
+
       <Menu
         anchorEl={anchorEl}
         keepMounted
