@@ -52,7 +52,7 @@ impl From<DieselError> for RepositoryError {
                 };
                 format!("DIESEL_DATABASE_ERROR_{}", err_str)
             }
-            DieselError::NotFound => "DIESEL_NOT_FOUND".to_string(),
+            DieselError::NotFound => return RepositoryError::NotFound,
             DieselError::QueryBuilderError(_) => "DIESEL_QUERY_BUILDER_ERROR".to_string(),
             DieselError::DeserializationError(_) => "DIESEL_DESERIALIZATION_ERROR".to_string(),
             DieselError::SerializationError(_) => "DIESEL_SERIALIZATION_ERROR".to_string(),
