@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 
 import clsx from 'clsx';
 import { ListItem, ListItemText, Tooltip } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import makeStyles from '@material-ui/styles/makeStyles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '../../hooks/useDrawer';
 
