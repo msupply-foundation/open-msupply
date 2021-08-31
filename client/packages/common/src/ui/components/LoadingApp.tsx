@@ -1,6 +1,5 @@
 import React from 'react';
 import { CircularProgress, Typography } from '@material-ui/core';
-
 import makeStyles from '@material-ui/styles/makeStyles';
 
 const useStyles = makeStyles(theme => ({
@@ -16,7 +15,7 @@ const useStyles = makeStyles(theme => ({
     height: '100%',
   },
   text: {
-    marginTop: theme.spacing(3),
+    marginTop: theme?.spacing?.(3),
   },
 }));
 
