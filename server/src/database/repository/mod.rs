@@ -3,19 +3,10 @@ pub struct RepositoryError {
     msg: String,
 }
 
-#[cfg_attr(feature = "mock", path = "mock/mod.rs")]
-#[cfg_attr(feature = "pgsqlx", path = "pgsqlx/mod.rs")]
+#[cfg_attr(any(feature = "sqlite", feature = "postgres"), path = "diesel/mod.rs")]
 #[cfg_attr(
-    any(feature = "dieselsqlite", feature = "dieselpg"),
-    path = "diesel/mod.rs"
-)]
-#[cfg_attr(
-    all(
-        not(feature = "mock"),
-        not(feature = "dieselsqlite"),
-        not(feature = "dieselpg")
-    ),
-    path = "pgsqlx/mod.rs"
+    not(any(feature = "sqlite", feature = "postgres")),
+    path = "mock/mod.rs"
 )]
 pub mod repository;
 
