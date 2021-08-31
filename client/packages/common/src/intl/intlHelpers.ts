@@ -5,7 +5,7 @@ import type { PrimitiveType } from 'intl-messageformat';
 import * as sourceOfTruth from './locales/en.json';
 import { useHostContext } from '../hooks';
 
-export type SupportedLocales = 'en' | 'fr' | 'pt' | 'ab';
+export type SupportedLocales = 'en' | 'fr' | 'pt' | 'ar';
 export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
 
@@ -28,7 +28,7 @@ export const useFormatDate = (): ((
 
 export const useRtl = (): boolean => {
   const { locale } = useHostContext();
-  const isRtl = locale === 'ab';
+  const isRtl = locale === 'ar';
   return isRtl;
 };
 
@@ -52,7 +52,7 @@ export const importMessages = (
         /* webpackMode: "lazy", webpackChunkName: "pt_json" */
         './locales/pt.json'
       );
-    case 'ab':
+    case 'ar':
       return import(
         /* webpackMode: "lazy", webpackChunkName: "ab_json" */
         './locales/ab.json'
