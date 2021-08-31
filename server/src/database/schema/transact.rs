@@ -1,25 +1,15 @@
 use super::diesel_schema::transact;
 use diesel_derive_enum::DbEnum;
 
-#[derive(sqlx::Type)]
-#[sqlx(rename = "transact_type")]
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 pub enum TransactRowType {
-    #[sqlx(rename = "customer_invoice")]
     CustomerInvoice,
-    #[sqlx(rename = "customer_credit")]
     CustomerCredit,
-    #[sqlx(rename = "supplier_invoice")]
     SupplierInvoice,
-    #[sqlx(rename = "supplier_credit")]
     SupplierCredit,
-    #[sqlx(rename = "repack")]
     Repack,
-    #[sqlx(rename = "build")]
     Build,
-    #[sqlx(rename = "receipt")]
     Receipt,
-    #[sqlx(rename = "payment")]
     Payment,
 }
 
