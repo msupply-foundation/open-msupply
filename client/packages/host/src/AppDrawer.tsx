@@ -183,7 +183,6 @@ const AppDrawer: React.FC = () => {
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
           }
           onClick={drawer.toggle}
-          size="large"
           icon={
             <MSupplyGuy
               classes={{
