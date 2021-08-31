@@ -204,7 +204,7 @@ query {
 
 **availableBatches.name** [String](/docs/api/types/#string) -> `name`: batch name, can be null
 
-**availableBatches.expiry** [Datetime](/docs/api/types/#Datetime) -> `expirty`: can be null
+**availableBatches.expiry** [Datetime](/docs/api/types/#Datetime) -> `expiry`: can be null
 
 <ins>Filters</ins>
 

@@ -66,5 +66,5 @@ From perspective of `transaction.store_id` store
 
 | Value            | Description    |
 | ---------------- | -------------- |
-| CUSTOMER_INVOICE | Outgiong stock |
+| CUSTOMER_INVOICE | Outgoing stock |
 | SUPPLIER_INVOICE | Incoming stock |
