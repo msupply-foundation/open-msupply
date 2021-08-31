@@ -19,8 +19,12 @@ export const IntlProvider: React.FC<
     importMessages(locale as SupportedLocales).then(setMessages);
   }, [locale]);
 
+  // to ensure local date formatting, use the full locale otherwise 'en' === 'en-US'
+  const re = new RegExp(`^${locale}-[A-Z]+$`);
+  const intlLocale = re.test(navigator.language) ? navigator.language : locale;
+
   return messages ? (
-    <ReactIntlProvider locale={locale} messages={messages} key={locale}>
+    <ReactIntlProvider locale={intlLocale} messages={messages} key={locale}>
       {props.children}
     </ReactIntlProvider>
   ) : null;

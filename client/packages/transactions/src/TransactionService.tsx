@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 import { request } from 'graphql-request';
 
@@ -12,13 +12,14 @@ import {
   QueryProps,
   RemoteDataTable,
   RouteBuilder,
+  SortingRule,
   useQuery,
-  useFormatDate,
+  useColumns,
+  ColumnFormat,
   useHostContext,
   useNotification,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { getColumns } from './columns';
 
 export type Transaction = {
   customer: string;
@@ -70,13 +71,14 @@ const Transaction: FC = () => {
 };
 
 const Transactions: FC = () => {
-  const queryProps = { first: 10, offset: 0, sort: undefined, desc: false };
   const { appBarButtonsRef } = useHostContext();
   const { info, success, warning } = useNotification();
-  const listQuery = async () => {
-    const { first, offset, sort, desc } = queryProps;
-    const sortParameters = sort ? `, sort: ${sort}, desc: ${!!desc}` : '';
-
+  const listQuery = async (queryParams: QueryProps<Transaction>) => {
+    const { first, offset, sortBy } = queryParams;
+    const sortParameters =
+      sortBy && sortBy.length
+        ? `, sort: "${sortBy[0]?.id}", desc: ${!!sortBy[0]?.desc}`
+        : '';
     const { transactions } = await request(
       'http://localhost:4000',
       `
@@ -97,18 +99,26 @@ const Transactions: FC = () => {
     return transactions;
   };
 
-  const { refetch } = useQuery(['transaction', 'list'], listQuery, {
-    enabled: false,
+  const [queryProps, setQueryProps] = useState<QueryProps<Transaction>>({
+    first: 10,
+    offset: 0,
   });
-
+  const { data: response, isLoading } = useQuery(
+    ['transaction', 'list', queryProps],
+    () => listQuery(queryProps)
+  );
   const navigate = useNavigate();
-  const formatDate = useFormatDate();
-  const columns = getColumns(formatDate);
-  const fetchData = (props: QueryProps) => {
-    queryProps.first = props.first;
-    queryProps.offset = props.offset;
-    return refetch();
-  };
+  const getColumns = useColumns();
+  const columns = getColumns<Transaction>([
+    { label: 'label.id', key: 'id', sortable: false },
+    { label: 'label.date', key: 'date', format: ColumnFormat.date },
+    { label: 'label.customer', key: 'customer' },
+    { label: 'label.supplier', key: 'supplier' },
+    { label: 'label.total', key: 'total' },
+  ]);
+  const initialSortBy: SortingRule<Transaction>[] = [
+    { id: 'date', desc: true },
+  ];
 
   return (
     <>
@@ -133,10 +143,14 @@ const Transactions: FC = () => {
       </Portal>
       <RemoteDataTable<Transaction>
         columns={columns}
-        onFetchData={fetchData}
+        data={response?.data || []}
+        initialSortBy={initialSortBy}
+        isLoading={isLoading}
+        onFetchData={setQueryProps}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);
         }}
+        totalLength={response?.totalLength || 0}
       />
     </>
   );
