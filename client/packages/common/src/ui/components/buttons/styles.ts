@@ -1,6 +1,6 @@
 import { Theme } from '@material-ui/core';
-import { CreateCSSProperties } from '@material-ui/core/styles/withStyles';
-import { TextTransformProperty } from 'csstype';
+import { CreateCSSProperties } from '@material-ui/styles';
+import { Property } from 'csstype';
 
 const defaultStyles = {
   backgroundColor: '#fff',
@@ -9,7 +9,7 @@ const defaultStyles = {
   height: 40,
   marginLeft: 5,
   marginRight: 5,
-  textTransform: 'none' as TextTransformProperty,
+  textTransform: 'none' as Property.TextTransform,
 };
 
 export const getButtonStyles = ({
