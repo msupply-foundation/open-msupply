@@ -1,6 +1,9 @@
+use super::diesel_schema::transact_line;
+use diesel_derive_enum::DbEnum;
+
 #[derive(sqlx::Type)]
 #[sqlx(rename = "transact_line_type")]
-#[derive(Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 pub enum TransactLineRowType {
     #[sqlx(rename = "stock_out")]
     StockOut,
@@ -18,7 +21,8 @@ pub enum TransactLineRowType {
     Service,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
+#[table_name = "transact_line"]
 pub struct TransactLineRow {
     pub id: String,
     pub transact_id: String,

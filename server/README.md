@@ -24,6 +24,7 @@ mSupply remote server is a component of the Open mSupply system:
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
 - Follow the [Docker Desktop installation guide](https://docs.docker.com/engine/install/) for Linux.
 - Install pkg-config `sudo apt install pkg-config` (needed to install/compile sqlx-cli)
+- Install Postgres dev libs: `sudo apt install postgresql-server-dev-13`
 
 ### Optional
 
@@ -46,7 +47,7 @@ cargo install sqlx-cli --no-default-features --features postgres
 - Migrate database tables:
 
 ```
-export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate run
+export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate --source migrations/pg run
 ```
 
 - Build and start the remote server:

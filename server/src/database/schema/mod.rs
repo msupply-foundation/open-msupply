@@ -8,6 +8,8 @@ mod transact;
 mod transact_line;
 mod user_account;
 
+pub mod diesel_schema;
+
 #[derive(Clone)]
 pub enum DatabaseRow {
     Item(ItemRow),
