@@ -3,8 +3,9 @@ import type { PrimitiveType } from 'intl-messageformat';
 
 // "import type" ensures en messages aren't bundled by default
 import * as sourceOfTruth from './locales/en.json';
+import { useHostContext } from '../hooks';
 
-export type SupportedLocales = 'en' | 'fr' | 'pt';
+export type SupportedLocales = 'en' | 'fr' | 'pt' | 'ar';
 export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
 
@@ -23,6 +24,12 @@ export const useFormatDate = (): ((
 ) => string) => {
   const intl = useIntl();
   return (value, options) => intl.formatDate(value, options);
+};
+
+export const useRtl = (): boolean => {
+  const { locale } = useHostContext();
+  const isRtl = locale === 'ar';
+  return isRtl;
 };
 
 // return type on this signature enforces that all languages have the same translations defined
@@ -44,6 +51,11 @@ export const importMessages = (
       return import(
         /* webpackMode: "lazy", webpackChunkName: "pt_json" */
         './locales/pt.json'
+      );
+    case 'ar':
+      return import(
+        /* webpackMode: "lazy", webpackChunkName: "ab_json" */
+        './locales/ar.json'
       );
   }
 };

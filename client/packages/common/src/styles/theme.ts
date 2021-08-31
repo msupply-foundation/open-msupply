@@ -1,4 +1,11 @@
-import { createTheme } from '@material-ui/core/styles';
+import { createTheme, Direction } from '@material-ui/core/styles';
+
+/**
+ * Our theme uses module augmentation when customising the theme to ensure
+ * types are correct throughout the app.
+ *
+ * See: https://material-ui.com/guides/typescript/#customization-of-theme
+ */
 
 declare module '@material-ui/core/styles/createMixins' {
   interface Mixins {
@@ -29,6 +36,7 @@ declare module '@material-ui/core/styles/createTypography' {
 }
 
 const themeOptions = {
+  direction: 'rtl' as Direction,
   mixins: {
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },

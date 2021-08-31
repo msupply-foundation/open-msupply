@@ -1,35 +1,27 @@
 import React from 'react';
-import { CssBaseline, makeStyles } from '@openmsupply-client/common';
+import { GlobalStyles, CssBaseline } from '@openmsupply-client/common';
 
-const useGlobalStyles = makeStyles(
-  () => ({
-    '@global': {
-      '*:-webkit-full-screen': {
-        height: '100%',
-        width: '100%',
-      },
-      html: {
-        position: 'fixed',
-      },
-      'html, body': {
-        height: '100%',
-        width: '100%',
-      },
-      '#root': {
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      },
-    },
-  }),
-  { name: 'ViewportGlobals' }
-);
+const globalStyles = {
+  '*:-webkit-full-screen': {
+    height: '100%',
+    width: '100%',
+  },
+  '#root': {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  html: { position: 'fixed' },
+  'html, body': {
+    height: '100%',
+    width: '100%',
+  },
+};
 
 const Viewport: React.FC = props => {
-  useGlobalStyles();
-
   return (
     <React.Fragment>
+      <GlobalStyles styles={globalStyles} {...props} />
       <CssBaseline />
       {props.children}
     </React.Fragment>
