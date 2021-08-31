@@ -13,7 +13,7 @@ describe('useRtl', () => {
 
   it('Correctly returns false when the language set is not a rtl language', () => {
     act(() => {
-      LocalStorage.setItem('/localisation/locale', 'ab');
+      LocalStorage.setItem('/localisation/locale', 'ar');
     });
     render(<RTLExample />);
 

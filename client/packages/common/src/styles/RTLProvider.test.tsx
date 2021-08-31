@@ -7,7 +7,7 @@ import { RTLProvider } from './RTLProvider';
 describe('RTLProvider', () => {
   it('Sets the direction of the body to be rtl when a rtl language is the current locale', () => {
     act(() => {
-      LocalStorage.setItem('/localisation/locale', 'ab');
+      LocalStorage.setItem('/localisation/locale', 'ar');
     });
 
     render(

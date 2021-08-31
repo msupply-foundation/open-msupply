@@ -13,7 +13,7 @@ describe('useAppTheme', () => {
 
   it('Correctly updates the direction when a language which is rtl is seleted', () => {
     act(() => {
-      LocalStorage.setItem('/localisation/locale', 'ab');
+      LocalStorage.setItem('/localisation/locale', 'ar');
     });
 
     render(<AppThemeExample />);
