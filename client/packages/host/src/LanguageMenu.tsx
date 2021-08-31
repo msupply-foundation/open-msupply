@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  IconButton,
+  Button,
   Menu,
   MenuItem,
   Translate,
@@ -29,21 +29,30 @@ export const LanguageMenu: React.FC = () => {
     handleClose();
   };
 
-  const LanguageMenuItem = (props: LanguageMenuItemProps) => {
-    const { children, language } = props;
-    const selected = language === locale;
-    return (
-      <MenuItem selected={selected} onClick={() => setLanguage(language)}>
-        {children}
-      </MenuItem>
-    );
-  };
+  const LanguageMenuItem = React.forwardRef(
+    (props: LanguageMenuItemProps, ref: React.ForwardedRef<HTMLLIElement>) => {
+      const { children, language } = props;
+      const selected = language === locale;
+      return (
+        <MenuItem
+          selected={selected}
+          onClick={() => setLanguage(language)}
+          ref={ref}
+        >
+          {children}
+        </MenuItem>
+      );
+    }
+  );
 
   return (
     <div>
-      <IconButton onClick={handleClick}>
-        <Translate />
-      </IconButton>
+      <Button
+        onClick={handleClick}
+        icon={<Translate />}
+        labelKey="button.language"
+      />
+
       <Menu
         anchorEl={anchorEl}
         keepMounted

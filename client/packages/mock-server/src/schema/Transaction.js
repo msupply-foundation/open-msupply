@@ -25,15 +25,16 @@ const TransactionTypes = `
 const parseValue = (object, key) => {
   const value = object[key];
   if (typeof value === 'string') {
-    if (!Number.isNaN(value)) return Number.parseFloat(value);
+    const valueAsNumber = Number.parseFloat(value);
+    if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
     return value.toUpperCase(); // ignore case
   }
   return value;
 };
 
 const getDataSorter = (sortKey, desc) => (a, b) => {
-  var valueA = parseValue(a, sortKey);
-  var valueB = parseValue(b, sortKey);
+  const valueA = parseValue(a, sortKey);
+  const valueB = parseValue(b, sortKey);
 
   if (valueA < valueB) {
     return desc ? 1 : -1;
@@ -45,7 +46,15 @@ const getDataSorter = (sortKey, desc) => (a, b) => {
   return 0;
 };
 
-const getTransactionData = (first, offset, sort, desc) => {
+const delay = async ms =>
+  new Promise(resolve =>
+    setTimeout(() => {
+      resolve('');
+    }, ms)
+  );
+
+const getTransactionData = async (first, offset, sort, desc) => {
+  await delay(1000 * Math.random() + 200);
   const data = TransactionData.slice();
   if (sort) {
     const sortData = getDataSorter(sort, desc);

@@ -15,6 +15,19 @@
   "app.transactions": "Transactions",
   "app.welcome": "Bonjour, {name}!",
   "breadcrumb.item": "#{id}",
+  "button.close-the-menu": "Fermer le menu",
+  "button.docs": "Docs",
+  "button.export": "Exporter",
+  "button.language": "Langue",
+  "button.print": "Imprimer",
+  "button.more": "Plus",
   "button.ok": "Ok",
-  "button.open-the-menu": "Ouvrir le menu"
+  "button.open-the-menu": "Ouvrir le menu",
+  "button.try-again": "Try again",
+  "error.something-wrong": "Oops! Somethings gone wrong.",
+  "label.customer": "Client",
+  "label.date": "Date",
+  "label.id": "ID",
+  "label.supplier": "Fournisseur",
+  "label.total": "Total"
 }
