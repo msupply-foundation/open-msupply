@@ -1,15 +1,18 @@
+import { createRef } from 'react';
 import create from 'zustand';
 import { LocalStorage } from '../localStorage';
 
 import { SupportedLocales } from '../intl/intlHelpers';
 
 type HostContext = {
+  appBarButtonsRef: React.MutableRefObject<null>;
   locale: SupportedLocales;
   setLocale: (locale: SupportedLocales) => void;
 };
 
 export const useHostContext = create<HostContext>(set => ({
   locale: LocalStorage.getItem('/localisation/locale') ?? 'en',
+  appBarButtonsRef: createRef(),
   setLocale: locale => set(state => ({ ...state, locale })),
 }));
 
