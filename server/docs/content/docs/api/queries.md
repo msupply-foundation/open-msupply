@@ -22,7 +22,7 @@ Full list of GraphQL queries is provided here is for:
 
 ### TRANSACTIONS
 
-Transaction [list](/docs/api/patterns/#lists-and-pagenation)
+Transaction [list](/docs/api/patterns/#lists-and-pagination)
 
 Transactions in this query are filtered by `store` associated with current session {TODO link to session info} (will output transactions where `store_id = logged in store`)
 
@@ -133,7 +133,7 @@ query {
 
 `Base Table`: transaction_line
 
-**lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists-and-pagenation)
+**lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists-and-pagination)
 
 **lines.id** [String!](/docs/api/types/#String) -> `id`
 
@@ -155,7 +155,7 @@ query {
 
 ### ITEMS
 
-Item [list](/docs/api/patterns/#lists-and-pagenation)
+Item [list](/docs/api/patterns/#lists-and-pagination)
 
 Items in this query are filtered by `store` associated with current session {TODO link to session info} (will output items where `item.id -> item_store_join.item_id` and `item_store_join.store_id = logged in store`) {TODO are we using master lists for visibility now ?}
 
@@ -196,7 +196,7 @@ query {
 
 `Base Table`: item_line
 
-**availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists-and-pagenation), `is_active` means `totalNumberOfPacks > 0`
+**availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists-and-pagination), `is_active` means `totalNumberOfPacks > 0`
 
 **availableBatches.packSize** [Int!](/docs/api/types/#int!) -> `pack_size`
 
@@ -212,7 +212,7 @@ query {
 
 ### CUSTOMERS
 
-Customer [list](/docs/api/patterns/#lists-and-pagenation)
+Customer [list](/docs/api/patterns/#lists-and-pagination)
 
 Names in this query are filtered by `is_customer` and `store` associated with current session {TODO link to session info} (will output names where `name.id -> name_store_join.name_id` and `name_store_join.store_id = logged in store` and `name_store_join.is_customer`) {TODO still in discussion}
 
@@ -246,7 +246,7 @@ All fields apart from `id` are [filterable](/docs/api/Filters)
 
 ### SUPPLIERS
 
-Supplier [list](/docs/api/patterns/#lists-and-pagenation)
+Supplier [list](/docs/api/patterns/#lists-and-pagination)
 
 Names in this query are filtered by `is_supplier` and `store` associated with current session {TODO link to session info} (will output names where `name.id -> name_store_join.name_id` and `name_store_join.store_id = logged in store` and `name_store_join.is_supplier`) {TODO still in discussion}
 

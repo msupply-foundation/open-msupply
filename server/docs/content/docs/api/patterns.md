@@ -134,7 +134,7 @@ TODO: Shape of error
 }
 ```
 
-# Lists and Pagenation
+# Lists and Pagination
 
 For lists, the base level of results for entity contains metadata and actual records are in `nodes` field.
 
@@ -212,7 +212,7 @@ query {
 }
 ```
 
-**Pagenation**
+**Pagination**
 
 An optional `totalCount` is available on all list queries, which give total number of records matching applied filter (if it's present).
 
@@ -223,7 +223,7 @@ The following arguments are available to all list queries
 | pageNumber | pageNumber > 0                                     | 0       | Zero indexed page number   |
 | pageSize   | pageSize > 0 and pageSize < 1000 (\*exception\*\*) | 100     | Number of records per page |
 
-\*exception\*\* limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagenation limit ?}
+\*exception\*\* limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
 
 **Examples**
 
