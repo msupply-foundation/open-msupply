@@ -6,6 +6,9 @@
 // basically no action taken since) isn’t precise enough.
 #![allow(where_clauses_object_safety)]
 
+#[macro_use]
+extern crate diesel;
+
 pub mod database;
 pub mod server;
 pub mod util;

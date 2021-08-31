@@ -1,6 +1,9 @@
+use super::diesel_schema::requisition;
+use diesel_derive_enum::DbEnum;
+
 #[derive(sqlx::Type)]
 #[sqlx(rename = "requisition_type")]
-#[derive(Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 pub enum RequisitionRowType {
     #[sqlx(rename = "imprest")]
     Imprest,
@@ -16,7 +19,8 @@ pub enum RequisitionRowType {
     Report,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
+#[table_name = "requisition"]
 pub struct RequisitionRow {
     pub id: String,
     pub name_id: String,
