@@ -12,45 +12,29 @@ template = "docs/page.html"
 toc = true
 +++
 
-## Int!
+### Not Null
 
-Not null integer
+`!` exclamation mark after type identifier signifies that value type is not null. Missing exclamation mark identifies type as nullable.
 
 ## Int
 
-Nullable integer
-
-## Boolean!
-
-Not null boolean
+Integer
 
 ## Boolean
 
-Nullable boolean
-
-## Float!
-
-Not null float
+Boolean
 
 ## Float
 
-Nullable float
-
-## String!
-
-Nullable string
+Floating point number
 
 ## String
 
-Not null string
-
-## Datetime!
-
-Not null date time with timezone stamp, i.e. `2021-08-31T11:32:29.631Z`
+A string
 
 ## Datetime
 
-Nullable date time with timezone stamp, i.e. `2021-08-31T11:32:29.631Z`
+Date time with timezone stamp, i.e. `2021-08-31T11:32:29.631Z`
 
 ### Enum - TransactionStatus
 
