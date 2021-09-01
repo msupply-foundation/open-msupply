@@ -32,7 +32,7 @@ The sort object is two Key:Value pairs defining the field the result set is sort
 
 **Limitations**
 
-The API currently supports an array of a single sort object.
+The API currently supports an array of a single sort object. (will apply only one element from sort array and discard the rest {TODO update when changed to do multi sort})
 
 **Error handling**
 
