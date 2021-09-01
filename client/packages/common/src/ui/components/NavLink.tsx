@@ -30,27 +30,22 @@ const getListItemCommonStyles = (isOpen: boolean) => ({
   width: isOpen ? 160 : 32,
   justifyContent: 'center',
   alignItems: 'center',
-  // ...(isOpen && {width: 160})
 });
 
 const StyledListItem = styled<
   FC<ListItemProps & { isOpen: boolean; isSelected: boolean; to: string }>
 >(ListItem, {
   shouldForwardProp: prop => prop !== 'isSelected' && prop !== 'isOpen',
-})(({ theme, isOpen, isSelected }) => {
-  return {
-    ...getListItemCommonStyles(isOpen),
-    backgroundColor: isSelected
-      ? theme.palette.background.white
-      : 'transparent',
-    boxShadow: isSelected ? theme.shadows[8] : 'none',
-    marginTop: 20,
-    '&:hover': {
-      backgroundColor: 'none',
-      boxShadow: theme.shadows[8],
-    },
-  };
-});
+})(({ theme, isOpen, isSelected }) => ({
+  ...getListItemCommonStyles(isOpen),
+  backgroundColor: isSelected ? theme.palette.background.white : 'transparent',
+  boxShadow: isSelected ? theme.shadows[8] : 'none',
+  marginTop: 20,
+  '&:hover': {
+    backgroundColor: 'none',
+    boxShadow: theme.shadows[8],
+  },
+}));
 
 interface ListItemLinkProps {
   end?: boolean; // denotes lowest level menu item, using terminology from useMatch
