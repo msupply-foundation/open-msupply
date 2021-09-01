@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import AppDrawer from './AppDrawer';
 import {
   setScreenSize_ONLY_FOR_TESTING,
@@ -8,78 +9,83 @@ import {
 import { act } from 'react-dom/test-utils';
 
 describe('AppDrawer', () => {
-  it('Collapses when clicking the drawer open/close button for the first time on a large screen', () => {
-    render(
+  it('Collapses when clicking the drawer open/close button for the first time on a large screen', async () => {
+    const { getByRole, getByTestId } = render(
       <TestingProvider>
         <AppDrawer />
       </TestingProvider>
     );
 
-    const button = screen.getByRole('button', { name: /Open the menu/i });
-    const drawer = screen.getByTestId('drawer');
+    const button = getByRole('button', { name: /Close the menu/i });
+    const drawer = getByTestId('drawer');
 
     act(() => {
-      fireEvent.click(button);
+      userEvent.click(button);
     });
 
-    expect(drawer).toHaveAttribute('aria-expanded', 'false');
+    await waitFor(() => {
+      expect(drawer).toHaveAttribute('aria-expanded', 'false');
+    });
   });
-  it('expands when clicking the drawer open/close button for the first time on a small screen', () => {
+  it('expands when clicking the drawer open/close button for the first time on a small screen', async () => {
     setScreenSize_ONLY_FOR_TESTING(1199);
-    render(
+    const { getByRole, getByTestId } = render(
       <TestingProvider>
         <AppDrawer />
       </TestingProvider>
     );
 
-    const button = screen.getByRole('button', { name: /Open the menu/i });
-    const drawer = screen.getByTestId('drawer');
+    const button = getByRole('button', { name: /Open the menu/i });
+    const drawer = getByTestId('drawer');
 
     act(() => {
-      fireEvent.click(button);
+      userEvent.click(button);
     });
 
-    expect(drawer).toHaveAttribute('aria-expanded', 'true');
+    await waitFor(() => {
+      expect(drawer).toHaveAttribute('aria-expanded', 'true');
+    });
   });
-  it('Text changes visibility when the menu is collapsed/expanded', () => {
-    render(
+  it('Text is visibility when the menu is expanded', async () => {
+    const { getByText } = render(
       <TestingProvider>
         <AppDrawer />
       </TestingProvider>
     );
 
-    const button = screen.getByRole('button', { name: /Open the menu/i });
-
-    let rootNavigationElements = [
-      screen.getByText(/dashboard/i),
-      screen.getByText(/customers/i),
-      screen.getByText(/suppliers/i),
-      screen.getByText(/stock/i),
-      screen.getByText(/tools/i),
-      screen.getByText(/reports/i),
-      screen.getByText(/messages/i),
-    ];
-
-    rootNavigationElements.forEach(element => {
-      expect(element).toBeVisible();
+    await waitFor(() => {
+      expect(getByText(/customers/i)).toBeVisible();
+      expect(getByText(/dashboard/i)).toBeVisible();
+      expect(getByText(/customers/i)).toBeVisible();
+      expect(getByText(/suppliers/i)).toBeVisible();
+      expect(getByText(/stock/i)).toBeVisible();
+      expect(getByText(/tools/i)).toBeVisible();
+      expect(getByText(/reports/i)).toBeVisible();
+      expect(getByText(/messages/i)).toBeVisible();
     });
+  });
+  it('Text is invisible when the menu is collapsed', async () => {
+    const { getByText } = render(
+      <TestingProvider>
+        <AppDrawer />
+      </TestingProvider>
+    );
+
+    const button = screen.getByRole('button', { name: /Close the menu/i });
 
     act(() => {
-      fireEvent.click(button);
+      userEvent.click(button);
     });
 
-    rootNavigationElements = [
-      screen.getByText(/dashboard/i),
-      screen.getByText(/customers/i),
-      screen.getByText(/suppliers/i),
-      screen.getByText(/stock/i),
-      screen.getByText(/tools/i),
-      screen.getByText(/reports/i),
-      screen.getByText(/messages/i),
-    ];
-
-    rootNavigationElements.forEach(element => {
-      expect(element).not.toBeVisible();
+    waitFor(() => {
+      expect(getByText(/customers/i)).not.toBeVisible();
+      expect(getByText(/dashboard/i)).not.toBeVisible();
+      expect(getByText(/customers/i)).not.toBeVisible();
+      expect(getByText(/suppliers/i)).not.toBeVisible();
+      expect(getByText(/stock/i)).not.toBeVisible();
+      expect(getByText(/tools/i)).not.toBeVisible();
+      expect(getByText(/reports/i)).not.toBeVisible();
+      expect(getByText(/messages/i)).not.toBeVisible();
     });
   });
 });
