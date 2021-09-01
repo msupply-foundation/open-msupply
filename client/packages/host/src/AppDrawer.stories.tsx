@@ -1,7 +1,7 @@
 import React from 'react';
 import { Story, ComponentMeta } from '@storybook/react';
 import AppDrawer from './AppDrawer';
-import { Box, TestingProvider } from '@openmsupply-client/common';
+import { TestingProvider } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 export default {
@@ -14,14 +14,13 @@ interface AppDrawerStoryArgs {
 }
 
 const Template: Story<AppDrawerStoryArgs> = args => (
-  <TestingProvider locale={args.locale}>
-    <Box display="flex" flex={1} height="100vh">
-      <AppDrawer />
-    </Box>
+  <TestingProvider {...args}>
+    <AppDrawer />
   </TestingProvider>
 );
 
 export const English = Template.bind({});
+English.args = 'en';
 
 export const French = Template.bind({});
 French.args = {
@@ -31,4 +30,9 @@ French.args = {
 export const Portuguese = Template.bind({});
 Portuguese.args = {
   locale: 'pt',
+};
+
+export const Arabic = Template.bind({});
+Arabic.args = {
+  locale: 'ar',
 };
