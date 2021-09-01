@@ -4,7 +4,7 @@ description = "Description of all API sorting"
 date = 2021-05-01T19:30:00+00:00
 updated = 2021-05-01T19:30:00+00:00
 draft = false
-weight = 51
+weight = 2
 sort_by = "weight"
 template = "docs/page.html"
 
@@ -54,7 +54,6 @@ query {
 ```
 
 # Filtering
-
 
 This API exposes a parameter on each query accepting a Filter object.
 
@@ -135,161 +134,167 @@ query {
 }
 ```
 
+# Lists and Pagination
 
-# Lists and Pagenation
-
-For lists, the base level of results for entity contains metadata and actual records are in `nodes` field. 
+For lists, the base level of results for entity contains metadata and actual records are in `nodes` field.
 
 **Examples**
 
 <ins>Query</ins>
+
 ```gql
-query { 
-    transactions {
-        nodes {
-            id
-            comment
-        }
+query {
+  transactions {
+    nodes {
+      id
+      comment
     }
+  }
 }
 ```
 
 <ins>Result</ins>
+
 ```json
 {
-    "transactions": {
-        "nodes": [
-            {
-                "id": "ABC",
-                "comment": "123"
-            },
-            {
-                "id": "DEF",
-                "comment": "456"
-            }
-        ]
-    }
+  "transactions": {
+    "nodes": [
+      {
+        "id": "ABC",
+        "comment": "123"
+      },
+      {
+        "id": "DEF",
+        "comment": "456"
+      }
+    ]
+  }
 }
 ```
 
 <ins>Query</ins>
+
 ```gql
-query { 
-    transaction(id: "ABC") {
+query {
+  transaction(id: "ABC") {
+    id
+    comment
+    lines {
+      nodes {
         id
-        comment
-        lines {
-            nodes {
-                id
-                itemName
-            }
-        }
+        itemName
+      }
     }
+  }
 }
 ```
 
 <ins>Result</ins>
+
 ```json
 {
-    "transaction": {
-        "id": "ABC",
-        "comment": "123",
-        "lines": {
-            "nodes": [
-                {
-                    "id": "GHI",
-                    "itemName": "amoxicillin"
-                },
-                {
-                    "id": "JKL",
-                    "itemName": "paracetamol"
-                }
-            ]
+  "transaction": {
+    "id": "ABC",
+    "comment": "123",
+    "lines": {
+      "nodes": [
+        {
+          "id": "GHI",
+          "itemName": "amoxicillin"
+        },
+        {
+          "id": "JKL",
+          "itemName": "paracetamol"
         }
+      ]
     }
+  }
 }
 ```
 
-**Pagenation**
+**Pagination**
 
 An optional `totalCount` is available on all list queries, which give total number of records matching applied filter (if it's present).
 
 The following arguments are available to all list queries
 
-| Argument   | Restrictions                                    | Default | Description                |
-|------------|-------------------------------------------------|---------|----------------------------|
-| pageNumber | pageNumber > 0                                  | 0       | Zero indexed page number   |
-| pageSize   | pageSize > 0 and pageSize < 1000 (*exception**) | 100     | Number of records per page |
+| Argument   | Restrictions                                       | Default | Description                |
+| ---------- | -------------------------------------------------- | ------- | -------------------------- |
+| pageNumber | pageNumber > 0                                     | 0       | Zero indexed page number   |
+| pageSize   | pageSize > 0 and pageSize < 1000 (\*exception\*\*) | 100     | Number of records per page |
 
-
-*exception** limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagenation limit ?}
+\*exception\*\* limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
 
 **Examples**
 
 <ins>Query</ins>
+
 ```gql
 query {
-    transactions {
-        totalCount
-        nodes {
-            id
-            comment
-        }
+  transactions {
+    totalCount
+    nodes {
+      id
+      comment
     }
+  }
 }
 ```
 
 <ins>Result</ins>
+
 ```json
 {
-    "transactions": {
-        "totalCount": 2,
-        "nodes": [
-            {
-                "id": "ABC",
-                "comment": "123"
-            },
-            {
-                "id": "DEF",
-                "comment": "456"
-            }
-        ]
-    }
+  "transactions": {
+    "totalCount": 2,
+    "nodes": [
+      {
+        "id": "ABC",
+        "comment": "123"
+      },
+      {
+        "id": "DEF",
+        "comment": "456"
+      }
+    ]
+  }
 }
 ```
 
 <ins>Query</ins>
+
 ```gql
 query {
-        transactions(pageSize: 1, pageNumber: 0) {
-        totalCount
-        nodes {
-            id
-            comment
-        }
+  transactions(pageSize: 1, pageNumber: 0) {
+    totalCount
+    nodes {
+      id
+      comment
     }
+  }
 }
 ```
 
 <ins>Result</ins>
+
 ```json
 {
-    "transactions": {
-        "totalCount": 2,
-        "nodes": [
-            {
-                "id": "ABC",
-                "comment": "123"
-            }
-        ]
-    }
+  "transactions": {
+    "totalCount": 2,
+    "nodes": [
+      {
+        "id": "ABC",
+        "comment": "123"
+      }
+    ]
+  }
 }
 ```
-
 
 **Error handling**
 
 {TODO, once we know the shape of errors}
+
 ```
 // error when restrictions are not met
 // no error if too far (just return last page)
