@@ -1,6 +1,17 @@
 import React, { FC } from 'react';
 import SvgIcon, { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { styled } from '@material-ui/core/styles';
+import { keyframes } from '@material-ui/styled-engine';
+
+const spin = keyframes`
+  from {transform:rotate(0deg);}
+  to {transform:rotate(360deg);}
+}`;
+
+const otherSpin = keyframes`
+  from {transform:rotate(360deg);}
+  to {transform:rotate(0deg);}
+}`;
 
 const sizes = {
   large: { height: 60, width: 45 },
@@ -46,6 +57,17 @@ export const UnstyledGuy: FC<MSupplyGuyProps> = (svgProps): JSX.Element => (
   </SvgIcon>
 );
 
-export const MSupplyGuy = styled(UnstyledGuy)(({ size }) => ({
+export const MSupplyGuy = styled(UnstyledGuy)(({ theme, size }) => ({
   ...sizes[size],
+
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  '&:hover': {
+    animation:
+      size === 'large'
+        ? `${spin} 1s infinite ease`
+        : `${otherSpin} 1s infinite ease`,
+  },
 }));
