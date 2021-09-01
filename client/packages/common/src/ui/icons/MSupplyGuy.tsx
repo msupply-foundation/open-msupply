@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { FC } from 'react';
 import SvgIcon, { SvgIconProps } from '@material-ui/core/SvgIcon';
+import { styled } from '@material-ui/core/styles';
 
-export const MSupplyGuy = (props: SvgIconProps): JSX.Element => (
-  <SvgIcon {...props} viewBox="3 1 206 310">
+const sizes = {
+  large: { height: 60, width: 45 },
+  medium: { height: 40, width: 30 },
+};
+
+type MSupplyGuyProps = SvgIconProps & {
+  size: 'large' | 'medium';
+};
+
+export const UnstyledGuy: FC<MSupplyGuyProps> = (svgProps): JSX.Element => (
+  <SvgIcon {...svgProps} viewBox="3 1 206 310">
     <g>
       <linearGradient id="6000022348f0" x1="0.5" y1="0" x2="0.5" y2="1">
         <stop offset="0" stopColor="#fa7a0a" />
@@ -35,3 +45,7 @@ export const MSupplyGuy = (props: SvgIconProps): JSX.Element => (
     </g>
   </SvgIcon>
 );
+
+export const MSupplyGuy = styled(UnstyledGuy)(({ size }) => ({
+  ...sizes[size],
+}));

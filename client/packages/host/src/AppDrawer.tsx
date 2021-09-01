@@ -14,7 +14,6 @@ import {
   Stock,
   Suppliers,
   Tools,
-  makeStyles,
   useTranslation,
   useDrawer,
   useMediaQuery,
@@ -30,24 +29,13 @@ const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
 );
 
-const useStyles = makeStyles(theme => ({
-  toolbarIcon: {
-    display: 'flex',
-    height: 90,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '0 8px',
-    ...theme.mixins.toolbar,
-  },
-  drawerMenu: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    justifyContent: 'space-between',
-  },
-
-  mSupplyGuy: { height: 60, width: 45 },
-  mSupplyGuySmall: { height: 40, width: 30 },
+const ToolbarIconContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  height: 90,
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: '0 8px',
+  ...theme.mixins.toolbar,
 }));
 
 const ListContainer = styled(Box)({
@@ -64,13 +52,14 @@ const StyledDivider = styled(Divider)({
 });
 
 const drawerWidth = 200;
+const gutterSize = 24;
 
 const openedMixin = theme => ({
   boxSizing: 'border-box' as CSS.Property.BoxSizing,
   width: drawerWidth,
   overflow: 'hidden',
-  paddingLeft: 16,
-  paddingRight: 16,
+  paddingLeft: gutterSize,
+  paddingRight: gutterSize,
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.enteringScreen,
@@ -79,8 +68,8 @@ const openedMixin = theme => ({
 
 const closedMixin = theme => ({
   boxSizing: 'border-box' as CSS.Property.BoxSizing,
-  paddingLeft: 24,
-  paddingRight: 24,
+  paddingLeft: gutterSize,
+  paddingRight: gutterSize,
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -115,7 +104,6 @@ const AppDrawer: React.FC = () => {
   const theme = useTheme();
   const t = useTranslation();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  const classes = useStyles();
   const drawer = useDrawer();
 
   React.useEffect(() => {
@@ -131,23 +119,15 @@ const AppDrawer: React.FC = () => {
       aria-expanded={drawer.isOpen}
       open={drawer.isOpen}
     >
-      <div className={classes.toolbarIcon}>
+      <ToolbarIconContainer>
         <UnstyledIconButton
           titleKey={
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
           }
           onClick={drawer.toggle}
-          icon={
-            <MSupplyGuy
-              classes={{
-                root: drawer.isOpen
-                  ? classes.mSupplyGuy
-                  : classes.mSupplyGuySmall,
-              }}
-            />
-          }
+          icon={<MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />}
         />
-      </div>
+      </ToolbarIconContainer>
       <ListContainer>
         <List>
           <AppNavLink

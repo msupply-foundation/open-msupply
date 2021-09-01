@@ -5,10 +5,10 @@ import {
   Collapse,
   List,
   useDrawer,
-  AppNavLink,
   useTranslation,
   RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
 import { AppRoute } from '@openmsupply-client/config';
 
 const useNestedNav = (path: string) => {
