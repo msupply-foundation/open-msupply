@@ -42,7 +42,6 @@ const StyledListItem = styled<
   boxShadow: isSelected ? theme.shadows[8] : 'none',
   marginTop: 20,
   '&:hover': {
-    backgroundColor: 'none',
     boxShadow: theme.shadows[8],
   },
 }));
