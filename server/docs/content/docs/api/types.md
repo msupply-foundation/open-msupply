@@ -20,6 +20,14 @@ Not null integer
 
 Nullable integer
 
+## Boolean!
+
+Not null boolean
+
+## Boolean
+
+Nullable boolean
+
 ## Float!
 
 Not null float
