@@ -45,9 +45,9 @@ TODO: Shape of error
 **Examples**
 
 ```
-{
-    query transaction([{ key: "confirmDate", desc: true }]){
-        id,
+query { 
+    transaction([{ key: "confirmDate", desc: true }]) {
+        id
         status
     }
 }
@@ -118,18 +118,18 @@ TODO: Shape of error
 **Examples**
 
 ```
-{
-    query transaction({ status: {equalTo: "cn" } }){
-        id,
+query {
+    transaction({ status: {equalTo: "cn" } }) {
+        id
         status
     }
 }
 ```
 
 ```
-{
-    query transaction({ status: {equalTo: "cn" }, confirm_date: {greaterThan: 1629687143 } }){
-        id,
+query {
+    transaction({ status: {equalTo: "cn" }, confirm_date: {greaterThan: 1629687143 } }) {
+        id
         status
     }
 }
