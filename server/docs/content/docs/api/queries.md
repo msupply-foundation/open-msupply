@@ -145,9 +145,9 @@ query {
 
 **lines.id** [String](/docs/api/types/#String) -> `id`
 
-**lines.item_name** [String](/docs/api/types/#string) -> `item_name`: denormalised from item in case of item name changes after transaction is created
+**lines.itemName** [String](/docs/api/types/#string) -> `item_name`: denormalised from item in case of item name changes after transaction is created
 
-**lines.item_code** [String](/docs/api/types/#string) -> item(transaction_line.item_id -> item).`code`
+**lines.itemCode** [String](/docs/api/types/#string) -> item(transaction_line.item_id -> item).`code`
 
 **lines.quantity** [Int](/docs/api/types/#int) -> `quantity`
 
