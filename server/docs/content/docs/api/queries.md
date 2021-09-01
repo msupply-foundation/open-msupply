@@ -178,6 +178,7 @@ query {
       id
       code
       name
+      isVisible
       availableQuantity
       activeBatches {
         nodes {
@@ -202,6 +203,8 @@ query {
 
 **name** [String!](/docs/api/types/#string!) -> `name`
 
+**isVisible** [Boolean!](/docs/api/types/#boolean!) -> {TODO, need to go over master list schema}
+
 **availableQuantity** [Int!](/docs/api/types/#int!) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize * availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
 
 `Base Table`: item_line
@@ -222,11 +225,11 @@ query {
 
 The following fields are [filterable](/docs/api/Filters)
 
-`code` `name` `availableQuantity` {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
+`code` `name` `isVisible` `availableQuantity` {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
 
 <ins>Session and Permissions</ins>
 
-Items in this query are filtered by permission system to only show items that are visible in current `logged in store` {TODO link to session info} (will output items where `item.id -> item_store_join.item_id` and `item_store_join.store_id = logged in store`) {TODO are we using master lists for visibility now ?}
+
 
 ### NAMES
 
