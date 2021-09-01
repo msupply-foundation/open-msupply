@@ -4,7 +4,7 @@ description = "Description of all GraphQL queries available"
 date = 2021-05-01T19:30:00+00:00
 updated = 2021-05-01T19:30:00+00:00
 draft = false
-weight = 51
+weight = 3
 sort_by = "weight"
 template = "docs/page.html"
 
@@ -22,7 +22,7 @@ Full list of GraphQL queries is provided here is for:
 
 ### TRANSACTIONS
 
-Transaction [list](/docs/api/patterns/#lists-and-pagenation)   
+Transaction [list](/docs/api/patterns/#lists-and-pagination)
 
 Transactions in this query are filtered by `store` associated with current session {TODO link to session info} (will output transactions where `store_id = logged in store`)
 
@@ -31,16 +31,16 @@ Transactions in this query are filtered by `store` associated with current sessi
 ```gql
 query {
   transactions {
-      nodes {
-        id
-        name
-        status
-        type
-        comment
-        serialNumber
-        enteredDate
-        reference
-      }
+    nodes {
+      id
+      name
+      status
+      type
+      comment
+      serialNumber
+      enteredDate
+      reference
+    }
   }
 }
 ```
@@ -49,25 +49,25 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`        
+**id** [String!](/docs/api/types/#string!) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination\*\* or *source\*\*\* of transaction
 
-**status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`  
+**status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`
 
 **type** [TransactionType!](/docs/api/types/#enum-transactiontype) -> `type`
 
-**comment** [String](/docs/api/types/#string) -> `comment` 
+**comment** [String](/docs/api/types/#string) -> `comment`
 
 **serialNumber** [Int!](/docs/api/types/#int!) -> `serial_number`
 
-**enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`   
+**enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**  
+**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to \*destination\*\*
 
-*destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
+\*destination\*\* if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
-*source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+\*source\*\*\* if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
 
 <ins>Filters</ins>
 
@@ -93,15 +93,15 @@ query {
     enteredDate
     reference
     lines {
-        nodes {
-            id
-            itemName
-            itemCode
-            quantity
-            availableQuantity
-            batchName
-            expiry
-        }
+      nodes {
+        id
+        itemName
+        itemCode
+        quantity
+        availableQuantity
+        batchName
+        expiry
+      }
     }
   }
 }
@@ -115,25 +115,25 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`        
+**id** [String!](/docs/api/types/#string!) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination\*\* or *source\*\*\* of transaction
 
-**status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`  
+**status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`
 
 **type** [TransactionType!](/docs/api/types/#enum-transactiontype) -> `type`
 
-**comment** [String](/docs/api/types/#string) -> `comment` 
+**comment** [String](/docs/api/types/#string) -> `comment`
 
 **serialNumber** [Int!](/docs/api/types/#int!) -> `serial_number`
 
-**enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`   
+**enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**  
+**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to \*destination\*\*
 
-`Base Table`: transaction_line 
+`Base Table`: transaction_line
 
-**lines**  ->  transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists-and-pagenation)  
+**lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists-and-pagination)
 
 **lines.id** [String!](/docs/api/types/#String) -> `id`
 
@@ -147,15 +147,15 @@ query {
 
 **lines.expiry** [Datetime](/docs/api/types/#datetime) -> item_line(item_line_id -> item_line.id).`expiry`
 
-**lines.availableQuantity** [Int!](/docs/api/types/#int!) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased. 
+**lines.availableQuantity** [Int!](/docs/api/types/#int!) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased.
 
-*destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
+\*destination\*\* if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
-*source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+\*source\*\*\* if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
 
 ### ITEMS
 
-Item [list](/docs/api/patterns/#lists-and-pagenation)   
+Item [list](/docs/api/patterns/#lists-and-pagination)
 
 Items in this query are filtered by `store` associated with current session {TODO link to session info} (will output items where `item.id -> item_store_join.item_id` and `item_store_join.store_id = logged in store`) {TODO are we using master lists for visibility now ?}
 
@@ -164,20 +164,20 @@ Items in this query are filtered by `store` associated with current session {TOD
 ```gql
 query {
   items {
-      nodes {
-        id
-        code
-        name
-        availableQuantity
-        activeBatches {
-            nodes {
-                packSize
-                availableNumberOfPacks
-                name
-                expiry
-            }
+    nodes {
+      id
+      code
+      name
+      availableQuantity
+      activeBatches {
+        nodes {
+          packSize
+          availableNumberOfPacks
+          name
+          expiry
         }
       }
+    }
   }
 }
 ```
@@ -186,17 +186,17 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`        
+**id** [String!](/docs/api/types/#string!) -> `id`
 
 **code** [String!](/docs/api/types/#string!) -> `code`
 
 **name** [String!](/docs/api/types/#string!) -> `name`
 
-**availableQuantity** [Int!](/docs/api/types/#int!) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize * availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
+**availableQuantity** [Int!](/docs/api/types/#int!) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize \* availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
 
-`Base Table`: item_line 
+`Base Table`: item_line
 
-**availableBatches**  ->  item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists-and-pagenation), `is_active` means `totalNumberOfPacks > 0`
+**availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists-and-pagination), `is_active` means `totalNumberOfPacks > 0`
 
 **availableBatches.packSize** [Int!](/docs/api/types/#int!) -> `pack_size`
 
@@ -204,7 +204,7 @@ query {
 
 **availableBatches.name** [String](/docs/api/types/#string) -> `name`: batch name, can be null
 
-**availableBatches.expiry** [Datetime](/docs/api/types/#Datetime) -> `expirty`: can be null
+**availableBatches.expiry** [Datetime](/docs/api/types/#Datetime) -> `expiry`: can be null
 
 <ins>Filters</ins>
 
@@ -212,7 +212,7 @@ query {
 
 ### CUSTOMERS
 
-Customer [list](/docs/api/patterns/#lists-and-pagenation)   
+Customer [list](/docs/api/patterns/#lists-and-pagination)
 
 Names in this query are filtered by `is_customer` and `store` associated with current session {TODO link to session info} (will output names where `name.id -> name_store_join.name_id` and `name_store_join.store_id = logged in store` and `name_store_join.is_customer`) {TODO still in discussion}
 
@@ -221,11 +221,11 @@ Names in this query are filtered by `is_customer` and `store` associated with cu
 ```gql
 query {
   customers {
-      nodes {
-        id
-        code
-        name
-      }
+    nodes {
+      id
+      code
+      name
+    }
   }
 }
 ```
@@ -234,7 +234,7 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`        
+**id** [String!](/docs/api/types/#string!) -> `id`
 
 **name** [String!](/docs/api/types/#string!) -> `name`
 
@@ -246,7 +246,7 @@ All fields apart from `id` are [filterable](/docs/api/Filters)
 
 ### SUPPLIERS
 
-Supplier [list](/docs/api/patterns/#lists-and-pagenation)   
+Supplier [list](/docs/api/patterns/#lists-and-pagination)
 
 Names in this query are filtered by `is_supplier` and `store` associated with current session {TODO link to session info} (will output names where `name.id -> name_store_join.name_id` and `name_store_join.store_id = logged in store` and `name_store_join.is_supplier`) {TODO still in discussion}
 
@@ -255,11 +255,11 @@ Names in this query are filtered by `is_supplier` and `store` associated with cu
 ```gql
 query {
   suppliers {
-      nodes {
-        id
-        code
-        name
-      }
+    nodes {
+      id
+      code
+      name
+    }
   }
 }
 ```
@@ -268,7 +268,7 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`        
+**id** [String!](/docs/api/types/#string!) -> `id`
 
 **name** [String!](/docs/api/types/#string!) -> `name`
 
