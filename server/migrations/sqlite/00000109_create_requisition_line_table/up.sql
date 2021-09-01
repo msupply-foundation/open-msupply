@@ -1,4 +1,4 @@
--- Create requiosition_line table.
+-- Create requisition_line table.
 
 CREATE TABLE requisition_line (
     id TEXT NOT NULL PRIMARY KEY,
