@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
-import { AppThemeProvider } from '../styles';
+import AppThemeProvider from '../styles/ThemeProvider';
 import { IntlTestProvider } from '../intl/IntlTestProvider';
 import { BrowserRouter } from 'react-router-dom';
 import { SupportedLocales } from '../intl/intlHelpers';
 import mediaQuery from 'css-mediaquery';
+
 interface TestingProviderProps {
   locale?: SupportedLocales;
 }
@@ -11,15 +12,13 @@ interface TestingProviderProps {
 export const TestingProvider: FC<TestingProviderProps> = ({
   children,
   locale = 'en',
-}) => {
-  return (
+}) => (
+  <IntlTestProvider locale={locale}>
     <AppThemeProvider>
-      <IntlTestProvider locale={locale}>
-        <BrowserRouter>{children}</BrowserRouter>
-      </IntlTestProvider>
+      <BrowserRouter>{children}</BrowserRouter>
     </AppThemeProvider>
-  );
-};
+  </IntlTestProvider>
+);
 
 function createMatchMedia(width: number) {
   return (query: any) => ({
