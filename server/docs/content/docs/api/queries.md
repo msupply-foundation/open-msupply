@@ -24,8 +24,6 @@ Full list of GraphQL queries is provided here is for:
 
 Transaction [list](/docs/api/patterns/#lists-and-pagination)
 
-Transactions in this query are filtered by `store` associated with current session {TODO link to session info} (will output transactions where `store_id = logged in store`)
-
 <ins>Full Shape</ins>
 
 ```gql
@@ -51,7 +49,7 @@ query {
 
 **id** [String!](/docs/api/types/#string!) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination\*\* or *source\*\*\* of transaction
+**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
 
 **status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`
 
@@ -63,21 +61,31 @@ query {
 
 **enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to \*destination\*\*
+**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**
 
-\*destination\*\* if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
+*destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
-\*source\*\*\* if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+*source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
 
 <ins>Filters</ins>
 
-All fields apart from `id` are [filterable](/docs/api/Filters)
+The following fields are [filterable](/docs/api/Filters)
+
+`name`
+`status`
+`type`
+`comment`
+`serialNumber`
+`enteredDate`
+`reference`
+
+<ins>Session and Permissions</ins>
+
+Transactions in this query are automatically filtered by permission system so that only transactions associated with current logged in `store` are visible {TODO link to session info} (will output transactions where `store_id = logged in store`)
 
 ### TRANSACTION
 
 Single transaction entity
-
-Additional filter is applied to transaction for store associated with current session {TODO link to session info} (where `store_id = logged in store`)
 
 <ins>Full Shape</ins>
 
@@ -117,7 +125,7 @@ query {
 
 **id** [String!](/docs/api/types/#string!) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination\*\* or *source\*\*\* of transaction
+**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
 
 **status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`
 
@@ -129,7 +137,7 @@ query {
 
 **enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to \*destination\*\*
+**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**
 
 `Base Table`: transaction_line
 
@@ -149,15 +157,17 @@ query {
 
 **lines.availableQuantity** [Int!](/docs/api/types/#int!) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased.
 
-\*destination\*\* if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
+*destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
-\*source\*\*\* if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+*source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+
+<ins>Session and Permissions</ins>
+
+Additional filter is applied to transaction by permission system to filter transaction by store associated with current session {TODO link to session info} (where `store_id = logged in store`)
 
 ### ITEMS
 
 Item [list](/docs/api/patterns/#lists-and-pagination)
-
-Items in this query are filtered by `store` associated with current session {TODO link to session info} (will output items where `item.id -> item_store_join.item_id` and `item_store_join.store_id = logged in store`) {TODO are we using master lists for visibility now ?}
 
 <ins>Full Shape</ins>
 
@@ -192,7 +202,7 @@ query {
 
 **name** [String!](/docs/api/types/#string!) -> `name`
 
-**availableQuantity** [Int!](/docs/api/types/#int!) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize \* availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
+**availableQuantity** [Int!](/docs/api/types/#int!) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize * availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
 
 `Base Table`: item_line
 
@@ -206,25 +216,33 @@ query {
 
 **availableBatches.expiry** [Datetime](/docs/api/types/#Datetime) -> `expiry`: can be null
 
-<ins>Filters</ins>
-
 `name` and `availableQuantity` are [filterable](/docs/api/Filters) {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
 
-### CUSTOMERS
+<ins>Filters</ins>
 
-Customer [list](/docs/api/patterns/#lists-and-pagination)
+The following fields are [filterable](/docs/api/Filters)
 
-Names in this query are filtered by `is_customer` and `store` associated with current session {TODO link to session info} (will output names where `name.id -> name_store_join.name_id` and `name_store_join.store_id = logged in store` and `name_store_join.is_customer`) {TODO still in discussion}
+`code` `name` `availableQuantity` {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
+
+<ins>Session and Permissions</ins>
+
+Items in this query are filtered by permission system to only show items that are visible in current `logged in store` {TODO link to session info} (will output items where `item.id -> item_store_join.item_id` and `item_store_join.store_id = logged in store`) {TODO are we using master lists for visibility now ?}
+
+### NAMES
+
+Names [list](/docs/api/patterns/#lists-and-pagination)
 
 <ins>Full Shape</ins>
 
 ```gql
 query {
-  customers {
+  names {
     nodes {
       id
       code
       name
+      isCustomer
+      isSupplier
     }
   }
 }
@@ -240,40 +258,16 @@ query {
 
 **code** [String!](/docs/api/types/#string!) -> `code`
 
-<ins>Filters</ins>
+**isCustomer** [Boolean!](/docs/api/types/#boolean!) -> name_store_join(`id` -> name_store_join.name_id).`name_is_customer`
 
-All fields apart from `id` are [filterable](/docs/api/Filters)
-
-### SUPPLIERS
-
-Supplier [list](/docs/api/patterns/#lists-and-pagination)
-
-Names in this query are filtered by `is_supplier` and `store` associated with current session {TODO link to session info} (will output names where `name.id -> name_store_join.name_id` and `name_store_join.store_id = logged in store` and `name_store_join.is_supplier`) {TODO still in discussion}
-
-<ins>Full Shape</ins>
-
-```gql
-query {
-  suppliers {
-    nodes {
-      id
-      code
-      name
-    }
-  }
-}
-```
-
-`Base Table`: Name
-
-<ins>Field Mapping</ins>
-
-**id** [String!](/docs/api/types/#string!) -> `id`
-
-**name** [String!](/docs/api/types/#string!) -> `name`
-
-**code** [String!](/docs/api/types/#string!) -> `code`
+**isSupplier** [Boolean!](/docs/api/types/#boolean!) -> name_store_join(`id` -> name_store_join.name_id).`name_is_supplier`
 
 <ins>Filters</ins>
 
-All fields apart from `id` are [filterable](/docs/api/Filters)
+The following fields are [filterable](/docs/api/Filters)
+
+`code` `name` `isCustomer` `isSupplier`
+
+<ins>Session and Permissions</ins>
+
+Names in this query are filtered by permission system to only show names visible in current `logged in store` {TODO link to session info} (will output names where `name_store_join.store_id = logged in store`)in discussion}
