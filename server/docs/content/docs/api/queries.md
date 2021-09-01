@@ -151,9 +151,9 @@ query {
 
 **lines.quantity** [Int!](/docs/api/types/#int!) -> `quantity`
 
-**lines.batchName** [String](/docs/api/types/#string) -> item_line(item_line_id -> item_line.id).`batch_name`
+**lines.batchName** [String](/docs/api/types/#string) -> `batch_name`
 
-**lines.expiry** [Datetime](/docs/api/types/#datetime) -> item_line(item_line_id -> item_line.id).`expiry`
+**lines.expiry** [Datetime](/docs/api/types/#datetime) -> `expiry`
 
 **lines.availableQuantity** [Int!](/docs/api/types/#int!) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased.
 
