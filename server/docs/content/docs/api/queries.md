@@ -47,21 +47,21 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`
+**id** [String](/docs/api/types/#string) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+**name** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
 
-**status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`
+**status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
 
-**type** [TransactionType!](/docs/api/types/#enum-transactiontype) -> `type`
+**type** [TransactionType](/docs/api/types/#enum-transactiontype) -> `type`
 
-**comment** [String!](/docs/api/types/#string!) -> `comment`
+**comment** [String](/docs/api/types/#string) -> `comment`
 
-**serialNumber** [Int!](/docs/api/types/#int!) -> `serial_number`
+**serialNumber** [Int](/docs/api/types/#int) -> `serial_number`
 
-**enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
+**enteredDate** [Datetime](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String!](/docs/api/types/#string!) -> `reference`: comment visible to *destination**
+**reference** [String](/docs/api/types/#string) -> `reference`: comment visible to *destination**
 
 *destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
@@ -119,43 +119,43 @@ query {
 
 <ins>Arguments</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`: transaction entity to query
+**id** [String](/docs/api/types/#string) -> `id`: transaction entity to query
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`
+**id** [String](/docs/api/types/#string) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+**name** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
 
-**status** [TransactionStatus!](/docs/api/types/#enum-transactionstatus) -> `status`
+**status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
 
-**type** [TransactionType!](/docs/api/types/#enum-transactiontype) -> `type`
+**type** [TransactionType](/docs/api/types/#enum-transactiontype) -> `type`
 
-**comment** [String!](/docs/api/types/#string!) -> `comment`
+**comment** [String](/docs/api/types/#string) -> `comment`
 
-**serialNumber** [Int!](/docs/api/types/#int!) -> `serial_number`
+**serialNumber** [Int](/docs/api/types/#int) -> `serial_number`
 
-**enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
+**enteredDate** [Datetime](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String!](/docs/api/types/#String!) -> `reference`: comment visible to *destination**
+**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**
 
 `Base Table`: transaction_line
 
 **lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists-and-pagination)
 
-**lines.id** [String!](/docs/api/types/#String) -> `id`
+**lines.id** [String](/docs/api/types/#String) -> `id`
 
-**lines.item_name** [String!](/docs/api/types/#string!) -> `item_name`: denormalised from item in case of item name changes after transaction is created
+**lines.item_name** [String](/docs/api/types/#string) -> `item_name`: denormalised from item in case of item name changes after transaction is created
 
-**lines.item_code** [String!](/docs/api/types/#string!) -> item(transaction_line.item_id -> item).`code`
+**lines.item_code** [String](/docs/api/types/#string) -> item(transaction_line.item_id -> item).`code`
 
-**lines.quantity** [Int!](/docs/api/types/#int!) -> `quantity`
+**lines.quantity** [Int](/docs/api/types/#int) -> `quantity`
 
 **lines.batchName** [String](/docs/api/types/#string) -> `batch_name`
 
 **lines.expiry** [Datetime](/docs/api/types/#datetime) -> `expiry`
 
-**lines.availableQuantity** [Int!](/docs/api/types/#int!) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased.
+**lines.availableQuantity** [Int](/docs/api/types/#int) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased.
 
 *destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
@@ -197,23 +197,23 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`
+**id** [String](/docs/api/types/#string) -> `id`
 
-**code** [String!](/docs/api/types/#string!) -> `code`
+**code** [String](/docs/api/types/#string) -> `code`
 
-**name** [String!](/docs/api/types/#string!) -> `name`
+**name** [String](/docs/api/types/#string) -> `name`
 
-**isVisible** [Boolean!](/docs/api/types/#boolean!) -> {TODO, need to go over master list schema}
+**isVisible** [Boolean](/docs/api/types/#boolean) -> {TODO, need to go over master list schema}
 
-**availableQuantity** [Int!](/docs/api/types/#int!) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize * availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
+**availableQuantity** [Int](/docs/api/types/#int) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize * availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
 
 `Base Table`: item_line
 
 **availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists-and-pagination), `is_active` means `totalNumberOfPacks > 0`
 
-**availableBatches.packSize** [Int!](/docs/api/types/#int!) -> `pack_size`
+**availableBatches.packSize** [Int](/docs/api/types/#int) -> `pack_size`
 
-**availableBatches.availableNumberOfPacks** [Float!](/docs/api/types/#float!) -> `available_number_of_packs`: float because can issue in less then pack size
+**availableBatches.availableNumberOfPacks** [Float](/docs/api/types/#float) -> `available_number_of_packs`: float because can issue in less then pack size
 
 **availableBatches.name** [String](/docs/api/types/#string) -> `name`: batch name, can be null
 
@@ -255,15 +255,15 @@ query {
 
 <ins>Field Mapping</ins>
 
-**id** [String!](/docs/api/types/#string!) -> `id`
+**id** [String](/docs/api/types/#string) -> `id`
 
-**name** [String!](/docs/api/types/#string!) -> `name`
+**name** [String](/docs/api/types/#string) -> `name`
 
-**code** [String!](/docs/api/types/#string!) -> `code`
+**code** [String](/docs/api/types/#string) -> `code`
 
-**isCustomer** [Boolean!](/docs/api/types/#boolean!) -> name_store_join(`id` -> name_store_join.name_id).`name_is_customer`
+**isCustomer** [Boolean](/docs/api/types/#boolean) -> name_store_join(`id` -> name_store_join.name_id).`name_is_customer`
 
-**isSupplier** [Boolean!](/docs/api/types/#boolean!) -> name_store_join(`id` -> name_store_join.name_id).`name_is_supplier`
+**isSupplier** [Boolean](/docs/api/types/#boolean) -> name_store_join(`id` -> name_store_join.name_id).`name_is_supplier`
 
 <ins>Filters</ins>
 
