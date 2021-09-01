@@ -55,13 +55,13 @@ query {
 
 **type** [TransactionType!](/docs/api/types/#enum-transactiontype) -> `type`
 
-**comment** [String](/docs/api/types/#string) -> `comment`
+**comment** [String!](/docs/api/types/#string!) -> `comment`
 
 **serialNumber** [Int!](/docs/api/types/#int!) -> `serial_number`
 
 **enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**
+**reference** [String!](/docs/api/types/#string!) -> `reference`: comment visible to *destination**
 
 *destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
@@ -131,13 +131,13 @@ query {
 
 **type** [TransactionType!](/docs/api/types/#enum-transactiontype) -> `type`
 
-**comment** [String](/docs/api/types/#string) -> `comment`
+**comment** [String!](/docs/api/types/#string!) -> `comment`
 
 **serialNumber** [Int!](/docs/api/types/#int!) -> `serial_number`
 
 **enteredDate** [Datetime!](/docs/api/types/#datetime) -> `entered_date`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**
+**reference** [String!](/docs/api/types/#String!) -> `reference`: comment visible to *destination**
 
 `Base Table`: transaction_line
 
