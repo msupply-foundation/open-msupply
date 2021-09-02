@@ -162,7 +162,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                     <TableCell
                       {...cell.getCellProps()}
                       sx={{
-                        padding: 9.5,
+                        padding: '9.5px',
                         ...(hasRowClick && { cursor: 'pointer' }),
                       }}
                     >
