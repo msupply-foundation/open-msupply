@@ -10,8 +10,8 @@ import {
   useDrawer,
   useHostContext,
   useTranslation,
+  Box,
 } from '@openmsupply-client/common';
-import clsx from 'clsx';
 import { LanguageMenu } from './LanguageMenu';
 import { Link, useLocation } from 'react-router-dom';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
@@ -109,13 +109,37 @@ const Breadcrumbs: React.FC = () => {
   );
 };
 
+const StyledContainer = styled(Box, {
+  shouldForwardProp: prop => prop !== 'isOpen',
+})<{ isOpen: boolean }>(({ isOpen, theme }) => ({
+  left: 72,
+  position: 'absolute',
+  transition: theme.transitions.create(['width', 'margin'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  width: 'calc(100% - 72px)',
+  zIndex: theme.zIndex.drawer - 1,
+  height: 90,
+  boxShadow: theme.shadows[1],
+  ...theme.mixins.header,
+
+  ...(isOpen && {
+    marginLeft: 128,
+    width: 'calc(100% - 200px)',
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+}));
+
 const AppBar: React.FC = () => {
-  const classes = useStyles();
   const { isOpen } = useDrawer();
   const { appBarButtonsRef } = useHostContext();
 
   return (
-    <div className={clsx(classes.appBar, isOpen && classes.appBarShift)}>
+    <StyledContainer isOpen={isOpen}>
       <StyledToolbar>
         <ArrowIcon />
         <Breadcrumbs />
@@ -128,7 +152,7 @@ const AppBar: React.FC = () => {
           <LanguageMenu />
         </ButtonContainer>
       </StyledToolbar>
-    </div>
+    </StyledContainer>
   );
 };
 export default AppBar;
