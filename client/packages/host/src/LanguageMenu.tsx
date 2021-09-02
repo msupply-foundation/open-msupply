@@ -7,6 +7,7 @@ import {
   useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
+import { useNavigate } from 'react-router';
 
 interface LanguageMenuItemProps {
   children: string;
@@ -14,6 +15,7 @@ interface LanguageMenuItemProps {
 }
 
 export const LanguageMenu: React.FC = () => {
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -21,6 +23,7 @@ export const LanguageMenu: React.FC = () => {
 
   const handleClose = () => {
     setAnchorEl(null);
+    navigate(0);
   };
 
   const { locale, setLocale } = useHostContext();
@@ -62,7 +65,7 @@ export const LanguageMenu: React.FC = () => {
         <LanguageMenuItem language="en">English</LanguageMenuItem>
         <LanguageMenuItem language="fr">French</LanguageMenuItem>
         <LanguageMenuItem language="pt">Portuguese</LanguageMenuItem>
-        <LanguageMenuItem language="ab">Arabic</LanguageMenuItem>
+        <LanguageMenuItem language="ar">Arabic</LanguageMenuItem>
       </Menu>
     </div>
   );

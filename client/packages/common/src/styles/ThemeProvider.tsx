@@ -1,11 +1,22 @@
 import React from 'react';
-import { ThemeProvider as MuiThemeProvider, Theme } from '@material-ui/core';
 import { CacheProvider } from '@emotion/react';
-import { StyledEngineProvider } from '@material-ui/core/styles';
+import { ThemeProvider as MuiThemeProvider } from '@material-ui/core/styles';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
+
+/**
+ * Need a cache with the rtl plugin for when we are using rtl.
+ * Don't want the plugin when using ltr.
+ * Statically define each cache and switch between rather than memoizing
+ * and adding the plugin within the react component.
+ * https://material-ui.com/guides/right-to-left/
+ */
+const cacheLtr = createCache({
+  key: 'rtl',
+  stylisPlugins: [],
+});
 
 const cacheRtl = createCache({
   key: 'rtl',
@@ -15,23 +26,17 @@ const cacheRtl = createCache({
   // cast to the reference to `any`, walk away and pretend nothing happened.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stylisPlugins: [rtlPlugin as any],
+  prepend: true,
 });
-
-declare module '@material-ui/styles/defaultTheme' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface DefaultTheme extends Theme {}
-}
 
 const ThemeProvider: React.FC = ({ children }) => {
   const appTheme = useAppTheme();
 
   return (
-    <CacheProvider value={cacheRtl}>
-      <StyledEngineProvider injectFirst>
-        <RTLProvider>
-          <MuiThemeProvider theme={appTheme}>{children}</MuiThemeProvider>
-        </RTLProvider>
-      </StyledEngineProvider>
+    <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
+      <RTLProvider>
+        <MuiThemeProvider theme={appTheme}>{children}</MuiThemeProvider>
+      </RTLProvider>
     </CacheProvider>
   );
 };
