@@ -8,7 +8,7 @@ import Typography from '@material-ui/core/Typography';
 
 export * from './buttons';
 export * from './errors';
-export * from './LoadingApp';
+export * from './LoadingSpinner';
 export * from './RemoteComponent';
 export { AppNavLink } from './NavLink';
 export {
