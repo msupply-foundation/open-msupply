@@ -212,18 +212,32 @@ query {
 }
 ```
 
-**Pagination**
+# Pagination
 
-An optional `totalCount` is available on all list queries, which give total number of records matching applied filter (if it's present).
+This API exposes a parameter on each [list](/docs/api/patterns/#lists-and-pagination) query accepting a pagination object.
 
-The following arguments are available to all list queries
+**The pagination object**
 
-| Argument   | Restrictions                                       | Default | Description                |
-| ---------- | -------------------------------------------------- | ------- | -------------------------- |
-| pageNumber | pageNumber > 0                                     | 0       | Zero indexed page number   |
-| pageSize   | pageSize > 0 and pageSize < 1000 (*exception**) | 100     | Number of records per page |
+```
+{
+   first: Int,
+   offset: Int
+}
+```
+
+Both fields are optional, with default values: `first` = 100, `offset` = 0.
+
+Values are restricted by these rules:
+
+`first > 0 && first <= 1000` (*exception**)
+
+`offset >= 0`
 
 *exception** limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
+
+Offset above row range will not result in an error or rows.
+
+`totalCount` is added as another field at the same level as `nodes` in the [list](/docs/api/patterns/#lists-and-pagination)
 
 **Examples**
 
@@ -265,7 +279,7 @@ query {
 
 ```gql
 query {
-  transactions(pageSize: 1, pageNumber: 0) {
+  transactions({ first: 1, offset: 0}) {
     totalCount
     nodes {
       id
