@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
-import { LoadingApp } from '@openmsupply-client/common';
+import { LoadingSpinner } from '@openmsupply-client/common';
 import TransactionService from './Service';
 
 const App: FC = () => (
-  <React.Suspense fallback={<LoadingApp />}>
+  <React.Suspense fallback={<LoadingSpinner />}>
     <TransactionService />
   </React.Suspense>
 );
