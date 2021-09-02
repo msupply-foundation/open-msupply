@@ -221,9 +221,9 @@ The following arguments are available to all list queries
 | Argument   | Restrictions                                       | Default | Description                |
 | ---------- | -------------------------------------------------- | ------- | -------------------------- |
 | pageNumber | pageNumber > 0                                     | 0       | Zero indexed page number   |
-| pageSize   | pageSize > 0 and pageSize < 1000 (\*exception\*\*) | 100     | Number of records per page |
+| pageSize   | pageSize > 0 and pageSize < 1000 (*exception**) | 100     | Number of records per page |
 
-\*exception\*\* limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
+*exception** limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
 
 **Examples**
 

@@ -125,7 +125,7 @@ query {
 
 **id** [String](/docs/api/types/#string) -> `id`
 
-**name** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+**name** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source** of transaction
 
 **status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
 
@@ -159,7 +159,7 @@ query {
 
 *destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
 
-*source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+*source** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
 
 <ins>Session and Permissions</ins>
 
