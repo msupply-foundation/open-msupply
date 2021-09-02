@@ -1,11 +1,7 @@
 import React from 'react';
-import {
-  Container,
-  Grid,
-  makeStyles,
-  Typography,
-} from '@openmsupply-client/common';
+import { Container, Grid, Typography } from '@openmsupply-client/common';
 import Widget from './Widget';
+import { styled } from '@material-ui/core/styles';
 
 const RecentInvoiceWidget = () => (
   <Widget height="500px">
@@ -25,40 +21,33 @@ const SalesTodayWidget = () => (
   </Widget>
 );
 
-const useStyles = makeStyles(theme => ({
-  appBarSpacer: theme.mixins.toolbar,
-  content: {
-    flexGrow: 1,
-    height: '100vh',
-    overflow: 'auto',
-  },
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
+const Content = styled('main')({
+  flexGrow: 1,
+  height: '100vh',
+  overflow: 'auto',
+});
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(4),
+  paddingBottom: theme.spacing(4),
 }));
 
-const Dashboard: React.FC = () => {
-  const classes = useStyles();
-
-  return (
-    <main className={classes.content}>
-      <div className={classes.appBarSpacer} />
-      <Container maxWidth="lg" className={classes.container}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8} lg={9}>
-            <SalesTodayWidget />
-          </Grid>
-          <Grid item xs={12} md={4} lg={3}>
-            <SalesDepositsWidget />
-          </Grid>
-          <Grid item xs={12}>
-            <RecentInvoiceWidget />
-          </Grid>
+const Dashboard: React.FC = () => (
+  <Content>
+    <StyledContainer maxWidth="lg">
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8} lg={9}>
+          <SalesTodayWidget />
         </Grid>
-      </Container>
-    </main>
-  );
-};
+        <Grid item xs={12} md={4} lg={3}>
+          <SalesDepositsWidget />
+        </Grid>
+        <Grid item xs={12}>
+          <RecentInvoiceWidget />
+        </Grid>
+      </Grid>
+    </StyledContainer>
+  </Content>
+);
 
 export default Dashboard;
