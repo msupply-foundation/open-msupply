@@ -33,7 +33,7 @@ const Nav: FC = () => {
       <AppNavLink
         end={!isActive}
         to={AppRoute.Customers}
-        icon={<Customers />}
+        icon={<Customers fontSize="small" />}
         text={t('app.customers')}
       />
       <Collapse in={isActive}>

@@ -8,4 +8,6 @@ export const DefaultButtonStyles = {
   marginLeft: 5,
   marginRight: 5,
   textTransform: 'none' as Property.TextTransform,
+  '&:hover': { color: '#fff' },
+  '&:hover svg': { color: '#fff' },
 };
