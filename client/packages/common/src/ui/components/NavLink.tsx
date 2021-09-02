@@ -6,12 +6,12 @@ import {
   ListItemText,
   Tooltip,
   ListItemButton,
+  Box,
 } from '@material-ui/core';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '../../hooks/useDrawer';
 import { styled } from '@material-ui/core/styles';
 import { ListItemProps } from 'material-ui';
-import { Box } from '@material-ui/system';
 
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
