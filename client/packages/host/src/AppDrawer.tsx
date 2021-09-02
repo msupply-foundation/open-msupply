@@ -1,9 +1,9 @@
 import React from 'react';
 import {
+  Box,
   Dashboard,
   Divider,
   Drawer,
-  UnstyledIconButton,
   List,
   MSupplyGuy,
   Messages,
@@ -13,13 +13,14 @@ import {
   Settings,
   Stock,
   Suppliers,
+  Theme,
   Tools,
-  useTranslation,
+  UnstyledIconButton,
+  styled,
   useDrawer,
   useMediaQuery,
   useTheme,
-  styled,
-  Box,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
@@ -54,10 +55,15 @@ const StyledDivider = styled(Divider)({
 const drawerWidth = 200;
 const gutterSize = 24;
 
-const openedMixin = theme => ({
+const getDrawerCommonStyles = (theme: Theme) => ({
+  backgroundColor: theme.palette.background.menu,
   boxSizing: 'border-box' as CSS.Property.BoxSizing,
-  width: drawerWidth,
   overflow: 'hidden',
+});
+
+const openedMixin = (theme: Theme) => ({
+  ...getDrawerCommonStyles(theme),
+  width: drawerWidth,
   paddingLeft: gutterSize,
   paddingRight: gutterSize,
   transition: theme.transitions.create('width', {
@@ -66,15 +72,14 @@ const openedMixin = theme => ({
   }),
 });
 
-const closedMixin = theme => ({
-  boxSizing: 'border-box' as CSS.Property.BoxSizing,
+const closedMixin = (theme: Theme) => ({
+  ...getDrawerCommonStyles(theme),
   paddingLeft: gutterSize,
   paddingRight: gutterSize,
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  overflow: 'hidden',
   [theme.breakpoints.up('sm')]: {
     width: theme.spacing(10),
   },
@@ -82,7 +87,6 @@ const closedMixin = theme => ({
 
 const StyledDrawer = styled(Drawer)(({ open, theme }) => {
   return {
-    backgroundColor: theme.palette.background.menu,
     position: 'relative',
     whiteSpace: 'nowrap',
     borderRadius: 8,
@@ -132,7 +136,7 @@ const AppDrawer: React.FC = () => {
         <List>
           <AppNavLink
             to={AppRoute.Dashboard}
-            icon={<Dashboard />}
+            icon={<Dashboard fontSize="small" />}
             text={t('app.dashboard')}
           />
           <React.Suspense fallback={null}>
@@ -140,27 +144,27 @@ const AppDrawer: React.FC = () => {
           </React.Suspense>
           <AppNavLink
             to={AppRoute.Suppliers}
-            icon={<Suppliers />}
+            icon={<Suppliers fontSize="small" />}
             text={t('app.suppliers')}
           />
           <AppNavLink
             to={AppRoute.Stock}
-            icon={<Stock />}
+            icon={<Stock fontSize="small" />}
             text={t('app.stock')}
           />
           <AppNavLink
             to={AppRoute.Tools}
-            icon={<Tools />}
+            icon={<Tools fontSize="small" />}
             text={t('app.tools')}
           />
           <AppNavLink
             to={AppRoute.Reports}
-            icon={<Reports />}
+            icon={<Reports fontSize="small" />}
             text={t('app.reports')}
           />
           <AppNavLink
             to={AppRoute.Messages}
-            icon={<Messages />}
+            icon={<Messages fontSize="small" />}
             text={t('app.messages')}
           />
         </List>
