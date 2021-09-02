@@ -2850,6 +2850,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sqlx",
+ "thiserror",
  "tokio 0.2.25",
  "uuid",
 ]
