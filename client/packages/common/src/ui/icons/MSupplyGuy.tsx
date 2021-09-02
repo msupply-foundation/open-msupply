@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { FC } from 'react';
 import SvgIcon, { SvgIconProps } from '@material-ui/core/SvgIcon';
+import { styled } from '@material-ui/core/styles';
+import { keyframes } from '@material-ui/styled-engine';
 
-export const MSupplyGuy = (props: SvgIconProps): JSX.Element => (
-  <SvgIcon {...props} viewBox="3 1 206 310">
+const spin = keyframes`
+  from {transform:rotate(0deg);}
+  to {transform:rotate(360deg);}
+}`;
+
+const otherSpin = keyframes`
+  from {transform:rotate(360deg);}
+  to {transform:rotate(0deg);}
+}`;
+
+const sizes = {
+  large: { height: 60, width: 45 },
+  medium: { height: 40, width: 30 },
+};
+
+type MSupplyGuyProps = SvgIconProps & {
+  size: 'large' | 'medium';
+};
+
+export const UnstyledGuy: FC<MSupplyGuyProps> = (svgProps): JSX.Element => (
+  <SvgIcon {...svgProps} viewBox="3 1 206 310">
     <g>
       <linearGradient id="6000022348f0" x1="0.5" y1="0" x2="0.5" y2="1">
         <stop offset="0" stopColor="#fa7a0a" />
@@ -35,3 +56,18 @@ export const MSupplyGuy = (props: SvgIconProps): JSX.Element => (
     </g>
   </SvgIcon>
 );
+
+export const MSupplyGuy = styled(UnstyledGuy)(({ theme, size }) => ({
+  ...sizes[size],
+
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  '&:hover': {
+    animation:
+      size === 'large'
+        ? `${spin} 1s infinite ease`
+        : `${otherSpin} 1s infinite ease`,
+  },
+}));

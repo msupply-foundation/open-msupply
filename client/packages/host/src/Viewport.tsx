@@ -16,7 +16,7 @@ const globalStyles = {
     height: '100%',
     width: '100%',
   },
-};
+} as const;
 
 const Viewport: React.FC = props => {
   return (
