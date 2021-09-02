@@ -43,12 +43,12 @@ Database field `transaction.status`
 | Value     | Description                              |
 | --------- | ---------------------------------------- |
 | DRAFT     | Editable with stock not reserved         |
-| CONFIRMED | Editable with stock \*reserved\*\*       |
-| FINALISED | Non editable with stock \*adjusted\*\*\* |
+| CONFIRMED | Editable with stock *reserved**       |
+| FINALISED | Non editable with stock *adjusted** |
 
-_reserved\*\*: Transaction's transaction_lines -> (item_line.`available_number_of_packs` _ item_line.`pack_size`) is adjusted with transaction_line.`quantity`
+*reserved**: Transaction's transaction_lines -> (item_line.`available_number_of_packs` _ item_line.`pack_size`) is adjusted with transaction_line.`quantity`
 
-\*adjusted*\*\*: Transaction's transaction_lines -> (item_line.`total_number_of_packs` * item_line.`pack_size`) is adjusted with transaction_line.`quantity`
+*adjusted**: Transaction's transaction_lines -> (item_line.`total_number_of_packs` * item_line.`pack_size`) is adjusted with transaction_line.`quantity`
 
 ### Enum - TransactionType
 
