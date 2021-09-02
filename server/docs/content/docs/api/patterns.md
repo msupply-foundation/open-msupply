@@ -279,7 +279,7 @@ query {
 
 ```gql
 query {
-  transactions({ first: 1, offset: 0}) {
+  transactions(page: { first: 1, offset: 0}) {
     totalCount
     nodes {
       id
