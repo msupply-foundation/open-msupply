@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { CircularProgress, Typography } from '@material-ui/core';
-import { Box, styled } from '@material-ui/system';
+import Box from '@material-ui/core/Box';
+import { styled } from '@material-ui/core/styles';
 
 const Container = styled(Box)({
   display: 'flex',

@@ -17,7 +17,7 @@ export const useHostContext = create<HostContext>(set => ({
 }));
 
 useHostContext.subscribe(({ locale }) => {
-  localStorage.setItem('/localisation/locale', locale);
+  LocalStorage.setItem('/localisation/locale', locale);
 });
 
 LocalStorage.addListener<SupportedLocales>((key, value) => {

@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   Book,
   Button,
-  makeStyles,
   styled,
   Toolbar,
   Typography,
@@ -37,30 +36,6 @@ const ButtonContainer = styled('div')({
 });
 
 const StyledToolbar = styled(Toolbar)({ paddingRight: 0 });
-
-const useStyles = makeStyles(theme => ({
-  appBar: {
-    left: 72,
-    position: 'absolute',
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    width: 'calc(100% - 72px)',
-    zIndex: theme.zIndex.drawer - 1,
-    height: 90,
-    boxShadow: theme.shadows[1],
-    ...theme.mixins.header,
-  },
-  appBarShift: {
-    marginLeft: 128,
-    width: 'calc(100% - 200px)',
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-}));
 
 interface urlPart {
   path: string;
