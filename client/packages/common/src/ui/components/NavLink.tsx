@@ -25,9 +25,9 @@ const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
 };
 
 const getListItemCommonStyles = (isOpen: boolean) => ({
-  height: 32,
-  borderRadius: 16,
-  width: isOpen ? 160 : 32,
+  height: 40,
+  borderRadius: 20,
+  width: isOpen ? 160 : 40,
   justifyContent: 'center',
   alignItems: 'center',
 });
@@ -39,8 +39,8 @@ const StyledListItem = styled<
 })(({ theme, isOpen, isSelected }) => ({
   ...getListItemCommonStyles(isOpen),
   backgroundColor: isSelected ? theme.palette.background.white : 'transparent',
-  boxShadow: isSelected ? theme.shadows[8] : 'none',
-  marginTop: 20,
+  boxShadow: isSelected ? theme.shadows[2] : 'none',
+  marginTop: 5,
   '&:hover': {
     boxShadow: theme.shadows[8],
   },
@@ -79,7 +79,7 @@ export const AppNavLink: FC<ListItemLinkProps> = props => {
           disableGutters
           component={CustomLink}
         >
-          <ListItemIcon sx={{ minWidth: 24 }}>{icon}</ListItemIcon>
+          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
           {drawer.isOpen && <Box width={10} />}
           {drawer.isOpen && <ListItemText primary={text} />}
         </ListItemButton>
