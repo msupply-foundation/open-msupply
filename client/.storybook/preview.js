@@ -2,11 +2,13 @@ import React from 'react';
 
 import AppThemeProvider from '../packages/common/src/styles/ThemeProvider';
 import { IntlProvider } from '../packages/common/src/intl/IntlProvider';
+import { CssBaseline } from '@material-ui/core';
 
 export const decorators = [
   Story => (
     <IntlProvider locale="en">
       <AppThemeProvider>
+        <CssBaseline />
         <Story />
       </AppThemeProvider>
     </IntlProvider>

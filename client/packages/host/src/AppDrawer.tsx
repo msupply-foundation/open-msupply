@@ -23,7 +23,6 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
-import * as CSS from 'csstype';
 
 const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
@@ -55,7 +54,6 @@ const drawerWidth = 200;
 const gutterSize = 24;
 
 const openedMixin = theme => ({
-  boxSizing: 'border-box' as CSS.Property.BoxSizing,
   width: drawerWidth,
   overflow: 'hidden',
   paddingLeft: gutterSize,
@@ -67,7 +65,6 @@ const openedMixin = theme => ({
 });
 
 const closedMixin = theme => ({
-  boxSizing: 'border-box' as CSS.Property.BoxSizing,
   paddingLeft: gutterSize,
   paddingRight: gutterSize,
   transition: theme.transitions.create('width', {
@@ -88,9 +85,6 @@ const StyledDrawer = styled(Drawer)(({ open, theme }) => {
     borderRadius: 8,
     overflow: 'hidden',
     boxShadow: theme.shadows[7],
-    '& .MuiPaper-root': {
-      position: 'absolute',
-    },
     ...(open && {
       ...openedMixin(theme),
       '& .MuiDrawer-paper': openedMixin(theme),
