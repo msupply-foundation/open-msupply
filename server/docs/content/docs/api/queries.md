@@ -31,7 +31,7 @@ query {
   transactions {
     nodes {
       id
-      name
+      otherPartyName
       status
       type
       comment
@@ -49,7 +49,7 @@ query {
 
 **id** [String](/docs/api/types/#string) -> `id`
 
-**name** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+**otherPartyName** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
 
 **status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
 
@@ -93,7 +93,7 @@ Single transaction entity
 query {
   transaction(id: S) {
     id
-    name
+    otherPartyName
     status
     type
     comment
@@ -125,7 +125,7 @@ query {
 
 **id** [String](/docs/api/types/#string) -> `id`
 
-**name** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source** of transaction
+**otherPartyName** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source** of transaction
 
 **status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
 
