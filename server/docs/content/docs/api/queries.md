@@ -180,7 +180,7 @@ query {
       name
       isVisible
       availableQuantity
-      activeBatches {
+      availableBatches {
         nodes {
           packSize
           availableNumberOfPacks
