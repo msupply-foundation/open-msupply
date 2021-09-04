@@ -58,7 +58,7 @@ type InvoiceSortOption {
    desc: Boolean
 }
 
-enum InvoiceSortOptions {
+enum InvoiceSortField {
   CODE
   OTHER_PARTY_NAME
   ...otherSortOptions
