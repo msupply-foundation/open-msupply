@@ -8,3 +8,4 @@ export * from './hooks';
 export * from './intl';
 export * from './styles';
 export * from './localStorage';
+export * from './types';

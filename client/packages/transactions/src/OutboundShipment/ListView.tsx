@@ -16,16 +16,9 @@ import {
   useHostContext,
   useNotification,
   SortingRule,
+  Transaction,
 } from '@openmsupply-client/common';
 import { getListQuery } from '../api';
-
-export type Transaction = {
-  customer: string;
-  supplier: string;
-  total: string;
-  id?: string;
-  date: string;
-};
 
 const queryFn = async (queryParams: QueryProps<Transaction>) => {
   const { first, offset, sortBy } = queryParams;

@@ -1,19 +1,9 @@
 import React, { FC } from 'react';
 import { useQueryClient } from 'react-query';
 import { useNavigate, useParams } from 'react-router';
-
-import { request } from '@openmsupply-client/common';
-
+import { request, Transaction } from '@openmsupply-client/common';
 import { getMutation, getDetailQuery } from '../api';
 import { useDraftDocument } from '../useDraftDocument';
-
-export type Transaction = {
-  customer: string;
-  supplier: string;
-  total: string;
-  id?: string;
-  date: string;
-};
 
 const queryFn = (id: string) => async (): Promise<Transaction> => {
   const result = await request('http://localhost:4000', getDetailQuery(), {
