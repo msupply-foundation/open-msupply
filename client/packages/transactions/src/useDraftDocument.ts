@@ -1,8 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@openmsupply-client/common';
+import { useEffect } from 'react';
+import {
+  UseStore,
+  useMutation,
+  useQuery,
+  zustand,
+} from '@openmsupply-client/common';
+
+interface DraftStore<T> {
+  draft: T | null;
+  setDraft: (draft: T | null) => void;
+}
+
+/**
+ * Create a store for a draft record. This can be used for each type
+ * of entity, such that we can create a separate store for each type of entity,
+ * so that if we are creating two types of entities at the same time,
+ * we ensure they're separated. For example, if we are creating a location
+ * while creating a new invoice.
+ */
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const createDraftStore = <T>(): UseStore<DraftStore<T>> => {
+  return zustand<DraftStore<T>>(set => ({
+    draft: null,
+    setDraft: draft => set(state => ({ ...state, draft })),
+  }));
+};
 
 interface DraftDocumentState<DocumentType> {
-  draft: DocumentType | undefined;
+  draft: DocumentType | null;
   setDraft: (updatedDocument: DocumentType) => void;
   save: () => void;
 }
@@ -57,10 +83,11 @@ export const useDraftDocument = <DocumentType>(
   key: unknown[],
   queryFn: QueryFn<DocumentType>,
   mutateFn: MutateFn<DocumentType>,
-  placeholderData: DocumentType,
-  onSuccess: OnSuccessCallback<DocumentType>
+  onSuccess: OnSuccessCallback<DocumentType>,
+  useDraftState: UseStore<DraftStore<DocumentType>>,
+  placeholderData?: DocumentType
 ): DraftDocumentState<DocumentType> => {
-  const [draft, setDraft] = useState<undefined | DocumentType>();
+  const { draft, setDraft } = useDraftState();
 
   const { data } = useQuery(key, queryFn, {
     placeholderData,
@@ -80,7 +107,7 @@ export const useDraftDocument = <DocumentType>(
     // be completely overwritten. We'd likely need a more complex data structure to be able to compare
     // new changes from the server and current draft changes to merge them together and/or show the
     // user the changes and let them resolve it.
-    setDraft(data);
+    setDraft(data ?? null);
   }, [data]);
 
   const save = () => {
