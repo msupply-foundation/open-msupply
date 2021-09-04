@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { useNavigate, useParams } from 'react-router';
 import { request, Transaction } from '@openmsupply-client/common';
 import { getMutation, getDetailQuery } from '../api';
-import { useDraftDocument } from '../useDraftDocument';
+import { createDraftStore, useDraftDocument } from '../useDraftDocument';
 
 const queryFn = (id: string) => async (): Promise<Transaction> => {
   const result = await request('http://localhost:4000', getDetailQuery(), {
@@ -27,16 +27,16 @@ const placeholderTransaction: Transaction = {
   supplier: '',
 };
 
-export const OutboundShipmentDetailView: FC = () => {
-  const { id } = useParams();
+const useDraft = createDraftStore<Transaction>();
+
+const useDraftOutbound = (id: string) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
   const { draft, setDraft, save } = useDraftDocument(
     ['transaction', id],
     queryFn(id ?? ''),
     mutationFn,
-    placeholderTransaction,
+
     // On successfully saving the draft, check if we had just saved a new
     // record - this is indicated by the record having no `id` field.
     // If there was an id field, we would be updating rather than creating.
@@ -54,8 +54,17 @@ export const OutboundShipmentDetailView: FC = () => {
       }
 
       queryClient.invalidateQueries('transaction');
-    }
+    },
+    useDraft,
+    id === 'new' ? placeholderTransaction : undefined
   );
+
+  return { draft, setDraft, save };
+};
+
+export const OutboundShipmentDetailView: FC = () => {
+  const { id } = useParams();
+  const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
 
   return draft ? (
     <>
