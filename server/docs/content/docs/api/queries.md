@@ -12,6 +12,7 @@ template = "docs/page.html"
 toc = true
 +++
 
+
 GraphQL exposes introspection queries, and in dev version of omSupply you can explore the full api by going to /graphiql end point.
 
 Full list of GraphQL queries is provided here is for:
@@ -26,7 +27,7 @@ Transaction [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
-```gql
+```graphql
 query {
   transactions {
     nodes {
@@ -84,7 +85,7 @@ Single transaction entity
 
 <ins>Full Shape</ins>
 
-```gql
+```graphql
 query {
   transaction(id: S) {
     id
@@ -166,7 +167,7 @@ Item [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
-```gql
+```graphql
 query {
   items {
     nodes {
@@ -232,7 +233,7 @@ Names [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
-```gql
+```graphql
 query {
   names {
     nodes {

@@ -27,10 +27,10 @@ All list queries contain metadata and share three generic arguments:
 <ins>Example</ins>
 
 ```graphql
-type query {
+type Query {
   invoices(sort: InvoiceSort, filter: InvoiceFilter, page: Page): {
       totalCount: Int,
-      nodes: Invoice[]
+      nodes: [Invoice]
   }
 }
 ```
@@ -50,7 +50,7 @@ The sort object is two Key:Value pairs defining which field the result set is so
 
 <ins>Example</ins>
 
-```gql
+```graphql
 type InvoiceSort: [InvoiceSortOption]
 
 type InvoiceSortOption {
@@ -61,7 +61,7 @@ type InvoiceSortOption {
 enum InvoiceSortOptions {
   CODE
   OTHER_PARTY_NAME
-  ...
+  ...otherSortOptions
 }
 ```
 
@@ -79,7 +79,7 @@ However, when a field does not exist, or the key value is null, an error will be
 
 TODO: Shape of error
 
-**Examples**
+<ins>Example</ins>
 
 ```graphql
 query {
@@ -112,7 +112,7 @@ The filter object can accept more than one field to filter by. Each additional f
 type InvoiceFilter {
   id: IntFilter
   code: StringFilter
-  ...
+  ...otherFilterTypes
 }
 
 type IntFilter {
@@ -131,7 +131,7 @@ type IntFilter {
 type StringFilter {
   isNull: Boolean
   equalTo: String
-  ...
+  ...otherStringFilters
 }
 ```
 
@@ -171,7 +171,7 @@ However, when a field does not exist, or the field or comparator value is null, 
 
 TODO: Shape of error
 
-**Examples**
+<ins>Example</ins>
 
 ```graphql
 query {
@@ -212,7 +212,6 @@ type PageObject {
   offset: Int
 }
 ```
-
 _Shape of the Page object_
 
 | Key    | Restrictions                                           | Default             | Description                |
@@ -224,8 +223,8 @@ _exception_\* limit is NOT set for inner lists (like lines in a transaction) {TO
 
 - Each list query defines the value of `MAX_PAGE_SIZE` and `DEFAULT_PAGE_SIZE` (see pagination section of [queries](/docs/api/queries)).
 - A value for `offset` above `totalCount` will return an empty array.
+<ins>Example</ins>
 
-<ins>Examples</ins>
 
 ```graphql
 query {
@@ -241,11 +240,12 @@ query {
 
 _An example query for `invoice` entities, where the first 1 entity is returned_
 
+
 <ins>Result</ins>
 
-```json
+```JSON
 {
-  "transactions": {
+  "invoices": {
     "totalCount": 2,
     "nodes": [
       {
@@ -259,7 +259,9 @@ _An example query for `invoice` entities, where the first 1 entity is returned_
 
 **Error handling**
 
-```
+{TODO, once we know the shape of errors}
+
+```JS
 // error when restrictions are not met
 // no error if too far (just return last page)
 ```
