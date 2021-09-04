@@ -12,23 +12,60 @@ template = "docs/page.html"
 toc = true
 +++
 
-# Sorting
+# Lists
 
-This API exposes a parameter on each query accepting an array of sort objects.
+All list queries contain metadata and share three generic arguments:
 
-**The sort object**
+- [Sort](/docs/api/patterns/#sorting)
+- [Filter](/docs/api/patterns/#filtering)
+- [Page](/docs/api/patterns/#pagination)
 
-The sort object is two Key:Value pairs defining the field the result set is sorted by and an indicator of ascending or descending. Each entity is sortable by any of the fields of that entity.
+**Metadata**
 
-```
-{
-   key: [EntityField],
-   desc: Boolean,
+- totalCount: A count of the total number of entities, ignoring any [pagination](/docs/api/patterns/#pagination). This allows a client to fetch the first five objects by passing "5" as the argument to "first", then fetch the total count so it could display "5 of 83", for example.
+
+<ins>Example</ins>
+
+```graphql
+type query {
+  invoices(sort: InvoiceSort, filter: InvoiceFilter, page: Page): {
+      totalCount: Int,
+      nodes: Invoice[]
+  }
 }
 ```
 
-- key: Any field on the entity.
+_An example query for a list of `invoice` entities and some metadata: `totalCount`_
+
+# Sorting
+
+This API exposes a parameter on each [list](/docs/api/patterns/#lists) query accepting an array of sort objects.
+
+**The sort object**
+
+The sort object is two Key:Value pairs defining which field the result set is sorted by and an indicator of ascending or descending. Each entity is sortable by any of the fields of that entity.
+
+- key: Any scalar field on the entity in standard graphQL enum value case (capital snake).
 - desc: Boolean indicator whether the sort should be descending.
+
+<ins>Example</ins>
+
+```gql
+type InvoiceSort: [InvoiceSortOption]
+
+type InvoiceSortOption {
+   key: [InvoiceSortField]
+   desc: Boolean
+}
+
+enum InvoiceSortOptions {
+  CODE
+  OTHER_PARTY_NAME
+  ...
+}
+```
+
+_Example shapes for sorting a query for `invoice` entities_
 
 **Limitations**
 
@@ -36,7 +73,7 @@ The API currently supports an array of a single sort object. (will apply only on
 
 **Error handling**
 
-NULL and empty sort fields will result in no filtering and will not return an error.
+Empty/undefined sort fields will result in no filtering and will not return an error.
 
 However, when a field does not exist, or the key value is null, an error will be returned.
 
@@ -44,40 +81,61 @@ TODO: Shape of error
 
 **Examples**
 
-```
-query { 
-    transaction([{ key: "confirmDate", desc: true }]) {
-        id
-        status
-    }
+```graphql
+query {
+  invoices(sort: [{ key: CONFIRM_DATE, desc: true }]) {
+    id
+    status
+  }
 }
 ```
 
+_Example query for sorting `invoice` entities by their confirm date in descending order_
+
 # Filtering
 
-This API exposes a parameter on each query accepting a Filter object.
+This API exposes a parameter on each [list](/docs/api/patterns/#lists) query accepting a Filter object.
 
 **The filter object**
 
 The filter object is a set of Key:Value pairs, where each key is a field of the node returned by the query, and the value is an object with a [comparison operator](#comparison-operators) and value to filter by.
 
-```
-{
-   [fieldOne]: {
-        [comparisonOperator]: [value]
-    },
-    ...,
-    [fieldN]: {
-        [comparisonOperator]: [value]
-    }
-}
-```
-
-- Field: Any field on the object returns from the query.
+- Field: Any scalar field that query exposes
 - Comparison operator: See below for available operators.
 - Value: A value to filter the result set by.
 
 The filter object can accept more than one field to filter by. Each additional field will filter the result set as if it were an `AND`.
+
+<ins>Example</ins>
+
+```graphql
+type InvoiceFilter {
+  id: IntFilter
+  code: StringFilter
+  ...
+}
+
+type IntFilter {
+  isNull: Boolean
+  equalTo: Int
+  notEqualTo: Int
+  distinctFrom: Int
+  notDistinctFrom: Int
+  in: [Int]
+  notIn: [Int]
+  lessThan: Int
+  greaterThan: Int
+  greaterThanOrQualTo: Int
+}
+
+type StringFilter {
+  isNull: Boolean
+  equalTo: String
+  ...
+}
+```
+
+_Example shapes for filtering a query for `invoice` entities_
 
 **Comparison operators**
 
@@ -101,137 +159,77 @@ SOURCE: https://github.com/graphile-contrib/postgraphile-plugin-connection-filte
 
 The API currently does not support:
 
-- Range filters (i.e. date within some range)
 - Data type specific filtering (i.e. String LIKE)
 - Filtering on related entities/nodes within the graph.
 - Logic (i.e. AND/OR's)
 
 **Error handling**
 
-NULL and empty filter objects will result in no filtering and will not return an error.
+Empty/undefined filter objects will result in no filtering and will not return an error.
 
-However, when a field does not exist, or the field or comparator value is null, an error will be returned.
+However, when a field does not exist, or the field or comparator value is null, or comparator doesn't exist or comparator value type is incorrect, an error will be returned.
 
 TODO: Shape of error
 
 **Examples**
 
-```
+```graphql
 query {
-    transaction({ status: {equalTo: "cn" } }) {
-        id
-        status
-    }
-}
-```
-
-```
-query {
-    transaction({ status: {equalTo: "cn" }, confirm_date: {greaterThan: 1629687143 } }) {
-        id
-        status
-    }
-}
-```
-
-# Lists and Pagination
-
-For lists, the base level of results for entity contains metadata and actual records are in `nodes` field.
-
-**Examples**
-
-<ins>Query</ins>
-
-```gql
-query {
-  transactions {
-    nodes {
-      id
-      comment
-    }
-  }
-}
-```
-
-<ins>Result</ins>
-
-```json
-{
-  "transactions": {
-    "nodes": [
-      {
-        "id": "ABC",
-        "comment": "123"
-      },
-      {
-        "id": "DEF",
-        "comment": "456"
-      }
-    ]
-  }
-}
-```
-
-<ins>Query</ins>
-
-```gql
-query {
-  transaction(id: "ABC") {
+  invoices(filter: { status: { equalTo: "cn" } }) {
     id
-    comment
-    lines {
-      nodes {
-        id
-        itemName
-      }
-    }
+    status
   }
 }
 ```
 
-<ins>Result</ins>
+_Example of a query for `invoice` entities being filtered by their status being equal to "cn"_
 
-```json
-{
-  "transaction": {
-    "id": "ABC",
-    "comment": "123",
-    "lines": {
-      "nodes": [
-        {
-          "id": "GHI",
-          "itemName": "amoxicillin"
-        },
-        {
-          "id": "JKL",
-          "itemName": "paracetamol"
-        }
-      ]
-    }
-  }
-}
-```
-
-**Pagination**
-
-An optional `totalCount` is available on all list queries, which give total number of records matching applied filter (if it's present).
-
-The following arguments are available to all list queries
-
-| Argument   | Restrictions                                       | Default | Description                |
-| ---------- | -------------------------------------------------- | ------- | -------------------------- |
-| pageNumber | pageNumber > 0                                     | 0       | Zero indexed page number   |
-| pageSize   | pageSize > 0 and pageSize < 1000 (*exception**) | 100     | Number of records per page |
-
-*exception** limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
-
-**Examples**
-
-<ins>Query</ins>
-
-```gql
+```graphql
 query {
-  transactions {
+  transaction(
+    filter: {
+      status: { equalTo: "cn" }
+      confirm_date: { greaterThan: "2021-09-03T11:42:53.569Z" }
+    }
+  ) {
+    id
+    status
+  }
+}
+```
+
+_Example of a query for `invoice` entities being filtered by their status being equal to "cn" and the confirm date being greater than the 3rd of September, 2021, 11:42am!_
+
+# Pagination
+
+This API exposes a parameter on each [list](/docs/api/patterns/#lists) query accepting a Page object.
+
+**The Page Object**
+
+```graphql
+type PageObject {
+  first: Int
+  offset: Int
+}
+```
+
+_Shape of the Page object_
+
+| Key    | Restrictions                                           | Default             | Description                |
+| ------ | ------------------------------------------------------ | ------------------- | -------------------------- |
+| offset | offset => 0                                            | 0                   | Zero indexed page number   |
+| first  | first > 0 and first <= `MAX_PAGE_SIZE` (_exception_\*) | `DEFAULT_PAGE_SIZE` | Number of records per page |
+
+_exception_\* limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
+
+- Each list query defines the value of `MAX_PAGE_SIZE` and `DEFAULT_PAGE_SIZE` (see pagination section of [queries](/docs/api/queries)).
+- A value for `offset` above `totalCount` will return an empty array.
+
+<ins>Examples</ins>
+
+```graphql
+query {
+  invoices(page: { first: 1, offset: 0 }) {
     totalCount
     nodes {
       id
@@ -241,39 +239,7 @@ query {
 }
 ```
 
-<ins>Result</ins>
-
-```json
-{
-  "transactions": {
-    "totalCount": 2,
-    "nodes": [
-      {
-        "id": "ABC",
-        "comment": "123"
-      },
-      {
-        "id": "DEF",
-        "comment": "456"
-      }
-    ]
-  }
-}
-```
-
-<ins>Query</ins>
-
-```gql
-query {
-  transactions(pageSize: 1, pageNumber: 0) {
-    totalCount
-    nodes {
-      id
-      comment
-    }
-  }
-}
-```
+_An example query for `invoice` entities, where the first 1 entity is returned_
 
 <ins>Result</ins>
 
@@ -292,8 +258,6 @@ query {
 ```
 
 **Error handling**
-
-{TODO, once we know the shape of errors}
 
 ```
 // error when restrictions are not met

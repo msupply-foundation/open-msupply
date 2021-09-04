@@ -22,7 +22,7 @@ Full list of GraphQL queries is provided here is for:
 
 ### TRANSACTIONS
 
-Transaction [list](/docs/api/patterns/#lists-and-pagination)
+Transaction [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
@@ -67,17 +67,12 @@ query {
 
 *source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
 
-<ins>Filters</ins>
+<ins> [Pagination](/docs/api/patterns/#pagination) </ins>
 
-The following fields are [filterable](/docs/api/Filters)
+`MAX_PAGE_SIZE`: 1000
 
-`name`
-`status`
-`type`
-`comment`
-`serialNumber`
-`enteredDate`
-`reference`
+`DEFAULT_PAGE_SIZE`: 100
+
 
 <ins>Session and Permissions</ins>
 
@@ -141,7 +136,7 @@ query {
 
 `Base Table`: transaction_line
 
-**lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists-and-pagination)
+**lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists)
 
 **lines.id** [String](/docs/api/types/#String) -> `id`
 
@@ -167,7 +162,7 @@ Additional filter is applied to transaction by permission system to filter trans
 
 ### ITEMS
 
-Item [list](/docs/api/patterns/#lists-and-pagination)
+Item [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
@@ -209,7 +204,7 @@ query {
 
 `Base Table`: item_line
 
-**availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists-and-pagination), `is_active` means `totalNumberOfPacks > 0`
+**availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists), `is_active` means `totalNumberOfPacks > 0`
 
 **availableBatches.packSize** [Int](/docs/api/types/#int) -> `pack_size`
 
@@ -221,11 +216,11 @@ query {
 
 `name` and `availableQuantity` are [filterable](/docs/api/Filters) {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
 
-<ins>Filters</ins>
+<ins> [Pagination](/docs/api/patterns/#pagination) </ins>
 
-The following fields are [filterable](/docs/api/Filters)
+`MAX_PAGE_SIZE`: 3000
 
-`code` `name` `isVisible` `availableQuantity` {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
+`DEFAULT_PAGE_SIZE`: 2000
 
 <ins>Session and Permissions</ins>
 
@@ -233,7 +228,7 @@ The following fields are [filterable](/docs/api/Filters)
 
 ### NAMES
 
-Names [list](/docs/api/patterns/#lists-and-pagination)
+Names [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
@@ -265,11 +260,11 @@ query {
 
 **isSupplier** [Boolean](/docs/api/types/#boolean) -> name_store_join(`id` -> name_store_join.name_id).`name_is_supplier`
 
-<ins>Filters</ins>
+<ins> [Pagination](/docs/api/patterns/#pagination) </ins>
 
-The following fields are [filterable](/docs/api/Filters)
+`MAX_PAGE_SIZE`: 3000
 
-`code` `name` `isCustomer` `isSupplier`
+`DEFAULT_PAGE_SIZE`: 2000
 
 <ins>Session and Permissions</ins>
 
