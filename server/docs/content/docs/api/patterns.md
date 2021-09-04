@@ -54,7 +54,7 @@ The sort object is two Key:Value pairs defining which field the result set is so
 type InvoiceSort: [InvoiceSortOption]
 
 type InvoiceSortOption {
-   key: [InvoiceSortField]
+   key: InvoiceSortField
    desc: Boolean
 }
 
