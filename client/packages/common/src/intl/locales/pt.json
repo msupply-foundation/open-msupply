@@ -16,6 +16,7 @@
   "app.welcome": "Hello, {name}!",
   "breadcrumb.item": "#{id}",
   "button.close-the-menu": "Close the menu",
+  "button.new-shipment": "New Shipment",
   "button.docs": "Docs",
   "button.export": "Export",
   "button.language": "Language",
