@@ -15,12 +15,21 @@ use crate::{
 };
 
 use async_graphql::dataloader::DataLoader;
-use sqlx::PgPool;
+use diesel::{
+    prelude::*,
+    r2d2::{ConnectionManager, Pool},
+};
+
+#[cfg(feature = "dieselsqlite")]
+type DBBackendConnection = SqliteConnection;
+
+#[cfg(feature = "dieselpg")]
+type DBBackendConnection = PgConnection;
 
 pub async fn get_loaders(settings: &Settings) -> LoaderMap {
-    let pool: PgPool = PgPool::connect(&settings.database.connection_string())
-        .await
-        .expect("Failed to connect to database");
+    let connection_manager =
+        ConnectionManager::<DBBackendConnection>::new(&settings.database.connection_string());
+    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
 
     let mut loaders: LoaderMap = LoaderMap::new();
 

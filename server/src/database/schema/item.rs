@@ -1,6 +1,9 @@
+use super::diesel_schema::item;
+use diesel_derive_enum::DbEnum;
+
 #[derive(sqlx::Type)]
 #[sqlx(rename = "item_type")]
-#[derive(Clone)]
+#[derive(DbEnum, Clone, Debug, PartialEq, Eq)]
 pub enum ItemRowType {
     #[sqlx(rename = "general")]
     General,
@@ -10,7 +13,8 @@ pub enum ItemRowType {
     CrossReference,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq)]
+#[table_name = "item"]
 pub struct ItemRow {
     pub id: String,
     pub item_name: String,

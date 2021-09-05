@@ -6,3 +6,6 @@
 \#*#
 .\#*
 .DS_Store
+
+# zola dev docs
+/docs/public

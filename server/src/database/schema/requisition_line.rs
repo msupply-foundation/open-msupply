@@ -1,4 +1,7 @@
-#[derive(Clone)]
+use super::diesel_schema::requisition_line;
+
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq)]
+#[table_name = "requisition_line"]
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,

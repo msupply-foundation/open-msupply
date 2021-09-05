@@ -24,11 +24,11 @@ mSupply remote server is a component of the Open mSupply system:
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
 - Follow the [Docker Desktop installation guide](https://docs.docker.com/engine/install/) for Linux.
 - Install pkg-config `sudo apt install pkg-config` (needed to install/compile sqlx-cli)
+- Install Postgres dev libs: `sudo apt install postgresql-server-dev-13`
 
 ### Optional
 
 - Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image).
-
 
 ## Getting started
 
@@ -47,7 +47,7 @@ cargo install sqlx-cli --no-default-features --features postgres
 - Migrate database tables:
 
 ```
-export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate run
+export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate --source migrations/pg run
 ```
 
 - Build and start the remote server:
@@ -56,3 +56,7 @@ export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-databas
 SQLX_OFFLINE=true cargo build # optionally force build in offline mode
 APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
 ```
+
+## Building docs
+
+Docs are built via github action, but can build local version with docker: [how to build docs locally](docker/zola_docs/README.md)
