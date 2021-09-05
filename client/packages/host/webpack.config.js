@@ -15,8 +15,7 @@ module.exports = {
   mode: isDevelopment ? 'development' : 'production',
   devServer: {
     hot: true,
-    static: path.join(__dirname, 'dist'),
-
+    static: path.join(__dirname, 'public'),
     port: 3003,
     historyApiFallback: true,
     headers: {
