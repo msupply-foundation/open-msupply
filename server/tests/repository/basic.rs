@@ -1,23 +1,20 @@
 #[cfg(test)]
 mod repository_basic_test {
 
-    use remote_server::{
-        database::{
-            repository::{
-                repository::get_repositories, CustomerInvoiceRepository, ItemLineRepository,
-                ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
-                StoreRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
-            },
-            schema::{
-                ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
-                RequisitionRowType, StoreRow, TransactLineRow, TransactLineRowType, TransactRow,
-                TransactRowType, UserAccountRow,
-            },
+    use remote_server::database::{
+        repository::{
+            repository::get_repositories, CustomerInvoiceRepository, ItemLineRepository,
+            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
+            StoreRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
         },
-        util::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings},
+        schema::{
+            ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
+            RequisitionRowType, StoreRow, TransactLineRow, TransactLineRowType, TransactRow,
+            TransactRowType, UserAccountRow,
+        },
     };
 
-    use crate::repository::test_db;
+    use remote_server::util::test_db;
 
     async fn requisition_test(repo: &RequisitionRepository) {
         let item1 = RequisitionRow {
@@ -245,30 +242,7 @@ mod repository_basic_test {
 
     #[tokio::test]
     async fn simple_repository_tests() {
-        let db_name = "omsupply-database-simple-repository-test";
-        // The following settings work for PG and Sqlite (username, password, host and port are
-        // ignored for the later)
-        let settings = Settings {
-            server: ServerSettings {
-                host: "localhost".to_string(),
-                port: 5432,
-            },
-            database: DatabaseSettings {
-                username: "postgres".to_string(),
-                password: "password".to_string(),
-                port: 5432,
-                host: "localhost".to_string(),
-                database_name: db_name.to_owned(),
-            },
-            sync: SyncSettings {
-                username: "postgres".to_string(),
-                password: "password".to_string(),
-                port: 5432,
-                host: "localhost".to_string(),
-                interval: 100000000,
-            },
-        };
-
+        let settings = test_db::get_test_settings("omsupply-database-simple-repository-test");
         // Initialise a new test database.
         test_db::setup(&settings.database).await;
         let repos = get_repositories(&settings).await;
