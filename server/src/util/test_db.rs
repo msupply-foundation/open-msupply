@@ -1,6 +1,7 @@
+use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};
+
 use diesel_migrations::{find_migrations_directory, mark_migrations_in_directory};
 
-use remote_server::util::settings::DatabaseSettings;
 
 #[cfg(feature = "postgres")]
 pub async fn setup(db_settings: &DatabaseSettings) {
@@ -69,5 +70,30 @@ pub async fn setup(db_settings: &DatabaseSettings) {
 
     for (migration, ..) in migrations.iter() {
         migration.run(&connection).unwrap();
+    }
+}
+
+// The following settings work for PG and Sqlite (username, password, host and port are
+// ignored for the later)
+pub fn get_test_settings(db_name: &str) -> Settings {
+    Settings {
+        server: ServerSettings {
+            host: "localhost".to_string(),
+            port: 5432,
+        },
+        database: DatabaseSettings {
+            username: "postgres".to_string(),
+            password: "password".to_string(),
+            port: 5432,
+            host: "localhost".to_string(),
+            database_name: db_name.to_owned(),
+        },
+        sync: SyncSettings {
+            username: "postgres".to_string(),
+            password: "password".to_string(),
+            port: 5432,
+            host: "localhost".to_string(),
+            interval: 100000000,
+        },
     }
 }
