@@ -11,13 +11,12 @@ mod sync {
     };
 
     use httpmock::prelude::{MockServer, GET, POST};
-    use reqwest::{header::AUTHORIZATION, Url};
+    use reqwest::header::AUTHORIZATION;
     use serde_json;
 
     #[actix_rt::test]
     async fn initialize_with_valid_credentials_is_success() {
         let mock_server = MockServer::start();
-        let mock_server_url = Url::parse(&mock_server.url("")).unwrap();
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
@@ -61,7 +60,6 @@ mod sync {
     #[actix_rt::test]
     async fn queued_records_with_valid_credentials_is_success() {
         let mock_server = MockServer::start();
-        let mock_server_url = Url::parse(&mock_server.url("")).unwrap();
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
@@ -125,7 +123,6 @@ mod sync {
     #[actix_rt::test]
     async fn acknowledge_records_with_valid_credentials_is_success() {
         let mock_server = MockServer::start();
-        let mock_server_url = Url::parse(&mock_server.url("")).unwrap();
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
