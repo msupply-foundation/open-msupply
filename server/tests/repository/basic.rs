@@ -269,7 +269,7 @@ mod repository_basic_test {
             },
         };
 
-        // setup a fresh/empty testing database
+        // Initialise a new test database.
         test_db::setup(&settings.database).await;
         let repos = get_repositories(&settings).await;
 

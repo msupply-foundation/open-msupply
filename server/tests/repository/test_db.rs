@@ -1,48 +1,73 @@
+use diesel_migrations::{find_migrations_directory, mark_migrations_in_directory};
+
 use remote_server::util::settings::DatabaseSettings;
 
-#[cfg(not(feature = "dieselsqlite"))]
+#[cfg(feature = "postgres")]
 pub async fn setup(db_settings: &DatabaseSettings) {
-    use sqlx::{Connection, Executor, PgConnection, PgPool};
-    let mut connection = PgConnection::connect(db_settings.connection_string_without_db().as_str())
-        .await
-        .unwrap();
-    connection
-        .execute(format!("DROP DATABASE IF EXISTS \"{}\";", db_settings.database_name).as_str())
-        .await
-        .unwrap();
-    connection
-        .execute(format!("CREATE DATABASE \"{}\";", db_settings.database_name).as_str())
-        .await
-        .unwrap();
-    connection.close().await.unwrap();
+    use diesel::{
+        r2d2::{ConnectionManager, Pool},
+        PgConnection, RunQueryDsl,
+    };
 
-    let pool = PgPool::connect(db_settings.connection_string().as_str())
-        .await
-        .expect("Failed to connect to database");
+    const MIGRATION_PATH: &str = "postgres";
 
-    sqlx::migrate!("migrations/pg").run(&pool).await.unwrap();
+    let connection_manager =
+        ConnectionManager::<PgConnection>::new(&db_settings.connection_string_without_db());
+    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+    let connection = pool.get().expect("Failed to open connection");
+
+    diesel::sql_query(format!(
+        "DROP DATABASE IF EXISTS \"{}\";",
+        &db_settings.database_name
+    ))
+    .execute(&connection)
+    .unwrap();
+
+    diesel::sql_query(format!(
+        "CREATE DATABASE \"{}\";",
+        &db_settings.database_name
+    ))
+    .execute(&connection)
+    .unwrap();
+
+    let connection_manager =
+        ConnectionManager::<PgConnection>::new(&db_settings.connection_string());
+    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+    let connection = pool.get().expect("Failed to open connection");
+
+    let mut migrations_dir =
+        find_migrations_directory().expect("Failed to locate migrations directory");
+    migrations_dir.push(MIGRATION_PATH);
+
+    let mut migrations = mark_migrations_in_directory(&connection, &migrations_dir).unwrap();
+    migrations.sort_by(|(m, ..), (n, ..)| m.version().cmp(&n.version()));
+
+    for (migration, ..) in migrations.iter() {
+        migration.run(&connection).unwrap();
+    }
 }
 
-#[cfg(feature = "dieselsqlite")]
+#[cfg(feature = "sqlite")]
 pub async fn setup(db_settings: &DatabaseSettings) {
-    use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
+    use diesel::{Connection, SqliteConnection};
     use std::fs;
 
-    let connection_str = db_settings.connection_string();
-    if connection_str != ":memory:" {
-        fs::remove_file(connection_str.as_str()).ok();
+    const MIGRATION_PATH: &str = "sqlite";
+
+    let db_path = format!("./{}.db", db_settings.database_name);
+
+    fs::remove_file(&db_path).ok();
+
+    let connection = SqliteConnection::establish(&db_path).unwrap();
+
+    let mut migrations_dir =
+        find_migrations_directory().expect("Failed to locate migrations directory");
+    migrations_dir.push(MIGRATION_PATH);
+
+    let mut migrations = mark_migrations_in_directory(&connection, &migrations_dir).unwrap();
+    migrations.sort_by(|(m, ..), (n, ..)| m.version().cmp(&n.version()));
+
+    for (migration, ..) in migrations.iter() {
+        migration.run(&connection).unwrap();
     }
-
-    let pool = SqlitePool::connect_with(
-        SqliteConnectOptions::new()
-            .filename(connection_str.as_str())
-            .create_if_missing(true),
-    )
-    .await
-    .expect("Failed to connect to database");
-
-    sqlx::migrate!("migrations/sqlite")
-        .run(&pool)
-        .await
-        .unwrap();
 }
