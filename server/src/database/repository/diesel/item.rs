@@ -1,0 +1,52 @@
+use super::DBBackendConnection;
+
+use crate::database::{
+    repository::{repository::get_connection, RepositoryError},
+    schema::ItemRow,
+};
+
+use diesel::{
+    prelude::*,
+    r2d2::{ConnectionManager, Pool},
+};
+
+#[derive(Clone)]
+pub struct ItemRepository {
+    pool: Pool<ConnectionManager<DBBackendConnection>>,
+}
+
+impl ItemRepository {
+    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> ItemRepository {
+        ItemRepository { pool }
+    }
+
+    pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::item::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        diesel::insert_into(item)
+            .values(item_row)
+            .execute(&connection)?;
+        Ok(())
+    }
+
+    pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::item::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = item.load(&connection);
+        Ok(result?)
+    }
+
+    pub async fn find_one_by_id(&self, item_id: &str) -> Result<ItemRow, RepositoryError> {
+        use crate::database::schema::diesel_schema::item::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = item.filter(id.eq(item_id)).first(&connection)?;
+        Ok(result)
+    }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::item::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = item.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
+}

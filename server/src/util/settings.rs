@@ -42,6 +42,7 @@ pub struct DatabaseSettings {
     pub database_name: String,
 }
 
+#[cfg(not(feature = "dieselsqlite"))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
@@ -55,6 +56,17 @@ impl DatabaseSettings {
             "postgres://{}:{}@{}:{}",
             self.username, self.password, self.host, self.port
         )
+    }
+}
+
+#[cfg(feature = "dieselsqlite")]
+impl DatabaseSettings {
+    pub fn connection_string(&self) -> String {
+        format!("{}.sqlite", self.database_name.to_string())
+    }
+
+    pub fn connection_string_without_db(&self) -> String {
+        return self.connection_string();
     }
 }
 
