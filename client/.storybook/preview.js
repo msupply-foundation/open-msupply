@@ -1,7 +1,8 @@
 import React from 'react';
 
-import AppThemeProvider from '../packages/common/src/styles/ThemeProvider';
-import { IntlProvider } from '../packages/common/src/intl/IntlProvider';
+import { TestingProvider } from '../packages/common/src/utils/testing';
+// import AppThemeProvider from '../packages/common/src/styles/ThemeProvider';
+// import { IntlProvider } from '../packages/common/src/intl/IntlProvider';
 import { CssBaseline } from '@material-ui/core';
 
 export const decorators = [
