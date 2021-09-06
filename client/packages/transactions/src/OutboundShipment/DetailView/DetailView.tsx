@@ -86,7 +86,7 @@ export const OutboundShipmentDetailView: FC = () => {
         <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
       </div>
       <div>
-        <button onClick={() => save()}>OK</button>
+        <button onClick={save}>OK</button>
       </div>
     </>
   ) : null;
