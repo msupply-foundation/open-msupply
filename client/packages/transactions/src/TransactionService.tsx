@@ -1,160 +1,12 @@
-import React, { FC, useState } from 'react';
-import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
-import { request } from 'graphql-request';
+import React, { FC } from 'react';
+import { Routes, Route } from 'react-router-dom';
 
-import { getQuery, mutation, useDraftDocument } from './api';
-import {
-  Button,
-  Download,
-  MenuDots,
-  Portal,
-  Printer,
-  QueryProps,
-  RemoteDataTable,
-  RouteBuilder,
-  SortingRule,
-  useQuery,
-  useColumns,
-  ColumnFormat,
-  useHostContext,
-  useNotification,
-} from '@openmsupply-client/common';
+import { RouteBuilder } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-
-export type Transaction = {
-  customer: string;
-  supplier: string;
-  total: string;
-  id: string;
-  date: string;
-};
-
-const queryFn = (id: string) => async (): Promise<Transaction> => {
-  const result = await request('http://localhost:4000', getQuery(), { id });
-  const { transaction } = result;
-  return transaction;
-};
-
-const mutationFn = async (updated: Transaction): Promise<Transaction> => {
-  const patch = { transactionPatch: updated };
-  const result = await request('http://localhost:4000', mutation, patch);
-  const { updateTransaction } = result;
-  return updateTransaction;
-};
-
-const Transaction: FC = () => {
-  const { id } = useParams();
-  const { draft, setDraft, save } = useDraftDocument<Transaction>(
-    ['transaction', id],
-    queryFn(id ?? ''),
-    mutationFn
-  );
-
-  return draft ? (
-    <>
-      <div>
-        <input
-          value={draft?.customer}
-          onChange={event =>
-            setDraft({ ...draft, customer: event?.target.value })
-          }
-        />
-      </div>
-      <div>
-        <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
-      </div>
-      <div>
-        <button onClick={() => save()}>OK</button>
-      </div>
-    </>
-  ) : null;
-};
-
-const Transactions: FC = () => {
-  const { appBarButtonsRef } = useHostContext();
-  const { info, success, warning } = useNotification();
-  const listQuery = async (queryParams: QueryProps<Transaction>) => {
-    const { first, offset, sortBy } = queryParams;
-    const sortParameters =
-      sortBy && sortBy.length
-        ? `, sort: "${sortBy[0]?.id}", desc: ${!!sortBy[0]?.desc}`
-        : '';
-    const { transactions } = await request(
-      'http://localhost:4000',
-      `
-      query Query {
-        transactions(first: ${first}, offset: ${offset}${sortParameters}) {
-          data {
-            id
-            date
-            customer
-            supplier
-            total
-          }
-          totalLength
-      }
-    }`
-    );
-
-    return transactions;
-  };
-
-  const [queryProps, setQueryProps] = useState<QueryProps<Transaction>>({
-    first: 10,
-    offset: 0,
-  });
-  const { data: response, isLoading } = useQuery(
-    ['transaction', 'list', queryProps],
-    () => listQuery(queryProps)
-  );
-  const navigate = useNavigate();
-  const getColumns = useColumns();
-  const columns = getColumns<Transaction>([
-    { label: 'label.id', key: 'id', sortable: false },
-    { label: 'label.date', key: 'date', format: ColumnFormat.date },
-    { label: 'label.customer', key: 'customer' },
-    { label: 'label.supplier', key: 'supplier' },
-    { label: 'label.total', key: 'total' },
-  ]);
-  const initialSortBy: SortingRule<Transaction>[] = [
-    { id: 'date', desc: true },
-  ];
-
-  return (
-    <>
-      <Portal container={appBarButtonsRef.current}>
-        <>
-          <Button
-            icon={<Download />}
-            labelKey="button.export"
-            onClick={success('Downloaded successfully')}
-          />
-          <Button
-            icon={<Printer />}
-            labelKey="button.print"
-            onClick={info('No printer detected')}
-          />
-          <Button
-            icon={<MenuDots />}
-            labelKey="button.more"
-            onClick={warning('Do not press this button')}
-          />
-        </>
-      </Portal>
-      <RemoteDataTable<Transaction>
-        columns={columns}
-        data={response?.data || []}
-        initialSortBy={initialSortBy}
-        isLoading={isLoading}
-        onFetchData={setQueryProps}
-        onRowClick={row => {
-          navigate(`/customers/customer-invoice/${row.id}`);
-        }}
-        totalLength={response?.totalLength || 0}
-      />
-    </>
-  );
-};
+import {
+  OutboundShipmentDetailView,
+  OutboundShipmentListView,
+} from './OutboundShipment';
 
 const TransactionService: FC = () => {
   const customerInvoicesRoute = RouteBuilder.create(
@@ -167,8 +19,19 @@ const TransactionService: FC = () => {
 
   return (
     <Routes>
-      <Route path={customerInvoicesRoute} element={<Transactions />} />
-      <Route path={customerInvoiceRoute} element={<Transaction />} />
+      <Route
+        path={customerInvoicesRoute}
+        element={<OutboundShipmentListView />}
+      />
+      <Route
+        path={customerInvoiceRoute}
+        element={
+          <>
+            <OutboundShipmentDetailView />
+            <OutboundShipmentDetailView />
+          </>
+        }
+      />
     </Routes>
   );
 };

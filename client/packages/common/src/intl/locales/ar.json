@@ -16,6 +16,7 @@
     "app.welcome": "أهلا،",
     "breadcrumb.item": "#{id}",
     "button.ok": "نعم",
+    "button.new-shipment": "New Shipment",
     "button.open-the-menu": "افتح القائمة",
     "button.print": "Print",
     "button.close-the-menu": "Close the menu",
