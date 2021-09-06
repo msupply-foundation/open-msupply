@@ -3,6 +3,7 @@ import { Story, ComponentMeta } from '@storybook/react';
 import AppDrawer from './AppDrawer';
 import { TestingProvider } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
+import { BrowserRouter } from 'react-router-dom';
 
 export default {
   title: 'Example/AppDrawer',
@@ -15,7 +16,9 @@ interface AppDrawerStoryArgs {
 
 const Template: Story<AppDrawerStoryArgs> = args => (
   <TestingProvider {...args}>
-    <AppDrawer />
+    <BrowserRouter>
+      <AppDrawer />
+    </BrowserRouter>
   </TestingProvider>
 );
 
