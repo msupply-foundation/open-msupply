@@ -6,12 +6,10 @@ import { CssBaseline } from '@material-ui/core';
 
 export const decorators = [
   Story => (
-    <IntlProvider locale="en">
-      <AppThemeProvider>
-        <CssBaseline />
-        <Story />
-      </AppThemeProvider>
-    </IntlProvider>
+    <TestingProvider>
+      <CssBaseline />
+      <Story />
+    </TestingProvider>
   ),
 ];
 

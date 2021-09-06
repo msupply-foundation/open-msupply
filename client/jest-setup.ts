@@ -1,5 +1,7 @@
-import { setScreenSize_ONLY_FOR_TESTING } from '@openmsupply-client/common';
 import '@testing-library/jest-dom';
+
+import { setScreenSize_ONLY_FOR_TESTING } from '@openmsupply-client/common';
+import { server } from '@openmsupply-client/mocks';
 
 let mockStorage: Record<string, string> = {};
 
@@ -34,4 +36,14 @@ beforeEach(() => {
  */
 beforeEach(() => {
   setScreenSize_ONLY_FOR_TESTING(1280);
+});
+
+beforeAll(() => {
+  // Establish requests interception layer before all tests.
+  server.listen();
+});
+afterAll(() => {
+  // Clean up after all tests are done, preventing this
+  // interception layer from affecting irrelevant tests.
+  server.close();
 });
