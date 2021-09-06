@@ -1,5 +1,6 @@
 // src/mocks/browser.js
 import { setupWorker } from 'msw';
+import { setupServer } from 'msw/node';
 
 // src/mocks/handlers.js
 import { graphql } from 'msw';
@@ -87,6 +88,4 @@ const transactionDetail = graphql.query(
 );
 
 export const handlers = [transactionList, transactionDetail, upsertTransaction];
-
-// This configures a Service Worker with the given request handlers.
-export const worker = setupWorker(...handlers);
+export const server = setupServer(...handlers);

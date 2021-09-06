@@ -13,7 +13,7 @@ export const getDetailQuery = (): string => gql`
 `;
 
 export const getMutation = (): string => gql`
-  mutation Mutation($transactionPatch: TransactionPatch) {
+  mutation upsertTransaction($transactionPatch: TransactionPatch) {
     upsertTransaction(transaction: $transactionPatch) {
       id
       date
@@ -25,7 +25,7 @@ export const getMutation = (): string => gql`
 `;
 
 export const getListQuery = (): string => gql`
-  query Query($first: Int, $offset: Int, $sort: String, $desc: Boolean) {
+  query transactions($first: Int, $offset: Int, $sort: String, $desc: Boolean) {
     transactions(first: $first, offset: $offset, sort: $sort, desc: $desc) {
       data {
         id
