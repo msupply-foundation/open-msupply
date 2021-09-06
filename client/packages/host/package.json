@@ -20,7 +20,7 @@
   },
   "scripts": {
     "start": "webpack-cli serve",
-    "build": "webpack --mode production",
+    "build": "webpack --env production",
     "serve": "serve dist -p 3003",
     "clean": "rm -rf dist",
     "tsc": "tsc --build"
