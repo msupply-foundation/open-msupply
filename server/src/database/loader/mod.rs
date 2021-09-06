@@ -1,5 +1,5 @@
 #[cfg_attr(feature = "mock", path = "mock.rs")]
-#[cfg_attr(not(feature = "mock"), path = "pgsqlx.rs")]
+#[cfg_attr(not(feature = "mock"), path = "diesel.rs")]
 mod loader;
 
 mod item;
