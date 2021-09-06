@@ -3,6 +3,7 @@ import AppThemeProvider from '../styles/ThemeProvider';
 import { IntlTestProvider } from '../intl/IntlTestProvider';
 import { SupportedLocales } from '../intl/intlHelpers';
 import mediaQuery from 'css-mediaquery';
+import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes } from 'react-router';
 
@@ -29,9 +30,11 @@ export const TestingProvider: FC<TestingProviderProps> = ({
   locale = 'en',
 }) => (
   <QueryClientProvider client={queryClient}>
-    <IntlTestProvider locale={locale}>
-      <AppThemeProvider>{children}</AppThemeProvider>
-    </IntlTestProvider>
+    <SnackbarProvider maxSnack={3}>
+      <IntlTestProvider locale={locale}>
+        <AppThemeProvider>{children}</AppThemeProvider>
+      </IntlTestProvider>
+    </SnackbarProvider>
   </QueryClientProvider>
 );
 

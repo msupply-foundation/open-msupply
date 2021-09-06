@@ -1,9 +1,15 @@
 import React, { FC } from 'react';
-import { useQueryClient } from 'react-query';
+
 import { useNavigate, useParams } from 'react-router';
-import { request, Transaction } from '@openmsupply-client/common';
-import { getMutation, getDetailQuery } from '../api';
-import { createDraftStore, useDraftDocument } from '../useDraftDocument';
+
+import {
+  request,
+  Transaction,
+  useQueryClient,
+} from '@openmsupply-client/common';
+
+import { getMutation, getDetailQuery } from '../../api';
+import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
 
 const queryFn = (id: string) => async (): Promise<Transaction> => {
   const result = await request('http://localhost:4000', getDetailQuery(), {

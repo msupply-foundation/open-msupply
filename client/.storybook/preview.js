@@ -1,9 +1,12 @@
 import React from 'react';
+import { CssBaseline } from '@material-ui/core';
+import { addDecorator } from '@storybook/react';
+import { initializeWorker, mswDecorator } from 'msw-storybook-addon';
 
 import { TestingProvider } from '../packages/common/src/utils/testing';
-// import AppThemeProvider from '../packages/common/src/styles/ThemeProvider';
-// import { IntlProvider } from '../packages/common/src/intl/IntlProvider';
-import { CssBaseline } from '@material-ui/core';
+
+initializeWorker();
+addDecorator(mswDecorator);
 
 export const decorators = [
   Story => (
