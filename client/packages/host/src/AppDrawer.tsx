@@ -24,7 +24,6 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
-import * as CSS from 'csstype';
 
 const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
@@ -57,7 +56,6 @@ const gutterSize = 24;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
   backgroundColor: theme.palette.background.menu,
-  boxSizing: 'border-box' as CSS.Property.BoxSizing,
   overflow: 'hidden',
 });
 
@@ -92,7 +90,6 @@ const StyledDrawer = styled(Drawer)(({ open, theme }) => {
     borderRadius: 8,
     overflow: 'hidden',
     boxShadow: theme.shadows[7],
-
     ...(open && {
       ...openedMixin(theme),
       '& .MuiDrawer-paper': openedMixin(theme),

@@ -10,7 +10,6 @@ import {
   useSortBy,
   useTable,
 } from 'react-table';
-import clsx from 'clsx';
 
 import {
   Box,
@@ -25,7 +24,7 @@ import {
   Table as MuiTable,
 } from '@material-ui/core';
 
-import makeStyles from '@material-ui/styles/makeStyles';
+import { useTheme } from '@material-ui/core/styles';
 
 import { SortAsc, SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';
@@ -41,21 +40,6 @@ export interface QueryResponse<T> {
   data: T[];
   totalLength: number;
 }
-
-const useStyles = makeStyles(theme => ({
-  container: { marginBottom: 100 },
-  bodyCell: {
-    padding: 9.5,
-  },
-  clickable: {
-    cursor: 'pointer',
-  },
-  headerCell: {
-    ...theme.typography.th,
-  },
-  loadingIndicator: { marginLeft: 'auto', marginRight: 'auto' },
-  loadingIndicatorContainer: { display: 'flex', marginTop: 50 },
-}));
 
 interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
@@ -84,7 +68,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   onRowClick,
   totalLength = 0,
 }: TableProps<T> & { children?: ReactNode }): JSX.Element => {
-  const classes = useStyles();
+  const theme = useTheme();
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
   const pageCount = Math.ceil(totalLength / pageSize);
@@ -131,11 +115,21 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   }, [sortBy]);
 
   return isLoading ? (
-    <Box className={classes.loadingIndicatorContainer}>
-      <CircularProgress className={classes.loadingIndicator} />
+    <Box
+      sx={{
+        display: 'flex',
+        marginTop: 50,
+      }}
+    >
+      <CircularProgress
+        sx={{
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      />
     </Box>
   ) : (
-    <TableContainer className={classes.container}>
+    <TableContainer sx={{ marginBottom: 100 }}>
       <MuiTable stickyHeader {...getTableProps()}>
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
@@ -143,7 +137,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
               {headers.map(column => (
                 <TableCell
                   {...column.getHeaderProps(column.getSortByToggleProps())}
-                  className={classes.headerCell}
+                  sx={theme.typography.th}
                 >
                   <Grid container>
                     {column.render('Header')}
@@ -167,10 +161,10 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                   return (
                     <TableCell
                       {...cell.getCellProps()}
-                      className={clsx(
-                        classes.bodyCell,
-                        hasRowClick && classes.clickable
-                      )}
+                      sx={{
+                        padding: '9.5px',
+                        ...(hasRowClick && { cursor: 'pointer' }),
+                      }}
                     >
                       {cell.render('Cell')}
                     </TableCell>
