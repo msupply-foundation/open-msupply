@@ -7,12 +7,15 @@ import {
   TestingProvider,
 } from '@openmsupply-client/common';
 import { act } from 'react-dom/test-utils';
+import { BrowserRouter } from 'react-router-dom';
 
 describe('AppDrawer', () => {
   it('Collapses when clicking the drawer open/close button for the first time on a large screen', async () => {
     const { getByRole, getByTestId } = render(
       <TestingProvider>
-        <AppDrawer />
+        <BrowserRouter>
+          <AppDrawer />
+        </BrowserRouter>
       </TestingProvider>
     );
 
@@ -31,7 +34,9 @@ describe('AppDrawer', () => {
     setScreenSize_ONLY_FOR_TESTING(1199);
     const { getByRole, getByTestId } = render(
       <TestingProvider>
-        <AppDrawer />
+        <BrowserRouter>
+          <AppDrawer />
+        </BrowserRouter>
       </TestingProvider>
     );
 
@@ -49,7 +54,9 @@ describe('AppDrawer', () => {
   it('Text is visibility when the menu is expanded', async () => {
     const { getByText } = render(
       <TestingProvider>
-        <AppDrawer />
+        <BrowserRouter>
+          <AppDrawer />
+        </BrowserRouter>
       </TestingProvider>
     );
 
@@ -67,7 +74,9 @@ describe('AppDrawer', () => {
   it('Text is invisible when the menu is collapsed', async () => {
     const { getByText } = render(
       <TestingProvider>
-        <AppDrawer />
+        <BrowserRouter>
+          <AppDrawer />
+        </BrowserRouter>
       </TestingProvider>
     );
 

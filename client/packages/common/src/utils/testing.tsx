@@ -4,11 +4,25 @@ import { IntlTestProvider } from '../intl/IntlTestProvider';
 import { SupportedLocales } from '../intl/intlHelpers';
 import mediaQuery from 'css-mediaquery';
 import { QueryClientProvider, QueryClient } from 'react-query';
+import { MemoryRouter, Routes } from 'react-router';
 
 const queryClient = new QueryClient();
 interface TestingProviderProps {
   locale?: SupportedLocales;
 }
+
+interface TestingRouterProps {
+  initialEntries: string[];
+}
+
+export const TestingRouter: FC<TestingRouterProps> = ({
+  children,
+  initialEntries,
+}) => (
+  <MemoryRouter initialEntries={initialEntries}>
+    <Routes>{children}</Routes>
+  </MemoryRouter>
+);
 
 export const TestingProvider: FC<TestingProviderProps> = ({
   children,
