@@ -28,10 +28,10 @@ use diesel::{
     result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
 };
 
-#[cfg(feature = "dieselsqlite")]
+#[cfg(feature = "sqlite")]
 type DBBackendConnection = SqliteConnection;
 
-#[cfg(feature = "dieselpg")]
+#[cfg(feature = "postgres")]
 type DBBackendConnection = PgConnection;
 
 impl From<DieselError> for RepositoryError {
