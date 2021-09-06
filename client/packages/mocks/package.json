@@ -22,5 +22,10 @@
   },
   "bugs": {
     "url": "https://github.com/openmsupply/openmsupply-client/issues"
+  },
+  "devDependencies": {
+    "@types/faker": "^5.5.8",
+    "faker": "^5.5.3",
+    "msw": "^0.35.0"
   }
 }

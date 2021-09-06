@@ -1,0 +1,1 @@
+export { OutboundShipmentListView } from './ListView';
