@@ -35,4 +35,11 @@ impl NameRepository {
         let result = name_table.filter(id.eq(name_id)).first(&connection)?;
         Ok(result)
     }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::name_table::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = name_table.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
 }

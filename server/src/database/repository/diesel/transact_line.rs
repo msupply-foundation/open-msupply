@@ -39,6 +39,16 @@ impl TransactLineRepository {
         result.map_err(|err| RepositoryError::from(err))
     }
 
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TransactLineRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::transact_line::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = transact_line.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
+
     pub async fn find_many_by_transact_id(
         &self,
         trans_id: &str,

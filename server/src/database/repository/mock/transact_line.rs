@@ -40,6 +40,25 @@ impl TransactLineRepository {
         }
     }
 
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TransactLineRow>, RepositoryError> {
+        info!(
+            "Querying multiple transact_line records (transact_line.id=({:?})",
+            ids
+        );
+        let mut transact_lines = vec![];
+        ids.iter().for_each(|id| {
+            if let Some(DatabaseRow::TransactLine(transact_line)) =
+                self.mock_data.lock().unwrap().get(id)
+            {
+                transact_lines.push(transact_line.clone());
+            }
+        });
+        Ok(transact_lines)
+    }
+
     pub async fn find_many_by_transact_id(
         &self,
         transact_id: &str,

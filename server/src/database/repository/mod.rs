@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Clone, Error, Debug)]
 pub enum RepositoryError {
     /// Row not found but expected at least one row
     #[error("row not found but expected at least one row")]
@@ -24,7 +24,7 @@ pub enum RepositoryError {
 pub mod repository;
 
 pub use repository::{
-    CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
-    RequisitionLineRepository, RequisitionRepository, StoreRepository, TransactLineRepository,
-    TransactRepository, UserAccountRepository,
+    get_repositories, CustomerInvoiceRepository, ItemLineRepository, ItemRepository,
+    NameRepository, RequisitionLineRepository, RequisitionRepository, StoreRepository,
+    TransactLineRepository, TransactRepository, UserAccountRepository,
 };

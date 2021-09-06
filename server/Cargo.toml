@@ -16,7 +16,7 @@ actix-cors = "0.5.4"
 actix-rt = "1.1.0"
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
 anymap = "0.12"
-async-graphql = "2.9.8"
+async-graphql = { version = "2.9.8", features = ["dataloader"] }
 async-graphql-actix-web = "2.9.8"
 async-trait = "0.1.16"
 diesel = { version = "1.4.7", default-features = false, features = ["sqlite", "postgres", "r2d2", "numeric"] }

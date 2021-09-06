@@ -43,4 +43,14 @@ impl RequisitionRepository {
             .first(&connection)?;
         Ok(result)
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<RequisitionRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::requisition::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = requisition.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
 }

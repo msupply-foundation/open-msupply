@@ -1,14 +1,18 @@
-use crate::database::repository::{
-    CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
-    RequisitionLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
+use crate::{
+    database::{
+        loader::{ItemLineLoader, ItemLoader, NameLoader, StoreLoader, TransactLoader},
+        repository::{
+            CustomerInvoiceRepository, RequisitionLineRepository, TransactLineRepository,
+        },
+        schema::{
+            ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
+            RequisitionRowType, StoreRow, TransactLineRow, TransactRow, TransactRowType,
+        },
+    },
+    server::service::graphql::ContextExt,
 };
-use crate::database::schema::{
-    ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
-    RequisitionRowType, StoreRow, TransactLineRow, TransactRow, TransactRowType,
-};
-use crate::server::service::graphql::ContextExt;
 
-use async_graphql::{Context, Enum, InputObject, Object};
+use async_graphql::{dataloader::DataLoader, Context, Enum, InputObject, Object};
 
 #[derive(Clone)]
 pub struct Name {
@@ -59,12 +63,15 @@ impl Store {
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
+        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
 
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&self.store_row.name_id)
+        let name_row: NameRow = name_loader
+            .load_one(self.store_row.name_id.clone())
             .await
-            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.store_row.id));
+            .unwrap_or_else(|_| panic!("Failed to get name for store {}", self.store_row.id))
+            .ok_or_else(|| panic!("Failed to get name for store {}", self.store_row.id))
+            .unwrap_or_else(|_| panic!("Failed to get name for store {}", self.store_row.id));
+
         Name { name_row }
     }
 
@@ -152,27 +159,43 @@ impl ItemLine {
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_repository = ctx.get_repository::<ItemRepository>();
+        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
-        let item_row: ItemRow = item_repository
-            .find_one_by_id(&self.item_line_row.item_id)
+        let item_row: ItemRow = item_loader
+            .load_one(self.item_line_row.item_id.clone())
             .await
             .unwrap_or_else(|_| {
-                panic!("Failed to get item for item line {}", self.item_line_row.id)
+                panic!("Failed to get item for item_line {}", self.item_line_row.id)
+            })
+            .ok_or_else(|| panic!("Failed to get item for item_line {}", self.item_line_row.id))
+            .unwrap_or_else(|_| {
+                panic!("Failed to get item for item_line {}", self.item_line_row.id)
             });
 
         Item { item_row }
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Store {
-        let store_repository = ctx.get_repository::<StoreRepository>();
+        let store_loader = ctx.get_loader::<DataLoader<StoreLoader>>();
 
-        let store_row: StoreRow = store_repository
-            .find_one_by_id(&self.item_line_row.store_id)
+        let store_row: StoreRow = store_loader
+            .load_one(self.item_line_row.store_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get store for item line {}",
+                    "Failed to get store for item_line {}",
+                    self.item_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get store for item_line {}",
+                    self.item_line_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for item_line {}",
                     self.item_line_row.id
                 )
             });
@@ -243,14 +266,26 @@ impl Requisition {
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
+        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
 
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&self.requisition_row.name_id)
+        let name_row: NameRow = name_loader
+            .load_one(self.requisition_row.name_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get store for item line {}",
+                    "Failed to get name for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get name for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get name for requisition {}",
                     self.requisition_row.id
                 )
             });
@@ -259,14 +294,26 @@ impl Requisition {
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Store {
-        let store_repository = ctx.get_repository::<StoreRepository>();
+        let store_loader = ctx.get_loader::<DataLoader<StoreLoader>>();
 
-        let store_row: StoreRow = store_repository
-            .find_one_by_id(&self.requisition_row.store_id)
+        let store_row: StoreRow = store_loader
+            .load_one(self.requisition_row.store_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get store for item line {}",
+                    "Failed to get store for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get store for requisition {}",
+                    self.requisition_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get store for requisition {}",
                     self.requisition_row.id
                 )
             });
@@ -312,14 +359,26 @@ impl RequisitionLine {
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_repository = ctx.get_repository::<ItemRepository>();
+        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
-        let item_row: ItemRow = item_repository
-            .find_one_by_id(&self.requisition_line_row.item_id)
+        let item_row: ItemRow = item_loader
+            .load_one(self.requisition_line_row.item_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get item for item line {}",
+                    "Failed to get item for requisition_line {}",
+                    self.requisition_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get item for requisition_line {}",
+                    self.requisition_line_row.id
+                )
+            })
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item for requisition_line {}",
                     self.requisition_line_row.id
                 )
             });
@@ -398,11 +457,13 @@ impl Transact {
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
+        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
 
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&self.transact_row.name_id)
+        let name_row: NameRow = name_loader
+            .load_one(self.transact_row.name_id.clone())
             .await
+            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id))
+            .ok_or_else(|| panic!("Failed to get name for transact {}", self.transact_row.id))
             .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id));
 
         Name { name_row }
@@ -448,11 +509,23 @@ impl TransactLine {
     }
 
     pub async fn transact(&self, ctx: &Context<'_>) -> Transact {
-        let transact_repository = ctx.get_repository::<TransactRepository>();
+        let transact_loader = ctx.get_loader::<DataLoader<TransactLoader>>();
 
-        let transact_row: TransactRow = transact_repository
-            .find_one_by_id(&self.transact_line_row.transact_id)
+        let transact_row: TransactRow = transact_loader
+            .load_one(self.transact_line_row.transact_id.clone())
             .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get transact for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get transact for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get transact for transact_line {}",
@@ -464,11 +537,23 @@ impl TransactLine {
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_repository = ctx.get_repository::<ItemRepository>();
+        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
-        let item_row: ItemRow = item_repository
-            .find_one_by_id(&self.transact_line_row.item_id)
+        let item_row: ItemRow = item_loader
+            .load_one(self.transact_line_row.item_id.clone())
             .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get item for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get item for transact_line {}",
@@ -480,12 +565,26 @@ impl TransactLine {
     }
 
     pub async fn item_line(&self, ctx: &Context<'_>) -> ItemLine {
-        let item_line_repository = ctx.get_repository::<ItemLineRepository>();
+        let item_line_loader = ctx.get_loader::<DataLoader<ItemLineLoader>>();
 
         // Handle optional item_line_id correctly.
-        let item_line_row: ItemLineRow = item_line_repository
-            .find_one_by_id(self.transact_line_row.item_line_id.as_ref().unwrap())
+        let item_line_id = self.transact_line_row.item_line_id.as_ref().unwrap();
+
+        let item_line_row: ItemLineRow = item_line_loader
+            .load_one(item_line_id.to_owned())
             .await
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get item_line for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
+            .ok_or_else(|| {
+                panic!(
+                    "Failed to get item_line for transact_line {}",
+                    self.transact_line_row.id
+                )
+            })
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get item_line for transact_line {}",

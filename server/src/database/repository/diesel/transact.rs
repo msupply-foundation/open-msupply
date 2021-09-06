@@ -35,6 +35,16 @@ impl TransactRepository {
         let result = transact.filter(id.eq(transact_id)).first(&connection);
         result.map_err(|err| RepositoryError::from(err))
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TransactRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::transact::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = transact.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
 }
 
 #[derive(Clone)]

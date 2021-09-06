@@ -35,4 +35,14 @@ impl ItemLineRepository {
         let result = item_line.filter(id.eq(item_line_id)).first(&connection)?;
         Ok(result)
     }
+
+    pub async fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ItemLineRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::item_line::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = item_line.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
 }

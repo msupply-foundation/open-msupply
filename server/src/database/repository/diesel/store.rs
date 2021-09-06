@@ -35,4 +35,11 @@ impl StoreRepository {
         let result = store.filter(id.eq(store_id)).first(&connection)?;
         Ok(result)
     }
+
+    pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::store::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = store.filter(id.eq_any(ids)).load(&connection)?;
+        Ok(result)
+    }
 }

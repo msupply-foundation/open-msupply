@@ -417,6 +417,50 @@
       ]
     }
   },
+  "63cfcbd7be18b96261640fc122ebcdccd8492e13f19332effe972cac946782f2": {
+    "query": "\n            SELECT id, requisition_id, item_id, actual_quantity, suggested_quantity\n            FROM requisition_line\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "requisition_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "actual_quantity",
+          "type_info": "Float8"
+        },
+        {
+          "ordinal": 4,
+          "name": "suggested_quantity",
+          "type_info": "Float8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "67e12749a5e7595ca2810d12bd905d77c82712d0932e4e3adf5edd16c2ff9409": {
     "query": "\n            SELECT id, name_id, store_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n            FROM transact\n            WHERE type_of = 'customer_invoice' AND store_id = $1\n            ",
     "describe": {
@@ -472,6 +516,32 @@
         false,
         false,
         false,
+        false,
+        false
+      ]
+    }
+  },
+  "6a8d53cfd160f2ca26c547e735143e20bc3abedccf38f83db5bcf34b69a12bb7": {
+    "query": "\n            SELECT id, name_id\n            FROM store\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
         false,
         false
       ]
@@ -552,6 +622,50 @@
       "nullable": []
     }
   },
+  "8c041eeae8f065cef681e3960cee576890ef012eb45f2a75a1629e92cc553bb4": {
+    "query": "\n            SELECT id, item_id, store_id, batch, quantity\n            from item_line\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "store_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "batch",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 4,
+          "name": "quantity",
+          "type_info": "Float8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "8c6a3b1d5cae2845a6bf18f41de5ae51a9690d5d3c5d4a839f5d09aa76ddd071": {
     "query": "\n            INSERT INTO requisition_line (id, requisition_id, item_id, actual_quantity, suggested_quantity)\n            VALUES ($1, $2, $3, $4, $5)\n            ",
     "describe": {
@@ -594,6 +708,222 @@
       "nullable": []
     }
   },
+  "93f5b22dcef5bdcffde68f1d049089982c4c8b2b1cdc380bd3df305a3b731afe": {
+    "query": "\n            SELECT id, username, password, email\n            FROM user_account\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "email",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "94e6f8c5aacf67e3fed26675e7d8ce690d588e9712ee8708d7d7bb207dcbaaad": {
+    "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "a151307a60ed52f66ea0c2720ad2276ea9e51eee74ac201c8629f7a414bd854c": {
+    "query": "\n            SELECT id, name_id, store_id, type_of AS \"type_of!: RequisitionRowType\"\n            FROM requisition\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "store_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "type_of!: RequisitionRowType",
+          "type_info": {
+            "Custom": {
+              "name": "requisition_type",
+              "kind": {
+                "Enum": [
+                  "imprest",
+                  "stock_history",
+                  "request",
+                  "response",
+                  "supply",
+                  "report"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "a7db1d6dcc9a911008b2fbeb1251caebc21262de205c54032c8805c8ddcf7dd1": {
+    "query": "\n            SELECT id, transact_id, type_of AS \"type_of!: TransactLineRowType\", item_id, item_line_id\n            FROM transact_line\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "transact_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "type_of!: TransactLineRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_line_type",
+              "kind": {
+                "Enum": [
+                  "stock_out",
+                  "stock_in",
+                  "placeholder",
+                  "cash_in",
+                  "cash_out",
+                  "non_stock",
+                  "service"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "name": "item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "item_line_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "abfb88e361775f8379a79c78b3c3b910268f6fa84c114005ec930b09b6b62fee": {
+    "query": "\n            SELECT id, item_name, type_of AS \"type_of!: ItemRowType\"\n            FROM item\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "type_of!: ItemRowType",
+          "type_info": {
+            "Custom": {
+              "name": "item_type",
+              "kind": {
+                "Enum": [
+                  "general",
+                  "service",
+                  "cross_reference"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "b7e9de5276037042baeb17780b4251d6af51356036293d2a1f4d62c96c1a0123": {
     "query": "\n            SELECT id, name\n            FROM name\n            WHERE id = $1\n            ",
     "describe": {
@@ -615,6 +945,66 @@
         ]
       },
       "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "bd50d9874cf39623b16424902fd7076b8942b25fd507cf9ca8342588f1b703d3": {
+    "query": "\n            SELECT id, name_id, store_id, invoice_number, type_of AS \"type_of!: TransactRowType\"\n            FROM transact\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "name_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "store_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "invoice_number",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 4,
+          "name": "type_of!: TransactRowType",
+          "type_info": {
+            "Custom": {
+              "name": "transact_type",
+              "kind": {
+                "Enum": [
+                  "customer_invoice",
+                  "customer_credit",
+                  "supplier_invoice",
+                  "supplier_credit",
+                  "repack",
+                  "build",
+                  "receipt",
+                  "payment"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
         false,
         false
       ]
@@ -663,6 +1053,49 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "d016c899bcc810314578fd46c4e4874bee56c67071285e11f56f28273ece2cbb": {
+    "query": "\n            SELECT id, item_name, type_of AS \"type_of!: ItemRowType\"\n            FROM item\n            WHERE id = ANY($1)\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "item_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "type_of!: ItemRowType",
+          "type_info": {
+            "Custom": {
+              "name": "item_type",
+              "kind": {
+                "Enum": [
+                  "general",
+                  "service",
+                  "cross_reference"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
     }
   },
   "de007ad514feb72e0878a0710508bbb56b5f8f0c858acf655774047fc02b3714": {

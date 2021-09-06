@@ -1,9 +1,9 @@
 #![allow(where_clauses_object_safety)]
 
 use remote_server::{
-    database::repository::repository::get_repositories,
+    database::{loader::get_loaders, repository::get_repositories},
     server::{
-        data::{ActorRegistry, RepositoryMap, RepositoryRegistry},
+        data::{ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap, RepositoryRegistry},
         middleware::{compress as compress_middleware, logger as logger_middleware},
         service::{graphql::config as graphql_config, rest::config as rest_config},
     },
@@ -31,17 +31,20 @@ async fn main() -> std::io::Result<()> {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     let repositories: RepositoryMap = get_repositories(&settings).await;
+    let loaders: LoaderMap = get_loaders(&settings).await;
 
     let sync_connection = SyncConnection::new(&settings.sync);
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors(sync_connection);
 
     let repository_registry = RepositoryRegistry { repositories };
+    let loader_registry = LoaderRegistry { loaders };
     let actor_registry = ActorRegistry {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
     let repository_registry_data = Data::new(repository_registry);
+    let loader_registry_data = Data::new(loader_registry);
     let actor_registry_data = Data::new(actor_registry);
 
     let listener =
@@ -53,7 +56,10 @@ async fn main() -> std::io::Result<()> {
             .app_data(actor_registry_data.clone())
             .wrap(logger_middleware())
             .wrap(compress_middleware())
-            .configure(graphql_config(repository_registry_data.clone()))
+            .configure(graphql_config(
+                repository_registry_data.clone(),
+                loader_registry_data.clone(),
+            ))
             .configure(rest_config)
     })
     .listen(listener)?
