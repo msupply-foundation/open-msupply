@@ -6,8 +6,8 @@ import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
 
 import { OutboundShipmentDetailView } from './DetailView';
 
-describe('useDraftDocument', () => {
-  it('', async () => {
+describe('OutboundShipmentDetailView', () => {
+  it('Renders the correct outbound shipment for the provided url ', async () => {
     const { getByText } = render(
       <TestingProvider>
         <TestingRouter initialEntries={['/customers/customer-invoice/3']}>
