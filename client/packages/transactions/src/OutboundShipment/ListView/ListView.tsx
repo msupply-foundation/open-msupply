@@ -40,7 +40,7 @@ const queryFn = async (queryParams: QueryProps<Transaction>) => {
 const Container = styled('div')<{ height: number }>(({ theme, height }) => ({
   height,
 
-  transition: theme.transitions.create(['all'], {
+  transition: theme.transitions.create(['height'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
