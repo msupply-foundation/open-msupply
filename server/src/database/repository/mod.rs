@@ -26,5 +26,5 @@ pub mod repository;
 pub use repository::{
     get_repositories, CustomerInvoiceRepository, ItemLineRepository, ItemRepository,
     NameRepository, RequisitionLineRepository, RequisitionRepository, StoreRepository,
-    TransactLineRepository, TransactRepository, UserAccountRepository,
+    SyncBufferRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
 };
