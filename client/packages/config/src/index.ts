@@ -10,4 +10,4 @@ declare global {
   }
 }
 
-export const Environment: EnvironmentConfig = window.env;
+export const Environment: EnvironmentConfig = window.env ?? {};
