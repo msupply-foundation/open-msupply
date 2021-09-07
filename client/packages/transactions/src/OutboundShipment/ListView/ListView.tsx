@@ -10,7 +10,6 @@ import {
   MenuDots,
   PlusCircle,
   Printer,
-  QueryProps,
   useQuery,
   RemoteDataTable,
   useColumns,
@@ -18,9 +17,10 @@ import {
   useNotification,
   SortingRule,
   Transaction,
+  QueryProps,
+  useDataTableApi,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-
 import { getListQuery } from '../../api';
 
 const queryFn = async (queryParams: QueryProps<Transaction>) => {
@@ -50,17 +50,22 @@ export const OutboundShipmentListView: FC = () => {
   );
 
   const navigate = useNavigate();
-  const getColumns = useColumns();
-  const columns = getColumns<Transaction>([
-    { label: 'label.id', key: 'id', sortable: false },
-    { label: 'label.date', key: 'date', format: ColumnFormat.date },
-    { label: 'label.customer', key: 'customer' },
-    { label: 'label.supplier', key: 'supplier' },
-    { label: 'label.total', key: 'total' },
-  ]);
+  const columns = useColumns<Transaction>(
+    [
+      { label: 'label.id', key: 'id', sortable: false },
+      { label: 'label.date', key: 'date', format: ColumnFormat.date },
+      { label: 'label.customer', key: 'customer' },
+      { label: 'label.supplier', key: 'supplier' },
+      { label: 'label.total', key: 'total' },
+    ],
+    { useSelectionColumn: true }
+  );
+
   const initialSortBy: SortingRule<Transaction>[] = [
     { id: 'date', desc: true },
   ];
+
+  const tableApi = useDataTableApi<Transaction>();
 
   return (
     <>
@@ -89,6 +94,7 @@ export const OutboundShipmentListView: FC = () => {
         </>
       </Portal>
       <RemoteDataTable<Transaction>
+        tableApi={tableApi}
         columns={columns}
         data={response?.data || []}
         initialSortBy={initialSortBy}
