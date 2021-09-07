@@ -54,7 +54,7 @@ pub async fn setup(db_settings: &DatabaseSettings) {
 
     const MIGRATION_PATH: &str = "sqlite";
 
-    let db_path = format!("./{}.db", db_settings.database_name);
+    let db_path = format!("./{}.sqlite", db_settings.database_name);
 
     fs::remove_file(&db_path).ok();
 
