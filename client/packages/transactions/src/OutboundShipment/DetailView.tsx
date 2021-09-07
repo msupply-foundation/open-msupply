@@ -4,9 +4,10 @@ import { useNavigate, useParams } from 'react-router';
 import { request, Transaction } from '@openmsupply-client/common';
 import { getMutation, getDetailQuery } from '../api';
 import { createDraftStore, useDraftDocument } from '../useDraftDocument';
+import { Environment } from '@openmsupply-client/config';
 
 const queryFn = (id: string) => async (): Promise<Transaction> => {
-  const result = await request('http://localhost:4000', getDetailQuery(), {
+  const result = await request(Environment.API_URL, getDetailQuery(), {
     id,
   });
   const { transaction } = result;
@@ -15,7 +16,7 @@ const queryFn = (id: string) => async (): Promise<Transaction> => {
 
 const mutationFn = async (updated: Transaction): Promise<Transaction> => {
   const patch = { transactionPatch: updated };
-  const result = await request('http://localhost:4000', getMutation(), patch);
+  const result = await request(Environment.API_URL, getMutation(), patch);
   const { upsertTransaction } = result;
   return upsertTransaction;
 };
