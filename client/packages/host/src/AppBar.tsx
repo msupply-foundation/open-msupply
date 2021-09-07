@@ -13,6 +13,7 @@ import {
   Breadcrumbs,
 } from '@openmsupply-client/common';
 import { LanguageMenu } from './LanguageMenu';
+import { ExternalURL } from '@openmsupply-client/config';
 
 const ButtonContainer = styled('div')({
   display: 'flex',
@@ -26,6 +27,7 @@ const StyledContainer = styled(Box, {
   marginLeft: 80,
   marginRight: 0,
   minHeight: 90,
+
   zIndex: theme.zIndex.drawer - 1,
   boxShadow: theme.shadows[1],
 
@@ -45,12 +47,12 @@ const StyledContainer = styled(Box, {
 
 const AppBar: React.FC = () => {
   const { isOpen } = useDrawer();
-  const { appBarButtonsRef, appBarExtra } = useHostContext();
+  const { appBarButtonsRef, appBarExtraRef } = useHostContext();
   const navigate = useNavigate();
 
   return (
     <StyledContainer isOpen={isOpen}>
-      <Toolbar disableGutters>
+      <Toolbar disableGutters sx={{ paddingLeft: '24px' }}>
         <UnstyledIconButton
           icon={<ArrowLeft />}
           titleKey="button.go-back"
@@ -62,12 +64,12 @@ const AppBar: React.FC = () => {
           <Button
             icon={<Book />}
             labelKey="button.docs"
-            onClick={() => (location.href = 'https://docs.msupply.foundation')}
+            onClick={() => (location.href = ExternalURL.PublicDocs)}
           />
           <LanguageMenu />
         </ButtonContainer>
       </Toolbar>
-      <ButtonContainer ref={appBarExtra} />
+      <ButtonContainer ref={appBarExtraRef} />
     </StyledContainer>
   );
 };
