@@ -21,9 +21,9 @@ import {
   useMediaQuery,
   useTheme,
   useTranslation,
+  NavLink,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
 import { Property } from 'csstype';
 
 const CustomersNav = React.lazy(
@@ -148,7 +148,7 @@ const AppDrawer: React.FC = () => {
       </ToolbarIconContainer>
       <UpperListContainer>
         <List>
-          <AppNavLink
+          <NavLink
             to={AppRoute.Dashboard}
             icon={<Dashboard fontSize="small" />}
             text={t('app.dashboard')}
@@ -156,27 +156,27 @@ const AppDrawer: React.FC = () => {
           <React.Suspense fallback={null}>
             <CustomersNav />
           </React.Suspense>
-          <AppNavLink
+          <NavLink
             to={AppRoute.Suppliers}
             icon={<Suppliers fontSize="small" />}
             text={t('app.suppliers')}
           />
-          <AppNavLink
+          <NavLink
             to={AppRoute.Stock}
             icon={<Stock fontSize="small" />}
             text={t('app.stock')}
           />
-          <AppNavLink
+          <NavLink
             to={AppRoute.Tools}
             icon={<Tools fontSize="small" />}
             text={t('app.tools')}
           />
-          <AppNavLink
+          <NavLink
             to={AppRoute.Reports}
             icon={<Reports fontSize="small" />}
             text={t('app.reports')}
           />
-          <AppNavLink
+          <NavLink
             to={AppRoute.Messages}
             icon={<Messages fontSize="small" />}
             text={t('app.messages')}
@@ -186,17 +186,13 @@ const AppDrawer: React.FC = () => {
       <LowerListContainer>
         <List>
           {drawer.isOpen && <StyledDivider />}
-          <AppNavLink
-            to={AppRoute.Sync}
-            icon={<Radio />}
-            text={t('app.sync')}
-          />
-          <AppNavLink
+          <NavLink to={AppRoute.Sync} icon={<Radio />} text={t('app.sync')} />
+          <NavLink
             to={AppRoute.Admin}
             icon={<Settings />}
             text={t('app.admin')}
           />
-          <AppNavLink
+          <NavLink
             to={AppRoute.Logout}
             icon={<Power />}
             text={t('app.logout')}
