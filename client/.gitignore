@@ -10,6 +10,7 @@ lerna-debug.log*
 # Compiled release
 **/build/*
 **/dist/*
+**/storybook-static/*
 
 # Dependency directories
 node_modules/
