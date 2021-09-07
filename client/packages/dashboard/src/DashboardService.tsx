@@ -5,19 +5,19 @@ import { styled } from '@material-ui/core/styles';
 
 const RecentInvoiceWidget = () => (
   <Widget height="500px">
-    <Typography>RecentInvoices</Typography>
+    <Typography variant="h6">Recent Invoices</Typography>
   </Widget>
 );
 
 const SalesDepositsWidget = () => (
   <Widget height="240px">
-    <Typography>SalesDeposits</Typography>
+    <Typography variant="h6">Alerts</Typography>
   </Widget>
 );
 
 const SalesTodayWidget = () => (
   <Widget height="240px">
-    <Typography>SalesToday</Typography>
+    <Typography variant="h6">Purchase Orders</Typography>
   </Widget>
 );
 
