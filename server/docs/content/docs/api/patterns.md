@@ -48,7 +48,7 @@ The sort object is two Key:Value pairs defining which field the result set is so
 - key: Any scalar field on the entity in standard graphQL enum value case (capital snake).
 - desc: Boolean indicator whether the sort should be descending.
 
-<ins>Example</ins>
+<ins>Example GraphQL schema</ins>
 
 ```graphql
 type InvoiceSort: [InvoiceSortOption]
@@ -67,19 +67,7 @@ enum InvoiceSortField {
 
 _Example shapes for sorting a query for `invoice` entities_
 
-**Limitations**
-
-The API currently supports an array of a single sort object. (will apply only one element from sort array and discard the rest {TODO update when changed to do multi sort})
-
-**Error handling**
-
-Empty/undefined sort fields will result in no filtering and will not return an error.
-
-However, when a field does not exist, or the key value is null, an error will be returned.
-
-TODO: Shape of error
-
-<ins>Example</ins>
+<ins>Example GraphQL query</ins>
 
 ```graphql
 query {
@@ -91,6 +79,17 @@ query {
 ```
 
 _Example query for sorting `invoice` entities by their confirm date in descending order_
+
+**Limitations**
+
+The API currently supports an array of a single sort object. (will apply only one element from sort array and discard the rest {TODO update when changed to do multi sort})
+
+**Error handling**
+
+Empty/undefined sort fields will result in no filtering and will not return an error.
+
+However, when a field does not exist, or the key value is null, a [type mismatch](/docs/api/patterns/#errors) error will be returned.
+
 
 # Filtering
 
@@ -163,14 +162,6 @@ The API currently does not support:
 - Filtering on related entities/nodes within the graph.
 - Logic (i.e. AND/OR's)
 
-**Error handling**
-
-Empty/undefined filter objects will result in no filtering and will not return an error.
-
-However, when a field does not exist, or the field or comparator value is null, or comparator doesn't exist or comparator value type is incorrect, an error will be returned.
-
-TODO: Shape of error
-
 <ins>Example</ins>
 
 ```graphql
@@ -199,6 +190,12 @@ query {
 ```
 
 _Example of a query for `invoice` entities being filtered by their status being equal to "cn" and the confirm date being greater than the 3rd of September, 2021, 11:42am!_
+
+**Error handling**
+
+Empty/undefined filter objects will result in no filtering and will not return an error.
+
+However, when a field does not exist, or the field or comparator value is null, or comparator doesn't exist or comparator value type is incorrect, a [type mismatch](/docs/api/patterns/#errors) will be returned.
 
 # Pagination
 
@@ -259,7 +256,7 @@ _An example query for `invoice` entities, where the first 1 entity is returned_
 
 **Error handling**
 
-{TODO, once we know the shape of errors}
+If restrictions are not met [pagination error](/docs/api/custom_error/#pagination) will be returned
 
 ```JS
 // error when restrictions are not met
@@ -268,4 +265,199 @@ _An example query for `invoice` entities, where the first 1 entity is returned_
 
 # Errors
 
-{ TODO Need to confirm that we can do any shape we want with async-graphql }
+Three types of errors:
+
+**Critical**
+
+These are unhandled (rust panics), they will result in connection close {TODO can we handles this better with actix-web ?}. We won't be using any panics in our code, but it's possible that due to external crates api (i.e. using methods that panic vs returning result).
+
+**Async Graphql Core**
+
+These errors are handled by `async-graphql`:
+* GraphQL syntax
+* Type mismatch
+
+They have the following shape:
+
+```TypeScript
+type CoreGraphqlErrorResult = {
+  data: null,
+  errors: {
+    message: string,
+    locations: {
+      line: number,
+      column: number
+    }
+  }[]
+}
+```
+
+<ins>Example Response: GraphQL syntax</ins>
+```JSON
+{
+    "data": null,
+    "errors": [
+        {
+            "message": " --> 2:3\n  |\n2 |   name(␊\n  |   ^---\n  |\n  = expected variable_definitions, selection_set, or directive",
+            "locations": [
+                {
+                    "line": 2,
+                    "column": 3
+                }
+            ]
+        }
+    ]
+}
+```
+
+<ins>Example Response: Type mismatch</ins>
+
+```JSON
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Invalid value for argument \"structuredInput.1.type\", enumeration type \"ExampleInputVariants\" does not contain the value \"FOUR\"",
+      "locations": [
+        {
+          "line": 74,
+          "column": 16
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Extended Error**
+
+These are errors that we handle explicitly, they have the following shape
+
+```TypeScript
+// TypeScript
+type CustomGraphqlErrorResult = {
+  data: null,
+  errors: {
+    message: 'CUSTOM_ERROR',
+    locations: {
+      line: number,
+      column: number
+    },
+    path: string[],
+    extensions: {
+      customErrors: CustomError[]
+    } 
+  }[]
+}
+
+interface CustomError {
+  code: CustomErrorCodes
+}
+
+// Examples only
+enum CustomErrorCodes {
+  RecordIdNotFound = "RECORD_ID_NOT_FOUND",
+  BatchReductionBelowZero = "BATCH_REDUCTION_BELOW_ZERO",
+  // Other errors codes
+}
+
+```
+
+Custom error instances extend CustomError interface, and their shape is different based on error type.
+
+[Full list of errors](/docs/api/custom_errors)
+
+<ins>Example RecordIdNotFoundError error</ins>
+
+```TypeScript
+interface RecordIdNotFoundError extends CustomError {
+  code: CustomErrorCodes.RecordIdNotFound,
+  recordId: string,
+}
+```
+
+```JSON
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "CUSTOM_ERROR",
+      "locations": [
+        {
+          "line": 60,
+          "column": 3
+        },
+      ],
+      "path": [ "invoice" ],
+      "extensions": {
+        "customErrors": [
+          {
+          "code": "RECORD_ID_NOT_FOUND",
+          "recordId": "ABC",
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+<ins>Example BatchReductionBelowZero error</ins>
+
+```TypeScript
+interface ValidationError extends CustomError {
+  code: CustomErrorCodes.BatchReductionBelowZero,
+  invoiceLineId: string,
+  stockLineId: string,
+  reductionQuantity: number,
+  availableQuantity: number,
+}
+```
+```JSON
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "CUSTOM_ERROR",
+      "locations": [
+        {
+          "line": 60,
+          "column": 3
+        },
+      ],
+      "path": [ "invoice" ],
+      "extensions": {
+        "customErrors": [
+          {
+          "code": "BATCH_REDUCTION_BELOW_ZERO",
+          "invoiceLineId": "ABC",
+          "stockLineId": "CBA"
+          "reductionQuantity": 10,
+          "availableQuantity": 5
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Batched Queries**
+
+Batched query is where more then one root query is listed in GraphQL query, i.e:
+
+```graphql
+query {
+  invoice(id: 10) {
+    id
+    comment
+  }
+  items {
+    id
+    code
+    name
+  }
+}
+```
+
+In error handling context, errors for individual root query would typically appear as a separate `errors` element, it looks like `async-graphql` doesn't do this and only one error is returned in the array (the first one that's triggered). It's hard to know what happens behind the hood and in an example of batched mutations, we don't know which mutations are actually executed (if error is triggered), thus for mutations we are not planning to support batching (although it will still be possible to submit them with `async-graphql`, use at your own risk)
