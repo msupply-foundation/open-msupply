@@ -24,6 +24,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
+import { Property } from 'csstype';
 
 const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
@@ -38,11 +39,30 @@ const ToolbarIconContainer = styled(Box)(({ theme }) => ({
   ...theme.mixins.toolbar,
 }));
 
-const ListContainer = styled(Box)({
+const commonListContainerStyles = {
   display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
+  flexDirection: 'column' as Property.FlexDirection,
   justifyContent: 'space-between',
+  alignItems: 'center',
+};
+
+const LowerListContainer = styled(Box)({
+  ...commonListContainerStyles,
+  height: 151,
+  position: 'static',
+  bottom: 0,
+});
+
+const UpperListContainer = styled(Box)({
+  ...commonListContainerStyles,
+  flex: 1,
+  height: '100%',
+  msOverflowStyle: 'none',
+  overflow: 'scroll',
+  scrollbarWidth: 'none',
+  '&::-webkit-scrollbar': {
+    display: 'none',
+  },
 });
 
 const StyledDivider = styled(Divider)({
@@ -52,7 +72,6 @@ const StyledDivider = styled(Divider)({
 });
 
 const drawerWidth = 200;
-const gutterSize = 24;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
   backgroundColor: theme.palette.background.menu,
@@ -62,8 +81,7 @@ const getDrawerCommonStyles = (theme: Theme) => ({
 const openedMixin = (theme: Theme) => ({
   ...getDrawerCommonStyles(theme),
   width: drawerWidth,
-  paddingLeft: gutterSize,
-  paddingRight: gutterSize,
+
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.enteringScreen,
@@ -72,8 +90,7 @@ const openedMixin = (theme: Theme) => ({
 
 const closedMixin = (theme: Theme) => ({
   ...getDrawerCommonStyles(theme),
-  paddingLeft: gutterSize,
-  paddingRight: gutterSize,
+
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -129,7 +146,7 @@ const AppDrawer: React.FC = () => {
           icon={<MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />}
         />
       </ToolbarIconContainer>
-      <ListContainer>
+      <UpperListContainer>
         <List>
           <AppNavLink
             to={AppRoute.Dashboard}
@@ -165,6 +182,8 @@ const AppDrawer: React.FC = () => {
             text={t('app.messages')}
           />
         </List>
+      </UpperListContainer>
+      <LowerListContainer>
         <List>
           {drawer.isOpen && <StyledDivider />}
           <AppNavLink
@@ -183,7 +202,7 @@ const AppDrawer: React.FC = () => {
             text={t('app.logout')}
           />
         </List>
-      </ListContainer>
+      </LowerListContainer>
     </StyledDrawer>
   );
 };
