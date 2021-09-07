@@ -17,7 +17,9 @@ module.exports = env => {
     mode: isProduction ? 'production' : 'development',
     devServer: {
       hot: true,
-      static: path.join(__dirname, 'dist'),
+      static: isProduction
+        ? path.join(__dirname, 'dist')
+        : path.join(__dirname, 'public'),
 
       port: 3003,
       historyApiFallback: true,

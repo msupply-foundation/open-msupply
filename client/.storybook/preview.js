@@ -1,17 +1,19 @@
 import React from 'react';
-
-import AppThemeProvider from '../packages/common/src/styles/ThemeProvider';
-import { IntlProvider } from '../packages/common/src/intl/IntlProvider';
 import { CssBaseline } from '@material-ui/core';
+import { addDecorator } from '@storybook/react';
+import { initializeWorker, mswDecorator } from 'msw-storybook-addon';
+
+import { TestingProvider } from '../packages/common/src/utils/testing';
+
+initializeWorker();
+addDecorator(mswDecorator);
 
 export const decorators = [
   Story => (
-    <IntlProvider locale="en">
-      <AppThemeProvider>
-        <CssBaseline />
-        <Story />
-      </AppThemeProvider>
-    </IntlProvider>
+    <TestingProvider>
+      <CssBaseline />
+      <Story />
+    </TestingProvider>
   ),
 ];
 

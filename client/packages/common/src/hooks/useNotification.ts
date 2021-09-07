@@ -9,6 +9,7 @@ interface NotificationHook {
 
 export const useNotification = (): NotificationHook => {
   const { enqueueSnackbar } = useSnackbar();
+
   const error = (message: string) => () =>
     enqueueSnackbar(message, {
       variant: 'error',

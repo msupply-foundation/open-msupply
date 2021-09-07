@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react';
 import { useNavigate } from 'react-router';
+
 import {
   Portal,
   request,
@@ -18,8 +19,9 @@ import {
   SortingRule,
   Transaction,
 } from '@openmsupply-client/common';
-import { getListQuery } from '../api';
 import { Environment } from '@openmsupply-client/config';
+
+import { getListQuery } from '../../api';
 
 const queryFn = async (queryParams: QueryProps<Transaction>) => {
   const { first, offset, sortBy } = queryParams;
