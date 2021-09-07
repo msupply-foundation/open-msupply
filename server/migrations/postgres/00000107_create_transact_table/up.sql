@@ -12,13 +12,13 @@ CREATE TYPE transact_type AS ENUM (
 );
 
 CREATE TABLE transact (
-    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    id TEXT NOT NULL PRIMARY KEY,
     -- For customer invoices, the id of the receiving customer.
     -- For supplier invoices, the id of the sending supplier.
-    name_id VARCHAR(255) NOT NULL,
+    name_id TEXT NOT NULL,
     -- For customer invoices, the id of the issuing store.
     -- For supplier invoices, the id of the receiving store.
-    store_id VARCHAR(255) NOT NULL,
+    store_id TEXT NOT NULL,
     invoice_number INTEGER NOT NULL,
     type_of transact_type NOT NULL,
     FOREIGN KEY(name_id) REFERENCES name(id),
