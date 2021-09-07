@@ -18,6 +18,7 @@ import {
   useNotification,
   SortingRule,
   Transaction,
+  styled,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 
@@ -36,8 +37,17 @@ const queryFn = async (queryParams: QueryProps<Transaction>) => {
   return transactions;
 };
 
+const Container = styled('div')<{ height: number }>(({ theme, height }) => ({
+  height,
+
+  transition: theme.transitions.create(['all'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+}));
+
 export const OutboundShipmentListView: FC = () => {
-  const { appBarButtonsRef } = useHostContext();
+  const { appBarButtonsRef, appBarExtraRef } = useHostContext();
   const { info, success, warning } = useNotification();
 
   const [queryProps, setQueryProps] = useState<QueryProps<Transaction>>({
@@ -62,8 +72,20 @@ export const OutboundShipmentListView: FC = () => {
     { id: 'date', desc: true },
   ];
 
+  const [height, setHeight] = useState(300);
+
   return (
     <>
+      <Portal container={appBarExtraRef.current}>
+        <Container height={height}>
+          <span>TODO: Some actual real work</span>
+          <Button
+            labelKey="app.admin"
+            onClick={() => setHeight(Math.ceil(Math.random() * 300))}
+            icon={null}
+          />
+        </Container>
+      </Portal>
       <Portal container={appBarButtonsRef.current}>
         <>
           <Button

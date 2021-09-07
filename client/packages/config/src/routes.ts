@@ -21,3 +21,7 @@ export enum AppRoute {
 
   Logout = 'logout',
 }
+
+export enum ExternalURL {
+  PublicDocs = 'https://docs.msupply.foundation',
+}
