@@ -7,8 +7,8 @@ import {
   useDrawer,
   useTranslation,
   RouteBuilder,
+  NavLink,
 } from '@openmsupply-client/common';
-import { AppNavLink } from '@openmsupply-client/common/src/ui/components/NavLink';
 import { AppRoute } from '@openmsupply-client/config';
 
 const useNestedNav = (path: string) => {
@@ -30,7 +30,7 @@ const Nav: FC = () => {
   const t = useTranslation();
   return (
     <>
-      <AppNavLink
+      <NavLink
         end={!isActive}
         to={AppRoute.Customers}
         icon={<Customers fontSize="small" />}
@@ -38,14 +38,14 @@ const Nav: FC = () => {
       />
       <Collapse in={isActive}>
         <List>
-          <AppNavLink
+          <NavLink
             end={true}
             to={RouteBuilder.create(AppRoute.Customers)
               .addPart(AppRoute.CustomerInvoice)
               .build()}
             text={t('app.customer-invoice')}
           />
-          <AppNavLink
+          <NavLink
             end={true}
             to={RouteBuilder.create(AppRoute.Customers)
               .addPart(AppRoute.CustomerRequisition)
