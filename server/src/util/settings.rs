@@ -42,7 +42,7 @@ pub struct DatabaseSettings {
     pub database_name: String,
 }
 
-#[cfg(not(feature = "dieselsqlite"))]
+#[cfg(not(feature = "sqlite"))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
@@ -59,7 +59,7 @@ impl DatabaseSettings {
     }
 }
 
-#[cfg(feature = "dieselsqlite")]
+#[cfg(feature = "sqlite")]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!("{}.sqlite", self.database_name.to_string())
