@@ -431,7 +431,7 @@ interface ValidationError extends CustomError {
           {
           "code": "BATCH_REDUCTION_BELOW_ZERO",
           "invoiceLineId": "ABC",
-          "stockLineId": "CBA"
+          "stockLineId": "CBA",
           "reductionQuantity": 10,
           "availableQuantity": 5
           }
