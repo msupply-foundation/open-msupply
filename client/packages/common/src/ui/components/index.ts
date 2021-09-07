@@ -6,11 +6,12 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Typography from '@material-ui/core/Typography';
 
+export * from './navigation';
 export * from './buttons';
 export * from './errors';
 export * from './LoadingSpinner';
 export * from './RemoteComponent';
-export { AppNavLink } from './NavLink';
+
 export {
   GlobalStyles,
   CircularProgress,
