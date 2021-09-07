@@ -9,9 +9,7 @@ import {
   IntlProvider,
   SnackbarProvider,
   styled,
-  useFormatDate,
   useHostContext,
-  useTranslation,
   RouteBuilder,
   ErrorBoundary,
   GenericErrorFallback,
@@ -36,113 +34,90 @@ const DashboardService = React.lazy(
   () => import('@openmsupply-client/dashboard/src/DashboardService')
 );
 
-const Heading: FC<{ locale: string }> = props => {
-  const t = useTranslation();
-  const formatDate = useFormatDate();
-  const date = new Date();
-
-  return (
-    <div style={{ margin: '100px 50px' }}>
-      <span>
-        <Typography>Current locale: {props.locale}</Typography>
-        <Typography>
-          {t('app.welcome', { name: '<your name here>' })}
-        </Typography>
-        <Typography>
-          Today is{' '}
-          {formatDate(date, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            weekday: 'long',
-          })}
-        </Typography>
-      </span>
-      <Typography>[ {props.children} ]</Typography>
-    </div>
-  );
-};
+const Heading: FC<{ locale: string }> = props => (
+  <div style={{ margin: 50 }}>
+    <Typography>[ Placeholder page: {props.children} ]</Typography>
+  </div>
+);
 
 const Host: FC = () => {
   const { locale } = useHostContext();
 
   return (
     <ErrorBoundary Fallback={GenericErrorFallback}>
-        <QueryClientProvider client={queryClient}>
-          <IntlProvider locale={locale}>
-            <AppThemeProvider>
-              <BrowserRouter>
-                <SnackbarProvider maxSnack={3}>
-                  <Viewport>
-                    <AppBar />
-                    <Box display="flex" flex={1}>
-                      <AppDrawer />
-                      <Content flex={1}>
-                        <React.Suspense fallback={'Loading'}>
-                          <Routes>
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Dashboard)
-                                .addWildCard()
-                                .build()}
-                              element={<DashboardService />}
-                            />
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Customers)
-                                .addWildCard()
-                                .build()}
-                              element={<CustomerContainer />}
-                            />
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Suppliers)
-                                .addWildCard()
-                                .build()}
-                              element={
-                                <Heading locale={locale}>suppliers</Heading>
-                              }
-                            />
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Stock)
-                                .addWildCard()
-                                .build()}
-                              element={<Heading locale={locale}>stock</Heading>}
-                            />
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Tools)
-                                .addWildCard()
-                                .build()}
-                              element={<Heading locale={locale}>tools</Heading>}
-                            />
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Reports)
-                                .addWildCard()
-                                .build()}
-                              element={
-                                <Heading locale={locale}>reports</Heading>
-                              }
-                            />
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Messages)
-                                .addWildCard()
-                                .build()}
-                              element={
-                                <Heading locale={locale}>messages</Heading>
-                              }
-                            />
-                            <Route
-                              path="*"
-                              element={<Navigate to="/dashboard" replace />}
-                            />
-                          </Routes>
-                        </React.Suspense>
-                      </Content>
-                    </Box>
-                  </Viewport>
-                </SnackbarProvider>
-              </BrowserRouter>
-            </AppThemeProvider>
-            <ReactQueryDevtools initialIsOpen />
-          </IntlProvider>
-        </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <IntlProvider locale={locale}>
+          <AppThemeProvider>
+            <BrowserRouter>
+              <SnackbarProvider maxSnack={3}>
+                <Viewport>
+                  <AppBar />
+                  <Box display="flex" flex={1}>
+                    <AppDrawer />
+                    <Content flex={1}>
+                      <React.Suspense fallback={'Loading'}>
+                        <Routes>
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Dashboard)
+                              .addWildCard()
+                              .build()}
+                            element={<DashboardService />}
+                          />
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Customers)
+                              .addWildCard()
+                              .build()}
+                            element={<CustomerContainer />}
+                          />
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Suppliers)
+                              .addWildCard()
+                              .build()}
+                            element={
+                              <Heading locale={locale}>suppliers</Heading>
+                            }
+                          />
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Stock)
+                              .addWildCard()
+                              .build()}
+                            element={<Heading locale={locale}>stock</Heading>}
+                          />
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Tools)
+                              .addWildCard()
+                              .build()}
+                            element={<Heading locale={locale}>tools</Heading>}
+                          />
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Reports)
+                              .addWildCard()
+                              .build()}
+                            element={<Heading locale={locale}>reports</Heading>}
+                          />
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Messages)
+                              .addWildCard()
+                              .build()}
+                            element={
+                              <Heading locale={locale}>messages</Heading>
+                            }
+                          />
+                          <Route
+                            path="*"
+                            element={<Navigate to="/dashboard" replace />}
+                          />
+                        </Routes>
+                      </React.Suspense>
+                    </Content>
+                  </Box>
+                </Viewport>
+              </SnackbarProvider>
+            </BrowserRouter>
+          </AppThemeProvider>
+          <ReactQueryDevtools initialIsOpen />
+        </IntlProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 };

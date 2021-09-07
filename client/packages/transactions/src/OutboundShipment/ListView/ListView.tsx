@@ -19,22 +19,19 @@ import {
   SortingRule,
   Transaction,
 } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 
 import { getListQuery } from '../../api';
 
 const queryFn = async (queryParams: QueryProps<Transaction>) => {
   const { first, offset, sortBy } = queryParams;
 
-  const { transactions } = await request(
-    'http://localhost:4000',
-    getListQuery(),
-    {
-      first,
-      offset,
-      sort: sortBy?.[0]?.id,
-      desc: !!sortBy?.[0]?.desc,
-    }
-  );
+  const { transactions } = await request(Environment.API_URL, getListQuery(), {
+    first,
+    offset,
+    sort: sortBy?.[0]?.id,
+    desc: !!sortBy?.[0]?.desc,
+  });
 
   return transactions;
 };

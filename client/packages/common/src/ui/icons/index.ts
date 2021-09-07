@@ -3,6 +3,7 @@ export { Book } from './Book';
 export { Customers } from './Customers';
 export { Dashboard } from './Dashboard';
 export { Download } from './Download';
+export { Invoice } from './Invoice';
 export { MenuDots } from './MenuDots';
 export { Messages } from './Messages';
 export { MSupplyGuy } from './MSupplyGuy';
