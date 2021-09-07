@@ -1,4 +1,5 @@
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const HotModuleReplacementPlugin = webpack.HotModuleReplacementPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -35,6 +36,7 @@ module.exports = env => {
     output: {
       publicPath: isProduction ? '/' : 'http://localhost:3003/',
       chunkFilename: '[id].[contenthash].js',
+      clean: true,
     },
     optimization: {
       splitChunks: {
@@ -78,7 +80,9 @@ module.exports = env => {
         favicon: './public/favicon.ico',
         template: './public/index.html',
       }),
-
+      new CopyPlugin({
+        patterns: [{ from: './public/config.js', to: 'config.js' }],
+      }),
       // new ModuleFederationPlugin({
       //   name: 'host',
       //   filename: 'remoteEntry.js',
