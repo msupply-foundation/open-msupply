@@ -2,6 +2,6 @@
 
 CREATE TABLE store (
     id TEXT NOT NULL PRIMARY KEY,
-    name_id VARCHAR(255) NOT NULL,
+    name_id TEXT NOT NULL,
     FOREIGN KEY(name_id) REFERENCES name(id)
 )
