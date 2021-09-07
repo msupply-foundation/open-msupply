@@ -4,6 +4,7 @@ mod name;
 mod requisition;
 mod requisition_line;
 mod store;
+mod sync_buffer;
 mod sync_out;
 mod transact;
 mod transact_line;
@@ -23,6 +24,7 @@ pub enum DatabaseRow {
     TransactLine(TransactLineRow),
     UserAccount(UserAccountRow),
     SyncOut(SyncOutRow),
+    SyncBuffer(SyncBufferRow),
 }
 
 pub use item::{ItemRow, ItemRowType};
@@ -31,6 +33,7 @@ pub use name::NameRow;
 pub use requisition::{RequisitionRow, RequisitionRowType};
 pub use requisition_line::RequisitionLineRow;
 pub use store::StoreRow;
+pub use sync_buffer::SyncBufferRow;
 pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
 pub use transact::{TransactRow, TransactRowType};
 pub use transact_line::{TransactLineRow, TransactLineRowType};
