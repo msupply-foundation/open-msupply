@@ -1,3 +1,4 @@
+import { getCheckboxSelectionColumn } from './../columns/CheckboxSelectionColumn';
 import { Column, IdType } from 'react-table';
 
 import { useFormatDate, useTranslation } from '../../../../intl';
@@ -17,34 +18,45 @@ export interface ColumnDefinition<T> {
   sortable?: boolean; // defaults to true
 }
 
-export const useColumns =
-  () =>
-  <T extends Record<string, unknown>>(
-    columns: ColumnDefinition<T>[]
-  ): Column<T>[] => {
-    const t = useTranslation();
-    const formatDate = useFormatDate();
+interface ColumnOptions {
+  useSelectionColumn: boolean;
+}
 
-    return columns.map(column => {
-      const { key, label, sortable = true } = column;
-      const Header = t(label);
-      const accessor = getAccessor<T>(column, formatDate);
-      const disableSortBy = !sortable;
-      const sortType = getSortType<T>(column);
-      const sortInverted = column.format === ColumnFormat.date;
-      const sortDescFirst = column.format === ColumnFormat.date;
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const useColumns = <T extends object>(
+  columnsToMap: ColumnDefinition<T>[],
+  options: ColumnOptions = { useSelectionColumn: false }
+): Column<T>[] => {
+  const t = useTranslation();
+  const formatDate = useFormatDate();
 
-      return {
-        accessor,
-        disableSortBy,
-        Header,
-        id: key as IdType<T>,
-        sortDescFirst,
-        sortInverted,
-        sortType,
-      };
-    });
-  };
+  let columns = columnsToMap.map(column => {
+    const { key, label, sortable = true } = column;
+    const Header = t(label);
+    const accessor = getAccessor<T>(column, formatDate);
+    const disableSortBy = !sortable;
+    const sortType = getSortType<T>(column);
+    const sortInverted = column.format === ColumnFormat.date;
+    const sortDescFirst = column.format === ColumnFormat.date;
+
+    return {
+      accessor,
+      disableSortBy,
+      Header,
+      id: key as IdType<T>,
+      sortDescFirst,
+      sortInverted,
+      sortType,
+      // TODO: Fix react-type column typings here
+    } as any;
+  });
+
+  if (options.useSelectionColumn) {
+    columns = [...columns, getCheckboxSelectionColumn()];
+  }
+
+  return columns;
+};
 
 const getSortType = <T>(column: ColumnDefinition<T>) => {
   switch (column.format) {

@@ -1,0 +1,26 @@
+import React from 'react';
+import { Checkbox } from '../../../components/inputs/Checkbox';
+import { Column } from 'react-table';
+
+export const getCheckboxSelectionColumn = (): Column => ({
+  id: 'selection',
+  Header: ({ getToggleAllRowsSelectedProps }) => (
+    <Checkbox
+      size="small"
+      color="secondary"
+      {...getToggleAllRowsSelectedProps()}
+    />
+  ),
+  Cell: ({ row }) => {
+    return (
+      <Checkbox
+        color="secondary"
+        size="small"
+        onClick={event => {
+          event.stopPropagation();
+        }}
+        {...row.getToggleRowSelectedProps()}
+      />
+    );
+  },
+});
