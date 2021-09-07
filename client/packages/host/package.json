@@ -27,6 +27,7 @@
     "tsc": "tsc --build"
   },
   "dependencies": {
+    "@fontsource/inter": "^4.5.0",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/customers": "^0.0.0",
