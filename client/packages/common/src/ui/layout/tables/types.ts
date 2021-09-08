@@ -16,8 +16,6 @@ export interface ColumnDefinition<T> {
   sortable?: boolean; // defaults to true
 }
 
-export type GenericColumnDef = GenericColumnType.Selection;
-
 export enum GenericColumnType {
   Selection = 'selection',
 }
