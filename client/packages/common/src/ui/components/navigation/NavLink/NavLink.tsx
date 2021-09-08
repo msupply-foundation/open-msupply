@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-
 import {
   ListItem,
   ListItemIcon,
@@ -7,11 +6,11 @@ import {
   Tooltip,
   ListItemButton,
   Box,
+  ListItemProps,
 } from '@material-ui/core';
-import { useMatch, Link } from 'react-router-dom';
-import { useDrawer } from '../../hooks/useDrawer';
 import { styled } from '@material-ui/core/styles';
-import { ListItemProps } from 'material-ui';
+import { useMatch, Link } from 'react-router-dom';
+import { useDrawer } from '../../../../hooks/useDrawer';
 
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
@@ -46,14 +45,14 @@ const StyledListItem = styled<
   },
 }));
 
-interface ListItemLinkProps {
+export interface NavLinkProps {
   end?: boolean; // denotes lowest level menu item, using terminology from useMatch
   icon?: JSX.Element;
   text?: string;
   to: string;
 }
 
-export const AppNavLink: FC<ListItemLinkProps> = props => {
+export const NavLink: FC<NavLinkProps> = props => {
   const { end, icon = <span style={{ width: 2 }} />, text, to } = props;
   const drawer = useDrawer();
   const selected = useSelectedNavMenuItem(to, !!end);
@@ -61,7 +60,7 @@ export const AppNavLink: FC<ListItemLinkProps> = props => {
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
-        <Link ref={ref} to={to} {...linkProps} />
+        <Link {...linkProps} ref={ref} to={to} role="link" aria-label={text} />
       )),
     [to]
   );
