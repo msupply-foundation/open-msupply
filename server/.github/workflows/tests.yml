@@ -7,7 +7,7 @@ name: CI
 
 jobs:
   build_and_test:
-    name: Remote Server Tests
+    name: Remote Server Tests (sqlite)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,4 +17,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=dieselsqlite
+          args: --features=sqlite
