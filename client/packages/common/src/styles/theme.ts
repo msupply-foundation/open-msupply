@@ -44,6 +44,8 @@ const themeOptions = {
   palette: {
     darkGrey: '#555770',
     primary: { 500: '#e95c30' },
+    secondary: { main: '#555770' },
+
     background: {
       menu: '#f2f2f5',
       white: '#fff',
