@@ -1,49 +1,49 @@
 import {
-  // UseColumnOrderInstanceProps,
-  // UseColumnOrderState,
-  // UseExpandedHooks,
-  // UseExpandedInstanceProps,
+  UseColumnOrderInstanceProps,
+  UseColumnOrderState,
+  UseExpandedHooks,
+  UseExpandedInstanceProps,
   UseExpandedOptions,
-  // UseExpandedRowProps,
+  UseExpandedRowProps,
   UseExpandedState,
-  // UseFiltersColumnOptions,
+  UseFiltersColumnOptions,
   UseFiltersColumnProps,
-  // UseFiltersInstanceProps,
+  UseFiltersInstanceProps,
   UseFiltersOptions,
   UseFiltersState,
-  // UseGlobalFiltersColumnOptions,
-  // UseGlobalFiltersInstanceProps,
+  UseGlobalFiltersColumnOptions,
+  UseGlobalFiltersInstanceProps,
   UseGlobalFiltersOptions,
   UseGlobalFiltersState,
-  // UseGroupByCellProps,
-  // UseGroupByColumnOptions,
+  UseGroupByCellProps,
+  UseGroupByColumnOptions,
   UseGroupByColumnProps,
-  // UseGroupByHooks,
-  // UseGroupByInstanceProps,
+  UseGroupByHooks,
+  UseGroupByInstanceProps,
   UseGroupByOptions,
-  // UseGroupByRowProps,
+  UseGroupByRowProps,
   UseGroupByState,
-  // UsePaginationInstanceProps,
+  UsePaginationInstanceProps,
   UsePaginationOptions,
   UsePaginationState,
-  // UseResizeColumnsColumnOptions,
+  UseResizeColumnsColumnOptions,
   UseResizeColumnsColumnProps,
   UseResizeColumnsOptions,
   UseResizeColumnsState,
-  // UseRowSelectHooks,
-  // UseRowSelectInstanceProps,
+  UseRowSelectHooks,
+  UseRowSelectInstanceProps,
   UseRowSelectOptions,
-  // UseRowSelectRowProps,
+  UseRowSelectRowProps,
   UseRowSelectState,
-  // UseRowStateCellProps,
-  // UseRowStateInstanceProps,
+  UseRowStateCellProps,
+  UseRowStateInstanceProps,
   UseRowStateOptions,
-  // UseRowStateRowProps,
+  UseRowStateRowProps,
   UseRowStateState,
-  // UseSortByColumnOptions,
+  UseSortByColumnOptions,
   UseSortByColumnProps,
-  // UseSortByHooks,
-  // UseSortByInstanceProps,
+  UseSortByHooks,
+  UseSortByInstanceProps,
   UseSortByOptions,
   UseSortByState,
 } from 'react-table';
@@ -67,24 +67,24 @@ declare module 'react-table' {
       UseRowStateOptions<D>,
       UseSortByOptions<D> {}
 
-  // export interface Hooks<
-  //   D extends Record<string, unknown> = Record<string, unknown>
-  // > extends UseExpandedHooks<D>,
-  //     UseGroupByHooks<D>,
-  //     UseRowSelectHooks<D>,
-  //     UseSortByHooks<D> {}
+  export interface Hooks<
+    D extends Record<string, unknown> = Record<string, unknown>
+  > extends UseExpandedHooks<D>,
+      UseGroupByHooks<D>,
+      UseRowSelectHooks<D>,
+      UseSortByHooks<D> {}
 
-  // export interface TableInstance<
-  //   D extends Record<string, unknown> = Record<string, unknown>
-  // > extends UseColumnOrderInstanceProps<D>,
-  //     UseExpandedInstanceProps<D>,
-  //     UseFiltersInstanceProps<D>,
-  //     UseGlobalFiltersInstanceProps<D>,
-  //     UseGroupByInstanceProps<D>,
-  //     UsePaginationInstanceProps<D>,
-  //     UseRowSelectInstanceProps<D>,
-  //     UseRowStateInstanceProps<D>,
-  //     UseSortByInstanceProps<D> {}
+  export interface TableInstance<
+    D extends Record<string, unknown> = Record<string, unknown>
+  > extends UseColumnOrderInstanceProps<D>,
+      UseExpandedInstanceProps<D>,
+      UseFiltersInstanceProps<D>,
+      UseGlobalFiltersInstanceProps<D>,
+      UseGroupByInstanceProps<D>,
+      UsePaginationInstanceProps<D>,
+      UseRowSelectInstanceProps<D>,
+      UseRowStateInstanceProps<D>,
+      UseSortByInstanceProps<D> {}
 
   export interface TableState<
     D extends Record<string, unknown> = Record<string, unknown>
@@ -99,24 +99,23 @@ declare module 'react-table' {
       UseRowStateState<D>,
       UseSortByState<D> {}
 
-  // export interface ColumnInterface<
-  //   D extends Record<string, unknown> = Record<string, unknown>
-  // > extends UseFiltersColumnOptions<D>,
-  //     UseGlobalFiltersColumnOptions<D>,
-  //     UseGroupByColumnOptions<D>,
-  //     UseResizeColumnsColumnOptions<D>,
-  //     UseSortByColumnOptions<D> {}
+  export interface ColumnInterface<
+    D extends Record<string, unknown> = Record<string, unknown>
+  > extends UseFiltersColumnOptions<D>,
+      UseGlobalFiltersColumnOptions<D>,
+      UseGroupByColumnOptions<D>,
+      UseResizeColumnsColumnOptions<D>,
+      UseSortByColumnOptions<D> {}
 
-  // export interface Cell<
-  //   D extends Record<string, unknown> = Record<string, unknown>,
-  //   V = any
-  // > extends UseGroupByCellProps<D>,
-  //     UseRowStateCellProps<D> {}
+  export interface Cell<
+    D extends Record<string, unknown> = Record<string, unknown>
+  > extends UseGroupByCellProps<D>,
+      UseRowStateCellProps<D> {}
 
-  // export interface Row<
-  //   D extends Record<string, unknown> = Record<string, unknown>
-  // > extends UseExpandedRowProps<D>,
-  //     UseGroupByRowProps<D>,
-  //     UseRowSelectRowProps<D>,
-  //     UseRowStateRowProps<D> {}
+  export interface Row<
+    D extends Record<string, unknown> = Record<string, unknown>
+  > extends UseExpandedRowProps<D>,
+      UseGroupByRowProps<D>,
+      UseRowSelectRowProps<D>,
+      UseRowStateRowProps<D> {}
 }

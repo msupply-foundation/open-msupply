@@ -1,5 +1,8 @@
 export { ArrowLeft } from './ArrowLeft';
 export { Book } from './Book';
+export { CheckboxChecked } from './CheckboxChecked';
+export { CheckboxDisabled } from './CheckboxDisabled';
+export { CheckboxEmpty } from './CheckboxEmpty';
 export { Customers } from './Customers';
 export { Dashboard } from './Dashboard';
 export { Download } from './Download';
