@@ -10,9 +10,10 @@ import {
   useHostContext,
   useTranslation,
   Box,
+  UnstyledIconButton,
 } from '@openmsupply-client/common';
 import { LanguageMenu } from './LanguageMenu';
-import { Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 
 const Breadcrumb = styled(Link)({
@@ -112,11 +113,17 @@ const StyledContainer = styled(Box, {
 const AppBar: React.FC = () => {
   const { isOpen } = useDrawer();
   const { appBarButtonsRef } = useHostContext();
+  const navigate = useNavigate();
 
   return (
     <StyledContainer isOpen={isOpen}>
       <StyledToolbar>
-        <ArrowIcon />
+        <UnstyledIconButton
+          icon={<ArrowIcon />}
+          titleKey="button.go-back"
+          onClick={() => navigate(-1)}
+        />
+
         <Breadcrumbs />
         <ButtonContainer ref={appBarButtonsRef}>
           <Button
