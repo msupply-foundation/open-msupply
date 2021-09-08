@@ -62,7 +62,7 @@ impl DatabaseSettings {
 #[cfg(feature = "sqlite")]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        format!("{}.sqlite", self.database_name.to_string())
+        format!("{}.sqlite", self.database_name)
     }
 
     pub fn connection_string_without_db(&self) -> String {
