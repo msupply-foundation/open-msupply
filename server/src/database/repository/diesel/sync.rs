@@ -1,3 +1,5 @@
+use super::{get_connection, DBBackendConnection, ItemRepository, NameRepository};
+
 use crate::database::{
     repository::RepositoryError,
     schema::{ItemRow, NameRow},
@@ -7,8 +9,6 @@ use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool},
 };
-
-use super::{get_connection, DBBackendConnection, ItemRepository, NameRepository};
 
 pub enum IntegrationUpsertRecord {
     Name(NameRow),
