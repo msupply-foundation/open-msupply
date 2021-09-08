@@ -10,4 +10,6 @@ declare global {
   }
 }
 
-export const Environment: EnvironmentConfig = window.env ?? {};
+export const Environment: EnvironmentConfig = window.env ?? {
+  API_URL: 'http://localhost:4000',
+};
