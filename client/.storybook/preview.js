@@ -1,3 +1,4 @@
+import '@fontsource/inter';
 import React from 'react';
 import { CssBaseline } from '@material-ui/core';
 import { addDecorator } from '@storybook/react';

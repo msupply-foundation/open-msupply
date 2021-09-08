@@ -25,7 +25,14 @@ const Content = styled(Box)({
   overflowY: 'scroll',
   height: '100vh',
 });
-const queryClient = new QueryClient();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const CustomerContainer = React.lazy(
   () => import('@openmsupply-client/customers/src/CustomerContainer')
