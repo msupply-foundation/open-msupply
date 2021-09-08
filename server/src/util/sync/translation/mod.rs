@@ -24,6 +24,8 @@ pub struct SyncRecord {
     data: String,
 }
 
+/// Translates sync records into the local DB schema.
+/// Translated records are added to integration_records.
 fn do_translation(
     sync_record: &SyncRecord,
     integration_records: &mut IntegrationRecord,
@@ -46,6 +48,8 @@ fn do_translation(
     Err("Cannot find matching translation".to_string())
 }
 
+/// Imports sync records and writes them to the DB
+/// If needed data records are translated to the local DB schema.
 pub async fn import_sync_records(
     registry: &RepositoryRegistry,
     records: &Vec<SyncRecord>,
