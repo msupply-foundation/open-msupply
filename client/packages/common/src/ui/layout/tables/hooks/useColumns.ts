@@ -1,36 +1,30 @@
-import { getCheckboxSelectionColumn } from './../columns/CheckboxSelectionColumn';
 import { Column, IdType } from 'react-table';
-
+import {
+  GenericColumnType,
+  ColumnDefinition,
+  GenericColumnDef,
+  ColumnFormat,
+} from '../types';
+import { getCheckboxSelectionColumn } from './../columns/CheckboxSelectionColumn';
 import { useFormatDate, useTranslation } from '../../../../intl';
-import { LocaleKey } from '../../../../intl/intlHelpers';
 
-export enum ColumnFormat {
-  date,
-  integer,
-  real,
-  text,
-}
-
-export interface ColumnDefinition<T> {
-  label: LocaleKey;
-  format?: ColumnFormat;
-  key: keyof T;
-  sortable?: boolean; // defaults to true
-}
-
-interface ColumnOptions {
-  useSelectionColumn: boolean;
-}
+const columnLookup = (column: GenericColumnDef) => {
+  if (column === GenericColumnType.Selection) {
+    return getCheckboxSelectionColumn();
+  }
+};
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const useColumns = <T extends object>(
-  columnsToMap: ColumnDefinition<T>[],
-  options: ColumnOptions = { useSelectionColumn: false }
+  columnsToMap: (ColumnDefinition<T> | GenericColumnDef)[]
 ): Column<T>[] => {
   const t = useTranslation();
   const formatDate = useFormatDate();
 
-  let columns = columnsToMap.map(column => {
+  return columnsToMap.map(column => {
+    if (typeof column === 'string') {
+      return columnLookup(column);
+    }
     const { key, label, sortable = true } = column;
     const Header = t(label);
     const accessor = getAccessor<T>(column, formatDate);
@@ -50,12 +44,6 @@ export const useColumns = <T extends object>(
       // TODO: Fix react-type column typings here
     } as any;
   });
-
-  if (options.useSelectionColumn) {
-    columns = [...columns, getCheckboxSelectionColumn()];
-  }
-
-  return columns;
 };
 
 const getSortType = <T>(column: ColumnDefinition<T>) => {

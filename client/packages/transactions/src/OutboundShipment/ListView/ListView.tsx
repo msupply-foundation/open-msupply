@@ -19,6 +19,7 @@ import {
   Transaction,
   QueryProps,
   useDataTableApi,
+  GenericColumnType,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { getListQuery } from '../../api';
@@ -50,16 +51,14 @@ export const OutboundShipmentListView: FC = () => {
   );
 
   const navigate = useNavigate();
-  const columns = useColumns<Transaction>(
-    [
-      { label: 'label.id', key: 'id', sortable: false },
-      { label: 'label.date', key: 'date', format: ColumnFormat.date },
-      { label: 'label.customer', key: 'customer' },
-      { label: 'label.supplier', key: 'supplier' },
-      { label: 'label.total', key: 'total' },
-    ],
-    { useSelectionColumn: true }
-  );
+  const columns = useColumns<Transaction>([
+    { label: 'label.id', key: 'id', sortable: false },
+    { label: 'label.date', key: 'date', format: ColumnFormat.date },
+    { label: 'label.customer', key: 'customer' },
+    { label: 'label.supplier', key: 'supplier' },
+    { label: 'label.total', key: 'total' },
+    GenericColumnType.Selection,
+  ]);
 
   const initialSortBy: SortingRule<Transaction>[] = [
     { id: 'date', desc: true },

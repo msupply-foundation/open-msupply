@@ -1,5 +1,26 @@
+import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ReactNode, RefObject } from 'react';
 import { Column, Row, SortingRule } from 'react-table';
+
+export enum ColumnFormat {
+  date,
+  integer,
+  real,
+  text,
+}
+
+export interface ColumnDefinition<T> {
+  label: LocaleKey;
+  format?: ColumnFormat;
+  key: keyof T;
+  sortable?: boolean; // defaults to true
+}
+
+export type GenericColumnDef = GenericColumnType.Selection;
+
+export enum GenericColumnType {
+  Selection = 'selection',
+}
 
 export interface QueryProps<D> {
   first: number;
