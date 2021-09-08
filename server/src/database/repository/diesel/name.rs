@@ -1,4 +1,4 @@
-use super::DBBackendConnection;
+use super::{DBBackendConnection, DBConnection};
 
 use crate::database::{
     repository::{repository::get_connection, RepositoryError},
@@ -20,26 +20,82 @@ impl NameRepository {
         NameRepository { pool }
     }
 
-    pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    pub fn insert_one_tx(
+        connection: &DBConnection,
+        name_row: &NameRow,
+    ) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::name_table::dsl::*;
-        let connection = get_connection(&self.pool)?;
         diesel::insert_into(name_table)
             .values(name_row)
-            .execute(&connection)?;
+            .execute(connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one_tx(
+        connection: &DBConnection,
+        name_row: &NameRow,
+    ) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::name_table::dsl::*;
+
+        diesel::insert_into(name_table)
+            .values(name_row)
+            .on_conflict(id)
+            .do_update()
+            .set(name_row)
+            .execute(connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "sqlite")]
+    pub fn upsert_one_tx(
+        connection: &DBConnection,
+        name_row: &NameRow,
+    ) -> Result<(), RepositoryError> {
+        use diesel::sql_types::Text;
+
+        let query = r#"
+        INSERT INTO name(id,name) VALUES($1, $2)
+        ON CONFLICT(id) DO UPDATE SET
+            name=excluded.name;"#;
+        let q = diesel::sql_query(query)
+            .bind::<Text, _>(&name_row.id)
+            .bind::<Text, _>(&name_row.name);
+        q.execute(connection)?;
+        Ok(())
+    }
+
+    pub fn find_one_by_id_tx(
+        connection: &DBConnection,
+        name_id: &str,
+    ) -> Result<NameRow, RepositoryError> {
+        use crate::database::schema::diesel_schema::name_table::dsl::*;
+        let result = name_table.filter(id.eq(name_id)).first(connection)?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_id_tx<'a>(
+        connection: &'a DBConnection,
+        ids: &[String],
+    ) -> Result<Vec<NameRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::name_table::dsl::*;
+        let result = name_table.filter(id.eq_any(ids)).load(connection)?;
+        Ok(result)
+    }
+
+    pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        NameRepository::insert_one_tx(&connection, name_row)?;
         Ok(())
     }
 
     pub async fn find_one_by_id(&self, name_id: &str) -> Result<NameRow, RepositoryError> {
-        use crate::database::schema::diesel_schema::name_table::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = name_table.filter(id.eq(name_id)).first(&connection)?;
-        Ok(result)
+        NameRepository::find_one_by_id_tx(&connection, name_id)
     }
 
     pub async fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
-        use crate::database::schema::diesel_schema::name_table::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = name_table.filter(id.eq_any(ids)).load(&connection)?;
-        Ok(result)
+        NameRepository::find_many_by_id_tx(&connection, ids)
     }
 }

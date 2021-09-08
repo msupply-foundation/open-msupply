@@ -1,4 +1,4 @@
-mod item;
+pub(crate) mod item;
 mod item_line;
 mod name;
 mod requisition;
