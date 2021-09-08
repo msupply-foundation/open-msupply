@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { ArrowLeft } from './ArrowLeft';
@@ -26,7 +26,14 @@ import { Suppliers } from './Suppliers';
 import { Tools } from './Tools';
 import { Translate } from './Translate';
 
-import { Grid, Paper, styled, Typography } from '@material-ui/core';
+import {
+  Box,
+  Grid,
+  Paper,
+  styled,
+  TextField,
+  Typography,
+} from '@material-ui/core';
 
 export default {
   title: 'Assets/Svg Icon',
@@ -40,7 +47,7 @@ const StyledPaper = styled(Paper)({
   textAlign: 'center',
   height: 90,
   padding: 10,
-  width: 125,
+  width: 150,
 });
 type Icon = {
   icon: JSX.Element;
@@ -74,18 +81,33 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
   ];
-
+  const [filteredIcons, setFilteredIcons] = useState(icons);
+  const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
+    const re = new RegExp(event.target.value, 'i');
+    setFilteredIcons(icons.filter(i => re.test(i.name)));
+  };
   return (
-    <Grid container spacing={1} xs={10}>
-      {icons.map(i => (
-        <Grid item key={i.name}>
-          <StyledPaper>
-            {i.icon}
-            <Typography>{i.name}</Typography>
-          </StyledPaper>
+    <>
+      <Box padding={1}>
+        <TextField
+          onChange={filterIcons}
+          label="Filter icons"
+          variant="outlined"
+        />
+      </Box>
+      <Grid item>
+        <Grid container spacing={1}>
+          {filteredIcons.map(i => (
+            <Grid item key={i.name}>
+              <StyledPaper>
+                {i.icon}
+                <Typography>{i.name}</Typography>
+              </StyledPaper>
+            </Grid>
+          ))}
         </Grid>
-      ))}
-    </Grid>
+      </Grid>
+    </>
   );
 };
 
