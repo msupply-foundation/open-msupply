@@ -6,6 +6,7 @@ pub enum ItemRowType {
     General,
     Service,
     CrossReference,
+    NoneStock,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq)]

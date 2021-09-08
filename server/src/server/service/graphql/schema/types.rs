@@ -105,6 +105,8 @@ pub enum ItemType {
     Service,
     #[graphql(name = "cross_reference")]
     CrossReference,
+    #[graphql(name = "none_stock")]
+    NoneStock,
 }
 
 impl From<ItemRowType> for ItemType {
@@ -113,6 +115,7 @@ impl From<ItemRowType> for ItemType {
             ItemRowType::General => ItemType::General,
             ItemRowType::Service => ItemType::Service,
             ItemRowType::CrossReference => ItemType::CrossReference,
+            ItemRowType::NoneStock => ItemType::NoneStock,
         }
     }
 }
@@ -123,6 +126,7 @@ impl From<ItemType> for ItemRowType {
             ItemType::General => ItemRowType::General,
             ItemType::Service => ItemRowType::Service,
             ItemType::CrossReference => ItemRowType::CrossReference,
+            ItemType::NoneStock => ItemRowType::NoneStock,
         }
     }
 }
