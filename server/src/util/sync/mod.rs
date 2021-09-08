@@ -2,6 +2,7 @@ mod connection;
 mod credentials;
 mod queue;
 mod server;
+mod translation;
 
 pub use connection::SyncConnection;
 pub use credentials::SyncCredentials;
