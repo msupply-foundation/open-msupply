@@ -25,6 +25,7 @@
     "button.language": "Language",
     "button.more": "More",
     "button.try-again": "Try again",
+    "button.go-back": "Go back",
     "error.something-wrong": "Oops! Somethings gone wrong.",
     "label.customer": "Customer",
     "label.date": "Date",
