@@ -24,7 +24,6 @@ pub enum DatabaseRow {
     TransactLine(TransactLineRow),
     UserAccount(UserAccountRow),
     SyncOut(SyncOutRow),
-    CentralSyncBuffer(CentralSyncBufferRow),
 }
 
 pub use central_sync_buffer::CentralSyncBufferRow;
