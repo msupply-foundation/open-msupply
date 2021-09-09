@@ -273,7 +273,8 @@ These are unhandled errors, they will result in connection close.
 
 <details>
 <summary>Further Info</summary>
-If there is a rust `panic` while process a web request, it seems the connection just closes, we can probably handle this better {TODO}, would assume we can catch these panics in actix-web. Ofcourse we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external crates)
+If there is a rust `panic` in web request process, it seems the connection just closes, we can probably handle this better {TODO}, would assume we can catch these panics in actix-web. Ofcourse we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external 
+crates)
 </details>
 
 
@@ -362,7 +363,7 @@ interface CustomError {
 
 // Examples only
 enum CustomErrorCodes {
-  RecordIdNotFound = "RECORD_ID_NOT_FOUND",
+  RecordNotFound = "RECORD_NOT_FOUND",
   BatchReductionBelowZero = "BATCH_REDUCTION_BELOW_ZERO",
   // Other errors codes
 }
@@ -373,12 +374,12 @@ Custom error instances extend CustomError interface, and their shape is differen
 
 [Full list of errors](/docs/api/custom_errors)
 
-<ins>Example RecordIdNotFoundError error</ins>
+<ins>Example RecordNotFoundError error</ins>
 
 ```TypeScript
-interface RecordIdNotFoundError extends CustomError {
-  code: CustomErrorCodes.RecordIdNotFound,
-  recordId: string,
+interface RecordNotFoundError extends CustomError {
+  code: CustomErrorCodes.RecordNotFound,
+  specifiedField: string,
 }
 ```
 
@@ -398,8 +399,8 @@ interface RecordIdNotFoundError extends CustomError {
       "extensions": {
         "customErrors": [
           {
-          "code": "RECORD_ID_NOT_FOUND",
-          "recordId": "ABC",
+          "code": "RECORD_NOT_FOUND",
+          "specifiedField": "id",
           }
         ]
       }

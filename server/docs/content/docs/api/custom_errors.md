@@ -24,7 +24,7 @@ enum CustomErrorCodes {
   OffsetBelowZero = "OFFSET_BELOW_ZERO",
   FirstNotInRange = "FIRST_NOT_IN_RANGE",
   // Singular query
-  RecordIdNotFound = "RECORD_ID_NOT_FOUND"
+  RecordNotFound = "RECORD_NOT_FOUND"
 }
 ```
 
@@ -56,8 +56,8 @@ interface FirstError extends CustomError {
 
 ## Singular Query
 ```TypeScript
-interface RecordIdNotFoundError extends CustomError {
-  code: CustomErrorCodes.RecordIdNotFound,
+interface RecordNotFoundError extends CustomError {
+  code: CustomErrorCodes.RecordNotFound,
   recordId: string,
 }
 ```
