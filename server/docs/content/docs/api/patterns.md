@@ -278,7 +278,7 @@ crates)
 </details>
 
 
-**Async Graphql Core**
+**GraphQL**
 
 These errors are handled by `async-graphql`:
 * GraphQL syntax
@@ -336,7 +336,7 @@ type CoreGraphqlErrorResult = {
 }
 ```
 
-**Extended Error**
+**Custom Error**
 
 These are errors that we handle explicitly, they have the following shape
 
