@@ -52,16 +52,10 @@ impl NameRepository {
         connection: &DBConnection,
         name_row: &NameRow,
     ) -> Result<(), RepositoryError> {
-        use diesel::sql_types::Text;
-
-        let query = r#"
-        INSERT INTO name(id,name) VALUES($1, $2)
-        ON CONFLICT(id) DO UPDATE SET
-            name=excluded.name;"#;
-        let q = diesel::sql_query(query)
-            .bind::<Text, _>(&name_row.id)
-            .bind::<Text, _>(&name_row.name);
-        q.execute(connection)?;
+        use crate::database::schema::diesel_schema::name_table::dsl::*;
+        diesel::replace_into(name_table)
+            .values(name_row)
+            .execute(connection)?;
         Ok(())
     }
 
