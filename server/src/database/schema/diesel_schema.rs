@@ -11,8 +11,7 @@ table! {
 table! {
   item {
     id -> Text,
-    item_name -> Text,
-    type_of -> crate::database::schema::item::ItemRowTypeMapping,
+    name -> Text,
   }
 }
 

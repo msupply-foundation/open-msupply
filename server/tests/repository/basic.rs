@@ -8,9 +8,9 @@ mod repository_basic_test {
             StoreRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
         },
         schema::{
-            ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
-            RequisitionRowType, StoreRow, TransactLineRow, TransactLineRowType, TransactRow,
-            TransactRowType, UserAccountRow,
+            ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+            StoreRow, TransactLineRow, TransactLineRowType, TransactRow, TransactRowType,
+            UserAccountRow,
         },
     };
 
@@ -81,8 +81,7 @@ mod repository_basic_test {
     async fn item_test(repo: &ItemRepository) {
         let item1 = ItemRow {
             id: "item1".to_string(),
-            item_name: "item-1".to_string(),
-            type_of: ItemRowType::General,
+            name: "item-1".to_string(),
         };
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
@@ -90,8 +89,7 @@ mod repository_basic_test {
 
         let item2 = ItemRow {
             id: "item2".to_string(),
-            item_name: "item-2".to_string(),
-            type_of: ItemRowType::Service,
+            name: "item-2".to_string(),
         };
         repo.insert_one(&item2).await.unwrap();
         let all_items = repo.find_all().await.unwrap();
