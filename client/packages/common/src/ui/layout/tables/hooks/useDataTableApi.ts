@@ -7,7 +7,8 @@ export const useSetupDataTableApi = <DataTableRowType extends object>(
   ref: RefObject<DataTableApi<DataTableRowType>>,
   tableInstance: TableInstance<DataTableRowType>
 ): RefObject<DataTableApi<DataTableRowType>> => {
-  const { selectedFlatRows, toggleAllRowsSelected } = tableInstance;
+  const { selectedFlatRows, toggleAllRowsSelected, isAllRowsSelected } =
+    tableInstance;
 
   useImperativeHandle(
     ref,
@@ -18,8 +19,16 @@ export const useSetupDataTableApi = <DataTableRowType extends object>(
         ({ values }) => values
       ) as DataTableRowType[],
       selectAllRows: toggleAllRowsSelected,
+      deselectAllRows: () => toggleAllRowsSelected(false),
+      toggleSelectAllRows: () => {
+        const selectOrDeselect = isAllRowsSelected
+          ? () => toggleAllRowsSelected(false)
+          : toggleAllRowsSelected;
+
+        selectOrDeselect();
+      },
     }),
-    [selectedFlatRows]
+    [selectedFlatRows, isAllRowsSelected]
   );
 
   return ref;
