@@ -17,13 +17,17 @@ import {
   useNotification,
   SortingRule,
   Transaction,
-  styled,
   QueryProps,
   useDataTableApi,
   GenericColumnType,
+  Dropdown,
+  DropdownItem,
+  AppBarContentPortal,
+  Customers,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { getListQuery } from '../../api';
+import { Checkbox } from '@material-ui/core';
 
 const queryFn = async (queryParams: QueryProps<Transaction>) => {
   const { first, offset, sortBy } = queryParams;
@@ -38,17 +42,8 @@ const queryFn = async (queryParams: QueryProps<Transaction>) => {
   return transactions;
 };
 
-const Container = styled('div')<{ height: number }>(({ theme, height }) => ({
-  height,
-
-  transition: theme.transitions.create(['height'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-}));
-
 export const OutboundShipmentListView: FC = () => {
-  const { appBarButtonsRef, appBarExtraRef } = useHostContext();
+  const { appBarButtonsRef } = useHostContext();
   const { info, success, warning } = useNotification();
 
   const [queryProps, setQueryProps] = useState<QueryProps<Transaction>>({
@@ -74,22 +69,23 @@ export const OutboundShipmentListView: FC = () => {
     { id: 'date', desc: true },
   ];
 
-  const [height, setHeight] = useState(300);
   const tableApi = useDataTableApi<Transaction>();
 
   return (
     <>
-      <Portal container={appBarExtraRef.current}>
-        <Container height={height}>
-          <span>TODO: Some actual real work</span>
-          <Button
-            labelKey="app.admin"
-            onClick={() => setHeight(Math.ceil(Math.random() * 300))}
-            icon={null}
-          />
-        </Container>
-      </Portal>
-      <Portal container={appBarButtonsRef.current}>
+      <AppBarContentPortal>
+        <Dropdown label="Select" value={10} IconComponent={Customers}>
+          <DropdownItem value={10}>Ten</DropdownItem>
+          <DropdownItem value={20}>Twenty</DropdownItem>
+        </Dropdown>
+        <Checkbox
+          size="small"
+          color="secondary"
+          onClick={tableApi.current?.toggleSelectAllRows}
+        />
+      </AppBarContentPortal>
+
+      <Portal container={appBarButtonsRef?.current}>
         <>
           <Button
             icon={<PlusCircle />}

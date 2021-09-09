@@ -33,6 +33,8 @@ export interface QueryResponse<T> {
 
 export interface DataTableApi<T> {
   selectAllRows: () => void;
+  deselectAllRows: () => void;
+  toggleSelectAllRows: () => void;
   selectedRows: T[];
 }
 
