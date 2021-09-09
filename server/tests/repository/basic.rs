@@ -238,7 +238,7 @@ mod repository_basic_test {
         assert_eq!(item2, loaded_item);
     }
 
-    #[tokio::test]
+    #[actix_rt::test]
     async fn simple_repository_tests() {
         let settings = test_db::get_test_settings("omsupply-database-simple-repository-test");
         // Initialise a new test database.
