@@ -1,7 +1,7 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@material-ui/core/SvgIcon';
 
-export const CheckboxDisabled = (props: SvgIconProps): JSX.Element => {
+export const CheckboxIndeterminate = (props: SvgIconProps): JSX.Element => {
   const combinedProps: SvgIconProps = { color: 'primary', ...props };
   return (
     <SvgIcon {...combinedProps} viewBox="3 3 20 20">

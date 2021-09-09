@@ -4,8 +4,9 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { ArrowLeft } from './ArrowLeft';
 import { Book } from './Book';
 import { CheckboxChecked } from './CheckboxChecked';
-import { CheckboxDisabled } from './CheckboxDisabled';
+import { CheckboxIndeterminate } from './CheckboxIndeterminate';
 import { CheckboxEmpty } from './CheckboxEmpty';
+import { ChevronDown } from './ChevronDown';
 import { Customers } from './Customers';
 import { Dashboard } from './Dashboard';
 import { Download } from './Download';
@@ -59,8 +60,12 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ArrowLeft {...args} />, name: 'ArrowLeft' },
     { icon: <Book {...args} />, name: 'Book' },
     { icon: <CheckboxChecked {...args} />, name: 'CheckboxChecked' },
-    { icon: <CheckboxDisabled {...args} />, name: 'CheckboxDisabled' },
+    {
+      icon: <CheckboxIndeterminate {...args} />,
+      name: 'CheckboxIndeterminate',
+    },
     { icon: <CheckboxEmpty {...args} />, name: 'CheckboxEmpty' },
+    { icon: <ChevronDown {...args} />, name: 'ChevronDown' },
     { icon: <Customers {...args} />, name: 'Customers' },
     { icon: <Dashboard {...args} />, name: 'Dashboard' },
     { icon: <Download {...args} />, name: 'Download' },

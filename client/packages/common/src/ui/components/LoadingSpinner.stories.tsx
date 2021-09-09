@@ -9,6 +9,6 @@ const Template: ComponentStory<typeof LoadingSpinner> = () => (
 export const Primary = Template.bind({});
 
 export default {
-  title: 'Example/LoadingSpinner',
+  title: 'Components/LoadingSpinner',
   component: LoadingSpinner,
 } as ComponentMeta<typeof LoadingSpinner>;
