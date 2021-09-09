@@ -1,1 +1,4 @@
-export { AppBarContent, AppBarContentPortal } from './AppBarContent';
+export {
+  AppBarContent,
+  AppBarContentPortal,
+} from './AppBarContent/AppBarContent';
