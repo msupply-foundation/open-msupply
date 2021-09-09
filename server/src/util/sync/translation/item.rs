@@ -109,7 +109,7 @@ mod tests {
         },
     };
 
-    #[tokio::test]
+    #[actix_rt::test]
     async fn test_item_translation() {
         let settings = test_db::get_test_settings("omsupply-database-item-translation");
         test_db::setup(&settings.database).await;
