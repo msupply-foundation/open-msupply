@@ -1,6 +1,6 @@
 use super::diesel_schema::central_sync_buffer;
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
+#[derive(Queryable, Insertable, Debug, PartialEq, Eq)]
 #[table_name = "central_sync_buffer"]
 pub struct CentralSyncBufferRow {
     pub id: String,

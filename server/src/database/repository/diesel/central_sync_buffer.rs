@@ -22,7 +22,7 @@ impl CentralSyncBufferRepository {
 
     pub async fn insert_many(
         &self,
-        central_sync_buffer_rows: Vec<CentralSyncBufferRow>,
+        central_sync_buffer_rows: &Vec<CentralSyncBufferRow>,
     ) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
         let connection = get_connection(&self.pool)?;
