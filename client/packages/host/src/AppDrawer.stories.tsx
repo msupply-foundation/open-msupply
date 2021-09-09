@@ -6,7 +6,7 @@ import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelper
 import { BrowserRouter } from 'react-router-dom';
 
 export default {
-  title: 'Example/AppDrawer',
+  title: 'Host/AppDrawer',
   component: AppDrawer,
 } as ComponentMeta<typeof AppDrawer>;
 
