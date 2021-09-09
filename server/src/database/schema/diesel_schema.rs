@@ -92,9 +92,12 @@ table! {
 }
 
 table! {
-    sync_buffer (id) {
+    central_sync_buffer (id) {
         id -> Text,
-        record -> Text,
+        cursor_id -> Integer,
+        table_name -> Text,
+        record_id -> Text,
+        data -> Text,
     }
 }
 
@@ -119,7 +122,7 @@ allow_tables_to_appear_in_same_query!(
     requisition,
     requisition_line,
     store,
-    sync_buffer,
+    central_sync_buffer,
     sync_out,
     transact,
     transact_line,
