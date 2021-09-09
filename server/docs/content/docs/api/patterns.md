@@ -269,7 +269,13 @@ Three types of errors:
 
 **Critical**
 
-These are unhandled (rust panics), they will result in connection close {TODO can we handles this better with actix-web ?}. We won't be using any panics in our code, but it's possible that due to external crates api (i.e. using methods that panic vs returning result).
+These are unhandled errors, they will result in connection close.
+
+<details>
+<summary>Further Info</summary>
+If there is a rust `panic` while process a web request, it seems the connection just closes, we can probably handle this better {TODO}, would assume we can catch these panics in actix-web. Ofcourse we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external crates)
+</details>
+
 
 **Async Graphql Core**
 
