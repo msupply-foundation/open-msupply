@@ -1,6 +1,6 @@
 use super::SyncRecord;
 
-use crate::database::schema::{ItemRow, ItemRowType};
+use crate::database::schema::ItemRow;
 
 use serde::Deserialize;
 
@@ -84,16 +84,6 @@ pub struct LegacyItemRow {
     */
 }
 
-fn match_item_type(type_of: String) -> ItemRowType {
-    match type_of.as_str() {
-        "general" => ItemRowType::General,
-        "service" => ItemRowType::Service,
-        "cross_reference" => ItemRowType::CrossReference,
-        "non_stock" => ItemRowType::NoneStock,
-        _ => panic!("unknown type"),
-    }
-}
-
 impl LegacyItemRow {
     pub fn try_translate(sync_record: &SyncRecord) -> Result<Option<ItemRow>, String> {
         if sync_record.record_type != "item" {
@@ -103,8 +93,7 @@ impl LegacyItemRow {
             .map_err(|_| "Deserialization Error".to_string())?;
         Ok(Some(ItemRow {
             id: data.id.to_string(),
-            item_name: data.item_name.to_string(),
-            type_of: match_item_type(data.type_of),
+            name: data.item_name.to_string(),
         }))
     }
 }
@@ -112,10 +101,7 @@ impl LegacyItemRow {
 #[cfg(test)]
 mod tests {
     use crate::{
-        database::{
-            repository::{repository::get_repositories, ItemRepository},
-            schema::ItemRowType,
-        },
+        database::repository::{repository::get_repositories, ItemRepository},
         server::data::RepositoryRegistry,
         util::{
             sync::translation::{import_sync_records, SyncRecord, SyncType},
@@ -144,8 +130,7 @@ mod tests {
             .find_one_by_id("8F252B5884B74888AAB73A0D42C09E7F")
             .await
             .unwrap();
-        assert_eq!(entry.item_name, "Non stock items");
-        assert_eq!(entry.type_of, ItemRowType::NoneStock);
+        assert_eq!(entry.name, "Non stock items");
 
         // should be able to upsert
         let record = SyncRecord {
@@ -161,7 +146,6 @@ mod tests {
             .find_one_by_id("8F252B5884B74888AAB73A0D42C09E7F")
             .await
             .unwrap();
-        assert_eq!(entry.item_name, "Non stock items 2");
-        assert_eq!(entry.type_of, ItemRowType::General);
+        assert_eq!(entry.name, "Non stock items 2");
     }
 }
