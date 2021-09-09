@@ -5,6 +5,7 @@ import {
   Book,
   Button,
   styled,
+  AppBarContent,
   Toolbar,
   useDrawer,
   useHostContext,
@@ -27,9 +28,9 @@ const StyledContainer = styled(Box, {
   marginLeft: 80,
   marginRight: 0,
   minHeight: 90,
-
   zIndex: theme.zIndex.drawer - 1,
   boxShadow: theme.shadows[1],
+  ...theme.mixins.header,
 
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
@@ -47,7 +48,7 @@ const StyledContainer = styled(Box, {
 
 const AppBar: React.FC = () => {
   const { isOpen } = useDrawer();
-  const { appBarButtonsRef, appBarExtraRef } = useHostContext();
+  const { appBarButtonsRef, appBarContentRef } = useHostContext();
   const navigate = useNavigate();
 
   return (
@@ -69,7 +70,7 @@ const AppBar: React.FC = () => {
           <LanguageMenu />
         </ButtonContainer>
       </Toolbar>
-      <ButtonContainer ref={appBarExtraRef} />
+      <AppBarContent />
     </StyledContainer>
   );
 };
