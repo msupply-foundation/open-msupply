@@ -17,7 +17,7 @@ table! {
 }
 
 table! {
-
+    #[sql_name = "name"]
     name_table (id) {
         id -> Text,
        name -> Text,
