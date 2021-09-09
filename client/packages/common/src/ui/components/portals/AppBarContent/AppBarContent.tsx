@@ -1,7 +1,7 @@
 import { Box, styled } from '@material-ui/system';
 import { Portal } from '@material-ui/core';
-import React, { FC } from 'react';
-import { useHostContext } from '../../../hooks';
+import React, { FC, useEffect, useRef } from 'react';
+import { useHostContext } from '../../../../hooks';
 
 // TODO: Create a function which creates the two below components?
 // createPortalPair(refName) => { Container, Portal }
@@ -17,13 +17,21 @@ const Container = styled('div')({
 // mounted at any one time as mounting this in multiple locations would cause
 // some pretty weird behaviour
 export const AppBarContent: FC = () => {
-  const { appBarContentRef } = useHostContext();
+  const { setAppBarContentRef } = useHostContext();
+  const ref = useRef(null);
 
-  return <Container ref={appBarContentRef} />;
+  useEffect(() => {
+    setAppBarContentRef(ref);
+    () => setAppBarContentRef(null);
+  }, []);
+
+  return <Container ref={ref} />;
 };
 
 export const AppBarContentPortal: FC = props => {
   const { appBarContentRef } = useHostContext();
+
+  if (!appBarContentRef) return null;
 
   return (
     <Portal container={appBarContentRef.current}>

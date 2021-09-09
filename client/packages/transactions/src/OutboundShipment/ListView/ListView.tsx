@@ -85,7 +85,7 @@ export const OutboundShipmentListView: FC = () => {
         />
       </AppBarContentPortal>
 
-      <Portal container={appBarButtonsRef.current}>
+      <Portal container={appBarButtonsRef?.current}>
         <>
           <Button
             icon={<PlusCircle />}
