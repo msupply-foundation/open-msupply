@@ -2,24 +2,24 @@ use crate::{
     database::repository::RepositoryError, server::data::RepositoryMap, util::settings::Settings,
 };
 
+mod central_sync_buffer;
 mod item;
 mod item_line;
 mod name;
 mod requisition;
 mod requisition_line;
 mod store;
-mod sync_buffer;
 mod transact;
 mod transact_line;
 mod user_account;
 
+pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use item::ItemRepository;
 pub use item_line::ItemLineRepository;
 pub use name::NameRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use store::StoreRepository;
-pub use sync_buffer::SyncBufferRepository;
 pub use transact::{CustomerInvoiceRepository, TransactRepository};
 pub use transact_line::TransactLineRepository;
 pub use user_account::UserAccountRepository;
@@ -93,7 +93,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(TransactRepository::new(pool.clone()));
     repositories.insert(TransactLineRepository::new(pool.clone()));
     repositories.insert(UserAccountRepository::new(pool.clone()));
-    repositories.insert(SyncBufferRepository::new(pool.clone()));
+    repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
 
     repositories
 }

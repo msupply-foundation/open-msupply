@@ -24,7 +24,7 @@ pub enum RepositoryError {
 pub mod repository;
 
 pub use repository::{
-    get_repositories, CustomerInvoiceRepository, ItemLineRepository, ItemRepository,
-    NameRepository, RequisitionLineRepository, RequisitionRepository, StoreRepository,
-    SyncBufferRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
+    get_repositories, CentralSyncBufferRepository, CustomerInvoiceRepository, ItemLineRepository,
+    ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
+    StoreRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
 };
