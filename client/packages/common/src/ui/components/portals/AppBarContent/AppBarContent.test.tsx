@@ -35,14 +35,17 @@ describe('AppBarContent', () => {
   });
 
   it('Portal children dismount if the portal dismounts', () => {
-    const { getByText, getByRole } = render(<TestAppBarContent initialShow />);
+    const { queryByText, getByRole } = render(
+      <TestAppBarContent initialShow />
+    );
 
-    const node = getByText(/josh/);
     const button = getByRole(/button/);
 
     act(() => {
       userEvent.click(button);
     });
+
+    const node = queryByText(/josh/);
 
     expect(node).not.toBeInTheDocument();
   });

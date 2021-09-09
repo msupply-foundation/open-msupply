@@ -22,7 +22,6 @@ export const AppBarContent: FC = () => {
 
   useEffect(() => {
     setAppBarContentRef(ref);
-    () => setAppBarContentRef(null);
   }, []);
 
   return <Container ref={ref} />;
