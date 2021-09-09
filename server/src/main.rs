@@ -1,9 +1,7 @@
 #![allow(where_clauses_object_safety)]
 
 use remote_server::{
-    database::{
-        loader::get_loaders, repository::get_repositories, repository::SyncBufferRepository,
-    },
+    database::{loader::get_loaders, repository::get_repositories},
     server::{
         data::{ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap, RepositoryRegistry},
         middleware::{compress as compress_middleware, logger as logger_middleware},
@@ -33,19 +31,17 @@ async fn main() -> std::io::Result<()> {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     let repositories: RepositoryMap = get_repositories(&settings).await;
-    let repository_registry = RepositoryRegistry { repositories };
-
     let loaders: LoaderMap = get_loaders(&settings).await;
-    let loader_registry = LoaderRegistry { loaders };
 
+    let sync_connection = SyncConnection::new(&settings.sync);
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
-        sync::get_sync_actors();
+        sync::get_sync_actors(sync_connection);
+
+    let repository_registry = RepositoryRegistry { repositories };
+    let loader_registry = LoaderRegistry { loaders };
     let actor_registry = ActorRegistry {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
-
-    let sync_connection = SyncConnection::new(&settings.sync);
-    let sync_buffer_repository = repository_registry.get::<SyncBufferRepository>().clone();
 
     let repository_registry_data = Data::new(repository_registry);
     let loader_registry_data = Data::new(loader_registry);
@@ -77,7 +73,7 @@ async fn main() -> std::io::Result<()> {
           sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
         } => unreachable!("Sync receiver unexpectedly died!?"),
         () = async {
-          sync_receiver.listen(&sync_connection, &sync_buffer_repository).await;
+          sync_receiver.listen().await;
         } => unreachable!("Sync scheduler unexpectedly died!?"),
     }
 }
