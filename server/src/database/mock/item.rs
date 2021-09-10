@@ -1,26 +1,23 @@
-use crate::database::schema::{ItemRow, ItemRowType};
+use crate::database::schema::ItemRow;
 
 pub fn mock_item_a() -> ItemRow {
     ItemRow {
         id: String::from("item_a"),
-        item_name: String::from("Item A"),
-        type_of: ItemRowType::General,
+        name: String::from("Item A"),
     }
 }
 
 pub fn mock_item_b() -> ItemRow {
     ItemRow {
         id: String::from("item_b"),
-        item_name: String::from("Item B"),
-        type_of: ItemRowType::General,
+        name: String::from("Item B"),
     }
 }
 
 pub fn mock_item_c() -> ItemRow {
     ItemRow {
         id: String::from("item_c"),
-        item_name: String::from("Item C"),
-        type_of: ItemRowType::General,
+        name: String::from("Item C"),
     }
 }
 

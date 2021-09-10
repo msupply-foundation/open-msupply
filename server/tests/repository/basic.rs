@@ -1,25 +1,21 @@
 #[cfg(test)]
 mod repository_basic_test {
 
-    use remote_server::{
-        database::{
-            repository::{
-                repository::get_repositories, CentralSyncBufferRepository,
-                CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
-                RequisitionLineRepository, RequisitionRepository, StoreRepository,
-                TransactLineRepository, TransactRepository, UserAccountRepository,
-            },
-            schema::{
-                diesel_schema::central_sync_buffer, CentralSyncBufferRow, ItemLineRow, ItemRow,
-                ItemRowType, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-                StoreRow, TransactLineRow, TransactLineRowType, TransactRow, TransactRowType,
-                UserAccountRow,
-            },
+    use remote_server::database::{
+        repository::{
+            repository::get_repositories, CentralSyncBufferRepository, CustomerInvoiceRepository,
+            ItemLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
+            RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            UserAccountRepository,
         },
-        util::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings},
+        schema::{
+            diesel_schema::central_sync_buffer, CentralSyncBufferRow, ItemLineRow, ItemRow,
+            NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow,
+            TransactLineRow, TransactLineRowType, TransactRow, TransactRowType, UserAccountRow,
+        },
     };
 
-    use crate::repository::test_db;
+    use remote_server::util::test_db;
 
     async fn requisition_test(repo: &RequisitionRepository) {
         let item1 = RequisitionRow {
@@ -86,8 +82,7 @@ mod repository_basic_test {
     async fn item_test(repo: &ItemRepository) {
         let item1 = ItemRow {
             id: "item1".to_string(),
-            item_name: "item-1".to_string(),
-            type_of: ItemRowType::General,
+            name: "item-1".to_string(),
         };
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
@@ -95,8 +90,7 @@ mod repository_basic_test {
 
         let item2 = ItemRow {
             id: "item2".to_string(),
-            item_name: "item-2".to_string(),
-            type_of: ItemRowType::Service,
+            name: "item-2".to_string(),
         };
         repo.insert_one(&item2).await.unwrap();
         let all_items = repo.find_all().await.unwrap();
@@ -280,32 +274,9 @@ mod repository_basic_test {
         assert!(result.is_err());
     }
 
-    #[tokio::test]
+    #[actix_rt::test]
     async fn simple_repository_tests() {
-        let db_name = "omsupply-database-simple-repository-test";
-        // The following settings work for PG and Sqlite (username, password, host and port are
-        // ignored for the later)
-        let settings = Settings {
-            server: ServerSettings {
-                host: "localhost".to_string(),
-                port: 5432,
-            },
-            database: DatabaseSettings {
-                username: "postgres".to_string(),
-                password: "password".to_string(),
-                port: 5432,
-                host: "localhost".to_string(),
-                database_name: db_name.to_owned(),
-            },
-            sync: SyncSettings {
-                username: "postgres".to_string(),
-                password: "password".to_string(),
-                port: 5432,
-                host: "localhost".to_string(),
-                interval: 100000000,
-            },
-        };
-
+        let settings = test_db::get_test_settings("omsupply-database-simple-repository-test");
         // Initialise a new test database.
         test_db::setup(&settings.database).await;
         let repos = get_repositories(&settings).await;

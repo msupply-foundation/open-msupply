@@ -1,8 +1,7 @@
 table! {
     item (id) {
         id -> Text,
-        item_name -> Text,
-        type_of -> crate::database::schema::item::ItemRowTypeMapping,
+        name -> Text,
     }
 }
 
@@ -17,10 +16,10 @@ table! {
 }
 
 table! {
-
+    #[sql_name = "name"]
     name_table (id) {
         id -> Text,
-       name -> Text,
+        name -> Text,
     }
 }
 

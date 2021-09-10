@@ -27,7 +27,8 @@ pub enum DatabaseRow {
 }
 
 pub use central_sync_buffer::CentralSyncBufferRow;
-pub use item::{ItemRow, ItemRowType};
+
+pub use item::ItemRow;
 pub use item_line::ItemLineRow;
 pub use name::NameRow;
 pub use requisition::{RequisitionRow, RequisitionRowType};
