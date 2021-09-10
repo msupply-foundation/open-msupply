@@ -8,6 +8,7 @@ mod name;
 mod requisition;
 mod requisition_line;
 mod store;
+mod sync;
 mod transact;
 mod transact_line;
 mod user_account;
@@ -18,6 +19,7 @@ pub use name::NameRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use store::StoreRepository;
+pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
 pub use transact::{CustomerInvoiceRepository, TransactRepository};
 pub use transact_line::TransactLineRepository;
 pub use user_account::UserAccountRepository;
@@ -31,8 +33,10 @@ use diesel::{
 #[cfg(feature = "sqlite")]
 type DBBackendConnection = SqliteConnection;
 
-#[cfg(feature = "postgres")]
+#[cfg(not(feature = "sqlite"))]
 type DBBackendConnection = PgConnection;
+
+pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>;
 
 impl From<DieselError> for RepositoryError {
     fn from(err: DieselError) -> Self {
@@ -91,6 +95,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(TransactRepository::new(pool.clone()));
     repositories.insert(TransactLineRepository::new(pool.clone()));
     repositories.insert(UserAccountRepository::new(pool.clone()));
+    repositories.insert(SyncRepository::new(pool.clone()));
 
     repositories
 }

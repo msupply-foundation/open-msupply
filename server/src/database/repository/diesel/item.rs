@@ -1,4 +1,4 @@
-use super::DBBackendConnection;
+use super::{DBBackendConnection, DBConnection};
 
 use crate::database::{
     repository::{repository::get_connection, RepositoryError},
@@ -20,13 +20,48 @@ impl ItemRepository {
         ItemRepository { pool }
     }
 
-    pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one_tx(
+        connection: &DBConnection,
+        item_row: &ItemRow,
+    ) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::item::dsl::*;
-        let connection = get_connection(&self.pool)?;
+
         diesel::insert_into(item)
             .values(item_row)
-            .execute(&connection)?;
+            .on_conflict(id)
+            .do_update()
+            .set(item_row)
+            .execute(connection)?;
         Ok(())
+    }
+
+    #[cfg(feature = "sqlite")]
+    pub fn upsert_one_tx(
+        connection: &DBConnection,
+        item_row: &ItemRow,
+    ) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::item::dsl::*;
+        diesel::replace_into(item)
+            .values(item_row)
+            .execute(connection)?;
+        Ok(())
+    }
+
+    pub fn insert_one_tx(
+        connection: &DBConnection,
+        item_row: &ItemRow,
+    ) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::item::dsl::*;
+        diesel::insert_into(item)
+            .values(item_row)
+            .execute(connection)?;
+        Ok(())
+    }
+
+    pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        ItemRepository::insert_one_tx(&connection, item_row)
     }
 
     pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {

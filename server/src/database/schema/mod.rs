@@ -1,4 +1,4 @@
-mod item;
+pub(crate) mod item;
 mod item_line;
 mod name;
 mod requisition;
@@ -25,7 +25,7 @@ pub enum DatabaseRow {
     SyncOut(SyncOutRow),
 }
 
-pub use item::{ItemRow, ItemRowType};
+pub use item::ItemRow;
 pub use item_line::ItemLineRow;
 pub use name::NameRow;
 pub use requisition::{RequisitionRow, RequisitionRowType};
