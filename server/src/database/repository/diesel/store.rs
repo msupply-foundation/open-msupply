@@ -1,14 +1,19 @@
-use super::DBBackendConnection;
+use super::{DBBackendConnection, DBConnection};
 
 use crate::database::{
     repository::{repository::get_connection, RepositoryError},
-    schema::StoreRow,
+    schema::{NameRow, StoreRow},
 };
 
 use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool},
 };
+
+pub struct Store {
+    pub id: String,
+    pub name: NameRow,
+}
 
 #[derive(Clone)]
 pub struct StoreRepository {
@@ -20,6 +25,27 @@ impl StoreRepository {
         StoreRepository { pool }
     }
 
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one_tx(connection: &DBConnection, row: &StoreRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::store::dsl::*;
+        diesel::insert_into(store)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "sqlite")]
+    pub fn upsert_one_tx(connection: &DBConnection, row: &StoreRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::store::dsl::*;
+        diesel::replace_into(store)
+            .values(row)
+            .execute(connection)?;
+        Ok(())
+    }
+
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::store::dsl::*;
         let connection = get_connection(&self.pool)?;
@@ -27,6 +53,22 @@ impl StoreRepository {
             .values(store_row)
             .execute(&connection)?;
         Ok(())
+    }
+
+    pub async fn find_one_by_id_joined(&self, store_id: &str) -> Result<Store, RepositoryError> {
+        use crate::database::schema::diesel_schema::{
+            name_table::dsl::name_table,
+            store::dsl::{id, store},
+        };
+        let connection = get_connection(&self.pool)?;
+        let result: (StoreRow, NameRow) = store
+            .inner_join(name_table)
+            .filter(id.eq(store_id))
+            .first(&connection)?;
+        Ok(Store {
+            id: result.0.id,
+            name: result.1,
+        })
     }
 
     pub async fn find_one_by_id(&self, store_id: &str) -> Result<StoreRow, RepositoryError> {

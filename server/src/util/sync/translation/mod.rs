@@ -1,5 +1,6 @@
 mod item;
 mod name;
+mod store;
 
 use crate::{
     database::repository::{
@@ -8,7 +9,7 @@ use crate::{
     server::data::RepositoryRegistry,
 };
 
-use self::{item::LegacyItemRow, name::LegacyNameTable};
+use self::{item::LegacyItemRow, name::LegacyNameRow, store::LegacyStoreRow};
 
 #[derive(Debug)]
 pub enum SyncType {
@@ -30,7 +31,7 @@ fn do_translation(
     sync_record: &SyncRecord,
     integration_records: &mut IntegrationRecord,
 ) -> Result<(), String> {
-    if let Some(row) = LegacyNameTable::try_translate(sync_record)? {
+    if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::Name(row));
@@ -41,6 +42,18 @@ fn do_translation(
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::Item(row));
+
+        return Ok(());
+    }
+    if let Some(row) = LegacyStoreRow::try_translate(sync_record)? {
+        // TODO: move this check up when fetching/validating/reordering the sync records?
+        // ignore stores without name
+        if row.name_id == "" {
+            return Ok(());
+        }
+        integration_records
+            .upserts
+            .push(IntegrationUpsertRecord::Store(row));
 
         return Ok(());
     }

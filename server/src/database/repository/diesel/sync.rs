@@ -1,8 +1,8 @@
-use super::{get_connection, DBBackendConnection, ItemRepository, NameRepository};
+use super::{get_connection, DBBackendConnection, ItemRepository, NameRepository, StoreRepository};
 
 use crate::database::{
     repository::RepositoryError,
-    schema::{ItemRow, NameRow},
+    schema::{ItemRow, NameRow, StoreRow},
 };
 
 use diesel::{
@@ -13,6 +13,7 @@ use diesel::{
 pub enum IntegrationUpsertRecord {
     Name(NameRow),
     Item(ItemRow),
+    Store(StoreRow),
 }
 
 pub struct IntegrationRecord {
@@ -42,6 +43,9 @@ impl SyncRepository {
                     }
                     IntegrationUpsertRecord::Item(record) => {
                         ItemRepository::upsert_one_tx(&connection, record)?
+                    }
+                    IntegrationUpsertRecord::Store(record) => {
+                        StoreRepository::upsert_one_tx(&connection, record)?
                     }
                 }
             }
