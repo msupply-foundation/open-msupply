@@ -4,14 +4,16 @@ mod repository_basic_test {
     use remote_server::{
         database::{
             repository::{
-                repository::get_repositories, CustomerInvoiceRepository, ItemLineRepository,
-                ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
-                StoreRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
+                repository::get_repositories, CentralSyncBufferRepository,
+                CustomerInvoiceRepository, ItemLineRepository, ItemRepository, NameRepository,
+                RequisitionLineRepository, RequisitionRepository, StoreRepository,
+                TransactLineRepository, TransactRepository, UserAccountRepository,
             },
             schema::{
-                ItemLineRow, ItemRow, ItemRowType, NameRow, RequisitionLineRow, RequisitionRow,
-                RequisitionRowType, StoreRow, TransactLineRow, TransactLineRowType, TransactRow,
-                TransactRowType, UserAccountRow,
+                diesel_schema::central_sync_buffer, CentralSyncBufferRow, ItemLineRow, ItemRow,
+                ItemRowType, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+                StoreRow, TransactLineRow, TransactLineRowType, TransactRow, TransactRowType,
+                UserAccountRow,
             },
         },
         util::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings},
@@ -243,6 +245,41 @@ mod repository_basic_test {
         assert_eq!(item2, loaded_item);
     }
 
+    async fn central_sync_buffer_test(repo: &CentralSyncBufferRepository) {
+        let central_sync_buffer_row_a = CentralSyncBufferRow {
+            id: "1".to_string(),
+            cursor_id: 1,
+            table_name: "store".to_string(),
+            record_id: "store_a".to_string(),
+            data: "{ \"ID\": \"store_a\" }".to_string(),
+        };
+
+        let central_sync_buffer_row_b = CentralSyncBufferRow {
+            id: "2".to_string(),
+            cursor_id: 2,
+            table_name: "store".to_string(),
+            record_id: "store_b".to_string(),
+            data: "{ \"ID\": \"store_b\" }".to_string(),
+        };
+
+        let central_sync_buffer_records = vec![
+            central_sync_buffer_row_a.clone(),
+            central_sync_buffer_row_b.clone(),
+        ];
+
+        // `insert_many` inserts valid sync buffer rows.
+        // `pop` returns buffered records in FIFO order.
+        repo.insert_many(&central_sync_buffer_records);
+        let result = repo.pop_one().await.unwrap();
+        assert_eq!(central_sync_buffer_row_a, result);
+
+        // `remove_all` removes all buffered records.
+        repo.insert_many(&central_sync_buffer_records);
+        repo.remove_all().await.unwrap();
+        let result = repo.pop_one().await;
+        assert!(result.is_err());
+    }
+
     #[tokio::test]
     async fn simple_repository_tests() {
         let db_name = "omsupply-database-simple-repository-test";
@@ -288,5 +325,6 @@ mod repository_basic_test {
         .await;
         transact_line_test(repos.get::<TransactLineRepository>().unwrap()).await;
         user_account_test(repos.get::<UserAccountRepository>().unwrap()).await;
+        central_sync_buffer_test(repos.get::<CentralSyncBufferRepository>().unwrap()).await;
     }
 }
