@@ -1,15 +1,10 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta, Story } from '@storybook/react';
-
+import { ComponentMeta, Story } from '@storybook/react';
 import { Dropdown, DropdownItem } from './Dropdown';
-import { Box, styled } from '@material-ui/system';
 
 export default {
   title: 'Inputs/Dropdown',
   component: Dropdown,
-  argTypes: {
-    backgroundColor: { control: 'color' },
-  },
 } as ComponentMeta<typeof Dropdown>;
 
 const options = [
@@ -46,29 +41,39 @@ const options = [
   { value: 'usa', label: 'United States of America' },
 ];
 
-const Container = styled('div')({
-  display: 'flex',
-  flex: 1,
-  justifyContent: 'flex-end',
-});
+const clickOptions = [
+  { label: 'One', onClick: () => console.log('one') },
+  { label: 'Two', onClick: () => console.log('two') },
+  { label: 'Three', onClick: () => console.log('three') },
+];
 
 const Template: Story<{
-  options: { label: string; value: string }[];
+  options: { label: string; value?: string; onClick?: () => void }[];
   placeholder: string;
 }> = args => (
-  <Container>
-    <Dropdown label={args.placeholder} value="">
-      {args.options.map(({ label, value }) => (
-        <DropdownItem key={label} value={value}>
-          {label}
-        </DropdownItem>
-      ))}
-    </Dropdown>
-  </Container>
+  <Dropdown label={args.placeholder}>
+    {args.options.map(({ label, value, onClick }) => (
+      <DropdownItem key={label} value={value} onClick={onClick}>
+        {label}
+      </DropdownItem>
+    ))}
+  </Dropdown>
 );
 
-export const Primary = Template.bind({});
-Primary.args = {
+export const Simple = Template.bind({});
+Simple.args = {
   options: options.slice(0, 5),
+  placeholder: 'Select a country!',
+};
+
+export const LargeList = Template.bind({});
+LargeList.args = {
+  options: options,
+  placeholder: 'Select a country!',
+};
+
+export const OnClick = Template.bind({});
+OnClick.args = {
+  options: clickOptions,
   placeholder: 'Select a country!',
 };

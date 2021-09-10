@@ -3,8 +3,6 @@ import React, { FC } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import {
-  Dropdown,
-  DropdownItem,
   request,
   Transaction,
   useQueryClient,
@@ -77,11 +75,6 @@ export const OutboundShipmentDetailView: FC = () => {
 
   return draft ? (
     <>
-      <Dropdown label="Select" value="">
-        <DropdownItem onClick={() => console.log('ten!')}>Ten</DropdownItem>
-        <DropdownItem value={() => console.log('twenty!')}>Twenty</DropdownItem>
-      </Dropdown>
-
       <div>
         <input
           value={draft?.customer}
