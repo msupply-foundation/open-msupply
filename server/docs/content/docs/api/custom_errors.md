@@ -58,6 +58,6 @@ interface FirstError extends CustomError {
 ```TypeScript
 interface RecordNotFoundError extends CustomError {
   code: CustomErrorCodes.RecordNotFound,
-  recordId: string,
+  specifiedField: string,
 }
 ```
