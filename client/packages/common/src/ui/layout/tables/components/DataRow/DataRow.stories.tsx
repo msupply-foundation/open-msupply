@@ -4,7 +4,7 @@ import { TableBody, Table } from '@material-ui/core';
 import { DataRow } from './DataRow';
 
 export default {
-  title: 'Components/Table/DataRow',
+  title: 'Table/DataRow',
   component: DataRow,
   argTypes: {
     backgroundColor: { control: 'color' },
@@ -47,6 +47,9 @@ const Template: Story = ({ onClick }) => (
 );
 
 export const Basic = Template.bind({});
+Basic.args = {
+  onClick: null,
+};
 
 export const WithRowClick = Template.bind({});
 WithRowClick.args = {
