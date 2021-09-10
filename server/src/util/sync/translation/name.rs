@@ -127,54 +127,25 @@ impl LegacyNameRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        database::repository::{repository::get_repositories, NameRepository},
-        server::data::RepositoryRegistry,
-        util::{
-            sync::translation::{import_sync_records, SyncRecord, SyncType},
-            test_db,
-        },
+    use crate::util::sync::translation::{
+        name::LegacyNameRow,
+        test_data::{name::get_test_name_records, TestSyncDataRecord},
     };
 
-    #[actix_rt::test]
-    async fn test_name_translation() {
-        let settings = test_db::get_test_settings("omsupply-database-name-translation");
-        test_db::setup(&settings.database).await;
-        let repositories = get_repositories(&settings).await;
-        let registry = RepositoryRegistry { repositories };
-        let name_repo = registry.get::<NameRepository>();
-
-        let record = SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: "name".to_string(),
-            data: r#"
-            {"ID":"CB929EB86530455AB0392277FAC3DBA4","name":"Birch Store","fax":"","phone":"","customer":true,"bill_address1":"234 Evil Street","bill_address2":"Scotland","supplier":false,"charge code":"SNA","margin":0,"comment":"","currency_ID":"8009D512AC0E4FD78625E3C8273B0171","country":"","freightfac":1,"email":"","custom1":"","code":"SNA","last":"","first":"","title":"","female":false,"date_of_birth":"0000-00-00","overpayment":0,"group_ID":"","hold":false,"ship_address1":"","ship_address2":"","url":"","barcode":"*SNA*","postal_address1":"","postal_address2":"","category1_ID":"","region_ID":"","type":"facility","price_category":"A","flag":"","manufacturer":false,"print_invoice_alphabetical":false,"custom2":"","custom3":"","default_order_days":0,"connection_type":0,"PATIENT_PHOTO":"[object Picture]","NEXT_OF_KIN_ID":"","POBOX":"","ZIP":0,"middle":"","preferred":false,"Blood_Group":"","marital_status":"","Benchmark":false,"next_of_kin_relative":"","mother_id":"","postal_address3":"","postal_address4":"","bill_address3":"","bill_address4":"","ship_address3":"","ship_address4":"","ethnicity_ID":"","occupation_ID":"","religion_ID":"","national_health_number":"","Master_RTM_Supplier_Code":0,"ordering_method":"sh","donor":false,"latitude":0,"longitude":0,"Master_RTM_Supplier_name":"","category2_ID":"","category3_ID":"","category4_ID":"","category5_ID":"","category6_ID":"","bill_address5":"","bill_postal_zip_code":"","postal_address5":"","postal_zip_code":"","ship_address5":"","ship_postal_zip_code":"","supplying_store_id":"D77F67339BF8400886D009178F4962E1","license_number":"","license_expiry":"0000-00-00","has_current_license":false,"custom_data":null,"maximum_credit":0,"nationality_ID":"","created_date":"0000-00-00"}
-            "#.to_string(),
-        };
-        let records = vec![record];
-        import_sync_records(&registry, &records).await.unwrap();
-        let entry = name_repo
-            .find_one_by_id("CB929EB86530455AB0392277FAC3DBA4")
-            .await
-            .unwrap();
-
-        assert_eq!(entry.name, "Birch Store");
-
-        // should be able to upsert
-        let record = SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: "name".to_string(),
-            data: r#"
-            {"ID":"CB929EB86530455AB0392277FAC3DBA4","name":"Birch Store 2","fax":"","phone":"","customer":true,"bill_address1":"234 Evil Street","bill_address2":"Scotland","supplier":false,"charge code":"SNA","margin":0,"comment":"","currency_ID":"8009D512AC0E4FD78625E3C8273B0171","country":"","freightfac":1,"email":"","custom1":"","code":"SNA","last":"","first":"","title":"","female":false,"date_of_birth":"0000-00-00","overpayment":0,"group_ID":"","hold":false,"ship_address1":"","ship_address2":"","url":"","barcode":"*SNA*","postal_address1":"","postal_address2":"","category1_ID":"","region_ID":"","type":"facility","price_category":"A","flag":"","manufacturer":false,"print_invoice_alphabetical":false,"custom2":"","custom3":"","default_order_days":0,"connection_type":0,"PATIENT_PHOTO":"[object Picture]","NEXT_OF_KIN_ID":"","POBOX":"","ZIP":0,"middle":"","preferred":false,"Blood_Group":"","marital_status":"","Benchmark":false,"next_of_kin_relative":"","mother_id":"","postal_address3":"","postal_address4":"","bill_address3":"","bill_address4":"","ship_address3":"","ship_address4":"","ethnicity_ID":"","occupation_ID":"","religion_ID":"","national_health_number":"","Master_RTM_Supplier_Code":0,"ordering_method":"sh","donor":false,"latitude":0,"longitude":0,"Master_RTM_Supplier_name":"","category2_ID":"","category3_ID":"","category4_ID":"","category5_ID":"","category6_ID":"","bill_address5":"","bill_postal_zip_code":"","postal_address5":"","postal_zip_code":"","ship_address5":"","ship_postal_zip_code":"","supplying_store_id":"D77F67339BF8400886D009178F4962E1","license_number":"","license_expiry":"0000-00-00","has_current_license":false,"custom_data":null,"maximum_credit":0,"nationality_ID":"","created_date":"0000-00-00"}
-            "#.to_string(),
-        };
-        let records = vec![record];
-        import_sync_records(&registry, &records).await.unwrap();
-        let entry = name_repo
-            .find_one_by_id("CB929EB86530455AB0392277FAC3DBA4")
-            .await
-            .unwrap();
-
-        assert_eq!(entry.name, "Birch Store 2");
+    #[test]
+    fn test_name_translation() {
+        for record in get_test_name_records() {
+            match record.translated_record {
+                TestSyncDataRecord::Name(translated_record) => {
+                    assert_eq!(
+                        LegacyNameRow::try_translate(&record.sync_record).unwrap(),
+                        translated_record,
+                        "{}",
+                        record.identifier
+                    )
+                }
+                _ => panic!("Testing wrong record type {:#?}", record.translated_record),
+            }
+        }
     }
 }
