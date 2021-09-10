@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
+  useQueryClient,
   Portal,
   request,
   Button,
@@ -23,10 +24,17 @@ import {
   Dropdown,
   DropdownItem,
   AppBarContentPortal,
+  useTranslation,
+  useMutation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { getListQuery } from '../../api';
-import { Checkbox } from '@material-ui/core';
+import { getDeleteMutation, getListQuery } from '../../api';
+
+const deleteFn = async (transactions: Transaction[]) => {
+  await request(Environment.API_URL, getDeleteMutation(), {
+    transactions,
+  });
+};
 
 const queryFn = async (
   queryParams: QueryProps<Transaction>
@@ -56,6 +64,12 @@ export const OutboundShipmentListView: FC = () => {
     () => queryFn(queryProps)
   );
 
+  const queryClient = useQueryClient();
+
+  const { isLoading: mutationLoading, mutateAsync } = useMutation(deleteFn, {
+    onSuccess: () => queryClient.invalidateQueries(['transaction']),
+  });
+
   const navigate = useNavigate();
   const columns = useColumns<Transaction>([
     { label: 'label.id', key: 'id', sortable: false },
@@ -71,22 +85,21 @@ export const OutboundShipmentListView: FC = () => {
   ];
 
   const tableApi = useDataTableApi<Transaction>();
+  const t = useTranslation();
 
   return (
     <>
       <AppBarContentPortal>
         <Dropdown label="Select">
-          <DropdownItem onClick={() => console.log('one')}>one</DropdownItem>
-          <DropdownItem onClick={() => console.log('two')}>two</DropdownItem>
-          <DropdownItem onClick={() => console.log('three')}>
-            three
+          <DropdownItem
+            onClick={() =>
+              tableApi?.current?.selectedRows &&
+              mutateAsync(tableApi?.current?.selectedRows)
+            }
+          >
+            {t('button.delete-lines')}
           </DropdownItem>
         </Dropdown>
-        <Checkbox
-          size="small"
-          color="secondary"
-          onClick={tableApi.current?.toggleSelectAllRows}
-        />
       </AppBarContentPortal>
 
       <Portal container={appBarButtonsRef?.current}>
@@ -118,7 +131,7 @@ export const OutboundShipmentListView: FC = () => {
         columns={columns}
         data={response?.data || []}
         initialSortBy={initialSortBy}
-        isLoading={isLoading}
+        isLoading={isLoading || mutationLoading}
         onFetchData={setQueryProps}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);

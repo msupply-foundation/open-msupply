@@ -24,6 +24,14 @@ export const getMutation = (): string => gql`
   }
 `;
 
+export const getDeleteMutation = (): string => gql`
+  mutation deleteTransactions($transactions: [TransactionPatch]) {
+    deleteTransactions(transactions: $transactions) {
+      id
+    }
+  }
+`;
+
 export const getListQuery = (): string => gql`
   query transactions($first: Int, $offset: Int, $sort: String, $desc: Boolean) {
     transactions(first: $first, offset: $offset, sort: $sort, desc: $desc) {
