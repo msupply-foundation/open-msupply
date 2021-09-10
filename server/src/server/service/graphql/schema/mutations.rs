@@ -3,7 +3,7 @@ use crate::database::repository::{
 };
 use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
 use crate::server::service::graphql::schema::types::{
-    InputRequisitionLine, Item, ItemType, Requisition, RequisitionType,
+    InputRequisitionLine, Item, Requisition, RequisitionType,
 };
 use crate::server::service::graphql::ContextExt;
 
@@ -17,14 +17,9 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "id of the item")] id: String,
-        #[graphql(desc = "name of the item")] item_name: String,
-        #[graphql(desc = "type of the item")] type_of: ItemType,
+        #[graphql(desc = "name of the item")] name: String,
     ) -> Item {
-        let item_row = ItemRow {
-            id,
-            item_name,
-            type_of: type_of.into(),
-        };
+        let item_row = ItemRow { id, name };
 
         let item_repository = ctx.get_repository::<ItemRepository>();
 
