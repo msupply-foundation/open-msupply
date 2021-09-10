@@ -20,13 +20,13 @@ import {
   QueryProps,
   useDataTableApi,
   GenericColumnType,
+  Dropdown,
   DropdownItem,
   AppBarContentPortal,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { getListQuery } from '../../api';
 import { Checkbox } from '@material-ui/core';
-import { ActionDropdown } from '@openmsupply-client/common/src/ui/components/inputs/Dropdown/Dropdown';
 
 const queryFn = async (
   queryParams: QueryProps<Transaction>
@@ -75,17 +75,13 @@ export const OutboundShipmentListView: FC = () => {
   return (
     <>
       <AppBarContentPortal>
-        <ActionDropdown
-          label="Select"
-          actions={[
-            {
-              label: 'oneoneoneoneoneoneoneone',
-              callback: () => console.log('one'),
-            },
-            { label: 'two', callback: () => console.log('two') },
-            { label: 'three', callback: () => console.log('three') },
-          ]}
-        />
+        <Dropdown label="Select">
+          <DropdownItem onClick={() => console.log('one')}>one</DropdownItem>
+          <DropdownItem onClick={() => console.log('two')}>two</DropdownItem>
+          <DropdownItem onClick={() => console.log('three')}>
+            three
+          </DropdownItem>
+        </Dropdown>
         <Checkbox
           size="small"
           color="secondary"
