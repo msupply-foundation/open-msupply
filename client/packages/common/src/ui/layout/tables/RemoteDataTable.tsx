@@ -8,6 +8,7 @@ import {
   useRowSelect,
   useSortBy,
   useTable,
+  Row,
 } from 'react-table';
 
 import {
@@ -29,6 +30,7 @@ import { SortAsc, SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';
 import { TableProps } from './types';
 import { useSetupDataTableApi } from './hooks/useDataTableApi';
+import { DataRow } from './components/DataRow/DataRow';
 
 export { SortingRule };
 
@@ -53,7 +55,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
   const pageCount = Math.ceil(totalLength / pageSize);
-  const hasRowClick = !!onRowClick;
   const tableInstance = useTable(
     {
       columns,
@@ -138,31 +139,22 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
           ))}
         </TableHead>
         <TableBody {...getTableBodyProps()}>
-          {rows.map(row => {
+          {rows.map((row: Row<T>) => {
             prepareRow(row);
+
+            const { cells, values } = row;
+            const { key } = row.getRowProps();
+
             return (
-              <TableRow
-                {...row.getRowProps()}
-                onClick={() => onRowClick && onRowClick(row)}
-                hover={hasRowClick}
-              >
-                {row.cells.map(cell => {
-                  return (
-                    <TableCell
-                      {...cell.getCellProps()}
-                      sx={{
-                        padding: 0,
-                        paddingLeft: '16px',
-                        ...(hasRowClick && { cursor: 'pointer' }),
-                      }}
-                    >
-                      {cell.render('Cell')}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
+              <DataRow<T>
+                cells={cells}
+                values={values as T}
+                key={key}
+                onClick={onRowClick}
+              />
             );
           })}
+
           <TableRow>
             <TablePagination
               page={pageIndex}
