@@ -29,7 +29,9 @@ import { Environment } from '@openmsupply-client/config';
 import { getListQuery } from '../../api';
 import { Checkbox } from '@material-ui/core';
 
-const queryFn = async (queryParams: QueryProps<Transaction>) => {
+const queryFn = async (
+  queryParams: QueryProps<Transaction>
+): Promise<{ data: Transaction[]; totalLength: number }> => {
   const { first, offset, sortBy } = queryParams;
 
   const { transactions } = await request(Environment.API_URL, getListQuery(), {
