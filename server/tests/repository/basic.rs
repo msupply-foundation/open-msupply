@@ -9,9 +9,9 @@ mod repository_basic_test {
             UserAccountRepository,
         },
         schema::{
-            diesel_schema::central_sync_buffer, CentralSyncBufferRow, ItemLineRow, ItemRow,
-            NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow,
-            TransactLineRow, TransactLineRowType, TransactRow, TransactRowType, UserAccountRow,
+            CentralSyncBufferRow, ItemLineRow, ItemRow, NameRow, RequisitionLineRow,
+            RequisitionRow, RequisitionRowType, StoreRow, TransactLineRow, TransactLineRowType,
+            TransactRow, TransactRowType, UserAccountRow,
         },
     };
 
@@ -263,12 +263,13 @@ mod repository_basic_test {
 
         // `insert_many` inserts valid sync buffer rows.
         // `pop` returns buffered records in FIFO order.
-        repo.insert_many(&central_sync_buffer_records);
+        repo.insert_many(&central_sync_buffer_records)
+            .await
+            .unwrap();
         let result = repo.pop_one().await.unwrap();
         assert_eq!(central_sync_buffer_row_a, result);
 
         // `remove_all` removes all buffered records.
-        repo.insert_many(&central_sync_buffer_records);
         repo.remove_all().await.unwrap();
         let result = repo.pop_one().await;
         assert!(result.is_err());
