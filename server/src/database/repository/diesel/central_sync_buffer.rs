@@ -28,7 +28,7 @@ impl CentralSyncBufferRepository {
         let connection = get_connection(&self.pool)?;
         diesel::insert_into(central_sync_buffer)
             .values(central_sync_buffer_rows)
-            .execute(&connection)?;
+            .execute(&*connection)?;
         Ok(())
     }
 
