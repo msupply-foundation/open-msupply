@@ -9,3 +9,6 @@
 
 # zola dev docs
 /docs/public
+
+# test databases
+*.sqlite
