@@ -71,6 +71,15 @@ const TransactionQueryResolvers = {
 };
 
 const TransactionMutationResolvers = {
+  deleteTransactions: (_, { transactions }) => {
+    transactions.forEach(({ id: deleteId }) => {
+      const idx = TransactionData.findIndex(({ id }) => deleteId === id);
+      TransactionData.splice(idx, 1);
+    });
+
+    return transactions;
+  },
+
   upsertTransaction: (_, { transaction: { id: filterId, ...patch } }) => {
     if (!filterId) {
       const newId = String(TransactionData.length);
@@ -105,6 +114,7 @@ const TransactionMutations = `
     upsertTransaction(transaction: TransactionPatch): Transaction
     addTransaction(transaction: TransactionPatch): Transaction
     deleteTransaction(transaction: TransactionPatch): Transaction
+    deleteTransactions(transactions: [TransactionPatch]): [Transaction]
 `;
 
 const TransactionInput = `
