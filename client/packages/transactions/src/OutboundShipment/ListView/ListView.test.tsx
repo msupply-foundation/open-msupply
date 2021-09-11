@@ -27,7 +27,7 @@ describe('OutboundShipmentListView', () => {
     });
   });
 
-  it('Selects all rows when the select all checkbox is checked', async () => {
+  it('Selects all rows when the select all checkbox is checked and deletes them after clicking delete all selected rows', async () => {
     const { getAllByRole, getByRole, getByText, queryAllByRole } = render(
       <TestingProvider>
         <TestingRouter initialEntries={['/customers/customer-invoice']}>
