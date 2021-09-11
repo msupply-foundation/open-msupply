@@ -57,7 +57,7 @@ const StyledSelect = styled(Select)(({ theme }) => ({
 
   [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]:
     {
-      borderColor: theme.palette['darkGrey'],
+      borderColor: theme.palette.darkGrey,
     },
 }));
 
