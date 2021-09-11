@@ -85,7 +85,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Suppliers {...args} />, name: 'Suppliers' },
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
-    { icon: <Circle {...args} />, name: 'Circle' },
+    { icon: <Circle htmlColor="#e95c30" {...args} />, name: 'Circle' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
