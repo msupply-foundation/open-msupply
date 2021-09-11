@@ -40,6 +40,5 @@ uuid = { version = "0.8", features = ["v4"] }
 httpmock = "0.6"
 
 [features]
-mock = []
 postgres = []
 sqlite = []
