@@ -118,6 +118,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                     sx={{
                       backgroundColor: 'transparent',
                     }}
+                    aria-label={column.id}
                     sortDirection={
                       column.isSorted
                         ? column.isSortedDesc
