@@ -245,7 +245,7 @@ mod repository_basic_test {
             cursor_id: 1,
             table_name: "store".to_string(),
             record_id: "store_a".to_string(),
-            data: "{ \"ID\": \"store_a\" }".to_string(),
+            data: r#"{ "ID": "store_a" }"#.to_string(),
         };
 
         let central_sync_buffer_row_b = CentralSyncBufferRow {
@@ -253,7 +253,7 @@ mod repository_basic_test {
             cursor_id: 2,
             table_name: "store".to_string(),
             record_id: "store_b".to_string(),
-            data: "{ \"ID\": \"store_b\" }".to_string(),
+            data: r#"{ "ID": "store_b" }"#.to_string(),
         };
 
         let central_sync_buffer_records = vec![
