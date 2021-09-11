@@ -90,6 +90,16 @@ table! {
     }
 }
 
+table! {
+    central_sync_buffer (id) {
+        id -> Text,
+        cursor_id -> Integer,
+        table_name -> Text,
+        record_id -> Text,
+        data -> Text,
+    }
+}
+
 joinable!(item_line -> item (item_id));
 joinable!(item_line -> store (store_id));
 joinable!(requisition -> name_table (name_id));
@@ -111,6 +121,7 @@ allow_tables_to_appear_in_same_query!(
     requisition,
     requisition_line,
     store,
+    central_sync_buffer,
     sync_out,
     transact,
     transact_line,

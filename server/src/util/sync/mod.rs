@@ -22,7 +22,7 @@ pub fn get_sync_actors(connection: SyncConnection) -> (SyncSenderActor, SyncRece
     // We use a single-element channel so that we can only have one sync pending at a time.
     // We consume this at the *start* of sync, so we could schedule a sync while syncing.
     // Worst-case scenario, we produce an infinite stream of sync instructions and always go
-    // straight from one sync to the next, but that’s OK.
+    // straight from one sync to the next, but that's OK.
     let (sender, receiver) = mpsc::channel(1);
 
     let sync_sender = SyncSenderActor { sender };
@@ -58,7 +58,7 @@ impl SyncSenderActor {
             // This implementation is purely tick-based, not taking into account how long sync
             // takes, whether manual sync has been triggered and so the schedule should be
             // adjusted, whether it failed and should be tried again sooner, &c. If you want to
-            // take any of these into account, create another channel from sync → scheduler.
+            // take any of these into account, create another channel from sync  scheduler.
             interval.tick().await;
             self.send();
         }

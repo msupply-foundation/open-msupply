@@ -1,4 +1,5 @@
-pub(crate) mod item;
+mod central_sync_buffer;
+mod item;
 mod item_line;
 mod name;
 mod requisition;
@@ -24,6 +25,8 @@ pub enum DatabaseRow {
     UserAccount(UserAccountRow),
     SyncOut(SyncOutRow),
 }
+
+pub use central_sync_buffer::CentralSyncBufferRow;
 
 pub use item::ItemRow;
 pub use item_line::ItemLineRow;
