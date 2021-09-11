@@ -21,7 +21,7 @@ interface DropdownItemProps extends MenuItemProps {
 
 export const DropdownItem: FC<DropdownItemProps> = props => {
   return (
-    <MenuItem sx={{ fontSize: '10' }}>
+    <MenuItem sx={{ fontSize: '10' }} {...props}>
       {props.IconComponent ? (
         <Box mr={1}>
           <props.IconComponent fontSize="inherit" />

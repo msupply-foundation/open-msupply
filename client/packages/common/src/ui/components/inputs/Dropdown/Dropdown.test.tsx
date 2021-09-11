@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
@@ -53,7 +53,7 @@ describe('Dropdown', () => {
       userEvent.click(node);
     });
 
-    node = getByText(/two/i);
+    node = screen.getByText(/two/i);
 
     expect(node).toBeInTheDocument();
   });
