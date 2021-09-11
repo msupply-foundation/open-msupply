@@ -9,8 +9,9 @@ import {
   Box,
   SvgIconProps,
   ListItemText,
+  styled,
 } from '@material-ui/core';
-import { styled } from '@material-ui/system';
+// import { styled } from '@material-ui/system';
 
 import { ChevronDown } from '../../../icons';
 
@@ -45,7 +46,8 @@ const StyledSelect = styled(Select)(({ theme }) => ({
   '& .MuiSelect-icon': {
     // If left is not explicitly defined, sometimes the icon floats to the left
     left: 'calc(100% - 30px)',
-    color: theme.palette['primary']['500'],
+    // color: theme.palette['primary']['500'],
+    color: theme.palette.primary.main,
   },
 
   [`& .${outlinedInputClasses.notchedOutline}`]: {
