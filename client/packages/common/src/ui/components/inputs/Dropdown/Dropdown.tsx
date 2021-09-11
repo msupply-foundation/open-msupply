@@ -74,7 +74,6 @@ export const Dropdown: FC<DropdownProps> = ({ label, children }) => {
         shrink={false}
         sx={{ color: '#8f90a6', '&.Mui-focused': { color: '#8f90a6' } }}
         id={`action-drop-down-label-${label}`}
-        aria-label="Select an action to perform on selected rows"
       >
         {label}
       </InputLabel>
