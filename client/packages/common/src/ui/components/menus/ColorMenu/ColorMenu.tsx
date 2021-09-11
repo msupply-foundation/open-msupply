@@ -39,7 +39,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
     }}
     anchorOrigin={{
       vertical: 'center',
-      horizontal: 'right',
+      horizontal: 'left',
     }}
     transformOrigin={{
       vertical: 'center',
