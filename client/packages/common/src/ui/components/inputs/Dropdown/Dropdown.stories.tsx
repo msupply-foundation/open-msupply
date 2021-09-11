@@ -1,6 +1,8 @@
 import React from 'react';
+import { SvgIconProps } from '@material-ui/core';
 import { ComponentMeta, Story } from '@storybook/react';
 import { Dropdown, DropdownItem } from './Dropdown';
+import { Customers, Download, Suppliers, Tools } from '../../../icons';
 
 export default {
   title: 'Inputs/Dropdown',
@@ -47,13 +49,39 @@ const clickOptions = [
   { label: 'Three', onClick: () => console.log('three') },
 ];
 
+const iconOptions = [
+  { label: 'Customers', icon: Customers },
+  { label: 'Suppliers', icon: Suppliers },
+  { label: 'Download', icon: Download },
+  { label: 'Tools', icon: Tools },
+];
+
+const someWithIconsOptions = [
+  { label: 'Customers', icon: Customers },
+  { label: 'Suppliers' },
+  { label: 'Download', icon: Download },
+  { label: 'Tools', inset: true },
+];
+
 const Template: Story<{
-  options: { label: string; value?: string; onClick?: () => void }[];
+  options: {
+    label: string;
+    value?: string;
+    onClick?: () => void;
+    icon?: React.JSXElementConstructor<SvgIconProps>;
+    inset?: boolean;
+  }[];
   placeholder: string;
 }> = args => (
   <Dropdown label={args.placeholder}>
-    {args.options.map(({ label, value, onClick }) => (
-      <DropdownItem key={label} value={value} onClick={onClick}>
+    {args.options.map(({ label, value, onClick, icon, inset }) => (
+      <DropdownItem
+        key={label}
+        value={value}
+        onClick={onClick}
+        IconComponent={icon}
+        inset={inset}
+      >
         {label}
       </DropdownItem>
     ))}
@@ -76,4 +104,16 @@ export const OnClick = Template.bind({});
 OnClick.args = {
   options: clickOptions,
   placeholder: 'Select a country!',
+};
+
+export const WithIcons = Template.bind({});
+WithIcons.args = {
+  options: iconOptions,
+  placeholder: 'Select a .. thing!',
+};
+
+export const SomeWithIcons = Template.bind({});
+SomeWithIcons.args = {
+  options: someWithIconsOptions,
+  placeholder: 'Select a different thing!',
 };

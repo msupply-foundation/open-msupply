@@ -26,6 +26,8 @@ import {
   AppBarContentPortal,
   useTranslation,
   useMutation,
+  ChevronDown,
+  Tools,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { getDeleteMutation, getListQuery } from '../../api';
@@ -92,12 +94,30 @@ export const OutboundShipmentListView: FC = () => {
       <AppBarContentPortal>
         <Dropdown label="Select">
           <DropdownItem
-            onClick={() =>
-              tableApi?.current?.selectedRows &&
-              mutateAsync(tableApi?.current?.selectedRows)
-            }
+            IconComponent={ChevronDown}
+            onClick={() => {
+              const linesToDelete = tableApi?.current?.selectedRows;
+              if (linesToDelete && linesToDelete?.length > 0) {
+                mutateAsync(linesToDelete);
+                success(`Deleted ${linesToDelete?.length} invoices`)();
+              } else {
+                info('Select rows to delete them')();
+              }
+            }}
           >
             {t('button.delete-lines')}
+          </DropdownItem>
+          <DropdownItem
+            IconComponent={Tools}
+            onClick={warning('Whats this do?')}
+          >
+            Edit
+          </DropdownItem>
+          <DropdownItem
+            IconComponent={Download}
+            onClick={success('Successfully exported to CSV!')}
+          >
+            {t('button.export-to-csv')}
           </DropdownItem>
         </Dropdown>
       </AppBarContentPortal>

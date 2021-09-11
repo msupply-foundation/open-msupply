@@ -6,13 +6,36 @@ import {
   Select,
   InputLabel,
   outlinedInputClasses,
+  Box,
+  SvgIconProps,
+  ListItemText,
 } from '@material-ui/core';
 import { styled } from '@material-ui/system';
 
 import { ChevronDown } from '../../../icons';
 
-export const DropdownItem: FC<MenuItemProps> = props => {
-  return <MenuItem {...props} />;
+interface DropdownItemProps extends MenuItemProps {
+  IconComponent?: React.JSXElementConstructor<SvgIconProps>;
+  inset?: boolean;
+}
+
+export const DropdownItem: FC<DropdownItemProps> = props => {
+  return (
+    <MenuItem sx={{ fontSize: '10' }}>
+      {props.IconComponent ? (
+        <Box mr={1}>
+          <props.IconComponent fontSize="inherit" />
+        </Box>
+      ) : null}
+      <ListItemText
+        inset={props.inset}
+        primaryTypographyProps={{ sx: { fontSize: 'inherit' } }}
+        sx={{ '&.MuiListItemText-inset': { paddingLeft: '22px' } }}
+      >
+        {props.children}
+      </ListItemText>
+    </MenuItem>
+  );
 };
 
 const StyledSelect = styled(Select)(({ theme }) => ({

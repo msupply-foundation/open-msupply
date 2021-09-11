@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 
 import {
-  ColumnInstance,
   SortingRule,
   usePagination,
   useRowSelect,
@@ -14,32 +13,23 @@ import {
 import {
   Box,
   CircularProgress,
-  Grid,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TableContainer,
   TablePagination,
+  TableSortLabel,
   Table as MuiTable,
 } from '@material-ui/core';
 
-import { useTheme } from '@material-ui/core/styles';
-
-import { SortAsc, SortDesc } from '../../icons';
+import { SortDesc } from '../../icons';
 import { DEFAULT_PAGE_SIZE } from '.';
 import { TableProps } from './types';
 import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
 
 export { SortingRule };
-
-const renderSortIcon = <D extends Record<string, unknown>>(
-  column: ColumnInstance<D>
-) => {
-  if (!column.isSorted) return null;
-  return !!column.isSortedDesc ? <SortDesc /> : <SortAsc />;
-};
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
@@ -51,7 +41,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   totalLength = 0,
   tableApi,
 }: TableProps<T>): JSX.Element => {
-  const theme = useTheme();
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageIndex, setPageIndex] = useState(0);
   const pageCount = Math.ceil(totalLength / pageSize);
@@ -105,7 +94,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     <Box
       sx={{
         display: 'flex',
-        marginTop: 50,
       }}
     >
       <CircularProgress
@@ -116,25 +104,39 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       />
     </Box>
   ) : (
-    <TableContainer sx={{ marginBottom: 100 }}>
+    <TableContainer>
       <MuiTable stickyHeader {...getTableProps()}>
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <TableRow {...getHeaderGroupProps()}>
-              {headers.map(column => (
-                <TableCell
-                  {...column.getHeaderProps(column.getSortByToggleProps())}
-                  sx={{
-                    backgroundColor: 'transparent',
-                    ...theme.typography.th,
-                  }}
-                >
-                  <Grid container>
-                    {column.render('Header')}
-                    {renderSortIcon(column)}
-                  </Grid>
-                </TableCell>
-              ))}
+              {headers.map(column => {
+                return (
+                  <TableCell
+                    {...column.getHeaderProps(column.getSortByToggleProps())}
+                    align={column.align}
+                    padding={column.id === 'selection' ? 'checkbox' : 'normal'}
+                    sx={{
+                      backgroundColor: 'transparent',
+                    }}
+                    sortDirection={
+                      column.isSorted
+                        ? column.isSortedDesc
+                          ? 'desc'
+                          : 'asc'
+                        : false
+                    }
+                  >
+                    <TableSortLabel
+                      hideSortIcon={column.id === 'selection'}
+                      active={column.isSorted}
+                      direction={column.isSortedDesc ? 'desc' : 'asc'}
+                      IconComponent={SortDesc}
+                    >
+                      {column.render('Header')}
+                    </TableSortLabel>
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableHead>

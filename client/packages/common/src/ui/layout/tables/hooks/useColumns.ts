@@ -7,6 +7,7 @@ const columnLookup = (column: GenericColumnType) => {
   if (column === GenericColumnType.Selection) {
     return getCheckboxSelectionColumn();
   }
+  return null;
 };
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -30,6 +31,7 @@ export const useColumns = <T extends object>(
     const sortDescFirst = column.format === ColumnFormat.date;
 
     return {
+      align: column.align || 'left',
       accessor,
       disableSortBy,
       Header,

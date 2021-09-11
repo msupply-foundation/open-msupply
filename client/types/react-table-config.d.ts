@@ -49,11 +49,13 @@ import {
 } from 'react-table';
 
 declare module 'react-table' {
+  type Align = { align?: 'left' | 'center' | 'right' };
   export interface ColumnInstance<
     D extends Record<string, unknown> = Record<string, unknown>
   > extends UseFiltersColumnProps<D>,
       UseGroupByColumnProps<D>,
       UseResizeColumnsColumnProps<D>,
+      Align,
       UseSortByColumnProps<D> {}
 
   export interface TableOptions<D extends Record<string, unknown>>
@@ -105,6 +107,7 @@ declare module 'react-table' {
       UseGlobalFiltersColumnOptions<D>,
       UseGroupByColumnOptions<D>,
       UseResizeColumnsColumnOptions<D>,
+      Align,
       UseSortByColumnOptions<D> {}
 
   export interface Cell<
