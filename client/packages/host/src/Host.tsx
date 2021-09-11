@@ -21,7 +21,6 @@ import AppBar from './AppBar';
 import Viewport from './Viewport';
 
 const Content = styled(Box)({
-  marginTop: 90,
   overflowY: 'scroll',
   height: '100vh',
 });

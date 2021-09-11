@@ -27,7 +27,9 @@ export const DataRow = <T extends Record<string, unknown>>({
         return (
           <TableCell
             key={cellKey}
+            align={cell.column.align}
             sx={{
+              justifyContent: 'flex-end',
               padding: 0,
               paddingLeft: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),

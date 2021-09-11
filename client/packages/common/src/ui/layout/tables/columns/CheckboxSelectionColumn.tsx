@@ -2,8 +2,10 @@ import React from 'react';
 import { Checkbox } from '../../../components/inputs/Checkbox';
 import { Column } from 'react-table';
 
-export const getCheckboxSelectionColumn = (): Column => ({
+export const getCheckboxSelectionColumn = (): Column & { align: string } => ({
   id: 'selection',
+  align: 'right',
+  disableSortBy: true,
   Header: ({ getToggleAllRowsSelectedProps }) => (
     <Checkbox
       size="small"
