@@ -26,7 +26,7 @@ import { Stock } from './Stock';
 import { Suppliers } from './Suppliers';
 import { Tools } from './Tools';
 import { Translate } from './Translate';
-
+import { Circle } from './Circle';
 import {
   Box,
   Grid,
@@ -62,7 +62,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <CheckboxChecked {...args} />, name: 'CheckboxChecked' },
     {
       icon: <CheckboxIndeterminate {...args} />,
-      name: 'CheckboxIndeterminate',
+      name: 'Checkbox Indeterminate',
     },
     { icon: <CheckboxEmpty {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDown {...args} />, name: 'ChevronDown' },
@@ -85,6 +85,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Suppliers {...args} />, name: 'Suppliers' },
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
+    { icon: <Circle {...args} />, name: 'Circle' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +104,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
       <Grid item>
         <Grid container spacing={1}>
           {filteredIcons.map(i => (
-            <Grid item key={i.name}>
+            <Grid item xs key={i.name}>
               <StyledPaper>
                 {i.icon}
                 <Typography>{i.name}</Typography>
