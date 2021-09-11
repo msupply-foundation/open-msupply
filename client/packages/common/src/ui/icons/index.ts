@@ -24,3 +24,4 @@ export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
 export { Translate } from './Translate';
 export { UnhappyMan } from './UnhappyMan';
+export { Circle } from './Circle';
