@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Clone, Error, Debug)]
+#[derive(Clone, Error, Debug, PartialEq)]
 pub enum RepositoryError {
     /// Row not found but expected at least one row
     #[error("row not found but expected at least one row")]
