@@ -2,18 +2,13 @@ use super::{DBBackendConnection, DBConnection};
 
 use crate::database::{
     repository::{repository::get_connection, RepositoryError},
-    schema::{NameRow, StoreRow},
+    schema::StoreRow,
 };
 
 use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool},
 };
-
-pub struct Store {
-    pub id: String,
-    pub name: NameRow,
-}
 
 #[derive(Clone)]
 pub struct StoreRepository {
@@ -53,22 +48,6 @@ impl StoreRepository {
             .values(store_row)
             .execute(&connection)?;
         Ok(())
-    }
-
-    pub async fn find_one_by_id_joined(&self, store_id: &str) -> Result<Store, RepositoryError> {
-        use crate::database::schema::diesel_schema::{
-            name_table::dsl::name_table,
-            store::dsl::{id, store},
-        };
-        let connection = get_connection(&self.pool)?;
-        let result: (StoreRow, NameRow) = store
-            .inner_join(name_table)
-            .filter(id.eq(store_id))
-            .first(&connection)?;
-        Ok(Store {
-            id: result.0.id,
-            name: result.1,
-        })
     }
 
     pub async fn find_one_by_id(&self, store_id: &str) -> Result<StoreRow, RepositoryError> {

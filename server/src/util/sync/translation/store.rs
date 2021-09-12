@@ -124,9 +124,9 @@ mod tests {
         let records = vec![record];
         import_sync_records(&registry, &records).await.unwrap();
         let entry = store_repo
-            .find_one_by_id_joined("9EDD3F83C3D64C22A3CC9C98CF4967C4")
+            .find_one_by_id("9EDD3F83C3D64C22A3CC9C98CF4967C4")
             .await
             .unwrap();
-        assert_eq!(entry.name.name, "storename");
+        assert_eq!(entry.id, "9EDD3F83C3D64C22A3CC9C98CF4967C4");
     }
 }
