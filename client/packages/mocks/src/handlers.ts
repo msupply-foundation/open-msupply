@@ -8,6 +8,7 @@ const TransactionData = Array.from({ length: 10 }).map((_, i) => ({
   supplier: `${faker.name.firstName()} ${faker.name.lastName()}`,
   date: faker.date.past().toString(),
   total: `${faker.commerce.price()}`,
+  color: 'grey',
 }));
 
 const parseValue = (object: any, key: string) => {
