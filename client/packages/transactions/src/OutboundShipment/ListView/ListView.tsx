@@ -27,6 +27,7 @@ import {
   useMutation,
   ChevronDown,
   Tools,
+  getNameAndColorColumn,
 } from '@openmsupply-client/common';
 
 import { listQueryFn, deleteFn, updateTransactionFn } from '../../api';
@@ -41,7 +42,8 @@ export const OutboundShipmentListView: FC = () => {
   });
   const { data: response, isLoading } = useQuery(
     ['transaction', 'list', queryProps],
-    () => listQueryFn(queryProps)
+    () => listQueryFn(queryProps),
+    { notifyOnChangeProps: ['data'] }
   );
 
   const queryClient = useQueryClient();
@@ -50,23 +52,53 @@ export const OutboundShipmentListView: FC = () => {
     onSuccess: () => queryClient.invalidateQueries(['transaction']),
   });
 
-  useMutation(updateTransactionFn, {
+  const { mutateAsync } = useMutation(updateTransactionFn, {
+    onMutate: patch => {
+      const key = ['transaction', 'list', queryProps];
+      const previousCached =
+        queryClient.getQueryData<{ data: Transaction[]; totalLength: number }>(
+          key
+        );
+
+      const previousData = [...(previousCached?.data ?? [])];
+
+      const existingRowIdx = previousData.findIndex(
+        ({ id }) => id === patch.id
+      );
+      previousData[existingRowIdx] = patch;
+
+      queryClient.setQueryData(key, { ...previousData, data: previousData });
+
+      return { previousCached };
+    },
     onSuccess: () => queryClient.invalidateQueries(['transaction']),
   });
 
   const navigate = useNavigate();
-  const columns = useColumns<Transaction>([
-    {
-      label: 'label.id',
-      key: 'id',
-      sortable: false,
-    },
-    { label: 'label.date', key: 'date', format: ColumnFormat.date },
-    { label: 'label.customer', key: 'customer' },
-    { label: 'label.supplier', key: 'supplier' },
-    { label: 'label.total', key: 'total' },
-    GenericColumnType.Selection,
-  ]);
+  const columns = useColumns<Transaction>(
+    [
+      {
+        ...getNameAndColorColumn<Transaction>((row, color) => {
+          mutateAsync({ ...row, color: color.hex });
+        }),
+
+        key: 'customer',
+        label: 'label.customer',
+        sortable: false,
+      },
+      {
+        label: 'label.id',
+        key: 'id',
+        sortable: false,
+      },
+      { label: 'label.date', key: 'date', format: ColumnFormat.date },
+      { label: 'label.customer', key: 'customer' },
+      { label: 'label.supplier', key: 'supplier' },
+      { label: 'label.total', key: 'total' },
+      GenericColumnType.Selection,
+    ],
+    []
+  );
 
   const initialSortBy: SortingRule<Transaction>[] = [
     { id: 'date', desc: true },

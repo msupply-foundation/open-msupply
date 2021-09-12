@@ -12,6 +12,7 @@ const placeholderTransaction: Transaction = {
   total: '',
   date: '',
   supplier: '',
+  color: 'grey',
 };
 
 const useDraft = createDraftStore<Transaction>();

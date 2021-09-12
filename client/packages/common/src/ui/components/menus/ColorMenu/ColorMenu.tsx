@@ -62,7 +62,8 @@ export const ColorMenu: FC<ColorMenuProps> = ({
           role="button"
           aria-label={name}
           key={hex}
-          onClick={() => {
+          onClick={e => {
+            e.stopPropagation();
             onClick({ hex, name });
             onClose();
           }}

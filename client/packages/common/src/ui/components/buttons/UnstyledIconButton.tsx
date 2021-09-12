@@ -9,13 +9,23 @@ interface ButtonProps {
   titleKey: LocaleKey;
 }
 
-const UnstyledIconButton: React.FC<ButtonProps> = props => {
+const UnstyledIconButton: React.FC<ButtonProps> = ({
+  disabled,
+  icon,
+  onClick,
+  titleKey,
+}) => {
   const t = useTranslation();
-  const { disabled, icon, onClick, titleKey } = props;
+
   const tooltip = t(titleKey);
   return (
     <Tooltip title={tooltip}>
-      <IconButton disabled={disabled} onClick={onClick} aria-label={tooltip}>
+      <IconButton
+        sx={{ padding: 0 }}
+        disabled={disabled}
+        onClick={onClick}
+        aria-label={tooltip}
+      >
         {icon}
       </IconButton>
     </Tooltip>
