@@ -1,4 +1,4 @@
-use super::DBBackendConnection;
+use super::{DBBackendConnection, DBConnection};
 
 use crate::database::{
     repository::{repository::get_connection, RepositoryError},
@@ -18,6 +18,27 @@ pub struct StoreRepository {
 impl StoreRepository {
     pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> StoreRepository {
         StoreRepository { pool }
+    }
+
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one_tx(connection: &DBConnection, row: &StoreRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::store::dsl::*;
+        diesel::insert_into(store)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "sqlite")]
+    pub fn upsert_one_tx(connection: &DBConnection, row: &StoreRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::store::dsl::*;
+        diesel::replace_into(store)
+            .values(row)
+            .execute(connection)?;
+        Ok(())
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
