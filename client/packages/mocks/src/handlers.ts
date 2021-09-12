@@ -48,7 +48,12 @@ const upsertTransaction = graphql.mutation(
       return response(context.data({ upsertTransaction: newTransaction }));
     }
 
-    return response(context.data({}));
+    const idx = TransactionData.findIndex(
+      ({ id: filterId }) => id === filterId
+    );
+    TransactionData[idx] = { ...TransactionData[idx], ...patch };
+
+    return response(context.data({ upsertTransaction: TransactionData[idx] }));
   }
 );
 
