@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 import {
   useQueryClient,
   Portal,
-  request,
   Button,
   ColumnFormat,
   Download,
@@ -29,29 +28,8 @@ import {
   ChevronDown,
   Tools,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
-import { getDeleteMutation, getListQuery } from '../../api';
 
-const deleteFn = async (transactions: Transaction[]) => {
-  await request(Environment.API_URL, getDeleteMutation(), {
-    transactions,
-  });
-};
-
-const queryFn = async (
-  queryParams: QueryProps<Transaction>
-): Promise<{ data: Transaction[]; totalLength: number }> => {
-  const { first, offset, sortBy } = queryParams;
-
-  const { transactions } = await request(Environment.API_URL, getListQuery(), {
-    first,
-    offset,
-    sort: sortBy?.[0]?.id,
-    desc: !!sortBy?.[0]?.desc,
-  });
-
-  return transactions;
-};
+import { listQueryFn, deleteFn, updateTransactionFn } from '../../api';
 
 export const OutboundShipmentListView: FC = () => {
   const { appBarButtonsRef } = useHostContext();
@@ -63,18 +41,26 @@ export const OutboundShipmentListView: FC = () => {
   });
   const { data: response, isLoading } = useQuery(
     ['transaction', 'list', queryProps],
-    () => queryFn(queryProps)
+    () => listQueryFn(queryProps)
   );
 
   const queryClient = useQueryClient();
 
-  const { isLoading: mutationLoading, mutateAsync } = useMutation(deleteFn, {
+  const { mutateAsync: deleteMutateAsync } = useMutation(deleteFn, {
+    onSuccess: () => queryClient.invalidateQueries(['transaction']),
+  });
+
+  useMutation(updateTransactionFn, {
     onSuccess: () => queryClient.invalidateQueries(['transaction']),
   });
 
   const navigate = useNavigate();
   const columns = useColumns<Transaction>([
-    { label: 'label.id', key: 'id', sortable: false },
+    {
+      label: 'label.id',
+      key: 'id',
+      sortable: false,
+    },
     { label: 'label.date', key: 'date', format: ColumnFormat.date },
     { label: 'label.customer', key: 'customer' },
     { label: 'label.supplier', key: 'supplier' },
@@ -98,7 +84,7 @@ export const OutboundShipmentListView: FC = () => {
             onClick={() => {
               const linesToDelete = tableApi?.current?.selectedRows;
               if (linesToDelete && linesToDelete?.length > 0) {
-                mutateAsync(linesToDelete);
+                deleteMutateAsync(linesToDelete);
                 success(`Deleted ${linesToDelete?.length} invoices`)();
               } else {
                 info('Select rows to delete them')();
@@ -146,12 +132,12 @@ export const OutboundShipmentListView: FC = () => {
           />
         </>
       </Portal>
-      <RemoteDataTable<Transaction>
+      <RemoteDataTable
         tableApi={tableApi}
         columns={columns}
         data={response?.data || []}
         initialSortBy={initialSortBy}
-        isLoading={isLoading || mutationLoading}
+        isLoading={isLoading}
         onFetchData={setQueryProps}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);
