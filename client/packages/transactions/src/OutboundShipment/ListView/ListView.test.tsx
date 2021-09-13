@@ -18,7 +18,7 @@ describe('OutboundShipmentListView', () => {
       </TestingProvider>
     );
 
-    // TODO: Don't hard core the columns. Get them from a shared function with the
+    // TODO: Don't hard code the columns. Get them from a shared function with the
     // specific view
 
     await waitFor(() => {

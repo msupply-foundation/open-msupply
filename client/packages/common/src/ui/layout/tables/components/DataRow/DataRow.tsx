@@ -44,7 +44,9 @@ export const DataRow = <T extends Record<string, unknown>>({
             sx={{
               borderBottom: 'none',
               justifyContent: 'flex-end',
-
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
               padding: 0,
               paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
