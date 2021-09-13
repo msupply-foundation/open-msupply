@@ -34,7 +34,6 @@ describe('ColorMenu', () => {
               sx={{
                 width: '12px',
                 margin: 'margin: 0 9px 0 10px',
-                overflow: 'visible',
                 cursor: 'pointer',
               }}
             />
