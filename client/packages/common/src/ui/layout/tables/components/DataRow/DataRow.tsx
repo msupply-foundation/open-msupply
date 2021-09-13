@@ -7,32 +7,48 @@ import { Cell } from 'react-table';
 interface DataRowProps<T extends object> {
   cells: Cell<T, any>[];
   onClick?: (rowValues: T) => void;
-  values: T;
+  rowData: T;
 }
 
 export const DataRow = <T extends Record<string, unknown>>({
   cells,
   onClick,
-  values,
+  rowData,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
-  const onRowClick = () => onClick && onClick(values);
+
+  const onRowClick = () => onClick && onClick(rowData);
 
   return (
-    <TableRow onClick={onRowClick} hover={hasOnClick}>
+    <TableRow
+      sx={{
+        alignItems: 'center',
+        height: '40px',
+        boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
+        padding: '0px 20px',
+        display: 'flex',
+        flex: '1 0 auto',
+        minWidth: '1000px',
+      }}
+      onClick={onRowClick}
+      hover={hasOnClick}
+    >
       {cells.map(cell => {
         const cellProps = cell.getCellProps();
-        const { key: cellKey } = cellProps;
+        const { key: cellKey, style: cellStyle } = cellProps;
 
         return (
           <TableCell
             key={cellKey}
             align={cell.column.align}
             sx={{
+              borderBottom: 'none',
               justifyContent: 'flex-end',
+
               padding: 0,
-              paddingLeft: '16px',
+              paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
+              ...cellStyle,
             }}
           >
             {cell.render('Cell')}

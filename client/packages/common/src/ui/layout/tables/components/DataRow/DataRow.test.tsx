@@ -10,6 +10,7 @@ describe('DataRow', () => {
     {
       render: () => <span>josh</span>,
       getCellProps: () => ({ key: Math.random() * 20 }),
+      column: { align: 'left' },
     },
   ] as any;
 
@@ -17,7 +18,7 @@ describe('DataRow', () => {
     const { getByText } = render(
       <Table>
         <TableBody>
-          <DataRow cells={cells} values={{ id: 'josh' }} />
+          <DataRow cells={cells} rowData={{ id: 'josh' }} />
         </TableBody>
       </Table>
     );

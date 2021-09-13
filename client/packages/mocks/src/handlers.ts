@@ -2,13 +2,30 @@ import { graphql } from 'msw';
 
 import faker from 'faker';
 
-const TransactionData = Array.from({ length: 10 }).map((_, i) => ({
+const choose = (options: unknown[]) => {
+  const numberOfOptions = options.length;
+
+  const randomIdx = Math.floor(Math.random() * numberOfOptions);
+
+  return options[randomIdx];
+};
+
+const TransactionData = Array.from({ length: 1000 }).map((_, i) => ({
   id: `${i}`,
-  customer: `${faker.name.firstName()} ${faker.name.lastName()}`,
-  supplier: `${faker.name.firstName()} ${faker.name.lastName()}`,
-  date: faker.date.past().toString(),
-  total: `${faker.commerce.price()}`,
+  name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+  status: choose(['Confirmed', 'Finalised']),
+  entered: faker.date.past().toString(),
+  confirmed: faker.date.past().toString(),
+  invoiceNumber: `${i}`,
+  total: `$${faker.commerce.price()}`,
   color: 'grey',
+  type: choose([
+    'Customer invoice',
+    'Supplier invoice',
+    'Customer credit',
+    'Supplier credit',
+  ]),
+  comment: faker.commerce.productDescription(),
 }));
 
 const parseValue = (object: any, key: string) => {
