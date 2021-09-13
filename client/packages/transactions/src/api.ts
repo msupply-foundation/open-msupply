@@ -16,6 +16,7 @@ export const getDetailQuery = (): string => gql`
       invoiceNumber
       total
       color
+      name
     }
   }
 `;
@@ -33,6 +34,7 @@ export const getMutation = (): string => gql`
       invoiceNumber
       total
       color
+      name
     }
   }
 `;
@@ -59,6 +61,7 @@ export const getListQuery = (): string => gql`
         invoiceNumber
         total
         color
+        name
       }
       totalLength
     }
