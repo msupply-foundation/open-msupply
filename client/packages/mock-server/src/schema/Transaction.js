@@ -12,11 +12,15 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
 const TransactionTypes = `
     type Transaction {
         id: String
-        date: String
-        customer: String
-        supplier: String
-        total: String
         color: String
+        comment: String
+        status: String
+        type: String
+        entered: String
+        confirmed: String
+        invoiceNumber: String
+        total: String
+        name: String
     }
     type TransactionResponse { 
       data: [Transaction],
@@ -122,11 +126,15 @@ const TransactionMutations = `
 const TransactionInput = `
     input TransactionPatch {
         id: String
-        date: String
-        customer: String
-        supplier: String
-        total: String
         color: String
+        comment: String
+        status: String
+        type: String
+        entered: String
+        confirmed: String
+        invoiceNumber: String
+        total: String
+        name: String
     }
 `;
 
