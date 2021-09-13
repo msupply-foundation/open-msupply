@@ -97,12 +97,12 @@ impl SyncConnection {
     // TODO: add return type.
     pub async fn acknowledge_records(
         &self,
-        records: &Vec<SyncQueueRecord>,
+        records: &Vec<RemoteSyncRecord>,
     ) -> Result<(), reqwest::Error> {
         // TODO: add error handling.
         let url = self.server.acknowledge_records_url();
 
-        let body: SyncQueueAcknowledgement = SyncQueueAcknowledgement {
+        let body: RemoteSyncAcknowledgement = RemoteSyncAcknowledgement {
             sync_ids: records
                 .into_iter()
                 .map(|record| record.sync_id.clone())
