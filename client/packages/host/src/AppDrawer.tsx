@@ -18,13 +18,12 @@ import {
   UnstyledIconButton,
   styled,
   useDrawer,
-  useMediaQuery,
-  useTheme,
   useTranslation,
   NavLink,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Property } from 'csstype';
+import { useIsSmallScreen } from '@openmsupply-client/common/src/hooks/useIsSmallScreen';
 
 const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
@@ -119,9 +118,8 @@ const StyledDrawer = styled(Drawer)(({ open, theme }) => {
 });
 
 const AppDrawer: React.FC = () => {
-  const theme = useTheme();
   const t = useTranslation();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const isSmallScreen = useIsSmallScreen();
   const drawer = useDrawer();
 
   React.useEffect(() => {
