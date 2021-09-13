@@ -19,7 +19,6 @@ pub struct IntegrationRecord {
     pub upserts: Vec<IntegrationUpsertRecord>,
 }
 
-#[derive(Clone)]
 pub struct SyncRepository {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
 }
