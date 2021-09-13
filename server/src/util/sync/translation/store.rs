@@ -36,6 +36,7 @@ impl LegacyStoreRow {
         Ok(Some(StoreRow {
             id: data.id,
             name_id: data.name_id,
+            code: data.code,
         }))
     }
 }

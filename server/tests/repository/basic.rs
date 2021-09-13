@@ -83,6 +83,7 @@ mod repository_basic_test {
         let item1 = ItemRow {
             id: "item1".to_string(),
             name: "item-1".to_string(),
+            code: "code1".to_string(),
         };
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
@@ -91,6 +92,7 @@ mod repository_basic_test {
         let item2 = ItemRow {
             id: "item2".to_string(),
             name: "item-2".to_string(),
+            code: "code2".to_string(),
         };
         repo.insert_one(&item2).await.unwrap();
         let all_items = repo.find_all().await.unwrap();
@@ -199,6 +201,9 @@ mod repository_basic_test {
         let item1 = NameRow {
             id: "name1".to_string(),
             name: "name_1".to_string(),
+            code: "code1".to_string(),
+            is_customer: false,
+            is_supplier: true,
         };
         repo.insert_one(&item1).await.unwrap();
 
@@ -210,6 +215,7 @@ mod repository_basic_test {
         let item1 = StoreRow {
             id: "store1".to_string(),
             name_id: "name1".to_string(),
+            code: "code1".to_string(),
         };
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();

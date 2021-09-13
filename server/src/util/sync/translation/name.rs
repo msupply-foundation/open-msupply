@@ -9,6 +9,9 @@ pub struct LegacyNameRow {
     #[serde(rename = "ID")]
     id: String,
     name: String,
+    code: String,
+    customer: bool,
+    supplier: bool,
 }
 
 impl From<&LegacyNameRow> for NameRow {
@@ -16,6 +19,9 @@ impl From<&LegacyNameRow> for NameRow {
         NameRow {
             id: t.id.to_string(),
             name: t.name.to_string(),
+            code: t.code.to_string(),
+            is_customer: t.customer,
+            is_supplier: t.supplier,
         }
     }
 }

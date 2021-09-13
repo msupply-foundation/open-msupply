@@ -9,7 +9,7 @@ pub struct LegacyItemRow {
     #[serde(rename = "ID")]
     id: String,
     item_name: String,
-    type_of: String,
+    code: String,
 }
 
 impl LegacyItemRow {
@@ -20,8 +20,9 @@ impl LegacyItemRow {
         let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)
             .map_err(|_| "Deserialization Error".to_string())?;
         Ok(Some(ItemRow {
-            id: data.id.to_string(),
-            name: data.item_name.to_string(),
+            id: data.id,
+            name: data.item_name,
+            code: data.code,
         }))
     }
 }
