@@ -75,30 +75,27 @@ export const OutboundShipmentListView: FC = () => {
   });
 
   const navigate = useNavigate();
-  const columns = useColumns<Transaction>(
-    [
-      {
-        ...getNameAndColorColumn<Transaction>((row, color) => {
-          mutateAsync({ ...row, color: color.hex });
-        }),
+  const columns = useColumns<Transaction>([
+    {
+      ...getNameAndColorColumn<Transaction>((row, color) => {
+        mutateAsync({ ...row, color: color.hex });
+      }),
 
-        key: 'customer',
-        label: 'label.customer',
-        sortable: false,
-      },
-      {
-        label: 'label.id',
-        key: 'id',
-        sortable: false,
-      },
-      { label: 'label.date', key: 'date', format: ColumnFormat.date },
-      { label: 'label.customer', key: 'customer' },
-      { label: 'label.supplier', key: 'supplier' },
-      { label: 'label.total', key: 'total' },
-      GenericColumnType.Selection,
-    ],
-    []
-  );
+      key: 'customer',
+      label: 'label.customer',
+      sortable: false,
+    },
+    {
+      label: 'label.id',
+      key: 'id',
+      sortable: false,
+    },
+    { label: 'label.date', key: 'date', format: ColumnFormat.date },
+    { label: 'label.customer', key: 'customer' },
+    { label: 'label.supplier', key: 'supplier' },
+    { label: 'label.total', key: 'total' },
+    GenericColumnType.Selection,
+  ]);
 
   const initialSortBy: SortingRule<Transaction>[] = [
     { id: 'date', desc: true },

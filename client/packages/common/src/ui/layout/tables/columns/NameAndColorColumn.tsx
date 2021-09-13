@@ -46,7 +46,7 @@ export const getNameAndColorColumn = <T extends Colorable>(
           }}
         />
         <UnstyledIconButton
-          titleKey="app.admin"
+          titleKey="button.select-a-color"
           icon={
             <Circle
               htmlColor={row.original.color}
