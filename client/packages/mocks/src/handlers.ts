@@ -2,7 +2,7 @@ import { graphql } from 'msw';
 
 import faker from 'faker';
 
-const TransactionData = Array.from({ length: 10 }).map((_, i) => ({
+const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
   id: `${i}`,
   customer: `${faker.name.firstName()} ${faker.name.lastName()}`,
   supplier: `${faker.name.firstName()} ${faker.name.lastName()}`,
