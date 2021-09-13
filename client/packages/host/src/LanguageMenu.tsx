@@ -51,6 +51,7 @@ export const LanguageMenu: React.FC = () => {
   return (
     <div>
       <Button
+        shouldShrink
         onClick={handleClick}
         icon={<Translate />}
         labelKey="button.language"
