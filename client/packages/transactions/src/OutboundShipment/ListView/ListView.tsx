@@ -30,7 +30,7 @@ import {
   getNameAndColorColumn,
 } from '@openmsupply-client/common';
 
-import { listQueryFn, deleteFn, updateTransactionFn } from '../../api';
+import { listQueryFn, deleteFn, updateFn } from '../../api';
 
 export const OutboundShipmentListView: FC = () => {
   const { appBarButtonsRef } = useHostContext();
@@ -51,7 +51,7 @@ export const OutboundShipmentListView: FC = () => {
     onSuccess: () => queryClient.invalidateQueries(['transaction']),
   });
 
-  const { mutateAsync } = useMutation(updateTransactionFn, {
+  const { mutateAsync } = useMutation(updateFn, {
     onMutate: patch => {
       const key = ['transaction', 'list', queryProps];
       const previousCached =
@@ -66,7 +66,7 @@ export const OutboundShipmentListView: FC = () => {
       );
       previousData[existingRowIdx] = patch;
 
-      queryClient.setQueryData(key, { ...previousData, data: previousData });
+      queryClient.setQueryData(key, { ...previousCached, data: previousData });
 
       return { previousCached };
     },

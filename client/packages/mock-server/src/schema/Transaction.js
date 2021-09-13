@@ -6,6 +6,7 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
   supplier: `${faker.name.firstName()} ${faker.name.lastName()}`,
   date: faker.date.past().toString(),
   total: `${faker.commerce.price()}`,
+  color: 'grey',
 }));
 
 const TransactionTypes = `
