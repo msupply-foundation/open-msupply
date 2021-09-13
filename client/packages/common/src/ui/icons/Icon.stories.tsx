@@ -66,6 +66,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     },
     { icon: <CheckboxEmpty {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDown {...args} />, name: 'ChevronDown' },
+    { icon: <Circle htmlColor="#e95c30" {...args} />, name: 'Circle' },
     { icon: <Customers {...args} />, name: 'Customers' },
     { icon: <Dashboard {...args} />, name: 'Dashboard' },
     { icon: <Download {...args} />, name: 'Download' },
@@ -85,7 +86,6 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Suppliers {...args} />, name: 'Suppliers' },
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
-    { icon: <Circle htmlColor="#e95c30" {...args} />, name: 'Circle' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
