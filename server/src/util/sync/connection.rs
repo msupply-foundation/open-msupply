@@ -1,7 +1,7 @@
 use crate::util::{
     settings::SyncSettings,
     sync::{
-        SyncCredentials, SyncQueueAcknowledgement, SyncQueueBatch, SyncQueueRecord, SyncServer,
+        RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord, SyncCredentials, SyncServer,
     },
 };
 
@@ -34,12 +34,12 @@ impl SyncConnection {
         }
     }
 
-    // Initialize sync queue.
+    // Initialize remote sync queue.
     //
     // Should only be called on initial sync or when re-initializing an existing data file.
     //
     // TODO: add custom error to return type.
-    pub async fn initialize(&self) -> Result<SyncQueueBatch, reqwest::Error> {
+    pub async fn initialize(&self) -> Result<RemoteSyncBatch, reqwest::Error> {
         // TODO: add error handling.
         let url = self.server.initialize_url();
 
@@ -55,15 +55,15 @@ impl SyncConnection {
 
         let response = request.send().await?;
 
-        let sync_batch = response.json::<SyncQueueBatch>().await?;
+        let sync_batch = response.json::<RemoteSyncBatch>().await?;
 
         Ok(sync_batch)
     }
 
-    // Pull batch of records for sync queue.
+    // Pull batch of records from remote sync queue.
     //
     // TODO: add custom error to return type.
-    pub async fn queued_records(&self) -> Result<SyncQueueBatch, reqwest::Error> {
+    pub async fn remote_records(&self) -> Result<RemoteSyncBatch, reqwest::Error> {
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
 
@@ -84,7 +84,10 @@ impl SyncConnection {
 
         let response = request.send().await?;
 
-        let sync_batch = response.json::<SyncQueueBatch>().await?;
+        let sync_batch = response.json::<RemoteSyncBatch>().await?;
+
+        Ok(sync_batch)
+    }
 
         Ok(sync_batch)
     }
