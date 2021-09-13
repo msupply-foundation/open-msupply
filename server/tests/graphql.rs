@@ -1,48 +1,66 @@
 #![allow(where_clauses_object_safety)]
 
-#[cfg(all(test, feature = "mock"))]
 mod graphql {
-    use remote_server::database::{
-        mock::mock_requisitions,
-        repository::RequisitionRepository,
-        schema::{DatabaseRow, RequisitionRow},
+    use remote_server::{
+        database::{
+            loader::get_loaders,
+            mock::{mock_names, mock_requisitions, mock_stores},
+            repository::{
+                get_repositories, NameRepository, RequisitionRepository, StoreRepository,
+            },
+            schema::{NameRow, RequisitionRow, StoreRow},
+        },
+        server::{
+            data::{LoaderRegistry, RepositoryRegistry},
+            service::graphql::config as graphql_config,
+        },
+        util::test_db,
     };
-
-    use remote_server::server::{
-        data::{RepositoryMap, RepositoryRegistry},
-        service::graphql::config as graphql_config,
-    };
-
-    use std::collections::HashMap;
-    use std::sync::{Arc, Mutex};
 
     #[actix_rt::test]
     async fn get_requisition_by_id_is_success() {
-        let mut mock_data: HashMap<String, DatabaseRow> = HashMap::new();
-
+        let mock_names: Vec<NameRow> = mock_names();
+        let mock_stores: Vec<StoreRow> = mock_stores();
         let mock_requisitions: Vec<RequisitionRow> = mock_requisitions();
-        for requisition in mock_requisitions {
-            mock_data.insert(
-                requisition.id.to_string(),
-                DatabaseRow::Requisition(requisition.clone()),
-            );
+
+        let settings = test_db::get_test_settings("omsupply-database-simple-repository-test");
+
+        // Initialise a new test database.
+        test_db::setup(&settings.database).await;
+
+        let repositories = get_repositories(&settings).await;
+        let loaders = get_loaders(&settings).await;
+
+        let name_repository = repositories.get::<NameRepository>().unwrap();
+        let store_repository = repositories.get::<StoreRepository>().unwrap();
+        let requisition_repository = repositories.get::<RequisitionRepository>().unwrap();
+
+        for name in mock_names {
+            name_repository.insert_one(&name).await.unwrap();
         }
 
-        let mut repositories: RepositoryMap = RepositoryMap::new();
-        let mock_data: Arc<Mutex<HashMap<String, DatabaseRow>>> = Arc::new(Mutex::new(mock_data));
+        for store in mock_stores {
+            store_repository.insert_one(&store).await.unwrap();
+        }
 
-        repositories.insert(RequisitionRepository::new(Arc::clone(&mock_data)));
+        for requisition in mock_requisitions {
+            requisition_repository
+                .insert_one(&requisition)
+                .await
+                .unwrap();
+        }
 
-        let registry = RepositoryRegistry {
-            repositories,
-            sync_sender: Arc::new(Mutex::new(tokio::sync::mpsc::channel(1).0)),
-        };
+        let repository_registry = RepositoryRegistry { repositories };
+        let loader_registry = LoaderRegistry { loaders };
 
-        let registry = actix_web::web::Data::new(registry);
+        let repository_registry = actix_web::web::Data::new(repository_registry);
+        let loader_registry = actix_web::web::Data::new(loader_registry);
+
         let mut app = actix_web::test::init_service(
             actix_web::App::new()
-                .data(registry.clone())
-                .configure(graphql_config(registry)),
+                .data(repository_registry.clone())
+                .data(loader_registry.clone())
+                .configure(graphql_config(repository_registry, loader_registry)),
         )
         .await;
 
