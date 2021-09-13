@@ -15,26 +15,32 @@ const cells = [
   {
     render: () => <span>11</span>,
     getCellProps: () => ({ key: Math.random() * 20 }),
+    column: { align: 'right' },
   },
   {
     render: () => <span>General Warehouse</span>,
     getCellProps: () => ({ key: Math.random() * 20 }),
+    column: { align: 'right' },
   },
   {
     render: () => <span>All items: General warehouse</span>,
     getCellProps: () => ({ key: Math.random() * 20 }),
+    column: { align: 'right' },
   },
   {
     render: () => <span>52</span>,
     getCellProps: () => ({ key: Math.random() * 20 }),
+    column: { align: 'right' },
   },
   {
     render: () => <span>25 Nov 2020</span>,
     getCellProps: () => ({ key: Math.random() * 20 }),
+    column: { align: 'right' },
   },
   {
     render: () => <span>In Progress</span>,
     getCellProps: () => ({ key: Math.random() * 20 }),
+    column: { align: 'right' },
   },
 ] as any;
 
