@@ -1,7 +1,8 @@
 use crate::util::{
     settings::SyncSettings,
     sync::{
-        RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord, SyncCredentials, SyncServer,
+        CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,
+        SyncCredentials, SyncServer,
     },
 };
 
@@ -88,6 +89,37 @@ impl SyncConnection {
 
         Ok(sync_batch)
     }
+
+    // Pull batch of records from central sync log.
+    //
+    // TODO: add custom error to return type.
+    pub async fn central_records(
+        &self,
+        cursor: u32,
+        limit: u32,
+    ) -> Result<CentralSyncBatch, reqwest::Error> {
+        let url = self.server.central_records_url();
+
+        // TODO: add constants for query parameters.
+        let query = [
+            ("cursor", &cursor.to_string()),
+            ("limit", &limit.to_string()),
+        ];
+
+        // Server rejects initialization request if no `content-length` header is included.
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+
+        let request = self
+            .client
+            .get(url)
+            .basic_auth(&self.credentials.username, Some(&self.credentials.password))
+            .query(&query)
+            .headers(headers);
+
+        let response = request.send().await?;
+
+        let sync_batch = response.json::<CentralSyncBatch>().await?;
 
         Ok(sync_batch)
     }

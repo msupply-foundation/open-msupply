@@ -74,6 +74,37 @@ pub struct SyncReceiverActor {
 
 #[allow(unused_assignments)]
 impl SyncReceiverActor {
+    pub async fn pull_central_records(&mut self) -> Vec<CentralSyncRecord> {
+        // TODO: read cursor from persisted storage.
+        let mut cursor: u32 = 0;
+        // Arbitrary batch size.
+        const BATCH_SIZE: u32 = 500;
+
+        let mut records: Vec<CentralSyncRecord> = Vec::new();
+        loop {
+            info!("Sending central sync request...");
+            let sync_batch: CentralSyncBatch = self
+                .connection
+                .central_records(cursor, BATCH_SIZE)
+                .await
+                .expect("Failed to pull central sync records");
+            info!("Received central sync response");
+
+            if let Some(data) = sync_batch.data {
+                records.append(&mut data.clone());
+            }
+
+            cursor += BATCH_SIZE;
+
+            if cursor >= sync_batch.max_cursor {
+                info!("All central sync records pulled successfully");
+                break;
+            }
+        }
+
+        records
+    }
+
     // Hacky method for pulling from sync_queue.
     pub async fn pull_remote_records(&mut self) -> Vec<RemoteSyncRecord> {
         // TODO: only initialize on initial sync.
@@ -120,6 +151,7 @@ impl SyncReceiverActor {
     pub async fn listen(&mut self) {
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message. Performing sync...");
+            let central_records = self.pull_central_records().await;
             let remote_records = self.pull_remote_records().await;
             self.integrate_remote_records(remote_records);
             info!("Finished sync!");
