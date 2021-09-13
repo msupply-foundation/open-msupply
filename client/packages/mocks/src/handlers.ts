@@ -10,7 +10,7 @@ const choose = (options: unknown[]) => {
   return options[randomIdx];
 };
 
-const TransactionData = Array.from({ length: 1000 }).map((_, i) => ({
+const TransactionData = Array.from({ length: 10 }).map((_, i) => ({
   id: `${i}`,
   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
   status: choose(['Confirmed', 'Finalised']),
