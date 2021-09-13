@@ -42,8 +42,7 @@ export const OutboundShipmentListView: FC = () => {
   });
   const { data: response, isLoading } = useQuery(
     ['transaction', 'list', queryProps],
-    () => listQueryFn(queryProps),
-    { notifyOnChangeProps: ['data'] }
+    () => listQueryFn(queryProps)
   );
 
   const queryClient = useQueryClient();
