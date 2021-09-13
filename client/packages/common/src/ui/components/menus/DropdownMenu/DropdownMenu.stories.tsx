@@ -1,13 +1,13 @@
 import React from 'react';
 import { SvgIconProps } from '@material-ui/core';
 import { ComponentMeta, Story } from '@storybook/react';
-import { Dropdown, DropdownItem } from './Dropdown';
+import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import { Customers, Download, Suppliers, Tools } from '../../../icons';
 
 export default {
-  title: 'Inputs/Dropdown',
-  component: Dropdown,
-} as ComponentMeta<typeof Dropdown>;
+  title: 'Menus/DropdownMenu',
+  component: DropdownMenu,
+} as ComponentMeta<typeof DropdownMenu>;
 
 const options = [
   { value: 'cooks', label: 'Cook islands.' },
@@ -73,9 +73,9 @@ const Template: Story<{
   }[];
   placeholder: string;
 }> = args => (
-  <Dropdown label={args.placeholder}>
+  <DropdownMenu label={args.placeholder}>
     {args.options.map(({ label, value, onClick, icon, inset }) => (
-      <DropdownItem
+      <DropdownMenuItem
         key={label}
         value={value}
         onClick={onClick}
@@ -83,9 +83,9 @@ const Template: Story<{
         inset={inset}
       >
         {label}
-      </DropdownItem>
+      </DropdownMenuItem>
     ))}
-  </Dropdown>
+  </DropdownMenu>
 );
 
 export const Simple = Template.bind({});

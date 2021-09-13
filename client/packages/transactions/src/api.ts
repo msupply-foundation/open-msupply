@@ -11,6 +11,7 @@ export const getDetailQuery = (): string => gql`
       customer
       supplier
       total
+      color
     }
   }
 `;
@@ -23,6 +24,7 @@ export const getMutation = (): string => gql`
       customer
       supplier
       total
+      color
     }
   }
 `;
@@ -44,6 +46,7 @@ export const getListQuery = (): string => gql`
         supplier
         date
         total
+        color
       }
       totalLength
     }
@@ -79,9 +82,7 @@ export const detailQueryFn = (id: string) => async (): Promise<Transaction> => {
   return transaction;
 };
 
-export const updateTransactionFn = async (
-  updated: Transaction
-): Promise<Transaction> => {
+export const updateFn = async (updated: Transaction): Promise<Transaction> => {
   const patch = { transactionPatch: updated };
   const result = await request(Environment.API_URL, getMutation(), patch);
   const { upsertTransaction } = result;
