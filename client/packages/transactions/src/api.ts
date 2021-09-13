@@ -11,6 +11,7 @@ export const getDetailQuery = (): string => gql`
       customer
       supplier
       total
+      color
     }
   }
 `;
@@ -23,6 +24,7 @@ export const getMutation = (): string => gql`
       customer
       supplier
       total
+      color
     }
   }
 `;
@@ -44,6 +46,7 @@ export const getListQuery = (): string => gql`
         supplier
         date
         total
+        color
       }
       totalLength
     }

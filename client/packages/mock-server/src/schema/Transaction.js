@@ -16,6 +16,7 @@ const TransactionTypes = `
         customer: String
         supplier: String
         total: String
+        color: String
     }
     type TransactionResponse { 
       data: [Transaction],
@@ -125,6 +126,7 @@ const TransactionInput = `
         customer: String
         supplier: String
         total: String
+        color: String
     }
 `;
 
