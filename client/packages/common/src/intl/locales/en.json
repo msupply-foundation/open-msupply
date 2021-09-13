@@ -26,6 +26,8 @@
   "button.print": "Print",
   "button.go-back": "Go back",
   "button.try-again": "Try again",
+  "button.delete-lines": "Delete selected lines",
+  "button.export-to-csv": "Export to CSV",
   "error.something-wrong": "Oops! Somethings gone wrong.",
   "label.customer": "Customer",
   "label.date": "Date",

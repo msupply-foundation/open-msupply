@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
+  useQueryClient,
   Portal,
   request,
   Button,
@@ -20,16 +21,26 @@ import {
   QueryProps,
   useDataTableApi,
   GenericColumnType,
-  Dropdown,
-  DropdownItem,
+  DropdownMenu,
+  DropdownMenuItem,
   AppBarContentPortal,
-  Customers,
+  useTranslation,
+  useMutation,
+  ChevronDown,
+  Tools,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { getListQuery } from '../../api';
-import { Checkbox } from '@material-ui/core';
+import { getDeleteMutation, getListQuery } from '../../api';
 
-const queryFn = async (queryParams: QueryProps<Transaction>) => {
+const deleteFn = async (transactions: Transaction[]) => {
+  await request(Environment.API_URL, getDeleteMutation(), {
+    transactions,
+  });
+};
+
+const queryFn = async (
+  queryParams: QueryProps<Transaction>
+): Promise<{ data: Transaction[]; totalLength: number }> => {
   const { first, offset, sortBy } = queryParams;
 
   const { transactions } = await request(Environment.API_URL, getListQuery(), {
@@ -55,6 +66,12 @@ export const OutboundShipmentListView: FC = () => {
     () => queryFn(queryProps)
   );
 
+  const queryClient = useQueryClient();
+
+  const { isLoading: mutationLoading, mutateAsync } = useMutation(deleteFn, {
+    onSuccess: () => queryClient.invalidateQueries(['transaction']),
+  });
+
   const navigate = useNavigate();
   const columns = useColumns<Transaction>([
     { label: 'label.id', key: 'id', sortable: false },
@@ -70,19 +87,39 @@ export const OutboundShipmentListView: FC = () => {
   ];
 
   const tableApi = useDataTableApi<Transaction>();
+  const t = useTranslation();
 
   return (
     <>
       <AppBarContentPortal>
-        <Dropdown label="Select" value={10} IconComponent={Customers}>
-          <DropdownItem value={10}>Ten</DropdownItem>
-          <DropdownItem value={20}>Twenty</DropdownItem>
-        </Dropdown>
-        <Checkbox
-          size="small"
-          color="secondary"
-          onClick={tableApi.current?.toggleSelectAllRows}
-        />
+        <DropdownMenu label="Select">
+          <DropdownMenuItem
+            IconComponent={ChevronDown}
+            onClick={() => {
+              const linesToDelete = tableApi?.current?.selectedRows;
+              if (linesToDelete && linesToDelete?.length > 0) {
+                mutateAsync(linesToDelete);
+                success(`Deleted ${linesToDelete?.length} invoices`)();
+              } else {
+                info('Select rows to delete them')();
+              }
+            }}
+          >
+            {t('button.delete-lines')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            IconComponent={Tools}
+            onClick={warning('Whats this do?')}
+          >
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            IconComponent={Download}
+            onClick={success('Successfully exported to CSV!')}
+          >
+            {t('button.export-to-csv')}
+          </DropdownMenuItem>
+        </DropdownMenu>
       </AppBarContentPortal>
 
       <Portal container={appBarButtonsRef?.current}>
@@ -114,7 +151,7 @@ export const OutboundShipmentListView: FC = () => {
         columns={columns}
         data={response?.data || []}
         initialSortBy={initialSortBy}
-        isLoading={isLoading}
+        isLoading={isLoading || mutationLoading}
         onFetchData={setQueryProps}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);

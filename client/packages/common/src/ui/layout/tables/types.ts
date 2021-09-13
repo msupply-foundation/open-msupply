@@ -1,6 +1,6 @@
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ReactNode, RefObject } from 'react';
-import { Column, Row, SortingRule } from 'react-table';
+import { Column, SortingRule } from 'react-table';
 
 export enum ColumnFormat {
   date,
@@ -14,6 +14,7 @@ export interface ColumnDefinition<T> {
   format?: ColumnFormat;
   key: keyof T;
   sortable?: boolean; // defaults to true
+  align?: 'left' | 'right' | 'center';
 }
 
 export enum GenericColumnType {
@@ -44,7 +45,7 @@ export interface TableProps<T extends Record<string, unknown>> {
   initialSortBy?: SortingRule<T>[];
   isLoading?: boolean;
   onFetchData: (props: QueryProps<T>) => void;
-  onRowClick?: <T extends Record<string, unknown>>(row: Row<T>) => void;
+  onRowClick?: (row: T) => void;
   totalLength?: number;
   tableApi: RefObject<DataTableApi<T>>;
   children?: ReactNode;

@@ -26,6 +26,8 @@
   "button.open-the-menu": "Abra o menu",
   "button.try-again": "Try again",
   "button.go-back": "Go back",
+  "button.delete-lines": "Delete selected lines",
+  "button.export-to-csv": "Export to CSV",
   "error.something-wrong": "Oops! Somethings gone wrong.",
   "label.customer": "Customer",
   "label.date": "Date",

@@ -28,6 +28,9 @@ const StyledContainer = styled(Box, {
   marginLeft: 80,
   marginRight: 0,
   minHeight: 90,
+  paddingLeft: '16px',
+  paddingRight: '16px',
+  paddingBottom: '16px',
   zIndex: theme.zIndex.drawer - 1,
   boxShadow: theme.shadows[1],
   ...theme.mixins.header,
@@ -48,12 +51,12 @@ const StyledContainer = styled(Box, {
 
 const AppBar: React.FC = () => {
   const { isOpen } = useDrawer();
-  const { appBarButtonsRef, appBarContentRef } = useHostContext();
+  const { appBarButtonsRef } = useHostContext();
   const navigate = useNavigate();
 
   return (
     <StyledContainer isOpen={isOpen}>
-      <Toolbar disableGutters sx={{ paddingLeft: '24px' }}>
+      <Toolbar disableGutters>
         <UnstyledIconButton
           icon={<ArrowLeft />}
           titleKey="button.go-back"
