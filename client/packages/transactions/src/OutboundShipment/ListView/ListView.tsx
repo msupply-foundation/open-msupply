@@ -20,8 +20,8 @@ import {
   QueryProps,
   useDataTableApi,
   GenericColumnType,
-  Dropdown,
-  DropdownItem,
+  DropdownMenu,
+  DropdownMenuItem,
   AppBarContentPortal,
   useTranslation,
   useMutation,
@@ -106,8 +106,8 @@ export const OutboundShipmentListView: FC = () => {
   return (
     <>
       <AppBarContentPortal>
-        <Dropdown label="Select">
-          <DropdownItem
+        <DropdownMenu label="Select">
+          <DropdownMenuItem
             IconComponent={ChevronDown}
             onClick={() => {
               const linesToDelete = tableApi?.current?.selectedRows;
@@ -120,20 +120,20 @@ export const OutboundShipmentListView: FC = () => {
             }}
           >
             {t('button.delete-lines')}
-          </DropdownItem>
-          <DropdownItem
+          </DropdownMenuItem>
+          <DropdownMenuItem
             IconComponent={Tools}
             onClick={warning('Whats this do?')}
           >
             Edit
-          </DropdownItem>
-          <DropdownItem
+          </DropdownMenuItem>
+          <DropdownMenuItem
             IconComponent={Download}
             onClick={success('Successfully exported to CSV!')}
           >
             {t('button.export-to-csv')}
-          </DropdownItem>
-        </Dropdown>
+          </DropdownMenuItem>
+        </DropdownMenu>
       </AppBarContentPortal>
 
       <Portal container={appBarButtonsRef?.current}>
