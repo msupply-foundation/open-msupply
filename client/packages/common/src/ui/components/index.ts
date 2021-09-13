@@ -14,6 +14,7 @@ export * from './buttons';
 export * from './errors';
 export * from './LoadingSpinner';
 export * from './RemoteComponent';
+export * from './menus';
 
 export {
   CircularProgress,

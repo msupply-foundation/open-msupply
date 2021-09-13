@@ -14,12 +14,12 @@ import {
 
 import { ChevronDown } from '../../../icons';
 
-interface DropdownItemProps extends MenuItemProps {
+interface DropdownMenuItemProps extends MenuItemProps {
   IconComponent?: React.JSXElementConstructor<SvgIconProps>;
   inset?: boolean;
 }
 
-export const DropdownItem: FC<DropdownItemProps> = ({
+export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({
   IconComponent,
   ...props
 }) => {
@@ -64,13 +64,13 @@ const StyledSelect = styled(Select)(({ theme }) => ({
     },
 }));
 
-interface DropdownProps {
+interface DropdownMenuProps {
   label: string;
 }
 
 // Styled doesn't like `sx` prop being passed to it.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const Dropdown: FC<DropdownProps> = ({ label, children }) => {
+export const DropdownMenu: FC<DropdownMenuProps> = ({ label, children }) => {
   return (
     <FormControl size="small">
       <InputLabel

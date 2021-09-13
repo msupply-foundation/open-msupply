@@ -2,16 +2,16 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import { Dropdown, DropdownItem } from '.';
+import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import { TestingProvider } from '../../../../utils';
 
 describe('Dropdown', () => {
   it('Renders the dropdown item children when the dropdown is clicked', () => {
     const { getByRole, getByText } = render(
       <TestingProvider>
-        <Dropdown label="dropdown">
-          <DropdownItem>One</DropdownItem>
-        </Dropdown>
+        <DropdownMenu label="dropdown">
+          <DropdownMenuItem>One</DropdownMenuItem>
+        </DropdownMenu>
       </TestingProvider>
     );
 
@@ -32,9 +32,11 @@ describe('Dropdown', () => {
 
       return (
         <TestingProvider>
-          <Dropdown label="dropdown">
-            <DropdownItem onClick={() => setText('two')}>{text}</DropdownItem>
-          </Dropdown>
+          <DropdownMenu label="dropdown">
+            <DropdownMenuItem onClick={() => setText('two')}>
+              {text}
+            </DropdownMenuItem>
+          </DropdownMenu>
         </TestingProvider>
       );
     };
