@@ -14,6 +14,7 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
             translated_record: TestSyncDataRecord::Store(Some(StoreRow {
                 id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
                 name_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
+                code: "GEN".to_owned(),
             })),
             identifier: "General",
             sync_record: SyncRecord {

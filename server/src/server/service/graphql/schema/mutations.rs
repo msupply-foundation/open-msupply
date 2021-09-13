@@ -18,8 +18,9 @@ impl Mutations {
         ctx: &Context<'_>,
         #[graphql(desc = "id of the item")] id: String,
         #[graphql(desc = "name of the item")] name: String,
+        #[graphql(desc = "code of the item")] code: String,
     ) -> Item {
-        let item_row = ItemRow { id, name };
+        let item_row = ItemRow { id, name, code };
 
         let item_repository = ctx.get_repository::<ItemRepository>();
 

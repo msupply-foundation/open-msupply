@@ -2,6 +2,7 @@ table! {
     item (id) {
         id -> Text,
         name -> Text,
+        code -> Text,
     }
 }
 
@@ -20,6 +21,9 @@ table! {
     name_table (id) {
         id -> Text,
         name -> Text,
+        code -> Text,
+        is_customer -> Bool,
+        is_supplier -> Bool,
     }
 }
 
@@ -46,6 +50,7 @@ table! {
     store (id) {
         id -> Text,
         name_id -> Text,
+        code -> Text,
     }
 }
 
