@@ -10,7 +10,6 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
 };
 
-#[derive(Clone)]
 pub struct StoreRepository {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
 }

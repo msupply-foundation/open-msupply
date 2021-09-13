@@ -10,12 +10,12 @@ use crate::server::data::{LoaderRegistry, RepositoryRegistry};
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 trait ContextExt {
-    fn get_repository<T: anymap::any::CloneAny + Send + Sync>(&self) -> &T;
+    fn get_repository<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
 }
 
 impl<'a> ContextExt for Context<'a> {
-    fn get_repository<T: anymap::any::CloneAny + Send + Sync>(&self) -> &T {
+    fn get_repository<T: anymap::any::Any + Send + Sync>(&self) -> &T {
         self.data_unchecked::<Data<RepositoryRegistry>>().get::<T>()
     }
 
