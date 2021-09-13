@@ -4,4 +4,5 @@ export type Transaction = {
   supplier: string;
   total: string;
   date: string;
+  color: string;
 };

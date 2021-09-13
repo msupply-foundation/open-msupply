@@ -8,6 +8,7 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
   supplier: `${faker.name.firstName()} ${faker.name.lastName()}`,
   date: faker.date.past().toString(),
   total: `${faker.commerce.price()}`,
+  color: 'grey',
 }));
 
 const parseValue = (object: any, key: string) => {
@@ -48,7 +49,12 @@ const upsertTransaction = graphql.mutation(
       return response(context.data({ upsertTransaction: newTransaction }));
     }
 
-    return response(context.data({}));
+    const idx = TransactionData.findIndex(
+      ({ id: filterId }) => id === filterId
+    );
+    TransactionData[idx] = { ...TransactionData[idx], ...patch };
+
+    return response(context.data({ upsertTransaction: TransactionData[idx] }));
   }
 );
 

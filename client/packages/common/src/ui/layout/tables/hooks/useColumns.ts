@@ -7,6 +7,7 @@ const columnLookup = (column: GenericColumnType) => {
   if (column === GenericColumnType.Selection) {
     return getCheckboxSelectionColumn();
   }
+
   return null;
 };
 
@@ -39,6 +40,7 @@ export const useColumns = <T extends object>(
       sortDescFirst,
       sortInverted,
       sortType,
+      ...column,
       // TODO: Fix react-type column typings here
     } as any;
   });

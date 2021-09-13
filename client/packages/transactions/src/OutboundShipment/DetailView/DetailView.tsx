@@ -2,36 +2,17 @@ import React, { FC } from 'react';
 
 import { useNavigate, useParams } from 'react-router';
 
-import {
-  request,
-  Transaction,
-  useQueryClient,
-} from '@openmsupply-client/common';
+import { Transaction, useQueryClient } from '@openmsupply-client/common';
 
-import { getMutation, getDetailQuery } from '../../api';
+import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
-import { Environment } from '@openmsupply-client/config';
-
-const queryFn = (id: string) => async (): Promise<Transaction> => {
-  const result = await request(Environment.API_URL, getDetailQuery(), {
-    id,
-  });
-  const { transaction } = result;
-  return transaction;
-};
-
-const mutationFn = async (updated: Transaction): Promise<Transaction> => {
-  const patch = { transactionPatch: updated };
-  const result = await request(Environment.API_URL, getMutation(), patch);
-  const { upsertTransaction } = result;
-  return upsertTransaction;
-};
 
 const placeholderTransaction: Transaction = {
   customer: '',
   total: '',
   date: '',
   supplier: '',
+  color: 'grey',
 };
 
 const useDraft = createDraftStore<Transaction>();
@@ -41,8 +22,8 @@ const useDraftOutbound = (id: string) => {
   const navigate = useNavigate();
   const { draft, setDraft, save } = useDraftDocument(
     ['transaction', id],
-    queryFn(id ?? ''),
-    mutationFn,
+    detailQueryFn(id ?? ''),
+    updateFn,
 
     // On successfully saving the draft, check if we had just saved a new
     // record - this is indicated by the record having no `id` field.
