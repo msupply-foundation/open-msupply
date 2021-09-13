@@ -10,7 +10,7 @@ import { OutboundShipmentListView } from './ListView';
 
 describe('OutboundShipmentListView', () => {
   it('Renders all the headers for the list', async () => {
-    const { getByText } = render(
+    const { getByRole } = render(
       <TestingProvider>
         <TestingRouter initialEntries={['/customers/customer-invoice']}>
           <Route path="*" element={<OutboundShipmentListView />} />
@@ -18,12 +18,31 @@ describe('OutboundShipmentListView', () => {
       </TestingProvider>
     );
 
+    // TODO: Don't hard core the columns. Get them from a shared function with the
+    // specific view
+
     await waitFor(() => {
-      expect(getByText(/ID/)).toBeInTheDocument();
-      expect(getByText(/date/i)).toBeInTheDocument();
-      expect(getByText(/customer/i)).toBeInTheDocument();
-      expect(getByText(/supplier/i)).toBeInTheDocument();
-      expect(getByText(/total/i)).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /color/i })).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /type/i })).toBeInTheDocument();
+      expect(
+        getByRole('columnheader', { name: /status/i })
+      ).toBeInTheDocument();
+      expect(
+        getByRole('columnheader', { name: /entered/i })
+      ).toBeInTheDocument();
+      expect(
+        getByRole('columnheader', { name: /confirmed/i })
+      ).toBeInTheDocument();
+      expect(
+        getByRole('columnheader', { name: /invoicenumber/i })
+      ).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
+      expect(
+        getByRole('columnheader', { name: /comment/i })
+      ).toBeInTheDocument();
+      expect(
+        getByRole('columnheader', { name: /selection/i })
+      ).toBeInTheDocument();
     });
   });
 

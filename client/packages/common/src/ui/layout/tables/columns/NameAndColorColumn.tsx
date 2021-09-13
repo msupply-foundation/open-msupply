@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { CellProps, Column } from 'react-table';
-import { TableCell } from '@material-ui/core';
 import { Color, ColorMenu, UnstyledIconButton } from '../../../components';
 import { Circle } from '../../../icons';
 import { Box } from '@material-ui/system';
@@ -27,12 +26,10 @@ export const getNameAndColorColumn = <T extends Colorable>(
     };
 
     return (
-      <TableCell
-        padding="none"
-        align="left"
+      <Box
         sx={{
           flexDirection: 'row',
-          borderBottom: 0,
+          borderBottom: 'none',
           alignItems: 'center',
           display: 'flex',
         }}
@@ -65,7 +62,7 @@ export const getNameAndColorColumn = <T extends Colorable>(
         />
         <Box ml={1} />
         {value}
-      </TableCell>
+      </Box>
     );
   },
 });

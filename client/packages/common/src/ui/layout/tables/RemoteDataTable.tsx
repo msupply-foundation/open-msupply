@@ -7,6 +7,7 @@ import {
   useRowSelect,
   useSortBy,
   useTable,
+  useFlexLayout,
   Row,
 } from 'react-table';
 
@@ -59,7 +60,8 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     },
     useSortBy,
     usePagination,
-    useRowSelect
+    useRowSelect,
+    useFlexLayout
   );
 
   const {
@@ -108,15 +110,31 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       <MuiTable stickyHeader {...getTableProps()}>
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
-            <TableRow {...getHeaderGroupProps()}>
+            <TableRow
+              {...getHeaderGroupProps()}
+              sx={{
+                ...getHeaderGroupProps().style,
+                display: 'flex',
+                flex: '1 0 auto',
+
+                height: '60px',
+                paddingLeft: '20px',
+                paddingRight: '20px',
+                alignItems: 'center',
+              }}
+            >
               {headers.map(column => {
                 return (
                   <TableCell
                     {...column.getHeaderProps(column.getSortByToggleProps())}
                     align={column.align}
-                    padding={column.id === 'selection' ? 'checkbox' : 'normal'}
+                    padding={'none'}
                     sx={{
                       backgroundColor: 'transparent',
+                      borderBottom: '0px',
+
+                      padding: 0,
+                      paddingRight: '16px',
                     }}
                     aria-label={column.id}
                     sortDirection={
@@ -132,6 +150,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                       active={column.isSorted}
                       direction={column.isSortedDesc ? 'desc' : 'asc'}
                       IconComponent={SortDesc}
+                      sx={{ fontWeight: 'bold' }}
                     >
                       {column.render('Header')}
                     </TableSortLabel>
@@ -145,19 +164,18 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
           {rows.map((row: Row<T>) => {
             prepareRow(row);
 
-            const { cells, values } = row;
+            const { cells, original } = row;
             const { key } = row.getRowProps();
 
             return (
               <DataRow<T>
                 cells={cells}
-                values={values as T}
                 key={key}
                 onClick={onRowClick}
+                rowData={original}
               />
             );
           })}
-
           <TableRow>
             <TablePagination
               page={pageIndex}
