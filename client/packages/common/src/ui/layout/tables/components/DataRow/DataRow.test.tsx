@@ -10,6 +10,7 @@ describe('DataRow', () => {
     {
       render: () => <span>josh</span>,
       getCellProps: () => ({ key: Math.random() * 20 }),
+      column: { align: 'right' },
     },
   ] as any;
 
