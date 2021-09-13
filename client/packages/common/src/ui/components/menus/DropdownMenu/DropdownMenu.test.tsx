@@ -26,7 +26,7 @@ describe('Dropdown', () => {
     expect(node).toBeInTheDocument();
   });
 
-  it('Renders the dropdown item children when the dropdown is clicked', () => {
+  it('Renders the dropdown item children when the dropdown is clicked and triggers the callback when an item is selected', () => {
     const TestDropdown = () => {
       const [text, setText] = React.useState('one');
 
