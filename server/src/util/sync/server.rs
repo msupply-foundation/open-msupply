@@ -5,6 +5,7 @@ pub const BASE_URL: &'static str = "/sync/v5/";
 
 pub const INITIALIZE: &'static str = "initialise";
 pub const QUEUED_RECORDS: &'static str = "queued_records";
+pub const CENTRAL_RECORDS: &'static str = "central_records";
 pub const ACKNOWLEDGE_RECORDS: &'static str = "acknowledged_records";
 
 #[derive(Debug)]
@@ -33,6 +34,10 @@ impl SyncServer {
 
     pub fn queued_records_url(&self) -> Url {
         self.base_url().join(QUEUED_RECORDS).unwrap()
+    }
+
+    pub fn central_records_url(&self) -> Url {
+        self.base_url().join(CENTRAL_RECORDS).unwrap()
     }
 
     pub fn acknowledge_records_url(&self) -> Url {
