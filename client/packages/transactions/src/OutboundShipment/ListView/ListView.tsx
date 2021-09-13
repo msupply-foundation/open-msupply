@@ -194,21 +194,25 @@ export const OutboundShipmentListView: FC = () => {
       <Portal container={appBarButtonsRef?.current}>
         <>
           <Button
+            shouldShrink
             icon={<PlusCircle />}
             labelKey="button.new-shipment"
             onClick={() => navigate(`/customers/customer-invoice/new`)}
           />
           <Button
+            shouldShrink
             icon={<Download />}
             labelKey="button.export"
             onClick={success('Downloaded successfully')}
           />
           <Button
+            shouldShrink
             icon={<Printer />}
             labelKey="button.print"
             onClick={info('No printer detected')}
           />
           <Button
+            shouldShrink
             icon={<MenuDots />}
             labelKey="button.more"
             onClick={warning('Do not press this button')}
