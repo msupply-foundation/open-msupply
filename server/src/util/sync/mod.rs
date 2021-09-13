@@ -1,9 +1,11 @@
+mod central;
 mod connection;
 mod credentials;
 mod remote;
 mod server;
 mod translation;
 
+pub use central::{CentralSyncBatch, CentralSyncRecord, CentralSyncRecordData};
 pub use connection::SyncConnection;
 pub use credentials::SyncCredentials;
 pub use remote::{
