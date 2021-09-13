@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { Transaction, useQueryClient } from '@openmsupply-client/common';
 
-import { detailQueryFn, updateTransactionFn } from '../../api';
+import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
 
 const placeholderTransaction: Transaction = {
@@ -27,7 +27,7 @@ const useDraftOutbound = (id: string) => {
   const { draft, setDraft, save } = useDraftDocument(
     ['transaction', id],
     detailQueryFn(id ?? ''),
-    updateTransactionFn,
+    updateFn,
 
     // On successfully saving the draft, check if we had just saved a new
     // record - this is indicated by the record having no `id` field.

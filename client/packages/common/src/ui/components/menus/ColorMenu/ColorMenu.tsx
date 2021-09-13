@@ -68,7 +68,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
             onClose();
           }}
           htmlColor={hex}
-          sx={{ width: '20px', overflow: 'visible', cursor: 'pointer' }}
+          sx={{ width: '20px', cursor: 'pointer' }}
         />
       ))}
     </Paper>

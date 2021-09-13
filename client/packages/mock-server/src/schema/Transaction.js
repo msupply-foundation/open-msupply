@@ -6,6 +6,7 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
   supplier: `${faker.name.firstName()} ${faker.name.lastName()}`,
   date: faker.date.past().toString(),
   total: `${faker.commerce.price()}`,
+  color: 'grey',
 }));
 
 const TransactionTypes = `
@@ -15,6 +16,7 @@ const TransactionTypes = `
         customer: String
         supplier: String
         total: String
+        color: String
     }
     type TransactionResponse { 
       data: [Transaction],
@@ -124,6 +126,7 @@ const TransactionInput = `
         customer: String
         supplier: String
         total: String
+        color: String
     }
 `;
 
