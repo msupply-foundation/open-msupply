@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button as MuiButton } from '@material-ui/core';
+import { Button as MuiButton, Tooltip } from '@material-ui/core';
 import { styled } from '@material-ui/core/styles';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
 import { DefaultButtonStyles } from './styles';
@@ -42,16 +42,18 @@ const Button: React.FC<ButtonProps> = ({
   const text = shrink ? null : t(labelKey);
 
   return (
-    <StyledButton
-      shrink={shrink}
-      onClick={onClick}
-      startIcon={startIcon}
-      variant="contained"
-      size="small"
-    >
-      {centeredIcon}
-      {text}
-    </StyledButton>
+    <Tooltip disableHoverListener={!shrink} title={t(labelKey)}>
+      <StyledButton
+        shrink={shrink}
+        onClick={onClick}
+        startIcon={startIcon}
+        variant="contained"
+        size="small"
+      >
+        {centeredIcon}
+        {text}
+      </StyledButton>
+    </Tooltip>
   );
 };
 
