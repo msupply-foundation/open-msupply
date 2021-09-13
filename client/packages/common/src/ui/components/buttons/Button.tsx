@@ -19,6 +19,10 @@ const StyledButton = styled(MuiButton, {
   boxShadow: theme.shadows[1],
   color: theme.palette.primary.main,
   width: shrink ? '64px' : '115px',
+  transition: theme.transitions.create(['width'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
 }));
 
 const Button: React.FC<ButtonProps> = ({
