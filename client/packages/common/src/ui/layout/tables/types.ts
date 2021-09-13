@@ -15,6 +15,9 @@ export interface ColumnDefinition<T> {
   key: keyof T;
   sortable?: boolean; // defaults to true
   align?: 'left' | 'right' | 'center';
+  width?: number;
+  maxWidth?: number;
+  minWidth?: number;
 }
 
 export enum GenericColumnType {
