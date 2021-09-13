@@ -6,6 +6,9 @@ export const getCheckboxSelectionColumn = (): Column & { align: string } => ({
   id: 'selection',
   align: 'right',
   disableSortBy: true,
+  width: 20,
+  maxWidth: 20,
+  minWidth: 20,
   Header: ({ getToggleAllRowsSelectedProps }) => (
     <Checkbox
       size="small"
