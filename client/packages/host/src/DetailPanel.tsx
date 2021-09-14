@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Box,
   Close,
@@ -6,7 +6,17 @@ import {
   FlatButton,
   styled,
   useDetailPanelStore,
+  useTranslation,
+  Typography,
+  ChevronDown,
+  useTheme,
+  useMediaQuery,
 } from '@openmsupply-client/common';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+} from '@material-ui/core';
 
 const openedMixin = (theme: Theme) => ({
   width: 300,
@@ -45,17 +55,55 @@ const StyledDivider = () => (
   />
 );
 
-const ButtonContainer = styled(Box)({
+const ButtonContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
-  color: '#8f90a6',
+  color: theme.palette.midGrey,
   display: 'flex',
   height: 56,
   justifyContent: 'flex-end',
-});
+}));
+
+const StyledAccordian = styled(Accordion)(({ theme }) => ({
+  backgroundColor: theme.palette.background.menu,
+  boxShadow: 'none',
+  '&.Mui-expanded': { margin: 0 },
+  '&:before': { backgroundColor: 'transparent' },
+  '& p.MuiTypography-root': { fontSize: 12 },
+}));
 
 const DetailPanel: React.FC = () => {
-  const isOpen = useDetailPanelStore(state => state.isOpen);
-  const close = useDetailPanelStore(state => state.close);
+  const { close, isOpen, open, sections } = useDetailPanelStore();
+  const t = useTranslation();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  const Sections = useCallback(
+    () => (
+      <>
+        {sections.map(section => (
+          <Box key={section.titleKey}>
+            <StyledAccordian>
+              <AccordionSummary expandIcon={<ChevronDown color="secondary" />}>
+                <Typography sx={{ fontWeight: 'bold' }}>
+                  {t(section.titleKey)}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>{section.children}</AccordionDetails>
+            </StyledAccordian>
+            <StyledDivider />
+          </Box>
+        ))}
+      </>
+    ),
+    [sections]
+  );
+
+  React.useEffect(() => {
+    if (isSmallScreen && isOpen) close();
+    if (!isSmallScreen && !isOpen) open();
+  }, [isSmallScreen]);
+
+  if (!sections.length) return null;
 
   return (
     <StyledDrawer
@@ -74,6 +122,7 @@ const DetailPanel: React.FC = () => {
         </ButtonContainer>
       </Box>
       <StyledDivider />
+      <Sections />
     </StyledDrawer>
   );
 };

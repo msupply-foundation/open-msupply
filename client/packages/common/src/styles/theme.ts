@@ -22,6 +22,7 @@ declare module '@material-ui/core/styles/createMixins' {
 declare module '@material-ui/core/styles/createPalette' {
   interface Palette {
     darkGrey: string;
+    midGrey: string;
   }
   interface TypeBackground {
     menu: string;
@@ -43,6 +44,7 @@ const themeOptions = {
   },
   palette: {
     darkGrey: '#555770',
+    midGrey: '#8f90a6',
     primary: { 500: '#e95c30' },
     secondary: { main: '#555770' },
 
