@@ -2,7 +2,13 @@ import React, { FC } from 'react';
 
 import { useNavigate, useParams } from 'react-router';
 
-import { Transaction, useQueryClient } from '@openmsupply-client/common';
+import {
+  Portal,
+  Transaction,
+  useDetailPanel,
+  useHostContext,
+  useQueryClient,
+} from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
@@ -53,9 +59,14 @@ const useDraftOutbound = (id: string) => {
 export const OutboundShipmentDetailView: FC = () => {
   const { id } = useParams();
   const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
-
+  const { appBarButtonsRef } = useHostContext();
+  const { OpenButton } = useDetailPanel();
+  console.info('*** render detail ***');
   return draft ? (
     <>
+      <Portal container={appBarButtonsRef?.current}>
+        <>{OpenButton}</>
+      </Portal>
       <div>
         <input
           value={draft?.customer}

@@ -18,6 +18,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
+import DetailPanel from './DetailPanel';
 import Viewport from './Viewport';
 
 const Content = styled(Box)({
@@ -116,6 +117,7 @@ const Host: FC = () => {
                         </Routes>
                       </React.Suspense>
                     </Content>
+                    <DetailPanel />
                   </Box>
                 </Viewport>
               </SnackbarProvider>

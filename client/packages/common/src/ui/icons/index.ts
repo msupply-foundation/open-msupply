@@ -4,6 +4,7 @@ export { CheckboxChecked } from './CheckboxChecked';
 export { CheckboxIndeterminate } from './CheckboxIndeterminate';
 export { CheckboxEmpty } from './CheckboxEmpty';
 export { ChevronDown } from './ChevronDown';
+export { Close } from './Close';
 export { Customers } from './Customers';
 export { Dashboard } from './Dashboard';
 export { Download } from './Download';
@@ -25,3 +26,18 @@ export { Tools } from './Tools';
 export { Translate } from './Translate';
 export { UnhappyMan } from './UnhappyMan';
 export { Circle } from './Circle';
+
+type Color =
+  | 'inherit'
+  | 'action'
+  | 'disabled'
+  | 'primary'
+  | 'secondary'
+  | 'error'
+  | 'info'
+  | 'success'
+  | 'warning';
+
+export interface SvgIconProps {
+  color: Color;
+}

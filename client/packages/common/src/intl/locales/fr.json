@@ -15,6 +15,7 @@
   "app.transactions": "Transactions",
   "app.welcome": "Bonjour, {name}!",
   "breadcrumb.item": "#{id}",
+  "button.close": "Fermer",
   "button.close-the-menu": "Fermer le menu",
   "button.new-shipment": "New Shipment",
   "button.docs": "Docs",
