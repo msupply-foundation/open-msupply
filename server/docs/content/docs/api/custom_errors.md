@@ -24,7 +24,21 @@ enum CustomErrorCodes {
   OffsetBelowZero = "OFFSET_BELOW_ZERO",
   FirstNotInRange = "FIRST_NOT_IN_RANGE",
   // Singular query
-  RecordNotFound = "RECORD_NOT_FOUND"
+  RecordNotFound = "RECORD_NOT_FOUND",
+  // Customer Invoice
+  OtherPartyIdNotFound = "OTHER_PARTY_ID_NOT_FOUND",
+  OtherPartyNotACustomerOfThisStore = "OTHER_PARTY_NOT_A_CUSTOMER_OF_THIS_STORE",
+  OtherPartyCannotBeThisStore = "OTHER_PARTY_CANNOT_BE_THIS_STORE",
+  DatabaseTransactionValidationError = "DATABASE_TRANSACTION_VALIDATION_ERROR",
+  OtherPartyIdMissing = "OTHER_PARTY_ID_MISSING",
+  IdPresentInInsertInvoiceLine = "ID_PRESENT_IN_INSERT_INVOICE_LINE",
+  FinalisedInvoiceIsNotEditable = "FINALISED_INVOICE_IS_NOT_EDITABLE",
+  CannotChangeStatusBackToDraft = "CANNOT_CHANGE_STATUS_BACK_TO_DRAFT",
+  NumberOfPacksCannotBeNegative = "NUMBER_OF_PACKS_CANNOT_BE_NEGATIVE",
+  NumberOfPacksMissingInInvoiceLine = "NUMBER_OF_PACKS_MISSING_IN_INVOICE_LINE",
+  BatchReductionBelowZero = "BATCH_REDUCTION_BELOW_ZERO",
+  ItemIdMissingInInvoiceLine = "ITEM_ID_MISSING_IN_INVOICE_LINE",
+  StockLineIdMissingInInvoiceLine =  "STOCK_LINE_ID_MISSING_IN_INVOICE_LINE"
 }
 ```
 
