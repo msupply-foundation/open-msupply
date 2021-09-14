@@ -1,12 +1,14 @@
 import React, { ChangeEvent, useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
+import { SvgIconProps } from '.';
 import { ArrowLeft } from './ArrowLeft';
 import { Book } from './Book';
 import { CheckboxChecked } from './CheckboxChecked';
 import { CheckboxIndeterminate } from './CheckboxIndeterminate';
 import { CheckboxEmpty } from './CheckboxEmpty';
 import { ChevronDown } from './ChevronDown';
+import { Close } from './Close';
 import { Customers } from './Customers';
 import { Dashboard } from './Dashboard';
 import { Download } from './Download';
@@ -66,6 +68,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     },
     { icon: <CheckboxEmpty {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDown {...args} />, name: 'ChevronDown' },
+    { icon: <Close {...args} />, name: 'Close' },
     { icon: <Circle htmlColor="#e95c30" {...args} />, name: 'Circle' },
     { icon: <Customers {...args} />, name: 'Customers' },
     { icon: <Dashboard {...args} />, name: 'Dashboard' },
@@ -117,20 +120,6 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
   );
 };
 
-type Color =
-  | 'inherit'
-  | 'action'
-  | 'disabled'
-  | 'primary'
-  | 'secondary'
-  | 'error'
-  | 'info'
-  | 'success'
-  | 'warning';
-
-interface SvgIconProps {
-  color: Color;
-}
 export const Primary = Template.bind({});
 export const Secondary = Template.bind({});
 
