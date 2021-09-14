@@ -15,11 +15,15 @@ import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
 
 const placeholderTransaction: Transaction = {
-  customer: '',
+  name: '',
   total: '',
-  date: '',
-  supplier: '',
+  comment: '',
   color: 'grey',
+  status: '',
+  type: '',
+  entered: '',
+  confirmed: '',
+  invoiceNumber: '',
 };
 
 const useDraft = createDraftStore<Transaction>();
@@ -85,10 +89,8 @@ export const OutboundShipmentDetailView: FC = () => {
       </Portal>
       <div>
         <input
-          value={draft?.customer}
-          onChange={event =>
-            setDraft({ ...draft, customer: event?.target.value })
-          }
+          value={draft?.name}
+          onChange={event => setDraft({ ...draft, name: event?.target.value })}
         />
       </div>
       <div>

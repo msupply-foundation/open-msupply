@@ -33,9 +33,16 @@
   "error.something-wrong": "Oops! Somethings gone wrong.",
   "heading.additional-info": "Additional Info",
   "heading.comment": "Comment",
+  "label.comment": "Comment",
+  "label.confirmed": "Confirmed",
   "label.customer": "Customer",
   "label.date": "Date",
+  "label.entered": "Entered",
   "label.id": "ID",
+  "label.invoice-number": "Invnum",
+  "label.name": "Name",
+  "label.status": "Status",
   "label.supplier": "Supplier",
-  "label.total": "Total"
+  "label.total": "Total",
+  "label.type": "Type"
 }
