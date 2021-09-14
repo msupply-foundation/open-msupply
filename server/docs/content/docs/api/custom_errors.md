@@ -43,7 +43,8 @@ interface OffsetError extends CustomError {
   // Offset in sort argument
   first: number
 }
-
+```
+```TypeScript
 interface FirstError extends CustomError {
   code: CustomErrorCodes.FirstNotInRange,
   // First in sort argument
@@ -59,5 +60,118 @@ interface FirstError extends CustomError {
 interface RecordNotFoundError extends CustomError {
   code: CustomErrorCodes.RecordNotFound,
   specifiedField: string,
+}
+```
+
+## [CUSTOMER INVOICE](/docs/api/mutations/#customer-invoice)
+
+#### Customer Invoice Common 
+
+```TypeScript
+interface OtherPartyIdNotFound extends CustomError {
+  code: CustomErrorCodes.OtherPartyIdNotFound,
+  otherPartyId: string,
+}
+```
+
+```TypeScript
+interface OtherPartyNotACustomerOfThisStore extends CustomError {
+  code: CustomErrorCodes.OtherPartyNotACustomerOfThisStore,
+  otherPartyId: string,
+}
+```
+
+```TypeScript
+interface OtherPartyCannotBeThisStore extends CustomError {
+  code: CustomErrorCodes.OtherPartyCannotBeThisStore,
+  otherPartyId: string,
+}
+```
+
+```TypeScript
+interface DatabaseTransactionValidationError extends CustomError {
+  code: CustomErrorCodes.DatabaseTransactionValidationError,
+  databaseMessage: string,
+}
+```
+
+### Customer Invoice Insert 
+
+```TypeScript
+interface OtherPartyIdMissing extends CustomError {
+  code: CustomErrorCodes.OtherPartyIdMissing,
+}
+```
+
+```TypeScript
+interface IdPresentInInsertInvoiceLine  extends CustomError {
+  code: CustomErrorCodes.IdPresentInInsertInvoiceLine,
+  invoiceLineId: string,
+}
+```
+
+### Customer Invoice Update 
+
+```TypeScript
+interface FinalisedInvoiceIsNotEditable extends CustomError {
+  code: CustomErrorCodes.FinalisedInvoiceIsNotEditable
+}
+```
+
+```TypeScript
+interface CannotChangeStatusBackToDraft extends CustomError {
+  code: CustomErrorCodes.CannotChangeStatusBackToDraft
+}
+```
+
+
+## [CUSTOMER INVOICE LINES](/docs/api/mutations/#customer-invoice)
+
+#### Customer Invoice Line Common
+
+```TypeScript
+interface NumberOfPacksCannotBeNegative extends CustomError {
+  code: CustomErrorCodes.NumberOfPacksCannotBeNegative,
+  invoiceLineId: string
+}
+// {TODO can this be delegated to async-graphql?}
+```
+
+```TypeScript
+interface NumberOfPacksMissingInInvoiceLine extends CustomError {
+  code: CustomErrorCodes.NumberOfPacksMissingInInvoiceLine,
+  invoiceLineId: string
+}
+```
+
+```TypeScript
+interface BatchReductionBelowZero  extends CustomError {
+  code: CustomErrorCodes.BatchReductionBelowZero,
+  invoiceLineId: string,
+  stockLineId: string,
+  // As specified in mutation
+  currentNumberOfPacks: number,
+  // stockLine.availableNumberOfPacks (A)
+  availableNumberOfPacks: number,
+  // before mutation invoiceLine.numberOfPacks (B)
+  previousReductionNumberOfPacks: number,
+  // B + A
+  maxAllowableNumberOfPacks: number
+}
+```
+
+#### Customer Invoice Line Insert
+
+```TypeScript
+interface ItemIdMissingInInvoiceLine extends CustomError {
+  code: CustomErrorCodes.ItemIdMissingInInvoiceLine,
+  invoiceLineId: string
+}
+```
+
+```TypeScript
+interface StockLineIdMissingInInvoiceLine extends CustomError {
+  code: CustomErrorCodes.StockLineIdMissingInInvoiceLine,
+  invoiceLineId: string
 }
 ```
