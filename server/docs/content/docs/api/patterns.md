@@ -82,7 +82,7 @@ _Example query for sorting `invoice` entities by their confirm date in descendin
 
 **Limitations**
 
-The API currently supports an array of a single sort object. (will apply only one element from sort array and discard the rest {TODO update when changed to do multi sort})
+The API currently supports an array of a single sort object. (will apply only one element from sort array and discard the rest _{TODO update when changed to do multi sort}_)
 
 **Error handling**
 
@@ -216,7 +216,7 @@ _Shape of the Page object_
 | offset | offset => 0                                            | 0                   | Zero indexed page number   |
 | first  | first > 0 and first <= `MAX_PAGE_SIZE` (_exception_\*) | `DEFAULT_PAGE_SIZE` | Number of records per page |
 
-_exception_\* limit is NOT set for inner lists (like lines in a transaction) {TODO or should it be ? or should each list just have a pagination limit ?}
+_exception_\* limit is NOT set for inner lists (like lines in a transaction) _{TODO or should it be ? or should each list just have a pagination limit ?}_
 
 - Each list query defines the value of `MAX_PAGE_SIZE` and `DEFAULT_PAGE_SIZE` (see pagination section of [queries](/docs/api/queries)).
 - A value for `offset` above `totalCount` will return an empty array.
@@ -273,10 +273,10 @@ These are unhandled errors, they will result in connection close.
 
 <details>
 <summary>Further Info</summary>
-If there is a rust `panic` in web request process, it seems the connection just closes, we can probably handle this better {TODO}, would assume we can catch these panics in actix-web. Ofcourse we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external 
+If there is a rust `panic` in web request process, it seems the connection just closes, we can probably handle this better _{TODO}_, would assume we can catch these panics in actix-web. Ofcourse we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external 
 crates)
 </details>
-
+&nbsp;
 
 **GraphQL**
 
