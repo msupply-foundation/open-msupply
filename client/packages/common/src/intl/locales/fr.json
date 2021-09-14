@@ -37,5 +37,12 @@
   "label.date": "Date",
   "label.id": "ID",
   "label.supplier": "Fournisseur",
-  "label.total": "Total"
+  "label.total": "Total",
+  "label.name": "Name",
+  "label.type": "Type",
+  "label.status": "Status",
+  "label.entered": "Entered",
+  "label.confirmed": "Confirmed",
+  "label.invoice-number": "Invnum",
+  "label.comment": "Comment"
 }

@@ -7,11 +7,16 @@ export const getDetailQuery = (): string => gql`
   query transaction($id: String!) {
     transaction(id: $id) {
       id
-      date
-      customer
-      supplier
+      color
+      comment
+      status
+      type
+      entered
+      confirmed
+      invoiceNumber
       total
       color
+      name
     }
   }
 `;
@@ -20,11 +25,16 @@ export const getMutation = (): string => gql`
   mutation upsertTransaction($transactionPatch: TransactionPatch) {
     upsertTransaction(transaction: $transactionPatch) {
       id
-      date
-      customer
-      supplier
+      color
+      comment
+      status
+      type
+      entered
+      confirmed
+      invoiceNumber
       total
       color
+      name
     }
   }
 `;
@@ -42,11 +52,16 @@ export const getListQuery = (): string => gql`
     transactions(first: $first, offset: $offset, sort: $sort, desc: $desc) {
       data {
         id
-        customer
-        supplier
-        date
+        color
+        comment
+        status
+        type
+        entered
+        confirmed
+        invoiceNumber
         total
         color
+        name
       }
       totalLength
     }
