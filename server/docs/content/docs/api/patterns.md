@@ -468,4 +468,3 @@ query {
 ```
 
 In error handling context, errors for individual root query would typically appear as a separate `errors` element, it looks like `async-graphql` doesn't do this and only one error is returned in the array (the first one that's triggered).
-Mutation in `async-graphql` should be executed sequentially, so we can deduce which mutation actually executed in case of an error.
