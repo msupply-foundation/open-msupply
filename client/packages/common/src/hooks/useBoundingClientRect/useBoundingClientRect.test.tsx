@@ -1,21 +1,34 @@
+import React, { useState } from 'react';
+import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useRef } from 'react';
 import { act } from 'react-dom/test-utils';
 import { useBoundingClientRect } from './useBoundingClientRect';
+import userEvent from '@testing-library/user-event';
 
-const original = {
-  innerWidth: window.innerWidth,
-  innerHeight: window.innerHeight,
-  outerWidth: window.outerWidth,
-  outerHeight: window.outerHeight,
-};
+class ResizeObserver {
+  fn: ResizeObserverCallback;
 
-beforeEach(() => {
-  window.resizeTo(1000, 1000);
+  constructor(fn: ResizeObserverCallback) {
+    this.fn = fn;
+  }
+
+  observe() {
+    const entries: ResizeObserverEntry[] = [];
+    this.fn(entries, this);
+  }
+
+  disconnect() {}
+
+  unobserve() {}
+}
+
+beforeAll(() => {
+  Object.assign(window, { ResizeObserver });
 });
 
 afterAll(() => {
-  window.resizeTo(original.innerWidth, original.innerHeight);
+  Object.assign(window, { ResizeObserver: null });
 });
 
 describe('useBoundingClientRect', () => {
@@ -43,18 +56,37 @@ describe('useBoundingClientRect', () => {
     );
   });
 
-  it('Updates the state after a window resize event', () => {
-    const { result } = renderHook(() => {
+  it('Updates the state after a window resize event', async () => {
+    const X = () => {
+      const [width, setWidth] = useState(100);
       const ref = useRef(null);
-      const rect = useBoundingClientRect(ref);
+      useBoundingClientRect(ref);
 
-      return rect;
+      const count = useRef(0);
+      count.current += 1;
+
+      return (
+        <div style={{ width }} ref={ref}>
+          <button onClick={() => setWidth(300)} />
+          <span>{count.current}</span>
+        </div>
+      );
+    };
+
+    const { getByText, getByRole } = render(<X />);
+
+    // Should have rendered twice - once for a standard render, another to set the rect.
+    const hasRenderedTwice = getByText(/2/);
+
+    // Find the button and click it to trigger a resize
+    const button = getByRole('button');
+    await act(async () => {
+      await userEvent.click(button);
     });
 
-    act(() => {
-      window.resizeTo(500, 500);
-    });
+    const hasRenderedThrice = getByText(/3/);
 
-    expect(result.all.length).toBe(2);
+    expect(hasRenderedTwice).toBeInTheDocument();
+    expect(hasRenderedThrice).toBeInTheDocument();
   });
 });
