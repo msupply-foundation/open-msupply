@@ -2,8 +2,6 @@ import React from 'react';
 import {
   Box,
   Close,
-  Divider,
-  Drawer,
   Theme,
   FlatButton,
   styled,
@@ -11,12 +9,7 @@ import {
 } from '@openmsupply-client/common';
 
 const openedMixin = (theme: Theme) => ({
-  // width: 300,
-  '& .MuiDrawer-paper': {
-    backgroundColor: theme.palette.background.menu,
-    width: 300,
-  },
-
+  width: 300,
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.enteringScreen,
@@ -24,31 +17,40 @@ const openedMixin = (theme: Theme) => ({
 });
 
 const closedMixin = (theme: Theme) => ({
+  width: 0,
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
 });
 
-const StyledDrawer = styled(Drawer)(({ open, theme }) => {
-  return {
-    // position: 'absolute',
-    // backgroundColor: theme.palette.background.menu,
+const StyledDrawer = styled(Box, {
+  shouldForwardProp: prop => prop !== 'isOpen',
+})<{ isOpen: boolean }>(({ isOpen, theme }) => ({
+  backgroundColor: theme.palette.background.menu,
+  borderRadius: 8,
+  height: '100vh',
+  overflow: 'hidden',
+  boxShadow: theme.shadows[7],
+  ...(isOpen && openedMixin(theme)),
+  ...(!isOpen && closedMixin(theme)),
+}));
 
-    whiteSpace: 'nowrap',
-    width: 0,
-    // borderRadius: 8,
-    // overflow: 'hidden',
-    boxShadow: theme.shadows[7],
-    ...(open && openedMixin(theme)),
-    ...(!open && closedMixin(theme)),
-  };
-});
+const StyledDivider = () => (
+  <div
+    style={{
+      height: 1,
+      backgroundColor: '#e4e4eb', // TODO: pop into theme;
+    }}
+  />
+);
 
-const StyledDivider = styled(Divider)({
-  backgroundColor: '#555770',
-  // marginLeft: 8,
-  width: 152,
+const ButtonContainer = styled(Box)({
+  alignItems: 'center',
+  color: '#8f90a6',
+  display: 'flex',
+  height: 56,
+  justifyContent: 'flex-end',
 });
 
 const DetailPanel: React.FC = () => {
@@ -57,17 +59,19 @@ const DetailPanel: React.FC = () => {
 
   return (
     <StyledDrawer
-      data-testid="drawer"
-      anchor="right"
+      data-testid="detail-panel"
       aria-expanded={isOpen}
-      open={isOpen}
+      isOpen={isOpen}
     >
       <Box>
-        <FlatButton
-          labelKey="button.close"
-          onClick={close}
-          icon={<Close color="secondary" />}
-        />
+        <ButtonContainer>
+          <FlatButton
+            color="inherit"
+            labelKey="button.close"
+            onClick={close}
+            icon={<Close color="inherit" />}
+          />
+        </ButtonContainer>
       </Box>
       <StyledDivider />
     </StyledDrawer>
