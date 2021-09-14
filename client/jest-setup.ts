@@ -49,3 +49,12 @@ afterAll(() => {
   // interception layer from affecting irrelevant tests.
   server.close();
 });
+
+window.resizeTo = (width, height) => {
+  Object.assign(window, {
+    innerWidth: width,
+    innerHeight: height,
+    outerWidth: width,
+    outerHeight: height,
+  }).dispatchEvent(new Event('resize'));
+};
