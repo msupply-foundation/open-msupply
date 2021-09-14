@@ -1,12 +1,4 @@
-import {
-  useLayoutEffect,
-  useCallback,
-  useState,
-  RefObject,
-  useRef,
-  useEffect,
-} from 'react';
-import { useWindowDimensions } from '..';
+import { useCallback, useState, RefObject, useRef, useEffect } from 'react';
 
 const getRect = (element: HTMLElement | null): DOMRect => {
   if (!element) {
@@ -31,20 +23,26 @@ const getRect = (element: HTMLElement | null): DOMRect => {
 export const useBoundingClientRect = <T extends HTMLElement>(
   ref: RefObject<T>
 ): DOMRect => {
-  const [rect, setRect] = useState(getRect(ref ? ref.current : null));
-  const { height, width } = useWindowDimensions();
+  const [rect, setRect] = useState(
+    getRect(ref && ref.current ? ref.current : null)
+  );
+  const observer = useRef<ResizeObserver | null>(null);
 
   const resize = useCallback(() => {
     if (!ref.current) return;
     setRect(getRect(ref.current));
   }, [ref]);
 
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+  useEffect(() => {
+    if (!ref.current) return;
 
-    resize();
-  }, [height, width]);
+    observer.current = new ResizeObserver(resize);
+    observer.current.observe(ref.current);
+
+    return () => {
+      observer.current?.disconnect();
+    };
+  }, []);
 
   return rect;
 };
@@ -53,7 +51,6 @@ export const useBoundingClientRectRef = <T extends HTMLElement>(
   callback: (rect: DOMRect) => void
 ): { ref: RefObject<T>; rect: DOMRect } => {
   const ref = useRef<T>(null);
-
   const rect = useBoundingClientRect<T>(ref);
 
   useEffect(() => {
