@@ -107,6 +107,7 @@ const StyledDrawer = styled(Box, {
   borderRadius: 8,
   overflow: 'hidden',
   boxShadow: theme.shadows[7],
+  zIndex: 2,
   ...(isOpen && {
     ...openedMixin(theme),
     '& .MuiDrawer-paper': openedMixin(theme),
