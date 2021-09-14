@@ -1,7 +1,8 @@
 use crate::util::{
     settings::SyncSettings,
     sync::{
-        SyncCredentials, SyncQueueAcknowledgement, SyncQueueBatch, SyncQueueRecord, SyncServer,
+        CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,
+        SyncCredentials, SyncServer,
     },
 };
 
@@ -34,12 +35,12 @@ impl SyncConnection {
         }
     }
 
-    // Initialize sync queue.
+    // Initialize remote sync queue.
     //
     // Should only be called on initial sync or when re-initializing an existing data file.
     //
     // TODO: add custom error to return type.
-    pub async fn initialize(&self) -> Result<SyncQueueBatch, reqwest::Error> {
+    pub async fn initialize(&self) -> Result<RemoteSyncBatch, reqwest::Error> {
         // TODO: add error handling.
         let url = self.server.initialize_url();
 
@@ -55,15 +56,15 @@ impl SyncConnection {
 
         let response = request.send().await?;
 
-        let sync_batch = response.json::<SyncQueueBatch>().await?;
+        let sync_batch = response.json::<RemoteSyncBatch>().await?;
 
         Ok(sync_batch)
     }
 
-    // Pull batch of records for sync queue.
+    // Pull batch of records from remote sync queue.
     //
     // TODO: add custom error to return type.
-    pub async fn queued_records(&self) -> Result<SyncQueueBatch, reqwest::Error> {
+    pub async fn remote_records(&self) -> Result<RemoteSyncBatch, reqwest::Error> {
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
 
@@ -84,7 +85,41 @@ impl SyncConnection {
 
         let response = request.send().await?;
 
-        let sync_batch = response.json::<SyncQueueBatch>().await?;
+        let sync_batch = response.json::<RemoteSyncBatch>().await?;
+
+        Ok(sync_batch)
+    }
+
+    // Pull batch of records from central sync log.
+    //
+    // TODO: add custom error to return type.
+    pub async fn central_records(
+        &self,
+        cursor: u32,
+        limit: u32,
+    ) -> Result<CentralSyncBatch, reqwest::Error> {
+        let url = self.server.central_records_url();
+
+        // TODO: add constants for query parameters.
+        let query = [
+            ("cursor", &cursor.to_string()),
+            ("limit", &limit.to_string()),
+        ];
+
+        // Server rejects initialization request if no `content-length` header is included.
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+
+        let request = self
+            .client
+            .get(url)
+            .basic_auth(&self.credentials.username, Some(&self.credentials.password))
+            .query(&query)
+            .headers(headers);
+
+        let response = request.send().await?;
+
+        let sync_batch = response.json::<CentralSyncBatch>().await?;
 
         Ok(sync_batch)
     }
@@ -94,12 +129,12 @@ impl SyncConnection {
     // TODO: add return type.
     pub async fn acknowledge_records(
         &self,
-        records: &Vec<SyncQueueRecord>,
+        records: &Vec<RemoteSyncRecord>,
     ) -> Result<(), reqwest::Error> {
         // TODO: add error handling.
         let url = self.server.acknowledge_records_url();
 
-        let body: SyncQueueAcknowledgement = SyncQueueAcknowledgement {
+        let body: RemoteSyncAcknowledgement = RemoteSyncAcknowledgement {
             sync_ids: records
                 .into_iter()
                 .map(|record| record.sync_id.clone())

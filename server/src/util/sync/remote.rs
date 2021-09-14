@@ -2,14 +2,14 @@ use serde::{self, Deserialize, Serialize};
 use std::fmt::{self, Debug, Display};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SyncQueueBatch {
+pub struct RemoteSyncBatch {
     #[serde(rename = "queueLength")]
     pub queue_length: u32,
-    pub data: Option<Vec<SyncQueueRecord>>,
+    pub data: Option<Vec<RemoteSyncRecord>>,
 }
 
-impl SyncQueueBatch {
-    pub fn next(&mut self) -> Option<SyncQueueRecord> {
+impl RemoteSyncBatch {
+    pub fn next(&mut self) -> Option<RemoteSyncRecord> {
         match &mut self.data {
             Some(data) => data.pop(),
             _ => None,
@@ -17,28 +17,28 @@ impl SyncQueueBatch {
     }
 }
 
-impl Display for SyncQueueBatch {
+impl Display for RemoteSyncBatch {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SyncQueueRecord {
+pub struct RemoteSyncRecord {
     #[serde(rename = "syncID")]
     pub sync_id: String,
-    pub action: SyncQueueRecordAction,
-    pub data: SyncQueueRecordData,
+    pub action: RemoteSyncRecordAction,
+    pub data: RemoteSyncRecordData,
 }
 
-impl Display for SyncQueueRecord {
+impl Display for RemoteSyncRecord {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum SyncQueueRecordAction {
+pub enum RemoteSyncRecordAction {
     #[serde(alias = "create")]
     Create,
     #[serde(alias = "update")]
@@ -50,24 +50,24 @@ pub enum SyncQueueRecordAction {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SyncQueueRecordData {
+pub struct RemoteSyncRecordData {
     #[serde(rename = "ID")]
     pub id: String,
 }
 
-impl Display for SyncQueueRecordData {
+impl Display for RemoteSyncRecordData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SyncQueueAcknowledgement {
+pub struct RemoteSyncAcknowledgement {
     #[serde(rename = "syncIDs")]
     pub sync_ids: Vec<String>,
 }
 
-impl Display for SyncQueueAcknowledgement {
+impl Display for RemoteSyncAcknowledgement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
