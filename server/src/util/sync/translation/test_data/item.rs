@@ -13,6 +13,7 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
         translated_record: TestSyncDataRecord::Item(Some(ItemRow {
             id: "8F252B5884B74888AAB73A0D42C09E7F".to_owned(),
             name: "Non stock items".to_owned(),
+            code: "NSI".to_owned(),
         })),
         identifier: "Non stock items",
         sync_record: SyncRecord {
@@ -104,6 +105,7 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
         translated_record: TestSyncDataRecord::Item(Some(ItemRow {
             id: "8F252B5884B74888AAB73A0D42C09E7F".to_owned(),
             name: "Non stock items 2".to_owned(),
+            code: "NSI".to_owned(),
         })),
         identifier: "Non stock items 2",
         sync_record: SyncRecord {
