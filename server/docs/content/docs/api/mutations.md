@@ -76,7 +76,7 @@ type InsertCustomerInvoiceInput = {
 
 Invoice lines that previously existed but are missing in `allInvoiceLines` list will be deleted. `UpsertCustomerInvoiceLineInput` can either be of [InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert) or [UpdateCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-update). See below
 
-{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}
+_{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}_
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -91,7 +91,10 @@ All other fields are translated directly to snake case equivalent.
 `type` to be set as: `CUSTOMER_INVOICE`
 `store_id` to be set as current logged in store in session
 
+On status change `confirm_datetime`, `entry_datetime`, and `finalised_datetime` should be changed
+
 </details>
+&nbsp;
 
 ## CUSTOMER INVOICE LINE
 
@@ -129,7 +132,7 @@ Base table: `invoice_line`
 
 All fields are translated directly to snake case equivalent.
 
-`invoice_id` set as id of parent
+`invoice_id` set as id of parent 
 
 `stock_line` links on `stock_line.id` -> `invoice_line.stock_line_id`
 
@@ -142,6 +145,7 @@ All fields are translated directly to snake case equivalent.
 Validation of reduction to be checked against each `stock_line`, and reduction applied to `stock_line`. As per [InvoiceStatus implementation details](/docs/api/types/#enum-invoicestatus)
 
 </details>
+&nbsp;
 
 ## SUPPLIER INVOICE
 
@@ -164,8 +168,8 @@ type UpsertSupplierInvoiceLineInput {
     itemId: String
     packSize: Number
     batch: String
-    sellPricePerPack: Number
-    costPricePerPack: Number
+    sellPricePerPack: Float
+    costPricePerPack: Float
     expiryDate: Date 
     numberOfPacks: Number
 }
@@ -206,7 +210,7 @@ type InsertSupplierInvoiceInput = {
 
 Invoice lines that previously existed but are missing in `allInvoiceLines` list will be deleted. `UpsertCustomerInvoiceLineInput` can either be of [InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert) or [UpdateSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-update). See below
 
-{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}                  
+_{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}_           
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -219,10 +223,10 @@ Base table: `invoice`
 All other fields are translated directly to snake case equivalent.
 
 `type` to be set as: `SUPPLIER_INVOICE`
-`store_id` to be set as current logged in store in session
+`store_id` to be set as current logged in store in session _{TODO can this be broken, if user is switched, and goes to an existing tab and looks at another invoice?}_
 
 </details>
-
+&nbsp;
 ## SUPPLIER INVOICE LINE
 
 Supplier invoice lines are always linked to an invoice, and are mutated via [upsertSupplierInvoice](/docs/api/mutations/#supplier-invoice).
@@ -277,6 +281,8 @@ All fields are translated directly to snake case equivalent.
 `item_name` to be populated from related item when item changes
 
 Stock line is created when invoice changes to `CONFIRMED` as per [InvoiceStatus implementation details](/docs/api/types/#enum-invoicestatus)
+
+`stock_line`.`store_id` is set to currently logged in store 
 
 During confirmation and any further subsequent change will result in:
 
