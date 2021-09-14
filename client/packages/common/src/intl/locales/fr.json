@@ -33,6 +33,7 @@
   "error.something-wrong": "Oops! Somethings gone wrong.",
   "heading.comment": "Comment",
   "heading.additional-info": "Additional Info",
+  "label.color": "Colour",
   "label.customer": "Client",
   "label.date": "Date",
   "label.id": "ID",

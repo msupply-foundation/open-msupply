@@ -8,6 +8,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Paper from '@material-ui/core/Paper';
 import Portal from '@material-ui/core/Portal';
 import Toolbar from '@material-ui/core/Toolbar';
+export * from './forms';
 export * from './tables';
 
 export {

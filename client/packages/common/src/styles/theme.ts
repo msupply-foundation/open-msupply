@@ -23,10 +23,16 @@ declare module '@material-ui/core/styles/createPalette' {
   interface Palette {
     darkGrey: string;
     midGrey: string;
+    form: TypeForm;
   }
   interface TypeBackground {
     menu: string;
     white: string;
+  }
+
+  interface TypeForm {
+    field: string;
+    label: string;
   }
 }
 
@@ -51,6 +57,11 @@ const themeOptions = {
     background: {
       menu: '#f2f2f5',
       white: '#fff',
+    },
+
+    form: {
+      field: '#555770',
+      label: '#28293d',
     },
   },
   typography: {
