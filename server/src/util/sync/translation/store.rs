@@ -4,12 +4,11 @@ use crate::database::schema::StoreRow;
 
 use serde::Deserialize;
 
+#[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyStoreRow {
-    #[serde(rename = "ID")]
-    id: String,
-    #[serde(rename = "name_ID")]
-    name_id: String,
+    ID: String,
+    name_ID: String,
     code: String,
 }
 
@@ -34,8 +33,9 @@ impl LegacyStoreRow {
         }
 
         Ok(Some(StoreRow {
-            id: data.id,
-            name_id: data.name_id,
+            id: data.ID,
+            name_id: data.name_ID,
+            code: data.code,
         }))
     }
 }

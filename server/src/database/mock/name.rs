@@ -4,6 +4,9 @@ pub fn mock_name_store_a() -> NameRow {
     NameRow {
         id: String::from("name_store_a"),
         name: String::from("Store A"),
+        code: String::from("code"),
+        is_customer: false,
+        is_supplier: true,
     }
 }
 
@@ -11,6 +14,9 @@ pub fn mock_name_store_b() -> NameRow {
     NameRow {
         id: String::from("name_store_b"),
         name: String::from("Store B"),
+        code: String::from("code"),
+        is_customer: false,
+        is_supplier: true,
     }
 }
 
@@ -18,6 +24,9 @@ pub fn mock_name_store_c() -> NameRow {
     NameRow {
         id: String::from("name_store_c"),
         name: String::from("Store C"),
+        code: String::from("code"),
+        is_customer: false,
+        is_supplier: true,
     }
 }
 

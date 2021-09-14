@@ -15,6 +15,9 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
             translated_record: TestSyncDataRecord::Name(Some(NameRow {
                 id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
                 name: "General".to_owned(),
+                code: "GEN".to_owned(),
+                is_supplier: true,
+                is_customer: true,
             })),
             identifier: "General",
             sync_record: SyncRecord {
@@ -118,6 +121,9 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
             translated_record: TestSyncDataRecord::Name(Some(NameRow {
                 id: "9EDD3F83C3D64C22A3CC9C98CF4967C4".to_owned(),
                 name: "Birch Store".to_owned(),
+                code: "SNA".to_owned(),
+                is_customer: true,
+                is_supplier: false,
             })),
             identifier: "Birch Store",
             sync_record: SyncRecord {
@@ -221,6 +227,9 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
             translated_record: TestSyncDataRecord::Name(Some(NameRow {
                 id: "CB929EB86530455AB0392277FAC3DBA4".to_owned(),
                 name: "Birch Store 2".to_owned(),
+                code: "SNA".to_owned(),
+                is_customer: true,
+                is_supplier: false,
             })),
             identifier: "Birch Store",
             sync_record: SyncRecord {
@@ -328,6 +337,9 @@ pub fn get_test_name_upsert_records() -> Vec<TestSyncRecord> {
         translated_record: TestSyncDataRecord::Name(Some(NameRow {
             id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
             name: "General2".to_owned(),
+            code: "GEN".to_owned(),
+            is_customer: true,
+            is_supplier: true,
         })),
         identifier: "General2",
         sync_record: SyncRecord {

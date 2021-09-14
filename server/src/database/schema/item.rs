@@ -5,4 +5,5 @@ use super::diesel_schema::item;
 pub struct ItemRow {
     pub id: String,
     pub name: String,
+    pub code: String,
 }
