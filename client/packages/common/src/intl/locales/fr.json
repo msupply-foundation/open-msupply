@@ -31,6 +31,8 @@
   "button.export-to-csv": "Export to CSV",
   "button.select-a-color": "Select a color",
   "error.something-wrong": "Oops! Somethings gone wrong.",
+  "heading.comment": "Comment",
+  "heading.additional-info": "Additional Info",
   "label.customer": "Client",
   "label.date": "Date",
   "label.id": "ID",

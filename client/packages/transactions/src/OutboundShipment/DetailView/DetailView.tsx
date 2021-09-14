@@ -1,10 +1,11 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 
 import { useNavigate, useParams } from 'react-router';
 
 import {
   Portal,
   Transaction,
+  Typography,
   useDetailPanel,
   useHostContext,
   useQueryClient,
@@ -60,8 +61,23 @@ export const OutboundShipmentDetailView: FC = () => {
   const { id } = useParams();
   const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
   const { appBarButtonsRef } = useHostContext();
-  const { OpenButton } = useDetailPanel();
-  console.info('*** render detail ***');
+  const { OpenButton, setSections } = useDetailPanel();
+
+  useEffect(() => {
+    setSections([
+      {
+        titleKey: 'heading.comment',
+        children: [<Typography key="comment">Comments go here..</Typography>],
+      },
+      {
+        titleKey: 'heading.additional-info',
+        children: [<Typography key="comment">Additional Info..</Typography>],
+      },
+    ]);
+    // clean up on unload: will hide the details panel
+    return () => setSections([]);
+  }, []);
+
   return draft ? (
     <>
       <Portal container={appBarButtonsRef?.current}>
