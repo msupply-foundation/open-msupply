@@ -32,6 +32,10 @@ Floating point number
 
 A string
 
+## Date
+
+Date string, no timezone i.e. '2021-09-30'
+
 ## Datetime
 
 Date time with timezone stamp, i.e. `2021-08-31T11:32:29.631Z`
@@ -48,15 +52,31 @@ type InvoiceStatus {
 
 Database field `Invoice.status`
 
-| Value     | Description                                     |
-|-----------|-------------------------------------------------|
-| DRAFT     | Editable with stock *reserved**                 |
-| CONFIRMED | Editable with stock *reserved** and *adjusted** |
-| FINALISED | Non editable with stock                         |
+| Value     | Description                                                                                        |
+|-----------|----------------------------------------------------------------------------------------------------|
+| DRAFT     | Editable with stock *reserved** (`CUSTOMER_INVOICE`)                                               |
+| CONFIRMED | Editable with stock *reserved** (`CUSTOMER_INVOICE`) and *adjusted** (`CUSTOMER/SUPPLIER_INVOICE`) |
+| FINALISED | Non editable with stock                                                                            |
 
-*reserved**: Invoice's Invoice_lines -> (stock_line.`available_number_of_packs`) is adjusted with invoice_line.`number_of_packs`
+<details>
+<summary>IMPLEMENTATION DETAILS*</summary>
+
+For `CUSTOMER_INVOICE`
+
+*reserved**: Invoice's invoice_lines -> (stock_line.`available_number_of_packs`) is adjusted with invoice_line.`number_of_packs`
 
 *adjusted**: Invoice's Invoice_lines -> (stock_line.`total_number_of_packs`) is adjusted with invoice_line.`number_of_packs`)
+
+For `SUPPLIER_INVOICE`
+
+When invoice is `CONFIRMED`, stock_line is created and *adjusted**. Any further changes to invoice_line would translated to changes in stock_line
+
+*adjusted**: 
+* invoice_line.`number_of_pack` -> stock_line.`available_number_of_packs`, `total_number_of_packs`
+* invoice_line.`pack_size`, `batch`, `expiry`, `sell_price_per_pack`, `cost_price_per_pack`, `item_id` -> to stock_line fields with the same name
+
+</details>
+
 
 ### Enum - InvoiceType
 ```graphql
