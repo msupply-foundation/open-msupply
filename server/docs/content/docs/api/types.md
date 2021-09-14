@@ -1,5 +1,5 @@
 +++
-title = "Types"
+title = "Scalar Types"
 description = "Custom GraphQL types"
 date = 2021-05-01T19:30:00+00:00
 updated = 2021-05-01T19:30:00+00:00
@@ -36,25 +36,39 @@ A string
 
 Date time with timezone stamp, i.e. `2021-08-31T11:32:29.631Z`
 
-### Enum - TransactionStatus
+### Enum - InvoiceStatus
 
-Database field `transaction.status`
+```graphql
+type InvoiceStatus {
+    DRAFT
+    CONFIRMED
+    FINALISED
+}
+```
 
-| Value     | Description                              |
-| --------- | ---------------------------------------- |
-| DRAFT     | Editable with stock not reserved         |
-| CONFIRMED | Editable with stock *reserved**       |
-| FINALISED | Non editable with stock *adjusted** |
+Database field `Invoice.status`
 
-*reserved**: Transaction's transaction_lines -> (item_line.`available_number_of_packs` _ item_line.`pack_size`) is adjusted with transaction_line.`quantity`
+| Value     | Description                                     |
+|-----------|-------------------------------------------------|
+| DRAFT     | Editable with stock *reserved**                 |
+| CONFIRMED | Editable with stock *reserved** and *adjusted** |
+| FINALISED | Non editable with stock                         |
 
-*adjusted**: Transaction's transaction_lines -> (item_line.`total_number_of_packs` * item_line.`pack_size`) is adjusted with transaction_line.`quantity`
+*reserved**: Invoice's Invoice_lines -> (stock_line.`available_number_of_packs`) is adjusted with invoice_line.`number_of_packs`
 
-### Enum - TransactionType
+*adjusted**: Invoice's Invoice_lines -> (stock_line.`total_number_of_packs`) is adjusted with invoice_line.`number_of_packs`)
 
-Database field `transaction.type`
+### Enum - InvoiceType
+```graphql
+type InvoiceStatus {
+    CUSTOMER_INVOICE
+    SUPPLIER_INVOICE
+}
+```
 
-From perspective of `transaction.store_id` store
+Database field `Invoice.type`
+
+From perspective of `Invoice.store_id` store
 
 | Value            | Description    |
 | ---------------- | -------------- |
