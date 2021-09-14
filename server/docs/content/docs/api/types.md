@@ -76,7 +76,7 @@ When invoice is `CONFIRMED`, stock_line is created and *adjusted**. Any further 
 * invoice_line.`pack_size`, `batch`, `expiry`, `sell_price_per_pack`, `cost_price_per_pack`, `item_id` -> to stock_line fields with the same name
 
 </details>
-
+&nbsp;
 
 ### Enum - InvoiceType
 ```graphql
