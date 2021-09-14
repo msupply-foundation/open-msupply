@@ -50,6 +50,8 @@ async fn main() -> std::io::Result<()> {
     let listener =
         TcpListener::bind(settings.server.address()).expect("Failed to bind server to address");
 
+    let repository_registry_sync_data = repository_registry_data.clone();
+
     let http_server = HttpServer::new(move || {
         App::new()
             .app_data(repository_registry_data.clone())
@@ -73,7 +75,7 @@ async fn main() -> std::io::Result<()> {
           sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
         } => unreachable!("Sync receiver unexpectedly died!?"),
         () = async {
-          sync_receiver.listen().await;
+          sync_receiver.listen(repository_registry_sync_data).await;
         } => unreachable!("Sync scheduler unexpectedly died!?"),
     }
 }
