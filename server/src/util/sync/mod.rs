@@ -1,14 +1,16 @@
+mod central;
 mod connection;
 mod credentials;
-mod queue;
+mod remote;
 mod server;
 mod translation;
 
+pub use central::{CentralSyncBatch, CentralSyncRecord, CentralSyncRecordData};
 pub use connection::SyncConnection;
 pub use credentials::SyncCredentials;
-pub use queue::{
-    SyncQueueAcknowledgement, SyncQueueBatch, SyncQueueRecord, SyncQueueRecordAction,
-    SyncQueueRecordData,
+pub use remote::{
+    RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord, RemoteSyncRecordAction,
+    RemoteSyncRecordData,
 };
 pub use server::SyncServer;
 
@@ -72,45 +74,76 @@ pub struct SyncReceiverActor {
 
 #[allow(unused_assignments)]
 impl SyncReceiverActor {
-    // Hacky method for pulling from sync_queue.
-    pub async fn pull_queued_records(&mut self) -> Vec<SyncQueueRecord> {
-        // TODO: only initialize on initial sync.
-        info!("Sending initialize request...");
-        let mut sync_batch: SyncQueueBatch = self
-            .connection
-            .initialize()
-            .await
-            .expect("Failed to initialize sync queue records");
-        info!("Received initialize response");
+    pub async fn pull_central_records(&mut self) -> Vec<CentralSyncRecord> {
+        // TODO: read cursor from persisted storage.
+        let mut cursor: u32 = 0;
+        // Arbitrary batch size.
+        const BATCH_SIZE: u32 = 500;
 
-        let mut records: Vec<SyncQueueRecord> = Vec::new();
-        while sync_batch.queue_length > 0 {
-            info!("Sending queued records request...");
-            sync_batch = self
+        let mut records: Vec<CentralSyncRecord> = Vec::new();
+        loop {
+            info!("Sending central sync request...");
+            let sync_batch: CentralSyncBatch = self
                 .connection
-                .queued_records()
+                .central_records(cursor, BATCH_SIZE)
                 .await
-                .expect("Failed to pull sync queue records");
-            info!("Received queued records response");
+                .expect("Failed to pull central sync records");
+            info!("Received central sync response");
 
-            // TODO: acknowledge after integration.
             if let Some(data) = sync_batch.data {
                 records.append(&mut data.clone());
-                info!("Acknowledging synced records...");
-                self.connection
-                    .acknowledge_records(&records)
-                    .await
-                    .expect("Failed to acknowledge synced records");
-                info!("Acknowledged synced records");
+            }
+
+            cursor += BATCH_SIZE;
+
+            if cursor >= sync_batch.max_cursor {
+                info!("All central sync records pulled successfully");
+                break;
             }
         }
 
         records
     }
 
-    pub fn integrate(&self, records: Vec<SyncQueueRecord>) {
+    // Hacky method for pulling from sync_queue.
+    pub async fn pull_remote_records(&mut self) -> Vec<RemoteSyncRecord> {
+        // TODO: only initialize on initial sync.
+        info!("Sending initialize request...");
+        let mut sync_batch: RemoteSyncBatch = self
+            .connection
+            .initialize()
+            .await
+            .expect("Failed to initialize remote sync records");
+        info!("Received initialize response");
+
+        let mut records: Vec<RemoteSyncRecord> = Vec::new();
+        while sync_batch.queue_length > 0 {
+            info!("Sending remote sync request...");
+            sync_batch = self
+                .connection
+                .remote_records()
+                .await
+                .expect("Failed to pull remote sync records");
+            info!("Received remote sync response");
+
+            // TODO: acknowledge after integration.
+            if let Some(data) = sync_batch.data {
+                records.append(&mut data.clone());
+                info!("Acknowledging remote sync records...");
+                self.connection
+                    .acknowledge_records(&records)
+                    .await
+                    .expect("Failed to acknowledge remote sync records");
+                info!("Acknowledged remote sync records");
+            }
+        }
+
+        records
+    }
+
+    pub fn integrate_remote_records(&self, records: Vec<RemoteSyncRecord>) {
         records.iter().for_each(|record| {
-            info!("Integrated sync record {}", record.sync_id);
+            info!("Integrated remote sync record {}", record.sync_id);
         });
     }
 
@@ -118,8 +151,9 @@ impl SyncReceiverActor {
     pub async fn listen(&mut self) {
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message. Performing sync...");
-            let queued_records = self.pull_queued_records().await;
-            self.integrate(queued_records);
+            let central_records = self.pull_central_records().await;
+            let remote_records = self.pull_remote_records().await;
+            self.integrate_remote_records(remote_records);
             info!("Finished sync!");
         }
         unreachable!(
