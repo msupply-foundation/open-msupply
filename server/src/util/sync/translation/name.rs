@@ -4,26 +4,14 @@ use crate::database::schema::NameRow;
 
 use serde::Deserialize;
 
+#[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyNameRow {
-    #[serde(rename = "ID")]
-    id: String,
+    ID: String,
     name: String,
     code: String,
     customer: bool,
     supplier: bool,
-}
-
-impl From<&LegacyNameRow> for NameRow {
-    fn from(t: &LegacyNameRow) -> NameRow {
-        NameRow {
-            id: t.id.to_string(),
-            name: t.name.to_string(),
-            code: t.code.to_string(),
-            is_customer: t.customer,
-            is_supplier: t.supplier,
-        }
-    }
 }
 
 impl LegacyNameRow {
@@ -33,7 +21,13 @@ impl LegacyNameRow {
         }
         let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)
             .map_err(|_| "Deserialization Error".to_string())?;
-        Ok(Some(NameRow::from(&data)))
+        Ok(Some(NameRow {
+            id: data.ID.to_string(),
+            name: data.name.to_string(),
+            code: data.code.to_string(),
+            is_customer: data.customer,
+            is_supplier: data.supplier,
+        }))
     }
 }
 
