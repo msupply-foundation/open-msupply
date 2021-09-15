@@ -15,7 +15,10 @@ pub use remote::{
 pub use server::SyncServer;
 
 use crate::{
-    database::{repository::CentralSyncBufferRepository, schema::CentralSyncBufferRow},
+    database::{
+        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository},
+        schema::CentralSyncBufferRow,
+    },
     server::data::RepositoryRegistry,
 };
 
@@ -79,13 +82,24 @@ pub struct SyncReceiverActor {
 
 #[allow(unused_assignments)]
 impl SyncReceiverActor {
-    pub async fn pull_central_records(&mut self) -> Vec<CentralSyncBufferRow> {
-        // TODO: read cursor from persisted storage.
-        let mut cursor: u32 = 0;
+    pub async fn pull_central_records(&mut self, repositories: Data<RepositoryRegistry>) {
+        let central_sync_cursor_repository: &CentralSyncCursorRepository =
+            repositories.get::<CentralSyncCursorRepository>();
+
+        let central_sync_buffer_repository: &CentralSyncBufferRepository =
+            repositories.get::<CentralSyncBufferRepository>();
+
+        let mut cursor: u32 = central_sync_cursor_repository
+            .get_cursor()
+            .await
+            .unwrap_or_else(|_| {
+                info!("Failed to load central sync cursor.");
+                info!("Initialising new central sync cursor...");
+                0
+            });
+
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
-
-        let mut records: Vec<CentralSyncBufferRow> = Vec::new();
 
         loop {
             info!("Sending central sync request...");
@@ -98,18 +112,26 @@ impl SyncReceiverActor {
 
             if let Some(central_sync_records) = sync_batch.data {
                 for central_sync_record in central_sync_records {
-                    cursor += 1;
-
                     let central_sync_buffer_row = CentralSyncBufferRow {
                         id: central_sync_record.id.to_string(),
-                        cursor_id: cursor as i32,
+                        cursor_id: (cursor + 1) as i32,
                         table_name: central_sync_record.table_name,
                         record_id: central_sync_record.record_id,
                         data: serde_json::to_string(&central_sync_record.data)
                             .expect("Failed to stringify central sync record data"),
                     };
 
-                    records.push(central_sync_buffer_row);
+                    central_sync_buffer_repository
+                        .insert_one(&central_sync_buffer_row)
+                        .await
+                        .expect("Failed to insert central sync record into sync buffer");
+
+                    cursor += 1;
+
+                    central_sync_cursor_repository
+                        .update_cursor(cursor)
+                        .await
+                        .expect("Failed to update central sync cursor");
                 }
             }
 
@@ -118,8 +140,6 @@ impl SyncReceiverActor {
                 break;
             }
         }
-
-        records
     }
 
     // Hacky method for pulling from sync_queue.
@@ -166,20 +186,11 @@ impl SyncReceiverActor {
 
     // Listen for incoming sync messages.
     pub async fn listen(&mut self, repositories: Data<RepositoryRegistry>) {
-        let central_sync_buffer_repository: &CentralSyncBufferRepository =
-            repositories.get::<CentralSyncBufferRepository>();
-
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message");
             info!("Syncing central records...");
-            let central_records = self.pull_central_records().await;
-            info!("Successfully pulled central records");
-            info!("Inserting central records into sync buffer...");
-            central_sync_buffer_repository
-                .insert_many(&central_records)
-                .await
-                .expect("Failed to insert central sync records into sync buffer");
-            info!("Successfully inserted central records into sync buffer");
+            self.pull_central_records(repositories.clone()).await;
+            info!("Successfully synced central records");
             info!("Syncing remote records...");
             let remote_records = self.pull_remote_records().await;
             info!("Successfully pulled remote records");
