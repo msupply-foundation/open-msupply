@@ -47,8 +47,8 @@ const themeOptions = {
     icon: { medium: { height: 20, width: 20 } },
     table: {
       dataRow: { height: 40 },
-      headerRow: { height: 40 },
-      paginationRow: { height: 32 },
+      headerRow: { height: 60 },
+      paginationRow: { height: 48 },
     },
   },
   palette: {

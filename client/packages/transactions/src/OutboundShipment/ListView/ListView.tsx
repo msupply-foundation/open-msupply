@@ -27,15 +27,15 @@ import {
   ChevronDown,
   Tools,
   getNameAndColorColumn,
-  useAppBarRect,
   useWindowDimensions,
   useTheme,
+  useAppBarRectStore,
 } from '@openmsupply-client/common';
 
 import { listQueryFn, deleteFn, updateFn } from '../../api';
 
 const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
-  const { height } = useAppBarRect();
+  const { height } = useAppBarRectStore();
   const { height: windowHeight } = useWindowDimensions();
   const theme = useTheme();
   const { mixins } = theme;
@@ -55,9 +55,8 @@ const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    setFirst(numberOfRows);
-    setOffset(page * numberOfRows);
-  }, [numberOfRows, page]);
+    setOffset(page * first);
+  }, [first, page]);
 
   return {
     first,
@@ -68,13 +67,13 @@ const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
     setFirst,
     setOffset,
     setSortBy,
+    numberOfRowsToRender: numberOfRows,
   };
 };
 
 export const OutboundShipmentListView: FC = () => {
-  const { first, offset, sortBy, setSortBy, setPage } = useListViewQueryParams([
-    { id: 'name', desc: false },
-  ]);
+  const { first, offset, sortBy, setSortBy, setPage, numberOfRowsToRender } =
+    useListViewQueryParams([{ id: 'name', desc: false }]);
 
   const { appBarButtonsRef } = useHostContext();
   const { info, success, warning } = useNotification();
@@ -264,7 +263,7 @@ export const OutboundShipmentListView: FC = () => {
         onChangePage={(page: number) => setPage(page)}
         tableApi={tableApi}
         columns={columns}
-        data={response?.data || []}
+        data={response?.data.slice(0, numberOfRowsToRender) || []}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);
