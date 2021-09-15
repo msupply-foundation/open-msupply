@@ -1,24 +1,20 @@
 import React, { useCallback } from 'react';
-import {
-  Box,
-  Close,
-  Theme,
-  FlatButton,
-  Grid,
-  styled,
-  useDetailPanelStore,
-  useTranslation,
-  Typography,
-  ChevronDown,
-  useTheme,
-  useMediaQuery,
-} from '@openmsupply-client/common';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Link,
-} from '@material-ui/core';
+import { Box } from '@openmsupply-client/common/src/ui/layout';
+import { Close } from '@openmsupply-client/common/src/ui/icons/Close';
+import { styled, Theme } from '@openmsupply-client/common/src/styles';
+import FlatButton from '@openmsupply-client/common/src/ui/components/buttons/FlatButton';
+import { Grid } from '@openmsupply-client/common/src/ui/layout';
+import { useDetailPanelStore } from '@openmsupply-client/common/src/hooks/useDetailPanel';
+import { useTranslation } from '@openmsupply-client/common/src/intl/intlHelpers';
+import { Typography } from '@openmsupply-client/common/src/ui/components';
+import { ChevronDown } from '@openmsupply-client/common/src/ui/icons/ChevronDown';
+import { useTheme } from '@openmsupply-client/common/src/styles/index';
+import { useMediaQuery } from '@openmsupply-client/common/src/styles/index';
+
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import Link from '@material-ui/core/Link';
 
 const openedMixin = (theme: Theme) => ({
   width: 300,
