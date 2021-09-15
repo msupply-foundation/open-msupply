@@ -48,13 +48,13 @@ export const useBoundingClientRect = <T extends HTMLElement>(
 };
 
 export const useBoundingClientRectRef = <T extends HTMLElement>(
-  callback: (rect: DOMRect) => void
+  callback?: (rect: DOMRect) => void
 ): { ref: RefObject<T>; rect: DOMRect } => {
   const ref = useRef<T>(null);
   const rect = useBoundingClientRect<T>(ref);
 
   useEffect(() => {
-    callback(rect);
+    callback?.(rect);
   }, [rect]);
 
   return { ref, rect };
