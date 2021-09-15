@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TestSyncDataRecord {
     Item(Option<ItemRow>),
     Store(Option<StoreRow>),
@@ -23,6 +23,7 @@ pub enum TestSyncDataRecord {
     MasterListNameJoin(Option<MasterListNameJoinRow>),
 }
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct TestSyncRecord {
     pub sync_record: SyncRecord,
     pub translated_record: TestSyncDataRecord,

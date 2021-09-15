@@ -190,8 +190,8 @@ mod tests {
         upsert_records.append(&mut get_test_master_list_upsert_records());
 
         let mut records = Vec::new();
-        records.append(&mut init_records);
-        records.append(&mut upsert_records);
+        records.append(&mut init_records.iter().cloned().collect());
+        records.append(&mut upsert_records.iter().cloned().collect());
         import_sync_records(&registry, &extract_sync_records(&records))
             .await
             .unwrap();
