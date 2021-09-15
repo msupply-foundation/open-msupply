@@ -30,12 +30,12 @@ describe('DetailPanel', () => {
   it('Does not render empty panel', () => {
     const actions: Action[] = [];
     const sections: Section[] = [];
-    const { queryByTestId } = render(
+    const { queryByTestId, queryByText } = render(
       <DetailPanelExample actions={actions} sections={sections} />
     );
 
     act(() => {
-      queryByTestId('More')?.click();
+      queryByText('More')?.click();
     });
 
     expect(queryByTestId('detail-panel')).not.toBeInTheDocument();
