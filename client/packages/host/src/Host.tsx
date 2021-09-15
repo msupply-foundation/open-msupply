@@ -22,7 +22,8 @@ import Viewport from './Viewport';
 
 const Content = styled(Box)({
   overflowY: 'scroll',
-  height: '100vh',
+  height: '100%',
+  display: 'flex',
 });
 
 const queryClient = new QueryClient({

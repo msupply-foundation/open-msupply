@@ -16,6 +16,11 @@ declare module '@material-ui/core/styles/createMixins' {
     icon: {
       medium: { width: number; height: number };
     };
+    table: {
+      dataRow: { height: number };
+      headerRow: { height: number };
+      paginationRow: { height: number };
+    };
   }
 }
 
@@ -40,6 +45,11 @@ const themeOptions = {
   mixins: {
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
+    table: {
+      dataRow: { height: 40 },
+      headerRow: { height: 40 },
+      paginationRow: { height: 32 },
+    },
   },
   palette: {
     darkGrey: '#555770',

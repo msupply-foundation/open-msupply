@@ -23,6 +23,7 @@ export const DataRow = <T extends Record<string, unknown>>({
     <TableRow
       sx={{
         alignItems: 'center',
+        maxHeight: '40px',
         height: '40px',
         boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
         padding: '0px 20px',
