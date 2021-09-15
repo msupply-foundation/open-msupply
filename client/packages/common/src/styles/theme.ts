@@ -36,6 +36,15 @@ declare module '@material-ui/core/styles/createTypography' {
 }
 
 const themeOptions = {
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 1024,
+      lg: 1440,
+      xl: 1536,
+    },
+  },
   direction: 'rtl' as Direction,
   mixins: {
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
