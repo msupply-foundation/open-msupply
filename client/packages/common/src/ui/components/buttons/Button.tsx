@@ -3,7 +3,7 @@ import { Button as MuiButton, Tooltip } from '@material-ui/core';
 import { styled } from '@material-ui/core/styles';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
 import { DefaultButtonStyles } from './styles';
-import { useIsSmallScreen } from '../../../hooks/useIsSmallScreen';
+import { useIsSmallScreen } from '../../../hooks';
 
 interface ButtonProps {
   icon: React.ReactNode;

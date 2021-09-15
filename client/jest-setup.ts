@@ -35,7 +35,7 @@ beforeEach(() => {
  *
  */
 beforeEach(() => {
-  setScreenSize_ONLY_FOR_TESTING(1280);
+  setScreenSize_ONLY_FOR_TESTING(1440);
 });
 
 const server = setupMockServer();
