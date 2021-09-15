@@ -20,10 +20,10 @@ import {
   useDrawer,
   useTranslation,
   NavLink,
+  useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Property } from 'csstype';
-import { useIsSmallScreen } from '@openmsupply-client/common/src/hooks/useIsSmallScreen';
 
 const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
@@ -119,14 +119,15 @@ const StyledDrawer = styled(Drawer)(({ open, theme }) => {
 
 const AppDrawer: React.FC = () => {
   const t = useTranslation();
-  const isSmallScreen = useIsSmallScreen();
+  const isMediumScreen = useIsMediumScreen();
+
   const drawer = useDrawer();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
-    if (isSmallScreen && drawer.isOpen) drawer.close();
-    if (!isSmallScreen && !drawer.isOpen) drawer.open();
-  }, [isSmallScreen]);
+    if (isMediumScreen && drawer.isOpen) drawer.close();
+    if (!isMediumScreen && !drawer.isOpen) drawer.open();
+  }, [isMediumScreen]);
 
   return (
     <StyledDrawer
