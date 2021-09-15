@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { IconButton } from '.';
+import { IconButton } from './IconButton';
 import { Book } from '../../icons';
 
 const Template: ComponentStory<typeof IconButton> = () => (
