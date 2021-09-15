@@ -18,7 +18,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
   color: theme.palette.primary.main,
 }));
 
-const IconButton: React.FC<ButtonProps> = props => {
+export const IconButton: React.FC<ButtonProps> = props => {
   const t = useTranslation();
   const { disabled, icon, onClick, size, titleKey } = props;
   return (

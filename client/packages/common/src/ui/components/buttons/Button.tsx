@@ -17,7 +17,7 @@ const StyledButton = styled(MuiButton)(({ theme }) => ({
   minWidth: 115,
 }));
 
-const Button: React.FC<ButtonProps> = props => {
+export const Button: React.FC<ButtonProps> = props => {
   const t = useTranslation();
 
   const { labelKey, icon, onClick } = props;
