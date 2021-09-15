@@ -112,8 +112,8 @@ query {
         itemCode: String!
         packSize: String!
         numberOfPacks: Number!
-        cost_price_per_pack: Float!
-        sell_price_per_pack: Float!
+        costPricePerPack: Float!
+        sellPricePerPack: Float!
         # name of batch
         batch: String
         expiryDate: Date
@@ -182,8 +182,8 @@ query {
       availableBatches {
         nodes {
           packSize: Number!
-          cost_price_per_pack: Float!
-          sell_price_per_pack: Float!
+          costPricePerPack: Float!
+          sellPricePerPack: Float!
           availableNumberOfPacks: Number!
           totalNumberOfPacks: Number!
           batch: String
