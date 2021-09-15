@@ -66,6 +66,7 @@ const AppBar: React.FC = () => {
         <Breadcrumbs />
         <ButtonContainer ref={appBarButtonsRef}>
           <Button
+            shouldShrink
             icon={<Book />}
             labelKey="button.docs"
             onClick={() => (location.href = ExternalURL.PublicDocs)}

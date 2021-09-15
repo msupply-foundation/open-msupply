@@ -5,9 +5,10 @@ import { Book } from '../../icons';
 
 const Template: ComponentStory<typeof Button> = () => (
   <Button
+    shouldShrink
     icon={<Book />}
     labelKey="button.docs"
-    onClick={() => console.info('clicked')}
+    onClick={() => alert('clicked')}
   />
 );
 
