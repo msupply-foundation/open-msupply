@@ -23,12 +23,12 @@ export const useDetailPanelStore = create<DetailPanelController>(set => ({
   close: () => set(state => ({ ...state, isOpen: false })),
 }));
 
-type Action = {
+export type Action = {
   onClick: () => void;
   titleKey: LocaleKey;
 };
 
-type Section = {
+export type Section = {
   children: JSX.Element[];
   titleKey: LocaleKey;
 };

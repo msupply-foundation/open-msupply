@@ -82,8 +82,8 @@ const DetailPanel: React.FC = () => {
   const Sections = useCallback(
     () => (
       <>
-        {sections.map(section => (
-          <Box key={section.titleKey}>
+        {sections.map((section, index) => (
+          <Box key={`action.titleKey_${index}`}>
             <StyledAccordian>
               <AccordionSummary expandIcon={<ChevronDown color="secondary" />}>
                 <Typography sx={{ fontWeight: 'bold' }}>
@@ -115,8 +115,11 @@ const DetailPanel: React.FC = () => {
           >
             {t('heading.actions')}
           </Typography>
-          {actions.map(action => (
-            <Box key={action.titleKey} sx={{ margin: '0 0 15px 21px' }}>
+          {actions.map((action, index) => (
+            <Box
+              key={`action.titleKey_${index}`}
+              sx={{ margin: '0 0 15px 21px' }}
+            >
               <Action underline="hover" onClick={action.onClick}>
                 {t(action.titleKey)}
               </Action>
@@ -132,7 +135,7 @@ const DetailPanel: React.FC = () => {
     if (!isSmallScreen && !isOpen) open();
   }, [isSmallScreen]);
 
-  if (!sections.length) return null;
+  if (!sections.length && !actions.length) return null;
 
   return (
     <StyledDrawer
