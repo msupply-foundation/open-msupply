@@ -68,7 +68,12 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       />
     </Box>
   ) : (
-    <TableContainer sx={{ display: 'flex', flexDirection: 'column' }}>
+    <TableContainer
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <MuiTable
         stickyHeader
         {...getTableProps()}
