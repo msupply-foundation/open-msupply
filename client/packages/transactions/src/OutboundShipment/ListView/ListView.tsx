@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
@@ -17,7 +17,6 @@ import {
   useNotification,
   SortingRule,
   Transaction,
-  QueryProps,
   useDataTableApi,
   GenericColumnType,
   DropdownMenu,
@@ -28,21 +27,62 @@ import {
   ChevronDown,
   Tools,
   getNameAndColorColumn,
+  useAppBarRect,
+  useWindowDimensions,
+  useTheme,
 } from '@openmsupply-client/common';
 
 import { listQueryFn, deleteFn, updateFn } from '../../api';
 
+const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
+  const { height } = useAppBarRect();
+  const { height: windowHeight } = useWindowDimensions();
+  const theme = useTheme();
+  const { mixins } = theme;
+
+  const dataRowHeight = mixins.table.dataRow.height;
+  const headerRowHeight = mixins.table.headerRow.height;
+  const paginationRowHeight = mixins.table.paginationRow.height;
+
+  const numberOfRows = Math.floor(
+    (windowHeight - (height ?? 0) - headerRowHeight - paginationRowHeight) /
+      dataRowHeight
+  );
+
+  const [first, setFirst] = useState(numberOfRows);
+  const [offset, setOffset] = useState(0);
+  const [sortBy, setSortBy] = useState(initialSortBy);
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    setFirst(numberOfRows);
+    setOffset(page * numberOfRows);
+  }, [numberOfRows, page]);
+
+  return {
+    first,
+    offset,
+    sortBy,
+    page,
+    setPage,
+    setFirst,
+    setOffset,
+    setSortBy,
+  };
+};
+
 export const OutboundShipmentListView: FC = () => {
+  const { first, offset, sortBy, setSortBy, setPage } = useListViewQueryParams([
+    { id: 'name', desc: false },
+  ]);
+
   const { appBarButtonsRef } = useHostContext();
   const { info, success, warning } = useNotification();
 
-  const [queryProps, setQueryProps] = useState<QueryProps<Transaction>>({
-    first: 10,
-    offset: 0,
-  });
   const { data: response, isLoading } = useQuery(
-    ['transaction', 'list', queryProps],
-    () => listQueryFn(queryProps)
+    ['transaction', 'list', { first, offset, sortBy }],
+    () => listQueryFn({ first, offset, sortBy }),
+    { keepPreviousData: true }
   );
 
   const queryClient = useQueryClient();
@@ -53,7 +93,7 @@ export const OutboundShipmentListView: FC = () => {
 
   const { mutateAsync } = useMutation(updateFn, {
     onMutate: patch => {
-      const key = ['transaction', 'list', queryProps];
+      const key = ['transaction'];
       const previousCached =
         queryClient.getQueryData<{ data: Transaction[]; totalLength: number }>(
           key
@@ -151,10 +191,6 @@ export const OutboundShipmentListView: FC = () => {
     GenericColumnType.Selection,
   ]);
 
-  const initialSortBy: SortingRule<Transaction>[] = [
-    { id: 'date', desc: true },
-  ];
-
   const tableApi = useDataTableApi<Transaction>();
   const t = useTranslation();
 
@@ -220,16 +256,19 @@ export const OutboundShipmentListView: FC = () => {
         </>
       </Portal>
       <RemoteDataTable
+        onSortBy={(newSortBy: SortingRule<Transaction>[]) =>
+          setSortBy(newSortBy)
+        }
+        sortBy={sortBy}
+        pagination={{ first, offset, total: response?.totalLength ?? 0 }}
+        onChangePage={(page: number) => setPage(page)}
         tableApi={tableApi}
         columns={columns}
         data={response?.data || []}
-        initialSortBy={initialSortBy}
         isLoading={isLoading}
-        onFetchData={setQueryProps}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);
         }}
-        totalLength={response?.totalLength || 0}
       />
     </>
   );

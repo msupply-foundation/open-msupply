@@ -1,11 +1,9 @@
 /* eslint-disable react/jsx-key */
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import {
   SortingRule,
-  usePagination,
   useRowSelect,
-  useSortBy,
   useTable,
   useFlexLayout,
   Row,
@@ -19,78 +17,42 @@ import {
   TableHead,
   TableRow,
   TableContainer,
-  TablePagination,
   TableSortLabel,
   Table as MuiTable,
 } from '@material-ui/core';
 
 import { SortDesc } from '../../icons';
-import { DEFAULT_PAGE_SIZE } from '.';
 import { TableProps } from './types';
 import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
+import { PaginationRow } from './columns/PaginationRow';
 
 export { SortingRule };
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
+  sortBy,
   data = [],
-  initialSortBy,
   isLoading = false,
-  onFetchData,
+  onSortBy,
   onRowClick,
-  totalLength = 0,
+  pagination,
   tableApi,
+  onChangePage,
 }: TableProps<T>): JSX.Element => {
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [pageIndex, setPageIndex] = useState(0);
-  const pageCount = Math.ceil(totalLength / pageSize);
   const tableInstance = useTable(
     {
       columns,
       data,
-      manualPagination: true,
-      manualSortBy: true,
-      pageCount,
-      initialState: {
-        pageIndex,
-        pageSize,
-        sortBy: initialSortBy,
-      },
     },
-    useSortBy,
-    usePagination,
     useRowSelect,
     useFlexLayout
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    state: { sortBy },
-  } = tableInstance;
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
+    tableInstance;
 
   useSetupDataTableApi(tableApi, tableInstance);
-
-  const gotoPage = (page: number) => setPageIndex(page);
-  const refetch = () =>
-    onFetchData({
-      offset: pageIndex * pageSize,
-      first: pageSize,
-      sortBy,
-    });
-
-  useEffect(() => {
-    refetch();
-  }, [pageSize, pageIndex]);
-
-  useEffect(() => {
-    setPageIndex(0);
-    refetch();
-  }, [sortBy]);
 
   return isLoading ? (
     <Box
@@ -106,8 +68,12 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       />
     </Box>
   ) : (
-    <TableContainer>
-      <MuiTable stickyHeader {...getTableProps()}>
+    <TableContainer sx={{ display: 'flex', flexDirection: 'column' }}>
+      <MuiTable
+        stickyHeader
+        {...getTableProps()}
+        sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+      >
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <TableRow
@@ -124,9 +90,17 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
               }}
             >
               {headers.map(column => {
+                const sortingRule = sortBy.find(
+                  ({ id: sortedById }) => column.id === sortedById
+                );
+
                 return (
                   <TableCell
-                    {...column.getHeaderProps(column.getSortByToggleProps())}
+                    {...column.getHeaderProps()}
+                    onClick={() =>
+                      !column.disableSortBy &&
+                      onSortBy([{ id: column.id, desc: !sortingRule?.desc }])
+                    }
                     align={column.align}
                     padding={'none'}
                     sx={{
@@ -138,17 +112,13 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                     }}
                     aria-label={column.id}
                     sortDirection={
-                      column.isSorted
-                        ? column.isSortedDesc
-                          ? 'desc'
-                          : 'asc'
-                        : false
+                      sortingRule ? (sortingRule?.desc ? 'desc' : 'asc') : false
                     }
                   >
                     <TableSortLabel
                       hideSortIcon={column.id === 'selection'}
-                      active={column.isSorted}
-                      direction={column.isSortedDesc ? 'desc' : 'asc'}
+                      active={!!sortingRule}
+                      direction={sortingRule?.desc ? 'desc' : 'asc'}
                       IconComponent={SortDesc}
                       sx={{ fontWeight: 'bold' }}
                     >
@@ -160,7 +130,15 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
             </TableRow>
           ))}
         </TableHead>
-        <TableBody {...getTableBodyProps()}>
+        <TableBody
+          {...getTableBodyProps()}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+            overflow: 'hidden',
+          }}
+        >
           {rows.map((row: Row<T>) => {
             prepareRow(row);
 
@@ -176,19 +154,14 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
               />
             );
           })}
-          <TableRow>
-            <TablePagination
-              page={pageIndex}
-              rowsPerPage={pageSize}
-              count={pageCount * pageSize}
-              onPageChange={(_, i) => gotoPage(i)}
-              onRowsPerPageChange={({ target: { value } }) =>
-                setPageSize(Number(value))
-              }
-            />
-          </TableRow>
         </TableBody>
       </MuiTable>
+      <PaginationRow
+        offset={pagination.offset}
+        first={pagination.first}
+        total={pagination.total}
+        onChange={onChangePage}
+      />
     </TableContainer>
   );
 };

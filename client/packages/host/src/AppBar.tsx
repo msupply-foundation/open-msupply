@@ -12,7 +12,9 @@ import {
   Box,
   UnstyledIconButton,
   Breadcrumbs,
+  useAppBarRect,
 } from '@openmsupply-client/common';
+
 import { LanguageMenu } from './LanguageMenu';
 import { ExternalURL } from '@openmsupply-client/config';
 
@@ -53,9 +55,10 @@ const AppBar: React.FC = () => {
   const { isOpen } = useDrawer();
   const { appBarButtonsRef } = useHostContext();
   const navigate = useNavigate();
+  const { ref } = useAppBarRect();
 
   return (
-    <StyledContainer isOpen={isOpen}>
+    <StyledContainer ref={ref} isOpen={isOpen}>
       <Toolbar disableGutters>
         <UnstyledIconButton
           icon={<ArrowLeft />}
