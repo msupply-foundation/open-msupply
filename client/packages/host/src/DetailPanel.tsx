@@ -4,6 +4,7 @@ import {
   Close,
   Theme,
   FlatButton,
+  Grid,
   styled,
   useDetailPanelStore,
   useTranslation,
@@ -16,6 +17,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Link,
 } from '@material-ui/core';
 
 const openedMixin = (theme: Theme) => ({
@@ -72,7 +74,7 @@ const StyledAccordian = styled(Accordion)(({ theme }) => ({
 }));
 
 const DetailPanel: React.FC = () => {
-  const { close, isOpen, open, sections } = useDetailPanelStore();
+  const { actions, close, isOpen, open, sections } = useDetailPanelStore();
   const t = useTranslation();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -98,6 +100,33 @@ const DetailPanel: React.FC = () => {
     [sections]
   );
 
+  const Action = styled(Link)({
+    color: '#e63535',
+    cursor: 'pointer',
+    fontSize: 14,
+  });
+  const Actions = useCallback(
+    () =>
+      !actions.length ? null : (
+        <>
+          <StyledDivider />
+          <Typography
+            sx={{ fontSize: 12, fontWeight: 600, margin: '15px 0 16px 21px' }}
+          >
+            {t('heading.actions')}
+          </Typography>
+          {actions.map(action => (
+            <Box key={action.titleKey} sx={{ margin: '0 0 15px 21px' }}>
+              <Action underline="hover" onClick={action.onClick}>
+                {t(action.titleKey)}
+              </Action>
+            </Box>
+          ))}
+        </>
+      ),
+    [actions]
+  );
+
   React.useEffect(() => {
     if (isSmallScreen && isOpen) close();
     if (!isSmallScreen && !isOpen) open();
@@ -111,18 +140,25 @@ const DetailPanel: React.FC = () => {
       aria-expanded={isOpen}
       isOpen={isOpen}
     >
-      <Box>
-        <ButtonContainer>
-          <FlatButton
-            color="inherit"
-            labelKey="button.close"
-            onClick={close}
-            icon={<Close color="inherit" />}
-          />
-        </ButtonContainer>
-      </Box>
-      <StyledDivider />
-      <Sections />
+      <Grid container flexDirection="column" sx={{ height: '100%' }}>
+        <Grid item>
+          <ButtonContainer>
+            <FlatButton
+              color="inherit"
+              labelKey="button.close"
+              onClick={close}
+              icon={<Close color="inherit" />}
+            />
+          </ButtonContainer>
+        </Grid>
+        <Grid item flex={1}>
+          <StyledDivider />
+          <Sections />
+        </Grid>
+        <Grid item>
+          <Actions />
+        </Grid>
+      </Grid>
     </StyledDrawer>
   );
 };
