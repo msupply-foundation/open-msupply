@@ -1,4 +1,5 @@
 mod central_sync_buffer;
+mod central_sync_cursor;
 mod item;
 mod item_line;
 mod name;
@@ -27,7 +28,7 @@ pub enum DatabaseRow {
 }
 
 pub use central_sync_buffer::CentralSyncBufferRow;
-
+pub use central_sync_cursor::CentralSyncCursorRow;
 pub use item::ItemRow;
 pub use item_line::ItemLineRow;
 pub use name::NameRow;
