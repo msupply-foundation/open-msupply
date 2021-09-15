@@ -17,21 +17,6 @@ import {
   AccordionSummary,
   Link,
 } from '@openmsupply-client/common';
-// import { Close } from '@openmsupply-client/common/src/ui/icons/Close';
-// import {  } from '@openmsupply-client/common/src/styles';
-// import  from '@openmsupply-client/common/src/ui/components/buttons/FlatButton';
-// import {  } from '@openmsupply-client/common/src/ui/layout';
-// import {  } from '@openmsupply-client/common/src/hooks/useDetailPanel';
-// import { useTranslation } from '@openmsupply-client/common/src/intl/intlHelpers';
-// import { Typography } from '@openmsupply-client/common/src/ui/components';
-// import { ChevronDown } from '@openmsupply-client/common/src/ui/icons/ChevronDown';
-// import { useTheme } from '@openmsupply-client/common/src/styles/index';
-// import { useMediaQuery } from '@openmsupply-client/common/src/styles/index';
-
-// import Accordion from '@material-ui/core/Accordion';
-// import AccordionDetails from '@material-ui/core/AccordionDetails';
-// import AccordionSummary from '@material-ui/core/AccordionSummary';
-// import Link from '@material-ui/core/Link';
 
 const openedMixin = (theme: Theme) => ({
   width: 300,
