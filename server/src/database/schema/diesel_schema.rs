@@ -1,4 +1,20 @@
 table! {
+    central_sync_buffer (id) {
+        id -> Text,
+        cursor_id -> Integer,
+        table_name -> Text,
+        record_id -> Text,
+        data -> Text,
+    }
+}
+
+table! {
+    central_sync_cursor (id) {
+        id -> Integer,
+    }
+}
+
+table! {
     item (id) {
         id -> Text,
         name -> Text,
@@ -95,16 +111,6 @@ table! {
     }
 }
 
-table! {
-    central_sync_buffer (id) {
-        id -> Text,
-        cursor_id -> Integer,
-        table_name -> Text,
-        record_id -> Text,
-        data -> Text,
-    }
-}
-
 joinable!(item_line -> item (item_id));
 joinable!(item_line -> store (store_id));
 joinable!(requisition -> name_table (name_id));
@@ -120,13 +126,14 @@ joinable!(transact_line -> item_line (item_line_id));
 joinable!(transact_line -> transact (transact_id));
 
 allow_tables_to_appear_in_same_query!(
+    central_sync_buffer,
+    central_sync_cursor,
     item,
     item_line,
     name_table,
     requisition,
     requisition_line,
     store,
-    central_sync_buffer,
     sync_out,
     transact,
     transact_line,
