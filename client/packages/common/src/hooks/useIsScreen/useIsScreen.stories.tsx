@@ -4,9 +4,10 @@ import { useIsLargeScreen } from './useIsLargeScreen';
 import { TestingProvider } from '../../utils';
 import { useIsMediumScreen } from '.';
 import { useIsExtraLargeScreen } from './useIsExtraLargeScreen';
+import { useIsSmallScreen } from '../..';
 
 const Template: Story<{
-  type: 'large' | 'medium' | 'xl';
+  type: 'large' | 'medium' | 'xl' | 'sm';
   hook: () => boolean;
 }> = args => {
   const isScreen = args.hook();
@@ -29,6 +30,9 @@ IsLargeScreen.args = { hook: useIsLargeScreen, type: 'large' };
 
 export const IsExtraLargeScreen = Template.bind({});
 IsExtraLargeScreen.args = { hook: useIsExtraLargeScreen, type: 'xl' };
+
+export const IsSmallScreen = Template.bind({});
+IsSmallScreen.args = { hook: useIsSmallScreen, type: 'sm' };
 
 export default {
   title: 'Hooks/useIsScreen',
