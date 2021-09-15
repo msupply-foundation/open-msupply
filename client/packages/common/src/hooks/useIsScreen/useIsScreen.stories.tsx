@@ -22,14 +22,14 @@ const Template: Story<{
   );
 };
 
-export const IsMediumScreen = Template.bind({});
-IsMediumScreen.args = { hook: useIsMediumScreen, type: 'medium' };
+export const IsExtraLargeScreen = Template.bind({});
+IsExtraLargeScreen.args = { hook: useIsExtraLargeScreen, type: 'xl' };
 
 export const IsLargeScreen = Template.bind({});
 IsLargeScreen.args = { hook: useIsLargeScreen, type: 'large' };
 
-export const IsExtraLargeScreen = Template.bind({});
-IsExtraLargeScreen.args = { hook: useIsExtraLargeScreen, type: 'xl' };
+export const IsMediumScreen = Template.bind({});
+IsMediumScreen.args = { hook: useIsMediumScreen, type: 'medium' };
 
 export const IsSmallScreen = Template.bind({});
 IsSmallScreen.args = { hook: useIsSmallScreen, type: 'sm' };
