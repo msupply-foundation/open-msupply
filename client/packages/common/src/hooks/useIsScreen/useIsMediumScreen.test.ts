@@ -14,7 +14,7 @@ describe('useIsMediumScreen', () => {
   });
 
   it('Returns false when the screen is greater than 1440', () => {
-    setScreenSize_ONLY_FOR_TESTING(1440);
+    setScreenSize_ONLY_FOR_TESTING(1441);
 
     const { result } = renderHook(useIsMediumScreen, {
       wrapper: TestingProvider,
