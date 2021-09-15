@@ -44,12 +44,12 @@ const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
   const headerRowHeight = mixins.table.headerRow.height;
   const paginationRowHeight = mixins.table.paginationRow.height;
 
-  const numberOfRows = Math.floor(
+  const numberOfRowsToRender = Math.floor(
     (windowHeight - (height ?? 0) - headerRowHeight - paginationRowHeight) /
       dataRowHeight
   );
 
-  const [first, setFirst] = useState(numberOfRows);
+  const [first, setFirst] = useState(numberOfRowsToRender);
   const [offset, setOffset] = useState(0);
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [page, setPage] = useState(0);
@@ -67,7 +67,7 @@ const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
     setFirst,
     setOffset,
     setSortBy,
-    numberOfRowsToRender: numberOfRows,
+    numberOfRowsToRender,
   };
 };
 
