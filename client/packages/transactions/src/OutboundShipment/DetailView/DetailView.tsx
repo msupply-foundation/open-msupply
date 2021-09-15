@@ -14,6 +14,7 @@ import {
   useDetailPanel,
   useFormatDate,
   useHostContext,
+  useNotification,
   useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -72,10 +73,16 @@ export const OutboundShipmentDetailView: FC = () => {
   const { id } = useParams();
   const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
   const { appBarButtonsRef } = useHostContext();
-  const { OpenButton, setSections } = useDetailPanel();
+  const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
+  const { success, warning } = useNotification();
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
+    success('Copied to clipboard successfully')();
+  };
 
   useEffect(() => {
     setSections([
@@ -116,6 +123,25 @@ export const OutboundShipmentDetailView: FC = () => {
     ]);
     // clean up on unload: will hide the details panel
     return () => setSections([]);
+  }, [draft]);
+
+  useEffect(() => {
+    setActions([
+      {
+        titleKey: 'link.history',
+        onClick: warning('No history available'),
+      },
+      {
+        titleKey: 'link.backorders',
+        onClick: warning('No back orders available'),
+      },
+      {
+        titleKey: 'link.copy-to-clipboard',
+        onClick: copyToClipboard,
+      },
+    ]);
+
+    return () => setActions([]);
   }, [draft]);
 
   return draft ? (
