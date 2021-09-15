@@ -6,31 +6,6 @@ import { act } from 'react-dom/test-utils';
 import { useBoundingClientRect } from './useBoundingClientRect';
 import userEvent from '@testing-library/user-event';
 
-class ResizeObserver {
-  fn: ResizeObserverCallback;
-
-  constructor(fn: ResizeObserverCallback) {
-    this.fn = fn;
-  }
-
-  observe() {
-    const entries: ResizeObserverEntry[] = [];
-    this.fn(entries, this);
-  }
-
-  disconnect() {}
-
-  unobserve() {}
-}
-
-beforeAll(() => {
-  Object.assign(window, { ResizeObserver });
-});
-
-afterAll(() => {
-  Object.assign(window, { ResizeObserver: null });
-});
-
 describe('useBoundingClientRect', () => {
   it('Returns a rect with dimensions', () => {
     // NOTE: JSDom doesn't have a layout engine so the actual rect is unfortunately
