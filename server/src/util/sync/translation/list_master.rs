@@ -10,6 +10,7 @@ pub struct LegacyListMasterRow {
     ID: String,
     description: String,
     code: String,
+    note: String,
 }
 
 impl LegacyListMasterRow {
@@ -21,10 +22,9 @@ impl LegacyListMasterRow {
             .map_err(|_| "Deserialization Error".to_string())?;
         Ok(Some(MasterListRow {
             id: data.ID,
-            // There is no name in list_master use an empty name
-            name: "".to_string(),
+            name: data.description,
             code: data.code,
-            description: data.description,
+            description: data.note,
         }))
     }
 }
