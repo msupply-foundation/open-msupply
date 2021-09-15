@@ -54,10 +54,7 @@ describe('DetailPanel', () => {
       queryByText('More')?.click();
     });
 
-    expect(queryByTestId('detail-panel')).toHaveAttribute(
-      'aria-expanded',
-      'false'
-    );
+    expect(queryByTestId('detail-panel')).toBeInTheDocument();
   });
 
   it('Does render panel if sections provided', () => {
