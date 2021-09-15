@@ -161,7 +161,7 @@ mod tests {
         records.append(&mut get_test_item_records());
         records.append(&mut get_test_master_list_records());
         records.append(&mut get_test_master_list_line_records());
-        records.append(&mut &mut get_test_master_list_name_join_records());
+        records.append(&mut get_test_master_list_name_join_records());
 
         import_sync_records(&registry, &extract_sync_records(&records))
             .await
