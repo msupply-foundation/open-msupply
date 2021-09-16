@@ -1,7 +1,13 @@
+use crate::{
+    database::repository::{get_repositories, DBBackendConnection},
+    server::data::{RepositoryMap, RepositoryRegistry},
+};
+
 use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};
 
+use diesel::r2d2::ConnectionManager;
 use diesel_migrations::{find_migrations_directory, mark_migrations_in_directory};
-
+use r2d2::{Pool, PooledConnection};
 
 #[cfg(feature = "postgres")]
 pub async fn setup(db_settings: &DatabaseSettings) {
@@ -96,4 +102,31 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             interval: 100000000,
         },
     }
+}
+
+pub async fn setup_all(
+    db_name: &str,
+    all_repositories: bool,
+) -> (
+    Pool<ConnectionManager<DBBackendConnection>>,
+    RepositoryMap,
+    PooledConnection<ConnectionManager<DBBackendConnection>>,
+) {
+    let settings = get_test_settings(db_name);
+
+    setup(&settings.database).await;
+
+    let connection_manager =
+        ConnectionManager::<DBBackendConnection>::new(&settings.database.connection_string());
+
+    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+
+    (
+        pool.clone(),
+        match all_repositories {
+            true => get_repositories(&settings).await,
+            false => RepositoryMap::new(),
+        },
+        pool.get().unwrap(),
+    )
 }
