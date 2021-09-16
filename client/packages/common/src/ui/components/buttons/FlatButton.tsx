@@ -18,7 +18,7 @@ const StyledButton = styled(MuiButton)({
   textTransform: 'none' as Property.TextTransform,
 });
 
-const FlatButton: React.FC<ButtonProps> = props => {
+export const FlatButton: React.FC<ButtonProps> = props => {
   const t = useTranslation();
 
   const { color, labelKey, icon, onClick } = props;

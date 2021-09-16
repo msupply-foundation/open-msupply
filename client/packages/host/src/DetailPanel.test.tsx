@@ -30,7 +30,7 @@ describe('DetailPanel', () => {
   it('Does not render empty panel', () => {
     const actions: Action[] = [];
     const sections: Section[] = [];
-    const { queryByText, queryByTestId } = render(
+    const { queryByTestId, queryByText } = render(
       <DetailPanelExample actions={actions} sections={sections} />
     );
 

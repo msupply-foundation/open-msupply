@@ -18,7 +18,7 @@ const StyledButton = styled(MuiButton)(({ theme }) => ({
   minWidth: 115,
 }));
 
-const NavigationButton: FC<NavigationButtonProps> = props => {
+export const NavigationButton: FC<NavigationButtonProps> = props => {
   const { icon, labelKey, to } = props;
   const t = useTranslation();
   const navigate = useNavigate();

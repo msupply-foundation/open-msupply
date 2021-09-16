@@ -1,7 +1,7 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import { LocalStorage } from '..';
+import { LocalStorage } from '../localStorage';
 import { useRtl } from './intlHelpers';
 
 describe('useRtl', () => {

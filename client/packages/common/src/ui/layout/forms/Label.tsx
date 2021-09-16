@@ -1,6 +1,5 @@
 import React from 'react';
-import { styled } from '@material-ui/core';
-import { Grid } from '..';
+import { Grid, styled } from '@material-ui/core';
 
 const StyledGrid = styled(Grid)(({ theme }) => ({
   color: theme.palette.form.label,
