@@ -22,10 +22,10 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
 };
 
-type NameJoinedWithStoreJoin = (NameRow, Option<NameStoreJoinRow>);
+type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>);
 
-impl From<NameJoinedWithStoreJoin> for NameQuery {
-    fn from((name_row, name_store_join_row_option): NameJoinedWithStoreJoin) -> Self {
+impl From<NameAndNameStoreJoin> for NameQuery {
+    fn from((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Self {
         let (is_customer, is_supplier) = match name_store_join_row_option {
             Some(name_store_join_row) => (
                 name_store_join_row.name_is_customer,
@@ -66,7 +66,7 @@ impl NameQueryRepository {
             .left_join(name_store_join)
             .offset(pagination.offset())
             .limit(pagination.first())
-            .load::<NameJoinedWithStoreJoin>(&*connection)?
+            .load::<NameAndNameStoreJoin>(&*connection)?
             .into_iter()
             .map(NameQuery::from)
             .collect())
