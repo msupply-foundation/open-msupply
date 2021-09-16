@@ -4,7 +4,7 @@ use crate::{
 
 mod central_sync_buffer;
 mod item;
-mod item_line;
+mod stock_line;
 mod item_query;
 mod master_list;
 mod master_list_line;
@@ -19,9 +19,11 @@ mod transact;
 mod transact_line;
 mod user_account;
 
+use actix_rt::blocking::BlockingError;
+use async_graphql::dataloader::DataLoader;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use item::ItemRepository;
-pub use item_line::ItemLineRepository;
+pub use stock_line::StockLineRepository;
 pub use item_query::ItemQueryRepository;
 pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
@@ -81,6 +83,15 @@ impl From<DieselError> for RepositoryError {
     }
 }
 
+impl From<BlockingError<RepositoryError>> for RepositoryError {
+    fn from(error: BlockingError<RepositoryError>) -> Self {
+        match error {
+            BlockingError::Error(error) => error,
+            BlockingError::Canceled => RepositoryError::ActixThredPoolCanceled,
+        }
+    }
+}
+
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<PooledConnection<ConnectionManager<DBBackendConnection>>, RepositoryError> {
@@ -99,7 +110,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
 
     repositories.insert(CustomerInvoiceRepository::new(pool.clone()));
     repositories.insert(ItemRepository::new(pool.clone()));
-    repositories.insert(ItemLineRepository::new(pool.clone()));
+    repositories.insert(StockLineRepository::new(pool.clone()));
     repositories.insert(ItemQueryRepository::new(pool.clone()));
     repositories.insert(NameRepository::new(pool.clone()));
     repositories.insert(NameQueryRepository::new(pool.clone()));
@@ -114,6 +125,8 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(MasterListRepository::new(pool.clone()));
     repositories.insert(MasterListLineRepository::new(pool.clone()));
     repositories.insert(MasterListNameJoinRepository::new(pool.clone()));
+    
+    repositories.insert(DataLoader::new(StockLineRepository::new(pool.clone())));
 
     repositories
 }

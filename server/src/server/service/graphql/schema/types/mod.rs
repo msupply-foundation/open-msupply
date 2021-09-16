@@ -22,6 +22,9 @@ pub use self::name::*;
 pub mod item;
 pub use self::item::*;
 
+pub mod stock_line;
+pub use self::stock_line::*;
+
 #[derive(Clone)]
 pub struct Store {
     pub store_row: StoreRow,
