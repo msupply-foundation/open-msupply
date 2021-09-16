@@ -19,9 +19,4 @@ pub enum RepositoryError {
 #[cfg_attr(any(feature = "sqlite", feature = "postgres"), path = "diesel/mod.rs")]
 pub mod repository;
 
-pub use repository::{
-    get_repositories, CentralSyncBufferRepository, CustomerInvoiceRepository, IntegrationRecord,
-    ItemLineRepository, ItemRepository, NameQueryRepository, NameRepository,
-    RequisitionLineRepository, RequisitionRepository, StoreRepository, SyncRepository,
-    TransactLineRepository, TransactRepository, UserAccountRepository,
-};
+pub use self::repository::*;
