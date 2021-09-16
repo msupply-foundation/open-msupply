@@ -7,7 +7,6 @@ import {
   Button,
   ColumnFormat,
   Download,
-  MenuDots,
   PlusCircle,
   Printer,
   useQuery,
@@ -255,12 +254,6 @@ export const OutboundShipmentListView: FC = () => {
             icon={<Printer />}
             labelKey="button.print"
             onClick={info('No printer detected')}
-          />
-          <Button
-            shouldShrink
-            icon={<MenuDots />}
-            labelKey="button.more"
-            onClick={warning('Do not press this button')}
           />
         </>
       </Portal>

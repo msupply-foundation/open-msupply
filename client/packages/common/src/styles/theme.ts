@@ -26,11 +26,19 @@ declare module '@material-ui/core/styles/createMixins' {
 
 declare module '@material-ui/core/styles/createPalette' {
   interface Palette {
+    border: string;
     darkGrey: string;
+    midGrey: string;
+    form: TypeForm;
   }
   interface TypeBackground {
     menu: string;
     white: string;
+  }
+
+  interface TypeForm {
+    field: string;
+    label: string;
   }
 }
 
@@ -62,12 +70,19 @@ const themeOptions = {
   },
   palette: {
     darkGrey: '#555770',
+    midGrey: '#8f90a6',
+    border: '#e4e4eb',
     primary: { 500: '#e95c30' },
     secondary: { main: '#555770' },
 
     background: {
       menu: '#f2f2f5',
       white: '#fff',
+    },
+
+    form: {
+      field: '#555770',
+      label: '#28293d',
     },
   },
   typography: {

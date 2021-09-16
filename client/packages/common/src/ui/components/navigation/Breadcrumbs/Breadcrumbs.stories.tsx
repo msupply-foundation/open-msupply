@@ -5,7 +5,7 @@ import { Route } from 'react-router-dom';
 import { Breadcrumbs } from './Breadcrumbs';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
 import { Box } from '@material-ui/system';
-import { RouteBuilder } from '../../../..';
+import { RouteBuilder } from '../../../../utils';
 import { AppRoute } from '@openmsupply-client/config';
 
 export default {

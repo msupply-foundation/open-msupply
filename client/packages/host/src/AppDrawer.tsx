@@ -3,7 +3,6 @@ import {
   Box,
   Dashboard,
   Divider,
-  Drawer,
   List,
   MSupplyGuy,
   Messages,
@@ -99,23 +98,24 @@ const closedMixin = (theme: Theme) => ({
   },
 });
 
-const StyledDrawer = styled(Drawer)(({ open, theme }) => {
-  return {
-    position: 'relative',
-    whiteSpace: 'nowrap',
-    borderRadius: 8,
-    overflow: 'hidden',
-    boxShadow: theme.shadows[7],
-    ...(open && {
-      ...openedMixin(theme),
-      '& .MuiDrawer-paper': openedMixin(theme),
-    }),
-    ...(!open && {
-      ...closedMixin(theme),
-      '& .MuiDrawer-paper': closedMixin(theme),
-    }),
-  };
-});
+const StyledDrawer = styled(Box, {
+  shouldForwardProp: prop => prop !== 'isOpen',
+})<{ isOpen: boolean }>(({ isOpen, theme }) => ({
+  height: '100vh',
+  flexGrow: 0,
+  borderRadius: 8,
+  overflow: 'hidden',
+  boxShadow: theme.shadows[7],
+  zIndex: 2,
+  ...(isOpen && {
+    ...openedMixin(theme),
+    '& .MuiDrawer-paper': openedMixin(theme),
+  }),
+  ...(!isOpen && {
+    ...closedMixin(theme),
+    '& .MuiDrawer-paper': closedMixin(theme),
+  }),
+}));
 
 const AppDrawer: React.FC = () => {
   const t = useTranslation();
@@ -132,9 +132,8 @@ const AppDrawer: React.FC = () => {
   return (
     <StyledDrawer
       data-testid="drawer"
-      variant="permanent"
       aria-expanded={drawer.isOpen}
-      open={drawer.isOpen}
+      isOpen={drawer.isOpen}
     >
       <ToolbarIconContainer>
         <UnstyledIconButton

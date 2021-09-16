@@ -17,6 +17,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
+import DetailPanel from './DetailPanel';
 import Viewport from './Viewport';
 
 const queryClient = new QueryClient({
@@ -51,65 +52,70 @@ const Host: FC = () => {
             <BrowserRouter>
               <SnackbarProvider maxSnack={3}>
                 <Viewport>
-                  <AppBar />
-                  <Box display="flex" flex={1}>
+                  <Box display="flex">
                     <AppDrawer />
-                    <Box flex={1} display="flex">
-                      <React.Suspense fallback={'Loading'}>
-                        <Routes>
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Dashboard)
-                              .addWildCard()
-                              .build()}
-                            element={<DashboardService />}
-                          />
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Customers)
-                              .addWildCard()
-                              .build()}
-                            element={<CustomerContainer />}
-                          />
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Suppliers)
-                              .addWildCard()
-                              .build()}
-                            element={
-                              <Heading locale={locale}>suppliers</Heading>
-                            }
-                          />
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Stock)
-                              .addWildCard()
-                              .build()}
-                            element={<Heading locale={locale}>stock</Heading>}
-                          />
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Tools)
-                              .addWildCard()
-                              .build()}
-                            element={<Heading locale={locale}>tools</Heading>}
-                          />
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Reports)
-                              .addWildCard()
-                              .build()}
-                            element={<Heading locale={locale}>reports</Heading>}
-                          />
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Messages)
-                              .addWildCard()
-                              .build()}
-                            element={
-                              <Heading locale={locale}>messages</Heading>
-                            }
-                          />
-                          <Route
-                            path="*"
-                            element={<Navigate to="/dashboard" replace />}
-                          />
-                        </Routes>
-                      </React.Suspense>
+                    <Box flex="1" flexDirection="column">
+                      <AppBar />
+                      <Box flex={1} display="flex">
+                        <React.Suspense fallback={'Loading'}>
+                          <Routes>
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Dashboard)
+                                .addWildCard()
+                                .build()}
+                              element={<DashboardService />}
+                            />
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Customers)
+                                .addWildCard()
+                                .build()}
+                              element={<CustomerContainer />}
+                            />
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Suppliers)
+                                .addWildCard()
+                                .build()}
+                              element={
+                                <Heading locale={locale}>suppliers</Heading>
+                              }
+                            />
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Stock)
+                                .addWildCard()
+                                .build()}
+                              element={<Heading locale={locale}>stock</Heading>}
+                            />
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Tools)
+                                .addWildCard()
+                                .build()}
+                              element={<Heading locale={locale}>tools</Heading>}
+                            />
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Reports)
+                                .addWildCard()
+                                .build()}
+                              element={
+                                <Heading locale={locale}>reports</Heading>
+                              }
+                            />
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Messages)
+                                .addWildCard()
+                                .build()}
+                              element={
+                                <Heading locale={locale}>messages</Heading>
+                              }
+                            />
+                            <Route
+                              path="*"
+                              element={<Navigate to="/dashboard" replace />}
+                            />
+                          </Routes>
+                        </React.Suspense>
+                      </Box>
                     </Box>
+                    <DetailPanel />
                   </Box>
                 </Viewport>
               </SnackbarProvider>

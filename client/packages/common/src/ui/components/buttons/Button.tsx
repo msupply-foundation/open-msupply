@@ -25,7 +25,7 @@ const StyledButton = styled(MuiButton, {
   }),
 }));
 
-const Button: React.FC<ButtonProps> = ({
+export const Button: React.FC<ButtonProps> = ({
   labelKey,
   icon,
   onClick,
@@ -56,5 +56,3 @@ const Button: React.FC<ButtonProps> = ({
     </Tooltip>
   );
 };
-
-export default Button;

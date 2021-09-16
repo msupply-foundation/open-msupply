@@ -25,12 +25,7 @@ const TransactionService: FC = () => {
       />
       <Route
         path={customerInvoiceRoute}
-        element={
-          <>
-            <OutboundShipmentDetailView />
-            <OutboundShipmentDetailView />
-          </>
-        }
+        element={<OutboundShipmentDetailView />}
       />
     </Routes>
   );
