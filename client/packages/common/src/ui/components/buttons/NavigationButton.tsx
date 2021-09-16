@@ -33,4 +33,3 @@ export const NavigationButton: FC<NavigationButtonProps> = props => {
     </StyledButton>
   );
 };
-export default NavigationButton;

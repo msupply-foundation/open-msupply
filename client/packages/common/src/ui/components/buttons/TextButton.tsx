@@ -26,5 +26,3 @@ export const TextButton: React.FC<ButtonProps> = props => {
     </StyledButton>
   );
 };
-
-export default TextButton;

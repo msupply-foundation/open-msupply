@@ -10,7 +10,7 @@ const choose = (options: unknown[]) => {
   return options[randomIdx];
 };
 
-const TransactionData = Array.from({ length: 10 }).map((_, i) => ({
+const TransactionData = Array.from({ length: 100 }).map((_, i) => ({
   id: `${i}`,
   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
   status: choose(['Confirmed', 'Finalised']),
@@ -32,6 +32,7 @@ const parseValue = (object: any, key: string) => {
   const value = object[key];
   if (typeof value === 'string') {
     const valueAsNumber = Number.parseFloat(value);
+
     if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
     return value.toUpperCase(); // ignore case
   }
@@ -96,7 +97,7 @@ export const transactionList = graphql.query(
     const { variables } = request;
     const { offset = 0, first = 25, sort, desc } = variables;
 
-    const data = TransactionData.slice(offset, first);
+    const data = TransactionData;
 
     if (sort) {
       const sortData = getDataSorter(sort, desc);
@@ -105,7 +106,10 @@ export const transactionList = graphql.query(
 
     return response(
       context.data({
-        transactions: { data, totalLength: 0 },
+        transactions: {
+          data: data.slice(offset, offset + first),
+          totalLength: TransactionData.length,
+        },
       })
     );
   }

@@ -17,10 +17,9 @@ import {
   UnstyledIconButton,
   styled,
   useDrawer,
-  useMediaQuery,
-  useTheme,
   useTranslation,
   NavLink,
+  useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Property } from 'csstype';
@@ -119,16 +118,16 @@ const StyledDrawer = styled(Box, {
 }));
 
 const AppDrawer: React.FC = () => {
-  const theme = useTheme();
   const t = useTranslation();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMediumScreen = useIsMediumScreen();
+
   const drawer = useDrawer();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
-    if (isSmallScreen && drawer.isOpen) drawer.close();
-    if (!isSmallScreen && !drawer.isOpen) drawer.open();
-  }, [isSmallScreen]);
+    if (isMediumScreen && drawer.isOpen) drawer.close();
+    if (!isMediumScreen && !drawer.isOpen) drawer.open();
+  }, [isMediumScreen]);
 
   return (
     <StyledDrawer

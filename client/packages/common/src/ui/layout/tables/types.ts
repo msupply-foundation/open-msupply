@@ -42,14 +42,21 @@ export interface DataTableApi<T> {
   selectedRows: T[];
 }
 
+interface Pagination {
+  first: number;
+  offset: number;
+  total: number;
+}
+
 export interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
   data?: T[];
-  initialSortBy?: SortingRule<T>[];
+  sortBy: SortingRule<T>[];
   isLoading?: boolean;
-  onFetchData: (props: QueryProps<T>) => void;
+  onSortBy: (sortRule: SortingRule<T>[]) => void;
+  pagination: Pagination;
+  onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
-  totalLength?: number;
   tableApi: RefObject<DataTableApi<T>>;
   children?: ReactNode;
 }
