@@ -1,17 +1,17 @@
 use crate::{
     database::{
         loader::{
-            StockLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
+            ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader, StockLineLoader,
             StoreLoader, TransactLineLoader, TransactLoader, UserAccountLoader,
         },
         mock,
         repository::{
-            StockLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
-            RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
+            StockLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
             UserAccountRepository,
         },
         schema::{
-            DatabaseRow, StockLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow,
+            DatabaseRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StockLineRow,
             StoreRow, TransactLineRow, TransactRow, UserAccountRow,
         },
     },
@@ -98,11 +98,6 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     let item_repository = ItemRepository::new(Arc::clone(&mock_data));
     let item_loader = DataLoader::new(ItemLoader { item_repository });
 
-    let stock_line_repository = StockLineRepository::new(Arc::clone(&mock_data));
-    let stock_line_loader = DataLoader::new(StockLineLoader {
-        stock_line_repository,
-    });
-
     let requisition_repository = RequisitionRepository::new(Arc::clone(&mock_data));
     let requisition_loader = DataLoader::new(RequisitionLoader {
         requisition_repository,
@@ -135,7 +130,6 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     });
 
     loaders.insert(item_loader);
-    loaders.insert(stock_line_loader);
     loaders.insert(requisition_loader);
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);
