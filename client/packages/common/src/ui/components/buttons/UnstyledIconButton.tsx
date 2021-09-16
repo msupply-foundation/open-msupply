@@ -31,5 +31,3 @@ export const UnstyledIconButton: React.FC<ButtonProps> = ({
     </Tooltip>
   );
 };
-
-export default UnstyledIconButton;

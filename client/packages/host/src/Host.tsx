@@ -8,7 +8,6 @@ import {
   QueryClientProvider,
   IntlProvider,
   SnackbarProvider,
-  styled,
   useHostContext,
   RouteBuilder,
   ErrorBoundary,
@@ -20,11 +19,6 @@ import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import DetailPanel from './DetailPanel';
 import Viewport from './Viewport';
-
-const Content = styled(Box)({
-  height: '100vh',
-  overflowY: 'scroll',
-});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,7 +56,7 @@ const Host: FC = () => {
                     <AppDrawer />
                     <Box flex="1" flexDirection="column">
                       <AppBar />
-                      <Content flex={1}>
+                      <Box flex={1} display="flex">
                         <React.Suspense fallback={'Loading'}>
                           <Routes>
                             <Route
@@ -119,7 +113,7 @@ const Host: FC = () => {
                             />
                           </Routes>
                         </React.Suspense>
-                      </Content>
+                      </Box>
                     </Box>
                     <DetailPanel />
                   </Box>

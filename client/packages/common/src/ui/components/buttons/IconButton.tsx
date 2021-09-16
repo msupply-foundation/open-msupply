@@ -34,5 +34,3 @@ export const IconButton: React.FC<ButtonProps> = props => {
     </Tooltip>
   );
 };
-
-export default IconButton;

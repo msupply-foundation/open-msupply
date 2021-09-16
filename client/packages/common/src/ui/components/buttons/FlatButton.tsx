@@ -32,5 +32,3 @@ export const FlatButton: React.FC<ButtonProps> = props => {
     </StyledButton>
   );
 };
-
-export default FlatButton;
