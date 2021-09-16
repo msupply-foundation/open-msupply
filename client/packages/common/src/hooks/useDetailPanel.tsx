@@ -4,36 +4,53 @@ import { LocaleKey } from '../intl/intlHelpers';
 import { Button, MenuDots } from '../ui';
 
 type DetailPanelController = {
+  actions: Action[];
   isOpen: boolean;
   sections: Section[];
+  setActions: (actions: Action[]) => void;
   setSections: (sections: Section[]) => void;
   open: () => void;
   close: () => void;
 };
 
 export const useDetailPanelStore = create<DetailPanelController>(set => ({
+  actions: [],
   isOpen: false,
   sections: [],
+  setActions: (actions: Action[]) => set(state => ({ ...state, actions })),
   setSections: (sections: Section[]) => set(state => ({ ...state, sections })),
   open: () => set(state => ({ ...state, isOpen: true })),
   close: () => set(state => ({ ...state, isOpen: false })),
 }));
 
-type Section = {
+export type Action = {
+  onClick: () => void;
+  icon?: JSX.Element;
+  titleKey: LocaleKey;
+};
+
+export type Section = {
   children: JSX.Element[];
   titleKey: LocaleKey;
 };
 
 interface DetailPanel {
   OpenButton: JSX.Element | null;
+  setActions: (actions: Action[]) => void;
   setSections: (sections: Section[]) => void;
 }
 export const useDetailPanel = (): DetailPanel => {
-  const { isOpen, open, setSections } = useDetailPanelStore();
+  const { actions, isOpen, open, sections, setActions, setSections } =
+    useDetailPanelStore();
+  const isEmpty = !sections.length && !actions.length;
+  const OpenButton =
+    isOpen || isEmpty ? null : (
+      <Button
+        icon={<MenuDots />}
+        labelKey="button.more"
+        onClick={() => open()}
+      />
+    );
 
-  const OpenButton = isOpen ? null : (
-    <Button icon={<MenuDots />} labelKey="button.more" onClick={() => open()} />
-  );
-
-  return { OpenButton, setSections };
+  return { OpenButton, setActions, setSections };
 };

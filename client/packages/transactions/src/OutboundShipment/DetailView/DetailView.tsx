@@ -3,12 +3,23 @@ import React, { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import {
+  Circle,
+  Clock,
+  Copy,
+  Field,
+  Grid,
+  Label,
   Portal,
+  Rewind,
+  Row,
   Transaction,
   Typography,
   useDetailPanel,
+  useFormatDate,
   useHostContext,
+  useNotification,
   useQueryClient,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -65,22 +76,79 @@ export const OutboundShipmentDetailView: FC = () => {
   const { id } = useParams();
   const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
   const { appBarButtonsRef } = useHostContext();
-  const { OpenButton, setSections } = useDetailPanel();
+  const { OpenButton, setActions, setSections } = useDetailPanel();
+  const t = useTranslation();
+  const d = useFormatDate();
+  const { success, warning } = useNotification();
+  const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
+    success('Copied to clipboard successfully')();
+  };
 
   useEffect(() => {
     setSections([
       {
         titleKey: 'heading.comment',
-        children: [<Typography key="comment">Comments go here..</Typography>],
+        children: [<Typography key="comment">{draft?.comment}</Typography>],
       },
       {
         titleKey: 'heading.additional-info',
-        children: [<Typography key="comment">Additional Info..</Typography>],
+        children: [
+          <Grid container key="additional-info">
+            <Row>
+              <Label>{t('label.color')}</Label>
+              <Field>
+                <Circle htmlColor={draft?.color} sx={{ width: 8 }} />
+                <span
+                  style={{
+                    color: draft?.color,
+                    verticalAlign: 'bottom',
+                    marginLeft: 5,
+                  }}
+                >
+                  {draft?.color}
+                </span>
+              </Field>
+            </Row>
+            <Row>
+              <Label>{t('label.entered')}</Label>
+              <Field>{entered}</Field>
+            </Row>
+            <Row>
+              <Label>{t('label.status')}</Label>
+              <Field>{draft?.status}</Field>
+            </Row>
+          </Grid>,
+        ],
       },
     ]);
     // clean up on unload: will hide the details panel
     return () => setSections([]);
-  }, []);
+  }, [draft]);
+
+  useEffect(() => {
+    setActions([
+      {
+        icon: <Clock />,
+        titleKey: 'link.history',
+        onClick: warning('No history available'),
+      },
+      {
+        icon: <Rewind />,
+        titleKey: 'link.backorders',
+        onClick: warning('No back orders available'),
+      },
+      {
+        icon: <Copy />,
+        titleKey: 'link.copy-to-clipboard',
+        onClick: copyToClipboard,
+      },
+    ]);
+
+    return () => setActions([]);
+  }, [draft]);
 
   return draft ? (
     <>

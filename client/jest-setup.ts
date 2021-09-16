@@ -35,7 +35,7 @@ beforeEach(() => {
  *
  */
 beforeEach(() => {
-  setScreenSize_ONLY_FOR_TESTING(1280);
+  setScreenSize_ONLY_FOR_TESTING(1440);
 });
 
 const server = setupMockServer();
@@ -48,4 +48,38 @@ afterAll(() => {
   // Clean up after all tests are done, preventing this
   // interception layer from affecting irrelevant tests.
   server.close();
+});
+
+window.resizeTo = (width, height) => {
+  Object.assign(window, {
+    innerWidth: width,
+    innerHeight: height,
+    outerWidth: width,
+    outerHeight: height,
+  }).dispatchEvent(new Event('resize'));
+};
+
+class ResizeObserver {
+  fn: ResizeObserverCallback;
+
+  constructor(fn: ResizeObserverCallback) {
+    this.fn = fn;
+  }
+
+  observe() {
+    const entries: ResizeObserverEntry[] = [];
+    this.fn(entries, this);
+  }
+
+  disconnect() {}
+
+  unobserve() {}
+}
+
+beforeEach(() => {
+  Object.assign(window, { ResizeObserver });
+});
+
+afterEach(() => {
+  Object.assign(window, { ResizeObserver: null });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { UnstyledIconButton } from '.';
+import { UnstyledIconButton } from './UnstyledIconButton';
 import { Book, SvgIconProps } from '../../icons';
 
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => (

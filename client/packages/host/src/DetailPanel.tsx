@@ -1,22 +1,21 @@
 import React, { useCallback } from 'react';
 import {
-  Box,
-  Close,
-  Theme,
-  FlatButton,
-  styled,
-  useDetailPanelStore,
-  useTranslation,
-  Typography,
-  ChevronDown,
-  useTheme,
-  useMediaQuery,
-} from '@openmsupply-client/common';
-import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-} from '@material-ui/core';
+  Box,
+  ChevronDown,
+  Close,
+  FlatButton,
+  Grid,
+  Theme,
+  Typography,
+  styled,
+  useDetailPanelStore,
+  useMediaQuery,
+  useTheme,
+  useTranslation,
+} from '@openmsupply-client/common';
 
 const openedMixin = (theme: Theme) => ({
   width: 300,
@@ -46,14 +45,10 @@ const StyledDrawer = styled(Box, {
   ...(!isOpen && closedMixin(theme)),
 }));
 
-const StyledDivider = () => (
-  <div
-    style={{
-      height: 1,
-      backgroundColor: '#e4e4eb', // TODO: pop into theme;
-    }}
-  />
-);
+const StyledDivider = styled('div')(({ theme }) => ({
+  height: 1,
+  backgroundColor: theme.palette.border,
+}));
 
 const ButtonContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
@@ -72,7 +67,7 @@ const StyledAccordian = styled(Accordion)(({ theme }) => ({
 }));
 
 const DetailPanel: React.FC = () => {
-  const { close, isOpen, open, sections } = useDetailPanelStore();
+  const { actions, close, isOpen, open, sections } = useDetailPanelStore();
   const t = useTranslation();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -80,8 +75,8 @@ const DetailPanel: React.FC = () => {
   const Sections = useCallback(
     () => (
       <>
-        {sections.map(section => (
-          <Box key={section.titleKey}>
+        {sections.map((section, index) => (
+          <Box key={`action.titleKey_${index}`}>
             <StyledAccordian>
               <AccordionSummary expandIcon={<ChevronDown color="secondary" />}>
                 <Typography sx={{ fontWeight: 'bold' }}>
@@ -98,12 +93,37 @@ const DetailPanel: React.FC = () => {
     [sections]
   );
 
+  const Actions = useCallback(
+    () =>
+      !actions.length ? null : (
+        <Box sx={{ marginBottom: 2 }}>
+          <StyledDivider />
+          <Typography
+            sx={{ fontSize: 12, fontWeight: 600, margin: '15px 0 10px 21px' }}
+          >
+            {t('heading.actions')}
+          </Typography>
+          {actions.map((action, index) => (
+            <Box key={`action.titleKey_${index}`} sx={{ marginLeft: '11px' }}>
+              <FlatButton
+                onClick={action.onClick}
+                icon={action.icon}
+                labelKey={action.titleKey}
+              />
+            </Box>
+          ))}
+        </Box>
+      ),
+    [actions]
+  );
+
   React.useEffect(() => {
     if (isSmallScreen && isOpen) close();
     if (!isSmallScreen && !isOpen) open();
   }, [isSmallScreen]);
 
-  if (!sections.length) return null;
+  // the intention is the panel won't show unless a calling component has populated it
+  if (!sections.length && !actions.length) return null;
 
   return (
     <StyledDrawer
@@ -111,18 +131,25 @@ const DetailPanel: React.FC = () => {
       aria-expanded={isOpen}
       isOpen={isOpen}
     >
-      <Box>
-        <ButtonContainer>
-          <FlatButton
-            color="inherit"
-            labelKey="button.close"
-            onClick={close}
-            icon={<Close color="inherit" />}
-          />
-        </ButtonContainer>
-      </Box>
-      <StyledDivider />
-      <Sections />
+      <Grid container flexDirection="column" sx={{ height: '100%' }}>
+        <Grid item>
+          <ButtonContainer>
+            <FlatButton
+              color="inherit"
+              labelKey="button.close"
+              onClick={close}
+              icon={<Close color="inherit" />}
+            />
+          </ButtonContainer>
+        </Grid>
+        <Grid item flex={1}>
+          <StyledDivider />
+          <Sections />
+        </Grid>
+        <Grid item>
+          <Actions />
+        </Grid>
+      </Grid>
     </StyledDrawer>
   );
 };

@@ -16,17 +16,29 @@ declare module '@material-ui/core/styles/createMixins' {
     icon: {
       medium: { width: number; height: number };
     };
+    table: {
+      dataRow: { height: number };
+      headerRow: { height: number };
+      paginationRow: { height: number };
+    };
   }
 }
 
 declare module '@material-ui/core/styles/createPalette' {
   interface Palette {
+    border: string;
     darkGrey: string;
     midGrey: string;
+    form: TypeForm;
   }
   interface TypeBackground {
     menu: string;
     white: string;
+  }
+
+  interface TypeForm {
+    field: string;
+    label: string;
   }
 }
 
@@ -37,20 +49,40 @@ declare module '@material-ui/core/styles/createTypography' {
 }
 
 const themeOptions = {
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 1024,
+      lg: 1440,
+      xl: 1536,
+    },
+  },
   direction: 'rtl' as Direction,
   mixins: {
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
+    table: {
+      dataRow: { height: 40 },
+      headerRow: { height: 60 },
+      paginationRow: { height: 48 },
+    },
   },
   palette: {
     darkGrey: '#555770',
     midGrey: '#8f90a6',
+    border: '#e4e4eb',
     primary: { 500: '#e95c30' },
     secondary: { main: '#555770' },
 
     background: {
       menu: '#f2f2f5',
       white: '#fff',
+    },
+
+    form: {
+      field: '#555770',
+      label: '#28293d',
     },
   },
   typography: {

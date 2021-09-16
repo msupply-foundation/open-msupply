@@ -1,13 +1,14 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { Button } from '.';
+import { Button } from './Button';
 import { Book } from '../../icons';
 
 const Template: ComponentStory<typeof Button> = () => (
   <Button
+    shouldShrink
     icon={<Book />}
     labelKey="button.docs"
-    onClick={() => console.info('clicked')}
+    onClick={() => alert('clicked')}
   />
 );
 

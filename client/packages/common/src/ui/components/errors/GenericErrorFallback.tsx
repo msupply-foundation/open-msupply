@@ -2,7 +2,7 @@ import { Box, Typography, Button } from '@material-ui/core';
 import React, { FC } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
 import UnhappyMan from '../../icons/UnhappyMan';
-import { useTranslation } from '../../..';
+import { useTranslation } from '../../../intl';
 
 export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
   onClearError,

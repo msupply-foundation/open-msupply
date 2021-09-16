@@ -4,3 +4,8 @@ export { useHostContext } from './useHostContext';
 export { useNotification } from './useNotification';
 export { useRemoteFn } from './useRemoteFn';
 export { useRemoteScript } from './useRemoteScript';
+export * from './useDetailPanel';
+export * from './useBoundingClientRect';
+export * from './useAppBarRect';
+export * from './useWindowDimensions';
+export * from './useIsScreen';

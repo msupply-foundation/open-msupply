@@ -31,8 +31,10 @@
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",
   "error.something-wrong": "Oops! Somethings gone wrong.",
+  "heading.actions": "Actions",
   "heading.additional-info": "Additional Info",
   "heading.comment": "Comment",
+  "label.color": "Colour",
   "label.comment": "Comment",
   "label.confirmed": "Confirmed",
   "label.customer": "Customer",
@@ -44,5 +46,8 @@
   "label.status": "Status",
   "label.supplier": "Supplier",
   "label.total": "Total",
-  "label.type": "Type"
+  "label.type": "Type",
+  "link.history": "History",
+  "link.backorders": "Backorders",
+  "link.copy-to-clipboard": "Copy to Clipboard"
 }

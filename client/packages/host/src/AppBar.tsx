@@ -11,7 +11,9 @@ import {
   Box,
   UnstyledIconButton,
   Breadcrumbs,
+  useAppBarRect,
 } from '@openmsupply-client/common';
+
 import { LanguageMenu } from './LanguageMenu';
 import { ExternalURL } from '@openmsupply-client/config';
 
@@ -34,9 +36,10 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 const AppBar: React.FC = () => {
   const { appBarButtonsRef } = useHostContext();
   const navigate = useNavigate();
+  const { ref } = useAppBarRect();
 
   return (
-    <StyledContainer>
+    <StyledContainer ref={ref}>
       <Toolbar disableGutters>
         <UnstyledIconButton
           icon={<ArrowLeft />}
@@ -47,6 +50,7 @@ const AppBar: React.FC = () => {
         <Breadcrumbs />
         <ButtonContainer ref={appBarButtonsRef}>
           <Button
+            shouldShrink
             icon={<Book />}
             labelKey="button.docs"
             onClick={() => (location.href = ExternalURL.PublicDocs)}
