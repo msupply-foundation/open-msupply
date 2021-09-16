@@ -96,16 +96,14 @@ fn do_translation(
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
-pub fn translation_records() -> Vec<String> {
-    return vec![
-        "name".to_string(),
-        "item".to_string(),
-        "store".to_string(),
-        "list_master".to_string(),
-        "list_master_line".to_string(),
-        "list_master_name_join".to_string(),
-    ];
-}
+pub const TRANSLATION_RECORDS: &'static [&'static str] = &[
+    "name",
+    "item",
+    "store",
+    "list_master",
+    "list_master_line",
+    "list_master_name_join",
+];
 
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
