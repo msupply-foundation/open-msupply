@@ -54,7 +54,9 @@ impl CentralSyncBufferRepository {
     pub async fn pop_one(&self) -> Result<CentralSyncBufferRow, RepositoryError> {
         use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = central_sync_buffer.order(id.asc()).first(&connection)?;
+        let result: CentralSyncBufferRow =
+            central_sync_buffer.order(id.asc()).first(&connection)?;
+        diesel::delete(central_sync_buffer.filter(id.eq(result.id))).execute(&connection)?;
         Ok(result)
     }
 
