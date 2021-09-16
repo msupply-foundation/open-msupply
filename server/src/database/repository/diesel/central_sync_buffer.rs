@@ -1,7 +1,7 @@
-use super::DBBackendConnection;
+use super::{DBBackendConnection, DBConnection};
 
 use crate::database::{
-    repository::{repository::get_connection, RepositoryError},
+    repository::{repository::get_connection, CentralSyncCursorRepository, RepositoryError},
     schema::CentralSyncBufferRow,
 };
 
@@ -19,27 +19,35 @@ impl CentralSyncBufferRepository {
         CentralSyncBufferRepository { pool }
     }
 
+    pub async fn insert_one_and_update_cursor(
+        &self,
+        central_sync_buffer_row: &CentralSyncBufferRow,
+    ) -> Result<(), RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        let cursor = central_sync_buffer_row.cursor_id as u32;
+        connection.transaction(|| {
+            CentralSyncBufferRepository::insert_one_tx(&connection, central_sync_buffer_row)?;
+            CentralSyncCursorRepository::update_cursor_tx(&connection, cursor)?;
+            Ok(())
+        })
+    }
+
     pub async fn insert_one(
         &self,
         central_sync_buffer_row: &CentralSyncBufferRow,
     ) -> Result<(), RepositoryError> {
-        use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
         let connection = get_connection(&self.pool)?;
-        diesel::insert_into(central_sync_buffer)
-            .values(central_sync_buffer_row)
-            .execute(&*connection)?;
-        Ok(())
+        CentralSyncBufferRepository::insert_one_tx(&connection, central_sync_buffer_row)
     }
 
-    pub async fn insert_many(
-        &self,
-        central_sync_buffer_rows: &Vec<CentralSyncBufferRow>,
+    pub fn insert_one_tx(
+        connection: &DBConnection,
+        central_sync_buffer_row: &CentralSyncBufferRow,
     ) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
-        let connection = get_connection(&self.pool)?;
         diesel::insert_into(central_sync_buffer)
-            .values(central_sync_buffer_rows)
-            .execute(&*connection)?;
+            .values(central_sync_buffer_row)
+            .execute(connection)?;
         Ok(())
     }
 

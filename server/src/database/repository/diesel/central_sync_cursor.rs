@@ -1,4 +1,4 @@
-use super::{get_connection, DBBackendConnection};
+use super::{get_connection, DBBackendConnection, DBConnection};
 
 use crate::database::{repository::RepositoryError, schema::CentralSyncCursorRow};
 
@@ -25,13 +25,17 @@ impl CentralSyncCursorRepository {
     }
 
     pub async fn update_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
-        use crate::database::schema::diesel_schema::central_sync_cursor::dsl::*;
         let connection = get_connection(&self.pool)?;
+        CentralSyncCursorRepository::update_cursor_tx(&connection, cursor)
+    }
+
+    pub fn update_cursor_tx(connection: &DBConnection, cursor: u32) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::central_sync_cursor::dsl::*;
         let row = CentralSyncCursorRow { id: cursor as i32 };
-        diesel::delete(central_sync_cursor).execute(&connection)?;
+        diesel::delete(central_sync_cursor).execute(connection)?;
         diesel::insert_into(central_sync_cursor)
             .values(&row)
-            .execute(&connection)?;
+            .execute(connection)?;
         Ok(())
     }
 }
