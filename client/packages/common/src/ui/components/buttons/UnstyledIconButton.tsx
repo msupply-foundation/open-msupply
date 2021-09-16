@@ -9,7 +9,7 @@ interface ButtonProps {
   titleKey: LocaleKey;
 }
 
-const UnstyledIconButton: React.FC<ButtonProps> = ({
+export const UnstyledIconButton: React.FC<ButtonProps> = ({
   disabled,
   icon,
   onClick,
