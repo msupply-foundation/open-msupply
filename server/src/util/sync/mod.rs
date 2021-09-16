@@ -93,7 +93,6 @@ impl SyncReceiverActor {
             .get_cursor()
             .await
             .unwrap_or_else(|_| {
-                info!("Failed to load central sync cursor.");
                 info!("Initialising new central sync cursor...");
                 0
             });
@@ -114,7 +113,7 @@ impl SyncReceiverActor {
                 for central_sync_record in central_sync_records {
                     let central_sync_buffer_row = CentralSyncBufferRow {
                         id: central_sync_record.id.to_string(),
-                        cursor_id: (cursor + 1) as i32,
+                        cursor_id: central_sync_record.id as i32,
                         table_name: central_sync_record.table_name,
                         record_id: central_sync_record.record_id,
                         data: serde_json::to_string(&central_sync_record.data)
@@ -122,18 +121,16 @@ impl SyncReceiverActor {
                     };
 
                     central_sync_buffer_repository
-                        .insert_one(&central_sync_buffer_row)
+                        .insert_one_and_update_cursor(&central_sync_buffer_row)
                         .await
                         .expect("Failed to insert central sync record into sync buffer");
-
-                    cursor += 1;
-
-                    central_sync_cursor_repository
-                        .update_cursor(cursor)
-                        .await
-                        .expect("Failed to update central sync cursor");
                 }
             }
+
+            cursor = central_sync_cursor_repository
+                .get_cursor()
+                .await
+                .expect("Failed to load central sync cursor");
 
             if cursor >= sync_batch.max_cursor - 1 {
                 info!("All central sync records pulled successfully");
