@@ -4,7 +4,7 @@ mod list_master_line;
 mod list_master_name_join;
 mod name;
 mod store;
-mod test_data;
+pub mod test_data;
 
 use crate::{
     database::repository::{
@@ -21,8 +21,8 @@ use self::{
 
 #[derive(Debug, Clone)]
 pub enum SyncType {
-    Delete,
-    Update,
+    // Delete,
+    // Update,
     Insert,
 }
 
@@ -131,25 +131,18 @@ pub async fn import_sync_records(
 #[cfg(test)]
 mod tests {
     use crate::{
-        database::repository::{
-            repository::{
-                get_repositories, MasterListLineRepository, MasterListNameJoinRepository,
-                MasterListRepository,
-            },
-            ItemRepository, NameRepository, RepositoryError, StoreRepository,
-        },
+        database::repository::repository::get_repositories,
         server::data::RepositoryRegistry,
         util::{
             sync::translation::{
-                import_sync_records,
-                test_data::{store::get_test_store_records, TestSyncDataRecord},
-                SyncRecord,
+                import_sync_records, test_data::store::get_test_store_records, SyncRecord,
             },
             test_db,
         },
     };
 
     use super::test_data::{
+        check_records_against_database,
         item::{get_test_item_records, get_test_item_upsert_records},
         master_list::{get_test_master_list_records, get_test_master_list_upsert_records},
         master_list_line::get_test_master_list_line_records,
@@ -213,83 +206,10 @@ mod tests {
         check_records_against_database(&registry, upsert_records).await;
     }
 
-    // DB query will return NotFound error for record that's not found
-    // while test data has None for records that shouldn't be integrated
-    fn from_option_to_db_result<T>(option: Option<T>) -> Result<T, RepositoryError> {
-        match option {
-            Some(record) => Ok(record),
-            None => Err(RepositoryError::NotFound),
-        }
-    }
-
     fn extract_sync_records(records: &Vec<TestSyncRecord>) -> Vec<SyncRecord> {
         records
             .into_iter()
             .map(|test_record| test_record.sync_record.clone())
             .collect()
-    }
-
-    async fn check_records_against_database(
-        registry: &RepositoryRegistry,
-        records: Vec<TestSyncRecord>,
-    ) {
-        for record in records {
-            match record.translated_record {
-                TestSyncDataRecord::Store(comparison_record) => {
-                    assert_eq!(
-                        registry
-                            .get::<StoreRepository>()
-                            .find_one_by_id(&record.sync_record.record_id)
-                            .await,
-                        from_option_to_db_result(comparison_record)
-                    )
-                }
-                TestSyncDataRecord::Name(comparison_record) => {
-                    assert_eq!(
-                        registry
-                            .get::<NameRepository>()
-                            .find_one_by_id(&record.sync_record.record_id)
-                            .await,
-                        from_option_to_db_result(comparison_record)
-                    )
-                }
-                TestSyncDataRecord::Item(comparison_record) => {
-                    assert_eq!(
-                        registry
-                            .get::<ItemRepository>()
-                            .find_one_by_id(&record.sync_record.record_id)
-                            .await,
-                        from_option_to_db_result(comparison_record)
-                    )
-                }
-                TestSyncDataRecord::MasterList(comparison_record) => {
-                    assert_eq!(
-                        registry
-                            .get::<MasterListRepository>()
-                            .find_one_by_id(&record.sync_record.record_id)
-                            .await,
-                        from_option_to_db_result(comparison_record)
-                    )
-                }
-                TestSyncDataRecord::MasterListLine(comparison_record) => {
-                    assert_eq!(
-                        registry
-                            .get::<MasterListLineRepository>()
-                            .find_one_by_id(&record.sync_record.record_id)
-                            .await,
-                        from_option_to_db_result(comparison_record)
-                    )
-                }
-                TestSyncDataRecord::MasterListNameJoin(comparison_record) => {
-                    assert_eq!(
-                        registry
-                            .get::<MasterListNameJoinRepository>()
-                            .find_one_by_id(&record.sync_record.record_id)
-                            .await,
-                        from_option_to_db_result(comparison_record)
-                    )
-                }
-            }
-        }
     }
 }
