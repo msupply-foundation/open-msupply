@@ -6,6 +6,9 @@ mod central_sync_buffer;
 mod central_sync_cursor;
 mod item;
 mod item_line;
+mod master_list;
+mod master_list_line;
+mod master_list_name_join;
 mod name;
 mod requisition;
 mod requisition_line;
@@ -19,6 +22,9 @@ pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use item::ItemRepository;
 pub use item_line::ItemLineRepository;
+pub use master_list::MasterListRepository;
+pub use master_list_line::MasterListLineRepository;
+pub use master_list_name_join::MasterListNameJoinRepository;
 pub use name::NameRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
@@ -102,6 +108,9 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
     repositories.insert(CentralSyncCursorRepository::new(pool.clone()));
     repositories.insert(SyncRepository::new(pool.clone()));
+    repositories.insert(MasterListRepository::new(pool.clone()));
+    repositories.insert(MasterListLineRepository::new(pool.clone()));
+    repositories.insert(MasterListNameJoinRepository::new(pool.clone()));
 
     repositories
 }
