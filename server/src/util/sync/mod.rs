@@ -5,7 +5,7 @@ mod remote;
 mod server;
 mod translation;
 
-pub use central::{CentralSyncBatch, CentralSyncRecord, CentralSyncRecordData};
+pub use central::CentralSyncBatch;
 pub use connection::SyncConnection;
 pub use credentials::SyncCredentials;
 pub use remote::{
@@ -15,10 +15,7 @@ pub use remote::{
 pub use server::SyncServer;
 
 use crate::{
-    database::{
-        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository},
-        schema::CentralSyncBufferRow,
-    },
+    database::repository::{CentralSyncBufferRepository, CentralSyncCursorRepository},
     server::data::RepositoryRegistry,
 };
 
@@ -111,17 +108,8 @@ impl SyncReceiverActor {
 
             if let Some(central_sync_records) = sync_batch.data {
                 for central_sync_record in central_sync_records {
-                    let central_sync_buffer_row = CentralSyncBufferRow {
-                        id: central_sync_record.id.to_string(),
-                        cursor_id: central_sync_record.id as i32,
-                        table_name: central_sync_record.table_name,
-                        record_id: central_sync_record.record_id,
-                        data: serde_json::to_string(&central_sync_record.data)
-                            .expect("Failed to stringify central sync record data"),
-                    };
-
                     central_sync_buffer_repository
-                        .insert_one_and_update_cursor(&central_sync_buffer_row)
+                        .insert_one_and_update_cursor(&central_sync_record)
                         .await
                         .expect("Failed to insert central sync record into sync buffer");
                 }
