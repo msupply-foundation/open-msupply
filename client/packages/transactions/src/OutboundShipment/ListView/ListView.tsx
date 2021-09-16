@@ -55,6 +55,17 @@ const useListViewQueryParams = (initialSortBy: SortingRule<Transaction>[]) => {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
+    // When the number of rows to render changes (when the viewport changes),
+    // if it is greater than the number of rows we've actually fetched,
+    // then update the number of rows to fetch. This will then trigger
+    // the effect to recalculate the offset based on the page and
+    // number to fetch.
+    // This is a minor optimisation to prevent refetching when we already
+    // have enough data to render.
+    if (numberOfRowsToRender > first) setFirst(numberOfRowsToRender);
+  }, [first, numberOfRowsToRender]);
+
+  useEffect(() => {
     setOffset(page * first);
   }, [first, page]);
 
@@ -80,8 +91,7 @@ export const OutboundShipmentListView: FC = () => {
 
   const { data: response, isLoading } = useQuery(
     ['transaction', 'list', { first, offset, sortBy }],
-    () => listQueryFn({ first, offset, sortBy }),
-    { keepPreviousData: true }
+    () => listQueryFn({ first, offset, sortBy })
   );
 
   const queryClient = useQueryClient();

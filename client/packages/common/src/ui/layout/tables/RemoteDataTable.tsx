@@ -58,14 +58,12 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     <Box
       sx={{
         display: 'flex',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
-      <CircularProgress
-        sx={{
-          marginLeft: 'auto',
-          marginRight: 'auto',
-        }}
-      />
+      <CircularProgress />
     </Box>
   ) : (
     <TableContainer
