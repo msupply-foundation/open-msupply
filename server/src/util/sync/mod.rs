@@ -229,3 +229,76 @@ impl SyncReceiverActor {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        database::{
+            repository::{get_repositories, CentralSyncBufferRepository},
+            schema::CentralSyncBufferRow,
+        },
+        server::data::RepositoryRegistry,
+        util::{
+            configuration,
+            settings::Settings,
+            sync::{
+                get_sync_actors,
+                translation::test_data::{
+                    item::get_test_item_records,
+                    master_list_name_join::get_test_master_list_name_join_records,
+                    name::get_test_name_records,
+                },
+                SyncConnection, SyncReceiverActor, SyncSenderActor,
+            },
+            test_db,
+        },
+    };
+
+    use super::translation::test_data::{
+        check_records_against_database, master_list::get_test_master_list_records,
+        master_list_line::get_test_master_list_line_records, store::get_test_store_records,
+    };
+
+    #[actix_rt::test]
+    async fn test_integrate_central_records() {
+        let settings: Settings =
+            configuration::get_configuration().expect("Failed to parse configuration settings");
+        let sync_connection = SyncConnection::new(&settings.sync);
+        let (_, sync_receiver): (SyncSenderActor, SyncReceiverActor) =
+            get_sync_actors(sync_connection);
+
+        let settings = test_db::get_test_settings("omsupply-database-integrate_central_records");
+
+        test_db::setup(&settings.database).await;
+        let registry = RepositoryRegistry {
+            repositories: get_repositories(&settings).await,
+        };
+
+        // use test records with cursors that are out of order
+        let mut test_records = Vec::new();
+        test_records.append(&mut get_test_name_records());
+        test_records.append(&mut get_test_item_records());
+        test_records.append(&mut get_test_store_records());
+        test_records.append(&mut get_test_master_list_records());
+        test_records.append(&mut get_test_master_list_name_join_records());
+        test_records.append(&mut get_test_master_list_line_records());
+
+        let central_records: Vec<CentralSyncBufferRow> = test_records
+            .iter()
+            .map(|entry| entry.central_sync_buffer_row.clone())
+            .collect();
+        let central_sync_buffer_repository: &CentralSyncBufferRepository =
+            registry.get::<CentralSyncBufferRepository>();
+        central_sync_buffer_repository
+            .insert_many(&central_records)
+            .await
+            .expect("Failed to insert central sync records into sync buffer");
+
+        sync_receiver
+            .integrate_central_records(&registry)
+            .await
+            .expect("Failed to integrate central records");
+
+        check_records_against_database(&registry, test_records).await;
+    }
+}
