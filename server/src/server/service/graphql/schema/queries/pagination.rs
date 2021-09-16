@@ -11,28 +11,20 @@ pub trait PaginationOption {
     fn offset(&self) -> i64;
 }
 
-pub const DEFAULT_PAGE_SIZE: i64 = 100;
+pub const DEFAULT_PAGE_SIZE: u32 = 100;
 
 impl PaginationOption for Option<Pagination> {
     fn first(&self) -> i64 {
-        match match self {
-            Some(pagination) => pagination.first,
-            None => None,
-        } {
-            // This will potentially panic
-            Some(first) => first.into(),
-            None => DEFAULT_PAGE_SIZE,
-        }
+        self.as_ref()
+            .and_then(|pagination| pagination.first)
+            .unwrap_or(DEFAULT_PAGE_SIZE)
+            .into()
     }
 
     fn offset(&self) -> i64 {
-        match match self {
-            Some(pagination) => pagination.offset,
-            None => None,
-        } {
-            // This will potentially panic
-            Some(offset) => offset.into(),
-            None => 0,
-        }
+        self.as_ref()
+            .and_then(|pagination| pagination.offset)
+            .unwrap_or(0)
+            .into()
     }
 }
