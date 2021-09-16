@@ -1,13 +1,23 @@
+import React, { FC, useEffect } from 'react';
 import { render } from '@testing-library/react';
-import React, { FC } from 'react';
 import { IntlTestProvider } from '../intl';
 import { act } from 'react-dom/test-utils';
-import { useDetailPanel } from './useDetailPanel';
+import { Section, useDetailPanel } from './useDetailPanel';
 import userEvent from '@testing-library/user-event';
+import { setScreenSize_ONLY_FOR_TESTING } from '../utils/testing';
 
 describe('useDetailPanel', () => {
   const DetailPanelExample: FC = () => {
-    const { OpenButton } = useDetailPanel();
+    const { OpenButton, setSections } = useDetailPanel();
+
+    const sections: Section[] = [
+      {
+        titleKey: 'heading.comment',
+        children: [<span key="0" />],
+      },
+    ];
+
+    useEffect(() => setSections(sections), []);
 
     return (
       <IntlTestProvider locale="en">
@@ -22,6 +32,8 @@ describe('useDetailPanel', () => {
   });
 
   it('Does not render an open button if open', () => {
+    setScreenSize_ONLY_FOR_TESTING(1000);
+
     const { getByRole, queryByRole } = render(<DetailPanelExample />);
     const node = getByRole('button', { name: /more/i });
 

@@ -9,6 +9,9 @@ import {
 import { Typography } from '@openmsupply-client/common/src/ui/components/index';
 import { TestingProvider } from '@openmsupply-client/common/src/utils/testing';
 import Grid from '@material-ui/core/Grid';
+import { Clock } from '@openmsupply-client/common/src/ui/icons/Clock';
+import { Copy } from '@openmsupply-client/common/src/ui/icons/Copy';
+import { Rewind } from '@openmsupply-client/common/src/ui/icons/Rewind';
 
 export default {
   title: 'Host/DetailPanel',
@@ -43,9 +46,55 @@ const Template: Story<DetailPanelArgs> = args => {
 
 export const Demo = Template.bind({});
 export const Empty = Template.bind({});
+export const SectionsOnly = Template.bind({});
+export const AcionsOnly = Template.bind({});
 
 Demo.args = {
-  actions: [{ titleKey: 'link.backorders', onClick: () => {} }],
+  actions: [
+    {
+      titleKey: 'link.backorders',
+      onClick: () => {
+        alert('back orders');
+      },
+      icon: <Rewind />,
+    },
+  ],
+  sections: [
+    {
+      titleKey: 'heading.comment',
+      children: [
+        <Typography key="0">comments to be shown in here...</Typography>,
+      ],
+    },
+    {
+      titleKey: 'heading.additional-info',
+      children: [<Typography key="0">additional info...</Typography>],
+    },
+  ],
+};
+
+AcionsOnly.args = {
+  actions: [
+    {
+      titleKey: 'link.history',
+      onClick: () => {
+        alert('history');
+      },
+      icon: <Clock />,
+    },
+    {
+      titleKey: 'link.copy-to-clipboard',
+      onClick: () => {
+        alert('copy to clipboard');
+      },
+      icon: <Copy />,
+    },
+  ],
+  sections: [],
+};
+
+SectionsOnly.args = {
+  actions: [],
   sections: [
     {
       titleKey: 'heading.comment',

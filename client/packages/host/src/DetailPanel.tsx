@@ -122,6 +122,9 @@ const DetailPanel: React.FC = () => {
     if (!isSmallScreen && !isOpen) open();
   }, [isSmallScreen]);
 
+  // the intention is the panel won't show unless a calling component has populated it
+  if (!sections.length && !actions.length) return null;
+
   return (
     <StyledDrawer
       data-testid="detail-panel"

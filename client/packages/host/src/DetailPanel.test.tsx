@@ -32,9 +32,22 @@ describe('DetailPanel', () => {
   // ensuring the drawer is closed for the test unless explicitly set to be a large screen
   beforeEach(() => setScreenSize_ONLY_FOR_TESTING(1000));
 
-  it('Does not show by default on a small screen', () => {
+  it('Does not render when empty', () => {
     const actions: Action[] = [];
     const sections: Section[] = [];
+
+    const { queryByTestId } = render(
+      <DetailPanelExample actions={actions} sections={sections} />
+    );
+
+    expect(queryByTestId('detail-panel')).not.toBeInTheDocument();
+  });
+
+  it('Does not show by default on a small screen', () => {
+    const actions: Action[] = [];
+    const sections: Section[] = [
+      { titleKey: 'heading.comment', children: [<span key="0" />] },
+    ];
 
     const { queryByTestId } = render(
       <DetailPanelExample actions={actions} sections={sections} />
@@ -50,7 +63,9 @@ describe('DetailPanel', () => {
     setScreenSize_ONLY_FOR_TESTING(2000);
 
     const actions: Action[] = [];
-    const sections: Section[] = [];
+    const sections: Section[] = [
+      { titleKey: 'heading.comment', children: [<span key="0" />] },
+    ];
     const { queryByTestId } = render(
       <DetailPanelExample actions={actions} sections={sections} />
     );
