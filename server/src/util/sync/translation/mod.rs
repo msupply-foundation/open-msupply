@@ -1,4 +1,7 @@
 mod item;
+mod list_master;
+mod list_master_line;
+mod list_master_name_join;
 mod name;
 mod store;
 mod test_data;
@@ -10,16 +13,20 @@ use crate::{
     server::data::RepositoryRegistry,
 };
 
-use self::{item::LegacyItemRow, name::LegacyNameRow, store::LegacyStoreRow};
+use self::{
+    item::LegacyItemRow, list_master::LegacyListMasterRow,
+    list_master_line::LegacyListMasterLineRow, list_master_name_join::LegacyListMasterNameJoinRow,
+    name::LegacyNameRow, store::LegacyStoreRow,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SyncType {
     Delete,
     Update,
     Insert,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SyncRecord {
     record_id: String,
     sync_type: SyncType,
@@ -60,6 +67,30 @@ fn do_translation(
         return Ok(());
     }
 
+    if let Some(row) = LegacyListMasterRow::try_translate(sync_record)? {
+        integration_records
+            .upserts
+            .push(IntegrationUpsertRecord::MasterList(row));
+
+        return Ok(());
+    }
+
+    if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)? {
+        integration_records
+            .upserts
+            .push(IntegrationUpsertRecord::MasterListLine(row));
+
+        return Ok(());
+    }
+
+    if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)? {
+        integration_records
+            .upserts
+            .push(IntegrationUpsertRecord::MasterListNameJoin(row));
+
+        return Ok(());
+    }
+
     Ok(()) // At this point we are either ignoring records or record_types
 }
 
@@ -88,8 +119,11 @@ pub async fn import_sync_records(
 mod tests {
     use crate::{
         database::repository::{
-            repository::get_repositories, ItemRepository, NameRepository, RepositoryError,
-            StoreRepository,
+            repository::{
+                get_repositories, MasterListLineRepository, MasterListNameJoinRepository,
+                MasterListRepository,
+            },
+            ItemRepository, NameRepository, RepositoryError, StoreRepository,
         },
         server::data::RepositoryRegistry,
         util::{
@@ -104,6 +138,9 @@ mod tests {
 
     use super::test_data::{
         item::{get_test_item_records, get_test_item_upsert_records},
+        master_list::{get_test_master_list_records, get_test_master_list_upsert_records},
+        master_list_line::get_test_master_list_line_records,
+        master_list_name_join::get_test_master_list_name_join_records,
         name::{get_test_name_records, get_test_name_upsert_records},
         TestSyncRecord,
     };
@@ -122,15 +159,14 @@ mod tests {
         records.append(&mut get_test_name_records());
         records.append(&mut get_test_store_records());
         records.append(&mut get_test_item_records());
+        records.append(&mut get_test_master_list_records());
+        records.append(&mut get_test_master_list_line_records());
+        records.append(&mut get_test_master_list_name_join_records());
 
-        import_sync_records(&registry, &extract_sync_records(records))
+        import_sync_records(&registry, &extract_sync_records(&records))
             .await
             .unwrap();
 
-        let mut records = Vec::new();
-        records.append(&mut get_test_name_records());
-        records.append(&mut get_test_store_records());
-        records.append(&mut get_test_item_records());
         // Asserts inside this method, to avoid repetition
         check_records_against_database(&registry, records).await;
     }
@@ -144,22 +180,24 @@ mod tests {
             repositories: get_repositories(&settings).await,
         };
 
-        let mut records = Vec::new();
-        records.append(&mut get_test_name_records());
-        records.append(&mut get_test_item_records());
-        records.append(&mut get_test_item_upsert_records());
-        records.append(&mut get_test_name_upsert_records());
+        let mut init_records = Vec::new();
+        init_records.append(&mut get_test_name_records());
+        init_records.append(&mut get_test_item_records());
+        init_records.append(&mut get_test_master_list_records());
+        let mut upsert_records = Vec::new();
+        upsert_records.append(&mut get_test_item_upsert_records());
+        upsert_records.append(&mut get_test_name_upsert_records());
+        upsert_records.append(&mut get_test_master_list_upsert_records());
 
-        import_sync_records(&registry, &extract_sync_records(records))
+        let mut records = Vec::new();
+        records.append(&mut init_records.iter().cloned().collect());
+        records.append(&mut upsert_records.iter().cloned().collect());
+        import_sync_records(&registry, &extract_sync_records(&records))
             .await
             .unwrap();
 
-        let mut records = Vec::new();
-        records.append(&mut get_test_item_upsert_records());
-        records.append(&mut get_test_name_upsert_records());
-
         // Asserts inside this method, to avoid repetition
-        check_records_against_database(&registry, records).await;
+        check_records_against_database(&registry, upsert_records).await;
     }
 
     // DB query will return NotFound error for record that's not found
@@ -171,10 +209,10 @@ mod tests {
         }
     }
 
-    fn extract_sync_records(records: Vec<TestSyncRecord>) -> Vec<SyncRecord> {
+    fn extract_sync_records(records: &Vec<TestSyncRecord>) -> Vec<SyncRecord> {
         records
             .into_iter()
-            .map(|test_record| test_record.sync_record)
+            .map(|test_record| test_record.sync_record.clone())
             .collect()
     }
 
@@ -206,6 +244,33 @@ mod tests {
                     assert_eq!(
                         registry
                             .get::<ItemRepository>()
+                            .find_one_by_id(&record.sync_record.record_id)
+                            .await,
+                        from_option_to_db_result(comparison_record)
+                    )
+                }
+                TestSyncDataRecord::MasterList(comparison_record) => {
+                    assert_eq!(
+                        registry
+                            .get::<MasterListRepository>()
+                            .find_one_by_id(&record.sync_record.record_id)
+                            .await,
+                        from_option_to_db_result(comparison_record)
+                    )
+                }
+                TestSyncDataRecord::MasterListLine(comparison_record) => {
+                    assert_eq!(
+                        registry
+                            .get::<MasterListLineRepository>()
+                            .find_one_by_id(&record.sync_record.record_id)
+                            .await,
+                        from_option_to_db_result(comparison_record)
+                    )
+                }
+                TestSyncDataRecord::MasterListNameJoin(comparison_record) => {
+                    assert_eq!(
+                        registry
+                            .get::<MasterListNameJoinRepository>()
                             .find_one_by_id(&record.sync_record.record_id)
                             .await,
                         from_option_to_db_result(comparison_record)

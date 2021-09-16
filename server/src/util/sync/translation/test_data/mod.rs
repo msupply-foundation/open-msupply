@@ -1,20 +1,29 @@
 pub mod item;
+pub mod master_list;
+pub mod master_list_line;
+pub mod master_list_name_join;
 pub mod name;
 pub mod store;
 
 use crate::{
-    database::schema::{ItemRow, NameRow, StoreRow},
+    database::schema::{
+        ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow, StoreRow,
+    },
     util::sync::translation::SyncRecord,
 };
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TestSyncDataRecord {
     Item(Option<ItemRow>),
     Store(Option<StoreRow>),
     Name(Option<NameRow>),
+    MasterList(Option<MasterListRow>),
+    MasterListLine(Option<MasterListLineRow>),
+    MasterListNameJoin(Option<MasterListNameJoinRow>),
 }
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct TestSyncRecord {
     pub sync_record: SyncRecord,
     pub translated_record: TestSyncDataRecord,

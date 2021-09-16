@@ -5,6 +5,9 @@ use crate::{
 mod central_sync_buffer;
 mod item;
 mod item_line;
+mod master_list;
+mod master_list_line;
+mod master_list_name_join;
 mod name;
 mod name_query;
 mod requisition;
@@ -18,6 +21,9 @@ mod user_account;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use item::ItemRepository;
 pub use item_line::ItemLineRepository;
+pub use master_list::MasterListRepository;
+pub use master_list_line::MasterListLineRepository;
+pub use master_list_name_join::MasterListNameJoinRepository;
 pub use name::NameRepository;
 pub use name_query::NameQueryRepository;
 pub use requisition::RequisitionRepository;
@@ -102,6 +108,9 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(UserAccountRepository::new(pool.clone()));
     repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
     repositories.insert(SyncRepository::new(pool.clone()));
+    repositories.insert(MasterListRepository::new(pool.clone()));
+    repositories.insert(MasterListLineRepository::new(pool.clone()));
+    repositories.insert(MasterListNameJoinRepository::new(pool.clone()));
 
     repositories
 }
