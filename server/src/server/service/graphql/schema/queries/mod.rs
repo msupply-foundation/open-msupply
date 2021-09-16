@@ -6,11 +6,17 @@ use crate::database::schema::{
     ItemLineRow, ItemRow, NameRow, RequisitionRow, StoreRow, TransactLineRow, TransactRow,
 };
 use crate::server::service::graphql::schema::types::{
-    Item, ItemLine, Name, Requisition, Store, Transact, TransactLine,
+    Item, ItemLine, Requisition, Store, Transact, TransactLine,
 };
 use crate::server::service::graphql::ContextExt;
 
 use async_graphql::{Context, Object};
+
+use self::pagination::Pagination;
+
+use super::types::NameList;
+
+pub mod pagination;
 
 pub struct Queries;
 
@@ -21,19 +27,12 @@ impl Queries {
         "1.0".to_string()
     }
 
-    pub async fn name(
+    pub async fn names(
         &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "id of the name")] id: String,
-    ) -> Name {
-        let name_repository = ctx.get_repository::<NameRepository>();
-
-        let name_row: NameRow = name_repository
-            .find_one_by_id(&id)
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get name {}", id));
-
-        Name { name_row }
+        _ctx: &Context<'_>,
+        #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
+    ) -> NameList {
+        NameList { pagination: page }
     }
 
     pub async fn store(
