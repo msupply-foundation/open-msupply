@@ -18,6 +18,16 @@ export const PaginationRow: FC<PaginationRowProps> = ({
   // users.
   const xToY = `${offset + 1}-${first + offset}`;
 
+  const onChangePage = (_: React.ChangeEvent<unknown>, value: number) => {
+    // The type here is broken and `value` can be `null`!
+    const isValidPage = !!value;
+
+    if (isValidPage) {
+      const zeroIndexedPageNumber = value - 1;
+      onChange(zeroIndexedPageNumber);
+    }
+  };
+
   return (
     <Box
       display="flex"
@@ -42,9 +52,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
           </Box>
           <Pagination
             count={Math.ceil(total / first)}
-            onChange={(_, value) => {
-              onChange(value - 1);
-            }}
+            onChange={onChangePage}
           />
         </>
       )}
