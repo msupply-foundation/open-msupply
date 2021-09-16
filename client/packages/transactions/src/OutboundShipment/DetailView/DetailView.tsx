@@ -3,6 +3,7 @@ import React, { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import {
+  AppBarContentPortal,
   Circle,
   Clock,
   Copy,
@@ -20,6 +21,10 @@ import {
   useNotification,
   useQueryClient,
   useTranslation,
+  Tab,
+  Tabs,
+  TabPanel,
+  useTabs,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -150,23 +155,53 @@ export const OutboundShipmentDetailView: FC = () => {
     return () => setActions([]);
   }, [draft]);
 
+  const { currentTab, onChangeTab } = useTabs(0);
+
   return draft ? (
     <>
       <Portal container={appBarButtonsRef?.current}>
         <>{OpenButton}</>
       </Portal>
-      <div>
-        <input
-          value={draft?.name}
-          onChange={event => setDraft({ ...draft, name: event?.target.value })}
-        />
-      </div>
-      <div>
-        <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
-      </div>
-      <div>
-        <button onClick={save}>OK</button>
-      </div>
+      <AppBarContentPortal
+        sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
+      >
+        <Tabs value={currentTab} centered onChange={onChangeTab}>
+          <Tab label={t('label.general')} />
+          <Tab label={t('label.item')} />
+          <Tab label={t('label.batch')} />
+          <Tab label={t('label.price')} />
+          <Tab label={t('label.log')} />
+        </Tabs>
+      </AppBarContentPortal>
+
+      <TabPanel tab={0} currentTab={currentTab}>
+        <div>
+          <input
+            value={draft?.name}
+            onChange={event =>
+              setDraft({ ...draft, name: event?.target.value })
+            }
+          />
+        </div>
+        <div>
+          <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
+        </div>
+        <div>
+          <button onClick={save}>OK</button>
+        </div>
+      </TabPanel>
+      <TabPanel tab={1} currentTab={currentTab}>
+        <span>Item summary coming soon..</span>
+      </TabPanel>
+      <TabPanel tab={2} currentTab={currentTab}>
+        <span>Batch summary coming soon..</span>
+      </TabPanel>
+      <TabPanel tab={3} currentTab={currentTab}>
+        <span>Price details coming soon..</span>
+      </TabPanel>
+      <TabPanel tab={4} currentTab={currentTab}>
+        <span>Log of actions coming soon..</span>
+      </TabPanel>
     </>
   ) : null;
 };
