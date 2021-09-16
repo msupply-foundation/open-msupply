@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 import { IntlTestProvider } from '../intl';
 import { act } from 'react-dom/test-utils';
 import { useDetailPanel } from './useDetailPanel';
+import userEvent from '@testing-library/user-event';
 
 describe('useDetailPanel', () => {
   const DetailPanelExample: FC = () => {
@@ -16,17 +17,18 @@ describe('useDetailPanel', () => {
   };
 
   it('Does render an open button by default', () => {
-    const { queryByText } = render(<DetailPanelExample />);
-    expect(queryByText('More')).toBeInTheDocument();
+    const { getByRole } = render(<DetailPanelExample />);
+    expect(getByRole('button', { name: /more/i })).toBeInTheDocument();
   });
 
   it('Does not render an open button if open', () => {
-    const { queryByText } = render(<DetailPanelExample />);
+    const { getByRole, queryByRole } = render(<DetailPanelExample />);
+    const node = getByRole('button', { name: /more/i });
 
     act(() => {
-      queryByText('More')?.click();
+      userEvent.click(node);
     });
 
-    expect(queryByText('More')).not.toBeInTheDocument();
+    expect(queryByRole('button', { name: /more/i })).not.toBeInTheDocument();
   });
 });
