@@ -1,7 +1,7 @@
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
 import React from 'react';
 import { Cell } from 'react-table';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 interface DataRowProps<T extends object> {

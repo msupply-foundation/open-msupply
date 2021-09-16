@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { TextButton } from '.';
+import { TextButton } from './TextButton';
 
 const Template: ComponentStory<typeof TextButton> = () => (
   <TextButton labelKey="button.docs" onClick={() => console.info('clicked')} />

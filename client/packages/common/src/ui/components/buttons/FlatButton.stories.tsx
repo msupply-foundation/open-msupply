@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { FlatButton } from '.';
+import { FlatButton } from './FlatButton';
 import { Book } from '../../icons';
 
 const Template: ComponentStory<typeof FlatButton> = args => (
