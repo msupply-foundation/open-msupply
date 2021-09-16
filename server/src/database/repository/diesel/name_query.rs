@@ -85,7 +85,7 @@ impl NameQueryRepository {
 
     // SELECT "name"."id", "name"."name", "name"."code", "name"."is_customer", "name"."is_supplier", "name_store_join"."id", "name_store_join"."name_id", "name_store_join"."store_id", "name_store_join"."name_is_customer", "name_store_join"."name_is_supplier"  from "name" left outer join name_store_join on name_store_join.id = "name".id;
 
-    // and results in duplicate names selected (should only be one set of unique names), this would be problematic if more then one name_store_join for the same store and name (which should happen)
+    // and results in duplicate names selected (should only be one set of unique names), this would be problematic if more then one name_store_join for the same store and name (which should not happen)
     // but can also be problematic if we are relying on proper left join
 }
 
