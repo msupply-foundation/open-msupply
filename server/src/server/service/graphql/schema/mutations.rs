@@ -1,9 +1,7 @@
-use crate::database::repository::{
-    ItemRepository, RequisitionLineRepository, RequisitionRepository,
-};
-use crate::database::schema::{ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::database::repository::{RequisitionLineRepository, RequisitionRepository};
+use crate::database::schema::{RequisitionLineRow, RequisitionRow};
 use crate::server::service::graphql::schema::types::{
-    InputRequisitionLine, Item, Requisition, RequisitionType,
+    InputRequisitionLine, Requisition, RequisitionType,
 };
 use crate::server::service::graphql::ContextExt;
 
@@ -13,25 +11,6 @@ pub struct Mutations;
 
 #[Object]
 impl Mutations {
-    async fn insert_item(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "id of the item")] id: String,
-        #[graphql(desc = "name of the item")] name: String,
-        #[graphql(desc = "code of the item")] code: String,
-    ) -> Item {
-        let item_row = ItemRow { id, name, code };
-
-        let item_repository = ctx.get_repository::<ItemRepository>();
-
-        item_repository
-            .insert_one(&item_row)
-            .await
-            .expect("Failed to insert item into database");
-
-        Item { item_row }
-    }
-
     async fn insert_requisition(
         &self,
         ctx: &Context<'_>,
