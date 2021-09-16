@@ -1,12 +1,12 @@
 use crate::{
     database::{
-        loader::{ItemLineLoader, ItemLoader, StoreLoader, TransactLoader},
+        loader::{StoreLoader, TransactLoader},
         repository::{
             CustomerInvoiceRepository, RequisitionLineRepository, TransactLineRepository,
         },
         schema::{
-            ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow,
-            TransactLineRow, TransactRow, TransactRowType,
+            RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow, TransactLineRow,
+            TransactRow, TransactRowType,
         },
     },
     server::service::graphql::ContextExt,
@@ -14,8 +14,13 @@ use crate::{
 
 use async_graphql::{dataloader::DataLoader, Context, Enum, InputObject, Object};
 
+// M1 speced API is moved to their own files
+// Types defined here are prototype types and should be removed before M1 release to avoid confusion (for consumers and devs)
 pub mod name;
 pub use self::name::*;
+
+pub mod item;
+pub use self::item::*;
 
 #[derive(Clone)]
 pub struct Store {
@@ -47,87 +52,6 @@ impl Store {
                 transact_row: customer_invoice_row,
             })
             .collect()
-    }
-}
-
-#[derive(Clone)]
-pub struct Item {
-    pub item_row: ItemRow,
-}
-
-#[Object]
-impl Item {
-    pub async fn id(&self) -> &str {
-        &self.item_row.id
-    }
-
-    pub async fn item_name(&self) -> &str {
-        &self.item_row.name
-    }
-}
-
-#[derive(Clone)]
-pub struct ItemLine {
-    pub item_line_row: ItemLineRow,
-}
-
-#[Object]
-impl ItemLine {
-    pub async fn id(&self) -> &str {
-        &self.item_line_row.id
-    }
-
-    pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-
-        let item_row: ItemRow = item_loader
-            .load_one(self.item_line_row.item_id.clone())
-            .await
-            .unwrap_or_else(|_| {
-                panic!("Failed to get item for item_line {}", self.item_line_row.id)
-            })
-            .ok_or_else(|| panic!("Failed to get item for item_line {}", self.item_line_row.id))
-            .unwrap_or_else(|_| {
-                panic!("Failed to get item for item_line {}", self.item_line_row.id)
-            });
-
-        Item { item_row }
-    }
-
-    pub async fn store(&self, ctx: &Context<'_>) -> Store {
-        let store_loader = ctx.get_loader::<DataLoader<StoreLoader>>();
-
-        let store_row: StoreRow = store_loader
-            .load_one(self.item_line_row.store_id.clone())
-            .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get store for item_line {}",
-                    self.item_line_row.id
-                )
-            })
-            .ok_or_else(|| {
-                panic!(
-                    "Failed to get store for item_line {}",
-                    self.item_line_row.id
-                )
-            })
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get store for item_line {}",
-                    self.item_line_row.id
-                )
-            });
-
-        Store { store_row }
-    }
-
-    pub async fn batch(&self) -> &str {
-        &self.item_line_row.batch
-    }
-
-    pub async fn quantity(&self) -> f64 {
-        self.item_line_row.quantity
     }
 }
 
@@ -247,34 +171,6 @@ pub struct RequisitionLine {
 impl RequisitionLine {
     pub async fn id(&self) -> &str {
         &self.requisition_line_row.id
-    }
-
-    pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-
-        let item_row: ItemRow = item_loader
-            .load_one(self.requisition_line_row.item_id.clone())
-            .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get item for requisition_line {}",
-                    self.requisition_line_row.id
-                )
-            })
-            .ok_or_else(|| {
-                panic!(
-                    "Failed to get item for requisition_line {}",
-                    self.requisition_line_row.id
-                )
-            })
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get item for requisition_line {}",
-                    self.requisition_line_row.id
-                )
-            });
-
-        Item { item_row }
     }
 
     pub async fn actual_quantity(&self) -> f64 {
@@ -412,65 +308,6 @@ impl TransactLine {
             });
 
         Transact { transact_row }
-    }
-
-    pub async fn item(&self, ctx: &Context<'_>) -> Item {
-        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-
-        let item_row: ItemRow = item_loader
-            .load_one(self.transact_line_row.item_id.clone())
-            .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get item for transact_line {}",
-                    self.transact_line_row.id
-                )
-            })
-            .ok_or_else(|| {
-                panic!(
-                    "Failed to get item for transact_line {}",
-                    self.transact_line_row.id
-                )
-            })
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get item for transact_line {}",
-                    self.transact_line_row.id
-                )
-            });
-
-        Item { item_row }
-    }
-
-    pub async fn item_line(&self, ctx: &Context<'_>) -> ItemLine {
-        let item_line_loader = ctx.get_loader::<DataLoader<ItemLineLoader>>();
-
-        // Handle optional item_line_id correctly.
-        let item_line_id = self.transact_line_row.item_line_id.as_ref().unwrap();
-
-        let item_line_row: ItemLineRow = item_line_loader
-            .load_one(item_line_id.to_owned())
-            .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get item_line for transact_line {}",
-                    self.transact_line_row.id
-                )
-            })
-            .ok_or_else(|| {
-                panic!(
-                    "Failed to get item_line for transact_line {}",
-                    self.transact_line_row.id
-                )
-            })
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get item_line for transact_line {}",
-                    self.transact_line_row.id
-                )
-            });
-
-        ItemLine { item_line_row }
     }
 }
 
