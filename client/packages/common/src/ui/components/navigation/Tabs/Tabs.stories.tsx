@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { TabPanel } from './TabPanel';
 import { Tab } from './Tab';
 import { Tabs } from './Tabs';
+import { useTabs } from '.';
 
 export default {
   title: 'Navigation/Tabs',
@@ -10,15 +11,11 @@ export default {
 } as ComponentMeta<typeof Tabs>;
 
 const ExampleTabs = () => {
-  const [currentTab, setCurrentTab] = useState(0);
+  const { currentTab, onChangeTab } = useTabs();
 
   return (
     <>
-      <Tabs
-        value={currentTab}
-        centered
-        onChange={(_, newTab) => setCurrentTab(newTab)}
-      >
+      <Tabs value={currentTab} centered onChange={onChangeTab}>
         <Tab value={0} label="General" />
         <Tab value={1} label="Item" />
         <Tab value={2} label="Batch" />
