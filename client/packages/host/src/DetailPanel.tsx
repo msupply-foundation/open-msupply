@@ -1,21 +1,20 @@
 import React, { useCallback } from 'react';
 import {
-  FlatButton,
-  styled,
-  Theme,
-  Close,
-  Box,
-  Grid,
-  useDetailPanelStore,
-  useTranslation,
-  Typography,
-  ChevronDown,
-  useTheme,
-  useMediaQuery,
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Link,
+  Box,
+  ChevronDown,
+  Close,
+  FlatButton,
+  Grid,
+  Theme,
+  Typography,
+  styled,
+  useDetailPanelStore,
+  useMediaQuery,
+  useTheme,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 const openedMixin = (theme: Theme) => ({
@@ -46,14 +45,10 @@ const StyledDrawer = styled(Box, {
   ...(!isOpen && closedMixin(theme)),
 }));
 
-const StyledDivider = () => (
-  <div
-    style={{
-      height: 1,
-      backgroundColor: '#e4e4eb', // TODO: pop into theme;
-    }}
-  />
-);
+const StyledDivider = styled('div')(({ theme }) => ({
+  height: 1,
+  backgroundColor: theme.palette.border,
+}));
 
 const ButtonContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
@@ -98,32 +93,26 @@ const DetailPanel: React.FC = () => {
     [sections]
   );
 
-  const Action = styled(Link)({
-    color: '#e63535',
-    cursor: 'pointer',
-    fontSize: 14,
-  });
   const Actions = useCallback(
     () =>
       !actions.length ? null : (
-        <>
+        <Box sx={{ marginBottom: 2 }}>
           <StyledDivider />
           <Typography
-            sx={{ fontSize: 12, fontWeight: 600, margin: '15px 0 16px 21px' }}
+            sx={{ fontSize: 12, fontWeight: 600, margin: '15px 0 10px 21px' }}
           >
             {t('heading.actions')}
           </Typography>
           {actions.map((action, index) => (
-            <Box
-              key={`action.titleKey_${index}`}
-              sx={{ margin: '0 0 15px 21px' }}
-            >
-              <Action underline="hover" onClick={action.onClick}>
-                {t(action.titleKey)}
-              </Action>
+            <Box key={`action.titleKey_${index}`} sx={{ marginLeft: '11px' }}>
+              <FlatButton
+                onClick={action.onClick}
+                icon={action.icon}
+                labelKey={action.titleKey}
+              />
             </Box>
           ))}
-        </>
+        </Box>
       ),
     [actions]
   );
@@ -132,8 +121,6 @@ const DetailPanel: React.FC = () => {
     if (isSmallScreen && isOpen) close();
     if (!isSmallScreen && !isOpen) open();
   }, [isSmallScreen]);
-
-  if (!sections.length && !actions.length) return null;
 
   return (
     <StyledDrawer

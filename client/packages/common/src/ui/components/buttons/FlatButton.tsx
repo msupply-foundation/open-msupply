@@ -12,7 +12,6 @@ interface ButtonProps {
 
 const StyledButton = styled(MuiButton)({
   fontWeight: 700,
-  height: 40,
   marginLeft: 5,
   marginRight: 5,
   textTransform: 'none' as Property.TextTransform,

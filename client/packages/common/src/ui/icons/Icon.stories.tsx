@@ -5,10 +5,13 @@ import { SvgIconProps } from '.';
 import { ArrowLeft } from './ArrowLeft';
 import { Book } from './Book';
 import { CheckboxChecked } from './CheckboxChecked';
-import { CheckboxIndeterminate } from './CheckboxIndeterminate';
 import { CheckboxEmpty } from './CheckboxEmpty';
+import { CheckboxIndeterminate } from './CheckboxIndeterminate';
 import { ChevronDown } from './ChevronDown';
+import { Circle } from './Circle';
+import { Clock } from './Clock';
 import { Close } from './Close';
+import { Copy } from './Copy';
 import { Customers } from './Customers';
 import { Dashboard } from './Dashboard';
 import { Download } from './Download';
@@ -21,6 +24,7 @@ import { Power } from './Power';
 import { Printer } from './Printer';
 import { Radio } from './Radio';
 import { Reports } from './Reports';
+import { Rewind } from './Rewind';
 import { Settings } from './Settings';
 import { SortAsc } from './SortAsc';
 import { SortDesc } from './SortDesc';
@@ -28,7 +32,6 @@ import { Stock } from './Stock';
 import { Suppliers } from './Suppliers';
 import { Tools } from './Tools';
 import { Translate } from './Translate';
-import { Circle } from './Circle';
 import {
   Box,
   Grid,
@@ -68,8 +71,10 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     },
     { icon: <CheckboxEmpty {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDown {...args} />, name: 'ChevronDown' },
-    { icon: <Close {...args} />, name: 'Close' },
     { icon: <Circle htmlColor="#e95c30" {...args} />, name: 'Circle' },
+    { icon: <Clock {...args} />, name: 'Clock' },
+    { icon: <Close {...args} />, name: 'Close' },
+    { icon: <Copy {...args} />, name: 'Copy' },
     { icon: <Customers {...args} />, name: 'Customers' },
     { icon: <Dashboard {...args} />, name: 'Dashboard' },
     { icon: <Download {...args} />, name: 'Download' },
@@ -82,6 +87,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Printer {...args} />, name: 'Printer' },
     { icon: <Radio {...args} />, name: 'Radio' },
     { icon: <Reports {...args} />, name: 'Reports' },
+    { icon: <Rewind {...args} />, name: 'Rewind' },
     { icon: <Settings {...args} />, name: 'Settings' },
     { icon: <SortAsc {...args} />, name: 'SortAsc' },
     { icon: <SortDesc {...args} />, name: 'SortDesc' },

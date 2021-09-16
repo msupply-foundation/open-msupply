@@ -25,6 +25,7 @@ export const useDetailPanelStore = create<DetailPanelController>(set => ({
 
 export type Action = {
   onClick: () => void;
+  icon?: JSX.Element;
   titleKey: LocaleKey;
 };
 

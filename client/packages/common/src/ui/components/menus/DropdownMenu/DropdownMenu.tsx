@@ -52,10 +52,10 @@ const StyledSelect = styled(Select)(({ theme }) => ({
   },
 
   [`& .${outlinedInputClasses.notchedOutline}`]: {
-    borderColor: '#e4e4eb',
+    borderColor: theme.palette.border,
   },
   [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-    borderColor: '#e4e4eb',
+    borderColor: theme.palette.border,
   },
 
   [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]:
