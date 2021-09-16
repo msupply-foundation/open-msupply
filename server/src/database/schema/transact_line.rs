@@ -18,6 +18,6 @@ pub struct TransactLineRow {
     pub id: String,
     pub transact_id: String,
     pub item_id: String,
-    pub item_line_id: Option<String>,
+    pub stock_line_id: Option<String>,
     pub type_of: TransactLineRowType,
 }

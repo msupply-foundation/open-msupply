@@ -3,7 +3,6 @@
 mod loader;
 
 mod item;
-mod item_line;
 mod name;
 mod requisition;
 mod requisition_line;
@@ -13,7 +12,6 @@ mod transact_line;
 mod user_account;
 
 pub use item::ItemLoader;
-pub use item_line::ItemLineLoader;
 pub use loader::get_loaders;
 pub use name::NameLoader;
 pub use requisition::RequisitionLoader;

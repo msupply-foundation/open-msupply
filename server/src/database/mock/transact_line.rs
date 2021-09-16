@@ -5,7 +5,7 @@ pub fn mock_customer_invoice_a_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("customer_invoice_a_line_a"),
         transact_id: String::from("customer_invoice_a"),
         item_id: String::from("item_a"),
-        item_line_id: Some(String::from("item_a_line_a")),
+        stock_line_id: Some(String::from("item_a_line_a")),
         type_of: TransactLineRowType::StockOut,
     };
 
@@ -13,7 +13,7 @@ pub fn mock_customer_invoice_a_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("customer_invoice_a_line_b"),
         transact_id: String::from("customer_invoice_a"),
         item_id: String::from("item_b"),
-        item_line_id: Some(String::from("item_b_line_a")),
+        stock_line_id: Some(String::from("item_b_line_a")),
         type_of: TransactLineRowType::StockOut,
     };
 
@@ -28,7 +28,7 @@ pub fn mock_customer_invoice_b_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("customer_invoice_b_line_a"),
         transact_id: String::from("customer_invoice_b_"),
         item_id: String::from("item_a"),
-        item_line_id: Some(String::from("item_a_line_a")),
+        stock_line_id: Some(String::from("item_a_line_a")),
         type_of: TransactLineRowType::StockOut,
     };
 
@@ -36,7 +36,7 @@ pub fn mock_customer_invoice_b_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("customer_invoice_b_line_b"),
         transact_id: String::from("customer_invoice_b"),
         item_id: String::from("item_b"),
-        item_line_id: Some(String::from("item_b_line_a")),
+        stock_line_id: Some(String::from("item_b_line_a")),
         type_of: TransactLineRowType::StockOut,
     };
 
@@ -51,7 +51,7 @@ pub fn mock_supplier_invoice_a_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("supplier_invoice_a_line_a"),
         transact_id: String::from("supplier_invoice_a"),
         item_id: String::from("item_a"),
-        item_line_id: Some(String::from("item_a_line_a")),
+        stock_line_id: Some(String::from("item_a_line_a")),
         type_of: TransactLineRowType::StockIn,
     };
 
@@ -59,7 +59,7 @@ pub fn mock_supplier_invoice_a_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("supplier_invoice_a_line_b"),
         transact_id: String::from("supplier_invoice_a"),
         item_id: String::from("item_b"),
-        item_line_id: Some(String::from("item_b_line_a")),
+        stock_line_id: Some(String::from("item_b_line_a")),
         type_of: TransactLineRowType::StockIn,
     };
 
@@ -74,7 +74,7 @@ pub fn mock_supplier_invoice_b_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("supplier_invoice_b_line_a"),
         transact_id: String::from("supplier_invoice_b_"),
         item_id: String::from("item_a"),
-        item_line_id: Some(String::from("item_a_line_a")),
+        stock_line_id: Some(String::from("item_a_line_a")),
         type_of: TransactLineRowType::StockIn,
     };
 
@@ -82,7 +82,7 @@ pub fn mock_supplier_invoice_b_transact_lines() -> Vec<TransactLineRow> {
         id: String::from("supplier_invoice_b_line_b"),
         transact_id: String::from("supplier_invoice_b"),
         item_id: String::from("item_b"),
-        item_line_id: Some(String::from("item_b_line_a")),
+        stock_line_id: Some(String::from("item_b_line_a")),
         type_of: TransactLineRowType::StockIn,
     };
 

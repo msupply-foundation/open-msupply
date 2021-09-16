@@ -75,7 +75,7 @@ pub fn mock_transact_lines() -> Vec<database::schema::TransactLineRow> {
         transact_id: "transact_a".to_string(),
         type_of: crate::database::schema::TransactLineRowType::StockOut,
         item_id: "item_a".to_string(),
-        item_line_id: Some("item_a_line_a".to_string()),
+        stock_line_id: Some("item_a_line_a".to_string()),
     };
 
     let transact_a_line_b = database::schema::TransactLineRow {
@@ -83,7 +83,7 @@ pub fn mock_transact_lines() -> Vec<database::schema::TransactLineRow> {
         transact_id: "transact_a".to_string(),
         type_of: database::schema::TransactLineRowType::StockOut,
         item_id: "item_b".to_string(),
-        item_line_id: Some("item_b_line_a".to_string()),
+        stock_line_id: Some("item_b_line_a".to_string()),
     };
 
     let transact_b_line_a = database::schema::TransactLineRow {
@@ -91,7 +91,7 @@ pub fn mock_transact_lines() -> Vec<database::schema::TransactLineRow> {
         transact_id: "transact_b".to_string(),
         type_of: database::schema::TransactLineRowType::StockOut,
         item_id: "item_a".to_string(),
-        item_line_id: Some("item_a_line_a".to_string()),
+        stock_line_id: Some("item_a_line_a".to_string()),
     };
 
     let transact_b_line_b = database::schema::TransactLineRow {
@@ -99,7 +99,7 @@ pub fn mock_transact_lines() -> Vec<database::schema::TransactLineRow> {
         transact_id: "transact_b".to_string(),
         type_of: database::schema::TransactLineRowType::StockOut,
         item_id: "item_b".to_string(),
-        item_line_id: Some("item_b_line_a".to_string()),
+        stock_line_id: Some("item_b_line_a".to_string()),
     };
 
     vec![

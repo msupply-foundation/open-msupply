@@ -1,17 +1,17 @@
 use crate::{
     database::{
         loader::{
-            ItemLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
+            StockLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
             StoreLoader, TransactLineLoader, TransactLoader, UserAccountLoader,
         },
         mock,
         repository::{
-            ItemLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
+            StockLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
             RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
             UserAccountRepository,
         },
         schema::{
-            DatabaseRow, ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow,
+            DatabaseRow, StockLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow,
             StoreRow, TransactLineRow, TransactRow, UserAccountRow,
         },
     },
@@ -35,11 +35,11 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         mock_data.insert(item.id.to_string(), DatabaseRow::Item(item.clone()));
     }
 
-    let mock_item_lines: Vec<ItemLineRow> = mock::mock_item_lines();
-    for item_line in mock_item_lines {
+    let mock_stock_lines: Vec<StockLineRow> = mock::mock_stock_lines();
+    for stock_line in mock_stock_lines {
         mock_data.insert(
-            item_line.id.to_string(),
-            DatabaseRow::ItemLine(item_line.clone()),
+            stock_line.id.to_string(),
+            DatabaseRow::StockLine(stock_line.clone()),
         );
     }
 
@@ -98,9 +98,9 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     let item_repository = ItemRepository::new(Arc::clone(&mock_data));
     let item_loader = DataLoader::new(ItemLoader { item_repository });
 
-    let item_line_repository = ItemLineRepository::new(Arc::clone(&mock_data));
-    let item_line_loader = DataLoader::new(ItemLineLoader {
-        item_line_repository,
+    let stock_line_repository = StockLineRepository::new(Arc::clone(&mock_data));
+    let stock_line_loader = DataLoader::new(StockLineLoader {
+        stock_line_repository,
     });
 
     let requisition_repository = RequisitionRepository::new(Arc::clone(&mock_data));
@@ -135,7 +135,7 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     });
 
     loaders.insert(item_loader);
-    loaders.insert(item_line_loader);
+    loaders.insert(stock_line_loader);
     loaders.insert(requisition_loader);
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);
