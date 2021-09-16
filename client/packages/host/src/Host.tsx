@@ -8,7 +8,6 @@ import {
   QueryClientProvider,
   IntlProvider,
   SnackbarProvider,
-  styled,
   useHostContext,
   RouteBuilder,
   ErrorBoundary,
@@ -19,11 +18,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import Viewport from './Viewport';
-
-const Content = styled(Box)({
-  overflowY: 'scroll',
-  height: '100vh',
-});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,7 +54,7 @@ const Host: FC = () => {
                   <AppBar />
                   <Box display="flex" flex={1}>
                     <AppDrawer />
-                    <Content flex={1}>
+                    <Box flex={1} display="flex">
                       <React.Suspense fallback={'Loading'}>
                         <Routes>
                           <Route
@@ -115,7 +109,7 @@ const Host: FC = () => {
                           />
                         </Routes>
                       </React.Suspense>
-                    </Content>
+                    </Box>
                   </Box>
                 </Viewport>
               </SnackbarProvider>
