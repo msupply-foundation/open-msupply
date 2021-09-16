@@ -26,6 +26,8 @@ use tokio::{
     time::{self, Duration, Interval},
 };
 
+use self::translation::{import_sync_records, translation_records, SyncRecord, SyncType};
+
 pub fn get_sync_actors(connection: SyncConnection) -> (SyncSenderActor, SyncReceiverActor) {
     // We use a single-element channel so that we can only have one sync pending at a time.
     // We consume this at the *start* of sync, so we could schedule a sync while syncing.
@@ -164,6 +166,35 @@ impl SyncReceiverActor {
         });
     }
 
+    async fn integrate_central_records(
+        &self,
+        repositories: &RepositoryRegistry,
+    ) -> Result<(), String> {
+        let central_sync_buffer_repository: &CentralSyncBufferRepository =
+            repositories.get::<CentralSyncBufferRepository>();
+        for table_name in translation_records() {
+            let buffer_rows = central_sync_buffer_repository
+                .get_sync_entries(table_name.as_str())
+                .await
+                .map_err(|_| "Failed to read central sync entries".to_string())?;
+            let records = buffer_rows
+                .into_iter()
+                .map(|row| SyncRecord {
+                    record_id: row.record_id,
+                    sync_type: SyncType::Insert,
+                    record_type: row.table_name,
+                    data: row.data,
+                })
+                .collect();
+            import_sync_records(repositories, &records).await?;
+        }
+        central_sync_buffer_repository
+            .remove_all()
+            .await
+            .map_err(|_| "Failed to empty central sync entries".to_string())?;
+        Ok(())
+    }
+
     // Listen for incoming sync messages.
     pub async fn listen(&mut self, repositories: Data<RepositoryRegistry>) {
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
@@ -180,6 +211,11 @@ impl SyncReceiverActor {
                 .await
                 .expect("Failed to insert central sync records into sync buffer");
             info!("Successfully inserted central records into sync buffer");
+            info!("Integrate central records");
+            self.integrate_central_records(repositories.as_ref())
+                .await
+                .expect("Failed to integrate central records");
+            info!("Successfully integrated central records");
             info!("Syncing remote records...");
             let remote_records = self.pull_remote_records().await;
             info!("Successfully pulled remote records");

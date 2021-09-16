@@ -28,10 +28,10 @@ pub enum SyncType {
 
 #[derive(Debug, Clone)]
 pub struct SyncRecord {
-    record_id: String,
-    sync_type: SyncType,
-    record_type: String,
-    data: String,
+    pub record_id: String,
+    pub sync_type: SyncType,
+    pub record_type: String,
+    pub data: String,
 }
 
 /// Translates sync records into the local DB schema.
@@ -92,6 +92,19 @@ fn do_translation(
     }
 
     Ok(()) // At this point we are either ignoring records or record_types
+}
+
+/// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
+/// at the beginning of the list don't rely on later items to be translated first.
+pub fn translation_records() -> Vec<String> {
+    return vec![
+        "name".to_string(),
+        "item".to_string(),
+        "store".to_string(),
+        "list_master".to_string(),
+        "list_master_line".to_string(),
+        "list_master_name_join".to_string(),
+    ];
 }
 
 /// Imports sync records and writes them to the DB
