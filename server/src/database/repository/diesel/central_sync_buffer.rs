@@ -24,7 +24,7 @@ impl CentralSyncBufferRepository {
         central_sync_buffer_row: &CentralSyncBufferRow,
     ) -> Result<(), RepositoryError> {
         let connection = get_connection(&self.pool)?;
-        let cursor = central_sync_buffer_row.cursor_id as u32;
+        let cursor = central_sync_buffer_row.id as u32;
         connection.transaction(|| {
             CentralSyncBufferRepository::insert_one_tx(&connection, central_sync_buffer_row)?;
             CentralSyncCursorRepository::update_cursor_tx(&connection, cursor)?;
@@ -54,9 +54,7 @@ impl CentralSyncBufferRepository {
     pub async fn pop_one(&self) -> Result<CentralSyncBufferRow, RepositoryError> {
         use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = central_sync_buffer
-            .order(cursor_id.asc())
-            .first(&connection)?;
+        let result = central_sync_buffer.order(id.asc()).first(&connection)?;
         Ok(result)
     }
 
