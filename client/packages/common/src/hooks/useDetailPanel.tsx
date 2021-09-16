@@ -40,11 +40,17 @@ interface DetailPanel {
   setSections: (sections: Section[]) => void;
 }
 export const useDetailPanel = (): DetailPanel => {
-  const { isOpen, open, setActions, setSections } = useDetailPanelStore();
-
-  const OpenButton = isOpen ? null : (
-    <Button icon={<MenuDots />} labelKey="button.more" onClick={() => open()} />
-  );
+  const { actions, isOpen, open, sections, setActions, setSections } =
+    useDetailPanelStore();
+  const isEmpty = !sections.length && !actions.length;
+  const OpenButton =
+    isOpen || isEmpty ? null : (
+      <Button
+        icon={<MenuDots />}
+        labelKey="button.more"
+        onClick={() => open()}
+      />
+    );
 
   return { OpenButton, setActions, setSections };
 };
