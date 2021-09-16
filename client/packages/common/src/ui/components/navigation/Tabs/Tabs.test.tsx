@@ -1,21 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { render } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { Tab } from './Tab';
 import { Tabs } from './Tabs';
 import { TabPanel } from './TabPanel';
+import { useTabs } from './useTabs';
 
 describe('Tabs', () => {
   const ExampleTabs = () => {
-    const [currentTab, setCurrentTab] = useState(0);
+    const { currentTab, onChangeTab } = useTabs(0);
 
     return (
       <>
-        <Tabs
-          value={currentTab}
-          onChange={(_, newTab) => setCurrentTab(newTab)}
-        >
+        <Tabs value={currentTab} onChange={onChangeTab}>
           <Tab value={0} label="1" />
           <Tab value={1} label="2" />
         </Tabs>
