@@ -4,10 +4,13 @@ import { useNavigate, useParams } from 'react-router';
 
 import {
   Circle,
+  Clock,
+  Copy,
   Field,
   Grid,
   Label,
   Portal,
+  Rewind,
   Row,
   Transaction,
   Typography,
@@ -128,14 +131,17 @@ export const OutboundShipmentDetailView: FC = () => {
   useEffect(() => {
     setActions([
       {
+        icon: <Clock />,
         titleKey: 'link.history',
         onClick: warning('No history available'),
       },
       {
+        icon: <Rewind />,
         titleKey: 'link.backorders',
         onClick: warning('No back orders available'),
       },
       {
+        icon: <Copy />,
         titleKey: 'link.copy-to-clipboard',
         onClick: copyToClipboard,
       },

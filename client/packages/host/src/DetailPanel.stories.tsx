@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { Story, ComponentMeta } from '@storybook/react';
 import DetailPanel from './DetailPanel';
 import {
   Action,
@@ -15,23 +15,14 @@ export default {
   component: DetailPanel,
 } as ComponentMeta<typeof DetailPanel>;
 
-const Template: ComponentStory<typeof DetailPanel> = () => {
+interface DetailPanelArgs {
+  actions: Action[];
+  sections: Section[];
+}
+
+const Template: Story<DetailPanelArgs> = args => {
   const { OpenButton, setActions, setSections } = useDetailPanel();
-  const actions: Action[] = [
-    { titleKey: 'link.backorders', onClick: () => {} },
-  ];
-  const sections: Section[] = [
-    {
-      titleKey: 'heading.comment',
-      children: [
-        <Typography key="0">comments to be shown in here...</Typography>,
-      ],
-    },
-    {
-      titleKey: 'heading.additional-info',
-      children: [<Typography key="0">additional info...</Typography>],
-    },
-  ];
+  const { actions, sections } = args;
 
   useEffect(() => setActions(actions), []);
   useEffect(() => setSections(sections), []);
@@ -50,4 +41,23 @@ const Template: ComponentStory<typeof DetailPanel> = () => {
   );
 };
 
-export const Primary = Template.bind({});
+export const Demo = Template.bind({});
+export const Empty = Template.bind({});
+
+Demo.args = {
+  actions: [{ titleKey: 'link.backorders', onClick: () => {} }],
+  sections: [
+    {
+      titleKey: 'heading.comment',
+      children: [
+        <Typography key="0">comments to be shown in here...</Typography>,
+      ],
+    },
+    {
+      titleKey: 'heading.additional-info',
+      children: [<Typography key="0">additional info...</Typography>],
+    },
+  ],
+};
+
+Empty.args = { actions: [], sections: [] };
