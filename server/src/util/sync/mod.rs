@@ -98,7 +98,7 @@ impl SyncReceiverActor {
         const BATCH_SIZE: u32 = 500;
 
         loop {
-            info!("Sending central sync request...");
+            info!("Requesting central sync data...");
             let sync_batch: CentralSyncBatch = self
                 .connection
                 .central_records(cursor, BATCH_SIZE)
