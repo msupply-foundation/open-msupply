@@ -1,7 +1,6 @@
 table! {
     central_sync_buffer (id) {
-        id -> Text,
-        cursor_id -> Integer,
+        id -> Integer,
         table_name -> Text,
         record_id -> Text,
         data -> Text,
