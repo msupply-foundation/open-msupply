@@ -1,8 +1,12 @@
-use super::{get_connection, DBBackendConnection, ItemRepository, NameRepository, StoreRepository};
+use super::{
+    get_connection, master_list::MasterListRepository, master_list_line::MasterListLineRepository,
+    master_list_name_join::MasterListNameJoinRepository, DBBackendConnection, ItemRepository,
+    NameRepository, StoreRepository,
+};
 
 use crate::database::{
     repository::RepositoryError,
-    schema::{ItemRow, NameRow, StoreRow},
+    schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow, StoreRow},
 };
 
 use diesel::{
@@ -14,6 +18,9 @@ pub enum IntegrationUpsertRecord {
     Name(NameRow),
     Item(ItemRow),
     Store(StoreRow),
+    MasterList(MasterListRow),
+    MasterListLine(MasterListLineRow),
+    MasterListNameJoin(MasterListNameJoinRow),
 }
 
 pub struct IntegrationRecord {
@@ -45,6 +52,15 @@ impl SyncRepository {
                     }
                     IntegrationUpsertRecord::Store(record) => {
                         StoreRepository::upsert_one_tx(&connection, record)?
+                    }
+                    IntegrationUpsertRecord::MasterList(record) => {
+                        MasterListRepository::upsert_one_tx(&connection, record)?
+                    }
+                    IntegrationUpsertRecord::MasterListLine(record) => {
+                        MasterListLineRepository::upsert_one_tx(&connection, record)?
+                    }
+                    IntegrationUpsertRecord::MasterListNameJoin(record) => {
+                        MasterListNameJoinRepository::upsert_one_tx(&connection, record)?
                     }
                 }
             }

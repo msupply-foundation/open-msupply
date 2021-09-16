@@ -230,3 +230,52 @@ pub struct LegacyStoreRow {
     created_date: String,
 }
 ```
+
+## list_master (new name: master_list)
+
+```rust
+pub struct LegacyListMasterRow {
+    #[serde(rename = "ID")]
+    id: String,
+    description: String,
+    date_created: String,
+    created_by_user_ID: String,
+    note: String,
+    gets_new_items: bool,
+    //tags: null,
+    isProgram: bool,
+    //programSettings: null,
+    code: String,
+    isPatientList: bool,
+    is_hiv: bool,
+    isSupplierHubCatalog: bool,
+}
+```
+
+## list_master_line (new name: master_list_line)
+
+```rust
+pub struct LegacyListMasterLineRow {
+    #[serde(rename = "ID")]
+    id: String,
+    item_master_ID: String,
+    item_ID: String,
+    imprest_quan: i64,
+    order_number: i64,
+    price: i64,
+}
+```
+
+## list_master_name_join (new name: master_list_name_join)
+
+```rust
+pub struct LegacyListMasterLineRow {
+    #[serde(rename = "ID")]
+    id: String,
+    item_master_ID: String,
+    item_ID: String,
+    imprest_quan: i64,
+    order_number: i64,
+    price: i64,
+}
+```
