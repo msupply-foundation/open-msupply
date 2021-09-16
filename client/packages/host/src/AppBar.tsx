@@ -28,7 +28,7 @@ const StyledContainer = styled(Box)(({ theme }) => ({
   minHeight: 90,
   paddingLeft: '16px',
   paddingRight: '16px',
-  paddingBottom: '16px',
+
   boxShadow: theme.shadows[1],
   ...theme.mixins.header,
 }));

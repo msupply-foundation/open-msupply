@@ -204,7 +204,7 @@ export const OutboundShipmentListView: FC = () => {
 
   return (
     <>
-      <AppBarContentPortal>
+      <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
         <DropdownMenu label="Select">
           <DropdownMenuItem
             IconComponent={ChevronDown}

@@ -47,6 +47,11 @@
   "label.confirmed": "Confirmed",
   "label.invoice-number": "Invnum",
   "label.comment": "Comment",
+  "label.general": "General",
+  "label.item": "Item",
+  "label.batch": "Batch",
+  "label.price": "Price",
+  "label.log": "Log",
   "link.history": "History",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard"
