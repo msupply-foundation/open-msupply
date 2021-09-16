@@ -62,10 +62,12 @@ impl NameQueryRepository {
 
     pub fn all(&self, pagination: &Option<Pagination>) -> Result<Vec<NameQuery>, RepositoryError> {
         let connection = get_connection(&self.pool)?;
+        // TODO (beyond M1), check that store_id matches current store
         Ok(name_table_dsl::name_table
             .left_join(name_store_join)
             .offset(pagination.offset())
             .limit(pagination.first())
+            .order(name_table_dsl::id.asc())
             .load::<NameAndNameStoreJoin>(&*connection)?
             .into_iter()
             .map(NameQuery::from)
@@ -93,15 +95,12 @@ impl NameQueryRepository {
 mod tests {
     use crate::{
         database::{
-            repository::{get_repositories, NameQueryRepository, NameRepository},
+            repository::{NameQueryRepository, NameRepository},
             schema::NameRow,
         },
-        server::{
-            data::RepositoryRegistry,
-            service::graphql::schema::{
-                queries::pagination::{Pagination, DEFAULT_PAGE_SIZE},
-                types::NameQuery,
-            },
+        server::service::graphql::schema::{
+            queries::pagination::{Pagination, DEFAULT_PAGE_SIZE},
+            types::NameQuery,
         },
         util::test_db,
     };
@@ -112,7 +111,7 @@ mod tests {
         let mut queries = Vec::new();
         for index in 0..200 {
             rows.push(NameRow {
-                id: format!("id{}", index),
+                id: format!("id{:05}", index),
                 name: format!("name{}", index),
                 code: format!("code{}", index),
                 is_customer: true,
@@ -120,7 +119,7 @@ mod tests {
             });
 
             queries.push(NameQuery {
-                id: format!("id{}", index),
+                id: format!("id{:05}", index),
                 name: format!("name{}", index),
                 code: format!("code{}", index),
                 is_customer: false,
@@ -133,23 +132,17 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let settings = test_db::get_test_settings("test_name_query_repository");
+        let (pool, _, connection) = test_db::setup_all("test_name_query_repository", false).await;
+        let repository = NameQueryRepository::new(pool.clone());
 
-        test_db::setup(&settings.database).await;
-        let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings).await,
-        };
-
-        let name_row_respository = registry.get::<NameRepository>();
         let (rows, queries) = data();
         for row in rows {
-            name_row_respository.insert_one(&row).await.unwrap();
+            NameRepository::upsert_one_tx(&connection, &row).unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGE_SIZE).unwrap();
 
         // Test
-        let repository = registry.get::<NameQueryRepository>();
 
         // .count()
         assert_eq!(
