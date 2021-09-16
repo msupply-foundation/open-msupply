@@ -26,7 +26,7 @@ use tokio::{
     time::{self, Duration, Interval},
 };
 
-use self::translation::{import_sync_records, translation_records, SyncRecord, SyncType};
+use self::translation::{import_sync_records, SyncRecord, SyncType, TRANSLATION_RECORDS};
 
 pub fn get_sync_actors(connection: SyncConnection) -> (SyncSenderActor, SyncReceiverActor) {
     // We use a single-element channel so that we can only have one sync pending at a time.
@@ -172,9 +172,9 @@ impl SyncReceiverActor {
     ) -> Result<(), String> {
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
             repositories.get::<CentralSyncBufferRepository>();
-        for table_name in translation_records() {
+        for table_name in TRANSLATION_RECORDS {
             let buffer_rows = central_sync_buffer_repository
-                .get_sync_entries(table_name.as_str())
+                .get_sync_entries(table_name)
                 .await
                 .map_err(|_| "Failed to read central sync entries".to_string())?;
             let records = buffer_rows
