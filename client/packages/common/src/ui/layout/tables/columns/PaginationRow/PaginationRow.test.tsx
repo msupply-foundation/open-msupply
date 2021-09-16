@@ -45,7 +45,7 @@ describe('PaginationRow', () => {
     const first = 10;
     const total = 20000;
 
-    const { getByRole } = render(
+    const { queryByRole, getByRole } = render(
       <PaginationRow
         offset={offset}
         total={total}
@@ -59,14 +59,16 @@ describe('PaginationRow', () => {
     const node3 = getByRole('button', { name: /page 3/i });
     const node4 = getByRole('button', { name: /page 4/i });
     const node5 = getByRole('button', { name: /page 5/i });
-    const node6 = getByRole('button', { name: /page 2000/i });
+    const node6 = queryByRole('button', { name: /page 6/i });
+    const node2000 = getByRole('button', { name: /page 2000/i });
 
     expect(node1).toBeInTheDocument();
     expect(node2).toBeInTheDocument();
     expect(node3).toBeInTheDocument();
     expect(node4).toBeInTheDocument();
     expect(node5).toBeInTheDocument();
-    expect(node6).toBeInTheDocument();
+    expect(node6).not.toBeInTheDocument();
+    expect(node2000).toBeInTheDocument();
   });
 
   it('Renders nothing when the total is zero', () => {
@@ -115,24 +117,95 @@ describe('PaginationRow', () => {
     expect(onChange).toBeCalledWith(0);
   });
 
-  it('Renders nothing when the total is zero', () => {
+  it('does not trigger the callback when the ellipsis is pressed', () => {
     const offset = 0;
     const first = 10;
-    const total = 0;
+    const total = 20000;
+    const onChange = jest.fn();
 
-    const { queryByRole, queryByText } = render(
+    const { getByLabelText } = render(
       <PaginationRow
         offset={offset}
         total={total}
         first={first}
-        onChange={jest.fn()}
+        onChange={onChange}
       />
     );
 
-    const node1 = queryByRole('button', { name: /page 1/i });
-    const node2 = queryByText('showing');
+    const node = getByLabelText(/ellipsis/i);
 
-    expect(node1).not.toBeInTheDocument();
-    expect(node2).not.toBeInTheDocument();
+    act(() => {
+      userEvent.click(node);
+    });
+
+    expect(onChange).toBeCalledTimes(0);
+  });
+
+  it('has a disabled back button when on page 1', () => {
+    const offset = 0;
+    const first = 10;
+    const total = 20000;
+    const onChange = jest.fn();
+
+    const { getByRole } = render(
+      <PaginationRow
+        offset={offset}
+        total={total}
+        first={first}
+        onChange={onChange}
+      />
+    );
+
+    const node = getByRole('button', { name: /prev/i });
+
+    expect(node).toBeDisabled();
+  });
+
+  it('has an enabled next button when on page 1', () => {
+    const offset = 0;
+    const first = 10;
+    const total = 20000;
+    const onChange = jest.fn();
+
+    const { getByRole } = render(
+      <PaginationRow
+        offset={offset}
+        total={total}
+        first={first}
+        onChange={onChange}
+      />
+    );
+
+    const node = getByRole('button', { name: /next/i });
+
+    expect(node).toBeEnabled();
+  });
+
+  it('has both back and next buttons enabled when not on page 1', () => {
+    const offset = 0;
+    const first = 10;
+    const total = 20000;
+    const onChange = jest.fn();
+
+    const { getByRole } = render(
+      <PaginationRow
+        offset={offset}
+        total={total}
+        first={first}
+        onChange={onChange}
+      />
+    );
+
+    const pageTwoButton = getByRole('button', { name: /page 2$/i });
+
+    act(() => {
+      userEvent.click(pageTwoButton);
+    });
+
+    const prev = getByRole('button', { name: /prev/i });
+    const next = getByRole('button', { name: /next/i });
+
+    expect(prev).toBeEnabled();
+    expect(next).toBeEnabled();
   });
 });
