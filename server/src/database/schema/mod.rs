@@ -9,6 +9,7 @@ mod sync_out;
 mod transact;
 mod transact_line;
 mod user_account;
+mod name_store_join;
 
 pub mod diesel_schema;
 
@@ -38,3 +39,4 @@ pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
 pub use transact::{TransactRow, TransactRowType};
 pub use transact_line::{TransactLineRow, TransactLineRowType};
 pub use user_account::UserAccountRow;
+pub use name_store_join::NameStoreJoinRow;
