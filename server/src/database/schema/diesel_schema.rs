@@ -114,6 +114,30 @@ table! {
         name_is_supplier -> Bool,
     }
 }
+table! {
+    master_list (id) {
+        id -> Text,
+        name -> Text,
+        code -> Text,
+        description -> Text,
+    }
+}
+
+table! {
+    master_list_line (id) {
+        id -> Text,
+        item_id -> Text,
+        master_list_id -> Text,
+    }
+}
+
+table! {
+    master_list_name_join (id) {
+        id -> Text,
+        master_list_id -> Text,
+        name_id -> Text,
+    }
+}
 
 joinable!(item_line -> item (item_id));
 joinable!(item_line -> store (store_id));
@@ -130,6 +154,9 @@ joinable!(transact_line -> item_line (item_line_id));
 joinable!(transact_line -> transact (transact_id));
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name_table (name_id));
+joinable!(master_list_line -> master_list (master_list_id));
+joinable!(master_list_name_join -> master_list (master_list_id));
+joinable!(master_list_name_join -> name_table (name_id));
 
 allow_tables_to_appear_in_same_query!(
     item,
