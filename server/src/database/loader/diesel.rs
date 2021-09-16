@@ -5,8 +5,8 @@ use crate::{
             TransactLineLoader, TransactLoader, UserAccountLoader,
         },
         repository::{
-            StockLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
-            RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
+            StockLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
             UserAccountRepository,
         },
     },
@@ -75,7 +75,6 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(transact_loader);
     loaders.insert(transact_line_loader);
     loaders.insert(user_account_loader);
-    loaders.insert(DataLoader::new(StockLineRepository::new(pool)));
 
     loaders
 }
