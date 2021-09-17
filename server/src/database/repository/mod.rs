@@ -13,7 +13,7 @@ pub enum RepositoryError {
     ForeignKeyViolation,
     /// Actix thred pool canceled
     #[error("actix thread pool canceled")]
-    ActixThreadPoolCanceled,
+    ThreadPoolCanceled,
     /// Other DB related errors
     #[error("DBError: {msg:?}")]
     DBError { msg: String },
