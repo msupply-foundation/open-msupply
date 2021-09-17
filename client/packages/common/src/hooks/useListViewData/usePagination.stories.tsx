@@ -28,7 +28,9 @@ const Template: Story = () => {
         />
       </div>
 
-      <p>{JSON.stringify({ first, offset, page })}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>
+        {JSON.stringify({ first, offset, page })}
+      </p>
     </div>
   );
 };
