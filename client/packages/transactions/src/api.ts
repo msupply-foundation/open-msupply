@@ -1,6 +1,5 @@
-import { Environment } from './../../config/src/index';
-import { QueryProps } from './../../common/src/ui/layout/tables/types';
-import { Transaction } from './../../common/src/types/index';
+import { Transaction, SortRule, ListApi } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
 
 export const getDetailQuery = (): string => gql`
@@ -74,16 +73,18 @@ export const deleteFn = async (transactions: Transaction[]) => {
   });
 };
 
-export const listQueryFn = async (
-  queryParams: QueryProps<Transaction>
-): Promise<{ data: Transaction[]; totalLength: number }> => {
+export const listQueryFn = async <T>(queryParams: {
+  first: number;
+  offset: number;
+  sortBy: SortRule<T>;
+}): Promise<{ data: Transaction[]; totalLength: number }> => {
   const { first, offset, sortBy } = queryParams;
 
   const { transactions } = await request(Environment.API_URL, getListQuery(), {
     first,
     offset,
-    sort: sortBy?.[0]?.id,
-    desc: !!sortBy?.[0]?.desc,
+    sort: sortBy.key,
+    desc: sortBy.isDesc,
   });
 
   return transactions;
@@ -102,4 +103,13 @@ export const updateFn = async (updated: Transaction): Promise<Transaction> => {
   const result = await request(Environment.API_URL, getMutation(), patch);
   const { upsertTransaction } = result;
   return upsertTransaction;
+};
+
+export const OutboundShipmentListViewApi: ListApi<Transaction> = {
+  onQuery:
+    ({ first, offset, sortBy }) =>
+    () =>
+      listQueryFn({ first, offset, sortBy }),
+  onDelete: deleteFn,
+  onUpdate: updateFn,
 };
