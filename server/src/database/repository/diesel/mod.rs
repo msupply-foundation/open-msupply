@@ -4,7 +4,6 @@ use crate::{
 
 mod central_sync_buffer;
 mod item;
-mod stock_line;
 mod item_query;
 mod master_list;
 mod master_list_line;
@@ -13,6 +12,7 @@ mod name;
 mod name_query;
 mod requisition;
 mod requisition_line;
+mod stock_line;
 mod store;
 mod sync;
 mod transact;
@@ -23,7 +23,6 @@ use actix_rt::blocking::BlockingError;
 use async_graphql::dataloader::DataLoader;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use item::ItemRepository;
-pub use stock_line::StockLineRepository;
 pub use item_query::ItemQueryRepository;
 pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
@@ -32,6 +31,7 @@ pub use name::NameRepository;
 pub use name_query::NameQueryRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
+pub use stock_line::StockLineRepository;
 pub use store::StoreRepository;
 pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
 pub use transact::{CustomerInvoiceRepository, TransactRepository};
@@ -87,7 +87,7 @@ impl From<BlockingError<RepositoryError>> for RepositoryError {
     fn from(error: BlockingError<RepositoryError>) -> Self {
         match error {
             BlockingError::Error(error) => error,
-            BlockingError::Canceled => RepositoryError::ActixThredPoolCanceled,
+            BlockingError::Canceled => RepositoryError::ActixThreadPoolCanceled,
         }
     }
 }
@@ -125,7 +125,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(MasterListRepository::new(pool.clone()));
     repositories.insert(MasterListLineRepository::new(pool.clone()));
     repositories.insert(MasterListNameJoinRepository::new(pool.clone()));
-    
+
     repositories.insert(DataLoader::new(StockLineRepository::new(pool.clone())));
 
     repositories
