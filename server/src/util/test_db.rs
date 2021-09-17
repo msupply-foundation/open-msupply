@@ -104,6 +104,11 @@ pub fn get_test_settings(db_name: &str) -> Settings {
     }
 }
 
+/// Test helper to setup enviroment for testing,
+///
+/// Will create connection, setup repositories and return both pool and a connection
+///
+/// Only requires database name and a boolean toggle to request repositories to be initilised
 pub async fn setup_all(
     db_name: &str,
     all_repositories: bool,
