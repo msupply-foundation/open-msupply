@@ -45,6 +45,7 @@ export const useListData = <T>(
   return {
     ...data,
     ...queryParams,
+    fullQueryKey,
     queryParams,
     onUpdate,
     onDelete,
