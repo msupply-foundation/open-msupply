@@ -16,8 +16,6 @@ use crate::{
 };
 
 use diesel::{
-    debug_query,
-    pg::Pg,
     prelude::*,
     r2d2::{ConnectionManager, Pool},
 };
@@ -62,6 +60,7 @@ impl NameQueryRepository {
 
     pub fn all(&self, pagination: &Option<Pagination>) -> Result<Vec<NameQuery>, RepositoryError> {
         let connection = get_connection(&self.pool)?;
+
         Ok(name_table_dsl::name_table
             .left_join(name_store_join)
             .offset(pagination.offset())
@@ -71,22 +70,6 @@ impl NameQueryRepository {
             .map(NameQuery::from)
             .collect())
     }
-    // There is a bug in Diesel, i'll create an issue in their repository, can do the following to see output
-
-    // println!("{}",debug_query::<Pg, _>( &name_table_dsl::name_table.left_join(name_store_join)
-    // .offset(pagination.offset())
-    //  .limit(pagination.first())).to_string());
-
-    // which results in
-
-    // SELECT "name"."id", "name"."name", "name"."code", "name"."is_customer", "name"."is_supplier", "name_store_join"."id", "name_store_join"."name_id", "name_store_join"."store_id", "name_store_join"."name_is_customer", "name_store_join"."name_is_supplier" FROM ("name" LEFT OUTER JOIN "name_store_join" ON "name_store_join"."name_id" = "name"."id");
-
-    // this is NOT equivelant to
-
-    // SELECT "name"."id", "name"."name", "name"."code", "name"."is_customer", "name"."is_supplier", "name_store_join"."id", "name_store_join"."name_id", "name_store_join"."store_id", "name_store_join"."name_is_customer", "name_store_join"."name_is_supplier"  from "name" left outer join name_store_join on name_store_join.id = "name".id;
-
-    // and results in duplicate names selected (should only be one set of unique names), this would be problematic if more then one name_store_join for the same store and name (which should not happen)
-    // but can also be problematic if we are relying on proper left join
 }
 
 #[cfg(test)]
@@ -197,5 +180,5 @@ mod tests {
 
     // TODO need to test name_store_join, but it also requires 'store' records to be add and name_store_join helpers
     // which i think might be too much for this test ? Ideally we would have a database snapshot to load in tests
-    // I've tested locally with graphIQL, seems to work (apart from diesel bug mentioned above)
+    // I've tested locally with graphIQL, seems to work
 }
