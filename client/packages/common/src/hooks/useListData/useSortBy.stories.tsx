@@ -12,10 +12,7 @@ interface TestSortBy {
 }
 
 const Template: Story = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<TestSortBy>({
-    key: 'id',
-    isDesc: true,
-  });
+  const { sortBy, onChangeSortBy } = useSortBy<TestSortBy>('id');
 
   return (
     <div>

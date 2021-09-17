@@ -9,9 +9,7 @@ interface TestSortBy {
 
 describe('useSortBy', () => {
   it('Has the correct initial value', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>('id'));
 
     expect(result.current.sortBy).toEqual({
       key: 'id',
@@ -21,9 +19,7 @@ describe('useSortBy', () => {
   });
 
   it('has the correct values after triggering a sort by', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>('id'));
 
     act(() => {
       result.current.onChangeSortBy('quantity');
@@ -37,9 +33,7 @@ describe('useSortBy', () => {
   });
 
   it('has the correct values after triggering a sort by for the same column that is set', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>('id'));
 
     act(() => {
       result.current.onChangeSortBy('id');
@@ -53,9 +47,7 @@ describe('useSortBy', () => {
   });
 
   it('has the correct values after triggering a few sort bys in sequence', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>('id'));
 
     act(() => {
       // initially: id/asc
