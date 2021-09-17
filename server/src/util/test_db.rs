@@ -5,9 +5,8 @@ use crate::{
 
 use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};
 
-use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel_migrations::{find_migrations_directory, mark_migrations_in_directory};
-use r2d2::{Pool, PooledConnection};
 
 #[cfg(feature = "postgres")]
 pub async fn setup(db_settings: &DatabaseSettings) {
