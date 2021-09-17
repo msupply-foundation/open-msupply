@@ -201,7 +201,6 @@ export const OutboundShipmentListView: FC = () => {
 
   const tableApi = useDataTableApi<Transaction>();
   const t = useTranslation();
-  console.info(response);
   return (
     <>
       <AppBarContentPortal>
