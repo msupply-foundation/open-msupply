@@ -2708,7 +2708,6 @@ dependencies = [
  "httpmock",
  "libsqlite3-sys",
  "log",
- "r2d2",
  "reqwest",
  "serde 1.0.130",
  "serde_json",
