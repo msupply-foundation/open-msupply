@@ -87,7 +87,7 @@ impl From<BlockingError<RepositoryError>> for RepositoryError {
     fn from(error: BlockingError<RepositoryError>) -> Self {
         match error {
             BlockingError::Error(error) => error,
-            BlockingError::Canceled => RepositoryError::ActixThreadPoolCanceled,
+            BlockingError::Canceled => RepositoryError::ThreadPoolCanceled,
         }
     }
 }
