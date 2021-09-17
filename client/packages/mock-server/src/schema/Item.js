@@ -1,7 +1,9 @@
-const ItemData = Array.from({ length: 10 }).map((_, i) => ({
-  id: `${i}`,
-  code: `Code: ${i}`,
-  name: `Name: ${i}`,
+import faker from 'faker';
+
+const ItemData = Array.from({ length: 10 }).map(_ => ({
+  id: `${faker.datatype.uuid()}`,
+  code: `${faker.random.alpha({ count: 6 })}`,
+  name: `${faker.commerce.productName()}`,
 }));
 
 const ItemType = `

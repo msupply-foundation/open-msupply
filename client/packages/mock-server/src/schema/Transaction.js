@@ -1,4 +1,5 @@
 import faker from 'faker';
+import { ItemData } from './Item';
 
 const choose = options => {
   const numberOfOptions = options.length;
@@ -27,6 +28,13 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
 }));
 
 const TransactionTypes = `
+    type Item {
+      id: String
+      name: String
+      code: String
+      packSize: Int
+      quantity: Int
+    }
     type Transaction {
         id: String
         color: String
@@ -38,6 +46,7 @@ const TransactionTypes = `
         invoiceNumber: String
         total: String
         name: String
+        items: [Item]
     }
     type TransactionResponse { 
       data: [Transaction],
@@ -83,14 +92,34 @@ const getTransactionData = async (first, offset, sort, desc) => {
     const sortData = getDataSorter(sort, desc);
     data.sort(sortData);
   }
-  return { totalLength: data.length, data: data.slice(offset, offset + first) };
+  return {
+    totalLength: data.length,
+    data: data.slice(offset, offset + first).map(addItems),
+  };
+};
+
+const addItems = transaction => {
+  const itemIndex = Math.random() * ItemData.length;
+  const itemCount = Math.random() * 10;
+  const items = ItemData.slice(itemIndex, itemIndex + itemCount);
+
+  return {
+    ...transaction,
+    items: items.map(item => ({
+      packSize: 1,
+      quantity: faker.datatype.number(100),
+      ...item,
+    })),
+  };
 };
 
 const TransactionQueryResolvers = {
   transactions: (_, { first = 50, offset = 0, sort, desc }) =>
-    getTransactionData(first, offset, sort, desc),
+    getTransactionData(first, offset, sort, desc), //.data?.map(transaction =>
+  //   addItems(transaction)
+  // ),
   transaction: (_, { id: filterId }) =>
-    TransactionData.filter(({ id }) => id === filterId)[0],
+    addItems(TransactionData.filter(({ id }) => id === filterId)[0]),
 };
 
 const TransactionMutationResolvers = {
