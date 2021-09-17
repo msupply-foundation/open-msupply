@@ -212,7 +212,7 @@ impl SyncReceiverActor {
                 .expect("Failed to insert central sync records into sync buffer");
             info!("Successfully inserted central records into sync buffer");
             info!("Integrate central records");
-            self.integrate_central_records(repositories.as_ref())
+            self.integrate_central_records(&repositories)
                 .await
                 .expect("Failed to integrate central records");
             info!("Successfully integrated central records");
