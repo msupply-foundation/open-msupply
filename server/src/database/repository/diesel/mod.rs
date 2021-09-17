@@ -27,7 +27,7 @@ pub use name::NameRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use store::StoreRepository;
-pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
+pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository, SyncSession};
 pub use transact::{CustomerInvoiceRepository, TransactRepository};
 pub use transact_line::TransactLineRepository;
 pub use user_account::UserAccountRepository;
