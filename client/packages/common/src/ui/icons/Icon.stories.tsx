@@ -14,7 +14,9 @@ import { Close } from './Close';
 import { Copy } from './Copy';
 import { Customers } from './Customers';
 import { Dashboard } from './Dashboard';
+import { Delete } from './Delete';
 import { Download } from './Download';
+import { Edit } from './Edit';
 import { Invoice } from './Invoice';
 import { MSupplyGuy } from './MSupplyGuy';
 import { MenuDots } from './MenuDots';
@@ -77,7 +79,9 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Copy {...args} />, name: 'Copy' },
     { icon: <Customers {...args} />, name: 'Customers' },
     { icon: <Dashboard {...args} />, name: 'Dashboard' },
+    { icon: <Delete {...args} />, name: 'Delete' },
     { icon: <Download {...args} />, name: 'Download' },
+    { icon: <Edit {...args} />, name: 'Edit' },
     { icon: <Invoice {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     { icon: <MenuDots {...args} />, name: 'MenuDots' },
