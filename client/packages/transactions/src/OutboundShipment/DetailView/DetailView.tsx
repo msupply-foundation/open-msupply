@@ -31,6 +31,7 @@ import {
 import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
 import { Box } from '@material-ui/system';
+import { GeneralTab } from './tabs/GeneralTab';
 
 const placeholderTransaction: Transaction = {
   name: '',
@@ -81,7 +82,7 @@ const useDraftOutbound = (id: string) => {
 
 export const OutboundShipmentDetailView: FC = () => {
   const { id } = useParams();
-  const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
+  const { draft } = useDraftOutbound(id ?? 'new');
   const { appBarButtonsRef } = useHostContext();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
@@ -176,20 +177,7 @@ export const OutboundShipmentDetailView: FC = () => {
 
         <Box sx={{ display: 'flex', flex: 1, height: '100%' }}>
           <TabPanel value="general">
-            <div>
-              <input
-                value={draft?.name}
-                onChange={event =>
-                  setDraft({ ...draft, name: event?.target.value })
-                }
-              />
-            </div>
-            <div>
-              <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
-            </div>
-            <div>
-              <button onClick={save}>OK</button>
-            </div>
+            <GeneralTab data={draft?.items ?? []} />
           </TabPanel>
 
           <TabPanel value="transport">
