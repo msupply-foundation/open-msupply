@@ -58,7 +58,7 @@ const ButtonContainer = styled(Box)(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-const StyledAccordian = styled(Accordion)(({ theme }) => ({
+const StyledAccordion = styled(Accordion)(({ theme }) => ({
   backgroundColor: theme.palette.background.menu,
   boxShadow: 'none',
   '&.Mui-expanded': { margin: 0 },
@@ -77,14 +77,14 @@ const DetailPanel: React.FC = () => {
       <>
         {sections.map((section, index) => (
           <Box key={`action.titleKey_${index}`}>
-            <StyledAccordian>
+            <StyledAccordion>
               <AccordionSummary expandIcon={<ChevronDown color="secondary" />}>
                 <Typography sx={{ fontWeight: 'bold' }}>
                   {t(section.titleKey)}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>{section.children}</AccordionDetails>
-            </StyledAccordian>
+            </StyledAccordion>
             <StyledDivider />
           </Box>
         ))}

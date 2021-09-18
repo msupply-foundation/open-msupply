@@ -18,8 +18,9 @@ const StyledButton = styled(MuiButton, {
   ...DefaultButtonStyles,
   boxShadow: theme.shadows[1],
   color: theme.palette.primary.main,
-  width: shrink ? '64px' : '115px',
-  transition: theme.transitions.create(['width'], {
+  width: shrink ? '64px' : 'auto',
+  minWidth: shrink ? '64px' : '115px',
+  transition: theme.transitions.create(['min-width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
