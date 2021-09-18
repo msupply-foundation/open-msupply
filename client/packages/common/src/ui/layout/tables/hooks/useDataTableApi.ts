@@ -16,7 +16,7 @@ export const useSetupDataTableApi = <DataTableRowType extends object>(
       // Mapping into a plain row object rather than a react-table row object
       // which contains a bunch of irrelevant data.
       selectedRows: selectedFlatRows.map(
-        ({ values }) => values
+        ({ original }) => original
       ) as DataTableRowType[],
       selectAllRows: toggleAllRowsSelected,
       deselectAllRows: () => toggleAllRowsSelected(false),

@@ -60,8 +60,8 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
 
   return (
     <RemoteDataTable
-      sortBy={[{ id: 'quantity' }]}
-      pagination={{ first: 0, offset: 0, total: 10 }}
+      sortBy={{ key: 'quantity', isDesc: false, direction: 'asc' }}
+      pagination={{ first: 10, offset: 0, total: 10 }}
       tableApi={tableApi}
       columns={columns}
       data={data}
