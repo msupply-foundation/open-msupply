@@ -54,7 +54,7 @@ const Host: FC = () => {
                 <Viewport>
                   <Box display="flex">
                     <AppDrawer />
-                    <Box flex="1" flexDirection="column">
+                    <Box display="flex" flex={1} flexDirection="column">
                       <AppBar />
                       <Box flex={1} display="flex">
                         <React.Suspense fallback={'Loading'}>
