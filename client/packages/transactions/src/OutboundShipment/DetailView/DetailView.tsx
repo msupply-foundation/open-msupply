@@ -22,13 +22,15 @@ import {
   useQueryClient,
   useTranslation,
   Tab,
-  Tabs,
+  TabList,
   TabPanel,
   useTabs,
+  TabContext,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
+import { Box } from '@material-ui/system';
 
 const placeholderTransaction: Transaction = {
   name: '',
@@ -155,53 +157,46 @@ export const OutboundShipmentDetailView: FC = () => {
     return () => setActions([]);
   }, [draft]);
 
-  const { currentTab, onChangeTab } = useTabs(0);
+  const { currentTab, onChangeTab } = useTabs('general');
 
   return draft ? (
     <>
-      <Portal container={appBarButtonsRef?.current}>
-        <>{OpenButton}</>
-      </Portal>
-      <AppBarContentPortal
-        sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
-      >
-        <Tabs value={currentTab} centered onChange={onChangeTab}>
-          <Tab label={t('label.general')} />
-          <Tab label={t('label.item')} />
-          <Tab label={t('label.batch')} />
-          <Tab label={t('label.price')} />
-          <Tab label={t('label.log')} />
-        </Tabs>
-      </AppBarContentPortal>
+      <TabContext value={String(currentTab)}>
+        <Portal container={appBarButtonsRef?.current}>
+          <>{OpenButton}</>
+        </Portal>
+        <AppBarContentPortal
+          sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
+        >
+          <TabList value={currentTab} onChange={onChangeTab}>
+            <Tab value="general" label={t('label.general')} />
+            <Tab value="transport" label={t('label.transport')} />
+          </TabList>
+        </AppBarContentPortal>
 
-      <TabPanel tab={0} currentTab={currentTab}>
-        <div>
-          <input
-            value={draft?.name}
-            onChange={event =>
-              setDraft({ ...draft, name: event?.target.value })
-            }
-          />
-        </div>
-        <div>
-          <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
-        </div>
-        <div>
-          <button onClick={save}>OK</button>
-        </div>
-      </TabPanel>
-      <TabPanel tab={1} currentTab={currentTab}>
-        <span>Item summary coming soon..</span>
-      </TabPanel>
-      <TabPanel tab={2} currentTab={currentTab}>
-        <span>Batch summary coming soon..</span>
-      </TabPanel>
-      <TabPanel tab={3} currentTab={currentTab}>
-        <span>Price details coming soon..</span>
-      </TabPanel>
-      <TabPanel tab={4} currentTab={currentTab}>
-        <span>Log of actions coming soon..</span>
-      </TabPanel>
+        <Box sx={{ display: 'flex', flex: 1, height: '100%' }}>
+          <TabPanel value="general">
+            <div>
+              <input
+                value={draft?.name}
+                onChange={event =>
+                  setDraft({ ...draft, name: event?.target.value })
+                }
+              />
+            </div>
+            <div>
+              <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
+            </div>
+            <div>
+              <button onClick={save}>OK</button>
+            </div>
+          </TabPanel>
+
+          <TabPanel value="transport">
+            <span>Price details coming soon..</span>
+          </TabPanel>
+        </Box>
+      </TabContext>
     </>
   ) : null;
 };

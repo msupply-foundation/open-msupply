@@ -2,32 +2,30 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { Tab } from './Tab';
-import { Tabs } from './Tabs';
-import { TabPanel } from './TabPanel';
+import { TabList, Tab, TabPanel, TabContext } from './Tabs';
 import { useTabs } from './useTabs';
 
 describe('Tabs', () => {
   const ExampleTabs = () => {
-    const { currentTab, onChangeTab } = useTabs(0);
+    const { currentTab, onChangeTab } = useTabs('0');
 
     return (
-      <>
-        <Tabs value={currentTab} onChange={onChangeTab}>
-          <Tab value={0} label="1" />
-          <Tab value={1} label="2" />
-        </Tabs>
-        <TabPanel tab={0} currentTab={currentTab}>
+      <TabContext value={currentTab}>
+        <TabList value={currentTab} onChange={onChangeTab}>
+          <Tab value="0" label="zero" />
+          <Tab value="1" label="one" />
+        </TabList>
+        <TabPanel value="0">
           <span>content1</span>
         </TabPanel>
-        <TabPanel tab={1} currentTab={currentTab}>
+        <TabPanel value="1">
           <span>content2</span>
         </TabPanel>
-      </>
+      </TabContext>
     );
   };
 
-  it('initially renders the content of the first tab', () => {
+  it('the content of the non active tab is not in the document initially', () => {
     const { queryByText } = render(<ExampleTabs />);
 
     const node1 = queryByText(/content1/i);
@@ -40,7 +38,7 @@ describe('Tabs', () => {
   it('renders the content for the tab for the tab clicked', () => {
     const { queryByText, getByRole } = render(<ExampleTabs />);
 
-    const tabButton = getByRole('tab', { name: /2/ });
+    const tabButton = getByRole('tab', { name: /one/i });
 
     act(() => {
       userEvent.click(tabButton);
