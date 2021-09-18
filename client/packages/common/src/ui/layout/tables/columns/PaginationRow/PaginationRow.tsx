@@ -16,7 +16,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
 }) => {
   // Offset is zero indexed, but should display one indexed for
   // users.
-  const xToY = `${offset + 1}-${first + offset}`;
+  const xToY = `${offset + 1}-${Math.min(first + offset, total)}`;
 
   const onChangePage = (_: React.ChangeEvent<unknown>, value: number) => {
     // The type here is broken and `value` can be `null`!
@@ -33,6 +33,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
       display="flex"
       flexDirection="row"
       height="48px"
+      minHeight="48px"
       justifyContent="space-between"
       alignItems="center"
       boxShadow="inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)"

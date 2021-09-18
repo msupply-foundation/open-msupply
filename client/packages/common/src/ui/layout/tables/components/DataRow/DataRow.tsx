@@ -24,6 +24,7 @@ export const DataRow = <T extends Record<string, unknown>>({
       sx={{
         alignItems: 'center',
         height: '40px',
+        maxHeight: '45px',
         boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
         padding: '0px 20px',
         display: 'flex',

@@ -70,12 +70,17 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
       }}
     >
       <MuiTable
         stickyHeader
         {...getTableProps()}
-        sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
