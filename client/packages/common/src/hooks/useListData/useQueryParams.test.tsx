@@ -65,7 +65,29 @@ describe('useQueryParams', () => {
     );
   });
 
-  it('when the number of rows changes, the pagination first value changes', () => {
+  it('when the number of rows changes to be more than the amount of data cached, the pagination first value changes', () => {
+    window.resizeTo(1000, 1000);
+
+    const { result } = renderHook(() => useQueryParams<TestSortBy>('id'), {
+      wrapper: getWrapper(),
+    });
+
+    act(() => {
+      window.resizeTo(2000, 2000);
+    });
+
+    expect(result.current).toEqual(
+      expect.objectContaining({
+        sortBy: { key: 'id', isDesc: false, direction: 'asc' },
+        pagination: expect.objectContaining({ page: 0, offset: 0, first: 200 }),
+        page: 0,
+        offset: 0,
+        first: 200,
+      })
+    );
+  });
+
+  it('when the number of rows changes to be less than the amount of data cached, the pagination first value does not change', () => {
     window.resizeTo(1000, 1000);
 
     const { result } = renderHook(() => useQueryParams<TestSortBy>('id'), {
@@ -79,10 +101,10 @@ describe('useQueryParams', () => {
     expect(result.current).toEqual(
       expect.objectContaining({
         sortBy: { key: 'id', isDesc: false, direction: 'asc' },
-        pagination: expect.objectContaining({ page: 0, offset: 0, first: 50 }),
+        pagination: expect.objectContaining({ page: 0, offset: 0, first: 100 }),
         page: 0,
         offset: 0,
-        first: 50,
+        first: 100,
       })
     );
   });

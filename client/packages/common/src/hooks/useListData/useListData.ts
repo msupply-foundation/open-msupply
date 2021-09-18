@@ -38,7 +38,7 @@ export const useListData = <T>(
   );
 
   const { mutateAsync: onUpdate, isLoading: isUpdateLoading } = useMutation(
-    api.onDelete,
+    api.onUpdate,
     { onSuccess: invalidation }
   );
 
