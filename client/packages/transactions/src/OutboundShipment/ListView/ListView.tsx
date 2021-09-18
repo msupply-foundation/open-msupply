@@ -43,6 +43,7 @@ export const OutboundShipmentListView: FC = () => {
     first,
     offset,
     sortBy,
+    numberOfRows,
     onChangeSortBy,
     onChangePage,
   } = useListData('color', 'transaction', OutboundShipmentListViewApi);
@@ -186,7 +187,7 @@ export const OutboundShipmentListView: FC = () => {
         onChangePage={(page: number) => onChangePage(page)}
         tableApi={tableApi}
         columns={columns}
-        data={data || []}
+        data={data?.slice(0, numberOfRows) || []}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/customers/customer-invoice/${row.id}`);
