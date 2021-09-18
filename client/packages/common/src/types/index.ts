@@ -1,3 +1,10 @@
+export type Item = {
+  id: string;
+  code: string;
+  name: string;
+  packSize?: number;
+  quantity?: number;
+};
 export type Transaction = {
   id?: string;
   color: string;
@@ -9,4 +16,5 @@ export type Transaction = {
   invoiceNumber: string;
   total: string;
   name: string;
+  items?: Item[];
 };
