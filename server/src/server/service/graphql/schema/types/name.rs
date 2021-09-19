@@ -8,9 +8,9 @@ pub struct NameQuery {
     pub id: String,
     pub name: String,
     pub code: String,
-    // will come from name_store_join not the Name record itself
-    // pub is_customer: bool,
-    // pub is_supplier: bool,
+    // Below are from name_store_join
+    pub is_customer: bool,
+    pub is_supplier: bool,
 }
 
 pub struct NameList {

@@ -106,6 +106,15 @@ table! {
 }
 
 table! {
+    name_store_join (id) {
+        id -> Text,
+        name_id -> Text,
+        store_id -> Text,
+        name_is_customer -> Bool,
+        name_is_supplier -> Bool,
+    }
+}
+table! {
     master_list (id) {
         id -> Text,
         name -> Text,
@@ -143,6 +152,8 @@ joinable!(transact -> store (store_id));
 joinable!(transact_line -> item (item_id));
 joinable!(transact_line -> item_line (item_line_id));
 joinable!(transact_line -> transact (transact_id));
+joinable!(name_store_join -> store (store_id));
+joinable!(name_store_join -> name_table (name_id));
 joinable!(master_list_line -> master_list (master_list_id));
 joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name_table (name_id));
@@ -159,4 +170,5 @@ allow_tables_to_appear_in_same_query!(
     transact,
     transact_line,
     user_account,
+    name_store_join
 );
