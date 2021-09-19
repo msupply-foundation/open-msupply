@@ -23,12 +23,12 @@ import {
   AppBarContentPortal,
   useTranslation,
   useMutation,
-  ChevronDown,
-  Tools,
   getNameAndColorColumn,
   useWindowDimensions,
   useTheme,
   useAppBarRectStore,
+  Delete,
+  Edit,
 } from '@openmsupply-client/common';
 
 import { listQueryFn, deleteFn, updateFn } from '../../api';
@@ -201,13 +201,12 @@ export const OutboundShipmentListView: FC = () => {
 
   const tableApi = useDataTableApi<Transaction>();
   const t = useTranslation();
-
   return (
     <>
       <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
         <DropdownMenu label="Select">
           <DropdownMenuItem
-            IconComponent={ChevronDown}
+            IconComponent={Delete}
             onClick={() => {
               const linesToDelete = tableApi?.current?.selectedRows;
               if (linesToDelete && linesToDelete?.length > 0) {
@@ -221,7 +220,7 @@ export const OutboundShipmentListView: FC = () => {
             {t('button.delete-lines')}
           </DropdownMenuItem>
           <DropdownMenuItem
-            IconComponent={Tools}
+            IconComponent={Edit}
             onClick={warning('Whats this do?')}
           >
             Edit
