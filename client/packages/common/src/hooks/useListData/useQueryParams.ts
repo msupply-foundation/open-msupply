@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useRowRenderCount } from './useRowRenderCount';
-import { usePagination, PaginationState } from './usePagination';
-import { useSortBy, SortState } from './useSortBy';
+import { useRowRenderCount } from '../useRowRenderCount';
+import { usePagination, PaginationState } from '../usePagination';
+import { useSortBy, SortState, SortRule } from '../useSortBy';
 
 interface QueryParams<T> extends SortState<T>, PaginationState {}
 
@@ -12,11 +12,11 @@ interface QueryParamsState<T> extends SortState<T>, PaginationState {
 }
 
 export const useQueryParams = <T>(
-  initialSortBy: keyof T
+  initialSortBy: SortRule<T>
 ): QueryParamsState<T> => {
   const numberOfRows = useRowRenderCount();
   const pagination = usePagination(numberOfRows);
-  const { sortBy, onChangeSortBy } = useSortBy(initialSortBy);
+  const { sortBy, onChangeSortBy } = useSortBy<T>(initialSortBy);
 
   useEffect(() => {
     if (numberOfRows > pagination.first) {

@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { useQueryParams } from './useQueryParams';
-import { SortRule } from './useSortBy';
+import { SortRule } from '../useSortBy';
 
 export interface ListApi<T> {
   onQuery: ({
@@ -17,7 +17,7 @@ export interface ListApi<T> {
 }
 
 export const useListData = <T>(
-  initialSortBy: keyof T,
+  initialSortBy: SortRule<T>,
   queryKey: string | readonly unknown[],
   api: ListApi<T>
 ): any => {

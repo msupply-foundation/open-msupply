@@ -3,13 +3,13 @@ import { act } from 'react-dom/test-utils';
 import { usePagination } from './usePagination';
 
 describe('usePagination', () => {
-  it('first is correctly set to the initial value passed', () => {
+  it('has first correctly set to the initial value passed', () => {
     const { result } = renderHook(() => usePagination(10));
 
     expect(result.current.first).toEqual(10);
   });
 
-  it('When the page has changed, the page, offset and first are correct', () => {
+  it('has correct offset, first and page values When the page is changed', () => {
     const { result } = renderHook(() => usePagination(10));
 
     act(() => {

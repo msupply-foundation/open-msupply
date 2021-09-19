@@ -50,9 +50,12 @@ describe('useQueryParams', () => {
   it('Returns the correct initial state', () => {
     window.resizeTo(1000, 1000);
 
-    const { result } = renderHook(() => useQueryParams<TestSortBy>('id'), {
-      wrapper: getWrapper(),
-    });
+    const { result } = renderHook(
+      () => useQueryParams<TestSortBy>({ key: 'id' }),
+      {
+        wrapper: getWrapper(),
+      }
+    );
 
     expect(result.current).toEqual(
       expect.objectContaining({
@@ -68,9 +71,12 @@ describe('useQueryParams', () => {
   it('when the number of rows changes to be more than the amount of data cached, the pagination first value changes', () => {
     window.resizeTo(1000, 1000);
 
-    const { result } = renderHook(() => useQueryParams<TestSortBy>('id'), {
-      wrapper: getWrapper(),
-    });
+    const { result } = renderHook(
+      () => useQueryParams<TestSortBy>({ key: 'id' }),
+      {
+        wrapper: getWrapper(),
+      }
+    );
 
     act(() => {
       window.resizeTo(2000, 2000);
@@ -90,9 +96,12 @@ describe('useQueryParams', () => {
   it('when the number of rows changes to be less than the amount of data cached, the pagination first value does not change', () => {
     window.resizeTo(1000, 1000);
 
-    const { result } = renderHook(() => useQueryParams<TestSortBy>('id'), {
-      wrapper: getWrapper(),
-    });
+    const { result } = renderHook(
+      () => useQueryParams<TestSortBy>({ key: 'id' }),
+      {
+        wrapper: getWrapper(),
+      }
+    );
 
     act(() => {
       window.resizeTo(500, 500);
