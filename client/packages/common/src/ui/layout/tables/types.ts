@@ -1,7 +1,7 @@
-import { SortRule } from '@openmsupply-client/common';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ReactNode, RefObject } from 'react';
 import { Column } from 'react-table';
+import { SortBy, SortRule } from '../../../hooks/useSortBy';
 
 export enum ColumnFormat {
   date,
@@ -52,9 +52,9 @@ interface Pagination {
 export interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
   data?: T[];
-  sortBy: SortRule<T>;
+  sortBy: SortBy<T>;
   isLoading?: boolean;
-  onSortBy: (sortRule: keyof T) => void;
+  onSortBy: (sortRule: SortRule<T>) => void;
   pagination: Pagination;
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
