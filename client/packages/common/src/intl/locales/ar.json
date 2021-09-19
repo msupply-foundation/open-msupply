@@ -30,7 +30,9 @@
   "button.print": "Print",
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",
-  "error.something-wrong": "Oops! Somethings gone wrong.",
+  "error.404": "Click the back arrow or use the menu to find your way again.",
+  "error.something-wrong": "Oops! Something's gone wrong.",
+  "heading.404": "Feeling lost?",
   "heading.actions": "Actions",
   "heading.additional-info": "Additional Info",
   "heading.comment": "Comment",
@@ -47,7 +49,7 @@
   "label.supplier": "Supplier",
   "label.total": "Total",
   "label.type": "Type",
-  "link.history": "History",
   "link.backorders": "Backorders",
-  "link.copy-to-clipboard": "Copy to Clipboard"
+  "link.copy-to-clipboard": "Copy to Clipboard",
+  "link.history": "History"
 }
