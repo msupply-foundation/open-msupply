@@ -1,12 +1,12 @@
 use crate::{
     database::{
-        loader::{ItemLineLoader, ItemLoader, NameLoader, StoreLoader, TransactLoader},
+        loader::{ItemLineLoader, ItemLoader, StoreLoader, TransactLoader},
         repository::{
             CustomerInvoiceRepository, RequisitionLineRepository, TransactLineRepository,
         },
         schema::{
-            ItemLineRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
-            StoreRow, TransactLineRow, TransactRow, TransactRowType,
+            ItemLineRow, ItemRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow,
+            TransactLineRow, TransactRow, TransactRowType,
         },
     },
     server::service::graphql::ContextExt,
@@ -14,42 +14,8 @@ use crate::{
 
 use async_graphql::{dataloader::DataLoader, Context, Enum, InputObject, Object};
 
-#[derive(Clone)]
-pub struct Name {
-    pub name_row: NameRow,
-}
-
-#[Object]
-impl Name {
-    pub async fn id(&self) -> &str {
-        &self.name_row.id
-    }
-
-    pub async fn name(&self) -> &str {
-        &self.name_row.id
-    }
-
-    pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Transact> {
-        let customer_invoice_repository = ctx.get_repository::<CustomerInvoiceRepository>();
-
-        let customer_invoice_rows = customer_invoice_repository
-            .find_many_by_name_id(&self.name_row.id)
-            .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get customer invoices for name {}",
-                    self.name_row.id
-                )
-            });
-
-        customer_invoice_rows
-            .into_iter()
-            .map(|customer_invoice_row| Transact {
-                transact_row: customer_invoice_row,
-            })
-            .collect()
-    }
-}
+pub mod name;
+pub use self::name::*;
 
 #[derive(Clone)]
 pub struct Store {
@@ -60,19 +26,6 @@ pub struct Store {
 impl Store {
     pub async fn id(&self) -> &str {
         &self.store_row.id
-    }
-
-    pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
-
-        let name_row: NameRow = name_loader
-            .load_one(self.store_row.name_id.clone())
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get name for store {}", self.store_row.id))
-            .ok_or_else(|| panic!("Failed to get name for store {}", self.store_row.id))
-            .unwrap_or_else(|_| panic!("Failed to get name for store {}", self.store_row.id));
-
-        Name { name_row }
     }
 
     pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Transact> {
@@ -229,34 +182,6 @@ pub struct Requisition {
 impl Requisition {
     pub async fn id(&self) -> &str {
         &self.requisition_row.id
-    }
-
-    pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
-
-        let name_row: NameRow = name_loader
-            .load_one(self.requisition_row.name_id.clone())
-            .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get name for requisition {}",
-                    self.requisition_row.id
-                )
-            })
-            .ok_or_else(|| {
-                panic!(
-                    "Failed to get name for requisition {}",
-                    self.requisition_row.id
-                )
-            })
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to get name for requisition {}",
-                    self.requisition_row.id
-                )
-            });
-
-        Name { name_row }
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Store {
@@ -420,19 +345,6 @@ pub struct Transact {
 impl Transact {
     pub async fn id(&self) -> String {
         self.transact_row.id.to_string()
-    }
-
-    pub async fn name(&self, ctx: &Context<'_>) -> Name {
-        let name_loader = ctx.get_loader::<DataLoader<NameLoader>>();
-
-        let name_row: NameRow = name_loader
-            .load_one(self.transact_row.name_id.clone())
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id))
-            .ok_or_else(|| panic!("Failed to get name for transact {}", self.transact_row.id))
-            .unwrap_or_else(|_| panic!("Failed to get name for transact {}", self.transact_row.id));
-
-        Name { name_row }
     }
 
     pub async fn invoice_number(&self) -> i32 {
