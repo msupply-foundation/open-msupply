@@ -1,106 +1,48 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { TabPanel } from './TabPanel';
-import { Tab } from './Tab';
-import { Tabs } from './Tabs';
-import { useTabs } from '.';
+import { TabList, Tab, TabPanel, TabContext } from './Tabs';
+import { useTabs } from './useTabs';
+import { Box } from '@material-ui/system';
 
 export default {
   title: 'Navigation/Tabs',
-  component: Tabs,
-} as ComponentMeta<typeof Tabs>;
+  component: TabList,
+} as ComponentMeta<typeof TabList>;
 
 const ExampleTabs = () => {
-  const { currentTab, onChangeTab } = useTabs();
+  const { currentTab, onChangeTab } = useTabs('hotpink');
 
   return (
-    <>
-      <Tabs value={currentTab} centered onChange={onChangeTab}>
-        <Tab value={0} label="General" />
-        <Tab value={1} label="Item" />
-        <Tab value={2} label="Batch" />
-        <Tab value={3} label="Log" />
-        <Tab value={4} label="Transport" />
-      </Tabs>
-      <TabPanel
-        sx={{ display: 'flex', flex: 1 }}
-        tab={0}
-        currentTab={currentTab}
-      >
-        <div
-          style={{
-            flexGrow: 1,
-            display: 'flex',
-            backgroundColor: 'hotpink',
-          }}
-        >
-          content1
-        </div>
-      </TabPanel>
-      <TabPanel
-        sx={{ display: 'flex', flex: 1 }}
-        tab={1}
-        currentTab={currentTab}
-      >
-        <span
-          style={{
-            flex: 1,
-            display: 'flex',
-            backgroundColor: 'aqua',
-          }}
-        >
-          content2
-        </span>
-      </TabPanel>
-      <TabPanel
-        sx={{ display: 'flex', flex: 1 }}
-        tab={2}
-        currentTab={currentTab}
-      >
-        <span
-          style={{
-            flex: 1,
-            display: 'flex',
-            backgroundColor: 'turquoise',
-          }}
-        >
-          content3
-        </span>
-      </TabPanel>
-      <TabPanel
-        sx={{ display: 'flex', flex: 1 }}
-        tab={3}
-        currentTab={currentTab}
-      >
-        <span
-          style={{
-            flex: 1,
-            display: 'flex',
-            backgroundColor: 'brown',
-          }}
-        >
-          content4
-        </span>
-      </TabPanel>
-      <TabPanel
-        sx={{ display: 'flex', flex: 1 }}
-        tab={4}
-        currentTab={currentTab}
-      >
-        <span
-          style={{
-            flex: 1,
-            display: 'flex',
-            backgroundColor: 'lime',
-          }}
-        >
-          content5
-        </span>
-      </TabPanel>
-    </>
+    <TabContext value={currentTab}>
+      <TabList value={currentTab} centered onChange={onChangeTab}>
+        <Tab value="hotpink" label="Hot Pink" />
+        <Tab value="aqua" label="Aqua" />
+        <Tab value="turquoise" label="Turquoise" />
+        <Tab value="brown" label="Brown" />
+        <Tab value="lime" label="Lime" />
+      </TabList>
+
+      <Box sx={{ display: 'flex', flex: 1 }}>
+        <TabPanel sx={{ flex: 1 }} value={'hotpink'}>
+          <Box height="100%" bgcolor="hotpink" />
+        </TabPanel>
+        <TabPanel sx={{ flex: 1 }} value={'aqua'}>
+          <Box height="100%" bgcolor="aqua" />
+        </TabPanel>
+        <TabPanel sx={{ flex: 1 }} value={'turquoise'}>
+          <Box height="100%" bgcolor="turquoise" />
+        </TabPanel>
+        <TabPanel sx={{ flex: 1 }} value={'brown'}>
+          <Box height="100%" bgcolor="brown" />
+        </TabPanel>
+        <TabPanel sx={{ flex: 1 }} value={'lime'}>
+          <Box height="100%" bgcolor="lime" />
+        </TabPanel>
+      </Box>
+    </TabContext>
   );
 };
 
-const Template: ComponentStory<typeof Tabs> = () => <ExampleTabs />;
+const Template: ComponentStory<typeof TabList> = () => <ExampleTabs />;
 
 export const Primary = Template.bind({});
