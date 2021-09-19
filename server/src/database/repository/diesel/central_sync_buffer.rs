@@ -46,4 +46,18 @@ impl CentralSyncBufferRepository {
         diesel::delete(central_sync_buffer).execute(&connection)?;
         Ok(())
     }
+
+    /// Retrieves all sync entries for a given table and returns them in asc order.
+    pub async fn get_sync_entries(
+        &self,
+        table: &str,
+    ) -> Result<Vec<CentralSyncBufferRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = central_sync_buffer
+            .filter(table_name.eq(table))
+            .order(cursor_id.asc())
+            .load(&connection)?;
+        Ok(result)
+    }
 }
