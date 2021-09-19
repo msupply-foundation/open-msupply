@@ -6,9 +6,19 @@ pub mod name;
 pub mod store;
 
 use crate::{
-    database::schema::{
-        ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow, StoreRow,
+    database::{
+        repository::{
+            repository::{
+                MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
+            },
+            ItemRepository, NameRepository, RepositoryError, StoreRepository,
+        },
+        schema::{
+            CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+            NameRow, StoreRow,
+        },
     },
+    server::data::RepositoryRegistry,
     util::sync::translation::SyncRecord,
 };
 
@@ -25,9 +35,14 @@ pub enum TestSyncDataRecord {
 #[allow(dead_code)]
 #[derive(Clone)]
 pub struct TestSyncRecord {
+    /// Sync record for the translation
     pub sync_record: SyncRecord,
+    /// Expected result for the imported data
     pub translated_record: TestSyncDataRecord,
+    /// Identifier for this record
     pub identifier: &'static str,
+    /// Row as stored in the central sync buffer
+    pub central_sync_buffer_row: CentralSyncBufferRow,
 }
 
 #[allow(dead_code)]
@@ -35,4 +50,79 @@ pub struct SyncRecordDefinition {
     pub id: &'static str,
     pub data: &'static str,
     pub identifier: &'static str,
+}
+
+// DB query will return NotFound error for record that's not found
+// while test data has None for records that shouldn't be integrated
+#[allow(dead_code)]
+fn from_option_to_db_result<T>(option: Option<T>) -> Result<T, RepositoryError> {
+    match option {
+        Some(record) => Ok(record),
+        None => Err(RepositoryError::NotFound),
+    }
+}
+
+#[allow(dead_code)]
+pub async fn check_records_against_database(
+    registry: &RepositoryRegistry,
+    records: Vec<TestSyncRecord>,
+) {
+    for record in records {
+        match record.translated_record {
+            TestSyncDataRecord::Store(comparison_record) => {
+                assert_eq!(
+                    registry
+                        .get::<StoreRepository>()
+                        .find_one_by_id(&record.sync_record.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+            TestSyncDataRecord::Name(comparison_record) => {
+                assert_eq!(
+                    registry
+                        .get::<NameRepository>()
+                        .find_one_by_id(&record.sync_record.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+            TestSyncDataRecord::Item(comparison_record) => {
+                assert_eq!(
+                    registry
+                        .get::<ItemRepository>()
+                        .find_one_by_id(&record.sync_record.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+            TestSyncDataRecord::MasterList(comparison_record) => {
+                assert_eq!(
+                    registry
+                        .get::<MasterListRepository>()
+                        .find_one_by_id(&record.sync_record.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+            TestSyncDataRecord::MasterListLine(comparison_record) => {
+                assert_eq!(
+                    registry
+                        .get::<MasterListLineRepository>()
+                        .find_one_by_id(&record.sync_record.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+            TestSyncDataRecord::MasterListNameJoin(comparison_record) => {
+                assert_eq!(
+                    registry
+                        .get::<MasterListNameJoinRepository>()
+                        .find_one_by_id(&record.sync_record.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+        }
+    }
 }
