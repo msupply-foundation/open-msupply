@@ -79,7 +79,7 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
   const tableApi = useDataTableApi<Item>();
   const [sortedData, setSortedData] = useState(data);
 
-  const { sortBy, onChangeSortBy } = useSortBy<Item>('quantity');
+  const { sortBy, onChangeSortBy } = useSortBy<Item>({ key: 'quantity' });
 
   const numberToRender = useRowRenderCount();
   const pagination = usePagination(Math.min(data.length, numberToRender));
@@ -90,7 +90,7 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
 
   useEffect(() => {
     const { key, isDesc } = sortBy;
-    const sorter = getDataSorter(key, isDesc);
+    const sorter = getDataSorter(key, !!isDesc);
     setSortedData(data.sort(sorter));
   }, [data, sortBy, columns]);
 

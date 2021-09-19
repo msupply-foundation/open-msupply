@@ -19,10 +19,10 @@ import {
   DropdownMenuItem,
   AppBarContentPortal,
   useTranslation,
-  Edit,
-  Delete,
-  getNameAndColorColumn,
   useListData,
+  getNameAndColorColumn,
+  Delete,
+  Edit,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
