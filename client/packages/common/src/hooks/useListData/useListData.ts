@@ -1,7 +1,7 @@
 import { SortBy } from './../useSortBy/useSortBy';
 import { UseMutateFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
-import { QueryParams, useQueryParams } from './useQueryParams';
+import { QueryParams, useQueryParams } from '../useQueryParams';
 import { SortRule } from '../useSortBy';
 
 export interface ListApi<T> {
