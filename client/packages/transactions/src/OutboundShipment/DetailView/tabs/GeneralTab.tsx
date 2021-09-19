@@ -4,7 +4,7 @@ import {
   RemoteDataTable,
   useColumns,
   useDataTableApi,
-  usePagination,
+  useQueryParams,
   useSortedData,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
@@ -52,7 +52,7 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
   const columns = useColumns<Item>(defaultColumns);
   const tableApi = useDataTableApi<Item>();
 
-  const { pagination } = usePagination();
+  const { pagination } = useQueryParams({ key: 'quantity' });
   const { sortedData, onChangeSortBy, sortBy } = useSortedData(data, {
     key: 'quantity',
   });

@@ -38,7 +38,7 @@ beforeEach(() => {
   setScreenSize_ONLY_FOR_TESTING(1440);
 });
 
-const server = setupMockServer();
+export const server = setupMockServer();
 
 beforeAll(() => {
   // Establish requests interception layer before all tests.
