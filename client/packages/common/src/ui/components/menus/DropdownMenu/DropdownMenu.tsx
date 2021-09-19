@@ -17,23 +17,28 @@ import { ChevronDown } from '../../../icons';
 interface DropdownMenuItemProps extends MenuItemProps {
   IconComponent?: React.JSXElementConstructor<SvgIconProps>;
   inset?: boolean;
+  color?: 'primary' | 'secondary';
 }
 
 export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({
   IconComponent,
+  color,
   ...props
 }) => {
   return (
     <MenuItem sx={{ fontSize: '10' }} {...props}>
       {IconComponent ? (
         <Box mr={1}>
-          <IconComponent fontSize="inherit" />
+          <IconComponent fontSize="inherit" color={color} />
         </Box>
       ) : null}
       <ListItemText
         inset={props.inset}
         primaryTypographyProps={{ sx: { fontSize: 'inherit' } }}
-        sx={{ '&.MuiListItemText-inset': { paddingLeft: '22px' } }}
+        sx={{
+          '&.MuiListItemText-inset': { paddingLeft: '22px' },
+          '&.MuiListItemText-root > span': { color: `${color}.main` },
+        }}
       >
         {props.children}
       </ListItemText>
