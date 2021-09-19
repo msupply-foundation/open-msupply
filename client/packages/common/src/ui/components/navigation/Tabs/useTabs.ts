@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
 
 type TabState = {
-  currentTab: number;
-  onChangeTab: (event: React.SyntheticEvent, newTab: number) => void;
+  currentTab: string;
+  onChangeTab: (event: React.SyntheticEvent, newTab: string) => void;
 };
 
-export const useTabs = (initialTab = 0): TabState => {
+export const useTabs = (initialTab: string): TabState => {
   const [currentTab, setCurrentTab] = useState(initialTab);
 
-  const onChangeTab = useCallback((_, newTab: number) => {
+  const onChangeTab = useCallback((_, newTab: string) => {
     setCurrentTab(newTab);
   }, []);
 
