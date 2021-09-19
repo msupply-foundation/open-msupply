@@ -13,3 +13,4 @@ export * from './useListData';
 export * from './useSortBy';
 export * from './usePagination';
 export * from './useRowRenderCount';
+export * from './useSortedData';

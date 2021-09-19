@@ -2,9 +2,11 @@ import {
   ColumnDefinition,
   Item,
   RemoteDataTable,
+  SortRule,
   useColumns,
   useDataTableApi,
   usePagination,
+  useQueryParams,
   useRowRenderCount,
   useSortBy,
 } from '@openmsupply-client/common';
@@ -74,25 +76,26 @@ const getDataSorter = (sortKey: string, desc: boolean) => (a: any, b: any) => {
   return 0;
 };
 
+const useSortedData = <T extends Record<string, unknown>>(data: T[]) => {
+  const { sortBy, onChangeSortBy } = useSortBy('quantity');
+  const [sortedData, setSortedData] = useState(data);
+
+  const wrapped = (newSortKey: string) => {
+    const newSortBy = onChangeSortBy(newSortKey);
+    const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
+
+    setSortedData(data.sort(sorter));
+  };
+
+  return { sortedData, sortBy, onChangeSortBy: wrapped };
+};
+
 export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
   const columns = useColumns<Item>(defaultColumns);
   const tableApi = useDataTableApi<Item>();
-  const [sortedData, setSortedData] = useState(data);
 
-  const { sortBy, onChangeSortBy } = useSortBy<Item>({ key: 'quantity' });
-
-  const numberToRender = useRowRenderCount();
-  const pagination = usePagination(Math.min(data.length, numberToRender));
-
-  useEffect(() => {
-    pagination.onChangeFirst(numberToRender);
-  }, [numberToRender]);
-
-  useEffect(() => {
-    const { key, isDesc } = sortBy;
-    const sorter = getDataSorter(key, !!isDesc);
-    setSortedData(data.sort(sorter));
-  }, [data, sortBy, columns]);
+  const { pagination } = useQueryParams<Item>('quantity');
+  const { sortedData, onChangeSortBy, sortBy } = useSortedData(data);
 
   return (
     <RemoteDataTable
@@ -102,7 +105,7 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
       columns={columns}
       data={sortedData.slice(
         pagination.offset,
-        Math.min(pagination.offset + pagination.first, data.length)
+        pagination.offset + pagination.first
       )}
       onSortBy={onChangeSortBy}
       onChangePage={pagination.onChangePage}
