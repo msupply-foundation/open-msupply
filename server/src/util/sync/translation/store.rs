@@ -1,6 +1,4 @@
-use super::SyncRecord;
-
-use crate::database::schema::StoreRow;
+use crate::database::schema::{CentralSyncBufferRow, StoreRow};
 
 use serde::Deserialize;
 
@@ -13,8 +11,8 @@ pub struct LegacyStoreRow {
 }
 
 impl LegacyStoreRow {
-    pub fn try_translate(sync_record: &SyncRecord) -> Result<Option<StoreRow>, String> {
-        if sync_record.record_type != "store" {
+    pub fn try_translate(sync_record: &CentralSyncBufferRow) -> Result<Option<StoreRow>, String> {
+        if sync_record.table_name != "store" {
             return Ok(None);
         }
 
@@ -53,7 +51,7 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::Store(translated_record) => {
                     assert_eq!(
-                        LegacyStoreRow::try_translate(&record.sync_record).unwrap(),
+                        LegacyStoreRow::try_translate(&record.central_sync_buffer_row).unwrap(),
                         translated_record,
                         "{}",
                         record.identifier

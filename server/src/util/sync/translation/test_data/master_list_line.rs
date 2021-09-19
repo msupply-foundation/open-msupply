@@ -1,9 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, MasterListLineRow},
-    util::sync::translation::{
-        test_data::{TestSyncDataRecord, TestSyncRecord},
-        SyncRecord, SyncType,
-    },
+    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
 };
 
 const MASTER_LIST_LINE_1: &'static str = r#"{
@@ -26,12 +23,6 @@ pub fn get_test_master_list_line_records() -> Vec<TestSyncRecord> {
             master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
         })),
         identifier: "Master list line",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_owned(),
-            data: MASTER_LIST_LINE_1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: "20".to_owned(),
             cursor_id: 20,

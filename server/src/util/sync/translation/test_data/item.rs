@@ -1,9 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, ItemRow},
-    util::sync::translation::{
-        test_data::{TestSyncDataRecord, TestSyncRecord},
-        SyncRecord, SyncType,
-    },
+    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
 };
 
 const ITEM_1: (&'static str, &'static str) = (
@@ -175,12 +172,6 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
             code: "NSI".to_owned(),
         })),
         identifier: "Non stock items",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: ITEM_1.0.to_owned(),
-            data: ITEM_1.1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: "300".to_owned(),
             cursor_id: 300,
@@ -199,12 +190,6 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
             code: "NSI".to_owned(),
         })),
         identifier: "Non stock items 2",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: ITEM_1_UPSERT.0.to_owned(),
-            data: ITEM_1_UPSERT.1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: "301".to_owned(),
             cursor_id: 301,

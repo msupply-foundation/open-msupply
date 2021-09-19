@@ -1,6 +1,4 @@
-use super::SyncRecord;
-
-use crate::database::schema::MasterListLineRow;
+use crate::database::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 use serde::Deserialize;
 
@@ -13,8 +11,10 @@ pub struct LegacyListMasterLineRow {
 }
 
 impl LegacyListMasterLineRow {
-    pub fn try_translate(sync_record: &SyncRecord) -> Result<Option<MasterListLineRow>, String> {
-        if sync_record.record_type != "list_master_line" {
+    pub fn try_translate(
+        sync_record: &CentralSyncBufferRow,
+    ) -> Result<Option<MasterListLineRow>, String> {
+        if sync_record.table_name != "list_master_line" {
             return Ok(None);
         }
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)
@@ -40,7 +40,8 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::MasterListLine(translated_record) => {
                     assert_eq!(
-                        LegacyListMasterLineRow::try_translate(&record.sync_record).unwrap(),
+                        LegacyListMasterLineRow::try_translate(&record.central_sync_buffer_row)
+                            .unwrap(),
                         translated_record,
                         "{}",
                         record.identifier

@@ -1,6 +1,4 @@
-use super::SyncRecord;
-
-use crate::database::schema::MasterListNameJoinRow;
+use crate::database::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 use serde::Deserialize;
 
@@ -14,9 +12,9 @@ pub struct LegacyListMasterNameJoinRow {
 
 impl LegacyListMasterNameJoinRow {
     pub fn try_translate(
-        sync_record: &SyncRecord,
+        sync_record: &CentralSyncBufferRow,
     ) -> Result<Option<MasterListNameJoinRow>, String> {
-        if sync_record.record_type != "list_master_name_join" {
+        if sync_record.table_name != "list_master_name_join" {
             return Ok(None);
         }
         let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)
@@ -44,7 +42,8 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::MasterListNameJoin(translated_record) => {
                     assert_eq!(
-                        LegacyListMasterNameJoinRow::try_translate(&record.sync_record).unwrap(),
+                        LegacyListMasterNameJoinRow::try_translate(&record.central_sync_buffer_row)
+                            .unwrap(),
                         translated_record,
                         "{}",
                         record.identifier

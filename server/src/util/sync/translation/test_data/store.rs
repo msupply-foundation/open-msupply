@@ -1,9 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, StoreRow},
-    util::sync::translation::{
-        test_data::{TestSyncDataRecord, TestSyncRecord},
-        SyncRecord, SyncType,
-    },
+    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
 };
 
 const STORE_1: (&'static str, &'static str) = (
@@ -197,12 +194,6 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 code: "GEN".to_owned(),
             })),
             identifier: "General",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: STORE_1.0.to_owned(),
-                data: STORE_1.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "10".to_owned(),
                 cursor_id: 10,
@@ -214,12 +205,6 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Store(None),
             identifier: "Drug Registration",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: STORE_2.0.to_owned(),
-                data: STORE_2.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "11".to_owned(),
                 cursor_id: 11,
@@ -231,12 +216,6 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Store(None),
             identifier: "Supervisor- All stores",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: STORE_3.0.to_owned(),
-                data: STORE_3.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "12".to_owned(),
                 cursor_id: 12,
@@ -248,12 +227,6 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Store(None),
             identifier: "Hospital Info System",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: STORE_4.0.to_owned(),
-                data: STORE_4.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "13".to_owned(),
                 cursor_id: 13,
