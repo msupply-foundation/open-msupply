@@ -15,7 +15,10 @@ pub use remote::{
 pub use server::SyncServer;
 
 use crate::{
-    database::{repository::CentralSyncBufferRepository, schema::CentralSyncBufferRow},
+    database::{
+        repository::{CentralSyncBufferRepository, SyncRepository},
+        schema::CentralSyncBufferRow,
+    },
     server::data::RepositoryRegistry,
 };
 
@@ -172,6 +175,11 @@ impl SyncReceiverActor {
     ) -> Result<(), String> {
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
             repositories.get::<CentralSyncBufferRepository>();
+        let sync_session = repositories
+            .get::<SyncRepository>()
+            .new_sync_session()
+            .await
+            .unwrap();
         for table_name in TRANSLATION_RECORDS {
             let buffer_rows = central_sync_buffer_repository
                 .get_sync_entries(table_name)
@@ -186,7 +194,7 @@ impl SyncReceiverActor {
                     data: row.data,
                 })
                 .collect();
-            import_sync_records(repositories, &records).await?;
+            import_sync_records(&sync_session, repositories, &records).await?;
         }
         central_sync_buffer_repository
             .remove_all()

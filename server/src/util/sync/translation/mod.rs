@@ -8,7 +8,8 @@ pub mod test_data;
 
 use crate::{
     database::repository::{
-        repository::IntegrationUpsertRecord, IntegrationRecord, SyncRepository,
+        repository::{IntegrationUpsertRecord, SyncSession},
+        IntegrationRecord, SyncRepository,
     },
     server::data::RepositoryRegistry,
 };
@@ -108,6 +109,7 @@ pub const TRANSLATION_RECORDS: &'static [&'static str] = &[
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
 pub async fn import_sync_records(
+    sync_session: &SyncSession,
     registry: &RepositoryRegistry,
     records: &Vec<SyncRecord>,
 ) -> Result<(), String> {
@@ -120,7 +122,7 @@ pub async fn import_sync_records(
 
     let sync_repo = registry.get::<SyncRepository>();
     sync_repo
-        .integrate_records(&integration_records)
+        .integrate_records(sync_session, &integration_records)
         .await
         .map_err(|e| format!("Sync Error: {}", e))?;
     Ok(())
@@ -129,7 +131,7 @@ pub async fn import_sync_records(
 #[cfg(test)]
 mod tests {
     use crate::{
-        database::repository::repository::get_repositories,
+        database::repository::repository::{get_repositories, SyncRepository},
         server::data::RepositoryRegistry,
         util::{
             sync::translation::{
@@ -167,7 +169,12 @@ mod tests {
         records.append(&mut get_test_master_list_line_records());
         records.append(&mut get_test_master_list_name_join_records());
 
-        import_sync_records(&registry, &extract_sync_records(&records))
+        let sync_session = registry
+            .get::<SyncRepository>()
+            .new_sync_session()
+            .await
+            .unwrap();
+        import_sync_records(&sync_session, &registry, &extract_sync_records(&records))
             .await
             .unwrap();
 
@@ -196,7 +203,12 @@ mod tests {
         let mut records = Vec::new();
         records.append(&mut init_records.iter().cloned().collect());
         records.append(&mut upsert_records.iter().cloned().collect());
-        import_sync_records(&registry, &extract_sync_records(&records))
+        let sync_session = registry
+            .get::<SyncRepository>()
+            .new_sync_session()
+            .await
+            .unwrap();
+        import_sync_records(&sync_session, &registry, &extract_sync_records(&records))
             .await
             .unwrap();
 
