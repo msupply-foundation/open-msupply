@@ -47,10 +47,15 @@ impl MasterListNameJoinRepository {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, id: &str) -> Result<MasterListNameJoinRow, RepositoryError> {
+    pub async fn find_one_by_id(
+        &self,
+        item_id: &str,
+    ) -> Result<MasterListNameJoinRow, RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_name_join::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = master_list_name_join.filter(id.eq(id)).first(&connection)?;
+        let result = master_list_name_join
+            .filter(id.eq(item_id))
+            .first(&connection)?;
         Ok(result)
     }
 }
