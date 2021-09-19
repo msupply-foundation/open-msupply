@@ -5,6 +5,7 @@ use crate::{
 mod central_sync_buffer;
 mod item;
 mod item_line;
+mod item_query;
 mod master_list;
 mod master_list_line;
 mod master_list_name_join;
@@ -21,6 +22,7 @@ mod user_account;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use item::ItemRepository;
 pub use item_line::ItemLineRepository;
+pub use item_query::ItemQueryRepository;
 pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
 pub use master_list_name_join::MasterListNameJoinRepository;
@@ -41,10 +43,10 @@ use diesel::{
 };
 
 #[cfg(feature = "sqlite")]
-type DBBackendConnection = SqliteConnection;
+pub type DBBackendConnection = SqliteConnection;
 
 #[cfg(not(feature = "sqlite"))]
-type DBBackendConnection = PgConnection;
+pub type DBBackendConnection = PgConnection;
 
 pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>;
 
@@ -98,6 +100,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(CustomerInvoiceRepository::new(pool.clone()));
     repositories.insert(ItemRepository::new(pool.clone()));
     repositories.insert(ItemLineRepository::new(pool.clone()));
+    repositories.insert(ItemQueryRepository::new(pool.clone()));
     repositories.insert(NameRepository::new(pool.clone()));
     repositories.insert(NameQueryRepository::new(pool.clone()));
     repositories.insert(RequisitionLineRepository::new(pool.clone()));
