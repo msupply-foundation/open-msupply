@@ -9,9 +9,7 @@ interface TestSortBy {
 
 describe('useSortBy', () => {
   it('Has the correct initial value', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }));
 
     expect(result.current.sortBy).toEqual({
       key: 'id',
@@ -21,12 +19,10 @@ describe('useSortBy', () => {
   });
 
   it('has the correct values after triggering a sort by', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }));
 
     act(() => {
-      result.current.onChangeSortBy('quantity');
+      result.current.onChangeSortBy({ key: 'quantity' });
     });
 
     expect(result.current.sortBy).toEqual({
@@ -37,12 +33,10 @@ describe('useSortBy', () => {
   });
 
   it('has the correct values after triggering a sort by for the same column that is set', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }));
 
     act(() => {
-      result.current.onChangeSortBy('id');
+      result.current.onChangeSortBy({ key: 'id' });
     });
 
     expect(result.current.sortBy).toEqual({
@@ -59,17 +53,17 @@ describe('useSortBy', () => {
 
     act(() => {
       // initially: id/asc
-      result.current.onChangeSortBy('id');
+      result.current.onChangeSortBy({ key: 'id' });
       // should be: id/desc
-      result.current.onChangeSortBy('id');
+      result.current.onChangeSortBy({ key: 'id' });
       // should be: quantity/asc
-      result.current.onChangeSortBy('quantity');
+      result.current.onChangeSortBy({ key: 'quantity' });
       // should be: id/asc
-      result.current.onChangeSortBy('id');
+      result.current.onChangeSortBy({ key: 'id' });
       // should be: quantity/asc
-      result.current.onChangeSortBy('quantity');
+      result.current.onChangeSortBy({ key: 'quantity' });
       // should be: quantity/desc
-      result.current.onChangeSortBy('quantity');
+      result.current.onChangeSortBy({ key: 'quantity' });
     });
 
     expect(result.current.sortBy).toEqual({

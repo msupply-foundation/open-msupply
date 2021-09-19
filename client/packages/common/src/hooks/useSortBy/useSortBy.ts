@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 export interface SortRule<T> {
   key: keyof T;
-  isDesc: boolean;
+  isDesc?: boolean;
 }
 
 interface SortBy<T> extends SortRule<T> {
@@ -10,21 +10,31 @@ interface SortBy<T> extends SortRule<T> {
 }
 interface SortState<T> {
   sortBy: SortBy<T>;
-  onChangeSortBy: (newSortKey: keyof T) => void;
+  onChangeSortBy: (newSortRule: SortRule<T>) => void;
 }
 
-export const useSortBy = <T>(initialSortBy: SortRule<T>): SortState<T> => {
-  const [{ key, isDesc }, setSortBy] = useState(initialSortBy);
+const getDirection = (isDesc: boolean) => (isDesc ? 'desc' : 'asc');
 
-  const onChangeSortBy = useCallback((newSortKey: keyof T) => {
+export const useSortBy = <T>({
+  key: initialSortKey,
+  isDesc: initialIsDesc = false,
+}: SortRule<T>): SortState<T> => {
+  const [{ key, isDesc }, setSortBy] = useState({
+    key: initialSortKey,
+    isDesc: initialIsDesc,
+  });
+
+  const onChangeSortBy = useCallback((newSortRule: SortRule<T>) => {
     setSortBy(({ key: prevSortKey, isDesc: prevIsDesc }) => {
-      const newIsDesc = prevSortKey === newSortKey ? !prevIsDesc : false;
+      const { key: newSortKey, isDesc: maybeNewIsDesc } = newSortRule;
+      const newIsDesc =
+        prevSortKey === newSortKey ? !prevIsDesc : maybeNewIsDesc ?? false;
       return { key: newSortKey, isDesc: newIsDesc };
     });
   }, []);
 
   return {
-    sortBy: { key, isDesc, direction: isDesc ? 'desc' : 'asc' },
+    sortBy: { key, isDesc, direction: getDirection(isDesc) },
     onChangeSortBy,
   };
 };
