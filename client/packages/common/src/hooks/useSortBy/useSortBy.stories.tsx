@@ -1,12 +1,13 @@
 import React from 'react';
 import { useSortBy } from './useSortBy';
 import { Story } from '@storybook/react';
+import { ObjectWithStringKeys } from '../..';
 
 export default {
   title: 'Hooks/useSortBy',
 };
 
-interface TestSortBy {
+interface TestSortBy extends ObjectWithStringKeys {
   id: string;
   quantity: number;
 }

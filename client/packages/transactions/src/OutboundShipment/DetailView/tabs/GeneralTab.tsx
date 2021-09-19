@@ -2,15 +2,12 @@ import {
   ColumnDefinition,
   Item,
   RemoteDataTable,
-  SortRule,
   useColumns,
   useDataTableApi,
   usePagination,
-  useQueryParams,
-  useRowRenderCount,
-  useSortBy,
+  useSortedData,
 } from '@openmsupply-client/common';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 
 interface GeneralTabProps<T> {
   data: T[];
@@ -51,51 +48,14 @@ const defaultColumns: ColumnDefinition<Item>[] = [
   },
 ];
 
-const parseValue = (object: any, key: string) => {
-  const value = object[key];
-  if (typeof value === 'string') {
-    const valueAsNumber = Number.parseFloat(value);
-
-    if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
-    return value.toUpperCase(); // ignore case
-  }
-  return value;
-};
-
-const getDataSorter = (sortKey: string, desc: boolean) => (a: any, b: any) => {
-  const valueA = parseValue(a, sortKey);
-  const valueB = parseValue(b, sortKey);
-
-  if (valueA < valueB) {
-    return desc ? 1 : -1;
-  }
-  if (valueA > valueB) {
-    return desc ? -1 : 1;
-  }
-
-  return 0;
-};
-
-const useSortedData = <T extends Record<string, unknown>>(data: T[]) => {
-  const { sortBy, onChangeSortBy } = useSortBy('quantity');
-  const [sortedData, setSortedData] = useState(data);
-
-  const wrapped = (newSortKey: string) => {
-    const newSortBy = onChangeSortBy(newSortKey);
-    const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
-
-    setSortedData(data.sort(sorter));
-  };
-
-  return { sortedData, sortBy, onChangeSortBy: wrapped };
-};
-
 export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
   const columns = useColumns<Item>(defaultColumns);
   const tableApi = useDataTableApi<Item>();
 
-  const { pagination } = useQueryParams<Item>('quantity');
-  const { sortedData, onChangeSortBy, sortBy } = useSortedData(data);
+  const { pagination } = usePagination();
+  const { sortedData, onChangeSortBy, sortBy } = useSortedData(data, {
+    key: 'quantity',
+  });
 
   return (
     <RemoteDataTable
