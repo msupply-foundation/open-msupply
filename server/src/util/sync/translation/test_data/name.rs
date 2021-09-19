@@ -1,9 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, NameRow},
-    util::sync::translation::{
-        test_data::{TestSyncDataRecord, TestSyncRecord},
-        SyncRecord, SyncType,
-    },
+    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
 };
 
 const NAME_1: (&'static str, &'static str) = (
@@ -396,12 +393,6 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 is_customer: true,
             })),
             identifier: "General",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: NAME_1.0.to_owned(),
-                data: NAME_1.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "200".to_owned(),
                 cursor_id: 200,
@@ -419,12 +410,6 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 is_supplier: false,
             })),
             identifier: "Birch Store",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: NAME_2.0.to_owned(),
-                data: NAME_2.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "201".to_owned(),
                 cursor_id: 201,
@@ -442,12 +427,6 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 is_supplier: false,
             })),
             identifier: "Birch Store",
-            sync_record: SyncRecord {
-                sync_type: SyncType::Insert,
-                record_type: RECORD_TYPE.to_owned(),
-                record_id: NAME_3.0.to_owned(),
-                data: NAME_3.1.to_owned(),
-            },
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: "202".to_owned(),
                 cursor_id: 202,
@@ -469,12 +448,6 @@ pub fn get_test_name_upsert_records() -> Vec<TestSyncRecord> {
             is_supplier: true,
         })),
         identifier: "General2",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: NAME_UPSERT_1.0.to_owned(),
-            data: NAME_UPSERT_1.1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: "250".to_owned(),
             cursor_id: 250,

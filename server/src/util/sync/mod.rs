@@ -29,7 +29,7 @@ use tokio::{
     time::{self, Duration, Interval},
 };
 
-use self::translation::{import_sync_records, SyncRecord, SyncType, TRANSLATION_RECORDS};
+use self::translation::{import_sync_records, TRANSLATION_RECORDS};
 
 pub fn get_sync_actors(connection: SyncConnection) -> (SyncSenderActor, SyncReceiverActor) {
     // We use a single-element channel so that we can only have one sync pending at a time.
@@ -185,16 +185,7 @@ impl SyncReceiverActor {
                 .get_sync_entries(table_name)
                 .await
                 .map_err(|_| "Failed to read central sync entries".to_string())?;
-            let records = buffer_rows
-                .into_iter()
-                .map(|row| SyncRecord {
-                    record_id: row.record_id,
-                    sync_type: SyncType::Insert,
-                    record_type: row.table_name,
-                    data: row.data,
-                })
-                .collect();
-            import_sync_records(&sync_session, repositories, &records).await?;
+            import_sync_records(&sync_session, repositories, &buffer_rows).await?;
         }
         central_sync_buffer_repository
             .remove_all()
@@ -263,7 +254,8 @@ mod tests {
     };
 
     use super::translation::test_data::{
-        check_records_against_database, master_list::get_test_master_list_records,
+        check_records_against_database, extract_sync_buffer_rows,
+        master_list::get_test_master_list_records,
         master_list_line::get_test_master_list_line_records, store::get_test_store_records,
     };
 
@@ -291,10 +283,7 @@ mod tests {
         test_records.append(&mut get_test_master_list_name_join_records());
         test_records.append(&mut get_test_master_list_line_records());
 
-        let central_records: Vec<CentralSyncBufferRow> = test_records
-            .iter()
-            .map(|entry| entry.central_sync_buffer_row.clone())
-            .collect();
+        let central_records: Vec<CentralSyncBufferRow> = extract_sync_buffer_rows(&test_records);
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
             registry.get::<CentralSyncBufferRepository>();
         central_sync_buffer_repository
