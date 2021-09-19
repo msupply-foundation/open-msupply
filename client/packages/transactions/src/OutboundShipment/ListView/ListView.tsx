@@ -19,10 +19,10 @@ import {
   DropdownMenuItem,
   AppBarContentPortal,
   useTranslation,
-  ChevronDown,
-  Tools,
-  getNameAndColorColumn,
   useListData,
+  getNameAndColorColumn,
+  Delete,
+  Edit,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -129,7 +129,7 @@ export const OutboundShipmentListView: FC = () => {
       <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
         <DropdownMenu label="Select">
           <DropdownMenuItem
-            IconComponent={ChevronDown}
+            IconComponent={Delete}
             onClick={() => {
               const linesToDelete = tableApi?.current?.selectedRows;
 
@@ -144,7 +144,7 @@ export const OutboundShipmentListView: FC = () => {
             {t('button.delete-lines')}
           </DropdownMenuItem>
           <DropdownMenuItem
-            IconComponent={Tools}
+            IconComponent={Edit}
             onClick={warning('Whats this do?')}
           >
             Edit
