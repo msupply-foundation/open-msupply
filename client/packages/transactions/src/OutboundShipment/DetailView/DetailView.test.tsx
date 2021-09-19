@@ -31,55 +31,32 @@ describe('OutboundShipmentDetailView', () => {
     await waitFor(() => expect(getByText(/"id": "3"/i)).toBeInTheDocument());
   });
 
-  it('Renders the item summary content once the item summary tab has been pressed', async () => {
-    const { getByRole, getByText } = render(<ExampleDetailView />);
+  it('initially renders the general tab panel', () => {
+    const { getByRole } = render(<ExampleDetailView />);
 
-    const itemTabButton = getByRole('tab', { name: /item/i });
+    const generalPanel = getByRole('tabpanel', { name: /general/i });
 
-    act(() => {
-      itemTabButton.click();
-    });
-
-    const itemPanel = getByText(/item summary coming soon/i);
-    expect(itemPanel).toBeInTheDocument();
+    expect(generalPanel).toBeInTheDocument();
   });
 
-  it('Renders the batch summary content once the batch summary tab has been pressed', async () => {
-    const { getByRole, getByText } = render(<ExampleDetailView />);
+  it('initially the general tab panel is the only panel rendered', () => {
+    const { queryAllByRole } = render(<ExampleDetailView />);
 
-    const itemTabButton = getByRole('tab', { name: /batch/i });
+    const allTabPanels = queryAllByRole('tabpanel');
 
-    act(() => {
-      itemTabButton.click();
-    });
-
-    const itemPanel = getByText(/batch summary coming soon/i);
-    expect(itemPanel).toBeInTheDocument();
+    expect(allTabPanels.length).toEqual(1);
   });
 
-  it('Renders the price details content once the price tab has been pressed', async () => {
-    const { getByRole, getByText } = render(<ExampleDetailView />);
+  it('Renders the transport details content once the price tab has been pressed', async () => {
+    const { getByRole } = render(<ExampleDetailView />);
 
-    const itemTabButton = getByRole('tab', { name: /price/i });
-
-    act(() => {
-      itemTabButton.click();
-    });
-
-    const itemPanel = getByText(/price details coming soon/i);
-    expect(itemPanel).toBeInTheDocument();
-  });
-
-  it('Renders the item summary content once the item summary tab has been pressed', async () => {
-    const { getByRole, getByText } = render(<ExampleDetailView />);
-
-    const itemTabButton = getByRole('tab', { name: /log/i });
+    const transportTabButton = getByRole('tab', { name: /transport/i });
 
     act(() => {
-      itemTabButton.click();
+      transportTabButton.click();
     });
 
-    const itemPanel = getByText(/log of actions coming soon/i);
-    expect(itemPanel).toBeInTheDocument();
+    const transportPanel = getByRole('tabpanel', { name: /transport/i });
+    expect(transportPanel).toBeInTheDocument();
   });
 });
