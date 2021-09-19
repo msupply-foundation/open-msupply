@@ -2,7 +2,7 @@
 
 CREATE TYPE sync_out_action_type AS ENUM ('insert', 'update', 'delete', 'patch');
 
-CREATE TYPE sync_out_table_name AS ENUM ('requisition', 'requisition_line', 'item', 'item_line', 'transact', 'transact_line', 'name', 'store');
+CREATE TYPE sync_out_table_name AS ENUM ('requisition', 'requisition_line', 'item', 'stock_line', 'transact', 'transact_line', 'name', 'store');
 
 CREATE TABLE sync_out (
     id TEXT NOT NULL PRIMARY KEY,
