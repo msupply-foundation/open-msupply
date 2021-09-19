@@ -11,7 +11,7 @@ const choose = (options: unknown[]) => {
 };
 
 const getItems = () =>
-  Array.from({ length: 5000 }).map(() => ({
+  Array.from({ length: 5 }).map(() => ({
     id: `${faker.datatype.uuid()}`,
     code: `${faker.random.alpha({ count: 6 })}`,
     name: `${faker.commerce.productName()}`,
@@ -19,7 +19,7 @@ const getItems = () =>
     quantity: faker.datatype.number(100),
   }));
 
-const TransactionData = Array.from({ length: 100 }).map((_, i) => ({
+const TransactionData = Array.from({ length: 5 }).map((_, i) => ({
   id: `${i}`,
   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
   status: choose(['Confirmed', 'Finalised']),

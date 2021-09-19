@@ -1,6 +1,6 @@
 import { SortRule, SortBy } from '@openmsupply-client/common';
 import { ObjectWithStringKeys } from './../../types/utility';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSortBy } from '../useSortBy';
 
 const parseValue = (object: any, key: string) => {
@@ -42,10 +42,15 @@ export const useSortedData = <T extends Record<string, unknown>>(
   const [sortedData, setSortedData] = useState(data);
 
   const wrapped = (newSortRule: SortRule<T>) => {
-    onChangeSortBy(newSortRule);
-    const sorter = getDataSorter(newSortRule.key, !!newSortRule.isDesc);
+    const newSortBy = onChangeSortBy(newSortRule);
+    const sorter = getDataSorter(newSortBy.key, !!newSortBy.isDesc);
     setSortedData(data.sort(sorter));
   };
+
+  useEffect(() => {
+    const sorter = getDataSorter(sortBy.key, !!sortBy.isDesc);
+    setSortedData(data.sort(sorter));
+  }, []);
 
   return { sortedData, sortBy, onChangeSortBy: wrapped };
 };

@@ -26,11 +26,6 @@ describe('OutboundShipmentDetailView', () => {
     </TestingProvider>
   );
 
-  // it('Renders the correct outbound shipment for the provided url ', async () => {
-  //   const { getByText } = render(<ExampleDetailView />);
-  //   await waitFor(() => expect(getByText(/"id": "3"/i)).toBeInTheDocument());
-  // });
-
   it('initially renders the general tab panel', () => {
     const { getByRole } = render(<ExampleDetailView />);
 
