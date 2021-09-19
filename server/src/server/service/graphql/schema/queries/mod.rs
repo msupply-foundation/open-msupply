@@ -1,3 +1,5 @@
+pub mod pagination;
+
 use crate::database::repository::{
     ItemLineRepository, ItemRepository, NameRepository, RequisitionRepository, StoreRepository,
     TransactLineRepository, TransactRepository,
@@ -10,14 +12,9 @@ use crate::server::service::graphql::schema::types::{
 };
 use crate::server::service::graphql::ContextExt;
 
-use async_graphql::{Context, Object};
-
-use self::pagination::Pagination;
-
 use super::types::NameList;
-
-pub mod pagination;
-
+use async_graphql::{Context, Object};
+use pagination::Pagination;
 pub struct Queries;
 
 #[Object]
