@@ -10,6 +10,7 @@ export * from './useAppBarRect';
 export * from './useWindowDimensions';
 export * from './useIsScreen';
 export * from './useListData';
+export * from './useQueryParams';
 export * from './useSortBy';
 export * from './usePagination';
 export * from './useRowRenderCount';

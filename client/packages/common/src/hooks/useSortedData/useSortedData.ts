@@ -1,5 +1,5 @@
 import { SortRule, SortBy } from '@openmsupply-client/common';
-import { KeyOf, ObjectWithStringKeys } from './../../types/utility';
+import { ObjectWithStringKeys } from './../../types/utility';
 import { useState } from 'react';
 import { useSortBy } from '../useSortBy';
 
@@ -31,7 +31,7 @@ const getDataSorter = (sortKey: string, desc: boolean) => (a: any, b: any) => {
 interface SortedDataState<T extends ObjectWithStringKeys> {
   sortedData: T[];
   sortBy: SortBy<T>;
-  onChangeSortBy: (newSortBy: SortBy<T>) => void;
+  onChangeSortBy: (newSortRule: SortRule<T>) => void;
 }
 
 export const useSortedData = <T extends Record<string, unknown>>(
