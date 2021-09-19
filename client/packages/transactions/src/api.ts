@@ -16,6 +16,13 @@ export const getDetailQuery = (): string => gql`
       total
       color
       name
+      items {
+        id
+        code
+        name
+        packSize
+        quantity
+      }
     }
   }
 `;
@@ -61,6 +68,13 @@ export const getListQuery = (): string => gql`
         total
         color
         name
+        items {
+          id
+          code
+          name
+          packSize
+          quantity
+        }
       }
       totalLength
     }
