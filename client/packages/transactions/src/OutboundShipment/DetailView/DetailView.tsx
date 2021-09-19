@@ -180,7 +180,7 @@ export const OutboundShipmentDetailView: FC = () => {
 
         <TabPanel sx={{ flex: 1 }} value="transport">
           <Box sx={{ flex: 1, display: 'flex' }}>
-            <span>Price details coming soon..</span>
+            <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
       </Box>

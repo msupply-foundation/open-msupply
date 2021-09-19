@@ -26,20 +26,19 @@ describe('OutboundShipmentDetailView', () => {
     </TestingProvider>
   );
 
-  it('initially renders the general tab panel', () => {
+  it('initially renders the general tab panel', async () => {
     const { getByRole } = render(<ExampleDetailView />);
 
-    waitFor(() => {
-      const generalPanel = getByRole('tabpanel', { name: /general/i });
-
-      expect(generalPanel).toBeInTheDocument();
+    await waitFor(() => {
+      const generalTab = getByRole('tabpanel', { name: /general/i });
+      expect(generalTab).toBeInTheDocument();
     });
   });
 
-  it('initially the general tab panel is the only panel rendered', () => {
+  it('initially the general tab panel is the only panel rendered', async () => {
     const { queryAllByRole } = render(<ExampleDetailView />);
 
-    waitFor(() => {
+    await waitFor(() => {
       const allTabPanels = queryAllByRole('tabpanel');
 
       expect(allTabPanels.length).toEqual(1);
@@ -49,7 +48,7 @@ describe('OutboundShipmentDetailView', () => {
   it('Renders the transport details content once the price tab has been pressed', async () => {
     const { getByRole } = render(<ExampleDetailView />);
 
-    waitFor(() => {
+    await waitFor(() => {
       const transportTabButton = getByRole('tab', { name: /transport/i });
 
       act(() => {
