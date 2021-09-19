@@ -46,7 +46,7 @@ export const OutboundShipmentListView: FC = () => {
     numberOfRows,
     onChangeSortBy,
     onChangePage,
-  } = useListData('color', 'transaction', OutboundShipmentListViewApi);
+  } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
 
   const columns = useColumns<Transaction>([
     {
