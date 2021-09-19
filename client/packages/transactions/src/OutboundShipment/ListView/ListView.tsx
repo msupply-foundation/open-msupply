@@ -203,7 +203,7 @@ export const OutboundShipmentListView: FC = () => {
   const t = useTranslation();
   return (
     <>
-      <AppBarContentPortal>
+      <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
         <DropdownMenu label="Select">
           <DropdownMenuItem
             IconComponent={Delete}

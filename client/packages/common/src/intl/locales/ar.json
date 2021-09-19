@@ -47,6 +47,8 @@
   "label.supplier": "Supplier",
   "label.total": "Total",
   "label.type": "Type",
+  "label.general": "General",
+  "label.transport": "Transport",
   "link.history": "History",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard"

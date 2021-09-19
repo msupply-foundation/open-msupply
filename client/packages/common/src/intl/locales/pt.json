@@ -47,6 +47,8 @@
   "label.confirmed": "Confirmed",
   "label.invoice-number": "Invnum",
   "label.comment": "Comment",
+  "label.general": "General",
+  "label.transport": "Transport",
   "link.history": "History",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard"
