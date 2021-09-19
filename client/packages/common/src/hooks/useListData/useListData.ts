@@ -1,6 +1,8 @@
+import { SortBy } from './../useSortBy/useSortBy';
+import { UseMutateFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
-import { useQueryParams } from './useQueryParams';
-import { SortRule } from './useSortBy';
+import { QueryParams, useQueryParams } from '../useQueryParams';
+import { SortRule } from '../useSortBy';
 
 export interface ListApi<T> {
   onQuery: ({
@@ -10,19 +12,34 @@ export interface ListApi<T> {
   }: {
     first: number;
     offset: number;
-    sortBy: SortRule<T>;
+    sortBy: SortBy<T>;
   }) => () => Promise<{ data: T[]; totalLength: number }>;
   onDelete: (toDelete: T[]) => Promise<void>;
   onUpdate: (toUpdate: T) => Promise<T>;
 }
 
+interface ListDataState<T> extends QueryParams<T> {
+  data?: T[];
+  totalLength?: number;
+  fullQueryKey: readonly unknown[];
+  queryParams: QueryParams<T>;
+  onUpdate: UseMutateFunction<T, unknown, T, unknown>;
+  onDelete: UseMutateFunction<void, unknown, T[], unknown>;
+  isQueryLoading: boolean;
+  isUpdateLoading: boolean;
+  isDeleteLoading: boolean;
+  isLoading: boolean;
+  numberOfRows: number;
+}
+
 export const useListData = <T>(
-  initialSortBy: keyof T,
+  initialSortBy: SortRule<T>,
   queryKey: string | readonly unknown[],
   api: ListApi<T>
-): any => {
+): ListDataState<T> => {
   const queryClient = useQueryClient();
-  const { queryParams, first, offset, sortBy } = useQueryParams(initialSortBy);
+  const { queryParams, first, offset, sortBy, numberOfRows } =
+    useQueryParams(initialSortBy);
   const fullQueryKey = [queryKey, 'list', queryParams];
 
   const { data, isLoading: isQueryLoading } = useQuery(
@@ -43,8 +60,9 @@ export const useListData = <T>(
   );
 
   return {
-    ...data,
+    ...(data ?? {}),
     ...queryParams,
+    numberOfRows,
     fullQueryKey,
     queryParams,
     onUpdate,

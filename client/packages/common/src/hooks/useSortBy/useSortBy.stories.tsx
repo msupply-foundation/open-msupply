@@ -12,14 +12,16 @@ interface TestSortBy {
 }
 
 const Template: Story = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<TestSortBy>('id');
+  const { sortBy, onChangeSortBy } = useSortBy<TestSortBy>({ key: 'id' });
 
   return (
     <div>
       <div>
         <span> Two buttons to sort by two different keys, ID or Quantity.</span>
-        <button onClick={() => onChangeSortBy('id')}>Sort by ID!</button>
-        <button onClick={() => onChangeSortBy('quantity')}>
+        <button onClick={() => onChangeSortBy({ key: 'id' })}>
+          Sort by ID!
+        </button>
+        <button onClick={() => onChangeSortBy({ key: 'quantity' })}>
           Sort by Quantity!
         </button>
       </div>

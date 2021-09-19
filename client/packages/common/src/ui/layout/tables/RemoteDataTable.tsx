@@ -103,7 +103,9 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                 return (
                   <TableCell
                     {...column.getHeaderProps()}
-                    onClick={() => !column.disableSortBy && onSortBy(column.id)}
+                    onClick={() =>
+                      !column.disableSortBy && onSortBy({ key: column.id })
+                    }
                     align={column.align}
                     padding={'none'}
                     sx={{
