@@ -5,8 +5,11 @@ export interface SortRule<T> {
   isDesc: boolean;
 }
 
+interface SortBy<T> extends SortRule<T> {
+  direction: 'asc' | 'desc';
+}
 interface SortState<T> {
-  sortBy: { key: keyof T; direction: 'asc' | 'desc'; isDesc: boolean };
+  sortBy: SortBy<T>;
   onChangeSortBy: (newSortKey: keyof T) => void;
 }
 
