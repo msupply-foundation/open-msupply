@@ -161,32 +161,29 @@ export const OutboundShipmentDetailView: FC = () => {
   const { currentTab, onChangeTab } = useTabs('general');
 
   return draft ? (
-    <>
-      <TabContext value={String(currentTab)}>
-        <Portal container={appBarButtonsRef?.current}>
-          <>{OpenButton}</>
-        </Portal>
-        <AppBarContentPortal
-          sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
-        >
-          <TabList value={currentTab} onChange={onChangeTab}>
-            <Tab value="general" label={t('label.general')} />
-            <Tab value="transport" label={t('label.transport')} />
-          </TabList>
-        </AppBarContentPortal>
+    <TabContext value={String(currentTab)}>
+      <Portal container={appBarButtonsRef?.current}>{OpenButton}</Portal>
 
-        <Box sx={{ display: 'flex', flex: 1, height: '100%' }}>
-          <TabPanel sx={{ flex: 1, padding: 0 }} value="general">
-            <GeneralTab data={draft?.items ?? []} />
-          </TabPanel>
+      <AppBarContentPortal
+        sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
+      >
+        <TabList value={currentTab} onChange={onChangeTab}>
+          <Tab value="general" label={t('label.general')} />
+          <Tab value="transport" label={t('label.transport')} />
+        </TabList>
+      </AppBarContentPortal>
 
-          <TabPanel sx={{ flex: 1 }} value="transport">
-            <Box sx={{ flex: 1, display: 'flex' }}>
-              <span>Price details coming soon..</span>
-            </Box>
-          </TabPanel>
-        </Box>
-      </TabContext>
-    </>
+      <Box display="flex" flex={1}>
+        <TabPanel sx={{ flex: 1, padding: 0 }} value="general">
+          <GeneralTab data={draft?.items ?? []} />
+        </TabPanel>
+
+        <TabPanel sx={{ flex: 1 }} value="transport">
+          <Box sx={{ flex: 1, display: 'flex' }}>
+            <span>Price details coming soon..</span>
+          </Box>
+        </TabPanel>
+      </Box>
+    </TabContext>
   ) : null;
 };
