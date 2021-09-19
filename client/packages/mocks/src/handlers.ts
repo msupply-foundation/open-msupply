@@ -10,6 +10,15 @@ const choose = (options: unknown[]) => {
   return options[randomIdx];
 };
 
+const getItems = () =>
+  Array.from({ length: Math.random() * 10 }).map(() => ({
+    id: `${faker.datatype.uuid()}`,
+    code: `${faker.random.alpha({ count: 6 })}`,
+    name: `${faker.commerce.productName()}`,
+    packSize: 1,
+    quantity: faker.datatype.number(100),
+  }));
+
 const TransactionData = Array.from({ length: 100 }).map((_, i) => ({
   id: `${i}`,
   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
@@ -26,6 +35,7 @@ const TransactionData = Array.from({ length: 100 }).map((_, i) => ({
     'Supplier credit',
   ]),
   comment: faker.commerce.productDescription(),
+  items: getItems(),
 }));
 
 const parseValue = (object: any, key: string) => {
