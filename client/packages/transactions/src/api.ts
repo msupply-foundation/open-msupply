@@ -1,4 +1,4 @@
-import { Transaction, SortRule, ListApi } from '@openmsupply-client/common';
+import { Transaction, SortBy, ListApi } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
 
@@ -76,7 +76,7 @@ export const deleteFn = async (transactions: Transaction[]) => {
 export const listQueryFn = async <T>(queryParams: {
   first: number;
   offset: number;
-  sortBy: SortRule<T>;
+  sortBy: SortBy<T>;
 }): Promise<{ data: Transaction[]; totalLength: number }> => {
   const { first, offset, sortBy } = queryParams;
 

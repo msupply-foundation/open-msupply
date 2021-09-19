@@ -5,7 +5,7 @@ export interface SortRule<T> {
   isDesc?: boolean;
 }
 
-interface SortBy<T> extends SortRule<T> {
+export interface SortBy<T> extends SortRule<T> {
   direction: 'asc' | 'desc';
 }
 export interface SortState<T> {

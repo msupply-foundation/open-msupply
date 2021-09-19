@@ -3,9 +3,9 @@ import { useRowRenderCount } from '../useRowRenderCount';
 import { usePagination, PaginationState } from '../usePagination';
 import { useSortBy, SortState, SortRule } from '../useSortBy';
 
-interface QueryParams<T> extends SortState<T>, PaginationState {}
+export interface QueryParams<T> extends SortState<T>, PaginationState {}
 
-interface QueryParamsState<T> extends SortState<T>, PaginationState {
+export interface QueryParamsState<T> extends SortState<T>, PaginationState {
   pagination: PaginationState;
   queryParams: QueryParams<T>;
   numberOfRows: number;
