@@ -1,8 +1,13 @@
-use crate::database::repository::ItemQueryRepository;
+use crate::database::repository::{ItemQueryRepository, StockLineRepository};
+use crate::server::service::graphql::schema::types::StockLineQuery;
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
-use async_graphql::{Context, Object, SimpleObject};
+use async_graphql::dataloader::DataLoader;
+use async_graphql::{ComplexObject, Context, Object, SimpleObject};
+
+use super::StockLineList;
 
 #[derive(SimpleObject, PartialEq, Debug)]
+#[graphql(complex)]
 #[graphql(name = "Item")]
 pub struct ItemQuery {
     pub id: String,
@@ -10,6 +15,19 @@ pub struct ItemQuery {
     pub code: String,
     // Is visible is from master list join
     pub is_visible: bool,
+}
+
+#[ComplexObject]
+impl ItemQuery {
+    async fn available_batches(&self, ctx: &Context<'_>) -> StockLineList {
+        let repository = ctx.get_repository::<DataLoader<StockLineRepository>>();
+        let result = repository.load_one(self.id.clone()).await.unwrap();
+        StockLineList {
+            stock_lines: result.map_or(Vec::new(), |stock_lines| {
+                stock_lines.into_iter().map(StockLineQuery::from).collect()
+            }),
+        }
+    }
 }
 
 pub struct ItemList {
