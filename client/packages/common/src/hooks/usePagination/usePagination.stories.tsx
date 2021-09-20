@@ -33,7 +33,9 @@ const Template: Story = () => {
         />
       </div>
       <h4>Result</h4>
-      <p>{JSON.stringify({ first, offset, page })}</p>
+      <p style={{ whiteSpace: 'pre' }}>
+        {JSON.stringify({ first, offset, page }, null, 2)}
+      </p>
     </div>
   );
 };
