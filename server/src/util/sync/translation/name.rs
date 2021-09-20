@@ -1,6 +1,4 @@
-use super::SyncRecord;
-
-use crate::database::schema::NameRow;
+use crate::database::schema::{CentralSyncBufferRow, NameRow};
 
 use serde::Deserialize;
 
@@ -15,8 +13,8 @@ pub struct LegacyNameRow {
 }
 
 impl LegacyNameRow {
-    pub fn try_translate(sync_record: &SyncRecord) -> Result<Option<NameRow>, String> {
-        if sync_record.record_type != "name" {
+    pub fn try_translate(sync_record: &CentralSyncBufferRow) -> Result<Option<NameRow>, String> {
+        if sync_record.table_name != "name" {
             return Ok(None);
         }
         let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)
@@ -44,7 +42,7 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::Name(translated_record) => {
                     assert_eq!(
-                        LegacyNameRow::try_translate(&record.sync_record).unwrap(),
+                        LegacyNameRow::try_translate(&record.central_sync_buffer_row).unwrap(),
                         translated_record,
                         "{}",
                         record.identifier
