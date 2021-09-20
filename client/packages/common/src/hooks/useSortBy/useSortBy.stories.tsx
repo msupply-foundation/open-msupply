@@ -29,9 +29,7 @@ const Template: Story = () => {
         </button>
       </div>
 
-      <p style={{ whiteSpace: 'pre-line' }}>
-        {JSON.stringify(sortBy, null, 2)}
-      </p>
+      <p style={{ whiteSpace: 'pre' }}>{JSON.stringify(sortBy, null, 2)}</p>
     </div>
   );
 };

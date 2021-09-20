@@ -12,7 +12,9 @@ const Template: Story = () => {
   return (
     <div>
       <p>Change your browsers window dimensions!</p>
-      <p>{JSON.stringify(windowDimensions, null, 2)}</p>
+      <p style={{ whiteSpace: 'pre' }}>
+        {JSON.stringify(windowDimensions, null, 2)}
+      </p>
     </div>
   );
 };
