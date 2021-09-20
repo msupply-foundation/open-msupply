@@ -2,8 +2,8 @@ server:
   port: 8000
 sync:
   port: 2048
-  username: "Gryffindor"
-  password: "pass"
+  username: "username"
+  password: "password"
   interval: 300
 database:
   host: "localhost"
