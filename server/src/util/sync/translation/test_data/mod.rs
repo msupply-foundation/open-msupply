@@ -19,7 +19,6 @@ use crate::{
         },
     },
     server::data::RepositoryRegistry,
-    util::sync::translation::SyncRecord,
 };
 
 #[allow(dead_code)]
@@ -35,8 +34,6 @@ pub enum TestSyncDataRecord {
 #[allow(dead_code)]
 #[derive(Clone)]
 pub struct TestSyncRecord {
-    /// Sync record for the translation
-    pub sync_record: SyncRecord,
     /// Expected result for the imported data
     pub translated_record: TestSyncDataRecord,
     /// Identifier for this record
@@ -63,6 +60,14 @@ fn from_option_to_db_result<T>(option: Option<T>) -> Result<T, RepositoryError> 
 }
 
 #[allow(dead_code)]
+pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<CentralSyncBufferRow> {
+    records
+        .into_iter()
+        .map(|test_record| test_record.central_sync_buffer_row.clone())
+        .collect()
+}
+
+#[allow(dead_code)]
 pub async fn check_records_against_database(
     registry: &RepositoryRegistry,
     records: Vec<TestSyncRecord>,
@@ -73,7 +78,7 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     registry
                         .get::<StoreRepository>()
-                        .find_one_by_id(&record.sync_record.record_id)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
                 )
@@ -82,7 +87,7 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     registry
                         .get::<NameRepository>()
-                        .find_one_by_id(&record.sync_record.record_id)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
                 )
@@ -91,7 +96,7 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     registry
                         .get::<ItemRepository>()
-                        .find_one_by_id(&record.sync_record.record_id)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
                 )
@@ -100,7 +105,7 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     registry
                         .get::<MasterListRepository>()
-                        .find_one_by_id(&record.sync_record.record_id)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
                 )
@@ -109,7 +114,7 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     registry
                         .get::<MasterListLineRepository>()
-                        .find_one_by_id(&record.sync_record.record_id)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
                 )
@@ -118,7 +123,7 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     registry
                         .get::<MasterListNameJoinRepository>()
-                        .find_one_by_id(&record.sync_record.record_id)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
                 )

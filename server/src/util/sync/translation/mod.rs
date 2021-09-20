@@ -7,9 +7,12 @@ mod store;
 pub mod test_data;
 
 use crate::{
-    database::repository::{
-        repository::{IntegrationUpsertRecord, SyncSession},
-        IntegrationRecord, SyncRepository,
+    database::{
+        repository::{
+            repository::{IntegrationUpsertRecord, SyncSession},
+            IntegrationRecord, SyncRepository,
+        },
+        schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
 };
@@ -20,25 +23,10 @@ use self::{
     name::LegacyNameRow, store::LegacyStoreRow,
 };
 
-#[derive(Debug, Clone)]
-pub enum SyncType {
-    // Delete,
-    // Update,
-    Insert,
-}
-
-#[derive(Debug, Clone)]
-pub struct SyncRecord {
-    pub record_id: String,
-    pub sync_type: SyncType,
-    pub record_type: String,
-    pub data: String,
-}
-
 /// Translates sync records into the local DB schema.
 /// Translated records are added to integration_records.
 fn do_translation(
-    sync_record: &SyncRecord,
+    sync_record: &CentralSyncBufferRow,
     integration_records: &mut IntegrationRecord,
 ) -> Result<(), String> {
     if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
@@ -111,7 +99,7 @@ pub const TRANSLATION_RECORDS: &'static [&'static str] = &[
 pub async fn import_sync_records(
     sync_session: &SyncSession,
     registry: &RepositoryRegistry,
-    records: &Vec<SyncRecord>,
+    records: &Vec<CentralSyncBufferRow>,
 ) -> Result<(), String> {
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),
@@ -135,14 +123,14 @@ mod tests {
         server::data::RepositoryRegistry,
         util::{
             sync::translation::{
-                import_sync_records, test_data::store::get_test_store_records, SyncRecord,
+                import_sync_records, test_data::store::get_test_store_records, CentralSyncBufferRow,
             },
             test_db,
         },
     };
 
     use super::test_data::{
-        check_records_against_database,
+        check_records_against_database, extract_sync_buffer_rows,
         item::{get_test_item_records, get_test_item_upsert_records},
         master_list::{get_test_master_list_records, get_test_master_list_upsert_records},
         master_list_line::get_test_master_list_line_records,
@@ -174,9 +162,13 @@ mod tests {
             .new_sync_session()
             .await
             .unwrap();
-        import_sync_records(&sync_session, &registry, &extract_sync_records(&records))
-            .await
-            .unwrap();
+        import_sync_records(
+            &sync_session,
+            &registry,
+            &extract_sync_buffer_rows(&records),
+        )
+        .await
+        .unwrap();
 
         // Asserts inside this method, to avoid repetition
         check_records_against_database(&registry, records).await;
@@ -208,18 +200,15 @@ mod tests {
             .new_sync_session()
             .await
             .unwrap();
-        import_sync_records(&sync_session, &registry, &extract_sync_records(&records))
-            .await
-            .unwrap();
+        import_sync_records(
+            &sync_session,
+            &registry,
+            &extract_sync_buffer_rows(&records),
+        )
+        .await
+        .unwrap();
 
         // Asserts inside this method, to avoid repetition
         check_records_against_database(&registry, upsert_records).await;
-    }
-
-    fn extract_sync_records(records: &Vec<TestSyncRecord>) -> Vec<SyncRecord> {
-        records
-            .into_iter()
-            .map(|test_record| test_record.sync_record.clone())
-            .collect()
     }
 }

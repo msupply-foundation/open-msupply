@@ -1,9 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, MasterListNameJoinRow},
-    util::sync::translation::{
-        test_data::{TestSyncDataRecord, TestSyncRecord},
-        SyncRecord, SyncType,
-    },
+    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
 };
 
 const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
@@ -31,12 +28,6 @@ pub fn get_test_master_list_name_join_records() -> Vec<TestSyncRecord> {
             name_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
         })),
         identifier: "Master list",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: LIST_MASTER_NAME_JOIN_1.0.to_owned(),
-            data: LIST_MASTER_NAME_JOIN_1.1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: 50,
             table_name: RECORD_TYPE.to_owned(),

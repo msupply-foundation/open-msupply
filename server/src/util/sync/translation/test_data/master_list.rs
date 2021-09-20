@@ -1,9 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, MasterListRow},
-    util::sync::translation::{
-        test_data::{TestSyncDataRecord, TestSyncRecord},
-        SyncRecord, SyncType,
-    },
+    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
 };
 
 const MASTER_LIST_1: (&'static str, &'static str) = (
@@ -56,12 +53,6 @@ pub fn get_test_master_list_records() -> Vec<TestSyncRecord> {
             description: "note 1".to_owned(),
         })),
         identifier: "Master list",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: MASTER_LIST_1.0.to_owned(),
-            data: MASTER_LIST_1.1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: 400,
             table_name: RECORD_TYPE.to_owned(),
@@ -80,12 +71,6 @@ pub fn get_test_master_list_upsert_records() -> Vec<TestSyncRecord> {
             description: "note 2".to_owned(),
         })),
         identifier: "Master list upsert",
-        sync_record: SyncRecord {
-            sync_type: SyncType::Insert,
-            record_type: RECORD_TYPE.to_owned(),
-            record_id: MASTER_LIST_UPSERT_1.0.to_owned(),
-            data: MASTER_LIST_UPSERT_1.1.to_owned(),
-        },
         central_sync_buffer_row: CentralSyncBufferRow {
             id: 500,
             table_name: RECORD_TYPE.to_owned(),
