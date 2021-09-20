@@ -1,4 +1,4 @@
-import { Box, styled } from '@material-ui/system';
+import { Box, BoxProps, styled } from '@material-ui/system';
 import { Portal } from '@material-ui/core';
 import React, { FC, useEffect, useRef } from 'react';
 import { useHostContext } from '../../../../hooks';
@@ -27,7 +27,7 @@ export const AppBarContent: FC = () => {
   return <Container ref={ref} />;
 };
 
-export const AppBarContentPortal: FC = props => {
+export const AppBarContentPortal: FC<BoxProps> = props => {
   const { appBarContentRef } = useHostContext();
 
   if (!appBarContentRef) return null;

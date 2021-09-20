@@ -3,6 +3,7 @@ import React, { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import {
+  AppBarContentPortal,
   Circle,
   Clock,
   Copy,
@@ -20,10 +21,16 @@ import {
   useNotification,
   useQueryClient,
   useTranslation,
+  Tab,
+  TabList,
+  TabPanel,
+  useTabs,
+  TabContext,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
+import { Box } from '@material-ui/system';
 
 const placeholderTransaction: Transaction = {
   name: '',
@@ -150,23 +157,46 @@ export const OutboundShipmentDetailView: FC = () => {
     return () => setActions([]);
   }, [draft]);
 
+  const { currentTab, onChangeTab } = useTabs('general');
+
   return draft ? (
     <>
-      <Portal container={appBarButtonsRef?.current}>
-        <>{OpenButton}</>
-      </Portal>
-      <div>
-        <input
-          value={draft?.name}
-          onChange={event => setDraft({ ...draft, name: event?.target.value })}
-        />
-      </div>
-      <div>
-        <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
-      </div>
-      <div>
-        <button onClick={save}>OK</button>
-      </div>
+      <TabContext value={String(currentTab)}>
+        <Portal container={appBarButtonsRef?.current}>
+          <>{OpenButton}</>
+        </Portal>
+        <AppBarContentPortal
+          sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
+        >
+          <TabList value={currentTab} onChange={onChangeTab}>
+            <Tab value="general" label={t('label.general')} />
+            <Tab value="transport" label={t('label.transport')} />
+          </TabList>
+        </AppBarContentPortal>
+
+        <Box sx={{ display: 'flex', flex: 1, height: '100%' }}>
+          <TabPanel value="general">
+            <div>
+              <input
+                value={draft?.name}
+                onChange={event =>
+                  setDraft({ ...draft, name: event?.target.value })
+                }
+              />
+            </div>
+            <div>
+              <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
+            </div>
+            <div>
+              <button onClick={save}>OK</button>
+            </div>
+          </TabPanel>
+
+          <TabPanel value="transport">
+            <span>Price details coming soon..</span>
+          </TabPanel>
+        </Box>
+      </TabContext>
     </>
   ) : null;
 };
