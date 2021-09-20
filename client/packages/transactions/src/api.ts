@@ -1,3 +1,4 @@
+import { ObjectWithStringKeys } from './../../common/src/types/utility';
 import { Transaction, SortBy, ListApi } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
@@ -68,13 +69,6 @@ export const getListQuery = (): string => gql`
         total
         color
         name
-        items {
-          id
-          code
-          name
-          packSize
-          quantity
-        }
       }
       totalLength
     }
@@ -87,7 +81,7 @@ export const deleteFn = async (transactions: Transaction[]) => {
   });
 };
 
-export const listQueryFn = async <T>(queryParams: {
+export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   first: number;
   offset: number;
   sortBy: SortBy<T>;

@@ -1,3 +1,4 @@
+import { ObjectWithStringKeys } from './../../../types/utility';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ReactNode, RefObject } from 'react';
 import { Column } from 'react-table';
@@ -25,7 +26,7 @@ export enum GenericColumnType {
   Selection = 'selection',
 }
 
-export interface QueryProps<D> {
+export interface QueryProps<D extends ObjectWithStringKeys> {
   first: number;
   offset: number;
   sortBy?: SortRule<D>[];

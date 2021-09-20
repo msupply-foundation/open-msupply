@@ -26,6 +26,7 @@ import { TableProps } from './types';
 import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
+import { KeyOf } from '@openmsupply-client/common';
 
 export { SortingRule };
 
@@ -70,12 +71,17 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
       }}
     >
       <MuiTable
         stickyHeader
         {...getTableProps()}
-        sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
@@ -99,7 +105,8 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                   <TableCell
                     {...column.getHeaderProps()}
                     onClick={() =>
-                      !column.disableSortBy && onSortBy({ key: column.id })
+                      !column.disableSortBy &&
+                      onSortBy({ key: column.id as KeyOf<T> })
                     }
                     align={column.align}
                     padding={'none'}

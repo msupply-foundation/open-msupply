@@ -26,37 +26,37 @@ describe('OutboundShipmentDetailView', () => {
     </TestingProvider>
   );
 
-  it('Renders the correct outbound shipment for the provided url ', async () => {
-    const { getByText } = render(<ExampleDetailView />);
-    await waitFor(() => expect(getByText(/"id": "3"/i)).toBeInTheDocument());
-  });
-
-  it('initially renders the general tab panel', () => {
+  it('initially renders the general tab panel', async () => {
     const { getByRole } = render(<ExampleDetailView />);
 
-    const generalPanel = getByRole('tabpanel', { name: /general/i });
-
-    expect(generalPanel).toBeInTheDocument();
+    await waitFor(() => {
+      const generalTab = getByRole('tabpanel', { name: /general/i });
+      expect(generalTab).toBeInTheDocument();
+    });
   });
 
-  it('initially the general tab panel is the only panel rendered', () => {
+  it('initially the general tab panel is the only panel rendered', async () => {
     const { queryAllByRole } = render(<ExampleDetailView />);
 
-    const allTabPanels = queryAllByRole('tabpanel');
+    await waitFor(() => {
+      const allTabPanels = queryAllByRole('tabpanel');
 
-    expect(allTabPanels.length).toEqual(1);
+      expect(allTabPanels.length).toEqual(1);
+    });
   });
 
-  it('Renders the transport details content once the price tab has been pressed', async () => {
+  it('renders the transport details content once the transport tab has been pressed', async () => {
     const { getByRole } = render(<ExampleDetailView />);
 
-    const transportTabButton = getByRole('tab', { name: /transport/i });
+    await waitFor(() => {
+      const transportTabButton = getByRole('tab', { name: /transport/i });
 
-    act(() => {
-      transportTabButton.click();
+      act(() => {
+        transportTabButton.click();
+      });
+
+      const transportPanel = getByRole('tabpanel', { name: /transport/i });
+      expect(transportPanel).toBeInTheDocument();
     });
-
-    const transportPanel = getByRole('tabpanel', { name: /transport/i });
-    expect(transportPanel).toBeInTheDocument();
   });
 });

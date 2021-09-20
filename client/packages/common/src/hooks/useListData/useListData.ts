@@ -1,10 +1,11 @@
+import { ObjectWithStringKeys } from './../../types/utility';
 import { SortBy } from './../useSortBy/useSortBy';
 import { UseMutateFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
 import { SortRule } from '../useSortBy';
 
-export interface ListApi<T> {
+export interface ListApi<T extends ObjectWithStringKeys> {
   onQuery: ({
     first,
     offset,
@@ -18,7 +19,7 @@ export interface ListApi<T> {
   onUpdate: (toUpdate: T) => Promise<T>;
 }
 
-interface ListDataState<T> extends QueryParams<T> {
+interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   data?: T[];
   totalLength?: number;
   fullQueryKey: readonly unknown[];
@@ -32,7 +33,7 @@ interface ListDataState<T> extends QueryParams<T> {
   numberOfRows: number;
 }
 
-export const useListData = <T>(
+export const useListData = <T extends ObjectWithStringKeys>(
   initialSortBy: SortRule<T>,
   queryKey: string | readonly unknown[],
   api: ListApi<T>

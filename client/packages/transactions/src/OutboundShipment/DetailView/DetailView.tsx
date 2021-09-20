@@ -31,6 +31,7 @@ import {
 import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
 import { Box } from '@material-ui/system';
+import { GeneralTab } from './tabs/GeneralTab';
 
 const placeholderTransaction: Transaction = {
   name: '',
@@ -81,7 +82,7 @@ const useDraftOutbound = (id: string) => {
 
 export const OutboundShipmentDetailView: FC = () => {
   const { id } = useParams();
-  const { draft, setDraft, save } = useDraftOutbound(id ?? 'new');
+  const { draft } = useDraftOutbound(id ?? 'new');
   const { appBarButtonsRef } = useHostContext();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
@@ -160,43 +161,29 @@ export const OutboundShipmentDetailView: FC = () => {
   const { currentTab, onChangeTab } = useTabs('general');
 
   return draft ? (
-    <>
-      <TabContext value={String(currentTab)}>
-        <Portal container={appBarButtonsRef?.current}>
-          <>{OpenButton}</>
-        </Portal>
-        <AppBarContentPortal
-          sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
-        >
-          <TabList value={currentTab} onChange={onChangeTab}>
-            <Tab value="general" label={t('label.general')} />
-            <Tab value="transport" label={t('label.transport')} />
-          </TabList>
-        </AppBarContentPortal>
+    <TabContext value={String(currentTab)}>
+      <Portal container={appBarButtonsRef?.current}>{OpenButton}</Portal>
 
-        <Box sx={{ display: 'flex', flex: 1, height: '100%' }}>
-          <TabPanel value="general">
-            <div>
-              <input
-                value={draft?.name}
-                onChange={event =>
-                  setDraft({ ...draft, name: event?.target.value })
-                }
-              />
-            </div>
-            <div>
-              <span>{JSON.stringify(draft, null, 4) ?? ''}</span>
-            </div>
-            <div>
-              <button onClick={save}>OK</button>
-            </div>
-          </TabPanel>
+      <AppBarContentPortal
+        sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
+      >
+        <TabList value={currentTab} onChange={onChangeTab}>
+          <Tab value="general" label={t('label.general')} />
+          <Tab value="transport" label={t('label.transport')} />
+        </TabList>
+      </AppBarContentPortal>
 
-          <TabPanel value="transport">
-            <span>Price details coming soon..</span>
-          </TabPanel>
-        </Box>
-      </TabContext>
-    </>
+      <Box display="flex" flex={1}>
+        <TabPanel sx={{ flex: 1, padding: 0 }} value="general">
+          <GeneralTab data={draft?.items ?? []} />
+        </TabPanel>
+
+        <TabPanel sx={{ flex: 1 }} value="transport">
+          <Box sx={{ flex: 1, display: 'flex' }}>
+            <span>Transport details coming soon..</span>
+          </Box>
+        </TabPanel>
+      </Box>
+    </TabContext>
   ) : null;
 };

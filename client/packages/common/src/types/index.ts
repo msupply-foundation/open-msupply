@@ -1,3 +1,5 @@
+export * from './utility';
+
 export type Item = {
   id: string;
   code: string;
