@@ -5,10 +5,12 @@ interface PaginationRowProps {
   offset: number;
   first: number;
   total: number;
+  page: number;
   onChange: (page: number) => void;
 }
 
 export const PaginationRow: FC<PaginationRowProps> = ({
+  page,
   offset,
   first,
   total,
@@ -20,6 +22,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
 
   const onChangePage = (_: React.ChangeEvent<unknown>, value: number) => {
     // The type here is broken and `value` can be `null`!
+
     const isValidPage = !!value;
 
     if (isValidPage) {
@@ -27,6 +30,10 @@ export const PaginationRow: FC<PaginationRowProps> = ({
       onChange(zeroIndexedPageNumber);
     }
   };
+
+  // Pages are zero indexed. The Pagination component wants the page as
+  // one-indexed.
+  const displayPage = page + 1;
 
   return (
     <Box
@@ -52,6 +59,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
             </Typography>
           </Box>
           <Pagination
+            page={displayPage}
             count={Math.ceil(total / first)}
             onChange={onChangePage}
           />

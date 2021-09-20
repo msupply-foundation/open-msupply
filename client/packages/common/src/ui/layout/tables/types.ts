@@ -44,19 +44,13 @@ export interface DataTableApi<T> {
   selectedRows: T[];
 }
 
-interface Pagination {
-  first: number;
-  offset: number;
-  total: number;
-}
-
 export interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
   data?: T[];
   sortBy: SortBy<T>;
   isLoading?: boolean;
   onSortBy: (sortRule: SortRule<T>) => void;
-  pagination: Pagination;
+  pagination: { page: number; total?: number; offset: number; first: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
   tableApi: RefObject<DataTableApi<T>>;
