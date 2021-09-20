@@ -1,9 +1,9 @@
 import { RTLProvider } from './RTLProvider';
 import { useAppTheme } from './useAppTheme';
 import AppThemeProvider from './ThemeProvider';
-import { styled, Theme, useTheme } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import { styled, Theme, useTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 export {
   AppThemeProvider,

@@ -10,7 +10,7 @@ import {
   SvgIconProps,
   ListItemText,
   styled,
-} from '@material-ui/core';
+} from '@mui/material';
 
 import { ChevronDown } from '../../../icons';
 

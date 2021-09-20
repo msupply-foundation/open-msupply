@@ -6,7 +6,7 @@ import { NavLink, NavLinkProps } from './NavLink';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
 import { Customers } from '../../../icons';
 import { useDrawer } from '../../../../hooks';
-import { Box } from '@material-ui/system';
+import { Box } from '@mui/system';
 
 export default {
   title: 'Components/NavLink',

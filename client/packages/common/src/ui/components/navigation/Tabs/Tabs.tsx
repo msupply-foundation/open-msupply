@@ -1,8 +1,8 @@
-import MuiTabPanel from '@material-ui/lab/TabPanel';
-import MuiTab from '@material-ui/core/Tab';
-import MuiTabContext from '@material-ui/lab/TabContext';
-import MuiTabList from '@material-ui/lab/TabList';
-import { styled } from '@material-ui/system';
+import MuiTabPanel from '@mui/lab/TabPanel';
+import MuiTab from '@mui/material/Tab';
+import MuiTabContext from '@mui/lab/TabContext';
+import MuiTabList from '@mui/lab/TabList';
+import { styled } from '@mui/system';
 
 export const TabContext = MuiTabContext;
 

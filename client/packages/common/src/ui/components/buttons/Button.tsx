@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button as MuiButton, Tooltip } from '@material-ui/core';
-import { styled } from '@material-ui/core/styles';
+import { Button as MuiButton, Tooltip } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
 import { DefaultButtonStyles } from './styles';
 import { useIsSmallScreen } from '../../../hooks';

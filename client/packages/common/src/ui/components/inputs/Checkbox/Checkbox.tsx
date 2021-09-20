@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import MuiCheckbox, { CheckboxProps } from '@material-ui/core/Checkbox';
+import MuiCheckbox, { CheckboxProps } from '@mui/material/Checkbox';
 
 import {
   CheckboxEmpty,
