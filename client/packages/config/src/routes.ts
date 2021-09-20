@@ -20,6 +20,8 @@ export enum AppRoute {
   Admin = 'admin',
 
   Logout = 'logout',
+
+  PageNotFound = 'page-not-found',
 }
 
 export enum ExternalURL {

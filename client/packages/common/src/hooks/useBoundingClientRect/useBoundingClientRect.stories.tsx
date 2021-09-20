@@ -12,7 +12,7 @@ const Template: Story = () => {
   return (
     <div>
       <p ref={ref}>Change your browsers window dimensions!</p>
-      <p>{JSON.stringify(rect, null, 2)}</p>
+      <p style={{ whiteSpace: 'pre' }}>{JSON.stringify(rect, null, 2)}</p>
     </div>
   );
 };
