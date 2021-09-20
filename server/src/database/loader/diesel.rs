@@ -1,12 +1,12 @@
 use crate::{
     database::{
         loader::{
-            ItemLineLoader, ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader,
-            StoreLoader, TransactLineLoader, TransactLoader, UserAccountLoader,
+            ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader, StoreLoader,
+            TransactLineLoader, TransactLoader, UserAccountLoader,
         },
         repository::{
-            ItemLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
-            RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
+            StockLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
             UserAccountRepository,
         },
     },
@@ -34,10 +34,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let item_repository = ItemRepository::new(pool.clone());
     let item_loader = DataLoader::new(ItemLoader { item_repository });
 
-    let item_line_repository = ItemLineRepository::new(pool.clone());
-    let item_line_loader = DataLoader::new(ItemLineLoader {
-        item_line_repository,
-    });
+    let _stock_line_repository = StockLineRepository::new(pool.clone());
 
     let requisition_repository = RequisitionRepository::new(pool.clone());
     let requisition_loader = DataLoader::new(RequisitionLoader {
@@ -71,7 +68,6 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     });
 
     loaders.insert(item_loader);
-    loaders.insert(item_line_loader);
     loaders.insert(requisition_loader);
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);

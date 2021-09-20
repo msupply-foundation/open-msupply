@@ -1,7 +1,7 @@
 mod central_sync_buffer;
 mod central_sync_cursor;
 mod item;
-mod item_line;
+mod stock_line;
 mod master_list;
 mod master_list_line;
 mod master_list_name_join;
@@ -13,13 +13,14 @@ mod sync_out;
 mod transact;
 mod transact_line;
 mod user_account;
+mod name_store_join;
 
 pub mod diesel_schema;
 
 #[derive(Clone)]
 pub enum DatabaseRow {
     Item(ItemRow),
-    ItemLine(ItemLineRow),
+    StockLine(StockLineRow),
     Name(NameRow),
     Requisition(RequisitionRow),
     RequisitionLine(RequisitionLineRow),
@@ -33,7 +34,7 @@ pub enum DatabaseRow {
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use central_sync_cursor::CentralSyncCursorRow;
 pub use item::ItemRow;
-pub use item_line::ItemLineRow;
+pub use stock_line::StockLineRow;
 pub use master_list::MasterListRow;
 pub use master_list_line::MasterListLineRow;
 pub use master_list_name_join::MasterListNameJoinRow;
@@ -45,3 +46,4 @@ pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
 pub use transact::{TransactRow, TransactRowType};
 pub use transact_line::{TransactLineRow, TransactLineRowType};
 pub use user_account::UserAccountRow;
+pub use name_store_join::NameStoreJoinRow;

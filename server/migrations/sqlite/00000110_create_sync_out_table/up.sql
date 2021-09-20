@@ -7,7 +7,7 @@ CREATE TABLE sync_out (
         'requisition',
         'requisition_line',
         'item',
-        'item_line',
+        'stock_line',
         'transact',
         'transact_line',
         'name',

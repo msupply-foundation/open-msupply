@@ -1,5 +1,5 @@
 mod item;
-mod item_line;
+mod stock_line;
 mod name;
 mod requisition;
 mod requisition_line;
@@ -9,7 +9,7 @@ mod transact_line;
 mod user_account;
 
 pub use item::mock_items;
-pub use item_line::mock_item_lines;
+pub use stock_line::mock_stock_lines;
 pub use name::mock_names;
 pub use requisition::mock_requisitions;
 pub use requisition_line::mock_requisition_lines;

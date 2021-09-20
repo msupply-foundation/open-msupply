@@ -51,6 +51,26 @@ impl CentralSyncBufferRepository {
         Ok(())
     }
 
+    pub async fn insert_many(
+        &self,
+        central_sync_buffer_rows: &Vec<CentralSyncBufferRow>,
+    ) -> Result<(), RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        CentralSyncBufferRepository::insert_many_tx(&connection, central_sync_buffer_rows)
+    }
+
+    pub fn insert_many_tx(
+        connection: &DBConnection,
+        central_sync_buffer_rows: &Vec<CentralSyncBufferRow>,
+    ) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
+        diesel::insert_into(central_sync_buffer)
+            .values(central_sync_buffer_rows)
+            // See https://github.com/diesel-rs/diesel/issues/1822.
+            .execute(&*(*connection))?;
+        Ok(())
+    }
+
     pub async fn pop_one(&self) -> Result<CentralSyncBufferRow, RepositoryError> {
         use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
         let connection = get_connection(&self.pool)?;
@@ -65,5 +85,19 @@ impl CentralSyncBufferRepository {
         let connection = get_connection(&self.pool)?;
         diesel::delete(central_sync_buffer).execute(&connection)?;
         Ok(())
+    }
+
+    // Retrieves all sync entries for a given table and returns them in asc order.
+    pub async fn get_sync_entries(
+        &self,
+        table: &str,
+    ) -> Result<Vec<CentralSyncBufferRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::central_sync_buffer::dsl::*;
+        let connection = get_connection(&self.pool)?;
+        let result = central_sync_buffer
+            .filter(table_name.eq(table))
+            .order(id.asc())
+            .load(&connection)?;
+        Ok(result)
     }
 }

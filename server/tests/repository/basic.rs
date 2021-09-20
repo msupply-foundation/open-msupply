@@ -4,13 +4,13 @@ mod repository_basic_test {
     use remote_server::database::{
         repository::{
             repository::get_repositories, CentralSyncBufferRepository, CustomerInvoiceRepository,
-            ItemLineRepository, ItemRepository, NameRepository, RequisitionLineRepository,
-            RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
+            StockLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
             UserAccountRepository,
         },
         schema::{
-            CentralSyncBufferRow, ItemLineRow, ItemRow, NameRow, RequisitionLineRow,
-            RequisitionRow, RequisitionRowType, StoreRow, TransactLineRow, TransactLineRowType,
+            CentralSyncBufferRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow,
+            RequisitionRowType, StockLineRow, StoreRow, TransactLineRow, TransactLineRowType,
             TransactRow, TransactRowType, UserAccountRow,
         },
     };
@@ -103,13 +103,18 @@ mod repository_basic_test {
         );
     }
 
-    async fn item_line_test(repo: &ItemLineRepository) {
-        let item1 = ItemLineRow {
-            id: "itemline1".to_string(),
+    async fn stock_line_test(repo: &StockLineRepository) {
+        let item1 = StockLineRow {
+            id: "StockLine1".to_string(),
             item_id: "item1".to_string(),
             store_id: "store1".to_string(),
-            batch: "batch1".to_string(),
-            quantity: 123.0,
+            batch: Some("batch1".to_string()),
+            available_number_of_packs: 6,
+            pack_size: 1,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            total_number_of_packs: 1,
+            expiry_date: None,
         };
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
@@ -158,7 +163,7 @@ mod repository_basic_test {
             id: "test1".to_string(),
             item_id: "item1".to_string(),
             transact_id: "transact1".to_string(),
-            item_line_id: Some("itemline1".to_string()),
+            stock_line_id: Some("StockLine1".to_string()),
             type_of: TransactLineRowType::CashOut,
         };
         repo.insert_one(&item1).await.unwrap();
@@ -170,7 +175,7 @@ mod repository_basic_test {
             id: "test2-with-optional".to_string(),
             item_id: "item1".to_string(),
             transact_id: "transact1".to_string(),
-            item_line_id: None,
+            stock_line_id: None,
             type_of: TransactLineRowType::CashOut,
         };
         repo.insert_one(&item2_optional).await.unwrap();
@@ -186,7 +191,7 @@ mod repository_basic_test {
             id: "test3".to_string(),
             item_id: "item2".to_string(),
             transact_id: "transact2".to_string(),
-            item_line_id: None,
+            stock_line_id: None,
             type_of: TransactLineRowType::Placeholder,
         };
         repo.insert_one(&item3).await.unwrap();
@@ -289,7 +294,7 @@ mod repository_basic_test {
         name_test(repos.get::<NameRepository>().unwrap()).await;
         store_test(repos.get::<StoreRepository>().unwrap()).await;
         item_test(repos.get::<ItemRepository>().unwrap()).await;
-        item_line_test(repos.get::<ItemLineRepository>().unwrap()).await;
+        stock_line_test(repos.get::<StockLineRepository>().unwrap()).await;
         requisition_test(repos.get::<RequisitionRepository>().unwrap()).await;
         requisition_line_test(repos.get::<RequisitionLineRepository>().unwrap()).await;
         transact_test(
