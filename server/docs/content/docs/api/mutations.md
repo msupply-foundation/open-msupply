@@ -34,9 +34,11 @@ type InsertCustomerInvoiceInput {
 }
 
 type InsertCustomerInvoiceLineInput {
+    clientId: String
     id: String
     itemId: String
     stockLineId: String
+    # GraphQL Validation >= 0
     numberOfPacks: Number
 }
 ```
@@ -60,8 +62,9 @@ type UpdateCustomerInvoiceInput {
     lines: [UpsertCustomerInvoiceLineInput]
 }
 
-// Intersection of InsertCustomerInvoiceLineInput or UpdateCustomerInvoiceLineInput
+# Intersection of InsertCustomerInvoiceLineInput or UpdateCustomerInvoiceLineInput
 type UpsertCustomerInvoiceLineInput {
+    clientId: String
     id: String
     itemId: String
     stockLineId: String
@@ -105,8 +108,10 @@ Customer invoice lines are always linked to an invoice, and are mutated via [Cus
 
 ```GraphQL
 type InsertCustomerInvoiceLineInput {
+    clientId: String
     itemId: String!
     stockLineId: String!
+    # GraphQL Validation >= 0
     numberOfPacks: Number!
 }
 ```
@@ -115,9 +120,11 @@ type InsertCustomerInvoiceLineInput {
 
 ```GraphQL
 type UpdateCustomerInvoiceLineInput {
+    clientId: String
     id: String!
     itemId: String
     stockLineId: String
+    # GraphQL Validation >= 0
     numberOfPacks: Number!
 }
 ```
@@ -147,6 +154,8 @@ Invoice lines are delete if they are missing in mutation but are present in data
 
 Validation of reduction to be checked against each `stock_line`, and reduction applied to `stock_line`. As per [InvoiceStatus implementation details](/docs/api/types/#enum-invoicestatus)
 
+`clientId` is only used in error responses
+
 </details>
 
 ## Supplier Invoice
@@ -167,12 +176,17 @@ type InsertSupplierInvoiceInput {
 }
 
 type InsertSupplierInvoiceLineInput {
+    clientId: String
     itemId: String!
+    # GraphQL Validation > 0
     packSize: Number!
     batch: String
+    # GraphQL Validation >= 0
     sellPricePerPack: Float!
+    # GraphQL Validation >= 0
     costPricePerPack: Float!
     expiryDate: Date 
+    # GraphQL Validation >= 0
     numberOfPacks: Number!
 }
 ```
@@ -195,15 +209,20 @@ type UpsertSupplierInvoiceInput {
     lines: [UpsertSupplierInvoiceLineInput]
 }
 
-// Intersection of InsertSupplierInvoiceLineInput or UpdateSupplierInvoiceLineInput
+# Intersection of InsertSupplierInvoiceLineInput or UpdateSupplierInvoiceLineInput
 type UpsertSupplierInvoiceLineInput {
+    clientId: String
     id: String
     itemId: String
+    # GraphQL Validation > 0
     packSize: Number
     batch: String
+    # GraphQL Validation >= 0
     sellPricePerPack: Float
+    # GraphQL Validation >= 0
     costPricePerPack: Float
     expiryDate: Date 
+    # GraphQL Validation >= 0
     numberOfPacks: Number
 }
 ```
@@ -240,12 +259,17 @@ Supplier invoice lines are always linked to an invoice, and are mutated via [Sup
 
 ```GraphQL
 type InsertSupplierInvoiceLineInput = {
+    clientId: String
     itemId: String!
+    # GraphQL Validation > 0
     packSize: Number!
     batch: String,
+    # GraphQL Validation >= 0
     sellPricePerPack: Float!
+    # GraphQL Validation >= 0
     costPricePerPack: Float!
     expiryDate: Date 
+    # GraphQL Validation >= 0
     numberOfPacks: Number!
 }
 ```       
@@ -254,14 +278,19 @@ type InsertSupplierInvoiceLineInput = {
 
 ```GraphQL
 type UpdateSupplierInvoiceLineInput = {
+    clientId: String
     id: String!
     itemId: String
+    # GraphQL Validation > 0
     packSize: Number
     batch: String,
+    # GraphQL Validation >= 0
     sellPricePerPack: Float
+    # GraphQL Validation >= 0
     costPricePerPack: Float
     expiryDate: Date
-    numberOfPacks: String
+    # GraphQL Validation >= 0
+    numberOfPacks: Number
 }
 ```
 
@@ -294,5 +323,7 @@ During confirmation and any further subsequent change will result in:
 When stock in supplier invoice is reserved by another invoice, `invoice_line` becomes not editable.
 
 Invoice lines are delete if they are missing in mutation but are present in database, in which case we have to make sure to delete associated `stock_line`
+
+`clientId` is only used in error responses
 
 </details>

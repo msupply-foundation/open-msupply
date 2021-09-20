@@ -16,6 +16,7 @@ toc = true
 
 {TODO can we export custom error shapes in GraphQL schema ?}
 
+
 ## Custom Error Codes
 
 ```TypeScript
@@ -36,23 +37,12 @@ enum CustomErrorCodes {
   IdPresentInInsertInvoiceLine = "ID_PRESENT_IN_INSERT_INVOICE_LINE",
   FinalisedInvoiceIsNotEditable = "FINALISED_INVOICE_IS_NOT_EDITABLE",
   CannotChangeStatusBackToDraft = "CANNOT_CHANGE_STATUS_BACK_TO_DRAFT",
+  InvoiceNotFound = "INVOICE_NOT_FOUND",
+  InvoiceLineError = "INVOICE_LINE_ERROR",
   // Customer Invoice Mutation
   OtherPartyNotACustomerOfThisStore = "OTHER_PARTY_NOT_A_CUSTOMER_OF_THIS_STORE",
   // Supplier Invoice Mutation
   OtherPartyNotASupplierOfThisStore = "OTHER_PARTY_NOT_A_SUPPLIER_OF_THIS_STORE",
-  // Customer Invoice and Supplier Invoice Line Mutation
-  NumberOfPacksCannotBeNegative = "NUMBER_OF_PACKS_CANNOT_BE_NEGATIVE",
-  NumberOfPacksMissingInInvoiceLine = "NUMBER_OF_PACKS_MISSING_IN_INVOICE_LINE",
-  ItemIdMissingInInvoiceLine = "ITEM_ID_MISSING_IN_INVOICE_LINE",
-  // Customer Invoice Line Mutation
-  ItemIdDoesNotMatchStockLineId = "ITEM_ID_DOES_NOT_MATCH_STOCK_LINE_ID",
-  StockLineIdMissingInInvoiceLine =  "STOCK_LINE_ID_MISSING_IN_INVOICE_LINE"
-  BatchReductionBelowZero = "BATCH_REDUCTION_BELOW_ZERO",
-  // Supplier Invoice Line Mutation
-  CannotDeleteReservedBatch = "CANNOT_DELETE_RESERVED_BATCH",
-  PriceFieldCannotBeNegative = "PRICE_FIELD_CANNOT_BE_NEGATIVE",
-  PackSizeMustBeAboveZero = "PACK_SIZE_MUST_BE_ABOVE_ZERO",
-  ReservedSupplierInvoiceLineIsNotEditable = "RESERVED_SUPPLIER_INVOICE_LINE_IS_NOT_EDITABLE",
 }
 ```
 
@@ -127,13 +117,6 @@ interface OtherPartyIdMissing extends CustomError {
 }
 ```
 
-```TypeScript
-interface IdPresentInInsertInvoiceLine  extends CustomError {
-  code: CustomErrorCodes.IdPresentInInsertInvoiceLine,
-  invoiceLineId: string,
-}
-```
-
 #### Update
 
 ```TypeScript
@@ -145,6 +128,13 @@ interface FinalisedInvoiceIsNotEditable extends CustomError {
 ```TypeScript
 interface CannotChangeStatusBackToDraft extends CustomError {
   code: CustomErrorCodes.CannotChangeStatusBackToDraft
+}
+```
+
+```TypeScript
+interface InvoiceNotFound extends CustomError {
+  code: CustomErrorCodes.InvoiceNotFound
+  id: string
 }
 ```
 
@@ -174,40 +164,71 @@ interface OtherPartyNotASupplierOfThisStore extends CustomError {
 
 ## [Customer And Supplier Invoice Line Mutation](/docs/api/mutations/#mutation)
 
-#### Insert and Update
+There errors are categories under `CustomErrorCodes.InvoiceLineError`
 
 ```TypeScript
-interface NumberOfPacksCannotBeNegative extends CustomError {
-  code: CustomErrorCodes.NumberOfPacksCannotBeNegative,
-  invoiceLineId: string
+interface InvoiceLineError extends CustomError {
+  code: CustomErrorCodes.InvoiceLineError,
+  lines: InvoiceErrorLine[]
 }
-// {TODO can this be delegated to async-graphql?}
-```
 
-```TypeScript
-interface NumberOfPacksMissingInInvoiceLine extends CustomError {
-  code: CustomErrorCodes.NumberOfPacksMissingInInvoiceLine,
-  invoiceLineId: string
+interface InvoiceLineError {
+  code: InvoiceLineErrorCodes,
+  clientId?: string,
+  id?: string
+}
+
+enum InvoiceLineErrorCodes {
+  // Customer Invoice and Supplier Invoice Line Mutation
+  NumberOfPacksMissingInInvoiceLine = "NUMBER_OF_PACKS_MISSING_IN_INVOICE_LINE",
+  ItemIdMissingInInvoiceLine = "ITEM_ID_MISSING_IN_INVOICE_LINE",
+  InvoiceLineNotFound = "INVOICE_LINE_NOT_FOUND",
+    // Customer Invoice Line Mutation
+  ItemIdDoesNotMatchStockLineId = "ITEM_ID_DOES_NOT_MATCH_STOCK_LINE_ID",
+  StockLineIdMissingInInvoiceLine =  "STOCK_LINE_ID_MISSING_IN_INVOICE_LINE",
+  BatchReductionBelowZero = "BATCH_REDUCTION_BELOW_ZERO",
+    // Supplier Invoice Line Mutation
+  CannotDeleteReservedBatch = "CANNOT_DELETE_RESERVED_BATCH",
+  ReservedSupplierInvoiceLineIsNotEditable = "RESERVED_SUPPLIER_INVOICE_LINE_IS_NOT_EDITABLE",
+  ReservedSupplierInvoiceLineIsNotDeletable = "RESERVED_SUPPLIER_INVOICE_LINE_IS_NOT_DELETABLE"
 }
 ```
 
 #### Insert
 
 ```TypeScript
-interface ItemIdMissingInInvoiceLine extends CustomError {
-  code: CustomErrorCodes.ItemIdMissingInInvoiceLine,
-  invoiceLineId: string
+interface NumberOfPacksMissingInInvoiceLine extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.NumberOfPacksMissingInInvoiceLine,
+  // this can only happen in insert
+  clientId?: string 
 }
 ```
 
-## [Customer Invoice Mutation](/docs/api/mutations/#customer-invoice-line)
+```TypeScript
+interface ItemIdMissingInInvoiceLine extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.ItemIdMissingInInvoiceLine,
+  // this can only happen in insert
+  clientId?: string 
+}
+```
+
+#### Insert
+```TypeScript
+interface InvoiceLineNotFound extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.InvoiceLineNotFound,
+  clientId?: string 
+  id: string
+}
+
+## [Customer Invoice Line Mutation](/docs/api/mutations/#customer-invoice-line)
 
 #### Insert and Update
 
 ```TypeScript
-interface ItemIdDoesNotMatchStockLineId extends CustomError {
-  code: CustomErrorCodes.ItemIdDoesNotMatchStockLineId,
-  stockLineId: string
+interface ItemIdDoesNotMatchStockLineId extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.ItemIdDoesNotMatchStockLineId,
+  clientId?: string 
+  id?: string
   stockLineItemId: string
   itemId: string
 }
@@ -216,18 +237,20 @@ interface ItemIdDoesNotMatchStockLineId extends CustomError {
 #### Insert
 
 ```TypeScript
-interface StockLineIdMissingInInvoiceLine extends CustomError {
-  code: CustomErrorCodes.StockLineIdMissingInInvoiceLine,
-  invoiceLineId: string
+interface StockLineIdMissingInInvoiceLine extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.StockLineIdMissingInInvoiceLine,
+ // this can only happen in insert
+  clientId?: string 
 }
 ```
 
 #### Update
 
 ```TypeScript
-interface BatchReductionBelowZero  extends CustomError {
-  code: CustomErrorCodes.BatchReductionBelowZero,
-  invoiceLineId: string,
+interface BatchReductionBelowZero  extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.BatchReductionBelowZero,
+  clientId?: string 
+  id: string
   stockLineId: string,
   // As specified in mutation
   currentNumberOfPacks: number,
@@ -246,36 +269,21 @@ interface BatchReductionBelowZero  extends CustomError {
 #### Delete {#supplier-invoice-line-delete}
 
 ```TypeScript
-interface CannotDeleteReservedBatch  extends CustomError {
-  code: CustomErrorCodes.CannotDeleteReservedBatch,
-  invoiceLineId: string,
+interface CannotDeleteReservedBatch  extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.CannotDeleteReservedBatch,
+  id: string
   stockLineId: string,
   // TODO add references to invoices/lines the stock is reserved in
-}
-```
-
-#### Insert and Update
-
-```TypeScript
-interface PriceFieldCannotBeNegative extends CustomError {
-  code: CustomErrorCodes.PriceFieldCannotBeNegative,
-  specifiedField: 'sellPricePerPack' | 'costPricePerPack',
-}
-```
-
-```TypeScript
-interface PackSizeMustBeAboveZero extends CustomError {
-  code: CustomErrorCodes.PackSizeMustBeAboveZero,
-  otherPartyId: string,
 }
 ```
 
 #### Update
 
 ```TypeScript
-interface ReservedSupplierInvoiceLineIsNotEditable  extends CustomError {
-  code: CustomErrorCodes.ReservedSupplierInvoiceLineIsNotEditable,
-  invoiceLineId: string,
+interface ReservedSupplierInvoiceLineIsNotEditable  extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.ReservedSupplierInvoiceLineIsNotEditable,
+  clientId?: string 
+  id: string,
   stockLineId: string,
   // TODO add references to invoices/lines the stock is reserved in
 }
@@ -283,4 +291,4 @@ interface ReservedSupplierInvoiceLineIsNotEditable  extends CustomError {
 
 When batch is already used, no changes are allowed to the invoice line 
 
-{TODO remember for delete: CannotDeleteSupplierWithReservedBatch}
+{TODO remember for delete: CannotDeleteSupplierInvoiceWithReservedBatch}
