@@ -17,9 +17,9 @@ const defaultColumns: ColumnDefinition<Item>[] = [
   {
     label: 'label.code',
     key: 'code',
-    width: 100,
-    minWidth: 100,
-    maxWidth: 100,
+    width: 20,
+    minWidth: 20,
+    maxWidth: 20,
     align: 'left',
   },
   {
@@ -33,18 +33,18 @@ const defaultColumns: ColumnDefinition<Item>[] = [
   {
     label: 'label.packSize',
     key: 'packSize',
-    width: 100,
-    minWidth: 100,
-    maxWidth: 100,
-    align: 'left',
+    width: 20,
+    minWidth: 20,
+    maxWidth: 20,
+    align: 'right',
   },
   {
     label: 'label.quantity',
     key: 'quantity',
-    width: 100,
-    minWidth: 100,
-    maxWidth: 100,
-    align: 'left',
+    width: 20,
+    minWidth: 20,
+    maxWidth: 20,
+    align: 'right',
   },
 ];
 
