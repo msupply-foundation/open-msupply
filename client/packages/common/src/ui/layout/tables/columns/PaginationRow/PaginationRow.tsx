@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Box, Typography, Pagination } from '@material-ui/core';
+import { Box, Typography, Pagination } from '@mui/material';
 
 interface PaginationRowProps {
   offset: number;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { styled } from '@material-ui/system';
-import { Typography } from '@material-ui/core';
+import { styled } from '@mui/system';
+import { Typography } from '@mui/material';
 import { useLocation, Link } from 'react-router-dom';
 
 import {

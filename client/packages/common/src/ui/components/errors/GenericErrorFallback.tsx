@@ -1,4 +1,4 @@
-import { Box, Typography, Button } from '@material-ui/core';
+import { Box, Typography, Button } from '@mui/material';
 import React, { FC } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
 import UnhappyMan from '../../icons/UnhappyMan';

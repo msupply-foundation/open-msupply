@@ -3,8 +3,8 @@ import { Story } from '@storybook/react';
 import { TestingProvider } from '../..';
 import { useRowRenderCount } from './useRowRenderCount';
 import { useTheme } from '../../styles';
-import { Box } from '@material-ui/system';
-import { Typography } from '@material-ui/core';
+import { Box } from '@mui/system';
+import { Typography } from '@mui/material';
 
 export default {
   title: 'Hooks/useRowRenderCount',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CacheProvider } from '@emotion/react';
-import { ThemeProvider as MuiThemeProvider } from '@material-ui/core/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
@@ -16,6 +16,7 @@ import { RTLProvider } from './RTLProvider';
 const cacheLtr = createCache({
   key: 'rtl',
   stylisPlugins: [],
+  prepend: true,
 });
 
 const cacheRtl = createCache({

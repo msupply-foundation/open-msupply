@@ -19,7 +19,7 @@ import {
   TableContainer,
   TableSortLabel,
   Table as MuiTable,
-} from '@material-ui/core';
+} from '@mui/material';
 
 import { SortDesc } from '../../icons';
 import { TableProps } from './types';
@@ -88,10 +88,9 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
             <TableRow
               {...getHeaderGroupProps()}
               sx={{
-                ...getHeaderGroupProps().style,
+                minWidth: getHeaderGroupProps()?.style?.minWidth,
                 display: 'flex',
                 flex: '1 0 auto',
-
                 height: '60px',
                 paddingLeft: '20px',
                 paddingRight: '20px',

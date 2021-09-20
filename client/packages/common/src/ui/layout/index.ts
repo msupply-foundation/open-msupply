@@ -1,13 +1,13 @@
-import Box from '@material-ui/core/Box';
-import Container from '@material-ui/core/Container';
-import Drawer from '@material-ui/core/Drawer';
-import Grid from '@material-ui/core/Grid';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Paper from '@material-ui/core/Paper';
-import Portal from '@material-ui/core/Portal';
-import Toolbar from '@material-ui/core/Toolbar';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Drawer from '@mui/material/Drawer';
+import Grid from '@mui/material/Grid';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Paper from '@mui/material/Paper';
+import Portal from '@mui/material/Portal';
+import Toolbar from '@mui/material/Toolbar';
 export * from './tables';
 
 export {
