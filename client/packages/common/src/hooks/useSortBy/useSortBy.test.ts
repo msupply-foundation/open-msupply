@@ -47,9 +47,7 @@ describe('useSortBy', () => {
   });
 
   it('has the correct values after triggering a few sort bys in sequence', () => {
-    const { result } = renderHook(() =>
-      useSortBy<TestSortBy>({ key: 'id', isDesc: false })
-    );
+    const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }));
 
     act(() => {
       // initially: id/asc

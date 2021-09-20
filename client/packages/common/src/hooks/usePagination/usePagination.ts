@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-interface PaginationState {
+export interface PaginationState {
   page: number;
   offset: number;
   first: number;

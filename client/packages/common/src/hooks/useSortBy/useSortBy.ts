@@ -5,10 +5,10 @@ export interface SortRule<T> {
   isDesc?: boolean;
 }
 
-interface SortBy<T> extends SortRule<T> {
+export interface SortBy<T> extends SortRule<T> {
   direction: 'asc' | 'desc';
 }
-interface SortState<T> {
+export interface SortState<T> {
   sortBy: SortBy<T>;
   onChangeSortBy: (newSortRule: SortRule<T>) => void;
 }
@@ -25,6 +25,9 @@ export const useSortBy = <T>({
   });
 
   const onChangeSortBy = useCallback((newSortRule: SortRule<T>) => {
+    console.log('-------------------------------------------');
+    console.log('newSortRule', newSortRule);
+    console.log('-------------------------------------------');
     setSortBy(({ key: prevSortKey, isDesc: prevIsDesc }) => {
       const { key: newSortKey, isDesc: maybeNewIsDesc } = newSortRule;
       const newIsDesc =
