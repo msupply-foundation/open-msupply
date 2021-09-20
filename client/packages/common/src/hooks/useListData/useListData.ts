@@ -47,7 +47,6 @@ export const useListData = <T>(
     api.onQuery({ first, offset, sortBy })
   );
 
-  const invalidation = () => queryClient.invalidateQueries(queryKey);
   const invalidate = () => queryClient.invalidateQueries(queryKey);
 
   const { mutateAsync: onDelete, isLoading: isDeleteLoading } = useMutation(
