@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { useMatch } from 'react-router-dom';
+import { Navigate, useMatch } from 'react-router-dom';
 import {
   Grid,
   Invoice,
@@ -33,6 +33,11 @@ const CustomerContainer: FC = () => {
   }
   if (useMatch(fullCustomerRequisitionPath)) {
     return <RequisitionService />;
+  }
+
+  if (!useMatch(AppRoute.Customers)) {
+    const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
+    return <Navigate to={notFoundRoute} />;
   }
 
   return (
