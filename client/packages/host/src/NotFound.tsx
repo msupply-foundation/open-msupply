@@ -2,6 +2,7 @@ import React from 'react';
 
 import {
   Grid,
+  Grow,
   Typography,
   UnhappyMan,
   useTranslation,
@@ -18,7 +19,11 @@ const NotFound: React.FC = () => {
       sx={{ height: '100vh' }}
     >
       <Grid item display="flex" justifyContent="center">
-        <UnhappyMan />
+        <Grow in timeout={1000}>
+          <div>
+            <UnhappyMan />
+          </div>
+        </Grow>
       </Grid>
       <Grid display="flex" justifyContent="center">
         <Typography variant="h5">{t('heading.404')}</Typography>
