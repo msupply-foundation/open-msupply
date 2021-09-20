@@ -16,22 +16,51 @@ Mutations will happen sequentially if batched, an error will result in cancellat
 
 For full list of errors see [custom error section](/docs/api/custom_errors)
 
-## CUSTOMER INVOICE
+## Customer Invoice
+
+#### Customer Invoice Insert
 
 ```graphql
 query {
-    upsertCustomerInvoice(input: UpsertCustomerInvoiceInput): Invoice
+    insertCustomerInvoice(input: InsertCustomerInvoiceInput): Invoice
 }
 
-type UpsertCustomerInvoiceInput {
+type InsertCustomerInvoiceInput {
+    otherPartyId: String!
+    status: InvoiceStatus!
+    comment: String
+    theirReference: String
+    lines: [InsertCustomerInvoiceLineInput]
+}
+
+type InsertCustomerInvoiceLineInput {
     id: String
+    itemId: String
+    stockLineId: String
+    numberOfPacks: Number
+}
+```
+
+[InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert)
+
+#### Customer Invoice Update
+
+
+```graphql
+query {
+    updateCustomerInvoice(input: UpdateCustomerInvoiceInput): Invoice
+}
+
+type UpdateCustomerInvoiceInput {
+    id: String!
     otherPartyId: String
     status: InvoiceStatus
     comment: String
     theirReference: String
-    allInvoiceLines: [UpsertCustomerInvoiceLineInput]
+    lines: [UpsertCustomerInvoiceLineInput]
 }
 
+// Intersection of InsertCustomerInvoiceLineInput or UpdateCustomerInvoiceLineInput
 type UpsertCustomerInvoiceLineInput {
     id: String
     itemId: String
@@ -40,43 +69,12 @@ type UpsertCustomerInvoiceLineInput {
 }
 ```
 
-Beyond graphQL type validation of above schema, further validations will apply, they are different for an insert or update request:
+[InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert)
+[UpdateCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-update)
 
-#### Customer Invoice Insert
+Invoice lines that previously existed but are missing in `lines` list will be deleted. 
 
-If **id** is missing, it's deemed an insertion and the following shape needs to be satisfied
-
-```TypeScript
-type InsertCustomerInvoiceInput = {
-    otherPartyId: string,
-    comment?: string,
-    status?: InvoiceStatus,
-    theirFerefence?: string,
-    allInvoiceLines?: InsertCustomerInvoiceLineInput[]
-}
-```
-
-As you can see an insert invoice mutation requires all invoice lines to be of [InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert) type, whereas in update invoice mutation invoice lines can be upserted.
-
-
-#### Customer Invoice Update
-
-If **id** is specified, it's deemed an update and the following shape needs to be satisfied
-
-```TypeScript
-type InsertCustomerInvoiceInput = {
-    id: string
-    otherPartyId?: string,
-    comment?: string,
-    status?: InvoiceStatus,
-    theirFerefence?: string,
-    allInvoiceLines?: UpsertCustomerInvoiceLineInput[]
-}
-```
-
-Invoice lines that previously existed but are missing in `allInvoiceLines` list will be deleted. `UpsertCustomerInvoiceLineInput` can either be of [InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert) or [UpdateCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-update). See below
-
-{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}
+{TODO we can expand this query to also have `deletedLines`, `partialLines`, if and when needed}
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -84,43 +82,49 @@ Invoice lines that previously existed but are missing in `allInvoiceLines` list 
 Base table: `invoice`
 
 <ins>otherPartyId</ins>: `name_id`
-<ins>allInvoiceLines</ins>: `id` -> `invoice_line.invoice_id`
+<ins>lines</ins>: `id` -> `invoice_line.invoice_id`
 
 All other fields are translated directly to snake case equivalent.
 
 `type` to be set as: `CUSTOMER_INVOICE`
 `store_id` to be set as current logged in store in session
 
+On Insertion `entry_datetime` is set.
+
+On status change the datetime fields are set:
+- `confirm_datetime` is set when the status is changed to `confirmed`
+- `finalised_datetime` is set when the status is changed to `finalised`
+
 </details>
 
-## CUSTOMER INVOICE LINE
+## Customer Invoice Line
 
-Customer invoice lines are always linked to an invoice, and are mutated via [upsertCustomerInvoice](/docs/api/mutations/#customer-invoice).
+Customer invoice lines are always linked to an invoice, and are mutated via [Custom Invoice](/docs/api/mutations/#customer-invoice) mutations.
 
 #### Customer Invoice Line Insert
 
-If **id** is missing, it's deemed an insertion and the following shape needs to be satisfied
-
-```TypeScript
-type InsertCustomerInvoiceLineInput = {
-    itemId: string,
-    stockLineId: string,
-    numberOfPacks: number
+```GraphQL
+type InsertCustomerInvoiceLineInput {
+    itemId: String!
+    stockLineId: String!
+    numberOfPacks: Number!
 }
 ```
 
 #### Customer Invoice Line Update
 
-If **id** is specified, it's deemed an update and the following shape needs to be satisfied
-
-```TypeScript
-type UpdateCustomerInvoiceLineInput = {
-    id: string
-    itemId?: string,
-    stockLineId?: string,
-    numberOfPacks: number
+```GraphQL
+type UpdateCustomerInvoiceLineInput {
+    id: String!
+    itemId: String
+    stockLineId: String
+    numberOfPacks: Number!
 }
 ```
+
+#### Customer Invoice Line Upsert
+
+`UpsertCustomerInvoiceLineInput` is an intersection of `InsertCustomerInvoiceLineInput` and `UpdateCustomerInvoiceLineInput`, the type is narrowed down by checking presence of value in **id** field
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -139,15 +143,47 @@ All fields are translated directly to snake case equivalent.
 
 `pack_size`, `cost_price_per_pack`, `sell_price_per_pack`, `batch`, `expiry_date` to be populated from `stock_line`, when `stock_line_id` changes
 
+Invoice lines are delete if they are missing in mutation but are present in database, in which case we have to make sure to adjust `stock_line` accordingly.
+
 Validation of reduction to be checked against each `stock_line`, and reduction applied to `stock_line`. As per [InvoiceStatus implementation details](/docs/api/types/#enum-invoicestatus)
 
 </details>
 
-## SUPPLIER INVOICE
+## Supplier Invoice
+
+### Supplier Invoice Insert
 
 ```graphql
 query {
-    upsertSupplierInvoice(input: UpsertSupplierInvoiceInput): Invoice
+    insertSupplierInvoice(input: InsertSupplierInvoiceInput): Invoice
+}
+
+type InsertSupplierInvoiceInput {
+    otherPartyId: String!
+    status: InvoiceStatus!
+    comment: String
+    theirReference: String
+    lines: [InsertSupplierInvoiceLineInput]
+}
+
+type InsertSupplierInvoiceLineInput {
+    itemId: String!
+    packSize: Number!
+    batch: String
+    sellPricePerPack: Float!
+    costPricePerPack: Float!
+    expiryDate: Date 
+    numberOfPacks: Number!
+}
+```
+
+[InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
+
+### Supplier Invoice Update
+
+```graphql
+query {
+    updateSupplierInvoice(input: UpsertSupplierInvoiceInput): Invoice
 }
 
 type UpsertSupplierInvoiceInput {
@@ -156,55 +192,24 @@ type UpsertSupplierInvoiceInput {
     status: InvoiceStatus
     comment: String
     theirReference: String
-    allInvoiceLines: [UpsertSupplierInvoiceLineInput]
+    lines: [UpsertSupplierInvoiceLineInput]
 }
 
+// Intersection of InsertSupplierInvoiceLineInput or UpdateSupplierInvoiceLineInput
 type UpsertSupplierInvoiceLineInput {
     id: String
     itemId: String
     packSize: Number
     batch: String
-    sellPricePerPack: Number
-    costPricePerPack: Number
+    sellPricePerPack: Float
+    costPricePerPack: Float
     expiryDate: Date 
     numberOfPacks: Number
 }
 ```
 
-Beyond graphQL type validation of above schema, further validations will apply, they are different for an insert or update request:
-
-#### Supplier Invoice Insert
-
-If **id** is missing, it's deemed an insertion and the following shape needs to be satisfied
-
-```TypeScript
-type SupplierCustomerInvoiceInput = {
-    otherPartyId: string,
-    comment?: string,
-    status?: InvoiceStatus,
-    theirFerefence?: string,
-    allInvoiceLines?: InsertSupplierInvoiceLineInput[]
-}
-```
-
-As you can see an insert invoice mutation requires all invoice lines to be of [InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert) type, whereas in update invoice mutation invoice lines can be upserted.
-
-#### Supplier Invoice Update
-
-If **id** is specified, it's deemed an update and the following shape needs to be satisfied
-
-```TypeScript
-type InsertSupplierInvoiceInput = {
-    id: string
-    otherPartyId?: string,
-    comment?: string,
-    status?: InvoiceStatus,
-    theirFerefence?: string,
-    allInvoiceLines?: UpsertSupplierInvoiceLineInput[]
-}
-```
-
-Invoice lines that previously existed but are missing in `allInvoiceLines` list will be deleted. `UpsertCustomerInvoiceLineInput` can either be of [InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert) or [UpdateSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-update). See below
+[InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
+[UpdateSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-update)
 
 {TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}                  
 
@@ -221,45 +226,48 @@ All other fields are translated directly to snake case equivalent.
 `type` to be set as: `SUPPLIER_INVOICE`
 `store_id` to be set as current logged in store in session
 
+On status change the datetime fields are set:
+- `confirm_datetime` is set when the status is changed to `confirmed`
+- `finalised_datetime` is set when the status is changed to `finalised`
+
 </details>
 
-## SUPPLIER INVOICE LINE
+## Supplier Invoice Line
 
-Supplier invoice lines are always linked to an invoice, and are mutated via [upsertSupplierInvoice](/docs/api/mutations/#supplier-invoice).
+Supplier invoice lines are always linked to an invoice, and are mutated via [Supplier Invoice](/docs/api/mutations/#supplier-invoice) mutations.
 
 #### Supplier Invoice Line Insert
 
-If **id** is missing, it's deemed an insertion and the following shape needs to be satisfied
-
-```TypeScript
+```GraphQL
 type InsertSupplierInvoiceLineInput = {
-    itemId: string,
-    packSize: number,
-    batch: string,
-    sellPricePerPack: number,
-    costPricePerPack: number
-    expiryDate: date | null, 
-    numberOfPacks: number
-    // TODO should we have defaults ?
+    itemId: String!
+    packSize: Number!
+    batch: String,
+    sellPricePerPack: Float!
+    costPricePerPack: Float!
+    expiryDate: Date 
+    numberOfPacks: Number!
 }
 ```       
 
 #### Supplier Invoice Line Update
 
-If **id** is specified, it's deemed an update and the following shape needs to be satisfied
-
-```TypeScript
-type InsertCustomerInvoiceLineInput = {
-    id: string
-    itemId?: string,
-    packSize?: number,
-    batch?: string,
-    sellPricePerPack?: number,
-    costPricePerPack?: number
-    expiryDate?: date | null, 
-    numberOfPacks?: number
+```GraphQL
+type UpdateSupplierInvoiceLineInput = {
+    id: String!
+    itemId: String
+    packSize: Number
+    batch: String,
+    sellPricePerPack: Float
+    costPricePerPack: Float
+    expiryDate: Date
+    numberOfPacks: String
 }
 ```
+
+#### Supplier Invoice Line Upsert
+
+`UpsertSupplierInvoiceLineInput` is an intersection of `InsertSupplierInvoiceLineInput` and `UpdateSupplierInvoiceLineInput`, the type is narrowed down by checking presence of value in **id** field
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -285,6 +293,6 @@ During confirmation and any further subsequent change will result in:
 
 When stock in supplier invoice is reserved by another invoice, `invoice_line` becomes not editable.
 
+Invoice lines are delete if they are missing in mutation but are present in database, in which case we have to make sure to delete associated `stock_line`
 
 </details>
-
