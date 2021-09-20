@@ -38,8 +38,7 @@ pub fn get_test_master_list_name_join_records() -> Vec<TestSyncRecord> {
             data: LIST_MASTER_NAME_JOIN_1.1.to_owned(),
         },
         central_sync_buffer_row: CentralSyncBufferRow {
-            id: "50".to_owned(),
-            cursor_id: 50,
+            id: 50,
             table_name: RECORD_TYPE.to_owned(),
             record_id: LIST_MASTER_NAME_JOIN_1.0.to_owned(),
             data: LIST_MASTER_NAME_JOIN_1.1.to_owned(),

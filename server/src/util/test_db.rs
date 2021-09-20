@@ -1,6 +1,6 @@
 use crate::{
     database::repository::{get_repositories, DBBackendConnection},
-    server::data::{RepositoryMap, RepositoryRegistry},
+    server::data::RepositoryMap,
 };
 
 use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};

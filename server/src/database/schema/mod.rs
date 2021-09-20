@@ -1,4 +1,5 @@
 mod central_sync_buffer;
+mod central_sync_cursor;
 mod item;
 mod stock_line;
 mod master_list;
@@ -31,7 +32,7 @@ pub enum DatabaseRow {
 }
 
 pub use central_sync_buffer::CentralSyncBufferRow;
-
+pub use central_sync_cursor::CentralSyncCursorRow;
 pub use item::ItemRow;
 pub use stock_line::StockLineRow;
 pub use master_list::MasterListRow;

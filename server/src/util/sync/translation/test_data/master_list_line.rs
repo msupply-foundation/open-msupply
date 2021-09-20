@@ -33,8 +33,7 @@ pub fn get_test_master_list_line_records() -> Vec<TestSyncRecord> {
             data: MASTER_LIST_LINE_1.to_owned(),
         },
         central_sync_buffer_row: CentralSyncBufferRow {
-            id: "20".to_owned(),
-            cursor_id: 20,
+            id: 20,
             table_name: RECORD_TYPE.to_owned(),
             record_id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_owned(),
             data: MASTER_LIST_LINE_1.to_owned(),

@@ -204,8 +204,7 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 data: STORE_1.1.to_owned(),
             },
             central_sync_buffer_row: CentralSyncBufferRow {
-                id: "10".to_owned(),
-                cursor_id: 10,
+                id: 10,
                 table_name: RECORD_TYPE.to_owned(),
                 record_id: STORE_1.0.to_owned(),
                 data: STORE_1.1.to_owned(),
@@ -221,8 +220,7 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 data: STORE_2.1.to_owned(),
             },
             central_sync_buffer_row: CentralSyncBufferRow {
-                id: "11".to_owned(),
-                cursor_id: 11,
+                id: 11,
                 table_name: RECORD_TYPE.to_owned(),
                 record_id: STORE_2.0.to_owned(),
                 data: STORE_2.1.to_owned(),
@@ -238,8 +236,7 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 data: STORE_3.1.to_owned(),
             },
             central_sync_buffer_row: CentralSyncBufferRow {
-                id: "12".to_owned(),
-                cursor_id: 12,
+                id: 12,
                 table_name: RECORD_TYPE.to_owned(),
                 record_id: STORE_3.0.to_owned(),
                 data: STORE_3.1.to_owned(),
@@ -255,8 +252,7 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 data: STORE_4.1.to_owned(),
             },
             central_sync_buffer_row: CentralSyncBufferRow {
-                id: "13".to_owned(),
-                cursor_id: 13,
+                id: 13,
                 table_name: RECORD_TYPE.to_owned(),
                 record_id: STORE_4.0.to_owned(),
                 data: STORE_4.1.to_owned(),

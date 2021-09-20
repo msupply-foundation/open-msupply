@@ -1,4 +1,19 @@
 table! {
+    central_sync_buffer (id) {
+        id -> Integer,
+        table_name -> Text,
+        record_id -> Text,
+        data -> Text,
+    }
+}
+
+table! {
+    central_sync_cursor (id) {
+        id -> Integer,
+    }
+}
+
+table! {
     item (id) {
         id -> Text,
         name -> Text,
@@ -101,16 +116,6 @@ table! {
 }
 
 table! {
-    central_sync_buffer (id) {
-        id -> Text,
-        cursor_id -> Integer,
-        table_name -> Text,
-        record_id -> Text,
-        data -> Text,
-    }
-}
-
-table! {
     name_store_join (id) {
         id -> Text,
         name_id -> Text,
@@ -119,6 +124,7 @@ table! {
         name_is_supplier -> Bool,
     }
 }
+
 table! {
     master_list (id) {
         id -> Text,
@@ -165,13 +171,14 @@ joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name_table (name_id));
 
 allow_tables_to_appear_in_same_query!(
+    central_sync_buffer,
+    central_sync_cursor,
     item,
     stock_line,
     name_table,
     requisition,
     requisition_line,
     store,
-    central_sync_buffer,
     sync_out,
     transact,
     transact_line,

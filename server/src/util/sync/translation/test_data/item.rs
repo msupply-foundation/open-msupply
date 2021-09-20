@@ -182,8 +182,7 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
             data: ITEM_1.1.to_owned(),
         },
         central_sync_buffer_row: CentralSyncBufferRow {
-            id: "300".to_owned(),
-            cursor_id: 300,
+            id: 300,
             table_name: RECORD_TYPE.to_owned(),
             record_id: ITEM_1.0.to_owned(),
             data: ITEM_1.1.to_owned(),
@@ -206,8 +205,7 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
             data: ITEM_1_UPSERT.1.to_owned(),
         },
         central_sync_buffer_row: CentralSyncBufferRow {
-            id: "301".to_owned(),
-            cursor_id: 301,
+            id: 301,
             table_name: RECORD_TYPE.to_owned(),
             record_id: ITEM_1_UPSERT.0.to_owned(),
             data: ITEM_1_UPSERT.1.to_owned(),

@@ -252,31 +252,27 @@ mod repository_basic_test {
 
     async fn central_sync_buffer_test(repo: &CentralSyncBufferRepository) {
         let central_sync_buffer_row_a = CentralSyncBufferRow {
-            id: "1".to_string(),
-            cursor_id: 1,
+            id: 1,
             table_name: "store".to_string(),
             record_id: "store_a".to_string(),
             data: r#"{ "ID": "store_a" }"#.to_string(),
         };
 
         let central_sync_buffer_row_b = CentralSyncBufferRow {
-            id: "2".to_string(),
-            cursor_id: 2,
+            id: 2,
             table_name: "store".to_string(),
             record_id: "store_b".to_string(),
             data: r#"{ "ID": "store_b" }"#.to_string(),
         };
 
-        let central_sync_buffer_records = vec![
-            central_sync_buffer_row_a.clone(),
-            central_sync_buffer_row_b.clone(),
-        ];
+        // `insert_one` inserts valid sync buffer row.
+        repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
+        let result = repo.pop_one().await.unwrap();
+        assert_eq!(central_sync_buffer_row_a, result);
 
-        // `insert_many` inserts valid sync buffer rows.
         // `pop` returns buffered records in FIFO order.
-        repo.insert_many(&central_sync_buffer_records)
-            .await
-            .unwrap();
+        repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
+        repo.insert_one(&central_sync_buffer_row_b).await.unwrap();
         let result = repo.pop_one().await.unwrap();
         assert_eq!(central_sync_buffer_row_a, result);
 

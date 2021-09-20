@@ -63,8 +63,7 @@ pub fn get_test_master_list_records() -> Vec<TestSyncRecord> {
             data: MASTER_LIST_1.1.to_owned(),
         },
         central_sync_buffer_row: CentralSyncBufferRow {
-            id: "400".to_owned(),
-            cursor_id: 400,
+            id: 400,
             table_name: RECORD_TYPE.to_owned(),
             record_id: MASTER_LIST_1.0.to_owned(),
             data: MASTER_LIST_1.1.to_owned(),
@@ -88,8 +87,7 @@ pub fn get_test_master_list_upsert_records() -> Vec<TestSyncRecord> {
             data: MASTER_LIST_UPSERT_1.1.to_owned(),
         },
         central_sync_buffer_row: CentralSyncBufferRow {
-            id: "500".to_owned(),
-            cursor_id: 500,
+            id: 500,
             table_name: RECORD_TYPE.to_owned(),
             record_id: MASTER_LIST_UPSERT_1.0.to_owned(),
             data: MASTER_LIST_UPSERT_1.1.to_owned(),

@@ -3,6 +3,7 @@ use crate::{
 };
 
 mod central_sync_buffer;
+mod central_sync_cursor;
 mod item;
 mod item_query;
 mod master_list;
@@ -22,6 +23,7 @@ mod user_account;
 use actix_rt::blocking::BlockingError;
 use async_graphql::dataloader::DataLoader;
 pub use central_sync_buffer::CentralSyncBufferRepository;
+pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use item::ItemRepository;
 pub use item_query::ItemQueryRepository;
 pub use master_list::MasterListRepository;
@@ -121,6 +123,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(TransactLineRepository::new(pool.clone()));
     repositories.insert(UserAccountRepository::new(pool.clone()));
     repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
+    repositories.insert(CentralSyncCursorRepository::new(pool.clone()));
     repositories.insert(SyncRepository::new(pool.clone()));
     repositories.insert(MasterListRepository::new(pool.clone()));
     repositories.insert(MasterListLineRepository::new(pool.clone()));

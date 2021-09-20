@@ -34,7 +34,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let item_repository = ItemRepository::new(pool.clone());
     let item_loader = DataLoader::new(ItemLoader { item_repository });
 
-    let stock_line_repository = StockLineRepository::new(pool.clone());
+    let _stock_line_repository = StockLineRepository::new(pool.clone());
 
     let requisition_repository = RequisitionRepository::new(pool.clone());
     let requisition_loader = DataLoader::new(RequisitionLoader {
