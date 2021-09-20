@@ -49,6 +49,7 @@ export const useDetailPanel = (): DetailPanel => {
         icon={<MenuDots />}
         labelKey="button.more"
         onClick={() => open()}
+        shouldShrink
       />
     );
 
