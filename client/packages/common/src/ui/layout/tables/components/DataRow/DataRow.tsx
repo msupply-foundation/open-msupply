@@ -1,7 +1,7 @@
 import React from 'react';
 import { Cell } from 'react-table';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 interface DataRowProps<T extends object> {
@@ -51,7 +51,10 @@ export const DataRow = <T extends Record<string, unknown>>({
               padding: 0,
               paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
-              ...cellStyle,
+              flex: cellStyle?.flex,
+              minWidth: cellStyle?.minWidth,
+              width: cellStyle?.width,
+              boxSizing: cellStyle?.boxSizing,
             }}
           >
             {cell.render('Cell')}

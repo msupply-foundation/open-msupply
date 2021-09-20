@@ -1,5 +1,5 @@
-import Fade from '@material-ui/core/Fade';
-import Grow from '@material-ui/core/Grow';
-import Slide from '@material-ui/core/Slide';
+import Fade from '@mui/material/Fade';
+import Grow from '@mui/material/Grow';
+import Slide from '@mui/material/Slide';
 
 export { Fade, Grow, Slide };

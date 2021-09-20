@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
-import { TableBody, Table } from '@material-ui/core';
+import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 
 export default {

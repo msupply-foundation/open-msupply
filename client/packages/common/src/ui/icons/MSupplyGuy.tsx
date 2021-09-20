@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import SvgIcon, { SvgIconProps } from '@material-ui/core/SvgIcon';
-import { styled } from '@material-ui/core/styles';
-import { keyframes } from '@material-ui/styled-engine';
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { styled } from '@mui/material/styles';
+import { keyframes } from '@mui/styled-engine';
 
 const spin = keyframes`
   from {transform:rotate(0deg);}

@@ -1,4 +1,4 @@
-import { createTheme, Direction } from '@material-ui/core/styles';
+import { createTheme, Direction } from '@mui/material/styles';
 
 /**
  * Our theme uses module augmentation when customising the theme to ensure
@@ -7,7 +7,7 @@ import { createTheme, Direction } from '@material-ui/core/styles';
  * See: https://material-ui.com/guides/typescript/#customization-of-theme
  */
 
-declare module '@material-ui/core/styles/createMixins' {
+declare module '@mui/material/styles/createMixins' {
   interface Mixins {
     header: {
       backgroundColor: string;
@@ -24,7 +24,7 @@ declare module '@material-ui/core/styles/createMixins' {
   }
 }
 
-declare module '@material-ui/core/styles/createPalette' {
+declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
     darkGrey: string;
@@ -42,7 +42,7 @@ declare module '@material-ui/core/styles/createPalette' {
   }
 }
 
-declare module '@material-ui/core/styles/createTypography' {
+declare module '@mui/material/styles/createTypography' {
   interface Typography {
     th: CSSProperties;
   }

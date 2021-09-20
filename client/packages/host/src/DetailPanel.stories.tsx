@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common/src/hooks/useDetailPanel';
 import { Typography } from '@openmsupply-client/common/src/ui/components/index';
 import { TestingProvider } from '@openmsupply-client/common/src/utils/testing';
-import Grid from '@material-ui/core/Grid';
+import Grid from '@mui/material/Grid';
 import { Clock } from '@openmsupply-client/common/src/ui/icons/Clock';
 import { Copy } from '@openmsupply-client/common/src/ui/icons/Copy';
 import { Rewind } from '@openmsupply-client/common/src/ui/icons/Rewind';
