@@ -123,7 +123,9 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                     }
                   >
                     <TableSortLabel
-                      hideSortIcon={column.id === 'selection'}
+                      hideSortIcon={
+                        column.id === 'selection' || column.disableSortBy
+                      }
                       active={!!sortedByThisColumn}
                       direction={sortBy.direction}
                       IconComponent={SortDesc}
