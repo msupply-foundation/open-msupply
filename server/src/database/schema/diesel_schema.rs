@@ -22,12 +22,17 @@ table! {
 }
 
 table! {
-    item_line (id) {
+    stock_line (id) {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        batch -> Text,
-        quantity -> Double,
+        batch -> Nullable<Text>,
+        pack_size -> Integer,
+        cost_price_per_pack -> Double,
+        sell_price_per_pack -> Double,
+        available_number_of_packs -> Integer,
+        total_number_of_packs -> Integer,
+        expiry_date -> Nullable<Text>,
     }
 }
 
@@ -96,7 +101,7 @@ table! {
         id -> Text,
         transact_id -> Text,
         item_id -> Text,
-        item_line_id -> Nullable<Text>,
+        stock_line_id -> Nullable<Text>,
         type_of -> crate::database::schema::transact_line::TransactLineRowTypeMapping,
     }
 }
@@ -107,6 +112,16 @@ table! {
         username -> Text,
         password -> Text,
         email -> Nullable<Text>,
+    }
+}
+
+table! {
+    name_store_join (id) {
+        id -> Text,
+        name_id -> Text,
+        store_id -> Text,
+        name_is_customer -> Bool,
+        name_is_supplier -> Bool,
     }
 }
 
@@ -135,8 +150,8 @@ table! {
     }
 }
 
-joinable!(item_line -> item (item_id));
-joinable!(item_line -> store (store_id));
+joinable!(stock_line -> item (item_id));
+joinable!(stock_line -> store (store_id));
 joinable!(requisition -> name_table (name_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition_line -> item (item_id));
@@ -146,9 +161,12 @@ joinable!(sync_out -> store (store_id));
 joinable!(transact -> name_table (name_id));
 joinable!(transact -> store (store_id));
 joinable!(transact_line -> item (item_id));
-joinable!(transact_line -> item_line (item_line_id));
+joinable!(transact_line -> stock_line (stock_line_id));
 joinable!(transact_line -> transact (transact_id));
+joinable!(name_store_join -> store (store_id));
+joinable!(name_store_join -> name_table (name_id));
 joinable!(master_list_line -> master_list (master_list_id));
+joinable!(master_list_line -> item (item_id));
 joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name_table (name_id));
 
@@ -156,7 +174,7 @@ allow_tables_to_appear_in_same_query!(
     central_sync_buffer,
     central_sync_cursor,
     item,
-    item_line,
+    stock_line,
     name_table,
     requisition,
     requisition_line,
@@ -165,4 +183,7 @@ allow_tables_to_appear_in_same_query!(
     transact,
     transact_line,
     user_account,
+    name_store_join,
+    master_list_line,
+    master_list_name_join
 );

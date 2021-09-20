@@ -47,10 +47,10 @@ impl MasterListRepository {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, id: &str) -> Result<MasterListRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, item_id: &str) -> Result<MasterListRow, RepositoryError> {
         use crate::database::schema::diesel_schema::master_list::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = master_list.filter(id.eq(id)).first(&connection)?;
+        let result = master_list.filter(id.eq(item_id)).first(&connection)?;
         Ok(result)
     }
 }
