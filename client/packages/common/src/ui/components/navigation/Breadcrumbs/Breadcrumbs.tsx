@@ -45,7 +45,6 @@ export const Breadcrumbs: React.FC = () => {
       const title = /^\d+$/.test(part.value)
         ? t('breadcrumb.item', { id: part.value })
         : tf(part.key, '');
-      if (title === part.key) return null;
 
       return <span key={part.key}>{title}</span>;
     }
