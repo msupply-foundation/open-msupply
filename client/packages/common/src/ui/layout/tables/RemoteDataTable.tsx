@@ -93,16 +93,13 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
               }}
             >
               {headers.map(column => {
-                const sortingRule = sortBy.find(
-                  ({ id: sortedById }) => column.id === sortedById
-                );
+                const sortedByThisColumn = column.id === sortBy.key;
 
                 return (
                   <TableCell
                     {...column.getHeaderProps()}
                     onClick={() =>
-                      !column.disableSortBy &&
-                      onSortBy([{ id: column.id, desc: !sortingRule?.desc }])
+                      !column.disableSortBy && onSortBy({ key: column.id })
                     }
                     align={column.align}
                     padding={'none'}
@@ -115,13 +112,15 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
                     }}
                     aria-label={column.id}
                     sortDirection={
-                      sortingRule ? (sortingRule?.desc ? 'desc' : 'asc') : false
+                      sortedByThisColumn ? sortBy.direction : false
                     }
                   >
                     <TableSortLabel
-                      hideSortIcon={column.id === 'selection'}
-                      active={!!sortingRule}
-                      direction={sortingRule?.desc ? 'desc' : 'asc'}
+                      hideSortIcon={
+                        column.id === 'selection' || column.disableSortBy
+                      }
+                      active={!!sortedByThisColumn}
+                      direction={sortBy.direction}
                       IconComponent={SortDesc}
                       sx={{ fontWeight: 'bold' }}
                     >
