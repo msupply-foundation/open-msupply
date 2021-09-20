@@ -12,6 +12,7 @@ describe('PaginationRow', () => {
 
     const { getByText } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -32,7 +33,13 @@ describe('PaginationRow', () => {
 
   it('Renders at least one page button', () => {
     const { getByRole } = render(
-      <PaginationRow offset={1} total={1} first={1} onChange={jest.fn()} />
+      <PaginationRow
+        page={0}
+        offset={1}
+        total={1}
+        first={1}
+        onChange={jest.fn()}
+      />
     );
 
     const node = getByRole('button', { name: 'page 1' });
@@ -47,6 +54,7 @@ describe('PaginationRow', () => {
 
     const { queryByRole, getByRole } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -78,6 +86,7 @@ describe('PaginationRow', () => {
 
     const { queryByRole, queryByText } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -100,6 +109,7 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -120,11 +130,13 @@ describe('PaginationRow', () => {
   it('does not trigger the callback when the ellipsis is pressed', () => {
     const offset = 0;
     const first = 10;
+
     const total = 20000;
     const onChange = jest.fn();
 
     const { getByLabelText } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -149,6 +161,7 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -169,6 +182,7 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <PaginationRow
+        page={0}
         offset={offset}
         total={total}
         first={first}
@@ -189,18 +203,13 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <PaginationRow
+        page={1}
         offset={offset}
         total={total}
         first={first}
         onChange={onChange}
       />
     );
-
-    const pageTwoButton = getByRole('button', { name: /page 2$/i });
-
-    act(() => {
-      userEvent.click(pageTwoButton);
-    });
 
     const prev = getByRole('button', { name: /prev/i });
     const next = getByRole('button', { name: /next/i });

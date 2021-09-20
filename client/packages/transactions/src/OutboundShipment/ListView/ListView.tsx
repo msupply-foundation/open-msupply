@@ -35,17 +35,16 @@ export const OutboundShipmentListView: FC = () => {
   const t = useTranslation();
 
   const {
-    data,
     totalLength,
+    data,
     isLoading,
     onDelete,
     onUpdate,
-    first,
-    offset,
     sortBy,
     numberOfRows,
     onChangeSortBy,
     onChangePage,
+    pagination,
   } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
 
   const columns = useColumns<Transaction>([
@@ -183,7 +182,7 @@ export const OutboundShipmentListView: FC = () => {
       <RemoteDataTable
         onSortBy={onChangeSortBy}
         sortBy={sortBy}
-        pagination={{ first, offset, total: totalLength ?? 0 }}
+        pagination={{ ...pagination, total: totalLength }}
         onChangePage={(page: number) => onChangePage(page)}
         tableApi={tableApi}
         columns={columns}
