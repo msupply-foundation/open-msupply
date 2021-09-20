@@ -32,6 +32,7 @@ export const useColumns = <T extends object>(
     const sortDescFirst = column.format === ColumnFormat.date;
 
     return {
+      ...column,
       align: column.align || 'left',
       accessor,
       disableSortBy,
@@ -40,7 +41,7 @@ export const useColumns = <T extends object>(
       sortDescFirst,
       sortInverted,
       sortType,
-      ...column,
+
       // TODO: Fix react-type column typings here
     } as any;
   });

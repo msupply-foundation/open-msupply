@@ -25,6 +25,9 @@ export const useSortBy = <T>({
   });
 
   const onChangeSortBy = useCallback((newSortRule: SortRule<T>) => {
+    console.log('-------------------------------------------');
+    console.log('newSortRule', newSortRule);
+    console.log('-------------------------------------------');
     setSortBy(({ key: prevSortKey, isDesc: prevIsDesc }) => {
       const { key: newSortKey, isDesc: maybeNewIsDesc } = newSortRule;
       const newIsDesc =
