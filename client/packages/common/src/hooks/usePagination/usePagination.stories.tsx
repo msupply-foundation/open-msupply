@@ -11,6 +11,11 @@ const Template: Story = () => {
 
   return (
     <div>
+      <p>
+        the <b>usePaginaton</b> hook provides pagination state, and methods to
+        update the `first` and `offset` values.
+      </p>
+      <h4>Input</h4>
       <div>
         <span>change the page: </span>
         <input
@@ -27,7 +32,7 @@ const Template: Story = () => {
           type="numeric"
         />
       </div>
-
+      <h4>Result</h4>
       <p>{JSON.stringify({ first, offset, page })}</p>
     </div>
   );
