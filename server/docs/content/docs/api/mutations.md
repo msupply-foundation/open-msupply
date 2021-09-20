@@ -12,7 +12,7 @@ template = "docs/page.html"
 toc = true
 +++
 
-Mutations will happen sequentially if batched, an error will result in cancellation of mutation batch in which it originated and further mutation in the sequence will be discarded (but batched mutation prior to erroneous one would have been executed).
+Multiple mutations in a single request are supported and each mutation will be run sequentially, in the order they were specified. If any mutation results in an error, previous mutations will not rollback and any remaining mutations will not be run. Only a single error will be returned.
 
 For full list of errors see [custom error section](/docs/api/custom_errors)
 
