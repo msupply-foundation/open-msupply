@@ -10,7 +10,7 @@ use remote_server::{
     util::{
         configuration,
         settings::Settings,
-        sync::{self, SyncConnection, SyncReceiverActor, SyncSenderActor},
+        sync::{self, SyncConnection, SyncReceiverActor, SyncSenderActor, Synchroniser},
     },
 };
 
@@ -32,10 +32,8 @@ async fn main() -> std::io::Result<()> {
 
     let repositories: RepositoryMap = get_repositories(&settings).await;
     let loaders: LoaderMap = get_loaders(&settings).await;
-
-    let sync_connection = SyncConnection::new(&settings.sync);
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
-        sync::get_sync_actors(sync_connection);
+        sync::get_sync_actors();
 
     let repository_registry = RepositoryRegistry { repositories };
     let loader_registry = LoaderRegistry { loaders };
@@ -43,29 +41,32 @@ async fn main() -> std::io::Result<()> {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
-    let repository_registry_data = Data::new(repository_registry);
+    let repository_registry_data_app = Data::new(repository_registry);
+    let repository_registry_data_sync = repository_registry_data_app.clone();
+
     let loader_registry_data = Data::new(loader_registry);
     let actor_registry_data = Data::new(actor_registry);
 
     let listener =
         TcpListener::bind(settings.server.address()).expect("Failed to bind server to address");
 
-    let repository_registry_sync_data = repository_registry_data.clone();
-
     let http_server = HttpServer::new(move || {
         App::new()
-            .app_data(repository_registry_data.clone())
+            .app_data(repository_registry_data_app.clone())
             .app_data(actor_registry_data.clone())
             .wrap(logger_middleware())
             .wrap(compress_middleware())
             .configure(graphql_config(
-                repository_registry_data.clone(),
+                repository_registry_data_app.clone(),
                 loader_registry_data.clone(),
             ))
             .configure(rest_config)
     })
     .listen(listener)?
     .run();
+
+    let connection = SyncConnection::new(&settings.sync);
+    let mut synchroniser = Synchroniser { connection };
 
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
@@ -75,7 +76,7 @@ async fn main() -> std::io::Result<()> {
           sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
         } => unreachable!("Sync receiver unexpectedly died!?"),
         () = async {
-          sync_receiver.listen(repository_registry_sync_data).await;
+            sync_receiver.listen(&mut synchroniser, &repository_registry_data_sync).await;
         } => unreachable!("Sync scheduler unexpectedly died!?"),
     }
 }

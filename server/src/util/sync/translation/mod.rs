@@ -122,9 +122,7 @@ mod tests {
         database::repository::repository::{get_repositories, SyncRepository},
         server::data::RepositoryRegistry,
         util::{
-            sync::translation::{
-                import_sync_records, test_data::store::get_test_store_records, CentralSyncBufferRow,
-            },
+            sync::translation::{import_sync_records, test_data::store::get_test_store_records},
             test_db,
         },
     };
@@ -136,7 +134,6 @@ mod tests {
         master_list_line::get_test_master_list_line_records,
         master_list_name_join::get_test_master_list_name_join_records,
         name::{get_test_name_records, get_test_name_upsert_records},
-        TestSyncRecord,
     };
 
     #[actix_rt::test]
