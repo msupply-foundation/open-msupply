@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button as MuiButton, styled } from '@material-ui/core';
+import { Button as MuiButton, styled } from '@mui/material';
 import { Property } from 'csstype';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
 

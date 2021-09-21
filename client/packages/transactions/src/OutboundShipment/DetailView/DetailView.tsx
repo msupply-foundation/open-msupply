@@ -30,7 +30,7 @@ import {
 
 import { detailQueryFn, updateFn } from '../../api';
 import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
-import { Box } from '@material-ui/system';
+import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
 
 const placeholderTransaction: Transaction = {

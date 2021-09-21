@@ -60,7 +60,6 @@
   },
   "dependencies": {
     "@types/react-dom": "^17.0.9",
-    "notistack": "^1.0.10",
     "react-intl": "^5.20.6"
   },
   "msw": {

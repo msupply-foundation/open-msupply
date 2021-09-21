@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Grid, Typography } from '@openmsupply-client/common';
 import Widget from './Widget';
-import { styled } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
 
 const RecentInvoiceWidget = () => (
   <Widget height="500px">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip } from '@mui/material';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
 
 interface ButtonProps {
@@ -25,7 +25,7 @@ export const UnstyledIconButton: React.FC<ButtonProps> = ({
         disabled={disabled}
         onClick={onClick}
         aria-label={tooltip}
-      >
+        size="large">
         {icon}
       </IconButton>
     </Tooltip>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 
-import { TableBody, Table } from '@material-ui/core';
+import { TableBody, Table } from '@mui/material';
 
 import { DataRow } from './DataRow';
 

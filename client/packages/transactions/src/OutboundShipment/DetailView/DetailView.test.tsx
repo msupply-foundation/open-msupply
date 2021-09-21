@@ -45,7 +45,7 @@ describe('OutboundShipmentDetailView', () => {
     });
   });
 
-  it('renders the transport details content once the price tab has been pressed', async () => {
+  it('renders the transport details content once the transport tab has been pressed', async () => {
     const { getByRole } = render(<ExampleDetailView />);
 
     await waitFor(() => {

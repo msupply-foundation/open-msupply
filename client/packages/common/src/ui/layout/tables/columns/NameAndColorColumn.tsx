@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CellProps, Column } from 'react-table';
 import { Color, ColorMenu, UnstyledIconButton } from '../../../components';
 import { Circle } from '../../../icons';
-import { Box } from '@material-ui/system';
+import { Box } from '@mui/system';
 
 type Colorable = {
   color: string;

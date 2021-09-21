@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from 'react';
-import { Box } from '@material-ui/system';
+import { Box } from '@mui/system';
 import { render } from '@testing-library/react';
 import { Route } from 'react-router';
 import { NavLink } from './NavLink';

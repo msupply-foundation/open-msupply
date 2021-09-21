@@ -48,16 +48,16 @@ export const useListData = <T extends ObjectWithStringKeys>(
     api.onQuery({ first, offset, sortBy })
   );
 
-  const invalidation = () => queryClient.invalidateQueries(queryKey);
+  const invalidate = () => queryClient.invalidateQueries(queryKey);
 
   const { mutateAsync: onDelete, isLoading: isDeleteLoading } = useMutation(
     api.onDelete,
-    { onSuccess: invalidation }
+    { onSuccess: invalidate }
   );
 
   const { mutateAsync: onUpdate, isLoading: isUpdateLoading } = useMutation(
     api.onUpdate,
-    { onSuccess: invalidation }
+    { onSuccess: invalidate }
   );
 
   return {

@@ -55,7 +55,7 @@ export const OutboundShipmentListView: FC = () => {
 
       key: 'name',
       label: 'label.name',
-      sortable: false,
+      sortable: true,
       width: 150,
       minWidth: 150,
       maxWidth: 250,

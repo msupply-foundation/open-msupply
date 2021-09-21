@@ -1,5 +1,5 @@
-import { Direction } from '@material-ui/core/styles';
-import { Theme } from '@material-ui/core';
+import { Direction } from '@mui/material/styles';
+import { Theme } from '@mui/material';
 import { useState, useEffect } from 'react';
 import theme from './theme';
 import { useRtl } from '../intl/intlHelpers';
