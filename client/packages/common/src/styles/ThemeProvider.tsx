@@ -16,7 +16,6 @@ import { RTLProvider } from './RTLProvider';
 const cacheLtr = createCache({
   key: 'rtl',
   stylisPlugins: [],
-  prepend: true,
 });
 
 const cacheRtl = createCache({
