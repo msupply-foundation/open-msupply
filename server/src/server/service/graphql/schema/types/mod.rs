@@ -1,12 +1,10 @@
 use crate::{
     database::{
-        loader::{StoreLoader, TransactLoader},
-        repository::{
-            CustomerInvoiceRepository, RequisitionLineRepository, TransactLineRepository,
-        },
+        loader::{InvoiceLoader, StoreLoader},
+        repository::{CustomerInvoiceRepository, InvoiceLineRepository, RequisitionLineRepository},
         schema::{
-            RequisitionLineRow, RequisitionRow, RequisitionRowType, StoreRow, TransactLineRow,
-            TransactRow, TransactRowType,
+            InvoiceLineRow, InvoiceRow, InvoiceRowType, RequisitionLineRow, RequisitionRow,
+            RequisitionRowType, StoreRow,
         },
     },
     server::service::graphql::ContextExt,
@@ -36,10 +34,10 @@ impl Store {
         &self.store_row.id
     }
 
-    pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Transact> {
+    pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Invoice> {
         let customer_invoice_repository = ctx.get_repository::<CustomerInvoiceRepository>();
 
-        let customer_invoice_rows: Vec<TransactRow> = customer_invoice_repository
+        let customer_invoice_rows: Vec<InvoiceRow> = customer_invoice_repository
             .find_many_by_store_id(&self.store_row.id)
             .await
             .unwrap_or_else(|_| {
@@ -51,8 +49,8 @@ impl Store {
 
         customer_invoice_rows
             .into_iter()
-            .map(|customer_invoice_row| Transact {
-                transact_row: customer_invoice_row,
+            .map(|customer_invoice_row| Invoice {
+                invoice_row: customer_invoice_row,
             })
             .collect()
     }
@@ -139,10 +137,6 @@ impl Requisition {
         Store { store_row }
     }
 
-    pub async fn type_of(&self) -> RequisitionType {
-        self.requisition_row.type_of.clone().into()
-    }
-
     pub async fn requisition_lines(&self, ctx: &Context<'_>) -> Vec<RequisitionLine> {
         let requisition_line_repository = ctx.get_repository::<RequisitionLineRepository>();
 
@@ -186,131 +180,105 @@ impl RequisitionLine {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum TransactType {
-    #[graphql(name = "customer_invoice")]
+pub enum InvoiceType {
     CustomerInvoice,
-    #[graphql(name = "customer_credit")]
-    CustomerCredit,
-    #[graphql(name = "supplier_invoice")]
     SupplierInvoice,
-    #[graphql(name = "supplier_credit")]
-    SupplierCredit,
-    #[graphql(name = "repack")]
-    Repack,
-    #[graphql(name = "build")]
-    Build,
-    #[graphql(name = "receipt")]
-    Receipt,
-    #[graphql(name = "payment")]
-    Payment,
 }
 
-impl From<TransactRowType> for TransactType {
-    fn from(transact_row_type: TransactRowType) -> TransactType {
-        match transact_row_type {
-            TransactRowType::CustomerInvoice => TransactType::CustomerInvoice,
-            TransactRowType::CustomerCredit => TransactType::CustomerCredit,
-            TransactRowType::SupplierInvoice => TransactType::SupplierInvoice,
-            TransactRowType::SupplierCredit => TransactType::SupplierCredit,
-            TransactRowType::Repack => TransactType::Repack,
-            TransactRowType::Build => TransactType::Build,
-            TransactRowType::Receipt => TransactType::Receipt,
-            TransactRowType::Payment => TransactType::Payment,
+impl From<InvoiceRowType> for InvoiceType {
+    fn from(invoice_row_type: InvoiceRowType) -> InvoiceType {
+        match invoice_row_type {
+            InvoiceRowType::CustomerInvoice => InvoiceType::CustomerInvoice,
+            InvoiceRowType::SupplierInvoice => InvoiceType::SupplierInvoice,
         }
     }
 }
 
-impl From<TransactType> for TransactRowType {
-    fn from(transact_type: TransactType) -> TransactRowType {
-        match transact_type {
-            TransactType::CustomerInvoice => TransactRowType::CustomerInvoice,
-            TransactType::CustomerCredit => TransactRowType::CustomerCredit,
-            TransactType::SupplierInvoice => TransactRowType::SupplierInvoice,
-            TransactType::SupplierCredit => TransactRowType::SupplierCredit,
-            TransactType::Repack => TransactRowType::Repack,
-            TransactType::Build => TransactRowType::Build,
-            TransactType::Receipt => TransactRowType::Receipt,
-            TransactType::Payment => TransactRowType::Payment,
+impl From<InvoiceType> for InvoiceRowType {
+    fn from(invoice_type: InvoiceType) -> InvoiceRowType {
+        match invoice_type {
+            InvoiceType::CustomerInvoice => InvoiceRowType::CustomerInvoice,
+            InvoiceType::SupplierInvoice => InvoiceRowType::SupplierInvoice,
         }
     }
 }
 
 #[derive(Clone)]
-pub struct Transact {
-    pub transact_row: TransactRow,
+pub struct Invoice {
+    pub invoice_row: InvoiceRow,
 }
 
 #[Object]
-impl Transact {
+impl Invoice {
     pub async fn id(&self) -> String {
-        self.transact_row.id.to_string()
+        self.invoice_row.id.to_string()
     }
 
     pub async fn invoice_number(&self) -> i32 {
-        self.transact_row.invoice_number
+        self.invoice_row.invoice_number
     }
 
-    pub async fn type_of(&self) -> TransactType {
-        self.transact_row.type_of.clone().into()
+    pub async fn r#type(&self) -> InvoiceType {
+        self.invoice_row.r#type.clone().into()
     }
 
-    pub async fn transact_lines(&self, ctx: &Context<'_>) -> Vec<TransactLine> {
-        let transact_line_repository = ctx.get_repository::<TransactLineRepository>();
+    pub async fn invoice_lines(&self, ctx: &Context<'_>) -> Vec<InvoiceLine> {
+        let invoice_line_repository = ctx.get_repository::<InvoiceLineRepository>();
 
-        let transact_line_rows: Vec<TransactLineRow> = transact_line_repository
-            .find_many_by_transact_id(&self.transact_row.id)
+        let invoice_line_rows: Vec<InvoiceLineRow> = invoice_line_repository
+            .find_many_by_invoice_id(&self.invoice_row.id)
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get transact_lines for transact {}",
-                    self.transact_row.id
+                    "Failed to get invoice_lines for invoice {}",
+                    self.invoice_row.id
                 )
             });
 
-        transact_line_rows
+        invoice_line_rows
             .into_iter()
-            .map(|transact_line_row| TransactLine { transact_line_row })
+            .map(|invoice_line_row| InvoiceLine { invoice_line_row })
             .collect()
     }
 }
 
 #[derive(Clone)]
-pub struct TransactLine {
-    pub transact_line_row: TransactLineRow,
+pub struct InvoiceLine {
+    pub invoice_line_row: InvoiceLineRow,
 }
 
 #[Object]
-impl TransactLine {
+impl InvoiceLine {
     pub async fn id(&self) -> &str {
-        &self.transact_line_row.id
+        &self.invoice_line_row.id
     }
 
-    pub async fn transact(&self, ctx: &Context<'_>) -> Transact {
-        let transact_loader = ctx.get_loader::<DataLoader<TransactLoader>>();
+    pub async fn invoice(&self, ctx: &Context<'_>) -> Invoice {
+        let invoice_loader = ctx.get_loader::<DataLoader<InvoiceLoader>>();
 
-        let transact_row: TransactRow = transact_loader
-            .load_one(self.transact_line_row.transact_id.clone())
+        let invoice_row: InvoiceRow = invoice_loader
+            .load_one(self.invoice_line_row.invoice_id.clone())
             .await
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get transact for transact_line {}",
-                    self.transact_line_row.id
+                    "Failed to get invoice for invoice_line {}",
+                    self.invoice_line_row.id
                 )
             })
             .ok_or_else(|| {
                 panic!(
-                    "Failed to get transact for transact_line {}",
-                    self.transact_line_row.id
+                    "Failed to get invoice for invoice_line {}",
+                    self.invoice_line_row.id
                 )
             })
             .unwrap_or_else(|_| {
                 panic!(
-                    "Failed to get transact for transact_line {}",
-                    self.transact_line_row.id
+                    "Failed to get invoice for invoice_line {}",
+                    self.invoice_line_row.id
                 )
             });
 
-        Transact { transact_row }
+        Invoice { invoice_row }
     }
 }
 

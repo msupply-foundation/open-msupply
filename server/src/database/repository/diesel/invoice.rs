@@ -2,7 +2,7 @@ use super::DBBackendConnection;
 
 use crate::database::{
     repository::{repository::get_connection, RepositoryError},
-    schema::{TransactRow, TransactRowType},
+    schema::{InvoiceRow, InvoiceRowType},
 };
 
 use diesel::{
@@ -10,38 +10,38 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
 };
 
-pub struct TransactRepository {
+pub struct InvoiceRepository {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
 }
 
-impl TransactRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> TransactRepository {
-        TransactRepository { pool }
+impl InvoiceRepository {
+    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> InvoiceRepository {
+        InvoiceRepository { pool }
     }
 
-    pub async fn insert_one(&self, transact_row: &TransactRow) -> Result<(), RepositoryError> {
-        use crate::database::schema::diesel_schema::transact::dsl::*;
+    pub async fn insert_one(&self, invoice_row: &InvoiceRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
         let connection = get_connection(&self.pool)?;
-        diesel::insert_into(transact)
-            .values(transact_row)
+        diesel::insert_into(invoice)
+            .values(invoice_row)
             .execute(&connection)?;
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, transact_id: &str) -> Result<TransactRow, RepositoryError> {
-        use crate::database::schema::diesel_schema::transact::dsl::*;
+    pub async fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = transact.filter(id.eq(transact_id)).first(&connection);
+        let result = invoice.filter(id.eq(invoice_id)).first(&connection);
         result.map_err(|err| RepositoryError::from(err))
     }
 
     pub async fn find_many_by_id(
         &self,
         ids: &[String],
-    ) -> Result<Vec<TransactRow>, RepositoryError> {
-        use crate::database::schema::diesel_schema::transact::dsl::*;
+    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = transact.filter(id.eq_any(ids)).load(&connection)?;
+        let result = invoice.filter(id.eq_any(ids)).load(&connection)?;
         Ok(result)
     }
 }
@@ -58,13 +58,13 @@ impl CustomerInvoiceRepository {
     pub async fn find_many_by_name_id(
         &self,
         name: &str,
-    ) -> Result<Vec<TransactRow>, RepositoryError> {
-        use crate::database::schema::diesel_schema::transact::dsl::*;
+    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = transact
+        let result = invoice
             .filter(
-                type_of
-                    .eq(TransactRowType::CustomerInvoice)
+                type_
+                    .eq(InvoiceRowType::CustomerInvoice)
                     .and(name_id.eq(name)),
             )
             .get_results(&connection)?;
@@ -74,13 +74,13 @@ impl CustomerInvoiceRepository {
     pub async fn find_many_by_store_id(
         &self,
         store: &str,
-    ) -> Result<Vec<TransactRow>, RepositoryError> {
-        use crate::database::schema::diesel_schema::transact::dsl::*;
+    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
         let connection = get_connection(&self.pool)?;
-        let result = transact
+        let result = invoice
             .filter(
-                type_of
-                    .eq(TransactRowType::CustomerInvoice)
+                type_
+                    .eq(InvoiceRowType::CustomerInvoice)
                     .and(store_id.eq(store)),
             )
             .get_results(&connection)?;

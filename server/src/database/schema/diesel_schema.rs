@@ -87,22 +87,34 @@ table! {
 }
 
 table! {
-    transact (id) {
+    invoice (id) {
         id -> Text,
         name_id -> Text,
         store_id -> Text,
         invoice_number -> Integer,
-        type_of -> crate::database::schema::transact::TransactRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::database::schema::invoice::InvoiceRowTypeMapping,
+        status -> crate::database::schema::invoice::InvoiceRowStatusMapping,
+        comment -> Nullable<Text>,
+        their_reference -> Nullable<Text>,
+        entry_datetime -> Text,
+        confirm_datetime -> Nullable<Text>,
+        finalised_datetime -> Nullable<Text>,
     }
 }
 
 table! {
-    transact_line (id) {
+    invoice_line (id) {
         id -> Text,
-        transact_id -> Text,
+        invoice_id -> Text,
         item_id -> Text,
         stock_line_id -> Nullable<Text>,
-        type_of -> crate::database::schema::transact_line::TransactLineRowTypeMapping,
+        batch -> Nullable<Text>,
+        expiry_date -> Nullable<Text>,
+        pack_size -> Integer,
+        cost_price_per_pack -> Double,
+        sell_price_per_pack -> Double,
+        available_number_of_packs -> Integer,
+        total_number_of_packs -> Integer,
     }
 }
 
@@ -158,11 +170,11 @@ joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
 joinable!(store -> name_table (name_id));
 joinable!(sync_out -> store (store_id));
-joinable!(transact -> name_table (name_id));
-joinable!(transact -> store (store_id));
-joinable!(transact_line -> item (item_id));
-joinable!(transact_line -> stock_line (stock_line_id));
-joinable!(transact_line -> transact (transact_id));
+joinable!(invoice -> name_table (name_id));
+joinable!(invoice -> store (store_id));
+joinable!(invoice_line -> item (item_id));
+joinable!(invoice_line -> stock_line (stock_line_id));
+joinable!(invoice_line -> invoice (invoice_id));
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name_table (name_id));
 joinable!(master_list_line -> master_list (master_list_id));
@@ -180,8 +192,8 @@ allow_tables_to_appear_in_same_query!(
     requisition_line,
     store,
     sync_out,
-    transact,
-    transact_line,
+    invoice,
+    invoice_line,
     user_account,
     name_store_join,
     master_list_line,

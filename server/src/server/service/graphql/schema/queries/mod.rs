@@ -1,10 +1,10 @@
 pub mod pagination;
 
 use crate::database::repository::{
-    RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+    InvoiceLineRepository, InvoiceRepository, RequisitionRepository, StoreRepository,
 };
-use crate::database::schema::{RequisitionRow, StoreRow, TransactLineRow, TransactRow};
-use crate::server::service::graphql::schema::types::{Requisition, Store, Transact, TransactLine};
+use crate::database::schema::{InvoiceLineRow, InvoiceRow, RequisitionRow, StoreRow};
+use crate::server::service::graphql::schema::types::{Invoice, InvoiceLine, Requisition, Store};
 use crate::server::service::graphql::ContextExt;
 
 use super::types::{ItemList, NameList};
@@ -50,34 +50,34 @@ impl Queries {
         Store { store_row }
     }
 
-    pub async fn transact(
+    pub async fn invoice(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "id of the transact")] id: String,
-    ) -> Transact {
-        let transact_repository = ctx.get_repository::<TransactRepository>();
+        #[graphql(desc = "id of the invoice")] id: String,
+    ) -> Invoice {
+        let invoice_repository = ctx.get_repository::<InvoiceRepository>();
 
-        let transact_row: TransactRow = transact_repository
+        let invoice_row: InvoiceRow = invoice_repository
             .find_one_by_id(&id)
             .await
-            .unwrap_or_else(|_| panic!("Failed to get transact {}", id));
+            .unwrap_or_else(|_| panic!("Failed to get invoice {}", id));
 
-        Transact { transact_row }
+        Invoice { invoice_row }
     }
 
-    pub async fn transact_line(
+    pub async fn invoice_line(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "id of the transact line")] id: String,
-    ) -> TransactLine {
-        let transact_line_repository = ctx.get_repository::<TransactLineRepository>();
+        #[graphql(desc = "id of the invoice line")] id: String,
+    ) -> InvoiceLine {
+        let invoice_line_repository = ctx.get_repository::<InvoiceLineRepository>();
 
-        let transact_line_row: TransactLineRow = transact_line_repository
+        let invoice_line_row: InvoiceLineRow = invoice_line_repository
             .find_one_by_id(&id)
             .await
-            .unwrap_or_else(|_| panic!("Failed to get transact line {}", id));
+            .unwrap_or_else(|_| panic!("Failed to get invoice line {}", id));
 
-        TransactLine { transact_line_row }
+        InvoiceLine { invoice_line_row }
     }
 
     pub async fn requisition(

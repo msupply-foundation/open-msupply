@@ -39,7 +39,7 @@ toc = true
 * `Store visibility` - for a store to send or recieve stock to or from another store, the stores must be visible to each other. The concept of visibility is symmetrical i.e. if store A is visible in store B, then store B is also visible in store A.
 * `Central data` data which is only editable on the primary site. Central data is synchronised to all sites via the central server. The main types of central data are items, facilities and categories.
 * `Central store data`: data which is only editable on the central server. Central store data is synchronised with the site where the store is active. The main types of central store data are store records themselves, stores preferences and store visibility records.
-* `Remote data`: also known as `store data`, remote data is data which is only editable on a single remote site. Store data is synchronised with the central server. The main types of remote data are transactions, requisitions and stocktakes (and their related child tables, such as transaction_lines, requisition_lines etc.).
+* `Remote data`: also known as `store data`, remote data is data which is only editable on a single remote site. Store data is synchronised with the central server. The main types of remote data are invoices, requisitions and stocktakes (and their related child tables, such as invoice_lines, requisition_lines etc.).
 * `Patient data`: patient- or prescriber-related remote data. As with all remote data, this data is only editable on a single remote site (referred to as the `home site`). Patient data is synchronised via the central server to all sites where the related record is visible. The main types of patient data are patient name records themselves, prescribers, patient medication records and insurance policies.
 
 
@@ -71,9 +71,9 @@ toc = true
 
 ## FAQ
 
-* What is a `transaction`?
+* What is a `invoice`?
 
-`transaction` is a table in mSupply (not to be confused with the concept of a SQL transaction). It mainly stores what are commonly thought of as invoices.
+`invoice` is a table in mSupply (not to be confused with the concept of a SQL invoice). It mainly stores what are commonly thought of as invoices.
 
 * Why do databases have ids?
 

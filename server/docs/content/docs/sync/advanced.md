@@ -70,7 +70,7 @@ Records of the following types may be merged on the site where the related store
 
 * The record to be merged has its `status` field updated from `active` to `merged`.
 * The record to be merged has its `merged_into` field updated with the `id` of the record to keep.
-* All child records which are linked to the merged record `id`, and which are editable on the site, have their parent table `id` field (e.g. `transact_id`) changed to the new `id`.
+* All child records which are linked to the merged record `id`, and which are editable on the site, have their parent table `id` field (e.g. `invoice_id`) changed to the new `id`.
 * Normal code in a trigger sends it to the central server.
 
 ### When the central server receives the merged record
@@ -84,7 +84,7 @@ Records of the following types may be merged on the site where the related store
 * Before saving it checks for a change in value of the status field from the saved value.
 * If the status has changed to `merged`:
   * The record's `merged_into` field determines the new `id` to be used for child records.
-  * All child records which are linked to the merged record `id`, and which are editable on the site, have their `<some_table>_id` (e.g. `transact.id`) field changed to `merged_into`.
+  * All child records which are linked to the merged record `id`, and which are editable on the site, have their `<some_table>_id` (e.g. `invoice.id`) field changed to `merged_into`.
   * Sync triggers create `sync_out` records to be pushed to the central server.
 
 ## Delegated Rights
