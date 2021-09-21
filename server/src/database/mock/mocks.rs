@@ -1,4 +1,3 @@
-
 pub fn mock_requisition_lines() -> Vec<database::schema::RequisitionLineRow> {
     let requisition_line_a = database::schema::RequisitionLineRow {
         id: "requisition_a_line_a".to_string(),
@@ -49,63 +48,63 @@ pub fn mock_requisition_lines() -> Vec<database::schema::RequisitionLineRow> {
     ]
 }
 
-pub fn mock_transacts() -> Vec<database::schema::TransactRow> {
-    let transact_a = database::schema::TransactRow {
-        id: "transact_a".to_string(),
+pub fn mock_invoices() -> Vec<database::schema::InvoiceRow> {
+    let invoice_a = database::schema::InvoiceRow {
+        id: "invoice_a".to_string(),
         name_id: "name_store_a".to_string(),
         store_id: "store_a".to_string(),
         invoice_number: 1,
-        type_of: database::schema::TransactRowType::CustomerInvoice,
+        r#type: database::schema::InvoiceRowType::CustomerInvoice,
     };
 
-    let transact_b = database::schema::TransactRow {
-        id: "transact_b".to_string(),
+    let invoice_b = database::schema::InvoiceRow {
+        id: "invoice_b".to_string(),
         name_id: "name_store_b".to_string(),
         store_id: "store_b".to_string(),
         invoice_number: 1,
-        type_of: database::schema::TransactRowType::CustomerInvoice,
+        r#type: database::schema::InvoiceRowType::CustomerInvoice,
     };
 
-    vec![transact_a, transact_b]
+    vec![invoice_a, invoice_b]
 }
 
-pub fn mock_transact_lines() -> Vec<database::schema::TransactLineRow> {
-    let transact_a_line_a = database::schema::TransactLineRow {
-        id: "transact_a_line_a".to_string(),
-        transact_id: "transact_a".to_string(),
-        type_of: crate::database::schema::TransactLineRowType::StockOut,
+pub fn mock_invoice_lines() -> Vec<database::schema::InvoiceLineRow> {
+    let invoice_a_line_a = database::schema::InvoiceLineRow {
+        id: "invoice_a_line_a".to_string(),
+        invoice_id: "invoice_a".to_string(),
+        r#type: crate::database::schema::InvoiceLineRowType::StockOut,
         item_id: "item_a".to_string(),
         stock_line_id: Some("item_a_line_a".to_string()),
     };
 
-    let transact_a_line_b = database::schema::TransactLineRow {
-        id: "transact_a_line_b".to_string(),
-        transact_id: "transact_a".to_string(),
-        type_of: database::schema::TransactLineRowType::StockOut,
+    let invoice_a_line_b = database::schema::InvoiceLineRow {
+        id: "invoice_a_line_b".to_string(),
+        invoice_id: "invoice_a".to_string(),
+        r#type: database::schema::InvoiceLineRowType::StockOut,
         item_id: "item_b".to_string(),
         stock_line_id: Some("item_b_line_a".to_string()),
     };
 
-    let transact_b_line_a = database::schema::TransactLineRow {
-        id: "transact_b_line_a".to_string(),
-        transact_id: "transact_b".to_string(),
-        type_of: database::schema::TransactLineRowType::StockOut,
+    let invoice_b_line_a = database::schema::InvoiceLineRow {
+        id: "invoice_b_line_a".to_string(),
+        invoice_id: "invoice_b".to_string(),
+        r#type: database::schema::InvoiceLineRowType::StockOut,
         item_id: "item_a".to_string(),
         stock_line_id: Some("item_a_line_a".to_string()),
     };
 
-    let transact_b_line_b = database::schema::TransactLineRow {
-        id: "transact_b_line_b".to_string(),
-        transact_id: "transact_b".to_string(),
-        type_of: database::schema::TransactLineRowType::StockOut,
+    let invoice_b_line_b = database::schema::InvoiceLineRow {
+        id: "invoice_b_line_b".to_string(),
+        invoice_id: "invoice_b".to_string(),
+        r#type: database::schema::InvoiceLineRowType::StockOut,
         item_id: "item_b".to_string(),
         stock_line_id: Some("item_b_line_a".to_string()),
     };
 
     vec![
-        transact_a_line_a,
-        transact_a_line_b,
-        transact_b_line_a,
-        transact_b_line_b,
+        invoice_a_line_a,
+        invoice_a_line_b,
+        invoice_b_line_a,
+        invoice_b_line_b,
     ]
 }

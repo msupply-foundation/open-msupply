@@ -7,8 +7,8 @@ pub enum SyncOutRowTableNameType {
     RequisitionLine,
     Item,
     StockLine,
-    Transact,
-    TransactLine,
+    Invoice,
+    InvoiceLine,
     Name,
     Store,
 }
