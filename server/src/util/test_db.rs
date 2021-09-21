@@ -10,10 +10,7 @@ use diesel_migrations::{find_migrations_directory, mark_migrations_in_directory}
 
 #[cfg(feature = "postgres")]
 pub async fn setup(db_settings: &DatabaseSettings) {
-    use diesel::{
-        r2d2::{ConnectionManager, Pool},
-        PgConnection, RunQueryDsl,
-    };
+    use diesel::{PgConnection, RunQueryDsl};
 
     const MIGRATION_PATH: &str = "postgres";
 
