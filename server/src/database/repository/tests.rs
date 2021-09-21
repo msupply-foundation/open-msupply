@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod repository_test {
     mod data {
-        use crate::database::schema::MasterListNameJoinRow;
+        use crate::database::schema::{InvoiceRowStatus, MasterListNameJoinRow};
 
         use super::*;
 
@@ -144,52 +144,82 @@ mod repository_test {
             }
         }
 
-        pub fn invoice_1() -> TransactRow {
-            TransactRow {
-                id: "transact1".to_string(),
+        pub fn invoice_1() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice1".to_string(),
                 name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
-                type_of: TransactRowType::Payment,
+                r#type: InvoiceRowType::SupplierInvoice,
+                status: InvoiceRowStatus::Draft,
+                comment: Some("".to_string()),
+                their_reference: Some("".to_string()),
+                entry_datetime: "".to_string(),
+                confirm_datetime: Some("".to_string()),
+                finalised_datetime: Some("".to_string()),
             }
         }
 
-        pub fn invoice_2() -> TransactRow {
-            TransactRow {
-                id: "transact2".to_string(),
+        pub fn invoice_2() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice2".to_string(),
                 name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
-                type_of: TransactRowType::CustomerInvoice,
+                r#type: InvoiceRowType::CustomerInvoice,
+                status: InvoiceRowStatus::Draft,
+                comment: Some("".to_string()),
+                their_reference: Some("".to_string()),
+                entry_datetime: "".to_string(),
+                confirm_datetime: Some("".to_string()),
+                finalised_datetime: Some("".to_string()),
             }
         }
 
-        pub fn invoice_line_1() -> TransactLineRow {
-            TransactLineRow {
+        pub fn invoice_line_1() -> InvoiceLineRow {
+            InvoiceLineRow {
                 id: "test1".to_string(),
                 item_id: "item1".to_string(),
-                transact_id: "transact1".to_string(),
-                stock_line_id: Some("StockLine1".to_string()),
-                type_of: TransactLineRowType::CashOut,
+                invoice_id: "invoice1".to_string(),
+                stock_line_id: None,
+                batch: Some("".to_string()),
+                expiry_date: Some("".to_string()),
+                pack_size: 1,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                available_number_of_packs: 1,
+                total_number_of_packs: 1,
             }
         }
-        pub fn invoice_line_2() -> TransactLineRow {
-            TransactLineRow {
+        pub fn invoice_line_2() -> InvoiceLineRow {
+            InvoiceLineRow {
                 id: "test2-with-optional".to_string(),
                 item_id: "item1".to_string(),
-                transact_id: "transact1".to_string(),
+                invoice_id: "invoice1".to_string(),
                 stock_line_id: None,
-                type_of: TransactLineRowType::CashOut,
+                batch: Some("".to_string()),
+                expiry_date: Some("".to_string()),
+                pack_size: 1,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                available_number_of_packs: 1,
+                total_number_of_packs: 1,
             }
         }
 
-        pub fn invoice_line_3() -> TransactLineRow {
-            TransactLineRow {
+        pub fn invoice_line_3() -> InvoiceLineRow {
+            InvoiceLineRow {
                 id: "test3".to_string(),
                 item_id: "item2".to_string(),
-                transact_id: "transact2".to_string(),
+                invoice_id: "invoice2".to_string(),
                 stock_line_id: None,
-                type_of: TransactLineRowType::Placeholder,
+                batch: Some("".to_string()),
+                expiry_date: Some("".to_string()),
+                pack_size: 1,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                available_number_of_packs: 1,
+                total_number_of_packs: 1,
             }
         }
 
@@ -236,15 +266,15 @@ mod repository_test {
         database::{
             repository::{
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
-                CustomerInvoiceRepository, DBBackendConnection, DBConnection, ItemRepository,
-                MasterListLineRepository, MasterListNameJoinRepository, NameRepository,
-                RequisitionLineRepository, RequisitionRepository, StockLineRepository,
-                StoreRepository, TransactLineRepository, TransactRepository, UserAccountRepository,
+                CustomerInvoiceRepository, DBBackendConnection, DBConnection,
+                InvoiceLineRepository, InvoiceRepository, ItemRepository, MasterListLineRepository,
+                MasterListNameJoinRepository, NameRepository, RequisitionLineRepository,
+                RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
             },
             schema::{
-                CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListRow, NameRow,
-                RequisitionLineRow, RequisitionRow, RequisitionRowType, StockLineRow, StoreRow,
-                TransactLineRow, TransactLineRowType, TransactRow, TransactRowType, UserAccountRow,
+                CentralSyncBufferRow, InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow,
+                MasterListLineRow, MasterListRow, NameRow, RequisitionLineRow, RequisitionRow,
+                RequisitionRowType, StockLineRow, StoreRow, UserAccountRow,
             },
         },
         util::{settings::Settings, test_db},
@@ -467,7 +497,7 @@ mod repository_test {
         let store_repo = registry.get::<StoreRepository>().unwrap();
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
-        let repo = registry.get::<TransactRepository>().unwrap();
+        let repo = registry.get::<InvoiceRepository>().unwrap();
         let customer_invoice_repo = registry.get::<CustomerInvoiceRepository>().unwrap();
 
         let item1 = data::invoice_1();
@@ -510,11 +540,11 @@ mod repository_test {
             .insert_one(&data::stock_line_1())
             .await
             .unwrap();
-        let invoice_repo = registry.get::<TransactRepository>().unwrap();
+        let invoice_repo = registry.get::<InvoiceRepository>().unwrap();
         invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
         invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
 
-        let repo = registry.get::<TransactLineRepository>().unwrap();
+        let repo = registry.get::<InvoiceLineRepository>().unwrap();
         let item1 = data::invoice_line_1();
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
@@ -529,12 +559,12 @@ mod repository_test {
             .unwrap();
         assert_eq!(item2_optional, loaded_item);
 
-        // find_many_by_transact_id:
+        // find_many_by_invoice_id:
         // add item that shouldn't end up in the results:
         let item3 = data::invoice_line_3();
         repo.insert_one(&item3).await.unwrap();
         let all_items = repo
-            .find_many_by_transact_id(&item1.transact_id)
+            .find_many_by_invoice_id(&item1.invoice_id)
             .await
             .unwrap();
         assert_eq!(2, all_items.len());

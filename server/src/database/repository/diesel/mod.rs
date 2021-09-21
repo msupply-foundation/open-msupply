@@ -4,6 +4,8 @@ use crate::{
 
 mod central_sync_buffer;
 mod central_sync_cursor;
+mod invoice;
+mod invoice_line;
 mod item;
 mod item_query;
 mod master_list;
@@ -16,14 +18,14 @@ mod requisition_line;
 mod stock_line;
 mod store;
 mod sync;
-mod transact;
-mod transact_line;
 mod user_account;
 
 use actix_rt::blocking::BlockingError;
 use async_graphql::dataloader::DataLoader;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
+pub use invoice::{CustomerInvoiceRepository, InvoiceRepository};
+pub use invoice_line::InvoiceLineRepository;
 pub use item::ItemRepository;
 pub use item_query::ItemQueryRepository;
 pub use master_list::MasterListRepository;
@@ -35,9 +37,7 @@ pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use stock_line::StockLineRepository;
 pub use store::StoreRepository;
-pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
-pub use transact::{CustomerInvoiceRepository, TransactRepository};
-pub use transact_line::TransactLineRepository;
+pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository, SyncSession};
 pub use user_account::UserAccountRepository;
 
 use diesel::{
@@ -119,8 +119,8 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(RequisitionLineRepository::new(pool.clone()));
     repositories.insert(RequisitionRepository::new(pool.clone()));
     repositories.insert(StoreRepository::new(pool.clone()));
-    repositories.insert(TransactRepository::new(pool.clone()));
-    repositories.insert(TransactLineRepository::new(pool.clone()));
+    repositories.insert(InvoiceRepository::new(pool.clone()));
+    repositories.insert(InvoiceLineRepository::new(pool.clone()));
     repositories.insert(UserAccountRepository::new(pool.clone()));
     repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
     repositories.insert(CentralSyncCursorRepository::new(pool.clone()));

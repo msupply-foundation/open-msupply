@@ -34,7 +34,7 @@ Each `sync_out` record has the following fields:
 
 - Central server
   * Most central data tables are handled by central_change_log, with the exception of incoming transfers and site configuration data, e.g.:
-	* When a `transact` representing a finalised customer invoice is pushed from a remote site, a `sync_out` record is created for the `transact`, where `sync_out.site_id` is the `site_id` for the store linked to `transact.name_id`.
+	* When a `invoice` representing a finalised customer invoice is pushed from a remote site, a `sync_out` record is created for the `invoice`, where `sync_out.site_id` is the `site_id` for the store linked to `invoice.name_id`.
     * When a `name_store_join` record is created, updated or deleted, a corresponding `sync_out` record is created, where `sync_out.site_id` is set to the `site_id` for the `store` with `store.id = name_store_join.store_id`.
 	* When an `item_store_join` record is created, updated or deleted, a corresponding `sync_out` record is created, where `sync_out.site_id` is set to the `site_id` for the `store` with `store.id = name_store_join.store_id`.
 
@@ -71,7 +71,7 @@ For batch_size records:
 Send batch to central server
 ```
 
-*Secondary ordering by `sync_out.table_name` ensures that child records are sent before parents (e.g. `trans_line` records send before `transact` records`)
+*Secondary ordering by `sync_out.table_name` ensures that child records are sent before parents (e.g. `trans_line` records send before `invoice` records`)
 *See [Sync API]('api') for JSON format.
 
 ## Pulling

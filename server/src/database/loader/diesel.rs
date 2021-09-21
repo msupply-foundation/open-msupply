@@ -1,12 +1,12 @@
 use crate::{
     database::{
         loader::{
-            ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader, StoreLoader,
-            TransactLineLoader, TransactLoader, UserAccountLoader,
+            InvoiceLineLoader, InvoiceLoader, ItemLoader, NameLoader, RequisitionLineLoader,
+            RequisitionLoader, StoreLoader, UserAccountLoader,
         },
         repository::{
-            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
-            StockLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            InvoiceLineRepository, InvoiceRepository, ItemRepository, NameRepository,
+            RequisitionLineRepository, RequisitionRepository, StockLineRepository, StoreRepository,
             UserAccountRepository,
         },
     },
@@ -52,14 +52,12 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let store_repository = StoreRepository::new(pool.clone());
     let store_loader = DataLoader::new(StoreLoader { store_repository });
 
-    let transact_repository = TransactRepository::new(pool.clone());
-    let transact_loader = DataLoader::new(TransactLoader {
-        transact_repository,
-    });
+    let invoice_repository = InvoiceRepository::new(pool.clone());
+    let invoice_loader = DataLoader::new(InvoiceLoader { invoice_repository });
 
-    let transact_line_repository = TransactLineRepository::new(pool.clone());
-    let transact_line_loader = DataLoader::new(TransactLineLoader {
-        transact_line_repository,
+    let invoice_line_repository = InvoiceLineRepository::new(pool.clone());
+    let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
+        invoice_line_repository,
     });
 
     let user_account_repository = UserAccountRepository::new(pool.clone());
@@ -72,8 +70,8 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);
     loaders.insert(store_loader);
-    loaders.insert(transact_loader);
-    loaders.insert(transact_line_loader);
+    loaders.insert(invoice_loader);
+    loaders.insert(invoice_line_loader);
     loaders.insert(user_account_loader);
 
     loaders
