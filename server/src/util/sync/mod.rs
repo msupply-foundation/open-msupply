@@ -15,8 +15,9 @@ pub use remote::{
 pub use server::SyncServer;
 
 use crate::{
-    database::repository::{
-        CentralSyncBufferRepository, CentralSyncCursorRepository, SyncRepository,
+    database::{
+        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository},
+        schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
 };
@@ -179,18 +180,22 @@ impl SyncReceiverActor {
     ) -> Result<(), String> {
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
             repositories.get::<CentralSyncBufferRepository>();
-        let sync_session = repositories
-            .get::<SyncRepository>()
-            .new_sync_session()
-            .await
-            .unwrap();
+
+        // load all sync buffer entries into memory
+        let mut records: Vec<CentralSyncBufferRow> = Vec::new();
         for table_name in TRANSLATION_RECORDS {
-            let buffer_rows = central_sync_buffer_repository
+            let mut buffer_rows = central_sync_buffer_repository
                 .get_sync_entries(table_name)
                 .await
                 .map_err(|_| "Failed to read central sync entries".to_string())?;
-            import_sync_records(&sync_session, repositories, &buffer_rows).await?;
+            records.append(&mut buffer_rows);
         }
+
+        // write all entries to the DB
+
+        import_sync_records(repositories, &records).await?;
+
+        // clear the sync buffer
         central_sync_buffer_repository
             .remove_all()
             .await
