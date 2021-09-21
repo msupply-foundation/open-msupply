@@ -51,7 +51,7 @@ export interface TableProps<T extends Record<string, unknown>> {
   sortBy: SortBy<T>;
   isLoading?: boolean;
   onSortBy: (sortRule: SortRule<T>) => void;
-  pagination: Pagination;
+  pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
   tableApi: RefObject<DataTableApi<T>>;
