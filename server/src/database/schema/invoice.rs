@@ -1,4 +1,5 @@
 use super::diesel_schema::invoice;
+use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
@@ -28,7 +29,7 @@ pub struct InvoiceRow {
     pub status: InvoiceRowStatus,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
-    pub entry_datetime: String,
-    pub confirm_datetime: Option<String>,
-    pub finalised_datetime: Option<String>,
+    pub entry_datetime: NaiveDateTime,
+    pub confirm_datetime: Option<NaiveDateTime>,
+    pub finalised_datetime: Option<NaiveDateTime>,
 }

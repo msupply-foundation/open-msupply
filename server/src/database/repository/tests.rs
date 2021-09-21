@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod repository_test {
     mod data {
+        use chrono::NaiveDateTime;
+
         use crate::database::schema::{InvoiceRowStatus, MasterListNameJoinRow};
 
         use super::*;
@@ -154,9 +156,10 @@ mod repository_test {
                 status: InvoiceRowStatus::Draft,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
-                entry_datetime: "".to_string(),
-                confirm_datetime: Some("".to_string()),
-                finalised_datetime: Some("".to_string()),
+                // Note: keep nsecs small enough for Postgres which has limited precision.
+                entry_datetime: NaiveDateTime::from_timestamp(1000, 0),
+                confirm_datetime: Some(NaiveDateTime::from_timestamp(1001, 0)),
+                finalised_datetime: Some(NaiveDateTime::from_timestamp(1002, 0)),
             }
         }
 
@@ -170,9 +173,9 @@ mod repository_test {
                 status: InvoiceRowStatus::Draft,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
-                entry_datetime: "".to_string(),
-                confirm_datetime: Some("".to_string()),
-                finalised_datetime: Some("".to_string()),
+                entry_datetime: NaiveDateTime::from_timestamp(2000, 0),
+                confirm_datetime: Some(NaiveDateTime::from_timestamp(2001, 0)),
+                finalised_datetime: Some(NaiveDateTime::from_timestamp(2002, 0)),
             }
         }
 

@@ -1,3 +1,5 @@
+use chrono::Utc;
+
 use crate::database::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
 pub fn mock_customer_invoice_a() -> InvoiceRow {
@@ -10,9 +12,9 @@ pub fn mock_customer_invoice_a() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: String::from(""),
-        confirm_datetime: Some(String::from("")),
-        finalised_datetime: Some(String::from("")),
+        entry_datetime: Utc::now().naive_utc(),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
     }
 }
 
@@ -26,9 +28,9 @@ pub fn mock_customer_invoice_b() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: String::from(""),
-        confirm_datetime: Some(String::from("")),
-        finalised_datetime: Some(String::from("")),
+        entry_datetime: Utc::now().naive_utc(),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
     }
 }
 
@@ -42,9 +44,9 @@ pub fn mock_supplier_invoice_a() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: String::from(""),
-        confirm_datetime: Some(String::from("")),
-        finalised_datetime: Some(String::from("")),
+        entry_datetime: Utc::now().naive_utc(),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
     }
 }
 
@@ -58,9 +60,9 @@ pub fn mock_supplier_invoice_b() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: String::from(""),
-        confirm_datetime: Some(String::from("")),
-        finalised_datetime: Some(String::from("")),
+        entry_datetime: Utc::now().naive_utc(),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
     }
 }
 

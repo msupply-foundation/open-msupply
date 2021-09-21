@@ -96,9 +96,9 @@ table! {
         status -> crate::database::schema::invoice::InvoiceRowStatusMapping,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
-        entry_datetime -> Text,
-        confirm_datetime -> Nullable<Text>,
-        finalised_datetime -> Nullable<Text>,
+        entry_datetime -> Timestamp,
+        confirm_datetime -> Nullable<Timestamp>,
+        finalised_datetime -> Nullable<Timestamp>,
     }
 }
 
