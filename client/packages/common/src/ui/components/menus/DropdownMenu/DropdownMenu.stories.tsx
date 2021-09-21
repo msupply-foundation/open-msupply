@@ -58,7 +58,7 @@ const iconOptions = [
 
 const someWithIconsOptions = [
   { label: 'Customers', icon: Customers },
-  { label: 'Suppliers' },
+  { label: 'Suppliers', inset: true },
   { label: 'Download', icon: Download },
   { label: 'Tools', inset: true },
 ];
@@ -115,5 +115,5 @@ WithIcons.args = {
 export const SomeWithIcons = Template.bind({});
 SomeWithIcons.args = {
   options: someWithIconsOptions,
-  placeholder: 'Select a different thing!',
+  placeholder: 'Select again!',
 };
