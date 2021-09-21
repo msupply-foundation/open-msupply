@@ -27,6 +27,13 @@ const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
 }));
 
 const TransactionTypes = `
+    type Item {
+        id: String
+        code: String
+        name: String
+        packSize: Int
+        quantity: Int
+    }
     type Transaction {
         id: String
         color: String
@@ -38,6 +45,7 @@ const TransactionTypes = `
         invoiceNumber: String
         total: String
         name: String
+        items: [Item]
     }
     type TransactionResponse { 
       data: [Transaction],
@@ -78,19 +86,31 @@ const getDataSorter = (sortKey, desc) => (a, b) => {
 
 const getTransactionData = async (first, offset, sort, desc) => {
   // await delay(1000 * Math.random() + 200);
-  const data = TransactionData.slice();
+  const transactions = TransactionData.slice();
   if (sort) {
     const sortData = getDataSorter(sort, desc);
-    data.sort(sortData);
+    transactions.sort(sortData);
   }
-  return { totalLength: data.length, data: data.slice(offset, offset + first) };
+  const data = transactions.slice(offset, offset + first).map(addItems);
+
+  return { totalLength: data.length, data };
 };
+
+const addItems = transaction => ({ ...transaction, items: getItems() });
+const getItems = () =>
+  Array.from({ length: Math.random() * 10 }).map(() => ({
+    id: `${faker.datatype.uuid()}`,
+    code: `${faker.random.alpha({ count: 6 })}`,
+    name: `${faker.commerce.productName()}`,
+    packSize: 1,
+    quantity: faker.datatype.number(100),
+  }));
 
 const TransactionQueryResolvers = {
   transactions: (_, { first = 50, offset = 0, sort, desc }) =>
     getTransactionData(first, offset, sort, desc),
   transaction: (_, { id: filterId }) =>
-    TransactionData.filter(({ id }) => id === filterId)[0],
+    addItems(TransactionData.filter(({ id }) => id === filterId)[0]),
 };
 
 const TransactionMutationResolvers = {
