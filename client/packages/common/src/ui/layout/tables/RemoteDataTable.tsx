@@ -22,7 +22,7 @@ import { TableProps } from './types';
 import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
-import { HeaderCell, HeaderRow } from './components/HeaderRow';
+import { HeaderCell, HeaderRow } from './components/Header';
 import { KeyOf } from '../../../types';
 
 export { SortingRule };
@@ -83,22 +83,20 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <HeaderRow key={getHeaderGroupProps().key}>
-              {headers.map(column => {
-                return (
-                  <HeaderCell
-                    style={column.getHeaderProps().style ?? {}}
-                    onSortBy={onSortBy}
-                    key={column.getHeaderProps().key}
-                    isSortable={!column.disableSortBy}
-                    isSorted={column.id === sortBy.key}
-                    align={column.align}
-                    id={column.id as KeyOf<T>}
-                    direction={sortBy.direction}
-                  >
-                    {column.render('Header')}
-                  </HeaderCell>
-                );
-              })}
+              {headers.map(column => (
+                <HeaderCell
+                  style={column.getHeaderProps().style ?? {}}
+                  onSortBy={onSortBy}
+                  key={column.getHeaderProps().key}
+                  isSortable={!column.disableSortBy}
+                  isSorted={column.id === sortBy.key}
+                  align={column.align}
+                  id={column.id as KeyOf<T>}
+                  direction={sortBy.direction}
+                >
+                  {column.render('Header')}
+                </HeaderCell>
+              ))}
             </HeaderRow>
           ))}
         </TableHead>
