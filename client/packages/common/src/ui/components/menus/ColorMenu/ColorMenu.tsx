@@ -1,4 +1,4 @@
-import { Paper, Popover } from '@material-ui/core';
+import { Paper, Popover } from '@mui/material';
 import React, { FC } from 'react';
 import { Circle } from '../../../icons';
 

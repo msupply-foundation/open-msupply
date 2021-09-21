@@ -14,11 +14,12 @@ import {
   GenericErrorFallback,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import DetailPanel from './DetailPanel';
 import Viewport from './Viewport';
+import NotFound from './NotFound';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,10 +108,9 @@ const Host: FC = () => {
                                 <Heading locale={locale}>messages</Heading>
                               }
                             />
-                            <Route
-                              path="*"
-                              element={<Navigate to="/dashboard" replace />}
-                            />
+                            <Route path="/" element={<DashboardService />} />
+
+                            <Route path="*" element={<NotFound />} />
                           </Routes>
                         </React.Suspense>
                       </Box>
