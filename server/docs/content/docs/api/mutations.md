@@ -197,10 +197,10 @@ type InsertSupplierInvoiceLineInput {
 
 ```graphql
 query {
-    updateSupplierInvoice(input: UpsertSupplierInvoiceInput): Invoice
+    updateSupplierInvoice(input: UpdateSupplierInvoiceInput): Invoice
 }
 
-type UpsertSupplierInvoiceInput {
+type UpdateSupplierInvoiceInput {
     id: String
     otherPartyId: String
     status: InvoiceStatus
