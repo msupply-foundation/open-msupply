@@ -407,47 +407,7 @@ interface RecordNotFoundError extends CustomError {
     }
   ]
 }
-```
-
-<ins>Example BatchReductionBelowZero error</ins>
-
-```TypeScript
-interface ValidationError extends CustomError {
-  code: CustomErrorCodes.BatchReductionBelowZero,
-  invoiceLineId: string,
-  stockLineId: string,
-  reductionQuantity: number,
-  availableQuantity: number,
-}
-```
-```JSON
-{
-  "data": null,
-  "errors": [
-    {
-      "message": "CUSTOM_ERROR",
-      "locations": [
-        {
-          "line": 60,
-          "column": 3
-        },
-      ],
-      "path": [ "invoice" ],
-      "extensions": {
-        "customErrors": [
-          {
-          "code": "BATCH_REDUCTION_BELOW_ZERO",
-          "invoiceLineId": "ABC",
-          "stockLineId": "CBA",
-          "reductionQuantity": 10,
-          "availableQuantity": 5
-          }
-        ]
-      }
-    }
-  ]
-}
-```
+``` 
 
 **Batched Queries**
 
