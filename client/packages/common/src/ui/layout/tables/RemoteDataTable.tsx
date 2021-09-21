@@ -13,20 +13,17 @@ import {
   Box,
   CircularProgress,
   TableBody,
-  TableCell,
   TableHead,
-  TableRow,
   TableContainer,
-  TableSortLabel,
   Table as MuiTable,
 } from '@mui/material';
 
-import { SortDesc } from '../../icons';
 import { TableProps } from './types';
 import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
-import { KeyOf } from '@openmsupply-client/common';
+import { HeaderCell, HeaderRow } from './components/Header';
+import { KeyOf } from '../../../types';
 
 export { SortingRule };
 
@@ -85,57 +82,22 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       >
         <TableHead>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
-            <TableRow
-              {...getHeaderGroupProps()}
-              sx={{
-                minWidth: getHeaderGroupProps()?.style?.minWidth,
-                display: 'flex',
-                flex: '1 0 auto',
-                height: '60px',
-                paddingLeft: '20px',
-                paddingRight: '20px',
-                alignItems: 'center',
-              }}
-            >
-              {headers.map(column => {
-                const sortedByThisColumn = column.id === sortBy.key;
-
-                return (
-                  <TableCell
-                    {...column.getHeaderProps()}
-                    onClick={() =>
-                      !column.disableSortBy &&
-                      onSortBy({ key: column.id as KeyOf<T> })
-                    }
-                    align={column.align}
-                    padding={'none'}
-                    sx={{
-                      backgroundColor: 'transparent',
-                      borderBottom: '0px',
-
-                      padding: 0,
-                      paddingRight: '16px',
-                    }}
-                    aria-label={column.id}
-                    sortDirection={
-                      sortedByThisColumn ? sortBy.direction : false
-                    }
-                  >
-                    <TableSortLabel
-                      hideSortIcon={
-                        column.id === 'selection' || column.disableSortBy
-                      }
-                      active={!!sortedByThisColumn}
-                      direction={sortBy.direction}
-                      IconComponent={SortDesc}
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {column.render('Header')}
-                    </TableSortLabel>
-                  </TableCell>
-                );
-              })}
-            </TableRow>
+            <HeaderRow key={getHeaderGroupProps().key}>
+              {headers.map(column => (
+                <HeaderCell
+                  style={column.getHeaderProps().style ?? {}}
+                  onSortBy={onSortBy}
+                  key={column.getHeaderProps().key}
+                  isSortable={!column.disableSortBy}
+                  isSorted={column.id === sortBy.key}
+                  align={column.align}
+                  id={column.id as KeyOf<T>}
+                  direction={sortBy.direction}
+                >
+                  {column.render('Header')}
+                </HeaderCell>
+              ))}
+            </HeaderRow>
           ))}
         </TableHead>
         <TableBody
