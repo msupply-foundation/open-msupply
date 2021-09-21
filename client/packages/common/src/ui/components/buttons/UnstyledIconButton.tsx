@@ -25,7 +25,8 @@ export const UnstyledIconButton: React.FC<ButtonProps> = ({
         disabled={disabled}
         onClick={onClick}
         aria-label={tooltip}
-        size="large">
+        size="large"
+      >
         {icon}
       </IconButton>
     </Tooltip>
