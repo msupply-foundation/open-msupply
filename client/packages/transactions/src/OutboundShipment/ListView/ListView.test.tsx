@@ -22,7 +22,7 @@ describe('OutboundShipmentListView', () => {
     // specific view
 
     await waitFor(() => {
-      expect(getByRole('columnheader', { name: /color/i })).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
       expect(getByRole('columnheader', { name: /type/i })).toBeInTheDocument();
       expect(
         getByRole('columnheader', { name: /status/i })

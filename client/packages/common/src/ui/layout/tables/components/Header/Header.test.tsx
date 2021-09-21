@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { render } from '@testing-library/react';
-import { HeaderCell, HeaderRow } from './HeaderRow';
+import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
 

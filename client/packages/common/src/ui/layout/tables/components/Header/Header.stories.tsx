@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
 import { Table, TableHead } from '@mui/material';
-import { HeaderCell, HeaderRow } from './HeaderRow';
+import { HeaderCell, HeaderRow } from './Header';
 import { useSortBy } from '../../../../../hooks/useSortBy';
 
 export default {
