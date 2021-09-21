@@ -22,6 +22,6 @@ CREATE TABLE invoice (
     status invoice_status NOT NULL,
     comment TEXT,
     their_reference TEXT,
-    entry_datetime TEXT NOT NULL,
-    confirm_datetime TEXT,
-    finalised_datetime TEXT)
+    entry_datetime TIMESTAMP NOT NULL,
+    confirm_datetime TIMESTAMP,
+    finalised_datetime TIMESTAMP)
