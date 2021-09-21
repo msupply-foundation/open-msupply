@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 
-interface Pagination {
+export interface Pagination {
   page: number;
   offset: number;
   first: number;
+}
+
+export interface PaginationController extends Pagination {
   onChangePage: (newPage: number) => void;
   onChangeFirst: (newFirst: number) => void;
 }
-export interface PaginationState extends Pagination {
-  pagination: Pagination;
+
+export interface PaginationState extends PaginationController {
+  pagination: PaginationController;
 }
 
 export const usePagination = (initialFirst = 20): PaginationState => {

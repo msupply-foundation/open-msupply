@@ -2,6 +2,7 @@ import { ObjectWithStringKeys } from './../../../types/utility';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ReactNode, RefObject } from 'react';
 import { Column } from 'react-table';
+import { Pagination } from '../../../hooks/usePagination';
 import { SortBy, SortRule } from '../../../hooks/useSortBy';
 
 export enum ColumnFormat {
@@ -44,19 +45,13 @@ export interface DataTableApi<T> {
   selectedRows: T[];
 }
 
-interface Pagination {
-  first: number;
-  offset: number;
-  total: number;
-}
-
 export interface TableProps<T extends Record<string, unknown>> {
   columns: Column<T>[];
   data?: T[];
   sortBy: SortBy<T>;
   isLoading?: boolean;
   onSortBy: (sortRule: SortRule<T>) => void;
-  pagination: Pagination;
+  pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
   tableApi: RefObject<DataTableApi<T>>;

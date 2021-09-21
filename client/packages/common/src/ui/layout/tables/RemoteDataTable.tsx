@@ -165,9 +165,10 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
         </TableBody>
       </MuiTable>
       <PaginationRow
+        page={pagination.page}
         offset={pagination.offset}
         first={pagination.first}
-        total={pagination.total}
+        total={pagination.total ?? 0}
         onChange={onChangePage}
       />
     </TableContainer>
