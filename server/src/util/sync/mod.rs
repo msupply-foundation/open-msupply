@@ -16,7 +16,7 @@ pub use server::SyncServer;
 
 use crate::{
     database::{
-        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository, SyncRepository},
+        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository},
         schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
@@ -192,12 +192,8 @@ impl SyncReceiverActor {
         }
 
         // write all entries to the DB
-        let sync_session = repositories
-            .get::<SyncRepository>()
-            .new_sync_session()
-            .await
-            .unwrap();
-        import_sync_records(&sync_session, repositories, &records).await?;
+
+        import_sync_records(repositories, &records).await?;
 
         // clear the sync buffer
         central_sync_buffer_repository
