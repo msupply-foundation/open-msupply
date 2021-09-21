@@ -87,8 +87,11 @@ interface FirstError extends CustomError {
 ```TypeScript
 interface RecordNotFoundError extends CustomError {
   code: CustomErrorCodes.RecordNotFound,
-  specifiedField: string,
+  specifiedField: SingleQueryArguments,
 }
+
+type SingleQueryArguments = "id"
+
 ```
 
 ## [Customer And Supplier Invoice Mutation](/docs/api/mutations/#mutations)
