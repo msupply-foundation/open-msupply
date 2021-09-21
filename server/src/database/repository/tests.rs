@@ -150,7 +150,7 @@ mod repository_test {
                 name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
-                r#type: InvoiceRowType::CustomerInvoice,
+                r#type: InvoiceRowType::SupplierInvoice,
                 status: InvoiceRowStatus::Draft,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
