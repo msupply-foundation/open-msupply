@@ -113,6 +113,7 @@ table! {
         pack_size -> Integer,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
+        total_after_tax -> Double,
         available_number_of_packs -> Integer,
         total_number_of_packs -> Integer,
     }

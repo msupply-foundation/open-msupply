@@ -11,6 +11,7 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -25,6 +26,7 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -46,6 +48,7 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -60,6 +63,7 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -81,6 +85,7 @@ pub fn mock_supplier_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -95,6 +100,7 @@ pub fn mock_supplier_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -116,6 +122,7 @@ pub fn mock_supplier_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };
@@ -130,6 +137,7 @@ pub fn mock_supplier_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_after_tax: 0.0,
         available_number_of_packs: 1,
         total_number_of_packs: 1,
     };

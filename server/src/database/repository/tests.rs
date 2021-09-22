@@ -190,6 +190,7 @@ mod repository_test {
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
+                total_after_tax: 0.0,
                 available_number_of_packs: 1,
                 total_number_of_packs: 1,
             }
@@ -205,6 +206,7 @@ mod repository_test {
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
+                total_after_tax: 0.0,
                 available_number_of_packs: 1,
                 total_number_of_packs: 1,
             }
@@ -221,6 +223,7 @@ mod repository_test {
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
+                total_after_tax: 0.0,
                 available_number_of_packs: 1,
                 total_number_of_packs: 1,
             }
