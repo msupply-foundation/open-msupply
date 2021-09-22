@@ -7,7 +7,8 @@ CREATE TABLE invoice_line (
     expiry_date TEXT,
     cost_price_per_pack REAL NOT NULL,
     sell_price_per_pack REAL NOT NULL,
+    total_after_tax REAL NOT NULL,
     available_number_of_packs INTEGER NOT NULL,
     total_number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL
-)
+);
