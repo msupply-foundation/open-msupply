@@ -1,13 +1,7 @@
 /* eslint-disable react/jsx-key */
-import React from 'react';
+import React, { useEffect } from 'react';
 
-import {
-  SortingRule,
-  useRowSelect,
-  useTable,
-  useFlexLayout,
-  Row,
-} from 'react-table';
+import { useRowSelect, useTable, useFlexLayout, Row } from 'react-table';
 
 import {
   Box,
@@ -24,8 +18,7 @@ import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
 import { KeyOf } from '../../../types';
-
-export { SortingRule };
+import { useTableStore } from './context';
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
@@ -46,6 +39,11 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     useRowSelect,
     useFlexLayout
   );
+
+  const { setActiveRows } = useTableStore();
+  useEffect(() => {
+    if (data.length) setActiveRows(data.map(({ id }) => id as string));
+  }, [data]);
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     tableInstance;

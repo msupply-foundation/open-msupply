@@ -13,7 +13,7 @@ export enum ColumnFormat {
 }
 
 export interface ColumnDefinition<T> {
-  label: LocaleKey;
+  label?: LocaleKey;
   format?: ColumnFormat;
   key: keyof T;
   sortable?: boolean; // defaults to true

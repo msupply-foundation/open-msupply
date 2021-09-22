@@ -32,11 +32,12 @@ export const useColumns = <T extends object>(
     const sortDescFirst = column.format === ColumnFormat.date;
 
     return {
+      Header,
       ...column,
       align: column.align || 'left',
       accessor,
       disableSortBy,
-      Header,
+
       id: key as IdType<T>,
       sortDescFirst,
       sortInverted,

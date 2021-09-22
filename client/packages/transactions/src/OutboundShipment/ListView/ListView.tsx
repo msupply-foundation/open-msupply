@@ -14,7 +14,6 @@ import {
   useNotification,
   Transaction,
   useDataTableApi,
-  GenericColumnType,
   DropdownMenu,
   DropdownMenuItem,
   AppBarContentPortal,
@@ -23,11 +22,15 @@ import {
   getNameAndColorColumn,
   Delete,
   Edit,
+  TableProvider,
+  createTableStore,
+  getCheckboxSelectionColumn,
+  ColumnDefinition,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
 
-export const OutboundShipmentListView: FC = () => {
+export const OutboundShipmentListViewComponent: FC = () => {
   const { appBarButtonsRef } = useHostContext();
   const { info, success, warning } = useNotification();
   const navigate = useNavigate();
@@ -120,7 +123,7 @@ export const OutboundShipmentListView: FC = () => {
       maxWidth: 450,
       align: 'left',
     },
-    GenericColumnType.Selection,
+    getCheckboxSelectionColumn() as ColumnDefinition<Transaction>,
   ]);
 
   return (
@@ -193,5 +196,13 @@ export const OutboundShipmentListView: FC = () => {
         }}
       />
     </>
+  );
+};
+
+export const OutboundShipmentListView: FC = () => {
+  return (
+    <TableProvider createStore={createTableStore}>
+      <OutboundShipmentListViewComponent />
+    </TableProvider>
   );
 };
