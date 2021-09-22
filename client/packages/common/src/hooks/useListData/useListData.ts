@@ -4,6 +4,8 @@ import { UseMutateFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
 import { SortRule } from '../useSortBy';
+import { ClientError } from 'graphql-request';
+import { useNotification } from '../..';
 
 export interface ListApi<T extends ObjectWithStringKeys> {
   onQuery: ({
@@ -42,10 +44,15 @@ export const useListData = <T extends ObjectWithStringKeys>(
   const { queryParams, first, offset, sortBy, numberOfRows } =
     useQueryParams(initialSortBy);
   const fullQueryKey = [queryKey, 'list', queryParams];
-
+  const { error } = useNotification();
   const { data, isLoading: isQueryLoading } = useQuery(
     fullQueryKey,
-    api.onQuery({ first, offset, sortBy })
+    api.onQuery({ first, offset, sortBy }),
+    {
+      onError: (e: ClientError) => error(e.message?.substring(0, 150))(),
+      useErrorBoundary: (error: ClientError): boolean =>
+        error.response?.status >= 500,
+    }
   );
 
   const invalidate = () => queryClient.invalidateQueries(queryKey);

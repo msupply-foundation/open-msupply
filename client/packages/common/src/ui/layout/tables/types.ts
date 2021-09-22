@@ -56,4 +56,5 @@ export interface TableProps<T extends Record<string, unknown>> {
   onRowClick?: (row: T) => void;
   tableApi: RefObject<DataTableApi<T>>;
   children?: ReactNode;
+  noDataMessageKey?: LocaleKey;
 }

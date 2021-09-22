@@ -16,6 +16,7 @@ import {
   TableHead,
   TableContainer,
   Table as MuiTable,
+  Typography,
 } from '@mui/material';
 
 import { TableProps } from './types';
@@ -24,6 +25,7 @@ import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
 import { KeyOf } from '../../../types';
+import { useTranslation } from '../../..';
 
 export { SortingRule };
 
@@ -37,6 +39,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   pagination,
   tableApi,
   onChangePage,
+  noDataMessageKey,
 }: TableProps<T>): JSX.Element => {
   const tableInstance = useTable(
     {
@@ -52,18 +55,32 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
 
   useSetupDataTableApi(tableApi, tableInstance);
 
-  return isLoading ? (
-    <Box
-      sx={{
-        display: 'flex',
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <CircularProgress />
-    </Box>
-  ) : (
+  if (isLoading)
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+
+  if (rows.length === 0) {
+    const t = useTranslation();
+    return (
+      <Box sx={{ padding: 2 }}>
+        <Typography variant="h6">
+          {t(noDataMessageKey || 'error.no-results')}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
     <TableContainer
       sx={{
         display: 'flex',

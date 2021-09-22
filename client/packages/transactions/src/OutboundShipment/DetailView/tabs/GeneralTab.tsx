@@ -69,6 +69,7 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
       )}
       onSortBy={onChangeSortBy}
       onChangePage={pagination.onChangePage}
+      noDataMessageKey="error.no-items"
     />
   );
 };
