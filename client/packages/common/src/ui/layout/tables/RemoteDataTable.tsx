@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-key */
 import React, { useEffect } from 'react';
 
-import { useRowSelect, useTable, useFlexLayout, Row } from 'react-table';
+import { useTable, useFlexLayout, Row } from 'react-table';
 
 import {
   Box,
@@ -36,7 +36,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       columns,
       data,
     },
-    useRowSelect,
     useFlexLayout
   );
 
