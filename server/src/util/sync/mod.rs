@@ -16,15 +16,4 @@ pub use remote::{
     RemoteSyncRecordData,
 };
 pub use server::SyncServer;
-pub use synchroniser::Synchroniser;
-
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum SyncError {
-    #[error("Sync connection error")]
-    ConnectionError {
-        #[from]
-        source: SyncConnectionError,
-    },
-}
+pub use synchroniser::{CentralSyncError, RemoteSyncError, SyncError, Synchroniser};
