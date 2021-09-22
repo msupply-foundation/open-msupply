@@ -1,5 +1,5 @@
-use crate::database::repository::{InvoiceLineRepository, RepositoryError};
-use crate::database::schema::InvoiceLineRow;
+use crate::database::repository::{InvoiceLineRepository, InvoiceQueryRepository, RepositoryError};
+use crate::database::schema::{InvoiceLineRow, InvoiceLineStatsRow};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -26,6 +26,26 @@ impl Loader<String> for InvoiceLineLoader {
                 let invoice_line = invoice_line.clone();
                 (invoice_line_id, invoice_line)
             })
+            .collect())
+    }
+}
+
+pub struct InvoiceLineStatsLoader {
+    pub invoice_query_repository: InvoiceQueryRepository,
+}
+
+#[async_trait::async_trait]
+impl Loader<String> for InvoiceLineStatsLoader {
+    type Value = InvoiceLineStatsRow;
+    type Error = RepositoryError;
+
+    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        Ok(self
+            .invoice_query_repository
+            .stats(keys)
+            .await?
+            .iter()
+            .map(|stats: &InvoiceLineStatsRow| (stats.invoice_id.clone(), stats.clone()))
             .collect())
     }
 }
