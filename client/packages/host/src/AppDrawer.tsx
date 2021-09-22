@@ -28,33 +28,25 @@ const CustomersNav = React.lazy(
   () => import('@openmsupply-client/customers/src/Nav')
 );
 
-const ToolbarIconContainer = styled(Box)(({ theme }) => ({
+const ToolbarIconContainer = styled(Box)({
   display: 'flex',
   height: 90,
   justifyContent: 'center',
-  alignItems: 'center',
-  padding: '0 8px',
-  ...theme.mixins.toolbar,
-}));
+});
 
 const commonListContainerStyles = {
+  alignItems: 'center',
   display: 'flex',
   flexDirection: 'column' as Property.FlexDirection,
-  justifyContent: 'space-between',
-  alignItems: 'center',
 };
 
 const LowerListContainer = styled(Box)({
   ...commonListContainerStyles,
-  height: 151,
-  position: 'static',
-  bottom: 0,
 });
 
 const UpperListContainer = styled(Box)({
   ...commonListContainerStyles,
   flex: 1,
-  height: '100%',
   msOverflowStyle: 'none',
   overflow: 'scroll',
   scrollbarWidth: 'none',
@@ -101,8 +93,9 @@ const closedMixin = (theme: Theme) => ({
 const StyledDrawer = styled(Box, {
   shouldForwardProp: prop => prop !== 'isOpen',
 })<{ isOpen: boolean }>(({ isOpen, theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
   height: '100vh',
-  flexGrow: 0,
   borderRadius: 8,
   overflow: 'hidden',
   boxShadow: theme.shadows[7],
