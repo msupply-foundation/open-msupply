@@ -39,7 +39,7 @@ impl Synchroniser {
             info!("Requesting central sync data...");
             let sync_batch: CentralSyncBatch = self
                 .connection
-                .central_records(cursor, BATCH_SIZE)
+                .pull_central_records(cursor, BATCH_SIZE)
                 .await
                 .expect("Failed to pull central sync records");
             info!("Received central sync response");
@@ -71,7 +71,7 @@ impl Synchroniser {
         info!("Sending initialize request...");
         let mut sync_batch: RemoteSyncBatch = self
             .connection
-            .initialize()
+            .initialise_remote_records()
             .await
             .expect("Failed to initialize remote sync records");
         info!("Received initialize response");
@@ -81,7 +81,7 @@ impl Synchroniser {
             info!("Sending remote sync request...");
             sync_batch = self
                 .connection
-                .remote_records()
+                .pull_remote_records()
                 .await
                 .expect("Failed to pull remote sync records");
             info!("Received remote sync response");
@@ -91,7 +91,7 @@ impl Synchroniser {
                 records.append(&mut data.clone());
                 info!("Acknowledging remote sync records...");
                 self.connection
-                    .acknowledge_records(&records)
+                    .acknowledge_remote_records(&records)
                     .await
                     .expect("Failed to acknowledge remote sync records");
                 info!("Acknowledged remote sync records");
