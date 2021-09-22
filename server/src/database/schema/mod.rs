@@ -34,7 +34,7 @@ pub enum DatabaseRow {
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use central_sync_cursor::CentralSyncCursorRow;
 pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
-pub use invoice_line::InvoiceLineRow;
+pub use invoice_line::{InvoiceLineRow, InvoiceLineStatsRow};
 pub use item::ItemRow;
 pub use master_list::MasterListRow;
 pub use master_list_line::MasterListLineRow;
