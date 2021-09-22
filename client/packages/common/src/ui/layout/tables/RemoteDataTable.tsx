@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 
 import { TableProps } from './types';
-import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
@@ -28,26 +27,21 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   onSortBy,
   onRowClick,
   pagination,
-  tableApi,
   onChangePage,
 }: TableProps<T>): JSX.Element => {
-  const tableInstance = useTable(
-    {
-      columns,
-      data,
-    },
-    useFlexLayout
-  );
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
+    useTable(
+      {
+        columns,
+        data,
+      },
+      useFlexLayout
+    );
 
   const { setActiveRows } = useTableStore();
   useEffect(() => {
     if (data.length) setActiveRows(data.map(({ id }) => id as string));
   }, [data]);
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    tableInstance;
-
-  useSetupDataTableApi(tableApi, tableInstance);
 
   return isLoading ? (
     <Box
