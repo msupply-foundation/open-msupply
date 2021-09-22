@@ -3,7 +3,7 @@ use std::fmt::{self, Debug, Display};
 
 pub const BASE_URL: &'static str = "/sync/v5/";
 
-pub const INITIALIZE: &'static str = "initialise";
+pub const INITIALISE: &'static str = "initialise";
 pub const QUEUED_RECORDS: &'static str = "queued_records";
 pub const CENTRAL_RECORDS: &'static str = "central_records";
 pub const ACKNOWLEDGE_RECORDS: &'static str = "acknowledged_records";
@@ -28,8 +28,8 @@ impl SyncServer {
         self.url.join(BASE_URL).unwrap()
     }
 
-    pub fn initialize_url(&self) -> Url {
-        self.base_url().join(INITIALIZE).unwrap()
+    pub fn initialise_url(&self) -> Url {
+        self.base_url().join(INITIALISE).unwrap()
     }
 
     pub fn queued_records_url(&self) -> Url {
