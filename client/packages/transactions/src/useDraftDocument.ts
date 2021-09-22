@@ -85,11 +85,12 @@ export const useDraftDocument = <DocumentType>(
   mutateFn: MutateFn<DocumentType>,
   onSuccess: OnSuccessCallback<DocumentType>,
   useDraftState: UseStore<DraftStore<DocumentType>>,
-  placeholderData?: DocumentType
+  placeholderData?: DocumentType,
+  onMissingRecord?: () => void
 ): DraftDocumentState<DocumentType> => {
   const { draft, setDraft } = useDraftState();
 
-  const { data } = useQuery(key, queryFn, {
+  const { data, isLoading } = useQuery(key, queryFn, {
     placeholderData,
     enabled: !key.includes('new'),
   });
@@ -109,6 +110,10 @@ export const useDraftDocument = <DocumentType>(
     // user the changes and let them resolve it.
     setDraft(data ?? null);
   }, [data]);
+
+  useEffect(() => {
+    if (onMissingRecord && !data && !isLoading) onMissingRecord();
+  }, [data, isLoading]);
 
   const save = () => {
     if (draft) {

@@ -67,7 +67,6 @@ export const getListQuery = (): string => gql`
         confirmed
         invoiceNumber
         total
-        color
         name
       }
       totalLength
