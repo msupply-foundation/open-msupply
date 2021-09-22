@@ -37,7 +37,7 @@ pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use stock_line::StockLineRepository;
 pub use store::StoreRepository;
-pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository, SyncSession};
+pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
 pub use user_account::UserAccountRepository;
 
 use diesel::{
