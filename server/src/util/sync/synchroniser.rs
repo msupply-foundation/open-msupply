@@ -1,15 +1,50 @@
 use crate::{
     database::repository::{
-        CentralSyncBufferRepository, CentralSyncCursorRepository, SyncRepository,
+        CentralSyncBufferRepository, CentralSyncCursorRepository, RepositoryError, SyncRepository,
     },
     server::data::RepositoryRegistry,
     util::sync::{
         translation::{import_sync_records, TRANSLATION_RECORDS},
-        CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection,
+        CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
     },
 };
 
 use log::info;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum CentralSyncError {
+    #[error("Failed to pull central sync records")]
+    PullCentralSyncRecordsError { source: SyncConnectionError },
+    #[error("Failed to update central sync buffer records")]
+    UpdateCentralSyncBufferError { source: RepositoryError },
+    #[error("Failed to get central sync cursor")]
+    GetCentralSyncCursorError { source: RepositoryError },
+}
+
+#[derive(Error, Debug)]
+pub enum RemoteSyncError {
+    #[error("Failed to initialise central sync records")]
+    InitialiseRemoteSyncError { source: SyncConnectionError },
+    #[error("Failed to pull remote sync records")]
+    PullRemoteSyncRecordsError { source: SyncConnectionError },
+    #[error("Failed to acknowledge remote sync records")]
+    AcknowledgeRemoteSyncRecordsError { source: SyncConnectionError },
+}
+
+#[derive(Error, Debug)]
+pub enum SyncError {
+    #[error("Failed to sync central records")]
+    CentralSyncError {
+        #[from]
+        source: CentralSyncError,
+    },
+    #[error("Failed to sync remote records")]
+    RemoteSyncError {
+        #[from]
+        source: RemoteSyncError,
+    },
+}
 
 pub struct Synchroniser {
     pub connection: SyncConnection,
@@ -17,7 +52,10 @@ pub struct Synchroniser {
 
 #[allow(unused_assignments)]
 impl Synchroniser {
-    pub async fn pull_central_records(&mut self, registry: &RepositoryRegistry) {
+    pub async fn pull_central_records(
+        &mut self,
+        registry: &RepositoryRegistry,
+    ) -> Result<(), CentralSyncError> {
         let central_sync_cursor_repository: &CentralSyncCursorRepository =
             registry.get::<CentralSyncCursorRepository>();
 
@@ -35,56 +73,58 @@ impl Synchroniser {
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
 
-        loop {
-            info!("Requesting central sync data...");
+        Ok(loop {
+            info!("Pulling central sync records...");
             let sync_batch: CentralSyncBatch = self
                 .connection
                 .pull_central_records(cursor, BATCH_SIZE)
                 .await
-                .expect("Failed to pull central sync records");
-            info!("Received central sync response");
+                .map_err(|source| CentralSyncError::PullCentralSyncRecordsError { source })?;
+            info!("Pulled central sync records");
 
             if let Some(central_sync_records) = sync_batch.data {
                 for central_sync_record in central_sync_records {
                     central_sync_buffer_repository
                         .insert_one_and_update_cursor(&central_sync_record)
                         .await
-                        .expect("Failed to insert central sync record into sync buffer");
+                        .map_err(|source| CentralSyncError::UpdateCentralSyncBufferError {
+                            source,
+                        })?;
                 }
             }
 
             cursor = central_sync_cursor_repository
                 .get_cursor()
                 .await
-                .expect("Failed to load central sync cursor");
+                .map_err(|source| CentralSyncError::GetCentralSyncCursorError { source })?;
 
             if cursor >= sync_batch.max_cursor - 1 {
                 info!("All central sync records pulled successfully");
                 break;
             }
-        }
+        })
     }
 
     // Hacky method for pulling from sync_queue.
-    pub async fn pull_remote_records(&mut self) -> Vec<RemoteSyncRecord> {
+    pub async fn pull_remote_records(&mut self) -> Result<Vec<RemoteSyncRecord>, RemoteSyncError> {
         // TODO: only initialize on initial sync.
-        info!("Sending initialize request...");
+        info!("Initialising remote sync records...");
         let mut sync_batch: RemoteSyncBatch = self
             .connection
             .initialise_remote_records()
             .await
-            .expect("Failed to initialize remote sync records");
-        info!("Received initialize response");
+            .map_err(|source| RemoteSyncError::InitialiseRemoteSyncError { source })?;
+        info!("Initialised remote sync recordse");
 
         let mut records: Vec<RemoteSyncRecord> = Vec::new();
         while sync_batch.queue_length > 0 {
-            info!("Sending remote sync request...");
+            info!("Pulling remote sync records...");
             sync_batch = self
                 .connection
                 .pull_remote_records()
                 .await
-                .expect("Failed to pull remote sync records");
-            info!("Received remote sync response");
+                .map_err(|source| RemoteSyncError::PullRemoteSyncRecordsError { source })?;
+            info!("Pulled remote sync records");
 
             // TODO: acknowledge after integration.
             if let Some(data) = sync_batch.data {
@@ -93,12 +133,14 @@ impl Synchroniser {
                 self.connection
                     .acknowledge_remote_records(&records)
                     .await
-                    .expect("Failed to acknowledge remote sync records");
+                    .map_err(
+                        |source| RemoteSyncError::AcknowledgeRemoteSyncRecordsError { source },
+                    )?;
                 info!("Acknowledged remote sync records");
             }
         }
 
-        records
+        Ok(records)
     }
 
     async fn integrate_central_records(&self, registry: &RepositoryRegistry) -> Result<(), String> {
@@ -129,24 +171,27 @@ impl Synchroniser {
         });
     }
 
-    pub async fn sync(&mut self, registry: &RepositoryRegistry) {
+    pub async fn sync(&mut self, registry: &RepositoryRegistry) -> Result<(), SyncError> {
         info!("Syncing central records...");
-        self.pull_central_records(registry).await;
+        self.pull_central_records(registry).await?;
         info!("Successfully synced central records");
 
         info!("Integrating central records...");
         self.integrate_central_records(registry)
             .await
-            .expect("Failed to integrate central records");
+            // TODO: add sync integration error structs
+            .expect("Integration error");
         info!("Successfully integrated central records");
 
         info!("Syncing remote records...");
-        let remote_records = self.pull_remote_records().await;
+        let remote_records = self.pull_remote_records().await?;
         info!("Successfully pulled remote records");
 
         info!("Integrating remote records...");
         self.integrate_remote_records(remote_records);
         info!("Successfully integrated remote records");
+
+        Ok(())
     }
 }
 

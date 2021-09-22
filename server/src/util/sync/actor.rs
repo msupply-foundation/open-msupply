@@ -1,4 +1,7 @@
-use crate::{server::data::RepositoryRegistry, util::sync::Synchroniser};
+use crate::{
+    server::data::RepositoryRegistry,
+    util::sync::{SyncError, Synchroniser},
+};
 
 use log::info;
 use tokio::{
@@ -60,7 +63,11 @@ impl SyncReceiverActor {
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message");
             info!("Starting sync...");
-            synchroniser.sync(registry).await;
+            match synchroniser.sync(registry).await {
+                Err(SyncError::CentralSyncError { source }) => info!("{:?}", source),
+                Err(SyncError::RemoteSyncError { source }) => info!("{:?}", source),
+                _ => info!("Unknown sync error"),
+            }
             info!("Finished sync!");
         }
         unreachable!(
