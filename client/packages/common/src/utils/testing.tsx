@@ -7,7 +7,15 @@ import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes } from 'react-router';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // ✅ turns retries off
+      retry: false,
+    },
+  },
+});
+
 interface TestingProviderProps {
   locale?: SupportedLocales;
 }

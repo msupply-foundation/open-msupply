@@ -20,3 +20,8 @@ export type Transaction = {
   name: string;
   items?: Item[];
 };
+
+export type Test = {
+  id: number;
+  message: string;
+};

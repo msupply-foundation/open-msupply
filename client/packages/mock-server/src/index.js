@@ -8,16 +8,19 @@ import {
   TransactionTypes,
   TransactionInput,
 } from './schema/Transaction';
+import { TestQueries, TestQueryResolvers, TestTypes } from './schema/Test';
 
 const typeDefs = gql`
   ${ItemType}
   ${TransactionTypes}
+  ${TestTypes}
 
   ${TransactionInput}
 
   type Query {
     ${ItemQueries}
     ${TransactionQueries}
+    ${TestQueries}
   }
 
   type Mutation {
@@ -27,6 +30,7 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
+    ...TestQueryResolvers,
     ...ItemResolvers,
     ...TransactionQueryResolvers,
   },
@@ -42,3 +46,8 @@ server.listen().then(({ url }) => {
     `🚀🚀🚀 Server   @ ${url}         🚀🚀🚀\n🤖🤖🤖 GraphiQL @ ${url}graphiql 🤖🤖🤖`
   );
 });
+
+// export {
+//   TestQueryResolvers,
+//   TestQueries,
+//   TestTypes,
