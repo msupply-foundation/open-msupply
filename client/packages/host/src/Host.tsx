@@ -50,10 +50,6 @@ const Heading: FC<{ locale: string }> = props => (
   </div>
 );
 
-// const CustomKBarSearch: FC = () => {
-
-// }
-
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   width: 500,
   height: 50,
