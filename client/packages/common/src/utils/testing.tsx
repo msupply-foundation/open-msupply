@@ -6,6 +6,7 @@ import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes } from 'react-router';
+import { TableProvider, createTableStore } from '../ui/layout/tables';
 
 const queryClient = new QueryClient();
 interface TestingProviderProps {
@@ -32,7 +33,9 @@ export const TestingProvider: FC<TestingProviderProps> = ({
   <QueryClientProvider client={queryClient}>
     <SnackbarProvider maxSnack={3}>
       <IntlTestProvider locale={locale}>
-        <AppThemeProvider>{children}</AppThemeProvider>
+        <TableProvider createStore={createTableStore}>
+          <AppThemeProvider>{children}</AppThemeProvider>
+        </TableProvider>
       </IntlTestProvider>
     </SnackbarProvider>
   </QueryClientProvider>

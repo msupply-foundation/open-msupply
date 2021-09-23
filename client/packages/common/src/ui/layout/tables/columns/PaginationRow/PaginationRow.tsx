@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { Box, Typography, Pagination } from '@mui/material';
+import { useTableStore } from '../../context';
 
 interface PaginationRowProps {
   offset: number;
@@ -16,6 +17,8 @@ export const PaginationRow: FC<PaginationRowProps> = ({
   total,
   onChange,
 }) => {
+  const { numberSelected } = useTableStore();
+
   // Offset is zero indexed, but should display one indexed for
   // users.
   const xToY = `${offset + 1}-${Math.min(first + offset, total)}`;
@@ -56,6 +59,9 @@ export const PaginationRow: FC<PaginationRowProps> = ({
             <Typography sx={{ marginRight: '4px' }}>of</Typography>
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {total}
+            </Typography>
+            <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
+              {`(${numberSelected} Selected)`}
             </Typography>
           </Box>
           <Pagination
