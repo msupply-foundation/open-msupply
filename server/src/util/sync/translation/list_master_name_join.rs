@@ -13,12 +13,13 @@ pub struct LegacyListMasterNameJoinRow {
 impl LegacyListMasterNameJoinRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<MasterListNameJoinRow>, String> {
+    ) -> Result<Option<MasterListNameJoinRow>, serde_json::Error> {
         if sync_record.table_name != "list_master_name_join" {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+
+        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
+
         Ok(Some(MasterListNameJoinRow {
             id: data.ID,
             master_list_id: data.list_master_ID,

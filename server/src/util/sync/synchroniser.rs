@@ -4,7 +4,7 @@ use crate::{
     },
     server::data::RepositoryRegistry,
     util::sync::{
-        translation::{import_sync_records, TRANSLATION_RECORDS},
+        translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
         CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
     },
 };
@@ -17,9 +17,15 @@ pub enum CentralSyncError {
     #[error("Failed to pull central sync records")]
     PullCentralSyncRecordsError { source: SyncConnectionError },
     #[error("Failed to update central sync buffer records")]
-    UpdateCentralSyncBufferError { source: RepositoryError },
-    #[error("Failed to get central sync cursor")]
-    GetCentralSyncCursorError { source: RepositoryError },
+    UpdateCentralSyncBufferRecordsError { source: RepositoryError },
+    #[error("Failed to get central sync cursor record")]
+    GetCentralSyncCursorRecordError { source: RepositoryError },
+    #[error("Failed to get central sync buffer records")]
+    GetCentralSyncBufferRecordsError { source: RepositoryError },
+    #[error("Failed to import central sync buffer records")]
+    ImportCentralSyncRecordsError { source: SyncImportError },
+    #[error("Failed to remove central sync buffer records")]
+    RemoveCentralSyncBufferRecordsError { source: RepositoryError },
 }
 
 #[derive(Error, Debug)]
@@ -87,8 +93,8 @@ impl Synchroniser {
                     central_sync_buffer_repository
                         .insert_one_and_update_cursor(&central_sync_record)
                         .await
-                        .map_err(|source| CentralSyncError::UpdateCentralSyncBufferError {
-                            source,
+                        .map_err(|source| {
+                            CentralSyncError::UpdateCentralSyncBufferRecordsError { source }
                         })?;
                 }
             }
@@ -96,7 +102,7 @@ impl Synchroniser {
             cursor = central_sync_cursor_repository
                 .get_cursor()
                 .await
-                .map_err(|source| CentralSyncError::GetCentralSyncCursorError { source })?;
+                .map_err(|source| CentralSyncError::GetCentralSyncCursorRecordError { source })?;
 
             if cursor >= sync_batch.max_cursor - 1 {
                 info!("All central sync records pulled successfully");
@@ -143,7 +149,10 @@ impl Synchroniser {
         Ok(records)
     }
 
-    async fn integrate_central_records(&self, registry: &RepositoryRegistry) -> Result<(), String> {
+    async fn integrate_central_records(
+        &self,
+        registry: &RepositoryRegistry,
+    ) -> Result<(), CentralSyncError> {
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
             registry.get::<CentralSyncBufferRepository>();
         let sync_session = registry
@@ -155,13 +164,18 @@ impl Synchroniser {
             let buffer_rows = central_sync_buffer_repository
                 .get_sync_entries(table_name)
                 .await
-                .map_err(|_| "Failed to read central sync entries".to_string())?;
-            import_sync_records(&sync_session, &registry, &buffer_rows).await?;
+                .map_err(|source| CentralSyncError::GetCentralSyncBufferRecordsError { source })?;
+
+            import_sync_records(&sync_session, &registry, &buffer_rows)
+                .await
+                .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
         }
+
         central_sync_buffer_repository
             .remove_all()
             .await
-            .map_err(|_| "Failed to empty central sync entries".to_string())?;
+            .map_err(|source| CentralSyncError::RemoveCentralSyncBufferRecordsError { source })?;
+
         Ok(())
     }
 
@@ -177,10 +191,7 @@ impl Synchroniser {
         info!("Successfully synced central records");
 
         info!("Integrating central records...");
-        self.integrate_central_records(registry)
-            .await
-            // TODO: add sync integration error structs
-            .expect("Integration error");
+        self.integrate_central_records(registry).await?;
         info!("Successfully integrated central records");
 
         info!("Syncing remote records...");

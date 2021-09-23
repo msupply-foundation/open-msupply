@@ -14,12 +14,13 @@ pub struct LegacyListMasterRow {
 impl LegacyListMasterRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<MasterListRow>, String> {
+    ) -> Result<Option<MasterListRow>, serde_json::Error> {
         if sync_record.table_name != "list_master" {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+
+        let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+
         Ok(Some(MasterListRow {
             id: data.ID,
             name: data.description,

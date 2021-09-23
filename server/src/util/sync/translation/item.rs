@@ -11,12 +11,14 @@ pub struct LegacyItemRow {
 }
 
 impl LegacyItemRow {
-    pub fn try_translate(sync_record: &CentralSyncBufferRow) -> Result<Option<ItemRow>, String> {
+    pub fn try_translate(
+        sync_record: &CentralSyncBufferRow,
+    ) -> Result<Option<ItemRow>, serde_json::Error> {
         if sync_record.table_name != "item" {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
+
         Ok(Some(ItemRow {
             id: data.ID,
             name: data.item_name,
