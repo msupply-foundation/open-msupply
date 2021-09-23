@@ -11,13 +11,14 @@ pub struct LegacyStoreRow {
 }
 
 impl LegacyStoreRow {
-    pub fn try_translate(sync_record: &CentralSyncBufferRow) -> Result<Option<StoreRow>, String> {
+    pub fn try_translate(
+        sync_record: &CentralSyncBufferRow,
+    ) -> Result<Option<StoreRow>, serde_json::Error> {
         if sync_record.table_name != "store" {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)

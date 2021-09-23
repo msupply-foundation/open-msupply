@@ -13,12 +13,14 @@ pub struct LegacyNameRow {
 }
 
 impl LegacyNameRow {
-    pub fn try_translate(sync_record: &CentralSyncBufferRow) -> Result<Option<NameRow>, String> {
+    pub fn try_translate(
+        sync_record: &CentralSyncBufferRow,
+    ) -> Result<Option<NameRow>, serde_json::Error> {
         if sync_record.table_name != "name" {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+        let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+
         Ok(Some(NameRow {
             id: data.ID.to_string(),
             name: data.name.to_string(),

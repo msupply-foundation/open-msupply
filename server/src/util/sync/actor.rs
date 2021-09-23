@@ -63,12 +63,15 @@ impl SyncReceiverActor {
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message");
             info!("Starting sync...");
-            match synchroniser.sync(registry).await {
-                Err(SyncError::CentralSyncError { source }) => info!("{:?}", source),
-                Err(SyncError::RemoteSyncError { source }) => info!("{:?}", source),
-                _ => info!("Unknown sync error"),
+            if let Err(error) = synchroniser.sync(registry).await {
+                info!("Sync encountered an error!");
+                match error {
+                    SyncError::CentralSyncError { source } => info!("{:?}", source),
+                    SyncError::RemoteSyncError { source } => info!("{:?}", source),
+                }
+            } else {
+                info!("Finished sync!");
             }
-            info!("Finished sync!");
         }
         unreachable!(
             "Sync receiver has stopped listening as channel has closed. Are the senders dead!?"

@@ -10,7 +10,7 @@ use crate::{
     database::{
         repository::{
             repository::{IntegrationUpsertRecord, SyncSession},
-            IntegrationRecord, SyncRepository,
+            IntegrationRecord, RepositoryError, SyncRepository,
         },
         schema::CentralSyncBufferRow,
     },
@@ -23,27 +23,65 @@ use self::{
     name::LegacyNameRow, store::LegacyStoreRow,
 };
 
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum SyncTranslationError {
+    #[error("Failed to translate name record")]
+    NameTranslationError { source: serde_json::Error },
+    #[error("Failed to translate item record")]
+    ItemTranslationError { source: serde_json::Error },
+    #[error("Failed to translate store record")]
+    StoreTranslationError { source: serde_json::Error },
+    #[error("Failed to translate list master record")]
+    ListMasterTranslationError { source: serde_json::Error },
+    #[error("Failed to translate list master line record")]
+    ListMasterLineTranslationError { source: serde_json::Error },
+    #[error("Failed to translate list master name join record")]
+    ListMasterNameJoinTranslationError { source: serde_json::Error },
+}
+
+#[derive(Error, Debug)]
+pub enum SyncImportError {
+    #[error("Failed to translate sync records")]
+    TranslationError {
+        #[from]
+        source: SyncTranslationError,
+    },
+    #[error("Failed to integrate sync records")]
+    IntegrationError {
+        #[from]
+        source: RepositoryError,
+    },
+}
+
 /// Translates sync records into the local DB schema.
 /// Translated records are added to integration_records.
 fn do_translation(
     sync_record: &CentralSyncBufferRow,
     integration_records: &mut IntegrationRecord,
-) -> Result<(), String> {
-    if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
+) -> Result<(), SyncTranslationError> {
+    if let Some(row) = LegacyNameRow::try_translate(sync_record)
+        .map_err(|source| SyncTranslationError::NameTranslationError { source })?
+    {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::Name(row));
 
         return Ok(());
     }
-    if let Some(row) = LegacyItemRow::try_translate(sync_record)? {
+    if let Some(row) = LegacyItemRow::try_translate(sync_record)
+        .map_err(|source| SyncTranslationError::ItemTranslationError { source })?
+    {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::Item(row));
 
         return Ok(());
     }
-    if let Some(row) = LegacyStoreRow::try_translate(sync_record)? {
+    if let Some(row) = LegacyStoreRow::try_translate(sync_record)
+        .map_err(|source| SyncTranslationError::StoreTranslationError { source })?
+    {
         // TODO: move this check up when fetching/validating/reordering the sync records?
         // ignore stores without name
         if row.name_id == "" {
@@ -56,7 +94,9 @@ fn do_translation(
         return Ok(());
     }
 
-    if let Some(row) = LegacyListMasterRow::try_translate(sync_record)? {
+    if let Some(row) = LegacyListMasterRow::try_translate(sync_record)
+        .map_err(|source| SyncTranslationError::ListMasterTranslationError { source })?
+    {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::MasterList(row));
@@ -64,7 +104,9 @@ fn do_translation(
         return Ok(());
     }
 
-    if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)? {
+    if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)
+        .map_err(|source| SyncTranslationError::ListMasterLineTranslationError { source })?
+    {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::MasterListLine(row));
@@ -72,7 +114,9 @@ fn do_translation(
         return Ok(());
     }
 
-    if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)? {
+    if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)
+        .map_err(|source| SyncTranslationError::ListMasterNameJoinTranslationError { source })?
+    {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::MasterListNameJoin(row));
@@ -100,7 +144,7 @@ pub async fn import_sync_records(
     sync_session: &SyncSession,
     registry: &RepositoryRegistry,
     records: &Vec<CentralSyncBufferRow>,
-) -> Result<(), String> {
+) -> Result<(), SyncImportError> {
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),
     };
@@ -111,8 +155,8 @@ pub async fn import_sync_records(
     let sync_repo = registry.get::<SyncRepository>();
     sync_repo
         .integrate_records(sync_session, &integration_records)
-        .await
-        .map_err(|e| format!("Sync Error: {}", e))?;
+        .await?;
+
     Ok(())
 }
 
