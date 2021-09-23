@@ -54,6 +54,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     tableInstance;
 
   useSetupDataTableApi(tableApi, tableInstance);
+  const t = useTranslation();
 
   if (isLoading)
     return (
@@ -70,7 +71,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     );
 
   if (rows.length === 0) {
-    const t = useTranslation();
     return (
       <Box sx={{ padding: 2 }}>
         <Typography variant="h6">

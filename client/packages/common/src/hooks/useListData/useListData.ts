@@ -46,12 +46,14 @@ export const useListData = <T extends ObjectWithStringKeys>(
     useQueryParams(initialSortBy);
   const fullQueryKey = [queryKey, 'list', queryParams];
   const { error } = useNotification();
-  const handleError = (e: ClientError) => error(e.message?.substring(0, 150));
+  const defaultErrorHandler = (e: ClientError) =>
+    error(e.message?.substring(0, 150))();
+
   const { data, isLoading: isQueryLoading } = useQuery(
     fullQueryKey,
     api.onQuery({ first, offset, sortBy }),
     {
-      onError: onError || handleError,
+      onError: onError || defaultErrorHandler,
       useErrorBoundary: (error: ClientError): boolean =>
         error.response?.status >= 500,
     }
