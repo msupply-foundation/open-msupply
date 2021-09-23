@@ -22,6 +22,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   display: 'flex',
   overflow: 'auto',
   height: '240px',
+  flexDirection: 'column',
 }));
 
 const Widget: React.FC<WidgetProps> = props => (
