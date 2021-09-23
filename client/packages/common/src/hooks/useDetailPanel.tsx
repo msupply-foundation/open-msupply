@@ -38,9 +38,11 @@ interface DetailPanel {
   OpenButton: JSX.Element | null;
   setActions: (actions: Action[]) => void;
   setSections: (sections: Section[]) => void;
+  open: () => void;
+  close: () => void;
 }
 export const useDetailPanel = (): DetailPanel => {
-  const { actions, isOpen, open, sections, setActions, setSections } =
+  const { actions, isOpen, open, sections, setActions, setSections, close } =
     useDetailPanelStore();
   const isEmpty = !sections.length && !actions.length;
   const OpenButton =
@@ -53,5 +55,5 @@ export const useDetailPanel = (): DetailPanel => {
       />
     );
 
-  return { OpenButton, setActions, setSections };
+  return { OpenButton, setActions, setSections, open, close };
 };

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
@@ -27,6 +27,7 @@ import {
   getCheckboxSelectionColumn,
   ColumnDefinition,
   useTableStore,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -44,6 +45,38 @@ const ListViewToolBar: FC<{
       .map(selectedId => data?.find(({ id }) => selectedId === id))
       .filter(Boolean) as Transaction[],
   }));
+
+  const deleteAction = () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      onDelete(selectedRows);
+      success(`Deleted ${selectedRows?.length} invoices`)();
+    } else {
+      info('Select rows to delete them')();
+    }
+  };
+
+  const ref = useRef(deleteAction);
+
+  useEffect(() => {
+    ref.current = deleteAction;
+  }, [selectedRows]);
+
+  useRegisterActions([
+    {
+      id: 'list-view:delete-all-selected',
+      name: 'List: Delete all selected rows',
+      shortcut: ['d'],
+      keywords: 'list, delete, rows',
+      perform: () => ref.current(),
+    },
+    {
+      id: 'list-view:export-all-selected',
+      name: 'List: Export all selected rows to CSV',
+      shortcut: ['d'],
+      keywords: 'list, export, csv rows',
+      perform: success('Successfully exported to CSV!'),
+    },
+  ]);
 
   return (
     <DropdownMenu label="Select">
