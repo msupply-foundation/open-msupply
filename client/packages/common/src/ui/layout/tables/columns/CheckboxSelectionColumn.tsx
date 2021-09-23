@@ -1,30 +1,77 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Checkbox } from '../../../components/inputs/Checkbox';
 import { Column } from 'react-table';
+import { useTableStore, TableStore } from '../context';
 
-export const getCheckboxSelectionColumn = (): Column & { align: string } => ({
+const useCheckbox = (rowId: string) => {
+  const selector = useCallback(
+    (state: TableStore) => {
+      return {
+        rowId,
+        isSelected: state.rowState[rowId]?.isSelected,
+        toggleSelected: () => state.toggleSelected(rowId),
+      };
+    },
+    [rowId]
+  );
+
+  const equalityFn = (
+    oldState: ReturnType<typeof selector>,
+    newState: ReturnType<typeof selector>
+  ) =>
+    oldState?.isSelected === newState?.isSelected &&
+    oldState.rowId === newState.rowId;
+
+  const { isSelected, toggleSelected } = useTableStore(selector, equalityFn);
+
+  return { isSelected, toggleSelected };
+};
+
+export const getCheckboxSelectionColumn = (): Column & {
+  key: string;
+  sortable: boolean;
+} => ({
+  key: 'selection',
+  sortable: false,
   id: 'selection',
   align: 'right',
   disableSortBy: true,
   width: 20,
   maxWidth: 20,
   minWidth: 20,
-  Header: ({ getToggleAllRowsSelectedProps }) => (
-    <Checkbox
-      size="small"
-      color="secondary"
-      {...getToggleAllRowsSelectedProps()}
-    />
-  ),
-  Cell: ({ row }) => {
+  Header: () => {
+    const { toggleAll, allSelected, someSelected } = useTableStore(state => {
+      const allSelected =
+        state.numberSelected === Object.keys(state.rowState).length;
+      return {
+        allSelected,
+        someSelected: state.numberSelected > 0,
+        toggleAll: state.toggleAll,
+      };
+    });
+
     return (
       <Checkbox
+        size="small"
+        color="secondary"
+        checked={!!allSelected}
+        indeterminate={someSelected && !allSelected}
+        onClick={toggleAll}
+      />
+    );
+  },
+  Cell: ({ row }: { row: { original: { id: string } } }) => {
+    const { isSelected, toggleSelected } = useCheckbox(row.original.id);
+
+    return (
+      <Checkbox
+        checked={!!isSelected}
         color="secondary"
         size="small"
         onClick={event => {
           event.stopPropagation();
+          toggleSelected();
         }}
-        {...row.getToggleRowSelectedProps()}
       />
     );
   },

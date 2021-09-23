@@ -26,6 +26,8 @@ import {
   TabPanel,
   useTabs,
   TabContext,
+  createTableStore,
+  TableProvider,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -80,7 +82,7 @@ const useDraftOutbound = (id: string) => {
   return { draft, setDraft, save };
 };
 
-export const OutboundShipmentDetailView: FC = () => {
+export const OutboundShipmentDetailViewComponent: FC = () => {
   const { id } = useParams();
   const { draft } = useDraftOutbound(id ?? 'new');
   const { appBarButtonsRef } = useHostContext();
@@ -186,4 +188,12 @@ export const OutboundShipmentDetailView: FC = () => {
       </Box>
     </TabContext>
   ) : null;
+};
+
+export const OutboundShipmentDetailView: FC = () => {
+  return (
+    <TableProvider createStore={createTableStore}>
+      <OutboundShipmentDetailViewComponent />
+    </TableProvider>
+  );
 };

@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { PaginationRow } from './PaginationRow';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
+import { createTableStore, TableProvider } from '../../context';
 
 describe('PaginationRow', () => {
   it('Renders a string : Showing X-Y of Z', () => {
@@ -11,13 +12,15 @@ describe('PaginationRow', () => {
     const total = 20;
 
     const { getByText } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={jest.fn()}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={jest.fn()}
+        />
+      </TableProvider>
     );
 
     const node1 = getByText(/showing/i);
@@ -33,13 +36,15 @@ describe('PaginationRow', () => {
 
   it('Renders at least one page button', () => {
     const { getByRole } = render(
-      <PaginationRow
-        page={0}
-        offset={1}
-        total={1}
-        first={1}
-        onChange={jest.fn()}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={1}
+          total={1}
+          first={1}
+          onChange={jest.fn()}
+        />
+      </TableProvider>
     );
 
     const node = getByRole('button', { name: 'page 1' });
@@ -53,13 +58,15 @@ describe('PaginationRow', () => {
     const total = 20000;
 
     const { queryByRole, getByRole } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={jest.fn()}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={jest.fn()}
+        />
+      </TableProvider>
     );
 
     const node1 = getByRole('button', { name: /page 1/i });
@@ -85,13 +92,15 @@ describe('PaginationRow', () => {
     const total = 0;
 
     const { queryByRole, queryByText } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={jest.fn()}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={jest.fn()}
+        />
+      </TableProvider>
     );
 
     const node1 = queryByRole('button', { name: /page 1/i });
@@ -108,13 +117,15 @@ describe('PaginationRow', () => {
     const onChange = jest.fn();
 
     const { getByRole } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={onChange}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={onChange}
+        />
+      </TableProvider>
     );
 
     const node = getByRole('button', { name: /page 1/i });
@@ -135,13 +146,15 @@ describe('PaginationRow', () => {
     const onChange = jest.fn();
 
     const { getByLabelText } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={onChange}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={onChange}
+        />
+      </TableProvider>
     );
 
     const node = getByLabelText(/ellipsis/i);
@@ -160,13 +173,15 @@ describe('PaginationRow', () => {
     const onChange = jest.fn();
 
     const { getByRole } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={onChange}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={onChange}
+        />
+      </TableProvider>
     );
 
     const node = getByRole('button', { name: /prev/i });
@@ -181,13 +196,15 @@ describe('PaginationRow', () => {
     const onChange = jest.fn();
 
     const { getByRole } = render(
-      <PaginationRow
-        page={0}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={onChange}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={0}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={onChange}
+        />
+      </TableProvider>
     );
 
     const node = getByRole('button', { name: /next/i });
@@ -202,13 +219,15 @@ describe('PaginationRow', () => {
     const onChange = jest.fn();
 
     const { getByRole } = render(
-      <PaginationRow
-        page={1}
-        offset={offset}
-        total={total}
-        first={first}
-        onChange={onChange}
-      />
+      <TableProvider createStore={createTableStore}>
+        <PaginationRow
+          page={1}
+          offset={offset}
+          total={total}
+          first={first}
+          onChange={onChange}
+        />
+      </TableProvider>
     );
 
     const prev = getByRole('button', { name: /prev/i });

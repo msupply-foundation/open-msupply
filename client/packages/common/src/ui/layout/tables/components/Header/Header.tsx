@@ -42,7 +42,12 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
   return (
     <TableCell
       role="columnheader"
-      onClick={onSortBy && (() => onSortBy({ key: id }))}
+      onClick={
+        onSortBy &&
+        (() => {
+          isSortable && onSortBy({ key: id });
+        })
+      }
       align={align}
       padding={'none'}
       colSpan={1}
