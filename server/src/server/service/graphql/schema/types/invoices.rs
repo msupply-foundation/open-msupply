@@ -12,15 +12,12 @@ use chrono::{DateTime, Utc};
 
 #[derive(SimpleObject, PartialEq, Debug)]
 pub struct InvoicesPricing {
-    #[graphql(name = "totalAfterTax")]
     total_after_tax: f64,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InvoiceType {
-    #[graphql(name = "CUSTOMER_INVOICE")]
     CustomerInvoice,
-    #[graphql(name = "SUPPLIER_INVOICE")]
     SupplierInvoice,
 }
 
@@ -35,11 +32,8 @@ impl From<InvoiceRowType> for InvoiceType {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InvoiceStatus {
-    #[graphql(name = "DRAFT")]
     Draft,
-    #[graphql(name = "CONFIRMED")]
     Confirmed,
-    #[graphql(name = "FINALISED")]
     Finalised,
 }
 
@@ -58,23 +52,15 @@ impl From<InvoiceRowStatus> for InvoiceStatus {
 #[graphql(name = "Invoice")]
 pub struct InvoicesNode {
     id: String,
-    #[graphql(name = "otherPartyName")]
     other_party_name: String,
-    #[graphql(name = "otherPartyId")]
     other_party_id: String,
     status: InvoiceStatus,
-    #[graphql(name = "type")]
     invoice_type: InvoiceType,
-    #[graphql(name = "invoiceNumber")]
     invoice_number: i32,
-    #[graphql(name = "theirReference")]
     their_reference: Option<String>,
     comment: Option<String>,
-    #[graphql(name = "entryDatetime")]
     entry_datetime: String,
-    #[graphql(name = "confirmDatetime")]
     confirm_datetime: Option<String>,
-    #[graphql(name = "finalisedDatetime")]
     finalised_datetime: Option<String>,
 }
 
