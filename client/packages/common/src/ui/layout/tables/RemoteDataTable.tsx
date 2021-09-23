@@ -63,7 +63,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       }}
     >
       <MuiTable
-        stickyHeader
         {...getTableProps()}
         sx={{
           flex: 1,
