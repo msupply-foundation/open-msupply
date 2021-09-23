@@ -82,7 +82,6 @@ const CommandK: FC = ({ children }) => {
   const actions = [
     {
       id: 'Navigate',
-      section: 'This is a subtitle hehe',
       name: 'Navigation actions',
       shortcut: ['c'],
       keywords: 'navigation, back',
@@ -114,7 +113,7 @@ const CommandK: FC = ({ children }) => {
       id: 'navigation:customer-invoice',
       name: 'Go to: Customer Invoices',
       shortcut: ['c'],
-      keywords: 'customer',
+      keywords: 'navigation, customer, invoice, customer',
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Customers)
@@ -126,28 +125,28 @@ const CommandK: FC = ({ children }) => {
       id: 'navigation:customer-invoice/new',
       name: 'Create: New Customer Invoice',
       shortcut: ['c'],
-      keywords: 'customer',
+      keywords: 'navigation, customer, invoice, customer',
       perform: () => navigate('/customers/customer-invoice/new'),
     },
     {
       id: 'navigation:dashboard',
       name: 'Go to: Dashboard',
       shortcut: ['d'],
-      keywords: 'customer',
+      keywords: 'navigation, dashboard',
       perform: () => navigate('/dashboard'),
     },
     {
       id: 'navigation:customer-requisition',
       name: 'Go to: Customer Requisition',
       shortcut: ['r'],
-      keywords: 'customer',
+      keywords: 'navigation, customer, requisition',
       perform: () => navigate('/customers/customer-requisition'),
     },
     {
       id: 'navigation:reports',
       name: 'Go to: Reports',
       shortcut: ['r'],
-      keywords: 'reports',
+      keywords: 'navigation, reports',
       perform: () => navigate('/reports'),
     },
   ];
