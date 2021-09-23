@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
@@ -14,7 +14,6 @@ import {
   useNotification,
   Transaction,
   useDataTableApi,
-  GenericColumnType,
   DropdownMenu,
   DropdownMenuItem,
   AppBarContentPortal,
@@ -23,16 +22,98 @@ import {
   getNameAndColorColumn,
   Delete,
   Edit,
+  TableProvider,
+  createTableStore,
+  getCheckboxSelectionColumn,
+  ColumnDefinition,
+  useTableStore,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
 
-export const OutboundShipmentListView: FC = () => {
+const ListViewToolBar: FC<{
+  onDelete: (toDelete: Transaction[]) => void;
+  data?: Transaction[];
+}> = ({ onDelete, data }) => {
+  const t = useTranslation();
+
+  const { success, info, warning } = useNotification();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .map(selectedId => data?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as Transaction[],
+  }));
+
+  const deleteAction = () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      onDelete(selectedRows);
+      success(`Deleted ${selectedRows?.length} invoices`)();
+    } else {
+      info('Select rows to delete them')();
+    }
+  };
+
+  const ref = useRef(deleteAction);
+
+  useEffect(() => {
+    ref.current = deleteAction;
+  }, [selectedRows]);
+
+  useRegisterActions([
+    {
+      id: 'list-view:delete-all-selected',
+      name: 'List: Delete all selected rows',
+      shortcut: ['d'],
+      keywords: 'list, delete, rows',
+      perform: () => ref.current(),
+    },
+    {
+      id: 'list-view:export-all-selected',
+      name: 'List: Export all selected rows to CSV',
+      shortcut: ['d'],
+      keywords: 'list, export, csv rows',
+      perform: success('Successfully exported to CSV!'),
+    },
+  ]);
+
+  return (
+    <DropdownMenu label="Select">
+      <DropdownMenuItem
+        IconComponent={Delete}
+        onClick={() => {
+          if (selectedRows && selectedRows?.length > 0) {
+            onDelete(selectedRows);
+            success(`Deleted ${selectedRows?.length} invoices`)();
+          } else {
+            info('Select rows to delete them')();
+          }
+        }}
+      >
+        {t('button.delete-lines')}
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        IconComponent={Edit}
+        onClick={warning('Whats this do?')}
+      >
+        Edit
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        IconComponent={Download}
+        onClick={success('Successfully exported to CSV!')}
+      >
+        {t('button.export-to-csv')}
+      </DropdownMenuItem>
+    </DropdownMenu>
+  );
+};
+
+export const OutboundShipmentListViewComponent: FC = () => {
   const { appBarButtonsRef } = useHostContext();
-  const { info, success, warning } = useNotification();
+  const { info, success } = useNotification();
   const navigate = useNavigate();
   const tableApi = useDataTableApi<Transaction>();
-  const t = useTranslation();
 
   const {
     totalLength,
@@ -120,41 +201,13 @@ export const OutboundShipmentListView: FC = () => {
       maxWidth: 450,
       align: 'left',
     },
-    GenericColumnType.Selection,
+    getCheckboxSelectionColumn() as ColumnDefinition<Transaction>,
   ]);
 
   return (
     <>
       <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
-        <DropdownMenu label="Select">
-          <DropdownMenuItem
-            IconComponent={Delete}
-            onClick={() => {
-              const linesToDelete = tableApi?.current?.selectedRows;
-
-              if (linesToDelete && linesToDelete?.length > 0) {
-                onDelete(linesToDelete);
-                success(`Deleted ${linesToDelete?.length} invoices`)();
-              } else {
-                info('Select rows to delete them')();
-              }
-            }}
-          >
-            {t('button.delete-lines')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            IconComponent={Edit}
-            onClick={warning('Whats this do?')}
-          >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            IconComponent={Download}
-            onClick={success('Successfully exported to CSV!')}
-          >
-            {t('button.export-to-csv')}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <ListViewToolBar onDelete={onDelete} data={data} />
       </AppBarContentPortal>
 
       <Portal container={appBarButtonsRef?.current}>
@@ -183,7 +236,7 @@ export const OutboundShipmentListView: FC = () => {
         onSortBy={onChangeSortBy}
         sortBy={sortBy}
         pagination={{ ...pagination, total: totalLength }}
-        onChangePage={(page: number) => onChangePage(page)}
+        onChangePage={onChangePage}
         tableApi={tableApi}
         columns={columns}
         data={data?.slice(0, numberOfRows) || []}
@@ -193,5 +246,13 @@ export const OutboundShipmentListView: FC = () => {
         }}
       />
     </>
+  );
+};
+
+export const OutboundShipmentListView: FC = () => {
+  return (
+    <TableProvider createStore={createTableStore}>
+      <OutboundShipmentListViewComponent />
+    </TableProvider>
   );
 };
