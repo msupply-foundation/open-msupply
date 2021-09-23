@@ -1,13 +1,7 @@
 /* eslint-disable react/jsx-key */
-import React from 'react';
+import React, { useEffect } from 'react';
 
-import {
-  SortingRule,
-  useRowSelect,
-  useTable,
-  useFlexLayout,
-  Row,
-} from 'react-table';
+import { useTable, useFlexLayout, Row } from 'react-table';
 
 import {
   Box,
@@ -20,14 +14,12 @@ import {
 } from '@mui/material';
 
 import { TableProps } from './types';
-import { useSetupDataTableApi } from './hooks/useDataTableApi';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
 import { KeyOf } from '../../../types';
 import { useTranslation } from '../../..';
-
-export { SortingRule };
+import { useTableStore } from './context';
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
   columns,
@@ -37,24 +29,23 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   onSortBy,
   onRowClick,
   pagination,
-  tableApi,
   onChangePage,
   noDataMessageKey,
 }: TableProps<T>): JSX.Element => {
-  const tableInstance = useTable(
-    {
-      columns,
-      data,
-    },
-    useRowSelect,
-    useFlexLayout
-  );
-
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    tableInstance;
+    useTable(
+      {
+        columns,
+        data,
+      },
+      useFlexLayout
+    );
 
-  useSetupDataTableApi(tableApi, tableInstance);
   const t = useTranslation();
+  const { setActiveRows } = useTableStore();
+  useEffect(() => {
+    if (data.length) setActiveRows(data.map(({ id }) => id as string));
+  }, [data]);
 
   if (isLoading)
     return (
@@ -89,7 +80,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       }}
     >
       <MuiTable
-        stickyHeader
         {...getTableProps()}
         sx={{
           flex: 1,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 export interface Pagination {
   page: number;
@@ -9,6 +9,7 @@ export interface Pagination {
 export interface PaginationController extends Pagination {
   onChangePage: (newPage: number) => void;
   onChangeFirst: (newFirst: number) => void;
+  nextPage: () => void;
 }
 
 export interface PaginationState extends PaginationController {
@@ -20,11 +21,25 @@ export const usePagination = (initialFirst = 20): PaginationState => {
   const [offset, onChangeOffset] = useState(0);
   const [page, onChangePage] = useState(0);
 
+  const pageRef = useRef(page);
+
   useEffect(() => {
     onChangeOffset(page * first);
+    pageRef.current = page;
   }, [first, page]);
 
-  const pagination = { page, onChangePage, onChangeFirst, offset, first };
+  const nextPage = () => {
+    onChangePage(pageRef.current + 1);
+  };
+
+  const pagination = {
+    page,
+    onChangePage,
+    onChangeFirst,
+    offset,
+    first,
+    nextPage,
+  };
 
   return { pagination, ...pagination };
 };
