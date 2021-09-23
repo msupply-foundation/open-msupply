@@ -10,6 +10,7 @@ import {
   TableHead,
   TableContainer,
   Table as MuiTable,
+  Typography,
 } from '@mui/material';
 
 import { TableProps } from './types';
@@ -17,6 +18,7 @@ import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
 import { KeyOf } from '../../../types';
+import { useTranslation } from '../../..';
 import { useTableStore } from './context';
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
@@ -28,6 +30,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   onRowClick,
   pagination,
   onChangePage,
+  noDataMessageKey,
 }: TableProps<T>): JSX.Element => {
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     useTable(
@@ -38,23 +41,37 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       useFlexLayout
     );
 
+  const t = useTranslation();
   const { setActiveRows } = useTableStore();
   useEffect(() => {
     if (data.length) setActiveRows(data.map(({ id }) => id as string));
   }, [data]);
 
-  return isLoading ? (
-    <Box
-      sx={{
-        display: 'flex',
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <CircularProgress />
-    </Box>
-  ) : (
+  if (isLoading)
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+
+  if (rows.length === 0) {
+    return (
+      <Box sx={{ padding: 2 }}>
+        <Typography variant="h6">
+          {t(noDataMessageKey || 'error.no-results')}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
     <TableContainer
       sx={{
         display: 'flex',

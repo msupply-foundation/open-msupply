@@ -8,7 +8,15 @@ import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes } from 'react-router';
 import { TableProvider, createTableStore } from '../ui/layout/tables';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // ✅ turns retries off
+      retry: false,
+    },
+  },
+});
+
 interface TestingProviderProps {
   locale?: SupportedLocales;
 }

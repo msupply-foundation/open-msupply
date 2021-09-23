@@ -175,9 +175,9 @@ const Host: FC = () => {
   const { locale } = useHostContext();
 
   return (
-    <ErrorBoundary Fallback={GenericErrorFallback}>
-      <QueryClientProvider client={queryClient}>
-        <IntlProvider locale={locale}>
+    <IntlProvider locale={locale}>
+      <ErrorBoundary Fallback={GenericErrorFallback}>
+        <QueryClientProvider client={queryClient}>
           <AppThemeProvider>
             <BrowserRouter>
               <CommandK>
@@ -257,9 +257,9 @@ const Host: FC = () => {
             </BrowserRouter>
           </AppThemeProvider>
           <ReactQueryDevtools initialIsOpen />
-        </IntlProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </IntlProvider>
   );
 };
 

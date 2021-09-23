@@ -9,6 +9,8 @@ import {
 interface DraftStore<T> {
   draft: T | null;
   setDraft: (draft: T | null) => void;
+  missingRecord: boolean;
+  setMissingRecord: (missing: boolean) => void;
 }
 
 /**
@@ -24,6 +26,9 @@ export const createDraftStore = <T>(): UseStore<DraftStore<T>> => {
   return zustand<DraftStore<T>>(set => ({
     draft: null,
     setDraft: draft => set(state => ({ ...state, draft })),
+    missingRecord: false,
+    setMissingRecord: missingRecord =>
+      set(state => ({ ...state, missingRecord })),
   }));
 };
 
@@ -31,6 +36,7 @@ interface DraftDocumentState<DocumentType> {
   draft: DocumentType | null;
   setDraft: (updatedDocument: DocumentType) => void;
   save: () => void;
+  missingRecord?: boolean;
 }
 
 /**
@@ -87,9 +93,9 @@ export const useDraftDocument = <DocumentType>(
   useDraftState: UseStore<DraftStore<DocumentType>>,
   placeholderData?: DocumentType
 ): DraftDocumentState<DocumentType> => {
-  const { draft, setDraft } = useDraftState();
+  const { draft, setDraft, missingRecord, setMissingRecord } = useDraftState();
 
-  const { data } = useQuery(key, queryFn, {
+  const { data, isLoading } = useQuery(key, queryFn, {
     placeholderData,
     enabled: !key.includes('new'),
   });
@@ -110,6 +116,11 @@ export const useDraftDocument = <DocumentType>(
     setDraft(data ?? null);
   }, [data]);
 
+  useEffect(() => {
+    const isMissing = !key.includes('new') && !data && !isLoading;
+    setMissingRecord(isMissing);
+  }, [data, isLoading]);
+
   const save = () => {
     if (draft) {
       mutateAsync(draft);
@@ -117,5 +128,5 @@ export const useDraftDocument = <DocumentType>(
   };
 
   // TODO: Wrap `setDraft` in auto-save functionality? Throttled, debounced? Timer? Optional?
-  return { draft, setDraft, save };
+  return { draft, setDraft, save, missingRecord };
 };
