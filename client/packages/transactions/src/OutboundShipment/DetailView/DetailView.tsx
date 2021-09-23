@@ -53,7 +53,7 @@ const useDraftOutbound = (id: string) => {
   const isNew = id === 'new';
   const { error } = useNotification();
   const t = useTranslation();
-  const { draft, setDraft, save } = useDraftDocument(
+  const { draft, setDraft, save, missingRecord } = useDraftDocument(
     ['transaction', id],
     detailQueryFn(id ?? ''),
     updateFn,
@@ -77,9 +77,10 @@ const useDraftOutbound = (id: string) => {
       queryClient.invalidateQueries('transaction');
     },
     useDraft,
-    isNew ? placeholderTransaction : undefined,
-    isNew ? undefined : error(t('error.missing-invoice', { id }))
+    isNew ? placeholderTransaction : undefined
   );
+
+  if (missingRecord) error(t('error.missing-invoice', { id }))();
 
   return { draft, setDraft, save };
 };

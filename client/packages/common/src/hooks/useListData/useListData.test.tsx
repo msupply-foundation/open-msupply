@@ -31,10 +31,10 @@ describe('useListData', () => {
 
   const ServerErrorApi: ListApi<Test> = {
     onQuery: () => async () => {
-      return await request('http://localhost:4000', getServerErrorQuery(), {});
+      return await request('http://localhost:4000', getServerErrorQuery());
     },
-    onDelete: () => new Promise(() => {}),
-    onUpdate: () => new Promise(() => {}),
+    onDelete: async () => {},
+    onUpdate: async () => ({} as Test),
   };
 
   const getServerErrorQuery = (): string => gql`
