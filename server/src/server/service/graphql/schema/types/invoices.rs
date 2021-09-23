@@ -50,7 +50,7 @@ impl From<InvoiceRowStatus> for InvoiceStatus {
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(complex)]
 #[graphql(name = "Invoice")]
-pub struct InvoicesNode {
+pub struct InvoiceNode {
     id: String,
     other_party_name: String,
     other_party_id: String,
@@ -65,7 +65,7 @@ pub struct InvoicesNode {
 }
 
 #[ComplexObject]
-impl InvoicesNode {
+impl InvoiceNode {
     async fn pricing(&self, ctx: &Context<'_>) -> InvoicesPricing {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
 
@@ -88,13 +88,13 @@ impl InvoicesNode {
     }
 }
 
-impl From<InvoiceQueryJoin> for InvoicesNode {
+impl From<InvoiceQueryJoin> for InvoiceNode {
     fn from((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Self {
         // TODO return error if name is not present (None)?
         let (other_party_id, other_party_name) =
             name_row.map_or(("".to_string(), "".to_string()), |v| (v.id, v.name));
 
-        InvoicesNode {
+        InvoiceNode {
             id: invoice_row.id,
             other_party_name,
             other_party_id,
@@ -120,13 +120,13 @@ pub struct InvoicesList {
 
 #[Object]
 impl InvoicesList {
-    async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoicesNode> {
+    async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceNode> {
         let repository = ctx.get_repository::<InvoiceQueryRepository>();
 
         repository
             .all(&self.pagination)
-            .map_or(Vec::<InvoicesNode>::new(), |list| {
-                list.into_iter().map(InvoicesNode::from).collect()
+            .map_or(Vec::<InvoiceNode>::new(), |list| {
+                list.into_iter().map(InvoiceNode::from).collect()
             })
     }
 }
