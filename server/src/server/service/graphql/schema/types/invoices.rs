@@ -90,14 +90,10 @@ impl InvoiceNode {
 
 impl From<InvoiceQueryJoin> for InvoiceNode {
     fn from((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Self {
-        // TODO return error if name is not present (None)?
-        let (other_party_id, other_party_name) =
-            name_row.map_or(("".to_string(), "".to_string()), |v| (v.id, v.name));
-
         InvoiceNode {
             id: invoice_row.id,
-            other_party_name,
-            other_party_id,
+            other_party_name: name_row.name,
+            other_party_id: name_row.id,
             status: InvoiceStatus::from(invoice_row.status),
             invoice_type: InvoiceType::from(invoice_row.r#type),
             invoice_number: invoice_row.invoice_number,
