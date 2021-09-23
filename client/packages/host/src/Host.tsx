@@ -51,6 +51,7 @@ const Heading: FC<{ locale: string }> = props => (
 );
 
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
+  color: '#fff',
   width: 500,
   height: 50,
   fontSize: 20,
@@ -58,6 +59,10 @@ const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   borderRadius: '5px',
   ':focus-visible': {
     outline: 'none',
+  },
+  '::placeholder': {
+    color: '#fff',
+    opacity: 0.75,
   },
 }));
 
