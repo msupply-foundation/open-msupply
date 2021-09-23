@@ -38,18 +38,20 @@ interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
 export const useListData = <T extends ObjectWithStringKeys>(
   initialSortBy: SortRule<T>,
   queryKey: string | readonly unknown[],
-  api: ListApi<T>
+  api: ListApi<T>,
+  onError?: (e: ClientError) => void
 ): ListDataState<T> => {
   const queryClient = useQueryClient();
   const { queryParams, first, offset, sortBy, numberOfRows } =
     useQueryParams(initialSortBy);
   const fullQueryKey = [queryKey, 'list', queryParams];
   const { error } = useNotification();
+  const handleError = (e: ClientError) => error(e.message?.substring(0, 150));
   const { data, isLoading: isQueryLoading } = useQuery(
     fullQueryKey,
     api.onQuery({ first, offset, sortBy }),
     {
-      onError: (e: ClientError) => error(e.message?.substring(0, 150))(),
+      onError: onError || handleError,
       useErrorBoundary: (error: ClientError): boolean =>
         error.response?.status >= 500,
     }

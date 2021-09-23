@@ -45,6 +45,26 @@ describe('useListData', () => {
     }
   `;
 
+  const PermissionErrorApi: ListApi<Test> = {
+    onQuery: () => async () => {
+      return await request(
+        'http://localhost:4000',
+        getPermissionErrorQuery(),
+        {}
+      );
+    },
+    onDelete: () => new Promise(() => {}),
+    onUpdate: () => new Promise(() => {}),
+  };
+
+  const getPermissionErrorQuery = (): string => gql`
+    query error401 {
+      error401 {
+        message
+      }
+    }
+  `;
+
   const ErrorFallback = () => <div>error boundary</div>;
   const Wrapper: React.FC = ({ children }) => (
     <ErrorBoundary Fallback={ErrorFallback}>
@@ -52,9 +72,38 @@ describe('useListData', () => {
     </ErrorBoundary>
   );
 
+  it('calls the provided error method on non-critical error', async () => {
+    const onError = jest.fn();
+    const ErrorTest = () => {
+      const { data } = useListData(
+        { key: 'message' },
+        '401test',
+        PermissionErrorApi,
+        onError
+      );
+      const [response] = data || [];
+
+      return <div>{response?.message}</div>;
+    };
+
+    render(
+      <Wrapper>
+        <ErrorTest />
+      </Wrapper>
+    );
+
+    await waitFor(() => {
+      expect(onError).toBeCalledTimes(1);
+    });
+  });
+
   it('calls error boundary on server error', async () => {
     const ErrorTest = () => {
-      const { data } = useListData({ key: 'message' }, 'test', ServerErrorApi);
+      const { data } = useListData(
+        { key: 'message' },
+        '500test',
+        ServerErrorApi
+      );
       const [response] = data || [];
 
       return <div>{response?.message}</div>;
