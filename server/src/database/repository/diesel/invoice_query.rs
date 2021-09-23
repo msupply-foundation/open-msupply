@@ -22,7 +22,7 @@ pub struct InvoiceQueryRepository {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
 }
 
-pub type InvoiceQueryJoin = (InvoiceRow, Option<NameRow>, Option<StoreRow>);
+pub type InvoiceQueryJoin = (InvoiceRow, NameRow, StoreRow);
 
 impl InvoiceQueryRepository {
     pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
@@ -50,8 +50,8 @@ impl InvoiceQueryRepository {
         let connection = get_connection(&self.pool)?;
 
         Ok(invoice_dsl::invoice
-            .left_join(name_dsl::name_table)
-            .left_join(store_dsl::store)
+            .inner_join(name_dsl::name_table)
+            .inner_join(store_dsl::store)
             .order(invoice_dsl::id.asc())
             .offset(pagination.offset())
             .limit(pagination.first())
