@@ -18,7 +18,8 @@ pub struct InvoiceLineRow {
     pub total_number_of_packs: i32,
 }
 
-/// Row for the invoice_line_stats table (need because of Diesel limitations).
+/// Row for the invoice_line_stats VIEW table (needed because of a Diesel limitation to query
+/// aggregates and columns at the same time).
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq)]
 #[table_name = "invoice_line_stats"]
 pub struct InvoiceLineStatsRow {
