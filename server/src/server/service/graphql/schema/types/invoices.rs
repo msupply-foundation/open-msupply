@@ -17,24 +17,24 @@ pub struct InvoicesPricing {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum GraphQLInvoiceType {
+pub enum InvoiceType {
     #[graphql(name = "CUSTOMER_INVOICE")]
     CustomerInvoice,
     #[graphql(name = "SUPPLIER_INVOICE")]
     SupplierInvoice,
 }
 
-impl From<InvoiceRowType> for GraphQLInvoiceType {
-    fn from(row: InvoiceRowType) -> GraphQLInvoiceType {
+impl From<InvoiceRowType> for InvoiceType {
+    fn from(row: InvoiceRowType) -> InvoiceType {
         match row {
-            InvoiceRowType::CustomerInvoice => GraphQLInvoiceType::CustomerInvoice,
-            InvoiceRowType::SupplierInvoice => GraphQLInvoiceType::SupplierInvoice,
+            InvoiceRowType::CustomerInvoice => InvoiceType::CustomerInvoice,
+            InvoiceRowType::SupplierInvoice => InvoiceType::SupplierInvoice,
         }
     }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum GraphQLInvoiceStatus {
+pub enum InvoiceStatus {
     #[graphql(name = "DRAFT")]
     Draft,
     #[graphql(name = "CONFIRMED")]
@@ -43,12 +43,12 @@ pub enum GraphQLInvoiceStatus {
     Finalised,
 }
 
-impl From<InvoiceRowStatus> for GraphQLInvoiceStatus {
-    fn from(row: InvoiceRowStatus) -> GraphQLInvoiceStatus {
+impl From<InvoiceRowStatus> for InvoiceStatus {
+    fn from(row: InvoiceRowStatus) -> InvoiceStatus {
         match row {
-            InvoiceRowStatus::Draft => GraphQLInvoiceStatus::Draft,
-            InvoiceRowStatus::Confirmed => GraphQLInvoiceStatus::Confirmed,
-            InvoiceRowStatus::Finalised => GraphQLInvoiceStatus::Finalised,
+            InvoiceRowStatus::Draft => InvoiceStatus::Draft,
+            InvoiceRowStatus::Confirmed => InvoiceStatus::Confirmed,
+            InvoiceRowStatus::Finalised => InvoiceStatus::Finalised,
         }
     }
 }
@@ -62,9 +62,9 @@ pub struct InvoicesNode {
     other_party_name: String,
     #[graphql(name = "otherPartyId")]
     other_party_id: String,
-    status: GraphQLInvoiceStatus,
+    status: InvoiceStatus,
     #[graphql(name = "type")]
-    invoice_type: GraphQLInvoiceType,
+    invoice_type: InvoiceType,
     #[graphql(name = "invoiceNumber")]
     invoice_number: i32,
     #[graphql(name = "theirReference")]
@@ -112,8 +112,8 @@ impl From<InvoiceQueryJoin> for InvoicesNode {
             id: invoice_row.id,
             other_party_name,
             other_party_id,
-            status: GraphQLInvoiceStatus::from(invoice_row.status),
-            invoice_type: GraphQLInvoiceType::from(invoice_row.r#type),
+            status: InvoiceStatus::from(invoice_row.status),
+            invoice_type: InvoiceType::from(invoice_row.r#type),
             invoice_number: invoice_row.invoice_number,
             their_reference: invoice_row.their_reference,
             comment: invoice_row.comment,
