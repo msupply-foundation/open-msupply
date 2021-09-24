@@ -17,7 +17,7 @@ import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
 import { KeyOf } from '../../../types';
-import { useTranslation } from '../../..';
+import { useTranslation } from '../../../intl';
 import { useTableStore } from './context';
 
 export const RemoteDataTable = <T extends Record<string, unknown>>({
