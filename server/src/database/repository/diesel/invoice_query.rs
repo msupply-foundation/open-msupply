@@ -42,6 +42,11 @@ impl InvoiceQueryRepository {
             .load::<InvoiceLineStatsRow>(&connection)?)
     }
 
+    pub fn count(&self) -> Result<i64, RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        Ok(invoice_dsl::invoice.count().get_result(&*connection)?)
+    }
+
     /// Gets all invoices
     pub fn all(
         &self,
