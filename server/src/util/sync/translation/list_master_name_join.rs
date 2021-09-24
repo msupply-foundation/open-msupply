@@ -1,4 +1,7 @@
-use crate::database::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
+use crate::{
+    database::schema::{CentralSyncBufferRow, MasterListNameJoinRow},
+    util::sync::translation::SyncTranslationError,
+};
 
 use serde::Deserialize;
 
@@ -13,12 +16,15 @@ pub struct LegacyListMasterNameJoinRow {
 impl LegacyListMasterNameJoinRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<MasterListNameJoinRow>, serde_json::Error> {
-        if sync_record.table_name != "list_master_name_join" {
+    ) -> Result<Option<MasterListNameJoinRow>, SyncTranslationError> {
+        const table_name: &str = "list_master_name_join";
+
+        if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)
+            .map_err(|source| SyncTranslationError { table_name, source })?;
 
         Ok(Some(MasterListNameJoinRow {
             id: data.ID,

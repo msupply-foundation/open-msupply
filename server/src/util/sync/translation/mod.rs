@@ -26,19 +26,10 @@ use self::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum SyncTranslationError {
-    #[error("Failed to translate name record")]
-    NameTranslationError { source: serde_json::Error },
-    #[error("Failed to translate item record")]
-    ItemTranslationError { source: serde_json::Error },
-    #[error("Failed to translate store record")]
-    StoreTranslationError { source: serde_json::Error },
-    #[error("Failed to translate list master record")]
-    ListMasterTranslationError { source: serde_json::Error },
-    #[error("Failed to translate list master line record")]
-    ListMasterLineTranslationError { source: serde_json::Error },
-    #[error("Failed to translate list master name join record")]
-    ListMasterNameJoinTranslationError { source: serde_json::Error },
+#[error("Failed to translate {table_name} sync record")]
+pub struct SyncTranslationError {
+    table_name: &'static str,
+    source: serde_json::Error,
 }
 
 #[derive(Error, Debug)]
@@ -61,27 +52,21 @@ fn do_translation(
     sync_record: &CentralSyncBufferRow,
     integration_records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
-    if let Some(row) = LegacyNameRow::try_translate(sync_record)
-        .map_err(|source| SyncTranslationError::NameTranslationError { source })?
-    {
+    if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::Name(row));
 
         return Ok(());
     }
-    if let Some(row) = LegacyItemRow::try_translate(sync_record)
-        .map_err(|source| SyncTranslationError::ItemTranslationError { source })?
-    {
+    if let Some(row) = LegacyItemRow::try_translate(sync_record)? {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::Item(row));
 
         return Ok(());
     }
-    if let Some(row) = LegacyStoreRow::try_translate(sync_record)
-        .map_err(|source| SyncTranslationError::StoreTranslationError { source })?
-    {
+    if let Some(row) = LegacyStoreRow::try_translate(sync_record)? {
         // TODO: move this check up when fetching/validating/reordering the sync records?
         // ignore stores without name
         if row.name_id == "" {
@@ -94,9 +79,7 @@ fn do_translation(
         return Ok(());
     }
 
-    if let Some(row) = LegacyListMasterRow::try_translate(sync_record)
-        .map_err(|source| SyncTranslationError::ListMasterTranslationError { source })?
-    {
+    if let Some(row) = LegacyListMasterRow::try_translate(sync_record)? {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::MasterList(row));
@@ -104,9 +87,7 @@ fn do_translation(
         return Ok(());
     }
 
-    if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)
-        .map_err(|source| SyncTranslationError::ListMasterLineTranslationError { source })?
-    {
+    if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)? {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::MasterListLine(row));
@@ -114,9 +95,7 @@ fn do_translation(
         return Ok(());
     }
 
-    if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)
-        .map_err(|source| SyncTranslationError::ListMasterNameJoinTranslationError { source })?
-    {
+    if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)? {
         integration_records
             .upserts
             .push(IntegrationUpsertRecord::MasterListNameJoin(row));
