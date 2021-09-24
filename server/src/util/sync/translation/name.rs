@@ -1,6 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, NameRow},
-    util::sync::translation::SyncTranslationError,
+    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_NAME},
 };
 
 use serde::Deserialize;
@@ -19,7 +19,7 @@ impl LegacyNameRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
     ) -> Result<Option<NameRow>, SyncTranslationError> {
-        const table_name: &str = "name";
+        let table_name = TRANSLATION_RECORD_NAME;
 
         if sync_record.table_name != table_name {
             return Ok(None);

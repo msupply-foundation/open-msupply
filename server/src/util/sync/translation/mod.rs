@@ -106,15 +106,22 @@ fn do_translation(
     Ok(()) // At this point we are either ignoring records or record_types
 }
 
+pub const TRANSLATION_RECORD_NAME: &str = "name";
+pub const TRANSLATION_RECORD_ITEM: &str = "item";
+pub const TRANSLATION_RECORD_STORE: &str = "store";
+pub const TRANSLATION_RECORD_LIST_MASTER: &str = "list_master";
+pub const TRANSLATION_RECORD_LIST_MASTER_LINE: &str = "list_master_line";
+pub const TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN: &str = "list_master_name_join";
+
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
-pub const TRANSLATION_RECORDS: &'static [&'static str] = &[
-    "name",
-    "item",
-    "store",
-    "list_master",
-    "list_master_line",
-    "list_master_name_join",
+pub const TRANSLATION_RECORDS: &[&str] = &[
+    TRANSLATION_RECORD_NAME,
+    TRANSLATION_RECORD_ITEM,
+    TRANSLATION_RECORD_STORE,
+    TRANSLATION_RECORD_LIST_MASTER,
+    TRANSLATION_RECORD_LIST_MASTER_LINE,
+    TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
 ];
 
 /// Imports sync records and writes them to the DB

@@ -1,6 +1,6 @@
 use crate::{
     database::schema::{CentralSyncBufferRow, MasterListLineRow},
-    util::sync::translation::SyncTranslationError,
+    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE},
 };
 
 use serde::Deserialize;
@@ -17,7 +17,7 @@ impl LegacyListMasterLineRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
     ) -> Result<Option<MasterListLineRow>, SyncTranslationError> {
-        const table_name: &str = "list_master_line";
+        let table_name = TRANSLATION_RECORD_LIST_MASTER_LINE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
