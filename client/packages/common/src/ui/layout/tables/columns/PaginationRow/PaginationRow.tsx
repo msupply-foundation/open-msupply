@@ -56,7 +56,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
     >
       {!!total && (
         <>
-          <Box display="flex" flexDirection="row" flexWrap="wrap">
+          <Box display="flex" flexDirection="row" flexWrap="wrap" flex={1}>
             <Typography sx={{ marginRight: '4px' }}>Showing</Typography>
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {xToY}
@@ -71,6 +71,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
               </Typography>
             )}
           </Box>
+
           <Pagination
             size="small"
             page={displayPage}
