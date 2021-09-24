@@ -116,6 +116,11 @@ pub struct InvoicesList {
 
 #[Object]
 impl InvoicesList {
+    async fn total_count(&self, ctx: &Context<'_>) -> i64 {
+        let repository = ctx.get_repository::<InvoiceQueryRepository>();
+        repository.count().unwrap()
+    }
+
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceNode> {
         let repository = ctx.get_repository::<InvoiceQueryRepository>();
 
