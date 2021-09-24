@@ -29,13 +29,10 @@ pub enum CentralSyncError {
 }
 
 #[derive(Error, Debug)]
-pub enum RemoteSyncError {
-    #[error("Failed to initialise central sync records")]
-    InitialiseRemoteSyncError { source: SyncConnectionError },
-    #[error("Failed to pull remote sync records")]
-    PullRemoteSyncRecordsError { source: SyncConnectionError },
-    #[error("Failed to acknowledge remote sync records")]
-    AcknowledgeRemoteSyncRecordsError { source: SyncConnectionError },
+#[error("{msg}")]
+pub struct RemoteSyncError {
+    msg: &'static str,
+    source: anyhow::Error,
 }
 
 #[derive(Error, Debug)]
@@ -119,7 +116,10 @@ impl Synchroniser {
             .connection
             .initialise_remote_records()
             .await
-            .map_err(|source| RemoteSyncError::InitialiseRemoteSyncError { source })?;
+            .map_err(|source| RemoteSyncError {
+                msg: "Failed to initialise remote sync records",
+                source: anyhow::Error::from(source),
+            })?;
         info!("Initialised remote sync recordse");
 
         let mut records: Vec<RemoteSyncRecord> = Vec::new();
@@ -129,7 +129,10 @@ impl Synchroniser {
                 .connection
                 .pull_remote_records()
                 .await
-                .map_err(|source| RemoteSyncError::PullRemoteSyncRecordsError { source })?;
+                .map_err(|source| RemoteSyncError {
+                    msg: "Failed to pull remote sync records",
+                    source: anyhow::Error::from(source),
+                })?;
             info!("Pulled remote sync records");
 
             // TODO: acknowledge after integration.
@@ -139,9 +142,10 @@ impl Synchroniser {
                 self.connection
                     .acknowledge_remote_records(&records)
                     .await
-                    .map_err(
-                        |source| RemoteSyncError::AcknowledgeRemoteSyncRecordsError { source },
-                    )?;
+                    .map_err(|source| RemoteSyncError {
+                        msg: "Failed to acknowledge remote sync records",
+                        source: anyhow::Error::from(source),
+                    })?;
                 info!("Acknowledged remote sync records");
             }
         }
