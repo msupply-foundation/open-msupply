@@ -57,6 +57,7 @@
   "label.quantity": "Quantity",
   "label.transport": "Transport",
   "label.type": "Type",
+  "label.selected": "Selected",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History"
