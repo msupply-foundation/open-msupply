@@ -22,7 +22,8 @@ const Template: Story = () => {
       <TableHead>
         <HeaderRow>
           <HeaderCell
-            style={{ flex: 100, width: 100, maxWidth: 100, minWidth: 100 }}
+            width={100}
+            minWidth={100}
             onSortBy={onChangeSortBy}
             isSortable
             isSorted={sortBy.key === 'id'}
@@ -32,7 +33,8 @@ const Template: Story = () => {
             Header1
           </HeaderCell>
           <HeaderCell
-            style={{ flex: 100, width: 100, maxWidth: 100, minWidth: 100 }}
+            width={100}
+            minWidth={100}
             isSortable={false}
             id="quantity"
           >

@@ -26,7 +26,8 @@ interface HeaderCellProps<T extends ObjectWithStringKeys> {
   id: KeyOf<T>;
   direction?: 'asc' | 'desc';
   children: ReactNode;
-  style: React.CSSProperties;
+  width?: number;
+  minWidth?: number;
 }
 
 export const HeaderCell = <T extends ObjectWithStringKeys>({
@@ -37,7 +38,8 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
   id,
   direction,
   children,
-  style,
+  width,
+  minWidth,
 }: HeaderCellProps<T>): JSX.Element => {
   return (
     <TableCell
@@ -56,10 +58,9 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
         borderBottom: '0px',
         padding: 0,
         paddingRight: '16px',
-        width: style.width,
-        maxWidth: style.maxWidth,
-        minWidth: style.minWidth,
-        flex: style.flex,
+        width,
+        minWidth,
+        flex: width,
         fontWeight: 'bold',
       }}
       aria-label={id}

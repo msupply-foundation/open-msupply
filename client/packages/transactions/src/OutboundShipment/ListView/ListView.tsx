@@ -42,6 +42,7 @@ const ListViewToolBar: FC<{
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
       .filter(Boolean) as Transaction[],
   }));
@@ -80,17 +81,7 @@ const ListViewToolBar: FC<{
 
   return (
     <DropdownMenu label="Select">
-      <DropdownMenuItem
-        IconComponent={Delete}
-        onClick={() => {
-          if (selectedRows && selectedRows?.length > 0) {
-            onDelete(selectedRows);
-            success(`Deleted ${selectedRows?.length} invoices`)();
-          } else {
-            info('Select rows to delete them')();
-          }
-        }}
-      >
+      <DropdownMenuItem IconComponent={Delete} onClick={deleteAction}>
         {t('button.delete-lines')}
       </DropdownMenuItem>
       <DropdownMenuItem
@@ -138,51 +129,51 @@ export const OutboundShipmentListViewComponent: FC = () => {
       label: 'label.name',
       sortable: true,
       width: 150,
-      minWidth: 150,
+      minWidth: 200,
       maxWidth: 250,
       align: 'left',
     },
     {
       label: 'label.type',
       key: 'type',
-      width: 100,
-      minWidth: 100,
+      width: 150,
+      minWidth: 150,
       maxWidth: 100,
       align: 'left',
     },
     {
       label: 'label.status',
       key: 'status',
-      width: 75,
-      minWidth: 75,
-      maxWidth: 75,
+      width: 100,
+      minWidth: 100,
+      maxWidth: 100,
       align: 'left',
     },
     {
       label: 'label.entered',
       key: 'entered',
       format: ColumnFormat.date,
-      width: 75,
-      minWidth: 75,
-      maxWidth: 75,
+      width: 100,
+      minWidth: 100,
+      maxWidth: 100,
       align: 'left',
     },
     {
       label: 'label.confirmed',
       key: 'confirmed',
       format: ColumnFormat.date,
-      width: 75,
-      minWidth: 75,
-      maxWidth: 75,
+      width: 100,
+      minWidth: 100,
+      maxWidth: 100,
       align: 'left',
     },
 
     {
       label: 'label.invoice-number',
       key: 'invoiceNumber',
-      width: 25,
-      minWidth: 25,
-      maxWidth: 25,
+      width: 75,
+      minWidth: 75,
+      maxWidth: 75,
       align: 'left',
     },
     {
@@ -197,7 +188,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       label: 'label.comment',
       key: 'comment',
       width: 150,
-      minWidth: 300,
+      minWidth: 150,
       maxWidth: 450,
       align: 'left',
     },

@@ -185,9 +185,14 @@ const Host: FC = () => {
                   <Viewport>
                     <Box display="flex">
                       <AppDrawer />
-                      <Box display="flex" flex={1} flexDirection="column">
+                      <Box
+                        overflow="auto"
+                        flex={1}
+                        display="flex"
+                        flexDirection="column"
+                      >
                         <AppBar />
-                        <Box flex={1} display="flex">
+                        <Box display="flex" flex={1}>
                           <React.Suspense fallback={'Loading'}>
                             <Routes>
                               <Route

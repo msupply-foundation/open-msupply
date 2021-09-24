@@ -201,7 +201,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       </AppBarContentPortal>
 
       <Box display="flex" flex={1}>
-        <TabPanel sx={{ flex: 1, padding: 0 }} value="general">
+        <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
           <GeneralTab data={draft?.items ?? []} />
         </TabPanel>
 
