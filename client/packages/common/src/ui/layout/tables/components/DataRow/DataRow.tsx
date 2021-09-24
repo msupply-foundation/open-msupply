@@ -29,14 +29,13 @@ export const DataRow = <T extends Record<string, unknown>>({
         padding: '0px 20px',
         display: 'flex',
         flex: '1 0 auto',
-        minWidth: '1000px',
       }}
       onClick={onRowClick}
       hover={hasOnClick}
     >
       {cells.map(cell => {
         const cellProps = cell.getCellProps();
-        const { key: cellKey, style: cellStyle } = cellProps;
+        const { key: cellKey } = cellProps;
 
         return (
           <TableCell
@@ -51,10 +50,9 @@ export const DataRow = <T extends Record<string, unknown>>({
               padding: 0,
               paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
-              flex: cellStyle?.flex,
-              minWidth: cellStyle?.minWidth,
-              width: cellStyle?.width,
-              boxSizing: cellStyle?.boxSizing,
+              flex: `${cell.column.width} 0 auto`,
+              minWidth: cell.column.minWidth,
+              width: cell.column.width,
             }}
           >
             {cell.render('Cell')}

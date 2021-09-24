@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-key */
 import React, { useEffect } from 'react';
-
-import { useTable, useFlexLayout, Row } from 'react-table';
+import { useTable, Row } from 'react-table';
 
 import {
   Box,
@@ -32,14 +31,10 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   onChangePage,
   noDataMessageKey,
 }: TableProps<T>): JSX.Element => {
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable(
-      {
-        columns,
-        data,
-      },
-      useFlexLayout
-    );
+  const { headerGroups, rows, prepareRow } = useTable({
+    columns,
+    data,
+  });
 
   const t = useTranslation();
   const { setActiveRows } = useTableStore();
@@ -75,24 +70,18 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     <TableContainer
       sx={{
         display: 'flex',
+        justifyContent: 'space-between',
         flexDirection: 'column',
-        height: '100%',
       }}
     >
-      <MuiTable
-        {...getTableProps()}
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <TableHead>
+      <MuiTable sx={{ display: 'block', overflow: 'auto' }}>
+        <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {headerGroups.map(({ getHeaderGroupProps, headers }) => (
             <HeaderRow key={getHeaderGroupProps().key}>
               {headers.map(column => (
                 <HeaderCell
-                  style={column.getHeaderProps().style ?? {}}
+                  minWidth={column.minWidth}
+                  width={Number(column.width)}
                   onSortBy={onSortBy}
                   key={column.getHeaderProps().key}
                   isSortable={!column.disableSortBy}
@@ -107,15 +96,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
             </HeaderRow>
           ))}
         </TableHead>
-        <TableBody
-          {...getTableBodyProps()}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            overflow: 'hidden',
-          }}
-        >
+        <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {rows.map((row: Row<T>) => {
             prepareRow(row);
 
