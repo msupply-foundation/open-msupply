@@ -39,13 +39,16 @@ impl Loader<String> for InvoiceLineStatsLoader {
     type Value = InvoiceLineStatsRow;
     type Error = RepositoryError;
 
-    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(
+        &self,
+        invoice_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         Ok(self
             .invoice_query_repository
-            .stats(keys)
+            .stats(invoice_ids)
             .await?
-            .iter()
-            .map(|stats: &InvoiceLineStatsRow| (stats.invoice_id.clone(), stats.clone()))
+            .into_iter()
+            .map(|stats| (stats.invoice_id.clone(), stats))
             .collect())
     }
 }
