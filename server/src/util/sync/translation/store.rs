@@ -1,4 +1,7 @@
-use crate::database::schema::{CentralSyncBufferRow, StoreRow};
+use crate::{
+    database::schema::{CentralSyncBufferRow, StoreRow},
+    util::sync::translation::SyncTranslationError,
+};
 
 use serde::Deserialize;
 
@@ -13,12 +16,15 @@ pub struct LegacyStoreRow {
 impl LegacyStoreRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<StoreRow>, serde_json::Error> {
-        if sync_record.table_name != "store" {
+    ) -> Result<Option<StoreRow>, SyncTranslationError> {
+        const table_name: &str = "store";
+
+        if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)
+            .map_err(|source| SyncTranslationError { table_name, source })?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
