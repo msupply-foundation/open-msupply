@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { useRegisterActions } from 'kbar';
 import { DomainObject } from '../../../../types';
 import { Checkbox } from '../../../components/inputs/Checkbox';
 import { useTableStore, TableStore } from '../context';
@@ -38,16 +37,6 @@ export const getCheckboxSelectionColumn = <
   width: 40,
   Header: () => {
     const { toggleAll, allSelected, someSelected } = useTableStore(state => {
-      useRegisterActions([
-        {
-          id: 'list-view:toggle-all-rows',
-          name: 'List: Toggle all rows',
-          shortcut: ['c'],
-          keywords: 'list, toggle, rows',
-          perform: () => toggleAll(),
-        },
-      ]);
-
       const allSelected =
         state.numberSelected === Object.keys(state.rowState).length;
       return {

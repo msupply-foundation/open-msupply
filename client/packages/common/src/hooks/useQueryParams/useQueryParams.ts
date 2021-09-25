@@ -3,7 +3,6 @@ import { ObjectWithStringKeys } from './../../types/utility';
 import { useRowRenderCount } from '../useRowRenderCount';
 import { usePagination, PaginationState } from '../usePagination';
 import { useSortBy, SortState, SortRule } from '../useSortBy';
-import { useRegisterActions } from 'kbar';
 
 export interface QueryParams<T extends ObjectWithStringKeys>
   extends SortState<T>,
@@ -31,16 +30,6 @@ export const useQueryParams = <T extends ObjectWithStringKeys>(
   }, [numberOfRows, pagination.first]);
 
   const queryParams = { ...pagination, pagination, sortBy, onChangeSortBy };
-
-  useRegisterActions([
-    {
-      id: 'list-view:next-page',
-      name: 'List: Go to the next page',
-      shortcut: ['g'],
-      keywords: 'list, pagination, next page',
-      perform: pagination.nextPage,
-    },
-  ]);
 
   return {
     ...pagination,
