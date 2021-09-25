@@ -5,6 +5,7 @@ import { TableBody, Table } from '@mui/material';
 
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
+import { TestingProvider } from '../../../../..';
 
 describe('DataRow', () => {
   const Example = () => {
@@ -26,7 +27,11 @@ describe('DataRow', () => {
   };
 
   it('Renders a cell passed', () => {
-    const { getByText } = render(<Example />);
+    const { getByText } = render(
+      <TestingProvider>
+        <Example />
+      </TestingProvider>
+    );
 
     expect(getByText(/josh/)).toBeInTheDocument();
   });

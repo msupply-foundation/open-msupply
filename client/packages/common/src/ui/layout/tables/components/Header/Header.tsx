@@ -62,7 +62,7 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
         flex: `${width} 0 auto`,
         fontWeight: 'bold',
       }}
-      // aria-label={columnKey}
+      aria-label={String(columnKey)}
       sortDirection={isSorted ? direction : false}
     >
       {isSortable ? (
