@@ -27,7 +27,6 @@ import {
   getCheckboxSelectionColumn,
   ColumnDefinition,
   useTableStore,
-  useRegisterActions,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -61,23 +60,6 @@ const ListViewToolBar: FC<{
   useEffect(() => {
     ref.current = deleteAction;
   }, [selectedRows]);
-
-  useRegisterActions([
-    {
-      id: 'list-view:delete-all-selected',
-      name: 'List: Delete all selected rows',
-      shortcut: ['d'],
-      keywords: 'list, delete, rows',
-      perform: () => ref.current(),
-    },
-    {
-      id: 'list-view:export-all-selected',
-      name: 'List: Export all selected rows to CSV',
-      shortcut: ['d'],
-      keywords: 'list, export, csv rows',
-      perform: success('Successfully exported to CSV!'),
-    },
-  ]);
 
   return (
     <DropdownMenu label="Select">
