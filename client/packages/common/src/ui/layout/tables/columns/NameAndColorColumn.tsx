@@ -13,6 +13,8 @@ interface DomainObjectWithRequiredFields extends DomainObject {
 export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
   onChange: (row: T, color: Color) => void
 ): ColumnDefinition<T> => ({
+  label: 'label.name',
+  width: 250,
   key: 'color',
   Cell: ({ rowData }: { rowData: T }) => {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);

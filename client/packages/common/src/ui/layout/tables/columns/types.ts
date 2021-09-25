@@ -49,6 +49,8 @@ export interface Column<T extends DomainObject> {
   width: number;
   minWidth: number;
 
+  order?: number;
+
   Cell: JSXElementConstructor<CellProps<T>>;
   Header: JSXElementConstructor<HeaderProps<T>>;
 }
