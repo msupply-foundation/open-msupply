@@ -19,7 +19,10 @@ export type ColumnKey =
   | 'total'
   | 'comment'
   | 'selection'
-  | 'name';
+  | 'name'
+  | 'code'
+  | 'packSize'
+  | 'quantity';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
@@ -70,6 +73,23 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 250,
   },
   selection: getCheckboxSelectionColumn(),
+  code: {
+    label: 'label.code',
+    key: 'code',
+    width: 20,
+  },
+  packSize: {
+    label: 'label.packSize',
+    key: 'packSize',
+    width: 20,
+    align: ColumnAlign.Right,
+  },
+  quantity: {
+    label: 'label.quantity',
+    key: 'quantity',
+    width: 20,
+    align: ColumnAlign.Right,
+  },
 });
 
 export class ColumnSetBuilder<T extends DomainObject> {

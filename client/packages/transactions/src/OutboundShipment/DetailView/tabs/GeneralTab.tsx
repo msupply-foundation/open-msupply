@@ -1,6 +1,5 @@
 import {
-  ColumnAlign,
-  ColumnDefinition,
+  ColumnSetBuilder,
   Item,
   RemoteDataTable,
   useColumns,
@@ -13,33 +12,15 @@ interface GeneralTabProps<T> {
   data: T[];
 }
 
-const defaultColumns: ColumnDefinition<Item>[] = [
-  {
-    label: 'label.code',
-    key: 'code',
-    width: 20,
-  },
-  {
-    label: 'label.name',
-    key: 'name',
-    width: 100,
-  },
-  {
-    label: 'label.packSize',
-    key: 'packSize',
-    width: 20,
-    align: ColumnAlign.Right,
-  },
-  {
-    label: 'label.quantity',
-    key: 'quantity',
-    width: 20,
-    align: ColumnAlign.Right,
-  },
-];
+const defaultColumns = new ColumnSetBuilder<Item>()
+  .addColumn('code')
+  .addColumn('name')
+  .addColumn('packSize')
+  .addColumn('quantity')
+  .build();
 
 export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
-  const columns = useColumns<Item>(defaultColumns);
+  const columns = useColumns(defaultColumns);
 
   const { pagination } = useQueryParams({ key: 'quantity' });
   const { sortedData, onChangeSortBy, sortBy } = useSortedData(data, {
