@@ -4,7 +4,6 @@ import {
   Item,
   RemoteDataTable,
   useColumns,
-  useDataTableApi,
   useQueryParams,
   useSortedData,
 } from '@openmsupply-client/common';
@@ -41,7 +40,6 @@ const defaultColumns: ColumnDefinition<Item>[] = [
 
 export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
   const columns = useColumns<Item>(defaultColumns);
-  const tableApi = useDataTableApi<Item>();
 
   const { pagination } = useQueryParams({ key: 'quantity' });
   const { sortedData, onChangeSortBy, sortBy } = useSortedData(data, {
@@ -52,7 +50,6 @@ export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
     <RemoteDataTable
       sortBy={sortBy}
       pagination={{ ...pagination, total: data.length }}
-      tableApi={tableApi}
       columns={columns}
       data={sortedData.slice(
         pagination.offset,

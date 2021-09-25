@@ -1,4 +1,4 @@
-import { ReactNode, RefObject } from 'react';
+import { ReactNode } from 'react';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ObjectWithStringKeys, DomainObject } from './../../../types';
 import { Pagination } from '../../../hooks/usePagination';
@@ -16,13 +16,6 @@ export interface QueryResponse<T> {
   totalLength: number;
 }
 
-export interface DataTableApi<T> {
-  selectAllRows: () => void;
-  deselectAllRows: () => void;
-  toggleSelectAllRows: () => void;
-  selectedRows: T[];
-}
-
 export interface TableProps<T extends DomainObject> {
   columns: Column<T>[];
   data?: T[];
@@ -32,7 +25,6 @@ export interface TableProps<T extends DomainObject> {
   pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
-  tableApi: RefObject<DataTableApi<T>>;
   children?: ReactNode;
   noDataMessageKey?: LocaleKey;
 }
