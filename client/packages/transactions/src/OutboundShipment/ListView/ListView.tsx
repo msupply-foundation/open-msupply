@@ -104,7 +104,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   const columns = useColumns(
     new ColumnSetBuilder<Transaction>()
-      .addColumn('name', getNameAndColorColumn(onColorUpdate))
+      .addColumn(getNameAndColorColumn(onColorUpdate))
       .addColumn('type')
       .addColumn('status')
       .addColumn('invoiceNumber')
