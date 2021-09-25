@@ -79,7 +79,7 @@ export class ColumnSetBuilder<T extends DomainObject> {
 
   constructor() {
     this.columns = [];
-    this.currentOrder = 0;
+    this.currentOrder = 100;
   }
 
   private addOrder(column?: { order?: number }) {
@@ -91,24 +91,38 @@ export class ColumnSetBuilder<T extends DomainObject> {
   }
 
   addColumn(
-    columnKey: keyof ReturnType<typeof getColumnLookup>,
-    columnOptions?: Omit<ColumnDefinition<T>, 'key'>
+    columnKeyOrColumnDefinition:
+      | keyof ReturnType<typeof getColumnLookup>
+      | ColumnDefinition<T>,
+    maybeColumnOptions?: Omit<ColumnDefinition<T>, 'key'>
   ): ColumnSetBuilder<T> {
-    const defaultColumnOptions = getColumnLookup<T>()[columnKey];
+    const usingColumnKey = typeof columnKeyOrColumnDefinition === 'string';
+
+    let defaultColumnOptions;
+
+    if (usingColumnKey) {
+      defaultColumnOptions = getColumnLookup<T>()[columnKeyOrColumnDefinition];
+    } else {
+      defaultColumnOptions = columnKeyOrColumnDefinition;
+    }
 
     const options = {
       ...defaultColumnOptions,
-      ...columnOptions,
-      order: this.addOrder(columnOptions),
+      ...maybeColumnOptions,
+      order: this.addOrder(
+        usingColumnKey ? maybeColumnOptions : columnKeyOrColumnDefinition
+      ),
     };
 
-    this.columns.push(createColumn<T>({ ...options, key: columnKey }));
+    const key = usingColumnKey ? columnKeyOrColumnDefinition : options.key;
+
+    this.columns.push(createColumn<T>({ ...options, key }));
 
     return this;
   }
 
   build(): ColumnDefinition<T>[] {
-    this.currentOrder = 0;
+    this.currentOrder = 100;
     const sortedColumns = this.columns.sort((a, b) => {
       const { order: aOrder = 0 } = a;
       const { order: bOrder = 0 } = b;
