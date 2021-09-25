@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 import {
   Portal,
   Button,
-  ColumnFormat,
   Download,
   PlusCircle,
   Printer,
@@ -23,9 +22,9 @@ import {
   Edit,
   TableProvider,
   createTableStore,
-  getCheckboxSelectionColumn,
   useTableStore,
-  ColumnAlign,
+  ColumnSetBuilder,
+  Color,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -99,57 +98,23 @@ export const OutboundShipmentListViewComponent: FC = () => {
     pagination,
   } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
 
-  const columns = useColumns<Transaction>([
-    {
-      ...getNameAndColorColumn((row, color) => {
-        onUpdate({ ...row, color: color.hex });
-      }),
+  const onColorUpdate = (row: Transaction, color: Color) => {
+    onUpdate({ ...row, color: color.hex });
+  };
 
-      key: 'name',
-      label: 'label.name',
-      width: 150,
-    },
-    {
-      label: 'label.type',
-      key: 'type',
-      width: 150,
-    },
-    {
-      label: 'label.status',
-      key: 'status',
-      width: 100,
-    },
-    {
-      label: 'label.entered',
-      key: 'entered',
-      format: ColumnFormat.date,
-      width: 100,
-    },
-    {
-      label: 'label.confirmed',
-      key: 'confirmed',
-      format: ColumnFormat.date,
-      width: 100,
-    },
-
-    {
-      label: 'label.invoice-number',
-      key: 'invoiceNumber',
-      width: 75,
-    },
-    {
-      label: 'label.total',
-      key: 'total',
-      width: 75,
-      align: ColumnAlign.Right,
-    },
-    {
-      label: 'label.comment',
-      key: 'comment',
-      width: 150,
-    },
-    getCheckboxSelectionColumn(),
-  ]);
+  const columns = useColumns(
+    new ColumnSetBuilder<Transaction>()
+      .addColumn('name', getNameAndColorColumn(onColorUpdate))
+      .addColumn('type')
+      .addColumn('status')
+      .addColumn('invoiceNumber')
+      .addColumn('confirmed')
+      .addColumn('entered')
+      .addColumn('total')
+      .addColumn('comment')
+      .addColumn('selection')
+      .build()
+  );
 
   return (
     <>
