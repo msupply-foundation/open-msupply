@@ -13,7 +13,6 @@ import {
   useHostContext,
   useNotification,
   Transaction,
-  useDataTableApi,
   DropdownMenu,
   DropdownMenuItem,
   AppBarContentPortal,
@@ -104,7 +103,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const { appBarButtonsRef } = useHostContext();
   const { info, success } = useNotification();
   const navigate = useNavigate();
-  const tableApi = useDataTableApi<Transaction>();
 
   const {
     totalLength,
@@ -204,7 +202,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
         sortBy={sortBy}
         pagination={{ ...pagination, total: totalLength }}
         onChangePage={onChangePage}
-        tableApi={tableApi}
         columns={columns}
         data={data?.slice(0, numberOfRows) || []}
         isLoading={isLoading}
