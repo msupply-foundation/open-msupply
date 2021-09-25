@@ -15,7 +15,7 @@ describe('HeaderRow', () => {
             onSortBy={onSortBy}
             isSortable
             isSorted
-            id="id"
+            columnKey="id"
             direction="asc"
           >
             Header1
@@ -26,7 +26,7 @@ describe('HeaderRow', () => {
             onSortBy={onSortBy}
             isSortable={false}
             isSorted={false}
-            id="quantity"
+            columnKey="quantity"
             direction="asc"
           >
             Header2

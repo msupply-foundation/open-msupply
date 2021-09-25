@@ -25,9 +25,9 @@ import {
   TableProvider,
   createTableStore,
   getCheckboxSelectionColumn,
-  ColumnDefinition,
   useTableStore,
   useRegisterActions,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -121,78 +121,54 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   const columns = useColumns<Transaction>([
     {
-      ...getNameAndColorColumn<Transaction>((row, color) => {
+      ...getNameAndColorColumn((row, color) => {
         onUpdate({ ...row, color: color.hex });
       }),
 
       key: 'name',
       label: 'label.name',
-      sortable: true,
       width: 150,
-      minWidth: 200,
-      maxWidth: 250,
-      align: 'left',
     },
     {
       label: 'label.type',
       key: 'type',
       width: 150,
-      minWidth: 150,
-      maxWidth: 100,
-      align: 'left',
     },
     {
       label: 'label.status',
       key: 'status',
       width: 100,
-      minWidth: 100,
-      maxWidth: 100,
-      align: 'left',
     },
     {
       label: 'label.entered',
       key: 'entered',
       format: ColumnFormat.date,
       width: 100,
-      minWidth: 100,
-      maxWidth: 100,
-      align: 'left',
     },
     {
       label: 'label.confirmed',
       key: 'confirmed',
       format: ColumnFormat.date,
       width: 100,
-      minWidth: 100,
-      maxWidth: 100,
-      align: 'left',
     },
 
     {
       label: 'label.invoice-number',
       key: 'invoiceNumber',
       width: 75,
-      minWidth: 75,
-      maxWidth: 75,
-      align: 'left',
     },
     {
       label: 'label.total',
       key: 'total',
       width: 75,
-      minWidth: 75,
-      maxWidth: 75,
-      align: 'right',
+      align: ColumnAlign.Right,
     },
     {
       label: 'label.comment',
       key: 'comment',
       width: 150,
-      minWidth: 150,
-      maxWidth: 450,
-      align: 'left',
     },
-    getCheckboxSelectionColumn() as ColumnDefinition<Transaction>,
+    getCheckboxSelectionColumn(),
   ]);
 
   return (

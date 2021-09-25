@@ -1,6 +1,5 @@
 /* eslint-disable react/jsx-key */
 import React, { useEffect } from 'react';
-import { useTable, Row } from 'react-table';
 
 import {
   Box,
@@ -16,11 +15,11 @@ import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
-import { KeyOf } from '../../../types';
+import { DomainObject } from '../../../types';
 import { useTranslation } from '../../../intl';
 import { useTableStore } from './context';
 
-export const RemoteDataTable = <T extends Record<string, unknown>>({
+export const RemoteDataTable = <T extends DomainObject>({
   columns,
   sortBy,
   data = [],
@@ -31,11 +30,6 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
   onChangePage,
   noDataMessageKey,
 }: TableProps<T>): JSX.Element => {
-  const { headerGroups, rows, prepareRow } = useTable({
-    columns,
-    data,
-  });
-
   const t = useTranslation();
   const { setActiveRows } = useTableStore();
   useEffect(() => {
@@ -56,7 +50,7 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
       </Box>
     );
 
-  if (rows.length === 0) {
+  if (data.length === 0) {
     return (
       <Box sx={{ padding: 2 }}>
         <Typography variant="h6">
@@ -76,39 +70,33 @@ export const RemoteDataTable = <T extends Record<string, unknown>>({
     >
       <MuiTable sx={{ display: 'block', overflow: 'auto' }}>
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {headerGroups.map(({ getHeaderGroupProps, headers }) => (
-            <HeaderRow key={getHeaderGroupProps().key}>
-              {headers.map(column => (
-                <HeaderCell
-                  minWidth={column.minWidth}
-                  width={Number(column.width)}
-                  onSortBy={onSortBy}
-                  key={column.getHeaderProps().key}
-                  isSortable={!column.disableSortBy}
-                  isSorted={column.id === sortBy.key}
-                  align={column.align}
-                  id={column.id as KeyOf<T>}
-                  direction={sortBy.direction}
-                >
-                  {column.render('Header')}
-                </HeaderCell>
-              ))}
-            </HeaderRow>
-          ))}
+          <HeaderRow>
+            {columns.map(column => (
+              <HeaderCell
+                minWidth={column.minWidth}
+                width={Number(column.width)}
+                onSortBy={onSortBy}
+                key={String(column.key)}
+                isSortable={!!column.sortable}
+                isSorted={column.key === sortBy.key}
+                align={column.align}
+                columnKey={column.key}
+                direction={sortBy.direction}
+              >
+                <column.Header column={column} />
+              </HeaderCell>
+            ))}
+          </HeaderRow>
         </TableHead>
         <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {rows.map((row: Row<T>) => {
-            prepareRow(row);
-
-            const { cells, original } = row;
-            const { key } = row.getRowProps();
-
+          {data.map((row, idx) => {
             return (
               <DataRow<T>
-                cells={cells}
-                key={key}
+                columns={columns}
+                key={row.id}
                 onClick={onRowClick}
-                rowData={original}
+                rowData={row}
+                rowKey={String(idx)}
               />
             );
           })}
