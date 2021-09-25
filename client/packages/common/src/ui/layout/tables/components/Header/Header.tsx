@@ -52,7 +52,6 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
       }
       align={align}
       padding={'none'}
-      colSpan={1}
       sx={{
         backgroundColor: 'transparent',
         borderBottom: '0px',
@@ -60,7 +59,7 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
         paddingRight: '16px',
         width,
         minWidth,
-        flex: width,
+        flex: `${width} 0 auto`,
         fontWeight: 'bold',
       }}
       aria-label={id}
