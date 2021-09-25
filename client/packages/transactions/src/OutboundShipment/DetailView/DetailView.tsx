@@ -37,6 +37,7 @@ import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
 
 const placeholderTransaction: Transaction = {
+  id: '',
   name: '',
   total: '',
   comment: '',

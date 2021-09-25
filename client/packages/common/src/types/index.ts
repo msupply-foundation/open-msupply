@@ -1,14 +1,21 @@
+import { ObjectWithStringKeys } from './utility';
+
 export * from './utility';
 
-export type Item = {
+type RecordWithId = { id: string };
+
+export interface DomainObject extends RecordWithId, ObjectWithStringKeys {}
+
+export interface Item extends DomainObject {
   id: string;
   code: string;
   name: string;
   packSize?: number;
   quantity?: number;
-};
-export type Transaction = {
-  id?: string;
+}
+
+export interface Transaction extends DomainObject {
+  id: string;
   color: string;
   comment: string;
   status: string;
@@ -19,7 +26,7 @@ export type Transaction = {
   total: string;
   name: string;
   items?: Item[];
-};
+}
 
 export type Test = {
   id: number;

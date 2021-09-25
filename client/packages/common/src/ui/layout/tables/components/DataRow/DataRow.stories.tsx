@@ -2,6 +2,13 @@ import React from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
 import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
+import {
+  ColumnDefinition,
+  ColumnAlign,
+  ColumnFormat,
+} from '../../columns/types';
+import { useColumns } from '../../hooks';
+import { Transaction } from '../../../../../types';
 
 export default {
   title: 'Table/DataRow',
@@ -11,61 +18,74 @@ export default {
   },
 } as ComponentMeta<typeof DataRow>;
 
-const cells = [
+const exampleColumns: ColumnDefinition<Transaction>[] = [
   {
-    render: () => <span>11</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
+    label: 'label.type',
+    key: 'type',
+    width: 150,
   },
   {
-    render: () => <span>General Warehouse</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
+    label: 'label.status',
+    key: 'status',
+    width: 100,
   },
   {
-    render: () => <span>All items: General warehouse</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
+    label: 'label.entered',
+    key: 'entered',
+    format: ColumnFormat.date,
+    width: 100,
   },
   {
-    render: () => <span>52</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
+    label: 'label.confirmed',
+    key: 'confirmed',
+    format: ColumnFormat.date,
+    width: 100,
   },
-  {
-    render: () => <span>25 Nov 2020</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
-  },
-  {
-    render: () => <span>In Progress</span>,
-    getCellProps: () => ({ key: Math.random() * 20 }),
-    column: { align: 'left' },
-  },
-] as any;
 
-const Template: Story = ({ onClick }) => (
-  <Table>
-    <TableBody>
-      <DataRow cells={cells} rowData={{ id: 'josh' }} onClick={onClick} />
-    </TableBody>
-  </Table>
-);
+  {
+    label: 'label.invoice-number',
+    key: 'invoiceNumber',
+    width: 75,
+  },
+  {
+    label: 'label.total',
+    key: 'total',
+    width: 75,
+    align: ColumnAlign.Right,
+  },
+  {
+    label: 'label.comment',
+    key: 'comment',
+    width: 150,
+  },
+];
+const Template: Story = ({ onClick }) => {
+  const columns = useColumns(exampleColumns);
+
+  return (
+    <Table>
+      <TableBody>
+        <DataRow
+          columns={columns}
+          rowKey="rowKey"
+          rowData={{
+            id: '',
+            name: '',
+            total: '',
+            comment: '',
+            color: 'grey',
+            status: '',
+            type: '',
+            entered: '',
+            confirmed: '',
+            invoiceNumber: '',
+          }}
+          onClick={onClick}
+        />
+      </TableBody>
+    </Table>
+  );
+};
 
 export const Basic = Template.bind({});
 Basic.args = {

@@ -4,24 +4,29 @@ import { render } from '@testing-library/react';
 import { TableBody, Table } from '@mui/material';
 
 import { DataRow } from './DataRow';
+import { useColumns } from '../../hooks';
 
 describe('DataRow', () => {
-  const cells = [
-    {
-      render: () => <span>josh</span>,
-      getCellProps: () => ({ key: Math.random() * 20 }),
-      column: { align: 'left' },
-    },
-  ] as any;
+  const Example = () => {
+    const columns = useColumns([
+      {
+        label: 'label.type',
+        key: 'id',
+        width: 150,
+      },
+    ]);
 
-  it('Renders a cell passed', () => {
-    const { getByText } = render(
+    return (
       <Table>
         <TableBody>
-          <DataRow cells={cells} rowData={{ id: 'josh' }} />
+          <DataRow columns={columns} rowKey="rowKey" rowData={{ id: 'josh' }} />
         </TableBody>
       </Table>
     );
+  };
+
+  it('Renders a cell passed', () => {
+    const { getByText } = render(<Example />);
 
     expect(getByText(/josh/)).toBeInTheDocument();
   });

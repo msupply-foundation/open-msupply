@@ -14,7 +14,7 @@ const parseValue = (object: any, key: string) => {
   return value;
 };
 
-const getDataSorter = (sortKey: string, desc: boolean) => (a: any, b: any) => {
+const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
   const valueA = parseValue(a, sortKey);
   const valueB = parseValue(b, sortKey);
 

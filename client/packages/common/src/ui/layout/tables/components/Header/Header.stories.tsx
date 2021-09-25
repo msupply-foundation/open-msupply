@@ -27,7 +27,7 @@ const Template: Story = () => {
             onSortBy={onChangeSortBy}
             isSortable
             isSorted={sortBy.key === 'id'}
-            id="id"
+            columnKey="id"
             direction={sortBy.direction}
           >
             Header1
@@ -36,7 +36,7 @@ const Template: Story = () => {
             width={100}
             minWidth={100}
             isSortable={false}
-            id="quantity"
+            columnKey="quantity"
           >
             Header2
           </HeaderCell>
