@@ -5,7 +5,7 @@ use crate::{
             RequisitionLoader, StoreLoader, UserAccountLoader,
         },
         repository::{
-            InvoiceLineRepository, InvoiceQueryRepository, InvoiceRepository, ItemRepository,
+            InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository, ItemRepository,
             NameRepository, RequisitionLineRepository, RequisitionRepository, StockLineRepository,
             StoreRepository, UserAccountRepository,
         },
@@ -63,7 +63,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     });
 
     let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
-        invoice_query_repository: InvoiceQueryRepository::new(pool.clone()),
+        invoice_line_query_repository: InvoiceLineQueryRepository::new(pool.clone()),
     });
 
     let user_account_repository = UserAccountRepository::new(pool.clone());

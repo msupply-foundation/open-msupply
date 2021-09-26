@@ -5,7 +5,7 @@ use crate::{
             diesel_schema::{
                 invoice::dsl as invoice_dsl, name_table::dsl as name_dsl, store::dsl as store_dsl,
             },
-            InvoiceLineStatsRow, InvoiceRow, NameRow, StoreRow,
+            InvoiceRow, NameRow, StoreRow,
         },
     },
     server::service::graphql::schema::queries::pagination::{Pagination, PaginationOption},
@@ -27,19 +27,6 @@ pub type InvoiceQueryJoin = (InvoiceRow, NameRow, StoreRow);
 impl InvoiceQueryRepository {
     pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
         InvoiceQueryRepository { pool }
-    }
-
-    /// Calculates invoice line stats for a given invoice
-    pub async fn stats(
-        &self,
-        invoice_ids: &[String],
-    ) -> Result<Vec<InvoiceLineStatsRow>, RepositoryError> {
-        use crate::database::schema::diesel_schema::invoice_line_stats::dsl as invoice_line_stats_dsl;
-        let connection = get_connection(&self.pool)?;
-
-        Ok(invoice_line_stats_dsl::invoice_line_stats
-            .filter(invoice_line_stats_dsl::invoice_id.eq_any(invoice_ids))
-            .load::<InvoiceLineStatsRow>(&connection)?)
     }
 
     pub fn count(&self) -> Result<i64, RepositoryError> {

@@ -1,8 +1,8 @@
 use crate::{
     database::{
         loader::InvoiceLineStatsLoader,
-        repository::{InvoiceQueryJoin, InvoiceQueryRepository},
-        schema::{InvoiceLineStatsRow, InvoiceRowStatus, InvoiceRowType},
+        repository::{InvoiceLineStats, InvoiceQueryJoin, InvoiceQueryRepository},
+        schema::{InvoiceRowStatus, InvoiceRowType},
     },
     server::service::graphql::{schema::queries::pagination::Pagination, ContextExt},
 };
@@ -75,7 +75,7 @@ impl InvoiceNode {
             .ok()
             .flatten()
             .map_or(
-                InvoiceLineStatsRow {
+                InvoiceLineStats {
                     invoice_id: self.id.to_string(),
                     total_after_tax: 0.0,
                 },

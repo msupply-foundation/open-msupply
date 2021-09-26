@@ -1,5 +1,4 @@
 use super::diesel_schema::invoice_line;
-use super::diesel_schema::invoice_line_stats;
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq)]
 #[table_name = "invoice_line"]
@@ -16,13 +15,4 @@ pub struct InvoiceLineRow {
     pub total_after_tax: f64,
     pub available_number_of_packs: i32,
     pub total_number_of_packs: i32,
-}
-
-/// Row for the invoice_line_stats VIEW table (needed because of a Diesel limitation to query
-/// aggregates and columns at the same time).
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq)]
-#[table_name = "invoice_line_stats"]
-pub struct InvoiceLineStatsRow {
-    pub invoice_id: String,
-    pub total_after_tax: f64,
 }
