@@ -120,13 +120,6 @@ table! {
 }
 
 table! {
-    invoice_line_stats (invoice_id) {
-        invoice_id -> Text,
-        total_after_tax -> Double,
-    }
-}
-
-table! {
     user_account (id) {
         id -> Text,
         username -> Text,
