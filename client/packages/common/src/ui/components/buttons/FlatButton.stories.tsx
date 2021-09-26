@@ -1,15 +1,18 @@
 import React from 'react';
+import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { FlatButton } from './FlatButton';
 import { Book } from '../../icons';
 
 const Template: ComponentStory<typeof FlatButton> = args => (
-  <FlatButton
-    {...args}
-    icon={<Book color={args.color} />}
-    labelKey="button.docs"
-    onClick={() => console.info('clicked')}
-  />
+  <Box>
+    <FlatButton
+      {...args}
+      icon={<Book color={args.color} />}
+      labelKey="button.docs"
+      onClick={() => console.info('clicked')}
+    />
+  </Box>
 );
 
 export const Primary = Template.bind({});

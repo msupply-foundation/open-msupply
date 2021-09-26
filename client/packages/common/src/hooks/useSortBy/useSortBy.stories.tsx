@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortBy } from './useSortBy';
 import { Story } from '@storybook/react';
-import { ObjectWithStringKeys } from '../..';
+import { ObjectWithStringKeys } from '../../types';
 
 export default {
   title: 'Hooks/useSortBy',

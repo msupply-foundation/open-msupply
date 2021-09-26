@@ -4,7 +4,7 @@ import { PaginationRow } from './PaginationRow';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { createTableStore, TableProvider } from '../../context';
-import { TestingProvider } from '../../../../..';
+import { TestingProvider } from '../../../../../utils';
 
 describe('PaginationRow', () => {
   it('Renders a string : Showing X-Y of Z', () => {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Color, ColorMenu, UnstyledIconButton } from '../../../components';
 import { Circle } from '../../../icons';
 import { Box } from '@mui/system';
-import { DomainObject } from '../../../..';
+import { DomainObject } from '../../../../types';
 import { ColumnDefinition } from '../columns/types';
 
 interface DomainObjectWithRequiredFields extends DomainObject {

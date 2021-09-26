@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { TestingProvider } from '../..';
+import { TestingProvider } from '../../utils';
 import { useRowRenderCount } from './useRowRenderCount';
 import { useTheme } from '../../styles';
 import { Box } from '@mui/system';
