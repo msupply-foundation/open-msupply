@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Box, Typography, Pagination } from '@mui/material';
 import { useTableStore } from '../../context';
-import { useTranslation } from '../../../../..';
+import { useTranslation } from '../../../../../intl';
 
 interface PaginationRowProps {
   offset: number;

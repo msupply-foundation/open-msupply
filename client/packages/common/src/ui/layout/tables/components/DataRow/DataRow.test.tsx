@@ -5,7 +5,7 @@ import { TableBody, Table } from '@mui/material';
 
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
-import { TestingProvider } from '../../../../..';
+import { TestingProvider } from '../../../../../utils';
 
 describe('DataRow', () => {
   const Example = () => {
