@@ -12,7 +12,7 @@ mod store;
 mod user_account;
 
 pub use invoice::InvoiceLoader;
-pub use invoice_line::InvoiceLineLoader;
+pub use invoice_line::{InvoiceLineLoader, InvoiceLineStatsLoader};
 pub use item::ItemLoader;
 pub use loader::get_loaders;
 pub use name::NameLoader;

@@ -23,6 +23,9 @@ pub use self::item::*;
 pub mod stock_line;
 pub use self::stock_line::*;
 
+pub mod invoices;
+pub use self::invoices::*;
+
 #[derive(Clone)]
 pub struct Store {
     pub store_row: StoreRow,

@@ -5,9 +5,9 @@ use crate::{
             RequisitionLoader, StoreLoader, UserAccountLoader,
         },
         repository::{
-            InvoiceLineRepository, InvoiceRepository, ItemRepository, NameRepository,
-            RequisitionLineRepository, RequisitionRepository, StockLineRepository, StoreRepository,
-            UserAccountRepository,
+            InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository, ItemRepository,
+            NameRepository, RequisitionLineRepository, RequisitionRepository, StockLineRepository,
+            StoreRepository, UserAccountRepository,
         },
     },
     server::data::LoaderMap,
@@ -23,6 +23,8 @@ use diesel::PgConnection as DBBackendConnection;
 
 #[cfg(feature = "sqlite")]
 use diesel::SqliteConnection as DBBackendConnection;
+
+use super::InvoiceLineStatsLoader;
 
 pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let connection_manager =
@@ -60,6 +62,10 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
         invoice_line_repository,
     });
 
+    let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
+        invoice_line_query_repository: InvoiceLineQueryRepository::new(pool.clone()),
+    });
+
     let user_account_repository = UserAccountRepository::new(pool.clone());
     let user_account_loader = DataLoader::new(UserAccountLoader {
         user_account_repository,
@@ -72,6 +78,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(store_loader);
     loaders.insert(invoice_loader);
     loaders.insert(invoice_line_loader);
+    loaders.insert(invoice_line_stats_loader);
     loaders.insert(user_account_loader);
 
     loaders
