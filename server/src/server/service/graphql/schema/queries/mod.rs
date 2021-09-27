@@ -5,12 +5,10 @@ use crate::database::repository::{
     StoreRepository,
 };
 use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
-use crate::server::service::graphql::schema::types::{
-    InvoiceLine, InvoiceQuery, Requisition, Store,
-};
+use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
 use crate::server::service::graphql::ContextExt;
 
-use super::types::{InvoicesList, ItemList, NameList};
+use super::types::{InvoiceList, InvoiceNode, ItemList, NameList};
 use async_graphql::{Context, Object};
 use pagination::Pagination;
 pub struct Queries;
@@ -43,18 +41,18 @@ impl Queries {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "id of the invoice")] id: String,
-    ) -> Result<InvoiceQuery, RepositoryError> {
+    ) -> Result<InvoiceNode, RepositoryError> {
         let repository = ctx.get_repository::<InvoiceQueryRepository>();
         let invoice = repository.find_one_by_id(id.as_str()).await?;
-        Ok(InvoiceQuery::from(invoice))
+        Ok(InvoiceNode::from(invoice))
     }
 
     pub async fn invoices(
         &self,
         _ctx: &Context<'_>,
         #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
-    ) -> InvoicesList {
-        InvoicesList { pagination: page }
+    ) -> InvoiceList {
+        InvoiceList { pagination: page }
     }
 
     pub async fn store(

@@ -1,12 +1,15 @@
 use crate::{
     database::{
-        repository::{InvoiceLineQueryJoin, InvoiceLineQueryRepository, InvoiceQueryJoin},
+        loader::InvoiceLineStatsLoader,
+        repository::{
+            InvoiceLineQueryJoin, InvoiceLineQueryRepository, InvoiceLineStats, InvoiceQueryJoin,
+        },
         schema::{InvoiceRowStatus, InvoiceRowType},
     },
     server::service::graphql::ContextExt,
 };
 
-use async_graphql::{Context, Enum, Object, SimpleObject};
+use async_graphql::{dataloader::DataLoader, ComplexObject, Context, Enum, Object, SimpleObject};
 use chrono::{DateTime, Utc};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -42,7 +45,14 @@ impl From<InvoiceRowStatus> for InvoiceStatus {
 }
 
 #[derive(SimpleObject, PartialEq, Debug)]
-pub struct InvoiceQuery {
+pub struct InvoiceLinePricing {
+    /// total for all invoice lines
+    total_after_tax: f64,
+}
+
+#[derive(SimpleObject, PartialEq, Debug)]
+#[graphql(complex)]
+pub struct InvoiceNode {
     id: String,
     other_party_name: String,
     other_party_id: String,
@@ -54,12 +64,36 @@ pub struct InvoiceQuery {
     entry_datetime: String,
     confirm_datetime: Option<String>,
     finalised_datetime: Option<String>,
-    lines: InvoiceQueryLines,
+    lines: InvoiceLines,
 }
 
-impl From<InvoiceQueryJoin> for InvoiceQuery {
+#[ComplexObject]
+impl InvoiceNode {
+    async fn pricing(&self, ctx: &Context<'_>) -> InvoiceLinePricing {
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
+
+        let result = loader
+            .load_one(self.id.to_string())
+            .await
+            .ok()
+            .flatten()
+            .map_or(
+                InvoiceLineStats {
+                    invoice_id: self.id.to_string(),
+                    total_after_tax: 0.0,
+                },
+                |v| v,
+            );
+
+        InvoiceLinePricing {
+            total_after_tax: result.total_after_tax,
+        }
+    }
+}
+
+impl From<InvoiceQueryJoin> for InvoiceNode {
     fn from((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Self {
-        InvoiceQuery {
+        InvoiceNode {
             id: invoice_row.id.to_owned(),
             other_party_name: name_row.name,
             other_party_id: name_row.id,
@@ -75,7 +109,7 @@ impl From<InvoiceQueryJoin> for InvoiceQuery {
             finalised_datetime: invoice_row
                 .finalised_datetime
                 .map(|v| DateTime::<Utc>::from_utc(v, Utc).to_rfc3339()),
-            lines: InvoiceQueryLines {
+            lines: InvoiceLines {
                 invoice_id: invoice_row.id,
             },
         }
@@ -83,12 +117,12 @@ impl From<InvoiceQueryJoin> for InvoiceQuery {
 }
 
 #[derive(PartialEq, Debug)]
-struct InvoiceQueryLines {
+struct InvoiceLines {
     invoice_id: String,
 }
 
 #[Object]
-impl InvoiceQueryLines {
+impl InvoiceLines {
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceLineNode> {
         let repository = ctx.get_repository::<InvoiceLineQueryRepository>();
         let lines = repository
