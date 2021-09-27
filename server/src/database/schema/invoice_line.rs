@@ -12,6 +12,7 @@ pub struct InvoiceLineRow {
     pub pack_size: i32,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
+    pub total_after_tax: f64,
     pub available_number_of_packs: i32,
     pub total_number_of_packs: i32,
 }
