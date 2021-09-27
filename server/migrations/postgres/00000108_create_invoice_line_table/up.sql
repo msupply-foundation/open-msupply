@@ -5,9 +5,9 @@ CREATE TABLE invoice_line (
     stock_line_id TEXT REFERENCES stock_line(id),
     batch TEXT,
     expiry_date TEXT,
-    cost_price_per_pack DECIMAL NOT NULL,
-    sell_price_per_pack DECIMAL NOT NULL,
-    total_after_tax DECIMAL NOT NULL,
+    cost_price_per_pack DOUBLE PRECISION NOT NULL,
+    sell_price_per_pack DOUBLE PRECISION NOT NULL,
+    total_after_tax DOUBLE PRECISION NOT NULL,
     available_number_of_packs INTEGER NOT NULL,
     total_number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL
