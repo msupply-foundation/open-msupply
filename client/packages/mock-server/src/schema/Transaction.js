@@ -93,7 +93,7 @@ const getTransactionData = async (first, offset, sort, desc) => {
   }
   const data = transactions.slice(offset, offset + first).map(addItems);
 
-  return { totalLength: data.length, data };
+  return { totalLength: transactions.length, data };
 };
 
 const addItems = transaction => ({ ...transaction, items: getItems() });
