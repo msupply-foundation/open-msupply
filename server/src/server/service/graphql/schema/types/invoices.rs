@@ -49,7 +49,7 @@ impl From<InvoiceRowStatus> for InvoiceStatus {
 
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(complex)]
-#[graphql(name = "Invoice")]
+#[graphql(name = "InvoicesQueryNode")]
 pub struct InvoiceNode {
     id: String,
     other_party_name: String,

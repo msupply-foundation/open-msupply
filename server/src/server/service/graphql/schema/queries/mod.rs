@@ -1,10 +1,13 @@
 pub mod pagination;
 
 use crate::database::repository::{
-    InvoiceLineRepository, InvoiceRepository, RequisitionRepository, StoreRepository,
+    InvoiceLineRepository, InvoiceQueryRepository, RepositoryError, RequisitionRepository,
+    StoreRepository,
 };
-use crate::database::schema::{InvoiceLineRow, InvoiceRow, RequisitionRow, StoreRow};
-use crate::server::service::graphql::schema::types::{Invoice, InvoiceLine, Requisition, Store};
+use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
+use crate::server::service::graphql::schema::types::{
+    InvoiceLine, InvoiceQuery, Requisition, Store,
+};
 use crate::server::service::graphql::ContextExt;
 
 use super::types::{InvoicesList, ItemList, NameList};
@@ -35,6 +38,17 @@ impl Queries {
         ItemList { pagination: page }
     }
 
+    // TODO return better error
+    pub async fn invoice(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the invoice")] id: String,
+    ) -> Result<InvoiceQuery, RepositoryError> {
+        let repository = ctx.get_repository::<InvoiceQueryRepository>();
+        let invoice = repository.find_one_by_id(id.as_str()).await?;
+        Ok(InvoiceQuery::from(invoice))
+    }
+
     pub async fn invoices(
         &self,
         _ctx: &Context<'_>,
@@ -56,21 +70,6 @@ impl Queries {
             .unwrap_or_else(|_| panic!("Failed to get store {}", id));
 
         Store { store_row }
-    }
-
-    pub async fn invoice(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "id of the invoice")] id: String,
-    ) -> Invoice {
-        let invoice_repository = ctx.get_repository::<InvoiceRepository>();
-
-        let invoice_row: InvoiceRow = invoice_repository
-            .find_one_by_id(&id)
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get invoice {}", id));
-
-        Invoice { invoice_row }
     }
 
     pub async fn invoice_line(
