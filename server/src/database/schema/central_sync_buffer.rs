@@ -20,7 +20,7 @@ fn map_as_string<'de, D>(deserializer: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
 {
-    serde_json::to_string_pretty(&serde_json::Value::deserialize(deserializer)?)
+    serde_json::to_string(&serde_json::Value::deserialize(deserializer)?)
         .map_err(|err| serde::de::Error::custom(err.to_string()))
 }
 
