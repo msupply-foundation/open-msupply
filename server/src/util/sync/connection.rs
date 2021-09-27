@@ -104,7 +104,7 @@ impl SyncConnection {
             .basic_auth(&self.credentials.username, Some(&self.credentials.password))
             .headers(headers);
 
-        let response = request.send().await?;
+        let response = request.send().await?.error_for_status()?;
 
         let sync_batch = response.json::<RemoteSyncBatch>().await?;
 
@@ -130,7 +130,7 @@ impl SyncConnection {
             .query(&query)
             .headers(headers);
 
-        let response = request.send().await?;
+        let response = request.send().await?.error_for_status()?;
 
         let sync_batch = response.json::<RemoteSyncBatch>().await?;
 
@@ -142,7 +142,6 @@ impl SyncConnection {
         &self,
         records: &Vec<RemoteSyncRecord>,
     ) -> Result<(), SyncConnectionError> {
-        // TODO: add error handling.
         let url = self.server.acknowledge_records_url();
 
         let body: RemoteSyncAcknowledgement = RemoteSyncAcknowledgement {
@@ -152,12 +151,14 @@ impl SyncConnection {
                 .collect(),
         };
 
-        self.client
+        let response = self
+            .client
             .post(url)
             .basic_auth(&self.credentials.username, Some(&self.credentials.password))
             .body(serde_json::to_string(&body).unwrap_or_default())
             .send()
-            .await?;
+            .await?
+            .error_for_status()?;
 
         Ok(())
     }
@@ -187,7 +188,8 @@ impl SyncConnection {
             .query(&query)
             .headers(headers)
             .send()
-            .await?;
+            .await?
+            .error_for_status()?;
 
         let sync_batch = response.json::<CentralSyncBatch>().await?;
 
@@ -201,22 +203,25 @@ mod tests {
     use reqwest::header::AUTHORIZATION;
     use serde_json;
 
-    use crate::util::{
-        settings::SyncSettings,
-        sync::{
-            RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord, RemoteSyncRecordAction,
-            RemoteSyncRecordData, SyncConnection, SyncConnectionError,
+    use crate::{
+        database::schema::CentralSyncBufferRow,
+        util::{
+            settings::SyncSettings,
+            sync::{
+                CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,
+                RemoteSyncRecordAction, RemoteSyncRecordData, SyncConnection,
+            },
         },
     };
 
     #[actix_rt::test]
-    async fn initialise_remote_records_with_valid_credentials_is_success() {
+    async fn test_initialise_remote_records() {
         let mock_server = MockServer::start();
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
 
-        let mock_sync_settings = SyncSettings {
+        let mock_sync_settings_with_auth = SyncSettings {
             host: mock_server.host().clone(),
             port: mock_server.port().clone(),
             username: mock_username.clone(),
@@ -224,42 +229,64 @@ mod tests {
             interval: 0,
         };
 
-        let mock_authorization_header =
+        let mock_sync_settings_without_auth = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: "".to_owned(),
+            password: "".to_owned(),
+            interval: 0,
+        };
+
+        let mock_authorisation_header =
 	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
 	    .to_owned();
 
-        let mock_initialize_path = "/sync/v5/initialise".to_owned();
-        let mock_initialize_body = RemoteSyncBatch {
+        let initialise_path = "/sync/v5/initialise".to_owned();
+
+        let mock_initialise_body = RemoteSyncBatch {
             queue_length: 0,
             data: None,
         };
 
         mock_server.mock(|when, then| {
             when.method(POST)
-                .header(AUTHORIZATION.to_string(), mock_authorization_header)
-                .path(mock_initialize_path);
+                .header(AUTHORIZATION.to_string(), mock_authorisation_header)
+                .path(initialise_path.clone());
             then.status(200)
-                .body(serde_json::to_string(&mock_initialize_body).unwrap());
+                .body(serde_json::to_string(&mock_initialise_body).unwrap());
         });
 
-        let sync_connection = SyncConnection::new(&mock_sync_settings);
+        mock_server.mock(|when, then| {
+            when.method(POST).path(initialise_path.clone());
+            then.status(401);
+        });
 
-        let initialize_body = sync_connection.initialise_remote_records().await.unwrap();
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let initialise_result_with_auth =
+            sync_connection_with_auth.initialise_remote_records().await;
 
+        assert!(initialise_result_with_auth.is_ok());
         assert_eq!(
-            serde_json::to_string(&initialize_body).unwrap(),
-            serde_json::to_string(&mock_initialize_body).unwrap()
+            serde_json::to_string(&initialise_result_with_auth.unwrap()).unwrap(),
+            serde_json::to_string(&mock_initialise_body).unwrap()
         );
+
+        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let initialise_result_without_auth = sync_connection_without_auth
+            .initialise_remote_records()
+            .await;
+
+        assert!(initialise_result_without_auth.is_err());
     }
 
     #[actix_rt::test]
-    async fn queued_records_with_valid_credentials_is_success() {
+    async fn test_pull_remote_records() {
         let mock_server = MockServer::start();
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
 
-        let mock_sync_settings = SyncSettings {
+        let mock_sync_settings_with_auth = SyncSettings {
             host: mock_server.host().clone(),
             port: mock_server.port().clone(),
             username: mock_username.clone(),
@@ -267,11 +294,19 @@ mod tests {
             interval: 0,
         };
 
+        let mock_sync_settings_without_auth = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: "".to_owned(),
+            password: "".to_owned(),
+            interval: 0,
+        };
+
         let mock_authorization_header =
 	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
 	    .to_owned();
 
-        let mock_remote_records_path = "/sync/v5/queued_records".to_owned();
+        let pull_remote_records_path = "/sync/v5/queued_records".to_owned();
 
         let mock_remote_records_data = vec![
             RemoteSyncRecord {
@@ -300,29 +335,39 @@ mod tests {
         mock_server.mock(|when, then| {
             when.method(GET)
                 .header(AUTHORIZATION.to_string(), mock_authorization_header)
-                .path(mock_remote_records_path);
+                .path(pull_remote_records_path.clone());
             then.status(200)
                 .body(serde_json::to_string(&mock_remote_records_body).unwrap());
         });
 
-        let sync_connection = SyncConnection::new(&mock_sync_settings);
+        mock_server.mock(|when, then| {
+            when.method(GET).path(pull_remote_records_path);
+            then.status(401);
+        });
 
-        let remote_records_body = sync_connection.pull_remote_records().await.unwrap();
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let pull_result_with_auth = sync_connection_with_auth.pull_remote_records().await;
 
+        assert!(pull_result_with_auth.is_ok());
         assert_eq!(
-            serde_json::to_string(&remote_records_body).unwrap(),
+            serde_json::to_string(&pull_result_with_auth.unwrap()).unwrap(),
             serde_json::to_string(&mock_remote_records_body).unwrap()
         );
+
+        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let pull_result_without_auth = sync_connection_without_auth.pull_remote_records().await;
+
+        assert!(pull_result_without_auth.is_err());
     }
 
     #[actix_rt::test]
-    async fn acknowledge_records_with_valid_credentials_is_success() {
+    async fn test_acknowledge_remote_records() {
         let mock_server = MockServer::start();
 
         let mock_username = "username".to_owned();
         let mock_password = "password".to_owned();
 
-        let mock_sync_settings = SyncSettings {
+        let mock_sync_settings_with_auth = SyncSettings {
             host: mock_server.host().clone(),
             port: mock_server.port().clone(),
             username: mock_username.clone(),
@@ -330,11 +375,19 @@ mod tests {
             interval: 0,
         };
 
+        let mock_sync_settings_without_auth = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: "".to_owned(),
+            password: "".to_owned(),
+            interval: 0,
+        };
+
         let mock_authorization_header =
 	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
 	    .to_owned();
 
-        let mock_acknowledge_records_path = "/sync/v5/acknowledged_records".to_owned();
+        let acknowledge_records_path = "/sync/v5/acknowledged_records".to_owned();
 
         let mock_acknowledge_records_data = vec![
             RemoteSyncRecord {
@@ -357,21 +410,106 @@ mod tests {
             sync_ids: vec!["sync_record_a".to_owned(), "sync_record_b".to_owned()],
         };
 
-        let mock_acknowledge_records = mock_server.mock(|when, then| {
+        mock_server.mock(|when, then| {
             when.method(POST)
                 .header(AUTHORIZATION.to_string(), mock_authorization_header)
-                .path(mock_acknowledge_records_path);
+                .path(acknowledge_records_path.clone());
             then.status(200)
                 .body(serde_json::to_string(&mock_acknowledge_records_body).unwrap());
         });
 
-        let sync_connection = SyncConnection::new(&mock_sync_settings);
+        mock_server.mock(|when, then| {
+            when.method(POST).path(acknowledge_records_path.clone());
+            then.status(401);
+        });
 
-        sync_connection
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let acknowledge_result_with_auth = sync_connection_with_auth
             .acknowledge_remote_records(&mock_acknowledge_records_data)
-            .await
-            .unwrap();
+            .await;
 
-        mock_acknowledge_records.assert();
+        assert!(acknowledge_result_with_auth.is_ok());
+
+        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let acknowledge_result_without_auth = sync_connection_without_auth
+            .acknowledge_remote_records(&mock_acknowledge_records_data)
+            .await;
+
+        assert!(acknowledge_result_without_auth.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn test_pull_central_records() {
+        let mock_server = MockServer::start();
+
+        let mock_username = "username".to_owned();
+        let mock_password = "password".to_owned();
+
+        let mock_sync_settings_with_auth = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: mock_username.clone(),
+            password: mock_password.clone(),
+            interval: 0,
+        };
+
+        let mock_sync_settings_without_auth = SyncSettings {
+            host: mock_server.host().clone(),
+            port: mock_server.port().clone(),
+            username: "".to_owned(),
+            password: "".to_owned(),
+            interval: 0,
+        };
+
+        let mock_authorization_header =
+	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
+	    .to_owned();
+
+        let pull_central_records_path = "/sync/v5/central_records".to_owned();
+        let mock_central_records_data = vec![
+            CentralSyncBufferRow {
+                id: 1,
+                table_name: "item".to_owned(),
+                record_id: "item_a".to_owned(),
+                data: "{ id: item_a }".to_owned(),
+            },
+            CentralSyncBufferRow {
+                id: 2,
+                table_name: "item".to_owned(),
+                record_id: "item_b".to_owned(),
+                data: "{ id: item_b }".to_owned(),
+            },
+        ];
+
+        let mock_central_records_body = CentralSyncBatch {
+            max_cursor: 2,
+            data: Some(mock_central_records_data),
+        };
+
+        mock_server.mock(|when, then| {
+            when.method(GET)
+                .header(AUTHORIZATION.to_string(), mock_authorization_header)
+                .path(pull_central_records_path.clone());
+            then.status(200)
+                .body(serde_json::to_string(&mock_central_records_body).unwrap());
+        });
+
+        mock_server.mock(|when, then| {
+            when.method(GET).path(pull_central_records_path.clone());
+            then.status(401);
+        });
+
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let pull_central_records_result_with_auth =
+            sync_connection_with_auth.pull_central_records(0, 2).await;
+
+        assert!(pull_central_records_result_with_auth.is_ok());
+
+        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let pull_central_records_result_without_auth = sync_connection_without_auth
+            .pull_central_records(0, 2)
+            .await;
+
+        assert!(pull_central_records_result_without_auth.is_err());
     }
 }
