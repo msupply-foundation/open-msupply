@@ -1,7 +1,7 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const User = (props: SvgIconProps): JSX.Element => {
+export const UserIcon = (props: SvgIconProps): JSX.Element => {
   const combinedProps: SvgIconProps = { color: 'primary', ...props };
   return (
     <SvgIcon {...combinedProps} viewBox="0 0 16 16">

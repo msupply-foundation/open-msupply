@@ -61,7 +61,6 @@ const themeOptions = {
   },
   direction: 'rtl' as Direction,
   mixins: {
-    footer: { backgroundColor: '#fafafc', height: 32, fontSize: 12 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
     table: {

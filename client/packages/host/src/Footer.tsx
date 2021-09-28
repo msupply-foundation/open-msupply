@@ -4,10 +4,12 @@ import {
   Home,
   styled,
   Typography,
+  useHostContext,
   User,
 } from '@openmsupply-client/common';
 
 export const Footer: React.FC = () => {
+  const { user, store } = useHostContext();
   const PaddedCell = styled(Box)({ display: 'flex', padding: '0 8px' });
   const iconStyles = { color: 'midGrey', height: '16px', width: '16px' };
   const textStyles = {
@@ -15,7 +17,7 @@ export const Footer: React.FC = () => {
     fontSize: '12px',
     padding: '0 0 0 8px',
   };
-  // 25?
+
   return (
     <Box
       sx={{
@@ -28,13 +30,11 @@ export const Footer: React.FC = () => {
     >
       <PaddedCell>
         <Home sx={iconStyles} />
-        <Typography sx={textStyles}>
-          Central Pharmaceutical Warehouse
-        </Typography>
+        <Typography sx={textStyles}>{store.name}</Typography>
       </PaddedCell>
       <PaddedCell>
         <User sx={iconStyles} />
-        <Typography sx={textStyles}>Admin</Typography>
+        <Typography sx={textStyles}>{user.name}</Typography>
       </PaddedCell>
     </Box>
   );
