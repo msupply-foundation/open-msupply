@@ -35,7 +35,7 @@ import { Stock } from './Stock';
 import { Suppliers } from './Suppliers';
 import { Tools } from './Tools';
 import { Translate } from './Translate';
-import { User } from './User';
+import { UserIcon } from './User';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
@@ -95,7 +95,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Suppliers {...args} />, name: 'Suppliers' },
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
-    { icon: <User {...args} />, name: 'User' },
+    { icon: <UserIcon {...args} />, name: 'User' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {

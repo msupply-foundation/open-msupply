@@ -32,7 +32,7 @@ export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
 export { Translate } from './Translate';
 export { UnhappyMan } from './UnhappyMan';
-export { User } from './User';
+export { UserIcon } from './User';
 
 type Color =
   | 'inherit'
