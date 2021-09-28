@@ -26,7 +26,7 @@ describe('ColumnSetBuilder', () => {
     ]);
   });
 
-  it('creates an array of column objects when passed a min of column definitions and keys', () => {
+  it('creates an array of column objects when passed a mix of column definitions and keys', () => {
     const columns = new ColumnSetBuilder<Transaction>()
       .addColumn('type')
       .addColumn({ key: 'status' })
