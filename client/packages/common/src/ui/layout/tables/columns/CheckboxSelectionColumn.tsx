@@ -37,9 +37,9 @@ export const getCheckboxSelectionColumn = (): Column & {
   id: 'selection',
   align: 'right',
   disableSortBy: true,
-  width: 20,
-  maxWidth: 20,
-  minWidth: 20,
+  width: 40,
+  maxWidth: 40,
+  minWidth: 40,
   Header: () => {
     const { toggleAll, allSelected, someSelected } = useTableStore(state => {
       useRegisterActions([

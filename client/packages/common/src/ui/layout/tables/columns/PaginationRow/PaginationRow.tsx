@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { Box, Typography, Pagination } from '@mui/material';
 import { useTableStore } from '../../context';
+import { useTranslation } from '../../../../..';
 
 interface PaginationRowProps {
   offset: number;
@@ -34,6 +35,10 @@ export const PaginationRow: FC<PaginationRowProps> = ({
     }
   };
 
+  const t = useTranslation();
+  const getNumberSelectedLabel = () =>
+    !!numberSelected && `(${numberSelected} ${t('label.selected')})`;
+
   // Pages are zero indexed. The Pagination component wants the page as
   // one-indexed.
   const displayPage = page + 1;
@@ -51,7 +56,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
     >
       {!!total && (
         <>
-          <Box display="flex" flexDirection="row">
+          <Box display="flex" flexDirection="row" flexWrap="wrap" flex={1}>
             <Typography sx={{ marginRight: '4px' }}>Showing</Typography>
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {xToY}
@@ -60,14 +65,18 @@ export const PaginationRow: FC<PaginationRowProps> = ({
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {total}
             </Typography>
-            <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
-              {`(${numberSelected} Selected)`}
-            </Typography>
+            {!!numberSelected && (
+              <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
+                {getNumberSelectedLabel()}
+              </Typography>
+            )}
           </Box>
+
           <Pagination
+            size="small"
             page={displayPage}
-            count={Math.ceil(total / first)}
             onChange={onChangePage}
+            count={Math.ceil(total / first)}
           />
         </>
       )}

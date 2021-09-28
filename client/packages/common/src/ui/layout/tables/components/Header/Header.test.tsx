@@ -10,7 +10,8 @@ describe('HeaderRow', () => {
       <thead>
         <HeaderRow>
           <HeaderCell
-            style={{ width: 10, maxWidth: 10, minWidth: 10 }}
+            width={100}
+            minWidth={100}
             onSortBy={onSortBy}
             isSortable
             isSorted
@@ -20,7 +21,8 @@ describe('HeaderRow', () => {
             Header1
           </HeaderCell>
           <HeaderCell
-            style={{ width: 10, maxWidth: 10, minWidth: 10 }}
+            width={100}
+            minWidth={100}
             onSortBy={onSortBy}
             isSortable={false}
             isSorted={false}
