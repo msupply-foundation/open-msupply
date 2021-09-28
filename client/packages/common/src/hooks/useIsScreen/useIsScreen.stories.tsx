@@ -1,10 +1,10 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { useIsLargeScreen } from './useIsLargeScreen';
 import { TestingProvider } from '../../utils';
-import { useIsMediumScreen } from '.';
+import { useIsSmallScreen } from './useIsSmallScreen';
+import { useIsMediumScreen } from './useIsMediumScreen';
+import { useIsLargeScreen } from './useIsLargeScreen';
 import { useIsExtraLargeScreen } from './useIsExtraLargeScreen';
-import { useIsSmallScreen } from '../..';
 
 const Template: Story<{
   type: 'large' | 'medium' | 'xl' | 'sm';

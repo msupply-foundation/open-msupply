@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { setScreenSize_ONLY_FOR_TESTING, TestingProvider } from '../..';
+import { setScreenSize_ONLY_FOR_TESTING, TestingProvider } from '../../utils';
 import { useIsExtraLargeScreen } from './useIsExtraLargeScreen';
 
 describe('useIsExtraLargeScreen', () => {
