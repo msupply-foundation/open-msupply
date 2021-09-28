@@ -8,7 +8,10 @@ import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
+import TextField from '@mui/material/TextField';
 import AccordionSummary from '@mui/material/AccordionSummary';
+import InputAdornment from '@mui/material/InputAdornment';
+import Tooltip from '@mui/material/Tooltip';
 
 export * from './portals';
 export * from './inputs';
@@ -25,10 +28,13 @@ export {
   AccordionSummary,
   CircularProgress,
   Collapse,
+  InputAdornment,
   Divider,
   GlobalStyles,
   Menu,
   MenuItem,
   Select,
   Typography,
+  TextField,
+  Tooltip,
 };

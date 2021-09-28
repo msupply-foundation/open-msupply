@@ -41,16 +41,14 @@ export const useSortedData = <T extends Record<string, unknown>>(
   const { sortBy, onChangeSortBy } = useSortBy(initialSortBy);
   const [sortedData, setSortedData] = useState(data);
 
-  const wrapped = (newSortRule: SortRule<T>) => {
-    const newSortBy = onChangeSortBy(newSortRule);
-    const sorter = getDataSorter(newSortBy.key, !!newSortBy.isDesc);
-    setSortedData(data.sort(sorter));
-  };
-
   useEffect(() => {
     const sorter = getDataSorter(sortBy.key, !!sortBy.isDesc);
     setSortedData(data.sort(sorter));
-  }, []);
+  }, [sortBy]);
 
-  return { sortedData, sortBy, onChangeSortBy: wrapped };
+  useEffect(() => {
+    setSortedData(data);
+  }, [data]);
+
+  return { sortedData, sortBy, onChangeSortBy };
 };
