@@ -1,8 +1,8 @@
-import { KeyOf, ObjectWithStringKeys } from './../../types/utility';
+import { ObjectWithStringKeys } from './../../types/utility';
 import { useCallback, useState } from 'react';
 
 export interface SortRule<T extends ObjectWithStringKeys> {
-  key: KeyOf<T>;
+  key: keyof T;
   isDesc?: boolean;
 }
 

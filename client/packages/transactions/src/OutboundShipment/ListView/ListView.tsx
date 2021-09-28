@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 import {
   Portal,
   Button,
-  ColumnFormat,
   Download,
   PlusCircle,
   Printer,
@@ -13,7 +12,6 @@ import {
   useHostContext,
   useNotification,
   Transaction,
-  useDataTableApi,
   DropdownMenu,
   DropdownMenuItem,
   AppBarContentPortal,
@@ -24,10 +22,9 @@ import {
   Edit,
   TableProvider,
   createTableStore,
-  getCheckboxSelectionColumn,
-  ColumnDefinition,
   useTableStore,
-  useRegisterActions,
+  ColumnSetBuilder,
+  Color,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -62,23 +59,6 @@ const ListViewToolBar: FC<{
     ref.current = deleteAction;
   }, [selectedRows]);
 
-  useRegisterActions([
-    {
-      id: 'list-view:delete-all-selected',
-      name: 'List: Delete all selected rows',
-      shortcut: ['d'],
-      keywords: 'list, delete, rows',
-      perform: () => ref.current(),
-    },
-    {
-      id: 'list-view:export-all-selected',
-      name: 'List: Export all selected rows to CSV',
-      shortcut: ['d'],
-      keywords: 'list, export, csv rows',
-      perform: success('Successfully exported to CSV!'),
-    },
-  ]);
-
   return (
     <DropdownMenu label="Select">
       <DropdownMenuItem IconComponent={Delete} onClick={deleteAction}>
@@ -104,7 +84,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const { appBarButtonsRef } = useHostContext();
   const { info, success } = useNotification();
   const navigate = useNavigate();
-  const tableApi = useDataTableApi<Transaction>();
 
   const {
     totalLength,
@@ -119,81 +98,23 @@ export const OutboundShipmentListViewComponent: FC = () => {
     pagination,
   } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
 
-  const columns = useColumns<Transaction>([
-    {
-      ...getNameAndColorColumn<Transaction>((row, color) => {
-        onUpdate({ ...row, color: color.hex });
-      }),
+  const onColorUpdate = (row: Transaction, color: Color) => {
+    onUpdate({ ...row, color: color.hex });
+  };
 
-      key: 'name',
-      label: 'label.name',
-      sortable: true,
-      width: 150,
-      minWidth: 200,
-      maxWidth: 250,
-      align: 'left',
-    },
-    {
-      label: 'label.type',
-      key: 'type',
-      width: 150,
-      minWidth: 150,
-      maxWidth: 100,
-      align: 'left',
-    },
-    {
-      label: 'label.status',
-      key: 'status',
-      width: 100,
-      minWidth: 100,
-      maxWidth: 100,
-      align: 'left',
-    },
-    {
-      label: 'label.entered',
-      key: 'entered',
-      format: ColumnFormat.date,
-      width: 100,
-      minWidth: 100,
-      maxWidth: 100,
-      align: 'left',
-    },
-    {
-      label: 'label.confirmed',
-      key: 'confirmed',
-      format: ColumnFormat.date,
-      width: 100,
-      minWidth: 100,
-      maxWidth: 100,
-      align: 'left',
-    },
-
-    {
-      label: 'label.invoice-number',
-      key: 'invoiceNumber',
-      width: 75,
-      minWidth: 75,
-      maxWidth: 75,
-      align: 'left',
-    },
-    {
-      label: 'label.total',
-      key: 'total',
-      width: 75,
-      minWidth: 75,
-      maxWidth: 75,
-      align: 'right',
-    },
-    {
-      label: 'label.comment',
-      key: 'comment',
-      width: 150,
-      minWidth: 150,
-      maxWidth: 450,
-      align: 'left',
-    },
-    getCheckboxSelectionColumn() as ColumnDefinition<Transaction>,
-  ]);
+  const columns = useColumns(
+    new ColumnSetBuilder<Transaction>()
+      .addColumn(getNameAndColorColumn(onColorUpdate))
+      .addColumn('type')
+      .addColumn('status')
+      .addColumn('invoiceNumber')
+      .addColumn('confirmed')
+      .addColumn('entered')
+      .addColumn('total')
+      .addColumn('comment')
+      .addColumn('selection')
+      .build()
+  );
 
   return (
     <>
@@ -228,7 +149,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
         sortBy={sortBy}
         pagination={{ ...pagination, total: totalLength }}
         onChangePage={onChangePage}
-        tableApi={tableApi}
         columns={columns}
         data={data?.slice(0, numberOfRows) || []}
         isLoading={isLoading}

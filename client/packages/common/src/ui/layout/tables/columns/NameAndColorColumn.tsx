@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { CellProps, Column } from 'react-table';
 import { Color, ColorMenu, UnstyledIconButton } from '../../../components';
 import { Circle } from '../../../icons';
 import { Box } from '@mui/system';
+import { DomainObject } from '../../../..';
+import { ColumnDefinition } from '../columns/types';
 
-type Colorable = {
+interface DomainObjectWithRequiredFields extends DomainObject {
   color: string;
-} & Record<string, unknown>;
+  name: string;
+}
 
-export const getNameAndColorColumn = <T extends Colorable>(
+export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
   onChange: (row: T, color: Color) => void
-): Column<T> => ({
-  id: 'color',
-  align: 'left',
-
-  Cell: ({ row, value }: CellProps<T>) => {
+): ColumnDefinition<T> => ({
+  label: 'label.name',
+  width: 250,
+  key: 'name',
+  Cell: ({ rowData }: { rowData: T }) => {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -39,14 +41,14 @@ export const getNameAndColorColumn = <T extends Colorable>(
           anchorEl={anchorEl}
           onClick={color => {
             handleClose();
-            onChange(row.original, color);
+            onChange(rowData, color);
           }}
         />
         <UnstyledIconButton
           titleKey="button.select-a-color"
           icon={
             <Circle
-              htmlColor={row.original.color}
+              htmlColor={rowData.color}
               sx={{
                 width: '12px',
                 margin: 'margin: 0 9px 0 10px',
@@ -61,7 +63,7 @@ export const getNameAndColorColumn = <T extends Colorable>(
           }}
         />
         <Box ml={1} />
-        {value}
+        {rowData.name}
       </Box>
     );
   },

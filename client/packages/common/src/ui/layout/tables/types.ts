@@ -1,31 +1,9 @@
-import { ObjectWithStringKeys } from './../../../types/utility';
+import { ReactNode } from 'react';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
-import { ReactNode, RefObject } from 'react';
-import { Column } from 'react-table';
+import { ObjectWithStringKeys, DomainObject } from './../../../types';
 import { Pagination } from '../../../hooks/usePagination';
 import { SortBy, SortRule } from '../../../hooks/useSortBy';
-
-export enum ColumnFormat {
-  date,
-  integer,
-  real,
-  text,
-}
-
-export interface ColumnDefinition<T> {
-  label?: LocaleKey;
-  format?: ColumnFormat;
-  key: keyof T;
-  sortable?: boolean; // defaults to true
-  align?: 'left' | 'right' | 'center';
-  width?: number;
-  maxWidth?: number;
-  minWidth?: number;
-}
-
-export enum GenericColumnType {
-  Selection = 'selection',
-}
+import { Column } from './columns/types';
 
 export interface QueryProps<D extends ObjectWithStringKeys> {
   first: number;
@@ -38,14 +16,7 @@ export interface QueryResponse<T> {
   totalLength: number;
 }
 
-export interface DataTableApi<T> {
-  selectAllRows: () => void;
-  deselectAllRows: () => void;
-  toggleSelectAllRows: () => void;
-  selectedRows: T[];
-}
-
-export interface TableProps<T extends Record<string, unknown>> {
+export interface TableProps<T extends DomainObject> {
   columns: Column<T>[];
   data?: T[];
   sortBy: SortBy<T>;
@@ -54,7 +25,6 @@ export interface TableProps<T extends Record<string, unknown>> {
   pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
-  tableApi: RefObject<DataTableApi<T>>;
   children?: ReactNode;
   noDataMessageKey?: LocaleKey;
 }

@@ -2,6 +2,8 @@ import React from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
 import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
+import { useColumns } from '../../hooks';
+import { ColumnSetBuilder } from '../../utils';
 
 export default {
   title: 'Table/DataRow',
@@ -11,61 +13,33 @@ export default {
   },
 } as ComponentMeta<typeof DataRow>;
 
-const cells = [
-  {
-    render: () => <span>11</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
-  },
-  {
-    render: () => <span>General Warehouse</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
-  },
-  {
-    render: () => <span>All items: General warehouse</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
-  },
-  {
-    render: () => <span>52</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
-  },
-  {
-    render: () => <span>25 Nov 2020</span>,
-    getCellProps: () => ({
-      key: Math.random() * 20,
-      style: { width: 'calc(100% / 5)' },
-    }),
-    column: { align: 'left' },
-  },
-  {
-    render: () => <span>In Progress</span>,
-    getCellProps: () => ({ key: Math.random() * 20 }),
-    column: { align: 'left' },
-  },
-] as any;
+const exampleColumns = new ColumnSetBuilder()
+  .addColumn('type')
+  .addColumn('status')
+  .addColumn('comment')
+  .build();
 
-const Template: Story = ({ onClick }) => (
-  <Table>
-    <TableBody>
-      <DataRow cells={cells} rowData={{ id: 'josh' }} onClick={onClick} />
-    </TableBody>
-  </Table>
-);
+const Template: Story = ({ onClick }) => {
+  const columns = useColumns(exampleColumns);
+
+  return (
+    <Table>
+      <TableBody>
+        <DataRow
+          columns={columns}
+          rowKey="rowKey"
+          rowData={{
+            id: '',
+            comment: 'Restock from surge of patients',
+            status: 'Finalised',
+            type: 'Supplier invoice',
+          }}
+          onClick={onClick}
+        />
+      </TableBody>
+    </Table>
+  );
+};
 
 export const Basic = Template.bind({});
 Basic.args = {

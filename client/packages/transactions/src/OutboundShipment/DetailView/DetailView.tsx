@@ -3,7 +3,6 @@ import React, { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import {
-  useRegisterActions,
   AppBarContentPortal,
   Circle,
   Clock,
@@ -37,6 +36,7 @@ import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
 
 const placeholderTransaction: Transaction = {
+  id: '',
   name: '',
   total: '',
   comment: '',
@@ -165,25 +165,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
     return () => setActions([]);
   }, [draft]);
-
-  const detailPanel = useDetailPanel();
-
-  useRegisterActions([
-    {
-      id: 'detail-panel:close-panel',
-      name: 'Detail Panel: Close',
-      shortcut: ['c'],
-      keywords: 'drawer, detail, panel, close',
-      perform: () => detailPanel.close(),
-    },
-    {
-      id: 'detail-panel:open-panel',
-      name: 'Detail Panel: Open',
-      shortcut: ['c'],
-      keywords: 'drawer, detail, panel, open',
-      perform: () => detailPanel.open(),
-    },
-  ]);
 
   const { currentTab, onChangeTab } = useTabs('general');
 

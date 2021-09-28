@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
-import { useRegisterActions } from '@openmsupply-client/common';
+import { DomainObject } from '../../../../types';
 import { Checkbox } from '../../../components/inputs/Checkbox';
-import { Column } from 'react-table';
 import { useTableStore, TableStore } from '../context';
+import { ColumnAlign, ColumnDefinition, GenericColumnKey } from './types';
 
 const useCheckbox = (rowId: string) => {
   const selector = useCallback(
@@ -28,30 +28,15 @@ const useCheckbox = (rowId: string) => {
   return { isSelected, toggleSelected };
 };
 
-export const getCheckboxSelectionColumn = (): Column & {
-  key: string;
-  sortable: boolean;
-} => ({
-  key: 'selection',
+export const getCheckboxSelectionColumn = <
+  T extends DomainObject
+>(): ColumnDefinition<T> => ({
+  key: GenericColumnKey.Selection,
   sortable: false,
-  id: 'selection',
-  align: 'right',
-  disableSortBy: true,
+  align: ColumnAlign.Right,
   width: 40,
-  maxWidth: 40,
-  minWidth: 40,
   Header: () => {
     const { toggleAll, allSelected, someSelected } = useTableStore(state => {
-      useRegisterActions([
-        {
-          id: 'list-view:toggle-all-rows',
-          name: 'List: Toggle all rows',
-          shortcut: ['c'],
-          keywords: 'list, toggle, rows',
-          perform: () => toggleAll(),
-        },
-      ]);
-
       const allSelected =
         state.numberSelected === Object.keys(state.rowState).length;
       return {
@@ -71,8 +56,8 @@ export const getCheckboxSelectionColumn = (): Column & {
       />
     );
   },
-  Cell: ({ row }: { row: { original: { id: string } } }) => {
-    const { isSelected, toggleSelected } = useCheckbox(row.original.id);
+  Cell: ({ rowData }) => {
+    const { isSelected, toggleSelected } = useCheckbox(rowData.id);
 
     return (
       <Checkbox

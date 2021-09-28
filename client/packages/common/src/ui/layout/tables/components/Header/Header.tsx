@@ -1,6 +1,6 @@
 import React, { FC, ReactNode } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
-import { KeyOf, ObjectWithStringKeys } from '../../../../../types/utility';
+import { ObjectWithStringKeys } from '../../../../../types/utility';
 import { SortRule } from '../../../../../hooks/useSortBy';
 import { SortDesc } from '../../../../icons';
 
@@ -23,7 +23,7 @@ interface HeaderCellProps<T extends ObjectWithStringKeys> {
   isSortable: boolean;
   isSorted?: boolean;
   align?: 'left' | 'right' | 'center';
-  id: KeyOf<T>;
+  columnKey: keyof T;
   direction?: 'asc' | 'desc';
   children: ReactNode;
   width?: number;
@@ -35,7 +35,7 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
   isSortable,
   isSorted,
   align,
-  id,
+  columnKey,
   direction,
   children,
   width,
@@ -47,7 +47,7 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
       onClick={
         onSortBy &&
         (() => {
-          isSortable && onSortBy({ key: id });
+          isSortable && onSortBy({ key: columnKey });
         })
       }
       align={align}
@@ -62,7 +62,7 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
         flex: `${width} 0 auto`,
         fontWeight: 'bold',
       }}
-      aria-label={id}
+      aria-label={String(columnKey)}
       sortDirection={isSorted ? direction : false}
     >
       {isSortable ? (

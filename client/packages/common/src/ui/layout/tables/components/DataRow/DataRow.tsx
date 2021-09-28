@@ -1,19 +1,22 @@
 import React from 'react';
-import { Cell } from 'react-table';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+import { Column } from '../../columns/types';
+import { DomainObject } from '../../../../../types';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-interface DataRowProps<T extends object> {
-  cells: Cell<T, any>[];
+interface DataRowProps<T extends DomainObject> {
+  columns: Column<T>[];
   onClick?: (rowValues: T) => void;
   rowData: T;
+  rowKey: string;
 }
 
-export const DataRow = <T extends Record<string, unknown>>({
-  cells,
+export const DataRow = <T extends DomainObject>({
+  columns,
   onClick,
   rowData,
+  rowKey,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
 
@@ -33,14 +36,11 @@ export const DataRow = <T extends Record<string, unknown>>({
       onClick={onRowClick}
       hover={hasOnClick}
     >
-      {cells.map(cell => {
-        const cellProps = cell.getCellProps();
-        const { key: cellKey } = cellProps;
-
+      {columns.map(column => {
         return (
           <TableCell
-            key={cellKey}
-            align={cell.column.align}
+            key={`${rowKey}${column.key}`}
+            align={column.align}
             sx={{
               borderBottom: 'none',
               justifyContent: 'flex-end',
@@ -50,12 +50,17 @@ export const DataRow = <T extends Record<string, unknown>>({
               padding: 0,
               paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
-              flex: `${cell.column.width} 0 auto`,
-              minWidth: cell.column.minWidth,
-              width: cell.column.width,
+              flex: `${column.width} 0 auto`,
+              minWidth: column.minWidth,
+              width: column.width,
             }}
           >
-            {cell.render('Cell')}
+            <column.Cell
+              rowData={rowData}
+              columns={columns}
+              column={column}
+              rowKey={rowKey}
+            />
           </TableCell>
         );
       })}
