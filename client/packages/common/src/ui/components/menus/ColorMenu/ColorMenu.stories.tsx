@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { ColorMenu } from './ColorMenu';
@@ -28,21 +29,23 @@ const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
   return (
     <TestingProvider>
       <ColorMenu onClose={handleClose} anchorEl={anchorEl} onClick={onClick} />
-      <UnstyledIconButton
-        titleKey="app.admin"
-        icon={
-          <Circle
-            htmlColor="red"
-            sx={{
-              width: '12px',
-              margin: 'margin: 0 9px 0 10px',
+      <Box>
+        <UnstyledIconButton
+          titleKey="app.admin"
+          icon={
+            <Circle
+              htmlColor="red"
+              sx={{
+                width: '12px',
+                margin: 'margin: 0 9px 0 10px',
 
-              cursor: 'pointer',
-            }}
-          />
-        }
-        onClick={handleClick}
-      />
+                cursor: 'pointer',
+              }}
+            />
+          }
+          onClick={handleClick}
+        />
+      </Box>
     </TestingProvider>
   );
 };

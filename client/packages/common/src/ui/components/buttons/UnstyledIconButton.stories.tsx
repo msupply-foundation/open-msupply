@@ -1,14 +1,17 @@
 import React from 'react';
+import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { UnstyledIconButton } from './UnstyledIconButton';
 import { Book, SvgIconProps } from '../../icons';
 
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => (
-  <UnstyledIconButton
-    icon={<Book {...args} />}
-    titleKey="button.docs"
-    onClick={() => console.info('clicked')}
-  />
+  <Box>
+    <UnstyledIconButton
+      icon={<Book {...args} />}
+      titleKey="button.docs"
+      onClick={() => console.info('clicked')}
+    />
+  </Box>
 );
 
 export const Primary = Template.bind({});

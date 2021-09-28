@@ -5,7 +5,7 @@ import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
 import { SortRule } from '../useSortBy';
 import { ClientError } from 'graphql-request';
-import { useNotification } from '../..';
+import { useNotification } from '../../hooks';
 
 export interface ListApi<T extends ObjectWithStringKeys> {
   onQuery: ({
