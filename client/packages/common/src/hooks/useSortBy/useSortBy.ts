@@ -21,9 +21,10 @@ export const useSortBy = <T extends ObjectWithStringKeys>({
   key: initialSortKey,
   isDesc: initialIsDesc = false,
 }: SortRule<T>): SortState<T> => {
-  const [sortBy, setSortBy] = useState<SortRule<T>>({
+  const [sortBy, setSortBy] = useState<SortBy<T>>({
     key: initialSortKey,
     isDesc: initialIsDesc,
+    direction: getDirection(initialIsDesc),
   });
 
   const onChangeSortBy = useCallback((newSortRule: SortRule<T>) => {
@@ -36,6 +37,7 @@ export const useSortBy = <T extends ObjectWithStringKeys>({
       newSortBy = {
         key: newSortKey,
         isDesc: newIsDesc,
+        direction: getDirection(newIsDesc),
       };
 
       return newSortBy;
@@ -44,8 +46,5 @@ export const useSortBy = <T extends ObjectWithStringKeys>({
     return { ...newSortBy, direction: getDirection(!!newSortBy?.isDesc) };
   }, []);
 
-  return {
-    sortBy: { ...sortBy, direction: getDirection(!!sortBy.isDesc) },
-    onChangeSortBy,
-  };
+  return { sortBy, onChangeSortBy };
 };

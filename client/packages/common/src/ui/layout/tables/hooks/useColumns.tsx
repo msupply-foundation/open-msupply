@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { DomainObject } from '../../../../types/index';
 import {
   ColumnDefinition,
@@ -24,23 +25,27 @@ export const useColumns = <T extends DomainObject>(
   const formatDate = useFormatDate();
   const defaultAccessor = getAccessor<T>(formatDate);
 
-  return columnsToMap.map(column => {
-    const defaults: Omit<Column<T>, 'key'> = {
-      label: '',
-      format: ColumnFormat.text,
-      sortable: true,
-      Cell: BasicCell,
-      Header: BasicHeader,
-      accessor: defaultAccessor(column),
-      sortType: getSortType(column),
-      sortInverted: column.format === ColumnFormat.date,
-      sortDescFirst: column.format === ColumnFormat.date,
-      align: ColumnAlign.Left,
-      ...getColumnWidths(column),
-    };
+  return useMemo(
+    () =>
+      columnsToMap.map(column => {
+        const defaults: Omit<Column<T>, 'key'> = {
+          label: '',
+          format: ColumnFormat.text,
+          sortable: true,
+          Cell: BasicCell,
+          Header: BasicHeader,
+          accessor: defaultAccessor(column),
+          sortType: getSortType(column),
+          sortInverted: column.format === ColumnFormat.date,
+          sortDescFirst: column.format === ColumnFormat.date,
+          align: ColumnAlign.Left,
+          ...getColumnWidths(column),
+        };
 
-    return { ...defaults, ...column };
-  });
+        return { ...defaults, ...column };
+      }),
+    []
+  );
 };
 
 const getSortType = (column: { format?: ColumnFormat }) => {
