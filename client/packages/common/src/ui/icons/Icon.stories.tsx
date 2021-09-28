@@ -17,6 +17,7 @@ import { Dashboard } from './Dashboard';
 import { Delete } from './Delete';
 import { Download } from './Download';
 import { Edit } from './Edit';
+import { Home } from './Home';
 import { Invoice } from './Invoice';
 import { MSupplyGuy } from './MSupplyGuy';
 import { MenuDots } from './MenuDots';
@@ -34,14 +35,8 @@ import { Stock } from './Stock';
 import { Suppliers } from './Suppliers';
 import { Tools } from './Tools';
 import { Translate } from './Translate';
-import {
-  Box,
-  Grid,
-  Paper,
-  styled,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { User } from './User';
+import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
   title: 'Assets/Svg Icon',
@@ -82,6 +77,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Delete {...args} />, name: 'Delete' },
     { icon: <Download {...args} />, name: 'Download' },
     { icon: <Edit {...args} />, name: 'Edit' },
+    { icon: <Home {...args} />, name: 'Home' },
     { icon: <Invoice {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     { icon: <MenuDots {...args} />, name: 'MenuDots' },
@@ -99,6 +95,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Suppliers {...args} />, name: 'Suppliers' },
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
+    { icon: <User {...args} />, name: 'User' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
@@ -132,5 +129,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
 
 export const Primary = Template.bind({});
 export const Secondary = Template.bind({});
+export const Small = Template.bind({});
 
 Secondary.args = { color: 'secondary' } as SvgIconProps;
+Small.args = { fontSize: 'small' } as SvgIconProps;
