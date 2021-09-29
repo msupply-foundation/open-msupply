@@ -12,7 +12,7 @@ export const useRowRenderCount = (): number => {
   const headerRowHeight = mixins.table.headerRow.height;
   const paginationRowHeight = mixins.table.paginationRow.height;
   const pageFooterHeight = mixins.footer.height;
-  console.info('windowHeight', windowHeight);
+
   const numberOfRowsToRender = Math.floor(
     (windowHeight -
       (height ?? 0) -
