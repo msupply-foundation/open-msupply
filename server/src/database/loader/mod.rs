@@ -4,6 +4,7 @@ mod loader;
 
 mod invoice;
 mod invoice_line;
+mod invoice_line_query;
 mod item;
 mod name;
 mod requisition;
@@ -13,6 +14,7 @@ mod user_account;
 
 pub use invoice::InvoiceLoader;
 pub use invoice_line::{InvoiceLineLoader, InvoiceLineStatsLoader};
+pub use invoice_line_query::InvoiceLineQueryLoader;
 pub use item::ItemLoader;
 pub use loader::get_loaders;
 pub use name::NameLoader;
