@@ -15,7 +15,7 @@ export const getEditableQuantityColumn = <
   width: 100,
   Cell: ({ rowData, rowKey }) => {
     const { quantity } = rowData;
-    const [buffer, setBuffer] = useState(quantity);
+    const [buffer, setBuffer] = useState(String(quantity));
     const [value, setValue] = useState(quantity);
     const [error, setError] = useState(false);
 
@@ -36,12 +36,12 @@ export const getEditableQuantityColumn = <
         setError(true);
       }
 
-      setBuffer(asNumber);
+      setBuffer(value);
     };
 
     useEffect(() => {
       setValue(quantity);
-      setBuffer(quantity);
+      setBuffer(String(quantity));
       setError(false);
     }, [rowData]);
 
