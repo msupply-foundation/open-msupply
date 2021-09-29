@@ -28,10 +28,16 @@ import {
   TabContext,
   createTableStore,
   TableProvider,
+  Item,
+  SetState,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
-import { createDraftStore, useDraftDocument } from '../../useDraftDocument';
+import {
+  createDraftStore,
+  DraftStore,
+  useDraftDocument,
+} from '../../useDraftDocument';
 import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
 
@@ -48,7 +54,44 @@ const placeholderTransaction: Transaction = {
   invoiceNumber: '',
 };
 
-const useDraft = createDraftStore<Transaction>();
+const draftCreator = <T extends Transaction>(
+  original: T,
+  setter: SetState<DraftStore<T>>
+) => {
+  const mappedLines = original.items?.map(line => ({
+    ...line,
+    setQuantity: (rowIdx: number, value: number) => {
+      setter((state: DraftStore<Transaction>) => {
+        if (!state.draft?.items) {
+          return state;
+        }
+
+        const newState = {
+          ...state,
+          draft: {
+            ...state.draft,
+            items: [...state.draft.items],
+          },
+        };
+
+        if (newState.draft.items[rowIdx]) {
+          newState.draft.items[rowIdx] = {
+            ...(newState.draft.items[rowIdx] as Item), // TODO: Type here
+            quantity: value,
+          };
+        }
+
+        return newState;
+      });
+    },
+  }));
+
+  const newDraft = { ...original, items: mappedLines };
+
+  return newDraft;
+};
+
+const useDraft = createDraftStore<Transaction>(draftCreator);
 
 const useDraftOutbound = (id: string) => {
   const queryClient = useQueryClient();
@@ -60,7 +103,6 @@ const useDraftOutbound = (id: string) => {
     ['transaction', id],
     detailQueryFn(id ?? ''),
     updateFn,
-
     // On successfully saving the draft, check if we had just saved a new
     // record - this is indicated by the record having no `id` field.
     // If there was an id field, we would be updating rather than creating.
@@ -164,7 +206,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     ]);
 
     return () => setActions([]);
-  }, [draft]);
+  }, []);
 
   const { currentTab, onChangeTab } = useTabs('general');
 

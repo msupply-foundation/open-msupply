@@ -1,4 +1,4 @@
-import zustand, { UseStore } from 'zustand';
+import zustand, { UseStore, SetState } from 'zustand';
 
 export {
   KBarProvider,
@@ -22,4 +22,4 @@ export * from './styles';
 export * from './localStorage';
 export * from './types';
 
-export { zustand, UseStore };
+export { zustand, UseStore, SetState };

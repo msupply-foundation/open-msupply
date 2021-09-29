@@ -5,6 +5,7 @@ import {
   useColumns,
   useQueryParams,
   useSortedData,
+  getEditableQuantityColumn,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 
@@ -12,20 +13,20 @@ interface GeneralTabProps<T> {
   data: T[];
 }
 
-const defaultColumns = new ColumnSetBuilder<Item>()
-  .addColumn('code')
-  .addColumn('name')
-  .addColumn('packSize')
-  .addColumn('quantity')
-  .build();
-
 export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
-  const columns = useColumns(defaultColumns);
-
   const { pagination } = useQueryParams({ key: 'quantity' });
-  const { sortedData, onChangeSortBy, sortBy } = useSortedData(data, {
+  const { sortedData, onChangeSortBy, sortBy } = useSortedData(data ?? [], {
     key: 'quantity',
   });
+
+  const defaultColumns = new ColumnSetBuilder<Item>()
+    .addColumn('code')
+    .addColumn('name')
+    .addColumn('packSize')
+    .addColumn(getEditableQuantityColumn())
+    .build();
+
+  const columns = useColumns(defaultColumns);
 
   return (
     <RemoteDataTable
