@@ -4,6 +4,7 @@ export { CheckboxChecked } from './CheckboxChecked';
 export { CheckboxIndeterminate } from './CheckboxIndeterminate';
 export { CheckboxEmpty } from './CheckboxEmpty';
 export { ChevronDown } from './ChevronDown';
+export { Circle } from './Circle';
 export { Close } from './Close';
 export { Clock } from './Clock';
 export { Copy } from './Copy';
@@ -12,6 +13,7 @@ export { Dashboard } from './Dashboard';
 export { Delete } from './Delete';
 export { Download } from './Download';
 export { Edit } from './Edit';
+export { Home } from './Home';
 export { Invoice } from './Invoice';
 export { MenuDots } from './MenuDots';
 export { Messages } from './Messages';
@@ -30,7 +32,7 @@ export { Suppliers } from './Suppliers';
 export { Tools } from './Tools';
 export { Translate } from './Translate';
 export { UnhappyMan } from './UnhappyMan';
-export { Circle } from './Circle';
+export { UserIcon } from './User';
 
 type Color =
   | 'inherit'
@@ -45,4 +47,5 @@ type Color =
 
 export interface SvgIconProps {
   color: Color;
+  fontSize?: 'small' | 'medium' | 'large' | 'inherit';
 }

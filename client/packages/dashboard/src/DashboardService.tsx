@@ -60,7 +60,6 @@ const SalesTodayWidget = () => (
 
 const Content = styled('main')({
   flexGrow: 1,
-  height: '100vh',
   overflow: 'auto',
 });
 

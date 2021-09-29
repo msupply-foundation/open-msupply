@@ -32,3 +32,13 @@ export type Test = {
   id: number;
   message: string;
 };
+
+export type User = {
+  id: string;
+  name: string;
+};
+
+export type Store = {
+  id: string;
+  name: string;
+};

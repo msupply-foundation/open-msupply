@@ -16,6 +16,9 @@ declare module '@mui/material/styles/createMixins' {
     icon: {
       medium: { width: number; height: number };
     };
+    footer: {
+      height: number;
+    };
     table: {
       dataRow: { height: number };
       headerRow: { height: number };
@@ -33,6 +36,7 @@ declare module '@mui/material/styles/createPalette' {
   }
   interface TypeBackground {
     menu: string;
+    toolbar: string;
     white: string;
   }
 
@@ -60,6 +64,7 @@ const themeOptions = {
   },
   direction: 'rtl' as Direction,
   mixins: {
+    footer: { height: 32 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
     table: {
@@ -77,6 +82,7 @@ const themeOptions = {
 
     background: {
       menu: '#f2f2f5',
+      toolbar: '#fafafc',
       white: '#fff',
     },
 

@@ -11,9 +11,14 @@ export const useRowRenderCount = (): number => {
   const dataRowHeight = mixins.table.dataRow.height;
   const headerRowHeight = mixins.table.headerRow.height;
   const paginationRowHeight = mixins.table.paginationRow.height;
+  const pageFooterHeight = mixins.footer.height;
 
   const numberOfRowsToRender = Math.floor(
-    (windowHeight - (height ?? 0) - headerRowHeight - paginationRowHeight) /
+    (windowHeight -
+      (height ?? 0) -
+      headerRowHeight -
+      paginationRowHeight -
+      pageFooterHeight) /
       dataRowHeight
   );
 
