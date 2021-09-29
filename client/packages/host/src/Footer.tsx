@@ -5,7 +5,7 @@ import {
   styled,
   Typography,
   useHostContext,
-  User,
+  UserIcon,
 } from '@openmsupply-client/common';
 
 export const Footer: React.FC = () => {
@@ -33,7 +33,7 @@ export const Footer: React.FC = () => {
         <Typography sx={textStyles}>{store.name}</Typography>
       </PaddedCell>
       <PaddedCell>
-        <User sx={iconStyles} />
+        <UserIcon sx={iconStyles} />
         <Typography sx={textStyles}>{user.name}</Typography>
       </PaddedCell>
     </Box>
