@@ -49,4 +49,13 @@ impl InvoiceQueryRepository {
             .limit(pagination.first())
             .load::<InvoiceQueryJoin>(&*connection)?)
     }
+
+    pub async fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceQueryJoin, RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        Ok(invoice_dsl::invoice
+            .filter(invoice_dsl::id.eq(row_id))
+            .inner_join(name_dsl::name_table)
+            .inner_join(store_dsl::store)
+            .first::<InvoiceQueryJoin>(&*connection)?)
+    }
 }

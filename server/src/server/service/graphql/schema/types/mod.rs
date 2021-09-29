@@ -23,6 +23,9 @@ pub use self::item::*;
 pub mod stock_line;
 pub use self::stock_line::*;
 
+pub mod invoice_query;
+pub use self::invoice_query::*;
+
 pub mod invoices;
 pub use self::invoices::*;
 
