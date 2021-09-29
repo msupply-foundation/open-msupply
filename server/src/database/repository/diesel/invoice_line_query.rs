@@ -47,6 +47,19 @@ impl InvoiceLineQueryRepository {
             .load::<InvoiceLineQueryJoin>(&*connection)?)
     }
 
+    /// Returns all invoice lines for the provided invoice ids.
+    pub async fn find_many_by_invoice_ids(
+        &self,
+        invoice_ids: &[String],
+    ) -> Result<Vec<InvoiceLineQueryJoin>, RepositoryError> {
+        let connection = get_connection(&self.pool)?;
+        Ok(invoice_line_dsl::invoice_line
+            .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
+            .inner_join(item_dsl::item)
+            .inner_join(stock_line_dsl::stock_line)
+            .load::<InvoiceLineQueryJoin>(&*connection)?)
+    }
+
     /// Calculates invoice line stats for a given invoice ids
     pub async fn stats(
         &self,

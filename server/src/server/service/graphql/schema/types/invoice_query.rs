@@ -1,9 +1,7 @@
 use crate::{
     database::{
-        loader::InvoiceLineStatsLoader,
-        repository::{
-            InvoiceLineQueryJoin, InvoiceLineQueryRepository, InvoiceLineStats, InvoiceQueryJoin,
-        },
+        loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
+        repository::{InvoiceLineQueryJoin, InvoiceLineStats, InvoiceQueryJoin},
         schema::{InvoiceRowStatus, InvoiceRowType},
     },
     server::service::graphql::ContextExt,
@@ -124,13 +122,14 @@ struct InvoiceLines {
 #[Object]
 impl InvoiceLines {
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceLineNode> {
-        let repository = ctx.get_repository::<InvoiceLineQueryRepository>();
-        let lines = repository
-            .find_many_by_invoice_id(self.invoice_id.as_str())
-            .await
-            .ok()
-            .map_or(Vec::new(), |v| v);
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
 
+        let lines = loader
+            .load_one(self.invoice_id.to_string())
+            .await
+            // TODO handle error:
+            .unwrap()
+            .map_or(Vec::new(), |v| v);
         lines.into_iter().map(InvoiceLineNode::from).collect()
     }
 }
