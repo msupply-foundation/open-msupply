@@ -75,8 +75,8 @@ impl InvoiceNode {
         let result = loader
             .load_one(self.id.to_string())
             .await
-            .ok()
-            .flatten()
+            // TODO report error
+            .unwrap()
             .map_or(
                 InvoiceLineStats {
                     invoice_id: self.id.to_string(),
