@@ -132,6 +132,7 @@ impl From<InvoiceLineQueryJoin> for InvoiceLineNode {
             sell_price_per_pack: invoice_line.sell_price_per_pack,
             batch: invoice_line.batch,
             expiry_date: invoice_line.expiry_date,
+            // TODO resolve stock_line on demand:
             stock_line: StockLine {
                 available_number_of_packs: stock_line.available_number_of_packs
                     + invoice_number_of_packs,
