@@ -10,6 +10,7 @@ const items = [
     name: 'ibuprofen',
     packSize: 2,
     quantity: 100,
+    setQuantity: () => {},
   },
   {
     id: '2',
@@ -17,6 +18,7 @@ const items = [
     name: 'amox',
     packSize: 2,
     quantity: 100,
+    setQuantity: () => {},
   },
 ];
 

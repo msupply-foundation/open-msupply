@@ -8,6 +8,8 @@ import AppBar from '@openmsupply-client/host/src/AppBar';
 
 import { OutboundShipmentListView } from './ListView';
 
+jest.setTimeout(10000);
+
 describe('OutboundShipmentListView', () => {
   it('Renders all the headers for the list', async () => {
     const { getByRole } = render(

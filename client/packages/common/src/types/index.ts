@@ -11,7 +11,8 @@ export interface Item extends DomainObject {
   code: string;
   name: string;
   packSize?: number;
-  quantity?: number;
+  quantity: number;
+  setQuantity: (row: number, newQuantity: number) => void;
 }
 
 export interface Transaction extends DomainObject {

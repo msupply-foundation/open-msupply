@@ -1,16 +1,19 @@
+import { DomainObject } from './../../common/src/types/index';
 import { useEffect } from 'react';
 import {
   UseStore,
   useMutation,
   useQuery,
   zustand,
+  SetState,
 } from '@openmsupply-client/common';
 
-interface DraftStore<T> {
+export interface DraftStore<T extends DomainObject> {
   draft: T | null;
-  setDraft: (draft: T | null) => void;
+  setDraft: (draft: T) => void;
   missingRecord: boolean;
   setMissingRecord: (missing: boolean) => void;
+  createDraft: (seed: T) => void;
 }
 
 /**
@@ -21,11 +24,15 @@ interface DraftStore<T> {
  * while creating a new invoice.
  */
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const createDraftStore = <T>(): UseStore<DraftStore<T>> => {
+export const createDraftStore = <T extends DomainObject>(
+  draftCreator: (data: T, setter: SetState<DraftStore<T>>) => T
+): UseStore<DraftStore<T>> => {
   return zustand<DraftStore<T>>(set => ({
     draft: null,
     setDraft: draft => set(state => ({ ...state, draft })),
+    createDraft: (seed: T) => {
+      return set(state => ({ ...state, draft: draftCreator(seed, set) }));
+    },
     missingRecord: false,
     setMissingRecord: missingRecord =>
       set(state => ({ ...state, missingRecord })),
@@ -85,7 +92,7 @@ type OnSuccessCallback<DocumentType> = (
   variables: Partial<DocumentType>
 ) => void;
 
-export const useDraftDocument = <DocumentType>(
+export const useDraftDocument = <DocumentType extends DomainObject>(
   key: unknown[],
   queryFn: QueryFn<DocumentType>,
   mutateFn: MutateFn<DocumentType>,
@@ -93,7 +100,8 @@ export const useDraftDocument = <DocumentType>(
   useDraftState: UseStore<DraftStore<DocumentType>>,
   placeholderData?: DocumentType
 ): DraftDocumentState<DocumentType> => {
-  const { draft, setDraft, missingRecord, setMissingRecord } = useDraftState();
+  const { draft, setDraft, missingRecord, setMissingRecord, createDraft } =
+    useDraftState();
 
   const { data, isLoading } = useQuery(key, queryFn, {
     placeholderData,
@@ -113,8 +121,9 @@ export const useDraftDocument = <DocumentType>(
     // be completely overwritten. We'd likely need a more complex data structure to be able to compare
     // new changes from the server and current draft changes to merge them together and/or show the
     // user the changes and let them resolve it.
-    setDraft(data ?? null);
-  }, [data]);
+    if (!data) return;
+    createDraft(data);
+  }, [data, setDraft]);
 
   useEffect(() => {
     const isMissing = !key.includes('new') && !data && !isLoading;
