@@ -1,8 +1,8 @@
 pub mod pagination;
 
 use crate::database::repository::{
-    InvoiceLineRepository, InvoiceQueryRepository, RepositoryError, RequisitionRepository,
-    StoreRepository,
+    InvoiceLineRepository, InvoiceQueryRepository, NameQueryFilter, RepositoryError,
+    RequisitionRepository, StoreRepository,
 };
 use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
 use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
@@ -24,8 +24,20 @@ impl Queries {
         &self,
         _ctx: &Context<'_>,
         #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
+        #[graphql(desc = "filters by name")] name: Option<String>,
+        #[graphql(desc = "filters by code")] code: Option<String>,
+        #[graphql(desc = "filters by is_supplier")] is_supplier: Option<bool>,
+        #[graphql(desc = "filters by is_customer")] is_customer: Option<bool>,
     ) -> NameList {
-        NameList { pagination: page }
+        NameList {
+            pagination: page,
+            filter: Some(NameQueryFilter {
+                name,
+                code,
+                is_supplier,
+                is_customer,
+            }),
+        }
     }
 
     pub async fn items(

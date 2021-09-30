@@ -1,4 +1,4 @@
-use crate::database::repository::NameQueryRepository;
+use crate::database::repository::{NameQueryFilter, NameQueryRepository};
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
 use async_graphql::{Context, Object, SimpleObject};
 
@@ -15,6 +15,7 @@ pub struct NameQuery {
 
 pub struct NameList {
     pub pagination: Option<Pagination>,
+    pub filter: Option<NameQueryFilter>,
 }
 
 #[Object]
@@ -26,6 +27,6 @@ impl NameList {
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<NameQuery> {
         let repository = ctx.get_repository::<NameQueryRepository>();
-        repository.all(&self.pagination).unwrap()
+        repository.all(&self.pagination, &self.filter).unwrap()
     }
 }
