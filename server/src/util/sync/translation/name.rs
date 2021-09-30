@@ -1,4 +1,7 @@
-use crate::database::schema::{CentralSyncBufferRow, NameRow};
+use crate::{
+    database::schema::{CentralSyncBufferRow, NameRow},
+    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_NAME},
+};
 
 use serde::Deserialize;
 
@@ -13,12 +16,18 @@ pub struct LegacyNameRow {
 }
 
 impl LegacyNameRow {
-    pub fn try_translate(sync_record: &CentralSyncBufferRow) -> Result<Option<NameRow>, String> {
-        if sync_record.table_name != "name" {
+    pub fn try_translate(
+        sync_record: &CentralSyncBufferRow,
+    ) -> Result<Option<NameRow>, SyncTranslationError> {
+        let table_name = TRANSLATION_RECORD_NAME;
+
+        if sync_record.table_name != table_name {
             return Ok(None);
         }
+
         let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+            .map_err(|source| SyncTranslationError { table_name, source })?;
+
         Ok(Some(NameRow {
             id: data.ID.to_string(),
             name: data.name.to_string(),

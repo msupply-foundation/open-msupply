@@ -8,7 +8,7 @@ pub mod test_data;
 
 use crate::{
     database::{
-        repository::{repository::IntegrationUpsertRecord, IntegrationRecord, SyncRepository},
+        repository::{IntegrationRecord, IntegrationUpsertRecord, RepositoryError, SyncRepository},
         schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
@@ -20,12 +20,35 @@ use self::{
     name::LegacyNameRow, store::LegacyStoreRow,
 };
 
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+#[error("Failed to translate {table_name} sync record")]
+pub struct SyncTranslationError {
+    table_name: &'static str,
+    source: serde_json::Error,
+}
+
+#[derive(Error, Debug)]
+pub enum SyncImportError {
+    #[error("Failed to translate sync records")]
+    TranslationError {
+        #[from]
+        source: SyncTranslationError,
+    },
+    #[error("Failed to integrate sync records")]
+    IntegrationError {
+        #[from]
+        source: RepositoryError,
+    },
+}
+
 /// Translates sync records into the local DB schema.
 /// Translated records are added to integration_records.
 fn do_translation(
     sync_record: &CentralSyncBufferRow,
     integration_records: &mut IntegrationRecord,
-) -> Result<(), String> {
+) -> Result<(), SyncTranslationError> {
     if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
         integration_records
             .upserts
@@ -80,15 +103,22 @@ fn do_translation(
     Ok(()) // At this point we are either ignoring records or record_types
 }
 
+pub const TRANSLATION_RECORD_NAME: &str = "name";
+pub const TRANSLATION_RECORD_ITEM: &str = "item";
+pub const TRANSLATION_RECORD_STORE: &str = "store";
+pub const TRANSLATION_RECORD_LIST_MASTER: &str = "list_master";
+pub const TRANSLATION_RECORD_LIST_MASTER_LINE: &str = "list_master_line";
+pub const TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN: &str = "list_master_name_join";
+
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
-pub const TRANSLATION_RECORDS: &'static [&'static str] = &[
-    "name",
-    "item",
-    "store",
-    "list_master",
-    "list_master_line",
-    "list_master_name_join",
+pub const TRANSLATION_RECORDS: &[&str] = &[
+    TRANSLATION_RECORD_NAME,
+    TRANSLATION_RECORD_ITEM,
+    TRANSLATION_RECORD_STORE,
+    TRANSLATION_RECORD_LIST_MASTER,
+    TRANSLATION_RECORD_LIST_MASTER_LINE,
+    TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
 ];
 
 /// Imports sync records and writes them to the DB
@@ -96,7 +126,7 @@ pub const TRANSLATION_RECORDS: &'static [&'static str] = &[
 pub async fn import_sync_records(
     registry: &RepositoryRegistry,
     records: &Vec<CentralSyncBufferRow>,
-) -> Result<(), String> {
+) -> Result<(), SyncImportError> {
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),
     };
@@ -105,10 +135,8 @@ pub async fn import_sync_records(
     }
 
     let sync_repo = registry.get::<SyncRepository>();
-    sync_repo
-        .integrate_records(&integration_records)
-        .await
-        .map_err(|e| format!("Sync Error: {}", e))?;
+    sync_repo.integrate_records(&integration_records).await?;
+
     Ok(())
 }
 

@@ -1,4 +1,7 @@
-use crate::database::schema::{CentralSyncBufferRow, MasterListLineRow};
+use crate::{
+    database::schema::{CentralSyncBufferRow, MasterListLineRow},
+    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE},
+};
 
 use serde::Deserialize;
 
@@ -13,12 +16,15 @@ pub struct LegacyListMasterLineRow {
 impl LegacyListMasterLineRow {
     pub fn try_translate(
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<MasterListLineRow>, String> {
-        if sync_record.table_name != "list_master_line" {
+    ) -> Result<Option<MasterListLineRow>, SyncTranslationError> {
+        let table_name = TRANSLATION_RECORD_LIST_MASTER_LINE;
+
+        if sync_record.table_name != table_name {
             return Ok(None);
         }
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)
-            .map_err(|_| "Deserialization Error".to_string())?;
+            .map_err(|source| SyncTranslationError { table_name, source })?;
+
         Ok(Some(MasterListLineRow {
             id: data.ID,
             item_id: data.item_ID,
