@@ -42,9 +42,14 @@ impl From<NameAndNameStoreJoin> for NameQuery {
     }
 }
 
+pub struct NameQueryStringFilter {
+    pub equal_to: Option<String>,
+    pub like: Option<String>,
+}
+
 pub struct NameQueryFilter {
-    pub name: Option<String>,
-    pub code: Option<String>,
+    pub name: Option<NameQueryStringFilter>,
+    pub code: Option<NameQueryStringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
 }
@@ -80,11 +85,19 @@ impl NameQueryRepository {
             .into_boxed();
 
         if let Some(f) = filter {
-            if let Some(code) = f.code.to_owned() {
-                query = query.filter(name_table_dsl::code.eq(code));
+            if let Some(code) = &f.code {
+                if let Some(eq) = &code.equal_to {
+                    query = query.filter(name_table_dsl::code.eq(eq));
+                } else if let Some(like) = &code.like {
+                    query = query.filter(name_table_dsl::code.like(format!("%{}%", like)));
+                }
             }
-            if let Some(name) = f.name.to_owned() {
-                query = query.filter(name_table_dsl::name.eq(name));
+            if let Some(name) = &f.name {
+                if let Some(eq) = &name.equal_to {
+                    query = query.filter(name_table_dsl::name.eq(eq));
+                } else if let Some(like) = &name.like {
+                    query = query.filter(name_table_dsl::name.like(format!("%{}%", like)));
+                }
             }
             if let Some(is_customer) = f.is_customer {
                 query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));

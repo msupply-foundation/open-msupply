@@ -295,8 +295,9 @@ mod repository_test {
                 CustomerInvoiceRepository, DBBackendConnection, DBConnection,
                 InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
                 ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-                NameQueryFilter, NameQueryRepository, NameRepository, RequisitionLineRepository,
-                RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
+                NameQueryFilter, NameQueryRepository, NameQueryStringFilter, NameRepository,
+                RequisitionLineRepository, RequisitionRepository, StockLineRepository,
+                StoreRepository, UserAccountRepository,
             },
             schema::{
                 CentralSyncBufferRow, InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow,
@@ -339,7 +340,10 @@ mod repository_test {
             .all(
                 &None,
                 &Some(NameQueryFilter {
-                    name: Some("name_1".to_string()),
+                    name: Some(NameQueryStringFilter {
+                        equal_to: Some("name_1".to_string()),
+                        like: None,
+                    }),
                     code: None,
                     is_customer: None,
                     is_supplier: None,
@@ -347,13 +351,33 @@ mod repository_test {
             )
             .unwrap();
         assert_eq!(result.len(), 1);
+        assert_eq!(result.get(0).unwrap().name, "name_1");
+
+        let result = repo
+            .all(
+                &None,
+                &Some(NameQueryFilter {
+                    name: Some(NameQueryStringFilter {
+                        equal_to: None,
+                        like: Some("me_".to_string()),
+                    }),
+                    code: None,
+                    is_customer: None,
+                    is_supplier: None,
+                }),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 3);
 
         let result = repo
             .all(
                 &None,
                 &Some(NameQueryFilter {
                     name: None,
-                    code: Some("code1".to_string()),
+                    code: Some(NameQueryStringFilter {
+                        equal_to: Some("code1".to_string()),
+                        like: None,
+                    }),
                     is_customer: None,
                     is_supplier: None,
                 }),

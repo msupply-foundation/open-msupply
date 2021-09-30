@@ -1,6 +1,6 @@
-use crate::database::repository::{NameQueryFilter, NameQueryRepository};
+use crate::database::repository::{NameQueryFilter, NameQueryRepository, NameQueryStringFilter};
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
-use async_graphql::{Context, Object, SimpleObject};
+use async_graphql::{Context, InputObject, Object, SimpleObject};
 
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(name = "Name")]
@@ -16,6 +16,41 @@ pub struct NameQuery {
 pub struct NameList {
     pub pagination: Option<Pagination>,
     pub filter: Option<NameQueryFilter>,
+}
+
+#[derive(InputObject)]
+pub struct NameStringFilter {
+    equal_to: Option<String>,
+    like: Option<String>,
+}
+
+impl From<NameStringFilter> for NameQueryStringFilter {
+    fn from(f: NameStringFilter) -> Self {
+        NameQueryStringFilter {
+            equal_to: f.equal_to,
+            like: f.like,
+        }
+    }
+}
+
+#[derive(InputObject)]
+
+pub struct NameFilter {
+    pub name: Option<NameStringFilter>,
+    pub code: Option<NameStringFilter>,
+    pub is_customer: Option<bool>,
+    pub is_supplier: Option<bool>,
+}
+
+impl From<NameFilter> for NameQueryFilter {
+    fn from(f: NameFilter) -> Self {
+        NameQueryFilter {
+            name: f.name.map(NameQueryStringFilter::from),
+            code: f.code.map(NameQueryStringFilter::from),
+            is_customer: f.is_customer,
+            is_supplier: f.is_supplier,
+        }
+    }
 }
 
 #[Object]
