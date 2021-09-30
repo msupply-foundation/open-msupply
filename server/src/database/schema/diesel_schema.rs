@@ -32,8 +32,7 @@ table! {
         sell_price_per_pack -> Double,
         available_number_of_packs -> Integer,
         total_number_of_packs -> Integer,
-        // TODO: Timestamp or Date? use Timestamp for now since it could also be used as a Date
-        expiry_date -> Nullable<Timestamp>,
+        expiry_date -> Nullable<Date>,
     }
 }
 
@@ -110,8 +109,7 @@ table! {
         item_id -> Text,
         stock_line_id -> Nullable<Text>,
         batch -> Nullable<Text>,
-        // TODO: Timestamp or Date? use Timestamp for now since it could also be used as a Date
-        expiry_date -> Nullable<Timestamp>,
+        expiry_date -> Nullable<Date>,
         pack_size -> Integer,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
