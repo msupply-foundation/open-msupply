@@ -18,6 +18,7 @@ import {
   useDetailPanel,
   useFormatDate,
   useHostContext,
+  useModal,
   useNotification,
   useQueryClient,
   useTranslation,
@@ -30,6 +31,8 @@ import {
   TableProvider,
   Item,
   SetState,
+  Button,
+  PlusCircle,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -138,6 +141,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
+  const { showModal, Modal } = useModal({
+    body: <Typography>Some stuff goes in here</Typography>,
+  });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 
   const copyToClipboard = () => {
@@ -212,7 +218,15 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   return draft ? (
     <TabContext value={String(currentTab)}>
-      <Portal container={appBarButtonsRef?.current}>{OpenButton}</Portal>
+      {Modal}
+      <Portal container={appBarButtonsRef?.current}>
+        <Button
+          labelKey="button.add-item"
+          icon={<PlusCircle />}
+          onClick={showModal}
+        />
+        {OpenButton}
+      </Portal>
 
       <AppBarContentPortal
         sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
