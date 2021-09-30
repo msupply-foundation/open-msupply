@@ -8,10 +8,7 @@ pub mod test_data;
 
 use crate::{
     database::{
-        repository::{
-            repository::{IntegrationUpsertRecord, SyncSession},
-            IntegrationRecord, RepositoryError, SyncRepository,
-        },
+        repository::{IntegrationRecord, IntegrationUpsertRecord, RepositoryError, SyncRepository},
         schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
@@ -127,7 +124,6 @@ pub const TRANSLATION_RECORDS: &[&str] = &[
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
 pub async fn import_sync_records(
-    sync_session: &SyncSession,
     registry: &RepositoryRegistry,
     records: &Vec<CentralSyncBufferRow>,
 ) -> Result<(), SyncImportError> {
@@ -139,9 +135,7 @@ pub async fn import_sync_records(
     }
 
     let sync_repo = registry.get::<SyncRepository>();
-    sync_repo
-        .integrate_records(sync_session, &integration_records)
-        .await?;
+    sync_repo.integrate_records(&integration_records).await?;
 
     Ok(())
 }
@@ -149,7 +143,7 @@ pub async fn import_sync_records(
 #[cfg(test)]
 mod tests {
     use crate::{
-        database::repository::repository::{get_repositories, SyncRepository},
+        database::repository::repository::get_repositories,
         server::data::RepositoryRegistry,
         util::{
             sync::translation::{import_sync_records, test_data::store::get_test_store_records},
@@ -184,18 +178,9 @@ mod tests {
         records.append(&mut get_test_master_list_line_records());
         records.append(&mut get_test_master_list_name_join_records());
 
-        let sync_session = registry
-            .get::<SyncRepository>()
-            .new_sync_session()
+        import_sync_records(&registry, &extract_sync_buffer_rows(&records))
             .await
             .unwrap();
-        import_sync_records(
-            &sync_session,
-            &registry,
-            &extract_sync_buffer_rows(&records),
-        )
-        .await
-        .unwrap();
 
         // Asserts inside this method, to avoid repetition
         check_records_against_database(&registry, records).await;
@@ -222,18 +207,10 @@ mod tests {
         let mut records = Vec::new();
         records.append(&mut init_records.iter().cloned().collect());
         records.append(&mut upsert_records.iter().cloned().collect());
-        let sync_session = registry
-            .get::<SyncRepository>()
-            .new_sync_session()
+
+        import_sync_records(&registry, &extract_sync_buffer_rows(&records))
             .await
             .unwrap();
-        import_sync_records(
-            &sync_session,
-            &registry,
-            &extract_sync_buffer_rows(&records),
-        )
-        .await
-        .unwrap();
 
         // Asserts inside this method, to avoid repetition
         check_records_against_database(&registry, upsert_records).await;

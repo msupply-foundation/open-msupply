@@ -1,19 +1,19 @@
 mod central_sync_buffer;
 mod central_sync_cursor;
+mod invoice;
+mod invoice_line;
 mod item;
-mod stock_line;
 mod master_list;
 mod master_list_line;
 mod master_list_name_join;
 mod name;
+mod name_store_join;
 mod requisition;
 mod requisition_line;
+mod stock_line;
 mod store;
 mod sync_out;
-mod transact;
-mod transact_line;
 mod user_account;
-mod name_store_join;
 
 pub mod diesel_schema;
 
@@ -25,25 +25,25 @@ pub enum DatabaseRow {
     Requisition(RequisitionRow),
     RequisitionLine(RequisitionLineRow),
     Store(StoreRow),
-    Transact(TransactRow),
-    TransactLine(TransactLineRow),
+    Invoice(InvoiceRow),
+    InvoiceLine(InvoiceLineRow),
     UserAccount(UserAccountRow),
     SyncOut(SyncOutRow),
 }
 
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use central_sync_cursor::CentralSyncCursorRow;
+pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+pub use invoice_line::InvoiceLineRow;
 pub use item::ItemRow;
-pub use stock_line::StockLineRow;
 pub use master_list::MasterListRow;
 pub use master_list_line::MasterListLineRow;
 pub use master_list_name_join::MasterListNameJoinRow;
 pub use name::NameRow;
+pub use name_store_join::NameStoreJoinRow;
 pub use requisition::{RequisitionRow, RequisitionRowType};
 pub use requisition_line::RequisitionLineRow;
+pub use stock_line::StockLineRow;
 pub use store::StoreRow;
 pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
-pub use transact::{TransactRow, TransactRowType};
-pub use transact_line::{TransactLineRow, TransactLineRowType};
 pub use user_account::UserAccountRow;
-pub use name_store_join::NameStoreJoinRow;

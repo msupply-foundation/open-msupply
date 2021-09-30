@@ -1,18 +1,18 @@
 use crate::{
     database::{
         loader::{
-            ItemLoader, NameLoader, RequisitionLineLoader, RequisitionLoader, StockLineLoader,
-            StoreLoader, TransactLineLoader, TransactLoader, UserAccountLoader,
+            InvoiceLineLoader, InvoiceLoader, ItemLoader, NameLoader, RequisitionLineLoader,
+            RequisitionLoader, StockLineLoader, StoreLoader, UserAccountLoader,
         },
         mock,
         repository::{
-            ItemRepository, NameRepository, RequisitionLineRepository, RequisitionRepository,
-            StockLineRepository, StoreRepository, TransactLineRepository, TransactRepository,
+            InvoiceLineRepository, InvoiceRepository, ItemRepository, NameRepository,
+            RequisitionLineRepository, RequisitionRepository, StockLineRepository, StoreRepository,
             UserAccountRepository,
         },
         schema::{
-            DatabaseRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, StockLineRow,
-            StoreRow, TransactLineRow, TransactRow, UserAccountRow,
+            DatabaseRow, InvoiceLineRow, InvoiceRow, ItemRow, NameRow, RequisitionLineRow,
+            RequisitionRow, StockLineRow, StoreRow, UserAccountRow,
         },
     },
     server::data::LoaderMap,
@@ -69,19 +69,19 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
         mock_data.insert(store.id.to_string(), DatabaseRow::Store(store.clone()));
     }
 
-    let mock_transacts: Vec<TransactRow> = mock::mock_transacts();
-    for transact in mock_transacts {
+    let mock_invoices: Vec<InvoiceRow> = mock::mock_invoices();
+    for invoice in mock_invoices {
         mock_data.insert(
-            transact.id.to_string(),
-            DatabaseRow::Transact(transact.clone()),
+            invoice.id.to_string(),
+            DatabaseRow::invoice(invoice.clone()),
         );
     }
 
-    let mock_transact_lines: Vec<TransactLineRow> = mock::mock_transact_lines();
-    for transact_line in mock_transact_lines {
+    let mock_invoice_lines: Vec<InvoiceLineRow> = mock::mock_invoice_lines();
+    for invoice_line in mock_invoice_lines {
         mock_data.insert(
-            transact_line.id.to_string(),
-            DatabaseRow::TransactLine(transact_line.clone()),
+            invoice_line.id.to_string(),
+            DatabaseRow::invoiceLine(invoice_line.clone()),
         );
     }
 
@@ -114,14 +114,12 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     let store_repository = StoreRepository::new(Arc::clone(&mock_data));
     let store_loader = DataLoader::new(StoreLoader { store_repository });
 
-    let transact_repository = TransactRepository::new(Arc::clone(&mock_data));
-    let transact_loader = DataLoader::new(TransactLoader {
-        transact_repository,
-    });
+    let invoice_repository = InvoiceRepository::new(Arc::clone(&mock_data));
+    let invoice_loader = DataLoader::new(InvoiceLoader { invoice_repository });
 
-    let transact_line_repository = TransactLineRepository::new(Arc::clone(&mock_data));
-    let transact_line_loader = DataLoader::new(TransactLineLoader {
-        transact_line_repository,
+    let invoice_line_repository = InvoiceLineRepository::new(Arc::clone(&mock_data));
+    let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
+        invoice_line_repository,
     });
 
     let user_account_repository = UserAccountRepository::new(Arc::clone(&mock_data));
@@ -134,8 +132,8 @@ pub async fn get_loaders(_settings: &Settings) -> LoaderMap {
     loaders.insert(requisition_line_loader);
     loaders.insert(name_loader);
     loaders.insert(store_loader);
-    loaders.insert(transact_loader);
-    loaders.insert(transact_line_loader);
+    loaders.insert(invoice_loader);
+    loaders.insert(invoice_line_loader);
     loaders.insert(user_account_loader);
 
     loaders

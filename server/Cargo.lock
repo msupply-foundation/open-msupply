@@ -130,7 +130,7 @@ dependencies = [
  "serde_urlencoded",
  "sha-1 0.9.8",
  "slab",
- "time",
+ "time 0.2.27",
 ]
 
 [[package]]
@@ -296,7 +296,7 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "socket2 0.3.19",
- "time",
+ "time 0.2.27",
  "tinyvec",
  "url",
 ]
@@ -455,6 +455,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "bytes 1.1.0",
+ "chrono",
  "fnv",
  "futures-channel",
  "futures-timer",
@@ -893,6 +894,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chrono"
+version = "0.4.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+dependencies = [
+ "libc",
+ "num-integer",
+ "num-traits 0.2.14",
+ "serde 1.0.130",
+ "time 0.1.43",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -936,7 +951,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03a5d7b21829bc7b4bf4754a978a241ae54ea55a40f92bb20216e54096f4b951"
 dependencies = [
  "percent-encoding",
- "time",
+ "time 0.2.27",
  "version_check",
 ]
 
@@ -1115,6 +1130,7 @@ dependencies = [
  "bigdecimal",
  "bitflags",
  "byteorder",
+ "chrono",
  "diesel_derives",
  "libsqlite3-sys",
  "num-bigint",
@@ -2706,6 +2722,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
+ "chrono",
  "config",
  "diesel",
  "diesel-derive-enum",
@@ -3240,6 +3257,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
 dependencies = [
  "num_cpus",
+]
+
+[[package]]
+name = "time"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
+dependencies = [
+ "libc",
+ "winapi 0.3.9",
 ]
 
 [[package]]

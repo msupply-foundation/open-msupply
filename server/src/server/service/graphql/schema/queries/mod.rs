@@ -1,13 +1,14 @@
 pub mod pagination;
 
 use crate::database::repository::{
-    RequisitionRepository, StoreRepository, TransactLineRepository, TransactRepository,
+    InvoiceLineRepository, InvoiceQueryRepository, RepositoryError, RequisitionRepository,
+    StoreRepository,
 };
-use crate::database::schema::{RequisitionRow, StoreRow, TransactLineRow, TransactRow};
-use crate::server::service::graphql::schema::types::{Requisition, Store, Transact, TransactLine};
+use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
+use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
 use crate::server::service::graphql::ContextExt;
 
-use super::types::{ItemList, NameList};
+use super::types::{InvoiceList, InvoiceNode, ItemList, NameList};
 use async_graphql::{Context, Object};
 use pagination::Pagination;
 pub struct Queries;
@@ -35,6 +36,25 @@ impl Queries {
         ItemList { pagination: page }
     }
 
+    // TODO return better error
+    pub async fn invoice(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "id of the invoice")] id: String,
+    ) -> Result<InvoiceNode, RepositoryError> {
+        let repository = ctx.get_repository::<InvoiceQueryRepository>();
+        let invoice = repository.find_one_by_id(id.as_str()).await?;
+        Ok(InvoiceNode::from(invoice))
+    }
+
+    pub async fn invoices(
+        &self,
+        _ctx: &Context<'_>,
+        #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
+    ) -> InvoiceList {
+        InvoiceList { pagination: page }
+    }
+
     pub async fn store(
         &self,
         ctx: &Context<'_>,
@@ -50,34 +70,19 @@ impl Queries {
         Store { store_row }
     }
 
-    pub async fn transact(
+    pub async fn invoice_line(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "id of the transact")] id: String,
-    ) -> Transact {
-        let transact_repository = ctx.get_repository::<TransactRepository>();
+        #[graphql(desc = "id of the invoice line")] id: String,
+    ) -> InvoiceLine {
+        let invoice_line_repository = ctx.get_repository::<InvoiceLineRepository>();
 
-        let transact_row: TransactRow = transact_repository
+        let invoice_line_row: InvoiceLineRow = invoice_line_repository
             .find_one_by_id(&id)
             .await
-            .unwrap_or_else(|_| panic!("Failed to get transact {}", id));
+            .unwrap_or_else(|_| panic!("Failed to get invoice line {}", id));
 
-        Transact { transact_row }
-    }
-
-    pub async fn transact_line(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "id of the transact line")] id: String,
-    ) -> TransactLine {
-        let transact_line_repository = ctx.get_repository::<TransactLineRepository>();
-
-        let transact_line_row: TransactLineRow = transact_line_repository
-            .find_one_by_id(&id)
-            .await
-            .unwrap_or_else(|_| panic!("Failed to get transact line {}", id));
-
-        TransactLine { transact_line_row }
+        InvoiceLine { invoice_line_row }
     }
 
     pub async fn requisition(
