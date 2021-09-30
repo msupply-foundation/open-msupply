@@ -32,10 +32,10 @@ mSupply remote server is a component of the Open mSupply system:
 
 ## Getting started
 
-- Install [sqlx-cli](https://crates.io/crates/sqlx-cli/0.1.0-beta.1):
+- Install [diesel_cli](https://crates.io/crates/diesel_cli):
 
 ```
-cargo install sqlx-cli --no-default-features --features postgres
+cargo install diesel_cli
 ```
 
 - Pull the latest [Postgres]() image and initialise the Docker container:
@@ -47,14 +47,29 @@ cargo install sqlx-cli --no-default-features --features postgres
 - Migrate database tables:
 
 ```
-export DATABASE_URL=postgres://postgres:password@localhost:5432/omsupply-database sqlx migrate --source migrations/pg run
+# postgres
+diesel migration run --migration-dir ./migrations/postgres/
+
+# sqlite
+diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ./migrations/sqlite/
 ```
 
 - Build and start the remote server:
 
 ```
-SQLX_OFFLINE=true cargo build # optionally force build in offline mode
 APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
+```
+
+## Tests
+
+- To run all tests:
+
+```
+# postgres
+cargo test --features postgres
+
+# sqlite
+cargo test --features sqlite
 ```
 
 ## Building docs
