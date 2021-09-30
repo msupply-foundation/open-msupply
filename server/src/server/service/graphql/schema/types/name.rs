@@ -1,6 +1,22 @@
-use crate::database::repository::{NameQueryFilter, NameQueryRepository, NameQueryStringFilter};
+use crate::database::repository::{
+    NameQueryFilter, NameQueryRepository, NameQuerySortField, NameQuerySortOption,
+    NameQueryStringFilter,
+};
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
-use async_graphql::{Context, InputObject, Object, SimpleObject};
+use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
+
+#[derive(InputObject)]
+pub struct NameSortOption {
+    key: NameSortField,
+    desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "crate::database::repository::repository::NameQuerySortField")]
+enum NameSortField {
+    Name,
+    Code,
+}
 
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(name = "Name")]
@@ -16,6 +32,7 @@ pub struct NameQuery {
 pub struct NameList {
     pub pagination: Option<Pagination>,
     pub filter: Option<NameQueryFilter>,
+    pub sort: Option<NameSortOption>,
 }
 
 #[derive(InputObject)]
@@ -62,6 +79,15 @@ impl NameList {
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<NameQuery> {
         let repository = ctx.get_repository::<NameQueryRepository>();
-        repository.all(&self.pagination, &self.filter).unwrap()
+        repository
+            .all(
+                &self.pagination,
+                &self.filter,
+                &self.sort.as_ref().map(|opt| NameQuerySortOption {
+                    key: NameQuerySortField::from(opt.key),
+                    desc: opt.desc,
+                }),
+            )
+            .unwrap()
     }
 }

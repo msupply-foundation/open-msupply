@@ -8,7 +8,7 @@ use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
 use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
 use crate::server::service::graphql::ContextExt;
 
-use super::types::{InvoiceList, InvoiceNode, ItemList, NameFilter, NameList};
+use super::types::{InvoiceList, InvoiceNode, ItemList, NameFilter, NameList, NameSortOption};
 use async_graphql::{Context, Object};
 use pagination::Pagination;
 pub struct Queries;
@@ -24,11 +24,13 @@ impl Queries {
         &self,
         _ctx: &Context<'_>,
         #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
-        #[graphql(desc = "filters")] filter: Option<NameFilter>,
+        #[graphql(desc = "filters option")] filter: Option<NameFilter>,
+        #[graphql(desc = "sort options")] sort: Option<NameSortOption>,
     ) -> NameList {
         NameList {
             pagination: page,
             filter: filter.map(NameQueryFilter::from),
+            sort,
         }
     }
 
