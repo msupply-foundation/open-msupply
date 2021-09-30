@@ -1,4 +1,5 @@
 use async_graphql::{Context, Object, SimpleObject};
+use chrono::{DateTime, Utc};
 use std::convert::TryInto;
 
 use crate::database::schema::StockLineRow;
@@ -43,7 +44,7 @@ impl From<StockLineRow> for StockLineQuery {
             sell_price_per_pack,
             available_number_of_packs,
             total_number_of_packs,
-            expiry_date,
+            expiry_date: expiry_date.map(|v| DateTime::<Utc>::from_utc(v, Utc).to_rfc3339()),
         }
     }
 }

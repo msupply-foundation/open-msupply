@@ -58,8 +58,12 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     const MIGRATION_PATH: &str = "sqlite";
 
     let db_path = format!("./{}.sqlite", db_settings.database_name);
-
     fs::remove_file(&db_path).ok();
+
+    // create parent dirs
+    let path = std::path::Path::new(&db_path);
+    let prefix = path.parent().unwrap();
+    fs::create_dir_all(prefix).unwrap();
 
     let connection = SqliteConnection::establish(&db_path).unwrap();
 
@@ -75,6 +79,17 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     }
 }
 
+#[cfg(feature = "postgres")]
+fn make_test_db_name(base_name: String) -> String {
+    base_name
+}
+
+#[cfg(feature = "sqlite")]
+fn make_test_db_name(base_name: String) -> String {
+    // store all test db files in a test directory
+    format!("test_output/{}", base_name)
+}
+
 // The following settings work for PG and Sqlite (username, password, host and port are
 // ignored for the later)
 pub fn get_test_settings(db_name: &str) -> Settings {
@@ -88,7 +103,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             password: "password".to_string(),
             port: 5432,
             host: "localhost".to_string(),
-            database_name: db_name.to_owned(),
+            database_name: make_test_db_name(db_name.to_owned()),
         },
         sync: SyncSettings {
             username: "postgres".to_string(),
