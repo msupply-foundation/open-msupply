@@ -348,6 +348,7 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 1);
@@ -365,6 +366,7 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 3);
@@ -381,6 +383,7 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 2);
