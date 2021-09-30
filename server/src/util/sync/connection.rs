@@ -151,8 +151,7 @@ impl SyncConnection {
                 .collect(),
         };
 
-        let response = self
-            .client
+        self.client
             .post(url)
             .basic_auth(&self.credentials.username, Some(&self.credentials.password))
             .body(serde_json::to_string(&body).unwrap_or_default())

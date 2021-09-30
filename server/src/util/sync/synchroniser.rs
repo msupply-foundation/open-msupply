@@ -1,6 +1,7 @@
 use crate::{
-    database::repository::{
-        CentralSyncBufferRepository, CentralSyncCursorRepository, RepositoryError, SyncRepository,
+    database::{
+        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository, RepositoryError},
+        schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
     util::sync::{
@@ -159,21 +160,19 @@ impl Synchroniser {
     ) -> Result<(), CentralSyncError> {
         let central_sync_buffer_repository: &CentralSyncBufferRepository =
             registry.get::<CentralSyncBufferRepository>();
-        let sync_session = registry
-            .get::<SyncRepository>()
-            .new_sync_session()
-            .await
-            .unwrap();
+
+        let mut records: Vec<CentralSyncBufferRow> = Vec::new();
         for table_name in TRANSLATION_RECORDS {
-            let buffer_rows = central_sync_buffer_repository
+            let mut buffer_rows = central_sync_buffer_repository
                 .get_sync_entries(table_name)
                 .await
                 .map_err(|source| CentralSyncError::GetCentralSyncBufferRecordsError { source })?;
-
-            import_sync_records(&sync_session, &registry, &buffer_rows)
-                .await
-                .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
+            records.append(&mut buffer_rows);
         }
+
+        import_sync_records(registry, &records)
+            .await
+            .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
 
         central_sync_buffer_repository
             .remove_all()
