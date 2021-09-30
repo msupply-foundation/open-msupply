@@ -8,7 +8,7 @@ use crate::{
 };
 
 use async_graphql::{dataloader::DataLoader, ComplexObject, Context, Enum, Object, SimpleObject};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InvoiceType {
@@ -146,7 +146,7 @@ pub struct InvoiceLineNode {
     cost_price_per_pack: f64,
     sell_price_per_pack: f64,
     batch: Option<String>,
-    expiry_date: Option<NaiveDateTime>,
+    expiry_date: Option<NaiveDate>,
     stock_line: StockLine,
 }
 
