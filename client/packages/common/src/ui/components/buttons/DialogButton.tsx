@@ -8,9 +8,10 @@ type Color = 'primary' | 'secondary';
 
 interface DialogButtonProps {
   color?: Color;
-  icon: React.ReactNode;
-  labelKey: LocaleKey;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  icon?: React.ReactNode;
+  labelKey?: LocaleKey;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  visible?: boolean;
 }
 
 const StyledButton = styled(MuiButton, {
@@ -33,8 +34,10 @@ const StyledButton = styled(MuiButton, {
   return {
     ...DefaultButtonStyles,
     ...normalStyle,
+    fontSize: 12,
+    fontWeight: 500,
     boxShadow: theme.shadows[1],
-    minWidth: '115px',
+    minWidth: '120px',
     '& svg': {
       color: normalStyle.color,
       height: theme.mixins.dialog.button.iconHeight,
@@ -50,7 +53,9 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   labelKey,
   icon,
   onClick,
+  visible,
 }) => {
+  if (!visible) return null;
   const t = useTranslation();
 
   return (

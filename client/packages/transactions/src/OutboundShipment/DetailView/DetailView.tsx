@@ -18,7 +18,7 @@ import {
   useDetailPanel,
   useFormatDate,
   useHostContext,
-  useModal,
+  useDialog,
   useNotification,
   useQueryClient,
   useTranslation,
@@ -143,15 +143,22 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const { success, warning } = useNotification();
   const addItem = () => {
     console.info('item added 😉');
-    hideModal();
+    hideDialog();
   };
   const addAnotherItem = () => {
     console.info('item added 😉');
   };
-  const { hideModal, showModal, Modal } = useModal({
+  const { hideDialog, showDialog, Modal } = useDialog({
     body: <Typography>Some stuff goes in here</Typography>,
-    onOk: addItem,
-    onOkAndNext: addAnotherItem,
+    buttonOverrides: {
+      ok: {
+        onClick: addItem,
+      },
+      okAndNext: {
+        onClick: addAnotherItem,
+        visible: true,
+      },
+    },
   });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 
@@ -232,7 +239,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         <Button
           labelKey="button.add-item"
           icon={<PlusCircle />}
-          onClick={showModal}
+          onClick={showDialog}
         />
         {OpenButton}
       </Portal>
