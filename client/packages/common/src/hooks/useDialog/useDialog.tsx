@@ -27,7 +27,7 @@ interface DialogButtonProps {
 
 export interface DialogProps {
   body: React.ReactElement;
-  buttonOverrides: DialogButtonOverrides;
+  buttonOverrides?: DialogButtonOverrides;
   title?: LocaleKey;
 }
 
@@ -50,20 +50,20 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
       labelKey: 'button.cancel',
       onClick: hideDialog,
       visible: true,
-      ...buttonOverrides.cancel,
+      ...buttonOverrides?.cancel,
     },
     ok: {
       icon: <CheckIcon />,
       labelKey: 'button.ok',
       onClick: hideDialog,
       visible: true,
-      ...buttonOverrides.ok,
+      ...buttonOverrides?.ok,
     },
     okAndNext: {
       icon: <ArrowRightIcon />,
       labelKey: 'button.ok-and-next',
       visible: false,
-      ...buttonOverrides.okAndNext,
+      ...buttonOverrides?.okAndNext,
     },
   };
 
