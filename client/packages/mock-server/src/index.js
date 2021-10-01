@@ -1,5 +1,12 @@
 import { ApolloServer, gql } from 'apollo-server';
-import { ItemQueries, ItemType, ItemResolvers } from './schema/Item';
+import {
+  ItemQueries,
+  ItemType,
+  ItemResolvers,
+  ItemMutationResolvers,
+  ItemMutations,
+  ItemInput,
+} from './schema/Item';
 import {
   TransactionMutations,
   TransactionQueries,
@@ -16,6 +23,7 @@ const typeDefs = gql`
   ${TestTypes}
 
   ${TransactionInput}
+  ${ItemInput}
 
   type Query {
     ${ItemQueries}
@@ -25,6 +33,7 @@ const typeDefs = gql`
 
   type Mutation {
     ${TransactionMutations}
+    ${ItemMutations}
   }
 `;
 
@@ -36,6 +45,7 @@ const resolvers = {
   },
   Mutation: {
     ...TransactionMutationResolvers,
+    ...ItemMutationResolvers,
   },
 };
 
