@@ -141,8 +141,17 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const { showModal, Modal } = useModal({
+  const addItem = () => {
+    console.info('item added 😉');
+    hideModal();
+  };
+  const addAnotherItem = () => {
+    console.info('item added 😉');
+  };
+  const { hideModal, showModal, Modal } = useModal({
     body: <Typography>Some stuff goes in here</Typography>,
+    onOk: addItem,
+    onOkAndNext: addAnotherItem,
   });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 

@@ -4,11 +4,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { LocaleKey, useTranslation } from '../../intl/intlHelpers';
-import { ButtonSetBuilder } from '../../ui/forms/utils/ButtonSetBuilder';
-
+import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../ui/icons';
+import { DialogButton } from '../../ui/components/buttons/DialogButton';
 export interface ModalProps {
   body: JSX.Element;
-  onCancel?: () => void;
+  onCancel?: (reason: string) => void;
   onOk?: () => void;
   onOkAndNext?: () => void;
   title?: LocaleKey;
@@ -21,7 +21,7 @@ interface ModalState {
 }
 
 export const useModal = (modalProps: ModalProps): ModalState => {
-  const { body, title } = modalProps;
+  const { body, onCancel, onOk, onOkAndNext, title } = modalProps;
   const [open, setOpen] = React.useState(false);
   const t = useTranslation();
 
@@ -29,25 +29,47 @@ export const useModal = (modalProps: ModalProps): ModalState => {
 
   const hideModal = () => setOpen(false);
 
-  const buttonSetBuilder = new ButtonSetBuilder();
-  buttonSetBuilder.addButton({
-    labelKey: 'button.cancel',
-    onClick: hideModal,
-  });
-  buttonSetBuilder.addButton({ labelKey: 'button.ok', onClick: hideModal });
-  const buttons = buttonSetBuilder.build();
+  const handleCancel = (_: Event, reason: string) => {
+    onCancel && onCancel(reason);
+    hideModal();
+  };
+
+  const handleOk = () => onOk && onOk();
+
+  const handleOkAndNext = () => onOkAndNext && onOkAndNext();
 
   const Modal = (
     <Dialog
       open={open}
-      onClose={hideModal}
+      onClose={handleCancel}
       PaperProps={{
-        sx: { borderRadius: '20px', minHeight: '400px', minWidth: '400px' },
+        sx: { borderRadius: '20px', minHeight: '400px', minWidth: '500px' },
       }}
     >
       {title && <DialogTitle>{t(title)}</DialogTitle>}
       <DialogContent>{body}</DialogContent>
-      <DialogActions>{buttons}</DialogActions>
+      <DialogActions>
+        <DialogButton
+          color="secondary"
+          labelKey="button.cancel"
+          onClick={hideModal}
+          icon={<XCircleIcon />}
+        />
+        {onOk && (
+          <DialogButton
+            labelKey="button.ok"
+            onClick={handleOk}
+            icon={<CheckIcon />}
+          />
+        )}
+        {onOkAndNext && (
+          <DialogButton
+            labelKey="button.ok-and-next"
+            onClick={handleOkAndNext}
+            icon={<ArrowRightIcon />}
+          />
+        )}
+      </DialogActions>
     </Dialog>
   );
 
