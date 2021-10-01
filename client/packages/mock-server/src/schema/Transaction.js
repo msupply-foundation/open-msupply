@@ -1,39 +1,7 @@
 import faker from 'faker';
-
-const choose = options => {
-  const numberOfOptions = options.length;
-
-  const randomIdx = Math.floor(Math.random() * numberOfOptions);
-
-  return options[randomIdx];
-};
-
-const TransactionData = Array.from({ length: 500 }).map((_, i) => ({
-  id: `${i}`,
-  name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-  status: choose(['Confirmed', 'Finalised']),
-  entered: faker.date.past().toString(),
-  confirmed: faker.date.past().toString(),
-  invoiceNumber: `${i}`,
-  total: `$${faker.commerce.price()}`,
-  color: 'grey',
-  type: choose([
-    'Customer invoice',
-    'Supplier invoice',
-    'Customer credit',
-    'Supplier credit',
-  ]),
-  comment: faker.commerce.productDescription(),
-}));
+import { TransactionData, ItemData } from './data';
 
 const TransactionTypes = `
-    type Item {
-        id: String
-        code: String
-        name: String
-        packSize: Int
-        quantity: Int
-    }
     type Transaction {
         id: String
         color: String
@@ -110,7 +78,7 @@ const TransactionQueryResolvers = {
   transactions: (_, { first = 50, offset = 0, sort, desc }) =>
     getTransactionData(first, offset, sort, desc),
   transaction: (_, { id: filterId }) =>
-    addItems(TransactionData.filter(({ id }) => id === filterId)[0]),
+    TransactionData.filter(({ id }) => id === filterId)[0],
 };
 
 const TransactionMutationResolvers = {

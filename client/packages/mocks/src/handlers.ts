@@ -10,14 +10,29 @@ const choose = (options: unknown[]) => {
   return options[randomIdx];
 };
 
-const getItems = () =>
-  Array.from({ length: Math.random() * 10 + 1 }).map(() => ({
+const ItemData: {
+  id: string;
+  code: string;
+  name: string;
+  packSize: number;
+  quantity: number;
+  transactionId: string;
+}[] = [];
+
+const getItems = (transactionId: string) => {
+  const items = Array.from({ length: Math.random() * 10 + 1 }).map(() => ({
     id: `${faker.datatype.uuid()}`,
     code: `${faker.random.alpha({ count: 6 })}`,
     name: `${faker.commerce.productName()}`,
     packSize: 1,
     quantity: faker.datatype.number(100),
+    transactionId,
   }));
+
+  ItemData.concat(items);
+
+  return items;
+};
 
 const TransactionData = Array.from({ length: 100 }).map((_, i) => ({
   id: `${i}`,
@@ -35,7 +50,7 @@ const TransactionData = Array.from({ length: 100 }).map((_, i) => ({
     'Supplier credit',
   ]),
   comment: faker.commerce.productDescription(),
-  items: getItems(),
+  items: getItems(`${i}`),
 }));
 
 const parseValue = (object: any, key: string) => {
@@ -86,6 +101,34 @@ const upsertTransaction = graphql.mutation(
   }
 );
 
+const upsertItem = graphql.mutation(
+  'upsertItem',
+  (request, response, context) => {
+    const { variables } = request;
+    const { itemPatch } = variables;
+
+    const { id, ...patch } = itemPatch;
+
+    if (!id) {
+      const newItem = { id: String(ItemData.length), ...patch };
+      ItemData.push(newItem);
+      const transaction = TransactionData.find(
+        ({ id: transactionId }) => transactionId === newItem.transactionId
+      );
+
+      if (transaction) {
+        transaction.items.push(newItem);
+      }
+      return response(context.data({ upsertItem: newItem }));
+    }
+
+    const idx = ItemData.findIndex(({ id: filterId }) => id === filterId);
+    ItemData[idx] = { ...ItemData[idx], ...patch };
+
+    return response(context.data({ upsertTransaction: ItemData[idx] }));
+  }
+);
+
 const deleteTransactions = graphql.mutation(
   'deleteTransactions',
   (request, response, context) => {
@@ -131,6 +174,7 @@ export const transactionDetail = graphql.query(
     const { variables } = request;
     const { id } = variables;
     const transaction = TransactionData[Number(id)];
+
     return response(context.data({ transaction }));
   }
 );
@@ -160,4 +204,5 @@ export const handlers = [
   deleteTransactions,
   permissionError,
   serverError,
+  upsertItem,
 ];
