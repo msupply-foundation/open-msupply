@@ -69,7 +69,7 @@ const getItems = () =>
   Array.from({ length: Math.random() * 10 }).map(() => ({
     id: `${faker.datatype.uuid()}`,
     code: `${faker.random.alpha({ count: 6 })}`,
-    name: `${faker.commerce.productName()}`,1
+    name: `${faker.commerce.productName()}`,
     packSize: 1,
     quantity: faker.datatype.number(100),
   }));
