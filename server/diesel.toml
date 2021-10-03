@@ -1,2 +1,0 @@
-[print_schema]
-file = "src/database/schema/diesel_schema.rs"
