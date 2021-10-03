@@ -5,7 +5,7 @@ use crate::server::service::graphql::{schema::queries::pagination::Pagination, C
 use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
 
 #[derive(InputObject)]
-pub struct NameSortOption {
+pub struct NameSortInput {
     key: NameSortField,
     desc: Option<bool>,
 }
@@ -30,11 +30,11 @@ pub struct NameQuery {
 
 pub struct NameList {
     pub pagination: Option<Pagination>,
-    pub filter: Option<NameQueryFilter>,
-    pub sort: Option<NameSortOption>,
+    pub filter: Option<NameFilter>,
+    pub sort: Option<Vec<NameSortInput>>,
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 pub struct NameStringFilter {
     equal_to: Option<String>,
     like: Option<String>,
@@ -49,7 +49,7 @@ impl From<NameStringFilter> for NameQueryStringFilter {
     }
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 
 pub struct NameFilter {
     pub name: Option<NameStringFilter>,
@@ -78,15 +78,22 @@ impl NameList {
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<NameQuery> {
         let repository = ctx.get_repository::<NameQueryRepository>();
+
+        let filter = self.filter.clone().map(NameQueryFilter::from);
+
+        // Currently only one sort option is supported, use the first from the list.
+        let first_sort = self
+            .sort
+            .as_ref()
+            .map(|sort_list| sort_list.get(0))
+            .flatten()
+            .map(|opt| NameQuerySort {
+                key: NameQuerySortField::from(opt.key),
+                desc: opt.desc,
+            });
+
         repository
-            .all(
-                &self.pagination,
-                &self.filter,
-                &self.sort.as_ref().map(|opt| NameQuerySort {
-                    key: NameQuerySortField::from(opt.key),
-                    desc: opt.desc,
-                }),
-            )
+            .all(&self.pagination, &filter, &first_sort)
             .unwrap()
     }
 }
