@@ -13,7 +13,27 @@ mod repository_test {
                 name: "name_1".to_string(),
                 code: "code1".to_string(),
                 is_customer: false,
-                is_supplier: true,
+                is_supplier: false,
+            }
+        }
+
+        pub fn name_2() -> NameRow {
+            NameRow {
+                id: "name2".to_string(),
+                name: "name_2".to_string(),
+                code: "code1".to_string(),
+                is_customer: false,
+                is_supplier: false,
+            }
+        }
+
+        pub fn name_3() -> NameRow {
+            NameRow {
+                id: "name3".to_string(),
+                name: "name_3".to_string(),
+                code: "code2".to_string(),
+                is_customer: true,
+                is_supplier: false,
             }
         }
 
@@ -275,8 +295,9 @@ mod repository_test {
                 CustomerInvoiceRepository, DBBackendConnection, DBConnection,
                 InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
                 ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-                NameRepository, RequisitionLineRepository, RequisitionRepository,
-                StockLineRepository, StoreRepository, UserAccountRepository,
+                NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField,
+                NameQueryStringFilter, NameRepository, RequisitionLineRepository,
+                RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
             },
             schema::{
                 CentralSyncBufferRow, InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow,
@@ -298,6 +319,117 @@ mod repository_test {
         repo.insert_one(&name_1).await.unwrap();
         let loaded_item = repo.find_one_by_id(name_1.id.as_str()).await.unwrap();
         assert_eq!(name_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_name_query_repository_all_filter_sort() {
+        let settings =
+            test_db::get_test_settings("omsupply-database-name-query-repository-all-filter-sort");
+        test_db::setup(&settings.database).await;
+        let registry = get_repositories(&settings).await;
+
+        // setup
+        let name_repo = registry.get::<NameRepository>().unwrap();
+        name_repo.insert_one(&data::name_1()).await.unwrap();
+        name_repo.insert_one(&data::name_2()).await.unwrap();
+        name_repo.insert_one(&data::name_3()).await.unwrap();
+
+        let repo = registry.get::<NameQueryRepository>().unwrap();
+        // test filter:
+        let result = repo
+            .all(
+                &None,
+                &Some(NameQueryFilter {
+                    name: Some(NameQueryStringFilter {
+                        equal_to: Some("name_1".to_string()),
+                        like: None,
+                    }),
+                    code: None,
+                    is_customer: None,
+                    is_supplier: None,
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(0).unwrap().name, "name_1");
+
+        let result = repo
+            .all(
+                &None,
+                &Some(NameQueryFilter {
+                    name: Some(NameQueryStringFilter {
+                        equal_to: None,
+                        like: Some("me_".to_string()),
+                    }),
+                    code: None,
+                    is_customer: None,
+                    is_supplier: None,
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 3);
+
+        let result = repo
+            .all(
+                &None,
+                &Some(NameQueryFilter {
+                    name: None,
+                    code: Some(NameQueryStringFilter {
+                        equal_to: Some("code1".to_string()),
+                        like: None,
+                    }),
+                    is_customer: None,
+                    is_supplier: None,
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 2);
+
+        /* TODO currently no way to add name_store_join rows for the following tests:
+        let result = repo
+            .all(
+                &None,
+                &Some(NameQueryFilter {
+                    name: None,
+                    code: None,
+                    is_customer: Some(true),
+                    is_supplier: None,
+                }),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(0).unwrap().name, "name_3");
+
+        let result = repo
+            .all(
+                &None,
+                &Some(NameQueryFilter {
+                    name: None,
+                    code: None,
+                    is_customer: None,
+                    is_supplier: Some(true),
+                }),
+            )
+            .unwrap();
+        assert!(result.len() == 1);
+        result.iter().find(|it| it.name == "name_1").unwrap();
+        result.iter().find(|it| it.name == "name_2").unwrap();
+        */
+
+        let result = repo
+            .all(
+                &None,
+                &None,
+                &Some(NameQuerySort {
+                    key: NameQuerySortField::Code,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().code, "code2");
     }
 
     #[actix_rt::test]
