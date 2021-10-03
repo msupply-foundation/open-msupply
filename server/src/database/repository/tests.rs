@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod repository_test {
     mod data {
-        use chrono::NaiveDateTime;
+        use chrono::{NaiveDate, NaiveDateTime};
 
         use crate::database::schema::{InvoiceRowStatus, MasterListNameJoinRow};
 
@@ -186,7 +186,7 @@ mod repository_test {
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDateTime::from_timestamp(4000, 0)),
+                expiry_date: Some(NaiveDate::from_ymd(2020, 9, 1)),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
@@ -202,7 +202,7 @@ mod repository_test {
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDateTime::from_timestamp(4001, 0)),
+                expiry_date: Some(NaiveDate::from_ymd(2020, 9, 3)),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
@@ -219,7 +219,7 @@ mod repository_test {
                 invoice_id: invoice_2().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDateTime::from_timestamp(4002, 0)),
+                expiry_date: Some(NaiveDate::from_ymd(2020, 9, 5)),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
