@@ -1,6 +1,21 @@
-use crate::database::repository::NameQueryRepository;
+use crate::database::repository::{
+    NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, NameQueryStringFilter,
+};
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
-use async_graphql::{Context, Object, SimpleObject};
+use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
+
+#[derive(InputObject)]
+pub struct NameSortInput {
+    key: NameSortField,
+    desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "crate::database::repository::repository::NameQuerySortField")]
+enum NameSortField {
+    Name,
+    Code,
+}
 
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(name = "Name")]
@@ -15,6 +30,43 @@ pub struct NameQuery {
 
 pub struct NameList {
     pub pagination: Option<Pagination>,
+    pub filter: Option<NameFilter>,
+    pub sort: Option<Vec<NameSortInput>>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct NameStringFilter {
+    equal_to: Option<String>,
+    like: Option<String>,
+}
+
+impl From<NameStringFilter> for NameQueryStringFilter {
+    fn from(f: NameStringFilter) -> Self {
+        NameQueryStringFilter {
+            equal_to: f.equal_to,
+            like: f.like,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+
+pub struct NameFilter {
+    pub name: Option<NameStringFilter>,
+    pub code: Option<NameStringFilter>,
+    pub is_customer: Option<bool>,
+    pub is_supplier: Option<bool>,
+}
+
+impl From<NameFilter> for NameQueryFilter {
+    fn from(f: NameFilter) -> Self {
+        NameQueryFilter {
+            name: f.name.map(NameQueryStringFilter::from),
+            code: f.code.map(NameQueryStringFilter::from),
+            is_customer: f.is_customer,
+            is_supplier: f.is_supplier,
+        }
+    }
 }
 
 #[Object]
@@ -26,6 +78,22 @@ impl NameList {
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<NameQuery> {
         let repository = ctx.get_repository::<NameQueryRepository>();
-        repository.all(&self.pagination).unwrap()
+
+        let filter = self.filter.clone().map(NameQueryFilter::from);
+
+        // Currently only one sort option is supported, use the first from the list.
+        let first_sort = self
+            .sort
+            .as_ref()
+            .map(|sort_list| sort_list.get(0))
+            .flatten()
+            .map(|opt| NameQuerySort {
+                key: NameQuerySortField::from(opt.key),
+                desc: opt.desc,
+            });
+
+        repository
+            .all(&self.pagination, &filter, &first_sort)
+            .unwrap()
     }
 }
