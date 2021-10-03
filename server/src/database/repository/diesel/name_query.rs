@@ -54,7 +54,7 @@ pub struct NameQueryFilter {
     pub is_supplier: Option<bool>,
 }
 
-pub struct NameQuerySortOption {
+pub struct NameQuerySort {
     pub key: NameQuerySortField,
     pub desc: Option<bool>,
 }
@@ -84,7 +84,7 @@ impl NameQueryRepository {
         &self,
         pagination: &Option<Pagination>,
         filter: &Option<NameQueryFilter>,
-        sort: &Option<NameQuerySortOption>,
+        sort: &Option<NameQuerySort>,
     ) -> Result<Vec<NameQuery>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let connection = get_connection(&self.pool)?;
