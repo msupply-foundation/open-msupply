@@ -54,6 +54,16 @@ pub struct NameQueryFilter {
     pub is_supplier: Option<bool>,
 }
 
+pub struct NameQuerySort {
+    pub key: NameQuerySortField,
+    pub desc: Option<bool>,
+}
+
+pub enum NameQuerySortField {
+    Name,
+    Code,
+}
+
 pub struct NameQueryRepository {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
 }
@@ -74,6 +84,7 @@ impl NameQueryRepository {
         &self,
         pagination: &Option<Pagination>,
         filter: &Option<NameQueryFilter>,
+        sort: &Option<NameQuerySort>,
     ) -> Result<Vec<NameQuery>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let connection = get_connection(&self.pool)?;
@@ -107,9 +118,28 @@ impl NameQueryRepository {
             }
         }
 
-        let result = query
-            .order(name_table_dsl::id.asc())
-            .load::<NameAndNameStoreJoin>(&*connection)?;
+        if let Some(sort) = sort {
+            match sort.key {
+                NameQuerySortField::Name => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(name_table_dsl::name.desc());
+                    } else {
+                        query = query.order(name_table_dsl::name.asc());
+                    }
+                }
+                NameQuerySortField::Code => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(name_table_dsl::code.desc());
+                    } else {
+                        query = query.order(name_table_dsl::code.asc());
+                    }
+                }
+            }
+        } else {
+            query = query.order(name_table_dsl::id.asc())
+        }
+
+        let result = query.load::<NameAndNameStoreJoin>(&*connection)?;
         Ok(result.into_iter().map(NameQuery::from).collect())
     }
 }
@@ -175,7 +205,7 @@ mod tests {
 
         // .all, no pagenation (default)
         assert_eq!(
-            repository.all(&None, &None).unwrap().len(),
+            repository.all(&None, &None, &None).unwrap().len(),
             default_page_size
         );
 
@@ -186,6 +216,7 @@ mod tests {
                     offset: Some(10),
                     first: None,
                 }),
+                &None,
                 &None,
             )
             .unwrap();
@@ -204,6 +235,7 @@ mod tests {
                     first: Some(10),
                 }),
                 &None,
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 10);
@@ -216,6 +248,7 @@ mod tests {
                     offset: Some(150),
                     first: Some(90),
                 }),
+                &None,
                 &None,
             )
             .unwrap();

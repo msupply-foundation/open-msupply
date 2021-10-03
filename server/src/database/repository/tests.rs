@@ -295,9 +295,9 @@ mod repository_test {
                 CustomerInvoiceRepository, DBBackendConnection, DBConnection,
                 InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
                 ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-                NameQueryFilter, NameQueryRepository, NameQueryStringFilter, NameRepository,
-                RequisitionLineRepository, RequisitionRepository, StockLineRepository,
-                StoreRepository, UserAccountRepository,
+                NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField,
+                NameQueryStringFilter, NameRepository, RequisitionLineRepository,
+                RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
             },
             schema::{
                 CentralSyncBufferRow, InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow,
@@ -322,9 +322,9 @@ mod repository_test {
     }
 
     #[actix_rt::test]
-    async fn test_name_query_repository_all_filter() {
+    async fn test_name_query_repository_all_filter_sort() {
         let settings =
-            test_db::get_test_settings("omsupply-database-name-query-repository-all-filter");
+            test_db::get_test_settings("omsupply-database-name-query-repository-all-filter-sort");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
 
@@ -348,6 +348,7 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 1);
@@ -365,6 +366,7 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 3);
@@ -381,6 +383,7 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
+                &None,
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -415,6 +418,18 @@ mod repository_test {
         result.iter().find(|it| it.name == "name_1").unwrap();
         result.iter().find(|it| it.name == "name_2").unwrap();
         */
+
+        let result = repo
+            .all(
+                &None,
+                &None,
+                &Some(NameQuerySort {
+                    key: NameQuerySortField::Code,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().code, "code2");
     }
 
     #[actix_rt::test]
