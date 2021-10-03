@@ -295,7 +295,7 @@ mod repository_test {
                 CustomerInvoiceRepository, DBBackendConnection, DBConnection,
                 InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
                 ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-                NameQueryFilter, NameQueryRepository, NameQuerySortField, NameQuerySortOption,
+                NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField,
                 NameQueryStringFilter, NameRepository, RequisitionLineRepository,
                 RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
             },
@@ -423,7 +423,7 @@ mod repository_test {
             .all(
                 &None,
                 &None,
-                &Some(NameQuerySortOption {
+                &Some(NameQuerySort {
                     key: NameQuerySortField::Code,
                     desc: Some(true),
                 }),
