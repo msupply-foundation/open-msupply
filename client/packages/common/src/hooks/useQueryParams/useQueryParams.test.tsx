@@ -14,6 +14,7 @@ type ThemeChangererProps = {
   paginationRowHeight: number;
   dataRowHeight: number;
   headerRowHeight: number;
+  footerHeight: number;
 };
 
 describe('useQueryParams', () => {
@@ -22,17 +23,24 @@ describe('useQueryParams', () => {
     paginationRowHeight,
     dataRowHeight,
     headerRowHeight,
+    footerHeight,
   }) => {
     const theme = useTheme();
     theme.mixins.table.dataRow = { height: dataRowHeight };
     theme.mixins.table.paginationRow = { height: paginationRowHeight };
     theme.mixins.table.headerRow = { height: headerRowHeight };
+    theme.mixins.footer = { height: footerHeight };
 
     return <>{children}</>;
   };
 
   const getWrapper =
-    (dataRowHeight = 10, headerRowHeight = 0, paginationRowHeight = 0) =>
+    (
+      dataRowHeight = 10,
+      headerRowHeight = 0,
+      paginationRowHeight = 0,
+      footerHeight = 0
+    ) =>
     ({ children }: { children: ReactNode[] }) => {
       return (
         <TestingProvider>
@@ -40,6 +48,7 @@ describe('useQueryParams', () => {
             paginationRowHeight={paginationRowHeight}
             dataRowHeight={dataRowHeight}
             headerRowHeight={headerRowHeight}
+            footerHeight={footerHeight}
           >
             {children}
           </ThemeChangerer>
