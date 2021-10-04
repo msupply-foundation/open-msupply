@@ -28,7 +28,7 @@ export const useBoundingClientRect = <T extends HTMLElement>(
   const [rect, setRect] = useState(
     getRect(ref && ref.current ? ref.current : null)
   );
-  const realRect = useDebouncedValue(rect, debouncedTimer);
+  const debouncedRect = useDebouncedValue(rect, debouncedTimer);
 
   const observer = useRef<ResizeObserver | null>(null);
 
@@ -48,7 +48,7 @@ export const useBoundingClientRect = <T extends HTMLElement>(
     };
   }, []);
 
-  return realRect;
+  return debouncedRect;
 };
 
 export const useBoundingClientRectRef = <T extends HTMLElement>(
