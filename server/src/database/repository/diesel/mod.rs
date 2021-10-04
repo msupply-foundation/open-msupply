@@ -17,6 +17,7 @@ mod name;
 mod name_query;
 mod requisition;
 mod requisition_line;
+mod sort_filter_types;
 mod stock_line;
 mod store;
 mod sync;
@@ -41,6 +42,7 @@ pub use name_query::{
 };
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
+pub use sort_filter_types::*;
 pub use stock_line::StockLineRepository;
 pub use store::StoreRepository;
 pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
