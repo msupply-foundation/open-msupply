@@ -28,7 +28,7 @@ interface DialogButtonProps {
 export interface DialogProps {
   body: React.ReactElement;
   buttonOverrides?: DialogButtonOverrides;
-  title?: LocaleKey;
+  title: LocaleKey;
 }
 
 interface DialogState {
@@ -75,7 +75,15 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
         sx: { borderRadius: '20px', minHeight: '400px', minWidth: '500px' },
       }}
     >
-      {title && <DialogTitle>{t(title)}</DialogTitle>}
+      <DialogTitle
+        sx={{
+          color: theme => theme.typography.body1.color,
+          fontSize: theme => theme.typography.body1.fontSize,
+          fontWeight: 'bold',
+        }}
+      >
+        {t(title)}
+      </DialogTitle>
       <DialogContent>{body}</DialogContent>
       <DialogActions sx={{ justifyContent: 'center' }}>
         <DialogButton color="secondary" {...dialogButtonProps.cancel} />

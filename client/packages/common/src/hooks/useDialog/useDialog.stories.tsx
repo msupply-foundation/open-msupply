@@ -36,6 +36,7 @@ const Template: Story = () => {
         visible: true,
       },
     },
+    title: 'heading.add-item',
   });
 
   return (
