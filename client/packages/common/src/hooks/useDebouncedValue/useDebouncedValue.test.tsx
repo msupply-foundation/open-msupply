@@ -9,7 +9,7 @@ describe('useDebouncedValue', () => {
     const [state, setState] = useState(0);
     const debounced = useDebouncedValue(state, 100);
 
-    const increment = () => setState(debounced + 1);
+    const increment = () => setState(state => (state += 1));
 
     return [debounced, increment];
   };
