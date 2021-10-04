@@ -1,29 +1,20 @@
-use super::{DBBackendConnection, DBConnection};
+use super::StorageConnection;
 
-use crate::database::{
-    repository::{repository::get_connection, RepositoryError},
-    schema::MasterListRow,
-};
+use crate::database::{repository::RepositoryError, schema::MasterListRow};
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
-pub struct MasterListRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct MasterListRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl MasterListRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        MasterListRepository { pool }
+impl<'a> MasterListRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        MasterListRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one_tx(
-        connection: &DBConnection,
-        row: &MasterListRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::master_list::dsl::*;
 
         diesel::insert_into(master_list)
@@ -31,26 +22,24 @@ impl MasterListRepository {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(feature = "sqlite")]
-    pub fn upsert_one_tx(
-        connection: &DBConnection,
-        row: &MasterListRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::master_list::dsl::*;
         diesel::replace_into(master_list)
             .values(row)
-            .execute(connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
     pub async fn find_one_by_id(&self, item_id: &str) -> Result<MasterListRow, RepositoryError> {
         use crate::database::schema::diesel_schema::master_list::dsl::*;
-        let connection = get_connection(&self.pool)?;
-        let result = master_list.filter(id.eq(item_id)).first(&connection)?;
+        let result = master_list
+            .filter(id.eq(item_id))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }

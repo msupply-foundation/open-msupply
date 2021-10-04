@@ -11,7 +11,8 @@ use crate::{
             repository::{
                 MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
             },
-            ItemRepository, NameRepository, RepositoryError, StoreRepository,
+            ItemRepository, NameRepository, RepositoryError, StorageConnectionManager,
+            StoreRepository,
         },
         schema::{
             CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -72,21 +73,21 @@ pub async fn check_records_against_database(
     registry: &RepositoryRegistry,
     records: Vec<TestSyncRecord>,
 ) {
+    let connection_manager = registry.get::<StorageConnectionManager>();
+    let connection = connection_manager.connection().unwrap();
+
     for record in records {
         match record.translated_record {
             TestSyncDataRecord::Store(comparison_record) => {
                 assert_eq!(
-                    registry
-                        .get::<StoreRepository>()
-                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
-                        .await,
+                    StoreRepository::new(&connection)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id),
                     from_option_to_db_result(comparison_record)
                 )
             }
             TestSyncDataRecord::Name(comparison_record) => {
                 assert_eq!(
-                    registry
-                        .get::<NameRepository>()
+                    NameRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
@@ -94,8 +95,7 @@ pub async fn check_records_against_database(
             }
             TestSyncDataRecord::Item(comparison_record) => {
                 assert_eq!(
-                    registry
-                        .get::<ItemRepository>()
+                    ItemRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
@@ -103,8 +103,7 @@ pub async fn check_records_against_database(
             }
             TestSyncDataRecord::MasterList(comparison_record) => {
                 assert_eq!(
-                    registry
-                        .get::<MasterListRepository>()
+                    MasterListRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
@@ -112,8 +111,7 @@ pub async fn check_records_against_database(
             }
             TestSyncDataRecord::MasterListLine(comparison_record) => {
                 assert_eq!(
-                    registry
-                        .get::<MasterListLineRepository>()
+                    MasterListLineRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
@@ -121,8 +119,7 @@ pub async fn check_records_against_database(
             }
             TestSyncDataRecord::MasterListNameJoin(comparison_record) => {
                 assert_eq!(
-                    registry
-                        .get::<MasterListNameJoinRepository>()
+                    MasterListNameJoinRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)

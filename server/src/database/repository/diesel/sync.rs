@@ -1,7 +1,7 @@
 use super::{
-    get_connection, master_list::MasterListRepository, master_list_line::MasterListLineRepository,
+    master_list::MasterListRepository, master_list_line::MasterListLineRepository,
     master_list_name_join::MasterListNameJoinRepository, DBBackendConnection, ItemRepository,
-    NameRepository, StoreRepository,
+    NameRepository, StorageConnectionManager, StoreRepository,
 };
 
 use crate::database::{
@@ -9,10 +9,7 @@ use crate::database::{
     schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow, StoreRow},
 };
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::r2d2::{ConnectionManager, Pool};
 
 pub enum IntegrationUpsertRecord {
     Name(NameRow),
@@ -40,31 +37,36 @@ impl SyncRepository {
         &self,
         integration_records: &IntegrationRecord,
     ) -> Result<(), RepositoryError> {
-        let connection = get_connection(&self.pool)?;
-        connection.transaction(|| {
-            for record in &integration_records.upserts {
-                match &record {
-                    IntegrationUpsertRecord::Name(record) => {
-                        NameRepository::upsert_one_tx(&connection, record)?
-                    }
-                    IntegrationUpsertRecord::Item(record) => {
-                        ItemRepository::upsert_one_tx(&connection, record)?
-                    }
-                    IntegrationUpsertRecord::Store(record) => {
-                        StoreRepository::upsert_one_tx(&connection, record)?
-                    }
-                    IntegrationUpsertRecord::MasterList(record) => {
-                        MasterListRepository::upsert_one_tx(&connection, record)?
-                    }
-                    IntegrationUpsertRecord::MasterListLine(record) => {
-                        MasterListLineRepository::upsert_one_tx(&connection, record)?
-                    }
-                    IntegrationUpsertRecord::MasterListNameJoin(record) => {
-                        MasterListNameJoinRepository::upsert_one_tx(&connection, record)?
+        let manager = StorageConnectionManager::new(self.pool.clone());
+
+        let con = manager.connection()?;
+        let result = con
+            .transaction(|con| async move {
+                for record in &integration_records.upserts {
+                    match &record {
+                        IntegrationUpsertRecord::Name(record) => {
+                            NameRepository::new(con).upsert_one(record)?
+                        }
+                        IntegrationUpsertRecord::Item(record) => {
+                            ItemRepository::new(con).upsert_one(record)?
+                        }
+                        IntegrationUpsertRecord::Store(record) => {
+                            StoreRepository::new(con).upsert_one(record)?
+                        }
+                        IntegrationUpsertRecord::MasterList(record) => {
+                            MasterListRepository::new(con).upsert_one(record)?
+                        }
+                        IntegrationUpsertRecord::MasterListLine(record) => {
+                            MasterListLineRepository::new(con).upsert_one(record)?
+                        }
+                        IntegrationUpsertRecord::MasterListNameJoin(record) => {
+                            MasterListNameJoinRepository::new(con).upsert_one(record)?
+                        }
                     }
                 }
-            }
-            Ok(())
-        })
+                Ok(())
+            })
+            .await?;
+        Ok(result)
     }
 }

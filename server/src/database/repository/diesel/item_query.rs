@@ -86,7 +86,7 @@ mod tests {
                 repository::{
                     MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
                 },
-                ItemQueryRepository, ItemRepository, NameRepository,
+                ItemQueryRepository, ItemRepository, NameRepository, StorageConnectionManager,
             },
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
@@ -120,12 +120,17 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository() {
         // Prepare
-        let (pool, _, connection) = test_db::setup_all("test_item_query_repository", false).await;
+        let (pool, _, _) = test_db::setup_all("test_item_query_repository", false).await;
+        let storage_connection = StorageConnectionManager::new(pool.clone())
+            .connection()
+            .unwrap();
         let item_query_repository = ItemQueryRepository::new(pool.clone());
 
         let (rows, queries) = data();
         for row in rows {
-            ItemRepository::upsert_one_tx(&connection, &row).unwrap();
+            ItemRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGE_SIZE).unwrap();
@@ -186,8 +191,10 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository_visibility() {
         // Prepare
-        let (pool, _, connection) =
-            test_db::setup_all("test_item_query_repository_visibility", false).await;
+        let (pool, _, _) = test_db::setup_all("test_item_query_repository_visibility", false).await;
+        let storage_connection = StorageConnectionManager::new(pool.clone())
+            .connection()
+            .unwrap();
         let item_query_repository = ItemQueryRepository::new(pool.clone());
 
         let item_rows = vec![
@@ -310,18 +317,26 @@ mod tests {
         };
 
         for row in item_rows {
-            ItemRepository::upsert_one_tx(&connection, &row).unwrap();
+            ItemRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         for row in master_list_rows {
-            MasterListRepository::upsert_one_tx(&connection, &row).unwrap();
+            MasterListRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         for row in master_list_line_rows {
-            MasterListLineRepository::upsert_one_tx(&connection, &row).unwrap();
+            MasterListLineRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
-        NameRepository::upsert_one_tx(&connection, &name_row).unwrap();
+        NameRepository::new(&storage_connection)
+            .upsert_one(&name_row)
+            .unwrap();
         // Test
 
         // Before adding any joins
@@ -330,13 +345,17 @@ mod tests {
         // After adding first join (item1 and item2 visible)
         item_query_rows[0].is_visible = true;
         item_query_rows[1].is_visible = true;
-        MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_1).unwrap();
+        MasterListNameJoinRepository::new(&storage_connection)
+            .upsert_one(&master_list_name_join_1)
+            .unwrap();
         assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
 
         // After adding second join (item3 and item4 visible)
         item_query_rows[2].is_visible = true;
         item_query_rows[3].is_visible = true;
-        MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_2).unwrap();
+        MasterListNameJoinRepository::new(&storage_connection)
+            .upsert_one(&master_list_name_join_2)
+            .unwrap();
         assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
     }
 }

@@ -6,7 +6,8 @@ mod graphql {
             loader::get_loaders,
             mock::{mock_names, mock_requisitions, mock_stores},
             repository::{
-                get_repositories, NameRepository, RequisitionRepository, StoreRepository,
+                get_repositories, NameRepository, RequisitionRepository, StorageConnectionManager,
+                StoreRepository,
             },
             schema::{NameRow, RequisitionRow, StoreRow},
         },
@@ -30,9 +31,11 @@ mod graphql {
 
         let repositories = get_repositories(&settings).await;
         let loaders = get_loaders(&settings).await;
+        let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let name_repository = repositories.get::<NameRepository>().unwrap();
-        let store_repository = repositories.get::<StoreRepository>().unwrap();
+        let name_repository = NameRepository::new(&connection);
+        let store_repository = StoreRepository::new(&connection);
         let requisition_repository = repositories.get::<RequisitionRepository>().unwrap();
 
         for name in mock_names {

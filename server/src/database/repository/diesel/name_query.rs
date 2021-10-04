@@ -141,7 +141,7 @@ impl NameQueryRepository {
 mod tests {
     use crate::{
         database::{
-            repository::{NameQueryRepository, NameRepository},
+            repository::{NameQueryRepository, NameRepository, StorageConnectionManager},
             schema::NameRow,
         },
         server::service::graphql::schema::{
@@ -178,12 +178,17 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (pool, _, connection) = test_db::setup_all("test_name_query_repository", false).await;
+        let (pool, _, _) = test_db::setup_all("test_name_query_repository", false).await;
+        let storage_connection = StorageConnectionManager::new(pool.clone())
+            .connection()
+            .unwrap();
         let repository = NameQueryRepository::new(pool.clone());
 
         let (rows, queries) = data();
         for row in rows {
-            NameRepository::upsert_one_tx(&connection, &row).unwrap();
+            NameRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGE_SIZE).unwrap();
