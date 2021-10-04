@@ -1,5 +1,7 @@
 export { ArrowLeft } from './ArrowLeft';
+export { ArrowRightIcon } from './ArrowRight';
 export { Book } from './Book';
+export { CheckIcon } from './Check';
 export { CheckboxChecked } from './CheckboxChecked';
 export { CheckboxIndeterminate } from './CheckboxIndeterminate';
 export { CheckboxEmpty } from './CheckboxEmpty';
@@ -33,6 +35,7 @@ export { Tools } from './Tools';
 export { Translate } from './Translate';
 export { UnhappyMan } from './UnhappyMan';
 export { UserIcon } from './User';
+export { XCircleIcon } from './XCircle';
 
 type Color =
   | 'inherit'
