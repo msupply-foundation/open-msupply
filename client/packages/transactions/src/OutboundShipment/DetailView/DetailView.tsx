@@ -18,6 +18,7 @@ import {
   useDetailPanel,
   useFormatDate,
   useHostContext,
+  useDialog,
   useNotification,
   useQueryClient,
   useTranslation,
@@ -30,6 +31,8 @@ import {
   TableProvider,
   Item,
   SetState,
+  Button,
+  PlusCircle,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -40,6 +43,7 @@ import {
 } from '../../useDraftDocument';
 import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
+import { DialogButton } from '@openmsupply-client/common/src/ui/components/buttons/DialogButton';
 
 const placeholderTransaction: Transaction = {
   id: '',
@@ -138,6 +142,16 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
+  const addItem = () => {
+    console.info('item added 😉');
+    hideDialog();
+  };
+  const addAnotherItem = () => {
+    console.info('item added 😉');
+  };
+  const { hideDialog, showDialog, Modal } = useDialog({
+    title: 'heading.add-item',
+  });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 
   const copyToClipboard = () => {
@@ -212,7 +226,21 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   return draft ? (
     <TabContext value={String(currentTab)}>
-      <Portal container={appBarButtonsRef?.current}>{OpenButton}</Portal>
+      <Modal
+        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
+        okButton={<DialogButton variant="ok" onClick={addItem} />}
+      >
+        <Typography>Some stuff goes in here</Typography>
+      </Modal>
+      <Portal container={appBarButtonsRef?.current}>
+        <Button
+          labelKey="button.add-item"
+          icon={<PlusCircle />}
+          onClick={showDialog}
+        />
+        {OpenButton}
+      </Portal>
 
       <AppBarContentPortal
         sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}

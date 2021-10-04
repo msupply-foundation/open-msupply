@@ -3,7 +3,9 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { SvgIconProps } from '.';
 import { ArrowLeft } from './ArrowLeft';
+import { ArrowRightIcon } from './ArrowRight';
 import { Book } from './Book';
+import { CheckIcon } from './Check';
 import { CheckboxChecked } from './CheckboxChecked';
 import { CheckboxEmpty } from './CheckboxEmpty';
 import { CheckboxIndeterminate } from './CheckboxIndeterminate';
@@ -36,6 +38,7 @@ import { Suppliers } from './Suppliers';
 import { Tools } from './Tools';
 import { Translate } from './Translate';
 import { UserIcon } from './User';
+import { XCircleIcon } from './XCircle';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
@@ -60,7 +63,9 @@ type Icon = {
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
     { icon: <ArrowLeft {...args} />, name: 'ArrowLeft' },
+    { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
     { icon: <Book {...args} />, name: 'Book' },
+    { icon: <CheckIcon {...args} />, name: 'Check' },
     { icon: <CheckboxChecked {...args} />, name: 'CheckboxChecked' },
     {
       icon: <CheckboxIndeterminate {...args} />,
@@ -96,6 +101,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Tools {...args} />, name: 'Tools' },
     { icon: <Translate {...args} />, name: 'Translate' },
     { icon: <UserIcon {...args} />, name: 'User' },
+    { icon: <XCircleIcon {...args} />, name: 'XCircle' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
