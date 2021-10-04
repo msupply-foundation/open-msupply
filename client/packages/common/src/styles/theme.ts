@@ -13,6 +13,20 @@ declare module '@mui/material/styles/createMixins' {
       backgroundColor: string;
       borderBottom: string;
     };
+    dialog: {
+      button: {
+        iconHeight: number;
+        iconWidth: number;
+        primary: {
+          backgroundColor: string;
+          color: string;
+        };
+        secondary: {
+          backgroundColor: string;
+          color: string;
+        };
+      };
+    };
     icon: {
       medium: { width: number; height: number };
     };
@@ -64,6 +78,20 @@ const themeOptions = {
   },
   direction: 'rtl' as Direction,
   mixins: {
+    dialog: {
+      button: {
+        iconHeight: 16,
+        iconWidth: 16,
+        primary: {
+          backgroundColor: '#3e7bfa',
+          color: '#fff',
+        },
+        secondary: {
+          backgroundColor: '#fff',
+          color: '#3e7bfa',
+        },
+      },
+    },
     footer: { height: 32 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
