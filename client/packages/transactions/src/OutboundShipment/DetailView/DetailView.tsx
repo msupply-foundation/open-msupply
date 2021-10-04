@@ -32,6 +32,7 @@ import {
   AppBarButtonsPortal,
   Book,
   Button,
+  PlusCircle,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -148,7 +149,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const addAnotherItem = () => {
     console.info('item added 😉');
   };
-  const { hideDialog, Modal } = useDialog({
+  const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
   });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
@@ -226,6 +227,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
+        <Button
+          labelKey="button.add-item"
+          icon={<PlusCircle />}
+          onClick={showDialog}
+        />
         <Button
           shouldShrink
           icon={<Book />}
