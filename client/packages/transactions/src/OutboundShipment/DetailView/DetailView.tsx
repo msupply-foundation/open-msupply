@@ -16,6 +16,7 @@ import {
   Typography,
   useDetailPanel,
   useFormatDate,
+  useDialog,
   useNotification,
   useQueryClient,
   useTranslation,
@@ -29,8 +30,8 @@ import {
   Item,
   SetState,
   AppBarButtonsPortal,
-  Button,
   Book,
+  Button,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -42,6 +43,7 @@ import {
 import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ExternalURL } from '@openmsupply-client/config';
+import { DialogButton } from '@openmsupply-client/common/src/ui/components/buttons/DialogButton';
 
 const placeholderTransaction: Transaction = {
   id: '',
@@ -139,6 +141,16 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
+  const addItem = () => {
+    console.info('item added 😉');
+    hideDialog();
+  };
+  const addAnotherItem = () => {
+    console.info('item added 😉');
+  };
+  const { hideDialog, Modal } = useDialog({
+    title: 'heading.add-item',
+  });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 
   const copyToClipboard = () => {
@@ -222,6 +234,14 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         />
         {OpenButton}
       </AppBarButtonsPortal>
+
+      <Modal
+        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
+        okButton={<DialogButton variant="ok" onClick={addItem} />}
+      >
+        <Typography>Some stuff goes in here</Typography>
+      </Modal>
 
       <AppBarContentPortal
         sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}

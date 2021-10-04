@@ -11,6 +11,7 @@ export * from './useEffectAfterMounting';
 export * from './useIsMountedRef';
 export * from './useIsScreen';
 export * from './useListData';
+export * from './useDialog';
 export * from './usePagination';
 export * from './useQueryParams';
 export * from './useRowRenderCount';
