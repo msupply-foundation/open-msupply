@@ -12,6 +12,7 @@ type ThemeChangererProps = {
   paginationRowHeight: number;
   dataRowHeight: number;
   headerRowHeight: number;
+  footerHeight: number;
 };
 
 describe('useRowRenderCount', () => {
@@ -20,17 +21,24 @@ describe('useRowRenderCount', () => {
     paginationRowHeight,
     dataRowHeight,
     headerRowHeight,
+    footerHeight,
   }) => {
     const theme = useTheme();
     theme.mixins.table.dataRow = { height: dataRowHeight };
     theme.mixins.table.paginationRow = { height: paginationRowHeight };
     theme.mixins.table.headerRow = { height: headerRowHeight };
+    theme.mixins.footer = { height: footerHeight };
 
     return <>{children}</>;
   };
 
   const getWrapper =
-    (dataRowHeight = 10, headerRowHeight = 0, paginationRowHeight = 0) =>
+    (
+      dataRowHeight = 10,
+      headerRowHeight = 0,
+      paginationRowHeight = 0,
+      footerHeight = 0
+    ) =>
     ({ children }: { children: ReactNode[] }) => {
       return (
         <TestingProvider>
@@ -39,6 +47,7 @@ describe('useRowRenderCount', () => {
               paginationRowHeight={paginationRowHeight}
               dataRowHeight={dataRowHeight}
               headerRowHeight={headerRowHeight}
+              footerHeight={footerHeight}
             >
               {children}
             </ThemeChangerer>
@@ -51,7 +60,7 @@ describe('useRowRenderCount', () => {
     window.resizeTo(1000, 1000);
     const { result } = renderHook(useRowRenderCount, { wrapper: getWrapper() });
 
-    // The window has a height of 1000. header 0, footer 0, Rows 10 each.
+    // The window has a height of 1000. header 0, pagination row 0, footer 0, Rows 10 each.
     expect(result.current).toBe(100);
   });
 
@@ -61,21 +70,31 @@ describe('useRowRenderCount', () => {
       wrapper: getWrapper(10, 10),
     });
 
-    // The window has a height of 1000. header 10, footer 0, Rows 10 each.
+    // The window has a height of 1000. header 10, pagination row 0, Rows 10 each.
     expect(result.current).toBe(99);
   });
 
-  it('Returns the correct value when there is a header and footer', () => {
+  it('Returns the correct value when there is a header and pagination row', () => {
     window.resizeTo(1000, 1000);
     const { result } = renderHook(useRowRenderCount, {
       wrapper: getWrapper(10, 10, 10),
     });
 
-    // The window has a height of 1000. header 10, footer 10, rows 10 each.
+    // The window has a height of 1000. header 10, pagination 10, rows 10 each.
     expect(result.current).toBe(98);
   });
 
-  it('Returns the correct value when there is a header and footer', () => {
+  it('Returns the correct value when there is a header, pagination row and footer', () => {
+    window.resizeTo(1000, 1000);
+    const { result } = renderHook(useRowRenderCount, {
+      wrapper: getWrapper(10, 10, 10, 10),
+    });
+
+    // The window has a height of 1000. header 10, pagination 10, footer 10 and rows 10 each.
+    expect(result.current).toBe(97);
+  });
+
+  it('Returns the correct value when there is a header and pagination row', () => {
     window.resizeTo(1000, 1000);
 
     const Wrapper = getWrapper();
@@ -109,7 +128,7 @@ describe('useRowRenderCount', () => {
       });
     });
 
-    // Window 1000, AppBar 10, header 0, footer, 0 and each row 10
+    // Window 1000, AppBar 10, header 0, pagination row, 0 and each row 10
     expect(result.current).toBe(99);
   });
 });
