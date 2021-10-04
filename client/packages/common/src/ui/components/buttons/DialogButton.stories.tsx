@@ -2,24 +2,20 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { DialogButton } from './DialogButton';
-import { CheckIcon, XCircleIcon } from '../../icons';
 
-const Template: ComponentStory<typeof DialogButton> = ({ color, icon }) => (
+const Template: ComponentStory<typeof DialogButton> = ({ variant }) => (
   <Box>
-    <DialogButton
-      color={color}
-      icon={icon}
-      labelKey="button.docs"
-      onClick={() => alert('clicked')}
-    />
+    <DialogButton variant={variant} onClick={() => alert('clicked')} />
   </Box>
 );
 
-export const Primary = Template.bind({});
-export const Secondary = Template.bind({});
+export const Cancel = Template.bind({});
+export const Ok = Template.bind({});
+export const Next = Template.bind({});
 
-Primary.args = { color: 'primary', icon: <CheckIcon /> };
-Secondary.args = { color: 'secondary', icon: <XCircleIcon /> };
+Ok.args = { variant: 'ok' };
+Cancel.args = { variant: 'cancel' };
+Next.args = { variant: 'next' };
 
 export default {
   title: 'Buttons/DialogButton',
