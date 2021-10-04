@@ -10,7 +10,7 @@ mod graphql {
             },
             repository::{
                 get_repositories, InvoiceLineRepository, InvoiceRepository, ItemRepository,
-                NameRepository, StockLineRepository, StoreRepository,
+                NameRepository, StockLineRepository, StorageConnectionManager, StoreRepository,
             },
             schema::{InvoiceLineRow, InvoiceRow, ItemRow, NameRow, StockLineRow, StoreRow},
         },
@@ -27,11 +27,13 @@ mod graphql {
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
         let loaders = get_loaders(&settings).await;
+        let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repository = repositories.get::<NameRepository>().unwrap();
-        let store_repository = repositories.get::<StoreRepository>().unwrap();
-        let item_repository = repositories.get::<ItemRepository>().unwrap();
+        let name_repository = NameRepository::new(&connection);
+        let store_repository = StoreRepository::new(&connection);
+        let item_repository = ItemRepository::new(&connection);
         let stock_repository = repositories.get::<StockLineRepository>().unwrap();
         let invoice_repository = repositories.get::<InvoiceRepository>().unwrap();
         let invoice_line_repository = repositories.get::<InvoiceLineRepository>().unwrap();

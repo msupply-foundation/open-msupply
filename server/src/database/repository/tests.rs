@@ -286,18 +286,16 @@ mod repository_test {
         }
     }
 
-    use diesel::r2d2::{ConnectionManager, Pool};
-
     use crate::{
         database::{
             repository::{
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
-                CustomerInvoiceRepository, DBBackendConnection, DBConnection,
-                InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
-                ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-                NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField,
-                NameRepository, RequisitionLineRepository, RequisitionRepository,
-                SimpleStringFilter, StockLineRepository, StoreRepository, UserAccountRepository,
+                CustomerInvoiceRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
+                InvoiceRepository, ItemRepository, MasterListLineRepository,
+                MasterListNameJoinRepository, NameQueryFilter, NameQueryRepository, NameQuerySort,
+                NameQuerySortField, NameRepository, RequisitionLineRepository,
+                RequisitionRepository, SimpleStringFilter, StockLineRepository,
+                StorageConnectionManager, StoreRepository, UserAccountRepository,
             },
             schema::{
                 CentralSyncBufferRow, InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow,
@@ -305,7 +303,7 @@ mod repository_test {
                 RequisitionRowType, StockLineRow, StoreRow, UserAccountRow,
             },
         },
-        util::{settings::Settings, test_db},
+        util::test_db,
     };
 
     #[actix_rt::test]
@@ -313,8 +311,10 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-name-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let repo = registry.get::<NameRepository>().unwrap();
+        let repo = NameRepository::new(&connection);
         let name_1 = data::name_1();
         repo.insert_one(&name_1).await.unwrap();
         let loaded_item = repo.find_one_by_id(name_1.id.as_str()).await.unwrap();
@@ -327,9 +327,11 @@ mod repository_test {
             test_db::get_test_settings("omsupply-database-name-query-repository-all-filter-sort");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         name_repo.insert_one(&data::name_2()).await.unwrap();
         name_repo.insert_one(&data::name_3()).await.unwrap();
@@ -437,15 +439,19 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-store-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = registry.get::<NameRepository>().unwrap();
-        name_repo.insert_one(&data::name_1()).await.unwrap();
+        NameRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
 
-        let repo = registry.get::<StoreRepository>().unwrap();
+        let repo = StoreRepository::new(&connection);
         let store_1 = data::store_1();
         repo.insert_one(&store_1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).await.unwrap();
+        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap();
         assert_eq!(store_1, loaded_item);
     }
 
@@ -454,13 +460,15 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-item-line-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = registry.get::<ItemRepository>().unwrap();
+        let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = registry.get::<StoreRepository>().unwrap();
+        let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
         // test insert
@@ -479,11 +487,13 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-master-list-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
-        let repo = registry.get::<MasterListRepository>().unwrap();
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = MasterListRepository::new(&connection);
 
         let master_list_1 = data::master_list_1();
-        let connection = get_connection(&settings);
-        MasterListRepository::upsert_one_tx(&connection, &master_list_1).unwrap();
+        repo.upsert_one(&master_list_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_1.id.as_str())
             .await
@@ -491,7 +501,7 @@ mod repository_test {
         assert_eq!(master_list_1, loaded_item);
 
         let master_list_upsert_1 = data::master_list_upsert_1();
-        MasterListRepository::upsert_one_tx(&connection, &master_list_upsert_1).unwrap();
+        repo.upsert_one(&master_list_upsert_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_upsert_1.id.as_str())
             .await
@@ -504,18 +514,20 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-master-list-line-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = registry.get::<ItemRepository>().unwrap();
+        let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
-        let connection = get_connection(&settings);
-        MasterListRepository::upsert_one_tx(&connection, &data::master_list_1()).unwrap();
+        MasterListRepository::new(&connection)
+            .upsert_one(&data::master_list_1())
+            .unwrap();
 
-        let repo = registry.get::<MasterListLineRepository>().unwrap();
+        let repo = MasterListLineRepository::new(&connection);
         let master_list_line_1 = data::master_list_line_1();
-        let connection = get_connection(&settings);
-        MasterListLineRepository::upsert_one_tx(&connection, &master_list_line_1).unwrap();
+        repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_1.id.as_str())
             .await
@@ -523,7 +535,7 @@ mod repository_test {
         assert_eq!(master_list_line_1, loaded_item);
 
         let master_list_line_upsert_1 = data::master_list_line_upsert_1();
-        MasterListLineRepository::upsert_one_tx(&connection, &master_list_line_upsert_1).unwrap();
+        repo.upsert_one(&master_list_line_upsert_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_upsert_1.id.as_str())
             .await
@@ -537,17 +549,21 @@ mod repository_test {
             test_db::get_test_settings("omsupply-database-master-list-name-join-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let connection = get_connection(&settings);
-        MasterListRepository::upsert_one_tx(&connection, &data::master_list_1()).unwrap();
+        MasterListRepository::new(&connection)
+            .upsert_one(&data::master_list_1())
+            .unwrap();
 
-        let repo = registry.get::<MasterListNameJoinRepository>().unwrap();
+        let repo = MasterListNameJoinRepository::new(&connection);
         let master_list_name_join_1 = data::master_list_name_join_1();
-        let connection = get_connection(&settings);
-        MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_1).unwrap();
+        MasterListNameJoinRepository::new(&connection)
+            .upsert_one(&master_list_name_join_1)
+            .unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_name_join_1.id.as_str())
             .await
@@ -560,11 +576,13 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-requisition-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = registry.get::<StoreRepository>().unwrap();
+        let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
         let repo = registry.get::<RequisitionRepository>().unwrap();
@@ -585,14 +603,16 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-requisition-line-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = registry.get::<ItemRepository>().unwrap();
+        let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = registry.get::<StoreRepository>().unwrap();
+        let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let requisition_repo = registry.get::<RequisitionRepository>().unwrap();
         requisition_repo
@@ -629,11 +649,13 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-invoice-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = registry.get::<StoreRepository>().unwrap();
+        let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
         let repo = registry.get::<InvoiceRepository>().unwrap();
@@ -665,14 +687,16 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-invoice-line-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = registry.get::<ItemRepository>().unwrap();
+        let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = registry.get::<StoreRepository>().unwrap();
+        let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = registry.get::<StockLineRepository>().unwrap();
         stock_line_repo
@@ -715,14 +739,16 @@ mod repository_test {
             test_db::get_test_settings("omsupply-database-invoice-line-query-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = registry.get::<ItemRepository>().unwrap();
+        let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
-        let name_repo = registry.get::<NameRepository>().unwrap();
+        let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = registry.get::<StoreRepository>().unwrap();
+        let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = registry.get::<StockLineRepository>().unwrap();
         stock_line_repo
@@ -765,13 +791,6 @@ mod repository_test {
         repo.insert_one(&item2).await.unwrap();
         let loaded_item = repo.find_one_by_id(item2.id.as_str()).await.unwrap();
         assert_eq!(item2, loaded_item);
-    }
-
-    fn get_connection(settings: &Settings) -> DBConnection {
-        let connection_manager =
-            ConnectionManager::<DBBackendConnection>::new(settings.database.connection_string());
-        let pool = Pool::new(connection_manager).expect("Failed to connect to database");
-        return pool.get().unwrap();
     }
 
     #[actix_rt::test]

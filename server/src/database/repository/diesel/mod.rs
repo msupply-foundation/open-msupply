@@ -19,6 +19,7 @@ mod requisition;
 mod requisition_line;
 mod sort_filter_types;
 mod stock_line;
+mod storage_connection;
 mod store;
 mod sync;
 mod user_account;
@@ -44,6 +45,7 @@ pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use sort_filter_types::*;
 pub use stock_line::StockLineRepository;
+pub use storage_connection::{StorageConnection, StorageConnectionManager};
 pub use store::StoreRepository;
 pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
 pub use user_account::UserAccountRepository;
@@ -119,14 +121,11 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     let mut repositories: RepositoryMap = RepositoryMap::new();
 
     repositories.insert(CustomerInvoiceRepository::new(pool.clone()));
-    repositories.insert(ItemRepository::new(pool.clone()));
     repositories.insert(StockLineRepository::new(pool.clone()));
     repositories.insert(ItemQueryRepository::new(pool.clone()));
-    repositories.insert(NameRepository::new(pool.clone()));
     repositories.insert(NameQueryRepository::new(pool.clone()));
     repositories.insert(RequisitionLineRepository::new(pool.clone()));
     repositories.insert(RequisitionRepository::new(pool.clone()));
-    repositories.insert(StoreRepository::new(pool.clone()));
     repositories.insert(InvoiceRepository::new(pool.clone()));
     repositories.insert(InvoiceQueryRepository::new(pool.clone()));
     repositories.insert(InvoiceLineRepository::new(pool.clone()));
@@ -135,9 +134,8 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
     repositories.insert(CentralSyncCursorRepository::new(pool.clone()));
     repositories.insert(SyncRepository::new(pool.clone()));
-    repositories.insert(MasterListRepository::new(pool.clone()));
-    repositories.insert(MasterListLineRepository::new(pool.clone()));
-    repositories.insert(MasterListNameJoinRepository::new(pool.clone()));
+
+    repositories.insert(StorageConnectionManager::new(pool.clone()));
 
     repositories.insert(DataLoader::new(StockLineRepository::new(pool.clone())));
 

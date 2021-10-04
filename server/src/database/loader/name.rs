@@ -1,4 +1,4 @@
-use crate::database::repository::{NameRepository, RepositoryError};
+use crate::database::repository::{NameRepository, RepositoryError, StorageConnectionManager};
 use crate::database::schema::NameRow;
 
 use async_graphql::dataloader::*;
@@ -6,7 +6,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct NameLoader {
-    pub name_repository: NameRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -15,10 +15,11 @@ impl Loader<String> for NameLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .name_repository
+        let connection = self.connection_manager.connection()?;
+        let repo = NameRepository::new(&connection);
+
+        Ok(repo
             .find_many_by_id(keys)
-            .await
             .unwrap()
             .iter()
             .map(|name: &NameRow| {

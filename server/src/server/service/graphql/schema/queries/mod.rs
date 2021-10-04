@@ -2,7 +2,7 @@ pub mod pagination;
 
 use crate::database::repository::{
     InvoiceLineRepository, InvoiceQueryRepository, RepositoryError, RequisitionRepository,
-    StoreRepository,
+    StorageConnectionManager, StoreRepository,
 };
 use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
 use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
@@ -77,11 +77,12 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "id of the store")] id: String,
     ) -> Store {
-        let store_repository = ctx.get_repository::<StoreRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
 
+        let store_repository = StoreRepository::new(&connection);
         let store_row: StoreRow = store_repository
             .find_one_by_id(&id)
-            .await
             .unwrap_or_else(|_| panic!("Failed to get store {}", id));
 
         Store { store_row }
