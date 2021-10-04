@@ -159,6 +159,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         visible: true,
       },
     },
+    title: 'heading.add-item',
   });
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 

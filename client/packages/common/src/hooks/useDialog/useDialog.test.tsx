@@ -4,10 +4,11 @@ import { TestingProvider } from '@openmsupply-client/common';
 
 import { useDialog } from './useDialog';
 
-describe('Footer', () => {
+describe('useDialog', () => {
   const DialogExample: React.FC = () => {
     const { Modal, showDialog } = useDialog({
       body: <div>dialog body context</div>,
+      title: 'heading.add-item',
     });
 
     return (
@@ -29,7 +30,7 @@ describe('Footer', () => {
   });
 
   it('Dialog is shown when requested', () => {
-    const { getByRole, getByText } = render(
+    const { getByRole } = render(
       <TestingProvider>
         <DialogExample />
       </TestingProvider>
@@ -37,7 +38,8 @@ describe('Footer', () => {
 
     act(() => getByRole('button', { name: 'show dialog' }).click());
 
-    expect(getByText(/dialog body context/)).toBeInTheDocument();
+    const node = getByRole(/dialog/, { name: /add item/i });
+    expect(node).toBeInTheDocument();
   });
 
   it('Cancel button is shown', () => {
