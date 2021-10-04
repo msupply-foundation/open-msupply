@@ -10,14 +10,12 @@ import {
   Field,
   Grid,
   Label,
-  Portal,
   Rewind,
   Row,
   Transaction,
   Typography,
   useDetailPanel,
   useFormatDate,
-  useHostContext,
   useNotification,
   useQueryClient,
   useTranslation,
@@ -30,6 +28,9 @@ import {
   TableProvider,
   Item,
   SetState,
+  AppBarButtonsPortal,
+  Button,
+  Book,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -40,6 +41,7 @@ import {
 } from '../../useDraftDocument';
 import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
+import { ExternalURL } from '@openmsupply-client/config';
 
 const placeholderTransaction: Transaction = {
   id: '',
@@ -133,7 +135,6 @@ const useDraftOutbound = (id: string) => {
 export const OutboundShipmentDetailViewComponent: FC = () => {
   const { id } = useParams();
   const { draft } = useDraftOutbound(id ?? 'new');
-  const { appBarButtonsRef } = useHostContext();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -212,7 +213,15 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   return draft ? (
     <TabContext value={String(currentTab)}>
-      <Portal container={appBarButtonsRef?.current}>{OpenButton}</Portal>
+      <AppBarButtonsPortal>
+        <Button
+          shouldShrink
+          icon={<Book />}
+          labelKey="button.docs"
+          onClick={() => (location.href = ExternalURL.PublicDocs)}
+        />
+        {OpenButton}
+      </AppBarButtonsPortal>
 
       <AppBarContentPortal
         sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
