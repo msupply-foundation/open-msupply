@@ -2,6 +2,7 @@ import React from 'react';
 import { useDialog } from './useDialog';
 import { Story } from '@storybook/react';
 import { Button } from '@mui/material';
+import { DialogButton } from '../../ui/components/buttons/DialogButton';
 
 export default {
   title: 'Hooks/useDialog',
@@ -21,27 +22,19 @@ const Template: Story = () => {
     hideDialog();
   };
 
-  const body = (
-    <div>This is an example dialog. There&apos;s nothing much to see</div>
-  );
   const { Modal, hideDialog, showDialog } = useDialog({
-    body,
-    buttonOverrides: {
-      cancel: { onClick: onCancel },
-      ok: {
-        onClick: onOk,
-      },
-      okAndNext: {
-        onClick: onOkNext,
-        visible: true,
-      },
-    },
     title: 'heading.add-item',
   });
 
   return (
     <div>
-      {Modal}
+      <Modal
+        cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
+        nextButton={<DialogButton variant="next" onClick={onOkNext} />}
+        okButton={<DialogButton variant="ok" onClick={onOk} />}
+      >
+        <div>This is an example dialog. There&apos;s nothing much to see</div>
+      </Modal>
       <div>
         <b>Button clicked:</b> {result}
       </div>

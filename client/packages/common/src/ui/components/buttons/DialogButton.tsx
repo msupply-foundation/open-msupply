@@ -3,15 +3,14 @@ import { Button as MuiButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
 import { DefaultButtonStyles } from './styles';
+import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../icons';
 
 type Color = 'primary' | 'secondary';
+type DialogButtonVariant = 'cancel' | 'next' | 'ok';
 
 interface DialogButtonProps {
-  color?: Color;
-  icon?: React.ReactNode;
-  labelKey?: LocaleKey;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  visible?: boolean;
+  variant: DialogButtonVariant;
 }
 
 const StyledButton = styled(MuiButton, {
@@ -48,15 +47,37 @@ const StyledButton = styled(MuiButton, {
   };
 });
 
+const getButtonProps = (
+  variant: DialogButtonVariant
+): { color: Color; icon: JSX.Element; labelKey: LocaleKey } => {
+  switch (variant) {
+    case 'cancel':
+      return {
+        color: 'secondary',
+        icon: <XCircleIcon />,
+        labelKey: 'button.cancel',
+      };
+    case 'ok':
+      return {
+        color: 'primary',
+        icon: <CheckIcon />,
+        labelKey: 'button.ok',
+      };
+    case 'next':
+      return {
+        color: 'primary',
+        icon: <ArrowRightIcon />,
+        labelKey: 'button.ok-and-next',
+      };
+  }
+};
+
 export const DialogButton: React.FC<DialogButtonProps> = ({
-  color = 'primary',
-  labelKey,
-  icon,
   onClick,
-  visible,
+  variant,
 }) => {
-  if (!visible) return null;
   const t = useTranslation();
+  const { color, icon, labelKey } = getButtonProps(variant);
 
   return (
     <StyledButton

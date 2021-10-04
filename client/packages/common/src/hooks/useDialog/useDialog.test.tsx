@@ -3,17 +3,21 @@ import { act, render, waitFor } from '@testing-library/react';
 import { TestingProvider } from '@openmsupply-client/common';
 
 import { useDialog } from './useDialog';
+import { DialogButton } from '../../ui/components/buttons/DialogButton';
 
 describe('useDialog', () => {
   const DialogExample: React.FC = () => {
-    const { Modal, showDialog } = useDialog({
-      body: <div>dialog body context</div>,
+    const { hideDialog, Modal, showDialog } = useDialog({
       title: 'heading.add-item',
     });
 
     return (
       <div>
-        {Modal}
+        <Modal
+          cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        >
+          <div>dialog body context</div>
+        </Modal>
         <button onClick={showDialog}>show dialog</button>
       </div>
     );
@@ -26,7 +30,7 @@ describe('useDialog', () => {
       </TestingProvider>
     );
 
-    expect(queryByText(/dialog body context/)).not.toBeInTheDocument();
+    expect(queryByText(/dialog body context/i)).not.toBeInTheDocument();
   });
 
   it('Dialog is shown when requested', () => {
@@ -66,7 +70,7 @@ describe('useDialog', () => {
     act(() => getByRole('button', { name: 'Cancel' }).click());
 
     await waitFor(() => {
-      expect(queryByText(/dialog body context/)).not.toBeInTheDocument();
+      expect(queryByText(/dialog body context/i)).not.toBeInTheDocument();
     });
   });
 });
