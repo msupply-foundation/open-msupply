@@ -36,7 +36,7 @@ const AppBar: React.FC = () => {
         />
 
         <Breadcrumbs />
-        <AppBarButtons></AppBarButtons>
+        <AppBarButtons />
       </Toolbar>
       <AppBarContent />
     </StyledContainer>
