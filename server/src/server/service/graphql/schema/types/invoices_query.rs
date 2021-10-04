@@ -22,7 +22,7 @@ impl InvoiceList {
         let repository = ctx.get_repository::<InvoiceQueryRepository>();
 
         repository
-            .all(&self.pagination)
+            .all(&self.pagination, &None, &None)
             .map_or(Vec::<InvoiceNode>::new(), |list| {
                 list.into_iter().map(InvoiceNode::from).collect()
             })
