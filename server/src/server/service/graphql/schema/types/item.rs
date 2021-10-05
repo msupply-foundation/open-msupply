@@ -43,6 +43,6 @@ impl ItemList {
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<ItemQuery> {
         let repository = ctx.get_repository::<ItemQueryRepository>();
-        repository.all(&self.pagination).unwrap()
+        repository.all(&self.pagination, &None, &None).unwrap()
     }
 }
