@@ -1,4 +1,7 @@
-use super::{InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, NameSortFieldInput};
+use super::{
+    InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, ItemSortFieldInput,
+    NameSortFieldInput,
+};
 
 use crate::database::{
     repository::{DatetimeFilter, EqualFilter, SimpleStringFilter},
@@ -9,8 +12,9 @@ use async_graphql::{InputObject, InputType};
 use chrono::NaiveDateTime;
 
 #[derive(InputObject)]
-#[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
 #[graphql(concrete(name = "InvoiceSortInput", params(InvoiceSortFieldInput)))]
+#[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
+#[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
 pub struct SortInput<T: InputType> {
     pub key: T,
     pub desc: Option<bool>,
