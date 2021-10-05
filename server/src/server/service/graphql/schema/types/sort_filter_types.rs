@@ -4,7 +4,7 @@ use super::{
 };
 
 use crate::database::{
-    repository::{DatetimeFilter, EqualFilter, SimpleStringFilter},
+    repository::{DatetimeFilter, EqualFilter, SimpleStringFilter, Sort},
     schema::{InvoiceRowStatus, InvoiceRowType},
 };
 
@@ -18,6 +18,19 @@ use chrono::NaiveDateTime;
 pub struct SortInput<T: InputType> {
     pub key: T,
     pub desc: Option<bool>,
+}
+
+impl<TInput, T> From<&SortInput<TInput>> for Sort<T>
+where
+    TInput: InputType + Copy,
+    T: From<TInput>,
+{
+    fn from(sort: &SortInput<TInput>) -> Self {
+        Sort {
+            key: T::from(sort.key),
+            desc: sort.desc,
+        }
+    }
 }
 
 // simple string filter
