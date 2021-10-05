@@ -1,5 +1,5 @@
 use crate::database::repository::{
-    ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, ItemSortField,
+    EqualFilter, ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, ItemSortField,
     SimpleStringFilter, StockLineRepository,
 };
 use crate::server::service::graphql::schema::types::StockLineQuery;
@@ -7,7 +7,7 @@ use crate::server::service::graphql::{schema::queries::pagination::Pagination, C
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Enum, InputObject, Object, SimpleObject};
 
-use super::{SimpleStringFilterInput, SortInput, StockLineList};
+use super::{EqualFilterBoolInput, SimpleStringFilterInput, SortInput, StockLineList};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "crate::database::repository::repository::ItemSortField")]
@@ -22,6 +22,7 @@ pub type ItemSortInput = SortInput<ItemSortFieldInput>;
 pub struct ItemFilterInput {
     pub name: Option<SimpleStringFilterInput>,
     pub code: Option<SimpleStringFilterInput>,
+    pub is_visible: Option<EqualFilterBoolInput>,
 }
 
 impl From<ItemFilterInput> for ItemFilter {
@@ -29,6 +30,7 @@ impl From<ItemFilterInput> for ItemFilter {
         ItemFilter {
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
+            is_visible: f.is_visible.map(EqualFilter::from),
         }
     }
 }
