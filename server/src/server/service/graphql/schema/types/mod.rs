@@ -10,7 +10,7 @@ use crate::{
     server::service::graphql::ContextExt,
 };
 
-use async_graphql::{dataloader::DataLoader, Context, Enum, InputObject, Object};
+use async_graphql::{dataloader::DataLoader, Context, Enum, Object};
 
 // M1 speced API is moved to their own files
 // Types defined here are prototype types and should be removed before M1 release to avoid confusion (for consumers and devs)
@@ -286,12 +286,4 @@ impl InvoiceLine {
 
         Invoice { invoice_row }
     }
-}
-
-#[derive(Clone, InputObject)]
-pub struct InputRequisitionLine {
-    pub id: String,
-    pub item_id: String,
-    pub actual_quantity: f64,
-    pub suggested_quantity: f64,
 }
