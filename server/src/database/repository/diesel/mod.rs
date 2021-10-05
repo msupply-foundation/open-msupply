@@ -37,9 +37,7 @@ pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
 pub use master_list_name_join::MasterListNameJoinRepository;
 pub use name::NameRepository;
-pub use name_query::{
-    NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, NameQueryStringFilter,
-};
+pub use name_query::{NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField};
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use sort_filter_types::*;

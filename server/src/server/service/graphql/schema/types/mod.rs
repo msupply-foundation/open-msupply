@@ -29,6 +29,9 @@ pub use self::invoice_query::*;
 pub mod invoices_query;
 pub use self::invoices_query::*;
 
+pub mod sort_filter_types;
+pub use self::sort_filter_types::*;
+
 #[derive(Clone)]
 pub struct Store {
     pub store_row: StoreRow,
