@@ -18,3 +18,4 @@ export * from './useRowRenderCount';
 export * from './useSortBy';
 export * from './useSortedData';
 export * from './useWindowDimensions';
+export * from './useDebounce';

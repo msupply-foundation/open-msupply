@@ -1,5 +1,5 @@
-import { useCallback, useState, RefObject, useRef, useEffect } from 'react';
-import { useDebouncedValue } from '../useDebouncedValue';
+import { useDebounceCallback } from './../useDebounce/useDebounceCallback';
+import { useState, RefObject, useRef, useEffect } from 'react';
 
 const getRect = (element: HTMLElement | null): DOMRect => {
   if (!element) {
@@ -28,14 +28,17 @@ export const useBoundingClientRect = <T extends HTMLElement>(
   const [rect, setRect] = useState(
     getRect(ref && ref.current ? ref.current : null)
   );
-  const debouncedRect = useDebouncedValue(rect, debouncedTimer);
 
   const observer = useRef<ResizeObserver | null>(null);
 
-  const resize = useCallback(() => {
-    if (!ref.current) return;
-    setRect(getRect(ref.current));
-  }, [ref]);
+  const resize = useDebounceCallback(
+    () => {
+      if (!ref.current) return;
+      setRect(getRect(ref.current));
+    },
+    [ref],
+    debouncedTimer
+  );
 
   useEffect(() => {
     if (!ref.current) return;
@@ -48,7 +51,7 @@ export const useBoundingClientRect = <T extends HTMLElement>(
     };
   }, []);
 
-  return debouncedRect;
+  return rect;
 };
 
 export const useBoundingClientRectRef = <T extends HTMLElement>(
