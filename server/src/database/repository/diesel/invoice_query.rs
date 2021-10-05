@@ -110,27 +110,33 @@ impl InvoiceQueryRepository {
             if let Some(value) = &f.entry_datetime {
                 if let Some(eq) = &value.equal_to {
                     query = query.filter(invoice_dsl::entry_datetime.eq(eq));
-                } else if let Some(before_or_equal) = &value.before_or_equal_to {
+                }
+                if let Some(before_or_equal) = &value.before_or_equal_to {
                     query = query.filter(invoice_dsl::entry_datetime.le(before_or_equal));
-                } else if let Some(after_or_equal) = &value.after_or_equal_to {
+                }
+                if let Some(after_or_equal) = &value.after_or_equal_to {
                     query = query.filter(invoice_dsl::entry_datetime.ge(after_or_equal));
                 }
             }
             if let Some(value) = &f.confirm_datetime {
                 if let Some(eq) = &value.equal_to {
                     query = query.filter(invoice_dsl::confirm_datetime.eq(eq));
-                } else if let Some(before_or_equal) = &value.before_or_equal_to {
+                }
+                if let Some(before_or_equal) = &value.before_or_equal_to {
                     query = query.filter(invoice_dsl::confirm_datetime.le(before_or_equal));
-                } else if let Some(after_or_equal) = &value.after_or_equal_to {
+                }
+                if let Some(after_or_equal) = &value.after_or_equal_to {
                     query = query.filter(invoice_dsl::confirm_datetime.ge(after_or_equal));
                 }
             }
             if let Some(value) = &f.finalised_datetime {
                 if let Some(eq) = &value.equal_to {
                     query = query.filter(invoice_dsl::finalised_datetime.eq(eq));
-                } else if let Some(before_or_equal) = &value.before_or_equal_to {
+                }
+                if let Some(before_or_equal) = &value.before_or_equal_to {
                     query = query.filter(invoice_dsl::finalised_datetime.le(before_or_equal));
-                } else if let Some(after_or_equal) = &value.after_or_equal_to {
+                }
+                if let Some(after_or_equal) = &value.after_or_equal_to {
                     query = query.filter(invoice_dsl::finalised_datetime.ge(after_or_equal));
                 }
             }
