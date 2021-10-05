@@ -51,18 +51,18 @@ pub struct InvoiceLinePricing {
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(complex)]
 pub struct InvoiceNode {
-    id: String,
-    other_party_name: String,
-    other_party_id: String,
-    status: InvoiceStatus,
-    invoice_type: InvoiceType,
-    invoice_number: i32,
-    their_reference: Option<String>,
-    comment: Option<String>,
-    entry_datetime: String,
-    confirm_datetime: Option<String>,
-    finalised_datetime: Option<String>,
-    lines: InvoiceLines,
+    pub id: String,
+    pub other_party_name: String,
+    pub other_party_id: String,
+    pub status: InvoiceStatus,
+    pub invoice_type: InvoiceType,
+    pub invoice_number: i32,
+    pub their_reference: Option<String>,
+    pub comment: Option<String>,
+    pub entry_datetime: String,
+    pub confirm_datetime: Option<String>,
+    pub finalised_datetime: Option<String>,
+    pub lines: InvoiceLines,
 }
 
 #[ComplexObject]
@@ -115,8 +115,8 @@ impl From<InvoiceQueryJoin> for InvoiceNode {
 }
 
 #[derive(PartialEq, Debug)]
-struct InvoiceLines {
-    invoice_id: String,
+pub struct InvoiceLines {
+    pub invoice_id: String,
 }
 
 #[Object]
