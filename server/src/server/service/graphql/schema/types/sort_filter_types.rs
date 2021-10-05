@@ -52,6 +52,21 @@ impl From<EqualFilterStringInput> for EqualFilter<String> {
     }
 }
 
+// bool equal filter
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterBoolInput {
+    equal_to: Option<bool>,
+}
+
+impl From<EqualFilterBoolInput> for EqualFilter<bool> {
+    fn from(f: EqualFilterBoolInput) -> Self {
+        EqualFilter {
+            equal_to: f.equal_to,
+        }
+    }
+}
+
 // generic equal filters
 
 #[derive(InputObject, Clone)]

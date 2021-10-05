@@ -1,4 +1,4 @@
-use super::{get_connection, DBBackendConnection, SimpleStringFilter, Sort};
+use super::{get_connection, DBBackendConnection, EqualFilter, SimpleStringFilter, Sort};
 use crate::{
     database::{
         repository::RepositoryError,
@@ -20,6 +20,8 @@ use diesel::{
 pub struct ItemFilter {
     pub name: Option<SimpleStringFilter>,
     pub code: Option<SimpleStringFilter>,
+    /// If true it only returns ItemAndMasterList that have a name join row
+    pub is_visible: Option<EqualFilter<bool>>,
 }
 
 pub enum ItemSortField {
@@ -87,6 +89,13 @@ impl ItemQueryRepository {
                     query = query.filter(item_dsl::name.like(format!("%{}%", like)));
                 }
             }
+            if let Some(is_visible) = f.is_visible.as_ref().map(|v| v.equal_to).flatten() {
+                if is_visible {
+                    query = query.filter(master_list_name_join_dsl::id.is_not_null());
+                } else {
+                    query = query.filter(master_list_name_join_dsl::id.is_null());
+                }
+            }
         }
 
         if let Some(sort) = sort {
@@ -124,7 +133,7 @@ mod tests {
                 repository::{
                     MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
                 },
-                ItemQueryRepository, ItemRepository, NameRepository,
+                EqualFilter, ItemFilter, ItemQueryRepository, ItemRepository, NameRepository,
             },
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
@@ -353,5 +362,38 @@ mod tests {
         let results = item_query_repository.all(&None, &None, &None).unwrap();
         assert!(results[2].2.is_some());
         assert!(results[3].2.is_some());
+
+        // test is_visible filter:
+        let results = item_query_repository
+            .all(
+                &None,
+                &Some(ItemFilter {
+                    name: None,
+                    code: None,
+                    // query invisible rows
+                    is_visible: Some(EqualFilter {
+                        equal_to: Some(false),
+                    }),
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(results[0].0, item_rows[4]);
+        // get visible rows
+        let results = item_query_repository
+            .all(
+                &None,
+                &Some(ItemFilter {
+                    name: None,
+                    code: None,
+                    // query invisible rows
+                    is_visible: Some(EqualFilter {
+                        equal_to: Some(true),
+                    }),
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(results.len(), 4);
     }
 }
