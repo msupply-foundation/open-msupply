@@ -1,20 +1,37 @@
 use crate::database::repository::{
-    NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, NameQueryStringFilter,
+    NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, SimpleStringFilter,
 };
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
 use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
 
-#[derive(InputObject)]
-pub struct NameSortInput {
-    key: NameSortField,
-    desc: Option<bool>,
-}
+use super::{SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "crate::database::repository::repository::NameQuerySortField")]
-enum NameSortField {
+pub enum NameSortFieldInput {
     Name,
     Code,
+}
+pub type NameSortInput = SortInput<NameSortFieldInput>;
+
+#[derive(InputObject, Clone)]
+
+pub struct NameFilterInput {
+    pub name: Option<SimpleStringFilterInput>,
+    pub code: Option<SimpleStringFilterInput>,
+    pub is_customer: Option<bool>,
+    pub is_supplier: Option<bool>,
+}
+
+impl From<NameFilterInput> for NameQueryFilter {
+    fn from(f: NameFilterInput) -> Self {
+        NameQueryFilter {
+            name: f.name.map(SimpleStringFilter::from),
+            code: f.code.map(SimpleStringFilter::from),
+            is_customer: f.is_customer,
+            is_supplier: f.is_supplier,
+        }
+    }
 }
 
 #[derive(SimpleObject, PartialEq, Debug)]
@@ -30,43 +47,8 @@ pub struct NameQuery {
 
 pub struct NameList {
     pub pagination: Option<Pagination>,
-    pub filter: Option<NameFilter>,
+    pub filter: Option<NameFilterInput>,
     pub sort: Option<Vec<NameSortInput>>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct NameStringFilter {
-    equal_to: Option<String>,
-    like: Option<String>,
-}
-
-impl From<NameStringFilter> for NameQueryStringFilter {
-    fn from(f: NameStringFilter) -> Self {
-        NameQueryStringFilter {
-            equal_to: f.equal_to,
-            like: f.like,
-        }
-    }
-}
-
-#[derive(InputObject, Clone)]
-
-pub struct NameFilter {
-    pub name: Option<NameStringFilter>,
-    pub code: Option<NameStringFilter>,
-    pub is_customer: Option<bool>,
-    pub is_supplier: Option<bool>,
-}
-
-impl From<NameFilter> for NameQueryFilter {
-    fn from(f: NameFilter) -> Self {
-        NameQueryFilter {
-            name: f.name.map(NameQueryStringFilter::from),
-            code: f.code.map(NameQueryStringFilter::from),
-            is_customer: f.is_customer,
-            is_supplier: f.is_supplier,
-        }
-    }
 }
 
 #[Object]
@@ -85,7 +67,7 @@ impl NameList {
         let first_sort = self
             .sort
             .as_ref()
-            .map(|sort_list| sort_list.get(0))
+            .map(|sort_list| sort_list.first())
             .flatten()
             .map(|opt| NameQuerySort {
                 key: NameQuerySortField::from(opt.key),

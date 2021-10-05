@@ -3,8 +3,8 @@ use crate::{
         loader::{InvoiceLoader, StoreLoader},
         repository::{CustomerInvoiceRepository, InvoiceLineRepository, RequisitionLineRepository},
         schema::{
-            InvoiceLineRow, InvoiceRow, InvoiceRowType, RequisitionLineRow, RequisitionRow,
-            RequisitionRowType, StoreRow,
+            InvoiceLineRow, InvoiceRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
+            StoreRow,
         },
     },
     server::service::graphql::ContextExt,
@@ -28,6 +28,9 @@ pub use self::invoice_query::*;
 
 pub mod invoices_query;
 pub use self::invoices_query::*;
+
+pub mod sort_filter_types;
+pub use self::sort_filter_types::*;
 
 #[derive(Clone)]
 pub struct Store {
@@ -185,30 +188,6 @@ impl RequisitionLine {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum InvoiceType {
-    CustomerInvoice,
-    SupplierInvoice,
-}
-
-impl From<InvoiceRowType> for InvoiceType {
-    fn from(invoice_row_type: InvoiceRowType) -> InvoiceType {
-        match invoice_row_type {
-            InvoiceRowType::CustomerInvoice => InvoiceType::CustomerInvoice,
-            InvoiceRowType::SupplierInvoice => InvoiceType::SupplierInvoice,
-        }
-    }
-}
-
-impl From<InvoiceType> for InvoiceRowType {
-    fn from(invoice_type: InvoiceType) -> InvoiceRowType {
-        match invoice_type {
-            InvoiceType::CustomerInvoice => InvoiceRowType::CustomerInvoice,
-            InvoiceType::SupplierInvoice => InvoiceRowType::SupplierInvoice,
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct Invoice {
     pub invoice_row: InvoiceRow,
@@ -224,7 +203,7 @@ impl Invoice {
         self.invoice_row.invoice_number
     }
 
-    pub async fn r#type(&self) -> InvoiceType {
+    pub async fn r#type(&self) -> InvoiceTypeInput {
         self.invoice_row.r#type.clone().into()
     }
 

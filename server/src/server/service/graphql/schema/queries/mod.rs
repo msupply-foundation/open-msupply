@@ -8,7 +8,10 @@ use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
 use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
 use crate::server::service::graphql::ContextExt;
 
-use super::types::{InvoiceList, InvoiceNode, ItemList, NameFilter, NameList, NameSortInput};
+use super::types::{
+    InvoiceFilterInput, InvoiceList, InvoiceNode, InvoiceSortInput, ItemList, NameFilterInput,
+    NameList, NameSortInput,
+};
 use async_graphql::{Context, Object};
 use pagination::Pagination;
 pub struct Queries;
@@ -24,8 +27,9 @@ impl Queries {
         &self,
         _ctx: &Context<'_>,
         #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
-        #[graphql(desc = "filters option")] filter: Option<NameFilter>,
-        #[graphql(desc = "sort options")] sort: Option<Vec<NameSortInput>>,
+        #[graphql(desc = "filters option")] filter: Option<NameFilterInput>,
+        #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<NameSortInput>>,
     ) -> NameList {
         NameList {
             pagination: page,
@@ -57,8 +61,15 @@ impl Queries {
         &self,
         _ctx: &Context<'_>,
         #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
+        #[graphql(desc = "filters option")] filter: Option<InvoiceFilterInput>,
+        #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<InvoiceSortInput>>,
     ) -> InvoiceList {
-        InvoiceList { pagination: page }
+        InvoiceList {
+            pagination: page,
+            filter,
+            sort,
+        }
     }
 
     pub async fn store(
