@@ -144,16 +144,17 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const { register, handleSubmit } = useForm();
-  const addItem = (item: Item) => {
+  const { register, reset, handleSubmit } = useForm();
+  const addItemClose = (item: Item) => {
     draft?.items?.push(item);
-    // console.info('item added 😉');
     hideDialog();
   };
-  const onSubmit = handleSubmit(addItem);
-  const addAnotherItem = () => {
-    console.info('item added 😉');
+  const addItemReset = (item: Item) => {
+    draft?.items?.push(item);
+    reset();
   };
+  const onSubmit = handleSubmit(addItemClose);
+  const onOkNext = handleSubmit(addItemReset);
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
   });
@@ -233,10 +234,10 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     <TabContext value={String(currentTab)}>
       <Modal
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
+        nextButton={<DialogButton variant="next" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onSubmit} />}
       >
-        <ItemDetails register={register} handleSubmit={handleSubmit(addItem)} />
+        <ItemDetails register={register} onSubmit={onSubmit} />
       </Modal>
       <Portal container={appBarButtonsRef?.current}>
         <Button

@@ -1,37 +1,67 @@
 import React from 'react';
 
-import { Item, TextField, UseFormRegister } from '@openmsupply-client/common';
+import {
+  Grid,
+  Input,
+  InputLabel,
+  Item,
+  UseFormRegister,
+} from '@openmsupply-client/common';
 
 interface ItemDetailsProps {
-  handleSubmit: () => void;
   item?: Item;
+  onSubmit: () => void;
   register: UseFormRegister<Item>;
 }
 
+const inputStyle = {
+  backgroundColor: '#f2f2f5',
+  borderRadius: '8px',
+  color: '#555770',
+  padding: '4px 8px',
+  width: '240px',
+};
+
+const labelStyle = {
+  color: '#1c1c28',
+  fontSize: '12px',
+};
+
 export const ItemDetails: React.FC<ItemDetailsProps> = ({
-  handleSubmit,
   item,
+  onSubmit,
   register,
 }) => {
-  //   const { item: draft, setItem } = useFormContext();
-
-  //   const handleInputChange: React.ChangeEventHandler<
-  //     HTMLInputElement | HTMLTextAreaElement
-  //   > = e => {
-  //     const { name, value } = e.target;
-  //     setItem({ ...draft, [name]: value } as Item);
-  //   };
   return (
-    <form onSubmit={handleSubmit}>
-      <div>code</div>
-      <div>{item?.code}</div>
-      <div>name</div>
-      <TextField
-        label="Item name"
-        defaultValue={item?.name}
-        variant="filled"
-        {...register('name')}
-      />
+    <form onSubmit={onSubmit}>
+      <Grid container sm={2}>
+        <Grid>
+          <Grid item>
+            <InputLabel sx={labelStyle}>Item</InputLabel>
+          </Grid>
+          <Grid item>
+            <Input
+              defaultValue={item?.name}
+              disableUnderline
+              sx={inputStyle}
+              {...register('name')}
+            />
+          </Grid>
+        </Grid>
+        <Grid>
+          <Grid item>
+            <InputLabel sx={labelStyle}>Quantity</InputLabel>
+          </Grid>
+          <Grid item>
+            <Input
+              defaultValue={item?.quantity}
+              disableUnderline
+              sx={inputStyle}
+              {...register('quantity')}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
     </form>
   );
 };
