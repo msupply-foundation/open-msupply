@@ -1,5 +1,5 @@
 use crate::database::repository::{
-    NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, SimpleStringFilter,
+    NameQueryFilter, NameQueryRepository, NameQuerySort, SimpleStringFilter,
 };
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
 use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
@@ -69,10 +69,7 @@ impl NameList {
             .as_ref()
             .map(|sort_list| sort_list.first())
             .flatten()
-            .map(|opt| NameQuerySort {
-                key: NameQuerySortField::from(opt.key),
-                desc: opt.desc,
-            });
+            .map(NameQuerySort::from);
 
         repository
             .all(&self.pagination, &filter, &first_sort)

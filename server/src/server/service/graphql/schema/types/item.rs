@@ -1,6 +1,6 @@
 use crate::database::repository::{
-    EqualFilter, ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, ItemSortField,
-    SimpleStringFilter, StockLineRepository,
+    EqualFilter, ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, SimpleStringFilter,
+    StockLineRepository,
 };
 use crate::server::service::graphql::schema::types::StockLineQuery;
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
@@ -94,10 +94,7 @@ impl ItemList {
             .as_ref()
             .map(|sort_list| sort_list.first())
             .flatten()
-            .map(|opt| ItemSort {
-                key: ItemSortField::from(opt.key),
-                desc: opt.desc,
-            });
+            .map(ItemSort::from);
 
         repository
             .all(&self.pagination, &filter, &first_sort)
