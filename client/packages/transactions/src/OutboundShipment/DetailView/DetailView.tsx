@@ -10,14 +10,12 @@ import {
   Field,
   Grid,
   Label,
-  Portal,
   Rewind,
   Row,
   Transaction,
   Typography,
   useDetailPanel,
   useFormatDate,
-  useHostContext,
   useDialog,
   useNotification,
   useQueryClient,
@@ -31,6 +29,8 @@ import {
   TableProvider,
   Item,
   SetState,
+  AppBarButtonsPortal,
+  Book,
   Button,
   PlusCircle,
 } from '@openmsupply-client/common';
@@ -43,6 +43,7 @@ import {
 } from '../../useDraftDocument';
 import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
+import { ExternalURL } from '@openmsupply-client/config';
 import { DialogButton } from '@openmsupply-client/common/src/ui/components/buttons/DialogButton';
 
 const placeholderTransaction: Transaction = {
@@ -137,7 +138,6 @@ const useDraftOutbound = (id: string) => {
 export const OutboundShipmentDetailViewComponent: FC = () => {
   const { id } = useParams();
   const { draft } = useDraftOutbound(id ?? 'new');
-  const { appBarButtonsRef } = useHostContext();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -226,6 +226,21 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   return draft ? (
     <TabContext value={String(currentTab)}>
+      <AppBarButtonsPortal>
+        <Button
+          labelKey="button.add-item"
+          icon={<PlusCircle />}
+          onClick={showDialog}
+        />
+        <Button
+          shouldShrink
+          icon={<Book />}
+          labelKey="button.docs"
+          onClick={() => (location.href = ExternalURL.PublicDocs)}
+        />
+        {OpenButton}
+      </AppBarButtonsPortal>
+
       <Modal
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
@@ -233,14 +248,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       >
         <Typography>Some stuff goes in here</Typography>
       </Modal>
-      <Portal container={appBarButtonsRef?.current}>
-        <Button
-          labelKey="button.add-item"
-          icon={<PlusCircle />}
-          onClick={showDialog}
-        />
-        {OpenButton}
-      </Portal>
 
       <AppBarContentPortal
         sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}
