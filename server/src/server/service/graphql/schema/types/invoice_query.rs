@@ -2,7 +2,6 @@ use crate::{
     database::{
         loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
         repository::{InvoiceLineQueryJoin, InvoiceLineStats, InvoiceQueryJoin},
-        schema::{InvoiceRowStatus, InvoiceRowType},
     },
     server::service::graphql::ContextExt,
 };
@@ -11,35 +10,18 @@ use async_graphql::{dataloader::DataLoader, ComplexObject, Context, Enum, Object
 use chrono::{DateTime, NaiveDate, Utc};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum InvoiceType {
+#[graphql(remote = "crate::database::schema::InvoiceRowType")]
+pub enum InvoiceTypeInput {
     CustomerInvoice,
     SupplierInvoice,
 }
 
-impl From<InvoiceRowType> for InvoiceType {
-    fn from(row: InvoiceRowType) -> InvoiceType {
-        match row {
-            InvoiceRowType::CustomerInvoice => InvoiceType::CustomerInvoice,
-            InvoiceRowType::SupplierInvoice => InvoiceType::SupplierInvoice,
-        }
-    }
-}
-
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum InvoiceStatus {
+#[graphql(remote = "crate::database::schema::InvoiceRowStatus")]
+pub enum InvoiceStatusInput {
     Draft,
     Confirmed,
     Finalised,
-}
-
-impl From<InvoiceRowStatus> for InvoiceStatus {
-    fn from(row: InvoiceRowStatus) -> InvoiceStatus {
-        match row {
-            InvoiceRowStatus::Draft => InvoiceStatus::Draft,
-            InvoiceRowStatus::Confirmed => InvoiceStatus::Confirmed,
-            InvoiceRowStatus::Finalised => InvoiceStatus::Finalised,
-        }
-    }
 }
 
 #[derive(SimpleObject, PartialEq, Debug)]
@@ -54,8 +36,8 @@ pub struct InvoiceNode {
     id: String,
     other_party_name: String,
     other_party_id: String,
-    status: InvoiceStatus,
-    invoice_type: InvoiceType,
+    status: InvoiceStatusInput,
+    invoice_type: InvoiceTypeInput,
     invoice_number: i32,
     their_reference: Option<String>,
     comment: Option<String>,
@@ -95,8 +77,8 @@ impl From<InvoiceQueryJoin> for InvoiceNode {
             id: invoice_row.id.to_owned(),
             other_party_name: name_row.name,
             other_party_id: name_row.id,
-            status: InvoiceStatus::from(invoice_row.status),
-            invoice_type: InvoiceType::from(invoice_row.r#type),
+            status: InvoiceStatusInput::from(invoice_row.status),
+            invoice_type: InvoiceTypeInput::from(invoice_row.r#type),
             invoice_number: invoice_row.invoice_number,
             their_reference: invoice_row.their_reference,
             comment: invoice_row.comment,
