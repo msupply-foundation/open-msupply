@@ -92,7 +92,7 @@ impl ItemList {
         let first_sort = self
             .sort
             .as_ref()
-            .map(|sort_list| sort_list.get(0))
+            .map(|sort_list| sort_list.first())
             .flatten()
             .map(|opt| ItemSort {
                 key: ItemSortField::from(opt.key),
