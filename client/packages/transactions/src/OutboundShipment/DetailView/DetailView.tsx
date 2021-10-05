@@ -34,7 +34,7 @@ import {
   SetState,
   Button,
   PlusCircle,
-  useFormContext,
+  useForm,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -144,12 +144,13 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const { item } = useFormContext();
-  const addItem = () => {
+  const { register, handleSubmit } = useForm();
+  const addItem = (item: Item) => {
     draft?.items?.push(item);
-    console.info('item added 😉');
+    // console.info('item added 😉');
     hideDialog();
   };
+  const onSubmit = handleSubmit(addItem);
   const addAnotherItem = () => {
     console.info('item added 😉');
   };
@@ -233,9 +234,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       <Modal
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
-        okButton={<DialogButton variant="ok" onClick={addItem} />}
+        okButton={<DialogButton variant="ok" onClick={onSubmit} />}
       >
-        <ItemDetails />
+        <ItemDetails register={register} handleSubmit={handleSubmit(addItem)} />
       </Modal>
       <Portal container={appBarButtonsRef?.current}>
         <Button
