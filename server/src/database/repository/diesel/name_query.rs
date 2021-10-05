@@ -1,4 +1,5 @@
-use super::{get_connection, DBBackendConnection};
+use super::{get_connection, DBBackendConnection, SimpleStringFilter, Sort};
+
 use crate::{
     database::{
         repository::RepositoryError,
@@ -42,22 +43,14 @@ impl From<NameAndNameStoreJoin> for NameQuery {
     }
 }
 
-pub struct NameQueryStringFilter {
-    pub equal_to: Option<String>,
-    pub like: Option<String>,
-}
-
 pub struct NameQueryFilter {
-    pub name: Option<NameQueryStringFilter>,
-    pub code: Option<NameQueryStringFilter>,
+    pub name: Option<SimpleStringFilter>,
+    pub code: Option<SimpleStringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
 }
 
-pub struct NameQuerySort {
-    pub key: NameQuerySortField,
-    pub desc: Option<bool>,
-}
+pub type NameQuerySort = Sort<NameQuerySortField>;
 
 pub enum NameQuerySortField {
     Name,

@@ -296,8 +296,8 @@ mod repository_test {
                 InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
                 ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
                 NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField,
-                NameQueryStringFilter, NameRepository, RequisitionLineRepository,
-                RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
+                NameRepository, RequisitionLineRepository, RequisitionRepository,
+                SimpleStringFilter, StockLineRepository, StoreRepository, UserAccountRepository,
             },
             schema::{
                 CentralSyncBufferRow, InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow,
@@ -340,7 +340,7 @@ mod repository_test {
             .all(
                 &None,
                 &Some(NameQueryFilter {
-                    name: Some(NameQueryStringFilter {
+                    name: Some(SimpleStringFilter {
                         equal_to: Some("name_1".to_string()),
                         like: None,
                     }),
@@ -358,7 +358,7 @@ mod repository_test {
             .all(
                 &None,
                 &Some(NameQueryFilter {
-                    name: Some(NameQueryStringFilter {
+                    name: Some(SimpleStringFilter {
                         equal_to: None,
                         like: Some("me_".to_string()),
                     }),
@@ -376,7 +376,7 @@ mod repository_test {
                 &None,
                 &Some(NameQueryFilter {
                     name: None,
-                    code: Some(NameQueryStringFilter {
+                    code: Some(SimpleStringFilter {
                         equal_to: Some("code1".to_string()),
                         like: None,
                     }),
