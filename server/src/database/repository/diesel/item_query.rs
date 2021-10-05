@@ -1,4 +1,4 @@
-use super::{get_connection, DBBackendConnection};
+use super::{get_connection, DBBackendConnection, SimpleStringFilter, Sort};
 use crate::{
     database::{
         repository::RepositoryError,
@@ -20,6 +20,17 @@ use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool},
 };
+pub struct ItemFilter {
+    pub name: Option<SimpleStringFilter>,
+    pub code: Option<SimpleStringFilter>,
+}
+
+pub enum ItemSortField {
+    Name,
+    Code,
+}
+
+pub type ItemSort = Sort<ItemSortField>;
 
 type ItemAndMasterList = (
     ItemRow,
@@ -52,7 +63,12 @@ impl ItemQueryRepository {
         Ok(item_dsl::item.count().get_result(&*connection)?)
     }
 
-    pub fn all(&self, pagination: &Option<Pagination>) -> Result<Vec<ItemQuery>, RepositoryError> {
+    pub fn all(
+        &self,
+        pagination: &Option<Pagination>,
+        filter: &Option<ItemFilter>,
+        sort: &Option<ItemSort>,
+    ) -> Result<Vec<ItemQuery>, RepositoryError> {
         let connection = get_connection(&self.pool)?;
         // Join master_list_line
         let item_and_master_list_line =
@@ -65,10 +81,50 @@ impl ItemQueryRepository {
                     .eq(master_list_name_join_dsl::master_list_id)),
         );
 
-        Ok(item_and_all_join
+        let mut query = item_and_all_join
             .offset(pagination.offset())
             .limit(pagination.first())
-            .order(item_dsl::id.asc())
+            .into_boxed();
+
+        if let Some(f) = filter {
+            if let Some(code) = &f.code {
+                if let Some(eq) = &code.equal_to {
+                    query = query.filter(item_dsl::code.eq(eq));
+                } else if let Some(like) = &code.like {
+                    query = query.filter(item_dsl::code.like(format!("%{}%", like)));
+                }
+            }
+            if let Some(name) = &f.name {
+                if let Some(eq) = &name.equal_to {
+                    query = query.filter(item_dsl::name.eq(eq));
+                } else if let Some(like) = &name.like {
+                    query = query.filter(item_dsl::name.like(format!("%{}%", like)));
+                }
+            }
+        }
+
+        if let Some(sort) = sort {
+            match sort.key {
+                ItemSortField::Name => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(item_dsl::name.desc());
+                    } else {
+                        query = query.order(item_dsl::name.asc());
+                    }
+                }
+                ItemSortField::Code => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(item_dsl::code.desc());
+                    } else {
+                        query = query.order(item_dsl::code.asc());
+                    }
+                }
+            }
+        } else {
+            query = query.order(item_dsl::id.asc())
+        }
+
+        Ok(query
             .load::<ItemAndMasterList>(&*connection)?
             .into_iter()
             .map(ItemQuery::from)
@@ -139,16 +195,23 @@ mod tests {
 
         // .all, no pagenation (default)
         assert_eq!(
-            item_query_repository.all(&None).unwrap().len(),
+            item_query_repository
+                .all(&None, &None, &None)
+                .unwrap()
+                .len(),
             default_page_size
         );
 
         // .all, pagenation (offset 10)
         let result = item_query_repository
-            .all(&Some(Pagination {
-                offset: Some(10),
-                first: None,
-            }))
+            .all(
+                &Some(Pagination {
+                    offset: Some(10),
+                    first: None,
+                }),
+                &None,
+                &None,
+            )
             .unwrap();
         assert_eq!(result.len(), default_page_size);
         assert_eq!(result[0], queries[10]);
@@ -159,20 +222,28 @@ mod tests {
 
         // .all, pagenation (first 10)
         let result = item_query_repository
-            .all(&Some(Pagination {
-                offset: None,
-                first: Some(10),
-            }))
+            .all(
+                &Some(Pagination {
+                    offset: None,
+                    first: Some(10),
+                }),
+                &None,
+                &None,
+            )
             .unwrap();
         assert_eq!(result.len(), 10);
         assert_eq!(*result.last().unwrap(), queries[9]);
 
         // .all, pagenation (offset 150, first 90) <- more then records in table
         let result = item_query_repository
-            .all(&Some(Pagination {
-                offset: Some(150),
-                first: Some(90),
-            }))
+            .all(
+                &Some(Pagination {
+                    offset: Some(150),
+                    first: Some(90),
+                }),
+                &None,
+                &None,
+            )
             .unwrap();
         assert_eq!(result.len(), queries.len() - 150);
         assert_eq!(result.last().unwrap(), queries.last().unwrap());
@@ -325,18 +396,27 @@ mod tests {
         // Test
 
         // Before adding any joins
-        assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
+        assert_eq!(
+            item_query_repository.all(&None, &None, &None).unwrap(),
+            item_query_rows
+        );
 
         // After adding first join (item1 and item2 visible)
         item_query_rows[0].is_visible = true;
         item_query_rows[1].is_visible = true;
         MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_1).unwrap();
-        assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
+        assert_eq!(
+            item_query_repository.all(&None, &None, &None).unwrap(),
+            item_query_rows
+        );
 
         // After adding second join (item3 and item4 visible)
         item_query_rows[2].is_visible = true;
         item_query_rows[3].is_visible = true;
         MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_2).unwrap();
-        assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
+        assert_eq!(
+            item_query_repository.all(&None, &None, &None).unwrap(),
+            item_query_rows
+        );
     }
 }
