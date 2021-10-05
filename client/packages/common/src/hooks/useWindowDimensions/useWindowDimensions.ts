@@ -1,3 +1,4 @@
+import { useDebounceCallback } from './../useDebounce';
 import { useState, useEffect } from 'react';
 
 interface WindowDimensions {
@@ -14,11 +15,18 @@ function getWindowDimensions(): WindowDimensions {
   };
 }
 
-export const useWindowDimensions = (): WindowDimensions => {
+export const useWindowDimensions = (debouncedTimer = 500): WindowDimensions => {
   const [dimensions, setDimensions] = useState(getWindowDimensions());
 
+  const resize = useDebounceCallback(
+    () => {
+      setDimensions(getWindowDimensions());
+    },
+    [],
+    debouncedTimer
+  );
+
   useEffect(() => {
-    const resize = () => setDimensions(getWindowDimensions());
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, []);
