@@ -7,6 +7,7 @@ import {
   Circle,
   Clock,
   Copy,
+  DialogButton,
   Field,
   Grid,
   Label,
@@ -33,6 +34,7 @@ import {
   SetState,
   Button,
   PlusCircle,
+  useFormContext,
 } from '@openmsupply-client/common';
 
 import { detailQueryFn, updateFn } from '../../api';
@@ -43,7 +45,7 @@ import {
 } from '../../useDraftDocument';
 import { Box } from '@mui/system';
 import { GeneralTab } from './tabs/GeneralTab';
-import { DialogButton } from '@openmsupply-client/common/src/ui/components/buttons/DialogButton';
+import { ItemDetails } from './modals/ItemDetails';
 
 const placeholderTransaction: Transaction = {
   id: '',
@@ -142,7 +144,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
+  const { item } = useFormContext();
   const addItem = () => {
+    draft?.items?.push(item);
     console.info('item added 😉');
     hideDialog();
   };
@@ -231,7 +235,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
         okButton={<DialogButton variant="ok" onClick={addItem} />}
       >
-        <Typography>Some stuff goes in here</Typography>
+        <ItemDetails />
       </Modal>
       <Portal container={appBarButtonsRef?.current}>
         <Button
