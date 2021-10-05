@@ -1,10 +1,37 @@
-use crate::database::repository::{ItemAndMasterList, ItemQueryRepository, StockLineRepository};
+use crate::database::repository::{
+    ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, ItemSortField,
+    SimpleStringFilter, StockLineRepository,
+};
 use crate::server::service::graphql::schema::types::StockLineQuery;
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
 use async_graphql::dataloader::DataLoader;
-use async_graphql::{ComplexObject, Context, Object, SimpleObject};
+use async_graphql::{ComplexObject, Context, Enum, InputObject, Object, SimpleObject};
 
-use super::StockLineList;
+use super::{SimpleStringFilterInput, SortInput, StockLineList};
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "crate::database::repository::repository::ItemSortField")]
+pub enum ItemSortFieldInput {
+    Name,
+    Code,
+}
+pub type ItemSortInput = SortInput<ItemSortFieldInput>;
+
+#[derive(InputObject, Clone)]
+
+pub struct ItemFilterInput {
+    pub name: Option<SimpleStringFilterInput>,
+    pub code: Option<SimpleStringFilterInput>,
+}
+
+impl From<ItemFilterInput> for ItemFilter {
+    fn from(f: ItemFilterInput) -> Self {
+        ItemFilter {
+            name: f.name.map(SimpleStringFilter::from),
+            code: f.code.map(SimpleStringFilter::from),
+        }
+    }
+}
 
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(complex)]
@@ -43,6 +70,8 @@ impl ItemQuery {
 
 pub struct ItemList {
     pub pagination: Option<Pagination>,
+    pub filter: Option<ItemFilterInput>,
+    pub sort: Option<Vec<ItemSortInput>>,
 }
 
 #[Object]
@@ -54,8 +83,22 @@ impl ItemList {
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<ItemQuery> {
         let repository = ctx.get_repository::<ItemQueryRepository>();
+
+        let filter = self.filter.clone().map(ItemFilter::from);
+
+        // Currently only one sort option is supported, use the first from the list.
+        let first_sort = self
+            .sort
+            .as_ref()
+            .map(|sort_list| sort_list.get(0))
+            .flatten()
+            .map(|opt| ItemSort {
+                key: ItemSortField::from(opt.key),
+                desc: opt.desc,
+            });
+
         repository
-            .all(&self.pagination, &None, &None)
+            .all(&self.pagination, &filter, &first_sort)
             .unwrap()
             .into_iter()
             .map(ItemQuery::from)
