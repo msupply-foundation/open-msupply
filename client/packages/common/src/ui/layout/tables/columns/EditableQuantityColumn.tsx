@@ -1,11 +1,14 @@
 import { ColumnDefinition } from './types';
 import { DomainObject } from '../../../../types';
 import { TextField, InputAdornment, Tooltip, Typography } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch } from 'react';
 
 interface SomeQuantityEntity extends DomainObject {
   quantity: number;
-  setQuantity: (rowKey: number, newQuantity: number) => void;
+  dispatch: Dispatch<{
+    type: 'CustomerInvoice/updateQuantity';
+    payload: { rowKey: string; quantity: number };
+  }> | null;
 }
 
 export const getEditableQuantityColumn = <
@@ -13,7 +16,7 @@ export const getEditableQuantityColumn = <
 >(): ColumnDefinition<T> => ({
   key: 'quantity',
   width: 100,
-  Cell: ({ rowData, rowKey }) => {
+  Cell: ({ rowData }) => {
     const { quantity } = rowData;
     const [buffer, setBuffer] = useState(String(quantity));
     const [value, setValue] = useState(quantity);
@@ -54,7 +57,12 @@ export const getEditableQuantityColumn = <
         helperText="Incorrect value"
         hiddenLabel
         value={buffer}
-        onBlur={() => rowData.setQuantity(Number(rowKey), value)}
+        onBlur={() =>
+          rowData.dispatch?.({
+            type: 'CustomerInvoice/updateQuantity',
+            payload: { rowKey: rowData.id ?? '', quantity: value },
+          })
+        }
         InputProps={{
           endAdornment: error ? (
             <InputAdornment position="end">
