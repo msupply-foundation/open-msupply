@@ -28,9 +28,9 @@ import {
   Button,
   PlusCircle,
   Box,
+  useDraftDocument,
 } from '@openmsupply-client/common';
 import { reducer } from './reducer';
-import { useDraft } from './useDraft';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ExternalURL } from '@openmsupply-client/config';
@@ -39,7 +39,7 @@ import { DialogButton } from '@openmsupply-client/common/src/ui/components/butto
 const useDraftOutbound = () => {
   const { id } = useParams();
 
-  const { draft, save } = useDraft(
+  const { draft, save } = useDraftDocument(
     ['transaction', id ?? 'new'],
     reducer,
     getOutboundShipmentDetailViewApi(id ?? '')

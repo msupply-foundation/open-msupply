@@ -1,22 +1,24 @@
-import { Dispatch } from 'react';
-import { Item, Transaction } from '@openmsupply-client/common';
+import {
+  Item,
+  Transaction,
+  DefaultDraftAction,
+} from '@openmsupply-client/common';
 
 export interface ItemRow extends Item {
-  dispatch: Dispatch<CustomerInvoiceAction> | null;
+  updateQuantity: (quantity: number) => void;
 }
 
 export interface OutboundShipment extends Transaction {
-  dispatch: Dispatch<CustomerInvoiceAction> | null;
   items: ItemRow[];
 }
 
+export enum ActionType {
+  UpdateQuantity = 'OutboundShipment/updateQuantity',
+}
+
 export type CustomerInvoiceAction =
-  | DraftReducerActionCreators
+  | DefaultDraftAction
   | {
-      type: 'CustomerInvoice/updateQuantity';
+      type: ActionType.UpdateQuantity;
       payload: { rowKey: string; quantity: number };
     };
-
-export type DraftReducerActionCreators =
-  | { type: 'draft/init' }
-  | { type: 'draft/merge' };
