@@ -21,7 +21,6 @@ mod sort_filter_types;
 mod stock_line;
 mod storage_connection;
 mod store;
-mod sync;
 mod user_account;
 
 use actix_rt::blocking::BlockingError;
@@ -47,7 +46,6 @@ pub use sort_filter_types::*;
 pub use stock_line::StockLineRepository;
 pub use storage_connection::{StorageConnection, StorageConnectionManager};
 pub use store::StoreRepository;
-pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
 pub use user_account::UserAccountRepository;
 
 use diesel::{
@@ -133,7 +131,6 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(UserAccountRepository::new(pool.clone()));
     repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
     repositories.insert(CentralSyncCursorRepository::new(pool.clone()));
-    repositories.insert(SyncRepository::new(pool.clone()));
 
     repositories.insert(StorageConnectionManager::new(pool.clone()));
 
