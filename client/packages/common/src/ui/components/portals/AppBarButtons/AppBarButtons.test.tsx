@@ -3,7 +3,7 @@ import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AppBarButtons, AppBarButtonsPortal } from './AppBarButtons';
 
-describe('AppBarContent', () => {
+describe('AppBarButtons', () => {
   const TestAppBarButtons: FC<{ initialShow: boolean }> = ({ initialShow }) => {
     const [show, setShow] = React.useState(initialShow);
 
