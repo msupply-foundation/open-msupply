@@ -1,14 +1,11 @@
 import { ColumnDefinition } from './types';
 import { DomainObject } from '../../../../types';
 import { TextField, InputAdornment, Tooltip, Typography } from '@mui/material';
-import React, { useState, useEffect, Dispatch } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SomeQuantityEntity extends DomainObject {
   quantity: number;
-  dispatch: Dispatch<{
-    type: 'CustomerInvoice/updateQuantity';
-    payload: { rowKey: string; quantity: number };
-  }> | null;
+  updateQuantity: (quantity: number) => void;
 }
 
 export const getEditableQuantityColumn = <
@@ -57,12 +54,7 @@ export const getEditableQuantityColumn = <
         helperText="Incorrect value"
         hiddenLabel
         value={buffer}
-        onBlur={() =>
-          rowData.dispatch?.({
-            type: 'CustomerInvoice/updateQuantity',
-            payload: { rowKey: rowData.id ?? '', quantity: value },
-          })
-        }
+        onBlur={() => rowData.updateQuantity(value)}
         InputProps={{
           endAdornment: error ? (
             <InputAdornment position="end">
