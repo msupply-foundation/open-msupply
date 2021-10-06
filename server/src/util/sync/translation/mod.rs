@@ -8,8 +8,15 @@ pub mod test_data;
 
 use crate::{
     database::{
-        repository::{IntegrationRecord, IntegrationUpsertRecord, RepositoryError, SyncRepository},
-        schema::CentralSyncBufferRow,
+        repository::{
+            ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+            MasterListRepository, NameRepository, RepositoryError, StorageConnectionManager,
+            StoreRepository,
+        },
+        schema::{
+            CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+            NameRow, StoreRow,
+        },
     },
     server::data::RepositoryRegistry,
 };
@@ -41,6 +48,19 @@ pub enum SyncImportError {
         #[from]
         source: RepositoryError,
     },
+}
+
+enum IntegrationUpsertRecord {
+    Name(NameRow),
+    Item(ItemRow),
+    Store(StoreRow),
+    MasterList(MasterListRow),
+    MasterListLine(MasterListLineRow),
+    MasterListNameJoin(MasterListNameJoinRow),
+}
+
+struct IntegrationRecord {
+    pub upserts: Vec<IntegrationUpsertRecord>,
 }
 
 /// Translates sync records into the local DB schema.
@@ -138,6 +158,41 @@ pub async fn import_sync_records(
     sync_repo.integrate_records(&integration_records).await?;
 
     Ok(())
+}
+
+async fn store_integration_records(
+    registry: &RepositoryRegistry,
+    integration_records: &IntegrationRecord,
+) -> Result<(), RepositoryError> {
+    let con = registry.get::<StorageConnectionManager>().connection()?;
+    let result = con
+        .transaction(|con| async move {
+            for record in &integration_records.upserts {
+                match &record {
+                    IntegrationUpsertRecord::Name(record) => {
+                        NameRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::Item(record) => {
+                        ItemRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::Store(record) => {
+                        StoreRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::MasterList(record) => {
+                        MasterListRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::MasterListLine(record) => {
+                        MasterListLineRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::MasterListNameJoin(record) => {
+                        MasterListNameJoinRepository::new(con).upsert_one(record)?
+                    }
+                }
+            }
+            Ok(())
+        })
+        .await?;
+    Ok(result)
 }
 
 #[cfg(test)]
