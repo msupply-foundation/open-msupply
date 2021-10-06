@@ -10,9 +10,11 @@ export type ReducerCreator<ServerDataType, StateType, ActionType> = (
   dispatch: Dispatch<DraftActionSet<ActionType>> | null
 ) => (state: StateType | undefined, action: ActionType) => StateType;
 
-export interface DraftState<StateType, ReadType> {
-  draft: StateType;
-  save: (draft: StateType) => Promise<ReadType>;
+export interface DraftState<DraftType, StateType, ReadType, ActionType> {
+  draft: DraftType;
+  state: StateType;
+  dispatch: Dispatch<DraftActionSet<ActionType>>;
+  save: (draft: DraftType) => Promise<ReadType>;
 }
 
 export enum DraftActionType {

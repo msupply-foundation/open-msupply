@@ -20,7 +20,7 @@ const ItemData: {
 }[] = [];
 
 const getItems = (transactionId: string) => {
-  const items = Array.from({ length: Math.random() * 10 + 1 }).map(() => ({
+  const items = Array.from({ length: Math.random() * 10 + 1000 }).map(() => ({
     id: `${faker.datatype.uuid()}`,
     code: `${faker.random.alpha({ count: 6 })}`,
     name: `${faker.commerce.productName()}`,

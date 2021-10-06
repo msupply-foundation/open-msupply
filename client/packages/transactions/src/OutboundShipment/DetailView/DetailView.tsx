@@ -29,26 +29,32 @@ import {
   PlusCircle,
   Box,
   useDraftDocument,
+  SortRule,
 } from '@openmsupply-client/common';
-import { reducer } from './reducer';
+import { reducer, onSortBy } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ExternalURL } from '@openmsupply-client/config';
 import { DialogButton } from '@openmsupply-client/common/src/ui/components/buttons/DialogButton';
+import { ItemRow } from './types';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
 
-  const { draft, save } = useDraftDocument(
+  const { draft, save, dispatch, state } = useDraftDocument(
     ['transaction', id ?? 'new'],
     reducer,
     getOutboundShipmentDetailViewApi(id ?? '')
   );
-  return { draft, save };
+
+  const onChangeSortBy: (sortBy: SortRule<ItemRow>) => void = ({ key }) =>
+    dispatch(onSortBy(key));
+
+  return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
-  const { draft } = useDraftOutbound();
+  const { draft, onChangeSortBy, sortBy } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -171,7 +177,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
       <Box display="flex" flex={1}>
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
-          <GeneralTab data={draft?.items ?? []} />
+          <GeneralTab
+            data={draft?.items ?? []}
+            onChangeSortBy={onChangeSortBy}
+            sortBy={sortBy}
+          />
         </TabPanel>
 
         <TabPanel sx={{ flex: 1 }} value="transport">

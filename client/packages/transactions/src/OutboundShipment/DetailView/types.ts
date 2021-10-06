@@ -14,6 +14,7 @@ export interface OutboundShipment extends Transaction {
 
 export enum ActionType {
   UpdateQuantity = 'OutboundShipment/updateQuantity',
+  SortBy = 'OutboundShipment/sortBy',
 }
 
 export type CustomerInvoiceAction =
@@ -21,4 +22,10 @@ export type CustomerInvoiceAction =
   | {
       type: ActionType.UpdateQuantity;
       payload: { rowKey: string; quantity: number };
+    }
+  | {
+      type: ActionType.SortBy;
+      payload: {
+        key: keyof ItemRow;
+      };
     };

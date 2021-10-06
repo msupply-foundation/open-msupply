@@ -3,21 +3,27 @@ import {
   ColumnSetBuilder,
   RemoteDataTable,
   useColumns,
-  useQueryParams,
-  useSortedData,
   getEditableQuantityColumn,
+  SortRule,
+  ObjectWithStringKeys,
+  SortBy,
+  usePagination,
+  useRowRenderCount,
 } from '@openmsupply-client/common';
 import { ItemRow } from '../types';
 
-interface GeneralTabProps<T> {
+interface GeneralTabProps<T extends ObjectWithStringKeys> {
   data: T[];
+  onChangeSortBy: (sortBy: SortRule<T>) => void;
+  sortBy: SortBy<T>;
 }
 
-export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data }) => {
-  const { pagination } = useQueryParams({ key: 'quantity' });
-  const { sortedData, onChangeSortBy, sortBy } = useSortedData(data ?? [], {
-    key: 'quantity',
-  });
+export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({
+  data,
+  onChangeSortBy,
+  sortBy,
+}) => {
+  const { pagination } = usePagination(useRowRenderCount());
 
   const defaultColumns = new ColumnSetBuilder<ItemRow>()
     .addColumn('code')
@@ -33,10 +39,7 @@ export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data }) => {
       sortBy={sortBy}
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
-      data={sortedData.slice(
-        pagination.offset,
-        pagination.offset + pagination.first
-      )}
+      data={data.slice(pagination.offset, pagination.offset + pagination.first)}
       onSortBy={onChangeSortBy}
       onChangePage={pagination.onChangePage}
       noDataMessageKey="error.no-items"
