@@ -41,7 +41,7 @@ export const useDraftDocument = <
         navigate({ pathname: `../${data.id}` }, { replace: true });
       }
 
-      queryClient.invalidateQueries('transaction');
+      queryClient.invalidateQueries(queryKey);
     },
   });
 
