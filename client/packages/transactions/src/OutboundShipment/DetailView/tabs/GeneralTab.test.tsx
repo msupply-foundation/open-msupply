@@ -26,7 +26,11 @@ describe('GeneralTab', () => {
   const Example = () => {
     return (
       <TestingProvider>
-        <GeneralTab data={items} />
+        <GeneralTab
+          data={items}
+          sortBy={{ key: 'quantity', direction: 'asc' }}
+          onChangeSortBy={() => {}}
+        />
       </TestingProvider>
     );
   };

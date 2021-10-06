@@ -20,14 +20,15 @@ export const mergeDraft = (): DefaultDraftAction => ({
 });
 
 export const useDraftDocument = <
+  DraftType extends { id: string },
   ReadType extends { id: string },
-  StateType extends { id: string },
+  StateType extends { draft: DraftType },
   ActionType
 >(
   queryKey: unknown[],
   reducer: ReducerCreator<ReadType, StateType, DraftActionSet<ActionType>>,
-  api: Api<ReadType, StateType>
-): DraftState<StateType, ReadType> => {
+  api: Api<ReadType, DraftType>
+): DraftState<DraftType, StateType, ReadType, ActionType> => {
   const isNew = queryKey.includes('new');
 
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ export const useDraftDocument = <
 
   const [state, dispatch] = useReducer(
     reducer(data, dispatchRef.current),
-    null,
+    undefined,
     () => reducer(data, dispatchRef.current)(undefined, initDraft())
   );
 
@@ -61,5 +62,7 @@ export const useDraftDocument = <
     }
   }, [data]);
 
-  return { draft: state, save: mutateAsync };
+  const { draft } = state;
+
+  return { state, draft, save: mutateAsync, dispatch };
 };
