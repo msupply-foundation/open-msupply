@@ -56,12 +56,12 @@ export const OutboundAction = {
   onSortBy,
 };
 
-interface InitialState {
+interface OutboundShipmentStateShape {
   draft: OutboundShipment;
   sortBy: SortBy<ItemRow>;
 }
 
-export const getInitialState = (): InitialState => ({
+export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderTransaction,
   sortBy: { key: 'quantity', isDesc: true, direction: 'asc' },
 });
@@ -74,7 +74,7 @@ export const reducer =
   (
     state = getInitialState(),
     action: DraftActionSet<CustomerInvoiceAction>
-  ): ReturnType<typeof getInitialState> => {
+  ): OutboundShipmentStateShape => {
     switch (action.type) {
       case DraftActionType.Init: {
         return state;

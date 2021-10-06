@@ -11,8 +11,8 @@ export type ReducerCreator<ServerDataType, StateType, ActionType> = (
 ) => (state: StateType | undefined, action: ActionType) => StateType;
 
 export interface DraftState<DraftType, StateType, ReadType, ActionType> {
-  draft: DraftType;
-  state: StateType;
+  draft: Readonly<DraftType>;
+  state: Readonly<StateType>;
   dispatch: Dispatch<DraftActionSet<ActionType>>;
   save: (draft: DraftType) => Promise<ReadType>;
 }

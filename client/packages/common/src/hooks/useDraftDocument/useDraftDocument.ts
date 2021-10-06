@@ -10,6 +10,7 @@ import {
   DraftActionType,
   DraftActionSet,
 } from './types';
+import { DomainObject } from '../../types';
 
 export const initDraft = (): DefaultDraftAction => ({
   type: DraftActionType.Init,
@@ -19,10 +20,16 @@ export const mergeDraft = (): DefaultDraftAction => ({
   type: DraftActionType.Merge,
 });
 
+/**
+ * Hook which handles side effects for fetching and updating server data and aids in merging
+ * the server data with a client side copy.
+ *
+ */
+
 export const useDraftDocument = <
-  DraftType extends { id: string },
-  ReadType extends { id: string },
   StateType extends { draft: DraftType },
+  DraftType extends DomainObject,
+  ReadType extends DomainObject,
   ActionType
 >(
   queryKey: unknown[],
