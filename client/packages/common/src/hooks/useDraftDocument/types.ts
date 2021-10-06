@@ -7,7 +7,7 @@ export interface Api<ReadType, UpdateType> {
 
 export type ReducerCreator<ServerDataType, StateType, ActionType> = (
   data: ServerDataType | undefined,
-  save: Dispatch<DraftActionSet<ActionType>> | null
+  dispatch: Dispatch<DraftActionSet<ActionType>> | null
 ) => (state: StateType | undefined, action: ActionType) => StateType;
 
 export interface DraftState<StateType, ReadType> {
