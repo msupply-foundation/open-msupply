@@ -1,6 +1,5 @@
 use async_graphql::Object;
 
-#[derive(Default)]
 pub struct OtherPartyNotASupplierError;
 
 #[Object]
@@ -14,7 +13,6 @@ impl OtherPartyNotASupplierError {
     }
 }
 
-#[derive(Default)]
 pub struct NotACustomerInvoiceError;
 
 #[Object]
@@ -28,7 +26,6 @@ impl NotACustomerInvoiceError {
     }
 }
 
-#[derive(Default)]
 pub struct CannotEditFinalisedInvoiceError;
 
 #[Object]
@@ -42,7 +39,6 @@ impl CannotEditFinalisedInvoiceError {
     }
 }
 
-#[derive(Default)]
 pub struct InvoiceDoesNotBelongToCurrentStoreError;
 
 #[Object]
@@ -56,7 +52,6 @@ impl InvoiceDoesNotBelongToCurrentStoreError {
     }
 }
 
-#[derive(Default)]
 pub struct CannotChangeInvoiceBackToDraftError;
 
 #[Object]
@@ -70,7 +65,6 @@ impl CannotChangeInvoiceBackToDraftError {
     }
 }
 
-#[derive(Default)]
 pub struct CannotDeleteFinalisedInvoiceError;
 
 #[Object]
