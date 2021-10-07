@@ -36,10 +36,7 @@ pub struct UpdateCustomerInvoiceError {
 }
 
 #[derive(Interface)]
-#[graphql(
-    field(name = "id", type = "String"),
-    field(name = "description", type = "String")
-)]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdateCustomerInvoiceErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordDoesNotExistError(RecordDoesNotExistError),
