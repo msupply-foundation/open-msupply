@@ -1,14 +1,17 @@
-use crate::database::repository::{
-    NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, SimpleStringFilter,
-    StorageConnectionManager,
+use crate::{
+    domain::{
+        name::{Name, NameFilter},
+        SimpleStringFilter,
+    },
+    service::{ListError, ListResult},
 };
-use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
-use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
 
-use super::{SimpleStringFilterInput, SortInput};
+use async_graphql::*;
+
+use super::{Connector, ConnectorErrorInterface, ErrorWrapper, SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "crate::database::repository::repository::NameQuerySortField")]
+#[graphql(remote = "crate::domain::name::NameSortField")]
 pub enum NameSortFieldInput {
     Name,
     Code,
@@ -16,7 +19,6 @@ pub enum NameSortFieldInput {
 pub type NameSortInput = SortInput<NameSortFieldInput>;
 
 #[derive(InputObject, Clone)]
-
 pub struct NameFilterInput {
     pub name: Option<SimpleStringFilterInput>,
     pub code: Option<SimpleStringFilterInput>,
@@ -24,9 +26,9 @@ pub struct NameFilterInput {
     pub is_supplier: Option<bool>,
 }
 
-impl From<NameFilterInput> for NameQueryFilter {
+impl From<NameFilterInput> for NameFilter {
     fn from(f: NameFilterInput) -> Self {
-        NameQueryFilter {
+        NameFilter {
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
             is_customer: f.is_customer,
@@ -35,52 +37,51 @@ impl From<NameFilterInput> for NameQueryFilter {
     }
 }
 
-#[derive(SimpleObject, PartialEq, Debug)]
-#[graphql(name = "Name")]
-pub struct NameQuery {
-    pub id: String,
-    pub name: String,
-    pub code: String,
-    // Below are from name_store_join
-    pub is_customer: bool,
-    pub is_supplier: bool,
-}
-
-pub struct NameList {
-    pub pagination: Option<Pagination>,
-    pub filter: Option<NameFilterInput>,
-    pub sort: Option<Vec<NameSortInput>>,
+#[derive(PartialEq, Debug)]
+pub struct NameNode {
+    name: Name,
 }
 
 #[Object]
-impl NameList {
-    async fn total_count(&self, ctx: &Context<'_>) -> i64 {
-        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        let connection = connection_manager.connection().unwrap();
-        let repository = NameQueryRepository::new(&connection);
-        repository.count().unwrap()
+impl NameNode {
+    pub async fn id(&self) -> &str {
+        &self.name.id
     }
 
-    async fn nodes(&self, ctx: &Context<'_>) -> Vec<NameQuery> {
-        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        let connection = connection_manager.connection().unwrap();
-        let repository = NameQueryRepository::new(&connection);
+    pub async fn name(&self) -> &str {
+        &self.name.name
+    }
 
-        let filter = self.filter.clone().map(NameQueryFilter::from);
+    pub async fn code(&self) -> &str {
+        &self.name.code
+    }
 
-        // Currently only one sort option is supported, use the first from the list.
-        let first_sort = self
-            .sort
-            .as_ref()
-            .map(|sort_list| sort_list.first())
-            .flatten()
-            .map(|opt| NameQuerySort {
-                key: NameQuerySortField::from(opt.key),
-                desc: opt.desc,
-            });
+    pub async fn is_customer(&self) -> bool {
+        self.name.is_customer
+    }
 
-        repository
-            .all(&self.pagination, &filter, &first_sort)
-            .unwrap()
+    pub async fn is_supplier(&self) -> bool {
+        self.name.is_supplier
+    }
+}
+
+#[derive(Union)]
+pub enum NamesResponse {
+    Error(ErrorWrapper<ConnectorErrorInterface>),
+    Response(Connector<NameNode>),
+}
+
+impl From<Result<ListResult<Name>, ListError>> for NamesResponse {
+    fn from(result: Result<ListResult<Name>, ListError>) -> Self {
+        match result {
+            Ok(response) => NamesResponse::Response(response.into()),
+            Err(error) => NamesResponse::Error(error.into()),
+        }
+    }
+}
+
+impl From<Name> for NameNode {
+    fn from(name: Name) -> Self {
+        NameNode { name }
     }
 }
