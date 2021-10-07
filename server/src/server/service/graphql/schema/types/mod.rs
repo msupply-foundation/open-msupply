@@ -40,6 +40,7 @@ pub use self::sort_filter_types::*;
 
 /// Generic Connector
 #[derive(SimpleObject)]
+#[graphql(concrete(name = "ItemConnector", params(ItemNode)))]
 #[graphql(concrete(name = "NameConnector", params(NameNode)))]
 pub struct Connector<T: OutputType> {
     total_count: u32,
