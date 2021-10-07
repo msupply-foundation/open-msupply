@@ -1,12 +1,19 @@
 import React from 'react';
 
 import {
+  Autocomplete,
+  Divider,
+  gql,
   Grid,
-  Input,
-  InputLabel,
   Item,
+  LabelledInputRow,
+  request,
+  TextField,
   UseFormRegister,
+  useQuery,
+  LoadingSpinner,
 } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 
 interface ItemDetailsProps {
   item?: Item;
@@ -14,53 +21,69 @@ interface ItemDetailsProps {
   register: UseFormRegister<Item>;
 }
 
-const inputStyle = {
-  backgroundColor: '#f2f2f5',
-  borderRadius: '8px',
-  color: '#555770',
-  padding: '4px 8px',
-  width: '240px',
-};
-
-const labelStyle = {
-  color: '#1c1c28',
-  fontSize: '12px',
-};
-
 export const ItemDetails: React.FC<ItemDetailsProps> = ({
   item,
   onSubmit,
   register,
 }) => {
-  return (
+  const listQueryFn = async (): Promise<Item[]> => {
+    const { items } = await request(
+      Environment.API_URL,
+      gql`
+        query items {
+          items {
+            id
+            code
+            name
+          }
+        }
+      `
+    );
+    return items;
+  };
+
+  const { data, isLoading } = useQuery(
+    ['item', 'list'],
+    listQueryFn
+    // {
+    //   onError: onError || defaultErrorHandler,
+    //   useErrorBoundary: (error: ClientError): boolean =>
+    //     error.response?.status >= 500,
+    // }
+  );
+
+  return isLoading ? (
+    <LoadingSpinner />
+  ) : (
     <form onSubmit={onSubmit}>
-      <Grid container sm={2}>
+      <Grid container>
+        <LabelledInputRow
+          inputProps={register('code')}
+          labelKey="label.code"
+          defaultValue={item?.code}
+        />
         <Grid>
-          <Grid item>
-            <InputLabel sx={labelStyle}>Item</InputLabel>
-          </Grid>
-          <Grid item>
-            <Input
-              defaultValue={item?.name}
-              disableUnderline
-              sx={inputStyle}
-              {...register('name')}
-            />
-          </Grid>
+          <Autocomplete
+            disablePortal
+            options={data?.map(item => ({ label: item.name, ...item })) || []}
+            sx={{ width: '540px' }}
+            renderInput={params => (
+              <TextField {...params} label="Item" variant="filled" />
+            )}
+            {...register('name')}
+          />
         </Grid>
-        <Grid>
-          <Grid item>
-            <InputLabel sx={labelStyle}>Quantity</InputLabel>
-          </Grid>
-          <Grid item>
-            <Input
-              defaultValue={item?.quantity}
-              disableUnderline
-              sx={inputStyle}
-              {...register('quantity')}
-            />
-          </Grid>
-        </Grid>
+        <LabelledInputRow
+          inputProps={register('quantity')}
+          labelKey="label.quantity"
+          defaultValue={item?.quantity}
+        />
+        <LabelledInputRow
+          inputProps={register('packSize')}
+          labelKey="label.packSize"
+          defaultValue={item?.packSize}
+        />
+        <Divider />
       </Grid>
     </form>
   );
