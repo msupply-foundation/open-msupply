@@ -114,7 +114,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       .addColumn('comment')
       .addColumn('selection')
       .build(),
-    { onChangeSortBy }
+    { onChangeSortBy, sortBy }
   );
 
   return (
@@ -151,7 +151,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
       </AppBarButtonsPortal>
 
       <RemoteDataTable
-        sortBy={sortBy}
         pagination={{ ...pagination, total: totalLength }}
         onChangePage={onChangePage}
         columns={columns}
