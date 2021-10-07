@@ -3,8 +3,9 @@ import { ComponentMeta, Story } from '@storybook/react';
 import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useSortBy } from '../../../../../hooks/useSortBy';
-import { ColumnSetBuilder, useColumns } from '../..';
-import { Item } from '../../../../..';
+import { useColumns } from '../../hooks';
+import { ColumnSetBuilder } from '../../utils';
+import { Item } from '../../../../../types';
 
 export default {
   title: 'Table/HeaderRow',
