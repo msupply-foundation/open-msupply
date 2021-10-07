@@ -1,13 +1,6 @@
 use async_graphql::Object;
 
-#[derive(Default)]
 pub struct ForeignKeyError;
-#[derive(Default)]
-pub struct RecordAlreadyExistsError;
-#[derive(Default)]
-pub struct RecordDoesNotExistError;
-#[derive(Default)]
-pub struct DatabaseError;
 
 #[Object]
 impl ForeignKeyError {
@@ -20,6 +13,8 @@ impl ForeignKeyError {
     }
 }
 
+pub struct RecordAlreadyExistsError;
+
 #[Object]
 impl RecordAlreadyExistsError {
     pub async fn id(&self) -> &str {
@@ -31,6 +26,8 @@ impl RecordAlreadyExistsError {
     }
 }
 
+pub struct RecordDoesNotExistError;
+
 #[Object]
 impl RecordDoesNotExistError {
     pub async fn id(&self) -> &str {
@@ -41,6 +38,8 @@ impl RecordDoesNotExistError {
         "Record does not exist."
     }
 }
+
+pub struct DatabaseError;
 
 #[Object]
 impl DatabaseError {
