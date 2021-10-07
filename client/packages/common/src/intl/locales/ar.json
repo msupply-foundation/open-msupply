@@ -52,6 +52,7 @@
   "label.general": "General",
   "label.id": "ID",
   "label.invoice-number": "Invnum",
+  "label.item": "Item",
   "label.name": "Name",
   "label.status": "Status",
   "label.supplier": "Supplier",

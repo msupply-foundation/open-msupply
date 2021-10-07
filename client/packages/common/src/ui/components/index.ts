@@ -1,3 +1,4 @@
+import Autocomplete from '@mui/material/Autocomplete';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
@@ -28,6 +29,7 @@ export {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Autocomplete,
   CircularProgress,
   Collapse,
   Input,
