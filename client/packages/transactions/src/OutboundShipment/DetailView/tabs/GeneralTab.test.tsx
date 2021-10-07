@@ -1,7 +1,12 @@
 import React from 'react';
-import { TestingProvider } from '@openmsupply-client/common';
+import {
+  ColumnSetBuilder,
+  TestingProvider,
+  useColumns,
+} from '@openmsupply-client/common';
 import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
+import { ItemRow } from '../types';
 
 const items = [
   {
@@ -24,12 +29,20 @@ const items = [
 
 describe('GeneralTab', () => {
   const Example = () => {
+    const defaultColumns = new ColumnSetBuilder<ItemRow>()
+      .addColumn('code')
+      .addColumn('name')
+      .addColumn('packSize')
+      .build();
+
+    const columns = useColumns(defaultColumns, { onChangeSortBy: () => {} });
+
     return (
       <TestingProvider>
         <GeneralTab
           data={items}
+          columns={columns}
           sortBy={{ key: 'quantity', direction: 'asc' }}
-          onChangeSortBy={() => {}}
         />
       </TestingProvider>
     );

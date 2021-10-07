@@ -1,5 +1,4 @@
 import { Dispatch } from 'react';
-
 export interface Api<ReadType, UpdateType> {
   onRead: () => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<ReadType>;
@@ -11,8 +10,8 @@ export type ReducerCreator<ServerDataType, StateType, ActionType> = (
 ) => (state: StateType | undefined, action: ActionType) => StateType;
 
 export interface DraftState<DraftType, StateType, ReadType, ActionType> {
-  draft: Readonly<DraftType>;
-  state: Readonly<StateType>;
+  draft: DraftType;
+  state: StateType;
   dispatch: Dispatch<DraftActionSet<ActionType>>;
   save: (draft: DraftType) => Promise<ReadType>;
 }

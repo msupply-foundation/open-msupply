@@ -2,6 +2,7 @@ import {
   Item,
   Transaction,
   DefaultDraftAction,
+  Column,
 } from '@openmsupply-client/common';
 
 export interface ItemRow extends Item {
@@ -25,7 +26,5 @@ export type CustomerInvoiceAction =
     }
   | {
       type: ActionType.SortBy;
-      payload: {
-        key: keyof ItemRow;
-      };
+      payload: { column: Column<ItemRow> };
     };
