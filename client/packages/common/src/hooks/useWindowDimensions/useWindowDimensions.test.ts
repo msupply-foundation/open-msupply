@@ -9,17 +9,22 @@ const original = {
   outerHeight: window.outerHeight,
 };
 
-beforeEach(() => {
-  window.resizeTo(1000, 1000);
-});
-
-afterAll(() => {
-  window.resizeTo(original.innerWidth, original.innerHeight);
-});
-
 describe('useWindowDimensions', () => {
+  beforeEach(() => {
+    window.resizeTo(1000, 1000);
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    window.resizeTo(original.innerWidth, original.innerHeight);
+  });
+
   it('returns the current window dimensions', () => {
     const { result } = renderHook(useWindowDimensions);
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
 
     expect(result.current).toEqual({ width: 1000, height: 1000 });
   });
@@ -31,6 +36,10 @@ describe('useWindowDimensions', () => {
       window.resizeTo(500, 500);
     });
 
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
     expect(result.all.length).toEqual(2);
   });
 
@@ -39,6 +48,10 @@ describe('useWindowDimensions', () => {
 
     act(() => {
       window.resizeTo(500, 500);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
 
     expect(result.current).toEqual({ width: 500, height: 500 });
