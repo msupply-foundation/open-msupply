@@ -71,7 +71,11 @@ export const RemoteDataTable = <T extends DomainObject>({
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <HeaderRow>
             {columns.map(column => (
-              <HeaderCell sortBy={sortBy} column={column}>
+              <HeaderCell
+                sortBy={sortBy}
+                column={column}
+                key={String(column.key)}
+              >
                 <column.Header column={column} />
               </HeaderCell>
             ))}

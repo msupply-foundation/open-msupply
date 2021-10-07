@@ -4,7 +4,7 @@ import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
 import { ColumnSetBuilder, useColumns } from '../..';
-import { Item } from '../../../../..';
+import { Item, TestingProvider } from '../../../../..';
 
 describe('HeaderRow', () => {
   const Example: FC<{
@@ -22,18 +22,20 @@ describe('HeaderRow', () => {
     if (!column1 || !column2) return null;
 
     return (
-      <table>
-        <thead>
-          <HeaderRow>
-            <HeaderCell column={column1} sortBy={sortBy}>
-              Header1
-            </HeaderCell>
-            <HeaderCell column={column2} sortBy={sortBy}>
-              Header2
-            </HeaderCell>
-          </HeaderRow>
-        </thead>
-      </table>
+      <TestingProvider>
+        <table>
+          <thead>
+            <HeaderRow>
+              <HeaderCell column={column1} sortBy={sortBy}>
+                Header1
+              </HeaderCell>
+              <HeaderCell column={column2} sortBy={sortBy}>
+                Header2
+              </HeaderCell>
+            </HeaderRow>
+          </thead>
+        </table>
+      </TestingProvider>
     );
   };
 
