@@ -16,7 +16,7 @@ describe('HeaderRow', () => {
         .addColumn('name')
         .addColumn('packSize', { sortable: false })
         .build(),
-      { onChangeSortBy }
+      { onChangeSortBy, sortBy }
     );
 
     if (!column1 || !column2) return null;
@@ -25,12 +25,8 @@ describe('HeaderRow', () => {
       <table>
         <thead>
           <HeaderRow>
-            <HeaderCell column={column1} sortBy={sortBy}>
-              Header1
-            </HeaderCell>
-            <HeaderCell column={column2} sortBy={sortBy}>
-              Header2
-            </HeaderCell>
+            <HeaderCell column={column1} />
+            <HeaderCell column={column2} />
           </HeaderRow>
         </thead>
       </table>
@@ -64,8 +60,8 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const nameHeader = getByRole('button', { name: /header1/i });
-    const packSizeHeader = queryByRole('button', { name: /header2/i });
+    const nameHeader = getByRole('button', { name: /name/i });
+    const packSizeHeader = queryByRole('button', { name: /pack size/i });
 
     expect(nameHeader).toBeInTheDocument();
     expect(packSizeHeader).not.toBeInTheDocument();
@@ -81,7 +77,7 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const nameHeader = getByRole('button', { name: /header1/i });
+    const nameHeader = getByRole('button', { name: /name/i });
 
     act(() => userEvent.click(nameHeader));
 
@@ -98,7 +94,7 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const idHeader = getByRole('button', { name: /header1/i });
+    const idHeader = getByRole('button', { name: /name/i });
 
     act(() => userEvent.click(idHeader));
 

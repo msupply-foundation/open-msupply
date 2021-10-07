@@ -13,14 +13,14 @@ export default {
 } as ComponentMeta<typeof HeaderRow>;
 
 const Template: Story = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<Item>({ key: 'name' });
+  const { onChangeSortBy, sortBy } = useSortBy<Item>({ key: 'name' });
 
   const [column1, column2] = useColumns(
     new ColumnSetBuilder<Item>()
       .addColumn('name')
       .addColumn('packSize')
       .build(),
-    { onChangeSortBy }
+    { onChangeSortBy, sortBy }
   );
 
   if (!column1 || !column2) return <></>;
@@ -35,12 +35,8 @@ const Template: Story = () => {
     >
       <TableHead>
         <HeaderRow>
-          <HeaderCell sortBy={sortBy} column={column1}>
-            Header1
-          </HeaderCell>
-          <HeaderCell sortBy={sortBy} column={column1}>
-            Header2
-          </HeaderCell>
+          <HeaderCell column={column1} />
+          <HeaderCell column={column1} />
         </HeaderRow>
       </TableHead>
     </Table>

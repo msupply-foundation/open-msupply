@@ -16,11 +16,7 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   sortBy: SortBy<T>;
 }
 
-export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({
-  data,
-  columns,
-  sortBy,
-}) => {
+export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data, columns }) => {
   const numberOfRows = useRowRenderCount();
   const { pagination } = usePagination(numberOfRows);
 
@@ -30,7 +26,6 @@ export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({
 
   return (
     <RemoteDataTable
-      sortBy={sortBy}
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
       data={data.slice(pagination.offset, pagination.offset + pagination.first)}

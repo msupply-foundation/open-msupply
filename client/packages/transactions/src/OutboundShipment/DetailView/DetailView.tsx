@@ -152,7 +152,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     .addColumn(getEditableQuantityColumn())
     .build();
 
-  const columns = useColumns(defaultColumns, { onChangeSortBy });
+  const columns = useColumns(defaultColumns, { onChangeSortBy, sortBy });
 
   return draft ? (
     <TabContext value={String(currentTab)}>

@@ -21,7 +21,6 @@ import { useTableStore } from './context';
 
 export const RemoteDataTable = <T extends DomainObject>({
   columns,
-  sortBy,
   data = [],
   isLoading = false,
   onRowClick,
@@ -71,13 +70,7 @@ export const RemoteDataTable = <T extends DomainObject>({
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <HeaderRow>
             {columns.map(column => (
-              <HeaderCell
-                sortBy={sortBy}
-                column={column}
-                key={String(column.key)}
-              >
-                <column.Header column={column} />
-              </HeaderCell>
+              <HeaderCell column={column} key={String(column.key)} />
             ))}
           </HeaderRow>
         </TableHead>

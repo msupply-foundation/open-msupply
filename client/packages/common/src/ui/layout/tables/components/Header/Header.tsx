@@ -1,10 +1,9 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
 import { ObjectWithStringKeys } from '../../../../../types/utility';
 import { Column } from '../../columns/types';
 import { SortDesc } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
-import { SortBy } from '../../../../../hooks';
 
 export const HeaderRow: FC = props => (
   <TableRow
@@ -21,19 +20,24 @@ export const HeaderRow: FC = props => (
 );
 
 interface HeaderCellProps<T extends DomainObject> {
-  sortBy: SortBy<T>;
   column: Column<T>;
-  children: ReactNode;
 }
 
 export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
-  sortBy,
-  children,
   column,
 }: HeaderCellProps<T>): JSX.Element => {
-  const { minWidth, width, onChangeSortBy, key, sortable, align } = column;
+  const {
+    minWidth,
+    width,
+    onChangeSortBy,
+    key,
+    sortable,
+    align,
+    sortBy,
+    Header,
+  } = column;
 
-  const { direction, key: currentSortKey } = sortBy;
+  const { direction, key: currentSortKey } = sortBy ?? {};
 
   const isSorted = key === currentSortKey;
 
@@ -68,10 +72,10 @@ export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
           direction={direction}
           IconComponent={SortDesc}
         >
-          {children}
+          <Header column={column} />
         </TableSortLabel>
       ) : (
-        children
+        <Header column={column} />
       )}
     </TableCell>
   );
