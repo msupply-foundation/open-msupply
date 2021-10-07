@@ -79,7 +79,7 @@ mod graphql {
 
         // Test query:
         let payload =
-            r#"{"query":"{invoice(id:\"customer_invoice_a\"){id,status,lines{nodes{id,stockLine{availableNumberOfPacks}}}}}"}"#
+            r#"{"query":"{invoice(id:\"customer_invoice_a\"){... on InvoiceNode { id,status,lines{nodes{id,stockLine{availableNumberOfPacks}}}}}}"}"#
                 .as_bytes();
         let req = actix_web::test::TestRequest::post()
             .header("content-type", "application/json")
@@ -95,7 +95,9 @@ mod graphql {
         );
 
         // Test not found error
-        let payload = r#"{"query":"{invoice(id:\"invalid\"){id}}"}"#.as_bytes();
+        let payload =
+            r#"{"query":"{invoice(id:\"invalid\"){... on NodeError { error {  ... on NodeErrorInterface {  __typename  } } }}}"}"#
+                .as_bytes();
         let req = actix_web::test::TestRequest::post()
             .header("content-type", "application/json")
             .set_payload(payload)
@@ -104,6 +106,6 @@ mod graphql {
         let res = actix_web::test::read_response(&mut app, req).await;
         let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
         // TODO find a more robust way to compare the results
-        assert!(body.contains("row not found"));
+        assert!(body.contains("RecordNotFound"));
     }
 }
