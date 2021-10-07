@@ -32,10 +32,7 @@ pub struct InsertCustomerInvoiceError {
 }
 
 #[derive(Interface)]
-#[graphql(
-    field(name = "id", type = "String"),
-    field(name = "description", type = "String")
-)]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertCustomerInvoiceErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExistsError(RecordAlreadyExistsError),
