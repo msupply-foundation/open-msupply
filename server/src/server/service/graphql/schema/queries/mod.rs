@@ -5,12 +5,15 @@ use crate::database::repository::{
     StorageConnectionManager, StoreRepository,
 };
 use crate::database::schema::{InvoiceLineRow, RequisitionRow, StoreRow};
+use crate::domain::name::NameFilter;
+use crate::domain::PaginationOption;
 use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, Store};
 use crate::server::service::graphql::ContextExt;
+use crate::service::name::get_names;
 
 use super::types::{
-    InvoiceFilterInput, InvoiceList, InvoiceNode, InvoiceSortInput, ItemList, NameFilterInput,
-    NameList, NameSortInput,
+    convert_sort, InvoiceFilterInput, InvoiceList, InvoiceNode, InvoiceSortInput, ItemList,
+    NameFilterInput, NameSortInput, NamesResponse, PaginationInput,
 };
 use async_graphql::{Context, Object};
 use pagination::Pagination;
@@ -25,17 +28,20 @@ impl Queries {
 
     pub async fn names(
         &self,
-        _ctx: &Context<'_>,
-        #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
+        ctx: &Context<'_>,
+        #[graphql(desc = "pagination (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "filters option")] filter: Option<NameFilterInput>,
         #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
-    ) -> NameList {
-        NameList {
-            pagination: page,
-            filter,
-            sort,
-        }
+    ) -> NamesResponse {
+        let connection_pool = ctx.get_repository::<StorageConnectionManager>();
+        get_names(
+            connection_pool,
+            page.map(PaginationOption::from),
+            filter.map(NameFilter::from),
+            convert_sort(sort),
+        )
+        .into()
     }
 
     pub async fn items(
