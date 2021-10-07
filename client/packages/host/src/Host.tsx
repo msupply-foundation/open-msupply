@@ -25,6 +25,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
+import { LanguageMenu } from './LanguageMenu';
 import DetailPanel from './DetailPanel';
 import Viewport from './Viewport';
 import NotFound from './NotFound';
@@ -244,6 +245,14 @@ const Host: FC = () => {
                                   <Heading locale={locale}>messages</Heading>
                                 }
                               />
+
+                              <Route
+                                path={RouteBuilder.create(AppRoute.Admin)
+                                  .addWildCard()
+                                  .build()}
+                                element={<LanguageMenu />}
+                              />
+
                               <Route path="/" element={<DashboardService />} />
 
                               <Route path="*" element={<NotFound />} />
