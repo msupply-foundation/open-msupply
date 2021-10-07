@@ -5,7 +5,6 @@ use crate::{
             RequisitionLoader, StoreLoader, UserAccountLoader,
         },
         repository::{
-            InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
             RequisitionLineRepository, RequisitionRepository, StockLineRepository,
             StorageConnectionManager, UserAccountRepository,
         },
@@ -57,19 +56,19 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
         connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
-    let invoice_repository = InvoiceRepository::new(pool.clone());
-    let invoice_loader = DataLoader::new(InvoiceLoader { invoice_repository });
+    let invoice_loader = DataLoader::new(InvoiceLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
 
-    let invoice_line_repository = InvoiceLineRepository::new(pool.clone());
     let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
-        invoice_line_repository,
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
     let invoice_line_query_loader = DataLoader::new(InvoiceLineQueryLoader {
-        invoice_line_query_repository: InvoiceLineQueryRepository::new(pool.clone()),
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
     let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
-        invoice_line_query_repository: InvoiceLineQueryRepository::new(pool.clone()),
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
     let user_account_repository = UserAccountRepository::new(pool.clone());

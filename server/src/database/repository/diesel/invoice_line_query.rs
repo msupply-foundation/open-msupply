@@ -9,14 +9,9 @@ use crate::database::{
     },
 };
 
-use super::{get_connection, DBBackendConnection};
+use super::StorageConnection;
 
-use diesel::{
-    dsl,
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-    sql_types::Double,
-};
+use diesel::{dsl, prelude::*, sql_types::Double};
 
 pub type InvoiceLineQueryJoin = (InvoiceLineRow, ItemRow, StockLineRow);
 
@@ -26,46 +21,40 @@ pub struct InvoiceLineStats {
     pub total_after_tax: f64,
 }
 
-pub struct InvoiceLineQueryRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct InvoiceLineQueryRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl InvoiceLineQueryRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        InvoiceLineQueryRepository { pool }
+impl<'a> InvoiceLineQueryRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        InvoiceLineQueryRepository { connection }
     }
 
     pub async fn find_many_by_invoice_id(
         &self,
         invoice_id: &str,
     ) -> Result<Vec<InvoiceLineQueryJoin>, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
         Ok(invoice_line_dsl::invoice_line
             .filter(invoice_line_dsl::invoice_id.eq(invoice_id))
             .inner_join(item_dsl::item)
             .inner_join(stock_line_dsl::stock_line)
-            .load::<InvoiceLineQueryJoin>(&*connection)?)
+            .load::<InvoiceLineQueryJoin>(&self.connection.connection)?)
     }
 
     /// Returns all invoice lines for the provided invoice ids.
-    pub async fn find_many_by_invoice_ids(
+    pub fn find_many_by_invoice_ids(
         &self,
         invoice_ids: &[String],
     ) -> Result<Vec<InvoiceLineQueryJoin>, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
         Ok(invoice_line_dsl::invoice_line
             .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
             .inner_join(item_dsl::item)
             .inner_join(stock_line_dsl::stock_line)
-            .load::<InvoiceLineQueryJoin>(&*connection)?)
+            .load::<InvoiceLineQueryJoin>(&self.connection.connection)?)
     }
 
     /// Calculates invoice line stats for a given invoice ids
-    pub async fn stats(
-        &self,
-        invoice_ids: &[String],
-    ) -> Result<Vec<InvoiceLineStats>, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
+    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<InvoiceLineStats>, RepositoryError> {
         let results = invoice_line_dsl::invoice_line
             .select((
                 invoice_line_dsl::invoice_id,
@@ -73,7 +62,7 @@ impl InvoiceLineQueryRepository {
             ))
             .group_by(invoice_line_dsl::invoice_id)
             .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
-            .load(&connection)?;
+            .load(&self.connection.connection)?;
 
         Ok(results
             .iter()

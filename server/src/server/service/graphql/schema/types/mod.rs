@@ -1,7 +1,10 @@
 use crate::{
     database::{
         loader::{InvoiceLoader, StoreLoader},
-        repository::{CustomerInvoiceRepository, InvoiceLineRepository, RequisitionLineRepository},
+        repository::{
+            CustomerInvoiceRepository, InvoiceLineRepository, RequisitionLineRepository,
+            StorageConnectionManager,
+        },
         schema::{
             InvoiceLineRow, InvoiceRow, RequisitionLineRow, RequisitionRow, RequisitionRowType,
             StoreRow,
@@ -44,11 +47,12 @@ impl Store {
     }
 
     pub async fn customer_invoices(&self, ctx: &Context<'_>) -> Vec<Invoice> {
-        let customer_invoice_repository = ctx.get_repository::<CustomerInvoiceRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let customer_invoice_repository = CustomerInvoiceRepository::new(&connection);
 
         let customer_invoice_rows: Vec<InvoiceRow> = customer_invoice_repository
             .find_many_by_store_id(&self.store_row.id)
-            .await
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get customer invoices for store {}",
@@ -208,11 +212,12 @@ impl Invoice {
     }
 
     pub async fn invoice_lines(&self, ctx: &Context<'_>) -> Vec<InvoiceLine> {
-        let invoice_line_repository = ctx.get_repository::<InvoiceLineRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let invoice_line_repository = InvoiceLineRepository::new(&connection);
 
         let invoice_line_rows: Vec<InvoiceLineRow> = invoice_line_repository
             .find_many_by_invoice_id(&self.invoice_row.id)
-            .await
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get invoice_lines for invoice {}",

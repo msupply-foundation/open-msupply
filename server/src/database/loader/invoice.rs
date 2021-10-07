@@ -1,4 +1,4 @@
-use crate::database::repository::{InvoiceRepository, RepositoryError};
+use crate::database::repository::{InvoiceRepository, RepositoryError, StorageConnectionManager};
 use crate::database::schema::InvoiceRow;
 
 use async_graphql::dataloader::*;
@@ -6,7 +6,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct InvoiceLoader {
-    pub invoice_repository: InvoiceRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -15,10 +15,10 @@ impl Loader<String> for InvoiceLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .invoice_repository
+        let connection = self.connection_manager.connection()?;
+        let repo = InvoiceRepository::new(&connection);
+        Ok(repo
             .find_many_by_id(keys)
-            .await
             .unwrap()
             .iter()
             .map(|invoice: &InvoiceRow| {

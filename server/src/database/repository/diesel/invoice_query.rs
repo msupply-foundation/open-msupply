@@ -1,6 +1,4 @@
-use super::{
-    get_connection, DBBackendConnection, DatetimeFilter, EqualFilter, SimpleStringFilter, Sort,
-};
+use super::{DatetimeFilter, EqualFilter, SimpleStringFilter, Sort, StorageConnection};
 
 use crate::{
     database::{
@@ -15,10 +13,7 @@ use crate::{
     server::service::graphql::schema::queries::pagination::{Pagination, PaginationOption},
 };
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
 pub struct InvoiceFilter {
     pub name_id: Option<EqualFilter<String>>,
@@ -42,20 +37,21 @@ pub enum InvoiceSortField {
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
 
-pub struct InvoiceQueryRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct InvoiceQueryRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
 pub type InvoiceQueryJoin = (InvoiceRow, NameRow, StoreRow);
 
-impl InvoiceQueryRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        InvoiceQueryRepository { pool }
+impl<'a> InvoiceQueryRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        InvoiceQueryRepository { connection }
     }
 
     pub fn count(&self) -> Result<i64, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
-        Ok(invoice_dsl::invoice.count().get_result(&*connection)?)
+        Ok(invoice_dsl::invoice
+            .count()
+            .get_result(&self.connection.connection)?)
     }
 
     /// Gets all invoices
@@ -65,8 +61,6 @@ impl InvoiceQueryRepository {
         filter: &Option<InvoiceFilter>,
         sort: &Option<InvoiceSort>,
     ) -> Result<Vec<InvoiceQueryJoin>, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
-
         let mut query = invoice_dsl::invoice
             .inner_join(name_dsl::name_table)
             .inner_join(store_dsl::store)
@@ -184,15 +178,14 @@ impl InvoiceQueryRepository {
             query = query.order(invoice_dsl::id.asc())
         }
 
-        Ok(query.load::<InvoiceQueryJoin>(&*connection)?)
+        Ok(query.load::<InvoiceQueryJoin>(&self.connection.connection)?)
     }
 
-    pub async fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceQueryJoin, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
+    pub fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceQueryJoin, RepositoryError> {
         Ok(invoice_dsl::invoice
             .filter(invoice_dsl::id.eq(row_id))
             .inner_join(name_dsl::name_table)
             .inner_join(store_dsl::store)
-            .first::<InvoiceQueryJoin>(&*connection)?)
+            .first::<InvoiceQueryJoin>(&self.connection.connection)?)
     }
 }

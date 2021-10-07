@@ -6,7 +6,7 @@ use super::{
 use crate::{
     database::repository::{
         DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceQueryRepository, InvoiceSort,
-        InvoiceSortField, SimpleStringFilter,
+        InvoiceSortField, SimpleStringFilter, StorageConnectionManager,
     },
     server::service::graphql::{schema::queries::pagination::Pagination, ContextExt},
 };
@@ -62,12 +62,16 @@ pub struct InvoiceList {
 #[Object]
 impl InvoiceList {
     async fn total_count(&self, ctx: &Context<'_>) -> i64 {
-        let repository = ctx.get_repository::<InvoiceQueryRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let repository = InvoiceQueryRepository::new(&connection);
         repository.count().unwrap()
     }
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceNode> {
-        let repository = ctx.get_repository::<InvoiceQueryRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let repository = InvoiceQueryRepository::new(&connection);
 
         let filter = self.filter.clone().map(InvoiceFilter::from);
 
