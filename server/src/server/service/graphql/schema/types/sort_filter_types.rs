@@ -1,7 +1,10 @@
-use super::{InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, NameSortFieldInput};
+use super::{
+    InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, ItemSortFieldInput,
+    NameSortFieldInput,
+};
 
 use crate::database::{
-    repository::{DatetimeFilter, EqualFilter, SimpleStringFilter},
+    repository::{DatetimeFilter, EqualFilter, SimpleStringFilter, Sort},
     schema::{InvoiceRowStatus, InvoiceRowType},
 };
 
@@ -9,11 +12,25 @@ use async_graphql::{InputObject, InputType};
 use chrono::NaiveDateTime;
 
 #[derive(InputObject)]
-#[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
 #[graphql(concrete(name = "InvoiceSortInput", params(InvoiceSortFieldInput)))]
+#[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
+#[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
 pub struct SortInput<T: InputType> {
     pub key: T,
     pub desc: Option<bool>,
+}
+
+impl<TInput, T> From<&SortInput<TInput>> for Sort<T>
+where
+    TInput: InputType + Copy,
+    T: From<TInput>,
+{
+    fn from(sort: &SortInput<TInput>) -> Self {
+        Sort {
+            key: T::from(sort.key),
+            desc: sort.desc,
+        }
+    }
 }
 
 // simple string filter
@@ -42,6 +59,21 @@ pub struct EqualFilterStringInput {
 
 impl From<EqualFilterStringInput> for EqualFilter<String> {
     fn from(f: EqualFilterStringInput) -> Self {
+        EqualFilter {
+            equal_to: f.equal_to,
+        }
+    }
+}
+
+// bool equal filter
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterBoolInput {
+    equal_to: Option<bool>,
+}
+
+impl From<EqualFilterBoolInput> for EqualFilter<bool> {
+    fn from(f: EqualFilterBoolInput) -> Self {
         EqualFilter {
             equal_to: f.equal_to,
         }

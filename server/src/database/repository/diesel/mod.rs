@@ -34,7 +34,7 @@ pub use invoice_query::{
     InvoiceFilter, InvoiceQueryJoin, InvoiceQueryRepository, InvoiceSort, InvoiceSortField,
 };
 pub use item::ItemRepository;
-pub use item_query::ItemQueryRepository;
+pub use item_query::{ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, ItemSortField};
 pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
 pub use master_list_name_join::MasterListNameJoinRepository;
