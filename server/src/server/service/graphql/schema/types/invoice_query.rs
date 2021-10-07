@@ -8,6 +8,7 @@ use crate::{
 
 use async_graphql::{dataloader::DataLoader, ComplexObject, Context, Enum, Object, SimpleObject};
 use chrono::{DateTime, NaiveDate, Utc};
+use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 #[graphql(remote = "crate::database::schema::InvoiceRowType")]
@@ -16,8 +17,9 @@ pub enum InvoiceTypeInput {
     SupplierInvoice,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[graphql(remote = "crate::database::schema::InvoiceRowStatus")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceStatusInput {
     Draft,
     Confirmed,
