@@ -36,7 +36,7 @@ mod graphql {
 
         let name_repository = NameRepository::new(&connection);
         let store_repository = StoreRepository::new(&connection);
-        let requisition_repository = repositories.get::<RequisitionRepository>().unwrap();
+        let requisition_repository = RequisitionRepository::new(&connection);
 
         for name in mock_names {
             name_repository.insert_one(&name).await.unwrap();
@@ -47,10 +47,7 @@ mod graphql {
         }
 
         for requisition in mock_requisitions {
-            requisition_repository
-                .insert_one(&requisition)
-                .await
-                .unwrap();
+            requisition_repository.insert_one(&requisition).unwrap();
         }
 
         let repository_registry = RepositoryRegistry { repositories };

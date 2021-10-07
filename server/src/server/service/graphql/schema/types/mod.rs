@@ -151,11 +151,12 @@ impl Requisition {
     }
 
     pub async fn requisition_lines(&self, ctx: &Context<'_>) -> Vec<RequisitionLine> {
-        let requisition_line_repository = ctx.get_repository::<RequisitionLineRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let repo = RequisitionLineRepository::new(&connection);
 
-        let requisition_line_rows: Vec<RequisitionLineRow> = requisition_line_repository
+        let requisition_line_rows: Vec<RequisitionLineRow> = repo
             .find_many_by_requisition_id(&self.requisition_row.id)
-            .await
             .unwrap_or_else(|_| {
                 panic!(
                     "Failed to get lines for requisition {}",

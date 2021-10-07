@@ -473,7 +473,7 @@ mod repository_test {
 
         // test insert
         let stock_line = data::stock_line_1();
-        let stock_line_repo = registry.get::<StockLineRepository>().unwrap();
+        let stock_line_repo = StockLineRepository::new(&connection);
         stock_line_repo.insert_one(&stock_line).await.unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
@@ -585,16 +585,16 @@ mod repository_test {
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
-        let repo = registry.get::<RequisitionRepository>().unwrap();
+        let repo = RequisitionRepository::new(&connection);
 
         let item1 = data::requisition_1();
-        repo.insert_one(&item1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
+        repo.insert_one(&item1).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         let item2 = data::requisition_2();
-        repo.insert_one(&item2).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item2.id.as_str()).await.unwrap();
+        repo.insert_one(&item2).unwrap();
+        let loaded_item = repo.find_one_by_id(item2.id.as_str()).unwrap();
         assert_eq!(item2, loaded_item);
     }
 
@@ -614,32 +614,25 @@ mod repository_test {
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
-        let requisition_repo = registry.get::<RequisitionRepository>().unwrap();
-        requisition_repo
-            .insert_one(&data::requisition_1())
-            .await
-            .unwrap();
-        requisition_repo
-            .insert_one(&data::requisition_2())
-            .await
-            .unwrap();
+        let requisition_repo = RequisitionRepository::new(&connection);
+        requisition_repo.insert_one(&data::requisition_1()).unwrap();
+        requisition_repo.insert_one(&data::requisition_2()).unwrap();
 
-        let repo = registry.get::<RequisitionLineRepository>().unwrap();
+        let repo = RequisitionLineRepository::new(&connection);
         let item1 = data::requisition_line_1();
-        repo.insert_one(&item1).await.unwrap();
+        repo.insert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
         assert_eq!(item1, loaded_item);
 
         // find_many_by_requisition_id test:
         let item2 = data::requisition_line_2();
-        repo.insert_one(&item2).await.unwrap();
+        repo.insert_one(&item2).unwrap();
 
         // add some noise, i.e. item3 should not be in the results
         let item3 = data::requisition_line_3();
-        repo.insert_one(&item3).await.unwrap();
+        repo.insert_one(&item3).unwrap();
         let all_items = repo
             .find_many_by_requisition_id(&item1.requisition_id)
-            .await
             .unwrap();
         assert_eq!(2, all_items.len());
     }
@@ -697,7 +690,7 @@ mod repository_test {
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
-        let stock_line_repo = registry.get::<StockLineRepository>().unwrap();
+        let stock_line_repo = StockLineRepository::new(&connection);
         stock_line_repo
             .insert_one(&data::stock_line_1())
             .await
@@ -743,7 +736,7 @@ mod repository_test {
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
-        let stock_line_repo = registry.get::<StockLineRepository>().unwrap();
+        let stock_line_repo = StockLineRepository::new(&connection);
         stock_line_repo
             .insert_one(&data::stock_line_1())
             .await
@@ -772,8 +765,10 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-user-account-repository");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let repo = registry.get::<UserAccountRepository>().unwrap();
+        let repo = UserAccountRepository::new(&connection);
         let item1 = data::user_account_1();
         repo.insert_one(&item1).await.unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
