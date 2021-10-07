@@ -29,7 +29,10 @@ import {
   PlusCircle,
   Box,
   useDraftDocument,
-  SortRule,
+  getEditableQuantityColumn,
+  useColumns,
+  ColumnSetBuilder,
+  Column,
 } from '@openmsupply-client/common';
 import { reducer, onSortBy } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -47,8 +50,9 @@ const useDraftOutbound = () => {
     getOutboundShipmentDetailViewApi(id ?? '')
   );
 
-  const onChangeSortBy: (sortBy: SortRule<ItemRow>) => void = ({ key }) =>
-    dispatch(onSortBy(key));
+  const onChangeSortBy: (sortBy: Column<ItemRow>) => void = column => {
+    dispatch(onSortBy(column));
+  };
 
   return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
 };
@@ -141,6 +145,15 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   const { currentTab, onChangeTab } = useTabs('general');
 
+  const defaultColumns = new ColumnSetBuilder<ItemRow>()
+    .addColumn('code')
+    .addColumn('name')
+    .addColumn('packSize')
+    .addColumn(getEditableQuantityColumn())
+    .build();
+
+  const columns = useColumns(defaultColumns, { onChangeSortBy });
+
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
@@ -178,8 +191,8 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       <Box display="flex" flex={1}>
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
           <GeneralTab
+            columns={columns}
             data={draft?.items ?? []}
-            onChangeSortBy={onChangeSortBy}
             sortBy={sortBy}
           />
         </TabPanel>

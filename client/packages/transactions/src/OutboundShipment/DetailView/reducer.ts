@@ -1,5 +1,7 @@
 import { Dispatch } from 'react';
+import { produce } from 'immer';
 import {
+  Column,
   DraftActionSet,
   DraftActionType,
   SortBy,
@@ -46,9 +48,9 @@ export const updateQuantity = (
   payload: { rowKey, quantity },
 });
 
-export const onSortBy = (key: keyof ItemRow): CustomerInvoiceAction => ({
+export const onSortBy = (column: Column<ItemRow>): CustomerInvoiceAction => ({
   type: ActionType.SortBy,
-  payload: { key },
+  payload: { column },
 });
 
 export const OutboundAction = {
@@ -66,73 +68,75 @@ export const getInitialState = (): OutboundShipmentStateShape => ({
   sortBy: { key: 'quantity', isDesc: true, direction: 'asc' },
 });
 
-export const reducer =
-  (
-    data: Transaction = placeholderTransaction,
-    dispatch: Dispatch<DraftActionSet<CustomerInvoiceAction>> | null
-  ) =>
-  (
-    state = getInitialState(),
-    action: DraftActionSet<CustomerInvoiceAction>
-  ): OutboundShipmentStateShape => {
-    switch (action.type) {
-      case DraftActionType.Init: {
-        return state;
-      }
-
-      case DraftActionType.Merge: {
-        const newInvoice = Object.keys(state.draft).reduce(
-          (acc, key) => ({ ...acc, [key]: data[key] }),
-          {} as OutboundShipment
-        );
-
-        const newItems = newInvoice.items?.map(item => ({
-          ...item,
-          updateQuantity: (quantity: number) =>
-            dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
-        }));
-
-        newInvoice.items = newItems;
-
-        return { ...state, draft: newInvoice };
-      }
-
-      case ActionType.SortBy: {
-        const { payload } = action;
-        const { key } = payload;
-
-        const { draft, sortBy } = state;
-        const { items } = draft;
-        const { key: currentSortKey, isDesc: currentIsDesc } = sortBy;
-
-        const newIsDesc = currentSortKey === key ? !currentIsDesc : false;
-        const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
-        const newSortBy = { key, isDesc: newIsDesc, direction: newDirection };
-
-        const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
-        const newItems = items.sort(sorter);
-        draft.items = newItems;
-
-        return { ...state, sortBy: newSortBy };
-      }
-
-      case ActionType.UpdateQuantity: {
-        const { payload } = action;
-        const { rowKey, quantity } = payload;
-
-        const rowIdx = state.draft.items.findIndex(({ id }) => id === rowKey);
-        const row = state.draft.items[rowIdx];
-
-        if (row) {
-          const newRow = { ...row, quantity };
-          const newItems = [...state.draft.items];
-          newItems[rowIdx] = newRow;
-          const newState = { ...state, items: newItems };
-
-          return newState;
+export const reducer = (
+  data: Transaction = placeholderTransaction,
+  dispatch: Dispatch<DraftActionSet<CustomerInvoiceAction>> | null
+): ((
+  state: OutboundShipmentStateShape | undefined,
+  action: CustomerInvoiceAction
+) => OutboundShipmentStateShape) =>
+  produce(
+    (
+      state: OutboundShipmentStateShape = getInitialState(),
+      action: DraftActionSet<CustomerInvoiceAction>
+    ) => {
+      switch (action.type) {
+        case DraftActionType.Init: {
+          return state;
         }
 
-        return state;
+        case DraftActionType.Merge: {
+          const { draft } = state;
+
+          Object.keys(draft).forEach(key => {
+            // TODO: Sometimes we want to keep the user entered values?
+            draft[key] = data[key];
+          });
+
+          draft.items = draft.items.map(item => ({
+            ...item,
+            updateQuantity: (quantity: number) =>
+              dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
+          }));
+
+          break;
+        }
+
+        case ActionType.SortBy: {
+          const { payload } = action;
+          const { column } = payload;
+
+          const { key } = column;
+
+          const { draft, sortBy } = state;
+          const { items } = draft;
+          const { key: currentSortKey, isDesc: currentIsDesc } = sortBy;
+
+          const newIsDesc = currentSortKey === key ? !currentIsDesc : false;
+          const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
+          const newSortBy = { key, isDesc: newIsDesc, direction: newDirection };
+
+          const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
+          const newItems = items.sort(sorter);
+
+          draft.items = newItems;
+          state.sortBy = newSortBy;
+
+          break;
+        }
+
+        case ActionType.UpdateQuantity: {
+          const { payload } = action;
+          const { rowKey, quantity } = payload;
+
+          const row = state.draft.items.find(({ id }) => id === rowKey);
+
+          if (row) {
+            row.quantity = quantity;
+          }
+
+          break;
+        }
       }
     }
-  };
+  );

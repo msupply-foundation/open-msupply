@@ -21,7 +21,6 @@ export interface TableProps<T extends DomainObject> {
   data?: T[];
   sortBy: SortBy<T>;
   isLoading?: boolean;
-  onSortBy: (sortRule: SortRule<T>) => void;
   pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;

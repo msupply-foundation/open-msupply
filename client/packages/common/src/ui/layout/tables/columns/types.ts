@@ -45,6 +45,7 @@ export interface Column<T extends DomainObject> {
   sortDescFirst: boolean;
   sortType: 'datetime' | 'numeric' | 'alphanumeric';
   sortInverted: boolean;
+  onChangeSortBy?: (column: Column<T>) => void;
 
   width: number;
   minWidth: number;

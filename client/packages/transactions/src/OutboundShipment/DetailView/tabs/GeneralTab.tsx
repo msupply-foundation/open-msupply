@@ -1,38 +1,32 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
-  ColumnSetBuilder,
   RemoteDataTable,
-  useColumns,
-  getEditableQuantityColumn,
-  SortRule,
   ObjectWithStringKeys,
   SortBy,
   usePagination,
   useRowRenderCount,
+  Column,
+  DomainObject,
 } from '@openmsupply-client/common';
 import { ItemRow } from '../types';
 
-interface GeneralTabProps<T extends ObjectWithStringKeys> {
+interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
-  onChangeSortBy: (sortBy: SortRule<T>) => void;
+  columns: Column<T>[];
   sortBy: SortBy<T>;
 }
 
 export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({
   data,
-  onChangeSortBy,
+  columns,
   sortBy,
 }) => {
-  const { pagination } = usePagination(useRowRenderCount());
+  const numberOfRows = useRowRenderCount();
+  const { pagination } = usePagination(numberOfRows);
 
-  const defaultColumns = new ColumnSetBuilder<ItemRow>()
-    .addColumn('code')
-    .addColumn('name')
-    .addColumn('packSize')
-    .addColumn(getEditableQuantityColumn())
-    .build();
-
-  const columns = useColumns(defaultColumns);
+  useEffect(() => {
+    pagination.onChangeFirst(numberOfRows);
+  }, [numberOfRows, pagination.first]);
 
   return (
     <RemoteDataTable
@@ -40,7 +34,6 @@ export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
       data={data.slice(pagination.offset, pagination.offset + pagination.first)}
-      onSortBy={onChangeSortBy}
       onChangePage={pagination.onChangePage}
       noDataMessageKey="error.no-items"
     />
