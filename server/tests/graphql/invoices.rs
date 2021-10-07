@@ -21,6 +21,9 @@ mod graphql {
         util::test_db,
     };
 
+    use assert_json_diff::assert_json_eq;
+    use serde_json::{json, Value};
+
     #[actix_rt::test]
     async fn test_graphql_invoices_query() {
         let settings = test_db::get_test_settings("omsupply-database-gql-invoices-query");
@@ -55,10 +58,10 @@ mod graphql {
         for stock_line in mock_stocks {
             stock_repository.insert_one(&stock_line).await.unwrap();
         }
-        for invoice in mock_invoices {
+        for invoice in &mock_invoices {
             invoice_repository.insert_one(&invoice).await.unwrap();
         }
-        for invoice_line in mock_invoice_lines {
+        for invoice_line in &mock_invoice_lines {
             invoice_line_repository
                 .insert_one(&invoice_line)
                 .await
@@ -80,7 +83,18 @@ mod graphql {
         .await;
 
         // Test query:
-        let payload = r#"{"query":"{invoices{nodes{id,pricing{totalAfterTax}}}}"}"#.as_bytes();
+        let query = r#"{
+            invoices{
+                nodes{
+                    id,
+                    pricing{
+                        totalAfterTax
+                    }
+                }
+            }
+        }"#
+        .replace("\n", "");
+        let payload = format!("{{\"query\":\"{}\"}}", query);
         let req = actix_web::test::TestRequest::post()
             .header("content-type", "application/json")
             .set_payload(payload)
@@ -90,10 +104,32 @@ mod graphql {
         let res = actix_web::test::read_response(&mut app, req).await;
         let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
 
-        // TODO find a more robust way to compare the results
-        assert_eq!(
-            body,
-            "{\"data\":{\"invoices\":{\"nodes\":[{\"id\":\"customer_invoice_a\",\"pricing\":{\"totalAfterTax\":3.0}},{\"id\":\"customer_invoice_b\",\"pricing\":{\"totalAfterTax\":7.0}},{\"id\":\"supplier_invoice_a\",\"pricing\":{\"totalAfterTax\":11.0}},{\"id\":\"supplier_invoice_b\",\"pricing\":{\"totalAfterTax\":15.0}}]}}}"
+        let expected_json_invoice_nodes = mock_invoices
+            .iter()
+            .map(|invoice| {
+                json!({
+                    "id": invoice.id.to_owned(),
+                    "pricing": {
+                      "totalAfterTax": &mock_invoice_lines.iter().fold(0.0, |acc, invoice_line| {
+                            if invoice_line.invoice_id == invoice.id {
+                                acc + invoice_line.total_after_tax
+                            } else {
+                                acc
+                            }
+                        }),
+                    }
+                  }
+                )
+            })
+            .collect::<serde_json::Value>();
+        let expected = json!({
+            "data": {
+              "invoices": {
+                "nodes": expected_json_invoice_nodes,
+              }
+            }
+          }
         );
+        assert_json_eq!(serde_json::from_str::<Value>(&body).unwrap(), expected);
     }
 }
