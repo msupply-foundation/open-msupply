@@ -24,7 +24,6 @@ mod store;
 mod user_account;
 
 use actix_rt::blocking::BlockingError;
-use async_graphql::dataloader::DataLoader;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use invoice::{CustomerInvoiceRepository, InvoiceRepository};
@@ -117,15 +116,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     let pool = Pool::new(connection_manager).expect("Failed to connect to database");
 
     let mut repositories: RepositoryMap = RepositoryMap::new();
-
-    repositories.insert(StockLineRepository::new(pool.clone()));
-    repositories.insert(RequisitionLineRepository::new(pool.clone()));
-    repositories.insert(RequisitionRepository::new(pool.clone()));
-    repositories.insert(UserAccountRepository::new(pool.clone()));
-
     repositories.insert(StorageConnectionManager::new(pool.clone()));
-
-    repositories.insert(DataLoader::new(StockLineRepository::new(pool.clone())));
 
     repositories
 }

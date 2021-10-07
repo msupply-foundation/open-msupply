@@ -112,11 +112,12 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "id of the requisition")] id: String,
     ) -> Requisition {
-        let requisition_repository = ctx.get_repository::<RequisitionRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let requisition_repository = RequisitionRepository::new(&connection);
 
         let requisition_row: RequisitionRow = requisition_repository
             .find_one_by_id(&id)
-            .await
             .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
         Requisition { requisition_row }

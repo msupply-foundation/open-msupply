@@ -1,4 +1,6 @@
-use crate::database::repository::{RequisitionLineRepository, RequisitionRepository};
+use crate::database::repository::{
+    RequisitionLineRepository, RequisitionRepository, StorageConnectionManager,
+};
 use crate::database::schema::{RequisitionLineRow, RequisitionRow};
 use crate::server::service::graphql::schema::types::{
     InputRequisitionLine, Requisition, RequisitionType,
@@ -29,12 +31,13 @@ impl Mutations {
             type_of: type_of.into(),
         };
 
-        let requisition_repository = ctx.get_repository::<RequisitionRepository>();
-        let requisition_line_repository = ctx.get_repository::<RequisitionLineRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let requisition_repository = RequisitionRepository::new(&connection);
+        let requisition_line_repository = RequisitionLineRepository::new(&connection);
 
         requisition_repository
             .insert_one(&requisition_row)
-            .await
             .expect("Failed to insert requisition into database");
 
         let requisition_line_rows: Vec<RequisitionLineRow> = requisition_lines
@@ -51,7 +54,6 @@ impl Mutations {
         for requisition_line_row in requisition_line_rows {
             requisition_line_repository
                 .insert_one(&requisition_line_row)
-                .await
                 .expect("Failed to insert requisition_line into database");
         }
 

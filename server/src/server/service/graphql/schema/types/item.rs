@@ -1,6 +1,5 @@
-use crate::database::repository::{
-    ItemQueryRepository, StockLineRepository, StorageConnectionManager,
-};
+use crate::database::loader::StockLineLoader;
+use crate::database::repository::{ItemQueryRepository, StorageConnectionManager};
 use crate::server::service::graphql::{
     schema::{queries::pagination::Pagination, types::StockLineQuery},
     ContextExt,
@@ -24,7 +23,7 @@ pub struct ItemQuery {
 #[ComplexObject]
 impl ItemQuery {
     async fn available_batches(&self, ctx: &Context<'_>) -> StockLineList {
-        let repository = ctx.get_repository::<DataLoader<StockLineRepository>>();
+        let repository = ctx.get_loader::<DataLoader<StockLineLoader>>();
         let result = repository.load_one(self.id.clone()).await.unwrap();
         StockLineList {
             stock_lines: result.map_or(Vec::new(), |stock_lines| {
