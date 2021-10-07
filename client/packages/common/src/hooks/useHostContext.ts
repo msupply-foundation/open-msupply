@@ -1,4 +1,3 @@
-import { createRef } from 'react';
 import create from 'zustand';
 import { LocalStorage } from '../localStorage';
 
@@ -7,12 +6,17 @@ import { Store, User } from '../types';
 
 type HostContext = {
   setAppBarContentRef: (ref: React.MutableRefObject<null> | null) => void;
-  appBarButtonsRef: React.MutableRefObject<null> | null;
   appBarContentRef: React.MutableRefObject<null> | null;
-  locale: SupportedLocales;
+
+  setAppBarButtonsRef: (ref: React.MutableRefObject<null> | null) => void;
+  appBarButtonsRef: React.MutableRefObject<null> | null;
+
   setLocale: (locale: SupportedLocales) => void;
+  locale: SupportedLocales;
+
   setStore: (store: Store) => void;
   store: Store;
+
   setUser: (user: User) => void;
   user: User;
 };
@@ -20,14 +24,20 @@ type HostContext = {
 export const useHostContext = create<HostContext>(set => ({
   setAppBarContentRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, appBarContentRef: refOrNull })),
-  locale: LocalStorage.getItem('/localisation/locale') ?? 'en',
-  appBarButtonsRef: createRef(),
   appBarContentRef: null,
-  store: { id: '4321dcba', name: 'Central Warehouse' },
-  user: { id: 'abcd1234', name: 'Administrator' },
+
+  setAppBarButtonsRef: (refOrNull: React.MutableRefObject<null> | null) =>
+    set(state => ({ ...state, appBarButtonsRef: refOrNull })),
+  appBarButtonsRef: null,
+
   setLocale: locale => set(state => ({ ...state, locale })),
-  setUser: user => set(state => ({ ...state, user })),
+  locale: LocalStorage.getItem('/localisation/locale') ?? 'en',
+
   setStore: store => set(state => ({ ...state, store })),
+  store: { id: '4321dcba', name: 'Central Warehouse' },
+
+  setUser: user => set(state => ({ ...state, user })),
+  user: { id: 'abcd1234', name: 'Administrator' },
 }));
 
 useHostContext.subscribe(({ locale }) => {

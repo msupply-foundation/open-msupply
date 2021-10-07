@@ -1,7 +1,5 @@
 import React, { FC, useEffect } from 'react';
-
-import { useNavigate, useParams } from 'react-router';
-
+import { useParams } from 'react-router';
 import {
   AppBarContentPortal,
   Circle,
@@ -11,17 +9,13 @@ import {
   Field,
   Grid,
   Label,
-  Portal,
   Rewind,
   Row,
-  Transaction,
   Typography,
   useDetailPanel,
   useFormatDate,
-  useHostContext,
   useDialog,
   useNotification,
-  useQueryClient,
   useTranslation,
   Tab,
   TabList,
@@ -30,127 +24,46 @@ import {
   TabContext,
   createTableStore,
   TableProvider,
-  Item,
-  SetState,
+  AppBarButtonsPortal,
+  Book,
   Button,
   PlusCircle,
-  useForm,
-} from '@openmsupply-client/common';
-
-import { detailQueryFn, updateFn } from '../../api';
-import {
-  createDraftStore,
-  DraftStore,
+  Box,
   useDraftDocument,
-} from '../../useDraftDocument';
-import { Box } from '@mui/system';
+  useForm,
+  Item,
+} from '@openmsupply-client/common';
+import { reducer } from './reducer';
+import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
+import { ExternalURL } from '@openmsupply-client/config';
 
-const placeholderTransaction: Transaction = {
-  id: '',
-  name: '',
-  total: '',
-  comment: '',
-  color: 'grey',
-  status: '',
-  type: '',
-  entered: '',
-  confirmed: '',
-  invoiceNumber: '',
-};
+const useDraftOutbound = () => {
+  const { id } = useParams();
 
-const draftCreator = <T extends Transaction>(
-  original: T,
-  setter: SetState<DraftStore<T>>
-) => {
-  const mappedLines = original.items?.map(line => ({
-    ...line,
-    setQuantity: (rowIdx: number, value: number) => {
-      setter((state: DraftStore<Transaction>) => {
-        if (!state.draft?.items) {
-          return state;
-        }
-
-        const newState = {
-          ...state,
-          draft: {
-            ...state.draft,
-            items: [...state.draft.items],
-          },
-        };
-
-        if (newState.draft.items[rowIdx]) {
-          newState.draft.items[rowIdx] = {
-            ...(newState.draft.items[rowIdx] as Item), // TODO: Type here
-            quantity: value,
-          };
-        }
-
-        return newState;
-      });
-    },
-  }));
-
-  const newDraft = { ...original, items: mappedLines };
-
-  return newDraft;
-};
-
-const useDraft = createDraftStore<Transaction>(draftCreator);
-
-const useDraftOutbound = (id: string) => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const isNew = id === 'new';
-  const { error } = useNotification();
-  const t = useTranslation();
-  const { draft, setDraft, save, missingRecord } = useDraftDocument(
-    ['transaction', id],
-    detailQueryFn(id ?? ''),
-    updateFn,
-    // On successfully saving the draft, check if we had just saved a new
-    // record - this is indicated by the record having no `id` field.
-    // If there was an id field, we would be updating rather than creating.
-    // If we did just save a newly created record, replace the current
-    // url with the new id of the record. For example, if we are creating
-    // an outbound shipment, we would start with the URL:
-    // outbound-shipment/new
-    // and once saved, we replace the url with the new invoice number
-    // outbound-shipment/{invoice_number}
-    // This will cause the query key to update, and everything from this
-    // point is exactly the same as when editing an existing invoice.
-    (data, variables) => {
-      if (!variables.id) {
-        navigate({ pathname: `../${data.id}` }, { replace: true });
-      }
-
-      queryClient.invalidateQueries('transaction');
-    },
-    useDraft,
-    isNew ? placeholderTransaction : undefined
+  const { draft, save } = useDraftDocument(
+    ['transaction', id ?? 'new'],
+    reducer,
+    getOutboundShipmentDetailViewApi(id ?? '')
   );
-
-  if (missingRecord) error(t('error.missing-invoice', { id }))();
-
-  return { draft, setDraft, save };
+  return { draft, save };
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
-  const { id } = useParams();
-  const { draft } = useDraftOutbound(id ?? 'new');
-  const { appBarButtonsRef } = useHostContext();
+  const { draft } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
   const { register, reset, handleSubmit } = useForm();
   const addItemClose = (item: Item) => {
-    draft?.items?.push(item);
+    // TODO: add to dataset and have the reducer add the fn
+    draft?.items?.push({ ...item, updateQuantity: () => {} });
     hideDialog();
   };
   const addItemReset = (item: Item) => {
-    draft?.items?.push(item);
+    draft?.items?.push({ ...item, updateQuantity: () => {} });
     reset();
   };
   const onSubmit = handleSubmit(addItemClose);
@@ -204,7 +117,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     ]);
     // clean up on unload: will hide the details panel
     return () => setSections([]);
-  }, [draft]);
+  }, [draft?.comment, draft?.color, draft?.status]);
 
   useEffect(() => {
     setActions([
@@ -232,6 +145,21 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   return draft ? (
     <TabContext value={String(currentTab)}>
+      <AppBarButtonsPortal>
+        <Button
+          labelKey="button.add-item"
+          icon={<PlusCircle />}
+          onClick={showDialog}
+        />
+        <Button
+          shouldShrink
+          icon={<Book />}
+          labelKey="button.docs"
+          onClick={() => (location.href = ExternalURL.PublicDocs)}
+        />
+        {OpenButton}
+      </AppBarButtonsPortal>
+
       <Modal
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={<DialogButton variant="next" onClick={onOkNext} />}
@@ -239,14 +167,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       >
         <ItemDetails register={register} onSubmit={onSubmit} />
       </Modal>
-      <Portal container={appBarButtonsRef?.current}>
-        <Button
-          labelKey="button.add-item"
-          icon={<PlusCircle />}
-          onClick={showDialog}
-        />
-        {OpenButton}
-      </Portal>
 
       <AppBarContentPortal
         sx={{ display: 'flex', flex: 1, justifyContent: 'center' }}

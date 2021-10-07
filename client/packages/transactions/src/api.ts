@@ -2,6 +2,7 @@ import { ObjectWithStringKeys } from './../../common/src/types/utility';
 import { Transaction, SortBy, ListApi } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
+import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getDetailQuery = (): string => gql`
   query transaction($id: String!) {
@@ -120,3 +121,20 @@ export const OutboundShipmentListViewApi: ListApi<Transaction> = {
   onDelete: deleteFn,
   onUpdate: updateFn,
 };
+
+interface Api<ReadType, UpdateType> {
+  onRead: () => Promise<ReadType>;
+  onUpdate: (val: UpdateType) => Promise<ReadType>;
+}
+
+export const getOutboundShipmentDetailViewApi: (
+  id: string
+) => Api<Transaction, OutboundShipment> = (id: string) => ({
+  onRead: detailQueryFn(id),
+  onUpdate: async (
+    outboundShipment: OutboundShipment
+  ): Promise<Transaction> => {
+    const result = await updateFn(outboundShipment);
+    return result;
+  },
+});

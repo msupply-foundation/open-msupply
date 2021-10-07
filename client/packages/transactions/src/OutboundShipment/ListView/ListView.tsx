@@ -2,14 +2,12 @@ import React, { FC, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
-  Portal,
   Button,
   Download,
   PlusCircle,
   Printer,
   RemoteDataTable,
   useColumns,
-  useHostContext,
   useNotification,
   Transaction,
   DropdownMenu,
@@ -25,9 +23,12 @@ import {
   useTableStore,
   ColumnSetBuilder,
   Color,
+  AppBarButtonsPortal,
+  Book,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
+import { ExternalURL } from '@openmsupply-client/config';
 
 const ListViewToolBar: FC<{
   onDelete: (toDelete: Transaction[]) => void;
@@ -81,7 +82,6 @@ const ListViewToolBar: FC<{
 };
 
 export const OutboundShipmentListViewComponent: FC = () => {
-  const { appBarButtonsRef } = useHostContext();
   const { info, success } = useNotification();
   const navigate = useNavigate();
 
@@ -122,28 +122,33 @@ export const OutboundShipmentListViewComponent: FC = () => {
         <ListViewToolBar onDelete={onDelete} data={data} />
       </AppBarContentPortal>
 
-      <Portal container={appBarButtonsRef?.current}>
-        <>
-          <Button
-            shouldShrink
-            icon={<PlusCircle />}
-            labelKey="button.new-shipment"
-            onClick={() => navigate(`/customers/customer-invoice/new`)}
-          />
-          <Button
-            shouldShrink
-            icon={<Download />}
-            labelKey="button.export"
-            onClick={success('Downloaded successfully')}
-          />
-          <Button
-            shouldShrink
-            icon={<Printer />}
-            labelKey="button.print"
-            onClick={info('No printer detected')}
-          />
-        </>
-      </Portal>
+      <AppBarButtonsPortal>
+        <Button
+          shouldShrink
+          icon={<PlusCircle />}
+          labelKey="button.new-shipment"
+          onClick={() => navigate(`/customers/customer-invoice/new`)}
+        />
+        <Button
+          shouldShrink
+          icon={<Download />}
+          labelKey="button.export"
+          onClick={success('Downloaded successfully')}
+        />
+        <Button
+          shouldShrink
+          icon={<Printer />}
+          labelKey="button.print"
+          onClick={info('No printer detected')}
+        />
+        <Button
+          shouldShrink
+          icon={<Book />}
+          labelKey="button.docs"
+          onClick={() => (location.href = ExternalURL.PublicDocs)}
+        />
+      </AppBarButtonsPortal>
+
       <RemoteDataTable
         onSortBy={onChangeSortBy}
         sortBy={sortBy}

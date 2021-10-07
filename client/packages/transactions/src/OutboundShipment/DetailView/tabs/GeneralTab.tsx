@@ -1,25 +1,25 @@
+import React, { FC } from 'react';
 import {
   ColumnSetBuilder,
-  Item,
   RemoteDataTable,
   useColumns,
   useQueryParams,
   useSortedData,
   getEditableQuantityColumn,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
+import { ItemRow } from '../types';
 
 interface GeneralTabProps<T> {
   data: T[];
 }
 
-export const GeneralTab: FC<GeneralTabProps<Item>> = ({ data }) => {
+export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data }) => {
   const { pagination } = useQueryParams({ key: 'quantity' });
   const { sortedData, onChangeSortBy, sortBy } = useSortedData(data ?? [], {
     key: 'quantity',
   });
 
-  const defaultColumns = new ColumnSetBuilder<Item>()
+  const defaultColumns = new ColumnSetBuilder<ItemRow>()
     .addColumn('code')
     .addColumn('name')
     .addColumn('packSize')
