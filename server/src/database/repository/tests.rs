@@ -658,8 +658,8 @@ mod repository_test {
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
-        let repo = registry.get::<InvoiceRepository>().unwrap();
-        let customer_invoice_repo = registry.get::<CustomerInvoiceRepository>().unwrap();
+        let repo = InvoiceRepository::new(&connection);
+        let customer_invoice_repo = CustomerInvoiceRepository::new(&connection);
 
         let item1 = data::invoice_1();
         repo.insert_one(&item1).await.unwrap();
@@ -677,7 +677,6 @@ mod repository_test {
 
         let loaded_item = customer_invoice_repo
             .find_many_by_store_id(&item1.store_id)
-            .await
             .unwrap();
         assert_eq!(1, loaded_item.len());
     }
@@ -703,33 +702,27 @@ mod repository_test {
             .insert_one(&data::stock_line_1())
             .await
             .unwrap();
-        let invoice_repo = registry.get::<InvoiceRepository>().unwrap();
+        let invoice_repo = InvoiceRepository::new(&connection);
         invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
         invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
 
-        let repo = registry.get::<InvoiceLineRepository>().unwrap();
+        let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.insert_one(&item1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // row with optional field
         let item2_optional = data::invoice_line_2();
         repo.insert_one(&item2_optional).await.unwrap();
-        let loaded_item = repo
-            .find_one_by_id(item2_optional.id.as_str())
-            .await
-            .unwrap();
+        let loaded_item = repo.find_one_by_id(item2_optional.id.as_str()).unwrap();
         assert_eq!(item2_optional, loaded_item);
 
         // find_many_by_invoice_id:
         // add item that shouldn't end up in the results:
         let item3 = data::invoice_line_3();
         repo.insert_one(&item3).await.unwrap();
-        let all_items = repo
-            .find_many_by_invoice_id(&item1.invoice_id)
-            .await
-            .unwrap();
+        let all_items = repo.find_many_by_invoice_id(&item1.invoice_id).unwrap();
         assert_eq!(2, all_items.len());
     }
 
@@ -755,10 +748,10 @@ mod repository_test {
             .insert_one(&data::stock_line_1())
             .await
             .unwrap();
-        let invoice_repo = registry.get::<InvoiceRepository>().unwrap();
+        let invoice_repo = InvoiceRepository::new(&connection);
         invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
         invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
-        let repo = registry.get::<InvoiceLineRepository>().unwrap();
+        let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.insert_one(&item1).await.unwrap();
         let item2 = data::invoice_line_2();
@@ -767,8 +760,8 @@ mod repository_test {
         repo.insert_one(&item3).await.unwrap();
 
         // line stats
-        let repo = registry.get::<InvoiceLineQueryRepository>().unwrap();
-        let result = repo.stats(&vec![data::invoice_1().id]).await.unwrap();
+        let repo = InvoiceLineQueryRepository::new(&connection);
+        let result = repo.stats(&vec![data::invoice_1().id]).unwrap();
         let stats_invoice_1 = result.get(0).unwrap();
         assert_eq!(stats_invoice_1.invoice_id, data::invoice_1().id);
         assert_eq!(stats_invoice_1.total_after_tax, 3.0);
