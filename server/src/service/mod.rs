@@ -4,6 +4,7 @@ use crate::{
 };
 use std::convert::TryInto;
 
+pub mod item;
 pub mod name;
 
 pub struct ListResult<T> {
