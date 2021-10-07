@@ -292,9 +292,8 @@ mod repository_test {
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
                 CustomerInvoiceRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
                 InvoiceRepository, ItemRepository, MasterListLineRepository,
-                MasterListNameJoinRepository, NameQueryFilter, NameQueryRepository, NameQuerySort,
-                NameQuerySortField, NameRepository, RequisitionLineRepository,
-                RequisitionRepository, SimpleStringFilter, StockLineRepository,
+                MasterListNameJoinRepository, NameQueryRepository, NameRepository,
+                RequisitionLineRepository, RequisitionRepository, StockLineRepository,
                 StorageConnectionManager, StoreRepository, UserAccountRepository,
             },
             schema::{
@@ -302,6 +301,10 @@ mod repository_test {
                 MasterListLineRow, MasterListRow, NameRow, RequisitionLineRow, RequisitionRow,
                 RequisitionRowType, StockLineRow, StoreRow, UserAccountRow,
             },
+        },
+        domain::{
+            name::{NameFilter, NameSort, NameSortField},
+            Pagination, SimpleStringFilter,
         },
         util::test_db,
     };
@@ -339,9 +342,9 @@ mod repository_test {
         let repo = NameQueryRepository::new(&connection);
         // test filter:
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
                     name: Some(SimpleStringFilter {
                         equal_to: Some("name_1".to_string()),
                         like: None,
@@ -350,16 +353,16 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
-                &None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result.get(0).unwrap().name, "name_1");
 
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
                     name: Some(SimpleStringFilter {
                         equal_to: None,
                         like: Some("me_".to_string()),
@@ -368,15 +371,15 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
-                &None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 3);
 
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
                     name: None,
                     code: Some(SimpleStringFilter {
                         equal_to: Some("code1".to_string()),
@@ -385,16 +388,16 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
-                &None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 2);
 
         /* TODO currently no way to add name_store_join rows for the following tests:
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameQueryFilter {
                     name: None,
                     code: None,
                     is_customer: Some(true),
@@ -406,9 +409,9 @@ mod repository_test {
         assert_eq!(result.get(0).unwrap().name, "name_3");
 
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameQueryFilter {
                     name: None,
                     code: None,
                     is_customer: None,
@@ -422,11 +425,11 @@ mod repository_test {
         */
 
         let result = repo
-            .all(
-                &None,
-                &None,
-                &Some(NameQuerySort {
-                    key: NameQuerySortField::Code,
+            .query(
+                Pagination::new(),
+                None,
+                Some(NameSort {
+                    key: NameSortField::Code,
                     desc: Some(true),
                 }),
             )
