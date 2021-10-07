@@ -38,18 +38,20 @@ describe('GeneralTab', () => {
     const columns = useColumns(defaultColumns, { onChangeSortBy: () => {} });
 
     return (
-      <TestingProvider>
-        <GeneralTab
-          data={items}
-          columns={columns}
-          sortBy={{ key: 'quantity', direction: 'asc' }}
-        />
-      </TestingProvider>
+      <GeneralTab
+        data={items}
+        columns={columns}
+        sortBy={{ key: 'quantity', direction: 'asc' }}
+      />
     );
   };
 
   it('renders the passed values into a row', async () => {
-    const { findByRole } = render(<Example />);
+    const { findByRole } = render(
+      <TestingProvider>
+        <Example />
+      </TestingProvider>
+    );
 
     await waitFor(async () => {
       const row = (await findByRole('cell', { name: 'ibuprofen' })).closest(
@@ -61,12 +63,10 @@ describe('GeneralTab', () => {
       if (row) {
         const code = within(row).getByRole('cell', { name: /abc123/i });
         const name = within(row).getByRole('cell', { name: /ibuprofen/i });
-        const quantity = within(row).getByRole('cell', { name: /100/i });
         const packSize = within(row).getByRole('cell', { name: /^2$/i });
 
         expect(code).toBeInTheDocument();
         expect(name).toBeInTheDocument();
-        expect(quantity).toBeInTheDocument();
         expect(packSize).toBeInTheDocument();
       }
     });

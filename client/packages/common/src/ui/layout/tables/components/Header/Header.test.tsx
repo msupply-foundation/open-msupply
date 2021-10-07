@@ -14,7 +14,7 @@ describe('HeaderRow', () => {
     const [column1, column2] = useColumns(
       new ColumnSetBuilder<Item>()
         .addColumn('name')
-        .addColumn('packSize')
+        .addColumn('packSize', { sortable: false })
         .build(),
       { onChangeSortBy }
     );
@@ -22,20 +22,18 @@ describe('HeaderRow', () => {
     if (!column1 || !column2) return null;
 
     return (
-      <TestingProvider>
-        <table>
-          <thead>
-            <HeaderRow>
-              <HeaderCell column={column1} sortBy={sortBy}>
-                Header1
-              </HeaderCell>
-              <HeaderCell column={column2} sortBy={sortBy}>
-                Header2
-              </HeaderCell>
-            </HeaderRow>
-          </thead>
-        </table>
-      </TestingProvider>
+      <table>
+        <thead>
+          <HeaderRow>
+            <HeaderCell column={column1} sortBy={sortBy}>
+              Header1
+            </HeaderCell>
+            <HeaderCell column={column2} sortBy={sortBy}>
+              Header2
+            </HeaderCell>
+          </HeaderRow>
+        </thead>
+      </table>
     );
   };
 
@@ -44,14 +42,16 @@ describe('HeaderRow', () => {
     const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
     const { getByRole } = render(
-      <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
     );
 
-    const idHeader = getByRole('columnheader', { name: /id/i });
-    const quantityHeader = getByRole('columnheader', { name: /quantity/i });
+    const nameHeader = getByRole('columnheader', { name: /name/i });
+    const packSizeHeader = getByRole('columnheader', { name: /packSize/i });
 
-    expect(idHeader).toBeInTheDocument();
-    expect(quantityHeader).toBeInTheDocument();
+    expect(nameHeader).toBeInTheDocument();
+    expect(packSizeHeader).toBeInTheDocument();
   });
 
   it('renders a button when the header is sortable, and no button otherwise', () => {
@@ -59,14 +59,16 @@ describe('HeaderRow', () => {
     const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
     const { getByRole, queryByRole } = render(
-      <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
     );
 
-    const idHeader = getByRole('button', { name: /header1/i });
-    const quantityHeader = queryByRole('button', { name: /header2/i });
+    const nameHeader = getByRole('button', { name: /header1/i });
+    const packSizeHeader = queryByRole('button', { name: /header2/i });
 
-    expect(idHeader).toBeInTheDocument();
-    expect(quantityHeader).not.toBeInTheDocument();
+    expect(nameHeader).toBeInTheDocument();
+    expect(packSizeHeader).not.toBeInTheDocument();
   });
 
   it('calls the provided sortBy function when the sort button is pressed', () => {
@@ -74,12 +76,14 @@ describe('HeaderRow', () => {
     const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
     const { getByRole } = render(
-      <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
     );
 
-    const idHeader = getByRole('button', { name: /header1/i });
+    const nameHeader = getByRole('button', { name: /header1/i });
 
-    act(() => userEvent.click(idHeader));
+    act(() => userEvent.click(nameHeader));
 
     expect(onSortBy).toBeCalledTimes(1);
   });
@@ -89,13 +93,15 @@ describe('HeaderRow', () => {
     const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
     const { getByRole } = render(
-      <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
     );
 
     const idHeader = getByRole('button', { name: /header1/i });
 
     act(() => userEvent.click(idHeader));
 
-    expect(onSortBy).toBeCalledWith({ key: 'id' });
+    expect(onSortBy).toBeCalledWith(expect.objectContaining({ key: 'name' }));
   });
 });
