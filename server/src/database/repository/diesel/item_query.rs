@@ -1,4 +1,4 @@
-use super::{get_connection, DBBackendConnection};
+use super::StorageConnection;
 use crate::{
     database::{
         repository::RepositoryError,
@@ -16,10 +16,7 @@ use crate::{
     },
 };
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
 type ItemAndMasterList = (
     ItemRow,
@@ -38,22 +35,22 @@ impl From<ItemAndMasterList> for ItemQuery {
     }
 }
 
-pub struct ItemQueryRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct ItemQueryRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl ItemQueryRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> ItemQueryRepository {
-        ItemQueryRepository { pool }
+impl<'a> ItemQueryRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        ItemQueryRepository { connection }
     }
 
     pub fn count(&self) -> Result<i64, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
-        Ok(item_dsl::item.count().get_result(&*connection)?)
+        Ok(item_dsl::item
+            .count()
+            .get_result(&self.connection.connection)?)
     }
 
     pub fn all(&self, pagination: &Option<Pagination>) -> Result<Vec<ItemQuery>, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
         // Join master_list_line
         let item_and_master_list_line =
             item_dsl::item.left_join(master_list_line_dsl::master_list_line);
@@ -69,7 +66,7 @@ impl ItemQueryRepository {
             .offset(pagination.offset())
             .limit(pagination.first())
             .order(item_dsl::id.asc())
-            .load::<ItemAndMasterList>(&*connection)?
+            .load::<ItemAndMasterList>(&self.connection.connection)?
             .into_iter()
             .map(ItemQuery::from)
             .collect())
@@ -124,7 +121,7 @@ mod tests {
         let storage_connection = StorageConnectionManager::new(pool.clone())
             .connection()
             .unwrap();
-        let item_query_repository = ItemQueryRepository::new(pool.clone());
+        let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let (rows, queries) = data();
         for row in rows {
@@ -195,7 +192,7 @@ mod tests {
         let storage_connection = StorageConnectionManager::new(pool.clone())
             .connection()
             .unwrap();
-        let item_query_repository = ItemQueryRepository::new(pool.clone());
+        let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let item_rows = vec![
             ItemRow {

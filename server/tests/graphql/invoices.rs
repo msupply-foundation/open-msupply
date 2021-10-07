@@ -34,9 +34,9 @@ mod graphql {
         let name_repository = NameRepository::new(&connection);
         let store_repository = StoreRepository::new(&connection);
         let item_repository = ItemRepository::new(&connection);
-        let stock_repository = repositories.get::<StockLineRepository>().unwrap();
-        let invoice_repository = repositories.get::<InvoiceRepository>().unwrap();
-        let invoice_line_repository = repositories.get::<InvoiceLineRepository>().unwrap();
+        let stock_repository = StockLineRepository::new(&connection);
+        let invoice_repository = InvoiceRepository::new(&connection);
+        let invoice_line_repository = InvoiceLineRepository::new(&connection);
         let mock_names: Vec<NameRow> = mock_names();
         let mock_stores: Vec<StoreRow> = mock_stores();
         let mock_items: Vec<ItemRow> = mock_items();

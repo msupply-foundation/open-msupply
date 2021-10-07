@@ -52,8 +52,11 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "id of the invoice")] id: String,
     ) -> Result<InvoiceNode, RepositoryError> {
-        let repository = ctx.get_repository::<InvoiceQueryRepository>();
-        let invoice = repository.find_one_by_id(id.as_str()).await?;
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+
+        let repository = InvoiceQueryRepository::new(&connection);
+        let invoice = repository.find_one_by_id(id.as_str())?;
         Ok(InvoiceNode::from(invoice))
     }
 
@@ -93,11 +96,12 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "id of the invoice line")] id: String,
     ) -> InvoiceLine {
-        let invoice_line_repository = ctx.get_repository::<InvoiceLineRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let invoice_line_repository = InvoiceLineRepository::new(&connection);
 
         let invoice_line_row: InvoiceLineRow = invoice_line_repository
             .find_one_by_id(&id)
-            .await
             .unwrap_or_else(|_| panic!("Failed to get invoice line {}", id));
 
         InvoiceLine { invoice_line_row }
@@ -108,11 +112,12 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "id of the requisition")] id: String,
     ) -> Requisition {
-        let requisition_repository = ctx.get_repository::<RequisitionRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let requisition_repository = RequisitionRepository::new(&connection);
 
         let requisition_row: RequisitionRow = requisition_repository
             .find_one_by_id(&id)
-            .await
             .unwrap_or_else(|_| panic!("Failed to get requisition {}", id));
 
         Requisition { requisition_row }

@@ -1,4 +1,6 @@
-use crate::database::repository::{RepositoryError, UserAccountRepository};
+use crate::database::repository::{
+    RepositoryError, StorageConnectionManager, UserAccountRepository,
+};
 use crate::database::schema::UserAccountRow;
 
 use async_graphql::dataloader::*;
@@ -6,7 +8,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct UserAccountLoader {
-    pub user_account_repository: UserAccountRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -15,10 +17,10 @@ impl Loader<String> for UserAccountLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .user_account_repository
+        let connection = self.connection_manager.connection()?;
+        let repo = UserAccountRepository::new(&connection);
+        Ok(repo
             .find_many_by_id(keys)
-            .await
             .unwrap()
             .iter()
             .map(|user_account: &UserAccountRow| {
