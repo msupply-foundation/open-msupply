@@ -13,7 +13,7 @@ export {
 export * from 'graphql-request';
 export * from 'react-query';
 export * from 'react-query/devtools';
-export * from 'use-immer';
+export * from 'immer';
 
 export * from './utils';
 export * from './ui';
