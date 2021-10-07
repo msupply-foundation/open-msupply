@@ -1,5 +1,6 @@
 use crate::database::repository::{
     NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField, SimpleStringFilter,
+    StorageConnectionManager,
 };
 use crate::server::service::graphql::{schema::queries::pagination::Pagination, ContextExt};
 use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
@@ -54,12 +55,16 @@ pub struct NameList {
 #[Object]
 impl NameList {
     async fn total_count(&self, ctx: &Context<'_>) -> i64 {
-        let repository = ctx.get_repository::<NameQueryRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let repository = NameQueryRepository::new(&connection);
         repository.count().unwrap()
     }
 
     async fn nodes(&self, ctx: &Context<'_>) -> Vec<NameQuery> {
-        let repository = ctx.get_repository::<NameQueryRepository>();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        let connection = connection_manager.connection().unwrap();
+        let repository = NameQueryRepository::new(&connection);
 
         let filter = self.filter.clone().map(NameQueryFilter::from);
 

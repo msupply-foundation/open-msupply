@@ -119,8 +119,6 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     let mut repositories: RepositoryMap = RepositoryMap::new();
 
     repositories.insert(StockLineRepository::new(pool.clone()));
-    repositories.insert(ItemQueryRepository::new(pool.clone()));
-    repositories.insert(NameQueryRepository::new(pool.clone()));
     repositories.insert(RequisitionLineRepository::new(pool.clone()));
     repositories.insert(RequisitionRepository::new(pool.clone()));
     repositories.insert(UserAccountRepository::new(pool.clone()));

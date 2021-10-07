@@ -336,7 +336,7 @@ mod repository_test {
         name_repo.insert_one(&data::name_2()).await.unwrap();
         name_repo.insert_one(&data::name_3()).await.unwrap();
 
-        let repo = registry.get::<NameQueryRepository>().unwrap();
+        let repo = NameQueryRepository::new(&connection);
         // test filter:
         let result = repo
             .all(

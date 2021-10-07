@@ -1,4 +1,4 @@
-use super::{get_connection, DBBackendConnection, SimpleStringFilter, Sort};
+use super::{SimpleStringFilter, Sort, StorageConnection};
 
 use crate::{
     database::{
@@ -16,10 +16,7 @@ use crate::{
     },
 };
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
 type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>);
 
@@ -57,20 +54,19 @@ pub enum NameQuerySortField {
     Code,
 }
 
-pub struct NameQueryRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct NameQueryRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl NameQueryRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> NameQueryRepository {
-        NameQueryRepository { pool }
+impl<'a> NameQueryRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        NameQueryRepository { connection }
     }
 
     pub fn count(&self) -> Result<i64, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
         Ok(name_table_dsl::name_table
             .count()
-            .get_result(&*connection)?)
+            .get_result(&self.connection.connection)?)
     }
 
     pub fn all(
@@ -80,7 +76,6 @@ impl NameQueryRepository {
         sort: &Option<NameQuerySort>,
     ) -> Result<Vec<NameQuery>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let connection = get_connection(&self.pool)?;
 
         let mut query = name_table_dsl::name_table
             .left_join(name_store_join_dsl::name_store_join)
@@ -132,7 +127,7 @@ impl NameQueryRepository {
             query = query.order(name_table_dsl::id.asc())
         }
 
-        let result = query.load::<NameAndNameStoreJoin>(&*connection)?;
+        let result = query.load::<NameAndNameStoreJoin>(&self.connection.connection)?;
         Ok(result.into_iter().map(NameQuery::from).collect())
     }
 }
@@ -182,7 +177,7 @@ mod tests {
         let storage_connection = StorageConnectionManager::new(pool.clone())
             .connection()
             .unwrap();
-        let repository = NameQueryRepository::new(pool.clone());
+        let repository = NameQueryRepository::new(&storage_connection);
 
         let (rows, queries) = data();
         for row in rows {
