@@ -798,8 +798,10 @@ mod repository_test {
         let settings = test_db::get_test_settings("omsupply-database-central-sync_buffer");
         test_db::setup(&settings.database).await;
         let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let repo = registry.get::<CentralSyncBufferRepository>().unwrap();
+        let repo = CentralSyncBufferRepository::new(&connection);
         let central_sync_buffer_row_a = data::central_sync_buffer_row_a();
         let central_sync_buffer_row_b = data::central_sync_buffer_row_b();
 

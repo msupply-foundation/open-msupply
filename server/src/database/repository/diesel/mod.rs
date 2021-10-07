@@ -129,8 +129,6 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     repositories.insert(InvoiceLineRepository::new(pool.clone()));
     repositories.insert(InvoiceLineQueryRepository::new(pool.clone()));
     repositories.insert(UserAccountRepository::new(pool.clone()));
-    repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
-    repositories.insert(CentralSyncCursorRepository::new(pool.clone()));
 
     repositories.insert(StorageConnectionManager::new(pool.clone()));
 
