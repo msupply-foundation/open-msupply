@@ -1,9 +1,9 @@
 #![allow(where_clauses_object_safety)]
 
 mod graphql {
+    use crate::graphql::assert_gql_query;
     use remote_server::{
         database::{
-            loader::get_loaders,
             mock::{
                 mock_invoice_lines, mock_invoices, mock_items, mock_names, mock_stock_lines,
                 mock_stores,
@@ -14,22 +14,15 @@ mod graphql {
             },
             schema::{InvoiceLineRow, InvoiceRow, ItemRow, NameRow, StockLineRow, StoreRow},
         },
-        server::{
-            data::{LoaderRegistry, RepositoryRegistry},
-            service::graphql::config as graphql_config,
-        },
         util::test_db,
     };
-
-    use assert_json_diff::assert_json_eq;
-    use serde_json::{json, Value};
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query() {
         let settings = test_db::get_test_settings("omsupply-database-gql-invoices-query");
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
-        let loaders = get_loaders(&settings).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
@@ -68,21 +61,6 @@ mod graphql {
                 .unwrap();
         }
 
-        let repository_registry = RepositoryRegistry { repositories };
-        let loader_registry = LoaderRegistry { loaders };
-
-        let repository_registry = actix_web::web::Data::new(repository_registry);
-        let loader_registry = actix_web::web::Data::new(loader_registry);
-
-        let mut app = actix_web::test::init_service(
-            actix_web::App::new()
-                .data(repository_registry.clone())
-                .data(loader_registry.clone())
-                .configure(graphql_config(repository_registry, loader_registry)),
-        )
-        .await;
-
-        // Test query:
         let query = r#"{
             invoices{
                 nodes{
@@ -92,36 +70,22 @@ mod graphql {
                     }
                 }
             }
-        }"#
-        .replace("\n", "");
-        let payload = format!("{{\"query\":\"{}\"}}", query);
-        let req = actix_web::test::TestRequest::post()
-            .header("content-type", "application/json")
-            .set_payload(payload)
-            .uri("/graphql")
-            .to_request();
-
-        let res = actix_web::test::read_response(&mut app, req).await;
-        let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-
+        }"#;
         let expected_json_invoice_nodes = mock_invoices
             .iter()
             .map(|invoice| {
                 json!({
                     "id": invoice.id.to_owned(),
                     "pricing": {
-                      "totalAfterTax": &mock_invoice_lines.iter().fold(0.0, |acc, invoice_line| {
-                            if invoice_line.invoice_id == invoice.id {
-                                acc + invoice_line.total_after_tax
-                            } else {
-                                acc
-                            }
-                        }),
+                        "totalAfterTax": &mock_invoice_lines
+                            .iter()
+                            .filter(|invoice_line| invoice_line.invoice_id == invoice.id)
+                            .fold(0.0, |acc, invoice_line| acc + invoice_line.total_after_tax),
                     }
                   }
                 )
             })
-            .collect::<serde_json::Value>();
+            .collect::<Vec<serde_json::Value>>();
         let expected = json!({
             "data": {
               "invoices": {
@@ -130,6 +94,6 @@ mod graphql {
             }
           }
         );
-        assert_json_eq!(serde_json::from_str::<Value>(&body).unwrap(), expected);
+        assert_gql_query(&settings, query, &expected).await;
     }
 }
