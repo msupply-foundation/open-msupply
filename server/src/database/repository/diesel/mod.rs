@@ -29,9 +29,7 @@ pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use invoice::{CustomerInvoiceRepository, InvoiceRepository};
 pub use invoice_line::InvoiceLineRepository;
 pub use invoice_line_query::{InvoiceLineQueryJoin, InvoiceLineQueryRepository, InvoiceLineStats};
-pub use invoice_query::{
-    InvoiceFilter, InvoiceQueryJoin, InvoiceQueryRepository, InvoiceSort, InvoiceSortField,
-};
+pub use invoice_query::InvoiceQueryRepository;
 pub use item::ItemRepository;
 pub use item_query::ItemQueryRepository;
 pub use master_list::MasterListRepository;
