@@ -38,7 +38,7 @@ pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
 pub use master_list_name_join::MasterListNameJoinRepository;
 pub use name::NameRepository;
-pub use name_query::{NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField};
+pub use name_query::NameQueryRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use sort_filter_types::*;
@@ -58,6 +58,12 @@ pub type DBBackendConnection = SqliteConnection;
 
 #[cfg(not(feature = "sqlite"))]
 pub type DBBackendConnection = PgConnection;
+
+#[cfg(feature = "sqlite")]
+pub type DBType = diesel::sqlite::Sqlite;
+
+#[cfg(not(feature = "sqlite"))]
+pub type DBType = diesel::sqlite::Pg;
 
 pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>;
 
