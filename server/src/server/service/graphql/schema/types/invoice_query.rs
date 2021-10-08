@@ -1,14 +1,11 @@
 use crate::{
-    database::{
-        loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
-        repository::{InvoiceLineQueryJoin, InvoiceLineStats},
-    },
+    database::loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
     domain::{
-        invoice::{Invoice, InvoiceFilter},
+        invoice::{Invoice, InvoiceFilter, InvoicePricing},
+        invoice_line::InvoiceLine,
         DatetimeFilter, EqualFilter, SimpleStringFilter,
     },
     server::service::graphql::ContextExt,
-    service::{ListError, ListResult, SingleRecordError},
 };
 
 use async_graphql::*;
@@ -16,9 +13,8 @@ use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
 use super::{
-    Connector, ConnectorErrorInterface, DatetimeFilterInput, EqualFilterInput,
-    EqualFilterStringInput, ErrorWrapper, InvoiceLineNode, NodeErrorInterface,
-    SimpleStringFilterInput, SortInput,
+    Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterStringInput,
+    InvoiceLinesResponse, NodeError, SimpleStringFilterInput, SortInput,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -78,12 +74,6 @@ pub enum InvoiceNodeStatus {
     Finalised,
 }
 
-#[derive(SimpleObject, PartialEq, Debug)]
-pub struct InvoiceLinePricing {
-    /// total for all invoice lines
-    total_after_tax: f64,
-}
-
 pub struct InvoiceNode {
     invoice: Invoice,
 }
@@ -138,68 +128,50 @@ impl InvoiceNode {
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
-    pub async fn lines(&self) -> InvoiceLines {
-        InvoiceLines {
-            invoice_id: self.invoice.id.clone(),
-        }
+    pub async fn lines(&self, ctx: &Context<'_>) -> InvoiceLinesResponse {
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
+        loader
+            .load_one(self.invoice.id.to_string())
+            .await
+            .map(|result: Option<Vec<InvoiceLine>>| result.unwrap_or(Vec::new()))
+            .into()
     }
 
-    async fn pricing(&self, ctx: &Context<'_>) -> InvoiceLinePricing {
+    async fn pricing(&self, ctx: &Context<'_>) -> InvoicePriceResponse {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
-
-        let result: InvoiceLineStats = loader
+        loader
             .load_one(self.invoice.id.to_string())
             .await
             // TODO report error
-            .unwrap()
-            .map_or(
-                InvoiceLineStats {
-                    invoice_id: self.invoice.id.to_string(),
+            .map(|result: Option<InvoicePricing>| {
+                result.unwrap_or(InvoicePricing {
                     total_after_tax: 0.0,
-                },
-                |v| v,
-            );
-
-        InvoiceLinePricing {
-            total_after_tax: result.total_after_tax,
-        }
+                })
+            })
+            .into()
     }
 }
 
-pub struct InvoiceLines {
-    invoice_id: String,
-}
-
-#[Object]
-impl InvoiceLines {
-    async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceLineNode> {
-        let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
-
-        let lines: Vec<InvoiceLineQueryJoin> = loader
-            .load_one(self.invoice_id.to_string())
-            .await
-            // TODO handle error:
-            .unwrap()
-            .map_or(Vec::new(), |v| v);
-
-        lines.into_iter().map(InvoiceLineNode::from).collect()
-    }
-}
+type CurrentConnector = Connector<InvoiceNode>;
 
 #[derive(Union)]
 pub enum InvoicesResponse {
-    Error(ErrorWrapper<ConnectorErrorInterface>),
+    Error(ConnectorError),
     Response(Connector<InvoiceNode>),
 }
 
 #[derive(Union)]
 pub enum InvoiceResponse {
-    Error(ErrorWrapper<NodeErrorInterface>),
+    Error(NodeError),
     Response(InvoiceNode),
 }
 
-impl From<Result<ListResult<Invoice>, ListError>> for InvoicesResponse {
-    fn from(result: Result<ListResult<Invoice>, ListError>) -> Self {
+impl<T, E> From<Result<T, E>> for InvoicesResponse
+where
+    CurrentConnector: From<T>,
+    ConnectorError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
         match result {
             Ok(response) => InvoicesResponse::Response(response.into()),
             Err(error) => InvoicesResponse::Error(error.into()),
@@ -207,8 +179,12 @@ impl From<Result<ListResult<Invoice>, ListError>> for InvoicesResponse {
     }
 }
 
-impl From<Result<Invoice, SingleRecordError>> for InvoiceResponse {
-    fn from(result: Result<Invoice, SingleRecordError>) -> Self {
+impl<T, E> From<Result<T, E>> for InvoiceResponse
+where
+    InvoiceNode: From<T>,
+    NodeError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
         match result {
             Ok(response) => InvoiceResponse::Response(response.into()),
             Err(error) => InvoiceResponse::Error(error.into()),
@@ -219,5 +195,42 @@ impl From<Result<Invoice, SingleRecordError>> for InvoiceResponse {
 impl From<Invoice> for InvoiceNode {
     fn from(invoice: Invoice) -> Self {
         InvoiceNode { invoice }
+    }
+}
+
+// INVOICE LINE PRICING
+pub struct InvoicePricingNode {
+    invoice_pricing: InvoicePricing,
+}
+
+#[Object]
+impl InvoicePricingNode {
+    pub async fn total_after_tax(&self) -> f64 {
+        self.invoice_pricing.total_after_tax
+    }
+}
+
+#[derive(Union)]
+pub enum InvoicePriceResponse {
+    Error(NodeError),
+    Response(InvoicePricingNode),
+}
+
+impl<T, E> From<Result<T, E>> for InvoicePriceResponse
+where
+    InvoicePricingNode: From<T>,
+    NodeError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => InvoicePriceResponse::Response(response.into()),
+            Err(error) => InvoicePriceResponse::Error(error.into()),
+        }
+    }
+}
+
+impl From<InvoicePricing> for InvoicePricingNode {
+    fn from(invoice_pricing: InvoicePricing) -> Self {
+        InvoicePricingNode { invoice_pricing }
     }
 }
