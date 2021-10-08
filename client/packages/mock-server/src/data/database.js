@@ -64,17 +64,15 @@ export const insert = {
 };
 
 export const remove = {
-  byId: {
-    invoice: invoice => {
-      const idx = get.id.invoice(invoice.id);
-      InvoiceData.splice(idx);
-      return invoice;
-    },
-    invoiceLine: invoiceLine => {
-      const idx = get.id.invoiceLine(invoiceLine.id);
-      InvoiceLineData.splice(idx);
-      return invoiceLine;
-    },
+  invoice: invoice => {
+    const idx = get.id.invoice(invoice.id);
+    InvoiceData.splice(idx);
+    return invoice;
+  },
+  invoiceLine: invoiceLine => {
+    const idx = get.id.invoiceLine(invoiceLine.id);
+    InvoiceLineData.splice(idx);
+    return invoiceLine;
   },
 };
 
