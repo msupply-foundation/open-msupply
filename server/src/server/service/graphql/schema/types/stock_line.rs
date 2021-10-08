@@ -1,66 +1,90 @@
-use async_graphql::{Context, Object, SimpleObject};
+use async_graphql::*;
 use chrono::NaiveDate;
-use std::convert::TryInto;
 
-use crate::database::schema::StockLineRow;
+use crate::domain::stock_line::StockLine;
 
-#[derive(SimpleObject, PartialEq, Debug)]
-#[graphql(name = "StockLine")]
-pub struct StockLineQuery {
-    pub id: String,
-    pub item_id: String,
-    pub store_id: String,
-    pub batch: Option<String>,
-    pub pack_size: i32,
-    pub cost_price_per_pack: f64,
-    pub sell_price_per_pack: f64,
-    pub available_number_of_packs: i32,
-    pub total_number_of_packs: i32,
-    pub expiry_date: Option<NaiveDate>,
+use super::{Connector, ConnectorError, NodeError};
+
+pub struct StockLineNode {
+    pub stock_line: StockLine,
 }
 
-impl From<StockLineRow> for StockLineQuery {
-    fn from(
-        StockLineRow {
-            id,
-            item_id,
-            store_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-        }: StockLineRow,
-    ) -> Self {
-        StockLineQuery {
-            id,
-            item_id,
-            store_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
+#[Object]
+impl StockLineNode {
+    pub async fn id(&self) -> &str {
+        &self.stock_line.id
+    }
+    pub async fn item_id(&self) -> &str {
+        &self.stock_line.item_id
+    }
+    pub async fn store_id(&self) -> &str {
+        &self.stock_line.store_id
+    }
+    pub async fn batch(&self) -> &Option<String> {
+        &self.stock_line.batch
+    }
+    pub async fn pack_size(&self) -> i32 {
+        self.stock_line.pack_size
+    }
+    pub async fn cost_price_per_pack(&self) -> f64 {
+        self.stock_line.cost_price_per_pack
+    }
+    pub async fn sell_price_per_pack(&self) -> f64 {
+        self.stock_line.sell_price_per_pack
+    }
+    pub async fn available_number_of_packs(&self) -> i32 {
+        self.stock_line.available_number_of_packs
+    }
+    pub async fn total_number_of_packs(&self) -> i32 {
+        self.stock_line.total_number_of_packs
+    }
+    pub async fn expiry_date(&self) -> &Option<NaiveDate> {
+        &self.stock_line.expiry_date
+    }
+}
+
+type CurrentConnector = Connector<StockLineNode>;
+
+#[derive(Union)]
+pub enum StockLinesResponse {
+    Error(ConnectorError),
+    Response(CurrentConnector),
+}
+
+#[derive(Union)]
+pub enum StockLineResponse {
+    Error(NodeError),
+    Response(StockLineNode),
+}
+
+impl<T, E> From<Result<T, E>> for StockLinesResponse
+where
+    CurrentConnector: From<T>,
+    ConnectorError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => StockLinesResponse::Response(response.into()),
+            Err(error) => StockLinesResponse::Error(error.into()),
         }
     }
 }
 
-pub struct StockLineList {
-    pub stock_lines: Vec<StockLineQuery>,
+impl<T, E> From<Result<T, E>> for StockLineResponse
+where
+    StockLineNode: From<T>,
+    NodeError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => StockLineResponse::Response(response.into()),
+            Err(error) => StockLineResponse::Error(error.into()),
+        }
+    }
 }
 
-#[Object]
-impl StockLineList {
-    async fn total_count(&self, _ctx: &Context<'_>) -> i64 {
-        // TODO part of error handling no unwraps
-        self.stock_lines.len().try_into().unwrap()
-    }
-
-    async fn nodes(&self, _ctx: &Context<'_>) -> &Vec<StockLineQuery> {
-        &self.stock_lines
+impl From<StockLine> for StockLineNode {
+    fn from(stock_line: StockLine) -> Self {
+        StockLineNode { stock_line }
     }
 }
