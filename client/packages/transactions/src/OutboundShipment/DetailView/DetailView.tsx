@@ -61,8 +61,8 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     reset,
     handleSubmit,
     setValue,
-    formState: { isValid },
-  } = useForm();
+    formState: { isDirty, isValid },
+  } = useForm({ mode: 'onBlur' });
   const addItemClose = (item: Item) => {
     addItem(item);
     hideDialog();
@@ -168,10 +168,18 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       <Modal
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={
-          <DialogButton variant="next" onClick={onOkNext} disabled={!isValid} />
+          <DialogButton
+            variant="next"
+            onClick={onOkNext}
+            disabled={!isDirty || !isValid}
+          />
         }
         okButton={
-          <DialogButton variant="ok" onClick={onSubmit} disabled={!isValid} />
+          <DialogButton
+            variant="ok"
+            onClick={onSubmit}
+            disabled={!isDirty || !isValid}
+          />
         }
         height={600}
         width={780}

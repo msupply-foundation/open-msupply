@@ -7,6 +7,7 @@ import {
   createFilterOptions,
   Grid,
   TextField,
+  Theme,
 } from '@mui/material';
 
 export interface ModalAutocompleteProps<T> {
@@ -32,11 +33,11 @@ export interface ModalAutocompleteProps<T> {
 }
 
 const inputStyle = {
-  backgroundColor: '#f2f2f5',
+  backgroundColor: (theme: Theme) => theme.palette.background.menu,
   borderRadius: '8px',
   padding: '4px 8px',
   '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-  '& .MuiInput-input': { color: '#555770' },
+  '& .MuiInput-input': { color: (theme: Theme) => theme.palette.darkGrey },
 };
 
 export { createFilterOptions };

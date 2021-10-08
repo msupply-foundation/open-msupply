@@ -9,10 +9,11 @@ import {
   ModalLabel,
   ModalRow,
   UseFormRegister,
+  createFilterOptions,
   gql,
   request,
+  styled,
   useQuery,
-  createFilterOptions,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
@@ -24,6 +25,11 @@ interface ItemDetailsProps {
   register: UseFormRegister<Item>;
   setValue: UseFormSetValue<Item>;
 }
+
+const ItemOption = styled('li')(({ theme }) => ({
+  color: theme.palette.midGrey,
+  backgroundColor: theme.palette.background.toolbar,
+}));
 
 export const ItemDetails: React.FC<ItemDetailsProps> = ({
   item,
@@ -48,15 +54,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
   };
 
   const t = useTranslation();
-  const { data, isLoading } = useQuery(
-    ['item', 'list'],
-    listQueryFn
-    // {
-    //   onError: onError || defaultErrorHandler,
-    //   useErrorBoundary: (error: ClientError): boolean =>
-    //     error.response?.status >= 500,
-    // }
-  );
+  const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
   const options =
     data?.slice(0, 100).map(item => ({ label: item.name, ...item })) || [];
 
@@ -68,14 +66,11 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     props: React.HTMLAttributes<HTMLLIElement>,
     item: Item
   ) => (
-    <li
-      {...props}
-      key={item.code}
-      style={{ color: '#8f90a6', backgroundColor: '#fafafc' }}
-    >
+    <ItemOption {...props} key={item.code}>
       <span style={{ width: 100 }}>{item.code}</span>
-      <span style={{ width: 500 }}>{item.name}</span>0
-    </li>
+      <span style={{ width: 500 }}>{item.name}</span>
+      <span>0</span>
+    </ItemOption>
   );
 
   const selectItem = (
