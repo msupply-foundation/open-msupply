@@ -21,6 +21,6 @@ pub use loader::get_loaders;
 pub use name::NameLoader;
 pub use requisition::RequisitionLoader;
 pub use requisition_line::RequisitionLineLoader;
-pub use stock_line::StockLineLoader;
+pub use stock_line::{StockLineByIdLoader, StockLineByItemIdLoader};
 pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
