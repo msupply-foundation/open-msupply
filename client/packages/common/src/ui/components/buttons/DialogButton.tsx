@@ -89,6 +89,9 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       startIcon={icon}
       variant="contained"
       size="small"
+      sx={
+        disabled ? { '& svg': { color: theme => theme.palette.midGrey } } : {}
+      }
     >
       {t(labelKey)}
     </StyledButton>
