@@ -1,4 +1,4 @@
-import { Grid, Input } from '@mui/material';
+import { Grid, Input, Theme } from '@mui/material';
 import React from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 
@@ -8,9 +8,9 @@ export interface ModalInputProps {
 }
 
 const inputStyle = {
-  backgroundColor: '#f2f2f5',
+  backgroundColor: (theme: Theme) => theme.palette.background.menu,
   borderRadius: '8px',
-  color: '#555770',
+  color: (theme: Theme) => theme.palette.darkGrey,
   padding: '4px 8px',
   width: '240px',
 };

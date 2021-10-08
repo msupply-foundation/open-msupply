@@ -7,7 +7,6 @@ export interface ModalLabelProps {
 }
 
 const labelStyle = {
-  color: '#1c1c28',
   fontSize: '12px',
   paddingRight: '19px',
 };
