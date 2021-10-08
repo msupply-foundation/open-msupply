@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 
 import {
   Divider,
@@ -14,17 +14,20 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
+import { UseFormSetValue } from 'react-hook-form';
 
 interface ItemDetailsProps {
   item?: Item;
   onSubmit: () => void;
   register: UseFormRegister<Item>;
+  setValue: UseFormSetValue<Item>;
 }
 
 export const ItemDetails: React.FC<ItemDetailsProps> = ({
   item,
   onSubmit,
   register,
+  setValue,
 }) => {
   const listQueryFn = async (): Promise<Item[]> => {
     const { items } = await request(
@@ -42,6 +45,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     return items;
   };
 
+  // const {selectedItem, setSelectedItem}
   const { data, isLoading } = useQuery(
     ['item', 'list'],
     listQueryFn
@@ -53,21 +57,29 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
   );
   const options =
     data?.slice(0, 100).map(item => ({ label: item.name, ...item })) || [];
-
+  const selectItem = (
+    _event: SyntheticEvent<Element, Event>,
+    value: Item | null
+  ) => {
+    setValue('id', value?.id || '');
+    setValue('code', value?.code || '');
+    setValue('name', value?.name || '');
+  };
   return (
     <form onSubmit={onSubmit}>
       <Grid container>
         <ModalInputRow
-          inputProps={register('code')}
+          inputProps={register('code', { disabled: true })}
           labelKey="label.code"
           defaultValue={item?.code}
         />
         <ModalRow>
           <ModalLabel labelKey="label.item" />
-          <ModalAutocomplete
-            inputProps={register('name')}
+          <ModalAutocomplete<Item>
+            onChange={selectItem}
             options={options}
             loading={isLoading}
+            width={540}
           />
         </ModalRow>
         <ModalInputRow
@@ -76,7 +88,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
           defaultValue={item?.quantity}
         />
         <ModalInputRow
-          inputProps={register('packSize')}
+          inputProps={register('packSize', { disabled: true })}
           labelKey="label.packSize"
           defaultValue={item?.packSize}
         />
