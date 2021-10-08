@@ -4,11 +4,13 @@ import {
   AutocompleteChangeDetails,
   AutocompleteRenderInputParams,
   AutocompleteRenderOptionState,
+  createFilterOptions,
   Grid,
   TextField,
 } from '@mui/material';
 
 export interface ModalAutocompleteProps<T> {
+  filterOptions: any;
   loading?: boolean;
   limitTags?: number;
   loadingText?: React.ReactNode;
@@ -37,13 +39,17 @@ const inputStyle = {
   '& .MuiInput-input': { color: '#555770' },
 };
 
+export { createFilterOptions };
+
 export function ModalAutocomplete<T>({
+  filterOptions,
   loading,
   loadingText,
   noOptionsText,
   onChange,
   options,
   renderInput,
+  renderOption,
   width,
 }: PropsWithChildren<ModalAutocompleteProps<T>>): JSX.Element {
   const defaultRenderInput = (params: AutocompleteRenderInputParams) => (
@@ -57,11 +63,13 @@ export function ModalAutocomplete<T>({
   return (
     <Grid item xs={10} sx={{ marginBottom: '4px' }}>
       <Autocomplete<T>
+        filterOptions={filterOptions}
         loading={loading}
         loadingText={loadingText}
         noOptionsText={noOptionsText}
         options={options}
         renderInput={renderInput || defaultRenderInput}
+        renderOption={renderOption}
         onChange={onChange}
       />
     </Grid>

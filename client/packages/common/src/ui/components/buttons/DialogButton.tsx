@@ -9,6 +9,7 @@ type Color = 'primary' | 'secondary';
 type DialogButtonVariant = 'cancel' | 'next' | 'ok';
 
 interface DialogButtonProps {
+  disabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   variant: DialogButtonVariant;
 }
@@ -73,6 +74,7 @@ const getButtonProps = (
 };
 
 export const DialogButton: React.FC<DialogButtonProps> = ({
+  disabled,
   onClick,
   variant,
 }) => {
@@ -81,6 +83,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
 
   return (
     <StyledButton
+      disabled={disabled}
       color={color}
       onClick={onClick}
       startIcon={icon}

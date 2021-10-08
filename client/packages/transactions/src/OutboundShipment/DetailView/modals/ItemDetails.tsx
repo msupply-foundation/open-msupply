@@ -12,6 +12,8 @@ import {
   gql,
   request,
   useQuery,
+  createFilterOptions,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { UseFormSetValue } from 'react-hook-form';
@@ -45,7 +47,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     return items;
   };
 
-  // const {selectedItem, setSelectedItem}
+  const t = useTranslation();
   const { data, isLoading } = useQuery(
     ['item', 'list'],
     listQueryFn
@@ -57,6 +59,25 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
   );
   const options =
     data?.slice(0, 100).map(item => ({ label: item.name, ...item })) || [];
+
+  const filterOptions = createFilterOptions({
+    stringify: (item: Item) => `${item.code} ${item.name}`,
+  });
+
+  const renderOption = (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    item: Item
+  ) => (
+    <li
+      {...props}
+      key={item.code}
+      style={{ color: '#8f90a6', backgroundColor: '#fafafc' }}
+    >
+      <span style={{ width: 100 }}>{item.code}</span>
+      <span style={{ width: 500 }}>{item.name}</span>0
+    </li>
+  );
+
   const selectItem = (
     _event: SyntheticEvent<Element, Event>,
     value: Item | null
@@ -65,6 +86,8 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     setValue('code', value?.code || '');
     setValue('name', value?.name || '');
   };
+
+  register('id', { required: true });
   return (
     <form onSubmit={onSubmit}>
       <Grid container>
@@ -76,9 +99,12 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
         <ModalRow>
           <ModalLabel labelKey="label.item" />
           <ModalAutocomplete<Item>
+            filterOptions={filterOptions}
+            loading={isLoading}
+            noOptionsText={t('error.no-items')}
             onChange={selectItem}
             options={options}
-            loading={isLoading}
+            renderOption={renderOption}
             width={540}
           />
         </ModalRow>

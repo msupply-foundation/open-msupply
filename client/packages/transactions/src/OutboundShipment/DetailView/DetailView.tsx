@@ -56,7 +56,13 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const { register, reset, handleSubmit, setValue } = useForm();
+  const {
+    register,
+    reset,
+    handleSubmit,
+    setValue,
+    formState: { isValid },
+  } = useForm();
   const addItemClose = (item: Item) => {
     addItem(item);
     hideDialog();
@@ -142,7 +148,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   }, []);
 
   const { currentTab, onChangeTab } = useTabs('general');
-
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
@@ -162,8 +167,12 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
       <Modal
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        nextButton={<DialogButton variant="next" onClick={onOkNext} />}
-        okButton={<DialogButton variant="ok" onClick={onSubmit} />}
+        nextButton={
+          <DialogButton variant="next" onClick={onOkNext} disabled={!isValid} />
+        }
+        okButton={
+          <DialogButton variant="ok" onClick={onSubmit} disabled={!isValid} />
+        }
         height={600}
         width={780}
       >
