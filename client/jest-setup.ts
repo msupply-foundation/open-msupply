@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
-
 import { setScreenSize_ONLY_FOR_TESTING } from '@openmsupply-client/common';
-import { setupMockServer } from '@openmsupply-client/mocks/src/server';
+import { setupMockServer } from '@openmsupply-client/mock-server/src/worker/server';
 
 let mockStorage: Record<string, string> = {};
 

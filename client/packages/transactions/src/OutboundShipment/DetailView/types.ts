@@ -1,16 +1,16 @@
 import {
-  Item,
   Transaction,
   DefaultDraftAction,
   Column,
+  InvoiceLine,
 } from '@openmsupply-client/common';
 
-export interface ItemRow extends Item {
+export interface ItemRow extends InvoiceLine {
   updateQuantity: (quantity: number) => void;
 }
 
 export interface OutboundShipment extends Transaction {
-  items: ItemRow[];
+  lines: ItemRow[];
 }
 
 export enum ActionType {

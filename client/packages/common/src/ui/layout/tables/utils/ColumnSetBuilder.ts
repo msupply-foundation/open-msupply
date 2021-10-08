@@ -22,12 +22,30 @@ export type ColumnKey =
   | 'name'
   | 'code'
   | 'packSize'
-  | 'quantity';
+  | 'quantity'
+  | 'itemCode'
+  | 'itemName'
+  | 'expiry';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
+  expiry: {
+    key: 'expiry',
+    label: 'label.date',
+    width: 75,
+  },
+  itemCode: {
+    key: 'itemCode',
+    label: 'label.code',
+    width: 75,
+  },
+  itemName: {
+    key: 'itemName',
+    label: 'label.name',
+    width: 75,
+  },
   name: {
     key: 'name',
     label: 'label.name',

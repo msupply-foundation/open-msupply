@@ -93,7 +93,7 @@ export const reducer = (
             draft[key] = data[key];
           });
 
-          draft.items = draft.items.map(item => ({
+          draft.lines = draft.lines.map(item => ({
             ...item,
             updateQuantity: (quantity: number) =>
               dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
@@ -109,7 +109,7 @@ export const reducer = (
           const { key } = column;
 
           const { draft, sortBy } = state;
-          const { items } = draft;
+          const { lines } = draft;
           const { key: currentSortKey, isDesc: currentIsDesc } = sortBy;
 
           const newIsDesc = currentSortKey === key ? !currentIsDesc : false;
@@ -117,9 +117,9 @@ export const reducer = (
           const newSortBy = { key, isDesc: newIsDesc, direction: newDirection };
 
           const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
-          const newItems = items.sort(sorter);
+          const newLines = lines.sort(sorter);
 
-          draft.items = newItems;
+          draft.lines = newLines;
           state.sortBy = newSortBy;
 
           break;
@@ -129,7 +129,7 @@ export const reducer = (
           const { payload } = action;
           const { rowKey, quantity } = payload;
 
-          const row = state.draft.items.find(({ id }) => id === rowKey);
+          const row = state.draft.lines.find(({ id }) => id === rowKey);
 
           if (row) {
             row.quantity = quantity;

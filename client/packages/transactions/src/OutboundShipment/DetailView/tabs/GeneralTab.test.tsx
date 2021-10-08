@@ -8,21 +8,21 @@ import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
 import { ItemRow } from '../types';
 
-const items = [
+const lines: ItemRow[] = [
   {
     id: '1',
-    code: 'abc123',
-    name: 'ibuprofen',
-    packSize: 2,
+    itemCode: 'abc123',
+    itemName: 'ibuprofen',
     quantity: 100,
+    expiry: '1/1/2020',
     updateQuantity: () => {},
   },
   {
     id: '2',
-    code: 'def123',
-    name: 'amox',
-    packSize: 2,
+    itemCode: 'def123',
+    itemName: 'amox',
     quantity: 100,
+    expiry: '1/1/2020',
     updateQuantity: () => {},
   },
 ];
@@ -39,7 +39,7 @@ describe('GeneralTab', () => {
 
     return (
       <GeneralTab
-        data={items}
+        data={lines}
         columns={columns}
         sortBy={{ key: 'quantity', direction: 'asc' }}
       />

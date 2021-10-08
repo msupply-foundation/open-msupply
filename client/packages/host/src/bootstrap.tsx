@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom';
 import App from './App';
 
 if (process.env.NODE_ENV === 'development') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { setupMockWorker } = require('@openmsupply-client/mocks/src/client');
+  const {
+    setupMockWorker,
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+  } = require('@openmsupply-client/mock-server/src/worker/client');
   const worker = setupMockWorker();
   worker.start();
 }

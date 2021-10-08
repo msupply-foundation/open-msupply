@@ -146,9 +146,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const { currentTab, onChangeTab } = useTabs('general');
 
   const defaultColumns = new ColumnSetBuilder<ItemRow>()
-    .addColumn('code')
-    .addColumn('name')
-    .addColumn('packSize')
+    .addColumn('itemCode')
+    .addColumn('itemName')
+    .addColumn('expiry')
     .addColumn(getEditableQuantityColumn())
     .build();
 
@@ -192,7 +192,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
           <GeneralTab
             columns={columns}
-            data={draft?.items ?? []}
+            data={draft.lines ?? []}
             sortBy={sortBy}
           />
         </TabPanel>
