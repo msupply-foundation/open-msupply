@@ -92,6 +92,6 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &expected).await;
+        assert_gql_query(&settings, query, &None, &expected).await;
     }
 }
