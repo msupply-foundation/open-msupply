@@ -87,10 +87,8 @@ mod graphql {
             })
             .collect::<Vec<serde_json::Value>>();
         let expected = json!({
-            "data": {
-              "invoices": {
+            "invoices": {
                 "nodes": expected_json_invoice_nodes,
-              }
             }
           }
         );

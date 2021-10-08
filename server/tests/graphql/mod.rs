@@ -8,7 +8,7 @@ use remote_server::{
 };
 
 use assert_json_diff::assert_json_eq;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 mod invoice_query;
 mod invoices;
@@ -62,6 +62,9 @@ async fn assert_gql_query(
 ) -> serde_json::Value {
     let actual = run_gql_query(settings, query).await;
     assert_gql_no_response_error(&actual);
-    assert_json_eq!(&actual, expected);
+    let expected_with_data = json!({
+        "data": expected,
+    });
+    assert_json_eq!(&actual, expected_with_data);
     actual
 }

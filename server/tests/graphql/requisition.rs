@@ -53,10 +53,8 @@ mod graphql {
             }
         }"#;
         let expected = json!({
-            "data": {
-              "requisition": {
+            "requisition": {
                 "id":"requisition_a"
-              }
             }
           }
         );

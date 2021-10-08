@@ -81,32 +81,30 @@ mod graphql {
         );
 
         let expected = json!({
-            "data": {
-                "invoice": {
-                    "id": invoice.id,
-                    "lines": {
-                        "nodes": &mock_invoice_lines
-                            .iter()
-                            .filter(|invoice_line| invoice_line.invoice_id == invoice.id)
-                            .map(|invoice_line| json!({
-                                "id": invoice_line.id,
-                                "stockLine": {
-                                    "availableNumberOfPacks": (&mock_stocks)
-                                        .iter()
-                                        .find(|stock_line|
-                                            invoice_line.stock_line_id
-                                            .as_ref()
-                                            .map(|stock_line_id| &stock_line.id == stock_line_id)
-                                            .unwrap_or(false))
-                                        .unwrap()
-                                        .available_number_of_packs
-                                            + invoice_line.available_number_of_packs,
-                                },
-                            }))
-                            .collect::<Vec<serde_json::Value>>(),
-                    },
-                    "status": InvoiceStatusInput::from(invoice.status),
+            "invoice": {
+                "id": invoice.id,
+                "lines": {
+                    "nodes": &mock_invoice_lines
+                        .iter()
+                        .filter(|invoice_line| invoice_line.invoice_id == invoice.id)
+                        .map(|invoice_line| json!({
+                            "id": invoice_line.id,
+                            "stockLine": {
+                                "availableNumberOfPacks": (&mock_stocks)
+                                    .iter()
+                                    .find(|stock_line|
+                                        invoice_line.stock_line_id
+                                        .as_ref()
+                                        .map(|stock_line_id| &stock_line.id == stock_line_id)
+                                        .unwrap_or(false))
+                                    .unwrap()
+                                    .available_number_of_packs
+                                        + invoice_line.available_number_of_packs,
+                            },
+                        }))
+                        .collect::<Vec<serde_json::Value>>(),
                 },
+                "status": InvoiceStatusInput::from(invoice.status),
             },
         });
         assert_gql_query(&settings, &query, &expected).await;
