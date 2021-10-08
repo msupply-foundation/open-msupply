@@ -12,6 +12,7 @@ use serde_json::{json, Value};
 
 mod invoice_query;
 mod invoices;
+mod names;
 mod requisition;
 
 async fn run_gql_query(
