@@ -1,9 +1,12 @@
 use crate::server::service::graphql::schema::{
-    mutations::error::{DatabaseError, ForeignKeyError, RecordAlreadyExistsError},
+    mutations::error::DatabaseError,
     types::invoice_query::{InvoiceLines, InvoiceNode, InvoiceStatus, InvoiceType},
 };
 
-use super::OtherPartyNotASupplierError;
+use super::{
+    OtherPartyCannotBeThisStoreError, OtherPartyIdMissingError, OtherPartyIdNotFoundError,
+    OtherPartyNotACustomerOfThisStoreError,
+};
 
 use async_graphql::{Context, InputObject, Interface, SimpleObject, Union};
 
@@ -34,9 +37,10 @@ pub struct InsertCustomerInvoiceError {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertCustomerInvoiceErrorInterface {
-    ForeignKeyError(ForeignKeyError),
-    RecordAlreadyExistsError(RecordAlreadyExistsError),
-    OtherPartyNotASupplierError(OtherPartyNotASupplierError),
+    OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
+    OtherPartyIdMissing(OtherPartyIdMissingError),
+    OtherPartyIdNotFound(OtherPartyIdNotFoundError),
+    OtherPartyNotACustomerOfThisStore(OtherPartyNotACustomerOfThisStoreError),
     DatabaseError(DatabaseError),
 }
 
