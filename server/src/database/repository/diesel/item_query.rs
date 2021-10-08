@@ -1,4 +1,4 @@
-use super::{get_connection, DBBackendConnection, EqualFilter, SimpleStringFilter, Sort};
+use super::{EqualFilter, SimpleStringFilter, Sort, StorageConnection};
 use crate::{
     database::{
         repository::RepositoryError,
@@ -13,10 +13,7 @@ use crate::{
     server::service::graphql::schema::queries::pagination::{Pagination, PaginationOption},
 };
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 pub struct ItemFilter {
     pub name: Option<SimpleStringFilter>,
     pub code: Option<SimpleStringFilter>,
@@ -37,18 +34,19 @@ pub type ItemAndMasterList = (
     Option<MasterListNameJoinRow>,
 );
 
-pub struct ItemQueryRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct ItemQueryRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl ItemQueryRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> ItemQueryRepository {
-        ItemQueryRepository { pool }
+impl<'a> ItemQueryRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        ItemQueryRepository { connection }
     }
 
     pub fn count(&self) -> Result<i64, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
-        Ok(item_dsl::item.count().get_result(&*connection)?)
+        Ok(item_dsl::item
+            .count()
+            .get_result(&self.connection.connection)?)
     }
 
     pub fn all(
@@ -57,7 +55,6 @@ impl ItemQueryRepository {
         filter: &Option<ItemFilter>,
         sort: &Option<ItemSort>,
     ) -> Result<Vec<ItemAndMasterList>, RepositoryError> {
-        let connection = get_connection(&self.pool)?;
         // Join master_list_line
         let item_and_master_list_line =
             item_dsl::item.left_join(master_list_line_dsl::master_list_line);
@@ -119,7 +116,7 @@ impl ItemQueryRepository {
             query = query.order(item_dsl::id.asc())
         }
 
-        Ok(query.load::<ItemAndMasterList>(&*connection)?)
+        Ok(query.load::<ItemAndMasterList>(&self.connection.connection)?)
     }
 }
 
@@ -134,6 +131,7 @@ mod tests {
                     MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
                 },
                 EqualFilter, ItemFilter, ItemQueryRepository, ItemRepository, NameRepository,
+                StorageConnectionManager,
             },
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
@@ -156,12 +154,17 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository() {
         // Prepare
-        let (pool, _, connection) = test_db::setup_all("test_item_query_repository", false).await;
-        let item_query_repository = ItemQueryRepository::new(pool.clone());
+        let (pool, _, _) = test_db::setup_all("test_item_query_repository", false).await;
+        let storage_connection = StorageConnectionManager::new(pool.clone())
+            .connection()
+            .unwrap();
+        let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let rows = data();
         for row in rows.iter() {
-            ItemRepository::upsert_one_tx(&connection, &row).unwrap();
+            ItemRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGE_SIZE).unwrap();
@@ -237,9 +240,11 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository_visibility() {
         // Prepare
-        let (pool, _, connection) =
-            test_db::setup_all("test_item_query_repository_visibility", false).await;
-        let item_query_repository = ItemQueryRepository::new(pool.clone());
+        let (pool, _, _) = test_db::setup_all("test_item_query_repository_visibility", false).await;
+        let storage_connection = StorageConnectionManager::new(pool.clone())
+            .connection()
+            .unwrap();
+        let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let item_rows = vec![
             ItemRow {
@@ -328,18 +333,26 @@ mod tests {
         };
 
         for row in item_rows.iter() {
-            ItemRepository::upsert_one_tx(&connection, row).unwrap();
+            ItemRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         for row in master_list_rows {
-            MasterListRepository::upsert_one_tx(&connection, &row).unwrap();
+            MasterListRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         for row in master_list_line_rows {
-            MasterListLineRepository::upsert_one_tx(&connection, &row).unwrap();
+            MasterListLineRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
-        NameRepository::upsert_one_tx(&connection, &name_row).unwrap();
+        NameRepository::new(&storage_connection)
+            .upsert_one(&name_row)
+            .unwrap();
         // Test
 
         // Before adding any joins
@@ -352,13 +365,17 @@ mod tests {
         assert_eq!(results0, item_rows);
 
         // After adding first join (item1 and item2 visible)
-        MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_1).unwrap();
+        MasterListNameJoinRepository::new(&storage_connection)
+            .upsert_one(&master_list_name_join_1)
+            .unwrap();
         let results = item_query_repository.all(&None, &None, &None).unwrap();
         assert!(results[0].2.is_some());
         assert!(results[1].2.is_some());
 
         // After adding second join (item3 and item4 visible)
-        MasterListNameJoinRepository::upsert_one_tx(&connection, &master_list_name_join_2).unwrap();
+        MasterListNameJoinRepository::new(&storage_connection)
+            .upsert_one(&master_list_name_join_2)
+            .unwrap();
         let results = item_query_repository.all(&None, &None, &None).unwrap();
         assert!(results[2].2.is_some());
         assert!(results[3].2.is_some());

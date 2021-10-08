@@ -1,4 +1,4 @@
-use crate::database::repository::{ItemRepository, RepositoryError};
+use crate::database::repository::{ItemRepository, RepositoryError, StorageConnectionManager};
 use crate::database::schema::ItemRow;
 
 use async_graphql::dataloader::*;
@@ -6,7 +6,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct ItemLoader {
-    pub item_repository: ItemRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -15,10 +15,10 @@ impl Loader<String> for ItemLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .item_repository
+        let connection = self.connection_manager.connection()?;
+        let repo = ItemRepository::new(&connection);
+        let result = repo
             .find_many_by_id(keys)
-            .await
             .unwrap()
             .iter()
             .map(|item: &ItemRow| {
@@ -26,6 +26,7 @@ impl Loader<String> for ItemLoader {
                 let item = item.clone();
                 (item_id, item)
             })
-            .collect())
+            .collect();
+        Ok(result)
     }
 }
