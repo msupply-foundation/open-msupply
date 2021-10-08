@@ -79,7 +79,7 @@ mod graphql {
 
         // Test query:
         let payload =
-            r#"{"query":"{invoice(id:\"customer_invoice_a\"){... on InvoiceNode { id,status,lines{ ... on InvoiceLineConnector { nodes{id,stockLine{availableNumberOfPacks}}}}}}}"}"#
+            r#"{"query":"{invoice(id:\"customer_invoice_a\"){... on InvoiceNode { id,status,lines{ ... on InvoiceLineConnector { nodes{id,stockLine{... on StockLineNode { availableNumberOfPacks }}}}}}}}"}"#
                 .as_bytes();
         let req = actix_web::test::TestRequest::post()
             .header("content-type", "application/json")

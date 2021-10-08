@@ -31,6 +31,7 @@ pub use self::sort_filter_types::*;
 #[graphql(concrete(name = "NameConnector", params(NameNode)))]
 #[graphql(concrete(name = "InvoiceConnector", params(InvoiceNode)))]
 #[graphql(concrete(name = "InvoiceLineConnector", params(InvoiceLineNode)))]
+#[graphql(concrete(name = "StockLineConnector", params(StockLineNode)))]
 pub struct Connector<T: OutputType> {
     total_count: u32,
     nodes: Vec<T>,
