@@ -1,7 +1,7 @@
-use crate::database::loader::StockLineLoader;
+use crate::database::loader::StockLineByItemIdLoader;
 use crate::domain::item::{Item, ItemFilter};
+use crate::domain::stock_line::StockLine;
 use crate::domain::{EqualFilter, SimpleStringFilter};
-use crate::server::service::graphql::schema::types::StockLineQuery;
 use crate::server::service::graphql::ContextExt;
 use crate::service::{ListError, ListResult};
 use async_graphql::dataloader::DataLoader;
@@ -9,7 +9,7 @@ use async_graphql::*;
 
 use super::{
     Connector, ConnectorError, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
-    StockLineList,
+    StockLinesResponse,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -60,14 +60,13 @@ impl ItemNode {
         self.item.is_visible
     }
 
-    async fn available_batches(&self, ctx: &Context<'_>) -> StockLineList {
-        let repository = ctx.get_loader::<DataLoader<StockLineLoader>>();
-        let result = repository.load_one(self.item.id.clone()).await.unwrap();
-        StockLineList {
-            stock_lines: result.map_or(Vec::new(), |stock_lines| {
-                stock_lines.into_iter().map(StockLineQuery::from).collect()
-            }),
-        }
+    async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {
+        let loader = ctx.get_loader::<DataLoader<StockLineByItemIdLoader>>();
+        loader
+            .load_one(self.item.id.to_string())
+            .await
+            .map(|result: Option<Vec<StockLine>>| result.unwrap_or(Vec::new()))
+            .into()
     }
 }
 
