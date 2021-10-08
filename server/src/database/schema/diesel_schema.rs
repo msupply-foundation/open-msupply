@@ -107,6 +107,8 @@ table! {
         id -> Text,
         invoice_id -> Text,
         item_id -> Text,
+        item_name -> Text,
+        item_code -> Text,
         stock_line_id -> Nullable<Text>,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
@@ -114,8 +116,7 @@ table! {
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
         total_after_tax -> Double,
-        available_number_of_packs -> Integer,
-        total_number_of_packs -> Integer,
+        number_of_packs -> Integer,
     }
 }
 
