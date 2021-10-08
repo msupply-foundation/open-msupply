@@ -56,18 +56,18 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const { register, reset, handleSubmit } = useForm();
+  const { register, reset, handleSubmit, setValue } = useForm();
   const addItemClose = (item: Item) => {
-    // TODO: add to dataset and have the reducer add the fn
-    draft?.items?.push({ ...item, updateQuantity: () => {} });
+    addItem(item);
     hideDialog();
   };
-  const addItemReset = (item: Item) => {
+  const addItem = (item: Item) => {
+    // TODO: add to dataset and have the reducer add the fn
     draft?.items?.push({ ...item, updateQuantity: () => {} });
     reset();
   };
   const onSubmit = handleSubmit(addItemClose);
-  const onOkNext = handleSubmit(addItemReset);
+  const onOkNext = handleSubmit(addItem);
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
   });
@@ -167,7 +167,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         height={600}
         width={780}
       >
-        <ItemDetails register={register} onSubmit={onSubmit} />
+        <ItemDetails
+          register={register}
+          onSubmit={onSubmit}
+          setValue={setValue}
+        />
       </Modal>
 
       <AppBarContentPortal
