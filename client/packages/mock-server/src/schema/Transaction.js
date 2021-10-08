@@ -1,7 +1,7 @@
 import { Api } from '../api';
 
 const Types = `
-    type Transaction {
+    type Invoice {
         id: String
         color: String
         comment: String
@@ -15,54 +15,54 @@ const Types = `
         lines: [InvoiceLine]
     }
 
-    type TransactionResponse { 
-      data: [Transaction],
+    type InvoiceResponse { 
+      data: [Invoice],
       totalLength: Int
     }
   `;
 
 const QueryResolvers = {
-  transactions: (_, { first = 50, offset = 0, sort, desc }) =>
+  invoices: (_, { first = 50, offset = 0, sort, desc }) =>
     Api.ResolverService.list.invoice({ first, offset, sort, desc }),
 
-  transaction: (_, { id }) => {
+  invoice: (_, { id }) => {
     return Api.ResolverService.byId.invoice(id);
   },
 };
 
 const MutationResolvers = {
-  deleteTransaction: (_, { transactions }) => {
-    transactions.forEach(transaction => {
-      Api.MutationService.remove.invoice(transaction);
+  deleteInvoice: (_, { invoices }) => {
+    invoices.forEach(invoice => {
+      Api.MutationService.remove.invoice(invoice);
     });
 
-    return transactions;
+    return invoices;
   },
-  updateTransaction: (_, { transaction }) => {
-    return Api.MutationService.update.invoice(transaction);
+  updateInvoice: (_, { invoice }) => {
+    return Api.MutationService.update.invoice(invoice);
   },
-  insertTransaction: (_, { transaction }) => {
-    return Api.MutationService.insert.invoice(transaction);
+  insertInvoice: (_, { invoice }) => {
+    return Api.MutationService.insert.invoice(invoice);
   },
-  deleteTransaction: (_, transaction) => {
-    return Api.MutationService.remove.invoice(transaction);
+  deleteInvoice: (_, invoice) => {
+    return Api.MutationService.remove.invoice(invoice);
   },
 };
 
 const Queries = `
-    transactions(first: Int, offset: Int, sort: String, desc: Boolean): TransactionResponse
-    transaction(id: String!): Transaction
+    invoices(first: Int, offset: Int, sort: String, desc: Boolean): InvoiceResponse
+    invoice(id: String!): Invoice
 `;
 
 const Mutations = `
-    updateTransaction(transaction: TransactionPatch): Transaction
-    insertTransaction(transaction: TransactionPatch): Transaction
-    deleteTransaction(transaction: TransactionPatch): Transaction
-    deleteTransactions(transactions: [TransactionPatch]): [Transaction]
+    updateInvoice(invoice: InvoicePatch): Invoice
+    insertInvoice(invoice: InvoicePatch): Invoice
+    deleteInvoice(invoice: InvoicePatch): Invoice
+    deleteInvoices(invoice: [InvoicePatch]): [Invoice]
 `;
 
 const Inputs = `
-    input TransactionPatch {
+    input InvoicePatch {
         id: String
         color: String
         comment: String

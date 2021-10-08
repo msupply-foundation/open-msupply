@@ -1,9 +1,4 @@
-import {
-  TransactionData as InvoiceData,
-  InvoiceLineData,
-  ItemData,
-  StockLineData,
-} from './data';
+import { InvoiceData, InvoiceLineData, ItemData, StockLineData } from './data';
 
 // Importing this from utils causes a circular deps loop and you will not have fun :)
 export const getFilter = (matchVal, key) => obj => obj[key] === matchVal;
@@ -36,7 +31,7 @@ export const get = {
 
   invoicesLines: {
     byInvoiceId: invoiceId =>
-      InvoiceLineData.filter(getFilter(invoiceId, 'transactionId')),
+      InvoiceLineData.filter(getFilter(invoiceId, 'invoiceId')),
   },
 };
 

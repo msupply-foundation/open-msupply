@@ -80,10 +80,10 @@ export const getStockLinesForItem = (item, stockLines = StockLineData) => {
   return stockLines.filter(({ itemId }) => itemId === item.id);
 };
 
-const createInvoiceLines = (items, stockLines, transactions) => {
+const createInvoiceLines = (items, stockLines, invoices) => {
   const invoiceLines = [];
 
-  transactions.forEach(transaction => {
+  invoices.forEach(invoice => {
     takeRandomSubsetFrom(items).forEach(item => {
       const stockLinesToUse = takeRandomSubsetFrom(
         getStockLinesForItem(item, stockLines)
@@ -95,10 +95,10 @@ const createInvoiceLines = (items, stockLines, transactions) => {
         const quantity = takeRandomPercentageFrom(availableNumberOfPacks);
 
         const invoiceLine = {
-          id: `${transaction.id}-${item.id}-${stockLine.id}-${i}`,
+          id: `${invoice.id}-${item.id}-${stockLine.id}-${i}`,
           itemName: item.name,
           itemCode: item.code,
-          transactionId: transaction.id,
+          invoiceId: invoice.id,
           stockLineId: stockLine.id,
           itemId: item.id,
           quantity,
@@ -133,9 +133,9 @@ const createItems = (numberToCreate = Math.ceil(Math.random() * 10)) => {
   });
 };
 
-const createTransactions = (numberToCreate = Math.ceil(Math.random() * 10)) => {
+const createInvoices = (numberToCreate = Math.ceil(Math.random() * 10)) => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
-    const transaction = {
+    const invoice = {
       id: `${i}`,
       name: `${faker.name.firstName()} ${faker.name.lastName()}`,
       status: choose(['Confirmed', 'Finalised']),
@@ -149,15 +149,15 @@ const createTransactions = (numberToCreate = Math.ceil(Math.random() * 10)) => {
       comment: faker.commerce.productDescription(),
     };
 
-    return transaction;
+    return invoice;
   });
 };
 
 export const ItemData = createItems();
 export const StockLineData = createStockLines(ItemData);
-export const TransactionData = createTransactions();
+export const InvoiceData = createInvoices();
 export const InvoiceLineData = createInvoiceLines(
   ItemData,
   StockLineData,
-  TransactionData
+  InvoiceData
 );
