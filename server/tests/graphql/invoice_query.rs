@@ -107,7 +107,7 @@ mod graphql {
                 "status": InvoiceStatusInput::from(invoice.status),
             },
         });
-        assert_gql_query(&settings, &query, &expected).await;
+        assert_gql_query(&settings, &query, &None, &expected).await;
 
         // Test not found error
         assert_gql_not_found(
@@ -126,6 +126,7 @@ mod graphql {
                     }
                 }           
             }"#,
+            &None,
         )
         .await;
     }

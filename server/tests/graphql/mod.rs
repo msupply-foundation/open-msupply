@@ -14,7 +14,11 @@ mod invoice_query;
 mod invoices;
 mod requisition;
 
-async fn run_gql_query(settings: &Settings, query: &str) -> serde_json::Value {
+async fn run_gql_query(
+    settings: &Settings,
+    query: &str,
+    variables: &Option<serde_json::Value>,
+) -> serde_json::Value {
     let repositories = get_repositories(settings).await;
     let loaders = get_loaders(settings).await;
 
@@ -29,8 +33,18 @@ async fn run_gql_query(settings: &Settings, query: &str) -> serde_json::Value {
     )
     .await;
 
-    let query = query.replace("\n", "");
-    let payload = format!("{{\"query\":\"{}\"}}", query);
+    let mut payload: String;
+    if let Some(variables) = variables {
+        payload = format!(
+            "{{\"query\":\"{}\",\"variables\":{}}}",
+            query,
+            variables.to_string()
+        );
+    } else {
+        payload = format!("{{\"query\":\"{}\"}}", query);
+    }
+    payload = payload.replace("\n", "");
+
     let req = actix_web::test::TestRequest::post()
         .header("content-type", "application/json")
         .set_payload(payload)
@@ -39,11 +53,15 @@ async fn run_gql_query(settings: &Settings, query: &str) -> serde_json::Value {
 
     let res = actix_web::test::read_response(&mut app, req).await;
     let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-    serde_json::from_str::<Value>(&body).unwrap()
+    serde_json::from_str::<Value>(&body).expect(body.as_str())
 }
 
-async fn assert_gql_not_found(settings: &Settings, query: &str) -> serde_json::Value {
-    let actual = run_gql_query(settings, query).await;
+async fn assert_gql_not_found(
+    settings: &Settings,
+    query: &str,
+    variables: &Option<serde_json::Value>,
+) -> serde_json::Value {
+    let actual = run_gql_query(settings, query, variables).await;
     let error_message = actual["errors"][0]["message"].to_string();
     assert!(error_message.contains("row not found"));
     actual
@@ -58,9 +76,10 @@ fn assert_gql_no_response_error(value: &serde_json::Value) {
 async fn assert_gql_query(
     settings: &Settings,
     query: &str,
+    variables: &Option<serde_json::Value>,
     expected: &serde_json::Value,
 ) -> serde_json::Value {
-    let actual = run_gql_query(settings, query).await;
+    let actual = run_gql_query(settings, query, variables).await;
     assert_gql_no_response_error(&actual);
     let expected_with_data = json!({
         "data": expected,
