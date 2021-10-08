@@ -203,6 +203,8 @@ mod repository_test {
             InvoiceLineRow {
                 id: "test1".to_string(),
                 item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
@@ -211,14 +213,15 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_after_tax: 1.0,
-                available_number_of_packs: 1,
-                total_number_of_packs: 1,
+                number_of_packs: 1,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test2-with-optional".to_string(),
                 item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
@@ -227,8 +230,7 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_after_tax: 2.0,
-                available_number_of_packs: 1,
-                total_number_of_packs: 1,
+                number_of_packs: 1,
             }
         }
 
@@ -236,6 +238,8 @@ mod repository_test {
             InvoiceLineRow {
                 id: "test3".to_string(),
                 item_id: item_2().id.to_string(),
+                item_name: item_2().name.to_string(),
+                item_code: item_2().code.to_string(),
                 invoice_id: invoice_2().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
@@ -244,8 +248,7 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_after_tax: 3.0,
-                available_number_of_packs: 1,
-                total_number_of_packs: 1,
+                number_of_packs: 1,
             }
         }
 
