@@ -2,7 +2,8 @@ use crate::{
     database::{
         loader::{
             InvoiceLineLoader, InvoiceLoader, ItemLoader, NameLoader, RequisitionLineLoader,
-            RequisitionLoader, StockLineLoader, StoreLoader, UserAccountLoader,
+            RequisitionLoader, StockLineByIdLoader, StockLineByItemIdLoader, StoreLoader,
+            UserAccountLoader,
         },
         mock,
         repository::{
