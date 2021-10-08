@@ -1,51 +1,39 @@
 import { ApolloServer, gql } from 'apollo-server';
-import {
-  ItemQueries,
-  ItemType,
-  ItemResolvers,
-  ItemMutationResolvers,
-  ItemMutations,
-  ItemInput,
-} from './schema/Item';
-import {
-  TransactionMutations,
-  TransactionQueries,
-  TransactionQueryResolvers,
-  TransactionMutationResolvers,
-  TransactionTypes,
-  TransactionInput,
-} from './schema/Transaction';
+import { Schema } from './schema';
+
 import { TestQueries, TestQueryResolvers, TestTypes } from './schema/Test';
 
 const typeDefs = gql`
-  ${ItemType}
-  ${TransactionTypes}
+  ${Schema.Item.Types}
+  ${Schema.Invoice.Types}
+  ${Schema.InvoiceLine.Types}
+  ${Schema.StockLine.Types}
+  
   ${TestTypes}
-
-  ${TransactionInput}
-  ${ItemInput}
-
+  
+  ${Schema.Invoice.Inputs}
+  
   type Query {
-    ${ItemQueries}
-    ${TransactionQueries}
+    ${Schema.Item.Queries}
+    ${Schema.Invoice.Queries}
     ${TestQueries}
+    ${Schema.StockLine.Queries}
   }
 
   type Mutation {
-    ${TransactionMutations}
-    ${ItemMutations}
+    ${Schema.Invoice.Mutations}
   }
 `;
 
 const resolvers = {
   Query: {
     ...TestQueryResolvers,
-    ...ItemResolvers,
-    ...TransactionQueryResolvers,
+    ...Schema.Item.QueryResolvers,
+    ...Schema.Invoice.QueryResolvers,
+    ...Schema.StockLine.QueryResolvers,
   },
   Mutation: {
-    ...TransactionMutationResolvers,
-    ...ItemMutationResolvers,
+    ...Schema.Invoice.MutationResolvers,
   },
 };
 
