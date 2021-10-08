@@ -1,7 +1,7 @@
 use crate::{
     database::repository::RepositoryError,
     domain::PaginationOption,
-    service::{ListError, ListResult, SingleRecordError},
+    service::{usize_to_u32, ListError, ListResult, SingleRecordError},
 };
 use async_graphql::*;
 
@@ -30,12 +30,13 @@ pub use self::sort_filter_types::*;
 #[graphql(concrete(name = "ItemConnector", params(ItemNode)))]
 #[graphql(concrete(name = "NameConnector", params(NameNode)))]
 #[graphql(concrete(name = "InvoiceConnector", params(InvoiceNode)))]
+#[graphql(concrete(name = "InvoiceLineConnector", params(InvoiceLineNode)))]
 pub struct Connector<T: OutputType> {
     total_count: u32,
     nodes: Vec<T>,
 }
 
-/// Convert from ListResult to Generic Connector
+/// Convert from ListResult (service return) to Generic Connector
 impl<DomainType, GQLType> From<ListResult<DomainType>> for Connector<GQLType>
 where
     GQLType: From<DomainType> + OutputType,
@@ -43,6 +44,19 @@ where
     fn from(ListResult { count, rows }: ListResult<DomainType>) -> Self {
         Connector {
             total_count: count,
+            nodes: rows.into_iter().map(GQLType::from).collect(),
+        }
+    }
+}
+
+/// Convert from Vec<T> (loader result) to Generic Connector
+impl<DomainType, GQLType> From<Vec<DomainType>> for Connector<GQLType>
+where
+    GQLType: From<DomainType> + OutputType,
+{
+    fn from(rows: Vec<DomainType>) -> Self {
+        Connector {
+            total_count: usize_to_u32(rows.len()),
             nodes: rows.into_iter().map(GQLType::from).collect(),
         }
     }
@@ -72,7 +86,10 @@ pub struct ErrorWrapper<T: OutputType> {
     error: T,
 }
 
-// Generic Error Interface
+pub type ConnectorError = ErrorWrapper<ConnectorErrorInterface>;
+pub type NodeError = ErrorWrapper<NodeErrorInterface>;
+
+// Generic Connector Error Interface
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum ConnectorErrorInterface {
@@ -80,7 +97,7 @@ pub enum ConnectorErrorInterface {
     PaginationError(PaginationError),
 }
 
-// Generic Error Interface
+// Generic Node Error Interface
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum NodeErrorInterface {
@@ -88,7 +105,8 @@ pub enum NodeErrorInterface {
     RecordNotFound(RecordNotFound),
 }
 
-impl From<ListError> for ErrorWrapper<ConnectorErrorInterface> {
+/// Convert from ListError (service result) to Generic connector error
+impl From<ListError> for ConnectorError {
     fn from(error: ListError) -> Self {
         let error = match error {
             ListError::DBError(error) => ConnectorErrorInterface::DBError(DBError(error)),
@@ -110,7 +128,8 @@ impl From<ListError> for ErrorWrapper<ConnectorErrorInterface> {
     }
 }
 
-impl From<SingleRecordError> for ErrorWrapper<NodeErrorInterface> {
+/// Convert from SingleRecordError (service result) to Generic single node error
+impl From<SingleRecordError> for NodeError {
     fn from(error: SingleRecordError) -> Self {
         let error = match error {
             SingleRecordError::DBError(error) => NodeErrorInterface::DBError(DBError(error)),
@@ -120,6 +139,24 @@ impl From<SingleRecordError> for ErrorWrapper<NodeErrorInterface> {
         };
 
         ErrorWrapper { error }
+    }
+}
+
+/// Convert from RepositoryError (loader result) to Generic connector error
+impl From<RepositoryError> for ConnectorError {
+    fn from(error: RepositoryError) -> Self {
+        ErrorWrapper {
+            error: ConnectorErrorInterface::DBError(DBError(error)),
+        }
+    }
+}
+
+/// Convert from RepositoryError (loader result) to Generic single node error
+impl From<RepositoryError> for NodeError {
+    fn from(error: RepositoryError) -> Self {
+        ErrorWrapper {
+            error: NodeErrorInterface::DBError(DBError(error)),
+        }
     }
 }
 
