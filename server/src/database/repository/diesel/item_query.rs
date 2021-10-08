@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{EqualFilter, SimpleStringFilter, Sort, StorageConnection};
 use crate::{
     database::{
         repository::RepositoryError,
@@ -10,30 +10,29 @@ use crate::{
             ItemRow, MasterListLineRow, MasterListNameJoinRow,
         },
     },
-    server::service::graphql::schema::{
-        queries::pagination::{Pagination, PaginationOption},
-        types::ItemQuery,
-    },
+    server::service::graphql::schema::queries::pagination::{Pagination, PaginationOption},
 };
 
 use diesel::prelude::*;
+pub struct ItemFilter {
+    pub name: Option<SimpleStringFilter>,
+    pub code: Option<SimpleStringFilter>,
+    /// If true it only returns ItemAndMasterList that have a name join row
+    pub is_visible: Option<EqualFilter<bool>>,
+}
 
-type ItemAndMasterList = (
+pub enum ItemSortField {
+    Name,
+    Code,
+}
+
+pub type ItemSort = Sort<ItemSortField>;
+
+pub type ItemAndMasterList = (
     ItemRow,
     Option<MasterListLineRow>,
     Option<MasterListNameJoinRow>,
 );
-
-impl From<ItemAndMasterList> for ItemQuery {
-    fn from((item_row, _, master_list_name_join_option): ItemAndMasterList) -> Self {
-        ItemQuery {
-            id: item_row.id,
-            name: item_row.name,
-            code: item_row.code,
-            is_visible: master_list_name_join_option.is_some(),
-        }
-    }
-}
 
 pub struct ItemQueryRepository<'a> {
     connection: &'a StorageConnection,
@@ -50,7 +49,12 @@ impl<'a> ItemQueryRepository<'a> {
             .get_result(&self.connection.connection)?)
     }
 
-    pub fn all(&self, pagination: &Option<Pagination>) -> Result<Vec<ItemQuery>, RepositoryError> {
+    pub fn all(
+        &self,
+        pagination: &Option<Pagination>,
+        filter: &Option<ItemFilter>,
+        sort: &Option<ItemSort>,
+    ) -> Result<Vec<ItemAndMasterList>, RepositoryError> {
         // Join master_list_line
         let item_and_master_list_line =
             item_dsl::item.left_join(master_list_line_dsl::master_list_line);
@@ -62,14 +66,57 @@ impl<'a> ItemQueryRepository<'a> {
                     .eq(master_list_name_join_dsl::master_list_id)),
         );
 
-        Ok(item_and_all_join
+        let mut query = item_and_all_join
             .offset(pagination.offset())
             .limit(pagination.first())
-            .order(item_dsl::id.asc())
-            .load::<ItemAndMasterList>(&self.connection.connection)?
-            .into_iter()
-            .map(ItemQuery::from)
-            .collect())
+            .into_boxed();
+
+        if let Some(f) = filter {
+            if let Some(code) = &f.code {
+                if let Some(eq) = &code.equal_to {
+                    query = query.filter(item_dsl::code.eq(eq));
+                } else if let Some(like) = &code.like {
+                    query = query.filter(item_dsl::code.like(format!("%{}%", like)));
+                }
+            }
+            if let Some(name) = &f.name {
+                if let Some(eq) = &name.equal_to {
+                    query = query.filter(item_dsl::name.eq(eq));
+                } else if let Some(like) = &name.like {
+                    query = query.filter(item_dsl::name.like(format!("%{}%", like)));
+                }
+            }
+            if let Some(is_visible) = f.is_visible.as_ref().map(|v| v.equal_to).flatten() {
+                if is_visible {
+                    query = query.filter(master_list_name_join_dsl::id.is_not_null());
+                } else {
+                    query = query.filter(master_list_name_join_dsl::id.is_null());
+                }
+            }
+        }
+
+        if let Some(sort) = sort {
+            match sort.key {
+                ItemSortField::Name => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(item_dsl::name.desc());
+                    } else {
+                        query = query.order(item_dsl::name.asc());
+                    }
+                }
+                ItemSortField::Code => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(item_dsl::code.desc());
+                    } else {
+                        query = query.order(item_dsl::code.asc());
+                    }
+                }
+            }
+        } else {
+            query = query.order(item_dsl::id.asc())
+        }
+
+        Ok(query.load::<ItemAndMasterList>(&self.connection.connection)?)
     }
 }
 
@@ -83,35 +130,25 @@ mod tests {
                 repository::{
                     MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
                 },
-                ItemQueryRepository, ItemRepository, NameRepository, StorageConnectionManager,
+                EqualFilter, ItemFilter, ItemQueryRepository, ItemRepository, NameRepository,
+                StorageConnectionManager,
             },
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
-        server::service::graphql::schema::{
-            queries::pagination::{Pagination, DEFAULT_PAGE_SIZE},
-            types::ItemQuery,
-        },
+        server::service::graphql::schema::queries::pagination::{Pagination, DEFAULT_PAGE_SIZE},
         util::test_db,
     };
-    // TODO this is very repetative, although it's ok for tests to be 'wet' I think we can do better (and stil have readable tests)
-    fn data() -> (Vec<ItemRow>, Vec<ItemQuery>) {
+    // TODO this is very repetitive, although it's ok for tests to be 'wet' I think we can do better (and still have readable tests)
+    fn data() -> Vec<ItemRow> {
         let mut rows = Vec::new();
-        let mut queries = Vec::new();
         for index in 0..200 {
             rows.push(ItemRow {
                 id: format!("id{:05}", index),
                 name: format!("name{}", index),
                 code: format!("code{}", index),
             });
-
-            queries.push(ItemQuery {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
-                is_visible: false,
-            });
         }
-        (rows, queries)
+        rows
     }
 
     #[actix_rt::test]
@@ -123,8 +160,8 @@ mod tests {
             .unwrap();
         let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
-        let (rows, queries) = data();
-        for row in rows {
+        let rows = data();
+        for row in rows.iter() {
             ItemRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
@@ -136,48 +173,63 @@ mod tests {
         // .count()
         assert_eq!(
             usize::try_from(item_query_repository.count().unwrap()).unwrap(),
-            queries.len()
+            rows.len()
         );
 
         // .all, no pagenation (default)
         assert_eq!(
-            item_query_repository.all(&None).unwrap().len(),
+            item_query_repository
+                .all(&None, &None, &None)
+                .unwrap()
+                .len(),
             default_page_size
         );
 
         // .all, pagenation (offset 10)
         let result = item_query_repository
-            .all(&Some(Pagination {
-                offset: Some(10),
-                first: None,
-            }))
+            .all(
+                &Some(Pagination {
+                    offset: Some(10),
+                    first: None,
+                }),
+                &None,
+                &None,
+            )
             .unwrap();
         assert_eq!(result.len(), default_page_size);
-        assert_eq!(result[0], queries[10]);
+        assert_eq!(result[0].0, rows[10]);
         assert_eq!(
-            result[default_page_size - 1],
-            queries[10 + default_page_size - 1]
+            result[default_page_size - 1].0,
+            rows[10 + default_page_size - 1]
         );
 
         // .all, pagenation (first 10)
         let result = item_query_repository
-            .all(&Some(Pagination {
-                offset: None,
-                first: Some(10),
-            }))
+            .all(
+                &Some(Pagination {
+                    offset: None,
+                    first: Some(10),
+                }),
+                &None,
+                &None,
+            )
             .unwrap();
         assert_eq!(result.len(), 10);
-        assert_eq!(*result.last().unwrap(), queries[9]);
+        assert_eq!((*result.last().unwrap()).0, rows[9]);
 
         // .all, pagenation (offset 150, first 90) <- more then records in table
         let result = item_query_repository
-            .all(&Some(Pagination {
-                offset: Some(150),
-                first: Some(90),
-            }))
+            .all(
+                &Some(Pagination {
+                    offset: Some(150),
+                    first: Some(90),
+                }),
+                &None,
+                &None,
+            )
             .unwrap();
-        assert_eq!(result.len(), queries.len() - 150);
-        assert_eq!(result.last().unwrap(), queries.last().unwrap());
+        assert_eq!(result.len(), rows.len() - 150);
+        assert_eq!((*result.last().unwrap()).0, (*rows.last().unwrap()));
     }
 
     // TODO not sure where this fits, seems like this unit test has a lot of dependencies
@@ -219,39 +271,6 @@ mod tests {
                 id: "item5".to_owned(),
                 name: "name5".to_owned(),
                 code: "name5".to_owned(),
-            },
-        ];
-
-        let mut item_query_rows = vec![
-            ItemQuery {
-                id: "item1".to_owned(),
-                name: "name1".to_owned(),
-                code: "name1".to_owned(),
-                is_visible: false,
-            },
-            ItemQuery {
-                id: "item2".to_owned(),
-                name: "name2".to_owned(),
-                code: "name2".to_owned(),
-                is_visible: false,
-            },
-            ItemQuery {
-                id: "item3".to_owned(),
-                name: "name3".to_owned(),
-                code: "name3".to_owned(),
-                is_visible: false,
-            },
-            ItemQuery {
-                id: "item4".to_owned(),
-                name: "name4".to_owned(),
-                code: "name4".to_owned(),
-                is_visible: false,
-            },
-            ItemQuery {
-                id: "item5".to_owned(),
-                name: "name5".to_owned(),
-                code: "name5".to_owned(),
-                is_visible: false,
             },
         ];
 
@@ -313,7 +332,7 @@ mod tests {
             master_list_id: "master_list2".to_owned(),
         };
 
-        for row in item_rows {
+        for row in item_rows.iter() {
             ItemRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
@@ -337,22 +356,61 @@ mod tests {
         // Test
 
         // Before adding any joins
-        assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
+        let results0: Vec<ItemRow> = item_query_repository
+            .all(&None, &None, &None)
+            .unwrap()
+            .into_iter()
+            .map(|v| v.0)
+            .collect();
+        assert_eq!(results0, item_rows);
 
         // After adding first join (item1 and item2 visible)
-        item_query_rows[0].is_visible = true;
-        item_query_rows[1].is_visible = true;
         MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
-        assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
+        let results = item_query_repository.all(&None, &None, &None).unwrap();
+        assert!(results[0].2.is_some());
+        assert!(results[1].2.is_some());
 
         // After adding second join (item3 and item4 visible)
-        item_query_rows[2].is_visible = true;
-        item_query_rows[3].is_visible = true;
         MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_2)
             .unwrap();
-        assert_eq!(item_query_repository.all(&None).unwrap(), item_query_rows);
+        let results = item_query_repository.all(&None, &None, &None).unwrap();
+        assert!(results[2].2.is_some());
+        assert!(results[3].2.is_some());
+
+        // test is_visible filter:
+        let results = item_query_repository
+            .all(
+                &None,
+                &Some(ItemFilter {
+                    name: None,
+                    code: None,
+                    // query invisible rows
+                    is_visible: Some(EqualFilter {
+                        equal_to: Some(false),
+                    }),
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(results[0].0, item_rows[4]);
+        // get visible rows
+        let results = item_query_repository
+            .all(
+                &None,
+                &Some(ItemFilter {
+                    name: None,
+                    code: None,
+                    // query invisible rows
+                    is_visible: Some(EqualFilter {
+                        equal_to: Some(true),
+                    }),
+                }),
+                &None,
+            )
+            .unwrap();
+        assert_eq!(results.len(), 4);
     }
 }

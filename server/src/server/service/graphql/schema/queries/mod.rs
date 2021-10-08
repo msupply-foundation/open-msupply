@@ -9,8 +9,8 @@ use crate::server::service::graphql::schema::types::{InvoiceLine, Requisition, S
 use crate::server::service::graphql::ContextExt;
 
 use super::types::{
-    InvoiceFilterInput, InvoiceList, InvoiceNode, InvoiceSortInput, ItemList, NameFilterInput,
-    NameList, NameSortInput,
+    InvoiceFilterInput, InvoiceList, InvoiceNode, InvoiceSortInput, ItemFilterInput, ItemList,
+    ItemSortInput, NameFilterInput, NameList, NameSortInput,
 };
 use async_graphql::{Context, Object};
 use pagination::Pagination;
@@ -42,8 +42,15 @@ impl Queries {
         &self,
         _ctx: &Context<'_>,
         #[graphql(desc = "pagination (first and offset)")] page: Option<Pagination>,
+        #[graphql(desc = "filters option")] filter: Option<ItemFilterInput>,
+        #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ItemSortInput>>,
     ) -> ItemList {
-        ItemList { pagination: page }
+        ItemList {
+            pagination: page,
+            filter,
+            sort,
+        }
     }
 
     // TODO return better error
