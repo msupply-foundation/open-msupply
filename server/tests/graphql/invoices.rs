@@ -80,7 +80,7 @@ mod graphql {
         .await;
 
         // Test query:
-        let payload = r#"{"query":"{invoices{ ... on InvoiceConnector { nodes{id,pricing{totalAfterTax}}}}}"}"#.as_bytes();
+        let payload = r#"{"query":"{invoices{ ... on InvoiceConnector { nodes{id,pricing{... on InvoicePricingNode { totalAfterTax}}}}}}"}"#.as_bytes();
         let req = actix_web::test::TestRequest::post()
             .header("content-type", "application/json")
             .set_payload(payload)

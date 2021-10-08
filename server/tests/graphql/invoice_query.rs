@@ -79,7 +79,7 @@ mod graphql {
 
         // Test query:
         let payload =
-            r#"{"query":"{invoice(id:\"customer_invoice_a\"){... on InvoiceNode { id,status,lines{nodes{id,stockLine{availableNumberOfPacks}}}}}}"}"#
+            r#"{"query":"{invoice(id:\"customer_invoice_a\"){... on InvoiceNode { id,status,lines{ ... on InvoiceLineConnector { nodes{id,stockLine{availableNumberOfPacks}}}}}}}"}"#
                 .as_bytes();
         let req = actix_web::test::TestRequest::post()
             .header("content-type", "application/json")
@@ -91,7 +91,7 @@ mod graphql {
         // TODO find a more robust way to compare the results
         assert_eq!(
             body,
-            "{\"data\":{\"invoice\":{\"id\":\"customer_invoice_a\",\"lines\":{\"nodes\":[{\"id\":\"customer_invoice_a_line_a\",\"stockLine\":{\"availableNumberOfPacks\":2}},{\"id\":\"customer_invoice_a_line_b\",\"stockLine\":{\"availableNumberOfPacks\":4}}]},\"status\":\"DRAFT\"}}}"
+            "{\"data\":{\"invoice\":{\"id\":\"customer_invoice_a\",\"lines\":{\"nodes\":[{\"id\":\"customer_invoice_a_line_a\",\"stockLine\":{\"availableNumberOfPacks\":1}},{\"id\":\"customer_invoice_a_line_b\",\"stockLine\":{\"availableNumberOfPacks\":3}}]},\"status\":\"DRAFT\"}}}"
         );
 
         // Test not found error
