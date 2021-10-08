@@ -1,8 +1,9 @@
-use crate::server::service::graphql::schema::mutations::error::{
-    DatabaseError, ForeignKeyError, RecordDoesNotExistError,
-};
+use crate::server::service::graphql::schema::mutations::error::DatabaseError;
 
-use super::CannotDeleteFinalisedInvoiceError;
+use super::{
+    CanOnlyEditInvoicesInLoggedInStoreError, FinalisedInvoiceIsNotEditableError,
+    InvoiceNotFoundError,
+};
 
 use async_graphql::{Context, InputObject, Interface, SimpleObject, Union};
 
@@ -30,20 +31,18 @@ pub struct DeleteCustomerInvoiceError {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteCustomerInvoiceErrorInterface {
-    CannotDeleteFinalisedInvoiceError(CannotDeleteFinalisedInvoiceError),
+    CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
+    FinalisedInvoiceIsNotEditable(FinalisedInvoiceIsNotEditableError),
+    InvoiceNotFound(InvoiceNotFoundError),
     DatabaseError(DatabaseError),
-    RecordDoesNotExistError(RecordDoesNotExistError),
-    ForeignKeyError(ForeignKeyError),
 }
 
 pub async fn delete_customer_invoice(
     _ctx: &Context<'_>,
-    _input: DeleteCustomerInvoiceInput,
+    input: DeleteCustomerInvoiceInput,
 ) -> DeleteCustomerInvoiceResultUnion {
     // TODO: add deletion logic.
     DeleteCustomerInvoiceResultUnion::Error(DeleteCustomerInvoiceError {
-        error: DeleteCustomerInvoiceErrorInterface::CannotDeleteFinalisedInvoiceError(
-            CannotDeleteFinalisedInvoiceError,
-        ),
+        error: DeleteCustomerInvoiceErrorInterface::InvoiceNotFound(InvoiceNotFoundError(input.id)),
     })
 }

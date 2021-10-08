@@ -1,11 +1,12 @@
 use crate::server::service::graphql::schema::{
-    mutations::error::{DatabaseError, ForeignKeyError, RecordDoesNotExistError},
+    mutations::error::DatabaseError,
     types::invoice_query::{InvoiceLines, InvoiceNode, InvoiceStatus, InvoiceType},
 };
 
 use super::{
-    CannotChangeInvoiceBackToDraftError, CannotEditFinalisedInvoiceError,
-    InvoiceDoesNotBelongToCurrentStoreError, NotACustomerInvoiceError, OtherPartyNotASupplierError,
+    CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,
+    FinalisedInvoiceIsNotEditableError, InvoiceNotFoundError, OtherPartyCannotBeThisStoreError,
+    OtherPartyIdMissingError, OtherPartyIdNotFoundError, OtherPartyNotACustomerOfThisStoreError,
 };
 
 use async_graphql::{Context, InputObject, Interface, SimpleObject, Union};
@@ -38,14 +39,15 @@ pub struct UpdateCustomerInvoiceError {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateCustomerInvoiceErrorInterface {
-    ForeignKeyError(ForeignKeyError),
-    RecordDoesNotExistError(RecordDoesNotExistError),
-    NotASupplierInvoiceError(NotACustomerInvoiceError),
-    OtherPartyNotASupplierError(OtherPartyNotASupplierError),
-    CannotEditFinalisedInvoiceError(CannotEditFinalisedInvoiceError),
-    InvoiceDoesNotBelongToCurrentStoreError(InvoiceDoesNotBelongToCurrentStoreError),
-    CannotChangeInvoiceBackToDraftError(CannotChangeInvoiceBackToDraftError),
-    DatabasseError(DatabaseError),
+    CannotChangeStatusBackToDraft(CannotChangeStatusBackToDraftError),
+    CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
+    FinalisedInvoiceIsNotEditable(FinalisedInvoiceIsNotEditableError),
+    InvoiceNotFound(InvoiceNotFoundError),
+    OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
+    OtherPartyIdMissing(OtherPartyIdMissingError),
+    OtherPartyIdNotFound(OtherPartyIdNotFoundError),
+    OtherPartyNotACustomerOfThisStore(OtherPartyNotACustomerOfThisStoreError),
+    DatabaseError(DatabaseError),
 }
 
 pub async fn update_customer_invoice(
