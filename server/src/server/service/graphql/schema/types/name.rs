@@ -1,14 +1,11 @@
-use crate::{
-    domain::{
-        name::{Name, NameFilter},
-        SimpleStringFilter,
-    },
-    service::{ListError, ListResult},
+use crate::domain::{
+    name::{Name, NameFilter},
+    SimpleStringFilter,
 };
 
 use async_graphql::*;
 
-use super::{Connector, ConnectorErrorInterface, ErrorWrapper, SimpleStringFilterInput, SortInput};
+use super::{Connector, ConnectorError, SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "crate::domain::name::NameSortField")]
@@ -65,14 +62,20 @@ impl NameNode {
     }
 }
 
+type CurrentConnector = Connector<NameNode>;
+
 #[derive(Union)]
 pub enum NamesResponse {
-    Error(ErrorWrapper<ConnectorErrorInterface>),
-    Response(Connector<NameNode>),
+    Error(ConnectorError),
+    Response(CurrentConnector),
 }
 
-impl From<Result<ListResult<Name>, ListError>> for NamesResponse {
-    fn from(result: Result<ListResult<Name>, ListError>) -> Self {
+impl<T, E> From<Result<T, E>> for NamesResponse
+where
+    CurrentConnector: From<T>,
+    ConnectorError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
         match result {
             Ok(response) => NamesResponse::Response(response.into()),
             Err(error) => NamesResponse::Error(error.into()),

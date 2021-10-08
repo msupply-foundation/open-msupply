@@ -8,8 +8,8 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 
 use super::{
-    Connector, ConnectorErrorInterface, EqualFilterBoolInput, ErrorWrapper,
-    SimpleStringFilterInput, SortInput, StockLineList,
+    Connector, ConnectorError, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
+    StockLineList,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -73,7 +73,7 @@ impl ItemNode {
 
 #[derive(Union)]
 pub enum ItemsResponse {
-    Error(ErrorWrapper<ConnectorErrorInterface>),
+    Error(ConnectorError),
     Response(Connector<ItemNode>),
 }
 
