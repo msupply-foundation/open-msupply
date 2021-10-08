@@ -6,7 +6,7 @@ use super::{
 use crate::{
     database::repository::{
         DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceQueryRepository, InvoiceSort,
-        InvoiceSortField, SimpleStringFilter, StorageConnectionManager,
+        SimpleStringFilter, StorageConnectionManager,
     },
     server::service::graphql::{schema::queries::pagination::Pagination, ContextExt},
 };
@@ -81,10 +81,7 @@ impl InvoiceList {
             .as_ref()
             .map(|sort_list| sort_list.first())
             .flatten()
-            .map(|opt| InvoiceSort {
-                key: InvoiceSortField::from(opt.key),
-                desc: opt.desc,
-            });
+            .map(InvoiceSort::from);
 
         repository
             .all(&self.pagination, &filter, &first_sort)
