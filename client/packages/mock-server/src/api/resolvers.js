@@ -20,8 +20,8 @@ export const ResolverService = {
       }
 
       const paged = invoices.slice(offset, offset + first);
-      const data = paged.map(transaction => {
-        return ResolverService.byId.invoice(transaction.id);
+      const data = paged.map(invoice => {
+        return ResolverService.byId.invoice(invoice.id);
       });
 
       return { totalLength: invoices.length, data };
