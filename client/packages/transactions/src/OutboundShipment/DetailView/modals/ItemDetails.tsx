@@ -1,17 +1,17 @@
 import React from 'react';
 
 import {
-  Autocomplete,
   Divider,
-  gql,
   Grid,
   Item,
-  LabelledInputRow,
-  request,
-  TextField,
+  ModalAutocomplete,
+  ModalInputRow,
+  ModalLabel,
+  ModalRow,
   UseFormRegister,
+  gql,
+  request,
   useQuery,
-  LoadingSpinner,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 
@@ -51,34 +51,31 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     //     error.response?.status >= 500,
     // }
   );
+  const options =
+    data?.slice(0, 100).map(item => ({ label: item.name, ...item })) || [];
 
-  return isLoading ? (
-    <LoadingSpinner />
-  ) : (
+  return (
     <form onSubmit={onSubmit}>
       <Grid container>
-        <LabelledInputRow
+        <ModalInputRow
           inputProps={register('code')}
           labelKey="label.code"
           defaultValue={item?.code}
         />
-        <Grid>
-          <Autocomplete
-            disablePortal
-            options={data?.map(item => ({ label: item.name, ...item })) || []}
-            sx={{ width: '540px' }}
-            renderInput={params => (
-              <TextField {...params} label="Item" variant="filled" />
-            )}
-            {...register('name')}
+        <ModalRow>
+          <ModalLabel labelKey="label.item" />
+          <ModalAutocomplete
+            inputProps={register('name')}
+            options={options}
+            loading={isLoading}
           />
-        </Grid>
-        <LabelledInputRow
+        </ModalRow>
+        <ModalInputRow
           inputProps={register('quantity')}
           labelKey="label.quantity"
           defaultValue={item?.quantity}
         />
-        <LabelledInputRow
+        <ModalInputRow
           inputProps={register('packSize')}
           labelKey="label.packSize"
           defaultValue={item?.packSize}

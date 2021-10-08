@@ -6,11 +6,11 @@ import {
   Clock,
   Copy,
   DialogButton,
-  Field,
+  PanelField,
   Grid,
-  Label,
+  PanelLabel,
   Rewind,
-  Row,
+  PanelRow,
   Typography,
   useDetailPanel,
   useFormatDate,
@@ -88,9 +88,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         titleKey: 'heading.additional-info',
         children: [
           <Grid container key="additional-info">
-            <Row>
-              <Label>{t('label.color')}</Label>
-              <Field>
+            <PanelRow>
+              <PanelLabel>{t('label.color')}</PanelLabel>
+              <PanelField>
                 <Circle htmlColor={draft?.color} sx={{ width: 8 }} />
                 <span
                   style={{
@@ -101,16 +101,16 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
                 >
                   {draft?.color}
                 </span>
-              </Field>
-            </Row>
-            <Row>
-              <Label>{t('label.entered')}</Label>
-              <Field>{entered}</Field>
-            </Row>
-            <Row>
-              <Label>{t('label.status')}</Label>
-              <Field>{draft?.status}</Field>
-            </Row>
+              </PanelField>
+            </PanelRow>
+            <PanelRow>
+              <PanelLabel>{t('label.entered')}</PanelLabel>
+              <PanelField>{entered}</PanelField>
+            </PanelRow>
+            <PanelRow>
+              <PanelLabel>{t('label.status')}</PanelLabel>
+              <PanelField>{draft?.status}</PanelField>
+            </PanelRow>
           </Grid>,
         ],
       },
@@ -164,6 +164,8 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={<DialogButton variant="next" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onSubmit} />}
+        height={600}
+        width={780}
       >
         <ItemDetails register={register} onSubmit={onSubmit} />
       </Modal>
