@@ -62,7 +62,7 @@ export const ResolverService = {
       const invoice = db.get.byId.invoice(id);
       return {
         ...invoice,
-        lines: db.get.invoicesLines
+        lines: db.get.invoiceLines
           .byInvoiceId(id)
           .map(({ id: invoiceLineId }) =>
             ResolverService.byId.invoiceLine(invoiceLineId)
