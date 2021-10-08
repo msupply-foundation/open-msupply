@@ -42,14 +42,3 @@ export type Store = {
   id: string;
   name: string;
 };
-
-// TODO: handle placeholder lines
-export type ItemLine = {
-  id: string;
-  quantity: number;
-};
-
-export type ItemEdit = {
-  id: string;
-  lines: ItemLine[];
-};
