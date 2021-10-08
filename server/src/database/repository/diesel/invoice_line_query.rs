@@ -1,21 +1,14 @@
 use crate::{
     database::{
         repository::RepositoryError,
-        schema::{
-            diesel_schema::{
-                invoice_line::dsl as invoice_line_dsl, stock_line::dsl as stock_line_dsl,
-            },
-            InvoiceLineRow, StockLineRow,
-        },
+        schema::{diesel_schema::invoice_line::dsl as invoice_line_dsl, InvoiceLineRow},
     },
-    domain::invoice_line::{InvoiceLine, StockLine},
+    domain::invoice_line::InvoiceLine,
 };
 
 use super::StorageConnection;
 
 use diesel::{dsl, prelude::*, sql_types::Double};
-
-pub type InvoiceLineQueryJoin = (InvoiceLineRow, StockLineRow);
 
 #[derive(Clone)]
 pub struct InvoiceLineStats {
@@ -23,10 +16,11 @@ pub struct InvoiceLineStats {
     pub total_after_tax: f64,
 }
 
-impl From<InvoiceLineQueryJoin> for InvoiceLine {
-    fn from((invoice_line, stock_line): InvoiceLineQueryJoin) -> Self {
+impl From<InvoiceLineRow> for InvoiceLine {
+    fn from(invoice_line: InvoiceLineRow) -> Self {
         InvoiceLine {
             id: invoice_line.id,
+            stock_line_id: invoice_line.stock_line_id,
             invoice_id: invoice_line.invoice_id,
             item_id: invoice_line.item_id,
             item_name: invoice_line.item_name,
@@ -37,10 +31,6 @@ impl From<InvoiceLineQueryJoin> for InvoiceLine {
             sell_price_per_pack: invoice_line.sell_price_per_pack,
             batch: invoice_line.batch,
             expiry_date: invoice_line.expiry_date,
-            // TODO resolve stock_line on demand:
-            stock_line: StockLine {
-                available_number_of_packs: stock_line.available_number_of_packs,
-            },
         }
     }
 }
@@ -61,8 +51,7 @@ impl<'a> InvoiceLineQueryRepository<'a> {
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
         Ok(invoice_line_dsl::invoice_line
             .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
-            .inner_join(stock_line_dsl::stock_line)
-            .load::<InvoiceLineQueryJoin>(&self.connection.connection)?
+            .load::<InvoiceLineRow>(&self.connection.connection)?
             .into_iter()
             .map(InvoiceLine::from)
             .collect())
