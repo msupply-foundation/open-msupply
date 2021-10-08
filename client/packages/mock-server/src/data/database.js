@@ -29,7 +29,7 @@ export const get = {
     byItemId: itemId => StockLineData.filter(getFilter(itemId, 'itemId')),
   },
 
-  invoicesLines: {
+  invoiceLines: {
     byInvoiceId: invoiceId =>
       InvoiceLineData.filter(getFilter(invoiceId, 'invoiceId')),
   },
