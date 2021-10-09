@@ -1,32 +1,13 @@
 import faker from 'faker';
+import {
+  takeRandomElementFrom,
+  takeRandomNumberFrom,
+  takeRandomPercentageFrom,
+  takeRandomSubsetFrom,
+} from '../utils';
 
-const choose = options => {
-  const numberOfOptions = options.length;
-  const randomIdx = Math.floor(Math.random() * numberOfOptions);
-  return options[randomIdx];
-};
-
-const randomPercentage = min => faker.datatype.number(100) / 100 + min;
-
-const takeRandomNumberFrom = (min, max) => faker.datatype.number({ min, max });
-
-const takeRandomPercentageFrom = (number, options = { minPercentage: 0 }) => {
-  const percentageToTake = randomPercentage(options.minPercentage);
-  const take = Math.ceil(number * percentageToTake);
-
-  return take;
-};
-
-const takeRandomElementFrom = array => {
-  const randomIdx = Math.floor(Math.random() * array.length);
-  return array[randomIdx];
-};
-
-const takeRandomSubsetFrom = array => {
-  const sizeOfSubset = takeRandomNumberFrom(0, array.length);
-  return Array.from({ length: sizeOfSubset }).map(() =>
-    takeRandomElementFrom(array)
-  );
+export const getStockLinesForItem = (item, stockLines = StockLineData) => {
+  return stockLines.filter(({ itemId }) => itemId === item.id);
 };
 
 const createStockLines = items => {
@@ -67,17 +48,6 @@ const createStockLines = items => {
   });
 
   return stockLines.flat();
-};
-
-const getSummer = key => (acc, obj) => obj[key] + acc;
-
-const getAvailableQuantity = (stockLines = StockLineData) => {
-  const quantity = stockLines.reduce(getSummer('availableNumberOfPacks'), 0);
-  return quantity;
-};
-
-export const getStockLinesForItem = (item, stockLines = StockLineData) => {
-  return stockLines.filter(({ itemId }) => itemId === item.id);
 };
 
 const createInvoiceLines = (items, stockLines, invoices) => {
@@ -138,14 +108,13 @@ const createInvoices = (numberToCreate = Math.ceil(Math.random() * 10)) => {
     const invoice = {
       id: `${i}`,
       name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-      status: choose(['Confirmed', 'Finalised']),
+      status: takeRandomElementFrom(['Confirmed', 'Finalised']),
       entered: faker.date.past().toString(),
       confirmed: faker.date.past().toString(),
       invoiceNumber: `${i}`,
       total: `$${faker.commerce.price()}`,
       color: 'grey',
       type: 'Customer invoice',
-
       comment: faker.commerce.productDescription(),
     };
 
