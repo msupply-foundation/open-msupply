@@ -57,4 +57,10 @@ impl<'a> StoreRepository<'a> {
             .load(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::store::dsl::*;
+        let result = store.load(&self.connection.connection)?;
+        Ok(result)
+    }
 }
