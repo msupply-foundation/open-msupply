@@ -13,9 +13,9 @@ pub use self::update::*;
 pub mod line;
 pub use self::line::*;
 
-pub struct OtherPartyNotASuppier(NameNode);
+pub struct OtherPartyNotASupplier(NameNode);
 #[Object]
-impl OtherPartyNotASuppier {
+impl OtherPartyNotASupplier {
     pub async fn description(&self) -> &'static str {
         "Other party name is not a supplier"
     }

@@ -8,7 +8,7 @@ use crate::server::service::graphql::schema::{
     types::{DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus},
 };
 
-use super::OtherPartyNotASuppier;
+use super::OtherPartyNotASupplier;
 
 #[derive(InputObject)]
 pub struct UpdateSupplierInvoiceInput {
@@ -31,7 +31,7 @@ pub enum UpdateSupplierInvoiceErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordDoesNotExist(RecordDoesNotExist),
-    OtherPartyNotASuppier(OtherPartyNotASuppier),
+    OtherPartyNotASupplier(OtherPartyNotASupplier),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotASupplierInvoice(NotASupplierInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
