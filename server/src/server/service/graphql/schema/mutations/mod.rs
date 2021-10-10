@@ -1,3 +1,9 @@
+use crate::{
+    database::repository::StorageConnectionManager,
+    server::service::graphql::ContextExt,
+    service::invoice::{get_invoice, insert_supplier_invoice},
+};
+
 use self::supplier_invoice::{
     delete::{DeleteSupplierInvoiceInput, DeleteSupplierInvoiceResponse},
     insert::{InsertSupplierInvoiceInput, InsertSupplierInvoiceResponse},
@@ -20,7 +26,12 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertSupplierInvoiceInput,
     ) -> InsertSupplierInvoiceResponse {
-        todo!();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match insert_supplier_invoice(connection_manager, input.into()) {
+            Ok(id) => get_invoice(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn update_supplier_invoice(
@@ -66,27 +77,20 @@ impl Mutations {
 
 // Common Mutation Errors
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum ForeignKeys {
+pub enum ForeignKey {
     OtherPartyId,
     ItemId,
 }
 
-pub struct ForeignKeyError {
-    pub key: ForeignKeys,
-    pub id: String,
-}
+pub struct ForeignKeyError(ForeignKey);
 #[Object]
 impl ForeignKeyError {
     pub async fn description(&self) -> &'static str {
         "FK record doesn't exist"
     }
 
-    pub async fn key(&self) -> ForeignKeys {
-        self.key
-    }
-
-    pub async fn id(&self) -> &str {
-        &self.id
+    pub async fn key(&self) -> ForeignKey {
+        self.0
     }
 }
 
