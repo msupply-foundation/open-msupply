@@ -42,6 +42,26 @@ export const ResolverService = {
 
       return createListResponse(invoices.length, data);
     },
+    invoiceLine: ({
+      first = 50,
+      offset = 0,
+      sort,
+      desc,
+    }: PaginationOptions): ListResponse<ResolvedInvoiceLine> => {
+      const invoiceLines = db.get.all.invoiceLine();
+
+      if (sort) {
+        const sortData = getDataSorter(sort as string, desc);
+        invoiceLines.sort(sortData);
+      }
+
+      const paged = invoiceLines.slice(offset, offset + first);
+      const data = paged.map(invoice => {
+        return ResolverService.byId.invoiceLine(invoice.id);
+      });
+
+      return createListResponse(invoiceLines.length, data);
+    },
     item: (): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
       const data = items.map(item => {
@@ -51,6 +71,7 @@ export const ResolverService = {
     },
     stockLine: (): ListResponse<ResolvedStockLine> => {
       const stockLines = db.get.all.stockLine();
+
       const data = stockLines.map(stockLine => {
         return ResolverService.byId.stockLine(stockLine.id);
       });

@@ -1,7 +1,7 @@
 import faker from 'faker';
 
 export const randomPercentage = (min: number): number =>
-  faker.datatype.number(100) / 100 + min;
+  faker.datatype.number(100) / 100 + min / 100;
 
 export const takeRandomNumberFrom = (min: number, max: number): number =>
   faker.datatype.number({ min, max });

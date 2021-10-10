@@ -103,6 +103,7 @@ export const detailQueryFn = (id: string) => async (): Promise<Transaction> => {
     id,
   });
   const { invoice } = result;
+
   return invoice;
 };
 

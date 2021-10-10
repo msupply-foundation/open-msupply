@@ -25,16 +25,19 @@ const typeDefs = gql`
   ${TestTypes}
   
   ${Schema.Invoice.Inputs}
+  ${Schema.InvoiceLine.Inputs}
   
   type Query {
     ${Schema.Item.Queries}
     ${Schema.Invoice.Queries}
+    ${Schema.InvoiceLine.Queries}
     ${TestQueries}
     ${Schema.StockLine.Queries}
   }
 
   type Mutation {
     ${Schema.Invoice.Mutations}
+    ${Schema.InvoiceLine.Mutations}
   }
 `;
 
@@ -43,10 +46,12 @@ const resolvers = {
     ...TestQueryResolvers,
     ...Schema.Item.QueryResolvers,
     ...Schema.Invoice.QueryResolvers,
+    ...Schema.InvoiceLine.QueryResolvers,
     ...Schema.StockLine.QueryResolvers,
   },
   Mutation: {
     ...Schema.Invoice.MutationResolvers,
+    ...Schema.InvoiceLine.MutationResolvers,
   },
 };
 
