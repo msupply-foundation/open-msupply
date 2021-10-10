@@ -80,5 +80,42 @@ mod graphql {
           }
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
+
+        // test filtering
+        let query = r#"query Names($filter: [NameFilterInput]) {
+          names(filter: $filter){
+              nodes{
+                  id,
+              }
+          }
+        }"#;
+        let variables = Some(json!({
+          "filter": {
+            "isCustomer": true,
+          }
+        }));
+        let expected_names_ids: Vec<&String> = mock_name_store_joins
+            .iter()
+            .filter(|a| a.name_is_customer)
+            .map(|a| &a.name_id)
+            .collect();
+        let names: Vec<&NameRow> = mock_names
+            .iter()
+            .filter(|a| {
+                expected_names_ids
+                    .iter()
+                    .find(|search_id| search_id == &&&a.id)
+                    .is_some()
+            })
+            .collect();
+        let expected = json!({
+          "names": {
+              "nodes": names.iter().map(|name| json!({
+                "id": name.id,
+              })).collect::<serde_json::Value>(),
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected).await;
     }
 }
