@@ -1,4 +1,4 @@
-use super::{SimpleStringFilter, Sort};
+use super::{EqualFilter, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug)]
 pub struct Name {
@@ -10,6 +10,7 @@ pub struct Name {
 }
 #[derive(Clone)]
 pub struct NameFilter {
+    pub id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub code: Option<SimpleStringFilter>,
     pub is_customer: Option<bool>,
@@ -22,3 +23,23 @@ pub enum NameSortField {
 }
 
 pub type NameSort = Sort<NameSortField>;
+
+impl NameFilter {
+    pub fn new() -> NameFilter {
+        NameFilter {
+            id: None,
+            name: None,
+            code: None,
+            is_customer: None,
+            is_supplier: None,
+        }
+    }
+
+    pub fn match_id(mut self, id: &str) -> Self {
+        self.id = Some(EqualFilter {
+            equal_to: Some(id.to_owned()),
+        });
+
+        self
+    }
+}
