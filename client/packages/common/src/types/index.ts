@@ -25,6 +25,8 @@ export interface StockLine extends DomainObject {
 export interface InvoiceLine extends DomainObject {
   id: string;
   itemName: string;
+  stockLineId: string;
+  invoiceId: string;
   itemCode?: string;
   stockLine?: StockLine;
   item?: Item;

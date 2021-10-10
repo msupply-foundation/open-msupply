@@ -9,10 +9,16 @@ type Item {
     code: String
     availableQuantity: Int
 }
+
+type ItemResponse { 
+    data: [Item],
+    totalLength: Int
+}
+
 `;
 
 const Queries = `
-    items: [Item]
+    items: ItemResponse
 `;
 
 const QueryResolvers = {

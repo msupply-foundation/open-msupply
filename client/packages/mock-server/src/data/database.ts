@@ -69,6 +69,13 @@ export const update = {
     InvoiceLineData[idx] = newLine;
     return newLine;
   },
+  stockLine: (stockLine: StockLine): StockLine => {
+    const idx = StockLineData.findIndex(getFilter(stockLine.id, 'id'));
+    if (idx < 0) throw new Error('Invalid stock line id');
+    const newLine: StockLine = { ...StockLineData[idx], ...stockLine };
+    StockLineData[idx] = newLine;
+    return newLine;
+  },
 };
 
 export const insert = {
@@ -85,11 +92,23 @@ export const insert = {
 export const remove = {
   invoice: (invoice: Invoice): Invoice => {
     const idx = get.id.invoice(invoice.id);
+
+    if (idx < 0) {
+      throw new Error(`Cannot find invoice to delete with id: ${invoice.id}`);
+    }
+
     InvoiceData.splice(idx);
     return invoice;
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
     const idx = get.id.invoiceLine(invoiceLine.id);
+
+    if (idx < 0) {
+      throw new Error(
+        `Cannot find invoice line to delete with id: ${invoiceLine.id}`
+      );
+    }
+
     InvoiceLineData.splice(idx);
     return invoiceLine;
   },
