@@ -43,9 +43,9 @@ pub struct InvoiceNode {
     invoice_number: i32,
     their_reference: Option<String>,
     comment: Option<String>,
-    entry_datetime: String,
-    confirm_datetime: Option<String>,
-    finalised_datetime: Option<String>,
+    entry_datetime: DateTime<Utc>,
+    confirm_datetime: Option<DateTime<Utc>>,
+    finalised_datetime: Option<DateTime<Utc>>,
     lines: InvoiceLines,
 }
 
@@ -84,13 +84,13 @@ impl From<InvoiceQueryJoin> for InvoiceNode {
             invoice_number: invoice_row.invoice_number,
             their_reference: invoice_row.their_reference,
             comment: invoice_row.comment,
-            entry_datetime: DateTime::<Utc>::from_utc(invoice_row.entry_datetime, Utc).to_rfc3339(),
+            entry_datetime: DateTime::<Utc>::from_utc(invoice_row.entry_datetime, Utc),
             confirm_datetime: invoice_row
                 .confirm_datetime
-                .map(|v| DateTime::<Utc>::from_utc(v, Utc).to_rfc3339()),
+                .map(|v| DateTime::<Utc>::from_utc(v, Utc)),
             finalised_datetime: invoice_row
                 .finalised_datetime
-                .map(|v| DateTime::<Utc>::from_utc(v, Utc).to_rfc3339()),
+                .map(|v| DateTime::<Utc>::from_utc(v, Utc)),
             lines: InvoiceLines {
                 invoice_id: invoice_row.id,
             },
