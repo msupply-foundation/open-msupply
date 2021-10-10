@@ -25,6 +25,8 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
+use super::mutations::supplier_invoice::*;
+
 /// Generic Connector
 #[derive(SimpleObject)]
 #[graphql(concrete(name = "ItemConnector", params(ItemNode)))]
@@ -83,8 +85,32 @@ impl From<PaginationInput> for PaginationOption {
 #[derive(SimpleObject)]
 #[graphql(concrete(name = "ConnectorError", params(ConnectorErrorInterface)))]
 #[graphql(concrete(name = "NodeError", params(NodeErrorInterface)))]
+#[graphql(concrete(
+    name = "InsertSupplierInvoiceError",
+    params(InsertSupplierInvoiceErrorInterface)
+))]
+#[graphql(concrete(
+    name = "UpdateSupplierInvoiceError",
+    params(UpdateSupplierInvoiceErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteSupplierInvoiceError",
+    params(DeleteSupplierInvoiceErrorInterface)
+))]
+#[graphql(concrete(
+    name = "InsertSupplierInvoiceLineError",
+    params(InsertSupplierInvoiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "UpdateSupplierInvoiceLineError",
+    params(UpdateSupplierInvoiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteSupplierInvoiceLineError",
+    params(DeleteSupplierInvoiceLineErrorInterface)
+))]
 pub struct ErrorWrapper<T: OutputType> {
-    error: T,
+    pub error: T,
 }
 
 pub type ConnectorError = ErrorWrapper<ConnectorErrorInterface>;
@@ -94,7 +120,7 @@ pub type NodeError = ErrorWrapper<NodeErrorInterface>;
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum ConnectorErrorInterface {
-    DBError(DBError),
+    DatabaseError(DatabaseError),
     PaginationError(PaginationError),
 }
 
@@ -102,7 +128,7 @@ pub enum ConnectorErrorInterface {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum NodeErrorInterface {
-    DBError(DBError),
+    DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
 }
 
@@ -110,7 +136,9 @@ pub enum NodeErrorInterface {
 impl From<ListError> for ConnectorError {
     fn from(error: ListError) -> Self {
         let error = match error {
-            ListError::DBError(error) => ConnectorErrorInterface::DBError(DBError(error)),
+            ListError::DatabaseError(error) => {
+                ConnectorErrorInterface::DatabaseError(DatabaseError(error))
+            }
             ListError::LimitBelowMin { limit, min } => {
                 ConnectorErrorInterface::PaginationError(PaginationError {
                     out_of_range: FirstOutOfRange::Min(min),
@@ -133,7 +161,9 @@ impl From<ListError> for ConnectorError {
 impl From<SingleRecordError> for NodeError {
     fn from(error: SingleRecordError) -> Self {
         let error = match error {
-            SingleRecordError::DBError(error) => NodeErrorInterface::DBError(DBError(error)),
+            SingleRecordError::DatabaseError(error) => {
+                NodeErrorInterface::DatabaseError(DatabaseError(error))
+            }
             SingleRecordError::NotFound(id) => {
                 NodeErrorInterface::RecordNotFound(RecordNotFound(id))
             }
@@ -147,7 +177,7 @@ impl From<SingleRecordError> for NodeError {
 impl From<RepositoryError> for ConnectorError {
     fn from(error: RepositoryError) -> Self {
         ErrorWrapper {
-            error: ConnectorErrorInterface::DBError(DBError(error)),
+            error: ConnectorErrorInterface::DatabaseError(DatabaseError(error)),
         }
     }
 }
@@ -156,16 +186,16 @@ impl From<RepositoryError> for ConnectorError {
 impl From<RepositoryError> for NodeError {
     fn from(error: RepositoryError) -> Self {
         ErrorWrapper {
-            error: NodeErrorInterface::DBError(DBError(error)),
+            error: NodeErrorInterface::DatabaseError(DatabaseError(error)),
         }
     }
 }
 
 // Generic Errors
-pub struct DBError(pub RepositoryError);
+pub struct DatabaseError(pub RepositoryError);
 
 #[Object]
-impl DBError {
+impl DatabaseError {
     pub async fn description(&self) -> &'static str {
         "Dabase Error"
     }
