@@ -4,9 +4,8 @@ use crate::{
         invoice::{Invoice, InvoiceFilter, InvoiceSort},
         Pagination, PaginationOption,
     },
+    service::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError},
 };
-
-use super::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -32,9 +31,8 @@ pub fn get_invoice(
     id: String,
 ) -> Result<Invoice, SingleRecordError> {
     let connection = connection_manager.connection()?;
-    let repository = InvoiceQueryRepository::new(&connection);
 
-    let mut result = repository.query(
+    let mut result = InvoiceQueryRepository::new(&connection).query(
         Pagination::one(),
         Some(InvoiceFilter::new().match_id(&id)),
         None,
