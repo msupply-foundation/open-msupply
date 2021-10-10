@@ -16,7 +16,7 @@ impl<'a> InvoiceRepository<'a> {
         InvoiceRepository { connection }
     }
 
-    pub async fn insert_one(&self, invoice_row: &InvoiceRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&self, invoice_row: &InvoiceRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::invoice::dsl::*;
         diesel::insert_into(invoice)
             .values(invoice_row)
@@ -24,7 +24,7 @@ impl<'a> InvoiceRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
+    pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
         use crate::database::schema::diesel_schema::invoice::dsl::*;
         let result = invoice
             .filter(id.eq(invoice_id))
