@@ -15,6 +15,8 @@ const lines: ItemRow[] = [
     itemName: 'ibuprofen',
     quantity: 100,
     expiry: '1/1/2020',
+    invoiceId: '',
+    stockLineId: '',
     updateQuantity: () => {},
   },
   {
@@ -23,6 +25,8 @@ const lines: ItemRow[] = [
     itemName: 'amox',
     quantity: 100,
     expiry: '1/1/2020',
+    invoiceId: '',
+    stockLineId: '',
     updateQuantity: () => {},
   },
 ];

@@ -22,22 +22,24 @@ const createStockLines = (items: Item[]) => {
     const { id: itemId } = item;
 
     // Take a random quantity we're going to use of this items total available.
+    // to distribute over all the stock lines we will create.
     let quantityToUse = takeRandomNumberFrom(100, 500);
     let i = 0;
+
     while (quantityToUse > 0) {
-      // Take another random amount from the total quantity
+      // Take another random amount from the total quantity for this stock line. We create a random number of
+      // stock lines by taking a random quantity (min of 10%) from the pool of available quantity.
       const quantityForThisBatch = takeRandomPercentageFrom(quantityToUse, {
         minPercentage: 10,
       });
 
-      // Either this percentage is greater than what we have left or less. If it's greater,
-      // just use the remaining stock.
+      // Use the remaining available if we generated a quantity for this stock line greater than the available
+      // quantity.
       const availableNumberOfPacks =
         quantityForThisBatch > quantityToUse
           ? quantityToUse
           : quantityForThisBatch;
 
-      // Create the stock line
       const stockLine = {
         id: `${itemId}-${i++}`,
         name: `${itemId}-${i++}`,
@@ -104,7 +106,7 @@ const createInvoiceLines = (
 };
 
 const createItems = (
-  numberToCreate = Math.ceil(Math.random() * 10)
+  numberToCreate = Math.ceil(Math.random() * 10) + 10
 ): Item[] => {
   return Array.from({ length: numberToCreate }).map((_, j) => {
     const itemId = `item-${j}`;
@@ -120,7 +122,7 @@ const createItems = (
 };
 
 const createInvoices = (
-  numberToCreate = Math.ceil(Math.random() * 10)
+  numberToCreate = Math.ceil(Math.random() * 10) + 100
 ): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const invoice = {
