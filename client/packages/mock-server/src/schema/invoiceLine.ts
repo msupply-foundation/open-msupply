@@ -29,7 +29,6 @@ const Mutations = `
     updateInvoiceLine(invoiceLine: InvoiceLinePatch): InvoiceLine
     insertInvoiceLine(invoiceLine: InvoiceLinePatch): InvoiceLine
     deleteInvoiceLine(invoiceLine: InvoiceLinePatch): InvoiceLine
-    deleteInvoiceLines(invoiceLine: [InvoiceLinePatch]): [InvoiceLine]
 `;
 
 const Inputs = `

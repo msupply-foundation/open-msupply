@@ -1,5 +1,5 @@
 import { StockLine, Invoice, Item, InvoiceLine } from './types';
-import { getFilter } from './../utils';
+import { getFilter, randomInteger } from './../utils';
 import faker from 'faker';
 import {
   takeRandomElementFrom,
@@ -106,7 +106,7 @@ const createInvoiceLines = (
 };
 
 const createItems = (
-  numberToCreate = Math.ceil(Math.random() * 10) + 10
+  numberToCreate = randomInteger({ min: 10, max: 20 })
 ): Item[] => {
   return Array.from({ length: numberToCreate }).map((_, j) => {
     const itemId = `item-${j}`;
@@ -122,7 +122,7 @@ const createItems = (
 };
 
 const createInvoices = (
-  numberToCreate = Math.ceil(Math.random() * 10) + 100
+  numberToCreate = randomInteger({ min: 10, max: 100 })
 ): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const invoice = {
