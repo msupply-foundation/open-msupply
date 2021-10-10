@@ -348,6 +348,7 @@ mod repository_test {
             .query(
                 Pagination::new(),
                 Some(NameFilter {
+                    id: None,
                     name: Some(SimpleStringFilter {
                         equal_to: Some("name_1".to_string()),
                         like: None,
@@ -366,6 +367,7 @@ mod repository_test {
             .query(
                 Pagination::new(),
                 Some(NameFilter {
+                    id: None,
                     name: Some(SimpleStringFilter {
                         equal_to: None,
                         like: Some("me_".to_string()),
@@ -383,6 +385,7 @@ mod repository_test {
             .query(
                 Pagination::new(),
                 Some(NameFilter {
+                    id: None,
                     name: None,
                     code: Some(SimpleStringFilter {
                         equal_to: Some("code1".to_string()),
