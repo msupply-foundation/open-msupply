@@ -20,7 +20,7 @@ import { Delete } from './Delete';
 import { Download } from './Download';
 import { Edit } from './Edit';
 import { Home } from './Home';
-import { Invoice } from './Invoice';
+import { InvoiceIcon } from './Invoice';
 import { MSupplyGuy } from './MSupplyGuy';
 import { MenuDots } from './MenuDots';
 import { Messages } from './Messages';
@@ -83,7 +83,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <Download {...args} />, name: 'Download' },
     { icon: <Edit {...args} />, name: 'Edit' },
     { icon: <Home {...args} />, name: 'Home' },
-    { icon: <Invoice {...args} />, name: 'Invoice' },
+    { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     { icon: <MenuDots {...args} />, name: 'MenuDots' },
     { icon: <Messages {...args} />, name: 'Messages' },

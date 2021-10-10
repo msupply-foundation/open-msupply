@@ -1,3 +1,5 @@
+import { StockLine, Invoice, Item, InvoiceLine } from './types';
+import { getFilter } from './../utils';
 import faker from 'faker';
 import {
   takeRandomElementFrom,
@@ -6,12 +8,15 @@ import {
   takeRandomSubsetFrom,
 } from '../utils';
 
-export const getStockLinesForItem = (item, stockLines = StockLineData) => {
-  return stockLines.filter(({ itemId }) => itemId === item.id);
+export const getStockLinesForItem = (
+  item: Item,
+  stockLines: StockLine[] = StockLineData
+): StockLine[] => {
+  return stockLines.filter(getFilter(item.id, 'itemId'));
 };
 
-const createStockLines = items => {
-  const stockLines = [];
+const createStockLines = (items: Item[]) => {
+  const stockLines: StockLine[] = [];
 
   items.forEach(item => {
     const { id: itemId } = item;
@@ -35,11 +40,12 @@ const createStockLines = items => {
       // Create the stock line
       const stockLine = {
         id: `${itemId}-${i++}`,
+        name: `${itemId}-${i++}`,
         packSize: 1,
         expiry: faker.date.future().toString(),
         availableNumberOfPacks,
         itemId,
-      };
+      } as StockLine;
 
       quantityToUse = quantityToUse - availableNumberOfPacks;
 
@@ -47,11 +53,15 @@ const createStockLines = items => {
     }
   });
 
-  return stockLines.flat();
+  return stockLines;
 };
 
-const createInvoiceLines = (items, stockLines, invoices) => {
-  const invoiceLines = [];
+const createInvoiceLines = (
+  items: Item[],
+  stockLines: StockLine[],
+  invoices: Invoice[]
+): InvoiceLine[] => {
+  const invoiceLines: InvoiceLine[][] = [];
 
   invoices.forEach(invoice => {
     takeRandomSubsetFrom(items).forEach(item => {
@@ -59,28 +69,32 @@ const createInvoiceLines = (items, stockLines, invoices) => {
         getStockLinesForItem(item, stockLines)
       );
 
-      const invoiceLinesForStockLines = stockLinesToUse.map((stockLine, i) => {
-        const { availableNumberOfPacks } = stockLine;
+      const invoiceLinesForStockLines = stockLinesToUse.map(
+        (stockLine: Omit<StockLine, 'item'>, i) => {
+          const { availableNumberOfPacks } = stockLine;
 
-        const quantity = takeRandomPercentageFrom(availableNumberOfPacks);
+          const quantity = takeRandomPercentageFrom(
+            availableNumberOfPacks as number
+          );
 
-        const invoiceLine = {
-          id: `${invoice.id}-${item.id}-${stockLine.id}-${i}`,
-          itemName: item.name,
-          itemCode: item.code,
-          invoiceId: invoice.id,
-          stockLineId: stockLine.id,
-          itemId: item.id,
-          quantity,
-          batchName: stockLine.name,
-          expiry: stockLine.expiry,
-        };
+          const invoiceLine = {
+            id: `${invoice.id}-${item.id}-${stockLine.id}-${i}`,
+            itemName: item.name,
+            itemCode: item.code,
+            invoiceId: invoice.id,
+            stockLineId: stockLine.id,
+            itemId: item.id,
+            quantity,
+            batchName: stockLine.name,
+            expiry: stockLine.expiry,
+          } as InvoiceLine;
 
-        stockLine.availableNumberOfPacks =
-          stockLine.availableNumberOfPacks - quantity;
+          stockLine.availableNumberOfPacks =
+            (stockLine.availableNumberOfPacks as number) - quantity;
 
-        return invoiceLine;
-      });
+          return invoiceLine;
+        }
+      );
 
       invoiceLines.push(invoiceLinesForStockLines);
     });
@@ -89,7 +103,9 @@ const createInvoiceLines = (items, stockLines, invoices) => {
   return invoiceLines.flat();
 };
 
-const createItems = (numberToCreate = Math.ceil(Math.random() * 10)) => {
+const createItems = (
+  numberToCreate = Math.ceil(Math.random() * 10)
+): Item[] => {
   return Array.from({ length: numberToCreate }).map((_, j) => {
     const itemId = `item-${j}`;
 
@@ -103,7 +119,9 @@ const createItems = (numberToCreate = Math.ceil(Math.random() * 10)) => {
   });
 };
 
-const createInvoices = (numberToCreate = Math.ceil(Math.random() * 10)) => {
+const createInvoices = (
+  numberToCreate = Math.ceil(Math.random() * 10)
+): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const invoice = {
       id: `${i}`,

@@ -16,7 +16,7 @@ export { Delete } from './Delete';
 export { Download } from './Download';
 export { Edit } from './Edit';
 export { Home } from './Home';
-export { Invoice } from './Invoice';
+export { InvoiceIcon } from './Invoice';
 export { MenuDots } from './MenuDots';
 export { Messages } from './Messages';
 export { MSupplyGuy } from './MSupplyGuy';

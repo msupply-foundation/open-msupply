@@ -1,3 +1,5 @@
+import { StockLine as StockLineType } from '../data/types';
+import { ListResponse } from './../index';
 import { Api } from '../api';
 
 const Types = `
@@ -16,7 +18,7 @@ const Queries = `
 `;
 
 const QueryResolvers = {
-  stockLines: () => {
+  stockLines: (): ListResponse<StockLineType> => {
     return Api.ResolverService.list.stockLine();
   },
 };

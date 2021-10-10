@@ -61,3 +61,17 @@ export type Store = {
   id: string;
   name: string;
 };
+
+export interface Invoice extends DomainObject {
+  id: string;
+  color: string;
+  comment: string;
+  status: string;
+  type: string;
+  entered: string;
+  confirmed: string;
+  invoiceNumber: string;
+  total: string;
+  name: string;
+  lines: InvoiceLine[];
+}

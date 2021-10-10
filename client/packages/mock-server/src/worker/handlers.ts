@@ -1,5 +1,7 @@
+import { PaginationOptions } from './../index';
 import { graphql } from 'msw';
 import { Api } from '../api';
+import { Invoice } from '../data';
 
 const updateInvoice = graphql.mutation(
   'updateInvoice',
@@ -19,7 +21,7 @@ const deleteInvoices = graphql.mutation(
     const { variables } = request;
     const { invoices } = variables;
 
-    invoices.forEach(invoice => {
+    (invoices as Invoice[]).forEach(invoice => {
       Api.MutationService.remove.invoice(invoice);
     });
 
@@ -27,23 +29,23 @@ const deleteInvoices = graphql.mutation(
   }
 );
 
-export const invoiceList = graphql.query(
-  'invoices',
-  (request, response, context) => {
-    const {
-      variables = {
-        first: 50,
-        offset: 0,
-        sort: 'name',
-        desc: false,
-      },
-    } = request;
+export const invoiceList = graphql.query<
+  Record<string, unknown>,
+  PaginationOptions
+>('invoices', (request, response, context) => {
+  const {
+    variables = {
+      first: 50,
+      offset: 0,
+      sort: 'name',
+      desc: false,
+    },
+  } = request;
 
-    const result = Api.ResolverService.list.invoice(variables);
+  const result = Api.ResolverService.list.invoice(variables);
 
-    return response(context.data({ invoices: result }));
-  }
-);
+  return response(context.data({ invoices: result }));
+});
 
 export const invoiceDetail = graphql.query(
   'invoice',
@@ -51,7 +53,7 @@ export const invoiceDetail = graphql.query(
     const { variables } = request;
     const { id } = variables;
 
-    const invoice = Api.ResolverService.byId.invoice(id);
+    const invoice = Api.ResolverService.byId.invoice(id as string);
 
     return response(context.data({ invoice }));
   }

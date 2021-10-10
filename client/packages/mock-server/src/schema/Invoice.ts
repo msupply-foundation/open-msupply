@@ -1,4 +1,7 @@
+import { ListResponse } from './../index';
 import { Api } from '../api';
+import { PaginationOptions } from '../index';
+import { Invoice as InvoiceType } from '../data/types';
 
 const Types = `
     type Invoice {
@@ -22,29 +25,41 @@ const Types = `
   `;
 
 const QueryResolvers = {
-  invoices: (_, { first = 50, offset = 0, sort, desc }) =>
+  invoices: (
+    _: any,
+    { first = 50, offset = 0, sort, desc }: PaginationOptions
+  ): ListResponse<InvoiceType> =>
     Api.ResolverService.list.invoice({ first, offset, sort, desc }),
 
-  invoice: (_, { id }) => {
+  invoice: (_: any, { id }: { id: string }): InvoiceType => {
     return Api.ResolverService.byId.invoice(id);
   },
 };
 
 const MutationResolvers = {
-  deleteInvoice: (_, { invoices }) => {
+  deleteInvoices: (
+    _: any,
+    { invoices }: { invoices: InvoiceType[] }
+  ): InvoiceType[] => {
     invoices.forEach(invoice => {
       Api.MutationService.remove.invoice(invoice);
     });
 
     return invoices;
   },
-  updateInvoice: (_, { invoice }) => {
+  updateInvoice: (
+    _: any,
+    { invoice }: { invoice: InvoiceType }
+  ): InvoiceType => {
     return Api.MutationService.update.invoice(invoice);
   },
-  insertInvoice: (_, { invoice }) => {
+  insertInvoice: (
+    _: any,
+    { invoice }: { invoice: InvoiceType }
+  ): InvoiceType => {
     return Api.MutationService.insert.invoice(invoice);
   },
-  deleteInvoice: (_, invoice) => {
+  deleteInvoice: (_: any, invoice: InvoiceType): InvoiceType => {
     return Api.MutationService.remove.invoice(invoice);
   },
 };

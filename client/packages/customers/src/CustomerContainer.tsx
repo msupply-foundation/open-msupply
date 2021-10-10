@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { Navigate, useMatch } from 'react-router-dom';
 import {
   Grid,
-  Invoice,
+  InvoiceIcon,
   NavigationButton,
   RouteBuilder,
   Typography,
@@ -49,7 +49,7 @@ const CustomerContainer: FC = () => {
               .addPart(AppRoute.CustomerInvoice)
               .build()}
             labelKey="app.customer-invoice"
-            icon={<Invoice />}
+            icon={<InvoiceIcon />}
           />
         </Grid>
         <Grid flex={1} item sx={{ margin: 1 }}>
@@ -58,7 +58,7 @@ const CustomerContainer: FC = () => {
               .addPart(AppRoute.CustomerRequisition)
               .build()}
             labelKey="app.customer-requisition"
-            icon={<Invoice />}
+            icon={<InvoiceIcon />}
           />
         </Grid>
       </Grid>

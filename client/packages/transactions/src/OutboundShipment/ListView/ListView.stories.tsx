@@ -1,8 +1,7 @@
 import React from 'react';
 import { Route } from 'react-router';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
-// import { transactionList } from '@openmsupply-client/mocks';
+import { handlers } from '@openmsupply-client/mock-server/src/worker/handlers';
 import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
 
 import { OutboundShipmentListView } from './ListView';
@@ -25,5 +24,5 @@ const Template: ComponentStory<typeof OutboundShipmentListView> = args => (
 
 export const Primary = Template.bind({});
 Primary.parameters = {
-  // msw: [transactionList],
+  msw: handlers,
 };
