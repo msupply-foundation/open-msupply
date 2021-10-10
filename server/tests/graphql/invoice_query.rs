@@ -1,5 +1,6 @@
 mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_gql_query};
+    use chrono::{DateTime, Utc};
     use remote_server::{
         database::{
             mock::{
@@ -129,5 +130,33 @@ mod graphql {
             &None,
         )
         .await;
+
+        // test time range filter
+        let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
+                invoices(filter: $filter){
+                    nodes {
+                        id
+                    }
+                }
+            }"#;
+
+        let filter_time = mock_invoices.get(1).unwrap().entry_datetime;
+        let variables = Some(json!({
+          "filter": {
+            "entryDatetime": {
+                "beforeOrEqualTo": DateTime::<Utc>::from_utc(filter_time, Utc).to_rfc3339()
+            },
+          }
+        }));
+        let expected = json!({
+            "invoices": {
+                "nodes": mock_invoices.iter()
+                    .filter(|invoice| invoice.entry_datetime <= filter_time)
+                    .map(|invoice| json!({
+                        "id": invoice.id,
+                    })).collect::<Vec<serde_json::Value>>(),
+            },
+        });
+        assert_gql_query(&settings, &query, &variables, &expected).await;
     }
 }
