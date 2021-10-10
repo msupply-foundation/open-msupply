@@ -10,6 +10,7 @@ import {
   DraftActionType,
   DraftActionSet,
 } from './types';
+import { DomainObject } from '../../types';
 
 export const initDraft = (): DefaultDraftAction => ({
   type: DraftActionType.Init,
@@ -19,15 +20,22 @@ export const mergeDraft = (): DefaultDraftAction => ({
   type: DraftActionType.Merge,
 });
 
+/**
+ * Hook which handles side effects for fetching and updating server data and aids in merging
+ * the server data with a client side copy.
+ *
+ */
+
 export const useDraftDocument = <
-  ReadType extends { id: string },
-  StateType extends { id: string },
+  StateType extends { draft: DraftType },
+  DraftType extends DomainObject,
+  ReadType extends DomainObject,
   ActionType
 >(
   queryKey: unknown[],
   reducer: ReducerCreator<ReadType, StateType, DraftActionSet<ActionType>>,
-  api: Api<ReadType, StateType>
-): DraftState<StateType, ReadType> => {
+  api: Api<ReadType, DraftType>
+): DraftState<DraftType, StateType, ReadType, ActionType> => {
   const isNew = queryKey.includes('new');
 
   const navigate = useNavigate();
@@ -49,7 +57,7 @@ export const useDraftDocument = <
 
   const [state, dispatch] = useReducer(
     reducer(data, dispatchRef.current),
-    null,
+    undefined,
     () => reducer(data, dispatchRef.current)(undefined, initDraft())
   );
 
@@ -61,5 +69,7 @@ export const useDraftDocument = <
     }
   }, [data]);
 
-  return { draft: state, save: mutateAsync };
+  const { draft } = state;
+
+  return { state, draft, save: mutateAsync, dispatch };
 };

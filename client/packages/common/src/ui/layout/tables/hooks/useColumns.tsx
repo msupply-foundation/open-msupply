@@ -9,6 +9,7 @@ import {
 } from '../columns/types';
 import { useFormatDate } from '../../../../intl';
 import { BasicCell, BasicHeader } from '../components';
+import { SortBy } from '../../../..';
 
 const getColumnWidths = <T extends DomainObject>(
   column: ColumnDefinition<T>
@@ -19,8 +20,14 @@ const getColumnWidths = <T extends DomainObject>(
   return { minWidth, width };
 };
 
+interface ColumnOptions<T extends DomainObject> {
+  onChangeSortBy?: (column: Column<T>) => void;
+  sortBy?: SortBy<T>;
+}
+
 export const useColumns = <T extends DomainObject>(
-  columnsToMap: ColumnDefinition<T>[]
+  columnsToMap: ColumnDefinition<T>[],
+  options?: ColumnOptions<T>
 ): Column<T>[] => {
   const formatDate = useFormatDate();
   const defaultAccessor = getAccessor<T>(formatDate);
@@ -39,12 +46,14 @@ export const useColumns = <T extends DomainObject>(
           sortInverted: column.format === ColumnFormat.date,
           sortDescFirst: column.format === ColumnFormat.date,
           align: ColumnAlign.Left,
+          onChangeSortBy: options?.onChangeSortBy,
+          sortBy: options?.sortBy,
           ...getColumnWidths(column),
         };
 
         return { ...defaults, ...column };
       }),
-    []
+    [options?.sortBy]
   );
 };
 
