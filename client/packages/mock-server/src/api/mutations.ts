@@ -14,9 +14,7 @@ export const update = {
   invoice: (invoice: Invoice): Invoice => {
     return db.update.invoice(invoice);
   },
-  invoiceLine: (
-    invoiceLine: InvoiceLine
-  ): Omit<InvoiceLine, 'item' | 'stockLine'> => {
+  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
     return db.update.invoiceLine(invoiceLine);
   },
 };

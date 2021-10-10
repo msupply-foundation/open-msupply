@@ -30,9 +30,9 @@ const lines: ItemRow[] = [
 describe('GeneralTab', () => {
   const Example = () => {
     const defaultColumns = new ColumnSetBuilder<ItemRow>()
-      .addColumn('code')
-      .addColumn('name')
-      .addColumn('packSize')
+      .addColumn('itemCode')
+      .addColumn('itemName')
+      .addColumn('quantity')
       .build();
 
     const columns = useColumns(defaultColumns, { onChangeSortBy: () => {} });
@@ -63,7 +63,7 @@ describe('GeneralTab', () => {
       if (row) {
         const code = within(row).getByRole('cell', { name: /abc123/i });
         const name = within(row).getByRole('cell', { name: /ibuprofen/i });
-        const packSize = within(row).getByRole('cell', { name: /^2$/i });
+        const packSize = within(row).getByRole('cell', { name: /^100$/i });
 
         expect(code).toBeInTheDocument();
         expect(name).toBeInTheDocument();
