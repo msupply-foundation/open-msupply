@@ -1,4 +1,6 @@
+import { ListResponse } from './../index';
 import { Api } from '../api';
+import { Item as ItemType } from '../data/types';
 
 const Types = `
 type Item {
@@ -14,7 +16,7 @@ const Queries = `
 `;
 
 const QueryResolvers = {
-  items: () => {
+  items: (): ListResponse<ItemType> => {
     return Api.ResolverService.list.item();
   },
 };

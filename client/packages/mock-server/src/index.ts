@@ -1,7 +1,20 @@
+import { Invoice } from '@openmsupply-client/common';
 import { ApolloServer, gql } from 'apollo-server';
 import { Schema } from './schema';
 
 import { TestQueries, TestQueryResolvers, TestTypes } from './schema/Test';
+
+export interface PaginationOptions {
+  first: number;
+  offset: number;
+  sort?: keyof Invoice;
+  desc: boolean;
+}
+
+export interface ListResponse<T> {
+  totalLength: number;
+  data: T[];
+}
 
 const typeDefs = gql`
   ${Schema.Item.Types}
@@ -44,3 +57,5 @@ server.listen().then(({ url }) => {
     `🚀🚀🚀 Server   @ ${url}         🚀🚀🚀\n🤖🤖🤖 GraphiQL @ ${url}graphiql 🤖🤖🤖`
   );
 });
+
+export { handlers } from './worker/handlers';
