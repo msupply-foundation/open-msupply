@@ -107,6 +107,12 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
         .into_boxed();
 
     if let Some(f) = filter {
+        if let Some(value) = f.id {
+            if let Some(eq) = value.equal_to {
+                query = query.filter(name_table_dsl::id.eq(eq));
+            }
+        }
+
         if let Some(code) = f.code {
             if let Some(eq) = code.equal_to {
                 query = query.filter(name_table_dsl::code.eq(eq));
@@ -134,7 +140,14 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
 
 #[cfg(test)]
 mod tests {
-    use crate::{database::{repository::{NameQueryRepository, NameRepository, StorageConnectionManager}, schema::NameRow}, domain::{name::Name, Pagination, DEFAULT_LIMIT}, util::test_db};
+    use crate::{
+        database::{
+            repository::{NameQueryRepository, NameRepository, StorageConnectionManager},
+            schema::NameRow,
+        },
+        domain::{name::Name, Pagination, DEFAULT_LIMIT},
+        util::test_db,
+    };
     use std::convert::TryFrom;
 
     fn data() -> (Vec<NameRow>, Vec<Name>) {
