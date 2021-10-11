@@ -28,7 +28,10 @@ export const DocumentAction = {
  * The intention is that you are able to pass a reducer function creator and API interface
  * and the heavy lifting of managing your client side state should be simplified.
  *
- * When data is fetched from the server, a DocumentAction.merge action is dispatched.
+ * When the hook is mounted, a `DocumentAction.init` action is run on your reducer from which you
+ * should return the default initial state
+ *
+ * Whenever new data is fetched from the server, a DocumentAction.merge action is dispatched.
  *
  *
  */
