@@ -11,11 +11,11 @@ pub fn validate(
     input: &InsertSupplierInvoice,
     connection: &StorageConnection,
 ) -> Result<(), InsertSupplierInvoiceError> {
-    check_invoice_exists(&input.id, connection)?;
+    check_invoice_does_not_exists(&input.id, connection)?;
     check_other_party(&input.other_party_id, connection)
 }
 
-pub fn check_invoice_exists(
+pub fn check_invoice_does_not_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InsertSupplierInvoiceError> {
