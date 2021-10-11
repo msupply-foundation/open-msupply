@@ -26,6 +26,25 @@ impl<'a> StockLineRepository<'a> {
         Ok(())
     }
 
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(stock_line_dsl::stock_line)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "sqlite")]
+    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(stock_line_dsl::stock_line)
+            .values(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     pub fn find_many_by_item_ids(
         &self,
         item_ids: &[String],

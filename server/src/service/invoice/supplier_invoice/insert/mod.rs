@@ -17,7 +17,7 @@ pub fn insert_supplier_invoice(
     // TODO do inside transaction
     validate(&input, &connection)?;
     let new_invoice = generate(input, &connection)?;
-    InvoiceRepository::new(&connection).insert_one(&new_invoice)?;
+    InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
 
     Ok(new_invoice.id)
 }

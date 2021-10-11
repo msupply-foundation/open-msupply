@@ -1,11 +1,21 @@
 use async_graphql::*;
 
-use crate::server::service::graphql::schema::{
-    mutations::{
-        CannotChangeInvoiceBackToDraft, CannotEditFinalisedInvoice, ForeignKeyError,
-        InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
+use crate::{
+    domain::{
+        invoice::{Invoice, InvoiceStatus},
+        supplier_invoice::UpdateSupplierInvoice,
     },
-    types::{DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus},
+    server::service::graphql::schema::{
+        mutations::{
+            CannotChangeInvoiceBackToDraft, CannotEditFinalisedInvoice, ForeignKey,
+            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
+            RecordDoesNotExist,
+        },
+        types::{
+            DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, InvoiceResponse, NameNode,
+        },
+    },
+    service::{invoice::UpdateSupplierInvoiceError, SingleRecordError},
 };
 
 use super::OtherPartyNotASupplier;
@@ -22,7 +32,8 @@ pub struct UpdateSupplierInvoiceInput {
 #[derive(Union)]
 pub enum UpdateSupplierInvoiceResponse {
     Error(ErrorWrapper<UpdateSupplierInvoiceErrorInterface>),
-    Response(InvoiceNode),
+    #[graphql(flatten)]
+    Response(InvoiceResponse),
 }
 
 #[derive(Interface)]
@@ -36,4 +47,66 @@ pub enum UpdateSupplierInvoiceErrorInterface {
     NotASupplierInvoice(NotASupplierInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft),
+}
+
+impl From<UpdateSupplierInvoiceInput> for UpdateSupplierInvoice {
+    fn from(
+        UpdateSupplierInvoiceInput {
+            id,
+            other_party_id,
+            status,
+            comment,
+            their_reference,
+        }: UpdateSupplierInvoiceInput,
+    ) -> Self {
+        UpdateSupplierInvoice {
+            id,
+            other_party_id,
+            status: status.map(InvoiceStatus::from),
+            comment,
+            their_reference,
+        }
+    }
+}
+
+impl From<Result<Invoice, SingleRecordError>> for UpdateSupplierInvoiceResponse {
+    fn from(result: Result<Invoice, SingleRecordError>) -> Self {
+        let invoice_response: InvoiceResponse = result.into();
+        // Implemented by flatten union
+        invoice_response.into()
+    }
+}
+
+impl From<UpdateSupplierInvoiceError> for UpdateSupplierInvoiceResponse {
+    fn from(error: UpdateSupplierInvoiceError) -> Self {
+        use UpdateSupplierInvoiceErrorInterface as OutError;
+        let error = match error {
+            UpdateSupplierInvoiceError::InvoiceDoesNotExists => {
+                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+            }
+            UpdateSupplierInvoiceError::DatabaseError(error) => {
+                OutError::DatabaseError(DatabaseError(error))
+            }
+            UpdateSupplierInvoiceError::OtherPartyDoesNotExists => {
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
+            }
+            UpdateSupplierInvoiceError::OtherPartyNotASupplier(name) => {
+                OutError::OtherPartyNotASupplier(OtherPartyNotASupplier(NameNode { name }))
+            }
+            UpdateSupplierInvoiceError::NotASupplierInvoice => {
+                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            }
+            UpdateSupplierInvoiceError::NotThisStoreInvoice => {
+                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
+            }
+            UpdateSupplierInvoiceError::CannotChangeInvoiceBackToDraft => {
+                OutError::CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft {})
+            }
+            UpdateSupplierInvoiceError::CannotEditFinalised => {
+                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+            }
+        };
+
+        UpdateSupplierInvoiceResponse::Error(ErrorWrapper { error })
+    }
 }
