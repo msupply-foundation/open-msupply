@@ -1,4 +1,4 @@
-import { StockLine, Invoice, Item, InvoiceLine } from './types';
+import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import { getFilter, randomInteger } from './../utils';
 import faker from 'faker';
 import {
@@ -122,12 +122,14 @@ const createItems = (
 };
 
 const createInvoices = (
+  customers = NameData,
   numberToCreate = randomInteger({ min: 10, max: 100 })
 ): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
+    const name = takeRandomElementFrom(customers);
     const invoice = {
       id: `${i}`,
-      name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      nameId: name.id,
       status: takeRandomElementFrom(['Confirmed', 'Finalised']),
       entered: faker.date.past().toString(),
       confirmed: faker.date.past().toString(),
@@ -142,9 +144,38 @@ const createInvoices = (
   });
 };
 
+const createCustomers = (
+  numberToCreate = randomInteger({ min: 10, max: 100 })
+): Name[] => {
+  const getNameAndCode = () => {
+    const firstName = faker.name.firstName();
+    const lastName = faker.name.lastName();
+
+    return {
+      name: `${firstName} ${lastName}`,
+      code: `${firstName[0]}${lastName[0]}${faker.datatype.number({
+        min: 100,
+        max: 999,
+      })}`,
+    };
+  };
+
+  return Array.from({ length: numberToCreate }).map((_, i) => {
+    const { name, code } = getNameAndCode();
+    return {
+      id: `${i}`,
+      name,
+      code,
+      isCustomer: true,
+      isSupplier: false,
+    };
+  });
+};
+
+export const NameData = createCustomers();
 export const ItemData = createItems();
 export const StockLineData = createStockLines(ItemData);
-export const InvoiceData = createInvoices();
+export const InvoiceData = createInvoices(NameData);
 export const InvoiceLineData = createInvoiceLines(
   ItemData,
   StockLineData,

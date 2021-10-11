@@ -4,25 +4,26 @@ import { PaginationOptions } from '../index';
 import { Invoice as InvoiceType } from '../data/types';
 
 const Types = `
-    type Invoice {
-        id: String
-        color: String
-        comment: String
-        status: String
-        type: String
-        entered: String
-        confirmed: String
-        invoiceNumber: String
-        total: String
-        name: String
-        lines: [InvoiceLine]
-    }
+type Invoice {
+    id: String
+    color: String
+    comment: String
+    status: String
+    type: String
+    entered: String
+    confirmed: String
+    invoiceNumber: String
+    total: String
+    name: Name
+    otherPartyName: String
+    lines: [InvoiceLine]
+}
 
-    type InvoiceResponse { 
-      data: [Invoice],
-      totalLength: Int
-    }
-  `;
+type InvoiceResponse { 
+  data: [Invoice]
+  totalLength: Int
+}
+`;
 
 const QueryResolvers = {
   invoices: (
@@ -68,30 +69,30 @@ const MutationResolvers = {
 };
 
 const Queries = `
-    invoices(first: Int, offset: Int, sort: String, desc: Boolean): InvoiceResponse
-    invoice(id: String!): Invoice
+invoices(first: Int, offset: Int, sort: String, desc: Boolean): InvoiceResponse
+invoice(id: String!): Invoice
 `;
 
 const Mutations = `
-    updateInvoice(invoice: InvoicePatch): Invoice
-    insertInvoice(invoice: InvoicePatch): Invoice
-    deleteInvoice(invoice: InvoicePatch): Invoice
-    deleteInvoices(invoice: [InvoicePatch]): [Invoice]
+updateInvoice(invoice: InvoicePatch): Invoice
+insertInvoice(invoice: InvoicePatch): Invoice
+deleteInvoice(invoice: InvoicePatch): Invoice
+deleteInvoices(invoice: [InvoicePatch]): [Invoice]
 `;
 
 const Inputs = `
-    input InvoicePatch {
-        id: String
-        color: String
-        comment: String
-        status: String
-        type: String
-        entered: String
-        confirmed: String
-        invoiceNumber: String
-        total: String
-        name: String
-    }
+input InvoicePatch {
+    id: String
+    color: String
+    comment: String
+    status: String
+    type: String
+    entered: String
+    confirmed: String
+    invoiceNumber: String
+    total: String
+    nameId: String
+}
 `;
 
 export const Invoice = {

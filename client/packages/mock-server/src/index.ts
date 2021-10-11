@@ -21,6 +21,7 @@ const typeDefs = gql`
   ${Schema.Invoice.Types}
   ${Schema.InvoiceLine.Types}
   ${Schema.StockLine.Types}
+  ${Schema.Name.Types}
   
   ${TestTypes}
   
@@ -29,10 +30,11 @@ const typeDefs = gql`
   
   type Query {
     ${Schema.Item.Queries}
+    ${Schema.Name.Queries}
     ${Schema.Invoice.Queries}
     ${Schema.InvoiceLine.Queries}
-    ${TestQueries}
     ${Schema.StockLine.Queries}
+    ${TestQueries}
   }
 
   type Mutation {
@@ -44,6 +46,7 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     ...TestQueryResolvers,
+    ...Schema.Name.QueryResolvers,
     ...Schema.Item.QueryResolvers,
     ...Schema.Invoice.QueryResolvers,
     ...Schema.InvoiceLine.QueryResolvers,
