@@ -3,84 +3,101 @@ import { render } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
+import { ColumnSetBuilder, useColumns } from '../..';
+import { Item, TestingProvider } from '../../../../..';
 
 describe('HeaderRow', () => {
-  const Example: FC<{ onSortBy: () => void }> = ({ onSortBy }) => (
-    <table>
-      <thead>
-        <HeaderRow>
-          <HeaderCell
-            width={100}
-            minWidth={100}
-            onSortBy={onSortBy}
-            isSortable
-            isSorted
-            columnKey="id"
-            direction="asc"
-          >
-            Header1
-          </HeaderCell>
-          <HeaderCell
-            width={100}
-            minWidth={100}
-            onSortBy={onSortBy}
-            isSortable={false}
-            isSorted={false}
-            columnKey="quantity"
-            direction="asc"
-          >
-            Header2
-          </HeaderCell>
-        </HeaderRow>
-      </thead>
-    </table>
-  );
+  const Example: FC<{
+    onChangeSortBy: () => void;
+    sortBy: { key: keyof Item; direction: 'asc' | 'desc' };
+  }> = ({ onChangeSortBy, sortBy }) => {
+    const [column1, column2] = useColumns(
+      new ColumnSetBuilder<Item>()
+        .addColumn('name')
+        .addColumn('packSize', { sortable: false })
+        .build(),
+      { onChangeSortBy, sortBy }
+    );
+
+    if (!column1 || !column2) return null;
+
+    return (
+      <table>
+        <thead>
+          <HeaderRow>
+            <HeaderCell column={column1} />
+            <HeaderCell column={column2} />
+          </HeaderRow>
+        </thead>
+      </table>
+    );
+  };
 
   it('renders the cells passed', () => {
     const onSortBy = jest.fn();
+    const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
-    const { getByRole } = render(<Example onSortBy={onSortBy} />);
+    const { getByRole } = render(
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
+    );
 
-    const idHeader = getByRole('columnheader', { name: /id/i });
-    const quantityHeader = getByRole('columnheader', { name: /quantity/i });
+    const nameHeader = getByRole('columnheader', { name: /name/i });
+    const packSizeHeader = getByRole('columnheader', { name: /packSize/i });
 
-    expect(idHeader).toBeInTheDocument();
-    expect(quantityHeader).toBeInTheDocument();
+    expect(nameHeader).toBeInTheDocument();
+    expect(packSizeHeader).toBeInTheDocument();
   });
 
   it('renders a button when the header is sortable, and no button otherwise', () => {
     const onSortBy = jest.fn();
+    const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
-    const { getByRole, queryByRole } = render(<Example onSortBy={onSortBy} />);
+    const { getByRole, queryByRole } = render(
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
+    );
 
-    const idHeader = getByRole('button', { name: /header1/i });
-    const quantityHeader = queryByRole('button', { name: /header2/i });
+    const nameHeader = getByRole('button', { name: /name/i });
+    const packSizeHeader = queryByRole('button', { name: /pack size/i });
 
-    expect(idHeader).toBeInTheDocument();
-    expect(quantityHeader).not.toBeInTheDocument();
+    expect(nameHeader).toBeInTheDocument();
+    expect(packSizeHeader).not.toBeInTheDocument();
   });
 
   it('calls the provided sortBy function when the sort button is pressed', () => {
     const onSortBy = jest.fn();
+    const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
-    const { getByRole } = render(<Example onSortBy={onSortBy} />);
+    const { getByRole } = render(
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
+    );
 
-    const idHeader = getByRole('button', { name: /header1/i });
+    const nameHeader = getByRole('button', { name: /name/i });
 
-    act(() => userEvent.click(idHeader));
+    act(() => userEvent.click(nameHeader));
 
     expect(onSortBy).toBeCalledTimes(1);
   });
 
   it('calls the provided sortBy function with the values of the column', () => {
     const onSortBy = jest.fn();
+    const sortBy = { key: 'packSize', direction: 'asc' as 'asc' | 'desc' };
 
-    const { getByRole } = render(<Example onSortBy={onSortBy} />);
+    const { getByRole } = render(
+      <TestingProvider>
+        <Example onChangeSortBy={onSortBy} sortBy={sortBy} />
+      </TestingProvider>
+    );
 
-    const idHeader = getByRole('button', { name: /header1/i });
+    const idHeader = getByRole('button', { name: /name/i });
 
     act(() => userEvent.click(idHeader));
 
-    expect(onSortBy).toBeCalledWith({ key: 'id' });
+    expect(onSortBy).toBeCalledWith(expect.objectContaining({ key: 'name' }));
   });
 });

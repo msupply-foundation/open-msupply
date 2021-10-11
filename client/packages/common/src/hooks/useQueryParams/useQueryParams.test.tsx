@@ -18,6 +18,10 @@ type ThemeChangererProps = {
 };
 
 describe('useQueryParams', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
   const ThemeChangerer: FC<ThemeChangererProps> = ({
     children,
     paginationRowHeight,
@@ -91,6 +95,10 @@ describe('useQueryParams', () => {
       window.resizeTo(2000, 2000);
     });
 
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
     expect(result.current).toEqual(
       expect.objectContaining({
         sortBy: { key: 'id', isDesc: false, direction: 'asc' },
@@ -114,6 +122,10 @@ describe('useQueryParams', () => {
 
     act(() => {
       window.resizeTo(500, 500);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
 
     expect(result.current).toEqual(

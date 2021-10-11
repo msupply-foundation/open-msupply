@@ -32,8 +32,12 @@ import {
   useDraftDocument,
   useForm,
   Item,
+  getEditableQuantityColumn,
+  useColumns,
+  ColumnSetBuilder,
+  Column,
 } from '@openmsupply-client/common';
-import { reducer } from './reducer';
+import { reducer, onSortBy } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
@@ -42,16 +46,21 @@ import { ExternalURL } from '@openmsupply-client/config';
 const useDraftOutbound = () => {
   const { id } = useParams();
 
-  const { draft, save } = useDraftDocument(
+  const { draft, save, dispatch, state } = useDraftDocument(
     ['transaction', id ?? 'new'],
     reducer,
     getOutboundShipmentDetailViewApi(id ?? '')
   );
-  return { draft, save };
+
+  const onChangeSortBy: (sortBy: Column<ItemRow>) => void = column => {
+    dispatch(onSortBy(column));
+  };
+
+  return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
-  const { draft } = useDraftOutbound();
+  const { draft, onChangeSortBy, sortBy } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -152,6 +161,16 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   }, []);
 
   const { currentTab, onChangeTab } = useTabs('general');
+
+  const defaultColumns = new ColumnSetBuilder<ItemRow>()
+    .addColumn('code')
+    .addColumn('name')
+    .addColumn('packSize')
+    .addColumn(getEditableQuantityColumn())
+    .build();
+
+  const columns = useColumns(defaultColumns, { onChangeSortBy, sortBy });
+
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
@@ -206,7 +225,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
       <Box display="flex" flex={1}>
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
-          <GeneralTab data={draft?.items ?? []} />
+          <GeneralTab
+            columns={columns}
+            data={draft?.items ?? []}
+            sortBy={sortBy}
+          />
         </TabPanel>
 
         <TabPanel sx={{ flex: 1 }} value="transport">
