@@ -1,9 +1,4 @@
-import {
-  Transaction,
-  DefaultDraftAction,
-  Column,
-  InvoiceLine,
-} from '@openmsupply-client/common';
+import { Transaction, Column, InvoiceLine } from '@openmsupply-client/common';
 
 export interface ItemRow extends InvoiceLine {
   updateQuantity: (quantity: number) => void;
@@ -19,7 +14,6 @@ export enum ActionType {
 }
 
 export type CustomerInvoiceAction =
-  | DefaultDraftAction
   | {
       type: ActionType.UpdateQuantity;
       payload: { rowKey: string; quantity: number };

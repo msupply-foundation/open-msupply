@@ -23,4 +23,4 @@ export * from './useSortBy';
 export * from './useSortedData';
 export * from './useWindowDimensions';
 export * from './useDebounce';
-export * from './useDraftDocument';
+export * from './useDocument';

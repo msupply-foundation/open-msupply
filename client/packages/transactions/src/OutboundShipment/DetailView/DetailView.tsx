@@ -29,15 +29,15 @@ import {
   Button,
   PlusCircle,
   Box,
-  useDraftDocument,
   useForm,
   Item,
+  useDocument,
   getEditableQuantityColumn,
   useColumns,
   ColumnSetBuilder,
   Column,
 } from '@openmsupply-client/common';
-import { reducer, onSortBy } from './reducer';
+import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
@@ -47,14 +47,14 @@ import { ItemRow } from './types';
 const useDraftOutbound = () => {
   const { id } = useParams();
 
-  const { draft, save, dispatch, state } = useDraftDocument(
+  const { draft, save, dispatch, state } = useDocument(
     ['transaction', id ?? 'new'],
     reducer,
     getOutboundShipmentDetailViewApi(id ?? '')
   );
 
   const onChangeSortBy: (sortBy: Column<ItemRow>) => void = column => {
-    dispatch(onSortBy(column));
+    dispatch(OutboundAction.onSortBy(column));
   };
 
   return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
