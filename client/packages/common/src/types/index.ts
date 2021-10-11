@@ -6,6 +6,14 @@ type RecordWithId = { id: string };
 
 export interface DomainObject extends RecordWithId, ObjectWithStringKeys {}
 
+export interface Name extends DomainObject {
+  id: string;
+  code: string;
+  name: string;
+  isCustomer: boolean;
+  isSupplier: boolean;
+}
+
 export interface Item extends DomainObject {
   id: string;
   code: string;
@@ -45,7 +53,8 @@ export interface Transaction extends DomainObject {
   confirmed: string;
   invoiceNumber: string;
   total: string;
-  name: string;
+  name?: Name;
+  otherPartyName: string;
   lines: InvoiceLine[];
 }
 
@@ -74,6 +83,7 @@ export interface Invoice extends DomainObject {
   confirmed: string;
   invoiceNumber: string;
   total: string;
-  name: string;
+  name?: Name;
+  otherPartyName: string;
   lines: InvoiceLine[];
 }
