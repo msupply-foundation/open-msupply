@@ -41,7 +41,7 @@ mod graphql {
         let query = r#"{
             names{
                 nodes{
-                    id,
+                    id
                 }
             }
         }"#;
@@ -59,7 +59,7 @@ mod graphql {
         let query = r#"query Names($sort: [NameSortInput]) {
           names(sort: $sort){
               nodes{
-                  id,
+                  id
               }
           }
         }"#;
@@ -85,7 +85,7 @@ mod graphql {
         let query = r#"query Names($filter: [NameFilterInput]) {
           names(filter: $filter){
               nodes{
-                  id,
+                  id
               }
           }
         }"#;

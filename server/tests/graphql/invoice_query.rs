@@ -63,23 +63,23 @@ mod graphql {
         }
 
         let invoice = mock_customer_invoices()[0].clone();
-        let query = format!(
-            r#"{{            
-                invoice(id:\"{}\"){{
-                    id,
-                    status,
-                    lines{{
-                        nodes{{
-                            id,
-                            stockLine{{
+        let query = r#"query Invoice($id: String) {            
+                invoice(id: $id) {
+                    id
+                    status
+                    lines {
+                        nodes {
+                            id
+                            stockLine {
                                 availableNumberOfPacks
-                            }}
-                        }}
-                    }}
-                }}            
-            }}"#,
-            invoice.id
-        );
+                            }
+                        }
+                    }
+                }         
+            }"#;
+        let variables = Some(json!({
+          "id": invoice.id
+        }));
 
         let expected = json!({
             "invoice": {
@@ -108,18 +108,18 @@ mod graphql {
                 "status": InvoiceStatusInput::from(invoice.status),
             },
         });
-        assert_gql_query(&settings, &query, &None, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected).await;
 
         // Test not found error
         assert_gql_not_found(
             &settings,
-            r#"{            
-                invoice(id:\"invalid\"){
-                    id,
-                    status,
+            r#"query InvoiceNotFound($id: String) {
+                invoice(id: $id){
+                    id
+                    status
                     lines{
                         nodes{
-                            id,
+                            id
                             stockLine{
                                 availableNumberOfPacks
                             }
@@ -127,7 +127,9 @@ mod graphql {
                     }
                 }           
             }"#,
-            &None,
+            &Some(json!({
+                "id": "invalid"
+            })),
         )
         .await;
 
