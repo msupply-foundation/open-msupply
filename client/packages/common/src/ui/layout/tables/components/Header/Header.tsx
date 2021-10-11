@@ -1,8 +1,9 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
 import { ObjectWithStringKeys } from '../../../../../types/utility';
-import { SortRule } from '../../../../../hooks/useSortBy';
+import { Column } from '../../columns/types';
 import { SortDesc } from '../../../../icons';
+import { DomainObject } from '../../../../../types';
 
 export const HeaderRow: FC = props => (
   <TableRow
@@ -18,36 +19,35 @@ export const HeaderRow: FC = props => (
   />
 );
 
-interface HeaderCellProps<T extends ObjectWithStringKeys> {
-  onSortBy?: (sortBy: SortRule<T>) => void;
-  isSortable: boolean;
-  isSorted?: boolean;
-  align?: 'left' | 'right' | 'center';
-  columnKey: keyof T;
-  direction?: 'asc' | 'desc';
-  children: ReactNode;
-  width?: number;
-  minWidth?: number;
+interface HeaderCellProps<T extends DomainObject> {
+  column: Column<T>;
 }
 
-export const HeaderCell = <T extends ObjectWithStringKeys>({
-  onSortBy,
-  isSortable,
-  isSorted,
-  align,
-  columnKey,
-  direction,
-  children,
-  width,
-  minWidth,
+export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
+  column,
 }: HeaderCellProps<T>): JSX.Element => {
+  const {
+    minWidth,
+    width,
+    onChangeSortBy,
+    key,
+    sortable,
+    align,
+    sortBy,
+    Header,
+  } = column;
+
+  const { direction, key: currentSortKey } = sortBy ?? {};
+
+  const isSorted = key === currentSortKey;
+
   return (
     <TableCell
       role="columnheader"
       onClick={
-        onSortBy &&
+        onChangeSortBy &&
         (() => {
-          isSortable && onSortBy({ key: columnKey });
+          sortable && onChangeSortBy(column);
         })
       }
       align={align}
@@ -62,20 +62,20 @@ export const HeaderCell = <T extends ObjectWithStringKeys>({
         flex: `${width} 0 auto`,
         fontWeight: 'bold',
       }}
-      aria-label={String(columnKey)}
+      aria-label={String(key)}
       sortDirection={isSorted ? direction : false}
     >
-      {isSortable ? (
+      {sortable ? (
         <TableSortLabel
           hideSortIcon={false}
           active={isSorted}
           direction={direction}
           IconComponent={SortDesc}
         >
-          {children}
+          <Header column={column} />
         </TableSortLabel>
       ) : (
-        children
+        <Header column={column} />
       )}
     </TableCell>
   );
