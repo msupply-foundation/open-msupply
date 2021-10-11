@@ -2,6 +2,7 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod name;
+pub mod stock_line;
 use chrono::NaiveDateTime;
 
 #[derive(Clone)]

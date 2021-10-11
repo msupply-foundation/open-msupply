@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 
 pub struct InvoiceLine {
     pub id: String,
+    pub stock_line_id: Option<String>,
     pub invoice_id: String,
     pub item_id: String,
     pub item_name: String,
@@ -13,10 +14,4 @@ pub struct InvoiceLine {
     pub sell_price_per_pack: f64,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub stock_line: StockLine,
-}
-
-#[derive(Clone)]
-pub struct StockLine {
-    pub available_number_of_packs: i32,
 }
