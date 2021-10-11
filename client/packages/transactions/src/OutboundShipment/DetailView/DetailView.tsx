@@ -42,6 +42,7 @@ import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
+import { ItemRow } from './types';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -76,9 +77,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     addItem(item);
     hideDialog();
   };
-  const addItem = (item: Item) => {
+  const addItem = (item: any) => {
     // TODO: add to dataset and have the reducer add the fn
-    draft?.items?.push({ ...item, updateQuantity: () => {} });
+    draft?.lines?.push({ ...item, updateQuantity: () => {} });
     reset();
   };
   const cancelItem = () => {

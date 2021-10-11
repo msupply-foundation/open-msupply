@@ -59,6 +59,12 @@ export const invoiceDetail = graphql.query(
   }
 );
 
+export const itemList = graphql.query('items', (_, response, context) => {
+  const result = Api.ResolverService.list.item();
+
+  return response(context.data({ invoices: result }));
+});
+
 export const permissionError = graphql.query(
   'error401',
   (_, response, context) =>

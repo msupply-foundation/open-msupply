@@ -43,7 +43,7 @@ const renderOption = (
   <ItemOption {...props} key={item.code}>
     <span style={{ width: 100 }}>{item.code}</span>
     <span style={{ width: 500 }}>{item.name}</span>
-    <span>0</span>
+    <span>{item.availableQuantity}</span>
   </ItemOption>
 );
 
@@ -57,16 +57,20 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     const { items } = await request(
       Environment.API_URL,
       gql`
-        query items {
+        query Query {
           items {
-            id
-            code
-            name
+            data {
+              id
+              name
+              code
+              availableQuantity
+            }
           }
         }
       `
     );
-    return items;
+
+    return items.data;
   };
 
   const t = useTranslation();
@@ -106,12 +110,12 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
         <ModalInputRow
           inputProps={register('quantity')}
           labelKey="label.quantity"
-          defaultValue={item?.quantity}
+          defaultValue={item?.availableQuantity}
         />
         <ModalInputRow
           inputProps={register('packSize', { disabled: true })}
           labelKey="label.packSize"
-          defaultValue={item?.packSize}
+          defaultValue={item?.availableQuantity}
         />
         <Divider />
       </Grid>
