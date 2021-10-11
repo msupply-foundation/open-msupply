@@ -2,8 +2,8 @@ import { Dispatch } from 'react';
 import { produce } from 'immer';
 import {
   Column,
-  DraftActionSet,
-  DraftActionType,
+  DocumentActionSet,
+  DocumentActionType,
   SortBy,
   Transaction,
 } from '@openmsupply-client/common';
@@ -40,25 +40,21 @@ const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
   return 0;
 };
 
-export const updateQuantity = (
-  rowKey: string,
-  quantity: number
-): CustomerInvoiceAction => ({
-  type: ActionType.UpdateQuantity,
-  payload: { rowKey, quantity },
-});
-
-export const onSortBy = (column: Column<ItemRow>): CustomerInvoiceAction => ({
-  type: ActionType.SortBy,
-  payload: { column },
-});
-
 export const OutboundAction = {
-  updateQuantity,
-  onSortBy,
+  updateQuantity: (
+    rowKey: string,
+    quantity: number
+  ): CustomerInvoiceAction => ({
+    type: ActionType.UpdateQuantity,
+    payload: { rowKey, quantity },
+  }),
+  onSortBy: (column: Column<ItemRow>): CustomerInvoiceAction => ({
+    type: ActionType.SortBy,
+    payload: { column },
+  }),
 };
 
-interface OutboundShipmentStateShape {
+export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
   sortBy: SortBy<ItemRow>;
 }
@@ -70,22 +66,22 @@ export const getInitialState = (): OutboundShipmentStateShape => ({
 
 export const reducer = (
   data: Transaction = placeholderTransaction,
-  dispatch: Dispatch<DraftActionSet<CustomerInvoiceAction>> | null
+  dispatch: Dispatch<DocumentActionSet<CustomerInvoiceAction>> | null
 ): ((
   state: OutboundShipmentStateShape | undefined,
-  action: CustomerInvoiceAction
+  action: DocumentActionSet<CustomerInvoiceAction>
 ) => OutboundShipmentStateShape) =>
   produce(
     (
       state: OutboundShipmentStateShape = getInitialState(),
-      action: DraftActionSet<CustomerInvoiceAction>
+      action: DocumentActionSet<CustomerInvoiceAction>
     ) => {
       switch (action.type) {
-        case DraftActionType.Init: {
+        case DocumentActionType.Init: {
           return state;
         }
 
-        case DraftActionType.Merge: {
+        case DocumentActionType.Merge: {
           const { draft } = state;
 
           Object.keys(draft).forEach(key => {
