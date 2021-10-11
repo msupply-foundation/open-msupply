@@ -26,6 +26,7 @@ pub struct NameFilterInput {
 impl From<NameFilterInput> for NameFilter {
     fn from(f: NameFilterInput) -> Self {
         NameFilter {
+            id: None,
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
             is_customer: f.is_customer,
@@ -36,7 +37,7 @@ impl From<NameFilterInput> for NameFilter {
 
 #[derive(PartialEq, Debug)]
 pub struct NameNode {
-    name: Name,
+    pub name: Name,
 }
 
 #[Object]
