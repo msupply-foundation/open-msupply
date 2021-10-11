@@ -1,7 +1,7 @@
 use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::ContextExt,
-    service::invoice::{get_invoice, insert_supplier_invoice},
+    service::invoice::{get_invoice, insert_supplier_invoice, update_supplier_invoice},
 };
 
 use self::supplier_invoice::{
@@ -39,7 +39,12 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateSupplierInvoiceInput,
     ) -> UpdateSupplierInvoiceResponse {
-        todo!();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match update_supplier_invoice(connection_manager, input.into()) {
+            Ok(id) => get_invoice(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn delete_supplier_invoice(
