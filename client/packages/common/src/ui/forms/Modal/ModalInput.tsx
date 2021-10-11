@@ -20,7 +20,7 @@ export const ModalInput: React.FC<ModalInputProps> = ({
   inputProps,
 }) => {
   return (
-    <Grid item xs={10} sx={{ marginBottom: '4px' }}>
+    <Grid item xs={10}>
       <Input
         defaultValue={defaultValue}
         disableUnderline
