@@ -2,6 +2,7 @@ import {
   Item,
   Transaction,
   DefaultDraftAction,
+  Column,
 } from '@openmsupply-client/common';
 
 export interface ItemRow extends Item {
@@ -14,6 +15,7 @@ export interface OutboundShipment extends Transaction {
 
 export enum ActionType {
   UpdateQuantity = 'OutboundShipment/updateQuantity',
+  SortBy = 'OutboundShipment/sortBy',
 }
 
 export type CustomerInvoiceAction =
@@ -21,4 +23,8 @@ export type CustomerInvoiceAction =
   | {
       type: ActionType.UpdateQuantity;
       payload: { rowKey: string; quantity: number };
+    }
+  | {
+      type: ActionType.SortBy;
+      payload: { column: Column<ItemRow> };
     };

@@ -3,6 +3,9 @@ import { ComponentMeta, Story } from '@storybook/react';
 import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useSortBy } from '../../../../../hooks/useSortBy';
+import { useColumns } from '../../hooks';
+import { ColumnSetBuilder } from '../../utils';
+import { Item } from '../../../../../types';
 
 export default {
   title: 'Table/HeaderRow',
@@ -10,7 +13,18 @@ export default {
 } as ComponentMeta<typeof HeaderRow>;
 
 const Template: Story = () => {
-  const { sortBy, onChangeSortBy } = useSortBy({ key: 'id' });
+  const { onChangeSortBy, sortBy } = useSortBy<Item>({ key: 'name' });
+
+  const [column1, column2] = useColumns(
+    new ColumnSetBuilder<Item>()
+      .addColumn('name')
+      .addColumn('packSize')
+      .build(),
+    { onChangeSortBy, sortBy }
+  );
+
+  if (!column1 || !column2) return <></>;
+
   return (
     <Table
       sx={{
@@ -21,25 +35,8 @@ const Template: Story = () => {
     >
       <TableHead>
         <HeaderRow>
-          <HeaderCell
-            width={100}
-            minWidth={100}
-            onSortBy={onChangeSortBy}
-            isSortable
-            isSorted={sortBy.key === 'id'}
-            columnKey="id"
-            direction={sortBy.direction}
-          >
-            Header1
-          </HeaderCell>
-          <HeaderCell
-            width={100}
-            minWidth={100}
-            isSortable={false}
-            columnKey="quantity"
-          >
-            Header2
-          </HeaderCell>
+          <HeaderCell column={column1} />
+          <HeaderCell column={column1} />
         </HeaderRow>
       </TableHead>
     </Table>

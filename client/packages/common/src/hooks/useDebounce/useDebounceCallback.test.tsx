@@ -1,8 +1,12 @@
-import { waitFor } from '@testing-library/dom';
 import { renderHook } from '@testing-library/react-hooks';
+import { act } from 'react-dom/test-utils';
 import { useDebounceCallback } from './useDebounceCallback';
 
 describe('useDebounceCallback', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
   it('returns a function which debounces consecutive calls', async () => {
     // Setting up a simple value for incrementing and a function which is a closure
     // over the value which will be incremented. The side effect makes this  somewhat flakey
@@ -15,18 +19,20 @@ describe('useDebounceCallback', () => {
     };
 
     const { result } = renderHook(() => {
-      const cb = useDebounceCallback(func, []);
+      const cb = useDebounceCallback(func, [], 1000);
 
       return cb;
     });
 
     result.current();
     result.current();
-    await result.current();
+    result.current();
 
-    await waitFor(() => {
-      expect(i).toBe(1);
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
+
+    expect(i).toBe(1);
   });
 
   it('calls the function again correctly after a wait period has completed', async () => {
@@ -40,20 +46,26 @@ describe('useDebounceCallback', () => {
 
     const { result } = renderHook(() => {
       const cb = useDebounceCallback(func, [], 10);
-
       return cb;
     });
 
     result.current();
     result.current();
-    await result.current();
     result.current();
-    await result.current();
-    await result.current();
 
-    await waitFor(() => {
-      expect(i).toBe(3);
+    act(() => {
+      jest.advanceTimersByTime(10);
     });
+
+    result.current();
+    result.current();
+    result.current();
+
+    act(() => {
+      jest.advanceTimersByTime(10);
+    });
+
+    expect(i).toBe(2);
   });
 
   it('returns a function which resolves to the final value', async () => {
@@ -63,23 +75,22 @@ describe('useDebounceCallback', () => {
       return i;
     };
     // Here we set up a debounced callback and call it multiple times and compare that the
-    // resolved value from each invocation aligns with with what the 'state' of i "should be",
-    // which will mean that the resolved values are equal to the final state of the consecutive calls.
+    // resolved value from the last invocation aligns with with what the 'state' of i "should be".
     const { result } = renderHook(() => {
       const cb = useDebounceCallback(func, [], 10);
 
       return cb;
     });
 
-    const val1 = result.current();
-    const val2 = result.current();
+    result.current();
+    result.current();
     const val3 = result.current();
 
-    await waitFor(() => {
-      expect(val1).resolves.toBe(1);
-      expect(val2).resolves.toBe(1);
-      expect(val3).resolves.toBe(1);
+    act(() => {
+      jest.advanceTimersByTime(100);
     });
+
+    return expect(val3).resolves.toBe(1);
   });
 
   it('is unaffected by re-renders', async () => {
@@ -101,11 +112,13 @@ describe('useDebounceCallback', () => {
     result.current();
     rerender();
 
-    await result.current();
+    result.current();
 
-    await waitFor(() => {
-      expect(i).toBe(1);
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
+
+    expect(i).toBe(1);
   });
 
   it('creates a new debounced function whenever the deps list changes', async () => {
@@ -129,11 +142,13 @@ describe('useDebounceCallback', () => {
     result.current();
     rerender({});
 
-    await result.current();
+    result.current();
 
-    await waitFor(() => {
-      expect(i).toBe(3);
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
+
+    expect(i).toBe(3);
   });
 
   it('creates debounces normally if a dependency in the deps list has not changed', async () => {
@@ -154,11 +169,12 @@ describe('useDebounceCallback', () => {
     rerender(1);
     result.current();
     rerender(1);
+    result.current();
 
-    await result.current();
-
-    await waitFor(() => {
-      expect(i).toBe(1);
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
+
+    expect(i).toBe(1);
   });
 });

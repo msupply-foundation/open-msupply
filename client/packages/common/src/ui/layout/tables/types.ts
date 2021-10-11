@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { ObjectWithStringKeys, DomainObject } from './../../../types';
 import { Pagination } from '../../../hooks/usePagination';
-import { SortBy, SortRule } from '../../../hooks/useSortBy';
+import { SortRule } from '../../../hooks/useSortBy';
 import { Column } from './columns/types';
 
 export interface QueryProps<D extends ObjectWithStringKeys> {
@@ -19,9 +19,7 @@ export interface QueryResponse<T> {
 export interface TableProps<T extends DomainObject> {
   columns: Column<T>[];
   data?: T[];
-  sortBy: SortBy<T>;
   isLoading?: boolean;
-  onSortBy: (sortRule: SortRule<T>) => void;
   pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
