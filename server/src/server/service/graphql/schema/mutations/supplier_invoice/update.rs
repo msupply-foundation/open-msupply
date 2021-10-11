@@ -11,9 +11,7 @@ use crate::{
             ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
             RecordDoesNotExist,
         },
-        types::{
-            DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, InvoiceResponse, NameNode,
-        },
+        types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
     service::{invoice::UpdateSupplierInvoiceError, SingleRecordError},
 };

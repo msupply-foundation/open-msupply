@@ -1,24 +1,22 @@
 use async_graphql::*;
 
-use crate::server::service::graphql::schema::{
-    mutations::{
-        CannotEditFinalisedInvoice, DeleteResponse, InvoiceDoesNotBelongToCurrentStore,
-        NotASupplierInvoice, RecordDoesNotExist,
+use crate::{
+    server::service::graphql::schema::{
+        mutations::{
+            CannotEditFinalisedInvoice, DeleteResponse, InvoiceDoesNotBelongToCurrentStore,
+            NotASupplierInvoice, RecordDoesNotExist,
+        },
+        types::{DatabaseError, ErrorWrapper},
     },
-    types::{DatabaseError, ErrorWrapper},
+    service::invoice::DeleteSupplierInvoiceError,
 };
 
 use super::CannotDeleteInvoiceWithLines;
 
-#[derive(InputObject)]
-pub struct DeleteSupplierInvoiceInput {
-    pub id: String,
-}
-
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceResponse {
     Error(ErrorWrapper<DeleteSupplierInvoiceErrorInterface>),
-    DeleteResponse(DeleteResponse),
+    Response(DeleteResponse),
 }
 
 #[derive(Interface)]
@@ -30,4 +28,42 @@ pub enum DeleteSupplierInvoiceErrorInterface {
     NotASupplierInvoice(NotASupplierInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+}
+
+impl From<Result<String, DeleteSupplierInvoiceError>> for DeleteSupplierInvoiceResponse {
+    fn from(result: Result<String, DeleteSupplierInvoiceError>) -> Self {
+        match result {
+            Ok(id) => DeleteSupplierInvoiceResponse::Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
+    }
+}
+
+impl From<DeleteSupplierInvoiceError> for DeleteSupplierInvoiceResponse {
+    fn from(error: DeleteSupplierInvoiceError) -> Self {
+        use DeleteSupplierInvoiceErrorInterface as OutError;
+        let error = match error {
+            DeleteSupplierInvoiceError::InvoiceDoesNotExists => {
+                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+            }
+            DeleteSupplierInvoiceError::DatabaseError(error) => {
+                OutError::DatabaseError(DatabaseError(error))
+            }
+
+            DeleteSupplierInvoiceError::NotASupplierInvoice => {
+                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            }
+            DeleteSupplierInvoiceError::NotThisStoreInvoice => {
+                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
+            }
+            DeleteSupplierInvoiceError::CannotEditFinalised => {
+                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+            }
+            DeleteSupplierInvoiceError::InvoiceLinesExists(lines) => {
+                OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(lines.into()))
+            }
+        };
+
+        DeleteSupplierInvoiceResponse::Error(ErrorWrapper { error })
+    }
 }
