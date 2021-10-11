@@ -1,5 +1,5 @@
 import { ObjectWithStringKeys } from './../../common/src/types/utility';
-import { Transaction, SortBy, ListApi } from '@openmsupply-client/common';
+import { Transaction, Name, SortBy, ListApi } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
@@ -25,6 +25,21 @@ export const getDetailQuery = (): string => gql`
         expiry
         quantity
       }
+    }
+  }
+`;
+
+export const getNameListQuery = (): string => gql`
+  query {
+    names {
+      data {
+        id
+        name
+        code
+        isCustomer
+        isSupplier
+      }
+      totalLength
     }
   }
 `;
@@ -79,6 +94,14 @@ export const deleteFn = async (invoices: Transaction[]) => {
   await request(Environment.API_URL, getDeleteMutation(), {
     invoices,
   });
+};
+
+export const nameListQueryFn = async (): Promise<{
+  data: Name[];
+  totalLength: number;
+}> => {
+  const { names } = await request(Environment.API_URL, getNameListQuery());
+  return names;
 };
 
 export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
