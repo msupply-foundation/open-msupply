@@ -1,10 +1,11 @@
 mod graphql {
+    use crate::graphql::{assert_gql_not_found, assert_gql_query};
+    use chrono::{DateTime, Utc};
     use remote_server::{
         database::{
-            loader::get_loaders,
             mock::{
-                mock_invoice_lines, mock_invoices, mock_items, mock_names, mock_stock_lines,
-                mock_stores,
+                mock_customer_invoices, mock_invoice_lines, mock_invoices, mock_items, mock_names,
+                mock_stock_lines, mock_stores,
             },
             repository::{
                 get_repositories, InvoiceLineRepository, InvoiceRepository, ItemRepository,
@@ -12,19 +13,17 @@ mod graphql {
             },
             schema::{InvoiceLineRow, InvoiceRow, ItemRow, NameRow, StockLineRow, StoreRow},
         },
-        server::{
-            data::{LoaderRegistry, RepositoryRegistry},
-            service::graphql::config as graphql_config,
-        },
+        server::service::graphql::schema::types::InvoiceStatusInput,
         util::test_db,
     };
+
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_invoice_query() {
         let settings = test_db::get_test_settings("omsupply-database-gql-invoice-query");
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
-        let loaders = get_loaders(&settings).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
@@ -50,60 +49,114 @@ mod graphql {
         for item in mock_items {
             item_repository.insert_one(&item).await.unwrap();
         }
-        for stock_line in mock_stocks {
+        for stock_line in &mock_stocks {
             stock_repository.insert_one(&stock_line).await.unwrap();
         }
-        for invoice in mock_invoices {
+        for invoice in &mock_invoices {
             invoice_repository.insert_one(&invoice).await.unwrap();
         }
-        for invoice_line in mock_invoice_lines {
+        for invoice_line in &mock_invoice_lines {
             invoice_line_repository
                 .insert_one(&invoice_line)
                 .await
                 .unwrap();
         }
 
-        let repository_registry = RepositoryRegistry { repositories };
-        let loader_registry = LoaderRegistry { loaders };
+        let invoice = mock_customer_invoices()[0].clone();
+        let query = format!(
+            r#"{{            
+                invoice(id:\"{}\"){{
+                    id,
+                    status,
+                    lines{{
+                        nodes{{
+                            id,
+                            stockLine{{
+                                availableNumberOfPacks
+                            }}
+                        }}
+                    }}
+                }}            
+            }}"#,
+            invoice.id
+        );
 
-        let repository_registry = actix_web::web::Data::new(repository_registry);
-        let loader_registry = actix_web::web::Data::new(loader_registry);
+        let expected = json!({
+            "invoice": {
+                "id": invoice.id,
+                "lines": {
+                    "nodes": &mock_invoice_lines
+                        .iter()
+                        .filter(|invoice_line| invoice_line.invoice_id == invoice.id)
+                        .map(|invoice_line| json!({
+                            "id": invoice_line.id,
+                            "stockLine": {
+                                "availableNumberOfPacks": (&mock_stocks)
+                                    .iter()
+                                    .find(|stock_line|
+                                        invoice_line.stock_line_id
+                                        .as_ref()
+                                        .map(|stock_line_id| &stock_line.id == stock_line_id)
+                                        .unwrap_or(false))
+                                    .unwrap()
+                                    .available_number_of_packs
+                                        + invoice_line.available_number_of_packs,
+                            },
+                        }))
+                        .collect::<Vec<serde_json::Value>>(),
+                },
+                "status": InvoiceStatusInput::from(invoice.status),
+            },
+        });
+        assert_gql_query(&settings, &query, &None, &expected).await;
 
-        let mut app = actix_web::test::init_service(
-            actix_web::App::new()
-                .data(repository_registry.clone())
-                .data(loader_registry.clone())
-                .configure(graphql_config(repository_registry, loader_registry)),
+        // Test not found error
+        assert_gql_not_found(
+            &settings,
+            r#"{            
+                invoice(id:\"invalid\"){
+                    id,
+                    status,
+                    lines{
+                        nodes{
+                            id,
+                            stockLine{
+                                availableNumberOfPacks
+                            }
+                        }
+                    }
+                }           
+            }"#,
+            &None,
         )
         .await;
 
-        // Test query:
-        let payload =
-            r#"{"query":"{invoice(id:\"customer_invoice_a\"){id,status,lines{nodes{id,stockLine{availableNumberOfPacks}}}}}"}"#
-                .as_bytes();
-        let req = actix_web::test::TestRequest::post()
-            .header("content-type", "application/json")
-            .set_payload(payload)
-            .uri("/graphql")
-            .to_request();
-        let res = actix_web::test::read_response(&mut app, req).await;
-        let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-        // TODO find a more robust way to compare the results
-        assert_eq!(
-            body,
-            "{\"data\":{\"invoice\":{\"id\":\"customer_invoice_a\",\"lines\":{\"nodes\":[{\"id\":\"customer_invoice_a_line_a\",\"stockLine\":{\"availableNumberOfPacks\":2}},{\"id\":\"customer_invoice_a_line_b\",\"stockLine\":{\"availableNumberOfPacks\":4}}]},\"status\":\"DRAFT\"}}}"
-        );
+        // test time range filter
+        let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
+                invoices(filter: $filter){
+                    nodes {
+                        id
+                    }
+                }
+            }"#;
 
-        // Test not found error
-        let payload = r#"{"query":"{invoice(id:\"invalid\"){id}}"}"#.as_bytes();
-        let req = actix_web::test::TestRequest::post()
-            .header("content-type", "application/json")
-            .set_payload(payload)
-            .uri("/graphql")
-            .to_request();
-        let res = actix_web::test::read_response(&mut app, req).await;
-        let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-        // TODO find a more robust way to compare the results
-        assert!(body.contains("row not found"));
+        let filter_time = mock_invoices.get(1).unwrap().entry_datetime;
+        let variables = Some(json!({
+          "filter": {
+            "entryDatetime": {
+                "beforeOrEqualTo": DateTime::<Utc>::from_utc(filter_time, Utc).to_rfc3339()
+            },
+          }
+        }));
+        let expected = json!({
+            "invoices": {
+                "nodes": mock_invoices.iter()
+                    .filter(|invoice| invoice.entry_datetime <= filter_time)
+                    .map(|invoice| json!({
+                        "id": invoice.id,
+                    })).collect::<Vec<serde_json::Value>>(),
+            },
+        });
+        assert_gql_query(&settings, &query, &variables, &expected).await;
     }
 }
