@@ -1,4 +1,5 @@
 import { JSXElementConstructor } from 'react';
+import { SortBy } from '../../../../hooks';
 import { LocaleKey } from './../../../../intl/intlHelpers';
 import { DomainObject } from './../../../../types';
 
@@ -45,6 +46,8 @@ export interface Column<T extends DomainObject> {
   sortDescFirst: boolean;
   sortType: 'datetime' | 'numeric' | 'alphanumeric';
   sortInverted: boolean;
+  onChangeSortBy?: (column: Column<T>) => void;
+  sortBy?: SortBy<T>;
 
   width: number;
   minWidth: number;

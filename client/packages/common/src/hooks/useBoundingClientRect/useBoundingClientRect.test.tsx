@@ -7,6 +7,10 @@ import { useBoundingClientRect } from './useBoundingClientRect';
 import userEvent from '@testing-library/user-event';
 
 describe('useBoundingClientRect', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
   it('Returns a rect with dimensions', () => {
     // NOTE: JSDom doesn't have a layout engine so the actual rect is unfortunately
     // just zero'd out.
@@ -15,6 +19,10 @@ describe('useBoundingClientRect', () => {
       const rect = useBoundingClientRect(ref);
 
       return rect;
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
 
     expect(result.current).toEqual(
@@ -50,6 +58,10 @@ describe('useBoundingClientRect', () => {
 
     const { getByText, getByRole } = render(<X />);
 
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
     // Should have rendered twice - once for a standard render, another to set the rect.
     const hasRenderedTwice = getByText(/2/);
 
@@ -57,6 +69,10 @@ describe('useBoundingClientRect', () => {
     const button = getByRole('button');
     await act(async () => {
       await userEvent.click(button);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
     });
 
     const hasRenderedThrice = getByText(/3/);
