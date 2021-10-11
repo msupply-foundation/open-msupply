@@ -14,8 +14,10 @@ export interface ButtonProps {
 
 export interface ModalProps {
   cancelButton?: JSX.Element;
+  height?: number;
   nextButton?: JSX.Element;
   okButton?: JSX.Element;
+  width?: number;
 }
 export interface DialogProps {
   onClose?: () => void;
@@ -41,17 +43,23 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
     hideDialog();
   };
 
-  const Modal: React.FC<ModalProps> = ({
+  const ModalComponent: React.FC<ModalProps> = ({
     cancelButton,
     children,
+    height,
     nextButton,
     okButton,
+    width,
   }) => (
     <Dialog
       open={open}
       onClose={handleClose}
       PaperProps={{
-        sx: { borderRadius: '20px', minHeight: '400px', minWidth: '500px' },
+        sx: {
+          borderRadius: '20px',
+          minHeight: `${height || '400'}px`,
+          minWidth: `${width || '500'}px`,
+        },
       }}
     >
       <DialogTitle
@@ -71,6 +79,8 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
       </DialogActions>
     </Dialog>
   );
+
+  const Modal = React.useMemo(() => ModalComponent, [open]);
 
   return { hideDialog, Modal, open, showDialog };
 };
