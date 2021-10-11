@@ -16,10 +16,23 @@ impl<'a> InvoiceRepository<'a> {
         InvoiceRepository { connection }
     }
 
-    pub fn insert_one(&self, invoice_row: &InvoiceRow) -> Result<(), RepositoryError> {
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::invoice::dsl::*;
         diesel::insert_into(invoice)
-            .values(invoice_row)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "sqlite")]
+    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
+        diesel::replace_into(invoice)
+            .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
