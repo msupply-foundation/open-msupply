@@ -15,25 +15,25 @@ pub struct ListResult<T> {
 
 #[derive(Clone, Debug)]
 pub enum ListError {
-    DBError(RepositoryError),
+    DatabaseError(RepositoryError),
     LimitBelowMin { limit: u32, min: u32 },
     LimitAboveMax { limit: u32, max: u32 },
 }
 
 pub enum SingleRecordError {
-    DBError(RepositoryError),
+    DatabaseError(RepositoryError),
     NotFound(String),
 }
 
 impl From<RepositoryError> for ListError {
     fn from(error: RepositoryError) -> Self {
-        ListError::DBError(error)
+        ListError::DatabaseError(error)
     }
 }
 
 impl From<RepositoryError> for SingleRecordError {
     fn from(error: RepositoryError) -> Self {
-        SingleRecordError::DBError(error)
+        SingleRecordError::DatabaseError(error)
     }
 }
 

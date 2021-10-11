@@ -348,6 +348,7 @@ mod repository_test {
             .query(
                 Pagination::new(),
                 Some(NameFilter {
+                    id: None,
                     name: Some(SimpleStringFilter {
                         equal_to: Some("name_1".to_string()),
                         like: None,
@@ -366,6 +367,7 @@ mod repository_test {
             .query(
                 Pagination::new(),
                 Some(NameFilter {
+                    id: None,
                     name: Some(SimpleStringFilter {
                         equal_to: None,
                         like: Some("me_".to_string()),
@@ -383,6 +385,7 @@ mod repository_test {
             .query(
                 Pagination::new(),
                 Some(NameFilter {
+                    id: None,
                     name: None,
                     code: Some(SimpleStringFilter {
                         equal_to: Some("code1".to_string()),
@@ -661,13 +664,13 @@ mod repository_test {
         let customer_invoice_repo = CustomerInvoiceRepository::new(&connection);
 
         let item1 = data::invoice_1();
-        repo.insert_one(&item1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
+        repo.insert_one(&item1).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // customer invoice
         let item1 = data::invoice_2();
-        repo.insert_one(&item1).await.unwrap();
+        repo.insert_one(&item1).unwrap();
         let loaded_item = customer_invoice_repo
             .find_many_by_name_id(&item1.name_id)
             .await
@@ -702,8 +705,8 @@ mod repository_test {
             .await
             .unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
-        invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
-        invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
+        invoice_repo.insert_one(&data::invoice_1()).unwrap();
+        invoice_repo.insert_one(&data::invoice_2()).unwrap();
 
         let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
@@ -748,8 +751,8 @@ mod repository_test {
             .await
             .unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
-        invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
-        invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
+        invoice_repo.insert_one(&data::invoice_1()).unwrap();
+        invoice_repo.insert_one(&data::invoice_2()).unwrap();
         let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.insert_one(&item1).await.unwrap();
