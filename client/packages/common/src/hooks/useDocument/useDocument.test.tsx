@@ -1,6 +1,7 @@
 import React, { Dispatch, FC } from 'react';
 import {
   DefaultDocumentAction,
+  DocumentActionType,
   TestingProvider,
   TestingRouter,
 } from '@openmsupply-client/common';
@@ -23,17 +24,21 @@ describe('useDocument', () => {
     );
   };
 
+  // Simple API with some mock returns from onRead and onUpdate to simulate fetches.
   const api: Api<{ id: string; data: string }, { id: string; data: string }> = {
     onRead: async () => ({ id: '2', data: 'data' }),
     onUpdate: async (data: { id: string; data: string }) => data,
   };
 
+  // Simple state to use in all of the tests. Merged and init are set within the reducer
+  // when the corresponding actions are dispatched.
   const getInitialState = () => ({
     merged: false,
     init: false,
     draft: { id: '1', data: 'data' },
   });
 
+  // Reducer to help us test what actions are being dispatched.
   const reducer =
     (
       data: { id: string; data: string } | undefined,
@@ -41,11 +46,11 @@ describe('useDocument', () => {
       _: Dispatch<DefaultDocumentAction> | null
     ) =>
     (state = getInitialState(), action: DefaultDocumentAction) => {
-      if (action.type === 'Draft/init') {
+      if (action.type === DocumentActionType.Init) {
         return { ...state, ...data, init: true };
       }
 
-      if (action.type === 'Draft/merge') {
+      if (action.type === DocumentActionType.Merge) {
         return { ...state, ...data, merged: true };
       }
 

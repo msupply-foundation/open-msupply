@@ -18,8 +18,8 @@ export interface DocumentState<Document, State, ServerData, ActionSet> {
 }
 
 export enum DocumentActionType {
-  Init = 'Draft/init',
-  Merge = 'Draft/merge',
+  Init = 'Document/init',
+  Merge = 'Document/merge',
 }
 
 export type DefaultDocumentAction =
