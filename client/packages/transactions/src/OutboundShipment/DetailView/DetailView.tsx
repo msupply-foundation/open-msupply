@@ -42,6 +42,7 @@ import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
+import { ItemRow } from './types';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -76,9 +77,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     addItem(item);
     hideDialog();
   };
-  const addItem = (item: Item) => {
+  const addItem = (item: any) => {
     // TODO: add to dataset and have the reducer add the fn
-    draft?.items?.push({ ...item, updateQuantity: () => {} });
+    draft?.lines?.push({ ...item, updateQuantity: () => {} });
     reset();
   };
   const cancelItem = () => {
@@ -163,9 +164,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const { currentTab, onChangeTab } = useTabs('general');
 
   const defaultColumns = new ColumnSetBuilder<ItemRow>()
-    .addColumn('code')
-    .addColumn('name')
-    .addColumn('packSize')
+    .addColumn('itemCode')
+    .addColumn('itemName')
+    .addColumn('expiry')
     .addColumn(getEditableQuantityColumn())
     .build();
 
@@ -227,7 +228,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
           <GeneralTab
             columns={columns}
-            data={draft?.items ?? []}
+            data={draft.lines ?? []}
             sortBy={sortBy}
           />
         </TabPanel>

@@ -5,8 +5,8 @@ import { request, gql } from 'graphql-request';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getDetailQuery = (): string => gql`
-  query transaction($id: String!) {
-    transaction(id: $id) {
+  query invoice($id: String!) {
+    invoice(id: $id) {
       id
       color
       comment
@@ -18,11 +18,11 @@ export const getDetailQuery = (): string => gql`
       total
       color
       name
-      items {
+      lines {
         id
-        code
-        name
-        packSize
+        itemCode
+        itemName
+        expiry
         quantity
       }
     }
@@ -30,8 +30,8 @@ export const getDetailQuery = (): string => gql`
 `;
 
 export const getMutation = (): string => gql`
-  mutation upsertTransaction($transactionPatch: TransactionPatch) {
-    upsertTransaction(transaction: $transactionPatch) {
+  mutation updateInvoice($invoicePatch: InvoicePatch) {
+    updateInvoice(invoice: $invoicePatch) {
       id
       color
       comment
@@ -48,16 +48,16 @@ export const getMutation = (): string => gql`
 `;
 
 export const getDeleteMutation = (): string => gql`
-  mutation deleteTransactions($transactions: [TransactionPatch]) {
-    deleteTransactions(transactions: $transactions) {
+  mutation deleteInvoices($invoices: [InvoicePatch]) {
+    deleteInvoices(invoices: $invoices) {
       id
     }
   }
 `;
 
 export const getListQuery = (): string => gql`
-  query transactions($first: Int, $offset: Int, $sort: String, $desc: Boolean) {
-    transactions(first: $first, offset: $offset, sort: $sort, desc: $desc) {
+  query invoices($first: Int, $offset: Int, $sort: String, $desc: Boolean) {
+    invoices(first: $first, offset: $offset, sort: $sort, desc: $desc) {
       data {
         id
         color
@@ -75,9 +75,9 @@ export const getListQuery = (): string => gql`
   }
 `;
 
-export const deleteFn = async (transactions: Transaction[]) => {
+export const deleteFn = async (invoices: Transaction[]) => {
   await request(Environment.API_URL, getDeleteMutation(), {
-    transactions,
+    invoices,
   });
 };
 
@@ -88,29 +88,30 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
 }): Promise<{ data: Transaction[]; totalLength: number }> => {
   const { first, offset, sortBy } = queryParams;
 
-  const { transactions } = await request(Environment.API_URL, getListQuery(), {
+  const { invoices } = await request(Environment.API_URL, getListQuery(), {
     first,
     offset,
     sort: sortBy.key,
     desc: sortBy.isDesc,
   });
 
-  return transactions;
+  return invoices;
 };
 
 export const detailQueryFn = (id: string) => async (): Promise<Transaction> => {
   const result = await request(Environment.API_URL, getDetailQuery(), {
     id,
   });
-  const { transaction } = result;
-  return transaction;
+  const { invoice } = result;
+
+  return invoice;
 };
 
 export const updateFn = async (updated: Transaction): Promise<Transaction> => {
-  const patch = { transactionPatch: updated };
+  const patch = { invoicePatch: updated };
   const result = await request(Environment.API_URL, getMutation(), patch);
-  const { upsertTransaction } = result;
-  return upsertTransaction;
+  const { updateInvoice } = result;
+  return updateInvoice;
 };
 
 export const OutboundShipmentListViewApi: ListApi<Transaction> = {

@@ -12,6 +12,6 @@ export const placeholderTransaction: OutboundShipment = {
   entered: '',
   confirmed: '',
   invoiceNumber: '',
-  items: [],
+  lines: [],
   dispatch: null,
 };

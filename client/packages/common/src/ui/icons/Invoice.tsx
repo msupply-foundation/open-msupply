@@ -1,7 +1,7 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const Invoice = (props: SvgIconProps): JSX.Element => {
+export const InvoiceIcon = (props: SvgIconProps): JSX.Element => {
   const combinedProps: SvgIconProps = {
     color: 'primary',
     style: {
