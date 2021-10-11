@@ -4,6 +4,14 @@ export interface Item {
   name: string;
 }
 
+export interface Name {
+  id: string;
+  code: string;
+  name: string;
+  isCustomer: boolean;
+  isSupplier: boolean;
+}
+
 export interface ResolvedItem extends Item {
   availableQuantity: number;
 }
@@ -48,9 +56,11 @@ export interface Invoice {
   confirmed: string;
   invoiceNumber: string;
   total: string;
-  name: string;
+  nameId: string;
 }
 
 export interface ResolvedInvoice extends Invoice {
   lines: InvoiceLine[];
+  name: Name;
+  otherPartyName: string;
 }
