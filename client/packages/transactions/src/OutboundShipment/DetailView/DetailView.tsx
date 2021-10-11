@@ -5,11 +5,12 @@ import {
   Circle,
   Clock,
   Copy,
-  Field,
+  DialogButton,
+  PanelField,
   Grid,
-  Label,
+  PanelLabel,
   Rewind,
-  Row,
+  PanelRow,
   Typography,
   useDetailPanel,
   useFormatDate,
@@ -29,6 +30,8 @@ import {
   PlusCircle,
   Box,
   useDraftDocument,
+  useForm,
+  Item,
   getEditableQuantityColumn,
   useColumns,
   ColumnSetBuilder,
@@ -37,9 +40,8 @@ import {
 import { reducer, onSortBy } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
+import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
-import { DialogButton } from '@openmsupply-client/common/src/ui/components/buttons/DialogButton';
-import { ItemRow } from './types';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -63,13 +65,28 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const addItem = () => {
-    console.info('item added 😉');
+  const {
+    register,
+    reset,
+    handleSubmit,
+    setValue,
+    formState: { isDirty, isValid },
+  } = useForm({ mode: 'onBlur' });
+  const addItemClose = (item: Item) => {
+    addItem(item);
     hideDialog();
   };
-  const addAnotherItem = () => {
-    console.info('item added 😉');
+  const addItem = (item: Item) => {
+    // TODO: add to dataset and have the reducer add the fn
+    draft?.items?.push({ ...item, updateQuantity: () => {} });
+    reset();
   };
+  const cancelItem = () => {
+    hideDialog();
+    reset();
+  };
+  const onSubmit = handleSubmit(addItemClose);
+  const onOkNext = handleSubmit(addItem);
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
   });
@@ -90,9 +107,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         titleKey: 'heading.additional-info',
         children: [
           <Grid container key="additional-info">
-            <Row>
-              <Label>{t('label.color')}</Label>
-              <Field>
+            <PanelRow>
+              <PanelLabel>{t('label.color')}</PanelLabel>
+              <PanelField>
                 <Circle htmlColor={draft?.color} sx={{ width: 8 }} />
                 <span
                   style={{
@@ -103,16 +120,16 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
                 >
                   {draft?.color}
                 </span>
-              </Field>
-            </Row>
-            <Row>
-              <Label>{t('label.entered')}</Label>
-              <Field>{entered}</Field>
-            </Row>
-            <Row>
-              <Label>{t('label.status')}</Label>
-              <Field>{draft?.status}</Field>
-            </Row>
+              </PanelField>
+            </PanelRow>
+            <PanelRow>
+              <PanelLabel>{t('label.entered')}</PanelLabel>
+              <PanelField>{entered}</PanelField>
+            </PanelRow>
+            <PanelRow>
+              <PanelLabel>{t('label.status')}</PanelLabel>
+              <PanelField>{draft?.status}</PanelField>
+            </PanelRow>
           </Grid>,
         ],
       },
@@ -172,11 +189,29 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       </AppBarButtonsPortal>
 
       <Modal
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        nextButton={<DialogButton variant="next" onClick={addAnotherItem} />}
-        okButton={<DialogButton variant="ok" onClick={addItem} />}
+        cancelButton={<DialogButton variant="cancel" onClick={cancelItem} />}
+        nextButton={
+          <DialogButton
+            variant="next"
+            onClick={onOkNext}
+            disabled={!isDirty || !isValid}
+          />
+        }
+        okButton={
+          <DialogButton
+            variant="ok"
+            onClick={onSubmit}
+            disabled={!isDirty || !isValid}
+          />
+        }
+        height={600}
+        width={780}
       >
-        <Typography>Some stuff goes in here</Typography>
+        <ItemDetails
+          register={register}
+          onSubmit={onSubmit}
+          setValue={setValue}
+        />
       </Modal>
 
       <AppBarContentPortal

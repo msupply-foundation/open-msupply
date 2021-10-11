@@ -48,6 +48,7 @@
   "label.date": "Date",
   "label.id": "ID",
   "label.name": "Name",
+  "label.item": "Item",
   "label.status": "Status",
   "label.entered": "Entered",
   "label.confirmed": "Confirmed",

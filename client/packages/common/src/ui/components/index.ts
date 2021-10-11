@@ -1,3 +1,4 @@
+import Autocomplete from '@mui/material/Autocomplete';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
@@ -8,6 +9,8 @@ import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
+import Input from '@mui/material/Input';
+import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -26,9 +29,12 @@ export {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Autocomplete,
   CircularProgress,
   Collapse,
+  Input,
   InputAdornment,
+  InputLabel,
   Divider,
   GlobalStyles,
   Menu,

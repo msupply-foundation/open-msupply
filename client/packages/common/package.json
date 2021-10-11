@@ -22,6 +22,7 @@
     "immer": "^9.0.6",
     "kbar": "^0.1.0-beta.5",
     "notistack": "^1.0.6-next.3",
+    "react-hook-form": "^7.17.0",
     "react-query": "^3.24.3",
     "react-router-dom": "^6.0.0-beta.0",
     "react-table": "^7.7.0",
