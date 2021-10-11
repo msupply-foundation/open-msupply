@@ -1,30 +1,68 @@
 use crate::database::loader::StockLineLoader;
-use crate::database::repository::{ItemQueryRepository, StorageConnectionManager};
-use crate::server::service::graphql::{
-    schema::{queries::pagination::Pagination, types::StockLineQuery},
-    ContextExt,
-};
+use crate::domain::item::{Item, ItemFilter};
+use crate::domain::{EqualFilter, SimpleStringFilter};
+use crate::server::service::graphql::schema::types::StockLineQuery;
+use crate::server::service::graphql::ContextExt;
+use crate::service::{ListError, ListResult};
 use async_graphql::dataloader::DataLoader;
-use async_graphql::{ComplexObject, Context, Object, SimpleObject};
+use async_graphql::*;
 
-use super::StockLineList;
+use super::{
+    Connector, ConnectorErrorInterface, EqualFilterBoolInput, ErrorWrapper,
+    SimpleStringFilterInput, SortInput, StockLineList,
+};
 
-#[derive(SimpleObject, PartialEq, Debug)]
-#[graphql(complex)]
-#[graphql(name = "Item")]
-pub struct ItemQuery {
-    pub id: String,
-    pub name: String,
-    pub code: String,
-    // Is visible is from master list join
-    pub is_visible: bool,
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "crate::domain::item::ItemSortField")]
+pub enum ItemSortFieldInput {
+    Name,
+    Code,
+}
+pub type ItemSortInput = SortInput<ItemSortFieldInput>;
+
+#[derive(InputObject, Clone)]
+pub struct ItemFilterInput {
+    pub name: Option<SimpleStringFilterInput>,
+    pub code: Option<SimpleStringFilterInput>,
+    pub is_visible: Option<EqualFilterBoolInput>,
 }
 
-#[ComplexObject]
-impl ItemQuery {
+impl From<ItemFilterInput> for ItemFilter {
+    fn from(f: ItemFilterInput) -> Self {
+        ItemFilter {
+            name: f.name.map(SimpleStringFilter::from),
+            code: f.code.map(SimpleStringFilter::from),
+            is_visible: f.is_visible.map(EqualFilter::from),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct ItemNode {
+    item: Item,
+}
+
+#[Object]
+impl ItemNode {
+    pub async fn id(&self) -> &str {
+        &self.item.id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.item.name
+    }
+
+    pub async fn code(&self) -> &str {
+        &self.item.code
+    }
+
+    pub async fn is_visible(&self) -> bool {
+        self.item.is_visible
+    }
+
     async fn available_batches(&self, ctx: &Context<'_>) -> StockLineList {
         let repository = ctx.get_loader::<DataLoader<StockLineLoader>>();
-        let result = repository.load_one(self.id.clone()).await.unwrap();
+        let result = repository.load_one(self.item.id.clone()).await.unwrap();
         StockLineList {
             stock_lines: result.map_or(Vec::new(), |stock_lines| {
                 stock_lines.into_iter().map(StockLineQuery::from).collect()
@@ -33,23 +71,23 @@ impl ItemQuery {
     }
 }
 
-pub struct ItemList {
-    pub pagination: Option<Pagination>,
+#[derive(Union)]
+pub enum ItemsResponse {
+    Error(ErrorWrapper<ConnectorErrorInterface>),
+    Response(Connector<ItemNode>),
 }
 
-#[Object]
-impl ItemList {
-    async fn total_count(&self, ctx: &Context<'_>) -> i64 {
-        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        let connection = connection_manager.connection().unwrap();
-        let repository = ItemQueryRepository::new(&connection);
-        repository.count().unwrap()
+impl From<Result<ListResult<Item>, ListError>> for ItemsResponse {
+    fn from(result: Result<ListResult<Item>, ListError>) -> Self {
+        match result {
+            Ok(response) => ItemsResponse::Response(response.into()),
+            Err(error) => ItemsResponse::Error(error.into()),
+        }
     }
+}
 
-    async fn nodes(&self, ctx: &Context<'_>) -> Vec<ItemQuery> {
-        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        let connection = connection_manager.connection().unwrap();
-        let repository = ItemQueryRepository::new(&connection);
-        repository.all(&self.pagination).unwrap()
+impl From<Item> for ItemNode {
+    fn from(item: Item) -> Self {
+        ItemNode { item }
     }
 }

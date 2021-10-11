@@ -1,4 +1,7 @@
-use super::{InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, NameSortFieldInput};
+use super::{
+    InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, ItemSortFieldInput,
+    NameSortFieldInput,
+};
 
 use crate::{
     database::{
@@ -17,6 +20,7 @@ use chrono::NaiveDateTime;
 #[derive(InputObject)]
 #[graphql(concrete(name = "InvoiceSortInput", params(InvoiceSortFieldInput)))]
 #[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
+#[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
 pub struct SortInput<T: InputType> {
     pub key: T,
     pub desc: Option<bool>,
