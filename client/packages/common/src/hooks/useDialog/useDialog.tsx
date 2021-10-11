@@ -43,7 +43,7 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
     hideDialog();
   };
 
-  const Modal: React.FC<ModalProps> = ({
+  const ModalComponent: React.FC<ModalProps> = ({
     cancelButton,
     children,
     height,
@@ -79,6 +79,8 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
       </DialogActions>
     </Dialog>
   );
+
+  const Modal = React.useMemo(() => ModalComponent, [open]);
 
   return { hideDialog, Modal, open, showDialog };
 };

@@ -72,6 +72,10 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     draft?.items?.push({ ...item, updateQuantity: () => {} });
     reset();
   };
+  const cancelItem = () => {
+    hideDialog();
+    reset();
+  };
   const onSubmit = handleSubmit(addItemClose);
   const onOkNext = handleSubmit(addItem);
   const { hideDialog, showDialog, Modal } = useDialog({
@@ -166,7 +170,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       </AppBarButtonsPortal>
 
       <Modal
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        cancelButton={<DialogButton variant="cancel" onClick={cancelItem} />}
         nextButton={
           <DialogButton
             variant="next"
