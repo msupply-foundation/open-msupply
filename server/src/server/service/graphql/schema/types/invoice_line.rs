@@ -1,7 +1,11 @@
-use super::{Connector, ConnectorError};
-use crate::domain::invoice_line::{InvoiceLine, StockLine};
+use super::{Connector, ConnectorError, StockLineResponse};
+use crate::{
+    database::loader::StockLineByIdLoader, domain::invoice_line::InvoiceLine,
+    server::service::graphql::ContextExt,
+};
 use async_graphql::*;
 use chrono::NaiveDate;
+use dataloader::DataLoader;
 
 pub struct InvoiceLineNode {
     invoice_line: InvoiceLine,
@@ -39,19 +43,22 @@ impl InvoiceLineNode {
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
         &self.invoice_line.expiry_date
     }
-    pub async fn stock_line(&self) -> StockLineNode {
-        self.invoice_line.stock_line.clone().into()
-    }
-}
+    async fn stock_line(&self, ctx: &Context<'_>) -> Option<StockLineResponse> {
+        let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 
-pub struct StockLineNode {
-    stock_line: StockLine,
-}
+        if let Some(invoice_line_id) = &self.invoice_line.stock_line_id {
+            let result = match loader.load_one(invoice_line_id.clone()).await {
+                Ok(response) => match response {
+                    None => return None,
+                    Some(result) => Ok(result),
+                },
+                Err(error) => Err(error),
+            };
 
-#[Object]
-impl StockLineNode {
-    pub async fn available_number_of_packs(&self) -> i32 {
-        self.stock_line.available_number_of_packs
+            Some(result.into())
+        } else {
+            None
+        }
     }
 }
 
@@ -80,11 +87,5 @@ impl From<InvoiceLine> for InvoiceLineNode {
     /// number of pack available for a batch ("includes" numberOfPacks in this line)
     fn from(invoice_line: InvoiceLine) -> Self {
         InvoiceLineNode { invoice_line }
-    }
-}
-
-impl From<StockLine> for StockLineNode {
-    fn from(stock_line: StockLine) -> Self {
-        StockLineNode { stock_line }
     }
 }
