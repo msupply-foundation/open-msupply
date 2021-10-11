@@ -37,6 +37,12 @@ impl<'a> InvoiceRepository<'a> {
         Ok(())
     }
 
+    pub fn delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice::dsl::*;
+        diesel::delete(invoice.filter(id.eq(invoice_id))).execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
         use crate::database::schema::diesel_schema::invoice::dsl::*;
         let result = invoice
