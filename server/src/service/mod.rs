@@ -13,6 +13,7 @@ pub struct ListResult<T> {
     pub count: u32,
 }
 
+#[derive(Clone, Debug)]
 pub enum ListError {
     DBError(RepositoryError),
     LimitBelowMin { limit: u32, min: u32 },
@@ -78,5 +79,9 @@ pub fn get_default_pagination(
 }
 
 pub fn i64_to_u32(num: i64) -> u32 {
+    num.try_into().unwrap_or(0)
+}
+
+pub fn usize_to_u32(num: usize) -> u32 {
     num.try_into().unwrap_or(0)
 }

@@ -76,3 +76,8 @@ pub enum InvoiceSortField {
 }
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
+
+#[derive(Clone)]
+pub struct InvoicePricing {
+    pub total_after_tax: f64,
+}

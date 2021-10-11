@@ -61,7 +61,7 @@ pub type DBBackendConnection = PgConnection;
 pub type DBType = diesel::sqlite::Sqlite;
 
 #[cfg(not(feature = "sqlite"))]
-pub type DBType = diesel::sqlite::Pg;
+pub type DBType = diesel::pg::Pg;
 
 pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>;
 

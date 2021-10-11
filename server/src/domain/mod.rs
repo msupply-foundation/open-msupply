@@ -1,4 +1,5 @@
 pub mod invoice;
+pub mod invoice_line;
 pub mod item;
 pub mod name;
 use chrono::NaiveDateTime;
