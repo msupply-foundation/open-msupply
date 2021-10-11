@@ -31,6 +31,22 @@ const ItemOption = styled('li')(({ theme }) => ({
   backgroundColor: theme.palette.background.toolbar,
 }));
 
+const filterOptions = createFilterOptions({
+  stringify: (item: Item) => `${item.code} ${item.name}`,
+  limit: 100,
+});
+
+const renderOption = (
+  props: React.HTMLAttributes<HTMLLIElement>,
+  item: Item
+) => (
+  <ItemOption {...props} key={item.code}>
+    <span style={{ width: 100 }}>{item.code}</span>
+    <span style={{ width: 500 }}>{item.name}</span>
+    <span>0</span>
+  </ItemOption>
+);
+
 export const ItemDetails: React.FC<ItemDetailsProps> = ({
   item,
   onSubmit,
@@ -55,23 +71,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
 
   const t = useTranslation();
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
-  const options =
-    data?.slice(0, 100).map(item => ({ label: item.name, ...item })) || [];
-
-  const filterOptions = createFilterOptions({
-    stringify: (item: Item) => `${item.code} ${item.name}`,
-  });
-
-  const renderOption = (
-    props: React.HTMLAttributes<HTMLLIElement>,
-    item: Item
-  ) => (
-    <ItemOption {...props} key={item.code}>
-      <span style={{ width: 100 }}>{item.code}</span>
-      <span style={{ width: 500 }}>{item.name}</span>
-      <span>0</span>
-    </ItemOption>
-  );
+  const options = data?.map(item => ({ label: item.name, ...item })) || [];
 
   const selectItem = (
     _event: SyntheticEvent<Element, Event>,
@@ -85,7 +85,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
   register('id', { required: true });
   return (
     <form onSubmit={onSubmit}>
-      <Grid container>
+      <Grid container gap={0.5}>
         <ModalInputRow
           inputProps={register('code', { disabled: true })}
           labelKey="label.code"

@@ -62,7 +62,7 @@ export function ModalAutocomplete<T>({
     />
   );
   return (
-    <Grid item xs={10} sx={{ marginBottom: '4px' }}>
+    <Grid item xs={10}>
       <Autocomplete<T>
         filterOptions={filterOptions}
         loading={loading}
