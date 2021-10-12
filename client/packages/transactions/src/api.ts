@@ -17,7 +17,6 @@ export const getDetailQuery = (): string => gql`
       invoiceNumber
       total
       color
-      name
       lines {
         id
         itemCode
@@ -83,7 +82,7 @@ export const getListQuery = (): string => gql`
         confirmed
         invoiceNumber
         total
-        name
+        otherPartyName
       }
       totalLength
     }
