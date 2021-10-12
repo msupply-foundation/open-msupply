@@ -3,6 +3,7 @@ use crate::{
         repository::{InvoiceLineQueryRepository, StorageConnection},
         schema::InvoiceRow,
     },
+    domain::supplier_invoice::DeleteSupplierInvoice,
     service::invoice::{
         check_invoice_exists, check_invoice_finalised, check_invoice_type, CommonError,
     },
@@ -11,15 +12,15 @@ use crate::{
 use super::DeleteSupplierInvoiceError;
 
 pub fn validate(
-    id: &str,
+    input: &DeleteSupplierInvoice,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, DeleteSupplierInvoiceError> {
-    let invoice = check_invoice_exists(&id, connection)?;
+    let invoice = check_invoice_exists(&input.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice)?;
     check_invoice_finalised(&invoice)?;
-    check_lines_exist(id, connection)?;
+    check_lines_exist(&input.id, connection)?;
 
     Ok(invoice)
 }

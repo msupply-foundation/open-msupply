@@ -1,6 +1,6 @@
 use crate::{
     database::repository::{InvoiceRepository, RepositoryError, StorageConnectionManager},
-    domain::invoice_line::InvoiceLine,
+    domain::{invoice_line::InvoiceLine, supplier_invoice::DeleteSupplierInvoice},
 };
 
 mod validate;
@@ -9,15 +9,15 @@ use validate::validate;
 
 pub fn delete_supplier_invoice(
     connection_manager: &StorageConnectionManager,
-    id: String,
+    input: DeleteSupplierInvoice,
 ) -> Result<String, DeleteSupplierInvoiceError> {
     let connection = connection_manager.connection()?;
     // TODO do inside transaction
-    validate(&id, &connection)?;
+    validate(&input, &connection)?;
 
-    InvoiceRepository::new(&connection).delete(&id)?;
+    InvoiceRepository::new(&connection).delete(&input.id)?;
 
-    Ok(id)
+    Ok(input.id)
 }
 
 pub enum DeleteSupplierInvoiceError {
