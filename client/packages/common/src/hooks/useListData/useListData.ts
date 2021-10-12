@@ -1,6 +1,6 @@
 import { ObjectWithStringKeys } from './../../types/utility';
 import { SortBy } from './../useSortBy/useSortBy';
-import { UseMutateFunction } from 'react-query';
+import { UseMutateAsyncFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
 import { SortRule } from '../useSortBy';
@@ -28,9 +28,9 @@ interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   invalidate: () => void;
   fullQueryKey: readonly unknown[];
   queryParams: QueryParams<T>;
-  onUpdate: UseMutateFunction<T, unknown, T, unknown>;
-  onDelete: UseMutateFunction<void, unknown, T[], unknown>;
-  onCreate: UseMutateFunction<T, unknown, Partial<T>, unknown>;
+  onUpdate: UseMutateAsyncFunction<T, unknown, T, unknown>;
+  onDelete: UseMutateAsyncFunction<void, unknown, T[], unknown>;
+  onCreate: UseMutateAsyncFunction<T, unknown, Partial<T>, unknown>;
   isCreateLoading: boolean;
   isQueryLoading: boolean;
   isUpdateLoading: boolean;
@@ -65,6 +65,7 @@ export const useListData = <T extends ObjectWithStringKeys>(
 
   const invalidate = () => queryClient.invalidateQueries(queryKey);
 
+  // TODO: Handler errors for mutations.
   const { mutateAsync: onDelete, isLoading: isDeleteLoading } = useMutation(
     api.onDelete,
     { onSuccess: invalidate }

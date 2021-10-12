@@ -25,12 +25,11 @@ import {
   Color,
   AppBarButtonsPortal,
   Book,
-  ListSearch,
-  useQuery,
 } from '@openmsupply-client/common';
 
-import { nameListQueryFn, OutboundShipmentListViewApi } from '../../api';
+import { OutboundShipmentListViewApi } from '../../api';
 import { ExternalURL } from '@openmsupply-client/config';
+import { CustomerSearch } from './CustomerSearch';
 
 const ListViewToolBar: FC<{
   onDelete: (toDelete: Transaction[]) => void;
@@ -123,21 +122,12 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   const [open, setOpen] = useState(false);
 
-  const { data: nameData, isLoading: nameDataIsLoading } = useQuery(
-    ['names', 'list'],
-    nameListQueryFn
-  );
-
   return (
     <>
-      <ListSearch
-        loading={nameDataIsLoading}
+      <CustomerSearch
         open={open}
-        options={nameData?.data ?? []}
         onClose={() => setOpen(false)}
-        title="label.customer"
-        optionKey="name"
-        onChange={async (_, name) => {
+        onChange={async name => {
           setOpen(false);
 
           const createInvoice = async () => {
@@ -146,11 +136,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
               nameId: name?.id,
             };
 
-            if (name) {
-              await onCreate(invoice);
-              invalidate();
-              navigate(`/customers/customer-invoice/${invoice.id}`);
-            }
+            const result = await onCreate(invoice);
+
+            invalidate();
+            navigate(`/customers/customer-invoice/${result.invoiceNumber}`);
           };
 
           createInvoice();
@@ -166,12 +155,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
           icon={<PlusCircle />}
           labelKey="button.new-shipment"
           onClick={() => setOpen(true)}
-        />
-        <Button
-          shouldShrink
-          icon={<PlusCircle />}
-          labelKey="button.new-shipment"
-          onClick={() => navigate(`/customers/customer-invoice/new`)}
         />
         <Button
           shouldShrink
