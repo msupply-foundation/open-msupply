@@ -1,11 +1,11 @@
 use super::{
-    InvoiceSortFieldInput, InvoiceStatusInput, InvoiceTypeInput, ItemSortFieldInput,
+    InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, ItemSortFieldInput,
     NameSortFieldInput,
 };
 
-use crate::database::{
-    repository::{DatetimeFilter, EqualFilter, SimpleStringFilter, Sort},
-    schema::{InvoiceRowStatus, InvoiceRowType},
+use crate::domain::{
+    invoice::{InvoiceStatus, InvoiceType},
+    DatetimeFilter, EqualFilter, SimpleStringFilter, Sort,
 };
 
 use async_graphql::{InputObject, InputType};
@@ -20,17 +20,30 @@ pub struct SortInput<T: InputType> {
     pub desc: Option<bool>,
 }
 
-impl<TInput, T> From<&SortInput<TInput>> for Sort<T>
+impl<TInput, T> From<SortInput<TInput>> for Sort<T>
 where
-    TInput: InputType + Copy,
+    TInput: InputType,
     T: From<TInput>,
 {
-    fn from(sort: &SortInput<TInput>) -> Self {
+    fn from(sort: SortInput<TInput>) -> Self {
         Sort {
             key: T::from(sort.key),
             desc: sort.desc,
         }
     }
+}
+
+pub fn convert_sort<FromField, ToField>(
+    from: Option<Vec<SortInput<FromField>>>,
+) -> Option<Sort<ToField>>
+where
+    FromField: InputType,
+    Sort<ToField>: From<SortInput<FromField>>,
+{
+    // Currently only one sort option is supported, use the first from the list.
+    from.map(|mut sort_list| sort_list.pop())
+        .flatten()
+        .map(Sort::from)
 }
 
 // simple string filter
@@ -83,24 +96,24 @@ impl From<EqualFilterBoolInput> for EqualFilter<bool> {
 // generic equal filters
 
 #[derive(InputObject, Clone)]
-#[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceTypeInput)))]
-#[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceStatusInput)))]
+#[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceNodeType)))]
+#[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceNodeStatus)))]
 pub struct EqualFilterInput<T: InputType> {
     equal_to: Option<T>,
 }
 
-impl From<EqualFilterInput<InvoiceTypeInput>> for EqualFilter<InvoiceRowType> {
-    fn from(f: EqualFilterInput<InvoiceTypeInput>) -> Self {
+impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
+    fn from(f: EqualFilterInput<InvoiceNodeType>) -> Self {
         EqualFilter {
-            equal_to: f.equal_to.map(InvoiceRowType::from),
+            equal_to: f.equal_to.map(InvoiceType::from),
         }
     }
 }
 
-impl From<EqualFilterInput<InvoiceStatusInput>> for EqualFilter<InvoiceRowStatus> {
-    fn from(f: EqualFilterInput<InvoiceStatusInput>) -> Self {
+impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
+    fn from(f: EqualFilterInput<InvoiceNodeStatus>) -> Self {
         EqualFilter {
-            equal_to: f.equal_to.map(InvoiceRowStatus::from),
+            equal_to: f.equal_to.map(InvoiceStatus::from),
         }
     }
 }

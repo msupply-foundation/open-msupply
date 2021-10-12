@@ -63,8 +63,8 @@ async fn assert_gql_not_found(
     variables: &Option<serde_json::Value>,
 ) -> serde_json::Value {
     let actual = run_gql_query(settings, query, variables).await;
-    let error_message = actual["errors"][0]["message"].to_string();
-    assert!(error_message.contains("row not found"));
+    let error_message = actual["data"].to_string();
+    assert!(error_message.contains("RecordNotFound"));
     actual
 }
 
