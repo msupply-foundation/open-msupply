@@ -7,10 +7,10 @@ use crate::{
     },
     server::service::graphql::ContextExt,
 };
-
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
+use serde::Serialize;
 
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterStringInput,
@@ -66,8 +66,9 @@ pub enum InvoiceNodeType {
     SupplierInvoice,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[graphql(remote = "crate::domain::invoice::InvoiceStatus")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
     Draft,
     Confirmed,
