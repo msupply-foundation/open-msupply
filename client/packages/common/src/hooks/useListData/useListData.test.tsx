@@ -35,6 +35,7 @@ describe('useListData', () => {
     },
     onDelete: async () => {},
     onUpdate: async () => ({} as Test),
+    onCreate: async () => ({} as Test),
   };
 
   const getServerErrorQuery = (): string => gql`
@@ -55,6 +56,7 @@ describe('useListData', () => {
     },
     onDelete: () => new Promise(() => {}),
     onUpdate: () => new Promise(() => {}),
+    onCreate: async () => ({} as Test),
   };
 
   const getPermissionErrorQuery = (): string => gql`

@@ -64,6 +64,7 @@ export const AutocompleteList = <T extends unknown>({
 
   return (
     <MuiAutocomplete
+      autoSelect={false}
       loading={loading}
       loadingText={loadingText}
       noOptionsText={noOptionsText}
@@ -77,7 +78,9 @@ export const AutocompleteList = <T extends unknown>({
           width: width ? `${width}px` : 'auto',
         },
       }}
-      renderInput={renderInput || (props => <BasicTextInput {...props} />)}
+      renderInput={
+        renderInput || (props => <BasicTextInput {...props} autoFocus />)
+      }
       filterOptions={filterOptions}
       open
       forcePopupIcon={false}
