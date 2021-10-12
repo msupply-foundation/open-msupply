@@ -710,20 +710,20 @@ mod repository_test {
 
         let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
-        repo.insert_one(&item1).await.unwrap();
+        repo.upsert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // row with optional field
         let item2_optional = data::invoice_line_2();
-        repo.insert_one(&item2_optional).await.unwrap();
+        repo.upsert_one(&item2_optional).unwrap();
         let loaded_item = repo.find_one_by_id(item2_optional.id.as_str()).unwrap();
         assert_eq!(item2_optional, loaded_item);
 
         // find_many_by_invoice_id:
         // add item that shouldn't end up in the results:
         let item3 = data::invoice_line_3();
-        repo.insert_one(&item3).await.unwrap();
+        repo.upsert_one(&item3).unwrap();
         let all_items = repo.find_many_by_invoice_id(&item1.invoice_id).unwrap();
         assert_eq!(2, all_items.len());
     }
@@ -755,11 +755,11 @@ mod repository_test {
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
         let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
-        repo.insert_one(&item1).await.unwrap();
+        repo.upsert_one(&item1).unwrap();
         let item2 = data::invoice_line_2();
-        repo.insert_one(&item2).await.unwrap();
+        repo.upsert_one(&item2).unwrap();
         let item3 = data::invoice_line_3();
-        repo.insert_one(&item3).await.unwrap();
+        repo.upsert_one(&item3).unwrap();
 
         // line stats
         let repo = InvoiceLineQueryRepository::new(&connection);
