@@ -1,14 +1,12 @@
 use crate::{
     database::{
-        repository::{NameQueryRepository, StorageConnection},
+        repository::StorageConnection,
         schema::{InvoiceRow, InvoiceRowStatus},
     },
-    domain::{
-        invoice::InvoiceStatus, name::NameFilter, supplier_invoice::UpdateSupplierInvoice,
-        Pagination,
-    },
+    domain::{invoice::InvoiceStatus, supplier_invoice::UpdateSupplierInvoice},
     service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, CommonErrors,
+        check_invoice_exists, check_invoice_finalised, check_invoice_type,
+        supplier_invoice::check_other_party, CommonError, OtherPartyError,
     },
 };
 
@@ -24,12 +22,12 @@ pub fn validate(
     check_invoice_type(&invoice)?;
     check_invoice_finalised(&invoice)?;
     check_invoice_status(patch, &invoice)?;
-    check_other_party(&patch.other_party_id, connection)?;
+    check_other_party(patch.other_party_id.clone(), connection)?;
 
     Ok(invoice)
 }
 
-pub fn check_invoice_status(
+fn check_invoice_status(
     patch: &UpdateSupplierInvoice,
     invoice: &InvoiceRow,
 ) -> Result<(), UpdateSupplierInvoiceError> {
@@ -41,43 +39,25 @@ pub fn check_invoice_status(
     }
 }
 
-pub fn check_other_party(
-    id_option: &Option<String>,
-    connection: &StorageConnection,
-) -> Result<(), UpdateSupplierInvoiceError> {
-    use UpdateSupplierInvoiceError::*;
-
-    if let Some(id) = id_option {
-        let repository = NameQueryRepository::new(&connection);
-
-        let mut result = repository.query(
-            Pagination::one(),
-            Some(NameFilter::new().match_id(&id)),
-            None,
-        )?;
-
-        if let Some(name) = result.pop() {
-            if name.is_supplier {
-                Ok(())
-            } else {
-                Err(OtherPartyNotASupplier(name))
-            }
-        } else {
-            Err(OtherPartyDoesNotExists)
+impl From<CommonError> for UpdateSupplierInvoiceError {
+    fn from(error: CommonError) -> Self {
+        use UpdateSupplierInvoiceError::*;
+        match error {
+            CommonError::InvoiceDoesNotExists => InvoiceDoesNotExists,
+            CommonError::DatabaseError(error) => DatabaseError(error),
+            CommonError::InvoiceIsFinalised => CannotEditFinalised,
+            CommonError::NotASupplierInvoice => NotASupplierInvoice,
         }
-    } else {
-        Ok(())
     }
 }
 
-impl From<CommonErrors> for UpdateSupplierInvoiceError {
-    fn from(error: CommonErrors) -> Self {
+impl From<OtherPartyError> for UpdateSupplierInvoiceError {
+    fn from(error: OtherPartyError) -> Self {
         use UpdateSupplierInvoiceError::*;
         match error {
-            CommonErrors::InvoiceDoesNotExists => InvoiceDoesNotExists,
-            CommonErrors::DatabaseError(error) => DatabaseError(error),
-            CommonErrors::InvoiceIsFinalised => CannotEditFinalised,
-            CommonErrors::NotASupplierInvoice => NotASupplierInvoice,
+            OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
+            OtherPartyError::DoesNotExist => OtherPartyDoesNotExists,
+            OtherPartyError::DatabaseError(error) => DatabaseError(error),
         }
     }
 }

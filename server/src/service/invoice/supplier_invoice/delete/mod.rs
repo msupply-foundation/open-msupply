@@ -3,7 +3,7 @@ use crate::{
     domain::invoice_line::InvoiceLine,
 };
 
-pub mod validate;
+mod validate;
 
 use validate::validate;
 
