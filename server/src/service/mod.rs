@@ -5,6 +5,7 @@ use crate::{
 use std::convert::TryInto;
 
 pub mod invoice;
+pub mod invoice_line;
 pub mod item;
 pub mod name;
 
@@ -16,8 +17,8 @@ pub struct ListResult<T> {
 #[derive(Clone, Debug)]
 pub enum ListError {
     DatabaseError(RepositoryError),
-    LimitBelowMin { limit: u32, min: u32 },
-    LimitAboveMax { limit: u32, max: u32 },
+    LimitBelowMin(u32),
+    LimitAboveMax(u32),
 }
 
 pub enum SingleRecordError {
@@ -44,17 +45,10 @@ pub fn get_default_pagination(
 ) -> Result<Pagination, ListError> {
     let check_limit = |limit: u32| -> Result<u32, ListError> {
         if limit < min_limit {
-            return Err(ListError::LimitBelowMin {
-                limit,
-                min: min_limit,
-            });
+            return Err(ListError::LimitBelowMin(min_limit));
         }
-
         if limit > max_limit {
-            return Err(ListError::LimitAboveMax {
-                limit,
-                max: max_limit,
-            });
+            return Err(ListError::LimitAboveMax(max_limit));
         }
 
         Ok(limit)
@@ -83,5 +77,9 @@ pub fn i64_to_u32(num: i64) -> u32 {
 }
 
 pub fn usize_to_u32(num: usize) -> u32 {
+    num.try_into().unwrap_or(0)
+}
+
+pub fn u32_to_i32(num: u32) -> i32 {
     num.try_into().unwrap_or(0)
 }
