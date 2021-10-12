@@ -57,7 +57,7 @@ describe('useDocument', () => {
       return { ...data, ...state };
     };
 
-  it('has dispatches an init action on mounting and receiving data', async () => {
+  it('dispatches an init action on mounting', async () => {
     const { result } = renderHook(
       () => {
         const state = useDocument(['key'], reducer, api);
@@ -74,7 +74,7 @@ describe('useDocument', () => {
     });
   });
 
-  it('has dispatches an init action on mounting and receiving data', async () => {
+  it('dispatches a merged action on receiving data', async () => {
     const { result } = renderHook(
       () => {
         const state = useDocument(['key'], reducer, api);

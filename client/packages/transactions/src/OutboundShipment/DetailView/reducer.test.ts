@@ -101,7 +101,7 @@ describe('DetailView reducer', () => {
     ]);
   });
 
-  it('sorts the lines by the provided key in descending order when already in descending order for the same key.', () => {
+  it('sorts the lines by the provided key in descending order when already in ascending order for the same key.', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderTransaction, lines },
       sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
