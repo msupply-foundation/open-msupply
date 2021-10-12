@@ -21,6 +21,16 @@ pub struct DatetimeFilter {
     pub before_or_equal_to: Option<NaiveDateTime>,
     pub after_or_equal_to: Option<NaiveDateTime>,
 }
+
+impl DatetimeFilter {
+    pub fn date_range(from: NaiveDateTime, to: NaiveDateTime) -> DatetimeFilter {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: Some(from),
+            before_or_equal_to: Some(to),
+        }
+    }
+}
 pub struct Sort<T> {
     pub key: T,
     pub desc: Option<bool>,
