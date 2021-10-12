@@ -1,49 +1,36 @@
-use super::{DBBackendConnection, DBConnection};
+use super::StorageConnection;
 
-use crate::database::{
-    repository::{repository::get_connection, RepositoryError},
-    schema::MasterListNameJoinRow,
-};
+use crate::database::{repository::RepositoryError, schema::MasterListNameJoinRow};
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
-pub struct MasterListNameJoinRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct MasterListNameJoinRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl MasterListNameJoinRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        MasterListNameJoinRepository { pool }
+impl<'a> MasterListNameJoinRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        MasterListNameJoinRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one_tx(
-        connection: &DBConnection,
-        row: &MasterListNameJoinRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_name_join::dsl::*;
-
         diesel::insert_into(master_list_name_join)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(feature = "sqlite")]
-    pub fn upsert_one_tx(
-        connection: &DBConnection,
-        row: &MasterListNameJoinRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_name_join::dsl::*;
         diesel::replace_into(master_list_name_join)
             .values(row)
-            .execute(connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
@@ -52,10 +39,9 @@ impl MasterListNameJoinRepository {
         item_id: &str,
     ) -> Result<MasterListNameJoinRow, RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_name_join::dsl::*;
-        let connection = get_connection(&self.pool)?;
         let result = master_list_name_join
             .filter(id.eq(item_id))
-            .first(&connection)?;
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }

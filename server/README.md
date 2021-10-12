@@ -34,21 +34,21 @@ mSupply remote server is a component of the Open mSupply system:
 
 - Install [diesel_cli](https://crates.io/crates/diesel_cli):
 
-```
-cargo install diesel_cli
+```bash
+cargo install diesel_cli --no-default-features --features "sqlite-bundled postgres"
 ```
 
 - Pull the latest [Postgres]() image and initialise the Docker container:
 
-```
+```bash
 ./scripts/init_db.sh
 ```
 
 - Migrate database tables:
 
-```
+```bash
 # postgres
-diesel migration run --migration-dir ./migrations/postgres/
+diesel migration run --database-url='postgres://postgres:password@localhost:5432/omsupply-database' --migration-dir ./migrations/postgres
 
 # sqlite
 diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ./migrations/sqlite/
@@ -56,7 +56,7 @@ diesel migration run --database-url ./omsupply-database.sqlite --migration-dir .
 
 - Build and start the remote server:
 
-```
+```bash
 APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
 ```
 
@@ -64,7 +64,7 @@ APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production,
 
 - To run all tests:
 
-```
+```bash
 # postgres
 cargo test --features postgres
 

@@ -8,8 +8,15 @@ pub mod test_data;
 
 use crate::{
     database::{
-        repository::{IntegrationRecord, IntegrationUpsertRecord, RepositoryError, SyncRepository},
-        schema::CentralSyncBufferRow,
+        repository::{
+            ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+            MasterListRepository, NameRepository, RepositoryError, StorageConnectionManager,
+            StoreRepository,
+        },
+        schema::{
+            CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+            NameRow, StoreRow,
+        },
     },
     server::data::RepositoryRegistry,
 };
@@ -43,60 +50,58 @@ pub enum SyncImportError {
     },
 }
 
+enum IntegrationUpsertRecord {
+    Name(NameRow),
+    Item(ItemRow),
+    Store(StoreRow),
+    MasterList(MasterListRow),
+    MasterListLine(MasterListLineRow),
+    MasterListNameJoin(MasterListNameJoinRow),
+}
+
+struct IntegrationRecord {
+    pub upserts: Vec<IntegrationUpsertRecord>,
+}
+
 /// Translates sync records into the local DB schema.
 /// Translated records are added to integration_records.
 fn do_translation(
     sync_record: &CentralSyncBufferRow,
-    integration_records: &mut IntegrationRecord,
+    records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
+    use IntegrationUpsertRecord::*;
     if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
-        integration_records
-            .upserts
-            .push(IntegrationUpsertRecord::Name(row));
-
+        records.upserts.push(Name(row));
         return Ok(());
     }
+
     if let Some(row) = LegacyItemRow::try_translate(sync_record)? {
-        integration_records
-            .upserts
-            .push(IntegrationUpsertRecord::Item(row));
-
+        records.upserts.push(Item(row));
         return Ok(());
     }
+
     if let Some(row) = LegacyStoreRow::try_translate(sync_record)? {
         // TODO: move this check up when fetching/validating/reordering the sync records?
         // ignore stores without name
         if row.name_id == "" {
             return Ok(());
         }
-        integration_records
-            .upserts
-            .push(IntegrationUpsertRecord::Store(row));
-
+        records.upserts.push(Store(row));
         return Ok(());
     }
 
     if let Some(row) = LegacyListMasterRow::try_translate(sync_record)? {
-        integration_records
-            .upserts
-            .push(IntegrationUpsertRecord::MasterList(row));
-
+        records.upserts.push(MasterList(row));
         return Ok(());
     }
 
     if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)? {
-        integration_records
-            .upserts
-            .push(IntegrationUpsertRecord::MasterListLine(row));
-
+        records.upserts.push(MasterListLine(row));
         return Ok(());
     }
 
     if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)? {
-        integration_records
-            .upserts
-            .push(IntegrationUpsertRecord::MasterListNameJoin(row));
-
+        records.upserts.push(MasterListNameJoin(row));
         return Ok(());
     }
 
@@ -134,10 +139,44 @@ pub async fn import_sync_records(
         do_translation(&record, &mut integration_records)?;
     }
 
-    let sync_repo = registry.get::<SyncRepository>();
-    sync_repo.integrate_records(&integration_records).await?;
+    store_integration_records(registry, &integration_records).await?;
 
     Ok(())
+}
+
+async fn store_integration_records(
+    registry: &RepositoryRegistry,
+    integration_records: &IntegrationRecord,
+) -> Result<(), RepositoryError> {
+    let con = registry.get::<StorageConnectionManager>().connection()?;
+    let result = con
+        .transaction(|con| async move {
+            for record in &integration_records.upserts {
+                match &record {
+                    IntegrationUpsertRecord::Name(record) => {
+                        NameRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::Item(record) => {
+                        ItemRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::Store(record) => {
+                        StoreRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::MasterList(record) => {
+                        MasterListRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::MasterListLine(record) => {
+                        MasterListLineRepository::new(con).upsert_one(record)?
+                    }
+                    IntegrationUpsertRecord::MasterListNameJoin(record) => {
+                        MasterListNameJoinRepository::new(con).upsert_one(record)?
+                    }
+                }
+            }
+            Ok(())
+        })
+        .await?;
+    Ok(result)
 }
 
 #[cfg(test)]

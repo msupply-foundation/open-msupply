@@ -1,4 +1,6 @@
-use crate::database::repository::{RepositoryError, RequisitionLineRepository};
+use crate::database::repository::{
+    RepositoryError, RequisitionLineRepository, StorageConnectionManager,
+};
 use crate::database::schema::RequisitionLineRow;
 
 use async_graphql::dataloader::*;
@@ -6,7 +8,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct RequisitionLineLoader {
-    pub requisition_line_repository: RequisitionLineRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -15,10 +17,10 @@ impl Loader<String> for RequisitionLineLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .requisition_line_repository
+        let connection = self.connection_manager.connection()?;
+        let repo = RequisitionLineRepository::new(&connection);
+        Ok(repo
             .find_many_by_id(keys)
-            .await
             .unwrap()
             .iter()
             .map(|requisition_line: &RequisitionLineRow| {

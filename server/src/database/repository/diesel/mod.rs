@@ -15,33 +15,38 @@ mod master_list_line;
 mod master_list_name_join;
 mod name;
 mod name_query;
+mod name_store_join;
 mod requisition;
 mod requisition_line;
+mod sort_filter_types;
 mod stock_line;
+mod storage_connection;
 mod store;
-mod sync;
 mod user_account;
 
 use actix_rt::blocking::BlockingError;
-use async_graphql::dataloader::DataLoader;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use invoice::{CustomerInvoiceRepository, InvoiceRepository};
 pub use invoice_line::InvoiceLineRepository;
 pub use invoice_line_query::{InvoiceLineQueryJoin, InvoiceLineQueryRepository, InvoiceLineStats};
-pub use invoice_query::{InvoiceQueryJoin, InvoiceQueryRepository};
+pub use invoice_query::{
+    InvoiceFilter, InvoiceQueryJoin, InvoiceQueryRepository, InvoiceSort, InvoiceSortField,
+};
 pub use item::ItemRepository;
-pub use item_query::ItemQueryRepository;
+pub use item_query::{ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, ItemSortField};
 pub use master_list::MasterListRepository;
 pub use master_list_line::MasterListLineRepository;
 pub use master_list_name_join::MasterListNameJoinRepository;
 pub use name::NameRepository;
-pub use name_query::NameQueryRepository;
+pub use name_query::{NameQueryFilter, NameQueryRepository, NameQuerySort, NameQuerySortField};
+pub use name_store_join::NameStoreJoinRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
+pub use sort_filter_types::*;
 pub use stock_line::StockLineRepository;
+pub use storage_connection::{StorageConnection, StorageConnectionManager};
 pub use store::StoreRepository;
-pub use sync::{IntegrationRecord, IntegrationUpsertRecord, SyncRepository};
 pub use user_account::UserAccountRepository;
 
 use diesel::{
@@ -113,29 +118,7 @@ pub async fn get_repositories(settings: &Settings) -> RepositoryMap {
     let pool = Pool::new(connection_manager).expect("Failed to connect to database");
 
     let mut repositories: RepositoryMap = RepositoryMap::new();
-
-    repositories.insert(CustomerInvoiceRepository::new(pool.clone()));
-    repositories.insert(ItemRepository::new(pool.clone()));
-    repositories.insert(StockLineRepository::new(pool.clone()));
-    repositories.insert(ItemQueryRepository::new(pool.clone()));
-    repositories.insert(NameRepository::new(pool.clone()));
-    repositories.insert(NameQueryRepository::new(pool.clone()));
-    repositories.insert(RequisitionLineRepository::new(pool.clone()));
-    repositories.insert(RequisitionRepository::new(pool.clone()));
-    repositories.insert(StoreRepository::new(pool.clone()));
-    repositories.insert(InvoiceRepository::new(pool.clone()));
-    repositories.insert(InvoiceQueryRepository::new(pool.clone()));
-    repositories.insert(InvoiceLineRepository::new(pool.clone()));
-    repositories.insert(InvoiceLineQueryRepository::new(pool.clone()));
-    repositories.insert(UserAccountRepository::new(pool.clone()));
-    repositories.insert(CentralSyncBufferRepository::new(pool.clone()));
-    repositories.insert(CentralSyncCursorRepository::new(pool.clone()));
-    repositories.insert(SyncRepository::new(pool.clone()));
-    repositories.insert(MasterListRepository::new(pool.clone()));
-    repositories.insert(MasterListLineRepository::new(pool.clone()));
-    repositories.insert(MasterListNameJoinRepository::new(pool.clone()));
-
-    repositories.insert(DataLoader::new(StockLineRepository::new(pool.clone())));
+    repositories.insert(StorageConnectionManager::new(pool.clone()));
 
     repositories
 }

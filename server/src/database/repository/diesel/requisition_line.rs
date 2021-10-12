@@ -1,33 +1,26 @@
-use super::DBBackendConnection;
+use super::StorageConnection;
 
-use crate::database::{
-    repository::{repository::get_connection, RepositoryError},
-    schema::RequisitionLineRow,
-};
+use crate::database::{repository::RepositoryError, schema::RequisitionLineRow};
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
-pub struct RequisitionLineRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct RequisitionLineRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl RequisitionLineRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> RequisitionLineRepository {
-        RequisitionLineRepository { pool }
+impl<'a> RequisitionLineRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        RequisitionLineRepository { connection }
     }
 
-    pub async fn insert_one(
+    pub fn insert_one(
         &self,
         requisition_line_row: &RequisitionLineRow,
     ) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::requisition_line::dsl::*;
-        let connection = get_connection(&self.pool)?;
         diesel::insert_into(requisition_line)
             .values(requisition_line_row)
-            .execute(&connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
@@ -36,30 +29,31 @@ impl RequisitionLineRepository {
         row_id: &str,
     ) -> Result<RequisitionLineRow, RepositoryError> {
         use crate::database::schema::diesel_schema::requisition_line::dsl::*;
-        let connection = get_connection(&self.pool)?;
-        let result = requisition_line.filter(id.eq(row_id)).first(&connection)?;
+        let result = requisition_line
+            .filter(id.eq(row_id))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 
-    pub async fn find_many_by_id(
+    pub fn find_many_by_id(
         &self,
         ids: &[String],
     ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
         use crate::database::schema::diesel_schema::requisition_line::dsl::*;
-        let connection = get_connection(&self.pool)?;
-        let result = requisition_line.filter(id.eq_any(ids)).load(&connection)?;
+        let result = requisition_line
+            .filter(id.eq_any(ids))
+            .load(&self.connection.connection)?;
         Ok(result)
     }
 
-    pub async fn find_many_by_requisition_id(
+    pub fn find_many_by_requisition_id(
         &self,
         req_id: &str,
     ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
         use crate::database::schema::diesel_schema::requisition_line::dsl::*;
-        let connection = get_connection(&self.pool)?;
         let result = requisition_line
             .filter(requisition_id.eq(req_id))
-            .load(&connection)?;
+            .load(&self.connection.connection)?;
         Ok(result)
     }
 }

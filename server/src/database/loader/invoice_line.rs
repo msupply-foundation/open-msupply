@@ -1,5 +1,6 @@
 use crate::database::repository::{
     InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceLineStats, RepositoryError,
+    StorageConnectionManager,
 };
 use crate::database::schema::InvoiceLineRow;
 
@@ -8,7 +9,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct InvoiceLineLoader {
-    pub invoice_line_repository: InvoiceLineRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -17,11 +18,10 @@ impl Loader<String> for InvoiceLineLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .invoice_line_repository
-            .find_many_by_id(keys)
-            .await
-            .unwrap()
+        let connection = self.connection_manager.connection()?;
+        let repo = InvoiceLineRepository::new(&connection);
+        Ok(repo
+            .find_many_by_id(keys)?
             .iter()
             .map(|invoice_line: &InvoiceLineRow| {
                 let invoice_line_id = invoice_line.id.clone();
@@ -33,7 +33,7 @@ impl Loader<String> for InvoiceLineLoader {
 }
 
 pub struct InvoiceLineStatsLoader {
-    pub invoice_line_query_repository: InvoiceLineQueryRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -45,10 +45,10 @@ impl Loader<String> for InvoiceLineStatsLoader {
         &self,
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        Ok(self
-            .invoice_line_query_repository
-            .stats(invoice_ids)
-            .await?
+        let connection = self.connection_manager.connection()?;
+        let repo = InvoiceLineQueryRepository::new(&connection);
+        Ok(repo
+            .stats(invoice_ids)?
             .into_iter()
             .map(|stats| (stats.invoice_id.clone(), stats))
             .collect())
