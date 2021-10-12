@@ -39,10 +39,12 @@ mod graphql {
         }
 
         let query = r#"{
-            names{
-                nodes{
-                    id
-                }
+            names {
+                ... on NameConnector {
+                  nodes{
+                      id
+                  }
+               }
             }
         }"#;
         let expected = json!({
@@ -58,8 +60,10 @@ mod graphql {
         // test sorting
         let query = r#"query Names($sort: [NameSortInput]) {
           names(sort: $sort){
-              nodes{
-                  id
+              ... on NameConnector {
+                nodes {
+                    id
+                }
               }
           }
         }"#;
@@ -84,8 +88,10 @@ mod graphql {
         // test filtering
         let query = r#"query Names($filter: [NameFilterInput]) {
           names(filter: $filter){
-              nodes{
-                  id
+              ... on NameConnector {
+                nodes {
+                    id
+                }
               }
           }
         }"#;

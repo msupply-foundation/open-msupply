@@ -52,7 +52,7 @@ mod graphql {
             stock_repository.insert_one(&stock_line).await.unwrap();
         }
         for invoice in &mock_invoices {
-            invoice_repository.insert_one(&invoice).await.unwrap();
+            invoice_repository.upsert_one(&invoice).unwrap();
         }
         for invoice_line in &mock_invoice_lines {
             invoice_line_repository
@@ -63,10 +63,14 @@ mod graphql {
 
         let query = r#"{
             invoices{
-                nodes{
-                    id
-                    pricing{
-                        totalAfterTax
+                ... on InvoiceConnector {
+                    nodes{
+                        id
+                        pricing {
+                            ... on InvoicePricingNode {
+                              totalAfterTax
+                            }
+                        }
                     }
                 }
             }

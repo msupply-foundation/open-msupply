@@ -13,7 +13,8 @@ mod graphql {
             },
             schema::{InvoiceLineRow, InvoiceRow, ItemRow, NameRow, StockLineRow, StoreRow},
         },
-        server::service::graphql::schema::types::InvoiceStatusInput,
+        domain::invoice::InvoiceStatus,
+        server::service::graphql::schema::types::InvoiceNodeStatus,
         util::test_db,
     };
 
@@ -53,7 +54,7 @@ mod graphql {
             stock_repository.insert_one(&stock_line).await.unwrap();
         }
         for invoice in &mock_invoices {
-            invoice_repository.insert_one(&invoice).await.unwrap();
+            invoice_repository.upsert_one(&invoice).unwrap();
         }
         for invoice_line in &mock_invoice_lines {
             invoice_line_repository
@@ -65,13 +66,19 @@ mod graphql {
         let invoice = mock_customer_invoices()[0].clone();
         let query = r#"query Invoice($id: String) {            
                 invoice(id: $id) {
-                    id
-                    status
-                    lines {
-                        nodes {
-                            id
-                            stockLine {
-                                availableNumberOfPacks
+                    ... on InvoiceNode {
+                        id
+                        status
+                        lines {
+                            ... on InvoiceLineConnector {
+                                nodes {
+                                    id
+                                    stockLine {
+                                        ... on StockLineNode {
+                                            availableNumberOfPacks
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -100,12 +107,11 @@ mod graphql {
                                         .unwrap_or(false))
                                     .unwrap()
                                     .available_number_of_packs
-                                        + invoice_line.available_number_of_packs,
                             },
                         }))
                         .collect::<Vec<serde_json::Value>>(),
                 },
-                "status": InvoiceStatusInput::from(invoice.status),
+                "status": InvoiceNodeStatus::from(InvoiceStatus::from(invoice.status)),
             },
         });
         assert_gql_query(&settings, &query, &variables, &expected).await;
@@ -115,14 +121,10 @@ mod graphql {
             &settings,
             r#"query InvoiceNotFound($id: String) {
                 invoice(id: $id){
-                    id
-                    status
-                    lines{
-                        nodes{
-                            id
-                            stockLine{
-                                availableNumberOfPacks
-                            }
+                    ... on NodeError {
+                        error {
+                            __typename
+                            description
                         }
                     }
                 }           
@@ -136,8 +138,10 @@ mod graphql {
         // test time range filter
         let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
                 invoices(filter: $filter){
-                    nodes {
-                        id
+                    ... on InvoiceConnector {
+                        nodes {
+                            id
+                        }
                     }
                 }
             }"#;
