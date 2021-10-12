@@ -1,26 +1,12 @@
 import React, { PropsWithChildren } from 'react';
 import {
   Autocomplete as MuiAutocomplete,
-  AutocompleteChangeDetails,
   AutocompleteRenderInputParams,
-  AutocompleteRenderOptionState,
   createFilterOptions,
   CreateFilterOptionsConfig,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
-
-export type AutocompleteOnChange<T> = (
-  event: React.SyntheticEvent,
-  value: T | null,
-  reason: string,
-  details?: AutocompleteChangeDetails<T>
-) => void;
-
-export type AutocompleteOptionRenderer<T> = (
-  props: React.HTMLAttributes<HTMLLIElement>,
-  option: T,
-  state: AutocompleteRenderOptionState
-) => React.ReactNode;
+import { AutocompleteOnChange, AutocompleteOptionRenderer } from '.';
 
 export interface AutocompleteProps<T> {
   filterOptionConfig?: CreateFilterOptionsConfig<T>;

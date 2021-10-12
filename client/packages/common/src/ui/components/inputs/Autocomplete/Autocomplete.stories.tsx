@@ -1,8 +1,10 @@
 import React from 'react';
-import { Grid, Paper } from '@mui/material';
+import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
-import { Autocomplete } from './Autocomplete';
 import { styled } from '@mui/system';
+
+import { Autocomplete } from './Autocomplete';
+import { AutocompleteList } from './AutocompleteList';
 
 export default {
   title: 'Inputs/Autocomplete',
@@ -15,12 +17,25 @@ const StyledPaper = styled(Paper)({
   width: 400,
 });
 
+const options = Array.from({ length: 100 }).map((_, i) => ({
+  name: `${i}`,
+}));
+
 // TODO: Currently the styles are broken for this only within storybook
 const Template: Story = () => (
-  <Grid>
-    <StyledPaper>
-      <Autocomplete options={[1, 2, 3]} width={300} />
-    </StyledPaper>
+  <Grid container>
+    <Grid item>
+      <StyledPaper>
+        <Typography>Basic autocomplete</Typography>
+        <Autocomplete options={options.map(({ name }) => name)} width={300} />
+      </StyledPaper>
+    </Grid>
+    <Grid item>
+      <StyledPaper>
+        <Typography>Autocomplete List</Typography>
+        <AutocompleteList options={options} optionKey="name" />
+      </StyledPaper>
+    </Grid>
   </Grid>
 );
 
