@@ -5,8 +5,8 @@ use crate::{
     domain::{name::Name, supplier_invoice::UpdateSupplierInvoice},
 };
 
-pub mod generate;
-pub mod validate;
+mod generate;
+mod validate;
 
 use generate::generate;
 use validate::validate;

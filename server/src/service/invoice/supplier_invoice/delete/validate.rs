@@ -4,7 +4,7 @@ use crate::{
         schema::InvoiceRow,
     },
     service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, CommonErrors,
+        check_invoice_exists, check_invoice_finalised, check_invoice_type, CommonError,
     },
 };
 
@@ -24,7 +24,7 @@ pub fn validate(
     Ok(invoice)
 }
 
-pub fn check_lines_exist(
+fn check_lines_exist(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), DeleteSupplierInvoiceError> {
@@ -38,14 +38,14 @@ pub fn check_lines_exist(
     }
 }
 
-impl From<CommonErrors> for DeleteSupplierInvoiceError {
-    fn from(error: CommonErrors) -> Self {
+impl From<CommonError> for DeleteSupplierInvoiceError {
+    fn from(error: CommonError) -> Self {
         use DeleteSupplierInvoiceError::*;
         match error {
-            CommonErrors::InvoiceDoesNotExists => InvoiceDoesNotExists,
-            CommonErrors::DatabaseError(error) => DatabaseError(error),
-            CommonErrors::InvoiceIsFinalised => CannotEditFinalised,
-            CommonErrors::NotASupplierInvoice => NotASupplierInvoice,
+            CommonError::InvoiceDoesNotExists => InvoiceDoesNotExists,
+            CommonError::DatabaseError(error) => DatabaseError(error),
+            CommonError::InvoiceIsFinalised => CannotEditFinalised,
+            CommonError::NotASupplierInvoice => NotASupplierInvoice,
         }
     }
 }

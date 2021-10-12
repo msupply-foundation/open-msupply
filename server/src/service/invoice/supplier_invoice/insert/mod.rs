@@ -3,11 +3,13 @@ use crate::{
     domain::{name::Name, supplier_invoice::InsertSupplierInvoice},
 };
 
-pub mod generate;
-pub mod validate;
+mod generate;
+mod validate;
 
 use generate::generate;
 use validate::validate;
+
+use super::OtherPartyError;
 
 pub fn insert_supplier_invoice(
     connection_manager: &StorageConnectionManager,
@@ -32,5 +34,16 @@ pub enum InsertSupplierInvoiceError {
 impl From<RepositoryError> for InsertSupplierInvoiceError {
     fn from(error: RepositoryError) -> Self {
         InsertSupplierInvoiceError::DatabaseError(error)
+    }
+}
+
+impl From<OtherPartyError> for InsertSupplierInvoiceError {
+    fn from(error: OtherPartyError) -> Self {
+        use InsertSupplierInvoiceError::*;
+        match error {
+            OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
+            OtherPartyError::DoesNotExist => OtherPartyDoesNotExists,
+            OtherPartyError::DatabaseError(error) => DatabaseError(error),
+        }
     }
 }
