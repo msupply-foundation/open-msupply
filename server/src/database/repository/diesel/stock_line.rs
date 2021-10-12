@@ -30,7 +30,7 @@ impl<'a> StockLineRepository<'a> {
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)
-            .on_conflict(id)
+            .on_conflict(stock_line_dsl::id)
             .do_update()
             .set(row)
             .execute(&self.connection.connection)?;
