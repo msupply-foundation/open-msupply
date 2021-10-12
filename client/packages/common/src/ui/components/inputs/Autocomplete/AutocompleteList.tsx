@@ -9,10 +9,10 @@ import {
 } from '@mui/material';
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
-import { getDefaultOptionRenderer } from './utils';
+import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
 
 export type BaseAutocompleteListProps<T> = {
-  options: readonly T[];
+  options: T[];
 
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
@@ -54,6 +54,14 @@ export const AutocompleteList = <T extends unknown>({
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
 
+  let mappedOptions: T[] = [];
+
+  if (optionKey) {
+    mappedOptions = defaultOptionMapper(options, optionKey);
+  } else {
+    mappedOptions = options;
+  }
+
   return (
     <MuiAutocomplete
       loading={loading}
@@ -61,6 +69,10 @@ export const AutocompleteList = <T extends unknown>({
       noOptionsText={noOptionsText}
       onChange={onChange}
       sx={{
+        '& .MuiAutocomplete-listbox': {
+          minHeight: height ? `${height}` : 'auto',
+          maxHeight: height ? `${height}` : 'auto',
+        },
         '& .MuiAutocomplete-inputRoot': {
           width: width ? `${width}px` : 'auto',
         },
@@ -69,19 +81,24 @@ export const AutocompleteList = <T extends unknown>({
       filterOptions={filterOptions}
       open
       forcePopupIcon={false}
-      options={options}
+      options={mappedOptions}
       renderOption={optionRenderer}
-      PaperComponent={props => {
-        return (
-          <Paper
-            sx={{
-              minHeight: height ? `${height}` : 'auto',
-            }}
-          >
-            {props.children}
-          </Paper>
-        );
+      ListboxProps={{
+        style: {
+          height: height ? `${height}` : 'auto',
+          maxHeight: height ? `${height}` : 'auto',
+        },
       }}
+      PaperComponent={props => (
+        <Paper
+          sx={{
+            backgroundColor: '#fafafc',
+            minHeight: height ? `${height}` : 'auto',
+          }}
+        >
+          {props.children}
+        </Paper>
+      )}
     />
   );
 };

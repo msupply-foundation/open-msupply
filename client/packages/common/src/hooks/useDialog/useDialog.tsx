@@ -1,9 +1,9 @@
 import React from 'react';
-import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import { LocaleKey, useTranslation } from '../../intl/intlHelpers';
+import { LocaleKey } from '../../intl/intlHelpers';
+import { BasicModal } from '../../ui/components/modals/BasicModal';
+import { ModalTitle } from '../../ui/components/modals/ModalTitle';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -34,7 +34,6 @@ interface DialogState {
 export const useDialog = (dialogProps: DialogProps): DialogState => {
   const { onClose, title } = dialogProps;
   const [open, setOpen] = React.useState(false);
-  const t = useTranslation();
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
 
@@ -51,33 +50,15 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
     okButton,
     width,
   }) => (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          minHeight: `${height || '400'}px`,
-          minWidth: `${width || '500'}px`,
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          color: theme => theme.typography.body1.color,
-          fontSize: theme => theme.typography.body1.fontSize,
-          fontWeight: 'bold',
-        }}
-      >
-        {t(title)}
-      </DialogTitle>
+    <BasicModal open={open} onClose={handleClose} width={width} height={height}>
+      <ModalTitle title={title} />
       <DialogContent>{children}</DialogContent>
       <DialogActions sx={{ justifyContent: 'center' }}>
         {cancelButton}
         {okButton}
         {nextButton}
       </DialogActions>
-    </Dialog>
+    </BasicModal>
   );
 
   const Modal = React.useMemo(() => ModalComponent, [open]);

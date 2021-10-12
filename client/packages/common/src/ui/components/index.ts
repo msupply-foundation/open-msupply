@@ -23,6 +23,7 @@ export * from './errors';
 export * from './LoadingSpinner';
 export * from './RemoteComponent';
 export * from './menus';
+export * from './modals';
 
 export {
   Accordion,

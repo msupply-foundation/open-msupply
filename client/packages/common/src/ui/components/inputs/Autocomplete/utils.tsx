@@ -8,12 +8,26 @@ export const DefaultAutocompleteItemOption = styled('li')(({ theme }) => ({
   backgroundColor: theme.palette.background.toolbar,
 }));
 
+type Option<T> = { label: string } & T;
+
+export type OptionMapper<T extends Record<keyof T, unknown>> = (
+  options: T[],
+  key: keyof T
+) => Option<T>[];
+
+export const defaultOptionMapper = <T extends Record<keyof T, unknown>>(
+  options: T[],
+  key: keyof T
+): Option<T>[] => {
+  return options.map(option => ({ label: String(option[key]), ...option }));
+};
+
 export const getDefaultOptionRenderer: <T>(
   key: keyof T
 ) => AutocompleteOptionRenderer<T> = key => (props, item) =>
   (
     <DefaultAutocompleteItemOption {...props}>
-      <span style={{ width: 100 }}>{String(item[key])}</span>
+      <span style={{ backgroundColor: '#fafafc' }}>{String(item[key])}</span>
     </DefaultAutocompleteItemOption>
   );
 
