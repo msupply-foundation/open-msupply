@@ -17,6 +17,9 @@ pub struct UpdateSupplierInvoice {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }
+pub struct DeleteSupplierInvoice {
+    pub id: String,
+}
 
 pub struct InsertSupplierInvoiceLine {
     pub id: String,
@@ -40,4 +43,9 @@ pub struct UpdateSupplierInvoiceLine {
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: Option<u32>,
+}
+
+pub struct DeleteSupplierInvoiceLine {
+    pub id: String,
+    pub invoice_id: String,
 }
