@@ -11,14 +11,14 @@ import { request, gql } from 'graphql-request';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
-  mutation Mutation($invoice: InvoicePatch) {
+  mutation insertInvoice($invoice: InvoicePatch) {
     insertInvoice(invoice: $invoice) {
       id
     }
   }
 `;
 
-export const createFn = async (invoice: Invoice): Promise<Invoice> => {
+export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
   const { insertInvoice } = await request(
     Environment.API_URL,
     getInsertInvoiceQuery(),
@@ -55,7 +55,7 @@ export const getDetailQuery = (): string => gql`
 `;
 
 export const getNameListQuery = (): string => gql`
-  query {
+  query names {
     names {
       data {
         id

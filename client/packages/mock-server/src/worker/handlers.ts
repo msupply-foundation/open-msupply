@@ -15,6 +15,18 @@ const updateInvoice = graphql.mutation(
   }
 );
 
+const insertInvoice = graphql.mutation(
+  'insertInvoice',
+  (request, response, context) => {
+    const { variables } = request;
+    const { invoice } = variables;
+
+    const result = Api.MutationService.insert.invoice(invoice);
+
+    return response(context.data({ updateInvoice: result }));
+  }
+);
+
 const deleteInvoices = graphql.mutation(
   'deleteInvoices',
   (request, response, context) => {
@@ -28,6 +40,15 @@ const deleteInvoices = graphql.mutation(
     return response(context.data({ invoices }));
   }
 );
+
+export const namesList = graphql.query<
+  Record<string, unknown>,
+  PaginationOptions
+>('names', (_, response, context) => {
+  const result = Api.ResolverService.list.name();
+
+  return response(context.data({ names: result }));
+});
 
 export const invoiceList = graphql.query<
   Record<string, unknown>,
@@ -90,4 +111,6 @@ export const handlers = [
   deleteInvoices,
   permissionError,
   serverError,
+  insertInvoice,
+  namesList,
 ];
