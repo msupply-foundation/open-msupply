@@ -142,7 +142,7 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
 mod tests {
     use crate::{
         database::{
-            repository::{NameQueryRepository, NameRepository, StorageConnectionManager},
+            repository::{NameQueryRepository, NameRepository},
             schema::NameRow,
         },
         domain::{name::Name, Pagination, DEFAULT_LIMIT},
@@ -176,10 +176,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (pool, _, _) = test_db::setup_all("test_name_query_repository", false).await;
-        let storage_connection = StorageConnectionManager::new(pool.clone())
-            .connection()
-            .unwrap();
+        let (_, storage_connection) = test_db::setup_all("test_name_query_repository").await;
         let repository = NameQueryRepository::new(&storage_connection);
 
         let (rows, queries) = data();
