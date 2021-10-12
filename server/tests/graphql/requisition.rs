@@ -47,17 +47,20 @@ mod graphql {
             requisition_repository.insert_one(&requisition).unwrap();
         }
 
-        let query = r#"{
-            requisition(id:\"requisition_a\"){
+        let query = r#"query RequisitionId($id: String) {
+            requisition(id: $id){
                 id
             }
         }"#;
+        let variables = Some(json!({
+          "id": "requisition_a"
+        }));
         let expected = json!({
             "requisition": {
                 "id":"requisition_a"
             }
           }
         );
-        assert_gql_query(&settings, query, &None, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected).await;
     }
 }

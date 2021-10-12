@@ -64,7 +64,7 @@ mod graphql {
         let query = r#"{
             invoices{
                 nodes{
-                    id,
+                    id
                     pricing{
                         totalAfterTax
                     }
