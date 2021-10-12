@@ -1,5 +1,11 @@
-import { Item, StockLine, Invoice, InvoiceLine } from './types';
-import { InvoiceData, InvoiceLineData, ItemData, StockLineData } from './data';
+import { Item, StockLine, Invoice, InvoiceLine, Name } from './types';
+import {
+  InvoiceData,
+  InvoiceLineData,
+  ItemData,
+  StockLineData,
+  NameData,
+} from './data';
 
 // Importing this from utils causes a circular deps loop and you will not have fun :)
 export const getFilter =
@@ -34,6 +40,10 @@ export const get = {
       ({
         ...InvoiceLineData.find(getFilter(id, 'id')),
       } as InvoiceLine),
+    name: (id: string): Name =>
+      ({
+        ...NameData.find(getFilter(id, 'id')),
+      } as Name),
   },
 
   all: {
@@ -41,6 +51,7 @@ export const get = {
     stockLine: (): StockLine[] => StockLineData.slice(),
     invoice: (): Invoice[] => InvoiceData.slice(),
     invoiceLine: (): InvoiceLine[] => InvoiceLineData.slice(),
+    name: (): Name[] => NameData.slice(),
   },
 
   stockLines: {

@@ -7,7 +7,7 @@ import { ColumnDefinition } from '../columns/types';
 
 interface DomainObjectWithRequiredFields extends DomainObject {
   color: string;
-  name: string;
+  otherPartyName: string;
 }
 
 export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
@@ -63,7 +63,7 @@ export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
           }}
         />
         <Box ml={1} />
-        {rowData.name}
+        {rowData.otherPartyName}
       </Box>
     );
   },

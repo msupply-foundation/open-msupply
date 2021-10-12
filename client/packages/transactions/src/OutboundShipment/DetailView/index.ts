@@ -3,7 +3,7 @@ export { OutboundShipmentDetailView } from './DetailView';
 
 export const placeholderTransaction: OutboundShipment = {
   id: '',
-  name: '',
+  otherPartyName: '',
   total: '',
   comment: '',
   color: 'grey',
