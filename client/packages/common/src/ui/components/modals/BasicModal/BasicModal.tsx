@@ -17,8 +17,8 @@ export const BasicModal: FC<DialogProps> = ({
       PaperProps={{
         sx: {
           borderRadius: '20px',
-          minHeight: `${height || '400'}px`,
-          minWidth: `${width || '500'}px`,
+          minHeight: `${height}px`,
+          minWidth: `${width}px`,
         },
         ...PaperProps,
       }}

@@ -6,7 +6,7 @@ import {
   CreateFilterOptionsConfig,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
-import { AutocompleteOnChange, AutocompleteOptionRenderer } from '.';
+import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 
 export interface AutocompleteProps<T> {
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
@@ -43,7 +43,6 @@ export function Autocomplete<T>({
 
   return (
     <MuiAutocomplete<T>
-      fullWidth={false}
       filterOptions={filterOptions}
       loading={loading}
       loadingText={loadingText}
