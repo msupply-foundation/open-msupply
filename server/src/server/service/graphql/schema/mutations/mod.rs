@@ -15,7 +15,8 @@ use crate::{
             delete_supplier_invoice, get_invoice, insert_supplier_invoice, update_supplier_invoice,
         },
         invoice_line::{
-            get_invoice_line, insert_supplier_invoice_line, update_supplier_invoice_line,
+            delete_supplier_invoice_line, get_invoice_line, insert_supplier_invoice_line,
+            update_supplier_invoice_line,
         },
     },
 };
@@ -31,6 +32,8 @@ use supplier_invoice::{
     },
     update::{UpdateSupplierInvoiceInput, UpdateSupplierInvoiceResponse},
 };
+
+use self::supplier_invoice::DeleteSupplierInvoiceInput;
 
 pub struct Mutations;
 
@@ -89,11 +92,11 @@ impl Mutations {
     async fn delete_supplier_invoice(
         &self,
         ctx: &Context<'_>,
-        id: String,
+        input: DeleteSupplierInvoiceInput,
     ) -> DeleteSupplierInvoiceResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_supplier_invoice(connection_manager, id).into()
+        delete_supplier_invoice(connection_manager, input.into()).into()
     }
 
     async fn insert_supplier_invoice_line(
@@ -127,7 +130,9 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteSupplierInvoiceLineInput,
     ) -> DeleteSupplierInvoiceLineResponse {
-        todo!();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        delete_supplier_invoice_line(connection_manager, input.into()).into()
     }
 }
 
