@@ -12,7 +12,7 @@ export default {
 };
 
 const StyledPaper = styled(Paper)({
-  height: 90,
+  height: 500,
   padding: 10,
   width: 400,
 });

@@ -34,7 +34,10 @@ export function Autocomplete<T>({
   const filterOptions = createFilterOptions(filterOptionConfig);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
-    <BasicTextInput {...props} />
+    <BasicTextInput
+      {...props}
+      InputProps={{ disableUnderline: false, ...props.InputProps }}
+    />
   );
 
   return (
