@@ -41,12 +41,10 @@ fn check_line_does_not_exists(
 ) -> Result<(), InsertSupplierInvoiceLineError> {
     let result = InvoiceLineRepository::new(connection).find_one_by_id(id);
 
-    if let Err(RepositoryError::NotFound) = &result {
-        Ok(())
-    } else if let Err(error) = result {
-        Err(error.into())
-    } else {
-        Err(InsertSupplierInvoiceLineError::LineAlreadyExists)
+    match result {
+        Ok(_) => Err(InsertSupplierInvoiceLineError::LineAlreadyExists),
+        Err(RepositoryError::NotFound) => Ok(()),
+        Err(error) => Err(error.into()),
     }
 }
 

@@ -4,7 +4,7 @@ use crate::{
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
     },
     domain::supplier_invoice::InsertSupplierInvoiceLine,
-    service::{invoice::current_store_id, u32_to_i32},
+    service::{invoice_line::generate_batch, u32_to_i32},
 };
 
 use super::InsertSupplierInvoiceLineError;
@@ -18,7 +18,7 @@ pub fn generate(
     let mut new_line = generate_line(input, item_row);
 
     let new_batch_option = if status != InvoiceRowStatus::Draft {
-        let new_batch = generate_batch(new_line.clone(), connection)?;
+        let new_batch = generate_batch(new_line.clone(), false, connection)?;
         new_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {
@@ -63,35 +63,4 @@ fn generate_line(
         stock_line_id: None,
         total_after_tax,
     }
-}
-
-fn generate_batch(
-    InvoiceLineRow {
-        id,
-        invoice_id,
-        item_id,
-        pack_size,
-        batch,
-        expiry_date,
-        sell_price_per_pack,
-        cost_price_per_pack,
-        number_of_packs,
-        ..
-    }: InvoiceLineRow,
-    connection: &StorageConnection,
-) -> Result<StockLineRow, InsertSupplierInvoiceLineError> {
-    let batch = StockLineRow {
-        id,
-        item_id,
-        store_id: current_store_id(connection)?,
-        batch,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        available_number_of_packs: number_of_packs,
-        total_number_of_packs: number_of_packs,
-        expiry_date,
-    };
-
-    Ok(batch)
 }
