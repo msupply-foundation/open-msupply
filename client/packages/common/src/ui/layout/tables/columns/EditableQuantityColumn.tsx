@@ -1,7 +1,8 @@
+import { InputAdornment, Tooltip, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import { ColumnDefinition } from './types';
 import { DomainObject } from '../../../../types';
-import { TextField, InputAdornment, Tooltip, Typography } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import { BasicTextInput } from '../../../components';
 
 interface SomeQuantityEntity extends DomainObject {
   quantity: number;
@@ -46,10 +47,9 @@ export const getEditableQuantityColumn = <
     }, [rowData]);
 
     return (
-      <TextField
+      <BasicTextInput
         sx={{ maxHeight: 40 }}
         error={error}
-        variant="filled"
         size="small"
         helperText="Incorrect value"
         hiddenLabel
