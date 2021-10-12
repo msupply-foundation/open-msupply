@@ -5,10 +5,8 @@ import {
   AutocompleteRenderInputParams,
   AutocompleteRenderOptionState,
   createFilterOptions,
-  Grid,
-  TextField,
-  Theme,
 } from '@mui/material';
+import { BasicTextInput } from '@openmsupply-client/common';
 
 export interface ModalAutocompleteProps<T> {
   filterOptions: any;
@@ -32,14 +30,6 @@ export interface ModalAutocompleteProps<T> {
   ) => React.ReactNode;
 }
 
-const inputStyle = {
-  backgroundColor: (theme: Theme) => theme.palette.background.menu,
-  borderRadius: '8px',
-  padding: '4px 8px',
-  '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-  '& .MuiInput-input': { color: (theme: Theme) => theme.palette.darkGrey },
-};
-
 export { createFilterOptions };
 
 export function ModalAutocomplete<T>({
@@ -53,26 +43,21 @@ export function ModalAutocomplete<T>({
   renderOption,
   width,
 }: PropsWithChildren<ModalAutocompleteProps<T>>): JSX.Element {
-  const defaultRenderInput = (params: AutocompleteRenderInputParams) => (
-    <TextField
-      {...params}
-      sx={{ ...inputStyle, width: width ? `${width}px` : 'auto' }}
-      size="small"
-      variant="standard"
-    />
-  );
   return (
-    <Grid item xs={10}>
-      <Autocomplete<T>
-        filterOptions={filterOptions}
-        loading={loading}
-        loadingText={loadingText}
-        noOptionsText={noOptionsText}
-        options={options}
-        renderInput={renderInput || defaultRenderInput}
-        renderOption={renderOption}
-        onChange={onChange}
-      />
-    </Grid>
+    <Autocomplete<T>
+      sx={{
+        '& .MuiAutocomplete-inputRoot': {
+          width: width ? `${width}px` : 'auto',
+        },
+      }}
+      filterOptions={filterOptions}
+      loading={loading}
+      loadingText={loadingText}
+      noOptionsText={noOptionsText}
+      options={options}
+      renderInput={renderInput || BasicTextInput}
+      renderOption={renderOption}
+      onChange={onChange}
+    />
   );
 }
