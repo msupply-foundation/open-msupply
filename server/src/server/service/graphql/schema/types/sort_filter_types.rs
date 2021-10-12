@@ -9,7 +9,7 @@ use crate::domain::{
 };
 
 use async_graphql::{InputObject, InputType};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 
 #[derive(InputObject)]
 #[graphql(concrete(name = "InvoiceSortInput", params(InvoiceSortFieldInput)))]
@@ -122,17 +122,17 @@ impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
 
 #[derive(InputObject, Clone)]
 pub struct DatetimeFilterInput {
-    pub equal_to: Option<NaiveDateTime>,
-    pub before_or_equal_to: Option<NaiveDateTime>,
-    pub after_or_equal_to: Option<NaiveDateTime>,
+    pub equal_to: Option<DateTime<Utc>>,
+    pub before_or_equal_to: Option<DateTime<Utc>>,
+    pub after_or_equal_to: Option<DateTime<Utc>>,
 }
 
 impl From<DatetimeFilterInput> for DatetimeFilter {
     fn from(f: DatetimeFilterInput) -> Self {
         DatetimeFilter {
-            equal_to: f.equal_to,
-            before_or_equal_to: f.before_or_equal_to,
-            after_or_equal_to: f.after_or_equal_to,
+            equal_to: f.equal_to.map(|t| t.naive_utc()),
+            before_or_equal_to: f.before_or_equal_to.map(|t| t.naive_utc()),
+            after_or_equal_to: f.after_or_equal_to.map(|t| t.naive_utc()),
         }
     }
 }
