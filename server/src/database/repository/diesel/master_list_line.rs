@@ -1,49 +1,36 @@
-use super::{DBBackendConnection, DBConnection};
+use super::StorageConnection;
 
-use crate::database::{
-    repository::{repository::get_connection, RepositoryError},
-    schema::MasterListLineRow,
-};
+use crate::database::{repository::RepositoryError, schema::MasterListLineRow};
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
-pub struct MasterListLineRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct MasterListLineRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl MasterListLineRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        MasterListLineRepository { pool }
+impl<'a> MasterListLineRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        MasterListLineRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one_tx(
-        connection: &DBConnection,
-        row: &MasterListLineRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_line::dsl::*;
-
         diesel::insert_into(master_list_line)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(feature = "sqlite")]
-    pub fn upsert_one_tx(
-        connection: &DBConnection,
-        row: &MasterListLineRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_line::dsl::*;
         diesel::replace_into(master_list_line)
             .values(row)
-            .execute(connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
@@ -52,8 +39,9 @@ impl MasterListLineRepository {
         line_id: &str,
     ) -> Result<MasterListLineRow, RepositoryError> {
         use crate::database::schema::diesel_schema::master_list_line::dsl::*;
-        let connection = get_connection(&self.pool)?;
-        let result = master_list_line.filter(id.eq(line_id)).first(&connection)?;
+        let result = master_list_line
+            .filter(id.eq(line_id))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }

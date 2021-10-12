@@ -4,11 +4,7 @@ use crate::{
             InvoiceLineLoader, InvoiceLoader, ItemLoader, NameLoader, RequisitionLineLoader,
             RequisitionLoader, StoreLoader, UserAccountLoader,
         },
-        repository::{
-            InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository, ItemRepository,
-            NameRepository, RequisitionLineRepository, RequisitionRepository, StockLineRepository,
-            StoreRepository, UserAccountRepository,
-        },
+        repository::StorageConnectionManager,
     },
     server::data::LoaderMap,
     util::settings::Settings,
@@ -24,7 +20,7 @@ use diesel::PgConnection as DBBackendConnection;
 #[cfg(feature = "sqlite")]
 use diesel::SqliteConnection as DBBackendConnection;
 
-use super::{InvoiceLineQueryLoader, InvoiceLineStatsLoader};
+use super::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineLoader};
 
 pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let connection_manager =
@@ -33,45 +29,48 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
 
     let mut loaders: LoaderMap = LoaderMap::new();
 
-    let item_repository = ItemRepository::new(pool.clone());
-    let item_loader = DataLoader::new(ItemLoader { item_repository });
+    let item_loader = DataLoader::new(ItemLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
 
-    let _stock_line_repository = StockLineRepository::new(pool.clone());
-
-    let requisition_repository = RequisitionRepository::new(pool.clone());
     let requisition_loader = DataLoader::new(RequisitionLoader {
-        requisition_repository,
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
-    let requisition_line_repository = RequisitionLineRepository::new(pool.clone());
     let requisition_line_loader = DataLoader::new(RequisitionLineLoader {
-        requisition_line_repository,
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
-    let name_repository = NameRepository::new(pool.clone());
-    let name_loader = DataLoader::new(NameLoader { name_repository });
+    let name_loader = DataLoader::new(NameLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
 
-    let store_repository = StoreRepository::new(pool.clone());
-    let store_loader = DataLoader::new(StoreLoader { store_repository });
+    let store_loader = DataLoader::new(StoreLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
 
-    let invoice_repository = InvoiceRepository::new(pool.clone());
-    let invoice_loader = DataLoader::new(InvoiceLoader { invoice_repository });
+    let invoice_loader = DataLoader::new(InvoiceLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
 
-    let invoice_line_repository = InvoiceLineRepository::new(pool.clone());
     let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
-        invoice_line_repository,
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
     let invoice_line_query_loader = DataLoader::new(InvoiceLineQueryLoader {
-        invoice_line_query_repository: InvoiceLineQueryRepository::new(pool.clone()),
-    });
-    let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
-        invoice_line_query_repository: InvoiceLineQueryRepository::new(pool.clone()),
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
-    let user_account_repository = UserAccountRepository::new(pool.clone());
+    let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
+
+    let stock_line_loader = DataLoader::new(StockLineLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
+
     let user_account_loader = DataLoader::new(UserAccountLoader {
-        user_account_repository,
+        connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
     loaders.insert(item_loader);
@@ -83,6 +82,7 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(invoice_line_loader);
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
+    loaders.insert(stock_line_loader);
     loaders.insert(user_account_loader);
 
     loaders

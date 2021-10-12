@@ -1,5 +1,5 @@
 use crate::database::repository::{
-    InvoiceLineQueryJoin, InvoiceLineQueryRepository, RepositoryError,
+    InvoiceLineQueryJoin, InvoiceLineQueryRepository, RepositoryError, StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;
@@ -7,7 +7,7 @@ use async_graphql::*;
 use std::collections::HashMap;
 
 pub struct InvoiceLineQueryLoader {
-    pub invoice_line_query_repository: InvoiceLineQueryRepository,
+    pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
@@ -19,10 +19,10 @@ impl Loader<String> for InvoiceLineQueryLoader {
         &self,
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let all_invoice_lines = self
-            .invoice_line_query_repository
-            .find_many_by_invoice_ids(invoice_ids)
-            .await?;
+        let connection = self.connection_manager.connection()?;
+        let repo = InvoiceLineQueryRepository::new(&connection);
+
+        let all_invoice_lines = repo.find_many_by_invoice_ids(invoice_ids)?;
 
         // Put lines into a map grouped by invoice id:
         // invoice_id -> list of invoice_line for the invoice id

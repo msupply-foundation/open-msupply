@@ -1,6 +1,9 @@
 use crate::{
     database::{
-        repository::{CentralSyncBufferRepository, CentralSyncCursorRepository, RepositoryError},
+        repository::{
+            CentralSyncBufferRepository, CentralSyncCursorRepository, RepositoryError,
+            StorageConnectionManager,
+        },
         schema::CentralSyncBufferRow,
     },
     server::data::RepositoryRegistry,
@@ -27,6 +30,8 @@ pub enum CentralSyncError {
     ImportCentralSyncRecordsError { source: SyncImportError },
     #[error("Failed to remove central sync buffer records")]
     RemoveCentralSyncBufferRecordsError { source: RepositoryError },
+    #[error("Failed to connect to DB")]
+    DBConnectionError { source: RepositoryError },
 }
 
 #[derive(Error, Debug)]
@@ -60,11 +65,12 @@ impl Synchroniser {
         &mut self,
         registry: &RepositoryRegistry,
     ) -> Result<(), CentralSyncError> {
-        let central_sync_cursor_repository: &CentralSyncCursorRepository =
-            registry.get::<CentralSyncCursorRepository>();
-
-        let central_sync_buffer_repository: &CentralSyncBufferRepository =
-            registry.get::<CentralSyncBufferRepository>();
+        let connection = registry
+            .get::<StorageConnectionManager>()
+            .connection()
+            .map_err(|source| CentralSyncError::DBConnectionError { source })?;
+        let central_sync_cursor_repository = CentralSyncCursorRepository::new(&connection);
+        let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
 
         let mut cursor: u32 = central_sync_cursor_repository
             .get_cursor()
@@ -158,8 +164,11 @@ impl Synchroniser {
         &self,
         registry: &RepositoryRegistry,
     ) -> Result<(), CentralSyncError> {
-        let central_sync_buffer_repository: &CentralSyncBufferRepository =
-            registry.get::<CentralSyncBufferRepository>();
+        let connection = registry
+            .get::<StorageConnectionManager>()
+            .connection()
+            .map_err(|source| CentralSyncError::DBConnectionError { source })?;
+        let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
 
         let mut records: Vec<CentralSyncBufferRow> = Vec::new();
         for table_name in TRANSLATION_RECORDS {
@@ -213,7 +222,7 @@ impl Synchroniser {
 mod tests {
     use crate::{
         database::{
-            repository::{get_repositories, CentralSyncBufferRepository},
+            repository::{get_repositories, CentralSyncBufferRepository, StorageConnectionManager},
             schema::CentralSyncBufferRow,
         },
         server::data::RepositoryRegistry,
@@ -259,12 +268,14 @@ mod tests {
         test_records.append(&mut get_test_master_list_line_records());
 
         let central_records: Vec<CentralSyncBufferRow> = extract_sync_buffer_rows(&test_records);
-        let central_sync_buffer_repository: &CentralSyncBufferRepository =
-            &registry.get::<CentralSyncBufferRepository>();
+        let connection = registry
+            .get::<StorageConnectionManager>()
+            .connection()
+            .unwrap();
+        let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
 
         central_sync_buffer_repository
             .insert_many(&central_records)
-            .await
             .expect("Failed to insert central sync records into sync buffer");
 
         let synchroniser = Synchroniser {

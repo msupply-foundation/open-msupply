@@ -2,44 +2,28 @@ use crate::{
     database::{
         loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
         repository::{InvoiceLineQueryJoin, InvoiceLineStats, InvoiceQueryJoin},
-        schema::{InvoiceRowStatus, InvoiceRowType},
     },
     server::service::graphql::ContextExt,
 };
 
 use async_graphql::{dataloader::DataLoader, ComplexObject, Context, Enum, Object, SimpleObject};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
+use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum InvoiceType {
+#[graphql(remote = "crate::database::schema::InvoiceRowType")]
+pub enum InvoiceTypeInput {
     CustomerInvoice,
     SupplierInvoice,
 }
 
-impl From<InvoiceRowType> for InvoiceType {
-    fn from(row: InvoiceRowType) -> InvoiceType {
-        match row {
-            InvoiceRowType::CustomerInvoice => InvoiceType::CustomerInvoice,
-            InvoiceRowType::SupplierInvoice => InvoiceType::SupplierInvoice,
-        }
-    }
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum InvoiceStatus {
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[graphql(remote = "crate::database::schema::InvoiceRowStatus")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum InvoiceStatusInput {
     Draft,
     Confirmed,
     Finalised,
-}
-
-impl From<InvoiceRowStatus> for InvoiceStatus {
-    fn from(row: InvoiceRowStatus) -> InvoiceStatus {
-        match row {
-            InvoiceRowStatus::Draft => InvoiceStatus::Draft,
-            InvoiceRowStatus::Confirmed => InvoiceStatus::Confirmed,
-            InvoiceRowStatus::Finalised => InvoiceStatus::Finalised,
-        }
-    }
 }
 
 #[derive(SimpleObject, PartialEq, Debug)]
@@ -51,18 +35,18 @@ pub struct InvoiceLinePricing {
 #[derive(SimpleObject, PartialEq, Debug)]
 #[graphql(complex)]
 pub struct InvoiceNode {
-    pub id: String,
-    pub other_party_name: String,
-    pub other_party_id: String,
-    pub status: InvoiceStatus,
-    pub invoice_type: InvoiceType,
-    pub invoice_number: i32,
-    pub their_reference: Option<String>,
-    pub comment: Option<String>,
-    pub entry_datetime: String,
-    pub confirm_datetime: Option<String>,
-    pub finalised_datetime: Option<String>,
-    pub lines: InvoiceLines,
+    id: String,
+    other_party_name: String,
+    other_party_id: String,
+    status: InvoiceStatusInput,
+    invoice_type: InvoiceTypeInput,
+    invoice_number: i32,
+    their_reference: Option<String>,
+    comment: Option<String>,
+    entry_datetime: DateTime<Utc>,
+    confirm_datetime: Option<DateTime<Utc>>,
+    finalised_datetime: Option<DateTime<Utc>>,
+    lines: InvoiceLines,
 }
 
 #[ComplexObject]
@@ -95,18 +79,18 @@ impl From<InvoiceQueryJoin> for InvoiceNode {
             id: invoice_row.id.to_owned(),
             other_party_name: name_row.name,
             other_party_id: name_row.id,
-            status: InvoiceStatus::from(invoice_row.status),
-            invoice_type: InvoiceType::from(invoice_row.r#type),
+            status: InvoiceStatusInput::from(invoice_row.status),
+            invoice_type: InvoiceTypeInput::from(invoice_row.r#type),
             invoice_number: invoice_row.invoice_number,
             their_reference: invoice_row.their_reference,
             comment: invoice_row.comment,
-            entry_datetime: DateTime::<Utc>::from_utc(invoice_row.entry_datetime, Utc).to_rfc3339(),
+            entry_datetime: DateTime::<Utc>::from_utc(invoice_row.entry_datetime, Utc),
             confirm_datetime: invoice_row
                 .confirm_datetime
-                .map(|v| DateTime::<Utc>::from_utc(v, Utc).to_rfc3339()),
+                .map(|v| DateTime::<Utc>::from_utc(v, Utc)),
             finalised_datetime: invoice_row
                 .finalised_datetime
-                .map(|v| DateTime::<Utc>::from_utc(v, Utc).to_rfc3339()),
+                .map(|v| DateTime::<Utc>::from_utc(v, Utc)),
             lines: InvoiceLines {
                 invoice_id: invoice_row.id,
             },
@@ -115,8 +99,8 @@ impl From<InvoiceQueryJoin> for InvoiceNode {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct InvoiceLines {
-    pub invoice_id: String,
+struct InvoiceLines {
+    invoice_id: String,
 }
 
 #[Object]
@@ -146,7 +130,7 @@ pub struct InvoiceLineNode {
     cost_price_per_pack: f64,
     sell_price_per_pack: f64,
     batch: Option<String>,
-    expiry_date: Option<NaiveDateTime>,
+    expiry_date: Option<NaiveDate>,
     stock_line: StockLine,
 }
 

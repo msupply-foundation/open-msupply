@@ -1,22 +1,16 @@
-use super::DBBackendConnection;
+use super::StorageConnection;
 
-use crate::database::{
-    repository::{repository::get_connection, RepositoryError},
-    schema::UserAccountRow,
-};
+use crate::database::{repository::RepositoryError, schema::UserAccountRow};
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool},
-};
+use diesel::prelude::*;
 
-pub struct UserAccountRepository {
-    pool: Pool<ConnectionManager<DBBackendConnection>>,
+pub struct UserAccountRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
-impl UserAccountRepository {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> UserAccountRepository {
-        UserAccountRepository { pool }
+impl<'a> UserAccountRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        UserAccountRepository { connection }
     }
 
     pub async fn insert_one(
@@ -24,10 +18,9 @@ impl UserAccountRepository {
         user_account_row: &UserAccountRow,
     ) -> Result<(), RepositoryError> {
         use crate::database::schema::diesel_schema::user_account::dsl::*;
-        let connection = get_connection(&self.pool)?;
         diesel::insert_into(user_account)
             .values(user_account_row)
-            .execute(&connection)?;
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
@@ -36,18 +29,17 @@ impl UserAccountRepository {
         account_id: &str,
     ) -> Result<UserAccountRow, RepositoryError> {
         use crate::database::schema::diesel_schema::user_account::dsl::*;
-        let connection = get_connection(&self.pool)?;
-        let result = user_account.filter(id.eq(account_id)).first(&connection)?;
+        let result = user_account
+            .filter(id.eq(account_id))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 
-    pub async fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<UserAccountRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         use crate::database::schema::diesel_schema::user_account::dsl::*;
-        let connection = get_connection(&self.pool)?;
-        let result = user_account.filter(id.eq_any(ids)).load(&connection)?;
+        let result = user_account
+            .filter(id.eq_any(ids))
+            .load(&self.connection.connection)?;
         Ok(result)
     }
 }

@@ -1,21 +1,20 @@
 #![allow(where_clauses_object_safety)]
 
 mod graphql {
+    use crate::graphql::assert_gql_query;
     use remote_server::{
         database::{
-            loader::get_loaders,
             mock::{mock_names, mock_requisitions, mock_stores},
             repository::{
-                get_repositories, NameRepository, RequisitionRepository, StoreRepository,
+                get_repositories, NameRepository, RequisitionRepository, StorageConnectionManager,
+                StoreRepository,
             },
             schema::{NameRow, RequisitionRow, StoreRow},
         },
-        server::{
-            data::{LoaderRegistry, RepositoryRegistry},
-            service::graphql::config as graphql_config,
-        },
         util::test_db,
     };
+
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn get_requisition_by_id_is_success() {
@@ -29,11 +28,12 @@ mod graphql {
         test_db::setup(&settings.database).await;
 
         let repositories = get_repositories(&settings).await;
-        let loaders = get_loaders(&settings).await;
+        let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let name_repository = repositories.get::<NameRepository>().unwrap();
-        let store_repository = repositories.get::<StoreRepository>().unwrap();
-        let requisition_repository = repositories.get::<RequisitionRepository>().unwrap();
+        let name_repository = NameRepository::new(&connection);
+        let store_repository = StoreRepository::new(&connection);
+        let requisition_repository = RequisitionRepository::new(&connection);
 
         for name in mock_names {
             name_repository.insert_one(&name).await.unwrap();
@@ -44,38 +44,23 @@ mod graphql {
         }
 
         for requisition in mock_requisitions {
-            requisition_repository
-                .insert_one(&requisition)
-                .await
-                .unwrap();
+            requisition_repository.insert_one(&requisition).unwrap();
         }
 
-        let repository_registry = RepositoryRegistry { repositories };
-        let loader_registry = LoaderRegistry { loaders };
-
-        let repository_registry = actix_web::web::Data::new(repository_registry);
-        let loader_registry = actix_web::web::Data::new(loader_registry);
-
-        let mut app = actix_web::test::init_service(
-            actix_web::App::new()
-                .data(repository_registry.clone())
-                .data(loader_registry.clone())
-                .configure(graphql_config(repository_registry, loader_registry)),
-        )
-        .await;
-
-        // TODO: parameterise gql test payloads and expected results.
-        let payload = r#"{"query":"{requisition(id:\"requisition_a\"){id}}"}"#.as_bytes();
-
-        let req = actix_web::test::TestRequest::post()
-            .header("content-type", "application/json")
-            .set_payload(payload)
-            .uri("/graphql")
-            .to_request();
-
-        let res = actix_web::test::read_response(&mut app, req).await;
-        let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-
-        assert_eq!(body, r#"{"data":{"requisition":{"id":"requisition_a"}}}"#);
+        let query = r#"query RequisitionId($id: String) {
+            requisition(id: $id){
+                id
+            }
+        }"#;
+        let variables = Some(json!({
+          "id": "requisition_a"
+        }));
+        let expected = json!({
+            "requisition": {
+                "id":"requisition_a"
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected).await;
     }
 }
