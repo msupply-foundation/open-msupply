@@ -121,24 +121,32 @@ const createItems = (
   });
 };
 
+export const createInvoice = (
+  id: string,
+  invoiceNumber: number,
+  nameId: string,
+  seeded?: Partial<Invoice>
+) => ({
+  id,
+  nameId,
+  invoiceNumber,
+  status: takeRandomElementFrom(['Confirmed', 'Finalised']),
+  entered: faker.date.past().toString(),
+  confirmed: faker.date.past().toString(),
+  total: `$${faker.commerce.price()}`,
+  color: 'grey',
+  type: 'Customer invoice',
+  comment: faker.commerce.productDescription(),
+  ...seeded,
+});
+
 const createInvoices = (
   customers = NameData,
   numberToCreate = randomInteger({ min: 10, max: 100 })
 ): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const name = takeRandomElementFrom(customers);
-    const invoice = {
-      id: `${i}`,
-      nameId: name.id,
-      status: takeRandomElementFrom(['Confirmed', 'Finalised']),
-      entered: faker.date.past().toString(),
-      confirmed: faker.date.past().toString(),
-      invoiceNumber: `${i}`,
-      total: `$${faker.commerce.price()}`,
-      color: 'grey',
-      type: 'Customer invoice',
-      comment: faker.commerce.productDescription(),
-    };
+    const invoice = createInvoice(`${i}`, i, name.id);
 
     return invoice;
   });

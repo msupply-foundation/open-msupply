@@ -19,7 +19,7 @@ export interface ListApi<T extends ObjectWithStringKeys> {
   }) => () => Promise<{ data: T[]; totalLength: number }>;
   onDelete: (toDelete: T[]) => Promise<void>;
   onUpdate: (toUpdate: T) => Promise<T>;
-  onCreate: (toCreate: T) => Promise<T>;
+  onCreate: (toCreate: Partial<T>) => Promise<T>;
 }
 
 interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
@@ -30,7 +30,7 @@ interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   queryParams: QueryParams<T>;
   onUpdate: UseMutateFunction<T, unknown, T, unknown>;
   onDelete: UseMutateFunction<void, unknown, T[], unknown>;
-  onCreate: UseMutateFunction<T, unknown, T, unknown>;
+  onCreate: UseMutateFunction<T, unknown, Partial<T>, unknown>;
   isCreateLoading: boolean;
   isQueryLoading: boolean;
   isUpdateLoading: boolean;

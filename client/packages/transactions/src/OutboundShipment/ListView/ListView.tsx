@@ -27,7 +27,6 @@ import {
   Book,
   ListSearch,
   useQuery,
-  Invoice,
 } from '@openmsupply-client/common';
 
 import { nameListQueryFn, OutboundShipmentListViewApi } from '../../api';
@@ -133,7 +132,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
     <>
       <ListSearch
         loading={nameDataIsLoading}
-        loadingText="Loading.."
         open={open}
         options={nameData?.data ?? []}
         onClose={() => setOpen(false)}
@@ -146,7 +144,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
             const invoice = {
               id: String(Math.ceil(Math.random() * 1000000)),
               nameId: name?.id,
-            } as unknown as Invoice;
+            };
 
             if (name) {
               await onCreate(invoice);
