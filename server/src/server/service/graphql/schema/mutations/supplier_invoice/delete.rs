@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    domain::supplier_invoice::DeleteSupplierInvoice,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, DeleteResponse, InvoiceDoesNotBelongToCurrentStore,
@@ -12,6 +13,11 @@ use crate::{
 };
 
 use super::CannotDeleteInvoiceWithLines;
+
+#[derive(InputObject)]
+pub struct DeleteSupplierInvoiceInput {
+    id: String,
+}
 
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceResponse {
@@ -28,6 +34,12 @@ pub enum DeleteSupplierInvoiceErrorInterface {
     NotASupplierInvoice(NotASupplierInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+}
+
+impl From<DeleteSupplierInvoiceInput> for DeleteSupplierInvoice {
+    fn from(input: DeleteSupplierInvoiceInput) -> Self {
+        DeleteSupplierInvoice { id: input.id }
+    }
 }
 
 impl From<Result<String, DeleteSupplierInvoiceError>> for DeleteSupplierInvoiceResponse {
