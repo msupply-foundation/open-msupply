@@ -11,16 +11,22 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
+const matchPath = (key: string, path: string) =>
+  `/${key.replace(/^\//, '')}/`.startsWith(path.replace(/\*$/, ''));
+
 const useNestedNav = (path: string) => {
-  const { isOpen } = useDrawer();
+  const { hoverActive, isOpen } = useDrawer();
   const match = useMatch(path);
   const [expanded, setExpanded] = React.useState(false);
+  const hovered = Object.keys(hoverActive).some(
+    key => matchPath(key, path) && hoverActive[key]
+  );
 
   useEffect(() => {
     setExpanded(!!match);
   }, [match]);
 
-  return { isActive: isOpen && expanded };
+  return { isActive: isOpen && (expanded || hovered) };
 };
 
 const Nav: FC = () => {
@@ -34,19 +40,22 @@ const Nav: FC = () => {
         end={!isActive}
         to={AppRoute.Customers}
         icon={<Customers fontSize="small" />}
+        expandOnHover
         text={t('app.customers')}
       />
       <Collapse in={isActive}>
         <List>
           <NavLink
-            end={true}
+            end
+            expandOnHover
             to={RouteBuilder.create(AppRoute.Customers)
               .addPart(AppRoute.CustomerInvoice)
               .build()}
             text={t('app.customer-invoice')}
           />
           <NavLink
-            end={true}
+            end
+            expandOnHover
             to={RouteBuilder.create(AppRoute.Customers)
               .addPart(AppRoute.CustomerRequisition)
               .build()}
