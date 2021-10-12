@@ -45,6 +45,12 @@ impl<'a> StockLineRepository<'a> {
         Ok(())
     }
 
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     pub fn find_many_by_item_ids(
         &self,
         item_ids: &[String],
@@ -66,10 +72,7 @@ impl<'a> StockLineRepository<'a> {
             .collect())
     }
 
-    pub async fn find_one_by_id(
-        &self,
-        stock_line_id: &str,
-    ) -> Result<StockLineRow, RepositoryError> {
+    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(stock_line_id))
             .first(&self.connection.connection)?;
