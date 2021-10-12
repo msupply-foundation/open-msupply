@@ -203,6 +203,8 @@ mod repository_test {
             InvoiceLineRow {
                 id: "test1".to_string(),
                 item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
@@ -211,14 +213,15 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_after_tax: 1.0,
-                available_number_of_packs: 1,
-                total_number_of_packs: 1,
+                number_of_packs: 1,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test2-with-optional".to_string(),
                 item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
@@ -227,8 +230,7 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_after_tax: 2.0,
-                available_number_of_packs: 1,
-                total_number_of_packs: 1,
+                number_of_packs: 1,
             }
         }
 
@@ -236,6 +238,8 @@ mod repository_test {
             InvoiceLineRow {
                 id: "test3".to_string(),
                 item_id: item_2().id.to_string(),
+                item_name: item_2().name.to_string(),
+                item_code: item_2().code.to_string(),
                 invoice_id: invoice_2().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
@@ -244,8 +248,7 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_after_tax: 3.0,
-                available_number_of_packs: 1,
-                total_number_of_packs: 1,
+                number_of_packs: 1,
             }
         }
 
@@ -292,9 +295,8 @@ mod repository_test {
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
                 CustomerInvoiceRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
                 InvoiceRepository, ItemRepository, MasterListLineRepository,
-                MasterListNameJoinRepository, NameQueryFilter, NameQueryRepository, NameQuerySort,
-                NameQuerySortField, NameRepository, RequisitionLineRepository,
-                RequisitionRepository, SimpleStringFilter, StockLineRepository,
+                MasterListNameJoinRepository, NameQueryRepository, NameRepository,
+                RequisitionLineRepository, RequisitionRepository, StockLineRepository,
                 StorageConnectionManager, StoreRepository, UserAccountRepository,
             },
             schema::{
@@ -302,6 +304,10 @@ mod repository_test {
                 MasterListLineRow, MasterListRow, NameRow, RequisitionLineRow, RequisitionRow,
                 RequisitionRowType, StockLineRow, StoreRow, UserAccountRow,
             },
+        },
+        domain::{
+            name::{NameFilter, NameSort, NameSortField},
+            Pagination, SimpleStringFilter,
         },
         util::test_db,
     };
@@ -339,9 +345,10 @@ mod repository_test {
         let repo = NameQueryRepository::new(&connection);
         // test filter:
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
+                    id: None,
                     name: Some(SimpleStringFilter {
                         equal_to: Some("name_1".to_string()),
                         like: None,
@@ -350,16 +357,17 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
-                &None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result.get(0).unwrap().name, "name_1");
 
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
+                    id: None,
                     name: Some(SimpleStringFilter {
                         equal_to: None,
                         like: Some("me_".to_string()),
@@ -368,15 +376,16 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
-                &None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 3);
 
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
+                    id: None,
                     name: None,
                     code: Some(SimpleStringFilter {
                         equal_to: Some("code1".to_string()),
@@ -385,16 +394,16 @@ mod repository_test {
                     is_customer: None,
                     is_supplier: None,
                 }),
-                &None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 2);
 
         /* TODO currently no way to add name_store_join rows for the following tests:
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameQueryFilter {
                     name: None,
                     code: None,
                     is_customer: Some(true),
@@ -406,9 +415,9 @@ mod repository_test {
         assert_eq!(result.get(0).unwrap().name, "name_3");
 
         let result = repo
-            .all(
-                &None,
-                &Some(NameQueryFilter {
+            .query(
+                Pagination::new(),
+                Some(NameQueryFilter {
                     name: None,
                     code: None,
                     is_customer: None,
@@ -422,11 +431,11 @@ mod repository_test {
         */
 
         let result = repo
-            .all(
-                &None,
-                &None,
-                &Some(NameQuerySort {
-                    key: NameQuerySortField::Code,
+            .query(
+                Pagination::new(),
+                None,
+                Some(NameSort {
+                    key: NameSortField::Code,
                     desc: Some(true),
                 }),
             )
@@ -655,13 +664,13 @@ mod repository_test {
         let customer_invoice_repo = CustomerInvoiceRepository::new(&connection);
 
         let item1 = data::invoice_1();
-        repo.insert_one(&item1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
+        repo.upsert_one(&item1).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // customer invoice
         let item1 = data::invoice_2();
-        repo.insert_one(&item1).await.unwrap();
+        repo.upsert_one(&item1).unwrap();
         let loaded_item = customer_invoice_repo
             .find_many_by_name_id(&item1.name_id)
             .await
@@ -696,8 +705,8 @@ mod repository_test {
             .await
             .unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
-        invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
-        invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
+        invoice_repo.upsert_one(&data::invoice_1()).unwrap();
+        invoice_repo.upsert_one(&data::invoice_2()).unwrap();
 
         let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
@@ -742,8 +751,8 @@ mod repository_test {
             .await
             .unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
-        invoice_repo.insert_one(&data::invoice_1()).await.unwrap();
-        invoice_repo.insert_one(&data::invoice_2()).await.unwrap();
+        invoice_repo.upsert_one(&data::invoice_1()).unwrap();
+        invoice_repo.upsert_one(&data::invoice_2()).unwrap();
         let repo = InvoiceLineRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.insert_one(&item1).await.unwrap();

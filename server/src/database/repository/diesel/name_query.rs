@@ -1,26 +1,29 @@
-use super::{SimpleStringFilter, Sort, StorageConnection};
-
+use super::{DBType, StorageConnection};
 use crate::{
     database::{
         repository::RepositoryError,
         schema::{
             diesel_schema::{
-                name_store_join::dsl as name_store_join_dsl, name_table::dsl as name_table_dsl,
+                name_store_join, name_store_join::dsl as name_store_join_dsl, name_table,
+                name_table::dsl as name_table_dsl,
             },
             NameRow, NameStoreJoinRow,
         },
     },
-    server::service::graphql::schema::{
-        queries::pagination::{Pagination, PaginationOption},
-        types::NameQuery,
+    domain::{
+        name::{Name, NameFilter, NameSort, NameSortField},
+        Pagination,
     },
 };
 
-use diesel::prelude::*;
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
+};
 
 type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>);
 
-impl From<NameAndNameStoreJoin> for NameQuery {
+impl From<NameAndNameStoreJoin> for Name {
     fn from((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Self {
         let (is_customer, is_supplier) = match name_store_join_row_option {
             Some(name_store_join_row) => (
@@ -30,7 +33,7 @@ impl From<NameAndNameStoreJoin> for NameQuery {
             None => (false, false),
         };
 
-        NameQuery {
+        Name {
             id: name_row.id,
             name: name_row.name,
             code: name_row.code,
@@ -38,20 +41,6 @@ impl From<NameAndNameStoreJoin> for NameQuery {
             is_supplier,
         }
     }
-}
-
-pub struct NameQueryFilter {
-    pub name: Option<SimpleStringFilter>,
-    pub code: Option<SimpleStringFilter>,
-    pub is_customer: Option<bool>,
-    pub is_supplier: Option<bool>,
-}
-
-pub type NameQuerySort = Sort<NameQuerySortField>;
-
-pub enum NameQuerySortField {
-    Name,
-    Code,
 }
 
 pub struct NameQueryRepository<'a> {
@@ -63,59 +52,32 @@ impl<'a> NameQueryRepository<'a> {
         NameQueryRepository { connection }
     }
 
-    pub fn count(&self) -> Result<i64, RepositoryError> {
-        Ok(name_table_dsl::name_table
-            .count()
-            .get_result(&self.connection.connection)?)
+    pub fn count(&self, filter: Option<NameFilter>) -> Result<i64, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
+
+        Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn all(
+    pub fn query(
         &self,
-        pagination: &Option<Pagination>,
-        filter: &Option<NameQueryFilter>,
-        sort: &Option<NameQuerySort>,
-    ) -> Result<Vec<NameQuery>, RepositoryError> {
+        pagination: Pagination,
+        filter: Option<NameFilter>,
+        sort: Option<NameSort>,
+    ) -> Result<Vec<Name>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-
-        let mut query = name_table_dsl::name_table
-            .left_join(name_store_join_dsl::name_store_join)
-            .offset(pagination.offset())
-            .limit(pagination.first())
-            .into_boxed();
-
-        if let Some(f) = filter {
-            if let Some(code) = &f.code {
-                if let Some(eq) = &code.equal_to {
-                    query = query.filter(name_table_dsl::code.eq(eq));
-                } else if let Some(like) = &code.like {
-                    query = query.filter(name_table_dsl::code.like(format!("%{}%", like)));
-                }
-            }
-            if let Some(name) = &f.name {
-                if let Some(eq) = &name.equal_to {
-                    query = query.filter(name_table_dsl::name.eq(eq));
-                } else if let Some(like) = &name.like {
-                    query = query.filter(name_table_dsl::name.like(format!("%{}%", like)));
-                }
-            }
-            if let Some(is_customer) = f.is_customer {
-                query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
-            }
-            if let Some(is_supplier) = f.is_supplier {
-                query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
-            }
-        }
+        let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
-                NameQuerySortField::Name => {
+                NameSortField::Name => {
                     if sort.desc.unwrap_or(false) {
                         query = query.order(name_table_dsl::name.desc());
                     } else {
                         query = query.order(name_table_dsl::name.asc());
                     }
                 }
-                NameQuerySortField::Code => {
+                NameSortField::Code => {
                     if sort.desc.unwrap_or(false) {
                         query = query.order(name_table_dsl::code.desc());
                     } else {
@@ -127,9 +89,53 @@ impl<'a> NameQueryRepository<'a> {
             query = query.order(name_table_dsl::id.asc())
         }
 
-        let result = query.load::<NameAndNameStoreJoin>(&self.connection.connection)?;
-        Ok(result.into_iter().map(NameQuery::from).collect())
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<NameAndNameStoreJoin>(&self.connection.connection)?;
+
+        Ok(result.into_iter().map(Name::from).collect())
     }
+}
+
+type BoxedNameQuery =
+    IntoBoxed<'static, LeftJoin<name_table::table, name_store_join::table>, DBType>;
+
+pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
+    let mut query = name_table_dsl::name_table
+        .left_join(name_store_join_dsl::name_store_join)
+        .into_boxed();
+
+    if let Some(f) = filter {
+        if let Some(value) = f.id {
+            if let Some(eq) = value.equal_to {
+                query = query.filter(name_table_dsl::id.eq(eq));
+            }
+        }
+
+        if let Some(code) = f.code {
+            if let Some(eq) = code.equal_to {
+                query = query.filter(name_table_dsl::code.eq(eq));
+            } else if let Some(like) = code.like {
+                query = query.filter(name_table_dsl::code.like(format!("%{}%", like)));
+            }
+        }
+        if let Some(name) = f.name {
+            if let Some(eq) = name.equal_to {
+                query = query.filter(name_table_dsl::name.eq(eq));
+            } else if let Some(like) = &name.like {
+                query = query.filter(name_table_dsl::name.like(format!("%{}%", like)));
+            }
+        }
+        if let Some(is_customer) = f.is_customer {
+            query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
+        }
+        if let Some(is_supplier) = f.is_supplier {
+            query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
+        }
+    }
+
+    query
 }
 
 #[cfg(test)]
@@ -139,15 +145,12 @@ mod tests {
             repository::{NameQueryRepository, NameRepository, StorageConnectionManager},
             schema::NameRow,
         },
-        server::service::graphql::schema::{
-            queries::pagination::{Pagination, DEFAULT_PAGE_SIZE},
-            types::NameQuery,
-        },
+        domain::{name::Name, Pagination, DEFAULT_LIMIT},
         util::test_db,
     };
     use std::convert::TryFrom;
 
-    fn data() -> (Vec<NameRow>, Vec<NameQuery>) {
+    fn data() -> (Vec<NameRow>, Vec<Name>) {
         let mut rows = Vec::new();
         let mut queries = Vec::new();
         for index in 0..200 {
@@ -159,7 +162,7 @@ mod tests {
                 is_supplier: true,
             });
 
-            queries.push(NameQuery {
+            queries.push(Name {
                 id: format!("id{:05}", index),
                 name: format!("name{}", index),
                 code: format!("code{}", index),
@@ -186,31 +189,34 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_PAGE_SIZE).unwrap();
+        let default_page_size = usize::try_from(DEFAULT_LIMIT).unwrap();
 
         // Test
 
         // .count()
         assert_eq!(
-            usize::try_from(repository.count().unwrap()).unwrap(),
+            usize::try_from(repository.count(None).unwrap()).unwrap(),
             queries.len()
         );
 
-        // .all, no pagenation (default)
+        // .query, no pagenation (default)
         assert_eq!(
-            repository.all(&None, &None, &None).unwrap().len(),
+            repository
+                .query(Pagination::new(), None, None)
+                .unwrap()
+                .len(),
             default_page_size
         );
 
-        // .all, pagenation (offset 10)
+        // .query, pagenation (offset 10)
         let result = repository
-            .all(
-                &Some(Pagination {
-                    offset: Some(10),
-                    first: None,
-                }),
-                &None,
-                &None,
+            .query(
+                Pagination {
+                    offset: 10,
+                    limit: DEFAULT_LIMIT,
+                },
+                None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), default_page_size);
@@ -220,29 +226,29 @@ mod tests {
             queries[10 + default_page_size - 1]
         );
 
-        // .all, pagenation (first 10)
+        // .query, pagenation (first 10)
         let result = repository
-            .all(
-                &Some(Pagination {
-                    offset: None,
-                    first: Some(10),
-                }),
-                &None,
-                &None,
+            .query(
+                Pagination {
+                    offset: 0,
+                    limit: 10,
+                },
+                None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 10);
         assert_eq!(*result.last().unwrap(), queries[9]);
 
-        // .all, pagenation (offset 150, first 90) <- more then records in table
+        // .query, pagenation (offset 150, first 90) <- more then records in table
         let result = repository
-            .all(
-                &Some(Pagination {
-                    offset: Some(150),
-                    first: Some(90),
-                }),
-                &None,
-                &None,
+            .query(
+                Pagination {
+                    offset: 150,
+                    limit: 90,
+                },
+                None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), queries.len() - 150);

@@ -1,6 +1,6 @@
-use crate::database::repository::{
-    InvoiceLineQueryJoin, InvoiceLineQueryRepository, RepositoryError, StorageConnectionManager,
-};
+use crate::database::repository::{InvoiceLineQueryRepository, StorageConnectionManager};
+use crate::domain::invoice_line::InvoiceLine;
+use crate::service::ListError;
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -12,8 +12,8 @@ pub struct InvoiceLineQueryLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for InvoiceLineQueryLoader {
-    type Value = Vec<InvoiceLineQueryJoin>;
-    type Error = RepositoryError;
+    type Value = Vec<InvoiceLine>;
+    type Error = ListError;
 
     async fn load(
         &self,
@@ -26,11 +26,11 @@ impl Loader<String> for InvoiceLineQueryLoader {
 
         // Put lines into a map grouped by invoice id:
         // invoice_id -> list of invoice_line for the invoice id
-        let mut map: HashMap<String, Vec<InvoiceLineQueryJoin>> = HashMap::new();
+        let mut map: HashMap<String, Vec<InvoiceLine>> = HashMap::new();
         for line in all_invoice_lines {
             let list = map
-                .entry(line.0.invoice_id.clone())
-                .or_insert_with(|| Vec::<InvoiceLineQueryJoin>::new());
+                .entry(line.invoice_id.clone())
+                .or_insert_with(|| Vec::<InvoiceLine>::new());
             list.push(line);
         }
         Ok(map)
