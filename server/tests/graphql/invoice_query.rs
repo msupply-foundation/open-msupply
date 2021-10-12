@@ -57,10 +57,7 @@ mod graphql {
             invoice_repository.upsert_one(&invoice).unwrap();
         }
         for invoice_line in &mock_invoice_lines {
-            invoice_line_repository
-                .insert_one(&invoice_line)
-                .await
-                .unwrap();
+            invoice_line_repository.upsert_one(&invoice_line).unwrap();
         }
 
         let invoice = mock_customer_invoices()[0].clone();
