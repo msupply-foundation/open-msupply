@@ -1,4 +1,6 @@
 use chrono::NaiveDate;
+
+use super::{EqualFilter, Sort};
 #[derive(Clone)]
 
 pub struct InvoiceLine {
@@ -15,3 +17,35 @@ pub struct InvoiceLine {
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
 }
+
+pub struct InvoiceLineFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub invoice_id: Option<EqualFilter<String>>,
+}
+
+impl InvoiceLineFilter {
+    pub fn new() -> InvoiceLineFilter {
+        InvoiceLineFilter {
+            id: None,
+            invoice_id: None,
+        }
+    }
+
+    pub fn match_id(mut self, id: &str) -> Self {
+        self.id = Some(EqualFilter {
+            equal_to: Some(id.to_owned()),
+        });
+
+        self
+    }
+
+    pub fn match_invoice_id(mut self, id: &str) -> Self {
+        self.invoice_id = Some(EqualFilter {
+            equal_to: Some(id.to_owned()),
+        });
+
+        self
+    }
+}
+
+pub type InvoiceLineSort = Sort<()>;
