@@ -2719,6 +2719,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "anymap",
+ "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",

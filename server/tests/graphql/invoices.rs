@@ -1,9 +1,9 @@
 #![allow(where_clauses_object_safety)]
 
 mod graphql {
+    use crate::graphql::assert_gql_query;
     use remote_server::{
         database::{
-            loader::get_loaders,
             mock::{
                 mock_invoice_lines, mock_invoices, mock_items, mock_names, mock_stock_lines,
                 mock_stores,
@@ -14,19 +14,15 @@ mod graphql {
             },
             schema::{InvoiceLineRow, InvoiceRow, ItemRow, NameRow, StockLineRow, StoreRow},
         },
-        server::{
-            data::{LoaderRegistry, RepositoryRegistry},
-            service::graphql::config as graphql_config,
-        },
         util::test_db,
     };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query() {
         let settings = test_db::get_test_settings("omsupply-database-gql-invoices-query");
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
-        let loaders = get_loaders(&settings).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
@@ -55,45 +51,47 @@ mod graphql {
         for stock_line in mock_stocks {
             stock_repository.insert_one(&stock_line).await.unwrap();
         }
-        for invoice in mock_invoices {
-            invoice_repository.upsert_one(&invoice).unwrap();
+        for invoice in &mock_invoices {
+            invoice_repository.insert_one(&invoice).await.unwrap();
         }
-        for invoice_line in mock_invoice_lines {
+        for invoice_line in &mock_invoice_lines {
             invoice_line_repository
                 .insert_one(&invoice_line)
                 .await
                 .unwrap();
         }
 
-        let repository_registry = RepositoryRegistry { repositories };
-        let loader_registry = LoaderRegistry { loaders };
-
-        let repository_registry = actix_web::web::Data::new(repository_registry);
-        let loader_registry = actix_web::web::Data::new(loader_registry);
-
-        let mut app = actix_web::test::init_service(
-            actix_web::App::new()
-                .data(repository_registry.clone())
-                .data(loader_registry.clone())
-                .configure(graphql_config(repository_registry, loader_registry)),
-        )
-        .await;
-
-        // Test query:
-        let payload = r#"{"query":"{invoices{ ... on InvoiceConnector { nodes{id,pricing{... on InvoicePricingNode { totalAfterTax}}}}}}"}"#.as_bytes();
-        let req = actix_web::test::TestRequest::post()
-            .header("content-type", "application/json")
-            .set_payload(payload)
-            .uri("/graphql")
-            .to_request();
-
-        let res = actix_web::test::read_response(&mut app, req).await;
-        let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-
-        // TODO find a more robust way to compare the results
-        assert_eq!(
-            body,
-            "{\"data\":{\"invoices\":{\"nodes\":[{\"id\":\"customer_invoice_a\",\"pricing\":{\"totalAfterTax\":3.0}},{\"id\":\"customer_invoice_b\",\"pricing\":{\"totalAfterTax\":7.0}},{\"id\":\"supplier_invoice_a\",\"pricing\":{\"totalAfterTax\":11.0}},{\"id\":\"supplier_invoice_b\",\"pricing\":{\"totalAfterTax\":15.0}}]}}}"
+        let query = r#"{
+            invoices{
+                nodes{
+                    id
+                    pricing{
+                        totalAfterTax
+                    }
+                }
+            }
+        }"#;
+        let expected_json_invoice_nodes = mock_invoices
+            .iter()
+            .map(|invoice| {
+                json!({
+                    "id": invoice.id.to_owned(),
+                    "pricing": {
+                        "totalAfterTax": &mock_invoice_lines
+                            .iter()
+                            .filter(|invoice_line| invoice_line.invoice_id == invoice.id)
+                            .fold(0.0, |acc, invoice_line| acc + invoice_line.total_after_tax),
+                    }
+                  }
+                )
+            })
+            .collect::<Vec<serde_json::Value>>();
+        let expected = json!({
+            "invoices": {
+                "nodes": expected_json_invoice_nodes,
+            }
+          }
         );
+        assert_gql_query(&settings, query, &None, &expected).await;
     }
 }

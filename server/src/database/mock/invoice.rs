@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 
 use crate::database::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
@@ -12,7 +12,7 @@ pub fn mock_customer_invoice_a() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: Utc::now().naive_utc(),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
     }
@@ -28,7 +28,7 @@ pub fn mock_customer_invoice_b() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: Utc::now().naive_utc(),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
     }
@@ -44,7 +44,7 @@ pub fn mock_supplier_invoice_a() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: Utc::now().naive_utc(),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
     }
@@ -60,7 +60,7 @@ pub fn mock_supplier_invoice_b() -> InvoiceRow {
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: Utc::now().naive_utc(),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
     }
