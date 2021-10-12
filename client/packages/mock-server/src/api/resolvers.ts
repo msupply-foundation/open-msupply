@@ -3,6 +3,7 @@ import {
   ResolvedInvoice,
   ResolvedStockLine,
   ResolvedInvoiceLine,
+  Name,
 } from './../data/types';
 import { PaginationOptions, ListResponse } from './../index';
 import { getSumFn, getDataSorter } from '../utils';
@@ -69,6 +70,12 @@ export const ResolverService = {
       });
       return createListResponse(items.length, data);
     },
+
+    name: (): ListResponse<Name> => {
+      // TODO: Filter customers/suppliers etc
+      const names = db.get.all.name();
+      return createListResponse(names.length, names);
+    },
     stockLine: (): ListResponse<ResolvedStockLine> => {
       const stockLines = db.get.all.stockLine();
 
@@ -103,10 +110,16 @@ export const ResolverService = {
         item: ResolverService.byId.item(invoiceLine.itemId),
       };
     },
+    name: (id: string): Name => {
+      return db.get.byId.name(id);
+    },
     invoice: (id: string): ResolvedInvoice => {
       const invoice = db.get.byId.invoice(id);
+      const name = db.get.byId.name(invoice.nameId);
       return {
         ...invoice,
+        name,
+        otherPartyName: name.name,
         lines: db.get.invoiceLines
           .byInvoiceId(id)
           .map(({ id: invoiceLineId }) =>
