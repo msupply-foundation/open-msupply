@@ -1,19 +1,19 @@
-use crate::database::loader::StockLineLoader;
-use crate::database::repository::{
-    EqualFilter, ItemAndMasterList, ItemFilter, ItemQueryRepository, ItemSort, SimpleStringFilter,
-    StorageConnectionManager,
-};
-use crate::server::service::graphql::{
-    schema::{queries::pagination::Pagination, types::StockLineQuery},
-    ContextExt,
-};
+use crate::database::loader::StockLineByItemIdLoader;
+use crate::domain::item::{Item, ItemFilter};
+use crate::domain::stock_line::StockLine;
+use crate::domain::{EqualFilter, SimpleStringFilter};
+use crate::server::service::graphql::ContextExt;
+use crate::service::{ListError, ListResult};
 use async_graphql::dataloader::DataLoader;
-use async_graphql::{ComplexObject, Context, Enum, InputObject, Object, SimpleObject};
+use async_graphql::*;
 
-use super::{EqualFilterBoolInput, SimpleStringFilterInput, SortInput, StockLineList};
+use super::{
+    Connector, ConnectorError, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
+    StockLinesResponse,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "crate::database::repository::repository::ItemSortField")]
+#[graphql(remote = "crate::domain::item::ItemSortField")]
 pub enum ItemSortFieldInput {
     Name,
     Code,
@@ -21,7 +21,6 @@ pub enum ItemSortFieldInput {
 pub type ItemSortInput = SortInput<ItemSortFieldInput>;
 
 #[derive(InputObject, Clone)]
-
 pub struct ItemFilterInput {
     pub name: Option<SimpleStringFilterInput>,
     pub code: Option<SimpleStringFilterInput>,
@@ -38,76 +37,56 @@ impl From<ItemFilterInput> for ItemFilter {
     }
 }
 
-#[derive(SimpleObject, PartialEq, Debug)]
-#[graphql(complex)]
-#[graphql(name = "Item")]
-pub struct ItemQuery {
-    pub id: String,
-    pub name: String,
-    pub code: String,
-    // Is visible is from master list join
-    pub is_visible: bool,
-}
-
-impl From<ItemAndMasterList> for ItemQuery {
-    fn from((item_row, _, master_list_name_join_option): ItemAndMasterList) -> Self {
-        ItemQuery {
-            id: item_row.id,
-            name: item_row.name,
-            code: item_row.code,
-            is_visible: master_list_name_join_option.is_some(),
-        }
-    }
-}
-
-#[ComplexObject]
-impl ItemQuery {
-    async fn available_batches(&self, ctx: &Context<'_>) -> StockLineList {
-        let repository = ctx.get_loader::<DataLoader<StockLineLoader>>();
-        let result = repository.load_one(self.id.clone()).await.unwrap();
-        StockLineList {
-            stock_lines: result.map_or(Vec::new(), |stock_lines| {
-                stock_lines.into_iter().map(StockLineQuery::from).collect()
-            }),
-        }
-    }
-}
-
-pub struct ItemList {
-    pub pagination: Option<Pagination>,
-    pub filter: Option<ItemFilterInput>,
-    pub sort: Option<Vec<ItemSortInput>>,
+#[derive(PartialEq, Debug)]
+pub struct ItemNode {
+    item: Item,
 }
 
 #[Object]
-impl ItemList {
-    async fn total_count(&self, ctx: &Context<'_>) -> i64 {
-        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        let connection = connection_manager.connection().unwrap();
-        let repository = ItemQueryRepository::new(&connection);
-        repository.count().unwrap()
+impl ItemNode {
+    pub async fn id(&self) -> &str {
+        &self.item.id
     }
 
-    async fn nodes(&self, ctx: &Context<'_>) -> Vec<ItemQuery> {
-        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        let connection = connection_manager.connection().unwrap();
-        let repository = ItemQueryRepository::new(&connection);
+    pub async fn name(&self) -> &str {
+        &self.item.name
+    }
 
-        let filter = self.filter.clone().map(ItemFilter::from);
+    pub async fn code(&self) -> &str {
+        &self.item.code
+    }
 
-        // Currently only one sort option is supported, use the first from the list.
-        let first_sort = self
-            .sort
-            .as_ref()
-            .map(|sort_list| sort_list.first())
-            .flatten()
-            .map(ItemSort::from);
+    pub async fn is_visible(&self) -> bool {
+        self.item.is_visible
+    }
 
-        repository
-            .all(&self.pagination, &filter, &first_sort)
-            .unwrap()
-            .into_iter()
-            .map(ItemQuery::from)
-            .collect()
+    async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {
+        let loader = ctx.get_loader::<DataLoader<StockLineByItemIdLoader>>();
+        loader
+            .load_one(self.item.id.to_string())
+            .await
+            .map(|result: Option<Vec<StockLine>>| result.unwrap_or(Vec::new()))
+            .into()
+    }
+}
+
+#[derive(Union)]
+pub enum ItemsResponse {
+    Error(ConnectorError),
+    Response(Connector<ItemNode>),
+}
+
+impl From<Result<ListResult<Item>, ListError>> for ItemsResponse {
+    fn from(result: Result<ListResult<Item>, ListError>) -> Self {
+        match result {
+            Ok(response) => ItemsResponse::Response(response.into()),
+            Err(error) => ItemsResponse::Error(error.into()),
+        }
+    }
+}
+
+impl From<Item> for ItemNode {
+    fn from(item: Item) -> Self {
+        ItemNode { item }
     }
 }

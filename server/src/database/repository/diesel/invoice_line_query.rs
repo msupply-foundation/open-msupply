@@ -1,24 +1,38 @@
-use crate::database::{
-    repository::RepositoryError,
-    schema::{
-        diesel_schema::{
-            invoice_line::dsl as invoice_line_dsl, item::dsl as item_dsl,
-            stock_line::dsl as stock_line_dsl,
-        },
-        InvoiceLineRow, ItemRow, StockLineRow,
+use crate::{
+    database::{
+        repository::RepositoryError,
+        schema::{diesel_schema::invoice_line::dsl as invoice_line_dsl, InvoiceLineRow},
     },
+    domain::invoice_line::InvoiceLine,
 };
 
 use super::StorageConnection;
 
 use diesel::{dsl, prelude::*, sql_types::Double};
 
-pub type InvoiceLineQueryJoin = (InvoiceLineRow, ItemRow, StockLineRow);
-
 #[derive(Clone)]
 pub struct InvoiceLineStats {
     pub invoice_id: String,
     pub total_after_tax: f64,
+}
+
+impl From<InvoiceLineRow> for InvoiceLine {
+    fn from(invoice_line: InvoiceLineRow) -> Self {
+        InvoiceLine {
+            id: invoice_line.id,
+            stock_line_id: invoice_line.stock_line_id,
+            invoice_id: invoice_line.invoice_id,
+            item_id: invoice_line.item_id,
+            item_name: invoice_line.item_name,
+            item_code: invoice_line.item_code,
+            pack_size: invoice_line.pack_size,
+            number_of_packs: invoice_line.number_of_packs,
+            cost_price_per_pack: invoice_line.cost_price_per_pack,
+            sell_price_per_pack: invoice_line.sell_price_per_pack,
+            batch: invoice_line.batch,
+            expiry_date: invoice_line.expiry_date,
+        }
+    }
 }
 
 pub struct InvoiceLineQueryRepository<'a> {
@@ -30,27 +44,17 @@ impl<'a> InvoiceLineQueryRepository<'a> {
         InvoiceLineQueryRepository { connection }
     }
 
-    pub async fn find_many_by_invoice_id(
-        &self,
-        invoice_id: &str,
-    ) -> Result<Vec<InvoiceLineQueryJoin>, RepositoryError> {
-        Ok(invoice_line_dsl::invoice_line
-            .filter(invoice_line_dsl::invoice_id.eq(invoice_id))
-            .inner_join(item_dsl::item)
-            .inner_join(stock_line_dsl::stock_line)
-            .load::<InvoiceLineQueryJoin>(&self.connection.connection)?)
-    }
-
     /// Returns all invoice lines for the provided invoice ids.
     pub fn find_many_by_invoice_ids(
         &self,
         invoice_ids: &[String],
-    ) -> Result<Vec<InvoiceLineQueryJoin>, RepositoryError> {
+    ) -> Result<Vec<InvoiceLine>, RepositoryError> {
         Ok(invoice_line_dsl::invoice_line
             .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
-            .inner_join(item_dsl::item)
-            .inner_join(stock_line_dsl::stock_line)
-            .load::<InvoiceLineQueryJoin>(&self.connection.connection)?)
+            .load::<InvoiceLineRow>(&self.connection.connection)?
+            .into_iter()
+            .map(InvoiceLine::from)
+            .collect())
     }
 
     /// Calculates invoice line stats for a given invoice ids

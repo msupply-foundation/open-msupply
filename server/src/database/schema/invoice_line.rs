@@ -8,6 +8,8 @@ pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
+    pub item_name: String,
+    pub item_code: String,
     pub stock_line_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
@@ -15,6 +17,5 @@ pub struct InvoiceLineRow {
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub total_after_tax: f64,
-    pub available_number_of_packs: i32,
-    pub total_number_of_packs: i32,
+    pub number_of_packs: i32,
 }

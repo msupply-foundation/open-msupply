@@ -1,165 +1,237 @@
 use crate::{
-    database::{
-        loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
-        repository::{InvoiceLineQueryJoin, InvoiceLineStats, InvoiceQueryJoin},
+    database::loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
+    domain::{
+        invoice::{Invoice, InvoiceFilter, InvoicePricing},
+        invoice_line::InvoiceLine,
+        DatetimeFilter, EqualFilter, SimpleStringFilter,
     },
     server::service::graphql::ContextExt,
 };
-
-use async_graphql::{dataloader::DataLoader, ComplexObject, Context, Enum, Object, SimpleObject};
-use chrono::{DateTime, NaiveDate, Utc};
+use async_graphql::*;
+use chrono::{DateTime, Utc};
+use dataloader::DataLoader;
 use serde::Serialize;
 
+use super::{
+    Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterStringInput,
+    InvoiceLinesResponse, NodeError, SimpleStringFilterInput, SortInput,
+};
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "crate::domain::invoice::InvoiceSortField")]
+pub enum InvoiceSortFieldInput {
+    Type,
+    Status,
+    EntryDatetime,
+    ConfirmDatetime,
+    FinalisedDateTime,
+}
+
+pub type InvoiceSortInput = SortInput<InvoiceSortFieldInput>;
+
+#[derive(InputObject, Clone)]
+pub struct InvoiceFilterInput {
+    pub name_id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterInput<InvoiceNodeType>>,
+    pub status: Option<EqualFilterInput<InvoiceNodeStatus>>,
+    pub comment: Option<SimpleStringFilterInput>,
+    pub their_reference: Option<EqualFilterStringInput>,
+    pub entry_datetime: Option<DatetimeFilterInput>,
+    pub confirm_datetime: Option<DatetimeFilterInput>,
+    pub finalised_datetime: Option<DatetimeFilterInput>,
+}
+
+impl From<InvoiceFilterInput> for InvoiceFilter {
+    fn from(f: InvoiceFilterInput) -> Self {
+        InvoiceFilter {
+            id: None,
+            name_id: f.name_id.map(EqualFilter::from),
+            store_id: f.store_id.map(EqualFilter::from),
+            r#type: f.r#type.map(EqualFilter::from),
+            status: f.status.map(EqualFilter::from),
+            comment: f.comment.map(SimpleStringFilter::from),
+            their_reference: f.their_reference.map(EqualFilter::from),
+            entry_datetime: f.entry_datetime.map(DatetimeFilter::from),
+            confirm_datetime: f.confirm_datetime.map(DatetimeFilter::from),
+            finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
+        }
+    }
+}
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-#[graphql(remote = "crate::database::schema::InvoiceRowType")]
-pub enum InvoiceTypeInput {
+#[graphql(remote = "crate::domain::invoice::InvoiceType")]
+pub enum InvoiceNodeType {
     CustomerInvoice,
     SupplierInvoice,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[graphql(remote = "crate::database::schema::InvoiceRowStatus")]
+#[graphql(remote = "crate::domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum InvoiceStatusInput {
+pub enum InvoiceNodeStatus {
     Draft,
     Confirmed,
     Finalised,
 }
 
-#[derive(SimpleObject, PartialEq, Debug)]
-pub struct InvoiceLinePricing {
-    /// total for all invoice lines
-    total_after_tax: f64,
-}
-
-#[derive(SimpleObject, PartialEq, Debug)]
-#[graphql(complex)]
 pub struct InvoiceNode {
-    id: String,
-    other_party_name: String,
-    other_party_id: String,
-    status: InvoiceStatusInput,
-    invoice_type: InvoiceTypeInput,
-    invoice_number: i32,
-    their_reference: Option<String>,
-    comment: Option<String>,
-    entry_datetime: DateTime<Utc>,
-    confirm_datetime: Option<DateTime<Utc>>,
-    finalised_datetime: Option<DateTime<Utc>>,
-    lines: InvoiceLines,
-}
-
-#[ComplexObject]
-impl InvoiceNode {
-    async fn pricing(&self, ctx: &Context<'_>) -> InvoiceLinePricing {
-        let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
-
-        let result = loader
-            .load_one(self.id.to_string())
-            .await
-            // TODO report error
-            .unwrap()
-            .map_or(
-                InvoiceLineStats {
-                    invoice_id: self.id.to_string(),
-                    total_after_tax: 0.0,
-                },
-                |v| v,
-            );
-
-        InvoiceLinePricing {
-            total_after_tax: result.total_after_tax,
-        }
-    }
-}
-
-impl From<InvoiceQueryJoin> for InvoiceNode {
-    fn from((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Self {
-        InvoiceNode {
-            id: invoice_row.id.to_owned(),
-            other_party_name: name_row.name,
-            other_party_id: name_row.id,
-            status: InvoiceStatusInput::from(invoice_row.status),
-            invoice_type: InvoiceTypeInput::from(invoice_row.r#type),
-            invoice_number: invoice_row.invoice_number,
-            their_reference: invoice_row.their_reference,
-            comment: invoice_row.comment,
-            entry_datetime: DateTime::<Utc>::from_utc(invoice_row.entry_datetime, Utc),
-            confirm_datetime: invoice_row
-                .confirm_datetime
-                .map(|v| DateTime::<Utc>::from_utc(v, Utc)),
-            finalised_datetime: invoice_row
-                .finalised_datetime
-                .map(|v| DateTime::<Utc>::from_utc(v, Utc)),
-            lines: InvoiceLines {
-                invoice_id: invoice_row.id,
-            },
-        }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-struct InvoiceLines {
-    invoice_id: String,
+    invoice: Invoice,
 }
 
 #[Object]
-impl InvoiceLines {
-    async fn nodes(&self, ctx: &Context<'_>) -> Vec<InvoiceLineNode> {
-        let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
+impl InvoiceNode {
+    pub async fn id(&self) -> &str {
+        &self.invoice.id
+    }
 
-        let lines = loader
-            .load_one(self.invoice_id.to_string())
+    pub async fn other_party_name(&self) -> &str {
+        &self.invoice.other_party_name
+    }
+
+    pub async fn other_party_id(&self) -> &str {
+        &self.invoice.other_party_id
+    }
+
+    pub async fn r#type(&self) -> InvoiceNodeType {
+        self.invoice.r#type.clone().into()
+    }
+
+    pub async fn status(&self) -> InvoiceNodeStatus {
+        self.invoice.status.clone().into()
+    }
+
+    pub async fn invoice_number(&self) -> i32 {
+        self.invoice.invoice_number
+    }
+
+    pub async fn their_reference(&self) -> &Option<String> {
+        &self.invoice.their_reference
+    }
+
+    pub async fn comment(&self) -> &Option<String> {
+        &self.invoice.comment
+    }
+
+    pub async fn entry_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.invoice.entry_datetime, Utc)
+    }
+
+    pub async fn confirmed_datetime(&self) -> Option<DateTime<Utc>> {
+        self.invoice
+            .confirm_datetime
+            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+
+    pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
+        self.invoice
+            .finalised_datetime
+            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+
+    pub async fn lines(&self, ctx: &Context<'_>) -> InvoiceLinesResponse {
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
+        loader
+            .load_one(self.invoice.id.to_string())
             .await
-            // TODO handle error:
-            .unwrap()
-            .map_or(Vec::new(), |v| v);
-        lines.into_iter().map(InvoiceLineNode::from).collect()
+            .map(|result: Option<Vec<InvoiceLine>>| result.unwrap_or(Vec::new()))
+            .into()
+    }
+
+    async fn pricing(&self, ctx: &Context<'_>) -> InvoicePriceResponse {
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
+        loader
+            .load_one(self.invoice.id.to_string())
+            .await
+            // TODO report error
+            .map(|result: Option<InvoicePricing>| {
+                result.unwrap_or(InvoicePricing {
+                    total_after_tax: 0.0,
+                })
+            })
+            .into()
     }
 }
 
-#[derive(SimpleObject, PartialEq, Debug)]
-#[graphql(name = "InvoiceQueryLineNode")]
-pub struct InvoiceLineNode {
-    id: String,
-    item_id: String,
-    item_name: String,
-    item_code: String,
-    pack_size: i32,
-    number_of_packs: i32,
-    cost_price_per_pack: f64,
-    sell_price_per_pack: f64,
-    batch: Option<String>,
-    expiry_date: Option<NaiveDate>,
-    stock_line: StockLine,
+type CurrentConnector = Connector<InvoiceNode>;
+
+#[derive(Union)]
+pub enum InvoicesResponse {
+    Error(ConnectorError),
+    Response(Connector<InvoiceNode>),
 }
 
-impl From<InvoiceLineQueryJoin> for InvoiceLineNode {
-    fn from((invoice_line, item, stock_line): InvoiceLineQueryJoin) -> Self {
-        // TODO: is that correct:
-        let invoice_number_of_packs = invoice_line.available_number_of_packs;
-        InvoiceLineNode {
-            id: invoice_line.id,
-            item_id: item.id,
-            item_name: item.name,
-            item_code: item.code,
-            pack_size: invoice_line.pack_size,
-            number_of_packs: invoice_number_of_packs,
-            cost_price_per_pack: invoice_line.cost_price_per_pack,
-            sell_price_per_pack: invoice_line.sell_price_per_pack,
-            batch: invoice_line.batch,
-            expiry_date: invoice_line.expiry_date,
-            // TODO resolve stock_line on demand:
-            stock_line: StockLine {
-                available_number_of_packs: stock_line.available_number_of_packs
-                    + invoice_number_of_packs,
-            },
+#[derive(Union)]
+pub enum InvoiceResponse {
+    Error(NodeError),
+    Response(InvoiceNode),
+}
+
+impl<T, E> From<Result<T, E>> for InvoicesResponse
+where
+    CurrentConnector: From<T>,
+    ConnectorError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => InvoicesResponse::Response(response.into()),
+            Err(error) => InvoicesResponse::Error(error.into()),
         }
     }
 }
 
-#[derive(SimpleObject, PartialEq, Debug)]
-pub struct StockLine {
-    /// number of pack available for a batch ("includes" numberOfPacks in this line)
-    available_number_of_packs: i32,
+impl<T, E> From<Result<T, E>> for InvoiceResponse
+where
+    InvoiceNode: From<T>,
+    NodeError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => InvoiceResponse::Response(response.into()),
+            Err(error) => InvoiceResponse::Error(error.into()),
+        }
+    }
+}
+
+impl From<Invoice> for InvoiceNode {
+    fn from(invoice: Invoice) -> Self {
+        InvoiceNode { invoice }
+    }
+}
+
+// INVOICE LINE PRICING
+pub struct InvoicePricingNode {
+    invoice_pricing: InvoicePricing,
+}
+
+#[Object]
+impl InvoicePricingNode {
+    pub async fn total_after_tax(&self) -> f64 {
+        self.invoice_pricing.total_after_tax
+    }
+}
+
+#[derive(Union)]
+pub enum InvoicePriceResponse {
+    Error(NodeError),
+    Response(InvoicePricingNode),
+}
+
+impl<T, E> From<Result<T, E>> for InvoicePriceResponse
+where
+    InvoicePricingNode: From<T>,
+    NodeError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => InvoicePriceResponse::Response(response.into()),
+            Err(error) => InvoicePriceResponse::Error(error.into()),
+        }
+    }
+}
+
+impl From<InvoicePricing> for InvoicePricingNode {
+    fn from(invoice_pricing: InvoicePricing) -> Self {
+        InvoicePricingNode { invoice_pricing }
+    }
 }

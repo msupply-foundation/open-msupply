@@ -3,6 +3,7 @@ use crate::database::repository::{
     StorageConnectionManager,
 };
 use crate::database::schema::InvoiceLineRow;
+use crate::domain::invoice::InvoicePricing;
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -38,7 +39,7 @@ pub struct InvoiceLineStatsLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for InvoiceLineStatsLoader {
-    type Value = InvoiceLineStats;
+    type Value = InvoicePricing;
     type Error = RepositoryError;
 
     async fn load(
@@ -50,7 +51,17 @@ impl Loader<String> for InvoiceLineStatsLoader {
         Ok(repo
             .stats(invoice_ids)?
             .into_iter()
-            .map(|stats| (stats.invoice_id.clone(), stats))
+            .map(|stats| (stats.invoice_id.clone(), InvoicePricing::from(stats)))
             .collect())
+    }
+}
+
+impl From<InvoiceLineStats> for InvoicePricing {
+    fn from(
+        InvoiceLineStats {
+            total_after_tax, ..
+        }: InvoiceLineStats,
+    ) -> Self {
+        InvoicePricing { total_after_tax }
     }
 }

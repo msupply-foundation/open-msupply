@@ -20,7 +20,9 @@ use diesel::PgConnection as DBBackendConnection;
 #[cfg(feature = "sqlite")]
 use diesel::SqliteConnection as DBBackendConnection;
 
-use super::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineLoader};
+use super::{
+    InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineByIdLoader, StockLineByItemIdLoader,
+};
 
 pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     let connection_manager =
@@ -65,7 +67,11 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
         connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
-    let stock_line_loader = DataLoader::new(StockLineLoader {
+    let stock_line_by_item_id_loader = DataLoader::new(StockLineByItemIdLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
+
+    let stock_line_by_id_loader = DataLoader::new(StockLineByIdLoader {
         connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
@@ -82,7 +88,8 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     loaders.insert(invoice_line_loader);
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
-    loaders.insert(stock_line_loader);
+    loaders.insert(stock_line_by_item_id_loader);
+    loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);
 
     loaders
