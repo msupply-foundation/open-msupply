@@ -5,7 +5,7 @@ use super::{
     InvoiceNotFoundError,
 };
 
-use async_graphql::{Context, InputObject, Interface, SimpleObject, Union};
+use async_graphql:: InputObject, Interface, SimpleObject, Union};
 
 #[derive(InputObject)]
 pub struct DeleteCustomerInvoiceInput {
@@ -35,14 +35,4 @@ pub enum DeleteCustomerInvoiceErrorInterface {
     FinalisedInvoiceIsNotEditable(FinalisedInvoiceIsNotEditableError),
     InvoiceNotFound(InvoiceNotFoundError),
     DatabaseError(DatabaseError),
-}
-
-pub async fn delete_customer_invoice(
-    _ctx: &Context<'_>,
-    input: DeleteCustomerInvoiceInput,
-) -> DeleteCustomerInvoiceResultUnion {
-    // TODO: add deletion logic.
-    DeleteCustomerInvoiceResultUnion::Error(DeleteCustomerInvoiceError {
-        error: DeleteCustomerInvoiceErrorInterface::InvoiceNotFound(InvoiceNotFoundError(input.id)),
-    })
 }

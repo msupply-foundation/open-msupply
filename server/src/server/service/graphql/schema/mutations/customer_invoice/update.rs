@@ -1,6 +1,6 @@
 use crate::server::service::graphql::schema::{
     mutations::error::DatabaseError,
-    types::invoice_query::{InvoiceLines, InvoiceNode, InvoiceStatus, InvoiceType},
+    types::{invoice_query::InvoiceNode, InvoiceNodeStatus},
 };
 
 use super::{
@@ -9,13 +9,13 @@ use super::{
     OtherPartyIdMissingError, OtherPartyIdNotFoundError, OtherPartyNotACustomerOfThisStoreError,
 };
 
-use async_graphql::{Context, InputObject, Interface, SimpleObject, Union};
+use async_graphql::{InputObject, Interface, SimpleObject, Union};
 
 #[derive(InputObject)]
 pub struct UpdateCustomerInvoiceInput {
     id: String,
     other_party_id: String,
-    status: Option<InvoiceStatus>,
+    status: Option<InvoiceNodeStatus>,
     comment: Option<String>,
     their_reference: Option<String>,
 }
@@ -48,29 +48,4 @@ pub enum UpdateCustomerInvoiceErrorInterface {
     OtherPartyIdNotFound(OtherPartyIdNotFoundError),
     OtherPartyNotACustomerOfThisStore(OtherPartyNotACustomerOfThisStoreError),
     DatabaseError(DatabaseError),
-}
-
-pub async fn update_customer_invoice(
-    _ctx: &Context<'_>,
-    _input: UpdateCustomerInvoiceInput,
-) -> UpdateCustomerInvoiceResultUnion {
-    // TODO: add update logic.
-    UpdateCustomerInvoiceResultUnion::Ok(UpdateCustomerInvoiceOk {
-        invoice: InvoiceNode {
-            id: "".to_string(),
-            other_party_name: "".to_string(),
-            other_party_id: "".to_string(),
-            status: InvoiceStatus::Draft,
-            invoice_type: InvoiceType::CustomerInvoice,
-            invoice_number: 0,
-            their_reference: None,
-            comment: None,
-            entry_datetime: "".to_string(),
-            confirm_datetime: None,
-            finalised_datetime: None,
-            lines: InvoiceLines {
-                invoice_id: "".to_string(),
-            },
-        },
-    })
 }
