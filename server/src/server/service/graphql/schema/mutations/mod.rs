@@ -10,8 +10,11 @@ use customer_invoice::{
 use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::ContextExt,
-    service::invoice::{
-        delete_supplier_invoice, get_invoice, insert_supplier_invoice, update_supplier_invoice,
+    service::{
+        invoice::{
+            delete_supplier_invoice, get_invoice, insert_supplier_invoice, update_supplier_invoice,
+        },
+        invoice_line::{get_invoice_line, insert_supplier_invoice_line},
     },
 };
 
@@ -96,7 +99,12 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertSupplierInvoiceLineInput,
     ) -> InsertSupplierInvoiceLineResponse {
-        todo!();
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match insert_supplier_invoice_line(connection_manager, input.into()) {
+            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn update_supplier_invoice_line(
@@ -121,6 +129,7 @@ impl Mutations {
 pub enum ForeignKey {
     OtherPartyId,
     ItemId,
+    InvoiceId,
 }
 
 pub struct ForeignKeyError(ForeignKey);

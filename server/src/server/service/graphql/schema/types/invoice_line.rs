@@ -1,4 +1,4 @@
-use super::{Connector, ConnectorError, StockLineResponse};
+use super::{Connector, ConnectorError, NodeError, StockLineResponse};
 use crate::{
     database::loader::StockLineByIdLoader, domain::invoice_line::InvoiceLine,
     server::service::graphql::ContextExt,
@@ -70,6 +70,12 @@ pub enum InvoiceLinesResponse {
     Response(CurrentConnector),
 }
 
+#[derive(Union)]
+pub enum InvoiceLineResponse {
+    Error(NodeError),
+    Response(InvoiceLineNode),
+}
+
 impl<T, E> From<Result<T, E>> for InvoiceLinesResponse
 where
     CurrentConnector: From<T>,
@@ -79,6 +85,19 @@ where
         match result {
             Ok(response) => InvoiceLinesResponse::Response(response.into()),
             Err(error) => InvoiceLinesResponse::Error(error.into()),
+        }
+    }
+}
+
+impl<T, E> From<Result<T, E>> for InvoiceLineResponse
+where
+    InvoiceLineNode: From<T>,
+    NodeError: From<E>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(response) => InvoiceLineResponse::Response(response.into()),
+            Err(error) => InvoiceLineResponse::Error(error.into()),
         }
     }
 }
