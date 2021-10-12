@@ -1,14 +1,18 @@
 use async_graphql::*;
 
-use crate::server::service::graphql::schema::{
-    mutations::{
-        CannotEditFinalisedInvoice, DeleteResponse, InvoiceDoesNotBelongToCurrentStore,
-        NotASupplierInvoice, RecordDoesNotExist,
+use crate::{
+    domain::supplier_invoice::DeleteSupplierInvoiceLine,
+    server::service::graphql::schema::{
+        mutations::{
+            CannotEditFinalisedInvoice, DeleteResponse, ForeignKey, ForeignKeyError,
+            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
+        },
+        types::{DatabaseError, ErrorWrapper},
     },
-    types::{DatabaseError, ErrorWrapper},
+    service::invoice_line::DeleteSupplierInvoiceLineError,
 };
 
-use super::{InvoiceLineBelongsToAnotherInvoice, InvoiceLineIsReserved};
+use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice, InvoiceLineIsReserved};
 
 #[derive(InputObject)]
 pub struct DeleteSupplierInvoiceLineInput {
@@ -19,7 +23,7 @@ pub struct DeleteSupplierInvoiceLineInput {
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceLineResponse {
     Error(ErrorWrapper<DeleteSupplierInvoiceLineErrorInterface>),
-    DeleteResponse(DeleteResponse),
+    Response(DeleteResponse),
 }
 
 #[derive(Interface)]
@@ -27,9 +31,66 @@ pub enum DeleteSupplierInvoiceLineResponse {
 pub enum DeleteSupplierInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
     RecordDoesNotExist(RecordDoesNotExist),
+    ForeignKeyError(ForeignKeyError),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotASupplierInvoice(NotASupplierInvoice),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     InvoiceLineIsReserved(InvoiceLineIsReserved),
+    BatchIsReserved(BatchIsReserved),
+}
+
+impl From<DeleteSupplierInvoiceLineInput> for DeleteSupplierInvoiceLine {
+    fn from(input: DeleteSupplierInvoiceLineInput) -> Self {
+        DeleteSupplierInvoiceLine {
+            id: input.id,
+            invoice_id: input.invoice_id,
+        }
+    }
+}
+
+impl From<Result<String, DeleteSupplierInvoiceLineError>> for DeleteSupplierInvoiceLineResponse {
+    fn from(result: Result<String, DeleteSupplierInvoiceLineError>) -> Self {
+        match result {
+            Ok(id) => DeleteSupplierInvoiceLineResponse::Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
+    }
+}
+
+impl From<DeleteSupplierInvoiceLineError> for DeleteSupplierInvoiceLineResponse {
+    fn from(error: DeleteSupplierInvoiceLineError) -> Self {
+        use DeleteSupplierInvoiceLineErrorInterface as OutError;
+        let error = match error {
+            DeleteSupplierInvoiceLineError::LineDoesNotExist => {
+                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+            }
+            DeleteSupplierInvoiceLineError::DatabaseError(error) => {
+                OutError::DatabaseError(DatabaseError(error))
+            }
+            DeleteSupplierInvoiceLineError::InvoiceDoesNotExist => {
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
+            }
+            DeleteSupplierInvoiceLineError::NotASupplierInvoice => {
+                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            }
+            DeleteSupplierInvoiceLineError::NotThisStoreInvoice => {
+                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
+            }
+            DeleteSupplierInvoiceLineError::CannotEditFinalised => {
+                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+            }
+
+            DeleteSupplierInvoiceLineError::BatchIsReserved => {
+                OutError::BatchIsReserved(BatchIsReserved {})
+            }
+            DeleteSupplierInvoiceLineError::NotThisInvoiceLine(invoice_id) => {
+                OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
+                    invoice_id,
+                ))
+            }
+        };
+
+        DeleteSupplierInvoiceLineResponse::Error(ErrorWrapper { error })
+    }
 }
