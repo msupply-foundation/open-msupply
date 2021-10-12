@@ -1,3 +1,4 @@
+pub mod delete;
 pub mod insert;
 pub mod update;
 use uuid::Uuid;
@@ -13,6 +14,7 @@ use crate::{
     service::invoice::current_store_id,
 };
 
+pub use self::delete::*;
 pub use self::insert::*;
 pub use self::update::*;
 
