@@ -65,6 +65,24 @@ impl InvoiceFilter {
 
         self
     }
+
+    pub fn set_entry_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.entry_datetime = Some(filter);
+
+        self
+    }
+
+    pub fn set_confirm_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.confirm_datetime = Some(filter);
+
+        self
+    }
+
+    pub fn set_finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.finalised_datetime = Some(filter);
+
+        self
+    }
 }
 
 pub enum InvoiceSortField {
