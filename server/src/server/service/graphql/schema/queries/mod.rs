@@ -8,12 +8,9 @@ use crate::service::invoice::{get_invoice, get_invoices};
 use crate::service::item::get_items;
 use crate::service::name::get_names;
 
-use super::types::{
-    convert_sort, InvoiceFilterInput, InvoiceResponse, InvoiceSortInput, InvoicesResponse,
-    ItemFilterInput, ItemSortInput, ItemsResponse, NameFilterInput, NameSortInput, NamesResponse,
-    PaginationInput,
-};
 use async_graphql::{Context, Object};
+
+use super::types::*;
 pub struct Queries;
 
 #[Object]

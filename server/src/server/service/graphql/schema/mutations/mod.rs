@@ -1,3 +1,12 @@
+mod customer_invoice;
+mod error;
+pub mod supplier_invoice;
+
+use customer_invoice::{
+    DeleteCustomerInvoiceInput, DeleteCustomerInvoiceResultUnion, InsertCustomerInvoiceInput,
+    InsertCustomerInvoiceResultUnion, UpdateCustomerInvoiceInput, UpdateCustomerInvoiceResultUnion,
+};
+
 use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::ContextExt,
@@ -6,7 +15,8 @@ use crate::{
     },
 };
 
-use self::supplier_invoice::{
+use async_graphql::*;
+use supplier_invoice::{
     delete::DeleteSupplierInvoiceResponse,
     insert::{InsertSupplierInvoiceInput, InsertSupplierInvoiceResponse},
     line::{
@@ -16,13 +26,35 @@ use self::supplier_invoice::{
     },
     update::{UpdateSupplierInvoiceInput, UpdateSupplierInvoiceResponse},
 };
-use async_graphql::*;
-pub mod supplier_invoice;
 
 pub struct Mutations;
 
 #[Object]
 impl Mutations {
+    async fn insert_customer_invoice(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertCustomerInvoiceInput,
+    ) -> InsertCustomerInvoiceResultUnion {
+        todo!()
+    }
+
+    async fn update_customer_invoice(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateCustomerInvoiceInput,
+    ) -> UpdateCustomerInvoiceResultUnion {
+        todo!()
+    }
+
+    async fn delete_customer_invoice(
+        &self,
+        ctx: &Context<'_>,
+        input: DeleteCustomerInvoiceInput,
+    ) -> DeleteCustomerInvoiceResultUnion {
+        todo!()
+    }
+
     async fn insert_supplier_invoice(
         &self,
         ctx: &Context<'_>,
