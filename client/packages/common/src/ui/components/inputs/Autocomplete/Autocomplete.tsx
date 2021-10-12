@@ -37,17 +37,13 @@ export function Autocomplete<T>({
     <BasicTextInput
       {...props}
       InputProps={{ disableUnderline: false, ...props.InputProps }}
+      sx={{ width: width ? `${width}px` : 'auto' }}
     />
   );
 
   return (
     <MuiAutocomplete<T>
       fullWidth={false}
-      sx={{
-        '& .MuiAutocomplete-inputRoot': {
-          width: width ? `${width}px` : 'auto',
-        },
-      }}
       filterOptions={filterOptions}
       loading={loading}
       loadingText={loadingText}
