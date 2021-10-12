@@ -23,7 +23,7 @@ const insertInvoice = graphql.mutation(
 
     const result = Api.MutationService.insert.invoice(invoice);
 
-    return response(context.data({ updateInvoice: result }));
+    return response(context.data({ insertInvoice: result }));
   }
 );
 
