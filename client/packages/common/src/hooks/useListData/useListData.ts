@@ -19,15 +19,19 @@ export interface ListApi<T extends ObjectWithStringKeys> {
   }) => () => Promise<{ data: T[]; totalLength: number }>;
   onDelete: (toDelete: T[]) => Promise<void>;
   onUpdate: (toUpdate: T) => Promise<T>;
+  onCreate: (toCreate: T) => Promise<T>;
 }
 
 interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   data?: T[];
   totalLength?: number;
+  invalidate: () => void;
   fullQueryKey: readonly unknown[];
   queryParams: QueryParams<T>;
   onUpdate: UseMutateFunction<T, unknown, T, unknown>;
   onDelete: UseMutateFunction<void, unknown, T[], unknown>;
+  onCreate: UseMutateFunction<T, unknown, T, unknown>;
+  isCreateLoading: boolean;
   isQueryLoading: boolean;
   isUpdateLoading: boolean;
   isDeleteLoading: boolean;
@@ -71,9 +75,17 @@ export const useListData = <T extends ObjectWithStringKeys>(
     { onSuccess: invalidate }
   );
 
+  const { mutateAsync: onCreate, isLoading: isCreateLoading } = useMutation(
+    api.onCreate,
+    { onSuccess: invalidate }
+  );
+
   return {
     ...(data ?? {}),
     ...queryParams,
+    onCreate,
+    invalidate,
+    isCreateLoading,
     numberOfRows,
     fullQueryKey,
     queryParams,

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
@@ -25,9 +25,12 @@ import {
   Color,
   AppBarButtonsPortal,
   Book,
+  ListSearch,
+  useQuery,
+  Invoice,
 } from '@openmsupply-client/common';
 
-import { OutboundShipmentListViewApi } from '../../api';
+import { nameListQueryFn, OutboundShipmentListViewApi } from '../../api';
 import { ExternalURL } from '@openmsupply-client/config';
 
 const ListViewToolBar: FC<{
@@ -94,8 +97,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
     sortBy,
     numberOfRows,
     onChangeSortBy,
+    onCreate,
     onChangePage,
     pagination,
+    invalidate,
   } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
 
   const onColorUpdate = (row: Transaction, color: Color) => {
@@ -117,13 +122,53 @@ export const OutboundShipmentListViewComponent: FC = () => {
     { onChangeSortBy, sortBy }
   );
 
+  const [open, setOpen] = useState(false);
+
+  const { data: nameData, isLoading: nameDataIsLoading } = useQuery(
+    ['names', 'list'],
+    nameListQueryFn
+  );
+
   return (
     <>
+      <ListSearch
+        loading={nameDataIsLoading}
+        loadingText="Loading.."
+        open={open}
+        options={nameData?.data ?? []}
+        onClose={() => setOpen(false)}
+        title="label.customer"
+        optionKey="name"
+        onChange={async (_, name) => {
+          setOpen(false);
+
+          const createInvoice = async () => {
+            const invoice = {
+              id: String(Math.ceil(Math.random() * 1000000)),
+              nameId: name?.id,
+            } as unknown as Invoice;
+
+            if (name) {
+              await onCreate(invoice);
+              invalidate();
+              navigate(`/customers/customer-invoice/${invoice.id}`);
+            }
+          };
+
+          createInvoice();
+        }}
+      />
       <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
         <ListViewToolBar onDelete={onDelete} data={data} />
       </AppBarContentPortal>
 
       <AppBarButtonsPortal>
+        <Button
+          shouldShrink
+          icon={<PlusCircle />}
+          labelKey="button.new-shipment"
+          onClick={() => setOpen(true)}
+        />
         <Button
           shouldShrink
           icon={<PlusCircle />}

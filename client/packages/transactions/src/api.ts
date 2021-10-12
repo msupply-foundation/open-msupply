@@ -1,8 +1,34 @@
 import { ObjectWithStringKeys } from './../../common/src/types/utility';
-import { Transaction, Name, SortBy, ListApi } from '@openmsupply-client/common';
+import {
+  Transaction,
+  Name,
+  SortBy,
+  ListApi,
+  Invoice,
+} from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
+
+export const getInsertInvoiceQuery = (): string => gql`
+  mutation Mutation($invoice: InvoicePatch) {
+    insertInvoice(invoice: $invoice) {
+      id
+    }
+  }
+`;
+
+export const createFn = async (invoice: Invoice): Promise<Invoice> => {
+  const { insertInvoice } = await request(
+    Environment.API_URL,
+    getInsertInvoiceQuery(),
+    {
+      invoice,
+    }
+  );
+
+  return insertInvoice;
+};
 
 export const getDetailQuery = (): string => gql`
   query invoice($id: String!) {
@@ -143,6 +169,7 @@ export const OutboundShipmentListViewApi: ListApi<Transaction> = {
       listQueryFn({ first, offset, sortBy }),
   onDelete: deleteFn,
   onUpdate: updateFn,
+  onCreate: createFn,
 };
 
 interface Api<ReadType, UpdateType> {

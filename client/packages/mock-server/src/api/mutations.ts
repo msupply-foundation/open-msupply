@@ -31,7 +31,9 @@ export const insert = {
       throw new Error(`Invoice with the ID ${invoice.id} already exists!`);
     }
 
-    return db.insert.invoice(invoice);
+    const createdInvoice = db.insert.invoice(invoice);
+
+    return createdInvoice;
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
     const existing = db.get.byId.invoiceLine(invoiceLine.id);
