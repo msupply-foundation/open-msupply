@@ -5,7 +5,7 @@ use super::{
     InvoiceNotFoundError,
 };
 
-use async_graphql:: InputObject, Interface, SimpleObject, Union};
+use async_graphql::{InputObject, Interface, SimpleObject, Union};
 
 #[derive(InputObject)]
 pub struct DeleteCustomerInvoiceInput {
