@@ -486,7 +486,6 @@ mod repository_test {
         stock_line_repo.insert_one(&stock_line).await.unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
-            .await
             .unwrap();
         assert_eq!(stock_line, loaded_item);
     }
