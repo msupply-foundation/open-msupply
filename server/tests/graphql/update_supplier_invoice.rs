@@ -1,5 +1,9 @@
 mod graphql {
     use crate::graphql::get_gql_result;
+    use crate::graphql::{
+        update_supplier_invoice_full as full, update_supplier_invoice_partial as partial,
+        UpdateSupplierInvoiceFull as Full, UpdateSupplierInvoicePartial as Partial,
+    };
     use chrono::{Duration, Utc};
     use graphql_client::{GraphQLQuery, Response};
     use remote_server::{
@@ -13,12 +17,6 @@ mod graphql {
             DatetimeFilter, Pagination,
         },
         util::test_db,
-    };
-    use uuid::Uuid;
-
-    use crate::graphql::{
-        update_supplier_invoice_full as full, update_supplier_invoice_partial as partial,
-        UpdateSupplierInvoiceFull as Full, UpdateSupplierInvoicePartial as Partial,
     };
 
     impl From<Name> for full::NameNode {
@@ -45,10 +43,6 @@ mod graphql {
             .checked_add_signed(Duration::seconds(5))
             .unwrap();
         let id1 = "invalid";
-        let id2 = Uuid::new_v4().to_string();
-        let id3 = Uuid::new_v4().to_string();
-        let id4 = Uuid::new_v4().to_string();
-        let id5 = Uuid::new_v4().to_string();
         let comment = "some comment";
         let their_reference = "some reference";
         let not_supplier = NameQueryRepository::new(&connection)
@@ -299,5 +293,7 @@ mod graphql {
                 ),
         };
         assert_eq!(response.data.unwrap(), expected);
+
+        // TODO check stock lines updating when changed to confirmed
     }
 }
