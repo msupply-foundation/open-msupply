@@ -1,3 +1,4 @@
+use actix_web::test::read_body;
 use remote_server::{
     database::{loader::get_loaders, repository::get_repositories},
     server::{
@@ -8,6 +9,7 @@ use remote_server::{
 };
 
 use assert_json_diff::assert_json_eq;
+use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
 mod insert_supplier_invoice;
@@ -15,6 +17,42 @@ mod invoice_query;
 mod invoices;
 mod names;
 mod requisition;
+
+pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
+where
+    IN: Serialize,
+    OUT: DeserializeOwned,
+{
+    let repositories = get_repositories(settings).await;
+    let loaders = get_loaders(settings).await;
+
+    let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
+    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
+
+    let mut app = actix_web::test::init_service(
+        actix_web::App::new()
+            .data(repository_registry.clone())
+            .data(loader_registry.clone())
+            .configure(graphql_config(repository_registry, loader_registry)),
+    )
+    .await;
+
+    let res = actix_web::test::TestRequest::post()
+        .header("content-type", "application/json")
+        .set_json(&query)
+        .uri("/graphql")
+        .send_request(&mut app)
+        .await;
+
+    let body = read_body(res).await;
+
+    let body_as_string = String::from_utf8(body.clone().to_vec()).unwrap();
+
+    match serde_json::from_slice(&body) {
+        Ok(result) => result,
+        Err(error) => panic!("failed to deserialize: {} {:#?}", body_as_string, error),
+    }
+}
 
 async fn run_gql_query(
     settings: &Settings,
@@ -90,3 +128,25 @@ async fn assert_gql_query(
     assert_json_eq!(&actual, expected_with_data);
     actual
 }
+
+use chrono::{DateTime as ChronoDateTime, NaiveDate, Utc};
+use graphql_client::GraphQLQuery;
+type DateTime = ChronoDateTime<Utc>;
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq",
+    variables_derives = "Debug,PartialEq",
+    normalization = "Rust"
+)]
+pub struct InsertSupplierInvoiceFull;
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq",
+    variables_derives = "Debug,PartialEq",
+    normalization = "Rust"
+)]
+pub struct InsertSupplierInvoicePartial;
