@@ -142,6 +142,7 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
 mod tests {
     use crate::{
         database::{
+            mock::MockDataInserts,
             repository::{NameQueryRepository, NameRepository},
             schema::NameRow,
         },
@@ -176,7 +177,8 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (_, storage_connection) = test_db::setup_all("test_name_query_repository").await;
+        let (_, storage_connection, _) =
+            test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
         let repository = NameQueryRepository::new(&storage_connection);
 
         let (rows, queries) = data();
