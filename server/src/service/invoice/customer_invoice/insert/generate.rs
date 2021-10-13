@@ -14,14 +14,13 @@ use crate::{
 use super::InsertCustomerInvoiceError;
 
 pub fn generate(
-    id: String,
     input: InsertCustomerInvoice,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, InsertCustomerInvoiceError> {
     let current_datetime = Utc::now().naive_utc();
 
     let result = InvoiceRow {
-        id,
+        id: input.id,
         name_id: input.other_party_id,
         r#type: InvoiceType::SupplierInvoice.into(),
         comment: input.comment,

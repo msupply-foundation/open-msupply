@@ -3,7 +3,6 @@ use crate::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
     domain::customer_invoice::InsertCustomerInvoice,
-    util::uuid::uuid,
 };
 
 pub mod generate;
@@ -45,9 +44,8 @@ pub fn insert_customer_invoice(
     let connection = connection_manager.connection()?;
 
     let new_invoice_id = connection.transaction_sync(|connection| {
-        let id = uuid();
-        validate(&id, &input, &connection)?;
-        let new_invoice = generate(id, input, &connection)?;
+        validate(&input, &connection)?;
+        let new_invoice = generate(input, &connection)?;
         InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
 
         Ok(new_invoice.id)

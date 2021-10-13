@@ -8,11 +8,10 @@ use crate::{
 use super::InsertCustomerInvoiceError;
 
 pub fn validate(
-    invoice_id: &str,
     input: &InsertCustomerInvoice,
     connection: &StorageConnection,
 ) -> Result<(), InsertCustomerInvoiceError> {
-    check_invoice_does_not_exists(invoice_id, connection)?;
+    check_invoice_does_not_exists(&input.id, connection)?;
     check_other_party_id(input, connection)?;
 
     // TODO check OtherPartyCannotBeThisStore
