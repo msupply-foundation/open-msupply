@@ -27,6 +27,8 @@ use supplier_invoice::{
     update::{UpdateSupplierInvoiceInput, UpdateSupplierInvoiceResponse},
 };
 
+use self::customer_invoice::InsertCustomerInvoiceResponse;
+
 pub struct Mutations;
 
 #[Object]
@@ -35,8 +37,13 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         input: InsertCustomerInvoiceInput,
-    ) -> InsertCustomerInvoiceResultUnion {
-        todo!()
+    ) -> InsertCustomerInvoiceResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match insert_customer_invoice(connection_manager, input.into()) {
+            Ok(id) => get_invoice(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn update_customer_invoice(

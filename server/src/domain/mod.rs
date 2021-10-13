@@ -1,3 +1,4 @@
+pub mod customer_invoice;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
