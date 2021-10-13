@@ -74,4 +74,32 @@ describe('NavLink', () => {
     expect(node).toBeInTheDocument();
     expect(node).toHaveAttribute('href', '/customer-invoice');
   });
+
+  it('Correctly renders a span in place of a link for top level hover items', () => {
+    const { getByTestId } = render(
+      <TestingProvider>
+        <TestingRouter initialEntries={['/customers']}>
+          <Route
+            path="*"
+            element={
+              <Box>
+                <Wrapper collapsed />
+                <NavLink
+                  to="/customer-invoice"
+                  icon={<Customers />}
+                  text="Customers"
+                  end={false}
+                  expandOnHover
+                />
+              </Box>
+            }
+          />
+        </TestingRouter>
+      </TestingProvider>
+    );
+
+    const node = getByTestId('/customer-invoice_hover');
+
+    expect(node).toBeInTheDocument();
+  });
 });
