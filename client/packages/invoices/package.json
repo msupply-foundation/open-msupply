@@ -1,5 +1,5 @@
 {
-  "name": "@openmsupply-client/transactions",
+  "name": "@openmsupply-client/invoices",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",

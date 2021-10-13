@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route } from 'react-router';
 import { render, waitFor } from '@testing-library/react';
-import AppBar from '../../../../host/src/AppBar';
+import AppBar from '@openmsupply-client/host/src/AppBar';
 import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
 
 import { OutboundShipmentDetailView } from './DetailView';

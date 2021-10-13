@@ -43,21 +43,6 @@ export interface InvoiceLine extends DomainObject {
   expiry: string;
 }
 
-export interface Transaction extends DomainObject {
-  id: string;
-  color: string;
-  comment: string;
-  status: string;
-  type: string;
-  entered: string;
-  confirmed: string;
-  invoiceNumber: string;
-  total: string;
-  name?: Name;
-  otherPartyName: string;
-  lines: InvoiceLine[];
-}
-
 export type Test = {
   id: number;
   message: string;

@@ -1,11 +1,5 @@
-import { ObjectWithStringKeys } from './../../common/src/types/utility';
-import {
-  Transaction,
-  Name,
-  SortBy,
-  ListApi,
-  Invoice,
-} from '@openmsupply-client/common';
+import { ObjectWithStringKeys } from '@openmsupply-client/common/src/types/utility';
+import { Name, SortBy, ListApi, Invoice } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { request, gql } from 'graphql-request';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
@@ -115,7 +109,7 @@ export const getListQuery = (): string => gql`
   }
 `;
 
-export const deleteFn = async (invoices: Transaction[]) => {
+export const deleteFn = async (invoices: Invoice[]) => {
   await request(Environment.API_URL, getDeleteMutation(), {
     invoices,
   });
@@ -133,7 +127,7 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-}): Promise<{ data: Transaction[]; totalLength: number }> => {
+}): Promise<{ data: Invoice[]; totalLength: number }> => {
   const { first, offset, sortBy } = queryParams;
 
   const { invoices } = await request(Environment.API_URL, getListQuery(), {
@@ -146,7 +140,7 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   return invoices;
 };
 
-export const detailQueryFn = (id: string) => async (): Promise<Transaction> => {
+export const detailQueryFn = (id: string) => async (): Promise<Invoice> => {
   const result = await request(Environment.API_URL, getDetailQuery(), {
     id,
   });
@@ -155,14 +149,14 @@ export const detailQueryFn = (id: string) => async (): Promise<Transaction> => {
   return invoice;
 };
 
-export const updateFn = async (updated: Transaction): Promise<Transaction> => {
+export const updateFn = async (updated: Invoice): Promise<Invoice> => {
   const patch = { invoicePatch: updated };
   const result = await request(Environment.API_URL, getMutation(), patch);
   const { updateInvoice } = result;
   return updateInvoice;
 };
 
-export const OutboundShipmentListViewApi: ListApi<Transaction> = {
+export const OutboundShipmentListViewApi: ListApi<Invoice> = {
   onQuery:
     ({ first, offset, sortBy }) =>
     () =>
@@ -179,11 +173,9 @@ interface Api<ReadType, UpdateType> {
 
 export const getOutboundShipmentDetailViewApi: (
   id: string
-) => Api<Transaction, OutboundShipment> = (id: string) => ({
+) => Api<Invoice, OutboundShipment> = (id: string) => ({
   onRead: detailQueryFn(id),
-  onUpdate: async (
-    outboundShipment: OutboundShipment
-  ): Promise<Transaction> => {
+  onUpdate: async (outboundShipment: OutboundShipment): Promise<Invoice> => {
     const result = await updateFn(outboundShipment);
     return result;
   },

@@ -1,10 +1,10 @@
-import { Transaction, Column, InvoiceLine } from '@openmsupply-client/common';
+import { Invoice, Column, InvoiceLine } from '@openmsupply-client/common';
 
 export interface ItemRow extends InvoiceLine {
   updateQuantity: (quantity: number) => void;
 }
 
-export interface OutboundShipment extends Transaction {
+export interface OutboundShipment extends Invoice {
   lines: ItemRow[];
 }
 
