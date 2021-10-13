@@ -1,5 +1,5 @@
 +++
-title = "Types"
+title = "Scalar Types"
 description = "Custom GraphQL types"
 date = 2021-05-01T19:30:00+00:00
 updated = 2021-05-01T19:30:00+00:00
@@ -32,29 +32,63 @@ Floating point number
 
 A string
 
+## Date
+
+Date string, no timezone i.e. '2021-09-30'
+
 ## Datetime
 
 Date time with timezone stamp, i.e. `2021-08-31T11:32:29.631Z`
 
-### Enum - TransactionStatus
+### Enum - InvoiceStatus
 
-Database field `transaction.status`
+```graphql
+type InvoiceStatus {
+    DRAFT
+    CONFIRMED
+    FINALISED
+}
+```
 
-| Value     | Description                              |
-| --------- | ---------------------------------------- |
-| DRAFT     | Editable with stock not reserved         |
-| CONFIRMED | Editable with stock *reserved**       |
-| FINALISED | Non editable with stock *adjusted** |
+Database field `Invoice.status`
 
-*reserved**: Transaction's transaction_lines -> (item_line.`available_number_of_packs` _ item_line.`pack_size`) is adjusted with transaction_line.`quantity`
+| Value     | Description                                                                                        |
+|-----------|----------------------------------------------------------------------------------------------------|
+| DRAFT     | Editable with stock *reserved** (`CUSTOMER_INVOICE`)                                               |
+| CONFIRMED | Editable with stock *reserved** (`CUSTOMER_INVOICE`) and *adjusted** (`CUSTOMER/SUPPLIER_INVOICE`) |
+| FINALISED | Non editable with stock                                                                            |
 
-*adjusted**: Transaction's transaction_lines -> (item_line.`total_number_of_packs` * item_line.`pack_size`) is adjusted with transaction_line.`quantity`
+<details>
+<summary>IMPLEMENTATION DETAILS*</summary>
 
-### Enum - TransactionType
+For `CUSTOMER_INVOICE`
 
-Database field `transaction.type`
+*reserved**: Invoice's invoice_lines -> (stock_line.`available_number_of_packs`) is adjusted with invoice_line.`number_of_packs`
 
-From perspective of `transaction.store_id` store
+*adjusted**: Invoice's Invoice_lines -> (stock_line.`total_number_of_packs`) is adjusted with invoice_line.`number_of_packs`)
+
+For `SUPPLIER_INVOICE`
+
+When invoice is `CONFIRMED`, stock_line is created and *adjusted**. Any further changes to invoice_line would translated to changes in stock_line
+
+*adjusted**: 
+* invoice_line.`number_of_pack` -> stock_line.`available_number_of_packs`, `total_number_of_packs`
+* invoice_line.`pack_size`, `batch`, `expiry`, `sell_price_per_pack`, `cost_price_per_pack`, `item_id` -> to stock_line fields with the same name
+
+</details>
+&nbsp;
+
+### Enum - InvoiceType
+```graphql
+type InvoiceStatus {
+    CUSTOMER_INVOICE
+    SUPPLIER_INVOICE
+}
+```
+
+Database field `Invoice.type`
+
+From perspective of `Invoice.store_id` store
 
 | Value            | Description    |
 | ---------------- | -------------- |

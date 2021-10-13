@@ -21,52 +21,55 @@ Full list of GraphQL queries is provided here is for:
 - version history
 - further description for api devs and consumers
 
-### TRANSACTIONS
+### Invoices
 
-Transaction [list](/docs/api/patterns/#lists)
+Invoices [list](/docs/api/patterns/#lists)
 
 <ins>Full Shape</ins>
 
 ```graphql
 query {
-  transactions {
+  invoices {
     nodes {
-      id
-      otherPartyName
-      status
-      type
-      comment
-      serialNumber
-      enteredDate
-      reference
+      id: String!
+      # 'destination' or 'source' of invoice
+      otherPartyName: String!
+      otherPartyId: String!
+      status: InvoiceStatus!
+      type: InvoiceType!
+      invoiceNumber: Number!
+      theirReference: String
+      comment: String
+      entryDatetime: Datetime!
+      confirmDatetime: DateTime
+      finalisedDatetime: DateTime
+      pricing {
+        totalAfterTax: Float!
+      }
     }
   }
 }
 ```
+`destination` if type is `CUSTOMER_INVOICE`, linked name record represents destination of stock movement
 
-`Base Table`: transaction
+`source` if type is `SUPPLIER_INVOICE`, linked name record represents source of stock movement
 
-<ins>Field Mapping</ins>
+<details>
+<summary>IMPLEMENTATION DETAILS</summary>
 
-**id** [String](/docs/api/types/#string) -> `id`
+Base Table: `invoice`
 
-**otherPartyName** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source*** of transaction
+Field mapping is 1 to 1 converted to snake case, apart from:
 
-**status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
+**otherPartyId** -> name(`invoice`.`name_id` -> name.id).`id`
 
-**type** [TransactionType](/docs/api/types/#enum-transactiontype) -> `type`
+**otherPartyName** -> name(`invoice`.`name_id` -> name.id).`name`
 
-**comment** [String](/docs/api/types/#string) -> `comment`
+`pricing`.`totalAfterTax` -> this is an aggregate of invoice_lines (sum of `total_after_tax`), linked by `invoice`.`id` -> `invoice_line`.`invoice_id`
 
-**serialNumber** [Int](/docs/api/types/#int) -> `serial_number`
-
-**enteredDate** [Datetime](/docs/api/types/#datetime) -> `entered_date`
-
-**reference** [String](/docs/api/types/#string) -> `reference`: comment visible to *destination**
-
-*destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
-
-*source*** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+_{TODO: do we need totalBeforeTax and serviceFee ? }_
+</details>
+&nbsp;
 
 <ins> [Pagination](/docs/api/patterns/#pagination) </ins>
 
@@ -74,92 +77,91 @@ query {
 
 `DEFAULT_PAGE_SIZE`: 100
 
-
 <ins>Session and Permissions</ins>
 
-Transactions in this query are automatically filtered by permission system so that only transactions associated with current logged in `store` are visible {TODO link to session info} (will output transactions where `store_id = logged in store`)
+Invoices in this query are automatically filtered by permission system so that only invoices associated with current logged in `store` are visible _{TODO link to session info}_ (will output invoice where `store_id = logged in store`)
 
-### TRANSACTION
 
-Single transaction entity
+
+### Invoice
+
+Single Invoice entity
 
 <ins>Full Shape</ins>
 
 ```graphql
 query {
-  transaction(id: S) {
-    id
-    otherPartyName
-    status
-    type
-    comment
-    serialNumber
-    enteredDate
-    reference
+  invoice(id: String!) {
+    id: String!
+    # 'destination' or 'source' of invoice
+    otherPartyName: String!
+    otherPartyId: String!
+    status: InvoiceStatus!
+    type: InvoiceType!
+    invoiceNumber: Number!
+    theirReference: String
+    comment: String
+    entryDatetime: Datetime!
+    confirmDatetime: DateTime
+    finalisedDatetime: DateTime
     lines {
       nodes {
-        id
-        itemName
-        itemCode
-        quantity
-        availableQuantity
-        batchName
-        expiry
+        id: String!
+        itemId: String!
+        itemName: String!
+        itemCode: String!
+        packSize: String!
+        numberOfPacks: Number!
+        costPricePerPack: Float!
+        sellPricePerPack: Float!
+        # name of batch
+        batch: String
+        expiryDate: Date
+        stockLine: {
+          # number of pack available for a batch ("includes" numberOfPacks in this line)
+          availableNumberOfPacks: Number
+        }
       }
     }
   }
 }
 ```
 
-`Base Table`: transaction
+_{TODO do we need stockLine here ? What happen in UI ? Is it a new window to edit quantity (and we show available nubmer of packs there) ?}_
 
-<ins>Arguments</ins>
+`destination` if type is `CUSTOMER_INVOICE`, linked name record represents destination of stock movement
 
-**id** [String](/docs/api/types/#string) -> `id`: transaction entity to query
+`source` if type is `SUPPLIER_INVOICE`, linked name record represents source of stock movement
 
-<ins>Field Mapping</ins>
+<details>
+<summary>IMPLEMENTATION DETAILS</summary>
 
-**id** [String](/docs/api/types/#string) -> `id`
+Base Table: `invoice`
 
-**otherPartyName** [String](/docs/api/types/#string) -> name(`name_id` -> name.id).`name`: *destination** or *source** of transaction
+Field mapping is 1 to 1 converted to snake case, apart from:
 
-**status** [TransactionStatus](/docs/api/types/#enum-transactionstatus) -> `status`
+**otherPartyId** -> name(`invoice`.`name_id` -> name.id).`id`: *destination** or *source*** of invoice
 
-**type** [TransactionType](/docs/api/types/#enum-transactiontype) -> `type`
+**otherPartyName** -> name(`invoice`.`name_id` -> name.id).`name`: *destination** or *source*** of invoice
 
-**comment** [String](/docs/api/types/#string) -> `comment`
+#### lines
 
-**serialNumber** [Int](/docs/api/types/#int) -> `serial_number`
+Base Table: `invoice_lines`
 
-**enteredDate** [Datetime](/docs/api/types/#datetime) -> `entered_date`
+Linked by `invoice`.`id` -> `invoice_line`.`invoice_id`
 
-**reference** [String](/docs/api/types/#String) -> `reference`: comment visible to *destination**
+Field mapping is 1 to 1 converted to snake case, apart from:
 
-`Base Table`: transaction_line
+`stockLine` -> `invoice_line`.`invoice_line`.`id`
 
-**lines** -> transaction_line(`id` -> transaction_line.transaction_id): this is a [list](/docs/api/patterns/#lists)
+Field mapping is 1 to 1 converted to snake case
 
-**lines.id** [String](/docs/api/types/#String) -> `id`
-
-**lines.itemName** [String](/docs/api/types/#string) -> `item_name`: denormalised from item in case of item name changes after transaction is created
-
-**lines.itemCode** [String](/docs/api/types/#string) -> item(transaction_line.item_id -> item).`code`
-
-**lines.quantity** [Int](/docs/api/types/#int) -> `quantity`
-
-**lines.batchName** [String](/docs/api/types/#string) -> `batch_name`
-
-**lines.expiry** [Datetime](/docs/api/types/#datetime) -> `expiry`
-
-**lines.availableQuantity** [Int](/docs/api/types/#int) -> item_line(item_line_id -> item_line.id).`available_quantity`: transaction line quantity will affect available quantity if [transaction status](/docs/api/types/#enum-transactionstatus) is not DRAFT. When [transaction type](/docs/api/types/#enum-transactiontype) is CUSTOMER_INVOICE the quantity will be reduced, when [transaction type](/docs/api/types/#enum-transactiontype) is SUPPLIER_INVOICE it will be increased.
-
-*destination** if type is CUSTOMER_INVOICE, linked name record represents destination of stock movement
-
-*source** if type is SUPPLIER_INVOICE, linked name record represents source of stock movement
+</details>
+&nbsp;
 
 <ins>Session and Permissions</ins>
 
-Additional filter is applied to transaction by permission system to filter transaction by store associated with current session {TODO link to session info} (where `store_id = logged in store`)
+Additional filter is applied to invoice by permission system to filter invoice by store associated with current session _{TODO link to session info}_ (where `store_id = logged in store`)
 
 ### ITEMS
 
@@ -171,17 +173,21 @@ Item [list](/docs/api/patterns/#lists)
 query {
   items {
     nodes {
-      id
-      code
-      name
-      isVisible
-      availableQuantity
+      id: String!
+      code: String!
+      name: String!
+      # item visibility in current logged in store
+      isVisible: Boolean!
+      # batches available in current logged in store
       availableBatches {
         nodes {
-          packSize
-          availableNumberOfPacks
-          name
-          expiry
+          packSize: Number!
+          costPricePerPack: Float!
+          sellPricePerPack: Float!
+          availableNumberOfPacks: Number!
+          totalNumberOfPacks: Number!
+          batch: String
+          expiryDate: Date
         }
       }
     }
@@ -189,33 +195,27 @@ query {
 }
 ```
 
-`Base Table`: item
+<details>
+<summary>IMPLEMENTATION DETAILS</summary>
 
-<ins>Field Mapping</ins>
+Base Table: `item`
 
-**id** [String](/docs/api/types/#string) -> `id`
+Field mapping is 1 to 1 converted to snake case, apart from:
 
-**code** [String](/docs/api/types/#string) -> `code`
+`isVisible` -> this is deduce by current logged in store (in session) link to the item via master lists, `item`.`id` -> `master_list_line`.`item_id` -> `master_list_line`.`master_list_id` -> `master_list_name_join`.`master_list_id` -> `master_list_name_join`.`name_id` -> (session logged in store name_id)
 
-**name** [String](/docs/api/types/#string) -> `name`
+#### availableBatches
 
-**isVisible** [Boolean](/docs/api/types/#boolean) -> {TODO, need to go over master list schema}
+Base Table: `stock_line`
 
-**availableQuantity** [Int](/docs/api/types/#int) -> `sum of` item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active).(packSize * availableNumberOfPacks) {TODO or can this be deduced by front end when batches are selected ?}
+Linked by `item`.`id` -> `stock_line`.`item_id` 
 
-`Base Table`: item_line
+Stock lines are further filtered by `store_id` of currently logged in store. And where available quantity > 0
 
-**availableBatches** -> item_line(`id` -> item_line.item_id and item_line.store_id = session store_id and item_line.is_active): this is a [list](/docs/api/patterns/#lists), `is_active` means `totalNumberOfPacks > 0`
+Field mapping is 1 to 1 converted to snake case
 
-**availableBatches.packSize** [Int](/docs/api/types/#int) -> `pack_size`
-
-**availableBatches.availableNumberOfPacks** [Float](/docs/api/types/#float) -> `available_number_of_packs`: float because can issue in less then pack size
-
-**availableBatches.name** [String](/docs/api/types/#string) -> `name`: batch name, can be null
-
-**availableBatches.expiry** [Datetime](/docs/api/types/#Datetime) -> `expiry`: can be null
-
-`name` and `availableQuantity` are [filterable](/docs/api/Filters) {TODO gotcha for filters, need to create a view (as i don't think diesel would be able to join, sum and filter ?), and also filter view by store_id from session}
+</details>
+&nbsp;
 
 <ins> [Pagination](/docs/api/patterns/#pagination) </ins>
 
@@ -225,7 +225,7 @@ query {
 
 <ins>Session and Permissions</ins>
 
-
+`availableBatches` are filterd by permission system to only show batches available in current logged in store
 
 ### NAMES
 
@@ -237,29 +237,27 @@ Names [list](/docs/api/patterns/#lists)
 query {
   names {
     nodes {
-      id
-      code
-      name
-      isCustomer
-      isSupplier
+      id: String!
+      code: String!
+      name: String!
+      isCustomer: Boolean!
+      isSupplier: Boolean!
     }
   }
 }
 ```
 
-`Base Table`: Name
+<details>
+<summary>IMPLEMENTATION DETAILS</summary>
 
-<ins>Field Mapping</ins>
+Base Table: `name`
 
-**id** [String](/docs/api/types/#string) -> `id`
+Field mapping is 1 to 1 converted to snake case, apart from:
 
-**name** [String](/docs/api/types/#string) -> `name`
+`isCustomer` and `isSupplier`, both come from `name_store_join`, linked by `name`.`id` -> `name_store_join`.`name_id` and `name_store_join`.`store_id` is current logged in store
 
-**code** [String](/docs/api/types/#string) -> `code`
-
-**isCustomer** [Boolean](/docs/api/types/#boolean) -> name_store_join(`id` -> name_store_join.name_id).`name_is_customer`
-
-**isSupplier** [Boolean](/docs/api/types/#boolean) -> name_store_join(`id` -> name_store_join.name_id).`name_is_supplier`
+</details>
+&nbsp;
 
 <ins> [Pagination](/docs/api/patterns/#pagination) </ins>
 
@@ -269,4 +267,4 @@ query {
 
 <ins>Session and Permissions</ins>
 
-Names in this query are filtered by permission system to only show names visible in current `logged in store` {TODO link to session info} (will output names where `name_store_join.store_id = logged in store`)in discussion}
+Names in this query are filtered by permission system to only show names visible in current `logged in store` _{TODO link to session info}_ (will output names where `name_store_join.store_id = logged in store`)in discussion}
