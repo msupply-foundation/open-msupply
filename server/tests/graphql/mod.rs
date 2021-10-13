@@ -12,6 +12,7 @@ use assert_json_diff::assert_json_eq;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
+mod delete_supplier_invoice;
 mod insert_supplier_invoice;
 mod invoice_query;
 mod invoices;
@@ -169,3 +170,13 @@ pub struct UpdateSupplierInvoiceFull;
     normalization = "Rust"
 )]
 pub struct UpdateSupplierInvoicePartial;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq",
+    variables_derives = "Debug,PartialEq",
+    normalization = "Rust"
+)]
+pub struct DeleteSupplierInvoiceFull;
