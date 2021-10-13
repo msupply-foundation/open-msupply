@@ -22,7 +22,8 @@ pub use user_account::mock_user_accounts;
 
 use super::{
     repository::{
-        ItemRepository, NameRepository, NameStoreJoinRepository, StorageConnection, StoreRepository,
+        InvoiceRepository, ItemRepository, NameRepository, NameStoreJoinRepository,
+        StorageConnection, StoreRepository,
     },
     schema::*,
 };
@@ -32,12 +33,14 @@ pub struct MockData {
     pub stores: Vec<StoreRow>,
     pub items: Vec<ItemRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
+    pub invoices: Vec<InvoiceRow>,
 }
 pub struct MockDataInserts {
     pub names: bool,
     pub stores: bool,
     pub items: bool,
     pub name_store_joins: bool,
+    pub invoices: bool,
 }
 
 impl MockDataInserts {
@@ -47,6 +50,7 @@ impl MockDataInserts {
             stores: true,
             items: true,
             name_store_joins: true,
+            invoices: true,
         }
     }
 
@@ -56,6 +60,7 @@ impl MockDataInserts {
             stores: false,
             items: false,
             name_store_joins: false,
+            invoices: false,
         }
     }
 
@@ -89,6 +94,7 @@ pub async fn insert_mock_data(
         stores: mock_stores(),
         items: mock_items(),
         name_store_joins: mock_name_store_joins(),
+        invoices: mock_invoices(),
     };
 
     if inserts.names {
@@ -115,6 +121,13 @@ pub async fn insert_mock_data(
     if inserts.name_store_joins {
         let repo = NameStoreJoinRepository::new(connection);
         for row in &result.name_store_joins {
+            repo.upsert_one(&row).unwrap();
+        }
+    }
+
+    if inserts.invoices {
+        let repo = InvoiceRepository::new(connection);
+        for row in &result.invoices {
             repo.upsert_one(&row).unwrap();
         }
     }
