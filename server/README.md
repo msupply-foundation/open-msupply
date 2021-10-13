@@ -62,6 +62,8 @@ APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production,
 
 ## Tests
 
+`important` graphql test require latest export of graphql schema, need to run `cargo run --bin export_graphql --features sqlite` when making changes to graphql schema (changes that may affect tests). Make sure to `commit` schema.graphql for CI tests to work.
+
 - To run all tests:
 
 ```bash
