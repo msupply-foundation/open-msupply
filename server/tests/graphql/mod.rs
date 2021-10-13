@@ -17,6 +17,7 @@ mod invoice_query;
 mod invoices;
 mod names;
 mod requisition;
+mod update_supplier_invoice;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
 where
@@ -150,3 +151,21 @@ pub struct InsertSupplierInvoiceFull;
     normalization = "Rust"
 )]
 pub struct InsertSupplierInvoicePartial;
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq",
+    variables_derives = "Debug,PartialEq",
+    normalization = "Rust"
+)]
+pub struct UpdateSupplierInvoiceFull;
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq",
+    variables_derives = "Debug,PartialEq",
+    normalization = "Rust"
+)]
+pub struct UpdateSupplierInvoicePartial;

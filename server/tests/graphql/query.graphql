@@ -4,18 +4,18 @@
 
 mutation insertSupplierInvoiceFull(
   $id: String!
-  $otherPartyId: String!
-  $status: InvoiceNodeStatus!
-  $comment: String
-  $theirReference: String
+  $otherPartyId_isi: String!
+  $status_isi: InvoiceNodeStatus!
+  $comment_isi: String
+  $theirReference_isi: String
 ) {
   insertSupplierInvoice(
     input: {
       id: $id
-      otherPartyId: $otherPartyId
-      status: $status
-      theirReference: $theirReference
-      comment: $comment
+      otherPartyId: $otherPartyId_isi
+      status: $status_isi
+      theirReference: $theirReference_isi
+      comment: $comment_isi
     }
   ) {
     ...InsertSupplierInvoiceResponse
@@ -24,18 +24,18 @@ mutation insertSupplierInvoiceFull(
 
 mutation insertSupplierInvoicePartial(
   $id: String!
-  $otherPartyId: String!
-  $status: InvoiceNodeStatus!
-  $comment: String
-  $theirReference: String
+  $otherPartyId_isi: String!
+  $status_isi: InvoiceNodeStatus!
+  $comment_isi: String
+  $theirReference_isi: String
 ) {
   insertSupplierInvoice(
     input: {
       id: $id
-      otherPartyId: $otherPartyId
-      status: $status
-      theirReference: $theirReference
-      comment: $comment
+      otherPartyId: $otherPartyId_isi
+      status: $status_isi
+      theirReference: $theirReference_isi
+      comment: $comment_isi
     }
   ) {
     ...InsertSupplierInvoiceResponsePartial
@@ -56,12 +56,6 @@ fragment InsertSupplierInvoiceResponsePartial on InsertSupplierInvoiceResponse {
   ...PartialInvoiceNode
 }
 
-fragment PartialInvoiceNode on InvoiceNode {
-  id
-  status
-  type
-}
-
 fragment InsertSupplierInvoiceError on InsertSupplierInvoiceError {
   error {
     ...InsertSupplierInvoiceErrorInterface
@@ -76,7 +70,87 @@ fragment InsertSupplierInvoiceErrorInterface on InsertSupplierInvoiceErrorInterf
   ...RecordAlreadyExist
 }
 
+# UPDATE SUPPLIER INVOICE
+
+mutation updateSupplierInvoiceFull(
+  $id: String!
+  $otherPartyId_usi: String
+  $status_usi: InvoiceNodeStatus
+  $comment_usi: String
+  $theirReference_usi: String
+) {
+  updateSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId_usi
+      status: $status_usi
+      theirReference: $theirReference_usi
+      comment: $comment_usi
+    }
+  ) {
+    ...UpdateSupplierInvoiceResponse
+  }
+}
+
+mutation updateSupplierInvoicePartial(
+  $id: String!
+  $otherPartyId_usi: String
+  $status_usi: InvoiceNodeStatus
+  $comment_usi: String
+  $theirReference_usi: String
+) {
+  updateSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId_usi
+      status: $status_usi
+      theirReference: $theirReference_usi
+      comment: $comment_usi
+    }
+  ) {
+    ...UpdateSupplierInvoiceResponsePartial
+  }
+}
+
+fragment UpdateSupplierInvoiceResponse on UpdateSupplierInvoiceResponse {
+  __typename
+  ...UpdateSupplierInvoiceError
+  ...NodeError
+  ...InvoiceNode
+}
+
+fragment UpdateSupplierInvoiceResponsePartial on UpdateSupplierInvoiceResponse {
+  __typename
+  ...UpdateSupplierInvoiceError
+  ...NodeError
+  ...PartialInvoiceNode
+}
+
+fragment UpdateSupplierInvoiceError on UpdateSupplierInvoiceError {
+  error {
+    ...UpdateSupplierInvoiceErrorInterface
+  }
+}
+
+fragment UpdateSupplierInvoiceErrorInterface on UpdateSupplierInvoiceErrorInterface {
+  __typename
+  ...DatabaseError
+  ...ForeignKeyError
+  ...OtherPartyNotASupplier
+  ...RecordDoesNotExist
+  ...CannotEditFinalisedInvoice
+  ...NotASupplierInvoice
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...CannotChangeInvoiceBackToDraft
+}
+
 # INVOICE
+
+fragment PartialInvoiceNode on InvoiceNode {
+  id
+  status
+  type
+}
 
 fragment InvoiceNode on InvoiceNode {
   comment
@@ -176,6 +250,10 @@ fragment RecordAlreadyExist on RecordAlreadyExist {
   description
 }
 
+fragment RecordDoesNotExist on RecordDoesNotExist {
+  description
+}
+
 fragment ForeignKeyError on ForeignKeyError {
   description
   key
@@ -234,4 +312,20 @@ fragment ConnectorErrorInterface on ConnectorErrorInterface {
   __typename
   ...DatabaseError
   ...PaginationError
+}
+
+fragment CannotEditFinalisedInvoice on CannotEditFinalisedInvoice {
+  description
+}
+
+fragment NotASupplierInvoice on NotASupplierInvoice {
+  description
+}
+
+fragment InvoiceDoesNotBelongToCurrentStore on InvoiceDoesNotBelongToCurrentStore {
+  description
+}
+
+fragment CannotChangeInvoiceBackToDraft on CannotChangeInvoiceBackToDraft {
+  description
 }
