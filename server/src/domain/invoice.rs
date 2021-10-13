@@ -90,6 +90,14 @@ impl InvoiceFilter {
         self
     }
 
+    pub fn match_finalised(mut self) -> Self {
+        self.status = Some(EqualFilter {
+            equal_to: Some(InvoiceStatus::Finalised),
+        });
+
+        self
+    }
+
     pub fn set_entry_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.entry_datetime = Some(filter);
 
