@@ -22,8 +22,8 @@ pub use user_account::mock_user_accounts;
 
 use super::{
     repository::{
-        InvoiceRepository, ItemRepository, NameRepository, NameStoreJoinRepository,
-        StorageConnection, StoreRepository,
+        InvoiceLineRepository, InvoiceRepository, ItemRepository, NameRepository,
+        NameStoreJoinRepository, StockLineRepository, StorageConnection, StoreRepository,
     },
     schema::*,
 };
@@ -34,6 +34,8 @@ pub struct MockData {
     pub items: Vec<ItemRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
     pub invoices: Vec<InvoiceRow>,
+    pub stock_lines: Vec<StockLineRow>,
+    pub invoice_lines: Vec<InvoiceLineRow>,
 }
 pub struct MockDataInserts {
     pub names: bool,
@@ -41,6 +43,8 @@ pub struct MockDataInserts {
     pub items: bool,
     pub name_store_joins: bool,
     pub invoices: bool,
+    pub stock_lines: bool,
+    pub invoice_lines: bool,
 }
 
 impl MockDataInserts {
@@ -51,6 +55,8 @@ impl MockDataInserts {
             items: true,
             name_store_joins: true,
             invoices: true,
+            stock_lines: true,
+            invoice_lines: true,
         }
     }
 
@@ -61,6 +67,8 @@ impl MockDataInserts {
             items: false,
             name_store_joins: false,
             invoices: false,
+            stock_lines: false,
+            invoice_lines: false,
         }
     }
 
@@ -83,6 +91,21 @@ impl MockDataInserts {
         self.name_store_joins = true;
         self
     }
+
+    pub fn invoices(mut self) -> Self {
+        self.invoices = true;
+        self
+    }
+
+    pub fn stock_lines(mut self) -> Self {
+        self.stock_lines = true;
+        self
+    }
+
+    pub fn invoice_lines(mut self) -> Self {
+        self.invoice_lines = true;
+        self
+    }
 }
 
 pub async fn insert_mock_data(
@@ -95,6 +118,8 @@ pub async fn insert_mock_data(
         items: mock_items(),
         name_store_joins: mock_name_store_joins(),
         invoices: mock_invoices(),
+        stock_lines: mock_stock_lines(),
+        invoice_lines: mock_invoice_lines(),
     };
 
     if inserts.names {
@@ -128,6 +153,20 @@ pub async fn insert_mock_data(
     if inserts.invoices {
         let repo = InvoiceRepository::new(connection);
         for row in &result.invoices {
+            repo.upsert_one(&row).unwrap();
+        }
+    }
+
+    if inserts.stock_lines {
+        let repo = StockLineRepository::new(connection);
+        for row in &result.stock_lines {
+            repo.upsert_one(&row).unwrap();
+        }
+    }
+
+    if inserts.invoice_lines {
+        let repo = InvoiceLineRepository::new(connection);
+        for row in &result.invoice_lines {
             repo.upsert_one(&row).unwrap();
         }
     }
