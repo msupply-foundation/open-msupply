@@ -54,7 +54,7 @@ export interface Invoice {
   type: string;
   entered: string;
   confirmed: string;
-  invoiceNumber: string;
+  invoiceNumber: number;
   total: string;
   nameId: string;
 }

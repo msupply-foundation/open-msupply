@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
@@ -29,6 +29,7 @@ import {
 
 import { OutboundShipmentListViewApi } from '../../api';
 import { ExternalURL } from '@openmsupply-client/config';
+import { CustomerSearch } from './CustomerSearch';
 
 const ListViewToolBar: FC<{
   onDelete: (toDelete: Transaction[]) => void;
@@ -94,8 +95,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
     sortBy,
     numberOfRows,
     onChangeSortBy,
+    onCreate,
     onChangePage,
     pagination,
+    invalidate,
   } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
 
   const onColorUpdate = (row: Transaction, color: Color) => {
@@ -117,8 +120,31 @@ export const OutboundShipmentListViewComponent: FC = () => {
     { onChangeSortBy, sortBy }
   );
 
+  const [open, setOpen] = useState(false);
+
   return (
     <>
+      <CustomerSearch
+        open={open}
+        onClose={() => setOpen(false)}
+        onChange={async name => {
+          setOpen(false);
+
+          const createInvoice = async () => {
+            const invoice = {
+              id: String(Math.ceil(Math.random() * 1000000)),
+              nameId: name?.id,
+            };
+
+            const result = await onCreate(invoice);
+
+            invalidate();
+            navigate(`/customers/customer-invoice/${result.invoiceNumber}`);
+          };
+
+          createInvoice();
+        }}
+      />
       <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
         <ListViewToolBar onDelete={onDelete} data={data} />
       </AppBarContentPortal>
@@ -128,7 +154,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
           shouldShrink
           icon={<PlusCircle />}
           labelKey="button.new-shipment"
-          onClick={() => navigate(`/customers/customer-invoice/new`)}
+          onClick={() => setOpen(true)}
         />
         <Button
           shouldShrink

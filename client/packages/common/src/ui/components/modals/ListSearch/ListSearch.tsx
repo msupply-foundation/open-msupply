@@ -1,16 +1,15 @@
 import React from 'react';
-import { AutocompleteList } from '../..';
+import { AutocompleteList, BaseAutocompleteListProps } from '../../inputs';
 import { useWindowDimensions } from '../../../..';
 import { LocaleKey } from '../../../../intl/intlHelpers';
 import { BasicModal } from '../BasicModal';
 import { ModalTitle } from '../ModalTitle';
 
-interface ListSearchProps<T> {
+interface ListSearchProps<T> extends BaseAutocompleteListProps<T> {
   title: LocaleKey;
-  options: T[];
-  optionKey: keyof T;
   open: boolean;
   onClose: () => void;
+  optionKey: keyof T;
 }
 
 export const ListSearch = <T extends unknown>({
@@ -19,6 +18,8 @@ export const ListSearch = <T extends unknown>({
   optionKey,
   open,
   onClose,
+  onChange,
+  loading = false,
 }: ListSearchProps<T>): JSX.Element => {
   const { height } = useWindowDimensions();
 
@@ -29,6 +30,8 @@ export const ListSearch = <T extends unknown>({
     <BasicModal open={open} onClose={onClose} height={modalHeight}>
       <ModalTitle title={title} />
       <AutocompleteList
+        onChange={onChange}
+        loading={loading}
         options={options}
         optionKey={optionKey}
         height={listViewHeight}

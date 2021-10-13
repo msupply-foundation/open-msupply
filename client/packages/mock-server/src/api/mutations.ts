@@ -1,3 +1,4 @@
+import { createInvoice } from './../data/data';
 import { Api } from './index';
 import { StockLine } from './../data/types';
 import { db } from '../data';
@@ -31,7 +32,18 @@ export const insert = {
       throw new Error(`Invoice with the ID ${invoice.id} already exists!`);
     }
 
-    return db.insert.invoice(invoice);
+    const allInvoices = db.get.all.invoice();
+    const invoiceNumber =
+      allInvoices.reduce(
+        (acc, invoice) => Math.max(Number(invoice.invoiceNumber), acc),
+        0
+      ) + 1;
+
+    const createdInvoice = db.insert.invoice(
+      createInvoice(invoice.id, invoiceNumber, invoice.nameId)
+    );
+
+    return createdInvoice;
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
     const existing = db.get.byId.invoiceLine(invoiceLine.id);
