@@ -1,6 +1,5 @@
 import React from 'react';
-import { styled, AutocompleteRenderInputParams } from '@mui/material';
-import { BasicTextInput } from '../TextInput';
+import { styled } from '@mui/material';
 import { AutocompleteOptionRenderer } from '../../../..';
 
 export const DefaultAutocompleteItemOption = styled('li')(({ theme }) => ({
@@ -30,7 +29,3 @@ export const getDefaultOptionRenderer: <T>(
       <span style={{ backgroundColor: '#fafafc' }}>{String(item[key])}</span>
     </DefaultAutocompleteItemOption>
   );
-
-export const DefaultRenderInput = (props: AutocompleteRenderInputParams) => (
-  <BasicTextInput {...props} />
-);

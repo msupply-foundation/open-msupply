@@ -92,7 +92,7 @@ export const AutocompleteList = <T extends unknown>({
       PaperComponent={props => (
         <Paper
           sx={{
-            backgroundColor: '#fafafc',
+            backgroundColor: theme => theme.palette.background.toolbar,
             minHeight: height ? `${height}` : 'auto',
           }}
         >
