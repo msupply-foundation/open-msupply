@@ -69,7 +69,11 @@ export const NavLink: FC<NavLinkProps> = props => {
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
         expandOnHover && !end ? (
-          <Link {...linkProps} to="" onClick={drawer.open} />
+          <span
+            {...linkProps}
+            onClick={drawer.open}
+            data-testid={`${to}_hover`}
+          />
         ) : (
           <Link
             {...linkProps}
