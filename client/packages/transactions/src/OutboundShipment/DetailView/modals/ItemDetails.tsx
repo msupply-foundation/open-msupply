@@ -4,17 +4,16 @@ import {
   Divider,
   Grid,
   Item,
-  ModalAutocomplete,
   ModalInputRow,
   ModalLabel,
   ModalRow,
   UseFormRegister,
-  createFilterOptions,
   gql,
   request,
   styled,
   useQuery,
   useTranslation,
+  Autocomplete,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { UseFormSetValue } from 'react-hook-form';
@@ -31,10 +30,10 @@ const ItemOption = styled('li')(({ theme }) => ({
   backgroundColor: theme.palette.background.toolbar,
 }));
 
-const filterOptions = createFilterOptions({
+const filterOptions = {
   stringify: (item: Item) => `${item.code} ${item.name}`,
   limit: 100,
-});
+};
 
 const renderOption = (
   props: React.HTMLAttributes<HTMLLIElement>,
@@ -97,8 +96,8 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
         />
         <ModalRow>
           <ModalLabel labelKey="label.item" />
-          <ModalAutocomplete<Item>
-            filterOptions={filterOptions}
+          <Autocomplete
+            filterOptionConfig={filterOptions}
             loading={isLoading}
             noOptionsText={t('error.no-items')}
             onChange={selectItem}
