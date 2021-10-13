@@ -34,10 +34,11 @@ const Nav: FC = () => {
     RouteBuilder.create(AppRoute.Customers).addWildCard().build()
   );
   const t = useTranslation();
+
   return (
     <>
       <NavLink
-        end={!isActive}
+        end={false}
         to={AppRoute.Customers}
         icon={<Customers fontSize="small" />}
         expandOnHover
