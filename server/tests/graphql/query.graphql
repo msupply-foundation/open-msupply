@@ -1,0 +1,237 @@
+# Queries must match the schema.graphql file, see readme.md test section.
+
+# INSERT SUPPLIER INVOICE
+
+mutation insertSupplierInvoiceFull(
+  $id: String!
+  $otherPartyId: String!
+  $status: InvoiceNodeStatus!
+  $comment: String
+  $theirReference: String
+) {
+  insertSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      status: $status
+      theirReference: $theirReference
+      comment: $comment
+    }
+  ) {
+    ...InsertSupplierInvoiceResponse
+  }
+}
+
+mutation insertSupplierInvoicePartial(
+  $id: String!
+  $otherPartyId: String!
+  $status: InvoiceNodeStatus!
+  $comment: String
+  $theirReference: String
+) {
+  insertSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      status: $status
+      theirReference: $theirReference
+      comment: $comment
+    }
+  ) {
+    ...InsertSupplierInvoiceResponsePartial
+  }
+}
+
+fragment InsertSupplierInvoiceResponse on InsertSupplierInvoiceResponse {
+  __typename
+  ...InsertSupplierInvoiceError
+  ...NodeError
+  ...InvoiceNode
+}
+
+fragment InsertSupplierInvoiceResponsePartial on InsertSupplierInvoiceResponse {
+  __typename
+  ...InsertSupplierInvoiceError
+  ...NodeError
+  ...PartialInvoiceNode
+}
+
+fragment PartialInvoiceNode on InvoiceNode {
+  id
+  status
+  type
+}
+
+fragment InsertSupplierInvoiceError on InsertSupplierInvoiceError {
+  error {
+    ...InsertSupplierInvoiceErrorInterface
+  }
+}
+
+fragment InsertSupplierInvoiceErrorInterface on InsertSupplierInvoiceErrorInterface {
+  __typename
+  ...DatabaseError
+  ...ForeignKeyError
+  ...OtherPartyNotASupplier
+  ...RecordAlreadyExist
+}
+
+# INVOICE
+
+fragment InvoiceNode on InvoiceNode {
+  comment
+  confirmedDatetime
+  entryDatetime
+  finalisedDatetime
+  id
+  invoiceNumber
+  lines {
+    ...InvoiceLinesResponse
+  }
+  otherPartyId
+  otherPartyName
+  pricing {
+    ...InvoicePriceResponse
+  }
+  status
+  theirReference
+  type
+}
+
+fragment InvoicePriceResponse on InvoicePriceResponse {
+  __typename
+  ...NodeError
+  ...InvoicePricingNode
+}
+
+fragment InvoicePricingNode on InvoicePricingNode {
+  totalAfterTax
+}
+
+# INVOICE LINE
+
+fragment InvoiceLinesResponse on InvoiceLinesResponse {
+  __typename
+  ...ConnectorError
+  ...InvoiceLineConnector
+}
+
+fragment InvoiceLineNode on InvoiceLineNode {
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemCode
+  itemId
+  itemName
+  numberOfPacks
+  packSize
+  sellPricePerPack
+  stockLine {
+    ...StockLineResponse
+  }
+}
+
+fragment InvoiceLineConnector on InvoiceLineConnector {
+  totalCount
+  nodes {
+    ...InvoiceLineNode
+  }
+}
+
+# STOCK LINE
+
+fragment StockLineResponse on StockLineResponse {
+  __typename
+  ...NodeError
+  ...StockLineNode
+}
+
+fragment StockLineNode on StockLineNode {
+  id
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  itemId
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+}
+
+# NAME
+
+fragment NameNode on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  name
+}
+
+# ERRORS
+
+fragment RecordAlreadyExist on RecordAlreadyExist {
+  description
+}
+
+fragment ForeignKeyError on ForeignKeyError {
+  description
+  key
+}
+
+fragment DatabaseError on DatabaseError {
+  description
+  fullError
+}
+
+fragment OtherPartyNotASupplier on OtherPartyNotASupplier {
+  description
+  otherParty {
+    ...NameNode
+  }
+}
+
+fragment RecordNotFound on RecordNotFound {
+  id
+  description
+}
+
+fragment NodeError on NodeError {
+  error {
+    ...NodeErrorInterface
+  }
+}
+
+fragment NodeErrorInterface on NodeErrorInterface {
+  __typename
+  ...DatabaseError
+  ...RecordNotFound
+}
+
+fragment PaginationError on PaginationError {
+  description
+  rangeError {
+    ...RangeError
+  }
+}
+
+fragment RangeError on RangeError {
+  description
+  field
+  max
+  min
+}
+
+fragment ConnectorError on ConnectorError {
+  error {
+    ...ConnectorErrorInterface
+  }
+}
+
+fragment ConnectorErrorInterface on ConnectorErrorInterface {
+  __typename
+  ...DatabaseError
+  ...PaginationError
+}
