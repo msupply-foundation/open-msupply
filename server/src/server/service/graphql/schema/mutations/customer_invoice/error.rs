@@ -81,7 +81,7 @@ pub struct OtherPartyNotACustomerOfThisStoreError(pub String);
 impl OtherPartyNotACustomerOfThisStoreError {
     pub async fn description(&self) -> String {
         format!(
-            "Other party with id '{}' is not a valid supplier of this store.",
+            "Other party with id '{}' is not a valid customer of this store.",
             self.0
         )
     }
