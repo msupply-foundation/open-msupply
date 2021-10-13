@@ -1,5 +1,4 @@
 use chrono::Utc;
-use uuid::Uuid;
 
 use crate::{
     database::{
@@ -8,6 +7,7 @@ use crate::{
     },
     domain::{invoice::InvoiceStatus, supplier_invoice::UpdateSupplierInvoice},
     service::invoice::current_store_id,
+    util::uuid::uuid,
 };
 
 use super::UpdateSupplierInvoiceError;
@@ -87,7 +87,7 @@ pub fn generate_batches(
     } in invoice_lines.into_iter()
     {
         result.push(StockLineRow {
-            id: Uuid::new_v4().to_string(),
+            id: uuid(),
             item_id,
             store_id: current_store_id(connection)?,
             batch,
