@@ -1,5 +1,11 @@
-use crate::database::repository::{
-    DBBackendConnection, StorageConnection, StorageConnectionManager,
+use crate::{
+    database::{
+        mock::{insert_mock_data, MockData, MockDataInserts},
+        repository::{
+            get_repositories, DBBackendConnection, StorageConnection, StorageConnectionManager,
+        },
+    },
+    server::data::{LoaderRegistry, RepositoryRegistry},
 };
 
 use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};
@@ -114,7 +120,14 @@ pub fn get_test_settings(db_name: &str) -> Settings {
     }
 }
 
-pub async fn setup_all(db_name: &str) -> (Settings, StorageConnection) {
+/// Generic setup method to help setup test enviroment
+/// - sets up database (create one and initilises schema), drops existing database
+/// - creates connectuion
+/// - inserts mock data
+pub async fn setup_all(
+    db_name: &str,
+    inserts: MockDataInserts,
+) -> (MockData, StorageConnection, Settings) {
     let settings = get_test_settings(db_name);
 
     setup(&settings.database).await;
@@ -127,5 +140,9 @@ pub async fn setup_all(db_name: &str) -> (Settings, StorageConnection) {
 
     let connection = storage_connection_manager.connection().unwrap();
 
-    (settings, connection)
+    (
+        insert_mock_data(&connection, inserts).await,
+        connection,
+        settings,
+    )
 }
