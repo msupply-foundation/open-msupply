@@ -67,9 +67,19 @@ export const NavLink: FC<NavLinkProps> = props => {
 
   const CustomLink = React.useMemo(
     () =>
-      React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
-        <Link {...linkProps} ref={ref} to={to} role="link" aria-label={text} />
-      )),
+      React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
+        expandOnHover && !end ? (
+          <Link {...linkProps} to="" onClick={drawer.open} />
+        ) : (
+          <Link
+            {...linkProps}
+            ref={ref}
+            to={to}
+            role="link"
+            aria-label={text}
+          />
+        )
+      ),
     [to]
   );
 
