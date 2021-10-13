@@ -30,6 +30,7 @@ pub struct InsertCustomerInvoiceInput {
 impl From<InsertCustomerInvoiceInput> for InsertCustomerInvoice {
     fn from(input: InsertCustomerInvoiceInput) -> Self {
         InsertCustomerInvoice {
+            id: input.id,
             other_party_id: input.other_party_id,
             status: input
                 .status
