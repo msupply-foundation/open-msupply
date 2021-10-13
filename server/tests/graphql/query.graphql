@@ -144,6 +144,36 @@ fragment UpdateSupplierInvoiceErrorInterface on UpdateSupplierInvoiceErrorInterf
   ...CannotChangeInvoiceBackToDraft
 }
 
+# DELETE SUPPLIER INVOICE
+
+mutation deleteSupplierInvoiceFull($id: String!) {
+  deleteSupplierInvoice(input: { id: $id }) {
+    ...DeleteSupplierInvoiceResponse
+  }
+}
+
+fragment DeleteSupplierInvoiceResponse on DeleteSupplierInvoiceResponse {
+  __typename
+  ...DeleteSupplierInvoiceError
+  ...DeleteResponse
+}
+
+fragment DeleteSupplierInvoiceError on DeleteSupplierInvoiceError {
+  error {
+    ...DeleteSupplierInvoiceErrorInterface
+  }
+}
+
+fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterface {
+  __typename
+  ...DatabaseError
+  ...RecordDoesNotExist
+  ...CannotEditFinalisedInvoice
+  ...NotASupplierInvoice
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...CannotDeleteInvoiceWithLines
+}
+
 # INVOICE
 
 fragment PartialInvoiceNode on InvoiceNode {
@@ -244,6 +274,12 @@ fragment NameNode on NameNode {
   name
 }
 
+# COMMON
+
+fragment DeleteResponse on DeleteResponse {
+  id
+}
+
 # ERRORS
 
 fragment RecordAlreadyExist on RecordAlreadyExist {
@@ -328,4 +364,11 @@ fragment InvoiceDoesNotBelongToCurrentStore on InvoiceDoesNotBelongToCurrentStor
 
 fragment CannotChangeInvoiceBackToDraft on CannotChangeInvoiceBackToDraft {
   description
+}
+
+fragment CannotDeleteInvoiceWithLines on CannotDeleteInvoiceWithLines {
+  description
+  lines {
+    ...InvoiceLinesResponse
+  }
 }
