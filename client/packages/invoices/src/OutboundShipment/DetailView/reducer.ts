@@ -5,9 +5,9 @@ import {
   DocumentActionSet,
   DocumentActionType,
   SortBy,
-  Transaction,
+  Invoice,
 } from '@openmsupply-client/common';
-import { placeholderTransaction } from './index';
+import { placeholderInvoice } from './index';
 import {
   ActionType,
   OutboundShipment,
@@ -60,12 +60,12 @@ export interface OutboundShipmentStateShape {
 }
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
-  draft: placeholderTransaction,
+  draft: placeholderInvoice,
   sortBy: { key: 'quantity', isDesc: true, direction: 'asc' },
 });
 
 export const reducer = (
-  data: Transaction = placeholderTransaction,
+  data: Invoice = placeholderInvoice,
   dispatch: Dispatch<DocumentActionSet<CustomerInvoiceAction>> | null
 ): ((
   state: OutboundShipmentStateShape | undefined,

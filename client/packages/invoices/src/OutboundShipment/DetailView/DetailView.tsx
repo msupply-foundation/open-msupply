@@ -48,7 +48,7 @@ const useDraftOutbound = () => {
   const { id } = useParams();
 
   const { draft, save, dispatch, state } = useDocument(
-    ['transaction', id ?? 'new'],
+    ['invoice', id ?? 'new'],
     reducer,
     getOutboundShipmentDetailViewApi(id ?? '')
   );

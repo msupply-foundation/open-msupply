@@ -91,7 +91,7 @@ module.exports = env => {
       //   remotes: {
       //     customers: 'customers@http://localhost:3007/remoteEntry.js',
       //     dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
-      //     transactions: 'transactions@http://localhost:3005/remoteEntry.js',
+      //     invoices: 'invoices@http://localhost:3005/remoteEntry.js',
       //   },
       //   exposes: {
       //     './Host': './src/Host',
