@@ -26,6 +26,6 @@ export const getDefaultOptionRenderer: <T>(
 ) => AutocompleteOptionRenderer<T> = key => (props, item) =>
   (
     <DefaultAutocompleteItemOption {...props}>
-      <span style={{ backgroundColor: '#fafafc' }}>{String(item[key])}</span>
+      <span>{String(item[key])}</span>
     </DefaultAutocompleteItemOption>
   );
