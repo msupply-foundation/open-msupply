@@ -1,15 +1,18 @@
-mod customer_invoice;
+pub mod customer_invoice;
 mod error;
 pub mod supplier_invoice;
 
 use customer_invoice::{
-    DeleteCustomerInvoiceInput, DeleteCustomerInvoiceResultUnion, InsertCustomerInvoiceInput,
-    InsertCustomerInvoiceResultUnion, UpdateCustomerInvoiceInput, UpdateCustomerInvoiceResultUnion,
+    DeleteCustomerInvoiceInput, DeleteCustomerInvoiceLineInput, DeleteCustomerInvoiceLineResponse,
+    DeleteCustomerInvoiceResultUnion, InsertCustomerInvoiceInput, InsertCustomerInvoiceLineInput,
+    InsertCustomerInvoiceLineResponse, InsertCustomerInvoiceResultUnion,
+    UpdateCustomerInvoiceInput, UpdateCustomerInvoiceLineInput, UpdateCustomerInvoiceLineResponse,
+    UpdateCustomerInvoiceResultUnion,
 };
 
 use crate::{
     database::repository::StorageConnectionManager,
-    server::service::graphql::ContextExt,
+    server::service::graphql::{schema::types::InvoiceResponse, ContextExt},
     service::{
         invoice::{
             delete_supplier_invoice, get_invoice, insert_supplier_invoice, update_supplier_invoice,
@@ -22,6 +25,7 @@ use crate::{
 };
 
 use async_graphql::*;
+
 use supplier_invoice::{
     delete::DeleteSupplierInvoiceResponse,
     insert::{InsertSupplierInvoiceInput, InsertSupplierInvoiceResponse},
@@ -60,6 +64,30 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteCustomerInvoiceInput,
     ) -> DeleteCustomerInvoiceResultUnion {
+        todo!()
+    }
+
+    async fn insert_customer_invoice_line(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertCustomerInvoiceLineInput,
+    ) -> InsertCustomerInvoiceLineResponse {
+        todo!()
+    }
+
+    async fn update_customer_invoice_line(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateCustomerInvoiceLineInput,
+    ) -> UpdateCustomerInvoiceLineResponse {
+        todo!()
+    }
+
+    async fn delete_customer_invoice_line(
+        &self,
+        ctx: &Context<'_>,
+        input: DeleteCustomerInvoiceLineInput,
+    ) -> DeleteCustomerInvoiceLineResponse {
         todo!()
     }
 
@@ -188,6 +216,14 @@ impl NotASupplierInvoice {
     }
 }
 
+pub struct NotACustomerInvoice;
+#[Object]
+impl NotACustomerInvoice {
+    pub async fn description(&self) -> &'static str {
+        "Invoice is not Customer Invoice"
+    }
+}
+
 pub struct InvoiceDoesNotBelongToCurrentStore;
 #[Object]
 impl InvoiceDoesNotBelongToCurrentStore {
@@ -209,5 +245,35 @@ pub struct DeleteResponse(String);
 impl DeleteResponse {
     pub async fn id(&self) -> &str {
         &self.0
+    }
+}
+
+pub struct InvoiceLineIsReserved;
+#[Object]
+impl InvoiceLineIsReserved {
+    pub async fn description(&self) -> &'static str {
+        "Invoice line is reserved"
+    }
+}
+
+pub struct InvoiceLineBelongsToAnotherInvoice(String);
+#[Object]
+impl InvoiceLineBelongsToAnotherInvoice {
+    pub async fn description(&self) -> &'static str {
+        "Invoice line belongs to another invoice"
+    }
+
+    pub async fn invoice(&self, ctx: &Context<'_>) -> InvoiceResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        get_invoice(connection_manager, self.0.clone()).into()
+    }
+}
+
+pub struct NumberOfPacksAboveZero;
+#[Object]
+impl NumberOfPacksAboveZero {
+    pub async fn description(&self) -> &'static str {
+        "Number of packs must be above zero"
     }
 }

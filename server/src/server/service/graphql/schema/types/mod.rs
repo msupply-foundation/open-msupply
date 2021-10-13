@@ -3,6 +3,7 @@ use crate::{
     domain::PaginationOption,
     service::{usize_to_u32, ListError, ListResult, SingleRecordError},
 };
+
 use async_graphql::*;
 
 // M1 speced API is moved to their own files
@@ -25,7 +26,7 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
-use super::mutations::supplier_invoice::*;
+use super::mutations::{customer_invoice::*, supplier_invoice::*};
 
 /// Generic Connector
 #[derive(SimpleObject)]
@@ -109,6 +110,19 @@ impl From<PaginationInput> for PaginationOption {
     name = "DeleteSupplierInvoiceLineError",
     params(DeleteSupplierInvoiceLineErrorInterface)
 ))]
+#[graphql(concrete(
+    name = "InsertCustomerInvoiceLineError",
+    params(InsertCustomerInvoiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "UpdateCustomerInvoiceLineError",
+    params(UpdateCustomerInvoiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteCustomerInvoiceLineError",
+    params(DeleteCustomerInvoiceLineErrorInterface)
+))]
+
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
