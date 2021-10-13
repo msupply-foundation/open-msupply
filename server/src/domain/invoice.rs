@@ -66,6 +66,30 @@ impl InvoiceFilter {
         self
     }
 
+    pub fn match_supplier_invoice(mut self) -> Self {
+        self.r#type = Some(EqualFilter {
+            equal_to: Some(InvoiceType::SupplierInvoice),
+        });
+
+        self
+    }
+
+    pub fn match_customer_invoice(mut self) -> Self {
+        self.r#type = Some(EqualFilter {
+            equal_to: Some(InvoiceType::CustomerInvoice),
+        });
+
+        self
+    }
+
+    pub fn match_draft(mut self) -> Self {
+        self.status = Some(EqualFilter {
+            equal_to: Some(InvoiceStatus::Draft),
+        });
+
+        self
+    }
+
     pub fn set_entry_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.entry_datetime = Some(filter);
 
