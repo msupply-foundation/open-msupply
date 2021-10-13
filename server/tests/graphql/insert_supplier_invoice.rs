@@ -76,10 +76,10 @@ mod graphql {
 
         let query = Full::build_query(full::Variables {
             id: current_id,
-            other_party_id: "invalid".to_string(),
-            status: full::InvoiceNodeStatus::Draft,
-            comment: None,
-            their_reference: None,
+            other_party_id_isi: "invalid".to_string(),
+            status_isi: full::InvoiceNodeStatus::Draft,
+            comment_isi: None,
+            their_reference_isi: None,
         });
         let response: Response<full::ResponseData> = get_gql_result(&settings, query).await;
         let expected = full::ResponseData {
@@ -103,10 +103,10 @@ mod graphql {
 
         let query = Full::build_query(full::Variables {
             id: current_id,
-            other_party_id: not_supplier.id.clone(),
-            status: full::InvoiceNodeStatus::Draft,
-            comment: None,
-            their_reference: None,
+            other_party_id_isi: not_supplier.id.clone(),
+            status_isi: full::InvoiceNodeStatus::Draft,
+            comment_isi: None,
+            their_reference_isi: None,
         });
         let response: Response<full::ResponseData> = get_gql_result(&settings, query).await;
         let expected = full::ResponseData {
@@ -130,10 +130,10 @@ mod graphql {
 
         let query = Partial::build_query(partial::Variables {
             id: current_id.clone(),
-            other_party_id: supplier.id.clone(),
-            status: partial::InvoiceNodeStatus::Draft,
-            comment: None,
-            their_reference: None,
+            other_party_id_isi: supplier.id.clone(),
+            status_isi: partial::InvoiceNodeStatus::Draft,
+            comment_isi: None,
+            their_reference_isi: None,
         });
         let response: Response<partial::ResponseData> = get_gql_result(&settings, query).await;
         let expected = partial::ResponseData {
@@ -169,10 +169,10 @@ mod graphql {
         let duplicated_id = id3;
         let query = Full::build_query(full::Variables {
             id: duplicated_id,
-            other_party_id: supplier.id.clone(),
-            status: full::InvoiceNodeStatus::Draft,
-            comment: None,
-            their_reference: None,
+            other_party_id_isi: supplier.id.clone(),
+            status_isi: full::InvoiceNodeStatus::Draft,
+            comment_isi: None,
+            their_reference_isi: None,
         });
         let response: Response<full::ResponseData> = get_gql_result(&settings, query).await;
         let expected = full::ResponseData {
@@ -194,10 +194,10 @@ mod graphql {
         let current_id = id4;
         let query = Partial::build_query(partial::Variables {
             id: current_id.clone(),
-            other_party_id: supplier.id.clone(),
-            status: partial::InvoiceNodeStatus::Confirmed,
-            comment: None,
-            their_reference: None,
+            other_party_id_isi: supplier.id.clone(),
+            status_isi: partial::InvoiceNodeStatus::Confirmed,
+            comment_isi: None,
+            their_reference_isi: None,
         });
         let response: Response<partial::ResponseData> = get_gql_result(&settings, query).await;
         let expected = partial::ResponseData {
@@ -235,10 +235,10 @@ mod graphql {
         let current_id = id5;
         let query = Partial::build_query(partial::Variables {
             id: current_id.clone(),
-            other_party_id: supplier.id.clone(),
-            status: partial::InvoiceNodeStatus::Finalised,
-            comment: Some(comment.to_string()),
-            their_reference: Some(their_reference.to_string()),
+            other_party_id_isi: supplier.id.clone(),
+            status_isi: partial::InvoiceNodeStatus::Finalised,
+            comment_isi: Some(comment.to_string()),
+            their_reference_isi: Some(their_reference.to_string()),
         });
         let response: Response<partial::ResponseData> = get_gql_result(&settings, query).await;
         let expected = partial::ResponseData {

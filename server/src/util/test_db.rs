@@ -1,11 +1,6 @@
-use crate::{
-    database::{
-        mock::{insert_mock_data, MockData, MockDataInserts},
-        repository::{
-            get_repositories, DBBackendConnection, StorageConnection, StorageConnectionManager,
-        },
-    },
-    server::data::{LoaderRegistry, RepositoryRegistry},
+use crate::database::{
+    mock::{insert_mock_data, MockData, MockDataInserts},
+    repository::{DBBackendConnection, StorageConnection, StorageConnectionManager},
 };
 
 use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};
