@@ -58,6 +58,18 @@ impl<'a> InvoiceLineRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_invoice_and_batch_id(
+        &self,
+        stock_line_id: &str,
+        invoice_id: &str,
+    ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+        use crate::database::schema::diesel_schema::invoice_line::dsl;
+        Ok(dsl::invoice_line
+            .filter(dsl::invoice_id.eq(invoice_id))
+            .filter(dsl::stock_line_id.eq(stock_line_id))
+            .load(&self.connection.connection)?)
+    }
+
     pub fn find_many_by_invoice_id(
         &self,
         invoice_id_param: &str,
