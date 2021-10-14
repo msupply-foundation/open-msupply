@@ -1,4 +1,3 @@
-import { Environment } from './../../../config/src/index';
 import { PaginationOptions } from './../index';
 import { graphql, rest } from 'msw';
 import { Api } from '../api';
@@ -108,7 +107,7 @@ export const serverError = graphql.query('error500', (_, response, context) =>
  * handler.
  */
 const batchMutationHandler = rest.post(
-  Environment.API_URL,
+  'http://localhost:4000',
   async (req, res) => {
     // This will ensure this handler does not try to handle the request
     if (!Array.isArray(req.body)) {

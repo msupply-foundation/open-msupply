@@ -6,12 +6,19 @@ export interface ItemRow extends InvoiceLine {
 
 export interface OutboundShipment extends Invoice {
   lines: ItemRow[];
+  update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
 }
 
 export enum ActionType {
   UpdateQuantity = 'OutboundShipment/updateQuantity',
+  UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
 }
+
+type CustomerInvoiceUpdateInvoice = {
+  type: ActionType.UpdateInvoice;
+  payload: { key: keyof Invoice; value: Invoice[keyof Invoice] };
+};
 
 export type CustomerInvoiceAction =
   | {
@@ -21,4 +28,5 @@ export type CustomerInvoiceAction =
   | {
       type: ActionType.SortBy;
       payload: { column: Column<ItemRow> };
-    };
+    }
+  | CustomerInvoiceUpdateInvoice;
