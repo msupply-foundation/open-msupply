@@ -1,6 +1,7 @@
 import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import {
   addRandomPercentageTo,
+  alphaString,
   getFilter,
   randomInteger,
   roundDecimalPlaces,
@@ -55,7 +56,8 @@ const createStockLines = (items: Item[]) => {
         id: `${itemId}-${i++}`,
         name: `${itemId}-${i++}`,
         packSize: 1,
-        expiry: faker.date.future().toString(),
+        expiryDate: faker.date.future().toString(),
+        batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
         availableNumberOfPacks,
         totalNumberOfPacks:
           availableNumberOfPacks + randomInteger({ min: 0, max: 5 }),
@@ -103,7 +105,7 @@ const createInvoiceLines = (
             itemId: item.id,
             quantity,
             batchName: stockLine.name,
-            expiry: stockLine.expiry,
+            expiry: stockLine.expiryDate,
           } as InvoiceLine;
 
           stockLine.availableNumberOfPacks =

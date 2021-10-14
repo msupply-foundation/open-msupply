@@ -5,7 +5,8 @@ import { Api } from '../api';
 const Types = `
     type StockLine { 
       id: String
-      expiry: String
+      expiryDate: String
+      batch: String
       name: String
       availableNumberOfPacks: Int
       totalNumberOfPacks: Int

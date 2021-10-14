@@ -20,7 +20,8 @@ export interface ResolvedItem extends Item {
 
 export interface StockLine {
   id: string;
-  expiry: string;
+  expiryDate: string;
+  batch: string;
   name: string;
   availableNumberOfPacks: number;
   totalNumberOfPacks: number;
