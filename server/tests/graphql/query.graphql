@@ -369,6 +369,6 @@ fragment CannotChangeInvoiceBackToDraft on CannotChangeInvoiceBackToDraft {
 fragment CannotDeleteInvoiceWithLines on CannotDeleteInvoiceWithLines {
   description
   lines {
-    ...InvoiceLinesResponse
+    ...InvoiceLineConnector
   }
 }

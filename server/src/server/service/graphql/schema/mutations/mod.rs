@@ -5,7 +5,7 @@ pub mod supplier_invoice;
 use super::types::{Connector, InvoiceLineNode};
 use crate::{
     database::repository::StorageConnectionManager,
-    server::service::graphql::{schema::types::InvoiceResponse, ContextExt},
+    server::service::graphql::ContextExt,
     service::{
         invoice::{
             delete_customer_invoice, delete_supplier_invoice, get_invoice, insert_customer_invoice,
