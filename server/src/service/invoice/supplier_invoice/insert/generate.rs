@@ -59,8 +59,8 @@ fn finalised_datetime(
     current_time: &NaiveDateTime,
 ) -> Option<NaiveDateTime> {
     match status {
-        InvoiceStatus::Finalised => None,
-        _ => Some(current_time.clone()),
+        InvoiceStatus::Finalised => Some(current_time.clone()),
+        _ => None,
     }
 }
 

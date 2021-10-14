@@ -89,6 +89,13 @@ where
     }
 }
 
+impl From<Vec<InvoiceLine>> for InvoiceLinesResponse {
+    fn from(result: Vec<InvoiceLine>) -> Self {
+        let nodes: CurrentConnector = result.into();
+        nodes.into()
+    }
+}
+
 impl<T, E> From<Result<T, E>> for InvoiceLineResponse
 where
     InvoiceLineNode: From<T>,

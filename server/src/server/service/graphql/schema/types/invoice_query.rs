@@ -59,8 +59,9 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[graphql(remote = "crate::domain::invoice::InvoiceType")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvoiceNodeType {
     CustomerInvoice,
     SupplierInvoice,
