@@ -33,6 +33,8 @@ pub enum InsertCustomerInvoiceLineError {
     ItemNotFound,
     StockLineNotFound,
     NumberOfPacksBelowOne,
+    StockLineAlreadyExistsInInvoice(String),
+    ItemDoesNotMatchStockLine,
 }
 
 impl From<RepositoryError> for InsertCustomerInvoiceLineError {
