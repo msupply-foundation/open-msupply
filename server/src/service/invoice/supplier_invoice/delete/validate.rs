@@ -3,9 +3,10 @@ use crate::{
         repository::{InvoiceLineQueryRepository, StorageConnection},
         schema::InvoiceRow,
     },
-    domain::supplier_invoice::DeleteSupplierInvoice,
+    domain::{invoice::InvoiceType, supplier_invoice::DeleteSupplierInvoice},
     service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, CommonError,
+        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
+        InvoiceIsFinalised, WrongInvoiceType,
     },
 };
 
@@ -18,7 +19,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice)?;
+    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
     check_invoice_finalised(&invoice)?;
     check_lines_exist(&input.id, connection)?;
 
@@ -39,14 +40,20 @@ fn check_lines_exist(
     }
 }
 
-impl From<CommonError> for DeleteSupplierInvoiceError {
-    fn from(error: CommonError) -> Self {
-        use DeleteSupplierInvoiceError::*;
-        match error {
-            CommonError::InvoiceDoesNotExists => InvoiceDoesNotExists,
-            CommonError::DatabaseError(error) => DatabaseError(error),
-            CommonError::InvoiceIsFinalised => CannotEditFinalised,
-            CommonError::NotASupplierInvoice => NotASupplierInvoice,
-        }
+impl From<WrongInvoiceType> for DeleteSupplierInvoiceError {
+    fn from(_: WrongInvoiceType) -> Self {
+        DeleteSupplierInvoiceError::NotASupplierInvoice
+    }
+}
+
+impl From<InvoiceIsFinalised> for DeleteSupplierInvoiceError {
+    fn from(_: InvoiceIsFinalised) -> Self {
+        DeleteSupplierInvoiceError::CannotEditFinalised
+    }
+}
+
+impl From<InvoiceDoesNotExist> for DeleteSupplierInvoiceError {
+    fn from(_: InvoiceDoesNotExist) -> Self {
+        DeleteSupplierInvoiceError::InvoiceDoesNotExist
     }
 }

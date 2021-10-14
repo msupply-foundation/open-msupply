@@ -23,7 +23,7 @@ pub fn delete_customer_invoice(
 }
 
 pub enum DeleteCustomerInvoiceError {
-    InvoiceDoesNotExists,
+    InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,

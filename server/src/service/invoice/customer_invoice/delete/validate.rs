@@ -14,7 +14,7 @@ pub fn validate(
     //  check invoice exists
     let result = InvoiceRepository::new(connection).find_one_by_id(id);
     if let Err(RepositoryError::NotFound) = &result {
-        return Err(DeleteCustomerInvoiceError::InvoiceDoesNotExists);
+        return Err(DeleteCustomerInvoiceError::InvoiceDoesNotExist);
     }
     let invoice = result?;
 

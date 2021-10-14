@@ -1,17 +1,21 @@
 use crate::{
     database::{
-        repository::{InvoiceLineRepository, RepositoryError, StorageConnection},
+        repository::StorageConnection,
         schema::{InvoiceRow, ItemRow},
     },
-    domain::supplier_invoice::InsertSupplierInvoiceLine,
+    domain::{invoice::InvoiceType, supplier_invoice::InsertSupplierInvoiceLine},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type,
-            CommonError as CommonInvoiceError,
+            validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
         },
         invoice_line::{
-            supplier_invoice_line::{check_item, check_number_of_packs, check_pack_size},
-            CommonError as CommonLineError,
+            supplier_invoice_line::check_pack_size,
+            validate::{
+                check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
+                LineAlreadyExists, NumberOfPacksBelowOne,
+            },
+            PackSizeBelowOne,
         },
     },
 };
@@ -29,45 +33,50 @@ pub fn validate(
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice)?;
+    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
     check_invoice_finalised(&invoice)?;
 
     Ok((item, invoice))
 }
 
-fn check_line_does_not_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<(), InsertSupplierInvoiceLineError> {
-    let result = InvoiceLineRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(_) => Err(InsertSupplierInvoiceLineError::LineAlreadyExists),
-        Err(RepositoryError::NotFound) => Ok(()),
-        Err(error) => Err(error.into()),
+impl From<ItemNotFound> for InsertSupplierInvoiceLineError {
+    fn from(_: ItemNotFound) -> Self {
+        InsertSupplierInvoiceLineError::ItemNotFound
     }
 }
 
-impl From<CommonLineError> for InsertSupplierInvoiceLineError {
-    fn from(error: CommonLineError) -> Self {
-        use InsertSupplierInvoiceLineError::*;
-        match error {
-            CommonLineError::PackSizeBelowOne => PackSizeBelowOne,
-            CommonLineError::NumberOfPacksBelowOne => NumberOfPacksBelowOne,
-            CommonLineError::ItemNotFound => ItemNotFound,
-            CommonLineError::DatabaseError(error) => DatabaseError(error),
-        }
+impl From<NumberOfPacksBelowOne> for InsertSupplierInvoiceLineError {
+    fn from(_: NumberOfPacksBelowOne) -> Self {
+        InsertSupplierInvoiceLineError::NumberOfPacksBelowOne
     }
 }
 
-impl From<CommonInvoiceError> for InsertSupplierInvoiceLineError {
-    fn from(error: CommonInvoiceError) -> Self {
-        use InsertSupplierInvoiceLineError::*;
-        match error {
-            CommonInvoiceError::InvoiceDoesNotExists => InvoiceDoesNotExist,
-            CommonInvoiceError::DatabaseError(error) => DatabaseError(error),
-            CommonInvoiceError::InvoiceIsFinalised => CannotEditFinalised,
-            CommonInvoiceError::NotASupplierInvoice => NotASupplierInvoice,
-        }
+impl From<PackSizeBelowOne> for InsertSupplierInvoiceLineError {
+    fn from(_: PackSizeBelowOne) -> Self {
+        InsertSupplierInvoiceLineError::PackSizeBelowOne
+    }
+}
+
+impl From<LineAlreadyExists> for InsertSupplierInvoiceLineError {
+    fn from(_: LineAlreadyExists) -> Self {
+        InsertSupplierInvoiceLineError::LineAlreadyExists
+    }
+}
+
+impl From<WrongInvoiceType> for InsertSupplierInvoiceLineError {
+    fn from(_: WrongInvoiceType) -> Self {
+        InsertSupplierInvoiceLineError::NotASupplierInvoice
+    }
+}
+
+impl From<InvoiceIsFinalised> for InsertSupplierInvoiceLineError {
+    fn from(_: InvoiceIsFinalised) -> Self {
+        InsertSupplierInvoiceLineError::CannotEditFinalised
+    }
+}
+
+impl From<InvoiceDoesNotExist> for InsertSupplierInvoiceLineError {
+    fn from(_: InvoiceDoesNotExist) -> Self {
+        InsertSupplierInvoiceLineError::InvoiceDoesNotExist
     }
 }

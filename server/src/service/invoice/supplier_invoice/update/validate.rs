@@ -3,10 +3,14 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceRow, InvoiceRowStatus},
     },
-    domain::{invoice::InvoiceStatus, supplier_invoice::UpdateSupplierInvoice},
+    domain::{
+        invoice::{InvoiceStatus, InvoiceType},
+        supplier_invoice::UpdateSupplierInvoice,
+    },
     service::invoice::{
         check_invoice_exists, check_invoice_finalised, check_invoice_type,
-        supplier_invoice::check_other_party, CommonError, OtherPartyError,
+        supplier_invoice::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
+        OtherPartyError, WrongInvoiceType,
     },
 };
 
@@ -19,7 +23,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice)?;
+    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
     check_invoice_finalised(&invoice)?;
     check_invoice_status(patch, &invoice)?;
     check_other_party(patch.other_party_id.clone(), connection)?;
@@ -39,25 +43,31 @@ fn check_invoice_status(
     }
 }
 
-impl From<CommonError> for UpdateSupplierInvoiceError {
-    fn from(error: CommonError) -> Self {
-        use UpdateSupplierInvoiceError::*;
-        match error {
-            CommonError::InvoiceDoesNotExists => InvoiceDoesNotExists,
-            CommonError::DatabaseError(error) => DatabaseError(error),
-            CommonError::InvoiceIsFinalised => CannotEditFinalised,
-            CommonError::NotASupplierInvoice => NotASupplierInvoice,
-        }
-    }
-}
-
 impl From<OtherPartyError> for UpdateSupplierInvoiceError {
     fn from(error: OtherPartyError) -> Self {
         use UpdateSupplierInvoiceError::*;
         match error {
             OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
-            OtherPartyError::DoesNotExist => OtherPartyDoesNotExists,
+            OtherPartyError::DoesNotExist => OtherPartyDoesNotExist,
             OtherPartyError::DatabaseError(error) => DatabaseError(error),
         }
+    }
+}
+
+impl From<WrongInvoiceType> for UpdateSupplierInvoiceError {
+    fn from(_: WrongInvoiceType) -> Self {
+        UpdateSupplierInvoiceError::NotASupplierInvoice
+    }
+}
+
+impl From<InvoiceIsFinalised> for UpdateSupplierInvoiceError {
+    fn from(_: InvoiceIsFinalised) -> Self {
+        UpdateSupplierInvoiceError::CannotEditFinalised
+    }
+}
+
+impl From<InvoiceDoesNotExist> for UpdateSupplierInvoiceError {
+    fn from(_: InvoiceDoesNotExist) -> Self {
+        UpdateSupplierInvoiceError::InvoiceDoesNotExist
     }
 }

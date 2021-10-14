@@ -1,6 +1,7 @@
 use crate::{
     database::repository::{InvoiceRepository, RepositoryError, StorageConnectionManager},
     domain::{invoice_line::InvoiceLine, supplier_invoice::DeleteSupplierInvoice},
+    service::WithDBError,
 };
 
 mod validate;
@@ -21,7 +22,7 @@ pub fn delete_supplier_invoice(
 }
 
 pub enum DeleteSupplierInvoiceError {
-    InvoiceDoesNotExists,
+    InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotASupplierInvoice,
     NotThisStoreInvoice,
@@ -32,5 +33,17 @@ pub enum DeleteSupplierInvoiceError {
 impl From<RepositoryError> for DeleteSupplierInvoiceError {
     fn from(error: RepositoryError) -> Self {
         DeleteSupplierInvoiceError::DatabaseError(error)
+    }
+}
+
+impl<ERR> From<WithDBError<ERR>> for DeleteSupplierInvoiceError
+where
+    ERR: Into<DeleteSupplierInvoiceError>,
+{
+    fn from(result: WithDBError<ERR>) -> Self {
+        match result {
+            WithDBError::DatabaseError(error) => error.into(),
+            WithDBError::Error(error) => error.into(),
+        }
     }
 }
