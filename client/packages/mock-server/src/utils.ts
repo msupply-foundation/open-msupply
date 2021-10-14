@@ -85,3 +85,8 @@ export const addRandomPercentageTo = ({
 
 export const roundDecimalPlaces = (value: number, precision: number): number =>
   Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
+
+export const alphaString = (length: number): string =>
+  Array.from({ length }, () =>
+    String.fromCharCode(faker.datatype.number({ min: 65, max: 90 }))
+  ).join('');
