@@ -5,108 +5,37 @@ use uuid::Uuid;
 
 use crate::{
     database::{
-        repository::{
-            InvoiceLineRepository, ItemRepository, RepositoryError, StockLineRepository,
-            StorageConnection,
-        },
-        schema::{InvoiceLineRow, InvoiceRow, ItemRow, StockLineRow},
+        repository::{RepositoryError, StockLineRepository, StorageConnection},
+        schema::{InvoiceLineRow, StockLineRow},
     },
-    service::invoice::current_store_id,
+    service::{invoice::current_store_id, WithDBError},
 };
 
 pub use self::delete::*;
 pub use self::insert::*;
 pub use self::update::*;
+pub struct PackSizeBelowOne;
 
-pub enum CommonError {
-    PackSizeBelowOne,
-    NumberOfPacksBelowOne,
-    ItemNotFound,
-    DatabaseError(RepositoryError),
-}
-
-fn check_pack_size(pack_size_option: Option<u32>) -> Result<(), CommonError> {
+fn check_pack_size(pack_size_option: Option<u32>) -> Result<(), PackSizeBelowOne> {
     if let Some(pack_size) = pack_size_option {
         if pack_size < 1 {
-            Err(CommonError::PackSizeBelowOne)
-        } else {
-            Ok(())
+            return Err(PackSizeBelowOne {});
         }
-    } else {
-        Ok(())
     }
+    Ok(())
 }
 
-fn check_number_of_packs(number_of_packs_option: Option<u32>) -> Result<(), CommonError> {
-    if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1 {
-            Err(CommonError::NumberOfPacksBelowOne)
-        } else {
-            Ok(())
-        }
-    } else {
-        Ok(())
-    }
-}
-
-fn check_item(item_id: &str, connection: &StorageConnection) -> Result<ItemRow, CommonError> {
-    use CommonError::*;
-    let item_result = ItemRepository::new(connection).find_one_by_id(item_id);
-
-    match item_result {
-        Ok(item) => Ok(item),
-        Err(RepositoryError::NotFound) => Err(ItemNotFound),
-        Err(error) => Err(DatabaseError(error)),
-    }
-}
-
-pub enum InsertAndDeleteError {
-    LineDoesNotExist,
-    NotInvoiceLine(String),
-    BatchIsReserved,
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for InsertAndDeleteError {
-    fn from(error: RepositoryError) -> Self {
-        InsertAndDeleteError::DatabaseError(error)
-    }
-}
-
-fn check_line_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<InvoiceLineRow, InsertAndDeleteError> {
-    let result = InvoiceLineRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(line) => Ok(line),
-        Err(RepositoryError::NotFound) => Err(InsertAndDeleteError::LineDoesNotExist),
-        Err(error) => Err(error.into()),
-    }
-}
-
-fn check_line_belongs_to_invoice(
-    line: &InvoiceLineRow,
-    invoice: &InvoiceRow,
-) -> Result<(), InsertAndDeleteError> {
-    if line.invoice_id == invoice.id {
-        Err(InsertAndDeleteError::NotInvoiceLine(
-            line.invoice_id.clone(),
-        ))
-    } else {
-        Ok(())
-    }
-}
+pub struct BatchIsReserved;
 
 fn check_batch(
     line: &InvoiceLineRow,
     connection: &StorageConnection,
-) -> Result<(), InsertAndDeleteError> {
+) -> Result<(), WithDBError<BatchIsReserved>> {
     if let Some(batch_id) = &line.stock_line_id {
-        if let Ok(batch) = StockLineRepository::new(connection).find_one_by_id(batch_id) {
-            return check_batch_stock_reserved(line, batch);
-        }
+        match StockLineRepository::new(connection).find_one_by_id(batch_id) {
+            Ok(batch) => return check_batch_stock_reserved(line, batch),
+            Err(error) => return Err(WithDBError::db(error)),
+        };
     }
 
     return Ok(());
@@ -115,9 +44,9 @@ fn check_batch(
 fn check_batch_stock_reserved(
     line: &InvoiceLineRow,
     batch: StockLineRow,
-) -> Result<(), InsertAndDeleteError> {
+) -> Result<(), WithDBError<BatchIsReserved>> {
     if line.number_of_packs != batch.available_number_of_packs {
-        Err(InsertAndDeleteError::BatchIsReserved)
+        Err(WithDBError::err(BatchIsReserved))
     } else {
         Ok(())
     }

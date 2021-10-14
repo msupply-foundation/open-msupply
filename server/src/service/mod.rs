@@ -26,6 +26,21 @@ pub enum SingleRecordError {
     NotFound(String),
 }
 
+pub enum WithDBError<T> {
+    DatabaseError(RepositoryError),
+    Error(T),
+}
+
+impl<T> WithDBError<T> {
+    pub fn db(error: RepositoryError) -> Self {
+        WithDBError::DatabaseError(error)
+    }
+
+    pub fn err(error: T) -> Self {
+        WithDBError::Error(error)
+    }
+}
+
 impl From<RepositoryError> for ListError {
     fn from(error: RepositoryError) -> Self {
         ListError::DatabaseError(error)

@@ -3,6 +3,7 @@ use crate::{
         InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
     },
     domain::supplier_invoice::UpdateSupplierInvoiceLine,
+    service::WithDBError,
 };
 
 mod generate;
@@ -53,5 +54,17 @@ pub enum UpdateSupplierInvoiceLineError {
 impl From<RepositoryError> for UpdateSupplierInvoiceLineError {
     fn from(error: RepositoryError) -> Self {
         UpdateSupplierInvoiceLineError::DatabaseError(error)
+    }
+}
+
+impl<ERR> From<WithDBError<ERR>> for UpdateSupplierInvoiceLineError
+where
+    ERR: Into<UpdateSupplierInvoiceLineError>,
+{
+    fn from(result: WithDBError<ERR>) -> Self {
+        match result {
+            WithDBError::DatabaseError(error) => error.into(),
+            WithDBError::Error(error) => error.into(),
+        }
     }
 }

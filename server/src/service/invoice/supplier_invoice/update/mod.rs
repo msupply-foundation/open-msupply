@@ -3,6 +3,7 @@ use crate::{
         InvoiceRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
     },
     domain::{name::Name, supplier_invoice::UpdateSupplierInvoice},
+    service::WithDBError,
 };
 
 mod generate;
@@ -32,9 +33,9 @@ pub fn update_supplier_invoice(
 }
 
 pub enum UpdateSupplierInvoiceError {
-    InvoiceDoesNotExists,
+    InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
-    OtherPartyDoesNotExists,
+    OtherPartyDoesNotExist,
     OtherPartyNotASupplier(Name),
     NotASupplierInvoice,
     NotThisStoreInvoice,
@@ -45,5 +46,17 @@ pub enum UpdateSupplierInvoiceError {
 impl From<RepositoryError> for UpdateSupplierInvoiceError {
     fn from(error: RepositoryError) -> Self {
         UpdateSupplierInvoiceError::DatabaseError(error)
+    }
+}
+
+impl<ERR> From<WithDBError<ERR>> for UpdateSupplierInvoiceError
+where
+    ERR: Into<UpdateSupplierInvoiceError>,
+{
+    fn from(result: WithDBError<ERR>) -> Self {
+        match result {
+            WithDBError::DatabaseError(error) => error.into(),
+            WithDBError::Error(error) => error.into(),
+        }
     }
 }

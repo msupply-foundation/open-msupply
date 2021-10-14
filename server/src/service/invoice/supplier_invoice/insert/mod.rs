@@ -1,6 +1,7 @@
 use crate::{
     database::repository::{InvoiceRepository, RepositoryError, StorageConnectionManager},
     domain::{name::Name, supplier_invoice::InsertSupplierInvoice},
+    service::WithDBError,
 };
 
 mod generate;
@@ -27,7 +28,7 @@ pub fn insert_supplier_invoice(
 pub enum InsertSupplierInvoiceError {
     InvoiceAlreadyExists,
     DatabaseError(RepositoryError),
-    OtherPartyDoesNotExists,
+    OtherPartyDoesNotExist,
     OtherPartyNotASupplier(Name),
 }
 
@@ -42,8 +43,20 @@ impl From<OtherPartyError> for InsertSupplierInvoiceError {
         use InsertSupplierInvoiceError::*;
         match error {
             OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
-            OtherPartyError::DoesNotExist => OtherPartyDoesNotExists,
+            OtherPartyError::DoesNotExist => OtherPartyDoesNotExist,
             OtherPartyError::DatabaseError(error) => DatabaseError(error),
+        }
+    }
+}
+
+impl<ERR> From<WithDBError<ERR>> for InsertSupplierInvoiceError
+where
+    ERR: Into<InsertSupplierInvoiceError>,
+{
+    fn from(result: WithDBError<ERR>) -> Self {
+        match result {
+            WithDBError::DatabaseError(error) => error.into(),
+            WithDBError::Error(error) => error.into(),
         }
     }
 }
