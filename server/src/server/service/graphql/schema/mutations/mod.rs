@@ -2,7 +2,7 @@ pub mod customer_invoice;
 mod error;
 pub mod supplier_invoice;
 
-use super::types::{Connector, InvoiceLineNode};
+use super::types::{Connector, InvoiceLineNode, InvoiceResponse};
 use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::ContextExt,
@@ -12,8 +12,8 @@ use crate::{
             insert_supplier_invoice, update_supplier_invoice,
         },
         invoice_line::{
-            delete_supplier_invoice_line, get_invoice_line, insert_supplier_invoice_line,
-            update_supplier_invoice_line,
+            delete_supplier_invoice_line, get_invoice_line, insert_customer_invoice_line,
+            insert_supplier_invoice_line, update_supplier_invoice_line,
         },
     },
 };
@@ -60,7 +60,12 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertCustomerInvoiceLineInput,
     ) -> InsertCustomerInvoiceLineResponse {
-        todo!()
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match insert_customer_invoice_line(connection_manager, input.into()) {
+            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn update_customer_invoice_line(
@@ -158,6 +163,7 @@ pub enum ForeignKey {
     OtherPartyId,
     ItemId,
     InvoiceId,
+    StockLineId,
 }
 
 pub struct ForeignKeyError(ForeignKey);
