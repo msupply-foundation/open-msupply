@@ -131,12 +131,7 @@ mod graphql {
                 delete::CannotDeleteInvoiceWithLines { lines, .. },
             ) = error_interface
             {
-                if let delete::InvoiceLinesResponse::InvoiceLineConnector(
-                    delete::InvoiceLineConnector { total_count, .. },
-                ) = lines
-                {
-                    lines_count = total_count.try_into().unwrap();
-                }
+                lines_count = lines.total_count.try_into().unwrap();
             }
         }
 
