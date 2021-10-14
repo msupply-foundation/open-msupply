@@ -6,7 +6,7 @@ pub struct CannotChangeStatusBackToDraftError;
 
 #[Object]
 impl CannotChangeStatusBackToDraftError {
-    pub async fn description(&self) -> &str {
+    pub async fn description(&self) -> &'static str {
         "Once confirmed or finalised, an invoice cannot be changed back to a draft."
     }
 }
@@ -15,7 +15,7 @@ pub struct CanOnlyEditInvoicesInLoggedInStoreError;
 
 #[Object]
 impl CanOnlyEditInvoicesInLoggedInStoreError {
-    pub async fn description(&self) -> &str {
+    pub async fn description(&self) -> &'static str {
         "Once finalised, an invoice cannot be edited."
     }
 }
@@ -24,7 +24,7 @@ pub struct FinalisedInvoiceIsNotEditableError;
 
 #[Object]
 impl FinalisedInvoiceIsNotEditableError {
-    pub async fn description(&self) -> &str {
+    pub async fn description(&self) -> &'static str {
         "Once finalised, an invoice cannot be edited."
     }
 }
@@ -45,8 +45,8 @@ pub struct InvoiceNotFoundError();
 
 #[Object]
 impl InvoiceNotFoundError {
-    pub async fn description(&self) -> String {
-        "Invoice not found.".to_string()
+    pub async fn description(&self) -> &'static str {
+        "Invoice not found."
     }
 }
 
@@ -54,7 +54,7 @@ pub struct OtherPartyCannotBeThisStoreError;
 
 #[Object]
 impl OtherPartyCannotBeThisStoreError {
-    pub async fn description(&self) -> &str {
+    pub async fn description(&self) -> &'static str {
         "Other party must be another store."
     }
 }
@@ -63,7 +63,7 @@ pub struct OtherPartyIdMissingError;
 
 #[Object]
 impl OtherPartyIdMissingError {
-    pub async fn description(&self) -> &str {
+    pub async fn description(&self) -> &'static str {
         "Other party id missing."
     }
 }
@@ -72,8 +72,8 @@ pub struct OtherPartyIdNotFoundError;
 
 #[Object]
 impl OtherPartyIdNotFoundError {
-    pub async fn description(&self) -> String {
-        "Other party not found.".to_string()
+    pub async fn description(&self) -> &'static str {
+        "Other party not found."
     }
 }
 
@@ -94,8 +94,8 @@ pub struct NotACustomerInvoiceError;
 
 #[Object]
 impl NotACustomerInvoiceError {
-    pub async fn description(&self) -> String {
-        "Not a customer invoice.".to_string()
+    pub async fn description(&self) -> &'static str {
+        "Not a customer invoice."
     }
 }
 
