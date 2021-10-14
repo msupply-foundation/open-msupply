@@ -89,3 +89,11 @@ impl OtherPartyNotACustomerError {
         &self.0
     }
 }
+pub struct LineDoesntReferenceStockLine;
+
+#[Object]
+impl LineDoesntReferenceStockLine {
+    pub async fn description(&self) -> &'static str {
+        "Line does not reference any stock line"
+    }
+}
