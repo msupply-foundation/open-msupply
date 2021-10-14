@@ -23,3 +23,11 @@ pub struct InsertCustomerInvoiceLine {
     pub stock_line_id: String,
     pub number_of_packs: u32,
 }
+
+pub struct UpdateCustomerInvoiceLine {
+    pub id: String,
+    pub invoice_id: String,
+    pub item_id: Option<String>,
+    pub stock_line_id: Option<String>,
+    pub number_of_packs: Option<u32>,
+}
