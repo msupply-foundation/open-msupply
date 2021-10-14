@@ -12,7 +12,7 @@
   "app.suppliers": "الموردين",
   "app.sync": "تزامن",
   "app.tools": "أدوات",
-  "app.transactions": "المعاملات",
+  "app.invoices": "Invoices",
   "app.welcome": "أهلا،",
   "breadcrumb.item": "#{id}",
   "button.add-item": "Add Item",

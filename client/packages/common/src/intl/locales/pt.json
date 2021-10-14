@@ -12,7 +12,7 @@
   "app.suppliers": "Suppliers",
   "app.sync": "Sync",
   "app.tools": "Tools",
-  "app.transactions": "Transactions",
+  "app.invoices": "Invoices",
   "app.welcome": "Hello, {name}!",
   "breadcrumb.item": "#{id}",
   "button.add-item": "Add Item",

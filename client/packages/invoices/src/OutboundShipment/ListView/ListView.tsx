@@ -9,7 +9,7 @@ import {
   RemoteDataTable,
   useColumns,
   useNotification,
-  Transaction,
+  Invoice,
   DropdownMenu,
   DropdownMenuItem,
   AppBarContentPortal,
@@ -21,7 +21,6 @@ import {
   TableProvider,
   createTableStore,
   useTableStore,
-  ColumnSetBuilder,
   Color,
   AppBarButtonsPortal,
   Book,
@@ -32,8 +31,8 @@ import { ExternalURL } from '@openmsupply-client/config';
 import { CustomerSearch } from './CustomerSearch';
 
 const ListViewToolBar: FC<{
-  onDelete: (toDelete: Transaction[]) => void;
-  data?: Transaction[];
+  onDelete: (toDelete: Invoice[]) => void;
+  data?: Invoice[];
 }> = ({ onDelete, data }) => {
   const t = useTranslation();
 
@@ -43,7 +42,7 @@ const ListViewToolBar: FC<{
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as Transaction[],
+      .filter(Boolean) as Invoice[],
   }));
 
   const deleteAction = () => {
@@ -99,25 +98,26 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onChangePage,
     pagination,
     invalidate,
-  } = useListData({ key: 'color' }, 'transaction', OutboundShipmentListViewApi);
+  } = useListData({ key: 'color' }, 'invoice', OutboundShipmentListViewApi);
 
-  const onColorUpdate = (row: Transaction, color: Color) => {
+  const onColorUpdate = (row: Invoice, color: Color) => {
     onUpdate({ ...row, color: color.hex });
   };
 
-  const columns = useColumns(
-    new ColumnSetBuilder<Transaction>()
-      .addColumn(getNameAndColorColumn(onColorUpdate))
-      .addColumn('type')
-      .addColumn('status')
-      .addColumn('invoiceNumber')
-      .addColumn('confirmed')
-      .addColumn('entered')
-      .addColumn('total')
-      .addColumn('comment')
-      .addColumn('selection')
-      .build(),
-    { onChangeSortBy, sortBy }
+  const columns = useColumns<Invoice>(
+    [
+      getNameAndColorColumn(onColorUpdate),
+      'type',
+      'status',
+      'invoiceNumber',
+      'confirmed',
+      'entered',
+      'total',
+      'comment',
+      'selection',
+    ],
+    { onChangeSortBy, sortBy },
+    [sortBy]
   );
 
   const [open, setOpen] = useState(false);

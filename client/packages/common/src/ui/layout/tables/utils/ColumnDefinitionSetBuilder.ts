@@ -1,7 +1,7 @@
-import { getCheckboxSelectionColumn } from './../columns/CheckboxSelectionColumn';
+import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign } from '@openmsupply-client/common/src/ui/layout/tables/columns/types';
-import { ColumnFormat } from './../columns/types';
-import { DomainObject } from './../../../../types';
+import { ColumnFormat } from '../columns/types';
+import { DomainObject } from '../../../../types';
 import { ColumnDefinition } from '../columns/types';
 
 const createColumn = <T extends DomainObject>(
@@ -110,7 +110,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   },
 });
 
-export class ColumnSetBuilder<T extends DomainObject> {
+export class ColumnDefinitionSetBuilder<T extends DomainObject> {
   columns: ColumnDefinition<T>[];
 
   currentOrder: number;
@@ -128,12 +128,33 @@ export class ColumnSetBuilder<T extends DomainObject> {
     return column.order;
   }
 
+  addColumns(
+    columnsToCreate: (
+      | ColumnDefinition<T>
+      | ColumnKey
+      | [ColumnKey | ColumnDefinition<T>, Omit<ColumnDefinition<T>, 'key'>]
+      | [ColumnKey]
+    )[]
+  ): ColumnDefinitionSetBuilder<T> {
+    columnsToCreate.forEach(columnDescription => {
+      if (Array.isArray(columnDescription)) {
+        const columnKeyOrColumnDefinition = columnDescription[0];
+        const maybeColumnOptions = columnDescription[1];
+        this.addColumn(columnKeyOrColumnDefinition, maybeColumnOptions);
+      } else {
+        this.addColumn(columnDescription);
+      }
+    });
+
+    return this;
+  }
+
   addColumn(
     columnKeyOrColumnDefinition:
       | keyof ReturnType<typeof getColumnLookup>
       | ColumnDefinition<T>,
     maybeColumnOptions?: Omit<ColumnDefinition<T>, 'key'>
-  ): ColumnSetBuilder<T> {
+  ): ColumnDefinitionSetBuilder<T> {
     const usingColumnKey = typeof columnKeyOrColumnDefinition === 'string';
 
     let defaultColumnOptions;

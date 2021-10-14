@@ -3,8 +3,8 @@ import { Navigate, useMatch } from 'react-router-dom';
 import { RouteBuilder, Typography } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
-const TransactionService = React.lazy(
-  () => import('@openmsupply-client/transactions/src/TransactionService')
+const InvoiceService = React.lazy(
+  () => import('@openmsupply-client/invoices/src/InvoiceService')
 );
 
 const RequisitionService: React.FC = () => (
@@ -23,7 +23,7 @@ const fullCustomerRequisitionPath = RouteBuilder.create(AppRoute.Customers)
 
 const CustomerContainer: FC = () => {
   if (useMatch(fullCustomerInvoicePath)) {
-    return <TransactionService />;
+    return <InvoiceService />;
   }
   if (useMatch(fullCustomerRequisitionPath)) {
     return <RequisitionService />;

@@ -1,13 +1,12 @@
 import { renderHook } from '@testing-library/react-hooks';
 import {
   TestingProvider,
-  Transaction,
   useColumns,
-  ColumnSetBuilder,
   DocumentAction,
+  Invoice,
 } from '@openmsupply-client/common';
 
-import { placeholderTransaction } from './index';
+import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import { ItemRow } from './types';
 
@@ -71,16 +70,12 @@ describe('DetailView reducer', () => {
 
   it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
     const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderTransaction, lines },
+      draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
-    const { result } = renderHook(
-      () =>
-        useColumns(
-          new ColumnSetBuilder<ItemRow>().addColumn('quantity').build()
-        ),
-      { wrapper: TestingProvider }
-    );
+    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
+      wrapper: TestingProvider,
+    });
 
     const quantityColumn = result.current[0];
 
@@ -103,16 +98,12 @@ describe('DetailView reducer', () => {
 
   it('sorts the lines by the provided key in descending order when already in ascending order for the same key.', () => {
     const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderTransaction, lines },
+      draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
     };
-    const { result } = renderHook(
-      () =>
-        useColumns(
-          new ColumnSetBuilder<ItemRow>().addColumn('quantity').build()
-        ),
-      { wrapper: TestingProvider }
-    );
+    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
+      wrapper: TestingProvider,
+    });
 
     const quantityColumn = result.current[0];
 
@@ -137,16 +128,12 @@ describe('DetailView reducer', () => {
 
   it('sorts the lines by the provided key in ascending order when sorted by some other key.', () => {
     const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderTransaction, lines },
+      draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
-    const { result } = renderHook(
-      () =>
-        useColumns(
-          new ColumnSetBuilder<ItemRow>().addColumn('itemName').build()
-        ),
-      { wrapper: TestingProvider }
-    );
+    const { result } = renderHook(() => useColumns<ItemRow>(['itemName']), {
+      wrapper: TestingProvider,
+    });
 
     const itemNameColumn = result.current[0];
 
@@ -169,7 +156,7 @@ describe('DetailView reducer', () => {
 
   it('updates the correct line with the correct quantity', () => {
     const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderTransaction, lines },
+      draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
 
@@ -187,14 +174,14 @@ describe('DetailView reducer', () => {
 
   it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderTransaction, lines },
+      draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
 
     // Create some server data which is the same except every line has 99 quantity.
     // Then after merging, every line should have 99 quantity.
     const dataLines = lines.map(line => ({ ...line, quantity: 99 }));
-    const data: Transaction = { ...placeholderTransaction, lines: dataLines };
+    const data: Invoice = { ...placeholderInvoice, lines: dataLines };
 
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
@@ -206,13 +193,13 @@ describe('DetailView reducer', () => {
 
   it('updates the client side draft state by merging the server invoice into the client data invoice draft, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderTransaction, lines },
+      draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
 
     // Create a server invoice which has a different comment and merge. The resulting invoice should be the same, except
     // for having the updated comment.
-    const data: Transaction = { ...state.draft, comment: 'josh' };
+    const data: Invoice = { ...state.draft, comment: 'josh' };
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a quantity of 99. If there are any, the merge was wrong.

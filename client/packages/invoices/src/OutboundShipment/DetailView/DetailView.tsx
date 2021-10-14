@@ -9,7 +9,6 @@ import {
   Circle,
   Clock,
   Column,
-  ColumnSetBuilder,
   Copy,
   DialogButton,
   FormProvider,
@@ -49,7 +48,7 @@ const useDraftOutbound = () => {
   const { id } = useParams();
 
   const { draft, save, dispatch, state } = useDocument(
-    ['transaction', id ?? 'new'],
+    ['invoice', id ?? 'new'],
     reducer,
     getOutboundShipmentDetailViewApi(id ?? '')
   );
@@ -163,14 +162,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
 
   const { currentTab, onChangeTab } = useTabs('general');
 
-  const defaultColumns = new ColumnSetBuilder<ItemRow>()
-    .addColumn('itemCode')
-    .addColumn('itemName')
-    .addColumn('expiry')
-    .addColumn(getEditableQuantityColumn())
-    .build();
-
-  const columns = useColumns(defaultColumns, { onChangeSortBy, sortBy });
+  const columns = useColumns<ItemRow>(
+    ['itemCode', 'itemName', 'expiry', getEditableQuantityColumn()],
+    { onChangeSortBy, sortBy },
+    [sortBy]
+  );
 
   return draft ? (
     <TabContext value={String(currentTab)}>
