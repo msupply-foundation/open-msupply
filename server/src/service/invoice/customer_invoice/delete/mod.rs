@@ -28,6 +28,7 @@ pub enum DeleteCustomerInvoiceError {
     NotThisStoreInvoice,
     CannotEditFinalised,
     InvoiceLinesExists(Vec<InvoiceLine>),
+    NotACustomerInvoice,
 }
 
 impl From<RepositoryError> for DeleteCustomerInvoiceError {
