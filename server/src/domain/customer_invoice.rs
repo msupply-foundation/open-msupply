@@ -15,3 +15,11 @@ pub struct UpdateCustomerInvoice {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }
+
+pub struct InsertCustomerInvoiceLine {
+    pub id: String,
+    pub invoice_id: String,
+    pub item_id: String,
+    pub stock_line_id: String,
+    pub number_of_packs: u32,
+}
