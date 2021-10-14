@@ -21,7 +21,6 @@ import {
   TableProvider,
   createTableStore,
   useTableStore,
-  ColumnSetBuilder,
   Color,
   AppBarButtonsPortal,
   Book,
@@ -105,19 +104,20 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onUpdate({ ...row, color: color.hex });
   };
 
-  const columns = useColumns(
-    new ColumnSetBuilder<Invoice>()
-      .addColumn(getNameAndColorColumn(onColorUpdate))
-      .addColumn('type')
-      .addColumn('status')
-      .addColumn('invoiceNumber')
-      .addColumn('confirmed')
-      .addColumn('entered')
-      .addColumn('total')
-      .addColumn('comment')
-      .addColumn('selection')
-      .build(),
-    { onChangeSortBy, sortBy }
+  const columns = useColumns<Invoice>(
+    [
+      getNameAndColorColumn(onColorUpdate),
+      'type',
+      'status',
+      'invoiceNumber',
+      'confirmed',
+      'entered',
+      'total',
+      'comment',
+      'selection',
+    ],
+    { onChangeSortBy, sortBy },
+    [sortBy]
   );
 
   const [open, setOpen] = useState(false);

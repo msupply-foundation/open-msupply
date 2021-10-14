@@ -3,7 +3,6 @@ import { ComponentMeta, Story } from '@storybook/react';
 import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
-import { ColumnSetBuilder } from '../../utils';
 
 export default {
   title: 'Table/DataRow',
@@ -13,14 +12,8 @@ export default {
   },
 } as ComponentMeta<typeof DataRow>;
 
-const exampleColumns = new ColumnSetBuilder()
-  .addColumn('type')
-  .addColumn('status')
-  .addColumn('comment')
-  .build();
-
 const Template: Story = ({ onClick }) => {
-  const columns = useColumns(exampleColumns);
+  const columns = useColumns(['type', 'status', 'comment']);
 
   return (
     <Table>
