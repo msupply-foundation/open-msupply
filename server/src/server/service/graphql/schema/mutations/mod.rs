@@ -13,7 +13,8 @@ use crate::{
         },
         invoice_line::{
             delete_supplier_invoice_line, get_invoice_line, insert_customer_invoice_line,
-            insert_supplier_invoice_line, update_supplier_invoice_line,
+            insert_supplier_invoice_line, update_customer_invoice_line,
+            update_supplier_invoice_line,
         },
     },
 };
@@ -73,7 +74,12 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateCustomerInvoiceLineInput,
     ) -> UpdateCustomerInvoiceLineResponse {
-        todo!()
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match update_customer_invoice_line(connection_manager, input.into()) {
+            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn delete_customer_invoice_line(
