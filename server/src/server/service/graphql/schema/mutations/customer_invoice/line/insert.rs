@@ -12,6 +12,11 @@ use crate::{
     service::{invoice_line::InsertCustomerInvoiceLineError, SingleRecordError},
 };
 
+use super::{
+    ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
+    StockLineDoesNotBelongToCurrentStore,
+};
+
 #[derive(InputObject)]
 pub struct InsertCustomerInvoiceLineInput {
     pub id: String,
@@ -37,6 +42,9 @@ pub enum InsertCustomerInvoiceLineErrorInterface {
     RangeError(RangeError),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotACustomerInvoice(NotACustomerInvoice),
+    StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
+    ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
+    StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
 }
 
@@ -101,6 +109,12 @@ impl From<InsertCustomerInvoiceLineError> for InsertCustomerInvoiceLineResponse 
             }
             InsertCustomerInvoiceLineError::StockLineNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::StockLineId))
+            }
+            InsertCustomerInvoiceLineError::StockLineAlreadyExistsInInvoice(line_id) => {
+                OutError::StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice(line_id))
+            }
+            InsertCustomerInvoiceLineError::ItemDoesNotMatchStockLine => {
+                OutError::ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine {})
             }
         };
 
