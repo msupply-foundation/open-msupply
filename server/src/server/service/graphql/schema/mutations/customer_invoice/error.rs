@@ -1,5 +1,7 @@
 use async_graphql::Object;
 
+use crate::server::service::graphql::schema::types::NameNode;
+
 pub struct CannotChangeStatusBackToDraftError;
 
 #[Object]
@@ -75,14 +77,15 @@ impl OtherPartyIdNotFoundError {
     }
 }
 
-pub struct OtherPartyNotACustomerOfThisStoreError(pub String);
+pub struct OtherPartyNotACustomerError(pub NameNode);
 
 #[Object]
-impl OtherPartyNotACustomerOfThisStoreError {
-    pub async fn description(&self) -> String {
-        format!(
-            "Other party with id '{}' is not a valid supplier of this store.",
-            self.0
-        )
+impl OtherPartyNotACustomerError {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a customer"
+    }
+
+    pub async fn other_party(&self) -> &NameNode {
+        &self.0
     }
 }

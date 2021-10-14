@@ -2,14 +2,6 @@ pub mod customer_invoice;
 mod error;
 pub mod supplier_invoice;
 
-use customer_invoice::{
-    DeleteCustomerInvoiceInput, DeleteCustomerInvoiceLineInput, DeleteCustomerInvoiceLineResponse,
-    DeleteCustomerInvoiceResultUnion, InsertCustomerInvoiceInput, InsertCustomerInvoiceLineInput,
-    InsertCustomerInvoiceLineResponse, InsertCustomerInvoiceResultUnion,
-    UpdateCustomerInvoiceInput, UpdateCustomerInvoiceLineInput, UpdateCustomerInvoiceLineResponse,
-    UpdateCustomerInvoiceResultUnion,
-};
-
 use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::{schema::types::InvoiceResponse, ContextExt},
@@ -37,7 +29,21 @@ use supplier_invoice::{
     update::{UpdateSupplierInvoiceInput, UpdateSupplierInvoiceResponse},
 };
 
+use customer_invoice::{
+    delete::DeleteCustomerInvoiceResponse,
+    insert::{InsertCustomerInvoiceInput, InsertCustomerInvoiceResponse},
+    line::{
+        delete::{DeleteCustomerInvoiceLineInput, DeleteCustomerInvoiceLineResponse},
+        insert::{InsertCustomerInvoiceLineInput, InsertCustomerInvoiceLineResponse},
+        update::{UpdateCustomerInvoiceLineInput, UpdateCustomerInvoiceLineResponse},
+    },
+    update::{UpdateCustomerInvoiceInput, UpdateCustomerInvoiceResponse},
+};
+
+use self::customer_invoice::InsertCustomerInvoiceResponse;
 use self::supplier_invoice::DeleteSupplierInvoiceInput;
+
+use super::types::InvoiceLineNode;
 
 pub struct Mutations;
 
@@ -47,8 +53,13 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         input: InsertCustomerInvoiceInput,
-    ) -> InsertCustomerInvoiceResultUnion {
-        todo!()
+    ) -> InsertCustomerInvoiceResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        match insert_customer_invoice(connection_manager, input.into()) {
+            Ok(id) => get_invoice(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn update_customer_invoice(
@@ -62,9 +73,10 @@ impl Mutations {
     async fn delete_customer_invoice(
         &self,
         ctx: &Context<'_>,
-        input: DeleteCustomerInvoiceInput,
-    ) -> DeleteCustomerInvoiceResultUnion {
-        todo!()
+        id: String,
+    ) -> DeleteCustomerInvoiceResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        delete_customer_invoice(connection_manager, id).into()
     }
 
     async fn insert_customer_invoice_line(
@@ -208,6 +220,14 @@ impl CannotEditFinalisedInvoice {
     }
 }
 
+pub struct NotACustomerInvoice;
+#[Object]
+impl NotACustomerInvoice {
+    pub async fn description(&self) -> &'static str {
+        "Invoice is not Customer Invoice"
+    }
+}
+
 pub struct NotASupplierInvoice;
 #[Object]
 impl NotASupplierInvoice {
@@ -221,6 +241,18 @@ pub struct NotACustomerInvoice;
 impl NotACustomerInvoice {
     pub async fn description(&self) -> &'static str {
         "Invoice is not Customer Invoice"
+    }
+}
+
+pub struct CannotDeleteInvoiceWithLines(pub Connector<InvoiceLineNode>);
+#[Object]
+impl CannotDeleteInvoiceWithLines {
+    pub async fn description(&self) -> &'static str {
+        "Cannot delete invoice with existing lines"
+    }
+
+    pub async fn lines(&self) -> &Connector<InvoiceLineNode> {
+        &self.0
     }
 }
 

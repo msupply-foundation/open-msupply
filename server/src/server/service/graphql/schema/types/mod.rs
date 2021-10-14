@@ -87,6 +87,14 @@ impl From<PaginationInput> for PaginationOption {
 #[graphql(concrete(name = "ConnectorError", params(ConnectorErrorInterface)))]
 #[graphql(concrete(name = "NodeError", params(NodeErrorInterface)))]
 #[graphql(concrete(
+    name = "InsertCustomerInvoiceError",
+    params(InsertCustomerInvoiceErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteCustomerInvoiceError",
+    params(DeleteCustomerInvoiceErrorInterface)
+))]
+#[graphql(concrete(
     name = "InsertSupplierInvoiceError",
     params(InsertSupplierInvoiceErrorInterface)
 ))]
@@ -211,7 +219,7 @@ pub struct DatabaseError(pub RepositoryError);
 #[Object]
 impl DatabaseError {
     pub async fn description(&self) -> &'static str {
-        "Dabase Error"
+        "Database Error"
     }
 
     pub async fn full_error(&self) -> String {
