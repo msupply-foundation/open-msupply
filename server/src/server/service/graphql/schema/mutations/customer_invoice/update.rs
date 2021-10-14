@@ -13,10 +13,16 @@ use async_graphql::{InputObject, Interface, SimpleObject, Union};
 
 #[derive(InputObject)]
 pub struct UpdateCustomerInvoiceInput {
+    /// The new invoice id provided by the client
     id: String,
-    other_party_id: String,
+    /// The other party must be a customer of the current store.
+    /// This field can be used to change the other_party of an invoice
+    other_party_id: Option<String>,
+    /// When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
+    /// existing invoice items gets updated.
     status: Option<InvoiceNodeStatus>,
     comment: Option<String>,
+    /// External invoice reference, e.g. purchase or shipment number
     their_reference: Option<String>,
 }
 

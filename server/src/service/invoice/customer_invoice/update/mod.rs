@@ -43,8 +43,7 @@ pub enum UpdateCustomerInvoiceError {
     OtherPartyDoesNotExists,
     OtherPartyNotACustomer(Name),
     OtherPartyCannotBeThisStore,
-    NotASupplierInvoice,
-    NotThisStoreInvoice,
+    NotACustomerInvoice,
     InternalError(String),
 }
 
