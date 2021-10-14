@@ -52,9 +52,20 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
           items {
             data {
               id
+              isVisible
               name
               code
               availableQuantity
+              availableBatches {
+                nodes {
+                  id
+                  packSize
+                  costPricePerPack
+                  sellPricePerPack
+                  availableNumberOfPacks
+                  totalNumberOfPacks
+                }
+              }
             }
           }
         }
@@ -65,13 +76,18 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
   };
 
   const t = useTranslation();
+  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
-  const options = data?.map(item => ({ label: item.name, ...item })) || [];
+  const options =
+    data
+      ?.filter(item => item.isVisible)
+      .map(item => ({ label: item.name, ...item })) || [];
 
   const selectItem = (
     _event: SyntheticEvent<Element, Event>,
     value: Item | null
   ) => {
+    setSelectedItem(value);
     setValue('id', value?.id || '');
     setValue('code', value?.code || '');
     setValue('name', value?.name || '');
@@ -114,6 +130,13 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
           defaultValue={item?.availableQuantity}
         />
         <Divider />
+        <table>
+          {selectedItem?.availableBatches.nodes.map(itemBatch => (
+            <tr key={itemBatch.id}>
+              <td>{itemBatch.availableNumberOfPacks}</td>
+            </tr>
+          ))}
+        </table>
       </Grid>
     </form>
   );

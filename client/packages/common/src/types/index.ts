@@ -16,18 +16,25 @@ export interface Name extends DomainObject {
 
 export interface Item extends DomainObject {
   id: string;
+  isVisible: boolean;
   code: string;
   name: string;
   availableQuantity: number;
+  availableBatches: {
+    nodes: StockLine[];
+  };
 }
 
 export interface StockLine extends DomainObject {
   id: string;
-  expiry: string;
-  name: string;
   availableNumberOfPacks: number;
-  packSize: number;
+  costPricePerPack: number;
+  expiry: string;
   item: Item;
+  name: string;
+  packSize: number;
+  sellPricePerPack: number;
+  totalNumberOfPacks: number;
 }
 
 export interface InvoiceLine extends DomainObject {
