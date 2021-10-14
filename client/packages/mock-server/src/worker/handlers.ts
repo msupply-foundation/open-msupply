@@ -102,6 +102,11 @@ export const serverError = graphql.query('error500', (_, response, context) =>
   )
 );
 
+/**
+ * MSW Currently does not support batched mutations. Instead, inspect every outgoing POST
+ * and check if the body is an array and each of the elements of the array has an existing
+ * handler.
+ */
 const batchMutationHandler = rest.post(
   Environment.API_URL,
   async (req, res) => {
