@@ -51,8 +51,8 @@ fn check_invoice_status(
 }
 
 fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateCustomerInvoiceError> {
-    if invoice.r#type != InvoiceRowType::SupplierInvoice {
-        Err(UpdateCustomerInvoiceError::NotASupplierInvoice)
+    if invoice.r#type != InvoiceRowType::CustomerInvoice {
+        Err(UpdateCustomerInvoiceError::NotACustomerInvoice)
     } else {
         Ok(())
     }
