@@ -170,6 +170,14 @@ impl CannotEditFinalisedInvoice {
     }
 }
 
+pub struct NotACustomerInvoice;
+#[Object]
+impl NotACustomerInvoice {
+    pub async fn description(&self) -> &'static str {
+        "Invoice is not Customer Invoice"
+    }
+}
+
 pub struct NotASupplierInvoice;
 #[Object]
 impl NotASupplierInvoice {

@@ -2,7 +2,7 @@ use crate::database::{
     repository::{
         InvoiceLineQueryRepository, InvoiceRepository, RepositoryError, StorageConnection,
     },
-    schema::{InvoiceRow, InvoiceRowStatus},
+    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
 };
 
 use super::DeleteCustomerInvoiceError;
@@ -28,6 +28,11 @@ pub fn validate(
         InvoiceLineQueryRepository::new(connection).find_many_by_invoice_ids(&[id.to_string()])?;
     if lines.len() > 0 {
         return Err(DeleteCustomerInvoiceError::InvoiceLinesExists(lines));
+    }
+
+    // check its a customer invoice
+    if invoice.r#type != InvoiceRowType::CustomerInvoice {
+        return Err(DeleteCustomerInvoiceError::NotACustomerInvoice);
     }
 
     Ok(invoice)
