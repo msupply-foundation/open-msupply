@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
-import { ColumnSetBuilder, useColumns } from '../..';
+import { useColumns } from '../..';
 import { Item, TestingProvider } from '../../../../..';
 
 describe('HeaderRow', () => {
@@ -12,11 +12,9 @@ describe('HeaderRow', () => {
     sortBy: { key: keyof Item; direction: 'asc' | 'desc' };
   }> = ({ onChangeSortBy, sortBy }) => {
     const [column1, column2] = useColumns(
-      new ColumnSetBuilder<Item>()
-        .addColumn('name')
-        .addColumn('packSize', { sortable: false })
-        .build(),
-      { onChangeSortBy, sortBy }
+      ['name', ['packSize', { sortable: false }]],
+      { onChangeSortBy, sortBy },
+      [sortBy]
     );
 
     if (!column1 || !column2) return null;

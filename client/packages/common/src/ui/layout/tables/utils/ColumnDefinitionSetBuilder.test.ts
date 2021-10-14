@@ -1,9 +1,9 @@
-import { ColumnSetBuilder } from './ColumnSetBuilder';
-import { Invoice } from './../../../../types';
+import { ColumnDefinitionSetBuilder } from './ColumnDefinitionSetBuilder';
+import { Invoice } from '../../../../types';
 
-describe('ColumnSetBuilder', () => {
+describe('ColumnDefinitionSetBuilder', () => {
   it('Creates an array of columns for the column keys passed', () => {
-    const columns = new ColumnSetBuilder<Invoice>()
+    const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('invoiceNumber')
       .addColumn('status')
       .build();
@@ -15,7 +15,7 @@ describe('ColumnSetBuilder', () => {
   });
 
   it('creates an array of column objects when passed column definitions rather than keys', () => {
-    const columns = new ColumnSetBuilder<Invoice>()
+    const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn({ key: 'status' })
       .addColumn({ key: 'invoiceNumber' })
       .build();
@@ -27,7 +27,7 @@ describe('ColumnSetBuilder', () => {
   });
 
   it('creates an array of column objects when passed a mix of column definitions and keys', () => {
-    const columns = new ColumnSetBuilder<Invoice>()
+    const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('type')
       .addColumn({ key: 'status' })
       .addColumn({ key: 'invoiceNumber' })
@@ -41,7 +41,7 @@ describe('ColumnSetBuilder', () => {
   });
 
   it('creates an array of column objects in the order they were specified', () => {
-    const columns = new ColumnSetBuilder<Invoice>()
+    const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('type', { order: 3 })
       .addColumn({ key: 'status', order: 2 })
       .addColumn({ key: 'invoiceNumber', order: 1 })
@@ -55,7 +55,7 @@ describe('ColumnSetBuilder', () => {
   });
 
   it('creates an array of column objects with columns in their specified order, and all others appended to the tail', () => {
-    const columns = new ColumnSetBuilder<Invoice>()
+    const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('type', { order: 0 })
       .addColumn({ key: 'status' })
       .addColumn({ key: 'invoiceNumber' })
@@ -73,7 +73,7 @@ describe('ColumnSetBuilder', () => {
   });
 
   it('overrides the default values of a column with the passed options', () => {
-    const columns = new ColumnSetBuilder<Invoice>()
+    const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('type', { width: 300 })
       .addColumn('status', { width: 300, label: 'app.admin' })
       .build();

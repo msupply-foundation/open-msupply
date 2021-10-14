@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { DependencyList, useMemo } from 'react';
 import { DomainObject } from '../../../../types/index';
 import {
   ColumnDefinition,
@@ -10,6 +10,7 @@ import {
 import { useFormatDate } from '../../../../intl';
 import { BasicCell, BasicHeader } from '../components';
 import { SortBy } from '../../../..';
+import { ColumnDefinitionSetBuilder, ColumnKey } from '..';
 
 const getColumnWidths = <T extends DomainObject>(
   column: ColumnDefinition<T>
@@ -25,16 +26,29 @@ interface ColumnOptions<T extends DomainObject> {
   sortBy?: SortBy<T>;
 }
 
+// TODO: Currently columns won't update if they're changed.
+// This will need to change when we add functionality to
+// add/remove columns.
 export const useColumns = <T extends DomainObject>(
-  columnsToMap: ColumnDefinition<T>[],
-  options?: ColumnOptions<T>
+  columnsToCreate: (
+    | ColumnDefinition<T>
+    | ColumnKey
+    | [ColumnKey | ColumnDefinition<T>, Omit<ColumnDefinition<T>, 'key'>]
+    | [ColumnKey]
+  )[],
+  options?: ColumnOptions<T>,
+  depsArray: DependencyList = []
 ): Column<T>[] => {
   const formatDate = useFormatDate();
   const defaultAccessor = getAccessor<T>(formatDate);
 
+  const columnDefinitions = new ColumnDefinitionSetBuilder<T>()
+    .addColumns(columnsToCreate)
+    .build();
+
   return useMemo(
     () =>
-      columnsToMap.map(column => {
+      columnDefinitions.map(column => {
         const defaults: Omit<Column<T>, 'key'> = {
           label: '',
           format: ColumnFormat.text,
@@ -53,7 +67,7 @@ export const useColumns = <T extends DomainObject>(
 
         return { ...defaults, ...column };
       }),
-    [options?.sortBy]
+    [depsArray]
   );
 };
 

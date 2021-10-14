@@ -2,7 +2,6 @@ import { renderHook } from '@testing-library/react-hooks';
 import {
   TestingProvider,
   useColumns,
-  ColumnSetBuilder,
   DocumentAction,
   Invoice,
 } from '@openmsupply-client/common';
@@ -74,13 +73,9 @@ describe('DetailView reducer', () => {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
-    const { result } = renderHook(
-      () =>
-        useColumns(
-          new ColumnSetBuilder<ItemRow>().addColumn('quantity').build()
-        ),
-      { wrapper: TestingProvider }
-    );
+    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
+      wrapper: TestingProvider,
+    });
 
     const quantityColumn = result.current[0];
 
@@ -106,13 +101,9 @@ describe('DetailView reducer', () => {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
     };
-    const { result } = renderHook(
-      () =>
-        useColumns(
-          new ColumnSetBuilder<ItemRow>().addColumn('quantity').build()
-        ),
-      { wrapper: TestingProvider }
-    );
+    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
+      wrapper: TestingProvider,
+    });
 
     const quantityColumn = result.current[0];
 
@@ -140,13 +131,9 @@ describe('DetailView reducer', () => {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
-    const { result } = renderHook(
-      () =>
-        useColumns(
-          new ColumnSetBuilder<ItemRow>().addColumn('itemName').build()
-        ),
-      { wrapper: TestingProvider }
-    );
+    const { result } = renderHook(() => useColumns<ItemRow>(['itemName']), {
+      wrapper: TestingProvider,
+    });
 
     const itemNameColumn = result.current[0];
 
