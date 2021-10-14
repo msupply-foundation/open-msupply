@@ -57,6 +57,8 @@ const createStockLines = (items: Item[]) => {
         packSize: 1,
         expiry: faker.date.future().toString(),
         availableNumberOfPacks,
+        totalNumberOfPacks:
+          availableNumberOfPacks + randomInteger({ min: 0, max: 5 }),
         itemId,
         costPricePerPack,
         sellPricePerPack,

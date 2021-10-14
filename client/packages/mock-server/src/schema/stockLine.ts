@@ -8,6 +8,7 @@ const Types = `
       expiry: String
       name: String
       availableNumberOfPacks: Int
+      totalNumberOfPacks: Int
       packSize: Int
       item: Item
       costPricePerPack: Float
