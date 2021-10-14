@@ -53,7 +53,7 @@ impl From<DeleteSupplierInvoiceError> for DeleteSupplierInvoiceResponse {
     fn from(error: DeleteSupplierInvoiceError) -> Self {
         use DeleteSupplierInvoiceErrorInterface as OutError;
         let error = match error {
-            DeleteSupplierInvoiceError::InvoiceDoesNotExists => {
+            DeleteSupplierInvoiceError::InvoiceDoesNotExist => {
                 OutError::RecordDoesNotExist(RecordDoesNotExist {})
             }
             DeleteSupplierInvoiceError::DatabaseError(error) => {
