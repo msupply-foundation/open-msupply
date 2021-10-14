@@ -1,4 +1,3 @@
-use crate::server::service::graphql::schema::types::InvoiceLinesResponse;
 use crate::server::service::graphql::schema::types::NameNode;
 use async_graphql::*;
 
@@ -22,18 +21,6 @@ impl OtherPartyNotASupplier {
     }
 
     pub async fn other_party(&self) -> &NameNode {
-        &self.0
-    }
-}
-
-pub struct CannotDeleteInvoiceWithLines(InvoiceLinesResponse);
-#[Object]
-impl CannotDeleteInvoiceWithLines {
-    pub async fn description(&self) -> &'static str {
-        "Cannot delete invoice with existing lines"
-    }
-
-    pub async fn lines(&self) -> &InvoiceLinesResponse {
         &self.0
     }
 }

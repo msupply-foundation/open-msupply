@@ -25,6 +25,7 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
+use super::mutations::customer_invoice::*;
 use super::mutations::supplier_invoice::*;
 
 /// Generic Connector
@@ -85,6 +86,14 @@ impl From<PaginationInput> for PaginationOption {
 #[derive(SimpleObject)]
 #[graphql(concrete(name = "ConnectorError", params(ConnectorErrorInterface)))]
 #[graphql(concrete(name = "NodeError", params(NodeErrorInterface)))]
+#[graphql(concrete(
+    name = "InsertCustomerInvoiceError",
+    params(InsertCustomerInvoiceErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteCustomerInvoiceError",
+    params(DeleteCustomerInvoiceErrorInterface)
+))]
 #[graphql(concrete(
     name = "InsertSupplierInvoiceError",
     params(InsertSupplierInvoiceErrorInterface)
@@ -197,7 +206,7 @@ pub struct DatabaseError(pub RepositoryError);
 #[Object]
 impl DatabaseError {
     pub async fn description(&self) -> &'static str {
-        "Dabase Error"
+        "Database Error"
     }
 
     pub async fn full_error(&self) -> String {

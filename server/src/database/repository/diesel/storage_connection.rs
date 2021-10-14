@@ -63,6 +63,39 @@ impl StorageConnection {
             }
         }
     }
+
+    pub fn transaction_sync<'a, T, E, F>(&'a self, f: F) -> Result<T, TransactionError<E>>
+    where
+        F: FnOnce(&'a StorageConnection) -> Result<T, E>,
+    {
+        let con = &self.connection;
+        let transaction_manager = con.transaction_manager();
+
+        transaction_manager
+            .begin_transaction(con)
+            .map_err(|_| TransactionError::Transaction {
+                msg: "Failed to start tx".to_string(),
+            })?;
+
+        match f(&self) {
+            Ok(value) => {
+                transaction_manager.commit_transaction(con).map_err(|_| {
+                    TransactionError::Transaction {
+                        msg: "Failed to end tx".to_string(),
+                    }
+                })?;
+                Ok(value)
+            }
+            Err(e) => {
+                transaction_manager.rollback_transaction(con).map_err(|_| {
+                    TransactionError::Transaction {
+                        msg: "Failed to rollback tx".to_string(),
+                    }
+                })?;
+                Err(TransactionError::Inner(e))
+            }
+        }
+    }
 }
 
 pub struct StorageConnectionManager {
