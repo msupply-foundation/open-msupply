@@ -16,7 +16,7 @@ module.exports = {
   mode: 'development',
   devServer: {
     static: path.join(__dirname, 'dist'),
-    port: 3007, // ${UPDATE} : This should contain a port number to run this MFE on. It should be unique to this package.
+    port: 3007,
     historyApiFallback: true,
     hot: true,
   },
@@ -48,12 +48,10 @@ module.exports = {
   },
   plugins: [
     new ModuleFederationPlugin({
-      // ${UPDATE} - The name of your package. This should be unique to all other packages and will be used
-      // from other remote packages to refer to this package.
       name: 'customers',
       filename: 'remoteEntry.js',
       remotes: {
-        transactions: 'transactions@http://localhost:3005/remoteEntry.js',
+        invoices: 'invoices@http://localhost:3005/remoteEntry.js',
       },
       exposes: {
         './CustomerContainer': './src/CustomerContainer',

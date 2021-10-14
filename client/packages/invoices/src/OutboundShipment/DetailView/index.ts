@@ -1,7 +1,7 @@
 import { OutboundShipment } from './types';
 export { OutboundShipmentDetailView } from './DetailView';
 
-export const placeholderTransaction: OutboundShipment = {
+export const placeholderInvoice: OutboundShipment = {
   id: '',
   otherPartyName: '',
   total: '',

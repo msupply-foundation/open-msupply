@@ -4,7 +4,6 @@ import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useSortBy } from '../../../../../hooks/useSortBy';
 import { useColumns } from '../../hooks';
-import { ColumnSetBuilder } from '../../utils';
 import { Item } from '../../../../../types';
 
 export default {
@@ -16,11 +15,9 @@ const Template: Story = () => {
   const { onChangeSortBy, sortBy } = useSortBy<Item>({ key: 'name' });
 
   const [column1, column2] = useColumns(
-    new ColumnSetBuilder<Item>()
-      .addColumn('name')
-      .addColumn('packSize')
-      .build(),
-    { onChangeSortBy, sortBy }
+    ['name', 'packSize'],
+    { onChangeSortBy, sortBy },
+    [sortBy]
   );
 
   if (!column1 || !column2) return <></>;

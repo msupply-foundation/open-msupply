@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  ColumnSetBuilder,
-  TestingProvider,
-  useColumns,
-} from '@openmsupply-client/common';
+import { TestingProvider, useColumns } from '@openmsupply-client/common';
 import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
 import { ItemRow } from '../types';
@@ -33,13 +29,9 @@ const lines: ItemRow[] = [
 
 describe('GeneralTab', () => {
   const Example = () => {
-    const defaultColumns = new ColumnSetBuilder<ItemRow>()
-      .addColumn('itemCode')
-      .addColumn('itemName')
-      .addColumn('quantity')
-      .build();
-
-    const columns = useColumns(defaultColumns, { onChangeSortBy: () => {} });
+    const columns = useColumns<ItemRow>(['itemCode', 'itemName', 'quantity'], {
+      onChangeSortBy: () => {},
+    });
 
     return (
       <GeneralTab
