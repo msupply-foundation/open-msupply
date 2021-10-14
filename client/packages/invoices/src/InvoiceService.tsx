@@ -8,7 +8,7 @@ import {
   OutboundShipmentListView,
 } from './OutboundShipment';
 
-const TransactionService: FC = () => {
+const InvoiceService: FC = () => {
   const customerInvoicesRoute = RouteBuilder.create(
     AppRoute.CustomerInvoice
   ).build();
@@ -31,4 +31,4 @@ const TransactionService: FC = () => {
   );
 };
 
-export default TransactionService;
+export default InvoiceService;
