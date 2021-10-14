@@ -2,10 +2,10 @@ pub mod schema;
 
 use actix_web::{guard::fn_guard, web::Data, HttpResponse, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::Context;
+use async_graphql::{Context, EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
 
-use self::schema::Schema;
+use self::schema::{Mutations, Queries, Schema};
 use crate::server::data::{LoaderRegistry, RepositoryRegistry};
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
@@ -24,19 +24,21 @@ impl<'a> ContextExt for Context<'a> {
     }
 }
 
+type Builder = SchemaBuilder<Queries, Mutations, EmptySubscription>;
+
+pub fn build_schema() -> Builder {
+    Schema::build(Queries, Mutations, EmptySubscription)
+}
+
 pub fn config(
     repository_registry: Data<RepositoryRegistry>,
     loader_registry: Data<LoaderRegistry>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
-        let schema = Schema::build(
-            schema::Queries,
-            schema::Mutations,
-            async_graphql::EmptySubscription,
-        )
-        .data(repository_registry)
-        .data(loader_registry)
-        .finish();
+        let schema = build_schema()
+            .data(repository_registry)
+            .data(loader_registry)
+            .finish();
         cfg.service(
             actix_web::web::scope("/graphql")
                 .data(schema)

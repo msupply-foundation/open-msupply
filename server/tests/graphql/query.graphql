@@ -1,0 +1,374 @@
+# Queries must match the schema.graphql file, see readme.md test section.
+
+# INSERT SUPPLIER INVOICE
+
+mutation insertSupplierInvoiceFull(
+  $id: String!
+  $otherPartyId_isi: String!
+  $status_isi: InvoiceNodeStatus!
+  $comment_isi: String
+  $theirReference_isi: String
+) {
+  insertSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId_isi
+      status: $status_isi
+      theirReference: $theirReference_isi
+      comment: $comment_isi
+    }
+  ) {
+    ...InsertSupplierInvoiceResponse
+  }
+}
+
+mutation insertSupplierInvoicePartial(
+  $id: String!
+  $otherPartyId_isi: String!
+  $status_isi: InvoiceNodeStatus!
+  $comment_isi: String
+  $theirReference_isi: String
+) {
+  insertSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId_isi
+      status: $status_isi
+      theirReference: $theirReference_isi
+      comment: $comment_isi
+    }
+  ) {
+    ...InsertSupplierInvoiceResponsePartial
+  }
+}
+
+fragment InsertSupplierInvoiceResponse on InsertSupplierInvoiceResponse {
+  __typename
+  ...InsertSupplierInvoiceError
+  ...NodeError
+  ...InvoiceNode
+}
+
+fragment InsertSupplierInvoiceResponsePartial on InsertSupplierInvoiceResponse {
+  __typename
+  ...InsertSupplierInvoiceError
+  ...NodeError
+  ...PartialInvoiceNode
+}
+
+fragment InsertSupplierInvoiceError on InsertSupplierInvoiceError {
+  error {
+    ...InsertSupplierInvoiceErrorInterface
+  }
+}
+
+fragment InsertSupplierInvoiceErrorInterface on InsertSupplierInvoiceErrorInterface {
+  __typename
+  ...DatabaseError
+  ...ForeignKeyError
+  ...OtherPartyNotASupplier
+  ...RecordAlreadyExist
+}
+
+# UPDATE SUPPLIER INVOICE
+
+mutation updateSupplierInvoiceFull(
+  $id: String!
+  $otherPartyId_usi: String
+  $status_usi: InvoiceNodeStatus
+  $comment_usi: String
+  $theirReference_usi: String
+) {
+  updateSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId_usi
+      status: $status_usi
+      theirReference: $theirReference_usi
+      comment: $comment_usi
+    }
+  ) {
+    ...UpdateSupplierInvoiceResponse
+  }
+}
+
+mutation updateSupplierInvoicePartial(
+  $id: String!
+  $otherPartyId_usi: String
+  $status_usi: InvoiceNodeStatus
+  $comment_usi: String
+  $theirReference_usi: String
+) {
+  updateSupplierInvoice(
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId_usi
+      status: $status_usi
+      theirReference: $theirReference_usi
+      comment: $comment_usi
+    }
+  ) {
+    ...UpdateSupplierInvoiceResponsePartial
+  }
+}
+
+fragment UpdateSupplierInvoiceResponse on UpdateSupplierInvoiceResponse {
+  __typename
+  ...UpdateSupplierInvoiceError
+  ...NodeError
+  ...InvoiceNode
+}
+
+fragment UpdateSupplierInvoiceResponsePartial on UpdateSupplierInvoiceResponse {
+  __typename
+  ...UpdateSupplierInvoiceError
+  ...NodeError
+  ...PartialInvoiceNode
+}
+
+fragment UpdateSupplierInvoiceError on UpdateSupplierInvoiceError {
+  error {
+    ...UpdateSupplierInvoiceErrorInterface
+  }
+}
+
+fragment UpdateSupplierInvoiceErrorInterface on UpdateSupplierInvoiceErrorInterface {
+  __typename
+  ...DatabaseError
+  ...ForeignKeyError
+  ...OtherPartyNotASupplier
+  ...RecordDoesNotExist
+  ...CannotEditFinalisedInvoice
+  ...NotASupplierInvoice
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...CannotChangeInvoiceBackToDraft
+}
+
+# DELETE SUPPLIER INVOICE
+
+mutation deleteSupplierInvoiceFull($id: String!) {
+  deleteSupplierInvoice(input: { id: $id }) {
+    ...DeleteSupplierInvoiceResponse
+  }
+}
+
+fragment DeleteSupplierInvoiceResponse on DeleteSupplierInvoiceResponse {
+  __typename
+  ...DeleteSupplierInvoiceError
+  ...DeleteResponse
+}
+
+fragment DeleteSupplierInvoiceError on DeleteSupplierInvoiceError {
+  error {
+    ...DeleteSupplierInvoiceErrorInterface
+  }
+}
+
+fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterface {
+  __typename
+  ...DatabaseError
+  ...RecordDoesNotExist
+  ...CannotEditFinalisedInvoice
+  ...NotASupplierInvoice
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...CannotDeleteInvoiceWithLines
+}
+
+# INVOICE
+
+fragment PartialInvoiceNode on InvoiceNode {
+  id
+  status
+  type
+}
+
+fragment InvoiceNode on InvoiceNode {
+  comment
+  confirmedDatetime
+  entryDatetime
+  finalisedDatetime
+  id
+  invoiceNumber
+  lines {
+    ...InvoiceLinesResponse
+  }
+  otherPartyId
+  otherPartyName
+  pricing {
+    ...InvoicePriceResponse
+  }
+  status
+  theirReference
+  type
+}
+
+fragment InvoicePriceResponse on InvoicePriceResponse {
+  __typename
+  ...NodeError
+  ...InvoicePricingNode
+}
+
+fragment InvoicePricingNode on InvoicePricingNode {
+  totalAfterTax
+}
+
+# INVOICE LINE
+
+fragment InvoiceLinesResponse on InvoiceLinesResponse {
+  __typename
+  ...ConnectorError
+  ...InvoiceLineConnector
+}
+
+fragment InvoiceLineNode on InvoiceLineNode {
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemCode
+  itemId
+  itemName
+  numberOfPacks
+  packSize
+  sellPricePerPack
+  stockLine {
+    ...StockLineResponse
+  }
+}
+
+fragment InvoiceLineConnector on InvoiceLineConnector {
+  totalCount
+  nodes {
+    ...InvoiceLineNode
+  }
+}
+
+# STOCK LINE
+
+fragment StockLineResponse on StockLineResponse {
+  __typename
+  ...NodeError
+  ...StockLineNode
+}
+
+fragment StockLineNode on StockLineNode {
+  id
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  itemId
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+}
+
+# NAME
+
+fragment NameNode on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  name
+}
+
+# COMMON
+
+fragment DeleteResponse on DeleteResponse {
+  id
+}
+
+# ERRORS
+
+fragment RecordAlreadyExist on RecordAlreadyExist {
+  description
+}
+
+fragment RecordDoesNotExist on RecordDoesNotExist {
+  description
+}
+
+fragment ForeignKeyError on ForeignKeyError {
+  description
+  key
+}
+
+fragment DatabaseError on DatabaseError {
+  description
+  fullError
+}
+
+fragment OtherPartyNotASupplier on OtherPartyNotASupplier {
+  description
+  otherParty {
+    ...NameNode
+  }
+}
+
+fragment RecordNotFound on RecordNotFound {
+  id
+  description
+}
+
+fragment NodeError on NodeError {
+  error {
+    ...NodeErrorInterface
+  }
+}
+
+fragment NodeErrorInterface on NodeErrorInterface {
+  __typename
+  ...DatabaseError
+  ...RecordNotFound
+}
+
+fragment PaginationError on PaginationError {
+  description
+  rangeError {
+    ...RangeError
+  }
+}
+
+fragment RangeError on RangeError {
+  description
+  field
+  max
+  min
+}
+
+fragment ConnectorError on ConnectorError {
+  error {
+    ...ConnectorErrorInterface
+  }
+}
+
+fragment ConnectorErrorInterface on ConnectorErrorInterface {
+  __typename
+  ...DatabaseError
+  ...PaginationError
+}
+
+fragment CannotEditFinalisedInvoice on CannotEditFinalisedInvoice {
+  description
+}
+
+fragment NotASupplierInvoice on NotASupplierInvoice {
+  description
+}
+
+fragment InvoiceDoesNotBelongToCurrentStore on InvoiceDoesNotBelongToCurrentStore {
+  description
+}
+
+fragment CannotChangeInvoiceBackToDraft on CannotChangeInvoiceBackToDraft {
+  description
+}
+
+fragment CannotDeleteInvoiceWithLines on CannotDeleteInvoiceWithLines {
+  description
+  lines {
+    ...InvoiceLinesResponse
+  }
+}

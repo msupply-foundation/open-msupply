@@ -12,11 +12,6 @@ use crate::{
     service::invoice::DeleteSupplierInvoiceError,
 };
 
-#[derive(InputObject)]
-pub struct DeleteSupplierInvoiceInput {
-    id: String,
-}
-
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceResponse {
     Error(ErrorWrapper<DeleteSupplierInvoiceErrorInterface>),
