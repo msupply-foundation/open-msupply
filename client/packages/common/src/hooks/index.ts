@@ -1,11 +1,16 @@
-import { useForm, UseFormRegister } from 'react-hook-form';
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  UseFormRegister,
+} from 'react-hook-form';
 
 export { useDrawer } from './useDrawer';
 export { useHostContext } from './useHostContext';
 export { useNotification } from './useNotification';
 export { useRemoteFn } from './useRemoteFn';
 export { useRemoteScript } from './useRemoteScript';
-export { useForm, UseFormRegister };
+export { FormProvider, useForm, useFormContext, UseFormRegister };
 
 export * from './useAppBarRect';
 export * from './useBoundingClientRect';
