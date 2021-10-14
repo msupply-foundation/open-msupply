@@ -41,12 +41,12 @@ impl InvoiceDoesNotBelongToCurrentStoreError {
     }
 }
 
-pub struct InvoiceNotFoundError(pub String);
+pub struct InvoiceNotFoundError();
 
 #[Object]
 impl InvoiceNotFoundError {
     pub async fn description(&self) -> String {
-        format!("Invoice with id '{}' not found.", self.0)
+        "Invoice not found.".to_string()
     }
 }
 
@@ -68,12 +68,12 @@ impl OtherPartyIdMissingError {
     }
 }
 
-pub struct OtherPartyIdNotFoundError(pub String);
+pub struct OtherPartyIdNotFoundError;
 
 #[Object]
 impl OtherPartyIdNotFoundError {
     pub async fn description(&self) -> String {
-        format!("Other party with id '{}' not found.", self.0)
+        "Other party not found.".to_string()
     }
 }
 
@@ -86,6 +86,28 @@ impl OtherPartyNotACustomerError {
     }
 
     pub async fn other_party(&self) -> &NameNode {
+        &self.0
+    }
+}
+
+pub struct NotACustomerInvoiceError;
+
+#[Object]
+impl NotACustomerInvoiceError {
+    pub async fn description(&self) -> String {
+        "Not a customer invoice.".to_string()
+    }
+}
+
+pub struct InternalError(pub String);
+
+#[Object]
+impl InternalError {
+    pub async fn description(&self) -> &'static str {
+        "Internal Error"
+    }
+
+    pub async fn msg(&self) -> &String {
         &self.0
     }
 }
