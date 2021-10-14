@@ -103,6 +103,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
           inputProps={register('quantity', {
             required: true,
             min: { value: 1, message: t('error.greater-than-zero-required') },
+            pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
           })}
           labelKey="label.quantity"
           defaultValue={item?.availableQuantity}

@@ -38,6 +38,7 @@
   "error.missing-invoice": "Invoice {id} not found",
   "error.no-items": "No items",
   "error.no-results": "No records to display",
+  "error.number-required": "Enter a valid number",
   "error.something-wrong": "Oops! Something's gone wrong.",
   "heading.404": "Feeling lost?",
   "heading.actions": "Actions",
