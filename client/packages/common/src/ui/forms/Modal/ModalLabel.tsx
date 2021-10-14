@@ -14,7 +14,7 @@ const labelStyle = {
 export const ModalLabel: React.FC<ModalLabelProps> = ({ labelKey }) => {
   const t = useTranslation();
   return (
-    <Grid container xs={2} alignItems="center" justifyContent="flex-end">
+    <Grid item xs={2} alignItems="center" justifyContent="flex-end">
       <InputLabel sx={labelStyle}>{t(labelKey)}</InputLabel>
     </Grid>
   );
