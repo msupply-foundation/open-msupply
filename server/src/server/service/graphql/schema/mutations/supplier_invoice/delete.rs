@@ -4,20 +4,13 @@ use crate::{
     domain::supplier_invoice::DeleteSupplierInvoice,
     server::service::graphql::schema::{
         mutations::{
-            CannotEditFinalisedInvoice, DeleteResponse, InvoiceDoesNotBelongToCurrentStore,
-            NotASupplierInvoice, RecordDoesNotExist,
+            CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
+            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
         },
         types::{DatabaseError, ErrorWrapper},
     },
     service::invoice::DeleteSupplierInvoiceError,
 };
-
-use super::CannotDeleteInvoiceWithLines;
-
-#[derive(InputObject)]
-pub struct DeleteSupplierInvoiceInput {
-    id: String,
-}
 
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceResponse {

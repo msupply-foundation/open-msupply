@@ -3,10 +3,11 @@ use chrono::Utc;
 use crate::{
     database::{
         repository::{InvoiceLineRepository, StorageConnection},
-        schema::{InvoiceRow, InvoiceRowStatus, StockLineRow},
+        schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
     },
     domain::{invoice::InvoiceStatus, supplier_invoice::UpdateSupplierInvoice},
-    service::invoice_line::generate_batch,
+    service::invoice::current_store_id,
+    util::uuid::uuid,
 };
 
 use super::UpdateSupplierInvoiceError;
@@ -74,8 +75,29 @@ pub fn generate_batches(
     let invoice_lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
-    for row in invoice_lines.into_iter() {
-        result.push(generate_batch(row, false, connection)?);
+    for InvoiceLineRow {
+        item_id,
+        batch,
+        pack_size,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        number_of_packs,
+        expiry_date,
+        ..
+    } in invoice_lines.into_iter()
+    {
+        result.push(StockLineRow {
+            id: uuid(),
+            item_id,
+            store_id: current_store_id(connection)?,
+            batch,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            available_number_of_packs: number_of_packs,
+            total_number_of_packs: number_of_packs,
+            expiry_date,
+        });
     }
     Ok(result)
 }
