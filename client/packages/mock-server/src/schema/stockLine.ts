@@ -10,6 +10,8 @@ const Types = `
       availableNumberOfPacks: Int
       packSize: Int
       item: Item
+      costPricePerPack: Float
+      sellPricePerPack: Float
     }
 
     type StockLineResponse { 
