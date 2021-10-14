@@ -1,9 +1,8 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import { UseFormRegisterReturn, useFormState } from 'react-hook-form';
+import { get, UseFormRegisterReturn, useFormState } from 'react-hook-form';
 
 import { BasicTextInput } from '../../components/inputs/TextInput/BasicTextInput';
-import { ModalErrorMessage } from './ModalErrorMessage';
 
 export interface ModalInputProps {
   defaultValue?: unknown;
@@ -15,15 +14,17 @@ export const ModalInput: React.FC<ModalInputProps> = ({
   inputProps,
 }) => {
   const { errors } = useFormState();
+  const error = get(errors, inputProps.name);
+  const errorProps = error ? { error: true, helperText: error.message } : {};
 
   return (
     <Grid item xs={10}>
       <BasicTextInput
         defaultValue={defaultValue}
         sx={{ width: '240px' }}
+        {...errorProps}
         {...inputProps}
       />
-      <ModalErrorMessage errors={errors} name={inputProps.name} />
     </Grid>
   );
 };
