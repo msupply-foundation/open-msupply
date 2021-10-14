@@ -2,12 +2,14 @@ pub mod customer_invoice;
 mod error;
 pub mod supplier_invoice;
 
+use super::types::{Connector, InvoiceLineNode};
 use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::{schema::types::InvoiceResponse, ContextExt},
     service::{
         invoice::{
-            delete_supplier_invoice, get_invoice, insert_supplier_invoice, update_supplier_invoice,
+            delete_customer_invoice, delete_supplier_invoice, get_invoice, insert_customer_invoice,
+            insert_supplier_invoice, update_supplier_invoice,
         },
         invoice_line::{
             delete_supplier_invoice_line, get_invoice_line, insert_supplier_invoice_line,
@@ -15,35 +17,9 @@ use crate::{
         },
     },
 };
-
 use async_graphql::*;
-
-use supplier_invoice::{
-    delete::DeleteSupplierInvoiceResponse,
-    insert::{InsertSupplierInvoiceInput, InsertSupplierInvoiceResponse},
-    line::{
-        delete::{DeleteSupplierInvoiceLineInput, DeleteSupplierInvoiceLineResponse},
-        insert::{InsertSupplierInvoiceLineInput, InsertSupplierInvoiceLineResponse},
-        update::{UpdateSupplierInvoiceLineInput, UpdateSupplierInvoiceLineResponse},
-    },
-    update::{UpdateSupplierInvoiceInput, UpdateSupplierInvoiceResponse},
-};
-
-use customer_invoice::{
-    delete::DeleteCustomerInvoiceResponse,
-    insert::{InsertCustomerInvoiceInput, InsertCustomerInvoiceResponse},
-    line::{
-        delete::{DeleteCustomerInvoiceLineInput, DeleteCustomerInvoiceLineResponse},
-        insert::{InsertCustomerInvoiceLineInput, InsertCustomerInvoiceLineResponse},
-        update::{UpdateCustomerInvoiceLineInput, UpdateCustomerInvoiceLineResponse},
-    },
-    update::{UpdateCustomerInvoiceInput, UpdateCustomerInvoiceResponse},
-};
-
-use self::customer_invoice::InsertCustomerInvoiceResponse;
-use self::supplier_invoice::DeleteSupplierInvoiceInput;
-
-use super::types::InvoiceLineNode;
+use customer_invoice::*;
+use supplier_invoice::*;
 
 pub struct Mutations;
 
@@ -217,14 +193,6 @@ pub struct CannotEditFinalisedInvoice;
 impl CannotEditFinalisedInvoice {
     pub async fn description(&self) -> &'static str {
         "Cannot edit finalised invoice"
-    }
-}
-
-pub struct NotACustomerInvoice;
-#[Object]
-impl NotACustomerInvoice {
-    pub async fn description(&self) -> &'static str {
-        "Invoice is not Customer Invoice"
     }
 }
 
