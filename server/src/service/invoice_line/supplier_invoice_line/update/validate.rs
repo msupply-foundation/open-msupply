@@ -12,7 +12,7 @@ use crate::{
         invoice_line::{
             supplier_invoice_line::{check_batch, check_pack_size},
             validate::{
-                check_item_option, check_line_belongs_to_invoice, check_line_exists,
+                check_item, check_line_belongs_to_invoice, check_line_exists,
                 check_number_of_packs, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
                 NumberOfPacksBelowOne,
             },
@@ -42,6 +42,17 @@ pub fn validate(
     check_batch(&line, connection)?;
 
     Ok((line, item, invoice))
+}
+
+fn check_item_option(
+    item_id_option: &Option<String>,
+    connection: &StorageConnection,
+) -> Result<Option<ItemRow>, UpdateSupplierInvoiceLineError> {
+    if let Some(item_id) = item_id_option {
+        Ok(Some(check_item(item_id, connection)?))
+    } else {
+        Ok(None)
+    }
 }
 
 impl From<ItemNotFound> for UpdateSupplierInvoiceLineError {

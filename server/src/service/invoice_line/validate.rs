@@ -52,17 +52,6 @@ pub fn check_item(
     }
 }
 
-pub fn check_item_option(
-    item_id_option: &Option<String>,
-    connection: &StorageConnection,
-) -> Result<Option<ItemRow>, WithDBError<ItemNotFound>> {
-    if let Some(item_id) = item_id_option {
-        Ok(Some(check_item(item_id, connection)?))
-    } else {
-        Ok(None)
-    }
-}
-
 pub struct LineDoesNotExist;
 
 pub fn check_line_exists(
