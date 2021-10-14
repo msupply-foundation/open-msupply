@@ -89,12 +89,11 @@ export const ResolverService = {
   byId: {
     item: (id: string): ResolvedItem => {
       const item = db.get.byId.item(id);
-
       return {
         ...item,
         availableQuantity: getAvailableQuantity(id),
         availableBatches: {
-          nodes: db.get.all.stockLine().filter(line => line.itemId === id),
+          nodes: db.get.stockLines.byItemId(id),
         },
       };
     },

@@ -23,6 +23,7 @@ export interface StockLine {
   expiry: string;
   name: string;
   availableNumberOfPacks: number;
+  totalNumberOfPacks: number;
   packSize: number;
   itemId: string;
   costPricePerPack: number;
