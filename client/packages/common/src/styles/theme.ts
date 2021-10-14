@@ -103,6 +103,7 @@ const themeOptions = {
   },
   palette: {
     darkGrey: '#555770',
+    error: { main: '#e63535' },
     midGrey: '#8f90a6',
     border: '#e4e4eb',
     primary: { 500: '#e95c30' },

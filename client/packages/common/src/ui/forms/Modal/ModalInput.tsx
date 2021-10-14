@@ -1,7 +1,9 @@
-import { Grid } from '@mui/material';
 import React from 'react';
-import { UseFormRegisterReturn } from 'react-hook-form';
-import { BasicTextInput } from '@openmsupply-client/common';
+import { Grid } from '@mui/material';
+import { UseFormRegisterReturn, useFormState } from 'react-hook-form';
+
+import { BasicTextInput } from '../../components/inputs/TextInput/BasicTextInput';
+import { ModalErrorMessage } from './ModalErrorMessage';
 
 export interface ModalInputProps {
   defaultValue?: unknown;
@@ -12,6 +14,8 @@ export const ModalInput: React.FC<ModalInputProps> = ({
   defaultValue,
   inputProps,
 }) => {
+  const { errors } = useFormState();
+
   return (
     <Grid item xs={10}>
       <BasicTextInput
@@ -19,6 +23,7 @@ export const ModalInput: React.FC<ModalInputProps> = ({
         sx={{ width: '240px' }}
         {...inputProps}
       />
+      <ModalErrorMessage errors={errors} name={inputProps.name} />
     </Grid>
   );
 };
