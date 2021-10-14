@@ -91,7 +91,7 @@ export const RemoteDataTable = <T extends DomainObject>({
       <PaginationRow
         page={pagination.page}
         offset={pagination.offset}
-        first={data.length}
+        first={pagination.first}
         total={pagination.total ?? 0}
         onChange={onChangePage}
       />
