@@ -72,3 +72,16 @@ export const getDataSorter =
 
     return 0;
   };
+
+export const addRandomPercentageTo = ({
+  value,
+  min,
+  max,
+}: {
+  value: number;
+  min: number;
+  max: number;
+}): number => value + (value * randomInteger({ min, max })) / 100;
+
+export const roundDecimalPlaces = (value: number, precision: number): number =>
+  Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);

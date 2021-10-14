@@ -1,5 +1,10 @@
 import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
-import { getFilter, randomInteger } from './../utils';
+import {
+  addRandomPercentageTo,
+  getFilter,
+  randomInteger,
+  roundDecimalPlaces,
+} from './../utils';
 import faker from 'faker';
 import {
   takeRandomElementFrom,
@@ -40,6 +45,12 @@ const createStockLines = (items: Item[]) => {
           ? quantityToUse
           : quantityForThisBatch;
 
+      const costPricePerPack = randomInteger({ min: 10, max: 1000 }) / 100;
+      const sellPricePerPack = roundDecimalPlaces(
+        addRandomPercentageTo({ value: costPricePerPack, min: 10, max: 40 }),
+        2
+      );
+
       const stockLine = {
         id: `${itemId}-${i++}`,
         name: `${itemId}-${i++}`,
@@ -47,6 +58,8 @@ const createStockLines = (items: Item[]) => {
         expiry: faker.date.future().toString(),
         availableNumberOfPacks,
         itemId,
+        costPricePerPack,
+        sellPricePerPack,
       } as StockLine;
 
       quantityToUse = quantityToUse - availableNumberOfPacks;
@@ -113,6 +126,7 @@ const createItems = (
 
     const item = {
       id: itemId,
+      isVisible: faker.datatype.boolean(),
       code: `${faker.random.alpha({ count: 6 })}`,
       name: `${faker.commerce.productName()}`,
     };
