@@ -10,12 +10,12 @@ use crate::{
             InvoiceIsFinalised, WrongInvoiceType,
         },
         invoice_line::{
-            check_batch_exists,
+            check_batch_exists, check_item_matches_batch, check_unique_stock_line,
             validate::{
                 check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
                 LineAlreadyExists, NumberOfPacksBelowOne,
             },
-            StockLineNotFound,
+            ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice, StockLineNotFound,
         },
     },
 };
@@ -30,8 +30,14 @@ pub fn validate(
     check_number_of_packs(Some(input.number_of_packs))?;
     let batch = check_batch_exists(&input.stock_line_id, connection)?;
     let item = check_item(&input.item_id, connection)?;
-
+    check_item_matches_batch(&batch, &item)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    check_unique_stock_line(
+        &input.id,
+        &invoice.id,
+        Some(input.stock_line_id.to_string()),
+        connection,
+    )?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::CustomerInvoice)?;
     check_invoice_finalised(&invoice)?;
@@ -39,6 +45,18 @@ pub fn validate(
     // Reduction Below zero
 
     Ok((item, invoice, batch))
+}
+
+impl From<StockLineAlreadyExistsInInvoice> for InsertCustomerInvoiceLineError {
+    fn from(error: StockLineAlreadyExistsInInvoice) -> Self {
+        InsertCustomerInvoiceLineError::StockLineAlreadyExistsInInvoice(error.0)
+    }
+}
+
+impl From<ItemDoesNotMatchStockLine> for InsertCustomerInvoiceLineError {
+    fn from(_: ItemDoesNotMatchStockLine) -> Self {
+        InsertCustomerInvoiceLineError::ItemDoesNotMatchStockLine
+    }
 }
 
 impl From<ItemNotFound> for InsertCustomerInvoiceLineError {
