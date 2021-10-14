@@ -6,7 +6,7 @@ use crate::server::service::graphql::schema::{
 use super::{
     CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,
     FinalisedInvoiceIsNotEditableError, InvoiceNotFoundError, OtherPartyCannotBeThisStoreError,
-    OtherPartyIdMissingError, OtherPartyIdNotFoundError, OtherPartyNotACustomerOfThisStoreError,
+    OtherPartyIdMissingError, OtherPartyIdNotFoundError, OtherPartyNotACustomerError,
 };
 
 use async_graphql::{InputObject, Interface, SimpleObject, Union};
@@ -46,6 +46,6 @@ pub enum UpdateCustomerInvoiceErrorInterface {
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
     OtherPartyIdMissing(OtherPartyIdMissingError),
     OtherPartyIdNotFound(OtherPartyIdNotFoundError),
-    OtherPartyNotACustomerOfThisStore(OtherPartyNotACustomerOfThisStoreError),
+    OtherPartyNotACustomer(OtherPartyNotACustomerError),
     DatabaseError(DatabaseError),
 }
