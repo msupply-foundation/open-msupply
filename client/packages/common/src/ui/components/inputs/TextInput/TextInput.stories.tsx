@@ -2,7 +2,9 @@ import React from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
+
 import { styled } from '@mui/system';
+import { InputWithLabelRow } from './InputWithLabelRow';
 
 export default {
   title: 'Inputs/TextInputs',
@@ -24,6 +26,10 @@ const Template: Story = () => (
           <StyledPaper>
             <Typography>BasicTextInput</Typography>
             <BasicTextInput />
+          </StyledPaper>
+          <StyledPaper>
+            <Typography>BasicTextInput</Typography>
+            <InputWithLabelRow Input={<BasicTextInput />} />
           </StyledPaper>
         </Grid>
       </Grid>

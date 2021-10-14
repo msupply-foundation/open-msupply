@@ -18,6 +18,7 @@ export interface AutocompleteProps<T> {
   width?: number;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
   renderOption?: AutocompleteOptionRenderer<T>;
+  value?: T;
 }
 
 export function Autocomplete<T>({
@@ -30,6 +31,7 @@ export function Autocomplete<T>({
   renderInput,
   renderOption,
   width,
+  value,
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -42,7 +44,8 @@ export function Autocomplete<T>({
   );
 
   return (
-    <MuiAutocomplete<T>
+    <MuiAutocomplete
+      value={value}
       filterOptions={filterOptions}
       loading={loading}
       loadingText={loadingText}
