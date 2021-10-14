@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    ItemDoesNotMatchStockLine, LineDoesntReferenceStockLine, StockLineAlreadyExistsInInvoice,
-    StockLineDoesNotBelongToCurrentStore,
+    ItemDoesNotMatchStockLine, LineDoesntReferenceStockLine, NotEnoughStockForReduction,
+    StockLineAlreadyExistsInInvoice, StockLineDoesNotBelongToCurrentStore,
 };
 
 #[derive(InputObject)]
@@ -50,6 +50,7 @@ pub enum UpdateCustomerInvoiceLineErrorInterface {
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     NotACustomerInvoice(NotACustomerInvoice),
     RangeError(RangeError),
+    NotEnoughStockForReduction(NotEnoughStockForReduction),
 }
 
 impl From<UpdateCustomerInvoiceLineInput> for UpdateCustomerInvoiceLine {
@@ -122,6 +123,9 @@ impl From<UpdateCustomerInvoiceLineError> for UpdateCustomerInvoiceLineResponse 
             }
             UpdateCustomerInvoiceLineError::LineDoesntReferenceStockLine => {
                 OutError::LineDoesntReferenceStockLine(LineDoesntReferenceStockLine {})
+            }
+            UpdateCustomerInvoiceLineError::ReductionBelowZero(line_id) => {
+                OutError::NotEnoughStockForReduction(NotEnoughStockForReduction(line_id))
             }
         };
 
