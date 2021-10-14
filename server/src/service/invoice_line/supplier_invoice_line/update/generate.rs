@@ -63,9 +63,7 @@ fn generate_line(
 ) -> InvoiceLineRow {
     let mut update_line = current_line;
 
-    let map_to_i32 = |value: u32| u32_to_i32(value);
-
-    update_line.pack_size = pack_size.map(map_to_i32).unwrap_or(update_line.pack_size);
+    update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);
     update_line.sell_price_per_pack =
@@ -73,7 +71,7 @@ fn generate_line(
     update_line.cost_price_per_pack =
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
     update_line.number_of_packs = number_of_packs
-        .map(map_to_i32)
+        .map(u32_to_i32)
         .unwrap_or(update_line.number_of_packs);
 
     if let Some(item) = new_item_option {
