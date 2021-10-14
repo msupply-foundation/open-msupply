@@ -1,7 +1,7 @@
+import { Environment } from './../../../config/src/index';
 import { PaginationOptions } from './../index';
-import { graphql } from 'msw';
+import { graphql, rest } from 'msw';
 import { Api } from '../api';
-import { Invoice } from '../data';
 
 const updateInvoice = graphql.mutation(
   'updateInvoice',
@@ -28,16 +28,14 @@ const insertInvoice = graphql.mutation(
 );
 
 const deleteInvoices = graphql.mutation(
-  'deleteInvoices',
+  'deleteInvoice',
   (request, response, context) => {
     const { variables } = request;
-    const { invoices } = variables;
+    const { invoiceId } = variables;
 
-    (invoices as Invoice[]).forEach(invoice => {
-      Api.MutationService.remove.invoice(invoice);
-    });
+    Api.MutationService.remove.invoice(invoiceId);
 
-    return response(context.data({ invoices }));
+    return response(context.data({ invoiceId }));
   }
 );
 
@@ -104,6 +102,47 @@ export const serverError = graphql.query('error500', (_, response, context) =>
   )
 );
 
+const batchMutationHandler = rest.post(
+  Environment.API_URL,
+  async (req, res) => {
+    // This will ensure this handler does not try to handle the request
+    if (!Array.isArray(req.body)) {
+      throw new Error('Unsupported');
+    }
+
+    // If the request body is an array, map each handler to a request and
+    // find a handler to hand it.
+    const data = await Promise.all(
+      req.body.map(async operation => {
+        const partReq = { ...req, body: operation };
+        const handler = handlers.find(handler => handler.test(partReq));
+
+        // no handler matched that operation
+        if (!handler) {
+          return Promise.reject(new Error('Unsupported'));
+        }
+
+        // execute and return the response-like object
+        return handler.run(partReq);
+      })
+    );
+
+    return res(res => {
+      res.headers.set('content-type', 'application/json');
+
+      // Map all requests back into an array to return
+      // for the original request.
+      res.body = JSON.stringify(
+        data.map(datum => {
+          return JSON.parse(datum?.response?.body) || {};
+        })
+      );
+
+      return res;
+    });
+  }
+);
+
 export const handlers = [
   invoiceList,
   invoiceDetail,
@@ -113,4 +152,5 @@ export const handlers = [
   serverError,
   insertInvoice,
   namesList,
+  batchMutationHandler,
 ];
