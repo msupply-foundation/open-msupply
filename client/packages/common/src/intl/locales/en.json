@@ -34,6 +34,7 @@
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",
   "error.404": "Click the back arrow or use the menu to find your way again.",
+  "error.greater-than-zero-required": "Enter a number greater than zero",
   "error.missing-invoice": "Invoice {id} not found",
   "error.no-items": "No items",
   "error.no-results": "No records to display",
