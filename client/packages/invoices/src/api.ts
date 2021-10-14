@@ -1,7 +1,15 @@
 import { ObjectWithStringKeys } from '@openmsupply-client/common/src/types/utility';
-import { Name, SortBy, ListApi, Invoice } from '@openmsupply-client/common';
+import {
+  request,
+  gql,
+  batchRequests,
+  Name,
+  SortBy,
+  ListApi,
+  Invoice,
+} from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { request, gql } from 'graphql-request';
+
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
@@ -82,8 +90,8 @@ export const getMutation = (): string => gql`
 `;
 
 export const getDeleteMutation = (): string => gql`
-  mutation deleteInvoices($invoices: [InvoicePatch]) {
-    deleteInvoices(invoices: $invoices) {
+  mutation deleteInvoice($invoiceId: String) {
+    deleteInvoice(invoiceId: $invoiceId) {
       id
     }
   }
@@ -110,9 +118,13 @@ export const getListQuery = (): string => gql`
 `;
 
 export const deleteFn = async (invoices: Invoice[]) => {
-  await request(Environment.API_URL, getDeleteMutation(), {
-    invoices,
-  });
+  await batchRequests(
+    Environment.API_URL,
+    invoices.map(invoice => ({
+      document: getDeleteMutation(),
+      variables: { invoiceId: invoice.id },
+    }))
+  );
 };
 
 export const nameListQueryFn = async (): Promise<{
