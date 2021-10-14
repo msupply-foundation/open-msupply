@@ -95,8 +95,7 @@ pub fn generate_batches(
             pack_size: stock_line.pack_size,
             cost_price_per_pack: stock_line.cost_price_per_pack,
             sell_price_per_pack: stock_line.sell_price_per_pack,
-            available_number_of_packs: stock_line.available_number_of_packs
-                - invoice_line.number_of_packs,
+            available_number_of_packs: stock_line.available_number_of_packs,
             total_number_of_packs: stock_line.total_number_of_packs - invoice_line.number_of_packs,
             expiry_date: stock_line.expiry_date,
         });
