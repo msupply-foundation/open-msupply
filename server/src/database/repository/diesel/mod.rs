@@ -41,7 +41,7 @@ pub use name_store_join::NameStoreJoinRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
 pub use stock_line::StockLineRepository;
-pub use storage_connection::{StorageConnection, StorageConnectionManager};
+pub use storage_connection::{StorageConnection, StorageConnectionManager, TransactionError};
 pub use store::StoreRepository;
 pub use user_account::UserAccountRepository;
 
