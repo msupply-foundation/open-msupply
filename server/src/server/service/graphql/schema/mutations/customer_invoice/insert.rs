@@ -5,12 +5,12 @@ use crate::{
     },
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
-        types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse},
+        types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
     service::{invoice::InsertCustomerInvoiceError, SingleRecordError},
 };
 
-use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerOfThisStoreError};
+use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 
 use async_graphql::{InputObject, Interface, Union};
 
@@ -55,7 +55,7 @@ pub enum InsertCustomerInvoiceErrorInterface {
     InvoiceAlreadyExists(RecordAlreadyExist),
     ForeignKeyError(ForeignKeyError),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
-    OtherPartyNotACustomerOfThisStore(OtherPartyNotACustomerOfThisStoreError),
+    OtherPartyNotACustomer(OtherPartyNotACustomerError),
     DatabaseError(DatabaseError),
 }
 
@@ -77,10 +77,8 @@ impl From<InsertCustomerInvoiceError> for InsertCustomerInvoiceResponse {
             InsertCustomerInvoiceError::OtherPartyIdNotFound(_) => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
-            InsertCustomerInvoiceError::OtherPartyNotACustomerOfThisStore(id) => {
-                OutError::OtherPartyNotACustomerOfThisStore(OtherPartyNotACustomerOfThisStoreError(
-                    id,
-                ))
+            InsertCustomerInvoiceError::OtherPartyNotACustomer(name) => {
+                OutError::OtherPartyNotACustomer(OtherPartyNotACustomerError(NameNode { name }))
             }
             InsertCustomerInvoiceError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))

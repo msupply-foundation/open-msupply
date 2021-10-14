@@ -51,8 +51,12 @@ pub fn check_other_party_id(
         None,
     )?;
 
-    if let Some(_) = result.pop() {
-        Ok(())
+    if let Some(name) = result.pop() {
+        if name.is_customer {
+            Ok(())
+        } else {
+            Err(OtherPartyNotACustomer(name))
+        }
     } else {
         Err(OtherPartyIdNotFound(other_party_id.to_string()))
     }

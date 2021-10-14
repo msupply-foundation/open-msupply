@@ -2,7 +2,7 @@ use crate::{
     database::repository::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
-    domain::customer_invoice::InsertCustomerInvoice,
+    domain::{customer_invoice::InsertCustomerInvoice, name::Name},
 };
 
 pub mod generate;
@@ -14,7 +14,7 @@ use validate::validate;
 pub enum InsertCustomerInvoiceError {
     OtherPartyCannotBeThisStore,
     OtherPartyIdNotFound(String),
-    OtherPartyNotACustomerOfThisStore(String),
+    OtherPartyNotACustomer(Name),
     InvoiceAlreadyExists,
     DatabaseError(RepositoryError),
 }
