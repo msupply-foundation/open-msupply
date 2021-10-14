@@ -1,38 +1,66 @@
-use crate::server::service::graphql::schema::mutations::error::DatabaseError;
-
-use super::{
-    CanOnlyEditInvoicesInLoggedInStoreError, FinalisedInvoiceIsNotEditableError,
-    InvoiceNotFoundError,
+use crate::{
+    server::service::graphql::schema::{
+        mutations::{
+            CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
+            InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice, RecordDoesNotExist,
+        },
+        types::{DatabaseError, ErrorWrapper},
+    },
+    service::invoice::DeleteCustomerInvoiceError,
 };
 
-use async_graphql::{InputObject, Interface, SimpleObject, Union};
-
-#[derive(InputObject)]
-pub struct DeleteCustomerInvoiceInput {
-    id: String,
-}
+use async_graphql::{Interface, Union};
 
 #[derive(Union)]
-pub enum DeleteCustomerInvoiceResultUnion {
-    Ok(DeleteCustomerInvoiceOk),
-    Error(DeleteCustomerInvoiceError),
-}
-
-#[derive(SimpleObject)]
-pub struct DeleteCustomerInvoiceOk {
-    invoice_id: String,
-}
-
-#[derive(SimpleObject)]
-pub struct DeleteCustomerInvoiceError {
-    error: DeleteCustomerInvoiceErrorInterface,
+pub enum DeleteCustomerInvoiceResponse {
+    Error(ErrorWrapper<DeleteCustomerInvoiceErrorInterface>),
+    Response(DeleteResponse),
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteCustomerInvoiceErrorInterface {
-    CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
-    FinalisedInvoiceIsNotEditable(FinalisedInvoiceIsNotEditableError),
-    InvoiceNotFound(InvoiceNotFoundError),
+    RecordDoesNotExist(RecordDoesNotExist),
+    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    NotACustomerInvoice(NotACustomerInvoice),
+    InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
+    CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
     DatabaseError(DatabaseError),
+}
+
+impl From<Result<String, DeleteCustomerInvoiceError>> for DeleteCustomerInvoiceResponse {
+    fn from(result: Result<String, DeleteCustomerInvoiceError>) -> Self {
+        match result {
+            Ok(id) => DeleteCustomerInvoiceResponse::Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
+    }
+}
+
+impl From<DeleteCustomerInvoiceError> for DeleteCustomerInvoiceResponse {
+    fn from(error: DeleteCustomerInvoiceError) -> Self {
+        use DeleteCustomerInvoiceErrorInterface as OutError;
+        let error = match error {
+            DeleteCustomerInvoiceError::InvoiceDoesNotExists => {
+                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+            }
+            DeleteCustomerInvoiceError::CannotEditFinalised => {
+                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+            }
+            DeleteCustomerInvoiceError::NotThisStoreInvoice => {
+                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
+            }
+            DeleteCustomerInvoiceError::InvoiceLinesExists(lines) => {
+                OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(lines.into()))
+            }
+            DeleteCustomerInvoiceError::DatabaseError(error) => {
+                OutError::DatabaseError(DatabaseError(error))
+            }
+            DeleteCustomerInvoiceError::NotACustomerInvoice => {
+                OutError::NotACustomerInvoice(NotACustomerInvoice {})
+            }
+        };
+
+        DeleteCustomerInvoiceResponse::Error(ErrorWrapper { error })
+    }
 }

@@ -3,15 +3,13 @@ use async_graphql::*;
 use crate::{
     server::service::graphql::schema::{
         mutations::{
-            CannotEditFinalisedInvoice, DeleteResponse, InvoiceDoesNotBelongToCurrentStore,
-            NotASupplierInvoice, RecordDoesNotExist,
+            CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
+            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
         },
         types::{DatabaseError, ErrorWrapper},
     },
     service::invoice::DeleteSupplierInvoiceError,
 };
-
-use super::CannotDeleteInvoiceWithLines;
 
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceResponse {
