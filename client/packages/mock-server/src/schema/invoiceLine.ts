@@ -28,7 +28,7 @@ const Queries = `
 const Mutations = `
     updateInvoiceLine(invoiceLine: InvoiceLinePatch): InvoiceLine
     insertInvoiceLine(invoiceLine: InvoiceLinePatch): InvoiceLine
-    deleteInvoiceLine(invoiceLine: InvoiceLinePatch): InvoiceLine
+    deleteInvoiceLine(invoiceLineId: String): InvoiceLine
 `;
 
 const Inputs = `
@@ -65,9 +65,9 @@ const MutationResolvers = {
   },
   deleteInvoiceLine: (
     _: any,
-    { invoiceLine }: { invoiceLine: InvoiceLineType }
-  ): InvoiceLineType => {
-    return Api.MutationService.remove.invoiceLine(invoiceLine);
+    { invoiceLineId }: { invoiceLineId: string }
+  ): string => {
+    return Api.MutationService.remove.invoiceLine(invoiceLineId);
   },
   insertInvoiceLine: (
     _: any,

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import { getFilter, randomInteger } from './../utils';
 import faker from 'faker';
@@ -126,7 +127,7 @@ export const createInvoice = (
   invoiceNumber: number,
   nameId: string,
   seeded?: Partial<Invoice>
-) => ({
+): Invoice => ({
   id,
   nameId,
   invoiceNumber,
@@ -146,7 +147,7 @@ const createInvoices = (
 ): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const name = takeRandomElementFrom(customers);
-    const invoice = createInvoice(`${i}`, i, name.id);
+    const invoice = createInvoice(faker.datatype.uuid(), i, name.id);
 
     return invoice;
   });
@@ -180,11 +181,15 @@ const createCustomers = (
   });
 };
 
-export const NameData = createCustomers();
-export const ItemData = createItems();
-export const StockLineData = createStockLines(ItemData);
-export const InvoiceData = createInvoices(NameData);
-export const InvoiceLineData = createInvoiceLines(
+export const removeElement = (source: any[], idx: number): void => {
+  source = source.splice(idx, 1);
+};
+
+export let NameData = createCustomers();
+export let ItemData = createItems();
+export let StockLineData = createStockLines(ItemData);
+export let InvoiceData = createInvoices(NameData);
+export let InvoiceLineData = createInvoiceLines(
   ItemData,
   StockLineData,
   InvoiceData

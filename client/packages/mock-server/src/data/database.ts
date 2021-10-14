@@ -5,6 +5,7 @@ import {
   ItemData,
   StockLineData,
   NameData,
+  removeElement,
 } from './data';
 
 // Importing this from utils causes a circular deps loop and you will not have fun :)
@@ -101,27 +102,29 @@ export const insert = {
 };
 
 export const remove = {
-  invoice: (invoice: Invoice): Invoice => {
-    const idx = get.id.invoice(invoice.id);
+  invoice: (invoiceId: string): string => {
+    const idx = get.id.invoice(invoiceId);
 
     if (idx < 0) {
-      throw new Error(`Cannot find invoice to delete with id: ${invoice.id}`);
+      throw new Error(`Cannot find invoice to delete with id: ${invoiceId}`);
     }
 
-    InvoiceData.splice(idx);
-    return invoice;
+    removeElement(InvoiceData, idx);
+
+    return invoiceId;
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
-    const idx = get.id.invoiceLine(invoiceLine.id);
+  invoiceLine: (invoiceLineId: string): string => {
+    const idx = get.id.invoiceLine(invoiceLineId);
 
     if (idx < 0) {
       throw new Error(
-        `Cannot find invoice line to delete with id: ${invoiceLine.id}`
+        `Cannot find invoice line to delete with id: ${invoiceLineId}`
       );
     }
 
-    InvoiceLineData.splice(idx);
-    return invoiceLine;
+    removeElement(InvoiceLineData, idx);
+
+    return invoiceLineId;
   },
 };
 
