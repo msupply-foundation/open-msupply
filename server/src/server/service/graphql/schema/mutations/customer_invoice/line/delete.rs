@@ -4,7 +4,7 @@ use crate::server::service::graphql::schema::{
     mutations::{
         CannotEditFinalisedInvoice, DeleteResponse, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
-        InvoiceLineIsReserved, NotASupplierInvoice, RecordDoesNotExist,
+        NotASupplierInvoice, RecordDoesNotExist,
     },
     types::{DatabaseError, ErrorWrapper},
 };
@@ -31,5 +31,4 @@ pub enum DeleteCustomerInvoiceLineErrorInterface {
     NotACustomerInvoice(NotASupplierInvoice),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
-    InvoiceLineIsReserved(InvoiceLineIsReserved),
 }
