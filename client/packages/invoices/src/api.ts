@@ -45,6 +45,11 @@ export const getDetailQuery = (): string => gql`
       invoiceNumber
       total
       color
+      name {
+        id
+        name
+        code
+      }
       lines {
         id
         itemCode
