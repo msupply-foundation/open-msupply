@@ -15,7 +15,7 @@ pub fn generate(
     patch: UpdateCustomerInvoice,
     connection: &StorageConnection,
 ) -> Result<(Option<Vec<StockLineRow>>, InvoiceRow), UpdateCustomerInvoiceError> {
-    let should_create_batches = should_create_batches(&existing_invoice, &patch);
+    let should_create_batches = should_update_batches(&existing_invoice, &patch);
     let mut update_invoice = existing_invoice;
 
     set_new_status_datetime(&mut update_invoice, &patch);
@@ -38,7 +38,7 @@ pub fn generate(
     }
 }
 
-pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateCustomerInvoice) -> bool {
+pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateCustomerInvoice) -> bool {
     match (&invoice.status, &patch.status) {
         (InvoiceRowStatus::Draft, Some(InvoiceStatus::Confirmed)) => true,
         (InvoiceRowStatus::Draft, Some(InvoiceStatus::Finalised)) => true,
