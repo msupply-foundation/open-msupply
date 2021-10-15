@@ -111,6 +111,9 @@ export const ResolverService = {
       return {
         ...item,
         availableQuantity: getAvailableQuantity(id),
+        availableBatches: {
+          nodes: db.get.stockLines.byItemId(id),
+        },
       };
     },
     stockLine: (id: string): ResolvedStockLine => {

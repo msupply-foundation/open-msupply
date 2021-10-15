@@ -1,7 +1,6 @@
 import React, { SyntheticEvent } from 'react';
 
 import {
-  Divider,
   Grid,
   Item,
   ModalInputRow,
@@ -16,6 +15,7 @@ import {
   Autocomplete,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
+import { ItemBatches } from './ItemBatches';
 interface ItemDetailsProps {
   item?: Item;
   onSubmit: () => void;
@@ -52,9 +52,22 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
           items {
             data {
               id
+              isVisible
               name
               code
               availableQuantity
+              availableBatches {
+                nodes {
+                  id
+                  batch
+                  expiryDate
+                  packSize
+                  costPricePerPack
+                  sellPricePerPack
+                  availableNumberOfPacks
+                  totalNumberOfPacks
+                }
+              }
             }
           }
         }
@@ -65,13 +78,18 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
   };
 
   const t = useTranslation();
+  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
-  const options = data?.map(item => ({ label: item.name, ...item })) || [];
+  const options =
+    data
+      ?.filter(item => item.isVisible)
+      .map(item => ({ label: item.name, ...item })) || [];
 
   const selectItem = (
     _event: SyntheticEvent<Element, Event>,
     value: Item | null
   ) => {
+    setSelectedItem(value);
     setValue('id', value?.id || '');
     setValue('code', value?.code || '');
     setValue('name', value?.name || '');
@@ -113,7 +131,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
           labelKey="label.packSize"
           defaultValue={item?.availableQuantity}
         />
-        <Divider />
+        <ItemBatches item={selectedItem} />
       </Grid>
     </form>
   );

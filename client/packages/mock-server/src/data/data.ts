@@ -1,6 +1,12 @@
 /* eslint-disable prefer-const */
 import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
-import { getFilter, randomInteger } from './../utils';
+import {
+  addRandomPercentageTo,
+  alphaString,
+  getFilter,
+  randomInteger,
+  roundDecimalPlaces,
+} from './../utils';
 import faker from 'faker';
 import {
   takeRandomElementFrom,
@@ -44,13 +50,25 @@ const createStockLines = (items: Item[]) => {
           ? quantityToUse
           : quantityForThisBatch;
 
+      const costPricePerPack = randomInteger({ min: 10, max: 1000 }) / 100;
+      const sellPricePerPack = roundDecimalPlaces(
+        addRandomPercentageTo({ value: costPricePerPack, min: 10, max: 40 }),
+        2
+      );
+
       const stockLine = {
         id: `${itemId}-${i++}`,
         name: `${itemId}-${i++}`,
         packSize: 1,
         expiry: faker.date.future(0.5).toString(),
+        expiryDate: faker.date.future().toString(),
+        batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
         availableNumberOfPacks,
+        totalNumberOfPacks:
+          availableNumberOfPacks + randomInteger({ min: 0, max: 5 }),
         itemId,
+        costPricePerPack,
+        sellPricePerPack,
       } as StockLine;
 
       quantityToUse = quantityToUse - availableNumberOfPacks;
@@ -92,7 +110,7 @@ const createInvoiceLines = (
             itemId: item.id,
             quantity,
             batchName: stockLine.name,
-            expiry: stockLine.expiry,
+            expiry: stockLine.expiryDate,
           } as InvoiceLine;
 
           stockLine.availableNumberOfPacks =
@@ -119,6 +137,7 @@ const createItems = (
       id: itemId,
       code,
       name,
+      isVisible: faker.datatype.boolean(),
     };
 
     return item;
