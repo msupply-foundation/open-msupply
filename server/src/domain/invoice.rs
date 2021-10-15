@@ -90,6 +90,14 @@ impl InvoiceFilter {
         self
     }
 
+    pub fn match_confirmed(mut self) -> Self {
+        self.status = Some(EqualFilter {
+            equal_to: Some(InvoiceStatus::Confirmed),
+        });
+
+        self
+    }
+
     pub fn match_finalised(mut self) -> Self {
         self.status = Some(EqualFilter {
             equal_to: Some(InvoiceStatus::Finalised),
