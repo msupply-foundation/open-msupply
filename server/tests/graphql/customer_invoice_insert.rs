@@ -43,7 +43,7 @@ mod graphql {
         let other_party_supplier = &mock_names[2];
         let other_party_customer = &mock_names[0];
 
-        let query = r#"mutation CreateReviewForEpisode($input: InsertCustomerInvoiceInput!) {
+        let query = r#"mutation InsertCustomerInvoice($input: InsertCustomerInvoiceInput!) {
             insertCustomerInvoice(input: $input) {
                 ... on InsertCustomerInvoiceError {
                   error {
