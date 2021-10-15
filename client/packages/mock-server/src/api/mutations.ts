@@ -89,9 +89,6 @@ export const remove = {
   invoiceLine: (invoiceLineId: string): string => {
     const invoiceLine = ResolverService.byId.invoiceLine(invoiceLineId);
 
-    if (!invoiceLine.stockLineId) {
-    }
-
     adjustStockLineQuantity(invoiceLine.stockLineId, invoiceLine.quantity);
 
     return db.remove.invoiceLine(invoiceLineId);
