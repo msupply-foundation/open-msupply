@@ -3,11 +3,17 @@ import { Api } from '../api';
 import { Item as ItemType } from '../data/types';
 
 const Types = `
+type AvailableBatches {
+  nodes: [StockLine]
+}
+
 type Item {
     id: String
+    isVisible: Boolean
     name: String
     code: String
     availableQuantity: Int
+    availableBatches: AvailableBatches
 }
 
 type ItemResponse { 

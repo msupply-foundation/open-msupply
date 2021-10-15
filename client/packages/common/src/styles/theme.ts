@@ -45,6 +45,7 @@ declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
     darkGrey: string;
+    lightGrey: string;
     midGrey: string;
     form: TypeForm;
   }
@@ -103,7 +104,9 @@ const themeOptions = {
   },
   palette: {
     darkGrey: '#555770',
+    divider: '#eaeaea',
     error: { main: '#e63535' },
+    lightGrey: '#c7c9d9',
     midGrey: '#8f90a6',
     border: '#e4e4eb',
     primary: { 500: '#e95c30' },

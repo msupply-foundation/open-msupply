@@ -1,6 +1,6 @@
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
-import Divider from '@mui/material/Divider';
+import { Divider } from './divider/Divider';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
