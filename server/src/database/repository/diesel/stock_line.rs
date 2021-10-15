@@ -45,6 +45,7 @@ impl<'a> StockLineRepository<'a> {
         Ok(())
     }
 
+    /// Find stock lines by item ids. Method doesn't error if one or more item ids are not found.
     pub fn find_many_by_item_ids(
         &self,
         item_ids: &[String],

@@ -4,7 +4,7 @@ pub mod supplier_invoice;
 
 use customer_invoice::{
     DeleteCustomerInvoiceResponse, InsertCustomerInvoiceInput, UpdateCustomerInvoiceInput,
-    UpdateCustomerInvoiceResultUnion,
+    UpdateCustomerInvoiceResponse,
 };
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
     server::service::graphql::{schema::types::Connector, ContextExt},
     service::invoice::{
         delete_customer_invoice, delete_supplier_invoice, get_invoice, insert_customer_invoice,
-        insert_supplier_invoice, update_supplier_invoice,
+        insert_supplier_invoice, update_customer_invoice, update_supplier_invoice,
     },
 };
 
@@ -42,7 +42,6 @@ impl Mutations {
         input: InsertCustomerInvoiceInput,
     ) -> InsertCustomerInvoiceResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
         match insert_customer_invoice(connection_manager, input.into()) {
             Ok(id) => get_invoice(connection_manager, id).into(),
             Err(error) => error.into(),
@@ -53,8 +52,12 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         input: UpdateCustomerInvoiceInput,
-    ) -> UpdateCustomerInvoiceResultUnion {
-        todo!()
+    ) -> UpdateCustomerInvoiceResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        match update_customer_invoice(connection_manager, input.into()) {
+            Ok(id) => get_invoice(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn delete_customer_invoice(
