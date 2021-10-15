@@ -94,7 +94,7 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
 export const itemList = graphql.query('items', (_, response, context) => {
   const result = Api.ResolverService.list.item();
 
-  return response(context.data({ invoices: result }));
+  return response(context.data({ items: result }));
 });
 
 export const permissionError = graphql.query(
@@ -124,6 +124,7 @@ const batchMutationHandler = rest.post(
   'http://localhost:4000',
   async (req, res) => {
     // This will ensure this handler does not try to handle the request
+
     if (!Array.isArray(req.body)) {
       throw new Error('Unsupported');
     }
@@ -171,5 +172,6 @@ export const handlers = [
   serverError,
   insertInvoice,
   namesList,
+  itemList,
   batchMutationHandler,
 ];
