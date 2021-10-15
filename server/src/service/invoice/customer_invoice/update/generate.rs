@@ -83,10 +83,9 @@ pub fn generate_batches(
         let stock_line = stock_lines
             .iter()
             .find(|stock_line| invoice_line.item_id == stock_line.item_id)
-            .ok_or(UpdateCustomerInvoiceError::InternalError(format!(
-                "Missing stock line for item id {}",
-                invoice_line.item_id
-            )))?;
+            .ok_or(UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(
+                invoice_line.item_id,
+            ))?;
         result.push(StockLineRow {
             id: stock_line.id.to_owned(),
             item_id: stock_line.item_id.to_owned(),

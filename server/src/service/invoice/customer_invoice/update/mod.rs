@@ -44,7 +44,8 @@ pub enum UpdateCustomerInvoiceError {
     OtherPartyNotACustomer(Name),
     OtherPartyCannotBeThisStore,
     NotACustomerInvoice,
-    InternalError(String),
+    /// Holds the id of the invalid invoice line
+    InvoiceLineHasNoStockLine(String),
 }
 
 impl From<RepositoryError> for UpdateCustomerInvoiceError {
