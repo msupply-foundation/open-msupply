@@ -107,11 +107,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const columns = useColumns<Invoice>(
     [
       getNameAndColorColumn(onColorUpdate),
-      'type',
       'status',
       'invoiceNumber',
-      'confirmed',
       'entered',
+      'confirmed',
       'total',
       'comment',
       'selection',

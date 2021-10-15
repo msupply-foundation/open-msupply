@@ -33,6 +33,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
 > => ({
   expiry: {
     key: 'expiry',
+    format: ColumnFormat.date,
     label: 'label.date',
     width: 75,
   },

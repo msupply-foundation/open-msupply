@@ -87,7 +87,7 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
       invoiceNumber as number
     );
 
-    return response(context.data({ invoice }));
+    return response(context.data({ invoiceByInvoiceNumber: invoice }));
   }
 );
 
@@ -164,6 +164,7 @@ const batchMutationHandler = rest.post(
 export const handlers = [
   invoiceList,
   invoiceDetail,
+  invoiceDetailByInvoiceNumber,
   updateInvoice,
   deleteInvoices,
   permissionError,
