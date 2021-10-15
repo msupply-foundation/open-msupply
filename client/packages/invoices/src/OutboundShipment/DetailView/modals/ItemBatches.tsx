@@ -15,6 +15,7 @@ import {
   useTranslation,
   Checkbox,
   Divider,
+  InfoIcon,
 } from '@openmsupply-client/common';
 
 export interface ItemBatchesProps {
@@ -52,7 +53,12 @@ const BatchRow = ({ batch, label }: { batch: StockLine; label: string }) => {
       <BasicCell>{d(new Date(batch.expiryDate))}</BasicCell>
       <BasicCell align="right">${batch.costPricePerPack}</BasicCell>
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
-      <BasicCell>I</BasicCell>
+      <BasicCell>
+        <InfoIcon
+          fontSize="small"
+          sx={{ color: theme => theme.palette.lightGrey }}
+        />
+      </BasicCell>
     </TableRow>
   );
 };
