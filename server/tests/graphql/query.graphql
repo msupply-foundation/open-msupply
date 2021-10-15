@@ -174,6 +174,61 @@ fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterf
   ...CannotDeleteInvoiceWithLines
 }
 
+# INSERT SUPPLIER INVOICE LINE
+
+mutation insertSupplierInvoiceLineFull(
+  $batch_isil: String
+  $costPricePerPack_isil: Float!
+  $expiryDate_isil: NaiveDate
+  $id: String!
+  $invoiceId_isil: String!
+  $itemId_isil: String!
+  $numberOfPacks_isil: Int!
+  $sellPricePerPack_isil: Float!
+  $packSize_isil: Int!
+) {
+  insertSupplierInvoiceLine(
+    input: {
+      id: $id
+      invoiceId: $invoiceId_isil
+      itemId: $itemId_isil
+      packSize: $packSize_isil
+      costPricePerPack: $costPricePerPack_isil
+      sellPricePerPack: $sellPricePerPack_isil
+      numberOfPacks: $numberOfPacks_isil
+      expiryDate: $expiryDate_isil
+      batch: $batch_isil
+      packSize: $packSize_isil
+    }
+  ) {
+    ...InsertSupplierInvoiceLineResponse
+  }
+}
+
+fragment InsertSupplierInvoiceLineResponse on InsertSupplierInvoiceLineResponse {
+  __typename
+  ...InsertSupplierInvoiceLineError
+  ...NodeError
+  ...InvoiceLineNode
+}
+
+fragment InsertSupplierInvoiceLineError on InsertSupplierInvoiceLineError {
+  error {
+    ...InsertSupplierInvoiceLineErrorInterface
+  }
+}
+
+fragment InsertSupplierInvoiceLineErrorInterface on InsertSupplierInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotASupplierInvoice
+  ...RangeError
+  ...RecordAlreadyExist
+}
+
 # INVOICE
 
 fragment PartialInvoiceNode on InvoiceNode {
