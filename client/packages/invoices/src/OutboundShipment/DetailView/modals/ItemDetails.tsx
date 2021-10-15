@@ -7,7 +7,7 @@ import {
   ModalInputRow,
   ModalLabel,
   ModalRow,
-  UseFormRegister,
+  useFormContext,
   gql,
   request,
   styled,
@@ -16,13 +16,9 @@ import {
   Autocomplete,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { UseFormSetValue } from 'react-hook-form';
-
 interface ItemDetailsProps {
   item?: Item;
   onSubmit: () => void;
-  register: UseFormRegister<Item>;
-  setValue: UseFormSetValue<Item>;
 }
 
 const ItemOption = styled('li')(({ theme }) => ({
@@ -46,12 +42,8 @@ const renderOption = (
   </ItemOption>
 );
 
-export const ItemDetails: React.FC<ItemDetailsProps> = ({
-  item,
-  onSubmit,
-  register,
-  setValue,
-}) => {
+export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
+  const { register, setValue, trigger } = useFormContext();
   const listQueryFn = async (): Promise<Item[]> => {
     const { items } = await request(
       Environment.API_URL,
@@ -83,6 +75,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
     setValue('id', value?.id || '');
     setValue('code', value?.code || '');
     setValue('name', value?.name || '');
+    trigger('id');
   };
 
   register('id', { required: true });
@@ -107,7 +100,11 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({
           />
         </ModalRow>
         <ModalInputRow
-          inputProps={register('quantity')}
+          inputProps={register('quantity', {
+            required: true,
+            min: { value: 1, message: t('error.greater-than-zero-required') },
+            pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
+          })}
           labelKey="label.quantity"
           defaultValue={item?.availableQuantity}
         />

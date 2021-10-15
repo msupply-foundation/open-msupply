@@ -1,40 +1,41 @@
 import React, { FC, useEffect } from 'react';
 import { useParams } from 'react-router';
 import {
+  AppBarButtonsPortal,
   AppBarContentPortal,
+  Book,
+  Box,
+  Button,
   Circle,
   Clock,
+  Column,
   Copy,
   DialogButton,
-  PanelField,
+  FormProvider,
   Grid,
+  Item,
+  PanelField,
   PanelLabel,
-  Rewind,
   PanelRow,
-  Typography,
-  useDetailPanel,
-  useFormatDate,
-  useDialog,
-  useNotification,
-  useTranslation,
+  PlusCircle,
+  Rewind,
   Tab,
+  TabContext,
   TabList,
   TabPanel,
-  useTabs,
-  TabContext,
-  createTableStore,
   TableProvider,
-  AppBarButtonsPortal,
-  Book,
-  Button,
-  PlusCircle,
-  Box,
-  useForm,
-  Item,
-  useDocument,
+  Typography,
+  createTableStore,
   getEditableQuantityColumn,
   useColumns,
-  Column,
+  useDetailPanel,
+  useDialog,
+  useDocument,
+  useForm,
+  useFormatDate,
+  useNotification,
+  useTabs,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -65,13 +66,12 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
+  const methods = useForm({ mode: 'onBlur' });
   const {
-    register,
+    formState: { isDirty, isValid },
     reset,
     handleSubmit,
-    setValue,
-    formState: { isDirty, isValid },
-  } = useForm({ mode: 'onBlur' });
+  } = methods;
   const addItemClose = (item: Item) => {
     addItem(item);
     hideDialog();
@@ -204,11 +204,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         height={600}
         width={780}
       >
-        <ItemDetails
-          register={register}
-          onSubmit={onSubmit}
-          setValue={setValue}
-        />
+        <FormProvider {...methods}>
+          <ItemDetails onSubmit={onSubmit} />
+        </FormProvider>
       </Modal>
 
       <AppBarContentPortal
