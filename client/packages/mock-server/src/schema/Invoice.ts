@@ -1,3 +1,4 @@
+import { ResolvedInvoice } from './../data/types';
 import { ListResponse } from './../index';
 import { Api } from '../api';
 import { PaginationOptions } from '../index';
@@ -35,6 +36,12 @@ const QueryResolvers = {
   invoice: (_: any, { id }: { id: string }): InvoiceType => {
     return Api.ResolverService.byId.invoice(id);
   },
+  invoiceByInvoiceNumber: (
+    _: any,
+    { invoiceNumber }: { invoiceNumber: number }
+  ): ResolvedInvoice => {
+    return Api.ResolverService.invoice.get.byInvoiceNumber(invoiceNumber);
+  },
 };
 
 const MutationResolvers = {
@@ -57,7 +64,8 @@ const MutationResolvers = {
 
 const Queries = `
 invoices(first: Int, offset: Int, sort: String, desc: Boolean): InvoiceResponse
-invoice(id: String!): Invoice
+invoice(id: String): Invoice
+invoiceByInvoiceNumber(invoiceNumber: Int): Invoice
 `;
 
 const Mutations = `

@@ -41,6 +41,13 @@ const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
 };
 
 export const OutboundAction = {
+  updateInvoice: <K extends keyof Invoice>(
+    key: K,
+    value: Invoice[K]
+  ): CustomerInvoiceAction => ({
+    type: ActionType.UpdateInvoice,
+    payload: { key, value },
+  }),
   updateQuantity: (
     rowKey: string,
     quantity: number
@@ -95,6 +102,10 @@ export const reducer = (
               dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
           }));
 
+          draft.update = (key, value) => {
+            dispatch?.(OutboundAction.updateInvoice(key, value));
+          };
+
           break;
         }
 
@@ -130,6 +141,15 @@ export const reducer = (
           if (row) {
             row.quantity = quantity;
           }
+
+          break;
+        }
+
+        case ActionType.UpdateInvoice: {
+          const { payload } = action;
+          const { key, value } = payload;
+
+          state.draft[key] = value;
 
           break;
         }

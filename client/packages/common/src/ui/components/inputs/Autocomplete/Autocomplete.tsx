@@ -5,9 +5,12 @@ import {
   createFilterOptions,
   CreateFilterOptionsConfig,
 } from '@mui/material';
+import {
+  AutocompleteOption,
+  AutocompleteOnChange,
+  AutocompleteOptionRenderer,
+} from './types';
 import { BasicTextInput } from '../TextInput';
-import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
-
 export interface AutocompleteProps<T> {
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
@@ -18,6 +21,8 @@ export interface AutocompleteProps<T> {
   width?: number;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
   renderOption?: AutocompleteOptionRenderer<T>;
+  value?: AutocompleteOption<T>;
+  clearable?: boolean;
 }
 
 export function Autocomplete<T>({
@@ -30,6 +35,8 @@ export function Autocomplete<T>({
   renderInput,
   renderOption,
   width,
+  value,
+  clearable = true,
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -42,7 +49,9 @@ export function Autocomplete<T>({
   );
 
   return (
-    <MuiAutocomplete<T>
+    <MuiAutocomplete
+      disableClearable={!clearable}
+      value={value}
       filterOptions={filterOptions}
       loading={loading}
       loadingText={loadingText}

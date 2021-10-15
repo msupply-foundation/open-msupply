@@ -107,11 +107,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const columns = useColumns<Invoice>(
     [
       getNameAndColorColumn(onColorUpdate),
-      'type',
       'status',
       'invoiceNumber',
-      'confirmed',
       'entered',
+      'confirmed',
       'total',
       'comment',
       'selection',
@@ -183,7 +182,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         data={data?.slice(0, numberOfRows) || []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/customers/customer-invoice/${row.id}`);
+          navigate(`/customers/customer-invoice/${row.invoiceNumber}`);
         }}
       />
     </>

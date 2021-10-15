@@ -1,4 +1,3 @@
-import { Environment } from './../../../config/src/index';
 import { PaginationOptions } from './../index';
 import { graphql, rest } from 'msw';
 import { Api } from '../api';
@@ -27,7 +26,7 @@ const insertInvoice = graphql.mutation(
   }
 );
 
-const deleteInvoices = graphql.mutation(
+const deleteInvoice = graphql.mutation(
   'deleteInvoice',
   (request, response, context) => {
     const { variables } = request;
@@ -78,10 +77,24 @@ export const invoiceDetail = graphql.query(
   }
 );
 
+export const invoiceDetailByInvoiceNumber = graphql.query(
+  'invoiceByInvoiceNumber',
+  (request, response, context) => {
+    const { variables } = request;
+    const { invoiceNumber } = variables;
+
+    const invoice = Api.ResolverService.invoice.get.byInvoiceNumber(
+      invoiceNumber as number
+    );
+
+    return response(context.data({ invoiceByInvoiceNumber: invoice }));
+  }
+);
+
 export const itemList = graphql.query('items', (_, response, context) => {
   const result = Api.ResolverService.list.item();
 
-  return response(context.data({ invoices: result }));
+  return response(context.data({ items: result }));
 });
 
 export const permissionError = graphql.query(
@@ -108,9 +121,10 @@ export const serverError = graphql.query('error500', (_, response, context) =>
  * handler.
  */
 const batchMutationHandler = rest.post(
-  Environment.API_URL,
+  'http://localhost:4000',
   async (req, res) => {
     // This will ensure this handler does not try to handle the request
+
     if (!Array.isArray(req.body)) {
       throw new Error('Unsupported');
     }
@@ -151,11 +165,13 @@ const batchMutationHandler = rest.post(
 export const handlers = [
   invoiceList,
   invoiceDetail,
+  invoiceDetailByInvoiceNumber,
   updateInvoice,
-  deleteInvoices,
+  deleteInvoice,
   permissionError,
   serverError,
   insertInvoice,
   namesList,
+  itemList,
   batchMutationHandler,
 ];
