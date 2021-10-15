@@ -5,7 +5,7 @@ use crate::{
     },
     server::service::graphql::schema::{
         mutations::{
-            customer_invoice::{InternalError, NotACustomerInvoiceError},
+            customer_invoice::{InvoiceLineHasNoStockLineError, NotACustomerInvoiceError},
             error::DatabaseError,
         },
         types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
@@ -75,7 +75,7 @@ pub enum UpdateCustomerInvoiceErrorInterface {
     OtherPartyNotACustomer(OtherPartyNotACustomerError),
     NotACustomerInvoice(NotACustomerInvoiceError),
     DatabaseError(DatabaseError),
-    InternalError(InternalError),
+    InvalidInvoiceLine(InvoiceLineHasNoStockLineError),
 }
 
 impl From<UpdateCustomerInvoiceError> for UpdateCustomerInvoiceResponse {
@@ -103,8 +103,8 @@ impl From<UpdateCustomerInvoiceError> for UpdateCustomerInvoiceResponse {
             UpdateCustomerInvoiceError::OtherPartyCannotBeThisStore => {
                 OutError::OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError {})
             }
-            UpdateCustomerInvoiceError::InternalError(msg) => {
-                OutError::InternalError(InternalError(msg))
+            UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(id) => {
+                OutError::InvalidInvoiceLine(InvoiceLineHasNoStockLineError(id))
             }
             UpdateCustomerInvoiceError::NotACustomerInvoice => {
                 OutError::NotACustomerInvoice(NotACustomerInvoiceError {})

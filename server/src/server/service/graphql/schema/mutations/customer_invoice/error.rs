@@ -99,15 +99,15 @@ impl NotACustomerInvoiceError {
     }
 }
 
-pub struct InternalError(pub String);
+pub struct InvoiceLineHasNoStockLineError(pub String);
 
 #[Object]
-impl InternalError {
-    pub async fn description(&self) -> &'static str {
-        "Internal Error"
+impl InvoiceLineHasNoStockLineError {
+    pub async fn description(&self) -> String {
+        format!("Invoice line ({}) has no matching stock line", self.0)
     }
 
-    pub async fn msg(&self) -> &String {
+    pub async fn invoice_line_id(&self) -> &String {
         &self.0
     }
 }
