@@ -52,7 +52,7 @@ const useDraftOutbound = () => {
   const { draft, save, dispatch, state } = useDocument(
     ['invoice', id ?? 'new'],
     reducer,
-    getOutboundShipmentDetailViewApi(id ?? '')
+    getOutboundShipmentDetailViewApi(Number(id))
   );
 
   const onChangeSortBy: (sortBy: Column<ItemRow>) => void = column => {

@@ -77,6 +77,20 @@ export const invoiceDetail = graphql.query(
   }
 );
 
+export const invoiceDetailByInvoiceNumber = graphql.query(
+  'invoiceByInvoiceNumber',
+  (request, response, context) => {
+    const { variables } = request;
+    const { invoiceNumber } = variables;
+
+    const invoice = Api.ResolverService.invoice.get.byInvoiceNumber(
+      invoiceNumber as number
+    );
+
+    return response(context.data({ invoice }));
+  }
+);
+
 export const itemList = graphql.query('items', (_, response, context) => {
   const result = Api.ResolverService.list.item();
 
