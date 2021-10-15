@@ -14,6 +14,15 @@ export const getFilter =
   (obj: T): boolean =>
     obj[key] === matchVal;
 
+export const invoice = {
+  get: {
+    byInvoiceNumber: (invoiceNumber: number): Invoice =>
+      ({
+        ...InvoiceData.find(getFilter(invoiceNumber, 'invoiceNumber')),
+      } as Invoice),
+  },
+};
+
 export const get = {
   id: {
     item: (id: string): number => ItemData.findIndex(getFilter(id, 'id')),
@@ -93,6 +102,7 @@ export const update = {
 export const insert = {
   invoice: (invoice: Invoice): Invoice => {
     InvoiceData.push(invoice);
+
     return invoice;
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
@@ -129,6 +139,7 @@ export const remove = {
 };
 
 export const db = {
+  invoice,
   get,
   update,
   insert,
