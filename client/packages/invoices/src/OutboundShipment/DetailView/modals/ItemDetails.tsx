@@ -1,7 +1,6 @@
 import React, { SyntheticEvent } from 'react';
 
 import {
-  Divider,
   Grid,
   Item,
   ModalInputRow,
@@ -16,6 +15,7 @@ import {
   Autocomplete,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
+import { ItemBatches } from './ItemBatches';
 interface ItemDetailsProps {
   item?: Item;
   onSubmit: () => void;
@@ -59,6 +59,8 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
               availableBatches {
                 nodes {
                   id
+                  batch
+                  expiryDate
                   packSize
                   costPricePerPack
                   sellPricePerPack
@@ -129,14 +131,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
           labelKey="label.packSize"
           defaultValue={item?.availableQuantity}
         />
-        <Divider />
-        <table>
-          {selectedItem?.availableBatches.nodes.map(itemBatch => (
-            <tr key={itemBatch.id}>
-              <td>{itemBatch.availableNumberOfPacks}</td>
-            </tr>
-          ))}
-        </table>
+        <ItemBatches item={selectedItem} />
       </Grid>
     </form>
   );
