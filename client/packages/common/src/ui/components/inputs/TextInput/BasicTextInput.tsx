@@ -16,6 +16,7 @@ export const BasicTextInput: FC<StandardTextFieldProps> = React.forwardRef(
         ...sx,
       }}
       variant="standard"
+      size="small"
       InputProps={{
         disableUnderline: true,
         sx: {

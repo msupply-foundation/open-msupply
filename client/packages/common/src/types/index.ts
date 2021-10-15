@@ -29,7 +29,8 @@ export interface StockLine extends DomainObject {
   id: string;
   availableNumberOfPacks: number;
   costPricePerPack: number;
-  expiry: string;
+  expiryDate: string;
+  batch: string;
   item: Item;
   name: string;
   packSize: number;
