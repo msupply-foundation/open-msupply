@@ -48,7 +48,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
     const { items } = await request(
       Environment.API_URL,
       gql`
-        query Query {
+        query items {
           items {
             data {
               id

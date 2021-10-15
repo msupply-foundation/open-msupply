@@ -221,6 +221,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       >
         <Box display="flex" flex={1}>
           <InputWithLabelRow
+            label="label.customer-name"
             Input={
               <CustomerSearchInput
                 value={draft.name}
