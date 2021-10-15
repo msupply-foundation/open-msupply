@@ -20,11 +20,11 @@ pub fn insert_supplier_invoice_line(
     // TODO do inside transaction
     let (item, invoice) = validate(&input, &connection)?;
     let (new_line, new_batch_option) = generate(input, item, invoice, &connection)?;
-    InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
 
     if let Some(new_batch) = new_batch_option {
         StockLineRepository::new(&connection).upsert_one(&new_batch)?;
     }
+    InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
 
     Ok(new_line.id)
 }
