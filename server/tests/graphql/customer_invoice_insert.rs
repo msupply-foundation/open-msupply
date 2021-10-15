@@ -80,6 +80,7 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
 
+        // OtherPartyIdNotFoundError
         let variables = Some(json!({
           "input": {
             "id": "ci_insert_1",
@@ -96,7 +97,7 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
 
-        // insert OK
+        // Test succeeding insert
         let variables = Some(json!({
           "input": {
             "id": "ci_insert_1",
