@@ -57,8 +57,10 @@
   "label.id": "ID",
   "label.invoice-number": "Invnum",
   "label.item": "Item",
+  "label.line": "Line {number}",
   "label.name": "Name",
   "label.packSize": "Pack size",
+  "label.placeholder": "Placeholder",
   "label.quantity": "Quantity",
   "label.selected": "Selected",
   "label.status": "Status",
@@ -68,5 +70,14 @@
   "label.type": "Type",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
-  "link.history": "History"
+  "link.history": "History",
+  "label.issue": "Issue",
+  "label.hold": "Hold",
+  "label.available": "Available",
+  "label.in-store": "In store",
+  "label.pack": "Pack",
+  "label.batch": "Batch",
+  "label.expiry": "Expiry",
+  "label.cost": "Cost",
+  "label.sell": "Sell"
 }

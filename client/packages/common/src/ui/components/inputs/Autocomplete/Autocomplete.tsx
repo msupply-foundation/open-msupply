@@ -12,6 +12,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 export interface AutocompleteProps<T> {
+  getOptionDisabled?: (option: T) => boolean;
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
   loadingText?: React.ReactNode;
@@ -27,6 +28,7 @@ export interface AutocompleteProps<T> {
 
 export function Autocomplete<T>({
   filterOptionConfig,
+  getOptionDisabled,
   loading,
   loadingText,
   noOptionsText,
@@ -52,6 +54,7 @@ export function Autocomplete<T>({
     <MuiAutocomplete
       disableClearable={!clearable}
       value={value}
+      getOptionDisabled={getOptionDisabled}
       filterOptions={filterOptions}
       loading={loading}
       loadingText={loadingText}
