@@ -1,3 +1,4 @@
+import { ResolverService } from './resolvers';
 import { createInvoice } from './../data/data';
 import { Api } from './index';
 import { StockLine } from './../data/types';
@@ -76,18 +77,21 @@ export const update = {
 };
 
 export const remove = {
-  invoice: (invoice: Invoice): Invoice => {
-    const resolvedInvoice = Api.ResolverService.byId.invoice(invoice.id);
+  invoice: (invoiceId: string): string => {
+    const resolvedInvoice = Api.ResolverService.byId.invoice(String(invoiceId));
+
     resolvedInvoice.lines.forEach(line => {
-      remove.invoiceLine(line);
+      remove.invoiceLine(line.id);
     });
 
-    return db.remove.invoice(invoice);
+    return db.remove.invoice(invoiceId);
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
+  invoiceLine: (invoiceLineId: string): string => {
+    const invoiceLine = ResolverService.byId.invoiceLine(invoiceLineId);
+
     adjustStockLineQuantity(invoiceLine.stockLineId, invoiceLine.quantity);
 
-    return db.remove.invoiceLine(invoiceLine);
+    return db.remove.invoiceLine(invoiceLineId);
   },
 };
 

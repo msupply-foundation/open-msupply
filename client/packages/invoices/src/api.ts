@@ -1,32 +1,38 @@
 import { ObjectWithStringKeys } from '@openmsupply-client/common/src/types/utility';
-import { Name, SortBy, ListApi, Invoice } from '@openmsupply-client/common';
+import {
+  request,
+  gql,
+  batchRequests,
+  Name,
+  SortBy,
+  ListApi,
+  Invoice,
+} from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { request, gql } from 'graphql-request';
+
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
   mutation insertInvoice($invoice: InvoicePatch) {
     insertInvoice(invoice: $invoice) {
       id
+      invoiceNumber
     }
   }
 `;
 
 export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
-  const { insertInvoice } = await request(
-    Environment.API_URL,
-    getInsertInvoiceQuery(),
-    {
-      invoice,
-    }
-  );
+  const result = await request(Environment.API_URL, getInsertInvoiceQuery(), {
+    invoice,
+  });
+  const { insertInvoice } = result;
 
   return insertInvoice;
 };
 
 export const getDetailQuery = (): string => gql`
-  query invoice($id: String!) {
-    invoice(id: $id) {
+  query invoiceByInvoiceNumber($invoiceNumber: Int) {
+    invoiceByInvoiceNumber(invoiceNumber: $invoiceNumber) {
       id
       color
       comment
@@ -37,6 +43,11 @@ export const getDetailQuery = (): string => gql`
       invoiceNumber
       total
       color
+      name {
+        id
+        name
+        code
+      }
       lines {
         id
         itemCode
@@ -82,8 +93,8 @@ export const getMutation = (): string => gql`
 `;
 
 export const getDeleteMutation = (): string => gql`
-  mutation deleteInvoices($invoices: [InvoicePatch]) {
-    deleteInvoices(invoices: $invoices) {
+  mutation deleteInvoice($invoiceId: String) {
+    deleteInvoice(invoiceId: $invoiceId) {
       id
     }
   }
@@ -110,9 +121,13 @@ export const getListQuery = (): string => gql`
 `;
 
 export const deleteFn = async (invoices: Invoice[]) => {
-  await request(Environment.API_URL, getDeleteMutation(), {
-    invoices,
-  });
+  await batchRequests(
+    Environment.API_URL,
+    invoices.map(invoice => ({
+      document: getDeleteMutation(),
+      variables: { invoiceId: invoice.id },
+    }))
+  );
 };
 
 export const nameListQueryFn = async (): Promise<{
@@ -140,14 +155,15 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   return invoices;
 };
 
-export const detailQueryFn = (id: string) => async (): Promise<Invoice> => {
-  const result = await request(Environment.API_URL, getDetailQuery(), {
-    id,
-  });
-  const { invoice } = result;
+export const detailQueryFn =
+  (invoiceNumber: number) => async (): Promise<Invoice> => {
+    const result = await request(Environment.API_URL, getDetailQuery(), {
+      invoiceNumber,
+    });
+    const { invoiceByInvoiceNumber } = result;
 
-  return invoice;
-};
+    return invoiceByInvoiceNumber;
+  };
 
 export const updateFn = async (updated: Invoice): Promise<Invoice> => {
   const patch = { invoicePatch: updated };
@@ -172,9 +188,9 @@ interface Api<ReadType, UpdateType> {
 }
 
 export const getOutboundShipmentDetailViewApi: (
-  id: string
-) => Api<Invoice, OutboundShipment> = (id: string) => ({
-  onRead: detailQueryFn(id),
+  invoiceNumber: number
+) => Api<Invoice, OutboundShipment> = (invoiceNumber: number) => ({
+  onRead: detailQueryFn(invoiceNumber),
   onUpdate: async (outboundShipment: OutboundShipment): Promise<Invoice> => {
     const result = await updateFn(outboundShipment);
     return result;

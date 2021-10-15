@@ -14,7 +14,7 @@ export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
   onChange: (row: T, color: Color) => void
 ): ColumnDefinition<T> => ({
   label: 'label.name',
-  width: 250,
+  width: 350,
   key: 'name',
   Cell: ({ rowData }: { rowData: T }) => {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);

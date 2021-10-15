@@ -17,7 +17,7 @@
     "@mui/material": "^5.0.0",
     "@openmsupply-client/config": "^0.0.0",
     "graphql": "^15.5.1",
-    "graphql-request": "^3.4.0",
+    "graphql-request": "^3.6.0",
     "history": "^5.0.0",
     "immer": "^9.0.6",
     "kbar": "^0.1.0-beta.5",

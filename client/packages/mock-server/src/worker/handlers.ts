@@ -1,7 +1,6 @@
 import { PaginationOptions } from './../index';
-import { graphql } from 'msw';
+import { graphql, rest } from 'msw';
 import { Api } from '../api';
-import { Invoice } from '../data';
 
 const updateInvoice = graphql.mutation(
   'updateInvoice',
@@ -27,17 +26,15 @@ const insertInvoice = graphql.mutation(
   }
 );
 
-const deleteInvoices = graphql.mutation(
-  'deleteInvoices',
+const deleteInvoice = graphql.mutation(
+  'deleteInvoice',
   (request, response, context) => {
     const { variables } = request;
-    const { invoices } = variables;
+    const { invoiceId } = variables;
 
-    (invoices as Invoice[]).forEach(invoice => {
-      Api.MutationService.remove.invoice(invoice);
-    });
+    Api.MutationService.remove.invoice(invoiceId);
 
-    return response(context.data({ invoices }));
+    return response(context.data({ invoiceId }));
   }
 );
 
@@ -80,10 +77,24 @@ export const invoiceDetail = graphql.query(
   }
 );
 
+export const invoiceDetailByInvoiceNumber = graphql.query(
+  'invoiceByInvoiceNumber',
+  (request, response, context) => {
+    const { variables } = request;
+    const { invoiceNumber } = variables;
+
+    const invoice = Api.ResolverService.invoice.get.byInvoiceNumber(
+      invoiceNumber as number
+    );
+
+    return response(context.data({ invoiceByInvoiceNumber: invoice }));
+  }
+);
+
 export const itemList = graphql.query('items', (_, response, context) => {
   const result = Api.ResolverService.list.item();
 
-  return response(context.data({ invoices: result }));
+  return response(context.data({ items: result }));
 });
 
 export const permissionError = graphql.query(
@@ -104,13 +115,63 @@ export const serverError = graphql.query('error500', (_, response, context) =>
   )
 );
 
+/**
+ * MSW Currently does not support batched mutations. Instead, inspect every outgoing POST
+ * and check if the body is an array and each of the elements of the array has an existing
+ * handler.
+ */
+const batchMutationHandler = rest.post(
+  'http://localhost:4000',
+  async (req, res) => {
+    // This will ensure this handler does not try to handle the request
+
+    if (!Array.isArray(req.body)) {
+      throw new Error('Unsupported');
+    }
+
+    // If the request body is an array, map each handler to a request and
+    // find a handler to hand it.
+    const data = await Promise.all(
+      req.body.map(async operation => {
+        const partReq = { ...req, body: operation };
+        const handler = handlers.find(handler => handler.test(partReq));
+
+        // no handler matched that operation
+        if (!handler) {
+          return Promise.reject(new Error('Unsupported'));
+        }
+
+        // execute and return the response-like object
+        return handler.run(partReq);
+      })
+    );
+
+    return res(res => {
+      res.headers.set('content-type', 'application/json');
+
+      // Map all requests back into an array to return
+      // for the original request.
+      res.body = JSON.stringify(
+        data.map(datum => {
+          return JSON.parse(datum?.response?.body) || {};
+        })
+      );
+
+      return res;
+    });
+  }
+);
+
 export const handlers = [
   invoiceList,
   invoiceDetail,
+  invoiceDetailByInvoiceNumber,
   updateInvoice,
-  deleteInvoices,
+  deleteInvoice,
   permissionError,
   serverError,
   insertInvoice,
   namesList,
+  itemList,
+  batchMutationHandler,
 ];

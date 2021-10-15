@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import {
   addRandomPercentageTo,
@@ -13,6 +14,9 @@ import {
   takeRandomPercentageFrom,
   takeRandomSubsetFrom,
 } from '../utils';
+import { items } from './items';
+import { comments } from './comments';
+import { names } from './names';
 
 export const getStockLinesForItem = (
   item: Item,
@@ -56,6 +60,7 @@ const createStockLines = (items: Item[]) => {
         id: `${itemId}-${i++}`,
         name: `${itemId}-${i++}`,
         packSize: 1,
+        expiry: faker.date.future(0.5).toString(),
         expiryDate: faker.date.future().toString(),
         batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
         availableNumberOfPacks,
@@ -125,14 +130,14 @@ const createInvoiceLines = (
 const createItems = (
   numberToCreate = randomInteger({ min: 10, max: 20 })
 ): Item[] => {
-  return Array.from({ length: numberToCreate }).map((_, j) => {
+  return items.slice(0, numberToCreate).map(({ code, name }, j) => {
     const itemId = `item-${j}`;
 
     const item = {
       id: itemId,
+      code,
+      name,
       isVisible: faker.datatype.boolean(),
-      code: `${faker.random.alpha({ count: 6 })}`,
-      name: `${faker.commerce.productName()}`,
     };
 
     return item;
@@ -144,19 +149,24 @@ export const createInvoice = (
   invoiceNumber: number,
   nameId: string,
   seeded?: Partial<Invoice>
-) => ({
-  id,
-  nameId,
-  invoiceNumber,
-  status: takeRandomElementFrom(['Confirmed', 'Finalised']),
-  entered: faker.date.past().toString(),
-  confirmed: faker.date.past().toString(),
-  total: `$${faker.commerce.price()}`,
-  color: 'grey',
-  type: 'Customer invoice',
-  comment: faker.commerce.productDescription(),
-  ...seeded,
-});
+): Invoice => {
+  const confirmed = faker.date.past(1);
+  const entered = faker.date.past(0.25, confirmed);
+
+  return {
+    id,
+    nameId,
+    invoiceNumber,
+    status: takeRandomElementFrom(['Confirmed', 'Finalised']),
+    entered: entered.toString(),
+    confirmed: confirmed.toString(),
+    total: `$${faker.commerce.price()}`,
+    color: 'grey',
+    type: 'Customer invoice',
+    comment: takeRandomElementFrom(comments),
+    ...seeded,
+  };
+};
 
 const createInvoices = (
   customers = NameData,
@@ -164,7 +174,7 @@ const createInvoices = (
 ): Invoice[] => {
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const name = takeRandomElementFrom(customers);
-    const invoice = createInvoice(`${i}`, i, name.id);
+    const invoice = createInvoice(faker.datatype.uuid(), i, name.id);
 
     return invoice;
   });
@@ -174,16 +184,7 @@ const createCustomers = (
   numberToCreate = randomInteger({ min: 10, max: 100 })
 ): Name[] => {
   const getNameAndCode = () => {
-    const firstName = faker.name.firstName();
-    const lastName = faker.name.lastName();
-
-    return {
-      name: `${firstName} ${lastName}`,
-      code: `${firstName[0]}${lastName[0]}${faker.datatype.number({
-        min: 100,
-        max: 999,
-      })}`,
-    };
+    return takeRandomElementFrom(names);
   };
 
   return Array.from({ length: numberToCreate }).map((_, i) => {
@@ -198,11 +199,15 @@ const createCustomers = (
   });
 };
 
-export const NameData = createCustomers();
-export const ItemData = createItems();
-export const StockLineData = createStockLines(ItemData);
-export const InvoiceData = createInvoices(NameData);
-export const InvoiceLineData = createInvoiceLines(
+export const removeElement = (source: any[], idx: number): void => {
+  source = source.splice(idx, 1);
+};
+
+export let NameData = createCustomers();
+export let ItemData = createItems();
+export let StockLineData = createStockLines(ItemData);
+export let InvoiceData = createInvoices(NameData);
+export let InvoiceLineData = createInvoiceLines(
   ItemData,
   StockLineData,
   InvoiceData

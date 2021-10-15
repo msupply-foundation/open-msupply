@@ -1,3 +1,4 @@
+import { ResolvedInvoice } from './../data/types';
 import { ListResponse } from './../index';
 import { Api } from '../api';
 import { PaginationOptions } from '../index';
@@ -12,7 +13,7 @@ type Invoice {
     type: String
     entered: String
     confirmed: String
-    invoiceNumber: String
+    invoiceNumber: Int
     total: String
     name: Name
     otherPartyName: String
@@ -35,19 +36,15 @@ const QueryResolvers = {
   invoice: (_: any, { id }: { id: string }): InvoiceType => {
     return Api.ResolverService.byId.invoice(id);
   },
+  invoiceByInvoiceNumber: (
+    _: any,
+    { invoiceNumber }: { invoiceNumber: number }
+  ): ResolvedInvoice => {
+    return Api.ResolverService.invoice.get.byInvoiceNumber(invoiceNumber);
+  },
 };
 
 const MutationResolvers = {
-  deleteInvoices: (
-    _: any,
-    { invoices }: { invoices: InvoiceType[] }
-  ): InvoiceType[] => {
-    invoices.forEach(invoice => {
-      Api.MutationService.remove.invoice(invoice);
-    });
-
-    return invoices;
-  },
   updateInvoice: (
     _: any,
     { invoice }: { invoice: InvoiceType }
@@ -60,24 +57,21 @@ const MutationResolvers = {
   ): InvoiceType => {
     return Api.MutationService.insert.invoice(invoice);
   },
-  deleteInvoice: (
-    _: any,
-    { invoice }: { invoice: InvoiceType }
-  ): InvoiceType => {
-    return Api.MutationService.remove.invoice(invoice);
+  deleteInvoice: (_: any, { invoiceId }: { invoiceId: string }): string => {
+    return Api.MutationService.remove.invoice(invoiceId);
   },
 };
 
 const Queries = `
 invoices(first: Int, offset: Int, sort: String, desc: Boolean): InvoiceResponse
-invoice(id: String!): Invoice
+invoice(id: String): Invoice
+invoiceByInvoiceNumber(invoiceNumber: Int): Invoice
 `;
 
 const Mutations = `
 updateInvoice(invoice: InvoicePatch): Invoice
 insertInvoice(invoice: InvoicePatch): Invoice
-deleteInvoice(invoice: InvoicePatch): Invoice
-deleteInvoices(invoice: [InvoicePatch]): [Invoice]
+deleteInvoice(invoiceId: String): Invoice
 `;
 
 const Inputs = `
@@ -89,7 +83,7 @@ input InvoicePatch {
     type: String
     entered: String
     confirmed: String
-    invoiceNumber: String
+    invoiceNumber: Int
     total: String
     nameId: String
 }

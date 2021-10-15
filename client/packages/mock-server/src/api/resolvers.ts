@@ -22,6 +22,25 @@ const createListResponse = <T>(totalLength: number, data: T[]) => ({
 });
 
 export const ResolverService = {
+  invoice: {
+    get: {
+      byInvoiceNumber: (invoiceNumber: number): ResolvedInvoice => {
+        const invoice = db.invoice.get.byInvoiceNumber(invoiceNumber);
+        const name = db.get.byId.name(invoice.nameId);
+
+        return {
+          ...invoice,
+          name,
+          otherPartyName: name.name,
+          lines: db.get.invoiceLines
+            .byInvoiceId(invoice.id)
+            .map(({ id: invoiceLineId }) =>
+              ResolverService.byId.invoiceLine(invoiceLineId)
+            ),
+        };
+      },
+    },
+  },
   list: {
     invoice: ({
       first = 50,
@@ -124,7 +143,7 @@ export const ResolverService = {
         name,
         otherPartyName: name.name,
         lines: db.get.invoiceLines
-          .byInvoiceId(id)
+          .byInvoiceId(invoice.id)
           .map(({ id: invoiceLineId }) =>
             ResolverService.byId.invoiceLine(invoiceLineId)
           ),
