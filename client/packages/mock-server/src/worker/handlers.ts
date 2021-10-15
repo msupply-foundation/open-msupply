@@ -26,7 +26,7 @@ const insertInvoice = graphql.mutation(
   }
 );
 
-const deleteInvoices = graphql.mutation(
+const deleteInvoice = graphql.mutation(
   'deleteInvoice',
   (request, response, context) => {
     const { variables } = request;
@@ -167,7 +167,7 @@ export const handlers = [
   invoiceDetail,
   invoiceDetailByInvoiceNumber,
   updateInvoice,
-  deleteInvoices,
+  deleteInvoice,
   permissionError,
   serverError,
   insertInvoice,
