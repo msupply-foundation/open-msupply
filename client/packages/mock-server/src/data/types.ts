@@ -2,6 +2,7 @@ export interface Item {
   id: string;
   code: string;
   name: string;
+  isVisible: boolean;
 }
 
 export interface Name {
@@ -13,16 +14,21 @@ export interface Name {
 }
 
 export interface ResolvedItem extends Item {
+  availableBatches: { nodes: StockLine[] };
   availableQuantity: number;
 }
 
 export interface StockLine {
   id: string;
-  expiry: string;
+  expiryDate: string;
+  batch: string;
   name: string;
   availableNumberOfPacks: number;
+  totalNumberOfPacks: number;
   packSize: number;
   itemId: string;
+  costPricePerPack: number;
+  sellPricePerPack: number;
 }
 
 export interface ResolvedStockLine extends StockLine {
