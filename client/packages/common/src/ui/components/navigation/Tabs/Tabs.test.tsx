@@ -11,7 +11,7 @@ describe('Tabs', () => {
 
     return (
       <TabContext value={currentTab}>
-        <TabList value={currentTab} onChange={onChangeTab}>
+        <TabList value={currentTab} onChange={(_, v) => onChangeTab(v)}>
           <Tab value="0" label="zero" />
           <Tab value="1" label="one" />
         </TabList>

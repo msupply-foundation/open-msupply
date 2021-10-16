@@ -2,7 +2,6 @@ import React, { FC, useEffect } from 'react';
 import { useParams } from 'react-router';
 import {
   AppBarButtonsPortal,
-  AppBarContentPortal,
   Book,
   Box,
   Button,
@@ -19,9 +18,7 @@ import {
   PanelRow,
   PlusCircle,
   Rewind,
-  Tab,
   TabContext,
-  TabList,
   TabPanel,
   TableProvider,
   Typography,
@@ -36,7 +33,6 @@ import {
   useNotification,
   useTabs,
   useTranslation,
-  InputWithLabelRow,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -44,7 +40,7 @@ import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ItemRow } from './types';
-import { CustomerSearchInput } from '../CustomerSearchInput';
+import { OutboundShipmentToolbar } from './DetailViewToolbar';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -211,37 +207,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         </FormProvider>
       </Modal>
 
-      <AppBarContentPortal
-        sx={{
-          display: 'flex',
-          flex: 1,
-          justifyContent: 'center',
-          paddingLeft: '25px',
-        }}
-      >
-        <Box display="flex" flex={1}>
-          <InputWithLabelRow
-            label="label.customer-name"
-            Input={
-              <CustomerSearchInput
-                value={draft.name}
-                onChange={name => {
-                  draft.update?.('name', name);
-                }}
-              />
-            }
-          />
-        </Box>
-
-        <Box display="flex" flex={1} justifyContent="center">
-          <TabList value={currentTab} onChange={onChangeTab}>
-            <Tab value="general" label={t('label.general')} />
-            <Tab value="transport" label={t('label.transport')} />
-          </TabList>
-        </Box>
-
-        <Box display="flex" flex={1} justifyContent="flex-end" />
-      </AppBarContentPortal>
+      <OutboundShipmentToolbar
+        draft={draft}
+        onChangeTab={(val: string) => onChangeTab(val)}
+        currentTab={currentTab}
+      />
 
       <Box display="flex" flex={1}>
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">

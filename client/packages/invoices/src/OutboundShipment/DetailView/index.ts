@@ -6,6 +6,7 @@ export const placeholderInvoice: OutboundShipment = {
   otherPartyName: '',
   total: '',
   comment: '',
+  theirReference: '',
   color: 'grey',
   status: '',
   type: '',

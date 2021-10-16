@@ -1,5 +1,5 @@
 import React, { FC, ReactNode } from 'react';
-import { Grid, FormLabel } from '@mui/material';
+import { FormLabel, Box } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
 import { useTranslation, LocaleKey } from '../../../../intl/intlHelpers';
 
@@ -15,9 +15,9 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   const t = useTranslation();
 
   return (
-    <Grid display="flex" alignItems="center" gap={1}>
-      <FormLabel sx={{ fontWeight: 'bold' }}>{t(label)}:</FormLabel>
-      {Input}
-    </Grid>
+    <Box display="flex" alignItems="center" gap={1}>
+      <FormLabel sx={{ fontWeight: 'bold', flex: 1 }}>{t(label)}:</FormLabel>
+      <Box sx={{ flex: 3 }}>{Input}</Box>
+    </Box>
   );
 };
