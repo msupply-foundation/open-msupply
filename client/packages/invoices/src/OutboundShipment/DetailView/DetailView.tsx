@@ -43,7 +43,7 @@ import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ItemRow } from './types';
-import { OutboundShipmentToolbar } from './DetailViewToolbar';
+import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -215,7 +215,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         </FormProvider>
       </Modal>
 
-      <OutboundShipmentToolbar
+      <OutboundShipmentDetailViewToolbar
         draft={draft}
         onChangeTab={(val: string) => onChangeTab(val)}
         currentTab={currentTab}
