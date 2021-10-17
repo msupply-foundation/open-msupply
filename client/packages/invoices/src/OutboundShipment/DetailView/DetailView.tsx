@@ -33,6 +33,9 @@ import {
   useTabs,
   useTranslation,
   ButtonWithIcon,
+  XCircleIcon,
+  Download,
+  ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -232,13 +235,32 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
-        <Box display="flex" alignItems="flex-end">
-          <Box flex={1} display="flex" justifyContent="flex-end">
-            <DialogButton variant="cancel" onClick={() => navigate(-1)} />
-            <DialogButton variant="ok" onClick={() => save(draft)} />
-            <DialogButton
-              variant="next"
+        <Box display="flex" alignItems="flex-end" height={40}>
+          <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+            <ButtonWithIcon
+              Icon={<XCircleIcon />}
+              labelKey="button.cancel"
+              variant="outlined"
+              color="secondary"
+              onClick={() => navigate(-1)}
+            />
+            <ButtonWithIcon
+              Icon={<Download />}
+              labelKey="button.save"
+              variant="contained"
+              color="secondary"
               onClick={() => {
+                success('Saved invoice! 🥳 ')();
+                save(draft);
+              }}
+            />
+            <ButtonWithIcon
+              Icon={<ArrowRightIcon />}
+              labelKey="button.save-and"
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                success('Saved invoice! 🥳 ')();
                 draft.update?.('status', 'finalised');
                 save(draft);
               }}

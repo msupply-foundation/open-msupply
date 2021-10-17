@@ -30,6 +30,9 @@ declare module '@mui/material/styles/createMixins' {
     icon: {
       medium: { width: number; height: number };
     };
+    saveButtonRow: {
+      height: number;
+    };
     footer: {
       height: number;
     };
@@ -91,15 +94,6 @@ declare module '@mui/material/styles/createTypography' {
 }
 
 const themeOptions = {
-  // components: {
-  //   MuiButton: {
-  //     styleOverrides: {
-  //       outlined: { backgroundColor: 'white', color: 'orange' },
-  //       contained: { backgroundColor: 'white', color: 'orange' },
-  //     },
-  //   },
-  // },
-
   breakpoints: {
     values: {
       xs: 0,
@@ -125,6 +119,7 @@ const themeOptions = {
         },
       },
     },
+    saveButtonRow: { height: 40 },
     footer: { height: 32 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },

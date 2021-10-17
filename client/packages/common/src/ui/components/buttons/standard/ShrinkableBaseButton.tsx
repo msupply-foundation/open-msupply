@@ -18,7 +18,12 @@ interface ShrinkableBaseButtonProps extends ButtonProps {
   shrink: boolean;
 }
 
-export const ShrinkableBaseButton: FC<ShrinkableBaseButtonProps> = ({
-  shrink = false,
-  ...props
-}) => <StyledShrinkableBaseButton shrink={shrink} size="small" {...props} />;
+export const ShrinkableBaseButton: FC<ShrinkableBaseButtonProps> =
+  React.forwardRef(({ shrink = false, ...props }, ref) => (
+    <StyledShrinkableBaseButton
+      ref={ref}
+      shrink={shrink}
+      size="small"
+      {...props}
+    />
+  ));
