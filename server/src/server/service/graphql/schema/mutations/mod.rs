@@ -260,14 +260,6 @@ impl DeleteResponse {
     }
 }
 
-pub struct InvoiceLineIsReserved;
-#[Object]
-impl InvoiceLineIsReserved {
-    pub async fn description(&self) -> &'static str {
-        "Invoice line is reserved"
-    }
-}
-
 pub struct InvoiceLineBelongsToAnotherInvoice(String);
 #[Object]
 impl InvoiceLineBelongsToAnotherInvoice {
