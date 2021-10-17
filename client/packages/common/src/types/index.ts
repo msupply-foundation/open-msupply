@@ -70,6 +70,7 @@ export interface Invoice extends DomainObject {
   id: string;
   color: string;
   comment: string;
+  theirReference: string;
   status: string;
   type: string;
   entered: string;

@@ -14,7 +14,7 @@ const ExampleTabs = () => {
 
   return (
     <TabContext value={currentTab}>
-      <TabList value={currentTab} centered onChange={onChangeTab}>
+      <TabList value={currentTab} centered onChange={(_, v) => onChangeTab(v)}>
         <Tab value="hotpink" label="Hot Pink" />
         <Tab value="aqua" label="Aqua" />
         <Tab value="turquoise" label="Turquoise" />
