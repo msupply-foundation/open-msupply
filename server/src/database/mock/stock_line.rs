@@ -1,3 +1,5 @@
+use chrono::NaiveDate;
+
 use crate::database::schema::StockLineRow;
 
 pub fn mock_item_a_lines() -> Vec<StockLineRow> {
@@ -90,12 +92,43 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
     vec![mock_item_c_line_a, mock_item_c_line_b]
 }
 
+pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
+    let mock_stock_line_si_d_siline_a: StockLineRow = StockLineRow {
+        id: String::from("stock_line_si_d_siline_a"),
+        item_id: String::from("item_a"),
+        store_id: String::from("store_a"),
+        batch: Some(String::from("item_a_si_d_siline_a")),
+        available_number_of_packs: 7,
+        pack_size: 1,
+        cost_price_per_pack: 2.0,
+        sell_price_per_pack: 18.0,
+        total_number_of_packs: 7,
+        expiry_date: None,
+    };
+
+    let mock_stock_line_si_d_siline_b: StockLineRow = StockLineRow {
+        id: String::from("stock_line_si_d_siline_b"),
+        item_id: String::from("item_b"),
+        store_id: String::from("store_a"),
+        batch: Some(String::from("item_b_si_c_siline_d")),
+        available_number_of_packs: 2,
+        pack_size: 3,
+        cost_price_per_pack: 45.0,
+        sell_price_per_pack: 34.0,
+        total_number_of_packs: 2,
+        expiry_date: Some(NaiveDate::from_ymd(2020, 8, 11)),
+    };
+
+    vec![mock_stock_line_si_d_siline_a, mock_stock_line_si_d_siline_b]
+}
+
 pub fn mock_stock_lines() -> Vec<StockLineRow> {
     let mut mock_stock_lines: Vec<StockLineRow> = Vec::new();
 
     mock_stock_lines.extend(mock_item_a_lines());
     mock_stock_lines.extend(mock_item_b_lines());
     mock_stock_lines.extend(mock_item_c_lines());
+    mock_stock_lines.extend(mock_stock_line_si_d());
 
     mock_stock_lines
 }

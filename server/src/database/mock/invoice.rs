@@ -98,12 +98,28 @@ pub fn mock_supplier_invoice_c() -> InvoiceRow {
     }
 }
 
+pub fn mock_supplier_invoice_d() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("supplier_invoice_d"),
+        name_id: String::from("name_store_c"),
+        store_id: String::from("store_a"),
+        invoice_number: 7,
+        r#type: InvoiceRowType::SupplierInvoice,
+        status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
+        confirm_datetime: Some(NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0)),
+        finalised_datetime: None,
+    }
+}
+
 pub fn mock_empty_draft_supplier_invoice() -> InvoiceRow {
     InvoiceRow {
         id: String::from("empty_draft_supplier_invoice"),
         name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
-        invoice_number: 7,
+        invoice_number: 8,
         r#type: InvoiceRowType::SupplierInvoice,
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
@@ -127,6 +143,7 @@ pub fn mock_supplier_invoices() -> Vec<InvoiceRow> {
         mock_supplier_invoice_a(),
         mock_supplier_invoice_b(),
         mock_supplier_invoice_c(),
+        mock_supplier_invoice_d(),
         mock_empty_draft_supplier_invoice(),
     ]
 }
