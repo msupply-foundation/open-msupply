@@ -130,8 +130,6 @@ const themeOptions = {
     border: '#e4e4eb',
     primary: { 500: '#e95c30' },
     secondary: { main: '#3e7bfa' },
-    white: { main: '#fff' },
-    g: { main: '#CDCDCD' },
 
     background: {
       menu: '#f2f2f5',
