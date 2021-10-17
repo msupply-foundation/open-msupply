@@ -16,8 +16,8 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
 
   return (
     <Box display="flex" alignItems="center" gap={1}>
-      <FormLabel sx={{ fontWeight: 'bold', flex: 1 }}>{t(label)}:</FormLabel>
-      <Box sx={{ flex: 3 }}>{Input}</Box>
+      <FormLabel sx={{ width: 120, fontWeight: 'bold' }}>{t(label)}:</FormLabel>
+      {Input}
     </Box>
   );
 };

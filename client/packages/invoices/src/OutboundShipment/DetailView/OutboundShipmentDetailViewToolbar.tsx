@@ -23,24 +23,10 @@ export const OutboundShipmentDetailViewToolbar: FC<OutboundShipmentToolbarProps>
     const t = useTranslation();
 
     return (
-      <AppBarContentPortal
-        sx={{
-          display: 'flex',
-          flex: 1,
-          justifyContent: 'center',
-          paddingLeft: '25px',
-        }}
-      >
+      <AppBarContentPortal sx={{ display: 'flex', flex: 1 }}>
         <Grid container flexDirection="column" display="flex" flex={1}>
           <Grid item display="flex" flex={1}>
-            <Box
-              component="form"
-              display="flex"
-              flex={1}
-              flexDirection="column"
-              gap={1}
-              flexShrink={1}
-            >
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
               <InputWithLabelRow
                 label="label.customer-name"
                 Input={
@@ -68,13 +54,9 @@ export const OutboundShipmentDetailViewToolbar: FC<OutboundShipmentToolbarProps>
             </Box>
           </Grid>
           <Grid item display="flex" flex={1}>
-            <Box display="flex" flex={1} justifyContent="flex-end" />
-            <Box
-              display="flex"
-              flex={1}
-              justifyContent="center"
-              alignItems="flex-end"
-            >
+            <Box display="flex" flex={1} />
+
+            <Box display="flex" flex={1} justifyContent="center">
               <TabList
                 value={currentTab}
                 onChange={(_, val) => onChangeTab(val)}
@@ -83,7 +65,8 @@ export const OutboundShipmentDetailViewToolbar: FC<OutboundShipmentToolbarProps>
                 <Tab value="transport" label={t('label.transport')} />
               </TabList>
             </Box>
-            <Box display="flex" flex={1} justifyContent="flex-end" />
+
+            <Box display="flex" flex={1} />
           </Grid>
         </Grid>
       </AppBarContentPortal>
