@@ -4,10 +4,7 @@ use crate::{
         invoice::{Invoice, InvoiceStatus},
     },
     server::service::graphql::schema::{
-        mutations::{
-            customer_invoice::OtherPartyIdNotFoundError, ForeignKey, ForeignKeyError,
-            RecordAlreadyExist,
-        },
+        mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
     service::{invoice::InsertCustomerInvoiceError, SingleRecordError},
@@ -57,7 +54,6 @@ pub enum InsertCustomerInvoiceResponse {
 pub enum InsertCustomerInvoiceErrorInterface {
     InvoiceAlreadyExists(RecordAlreadyExist),
     ForeignKeyError(ForeignKeyError),
-    OtherPartyIdNotFound(OtherPartyIdNotFoundError),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
     OtherPartyNotACustomer(OtherPartyNotACustomerError),
     DatabaseError(DatabaseError),

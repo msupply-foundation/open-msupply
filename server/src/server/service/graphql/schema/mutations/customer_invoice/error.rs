@@ -59,15 +59,6 @@ impl OtherPartyCannotBeThisStoreError {
     }
 }
 
-pub struct OtherPartyIdNotFoundError;
-
-#[Object]
-impl OtherPartyIdNotFoundError {
-    pub async fn description(&self) -> &'static str {
-        "Other party not found."
-    }
-}
-
 pub struct OtherPartyNotACustomerError(pub NameNode);
 
 #[Object]
