@@ -1,7 +1,7 @@
 type BatchIsReserved implements DeleteSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface {
 	description: String!
 }
-type CanOnlyEditInvoicesInLoggedInStoreError implements DeleteCustomerInvoiceErrorInterface & UpdateCustomerInvoiceErrorInterface {
+type CanOnlyEditInvoicesInLoggedInStoreError implements UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
 type CannotChangeInvoiceBackToDraft implements UpdateSupplierInvoiceErrorInterface {
@@ -10,11 +10,11 @@ type CannotChangeInvoiceBackToDraft implements UpdateSupplierInvoiceErrorInterfa
 type CannotChangeStatusBackToDraftError implements UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
-type CannotDeleteInvoiceWithLines implements DeleteSupplierInvoiceErrorInterface {
+type CannotDeleteInvoiceWithLines implements DeleteCustomerInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface {
 	description: String!
 	lines: InvoiceLineConnector!
 }
-type CannotEditFinalisedInvoice implements UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceErrorInterface {
+type CannotEditFinalisedInvoice implements UpdateSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface & InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & DeleteCustomerInvoiceLineErrorInterface & UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface & DeleteCustomerInvoiceErrorInterface {
 	description: String!
 }
 """
@@ -26,7 +26,7 @@ type ConnectorError {
 interface ConnectorErrorInterface {
 	description: String!
 }
-type DatabaseError implements DeleteCustomerInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface & UpdateSupplierInvoiceLineErrorInterface & NodeErrorInterface & InsertCustomerInvoiceErrorInterface & InsertSupplierInvoiceErrorInterface & InsertSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface & ConnectorErrorInterface & UpdateSupplierInvoiceErrorInterface & UpdateCustomerInvoiceErrorInterface {
+type DatabaseError implements UpdateSupplierInvoiceLineErrorInterface & InsertCustomerInvoiceErrorInterface & DeleteSupplierInvoiceLineErrorInterface & NodeErrorInterface & InsertCustomerInvoiceLineErrorInterface & InsertSupplierInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface & DeleteCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceErrorInterface & ConnectorErrorInterface & UpdateCustomerInvoiceErrorInterface & UpdateSupplierInvoiceErrorInterface & InsertSupplierInvoiceLineErrorInterface {
 	description: String!
 	fullError: String!
 }
@@ -41,19 +41,30 @@ input DatetimeFilterInput {
 	beforeOrEqualTo: DateTime
 	afterOrEqualTo: DateTime
 }
+"""
+Generic Error Wrapper
+"""
 type DeleteCustomerInvoiceError {
 	error: DeleteCustomerInvoiceErrorInterface!
 }
 interface DeleteCustomerInvoiceErrorInterface {
 	description: String!
 }
-input DeleteCustomerInvoiceInput {
-	id: String!
+"""
+Generic Error Wrapper
+"""
+type DeleteCustomerInvoiceLineError {
+	error: DeleteCustomerInvoiceLineErrorInterface!
 }
-type DeleteCustomerInvoiceOk {
+interface DeleteCustomerInvoiceLineErrorInterface {
+	description: String!
+}
+input DeleteCustomerInvoiceLineInput {
+	id: String!
 	invoiceId: String!
 }
-union DeleteCustomerInvoiceResultUnion = | DeleteCustomerInvoiceOk | DeleteCustomerInvoiceError
+union DeleteCustomerInvoiceLineResponse = | DeleteCustomerInvoiceLineError | DeleteResponse
+union DeleteCustomerInvoiceResponse = | DeleteCustomerInvoiceError | DeleteResponse
 type DeleteResponse {
 	id: String!
 }
@@ -96,18 +107,22 @@ input EqualFilterInvoiceTypeInput {
 input EqualFilterStringInput {
 	equalTo: String
 }
-type FinalisedInvoiceIsNotEditableError implements UpdateCustomerInvoiceErrorInterface & DeleteCustomerInvoiceErrorInterface {
+type FinalisedInvoiceIsNotEditableError implements UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
 enum ForeignKey {
 	OTHER_PARTY_ID
 	ITEM_ID
 	INVOICE_ID
+	STOCK_LINE_ID
 }
-type ForeignKeyError implements InsertSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface & InsertSupplierInvoiceErrorInterface & UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceLineErrorInterface {
+type ForeignKeyError implements UpdateSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface & DeleteCustomerInvoiceLineErrorInterface & InsertSupplierInvoiceErrorInterface & UpdateSupplierInvoiceErrorInterface & UpdateCustomerInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & InsertCustomerInvoiceErrorInterface & InsertCustomerInvoiceLineErrorInterface {
 	description: String!
 	key: ForeignKey!
 }
+"""
+Generic Error Wrapper
+"""
 type InsertCustomerInvoiceError {
 	error: InsertCustomerInvoiceErrorInterface!
 }
@@ -115,15 +130,36 @@ interface InsertCustomerInvoiceErrorInterface {
 	description: String!
 }
 input InsertCustomerInvoiceInput {
+	"""
+	The new invoice id provided by the client
+	"""
+	id: String!
+	"""
+	The other party must be an customer of the current store
+	"""
 	otherPartyId: String!
 	status: InvoiceNodeStatus
 	comment: String
 	theirReference: String
 }
-type InsertCustomerInvoiceOk {
-	invoice: InvoiceNode!
+"""
+Generic Error Wrapper
+"""
+type InsertCustomerInvoiceLineError {
+	error: InsertCustomerInvoiceLineErrorInterface!
 }
-union InsertCustomerInvoiceResultUnion = | InsertCustomerInvoiceOk | InsertCustomerInvoiceError
+interface InsertCustomerInvoiceLineErrorInterface {
+	description: String!
+}
+input InsertCustomerInvoiceLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String!
+	stockLineId: String!
+	numberOfPacks: Int!
+}
+union InsertCustomerInvoiceLineResponse = | InsertCustomerInvoiceLineError | NodeError | InvoiceLineNode
+union InsertCustomerInvoiceResponse = | InsertCustomerInvoiceError | NodeError | InvoiceNode
 """
 Generic Error Wrapper
 """
@@ -133,14 +169,8 @@ type InsertSupplierInvoiceError {
 interface InsertSupplierInvoiceErrorInterface {
 	description: String!
 }
-"""
-Input Description Main
-"""
 input InsertSupplierInvoiceInput {
 	id: String!
-	"""
-	Input Descirption Inner
-	"""
 	otherPartyId: String!
 	status: InvoiceNodeStatus!
 	comment: String
@@ -175,7 +205,7 @@ type InvoiceConnector {
 	totalCount: Int!
 	nodes: [InvoiceNode!]!
 }
-type InvoiceDoesNotBelongToCurrentStore implements DeleteSupplierInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceErrorInterface & UpdateSupplierInvoiceErrorInterface & UpdateSupplierInvoiceLineErrorInterface {
+type InvoiceDoesNotBelongToCurrentStore implements InsertCustomerInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceErrorInterface & UpdateCustomerInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & DeleteCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceErrorInterface & UpdateSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceErrorInterface {
 	description: String!
 }
 input InvoiceFilterInput {
@@ -189,7 +219,7 @@ input InvoiceFilterInput {
 	confirmDatetime: DatetimeFilterInput
 	finalisedDatetime: DatetimeFilterInput
 }
-type InvoiceLineBelongsToAnotherInvoice implements UpdateSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface {
+type InvoiceLineBelongsToAnotherInvoice implements UpdateCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface {
 	description: String!
 	invoice: InvoiceResponse!
 }
@@ -216,6 +246,7 @@ type InvoiceLineNode {
 	expiryDate: NaiveDate
 	stockLine: StockLineResponse
 }
+union InvoiceLineResponse = | NodeError | InvoiceLineNode
 union InvoiceLinesResponse = | ConnectorError | InvoiceLineConnector
 type InvoiceNode {
 	id: String!
@@ -241,7 +272,7 @@ enum InvoiceNodeType {
 	CUSTOMER_INVOICE
 	SUPPLIER_INVOICE
 }
-type InvoiceNotFoundError implements DeleteCustomerInvoiceErrorInterface & UpdateCustomerInvoiceErrorInterface {
+type InvoiceNotFoundError implements UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
 union InvoicePriceResponse = | NodeError | InvoicePricingNode
@@ -268,6 +299,9 @@ type ItemConnector {
 	totalCount: Int!
 	nodes: [ItemNode!]!
 }
+type ItemDoesNotMatchStockLine implements InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface {
+	description: String!
+}
 input ItemFilterInput {
 	name: SimpleStringFilterInput
 	code: SimpleStringFilterInput
@@ -289,10 +323,16 @@ input ItemSortInput {
 	desc: Boolean
 }
 union ItemsResponse = | ConnectorError | ItemConnector
+type LineDoesntReferenceStockLine implements UpdateCustomerInvoiceLineErrorInterface {
+	description: String!
+}
 type Mutations {
-	insertCustomerInvoice(input: InsertCustomerInvoiceInput!): InsertCustomerInvoiceResultUnion!
+	insertCustomerInvoice(input: InsertCustomerInvoiceInput!): InsertCustomerInvoiceResponse!
 	updateCustomerInvoice(input: UpdateCustomerInvoiceInput!): UpdateCustomerInvoiceResultUnion!
-	deleteCustomerInvoice(input: DeleteCustomerInvoiceInput!): DeleteCustomerInvoiceResultUnion!
+	deleteCustomerInvoice(id: String!): DeleteCustomerInvoiceResponse!
+	insertCustomerInvoiceLine(input: InsertCustomerInvoiceLineInput!): InsertCustomerInvoiceLineResponse!
+	updateCustomerInvoiceLine(input: UpdateCustomerInvoiceLineInput!): UpdateCustomerInvoiceLineResponse!
+	deleteCustomerInvoiceLine(input: DeleteCustomerInvoiceLineInput!): DeleteCustomerInvoiceLineResponse!
 	insertSupplierInvoice(input: InsertSupplierInvoiceInput!): InsertSupplierInvoiceResponse!
 	updateSupplierInvoice(input: UpdateSupplierInvoiceInput!): UpdateSupplierInvoiceResponse!
 	deleteSupplierInvoice(input: DeleteSupplierInvoiceInput!): DeleteSupplierInvoiceResponse!
@@ -314,14 +354,8 @@ input NameFilterInput {
 	isCustomer: Boolean
 	isSupplier: Boolean
 }
-"""
-Node Description Main
-"""
 type NameNode {
 	id: String!
-	"""
-	Node Description Inner
-	"""
 	name: String!
 	code: String!
 	isCustomer: Boolean!
@@ -345,30 +379,35 @@ type NodeError {
 interface NodeErrorInterface {
 	description: String!
 }
-type NotASupplierInvoice implements InsertSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface {
+type NotACustomerInvoice implements InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceErrorInterface {
 	description: String!
 }
-type NumberOfPacksAboveZero implements UpdateSupplierInvoiceLineErrorInterface {
+type NotASupplierInvoice implements UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface & DeleteCustomerInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface & DeleteSupplierInvoiceLineErrorInterface {
 	description: String!
 }
-type OtherPartyCannotBeThisStoreError implements UpdateCustomerInvoiceErrorInterface & InsertCustomerInvoiceErrorInterface {
+type NotEnoughStockForReduction implements InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface {
+	description: String!
+	line: InvoiceLineResponse!
+}
+type NumberOfPacksAboveZero implements UpdateCustomerInvoiceLineErrorInterface {
 	description: String!
 }
-type OtherPartyIdMissingError implements InsertCustomerInvoiceErrorInterface & UpdateCustomerInvoiceErrorInterface {
+type OtherPartyCannotBeThisStoreError implements InsertCustomerInvoiceErrorInterface & UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
-type OtherPartyIdNotFoundError implements InsertCustomerInvoiceErrorInterface & UpdateCustomerInvoiceErrorInterface {
+type OtherPartyIdMissingError implements UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
-type OtherPartyNotACustomerOfThisStoreError implements UpdateCustomerInvoiceErrorInterface & InsertCustomerInvoiceErrorInterface {
+type OtherPartyIdNotFoundError implements UpdateCustomerInvoiceErrorInterface {
 	description: String!
 }
-type OtherPartyNotASupplier implements InsertSupplierInvoiceErrorInterface & UpdateSupplierInvoiceErrorInterface {
+type OtherPartyNotACustomerError implements UpdateCustomerInvoiceErrorInterface & InsertCustomerInvoiceErrorInterface {
 	description: String!
 	otherParty: NameNode!
 }
-type PackSizeAboveZero implements UpdateSupplierInvoiceLineErrorInterface {
+type OtherPartyNotASupplier implements UpdateSupplierInvoiceErrorInterface & InsertSupplierInvoiceErrorInterface {
 	description: String!
+	otherParty: NameNode!
 }
 type PaginationError implements ConnectorErrorInterface {
 	description: String!
@@ -388,7 +427,7 @@ type Queries {
 	invoice(id: String!): InvoiceResponse!
 	invoices(page: PaginationInput, filter: InvoiceFilterInput, sort: [InvoiceSortInput!]): InvoicesResponse!
 }
-type RangeError implements UpdateSupplierInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface {
+type RangeError implements InsertSupplierInvoiceLineErrorInterface & InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface {
 	description: String!
 	field: RangeField!
 	max: Int
@@ -399,10 +438,10 @@ enum RangeField {
 	NUMBER_OF_PACKS
 	PACK_SIZE
 }
-type RecordAlreadyExist implements InsertSupplierInvoiceErrorInterface & InsertSupplierInvoiceLineErrorInterface {
+type RecordAlreadyExist implements InsertSupplierInvoiceLineErrorInterface & InsertCustomerInvoiceErrorInterface & InsertSupplierInvoiceErrorInterface & InsertCustomerInvoiceLineErrorInterface {
 	description: String!
 }
-type RecordDoesNotExist implements DeleteSupplierInvoiceErrorInterface & UpdateSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceLineErrorInterface {
+type RecordDoesNotExist implements UpdateSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceLineErrorInterface & DeleteSupplierInvoiceErrorInterface & DeleteCustomerInvoiceErrorInterface {
 	description: String!
 }
 type RecordNotFound implements NodeErrorInterface {
@@ -413,12 +452,19 @@ input SimpleStringFilterInput {
 	equalTo: String
 	like: String
 }
+type StockLineAlreadyExistsInInvoice implements InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface {
+	description: String!
+	line: InvoiceLineResponse!
+}
 """
 Generic Connector
 """
 type StockLineConnector {
 	totalCount: Int!
 	nodes: [StockLineNode!]!
+}
+type StockLineDoesNotBelongToCurrentStore implements InsertCustomerInvoiceLineErrorInterface & UpdateCustomerInvoiceLineErrorInterface {
+	description: String!
 }
 type StockLineNode {
 	id: String!
@@ -447,6 +493,23 @@ input UpdateCustomerInvoiceInput {
 	comment: String
 	theirReference: String
 }
+"""
+Generic Error Wrapper
+"""
+type UpdateCustomerInvoiceLineError {
+	error: UpdateCustomerInvoiceLineErrorInterface!
+}
+interface UpdateCustomerInvoiceLineErrorInterface {
+	description: String!
+}
+input UpdateCustomerInvoiceLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	stockLineId: String
+	numberOfPacks: Int
+}
+union UpdateCustomerInvoiceLineResponse = | UpdateCustomerInvoiceLineError | NodeError | InvoiceLineNode
 type UpdateCustomerInvoiceOk {
 	invoice: InvoiceNode!
 }
