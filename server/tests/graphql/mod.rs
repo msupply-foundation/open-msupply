@@ -86,7 +86,6 @@ async fn assert_gql_query(
     let expected_with_data = json!({
         "data": expected,
     });
-    println!("{}", actual);
     assert_json_eq!(&actual, expected_with_data);
     actual
 }
