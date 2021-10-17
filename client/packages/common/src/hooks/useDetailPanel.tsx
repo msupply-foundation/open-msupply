@@ -48,7 +48,6 @@ export const useDetailPanel = (): DetailPanel => {
   const OpenButton =
     isOpen || isEmpty ? null : (
       <ButtonWithIcon
-        variant="outlined"
         Icon={<MenuDots />}
         labelKey="button.more"
         onClick={() => open()}
