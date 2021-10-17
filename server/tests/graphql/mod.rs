@@ -147,16 +147,7 @@ type DateTime = ChronoDateTime<Utc>;
     normalization = "Rust"
 )]
 pub struct InsertSupplierInvoiceFull;
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq",
-    Clone,
-    normalization = "Rust"
-)]
-pub struct InsertSupplierInvoicePartial;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "tests/graphql/schema.graphql",
@@ -166,15 +157,6 @@ pub struct InsertSupplierInvoicePartial;
     normalization = "Rust"
 )]
 pub struct UpdateSupplierInvoiceFull;
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct UpdateSupplierInvoicePartial;
 
 #[derive(GraphQLQuery)]
 #[graphql(

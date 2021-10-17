@@ -22,38 +22,11 @@ mutation insertSupplierInvoiceFull(
   }
 }
 
-mutation insertSupplierInvoicePartial(
-  $id: String!
-  $otherPartyId_isi: String!
-  $status_isi: InvoiceNodeStatus!
-  $comment_isi: String
-  $theirReference_isi: String
-) {
-  insertSupplierInvoice(
-    input: {
-      id: $id
-      otherPartyId: $otherPartyId_isi
-      status: $status_isi
-      theirReference: $theirReference_isi
-      comment: $comment_isi
-    }
-  ) {
-    ...InsertSupplierInvoiceResponsePartial
-  }
-}
-
 fragment InsertSupplierInvoiceResponse on InsertSupplierInvoiceResponse {
   __typename
   ...InsertSupplierInvoiceError
   ...NodeError
   ...InvoiceNode
-}
-
-fragment InsertSupplierInvoiceResponsePartial on InsertSupplierInvoiceResponse {
-  __typename
-  ...InsertSupplierInvoiceError
-  ...NodeError
-  ...PartialInvoiceNode
 }
 
 fragment InsertSupplierInvoiceError on InsertSupplierInvoiceError {
@@ -92,38 +65,11 @@ mutation updateSupplierInvoiceFull(
   }
 }
 
-mutation updateSupplierInvoicePartial(
-  $id: String!
-  $otherPartyId_usi: String
-  $status_usi: InvoiceNodeStatus
-  $comment_usi: String
-  $theirReference_usi: String
-) {
-  updateSupplierInvoice(
-    input: {
-      id: $id
-      otherPartyId: $otherPartyId_usi
-      status: $status_usi
-      theirReference: $theirReference_usi
-      comment: $comment_usi
-    }
-  ) {
-    ...UpdateSupplierInvoiceResponsePartial
-  }
-}
-
 fragment UpdateSupplierInvoiceResponse on UpdateSupplierInvoiceResponse {
   __typename
   ...UpdateSupplierInvoiceError
   ...NodeError
   ...InvoiceNode
-}
-
-fragment UpdateSupplierInvoiceResponsePartial on UpdateSupplierInvoiceResponse {
-  __typename
-  ...UpdateSupplierInvoiceError
-  ...NodeError
-  ...PartialInvoiceNode
 }
 
 fragment UpdateSupplierInvoiceError on UpdateSupplierInvoiceError {
@@ -330,12 +276,6 @@ fragment InvoiceResponse on InvoiceResponse {
   __typename
   ...InvoiceNode
   ...NodeError
-}
-
-fragment PartialInvoiceNode on InvoiceNode {
-  id
-  status
-  type
 }
 
 fragment InvoiceNode on InvoiceNode {
