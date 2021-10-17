@@ -25,7 +25,9 @@ mod graphql {
         let name_repository = NameRepository::new(&connection);
         let store_repository = StoreRepository::new(&connection);
         let name_store_repository = NameStoreJoinRepository::new(&connection);
-        let mock_names: Vec<NameRow> = mock_names();
+        let mut mock_names: Vec<NameRow> = mock_names();
+        mock_names.sort_by(|a, b| a.id.cmp(&b.id));
+
         let mock_stores: Vec<StoreRow> = mock_stores();
         let mock_name_store_joins: Vec<NameStoreJoinRow> = mock_name_store_joins();
         for name in &mock_names {
