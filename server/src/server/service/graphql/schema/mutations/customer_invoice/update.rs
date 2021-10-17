@@ -7,6 +7,7 @@ use crate::{
         mutations::{
             customer_invoice::{InvoiceLineHasNoStockLineError, NotACustomerInvoiceError},
             error::DatabaseError,
+            ForeignKey, ForeignKeyError,
         },
         types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
@@ -16,7 +17,7 @@ use crate::{
 use super::{
     CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,
     FinalisedInvoiceIsNotEditableError, InvoiceNotFoundError, OtherPartyCannotBeThisStoreError,
-    OtherPartyIdNotFoundError, OtherPartyNotACustomerError,
+    OtherPartyNotACustomerError,
 };
 
 use async_graphql::{InputObject, Interface, Union};
@@ -71,7 +72,8 @@ pub enum UpdateCustomerInvoiceErrorInterface {
     InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError),
     InvoiceDoesNotExists(InvoiceNotFoundError),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
-    OtherPartyDoesNotExists(OtherPartyIdNotFoundError),
+    /// Other party does not exist
+    ForeignKeyError(ForeignKeyError),
     OtherPartyNotACustomer(OtherPartyNotACustomerError),
     NotACustomerInvoice(NotACustomerInvoiceError),
     DatabaseError(DatabaseError),
@@ -95,7 +97,7 @@ impl From<UpdateCustomerInvoiceError> for UpdateCustomerInvoiceResponse {
                 OutError::InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError {})
             }
             UpdateCustomerInvoiceError::OtherPartyDoesNotExists => {
-                OutError::OtherPartyDoesNotExists(OtherPartyIdNotFoundError {})
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
             UpdateCustomerInvoiceError::OtherPartyNotACustomer(name) => {
                 OutError::OtherPartyNotACustomer(OtherPartyNotACustomerError(NameNode { name }))

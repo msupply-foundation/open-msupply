@@ -10,6 +10,7 @@ use remote_server::{
 use assert_json_diff::assert_json_eq;
 use serde_json::{json, Value};
 
+mod customer_invoice_insert;
 mod invoice_query;
 mod invoices;
 mod names;
