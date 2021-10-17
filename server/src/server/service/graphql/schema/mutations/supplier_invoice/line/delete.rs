@@ -12,7 +12,7 @@ use crate::{
     service::invoice_line::DeleteSupplierInvoiceLineError,
 };
 
-use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice, InvoiceLineIsReserved};
+use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 
 #[derive(InputObject)]
 pub struct DeleteSupplierInvoiceLineInput {
@@ -36,7 +36,6 @@ pub enum DeleteSupplierInvoiceLineErrorInterface {
     NotASupplierInvoice(NotASupplierInvoice),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
-    InvoiceLineIsReserved(InvoiceLineIsReserved),
     BatchIsReserved(BatchIsReserved),
 }
 
