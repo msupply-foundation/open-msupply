@@ -1,7 +1,7 @@
 mod graphql {
     use crate::graphql::common::{
-        assert_unwrap_enum, assert_unwrap_optional_key, convert_graphql_client_type,
-        get_invoice_inline, get_invoice_lines_inline,
+        assert_unwrap_enum, assert_unwrap_optional_key, compare_option,
+        convert_graphql_client_type, get_invoice_inline, get_invoice_lines_inline,
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
@@ -367,17 +367,6 @@ mod graphql {
 
         assert_eq!(start_line, end_line);
         assert_eq!(start_batch, end_batch);
-    }
-
-    fn compare_option<A, B>(a: &Option<A>, b: &B) -> bool
-    where
-        B: PartialEq<A>,
-    {
-        if let Some(a) = a {
-            b == a
-        } else {
-            true
-        }
     }
 
     impl PartialEq<update::Variables> for InvoiceLineRow {
