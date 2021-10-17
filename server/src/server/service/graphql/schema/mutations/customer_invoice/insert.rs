@@ -79,7 +79,7 @@ impl From<InsertCustomerInvoiceError> for InsertCustomerInvoiceResponse {
                 OutError::OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError {})
             }
             InsertCustomerInvoiceError::OtherPartyIdNotFound(_) => {
-                OutError::OtherPartyIdNotFound(OtherPartyIdNotFoundError {})
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
             InsertCustomerInvoiceError::OtherPartyNotACustomer(name) => {
                 OutError::OtherPartyNotACustomer(OtherPartyNotACustomerError(NameNode { name }))
