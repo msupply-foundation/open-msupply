@@ -1,29 +1,70 @@
 mod graphql {
-    use crate::graphql::get_gql_result;
+    use crate::graphql::common::{
+        assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
+    };
+    use crate::graphql::{
+        get_gql_result, insert_supplier_invoice_line_full as insert,
+        InsertSupplierInvoiceLineFull as Insert,
+    };
     use chrono::NaiveDate;
     use graphql_client::{GraphQLQuery, Response};
+    use insert::InsertSupplierInvoiceLineErrorInterface::*;
     use remote_server::{
         database::{
             mock::MockDataInserts,
-            repository::{
-                InvoiceLineRepository, InvoiceQueryRepository, StockLineRepository,
-                StorageConnection,
-            },
+            repository::{InvoiceLineRepository, StockLineRepository},
             schema::{InvoiceLineRow, StockLineRow},
         },
-        domain::{
-            invoice::{Invoice, InvoiceFilter},
-            Pagination,
-        },
+        domain::{invoice::InvoiceFilter, Pagination},
         util::test_db,
     };
     use uuid::Uuid;
 
-    use crate::graphql::{
-        insert_supplier_invoice_line_full as insert, InsertSupplierInvoiceLineFull as Insert,
-    };
+    macro_rules! assert_unwrap_response_variant {
+        ($response:ident) => {
+            assert_unwrap_optional_key!($response, data).insert_supplier_invoice_line
+        };
+    }
 
-    use insert::InsertSupplierInvoiceLineErrorInterface::*;
+    macro_rules! assert_unwrap_line {
+        ($response:ident) => {{
+            let response_variant = assert_unwrap_response_variant!($response);
+            assert_unwrap_enum!(
+                response_variant,
+                insert::InsertSupplierInvoiceLineResponse::InvoiceLineNode
+            )
+        }};
+    }
+
+    macro_rules! assert_unwrap_batch {
+        ($line:ident) => {{
+            let line_cloned = $line.clone();
+            let batch_variant = assert_unwrap_optional_key!(line_cloned, stock_line);
+            let batch =
+                assert_unwrap_enum!(batch_variant, insert::StockLineResponse::StockLineNode);
+            batch
+        }};
+    }
+
+    macro_rules! assert_unwrap_error {
+        ($response:ident) => {{
+            let response_variant = assert_unwrap_response_variant!($response);
+            let error_wrapper = assert_unwrap_enum!(
+                response_variant,
+                insert::InsertSupplierInvoiceLineResponse::InsertSupplierInvoiceLineError
+            );
+            error_wrapper.error
+        }};
+    }
+
+    macro_rules! assert_error {
+        ($response:ident, $error:expr) => {{
+            let lhs = assert_unwrap_error!($response);
+            let rhs = $error;
+            assert_eq!(lhs, rhs);
+        }};
+    }
+
     #[actix_rt::test]
     async fn test_insert_supplier_invoice_line() {
         let (mut mock_data, connection, settings) = test_db::setup_all(
@@ -34,30 +75,24 @@ mod graphql {
 
         // Setup
 
-        let draft_supplier_invoice = get_invoice(
+        let draft_supplier_invoice = get_invoice_inline!(
             InvoiceFilter::new().match_supplier_invoice().match_draft(),
-            &connection,
-            "can't find draft supplier invoice",
+            &connection
         );
-        let confirmed_supplier_invoice = get_invoice(
+        let confirmed_supplier_invoice = get_invoice_inline!(
             InvoiceFilter::new()
                 .match_supplier_invoice()
                 .match_confirmed(),
-            &connection,
-            "can't find confirmed supplier invoice",
+            &connection
         );
-        let finalised_supplier_invoice = get_invoice(
+        let finalised_supplier_invoice = get_invoice_inline!(
             InvoiceFilter::new()
                 .match_supplier_invoice()
                 .match_finalised(),
-            &connection,
-            "can't find finalise supplier invoice",
+            &connection
         );
-        let customer_invoice = get_invoice(
-            InvoiceFilter::new().match_customer_invoice(),
-            &connection,
-            "can't find customer invoice",
-        );
+        let customer_invoice =
+            get_invoice_inline!(InvoiceFilter::new().match_customer_invoice(), &connection);
         let item = mock_data.items.pop().unwrap();
         let existing_line = mock_data.invoice_lines.pop().unwrap();
 
@@ -80,14 +115,13 @@ mod graphql {
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(ForeignKeyError(insert::ForeignKeyError {
+            ForeignKeyError(insert::ForeignKeyError {
                 description: "FK record doesn't exist".to_string(),
                 key: insert::ForeignKey::ItemId,
-            },))
+            })
         );
-
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
@@ -95,14 +129,13 @@ mod graphql {
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(ForeignKeyError(insert::ForeignKeyError {
+            ForeignKeyError(insert::ForeignKeyError {
                 description: "FK record doesn't exist".to_string(),
                 key: insert::ForeignKey::InvoiceId,
-            },))
+            })
         );
-
         // Test CannotEditFinalisedInvoice
 
         let mut variables = base_variables.clone();
@@ -110,13 +143,11 @@ mod graphql {
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(CannotEditFinalisedInvoice(
-                insert::CannotEditFinalisedInvoice {
-                    description: "Cannot edit finalised invoice".to_string(),
-                },
-            ))
+            CannotEditFinalisedInvoice(insert::CannotEditFinalisedInvoice {
+                description: "Cannot edit finalised invoice".to_string(),
+            },)
         );
 
         // Test NotASupplierInvoice
@@ -126,13 +157,12 @@ mod graphql {
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(NotASupplierInvoice(insert::NotASupplierInvoice {
+            NotASupplierInvoice(insert::NotASupplierInvoice {
                 description: "Invoice is not Supplier Invoice".to_string(),
-            },))
+            })
         );
-
         // Test RangeError NumberOfPacks
 
         let mut variables = base_variables.clone();
@@ -140,16 +170,15 @@ mod graphql {
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(RangeError(insert::RangeError {
+            RangeError(insert::RangeError {
                 description: "Value is below minimum".to_string(),
                 field: insert::RangeField::NumberOfPacks,
                 max: None,
                 min: Some(1),
-            },))
+            })
         );
-
         // Test RangeError PackSize
 
         let mut variables = base_variables.clone();
@@ -157,16 +186,15 @@ mod graphql {
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(RangeError(insert::RangeError {
+            RangeError(insert::RangeError {
                 description: "Value is below minimum".to_string(),
                 field: insert::RangeField::NumberOfPacks,
                 max: None,
                 min: Some(1),
-            },))
+            })
         );
-
         // Test RecordAlreadyExists
 
         let mut variables = base_variables.clone();
@@ -175,20 +203,19 @@ mod graphql {
         let query = Insert::build_query(variables);
 
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        assert_eq!(
+        assert_error!(
             response,
-            error_response(RecordAlreadyExist(insert::RecordAlreadyExist {
+            RecordAlreadyExist(insert::RecordAlreadyExist {
                 description: "Record already exists".to_string(),
-            },))
+            })
         );
-
         // Success Draft
 
         let variables = base_variables.clone();
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        let line = unwrap_line(response);
+        let line = assert_unwrap_line!(response);
 
         assert_eq!(line.id, variables.id);
 
@@ -207,7 +234,8 @@ mod graphql {
         let query = Insert::build_query(variables.clone());
 
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        let (line, batch) = unwrap_line_and_batch(response);
+        let line = assert_unwrap_line!(response);
+        let batch = assert_unwrap_batch!(line);
 
         assert_eq!(line.id, variables.id);
 
@@ -232,7 +260,8 @@ mod graphql {
         let query = Insert::build_query(variables.clone());
 
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        let (line, batch) = unwrap_line_and_batch(response);
+        let line = assert_unwrap_line!(response);
+        let batch = assert_unwrap_batch!(line);
 
         assert_eq!(line.id, variables.id);
 
@@ -255,7 +284,7 @@ mod graphql {
         let query = Insert::build_query(variables.clone());
 
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-        let line = unwrap_line(response);
+        let line = assert_unwrap_line!(response);
 
         assert_eq!(line.id, variables.id);
 
@@ -275,78 +304,8 @@ mod graphql {
         );
     }
 
-    fn unwrap_line(data: Response<insert::ResponseData>) -> insert::InvoiceLineNode {
-        let error_message = format!("Error while unwrapping line {:#?}", data);
-        if data.data.is_none() {
-            panic!("{}", error_message)
-        }
-
-        match data.data.unwrap().insert_supplier_invoice_line {
-            insert::InsertSupplierInvoiceLineResponse::InvoiceLineNode(node) => node,
-            _ => panic!("{}", error_message),
-        }
-    }
-
-    fn unwrap_line_and_batch(
-        data: Response<insert::ResponseData>,
-    ) -> (insert::InvoiceLineNode, insert::StockLineNode) {
-        let error_message = format!("Error while unwrapping batch {:#?}", data);
-        let line = unwrap_line(data);
-
-        if line.stock_line.is_none() {
-            panic!("{}", error_message);
-        };
-        let batch = match line.stock_line.clone().unwrap() {
-            insert::StockLineResponse::StockLineNode(node) => node,
-            _ => panic!("{}", error_message),
-        };
-
-        (line, batch)
-    }
-
-    fn get_invoice(
-        invoice_filter: InvoiceFilter,
-        connection: &StorageConnection,
-        error_message: &str,
-    ) -> Invoice {
-        InvoiceQueryRepository::new(&connection)
-            .query(Pagination::one(), Some(invoice_filter), None)
-            .expect(error_message)
-            .pop()
-            .expect(error_message)
-    }
-
-    fn error_response(
-        error: insert::InsertSupplierInvoiceLineErrorInterface,
-    ) -> Response<insert::ResponseData> {
-        Response {
-            data: Some(insert::ResponseData {
-                insert_supplier_invoice_line:
-                    insert::InsertSupplierInvoiceLineResponse::InsertSupplierInvoiceLineError(
-                        insert::InsertSupplierInvoiceLineError { error },
-                    ),
-            }),
-            errors: None,
-        }
-    }
-
     impl PartialEq<insert::Variables> for InvoiceLineRow {
         fn eq(&self, other: &insert::Variables) -> bool {
-            let InvoiceLineRow {
-                id,
-                invoice_id,
-                item_id,
-                item_name: _,
-                item_code: _,
-                stock_line_id: _,
-                batch,
-                expiry_date,
-                pack_size,
-                cost_price_per_pack,
-                sell_price_per_pack,
-                total_after_tax: _,
-                number_of_packs,
-            } = self;
             let insert::Variables {
                 batch_isil,
                 cost_price_per_pack_isil,
@@ -359,37 +318,25 @@ mod graphql {
                 pack_size_isil,
             } = other;
 
-            cost_price_per_pack_isil == cost_price_per_pack
-                && expiry_date_isil == expiry_date
-                && id_isil == id
-                && invoice_id_isil == invoice_id
-                && item_id_isil == item_id
-                && *number_of_packs_isil == *number_of_packs as i64
-                && sell_price_per_pack_isil == sell_price_per_pack
-                && batch_isil == batch
-                && *pack_size_isil == *pack_size as i64
+            *cost_price_per_pack_isil == self.cost_price_per_pack
+                && *expiry_date_isil == self.expiry_date
+                && *id_isil == self.id
+                && *invoice_id_isil == self.invoice_id
+                && *item_id_isil == self.item_id
+                && *number_of_packs_isil == self.number_of_packs as i64
+                && *sell_price_per_pack_isil == self.sell_price_per_pack
+                && *batch_isil == self.batch
+                && *pack_size_isil == self.pack_size as i64
         }
     }
 
     impl PartialEq<insert::Variables> for StockLineRow {
         fn eq(&self, other: &insert::Variables) -> bool {
-            let StockLineRow {
-                id: _,
-                item_id,
-                store_id: _,
-                batch,
-                pack_size,
-                cost_price_per_pack,
-                sell_price_per_pack,
-                available_number_of_packs,
-                total_number_of_packs,
-                expiry_date,
-            } = self;
             let insert::Variables {
                 batch_isil,
                 cost_price_per_pack_isil,
                 expiry_date_isil,
-                id,
+                id: _,
                 invoice_id_isil: _,
                 item_id_isil,
                 number_of_packs_isil,
@@ -397,15 +344,14 @@ mod graphql {
                 pack_size_isil,
             } = other;
 
-            cost_price_per_pack_isil == cost_price_per_pack
-                && expiry_date_isil == expiry_date
-                && id == id
-                && item_id_isil == item_id
-                && *number_of_packs_isil == *available_number_of_packs as i64
-                && *number_of_packs_isil == *total_number_of_packs as i64
-                && sell_price_per_pack_isil == sell_price_per_pack
-                && batch_isil == batch
-                && *pack_size_isil == *pack_size as i64
+            *cost_price_per_pack_isil == self.cost_price_per_pack
+                && *expiry_date_isil == self.expiry_date
+                && *item_id_isil == self.item_id
+                && *number_of_packs_isil == self.available_number_of_packs as i64
+                && *number_of_packs_isil == self.total_number_of_packs as i64
+                && *sell_price_per_pack_isil == self.sell_price_per_pack
+                && *batch_isil == self.batch
+                && *pack_size_isil == self.pack_size as i64
         }
     }
 }
