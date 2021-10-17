@@ -80,7 +80,19 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
 
-        // OtherPartyIdNotFoundError
+        // ForeignKeyError (OtherPartyIdNotFoundError)
+        let foreign_key_query = r#"mutation InsertCustomerInvoice($input: InsertCustomerInvoiceInput!) {
+          insertCustomerInvoice(input: $input) {
+              ... on InsertCustomerInvoiceError {
+                error {
+                  ... on ForeignKeyError {
+                    __typename
+                    key
+                  }
+                }
+              }
+          }
+        }"#;
         let variables = Some(json!({
           "input": {
             "id": "ci_insert_1",
@@ -90,12 +102,13 @@ mod graphql {
         let expected = json!({
             "insertCustomerInvoice": {
               "error": {
-                "__typename": "OtherPartyIdNotFoundError"
+                "__typename": "ForeignKeyError",
+                "key": "OTHER_PARTY_ID"
               }
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, foreign_key_query, &variables, &expected).await;
 
         // Test succeeding insert
         let variables = Some(json!({
