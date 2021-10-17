@@ -30,6 +30,23 @@ macro_rules! assert_unwrap_enum {
     }};
 }
 
+macro_rules! assert_matches {
+    ($enum:ident, $variant:pat_param) => {{
+        let debug = format!("{:#?}", $enum);
+
+        match $enum {
+            $variant => {}
+            _ => {
+                panic!(
+                    "\nwrong enum variant {} in\n {}",
+                    stringify!($variant),
+                    debug
+                );
+            }
+        }
+    }};
+}
+
 macro_rules! assert_unwrap_optional_key {
     ($option:ident, $key:ident) => {{
         let debug = format!("{:#?}", $option);
@@ -54,6 +71,7 @@ where
     serde_json::from_str(&serde_json::to_string(&f).unwrap()).unwrap()
 }
 
+pub(crate) use assert_matches;
 pub(crate) use assert_unwrap_enum;
 pub(crate) use assert_unwrap_optional_key;
 pub(crate) use get_invoice_inline;
