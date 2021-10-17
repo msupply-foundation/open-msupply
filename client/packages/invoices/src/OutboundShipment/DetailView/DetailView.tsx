@@ -176,13 +176,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       <AppBarButtonsPortal>
         <Grid container gap={1}>
           <ButtonWithIcon
-            variant="outlined"
             labelKey="button.add-item"
             Icon={<PlusCircle />}
             onClick={showDialog}
           />
           <ButtonWithIcon
-            variant="outlined"
             Icon={<Book />}
             labelKey="button.docs"
             onClick={() => (location.href = ExternalURL.PublicDocs)}
@@ -240,7 +238,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <ButtonWithIcon
               Icon={<XCircleIcon />}
               labelKey="button.cancel"
-              variant="outlined"
               color="secondary"
               onClick={() => navigate(-1)}
             />
