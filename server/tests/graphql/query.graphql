@@ -286,6 +286,38 @@ fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErr
   ...InvoiceLineBelongsToAnotherInvoice
 }
 
+# DELETE SUPPLIER INVOICE LINE
+
+mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId_dsil: String!) {
+  deleteSupplierInvoiceLine(input: { id: $id, invoiceId: $invoiceId_dsil }) {
+    ...DeleteSupplierInvoiceLineResponse
+  }
+}
+
+fragment DeleteSupplierInvoiceLineResponse on DeleteSupplierInvoiceLineResponse {
+  __typename
+  ...DeleteSupplierInvoiceLineError
+  ...DeleteResponse
+}
+
+fragment DeleteSupplierInvoiceLineError on DeleteSupplierInvoiceLineError {
+  error {
+    ...DeleteSupplierInvoiceLineErrorInterface
+  }
+}
+
+fragment DeleteSupplierInvoiceLineErrorInterface on DeleteSupplierInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotASupplierInvoice
+  ...RecordDoesNotExist
+  ...BatchIsReserved
+  ...InvoiceLineBelongsToAnotherInvoice
+}
+
 # INVOICE
 
 query invoiceFull($id: String!) {
