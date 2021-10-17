@@ -1,8 +1,9 @@
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, { FC } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
 import UnhappyMan from '../../icons/UnhappyMan';
 import { useTranslation } from '../../../intl';
+import { BaseButton } from '../buttons';
 
 export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
   onClearError,
@@ -22,9 +23,7 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
       <Typography style={{ padding: 20 }} variant="h3">
         {t('error.something-wrong')}
       </Typography>
-      <Button color="primary" variant="contained" onClick={onClearError}>
-        {t('button.try-again')}
-      </Button>
+      <BaseButton onClick={onClearError}>{t('button.try-again')}</BaseButton>
     </Box>
   );
 };

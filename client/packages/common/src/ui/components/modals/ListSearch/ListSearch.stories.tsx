@@ -1,7 +1,8 @@
 import React from 'react';
-import { Grid, Button } from '@mui/material';
+import { Grid } from '@mui/material';
 import { Story } from '@storybook/react';
 import { ListSearch } from './ListSearch';
+import { BaseButton } from '../../buttons';
 
 export default {
   title: 'Modals/ListSearch',
@@ -17,7 +18,7 @@ const Template: Story = () => {
 
   return (
     <Grid>
-      <Button onClick={() => setOpen(true)}> Open Modal </Button>
+      <BaseButton onClick={() => setOpen(true)}> Open Modal </BaseButton>
       <ListSearch
         title="app.admin"
         open={open}

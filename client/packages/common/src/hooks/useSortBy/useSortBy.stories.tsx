@@ -2,6 +2,7 @@ import React from 'react';
 import { useSortBy } from './useSortBy';
 import { Story } from '@storybook/react';
 import { ObjectWithStringKeys } from '../../types';
+import { BaseButton } from '../../ui/components/buttons';
 
 export default {
   title: 'Hooks/useSortBy',
@@ -19,12 +20,12 @@ const Template: Story = () => {
     <div>
       <div>
         <span> Two buttons to sort by two different keys, ID or Quantity.</span>
-        <button onClick={() => onChangeSortBy({ key: 'id' })}>
+        <BaseButton onClick={() => onChangeSortBy({ key: 'id' })}>
           Sort by ID!
-        </button>
-        <button onClick={() => onChangeSortBy({ key: 'quantity' })}>
+        </BaseButton>
+        <BaseButton onClick={() => onChangeSortBy({ key: 'quantity' })}>
           Sort by Quantity!
-        </button>
+        </BaseButton>
       </div>
 
       <p style={{ whiteSpace: 'pre' }}>{JSON.stringify(sortBy, null, 2)}</p>

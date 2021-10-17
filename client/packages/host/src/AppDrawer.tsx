@@ -14,7 +14,7 @@ import {
   Suppliers,
   Theme,
   Tools,
-  UnstyledIconButton,
+  IconButton,
   styled,
   useDrawer,
   useTranslation,
@@ -129,8 +129,8 @@ const AppDrawer: React.FC = () => {
       isOpen={drawer.isOpen}
     >
       <ToolbarIconContainer>
-        <UnstyledIconButton
-          titleKey={
+        <IconButton
+          labelKey={
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
           }
           onClick={drawer.toggle}
