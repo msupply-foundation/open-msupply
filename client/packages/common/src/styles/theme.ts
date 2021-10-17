@@ -44,36 +44,28 @@ declare module '@mui/material/styles/createMixins' {
   }
 }
 
-declare module '@mui/material/Button' {
-  export interface ButtonPropsColorOverrides {
-    white: true;
+declare module '@mui/material/Checkbox' {
+  export interface CheckboxPropsColorOverrides {
+    darkGrey: true;
   }
 }
 
 declare module '@mui/material/styles' {
   interface Palette {
-    white: Palette['primary'];
+    darkGrey: Palette['primary'];
   }
   interface PaletteOptions {
-    white: PaletteOptions['primary'];
-  }
-
-  interface PaletteColor {
-    darker?: string;
-  }
-  interface SimplePaletteColorOptions {
-    darker?: string;
+    darkGrey: PaletteOptions['primary'];
   }
 }
 
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
-    darkGrey: string;
+    darkGrey: Palette['primary'];
     lightGrey: string;
     midGrey: string;
     form: TypeForm;
-    // white: string;
   }
   interface TypeBackground {
     menu: string;
@@ -130,7 +122,7 @@ const themeOptions = {
     },
   },
   palette: {
-    darkGrey: '#555770',
+    darkGrey: { main: '#555770' },
     divider: '#eaeaea',
     error: { main: '#e63535' },
     lightGrey: '#c7c9d9',
@@ -139,6 +131,7 @@ const themeOptions = {
     primary: { 500: '#e95c30' },
     secondary: { main: '#3e7bfa' },
     white: { main: '#fff' },
+    g: { main: '#CDCDCD' },
 
     background: {
       menu: '#f2f2f5',

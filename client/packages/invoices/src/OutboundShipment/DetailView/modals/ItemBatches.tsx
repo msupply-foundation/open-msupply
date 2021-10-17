@@ -80,7 +80,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
     {...props}
     sx={{
       borderBottomWidth: 0,
-      color: theme => theme.palette.darkGrey,
+      color: theme => theme.palette.darkGrey.main,
       fontSize: '12px',
       padding: '0 8px',
       whiteSpace: 'nowrap',
