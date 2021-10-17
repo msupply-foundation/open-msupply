@@ -41,6 +41,28 @@ declare module '@mui/material/styles/createMixins' {
   }
 }
 
+declare module '@mui/material/Button' {
+  export interface ButtonPropsColorOverrides {
+    white: true;
+  }
+}
+
+declare module '@mui/material/styles' {
+  interface Palette {
+    white: Palette['primary'];
+  }
+  interface PaletteOptions {
+    white: PaletteOptions['primary'];
+  }
+
+  interface PaletteColor {
+    darker?: string;
+  }
+  interface SimplePaletteColorOptions {
+    darker?: string;
+  }
+}
+
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
@@ -48,6 +70,7 @@ declare module '@mui/material/styles/createPalette' {
     lightGrey: string;
     midGrey: string;
     form: TypeForm;
+    // white: string;
   }
   interface TypeBackground {
     menu: string;
@@ -68,6 +91,15 @@ declare module '@mui/material/styles/createTypography' {
 }
 
 const themeOptions = {
+  // components: {
+  //   MuiButton: {
+  //     styleOverrides: {
+  //       outlined: { backgroundColor: 'white', color: 'orange' },
+  //       contained: { backgroundColor: 'white', color: 'orange' },
+  //     },
+  //   },
+  // },
+
   breakpoints: {
     values: {
       xs: 0,
@@ -110,7 +142,8 @@ const themeOptions = {
     midGrey: '#8f90a6',
     border: '#e4e4eb',
     primary: { 500: '#e95c30' },
-    secondary: { main: '#555770' },
+    secondary: { main: '#3e7bfa' },
+    white: { main: '#fff' },
 
     background: {
       menu: '#f2f2f5',

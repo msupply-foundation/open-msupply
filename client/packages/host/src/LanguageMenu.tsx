@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Button,
+  ButtonWithIcon,
   Menu,
   MenuItem,
   Translate,
@@ -50,10 +50,9 @@ export const LanguageMenu: React.FC = () => {
 
   return (
     <div>
-      <Button
-        shouldShrink
+      <ButtonWithIcon
         onClick={handleClick}
-        icon={<Translate />}
+        Icon={<Translate />}
         labelKey="button.language"
       />
 

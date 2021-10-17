@@ -1,5 +1,5 @@
 import { useEffect, useReducer, Dispatch, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 
 import {
@@ -50,7 +50,6 @@ export const useDocument = <
   // TODO: Far more robust method needed here.
   const isNew = queryKey.includes('new');
 
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Data is the current data on the server and our most up to date snapshot of the server state.
@@ -62,11 +61,7 @@ export const useDocument = <
   // document state and manage the communication with the server from that.
   const { mutateAsync } = useMutation(api.onUpdate, {
     // TODO: onError: should dispatch some DefaultDocumentAction with errors for the reducer to handle.
-    onSuccess: (data, variables) => {
-      if (variables.id) {
-        navigate({ pathname: `../${data.id}` }, { replace: true });
-      }
-
+    onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
     },
   });

@@ -2,7 +2,6 @@ import React, { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
-  Button,
   Download,
   PlusCircle,
   Printer,
@@ -24,6 +23,8 @@ import {
   Color,
   AppBarButtonsPortal,
   Book,
+  ButtonWithIcon,
+  Grid,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -149,30 +150,28 @@ export const OutboundShipmentListViewComponent: FC = () => {
       </AppBarContentPortal>
 
       <AppBarButtonsPortal>
-        <Button
-          shouldShrink
-          icon={<PlusCircle />}
-          labelKey="button.new-shipment"
-          onClick={() => setOpen(true)}
-        />
-        <Button
-          shouldShrink
-          icon={<Download />}
-          labelKey="button.export"
-          onClick={success('Downloaded successfully')}
-        />
-        <Button
-          shouldShrink
-          icon={<Printer />}
-          labelKey="button.print"
-          onClick={info('No printer detected')}
-        />
-        <Button
-          shouldShrink
-          icon={<Book />}
-          labelKey="button.docs"
-          onClick={() => (location.href = ExternalURL.PublicDocs)}
-        />
+        <Grid container gap={1}>
+          <ButtonWithIcon
+            Icon={<PlusCircle />}
+            labelKey="button.new-shipment"
+            onClick={() => setOpen(true)}
+          />
+          <ButtonWithIcon
+            Icon={<Download />}
+            labelKey="button.export"
+            onClick={success('Downloaded successfully')}
+          />
+          <ButtonWithIcon
+            Icon={<Printer />}
+            labelKey="button.print"
+            onClick={info('No printer detected')}
+          />
+          <ButtonWithIcon
+            Icon={<Book />}
+            labelKey="button.docs"
+            onClick={() => (location.href = ExternalURL.PublicDocs)}
+          />
+        </Grid>
       </AppBarButtonsPortal>
 
       <RemoteDataTable

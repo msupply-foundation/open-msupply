@@ -1,7 +1,7 @@
 import React from 'react';
 import create from 'zustand';
 import { LocaleKey } from '../intl/intlHelpers';
-import { Button, MenuDots } from '../ui';
+import { MenuDots, ButtonWithIcon } from '../ui';
 
 type DetailPanelController = {
   actions: Action[];
@@ -47,11 +47,11 @@ export const useDetailPanel = (): DetailPanel => {
   const isEmpty = !sections.length && !actions.length;
   const OpenButton =
     isOpen || isEmpty ? null : (
-      <Button
-        icon={<MenuDots />}
+      <ButtonWithIcon
+        variant="outlined"
+        Icon={<MenuDots />}
         labelKey="button.more"
         onClick={() => open()}
-        shouldShrink
       />
     );
 

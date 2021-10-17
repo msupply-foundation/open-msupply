@@ -30,7 +30,6 @@ export const OutboundShipmentToolbar: FC<OutboundShipmentToolbarProps> = ({
         display: 'flex',
         flex: 1,
         justifyContent: 'center',
-        paddingLeft: '25px',
       }}
     >
       <Box

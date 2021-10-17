@@ -6,7 +6,7 @@ import {
   AppBarContent,
   Toolbar,
   Box,
-  UnstyledIconButton,
+  IconButton,
   Breadcrumbs,
   useAppBarRect,
   AppBarButtons,
@@ -29,9 +29,9 @@ const AppBar: React.FC = () => {
   return (
     <StyledContainer ref={ref}>
       <Toolbar disableGutters>
-        <UnstyledIconButton
+        <IconButton
           icon={<ArrowLeft />}
-          titleKey="button.go-back"
+          labelKey="button.go-back"
           onClick={() => navigate(-1)}
         />
 

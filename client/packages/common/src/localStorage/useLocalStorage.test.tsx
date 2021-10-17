@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { LocalStorage } from '.';
+import { BaseButton } from '../ui/components/buttons';
 import { useLocalStorage } from './useLocalStorage';
 
 const UseLocalStorageExample = () => {
@@ -8,7 +9,7 @@ const UseLocalStorageExample = () => {
 
   return (
     <>
-      <button onClick={() => setValue(!value)} />
+      <BaseButton onClick={() => setValue(!value)} />
       <span>{String(value)}</span>
     </>
   );
