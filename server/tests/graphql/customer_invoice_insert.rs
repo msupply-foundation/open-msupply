@@ -6,7 +6,7 @@ mod graphql {
         database::{
             mock::{mock_name_store_joins, mock_names, mock_stores},
             repository::{
-                get_repositories, NameRepository, NameStoreJoinRepository,
+                get_repositories, InvoiceRepository, NameRepository, NameStoreJoinRepository,
                 StorageConnectionManager, StoreRepository,
             },
             schema::{NameRow, NameStoreJoinRow, StoreRow},
@@ -27,6 +27,7 @@ mod graphql {
         let name_repository = NameRepository::new(&connection);
         let store_repository = StoreRepository::new(&connection);
         let name_store_repository = NameStoreJoinRepository::new(&connection);
+        let invoice_repository = InvoiceRepository::new(&connection);
         let mock_names: Vec<NameRow> = mock_names();
         let mock_stores: Vec<StoreRow> = mock_stores();
         let mock_name_store_joins: Vec<NameStoreJoinRow> = mock_name_store_joins();
@@ -127,6 +128,8 @@ mod graphql {
           }
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
+        // make sure item has been inserted
+        invoice_repository.find_one_by_id("ci_insert_1").unwrap();
 
         // RecordAlreadyExist,
         let variables = Some(json!({
