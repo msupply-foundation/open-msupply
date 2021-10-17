@@ -13,6 +13,7 @@ type ThemeChangererProps = {
   dataRowHeight: number;
   headerRowHeight: number;
   footerHeight: number;
+  saveButtonRowHeight: number;
 };
 
 describe('useRowRenderCount', () => {
@@ -22,12 +23,14 @@ describe('useRowRenderCount', () => {
     dataRowHeight,
     headerRowHeight,
     footerHeight,
+    saveButtonRowHeight,
   }) => {
     const theme = useTheme();
     theme.mixins.table.dataRow = { height: dataRowHeight };
     theme.mixins.table.paginationRow = { height: paginationRowHeight };
     theme.mixins.table.headerRow = { height: headerRowHeight };
     theme.mixins.footer = { height: footerHeight };
+    theme.mixins.saveButtonRow = { height: saveButtonRowHeight };
 
     return <>{children}</>;
   };
@@ -37,6 +40,7 @@ describe('useRowRenderCount', () => {
       dataRowHeight = 10,
       headerRowHeight = 0,
       paginationRowHeight = 0,
+      saveButtonRowHeight = 0,
       footerHeight = 0
     ) =>
     ({ children }: { children: ReactNode[] }) => {
@@ -48,6 +52,7 @@ describe('useRowRenderCount', () => {
               dataRowHeight={dataRowHeight}
               headerRowHeight={headerRowHeight}
               footerHeight={footerHeight}
+              saveButtonRowHeight={saveButtonRowHeight}
             >
               {children}
             </ThemeChangerer>
