@@ -165,10 +165,10 @@ export const detailQueryFn =
   };
 
 export const updateFn = async (updated: Invoice): Promise<Invoice> => {
-  const x: Partial<Invoice> = { ...updated };
-  delete x['lines'];
+  const invoicePatch: Partial<Invoice> = { ...updated };
+  delete invoicePatch['lines'];
 
-  const patch = { invoicePatch: x };
+  const patch = { invoicePatch };
 
   const result = await request(Environment.API_URL, getMutation(), patch);
 
