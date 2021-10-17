@@ -229,7 +229,76 @@ fragment InsertSupplierInvoiceLineErrorInterface on InsertSupplierInvoiceLineErr
   ...RecordAlreadyExist
 }
 
+# UPDATES SUPPLIER INVOICE LINE
+
+mutation updateSupplierInvoiceLineFull(
+  $batch_usil: String
+  $costPricePerPack_usil: Float
+  $expiryDate_usil: NaiveDate
+  $id: String!
+  $invoiceId_usil: String!
+  $itemId_usil: String
+  $numberOfPacks_usil: Int
+  $sellPricePerPack_usil: Float
+  $packSize_usil: Int
+) {
+  updateSupplierInvoiceLine(
+    input: {
+      id: $id
+      invoiceId: $invoiceId_usil
+      itemId: $itemId_usil
+      packSize: $packSize_usil
+      costPricePerPack: $costPricePerPack_usil
+      sellPricePerPack: $sellPricePerPack_usil
+      numberOfPacks: $numberOfPacks_usil
+      expiryDate: $expiryDate_usil
+      batch: $batch_usil
+      packSize: $packSize_usil
+    }
+  ) {
+    ...UpdateSupplierInvoiceLineResponse
+  }
+}
+
+fragment UpdateSupplierInvoiceLineResponse on UpdateSupplierInvoiceLineResponse {
+  __typename
+  ...UpdateSupplierInvoiceLineError
+  ...NodeError
+  ...InvoiceLineNode
+}
+
+fragment UpdateSupplierInvoiceLineError on UpdateSupplierInvoiceLineError {
+  error {
+    ...UpdateSupplierInvoiceLineErrorInterface
+  }
+}
+
+fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotASupplierInvoice
+  ...RangeError
+  ...RecordDoesNotExist
+  ...BatchIsReserved
+  ...InvoiceLineBelongsToAnotherInvoice
+}
+
 # INVOICE
+
+query invoiceFull($id: String!) {
+  invoice(id: $id) {
+    ...InvoiceResponse
+  }
+}
+
+fragment InvoiceResponse on InvoiceResponse {
+  __typename
+  ...InvoiceNode
+  ...NodeError
+}
 
 fragment PartialInvoiceNode on InvoiceNode {
   id
@@ -425,5 +494,16 @@ fragment CannotDeleteInvoiceWithLines on CannotDeleteInvoiceWithLines {
   description
   lines {
     ...InvoiceLineConnector
+  }
+}
+
+fragment BatchIsReserved on BatchIsReserved {
+  description
+}
+
+fragment InvoiceLineBelongsToAnotherInvoice on InvoiceLineBelongsToAnotherInvoice {
+  description
+  invoice {
+    ...InvoiceResponse
   }
 }
