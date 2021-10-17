@@ -2,7 +2,7 @@ mod graphql {
     use crate::graphql::{
         common::{
             assert_unwrap_enum, assert_unwrap_optional_key, compare_option, get_invoice_inline,
-            get_name_inline,
+            get_invoice_lines_inline, get_name_inline,
         },
         get_gql_result,
     };
@@ -14,8 +14,8 @@ mod graphql {
     use remote_server::{
         database::{
             mock::MockDataInserts,
-            repository::InvoiceRepository,
-            schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+            repository::{InvoiceRepository, StockLineRepository},
+            schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
         },
         domain::{invoice::InvoiceFilter, name::NameFilter, Pagination},
         util::test_db,
@@ -84,9 +84,28 @@ mod graphql {
         );
 
         let draft_supplier_invoice = get_invoice_inline!(
-            InvoiceFilter::new().match_supplier_invoice().match_draft(),
+            InvoiceFilter::new()
+                .match_supplier_invoice()
+                .match_draft()
+                .match_id("supplier_invoice_c"),
             &connection
         );
+
+        let draft_supplier_invoice_lines =
+            get_invoice_lines_inline!(&draft_supplier_invoice.id, &connection);
+        assert_ne!(
+            draft_supplier_invoice_lines.len(),
+            0,
+            "draft supplier invoice in this test must have at leaset one line",
+        );
+        assert_eq!(
+            draft_supplier_invoice_lines
+                .iter()
+                .find(|line| line.stock_line_id.is_some()),
+            None,
+            "draft supplier invoice should not have stock lines"
+        );
+
         let customer_invoice =
             get_invoice_inline!(InvoiceFilter::new().match_customer_invoice(), &connection);
 
@@ -183,6 +202,15 @@ mod graphql {
 
         assert_eq!(updated_invoice.finalised_datetime, None);
 
+        for line in get_invoice_lines_inline!(&draft_supplier_invoice.id, &connection) {
+            let cloned_line = line.clone();
+            let stock_line_id = assert_unwrap_optional_key!(cloned_line, stock_line_id);
+            let stock_line = StockLineRepository::new(&connection)
+                .find_one_by_id(&stock_line_id)
+                .unwrap();
+            assert_eq!(line, UpdatedStockLine(stock_line));
+        }
+
         // Test unchanged
 
         let mut variables = base_variables.clone();
@@ -247,9 +275,10 @@ mod graphql {
                 description: "Cannot edit finalised invoice".to_string(),
             },)
         );
-
-        // TODO check stock lines updating when changed to confirmed
     }
+
+    #[derive(Debug)]
+    struct UpdatedStockLine(StockLineRow);
 
     impl From<InvoiceRowStatus> for update::InvoiceNodeStatus {
         fn from(status: InvoiceRowStatus) -> Self {
@@ -259,6 +288,38 @@ mod graphql {
                 InvoiceRowStatus::Confirmed => Confirmed,
                 InvoiceRowStatus::Finalised => Finalised,
             }
+        }
+    }
+
+    impl PartialEq<UpdatedStockLine> for InvoiceLineRow {
+        fn eq(&self, other: &UpdatedStockLine) -> bool {
+            let InvoiceLineRow {
+                id: _,
+                invoice_id: _,
+                item_id,
+                item_name: _,
+                item_code: _,
+                stock_line_id,
+                batch,
+                expiry_date,
+                pack_size,
+                cost_price_per_pack,
+                sell_price_per_pack,
+                total_after_tax: _,
+                number_of_packs,
+            } = self;
+
+            let stock_line = &other.0;
+
+            *item_id == stock_line.item_id
+                && *stock_line_id.clone().unwrap() == stock_line.id
+                && *batch == stock_line.batch
+                && *expiry_date == stock_line.expiry_date
+                && *pack_size == stock_line.pack_size
+                && *cost_price_per_pack == stock_line.cost_price_per_pack
+                && *sell_price_per_pack == stock_line.sell_price_per_pack
+                && *number_of_packs == stock_line.available_number_of_packs
+                && *number_of_packs == stock_line.total_number_of_packs
         }
     }
 
