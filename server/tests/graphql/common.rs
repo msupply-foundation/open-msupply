@@ -18,6 +18,16 @@ macro_rules! get_invoice_lines_inline {
     }};
 }
 
+macro_rules! get_name_inline {
+    ($filter:expr, $connection:expr) => {{
+        remote_server::database::repository::NameQueryRepository::new($connection)
+            .query(Pagination::one(), Some($filter), None)
+            .unwrap()
+            .pop()
+            .unwrap()
+    }};
+}
+
 macro_rules! assert_unwrap_enum {
     ($enum:ident, $variant:path) => {{
         let debug = format!("{:#?}", $enum);
@@ -71,8 +81,20 @@ where
     serde_json::from_str(&serde_json::to_string(&f).unwrap()).unwrap()
 }
 
+pub fn compare_option<A, B>(a: &Option<A>, b: &B) -> bool
+where
+    B: PartialEq<A>,
+{
+    if let Some(a) = a {
+        b == a
+    } else {
+        true
+    }
+}
+
 pub(crate) use assert_matches;
 pub(crate) use assert_unwrap_enum;
 pub(crate) use assert_unwrap_optional_key;
 pub(crate) use get_invoice_inline;
 pub(crate) use get_invoice_lines_inline;
+pub(crate) use get_name_inline;
