@@ -10,10 +10,11 @@ import {
 export const Checkbox: FC<CheckboxProps> = props => {
   return (
     <MuiCheckbox
+      color="darkGrey"
       size="small"
-      icon={<CheckboxEmpty color="secondary" />}
-      checkedIcon={<CheckboxChecked color="secondary" />}
-      indeterminateIcon={<CheckboxIndeterminate color="secondary" />}
+      icon={<CheckboxEmpty />}
+      checkedIcon={<CheckboxChecked />}
+      indeterminateIcon={<CheckboxIndeterminate />}
       {...props}
     />
   );
