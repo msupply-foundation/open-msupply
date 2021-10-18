@@ -8,10 +8,11 @@ import { useHostContext } from '../hooks';
 export type SupportedLocales = 'en' | 'fr' | 'pt' | 'ar';
 export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
+export type LocaleProps = Record<string, PrimitiveType>;
 
 export const useTranslation = (): ((
   id?: LocaleKey, // only accepts valid keys, not any string
-  values?: Record<string, PrimitiveType>
+  values?: LocaleProps
 ) => string) => {
   const intl = useIntl();
   return (id, values) =>

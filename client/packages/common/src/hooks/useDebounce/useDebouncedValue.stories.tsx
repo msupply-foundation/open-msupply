@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Story } from '@storybook/react';
 import { useDebouncedValue } from './useDebouncedValue';
-import { TextField, Typography, Button } from '@mui/material';
+import { TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { useDebounceCallback } from '.';
+import { BaseButton } from '../../ui/components/buttons';
 
 export default {
   title: 'Hooks/useDebounce',
@@ -26,18 +27,12 @@ const Value: Story = () => {
         />
       </Box>
       <Box gap={2} mt={2} flexDirection="row" display="flex">
-        <Button
-          variant="contained"
-          onClick={() => setNumber(state => (state += 1))}
-        >
+        <BaseButton onClick={() => setNumber(state => (state += 1))}>
           Increment
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => setNumber(state => (state -= 1))}
-        >
+        </BaseButton>
+        <BaseButton onClick={() => setNumber(state => (state -= 1))}>
           Decrement
-        </Button>
+        </BaseButton>
       </Box>
     </div>
   );
@@ -59,12 +54,12 @@ const Callback: Story = () => {
         />
       </Box>
       <Box gap={2} mt={2} flexDirection="row" display="flex">
-        <Button variant="contained" onClick={() => cb(state => (state += 1))}>
+        <BaseButton onClick={() => cb(state => (state += 1))}>
           Increment
-        </Button>
-        <Button variant="contained" onClick={() => cb(state => (state -= 1))}>
+        </BaseButton>
+        <BaseButton onClick={() => cb(state => (state -= 1))}>
           Decrement
-        </Button>
+        </BaseButton>
       </Box>
     </div>
   );

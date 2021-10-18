@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { render } from '@testing-library/react';
 import { Color, ColorMenu } from './ColorMenu';
-import { UnstyledIconButton } from '../../buttons';
+import { IconButton } from '../../buttons';
 import { TestingProvider } from '../../../../utils';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
@@ -26,8 +26,8 @@ describe('ColorMenu', () => {
           anchorEl={anchorEl}
           onClick={onClick}
         />
-        <UnstyledIconButton
-          titleKey="app.admin"
+        <IconButton
+          labelKey="app.admin"
           icon={
             <Circle
               htmlColor="red"

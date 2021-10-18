@@ -25,7 +25,6 @@ describe('OutboundShipmentListView', () => {
 
     await waitFor(() => {
       expect(getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
-      expect(getByRole('columnheader', { name: /type/i })).toBeInTheDocument();
       expect(
         getByRole('columnheader', { name: /status/i })
       ).toBeInTheDocument();

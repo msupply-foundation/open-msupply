@@ -49,7 +49,6 @@ export const getCheckboxSelectionColumn = <
     return (
       <Checkbox
         size="small"
-        color="secondary"
         checked={!!allSelected}
         indeterminate={someSelected && !allSelected}
         onClick={toggleAll}
@@ -62,7 +61,6 @@ export const getCheckboxSelectionColumn = <
     return (
       <Checkbox
         checked={!!isSelected}
-        color="secondary"
         size="small"
         onClick={event => {
           event.stopPropagation();

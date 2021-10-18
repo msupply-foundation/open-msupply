@@ -1,10 +1,9 @@
 import React, { FC, useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import {
   AppBarButtonsPortal,
   Book,
   Box,
-  Button,
   Circle,
   Clock,
   Column,
@@ -33,6 +32,10 @@ import {
   useNotification,
   useTabs,
   useTranslation,
+  ButtonWithIcon,
+  XCircleIcon,
+  Download,
+  ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -59,7 +62,7 @@ const useDraftOutbound = () => {
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
-  const { draft, onChangeSortBy, sortBy } = useDraftOutbound();
+  const { draft, onChangeSortBy, sortBy, save } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -166,21 +169,24 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     [sortBy]
   );
 
+  const navigate = useNavigate();
+
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
-        <Button
-          labelKey="button.add-item"
-          icon={<PlusCircle />}
-          onClick={showDialog}
-        />
-        <Button
-          shouldShrink
-          icon={<Book />}
-          labelKey="button.docs"
-          onClick={() => (location.href = ExternalURL.PublicDocs)}
-        />
-        {OpenButton}
+        <Grid container gap={1}>
+          <ButtonWithIcon
+            labelKey="button.add-item"
+            Icon={<PlusCircle />}
+            onClick={showDialog}
+          />
+          <ButtonWithIcon
+            Icon={<Book />}
+            labelKey="button.docs"
+            onClick={() => (location.href = ExternalURL.PublicDocs)}
+          />
+          {OpenButton}
+        </Grid>
       </AppBarButtonsPortal>
 
       <Modal
@@ -213,7 +219,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         currentTab={currentTab}
       />
 
-      <Box display="flex" flex={1}>
+      <Box display="flex" flex={1} flexDirection="column">
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
           <GeneralTab
             columns={columns}
@@ -227,6 +233,38 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
+        <Box display="flex" alignItems="flex-end" height={40} marginRight={2}>
+          <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+            <ButtonWithIcon
+              Icon={<XCircleIcon />}
+              labelKey="button.cancel"
+              color="secondary"
+              onClick={() => navigate(-1)}
+            />
+            <ButtonWithIcon
+              Icon={<Download />}
+              labelKey="button.save"
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                success('Saved invoice! 🥳 ')();
+                save(draft);
+              }}
+            />
+            <ButtonWithIcon
+              Icon={<ArrowRightIcon />}
+              labelKey="button.save-and"
+              labelProps={{ status: draft.status }}
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                success('Saved invoice! 🥳 ')();
+                draft.update?.('status', 'finalised');
+                save(draft);
+              }}
+            />
+          </Box>
+        </Box>
       </Box>
     </TabContext>
   ) : null;
