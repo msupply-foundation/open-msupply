@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Box,
-  Home,
+  HomeIcon,
   styled,
   Typography,
   useHostContext,
@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
       alignItems="center"
     >
       <PaddedCell>
-        <Home sx={iconStyles} />
+        <HomeIcon sx={iconStyles} />
         <Typography sx={textStyles}>{store.name}</Typography>
       </PaddedCell>
       <PaddedCell>

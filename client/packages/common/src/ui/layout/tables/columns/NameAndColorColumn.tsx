@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Color, ColorMenu, UnstyledIconButton } from '../../../components';
-import { Circle } from '../../../icons';
+import { Color, ColorMenu, IconButton } from '../../../components';
+import { CircleIcon } from '../../../icons';
 import { Box } from '@mui/system';
 import { DomainObject } from '../../../../types';
 import { ColumnDefinition } from '../columns/types';
@@ -44,10 +44,10 @@ export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
             onChange(rowData, color);
           }}
         />
-        <UnstyledIconButton
-          titleKey="button.select-a-color"
+        <IconButton
+          labelKey="button.select-a-color"
           icon={
-            <Circle
+            <CircleIcon
               htmlColor={rowData.color}
               sx={{
                 width: '12px',

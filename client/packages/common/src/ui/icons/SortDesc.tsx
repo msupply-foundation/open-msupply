@@ -1,7 +1,7 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const SortDesc = (props: SvgIconProps): JSX.Element => {
+export const SortDescIcon = (props: SvgIconProps): JSX.Element => {
   const combinedProps: SvgIconProps = {
     style: {
       fill: 'none',

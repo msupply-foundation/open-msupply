@@ -87,7 +87,6 @@ export const getMutation = (): string => gql`
       invoiceNumber
       total
       color
-      name
     }
   }
 `;
@@ -166,8 +165,13 @@ export const detailQueryFn =
   };
 
 export const updateFn = async (updated: Invoice): Promise<Invoice> => {
-  const patch = { invoicePatch: updated };
+  const invoicePatch: Partial<Invoice> = { ...updated };
+  delete invoicePatch['lines'];
+
+  const patch = { invoicePatch };
+
   const result = await request(Environment.API_URL, getMutation(), patch);
+
   const { updateInvoice } = result;
   return updateInvoice;
 };

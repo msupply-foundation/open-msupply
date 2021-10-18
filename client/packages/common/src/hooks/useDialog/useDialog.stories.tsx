@@ -1,8 +1,9 @@
 import React from 'react';
 import { useDialog } from './useDialog';
 import { Story } from '@storybook/react';
-import { Button } from '@mui/material';
-import { DialogButton } from '../../ui/components/buttons/DialogButton';
+
+import { DialogButton } from '../../ui/components/buttons/standard/DialogButton';
+import { BaseButton } from '../../ui/components/buttons/standard/BaseButton';
 
 export default {
   title: 'Hooks/useDialog',
@@ -38,7 +39,7 @@ const Template: Story = () => {
       <div>
         <b>Button clicked:</b> {result}
       </div>
-      <Button onClick={showDialog}>Show Dialog</Button>
+      <BaseButton onClick={showDialog}>Show Dialog</BaseButton>
     </div>
   );
 };

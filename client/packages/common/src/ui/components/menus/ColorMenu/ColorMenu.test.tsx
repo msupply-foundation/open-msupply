@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { render } from '@testing-library/react';
 import { Color, ColorMenu } from './ColorMenu';
-import { UnstyledIconButton } from '../../buttons';
+import { IconButton } from '../../buttons';
 import { TestingProvider } from '../../../../utils';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { Circle } from '../../../icons';
+import { CircleIcon } from '../../../icons';
 
 describe('ColorMenu', () => {
   const TestColorMenu = ({ onClick }: { onClick: (color: Color) => void }) => {
@@ -26,10 +26,10 @@ describe('ColorMenu', () => {
           anchorEl={anchorEl}
           onClick={onClick}
         />
-        <UnstyledIconButton
-          titleKey="app.admin"
+        <IconButton
+          labelKey="app.admin"
           icon={
-            <Circle
+            <CircleIcon
               htmlColor="red"
               sx={{
                 width: '12px',

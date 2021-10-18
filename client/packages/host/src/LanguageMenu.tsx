@@ -1,9 +1,9 @@
 import React from 'react';
 import {
-  Button,
+  ButtonWithIcon,
   Menu,
   MenuItem,
-  Translate,
+  TranslateIcon,
   useHostContext,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
@@ -50,10 +50,9 @@ export const LanguageMenu: React.FC = () => {
 
   return (
     <div>
-      <Button
-        shouldShrink
+      <ButtonWithIcon
         onClick={handleClick}
-        icon={<Translate />}
+        Icon={<TranslateIcon />}
         labelKey="button.language"
       />
 

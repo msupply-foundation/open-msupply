@@ -2,7 +2,12 @@ import React from 'react';
 import { SvgIconProps } from '@mui/material';
 import { ComponentMeta, Story } from '@storybook/react';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
-import { Customers, Download, Suppliers, Tools } from '../../../icons';
+import {
+  CustomersIcon,
+  DownloadIcon,
+  SuppliersIcon,
+  ToolsIcon,
+} from '../../../icons';
 
 export default {
   title: 'Menus/DropdownMenu',
@@ -50,16 +55,16 @@ const clickOptions = [
 ];
 
 const iconOptions = [
-  { label: 'Customers', icon: Customers },
-  { label: 'Suppliers', icon: Suppliers },
-  { label: 'Download', icon: Download },
-  { label: 'Tools', icon: Tools },
+  { label: 'Customers', icon: CustomersIcon },
+  { label: 'Suppliers', icon: SuppliersIcon },
+  { label: 'Download', icon: DownloadIcon },
+  { label: 'Tools', icon: ToolsIcon },
 ];
 
 const someWithIconsOptions = [
-  { label: 'Customers', icon: Customers },
+  { label: 'Customers', icon: CustomersIcon },
   { label: 'Suppliers', inset: true },
-  { label: 'Download', icon: Download },
+  { label: 'Download', icon: DownloadIcon },
   { label: 'Tools', inset: true },
 ];
 

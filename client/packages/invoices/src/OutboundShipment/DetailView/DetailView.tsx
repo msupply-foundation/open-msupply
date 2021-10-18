@@ -1,22 +1,21 @@
 import React, { FC, useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import {
   AppBarButtonsPortal,
-  Book,
+  BookIcon,
   Box,
-  Button,
-  Circle,
-  Clock,
+  CircleIcon,
+  ClockIcon,
   Column,
-  Copy,
+  CopyIcon,
   DialogButton,
   FormProvider,
   Grid,
   PanelField,
   PanelLabel,
   PanelRow,
-  PlusCircle,
-  Rewind,
+  PlusCircleIcon,
+  RewindIcon,
   TabContext,
   TabPanel,
   TableProvider,
@@ -33,6 +32,10 @@ import {
   useTabs,
   useTranslation,
   InvoiceLine,
+  ButtonWithIcon,
+  XCircleIcon,
+  DownloadIcon,
+  ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -59,7 +62,8 @@ const useDraftOutbound = () => {
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
-  const { draft, dispatch, onChangeSortBy, sortBy } = useDraftOutbound();
+  const { draft, dispatch, onChangeSortBy, save, sortBy } = useDraftOutbound();
+  const { draft, onChangeSortBy, sortBy, save } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -107,7 +111,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <PanelRow>
               <PanelLabel>{t('label.color')}</PanelLabel>
               <PanelField>
-                <Circle htmlColor={draft?.color} sx={{ width: 8 }} />
+                <CircleIcon htmlColor={draft?.color} sx={{ width: 8 }} />
                 <span
                   style={{
                     color: draft?.color,
@@ -138,17 +142,17 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   useEffect(() => {
     setActions([
       {
-        icon: <Clock />,
+        icon: <ClockIcon />,
         titleKey: 'link.history',
         onClick: warning('No history available'),
       },
       {
-        icon: <Rewind />,
+        icon: <RewindIcon />,
         titleKey: 'link.backorders',
         onClick: warning('No back orders available'),
       },
       {
-        icon: <Copy />,
+        icon: <CopyIcon />,
         titleKey: 'link.copy-to-clipboard',
         onClick: copyToClipboard,
       },
@@ -165,21 +169,24 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     [sortBy]
   );
 
+  const navigate = useNavigate();
+
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
-        <Button
-          labelKey="button.add-item"
-          icon={<PlusCircle />}
-          onClick={showDialog}
-        />
-        <Button
-          shouldShrink
-          icon={<Book />}
-          labelKey="button.docs"
-          onClick={() => (location.href = ExternalURL.PublicDocs)}
-        />
-        {OpenButton}
+        <Grid container gap={1}>
+          <ButtonWithIcon
+            labelKey="button.add-item"
+            Icon={<PlusCircleIcon />}
+            onClick={showDialog}
+          />
+          <ButtonWithIcon
+            Icon={<BookIcon />}
+            labelKey="button.docs"
+            onClick={() => (location.href = ExternalURL.PublicDocs)}
+          />
+          {OpenButton}
+        </Grid>
       </AppBarButtonsPortal>
 
       <Modal
@@ -212,7 +219,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         currentTab={currentTab}
       />
 
-      <Box display="flex" flex={1}>
+      <Box display="flex" flex={1} flexDirection="column">
         <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
           <GeneralTab
             columns={columns}
@@ -226,6 +233,38 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
+        <Box display="flex" alignItems="flex-end" height={40} marginRight={2}>
+          <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+            <ButtonWithIcon
+              Icon={<XCircleIcon />}
+              labelKey="button.cancel"
+              color="secondary"
+              onClick={() => navigate(-1)}
+            />
+            <ButtonWithIcon
+              Icon={<DownloadIcon />}
+              labelKey="button.save"
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                success('Saved invoice! 🥳 ')();
+                save(draft);
+              }}
+            />
+            <ButtonWithIcon
+              Icon={<ArrowRightIcon />}
+              labelKey="button.save-and"
+              labelProps={{ status: draft.status }}
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                success('Saved invoice! 🥳 ')();
+                draft.update?.('status', 'finalised');
+                save(draft);
+              }}
+            />
+          </Box>
+        </Box>
       </Box>
     </TabContext>
   ) : null;

@@ -2,10 +2,9 @@ import React, { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
-  Button,
-  Download,
-  PlusCircle,
-  Printer,
+  DownloadIcon,
+  PlusCircleIcon,
+  PrinterIcon,
   RemoteDataTable,
   useColumns,
   useNotification,
@@ -16,14 +15,16 @@ import {
   useTranslation,
   useListData,
   getNameAndColorColumn,
-  Delete,
-  Edit,
+  DeleteIcon,
+  EditIcon,
   TableProvider,
   createTableStore,
   useTableStore,
   Color,
   AppBarButtonsPortal,
-  Book,
+  BookIcon,
+  ButtonWithIcon,
+  Grid,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
@@ -62,17 +63,17 @@ const ListViewToolBar: FC<{
 
   return (
     <DropdownMenu label="Select">
-      <DropdownMenuItem IconComponent={Delete} onClick={deleteAction}>
+      <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
         {t('button.delete-lines')}
       </DropdownMenuItem>
       <DropdownMenuItem
-        IconComponent={Edit}
+        IconComponent={EditIcon}
         onClick={warning('Whats this do?')}
       >
         Edit
       </DropdownMenuItem>
       <DropdownMenuItem
-        IconComponent={Download}
+        IconComponent={DownloadIcon}
         onClick={success('Successfully exported to CSV!')}
       >
         {t('button.export-to-csv')}
@@ -149,30 +150,28 @@ export const OutboundShipmentListViewComponent: FC = () => {
       </AppBarContentPortal>
 
       <AppBarButtonsPortal>
-        <Button
-          shouldShrink
-          icon={<PlusCircle />}
-          labelKey="button.new-shipment"
-          onClick={() => setOpen(true)}
-        />
-        <Button
-          shouldShrink
-          icon={<Download />}
-          labelKey="button.export"
-          onClick={success('Downloaded successfully')}
-        />
-        <Button
-          shouldShrink
-          icon={<Printer />}
-          labelKey="button.print"
-          onClick={info('No printer detected')}
-        />
-        <Button
-          shouldShrink
-          icon={<Book />}
-          labelKey="button.docs"
-          onClick={() => (location.href = ExternalURL.PublicDocs)}
-        />
+        <Grid container gap={1}>
+          <ButtonWithIcon
+            Icon={<PlusCircleIcon />}
+            labelKey="button.new-shipment"
+            onClick={() => setOpen(true)}
+          />
+          <ButtonWithIcon
+            Icon={<DownloadIcon />}
+            labelKey="button.export"
+            onClick={success('Downloaded successfully')}
+          />
+          <ButtonWithIcon
+            Icon={<PrinterIcon />}
+            labelKey="button.print"
+            onClick={info('No printer detected')}
+          />
+          <ButtonWithIcon
+            Icon={<BookIcon />}
+            labelKey="button.docs"
+            onClick={() => (location.href = ExternalURL.PublicDocs)}
+          />
+        </Grid>
       </AppBarButtonsPortal>
 
       <RemoteDataTable

@@ -9,9 +9,9 @@ import {
 import { Typography } from '@openmsupply-client/common/src/ui/components/index';
 import { TestingProvider } from '@openmsupply-client/common/src/utils/testing';
 import Grid from '@mui/material/Grid';
-import { Clock } from '@openmsupply-client/common/src/ui/icons/Clock';
-import { Copy } from '@openmsupply-client/common/src/ui/icons/Copy';
-import { Rewind } from '@openmsupply-client/common/src/ui/icons/Rewind';
+import { ClockIcon } from '@openmsupply-client/common/src/ui/icons/Clock';
+import { CopyIcon } from '@openmsupply-client/common/src/ui/icons/Copy';
+import { RewindIcon } from '@openmsupply-client/common/src/ui/icons/Rewind';
 
 export default {
   title: 'Host/DetailPanel',
@@ -56,7 +56,7 @@ Demo.args = {
       onClick: () => {
         alert('back orders');
       },
-      icon: <Rewind />,
+      icon: <RewindIcon />,
     },
   ],
   sections: [
@@ -80,14 +80,14 @@ AcionsOnly.args = {
       onClick: () => {
         alert('history');
       },
-      icon: <Clock />,
+      icon: <ClockIcon />,
     },
     {
       titleKey: 'link.copy-to-clipboard',
       onClick: () => {
         alert('copy to clipboard');
       },
-      icon: <Copy />,
+      icon: <CopyIcon />,
     },
   ],
   sections: [],
