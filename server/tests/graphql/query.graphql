@@ -232,6 +232,58 @@ fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErr
   ...InvoiceLineBelongsToAnotherInvoice
 }
 
+# UPDATES CUSTOMER INVOICE LINE
+
+mutation updateCustomerInvoiceLineFull(
+  $id: String!
+  $invoiceId_ucil: String!
+  $itemId_ucil: String
+  $numberOfPacks_ucil: Int
+  $stockLineId_ucil: String
+) {
+  updateCustomerInvoiceLine(
+    input: {
+      id: $id
+      invoiceId: $invoiceId_ucil
+      itemId: $itemId_ucil
+      numberOfPacks: $numberOfPacks_ucil
+      stockLineId: $stockLineId_ucil
+    }
+  ) {
+    ...UpdateCustomerInvoiceLineResponse
+  }
+}
+
+fragment UpdateCustomerInvoiceLineResponse on UpdateCustomerInvoiceLineResponse {
+  __typename
+  ...UpdateCustomerInvoiceLineError
+  ...NodeError
+  ...InvoiceLineNode
+}
+
+fragment UpdateCustomerInvoiceLineError on UpdateCustomerInvoiceLineError {
+  error {
+    ...UpdateCustomerInvoiceLineErrorInterface
+  }
+}
+
+fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...InvoiceLineBelongsToAnotherInvoice
+  ...LineDoesNotReferenceStockLine
+  ...NotACustomerInvoice
+  ...NotEnoughStockForReduction
+  ...RangeError
+  ...RecordDoesNotExist
+  ...StockLineAlreadyExistsInInvoice
+  ...StockLineDoesNotBelongToCurrentStore
+  ...ItemDoesNotMatchStockLine
+}
+
 # DELETE SUPPLIER INVOICE LINE
 
 mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId_dsil: String!) {
@@ -309,6 +361,12 @@ fragment InvoicePricingNode on InvoicePricingNode {
 }
 
 # INVOICE LINE
+
+fragment InvoiceLineResponse on InvoiceLineResponse {
+  __typename
+  ...NodeError
+  ...InvoiceLineNode
+}
 
 fragment InvoiceLinesResponse on InvoiceLinesResponse {
   __typename
@@ -454,6 +512,10 @@ fragment NotASupplierInvoice on NotASupplierInvoice {
   description
 }
 
+fragment NotACustomerInvoice on NotACustomerInvoice {
+  description
+}
+
 fragment InvoiceDoesNotBelongToCurrentStore on InvoiceDoesNotBelongToCurrentStore {
   description
 }
@@ -471,6 +533,32 @@ fragment CannotDeleteInvoiceWithLines on CannotDeleteInvoiceWithLines {
 
 fragment BatchIsReserved on BatchIsReserved {
   description
+}
+
+fragment StockLineDoesNotBelongToCurrentStore on StockLineDoesNotBelongToCurrentStore {
+  description
+}
+
+fragment ItemDoesNotMatchStockLine on ItemDoesNotMatchStockLine {
+  description
+}
+
+fragment LineDoesNotReferenceStockLine on LineDoesNotReferenceStockLine {
+  description
+}
+
+fragment StockLineAlreadyExistsInInvoice on StockLineAlreadyExistsInInvoice {
+  description
+  line {
+    ...InvoiceLineResponse
+  }
+}
+
+fragment NotEnoughStockForReduction on NotEnoughStockForReduction {
+  description
+  line {
+    ...InvoiceLineResponse
+  }
 }
 
 fragment InvoiceLineBelongsToAnotherInvoice on InvoiceLineBelongsToAnotherInvoice {
