@@ -6,7 +6,7 @@ use crate::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
             InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
-            NotACustomerInvoice, NumberOfPacksAboveZero, RecordDoesNotExist,
+            NotACustomerInvoice, RecordDoesNotExist,
         },
         types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
@@ -14,7 +14,7 @@ use crate::{
 };
 
 use super::{
-    ItemDoesNotMatchStockLine, LineDoesntReferenceStockLine, NotEnoughStockForReduction,
+    ItemDoesNotMatchStockLine, LineDoesNotReferenceStockLine, NotEnoughStockForReduction,
     StockLineAlreadyExistsInInvoice, StockLineDoesNotBelongToCurrentStore,
 };
 
@@ -40,11 +40,10 @@ pub enum UpdateCustomerInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordDoesNotExist(RecordDoesNotExist),
-    NumberOfPacksAboveZero(NumberOfPacksAboveZero),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
-    LineDoesntReferenceStockLine(LineDoesntReferenceStockLine),
+    LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine),
     ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
@@ -121,11 +120,16 @@ impl From<UpdateCustomerInvoiceLineError> for UpdateCustomerInvoiceLineResponse 
             UpdateCustomerInvoiceLineError::LineDoesNotExist => {
                 OutError::RecordDoesNotExist(RecordDoesNotExist {})
             }
-            UpdateCustomerInvoiceLineError::LineDoesntReferenceStockLine => {
-                OutError::LineDoesntReferenceStockLine(LineDoesntReferenceStockLine {})
+            UpdateCustomerInvoiceLineError::LineDoesNotReferenceStockLine => {
+                OutError::LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine {})
             }
             UpdateCustomerInvoiceLineError::ReductionBelowZero(line_id) => {
                 OutError::NotEnoughStockForReduction(NotEnoughStockForReduction(line_id))
+            }
+            UpdateCustomerInvoiceLineError::NotThisInvoiceLine(invoice_id) => {
+                OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
+                    invoice_id,
+                ))
             }
         };
 

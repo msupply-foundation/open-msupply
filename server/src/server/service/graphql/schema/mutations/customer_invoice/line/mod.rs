@@ -49,9 +49,9 @@ impl NotEnoughStockForReduction {
     }
 }
 
-pub struct LineDoesntReferenceStockLine;
+pub struct LineDoesNotReferenceStockLine;
 #[Object]
-impl LineDoesntReferenceStockLine {
+impl LineDoesNotReferenceStockLine {
     pub async fn description(&self) -> &'static str {
         "Internal Error, line does not reference stock line"
     }
