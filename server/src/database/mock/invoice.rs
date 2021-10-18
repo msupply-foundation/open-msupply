@@ -50,6 +50,22 @@ pub fn mock_customer_invoice_c() -> InvoiceRow {
     }
 }
 
+pub fn mock_customer_invoice_d() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_d"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 9,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
+        confirm_datetime: Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0)),
+        finalised_datetime: None,
+    }
+}
+
 pub fn mock_supplier_invoice_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("supplier_invoice_a"),
@@ -135,6 +151,7 @@ pub fn mock_customer_invoices() -> Vec<InvoiceRow> {
         mock_customer_invoice_a(),
         mock_customer_invoice_b(),
         mock_customer_invoice_c(),
+        mock_customer_invoice_d(),
     ]
 }
 
