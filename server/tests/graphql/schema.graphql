@@ -376,7 +376,7 @@ type NodeError {
 interface NodeErrorInterface {
 	description: String!
 }
-type NotACustomerInvoice implements UpdateCustomerInvoiceLineErrorInterface & InsertCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceErrorInterface {
+type NotACustomerInvoice implements UpdateCustomerInvoiceLineErrorInterface & InsertCustomerInvoiceLineErrorInterface & DeleteCustomerInvoiceErrorInterface & DeleteCustomerInvoiceLineErrorInterface {
 	description: String!
 }
 type NotASupplierInvoice implements UpdateSupplierInvoiceErrorInterface & DeleteSupplierInvoiceErrorInterface & DeleteSupplierInvoiceLineErrorInterface & InsertSupplierInvoiceLineErrorInterface & UpdateSupplierInvoiceLineErrorInterface & DeleteCustomerInvoiceLineErrorInterface {
