@@ -17,6 +17,7 @@ use crate::{
             },
             ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice, StockLineNotFound,
         },
+        u32_to_i32,
     },
 };
 
@@ -42,9 +43,22 @@ pub fn validate(
     check_invoice_type(&invoice, InvoiceType::CustomerInvoice)?;
     check_invoice_finalised(&invoice)?;
 
-    // Reduction Below zero
+    check_reduction_below_zero(&input, &batch)?;
 
     Ok((item, invoice, batch))
+}
+
+fn check_reduction_below_zero(
+    input: &InsertCustomerInvoiceLine,
+    batch: &StockLineRow,
+) -> Result<(), InsertCustomerInvoiceLineError> {
+    if batch.available_number_of_packs < u32_to_i32(input.number_of_packs) {
+        Err(InsertCustomerInvoiceLineError::ReductionBelowZero(
+            input.id.clone(),
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 impl From<StockLineAlreadyExistsInInvoice> for InsertCustomerInvoiceLineError {

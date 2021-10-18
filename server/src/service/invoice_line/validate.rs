@@ -73,7 +73,7 @@ pub fn check_line_belongs_to_invoice(
     line: &InvoiceLineRow,
     invoice: &InvoiceRow,
 ) -> Result<(), NotInvoiceLine> {
-    if line.invoice_id == invoice.id {
+    if line.invoice_id != invoice.id {
         Err(NotInvoiceLine(line.invoice_id.clone()))
     } else {
         Ok(())

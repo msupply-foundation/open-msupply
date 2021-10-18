@@ -1,6 +1,7 @@
 use crate::{
     database::repository::{
-        InvoiceRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+        InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
+        StorageConnectionManager,
     },
     domain::{name::Name, supplier_invoice::UpdateSupplierInvoice},
     service::WithDBError,
@@ -12,6 +13,8 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
+use self::generate::LineAndStockLine;
+
 pub fn update_supplier_invoice(
     connection_manager: &StorageConnectionManager,
     patch: UpdateSupplierInvoice,
@@ -19,13 +22,17 @@ pub fn update_supplier_invoice(
     let connection = connection_manager.connection()?;
     // TODO do inside transaction
     let invoice = validate(&patch, &connection)?;
-    let (stock_lines_option, update_invoice) = generate(invoice, patch, &connection)?;
+    let (lines_and_invoice_lines_option, update_invoice) = generate(invoice, patch, &connection)?;
 
     InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
-    if let Some(stock_lines) = stock_lines_option {
-        let repository = StockLineRepository::new(&connection);
-        for stock_line in stock_lines {
-            repository.upsert_one(&stock_line)?;
+
+    if let Some(lines_and_invoice_lines) = lines_and_invoice_lines_option {
+        let stock_line_repository = StockLineRepository::new(&connection);
+        let invoice_line_respository = InvoiceLineRepository::new(&connection);
+
+        for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
+            stock_line_repository.upsert_one(&stock_line)?;
+            invoice_line_respository.upsert_one(&line)?;
         }
     }
 

@@ -22,38 +22,11 @@ mutation insertSupplierInvoiceFull(
   }
 }
 
-mutation insertSupplierInvoicePartial(
-  $id: String!
-  $otherPartyId_isi: String!
-  $status_isi: InvoiceNodeStatus!
-  $comment_isi: String
-  $theirReference_isi: String
-) {
-  insertSupplierInvoice(
-    input: {
-      id: $id
-      otherPartyId: $otherPartyId_isi
-      status: $status_isi
-      theirReference: $theirReference_isi
-      comment: $comment_isi
-    }
-  ) {
-    ...InsertSupplierInvoiceResponsePartial
-  }
-}
-
 fragment InsertSupplierInvoiceResponse on InsertSupplierInvoiceResponse {
   __typename
   ...InsertSupplierInvoiceError
   ...NodeError
   ...InvoiceNode
-}
-
-fragment InsertSupplierInvoiceResponsePartial on InsertSupplierInvoiceResponse {
-  __typename
-  ...InsertSupplierInvoiceError
-  ...NodeError
-  ...PartialInvoiceNode
 }
 
 fragment InsertSupplierInvoiceError on InsertSupplierInvoiceError {
@@ -92,38 +65,11 @@ mutation updateSupplierInvoiceFull(
   }
 }
 
-mutation updateSupplierInvoicePartial(
-  $id: String!
-  $otherPartyId_usi: String
-  $status_usi: InvoiceNodeStatus
-  $comment_usi: String
-  $theirReference_usi: String
-) {
-  updateSupplierInvoice(
-    input: {
-      id: $id
-      otherPartyId: $otherPartyId_usi
-      status: $status_usi
-      theirReference: $theirReference_usi
-      comment: $comment_usi
-    }
-  ) {
-    ...UpdateSupplierInvoiceResponsePartial
-  }
-}
-
 fragment UpdateSupplierInvoiceResponse on UpdateSupplierInvoiceResponse {
   __typename
   ...UpdateSupplierInvoiceError
   ...NodeError
   ...InvoiceNode
-}
-
-fragment UpdateSupplierInvoiceResponsePartial on UpdateSupplierInvoiceResponse {
-  __typename
-  ...UpdateSupplierInvoiceError
-  ...NodeError
-  ...PartialInvoiceNode
 }
 
 fragment UpdateSupplierInvoiceError on UpdateSupplierInvoiceError {
@@ -174,12 +120,162 @@ fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterf
   ...CannotDeleteInvoiceWithLines
 }
 
+# INSERT SUPPLIER INVOICE LINE
+
+mutation insertSupplierInvoiceLineFull(
+  $batch_isil: String
+  $costPricePerPack_isil: Float!
+  $expiryDate_isil: NaiveDate
+  $id: String!
+  $invoiceId_isil: String!
+  $itemId_isil: String!
+  $numberOfPacks_isil: Int!
+  $sellPricePerPack_isil: Float!
+  $packSize_isil: Int!
+) {
+  insertSupplierInvoiceLine(
+    input: {
+      id: $id
+      invoiceId: $invoiceId_isil
+      itemId: $itemId_isil
+      packSize: $packSize_isil
+      costPricePerPack: $costPricePerPack_isil
+      sellPricePerPack: $sellPricePerPack_isil
+      numberOfPacks: $numberOfPacks_isil
+      expiryDate: $expiryDate_isil
+      batch: $batch_isil
+      packSize: $packSize_isil
+    }
+  ) {
+    ...InsertSupplierInvoiceLineResponse
+  }
+}
+
+fragment InsertSupplierInvoiceLineResponse on InsertSupplierInvoiceLineResponse {
+  __typename
+  ...InsertSupplierInvoiceLineError
+  ...NodeError
+  ...InvoiceLineNode
+}
+
+fragment InsertSupplierInvoiceLineError on InsertSupplierInvoiceLineError {
+  error {
+    ...InsertSupplierInvoiceLineErrorInterface
+  }
+}
+
+fragment InsertSupplierInvoiceLineErrorInterface on InsertSupplierInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotASupplierInvoice
+  ...RangeError
+  ...RecordAlreadyExist
+}
+
+# UPDATES SUPPLIER INVOICE LINE
+
+mutation updateSupplierInvoiceLineFull(
+  $batch_usil: String
+  $costPricePerPack_usil: Float
+  $expiryDate_usil: NaiveDate
+  $id: String!
+  $invoiceId_usil: String!
+  $itemId_usil: String
+  $numberOfPacks_usil: Int
+  $sellPricePerPack_usil: Float
+  $packSize_usil: Int
+) {
+  updateSupplierInvoiceLine(
+    input: {
+      id: $id
+      invoiceId: $invoiceId_usil
+      itemId: $itemId_usil
+      packSize: $packSize_usil
+      costPricePerPack: $costPricePerPack_usil
+      sellPricePerPack: $sellPricePerPack_usil
+      numberOfPacks: $numberOfPacks_usil
+      expiryDate: $expiryDate_usil
+      batch: $batch_usil
+      packSize: $packSize_usil
+    }
+  ) {
+    ...UpdateSupplierInvoiceLineResponse
+  }
+}
+
+fragment UpdateSupplierInvoiceLineResponse on UpdateSupplierInvoiceLineResponse {
+  __typename
+  ...UpdateSupplierInvoiceLineError
+  ...NodeError
+  ...InvoiceLineNode
+}
+
+fragment UpdateSupplierInvoiceLineError on UpdateSupplierInvoiceLineError {
+  error {
+    ...UpdateSupplierInvoiceLineErrorInterface
+  }
+}
+
+fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotASupplierInvoice
+  ...RangeError
+  ...RecordDoesNotExist
+  ...BatchIsReserved
+  ...InvoiceLineBelongsToAnotherInvoice
+}
+
+# DELETE SUPPLIER INVOICE LINE
+
+mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId_dsil: String!) {
+  deleteSupplierInvoiceLine(input: { id: $id, invoiceId: $invoiceId_dsil }) {
+    ...DeleteSupplierInvoiceLineResponse
+  }
+}
+
+fragment DeleteSupplierInvoiceLineResponse on DeleteSupplierInvoiceLineResponse {
+  __typename
+  ...DeleteSupplierInvoiceLineError
+  ...DeleteResponse
+}
+
+fragment DeleteSupplierInvoiceLineError on DeleteSupplierInvoiceLineError {
+  error {
+    ...DeleteSupplierInvoiceLineErrorInterface
+  }
+}
+
+fragment DeleteSupplierInvoiceLineErrorInterface on DeleteSupplierInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotASupplierInvoice
+  ...RecordDoesNotExist
+  ...BatchIsReserved
+  ...InvoiceLineBelongsToAnotherInvoice
+}
+
 # INVOICE
 
-fragment PartialInvoiceNode on InvoiceNode {
-  id
-  status
-  type
+query invoiceFull($id: String!) {
+  invoice(id: $id) {
+    ...InvoiceResponse
+  }
+}
+
+fragment InvoiceResponse on InvoiceResponse {
+  __typename
+  ...InvoiceNode
+  ...NodeError
 }
 
 fragment InvoiceNode on InvoiceNode {
@@ -370,5 +466,16 @@ fragment CannotDeleteInvoiceWithLines on CannotDeleteInvoiceWithLines {
   description
   lines {
     ...InvoiceLineConnector
+  }
+}
+
+fragment BatchIsReserved on BatchIsReserved {
+  description
+}
+
+fragment InvoiceLineBelongsToAnotherInvoice on InvoiceLineBelongsToAnotherInvoice {
+  description
+  invoice {
+    ...InvoiceResponse
   }
 }

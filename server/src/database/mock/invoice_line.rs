@@ -158,6 +158,84 @@ pub fn mock_supplier_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
     ]
 }
 
+pub fn mock_supplier_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_supplier_invoice_c_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("supplier_invoice_c_line_a"),
+        invoice_id: String::from("supplier_invoice_c"),
+        item_id: String::from("item_a"),
+        item_name: String::from("item_a"),
+        item_code: String::from("item_a"),
+        stock_line_id: None,
+        batch: Some(String::from("item_a_si_c_siline_a")),
+        expiry_date: None,
+        pack_size: 1,
+        cost_price_per_pack: 7.0,
+        sell_price_per_pack: 5.0,
+        total_after_tax: 21.0,
+        number_of_packs: 3,
+    };
+
+    let mock_supplier_invoice_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("supplier_invoice_c_line_b"),
+        invoice_id: String::from("supplier_invoice_c"),
+        item_id: String::from("item_b"),
+        item_name: String::from("item_b"),
+        item_code: String::from("item_b"),
+        stock_line_id: None,
+        batch: Some(String::from("item_b_si_c_siline_b")),
+        expiry_date: Some(NaiveDate::from_ymd(2020, 8, 8)),
+        pack_size: 1,
+        cost_price_per_pack: 4.0,
+        sell_price_per_pack: 2.0,
+        total_after_tax: 8.0,
+        number_of_packs: 2,
+    };
+
+    vec![
+        mock_supplier_invoice_c_invoice_line_a,
+        mock_supplier_invoice_c_invoice_line_b,
+    ]
+}
+
+pub fn mock_supplier_invoice_d_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_supplier_invoice_d_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("supplier_invoice_d_line_a"),
+        invoice_id: String::from("supplier_invoice_d"),
+        item_id: String::from("item_a"),
+        item_name: String::from("item_a"),
+        item_code: String::from("item_a"),
+        stock_line_id: Some(String::from("stock_line_si_d_siline_a")),
+        batch: Some(String::from("item_a_si_d_siline_a")),
+        expiry_date: None,
+        pack_size: 1,
+        cost_price_per_pack: 2.0,
+        sell_price_per_pack: 18.0,
+        total_after_tax: 14.0,
+        number_of_packs: 7,
+    };
+
+    let mock_supplier_invoice_d_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("supplier_invoice_d_line_b"),
+        invoice_id: String::from("supplier_invoice_d"),
+        item_id: String::from("item_b"),
+        item_name: String::from("item_b"),
+        item_code: String::from("item_b"),
+        stock_line_id: Some(String::from("stock_line_si_d_siline_b")),
+        batch: Some(String::from("item_b_si_c_siline_d")),
+        expiry_date: Some(NaiveDate::from_ymd(2020, 8, 11)),
+        pack_size: 3,
+        cost_price_per_pack: 45.0,
+        sell_price_per_pack: 34.0,
+        total_after_tax: 270.0,
+        number_of_packs: 2,
+    };
+
+    vec![
+        mock_supplier_invoice_d_invoice_line_a,
+        mock_supplier_invoice_d_invoice_line_b,
+    ]
+}
+
 pub fn mock_customer_invoice_invoice_lines() -> Vec<InvoiceLineRow> {
     let mut mock_customer_invoice_invoice_lines = Vec::new();
 
@@ -172,6 +250,8 @@ pub fn mock_supplier_invoice_invoice_lines() -> Vec<InvoiceLineRow> {
 
     mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_a_invoice_lines());
     mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_b_invoice_lines());
+    mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_c_invoice_lines());
+    mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_d_invoice_lines());
 
     mock_supplier_invoice_invoice_lines
 }
