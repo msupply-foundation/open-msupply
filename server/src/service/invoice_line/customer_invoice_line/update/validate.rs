@@ -12,8 +12,9 @@ use crate::{
         invoice_line::{
             check_batch_exists, check_item_matches_batch, check_unique_stock_line,
             validate::{
-                check_item, check_line_exists, check_number_of_packs, ItemNotFound,
-                LineDoesNotExist, NumberOfPacksBelowOne,
+                check_item, check_line_belongs_to_invoice, check_line_exists,
+                check_number_of_packs, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
+                NumberOfPacksBelowOne,
             },
             ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice, StockLineNotFound,
         },
@@ -27,10 +28,6 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateCustomerInvoiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
-    check_number_of_packs(input.number_of_packs.clone())?;
-    let batch_pair = check_batch_exists_option(&input, &line, connection)?;
-    let item = check_item_option(input.item_id.clone(), &line, connection)?;
-    check_item_matches_batch(&batch_pair.main_batch, &item)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     check_unique_stock_line(
         &line.id,
@@ -42,8 +39,14 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     // check batch belongs to store
 
+    check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceType::CustomerInvoice)?;
     check_invoice_finalised(&invoice)?;
+
+    check_number_of_packs(input.number_of_packs.clone())?;
+    let batch_pair = check_batch_exists_option(&input, &line, connection)?;
+    let item = check_item_option(input.item_id.clone(), &line, connection)?;
+    check_item_matches_batch(&batch_pair.main_batch, &item)?;
 
     check_reduction_below_zero(&input, &line, &batch_pair)?;
 
@@ -92,19 +95,21 @@ fn check_batch_exists_option(
         check_batch_exists(batch_id, connection)?
     } else {
         // This should never happen, but still need to cover
-        return Err(LineDoesntReferenceStockLine);
+        return Err(LineDoesNotReferenceStockLine);
     };
 
-    let result = if let Some(batch_id) = &input.stock_line_id {
-        BatchPair {
+    let result = match &input.stock_line_id {
+        Some(batch_id) if batch_id != &previous_batch.id => BatchPair {
+            // stock_line changed
             main_batch: check_batch_exists(batch_id, connection)?,
             previous_batch_option: Some(previous_batch),
-        }
-    } else {
-        // stock_line_id not changed in input
-        BatchPair {
-            main_batch: previous_batch,
-            previous_batch_option: None,
+        },
+        _ => {
+            // stock_line_id not changed
+            BatchPair {
+                main_batch: previous_batch,
+                previous_batch_option: None,
+            }
         }
     };
 
@@ -114,6 +119,12 @@ fn check_batch_exists_option(
 impl From<ItemDoesNotMatchStockLine> for UpdateCustomerInvoiceLineError {
     fn from(_: ItemDoesNotMatchStockLine) -> Self {
         UpdateCustomerInvoiceLineError::ItemDoesNotMatchStockLine
+    }
+}
+
+impl From<NotInvoiceLine> for UpdateCustomerInvoiceLineError {
+    fn from(error: NotInvoiceLine) -> Self {
+        UpdateCustomerInvoiceLineError::NotThisInvoiceLine(error.0)
     }
 }
 
