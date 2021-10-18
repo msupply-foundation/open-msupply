@@ -8,7 +8,7 @@ export const placeholderInvoice: OutboundShipment = {
   comment: '',
   theirReference: '',
   color: 'grey',
-  status: '',
+  status: 'draft',
   type: '',
   entered: '',
   confirmed: '',
