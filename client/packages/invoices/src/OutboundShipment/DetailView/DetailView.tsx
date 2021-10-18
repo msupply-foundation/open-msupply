@@ -44,6 +44,10 @@ import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
+import {
+  getNextOutboundStatusButtonTranslation,
+  isInvoiceSaveable,
+} from '../utils';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -63,7 +67,6 @@ const useDraftOutbound = () => {
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
   const { draft, dispatch, onChangeSortBy, save, sortBy } = useDraftOutbound();
-  const { draft, onChangeSortBy, sortBy, save } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -241,28 +244,36 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               color="secondary"
               onClick={() => navigate(-1)}
             />
-            <ButtonWithIcon
-              Icon={<DownloadIcon />}
-              labelKey="button.save"
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                success('Saved invoice! 🥳 ')();
-                save(draft);
-              }}
-            />
-            <ButtonWithIcon
-              Icon={<ArrowRightIcon />}
-              labelKey="button.save-and"
-              labelProps={{ status: draft.status }}
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                success('Saved invoice! 🥳 ')();
-                draft.update?.('status', 'finalised');
-                save(draft);
-              }}
-            />
+            {isInvoiceSaveable(draft) && (
+              <>
+                <ButtonWithIcon
+                  Icon={<DownloadIcon />}
+                  labelKey="button.save"
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    success('Saved invoice! 🥳 ')();
+                    save(draft);
+                  }}
+                />
+                <ButtonWithIcon
+                  Icon={<ArrowRightIcon />}
+                  labelKey="button.save-and-confirm-status"
+                  labelProps={{
+                    status: t(
+                      getNextOutboundStatusButtonTranslation(draft.status)
+                    ),
+                  }}
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    success('Saved invoice! 🥳 ')();
+                    draft.update?.('status', 'finalised');
+                    save(draft);
+                  }}
+                />
+              </>
+            )}
           </Box>
         </Box>
       </Box>
