@@ -5,7 +5,7 @@ import { Route } from 'react-router';
 import { NavLink } from './NavLink';
 import { useDrawer } from '../../../../hooks';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
-import { Customers } from '../../../icons';
+import { CustomersIcon } from '../../../icons';
 
 const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   const drawer = useDrawer();
@@ -30,7 +30,7 @@ describe('NavLink', () => {
                 <Wrapper collapsed />
                 <NavLink
                   to="/customer-invoice"
-                  icon={<Customers />}
+                  icon={<CustomersIcon />}
                   text="Customers"
                   end={false}
                 />
@@ -58,7 +58,7 @@ describe('NavLink', () => {
                 <Wrapper collapsed={false} />
                 <NavLink
                   to="/customer-invoice"
-                  icon={<Customers />}
+                  icon={<CustomersIcon />}
                   text="Customers"
                   end={false}
                 />
@@ -86,7 +86,7 @@ describe('NavLink', () => {
                 <Wrapper collapsed />
                 <NavLink
                   to="/customer-invoice"
-                  icon={<Customers />}
+                  icon={<CustomersIcon />}
                   text="Customers"
                   end={false}
                   expandOnHover

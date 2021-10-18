@@ -4,8 +4,8 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { ColorMenu } from './ColorMenu';
 import { TestingProvider } from '../../../../utils';
-import { UnstyledIconButton } from '../../buttons';
-import { Circle } from '../../../icons';
+import { IconButton } from '../../buttons';
+import { CircleIcon } from '../../../icons';
 
 export default {
   title: 'Menus/ColorMenu',
@@ -30,10 +30,10 @@ const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
     <TestingProvider>
       <ColorMenu onClose={handleClose} anchorEl={anchorEl} onClick={onClick} />
       <Box>
-        <UnstyledIconButton
-          titleKey="app.admin"
+        <IconButton
+          labelKey="app.admin"
           icon={
-            <Circle
+            <CircleIcon
               htmlColor="red"
               sx={{
                 width: '12px',

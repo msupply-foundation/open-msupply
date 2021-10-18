@@ -1,36 +1,33 @@
 import React from 'react';
-import { Button, Tooltip } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { IconButton as MuiIconButton, Tooltip } from '@mui/material';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
-import { DefaultButtonStyles } from './styles';
 
 interface ButtonProps {
   disabled?: boolean;
   icon: React.ReactNode;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  size?: 'small' | 'medium';
-  titleKey: LocaleKey;
+  labelKey: LocaleKey;
 }
 
-const StyledButton = styled(Button)(({ theme }) => ({
-  ...DefaultButtonStyles,
-  boxShadow: theme.shadows[1],
-  color: theme.palette.primary.main,
-}));
-
-export const IconButton: React.FC<ButtonProps> = props => {
+export const IconButton: React.FC<ButtonProps> = ({
+  disabled,
+  icon,
+  onClick,
+  labelKey,
+}) => {
   const t = useTranslation();
-  const { disabled, icon, onClick, size, titleKey } = props;
+
+  const tooltip = t(labelKey);
   return (
-    <Tooltip title={t(titleKey)}>
-      <StyledButton
+    <Tooltip title={tooltip}>
+      <MuiIconButton
         disabled={disabled}
         onClick={onClick}
-        size={size}
-        variant="contained"
+        aria-label={tooltip}
+        size="small"
       >
         {icon}
-      </StyledButton>
+      </MuiIconButton>
     </Tooltip>
   );
 };

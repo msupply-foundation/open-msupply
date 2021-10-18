@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
+  ArrowLeftIcon,
   styled,
   AppBarContent,
   Toolbar,
   Box,
-  UnstyledIconButton,
+  IconButton,
   Breadcrumbs,
   useAppBarRect,
   AppBarButtons,
@@ -29,9 +29,9 @@ const AppBar: React.FC = () => {
   return (
     <StyledContainer ref={ref}>
       <Toolbar disableGutters>
-        <UnstyledIconButton
-          icon={<ArrowLeft />}
-          titleKey="button.go-back"
+        <IconButton
+          icon={<ArrowLeftIcon color="primary" />}
+          labelKey="button.go-back"
           onClick={() => navigate(-1)}
         />
 

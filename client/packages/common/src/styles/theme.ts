@@ -30,6 +30,9 @@ declare module '@mui/material/styles/createMixins' {
     icon: {
       medium: { width: number; height: number };
     };
+    saveButtonRow: {
+      height: number;
+    };
     footer: {
       height: number;
     };
@@ -41,10 +44,25 @@ declare module '@mui/material/styles/createMixins' {
   }
 }
 
+declare module '@mui/material/Checkbox' {
+  export interface CheckboxPropsColorOverrides {
+    darkGrey: true;
+  }
+}
+
+declare module '@mui/material/styles' {
+  interface Palette {
+    darkGrey: Palette['primary'];
+  }
+  interface PaletteOptions {
+    darkGrey: PaletteOptions['primary'];
+  }
+}
+
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
-    darkGrey: string;
+    darkGrey: Palette['primary'];
     lightGrey: string;
     midGrey: string;
     form: TypeForm;
@@ -93,6 +111,7 @@ const themeOptions = {
         },
       },
     },
+    saveButtonRow: { height: 40 },
     footer: { height: 32 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
@@ -103,14 +122,14 @@ const themeOptions = {
     },
   },
   palette: {
-    darkGrey: '#555770',
+    darkGrey: { main: '#555770' },
     divider: '#eaeaea',
     error: { main: '#e63535' },
     lightGrey: '#c7c9d9',
     midGrey: '#8f90a6',
     border: '#e4e4eb',
     primary: { 500: '#e95c30' },
-    secondary: { main: '#555770' },
+    secondary: { main: '#3e7bfa' },
 
     background: {
       menu: '#f2f2f5',

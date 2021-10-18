@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
 import { ObjectWithStringKeys } from '../../../../../types/utility';
 import { Column } from '../../columns/types';
-import { SortDesc } from '../../../../icons';
+import { SortDescIcon } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
 
 export const HeaderRow: FC = props => (
@@ -70,7 +70,7 @@ export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
           hideSortIcon={false}
           active={isSorted}
           direction={direction}
-          IconComponent={SortDesc}
+          IconComponent={SortDescIcon}
         >
           <Header column={column} />
         </TableSortLabel>

@@ -12,7 +12,7 @@ import {
   styled,
 } from '@mui/material';
 
-import { ChevronDown } from '../../../icons';
+import { ChevronDownIcon } from '../../../icons';
 
 interface DropdownMenuItemProps extends MenuItemProps {
   IconComponent?: React.JSXElementConstructor<SvgIconProps>;
@@ -64,7 +64,7 @@ const StyledSelect = styled(Select)(({ theme }) => ({
 
   [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]:
     {
-      borderColor: theme.palette.darkGrey,
+      borderColor: theme.palette.darkGrey.main,
     },
 }));
 
@@ -89,7 +89,7 @@ export const DropdownMenu: FC<DropdownMenuProps> = ({ label, children }) => {
         size="small"
         labelId={`action-drop-down-label-${label}`}
         variant="outlined"
-        IconComponent={ChevronDown}
+        IconComponent={ChevronDownIcon}
       >
         {children}
       </StyledSelect>
