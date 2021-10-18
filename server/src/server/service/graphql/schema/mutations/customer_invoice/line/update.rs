@@ -123,9 +123,13 @@ impl From<UpdateCustomerInvoiceLineError> for UpdateCustomerInvoiceLineResponse 
             UpdateCustomerInvoiceLineError::LineDoesNotReferenceStockLine => {
                 OutError::LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine {})
             }
-            UpdateCustomerInvoiceLineError::ReductionBelowZero(line_id) => {
-                OutError::NotEnoughStockForReduction(NotEnoughStockForReduction(line_id))
-            }
+            UpdateCustomerInvoiceLineError::ReductionBelowZero {
+                stock_line_id,
+                line_id,
+            } => OutError::NotEnoughStockForReduction(NotEnoughStockForReduction {
+                stock_line_id,
+                line_id: Some(line_id),
+            }),
             UpdateCustomerInvoiceLineError::NotThisInvoiceLine(invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
                     invoice_id,

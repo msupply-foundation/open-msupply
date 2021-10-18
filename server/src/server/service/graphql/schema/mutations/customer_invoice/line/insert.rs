@@ -118,8 +118,11 @@ impl From<InsertCustomerInvoiceLineError> for InsertCustomerInvoiceLineResponse 
             InsertCustomerInvoiceLineError::ItemDoesNotMatchStockLine => {
                 OutError::ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine {})
             }
-            InsertCustomerInvoiceLineError::ReductionBelowZero(line_id) => {
-                OutError::NotEnoughStockForReduction(NotEnoughStockForReduction(line_id))
+            InsertCustomerInvoiceLineError::ReductionBelowZero { stock_line_id } => {
+                OutError::NotEnoughStockForReduction(NotEnoughStockForReduction {
+                    stock_line_id,
+                    line_id: None,
+                })
             }
         };
 
