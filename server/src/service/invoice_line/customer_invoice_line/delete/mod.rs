@@ -1,6 +1,10 @@
 use crate::{
-    database::repository::{
-        InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    database::{
+        repository::{
+            InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
+            StorageConnectionManager,
+        },
+        schema::InvoiceRowStatus,
     },
     domain::customer_invoice::DeleteCustomerInvoiceLine,
     service::WithDBError,
@@ -22,8 +26,20 @@ pub fn delete_customer_invoice_line(
 
     InvoiceLineRepository::new(&connection).delete(&line.id)?;
 
-    if let Some(id) = delete_batch_id_option {
-        StockLineRepository::new(&connection).delete(&id)?;
+    if let Some(delete_batch_id) = delete_batch_id_option {
+        let invoice = InvoiceRepository::new(&connection).find_one_by_id(&line.invoice_id)?;
+
+        let stock_line_repository = StockLineRepository::new(&connection);
+
+        let mut stock_line = stock_line_repository.find_one_by_id(&delete_batch_id)?;
+
+        stock_line.available_number_of_packs += line.number_of_packs;
+
+        if invoice.status == InvoiceRowStatus::Confirmed {
+            stock_line.total_number_of_packs += line.number_of_packs;
+        }
+
+        stock_line_repository.upsert_one(&stock_line)?;
     }
 
     Ok(line.id)
