@@ -1,12 +1,11 @@
 mod graphql {
     use crate::graphql::common::{
-        assert_matches, assert_unwrap_enum, assert_unwrap_optional_key,
-        convert_graphql_client_type, get_invoice_inline, get_invoice_lines_inline,
+        assert_matches, assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
+        get_invoice_lines_inline,
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
-        delete_supplier_invoice_line_full as delete, invoice_full as get,
-        DeleteSupplierInvoiceLineFull as Delete, InvoiceFull as Get,
+        delete_supplier_invoice_line_full as delete, DeleteSupplierInvoiceLineFull as Delete,
     };
 
     use graphql_client::{GraphQLQuery, Response};
@@ -170,21 +169,12 @@ mod graphql {
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-        let invoice: Response<get::ResponseData> = get_gql_result(
-            &settings,
-            Get::build_query(get::Variables {
-                id: draft_supplier_invoice.id,
-            }),
-        )
-        .await;
 
-        assert_error!(
-            response,
-            InvoiceLineBelongsToAnotherInvoice(delete::InvoiceLineBelongsToAnotherInvoice {
-                description: "Invoice line belongs to another invoice".to_string(),
-                invoice: convert_graphql_client_type(invoice.data.unwrap().invoice)
-            },)
-        );
+        let error_variant = assert_unwrap_error!(response);
+        let invoice_variant =
+            assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice).invoice;
+        let invoice = assert_unwrap_enum!(invoice_variant, delete::InvoiceResponse::InvoiceNode);
+        assert_eq!(invoice.id, draft_supplier_invoice.id);
 
         // Test BatchIsReserved
 
@@ -192,7 +182,7 @@ mod graphql {
         variables.id = confirmed_invoice_lines[1].id.clone();
         variables.invoice_id_dsil = confirmed_supplier_invoice.id.clone();
         let mut stock_line = StockLineRepository::new(&connection)
-            .find_one_by_id(&confirmed_invoice_lines[1].stock_line_id.clone().unwrap())
+            .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
         stock_line.available_number_of_packs -= 1;
         StockLineRepository::new(&connection)

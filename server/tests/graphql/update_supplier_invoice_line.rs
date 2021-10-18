@@ -1,15 +1,15 @@
 mod graphql {
     use crate::graphql::common::{
-        assert_unwrap_enum, assert_unwrap_optional_key, compare_option,
-        convert_graphql_client_type, get_invoice_inline, get_invoice_lines_inline,
+        assert_matches, assert_unwrap_enum, assert_unwrap_optional_key, compare_option,
+        get_invoice_inline, get_invoice_lines_inline,
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
-        invoice_full as get, update_supplier_invoice_line_full as update, InvoiceFull as Get,
-        UpdateSupplierInvoiceLineFull as Update,
+        update_supplier_invoice_line_full as update, UpdateSupplierInvoiceLineFull as Update,
     };
     use chrono::NaiveDate;
     use graphql_client::{GraphQLQuery, Response};
+    use remote_server::database::repository::{ItemRepository, RepositoryError};
     use remote_server::{
         database::{
             mock::MockDataInserts,
@@ -108,6 +108,7 @@ mod graphql {
             get_invoice_lines_inline!(&finalised_supplier_invoice.id.clone(), &connection);
         let draft_invoice_lines =
             get_invoice_lines_inline!(&draft_supplier_invoice.id.clone(), &connection);
+        let item_not_in_invoices_id = "item_c".to_string();
 
         let base_variables = update::Variables {
             id: draft_invoice_lines[0].id.clone(),
@@ -237,21 +238,12 @@ mod graphql {
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
-        let invoice: Response<get::ResponseData> = get_gql_result(
-            &settings,
-            Get::build_query(get::Variables {
-                id: draft_supplier_invoice.id,
-            }),
-        )
-        .await;
 
-        assert_error!(
-            response,
-            InvoiceLineBelongsToAnotherInvoice(update::InvoiceLineBelongsToAnotherInvoice {
-                description: "Invoice line belongs to another invoice".to_string(),
-                invoice: convert_graphql_client_type(invoice.data.unwrap().invoice)
-            },)
-        );
+        let error_variant = assert_unwrap_error!(response);
+        let invoice_variant =
+            assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice).invoice;
+        let invoice = assert_unwrap_enum!(invoice_variant, update::InvoiceResponse::InvoiceNode);
+        assert_eq!(invoice.id, draft_supplier_invoice.id);
 
         // Test BatchIsReserved
 
@@ -259,7 +251,7 @@ mod graphql {
         variables.id = confirmed_invoice_lines[1].id.clone();
         variables.invoice_id_usil = confirmed_supplier_invoice.id.clone();
         let mut stock_line = StockLineRepository::new(&connection)
-            .find_one_by_id(&confirmed_invoice_lines[1].stock_line_id.clone().unwrap())
+            .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
         stock_line.available_number_of_packs -= 1;
         StockLineRepository::new(&connection)
@@ -291,9 +283,7 @@ mod graphql {
         assert_eq!(new_line.stock_line_id, None);
         assert_eq!(
             new_line.total_after_tax,
-            new_line.pack_size as f64
-                * new_line.number_of_packs as f64
-                * new_line.cost_price_per_pack
+            new_line.number_of_packs as f64 * new_line.cost_price_per_pack
         );
 
         // Success Confirmed
@@ -322,10 +312,45 @@ mod graphql {
 
         assert_eq!(
             new_line.total_after_tax,
-            new_line.pack_size as f64
-                * new_line.number_of_packs as f64
-                * new_line.cost_price_per_pack
+            new_line.number_of_packs as f64 * new_line.cost_price_per_pack
         );
+
+        // Success Confirmed change item
+
+        let mut variables = base_variables.clone();
+        variables.id = confirmed_invoice_lines[0].id.clone();
+        variables.invoice_id_usil = confirmed_supplier_invoice.id.clone();
+        variables.item_id_usil = Some(item_not_in_invoices_id.clone());
+
+        let deleted_stock_line_id = confirmed_invoice_lines[0].stock_line_id.as_ref().unwrap();
+        let new_item = ItemRepository::new(&connection)
+            .find_one_by_id(&item_not_in_invoices_id)
+            .unwrap();
+
+        let query = Update::build_query(variables.clone());
+        let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
+        let line = assert_unwrap_line!(response);
+        let batch = assert_unwrap_batch!(line);
+
+        assert_eq!(line.id, variables.id);
+
+        let new_line = InvoiceLineRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+        let new_stock_line = StockLineRepository::new(&connection)
+            .find_one_by_id(&batch.id)
+            .unwrap();
+        let deleted_stock_line =
+            StockLineRepository::new(&connection).find_one_by_id(deleted_stock_line_id);
+
+        assert_eq!(new_line, variables);
+        assert_eq!(new_stock_line, variables);
+        assert_eq!(new_line.stock_line_id, Some(new_stock_line.id));
+
+        assert_matches!(deleted_stock_line, Err(RepositoryError::NotFound));
+
+        assert_eq!(new_line.item_code, new_item.code);
+        assert_eq!(new_line.item_name, new_item.name);
 
         // Success Confirmed make batch name and expiry null
 
