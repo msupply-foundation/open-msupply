@@ -1,7 +1,9 @@
 use crate::database::repository::StorageConnectionManager;
 use crate::server::service::graphql::schema::types::InvoiceLineResponse;
+use crate::server::service::graphql::schema::types::StockLineResponse;
 use crate::server::service::graphql::ContextExt;
 use crate::service::invoice_line::get_invoice_line;
+use crate::service::stock_line::get_stock_line;
 use async_graphql::*;
 
 pub mod delete;
@@ -35,17 +37,29 @@ impl StockLineAlreadyExistsInInvoice {
     }
 }
 
-pub struct NotEnoughStockForReduction(pub String);
+pub struct NotEnoughStockForReduction {
+    pub stock_line_id: String,
+    pub line_id: Option<String>,
+}
+
 #[Object]
 impl NotEnoughStockForReduction {
     pub async fn description(&self) -> &'static str {
         "Not enought stock for reduction"
     }
 
-    pub async fn line(&self, ctx: &Context<'_>) -> InvoiceLineResponse {
+    pub async fn line(&self, ctx: &Context<'_>) -> Option<InvoiceLineResponse> {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        get_invoice_line(connection_manager, self.0.clone()).into()
+        self.line_id
+            .as_ref()
+            .map(|line_id| get_invoice_line(connection_manager, line_id.clone()).into())
+    }
+
+    pub async fn batch(&self, ctx: &Context<'_>) -> StockLineResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        get_stock_line(connection_manager, self.stock_line_id.clone()).into()
     }
 }
 

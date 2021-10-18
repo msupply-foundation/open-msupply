@@ -83,7 +83,10 @@ pub enum UpdateCustomerInvoiceLineError {
     ItemDoesNotMatchStockLine,
     LineDoesNotReferenceStockLine,
     StockLineAlreadyExistsInInvoice(String),
-    ReductionBelowZero(String),
+    ReductionBelowZero {
+        stock_line_id: String,
+        line_id: String,
+    },
 }
 
 impl From<RepositoryError> for UpdateCustomerInvoiceLineError {

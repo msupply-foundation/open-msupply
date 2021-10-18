@@ -38,7 +38,7 @@ pub enum InsertCustomerInvoiceLineError {
     NumberOfPacksBelowOne,
     StockLineAlreadyExistsInInvoice(String),
     ItemDoesNotMatchStockLine,
-    ReductionBelowZero(String),
+    ReductionBelowZero { stock_line_id: String },
 }
 
 impl From<RepositoryError> for InsertCustomerInvoiceLineError {

@@ -63,9 +63,10 @@ fn check_reduction_below_zero(
     let reduction = batch_pair.get_main_batch_reduction(input, line);
 
     if batch_pair.main_batch.available_number_of_packs < reduction {
-        Err(UpdateCustomerInvoiceLineError::ReductionBelowZero(
-            input.id.clone(),
-        ))
+        Err(UpdateCustomerInvoiceLineError::ReductionBelowZero {
+            stock_line_id: batch_pair.main_batch.id.clone(),
+            line_id: line.id.clone(),
+        })
     } else {
         Ok(())
     }

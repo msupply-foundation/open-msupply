@@ -53,9 +53,9 @@ fn check_reduction_below_zero(
     batch: &StockLineRow,
 ) -> Result<(), InsertCustomerInvoiceLineError> {
     if batch.available_number_of_packs < u32_to_i32(input.number_of_packs) {
-        Err(InsertCustomerInvoiceLineError::ReductionBelowZero(
-            input.id.clone(),
-        ))
+        Err(InsertCustomerInvoiceLineError::ReductionBelowZero {
+            stock_line_id: batch.id.clone(),
+        })
     } else {
         Ok(())
     }
