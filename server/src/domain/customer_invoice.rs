@@ -31,3 +31,8 @@ pub struct UpdateCustomerInvoiceLine {
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<u32>,
 }
+
+pub struct DeleteCustomerInvoiceLine {
+    pub id: String,
+    pub invoice_id: String,
+}
