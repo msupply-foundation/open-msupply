@@ -23,13 +23,13 @@ pub fn update_supplier_invoice_line(
     let (updated_line, upsert_batch_option, delete_batch_id_option) =
         generate(input, line, item, invoice, &connection)?;
 
-    InvoiceLineRepository::new(&connection).upsert_one(&updated_line)?;
-
     let stock_line_respository = StockLineRepository::new(&connection);
 
     if let Some(upsert_batch) = upsert_batch_option {
         stock_line_respository.upsert_one(&upsert_batch)?;
     }
+
+    InvoiceLineRepository::new(&connection).upsert_one(&updated_line)?;
 
     if let Some(id) = delete_batch_id_option {
         stock_line_respository.delete(&id)?;
