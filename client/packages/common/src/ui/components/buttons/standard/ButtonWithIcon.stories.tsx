@@ -2,12 +2,12 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { ButtonWithIcon } from './ButtonWithIcon';
-import { Book } from '../../../icons';
+import { BookIcon } from '../../../icons';
 
 const Template: ComponentStory<typeof ButtonWithIcon> = () => (
   <Box>
     <ButtonWithIcon
-      Icon={<Book />}
+      Icon={<BookIcon />}
       labelKey="button.docs"
       onClick={() => {
         alert('clicked');

@@ -1,6 +1,6 @@
 import { Paper, Popover } from '@mui/material';
 import React, { FC } from 'react';
-import { Circle } from '../../../icons';
+import { CircleIcon } from '../../../icons';
 
 export interface Color {
   hex: string;
@@ -58,7 +58,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
       }}
     >
       {colors.map(({ hex, name }) => (
-        <Circle
+        <CircleIcon
           role="button"
           aria-label={name}
           key={hex}

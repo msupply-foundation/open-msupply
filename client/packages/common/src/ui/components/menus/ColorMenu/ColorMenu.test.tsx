@@ -5,7 +5,7 @@ import { IconButton } from '../../buttons';
 import { TestingProvider } from '../../../../utils';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { Circle } from '../../../icons';
+import { CircleIcon } from '../../../icons';
 
 describe('ColorMenu', () => {
   const TestColorMenu = ({ onClick }: { onClick: (color: Color) => void }) => {
@@ -29,7 +29,7 @@ describe('ColorMenu', () => {
         <IconButton
           labelKey="app.admin"
           icon={
-            <Circle
+            <CircleIcon
               htmlColor="red"
               sx={{
                 width: '12px',

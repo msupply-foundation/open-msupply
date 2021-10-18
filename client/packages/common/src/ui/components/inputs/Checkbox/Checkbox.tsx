@@ -2,9 +2,9 @@ import React, { FC } from 'react';
 import MuiCheckbox, { CheckboxProps } from '@mui/material/Checkbox';
 
 import {
-  CheckboxEmpty,
-  CheckboxChecked,
-  CheckboxIndeterminate,
+  CheckboxEmptyIcon,
+  CheckboxCheckedIcon,
+  CheckboxIndeterminateIcon,
 } from '../../../icons';
 
 export const Checkbox: FC<CheckboxProps> = props => {
@@ -12,9 +12,9 @@ export const Checkbox: FC<CheckboxProps> = props => {
     <MuiCheckbox
       color="darkGrey"
       size="small"
-      icon={<CheckboxEmpty />}
-      checkedIcon={<CheckboxChecked />}
-      indeterminateIcon={<CheckboxIndeterminate />}
+      icon={<CheckboxEmptyIcon />}
+      checkedIcon={<CheckboxCheckedIcon />}
+      indeterminateIcon={<CheckboxIndeterminateIcon />}
       {...props}
     />
   );
