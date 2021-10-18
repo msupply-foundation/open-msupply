@@ -11,7 +11,6 @@ import {
   DialogButton,
   FormProvider,
   Grid,
-  Item,
   PanelField,
   PanelLabel,
   PanelRow,
@@ -32,6 +31,7 @@ import {
   useNotification,
   useTabs,
   useTranslation,
+  InvoiceLine,
   ButtonWithIcon,
   XCircleIcon,
   DownloadIcon,
@@ -42,7 +42,7 @@ import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
-import { ItemRow } from './types';
+import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
 
 const useDraftOutbound = () => {
@@ -62,6 +62,7 @@ const useDraftOutbound = () => {
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
+  const { draft, dispatch, onChangeSortBy, save, sortBy } = useDraftOutbound();
   const { draft, onChangeSortBy, sortBy, save } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
@@ -73,13 +74,12 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     reset,
     handleSubmit,
   } = methods;
-  const addItemClose = (item: Item) => {
+  const addItemClose = (item: InvoiceLine) => {
     addItem(item);
     hideDialog();
   };
-  const addItem = (item: any) => {
-    // TODO: add to dataset and have the reducer add the fn
-    draft?.lines?.push({ ...item, updateQuantity: () => {} });
+  const addItem = (invoiceLine: InvoiceLine) => {
+    dispatch({ type: ActionType.UpsertLine, payload: { invoiceLine } });
     reset();
   };
   const cancelItem = () => {
