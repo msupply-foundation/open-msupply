@@ -1,5 +1,5 @@
 use crate::{
-    database::schema::{InvoiceLineRow, InvoiceRow, ItemRow, StockLineRow},
+    database::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
     domain::customer_invoice::InsertCustomerInvoiceLine,
     service::u32_to_i32,
 };
@@ -10,13 +10,31 @@ pub fn generate(
     input: InsertCustomerInvoiceLine,
     item_row: ItemRow,
     batch: StockLineRow,
-    _: InvoiceRow,
-) -> Result<InvoiceLineRow, InsertCustomerInvoiceLineError> {
+    invoice: InvoiceRow,
+) -> Result<(InvoiceLineRow, StockLineRow), InsertCustomerInvoiceLineError> {
+    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Confirmed;
+
+    let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
     let new_line = generate_line(input, item_row, batch);
 
-    // Adjust stock line
+    Ok((new_line, update_batch))
+}
 
-    Ok(new_line)
+fn generate_batch_update(
+    input: &InsertCustomerInvoiceLine,
+    batch: StockLineRow,
+    adjust_total_number_of_packs: bool,
+) -> StockLineRow {
+    let mut update_batch = batch;
+
+    let reduction = u32_to_i32(input.number_of_packs);
+
+    update_batch.available_number_of_packs = update_batch.available_number_of_packs - reduction;
+    if adjust_total_number_of_packs {
+        update_batch.total_number_of_packs = update_batch.total_number_of_packs - reduction;
+    }
+
+    update_batch
 }
 
 fn generate_line(

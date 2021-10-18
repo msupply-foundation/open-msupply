@@ -35,6 +35,20 @@ impl StockLineAlreadyExistsInInvoice {
     }
 }
 
+pub struct NotEnoughStockForReduction(pub String);
+#[Object]
+impl NotEnoughStockForReduction {
+    pub async fn description(&self) -> &'static str {
+        "Not enought stock for reduction"
+    }
+
+    pub async fn line(&self, ctx: &Context<'_>) -> InvoiceLineResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        get_invoice_line(connection_manager, self.0.clone()).into()
+    }
+}
+
 pub struct LineDoesntReferenceStockLine;
 #[Object]
 impl LineDoesntReferenceStockLine {

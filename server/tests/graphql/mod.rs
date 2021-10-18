@@ -12,13 +12,17 @@ use assert_json_diff::assert_json_eq;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
+pub mod common;
 mod delete_supplier_invoice;
+mod delete_supplier_invoice_line;
 mod insert_supplier_invoice;
+mod insert_supplier_invoice_line;
 mod invoice_query;
 mod invoices;
 mod names;
 mod requisition;
 mod update_supplier_invoice;
+mod update_supplier_invoice_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
 where
@@ -138,45 +142,68 @@ type DateTime = ChronoDateTime<Utc>;
 #[graphql(
     schema_path = "tests/graphql/schema.graphql",
     query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq",
-    variables_derives = "Debug,PartialEq",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
 pub struct InsertSupplierInvoiceFull;
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq",
-    variables_derives = "Debug,PartialEq",
-    normalization = "Rust"
-)]
-pub struct InsertSupplierInvoicePartial;
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq",
-    variables_derives = "Debug,PartialEq",
-    normalization = "Rust"
-)]
-pub struct UpdateSupplierInvoiceFull;
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq",
-    variables_derives = "Debug,PartialEq",
-    normalization = "Rust"
-)]
-pub struct UpdateSupplierInvoicePartial;
 
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "tests/graphql/schema.graphql",
     query_path = "tests/graphql/query.graphql",
-    response_derives = "Debug,PartialEq",
-    variables_derives = "Debug,PartialEq",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct UpdateSupplierInvoiceFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
 pub struct DeleteSupplierInvoiceFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct InsertSupplierInvoiceLineFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct UpdateSupplierInvoiceLineFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct InvoiceFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct DeleteSupplierInvoiceLineFull;

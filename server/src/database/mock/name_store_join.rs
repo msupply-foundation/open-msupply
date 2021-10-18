@@ -30,10 +30,21 @@ pub fn mock_name_store_join_c() -> NameStoreJoinRow {
     }
 }
 
+pub fn mock_name_store_join_d() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_name_store_join_d"),
+        name_id: String::from("name_a"),
+        store_id: String::from("store_a"),
+        name_is_customer: false,
+        name_is_supplier: true,
+    }
+}
+
 pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
     vec![
         mock_name_store_join_a(),
         mock_name_store_join_b(),
         mock_name_store_join_c(),
+        mock_name_store_join_d(),
     ]
 }

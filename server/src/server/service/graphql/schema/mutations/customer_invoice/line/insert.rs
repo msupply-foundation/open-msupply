@@ -4,8 +4,9 @@ use crate::{
     domain::{customer_invoice::InsertCustomerInvoiceLine, invoice_line::InvoiceLine},
     server::service::graphql::schema::{
         mutations::{
-            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice, RecordAlreadyExist,
+            customer_invoice::NotEnoughStockForReduction, CannotEditFinalisedInvoice, ForeignKey,
+            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice,
+            RecordAlreadyExist,
         },
         types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
@@ -46,6 +47,7 @@ pub enum InsertCustomerInvoiceLineErrorInterface {
     ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
+    NotEnoughStockForReduction(NotEnoughStockForReduction),
 }
 
 impl From<InsertCustomerInvoiceLineInput> for InsertCustomerInvoiceLine {
@@ -115,6 +117,9 @@ impl From<InsertCustomerInvoiceLineError> for InsertCustomerInvoiceLineResponse 
             }
             InsertCustomerInvoiceLineError::ItemDoesNotMatchStockLine => {
                 OutError::ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine {})
+            }
+            InsertCustomerInvoiceLineError::ReductionBelowZero(line_id) => {
+                OutError::NotEnoughStockForReduction(NotEnoughStockForReduction(line_id))
             }
         };
 

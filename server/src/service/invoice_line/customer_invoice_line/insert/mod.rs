@@ -1,5 +1,7 @@
 use crate::{
-    database::repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager},
+    database::repository::{
+        InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    },
     domain::customer_invoice::InsertCustomerInvoiceLine,
     service::WithDBError,
 };
@@ -17,8 +19,9 @@ pub fn insert_customer_invoice_line(
     let connection = connection_manager.connection()?;
     // TODO do inside transaction
     let (item, invoice, batch) = validate(&input, &connection)?;
-    let new_line = generate(input, item, batch, invoice)?;
+    let (new_line, update_batch) = generate(input, item, batch, invoice)?;
     InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
+    StockLineRepository::new(&connection).upsert_one(&update_batch)?;
 
     Ok(new_line.id)
 }
@@ -35,6 +38,7 @@ pub enum InsertCustomerInvoiceLineError {
     NumberOfPacksBelowOne,
     StockLineAlreadyExistsInInvoice(String),
     ItemDoesNotMatchStockLine,
+    ReductionBelowZero(String),
 }
 
 impl From<RepositoryError> for InsertCustomerInvoiceLineError {

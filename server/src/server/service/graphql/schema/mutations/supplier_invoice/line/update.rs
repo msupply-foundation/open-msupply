@@ -5,7 +5,6 @@ use crate::{
     domain::{invoice_line::InvoiceLine, supplier_invoice::UpdateSupplierInvoiceLine},
     server::service::graphql::schema::{
         mutations::{
-            supplier_invoice::{NumberOfPacksAboveZero, PackSizeAboveZero},
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
             InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
         },
@@ -42,8 +41,6 @@ pub enum UpdateSupplierInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordDoesNotExist(RecordDoesNotExist),
-    PackSizeAboveOne(PackSizeAboveZero),
-    NumberOfPacksAboveZero(NumberOfPacksAboveZero),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),

@@ -1,7 +1,7 @@
 use crate::{
     database::{
         repository::StorageConnection,
-        schema::{InvoiceLineRow, InvoiceRow, ItemRow, StockLineRow},
+        schema::{InvoiceLineRow, InvoiceRow, ItemRow},
     },
     domain::{customer_invoice::UpdateCustomerInvoiceLine, invoice::InvoiceType},
     service::{
@@ -20,17 +20,17 @@ use crate::{
     },
 };
 
-use super::UpdateCustomerInvoiceLineError;
+use super::{BatchPair, UpdateCustomerInvoiceLineError};
 
 pub fn validate(
     input: &UpdateCustomerInvoiceLine,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, ItemRow, InvoiceRow, StockLineRow), UpdateCustomerInvoiceLineError> {
+) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateCustomerInvoiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
     check_number_of_packs(input.number_of_packs.clone())?;
-    let batch = check_batch_exists_option(&input, &line, connection)?;
+    let batch_pair = check_batch_exists_option(&input, &line, connection)?;
     let item = check_item_option(input.item_id.clone(), &line, connection)?;
-    check_item_matches_batch(&batch, &item)?;
+    check_item_matches_batch(&batch_pair.main_batch, &item)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     check_unique_stock_line(
         &line.id,
@@ -45,9 +45,27 @@ pub fn validate(
     check_invoice_type(&invoice, InvoiceType::CustomerInvoice)?;
     check_invoice_finalised(&invoice)?;
 
-    // Reduction Below zero
+    check_reduction_below_zero(&input, &line, &batch_pair)?;
 
-    Ok((line, item, invoice, batch))
+    Ok((line, item, batch_pair, invoice))
+}
+
+fn check_reduction_below_zero(
+    input: &UpdateCustomerInvoiceLine,
+    line: &InvoiceLineRow,
+    batch_pair: &BatchPair,
+) -> Result<(), UpdateCustomerInvoiceLineError> {
+    // If previous batch is present, this means we are adjust new batch thus:
+    // - check full number of pack in invoice
+    let reduction = batch_pair.get_main_batch_reduction(input, line);
+
+    if batch_pair.main_batch.available_number_of_packs < reduction {
+        Err(UpdateCustomerInvoiceLineError::ReductionBelowZero(
+            input.id.clone(),
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 fn check_item_option(
@@ -66,18 +84,31 @@ fn check_batch_exists_option(
     input: &UpdateCustomerInvoiceLine,
     existing_line: &InvoiceLineRow,
     connection: &StorageConnection,
-) -> Result<StockLineRow, UpdateCustomerInvoiceLineError> {
+) -> Result<BatchPair, UpdateCustomerInvoiceLineError> {
     use UpdateCustomerInvoiceLineError::*;
 
-    if let Some(batch_id) = &input.stock_line_id {
-        Ok(check_batch_exists(batch_id, connection)?)
-    } else if let Some(batch_id) = &existing_line.stock_line_id {
+    let previous_batch = if let Some(batch_id) = &existing_line.stock_line_id {
         // Should always be found due to contraints on database
-        Ok(check_batch_exists(batch_id, connection)?)
+        check_batch_exists(batch_id, connection)?
     } else {
         // This should never happen, but still need to cover
-        Err(LineDoesntReferenceStockLine)
-    }
+        return Err(LineDoesntReferenceStockLine);
+    };
+
+    let result = if let Some(batch_id) = &input.stock_line_id {
+        BatchPair {
+            main_batch: check_batch_exists(batch_id, connection)?,
+            previous_batch_option: Some(previous_batch),
+        }
+    } else {
+        // stock_line_id not changed in input
+        BatchPair {
+            main_batch: previous_batch,
+            previous_batch_option: None,
+        }
+    };
+
+    Ok(result)
 }
 
 impl From<ItemDoesNotMatchStockLine> for UpdateCustomerInvoiceLineError {

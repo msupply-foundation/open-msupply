@@ -261,8 +261,8 @@ pub struct RangeError {
 impl RangeError {
     pub async fn description(&self) -> &'static str {
         match &self.range {
-            Range::Max(_) => "Value is below minimim",
-            Range::Min(_) => "Value is above maximum",
+            Range::Max(_) => "Value is above maximum",
+            Range::Min(_) => "Value is below minimum",
         }
     }
 
