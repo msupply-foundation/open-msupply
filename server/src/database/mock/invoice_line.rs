@@ -80,6 +80,45 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
     ]
 }
 
+pub fn mock_customer_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_customer_invoice_c_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("customer_invoice_c_line_a"),
+        invoice_id: String::from("customer_invoice_c"),
+        item_id: String::from("item_a"),
+        item_name: String::from("item_a"),
+        item_code: String::from("item_a"),
+        stock_line_id: Some(String::from("stock_line_ci_c_siline_a")),
+        batch: Some(String::from("item_a_ci_c_siline_a")),
+        expiry_date: Some(NaiveDate::from_ymd(2020, 1, 4)),
+        pack_size: 3,
+        cost_price_per_pack: 8.0,
+        sell_price_per_pack: 9.0,
+        total_after_tax: 18.0,
+        number_of_packs: 3,
+    };
+
+    let mock_customer_invoice_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("customer_invoice_c_line_b"),
+        invoice_id: String::from("customer_invoice_c"),
+        item_id: String::from("item_b"),
+        item_name: String::from("item_b"),
+        item_code: String::from("item_b"),
+        stock_line_id: Some(String::from("stock_line_ci_c_siline_b")),
+        batch: None,
+        expiry_date: Some(NaiveDate::from_ymd(2020, 3, 23)),
+        pack_size: 7,
+        cost_price_per_pack: 54.0,
+        sell_price_per_pack: 34.0,
+        total_after_tax: 34.0,
+        number_of_packs: 1,
+    };
+
+    vec![
+        mock_customer_invoice_c_invoice_line_a,
+        mock_customer_invoice_c_invoice_line_b,
+    ]
+}
+
 pub fn mock_supplier_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
     let mock_supplier_invoice_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
         id: String::from("supplier_invoice_a_line_a"),
@@ -241,6 +280,7 @@ pub fn mock_customer_invoice_invoice_lines() -> Vec<InvoiceLineRow> {
 
     mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_a_invoice_lines());
     mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_b_invoice_lines());
+    mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_c_invoice_lines());
 
     mock_customer_invoice_invoice_lines
 }
