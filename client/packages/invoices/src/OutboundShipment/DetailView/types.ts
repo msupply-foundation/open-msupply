@@ -13,7 +13,7 @@ export enum ActionType {
   UpdateQuantity = 'OutboundShipment/updateQuantity',
   UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
-  AddLine = 'OutboundShipment/addLine',
+  UpsertLine = 'OutboundShipment/upsertLine',
 }
 
 type CustomerInvoiceUpdateInvoice = {
@@ -32,6 +32,6 @@ export type CustomerInvoiceAction =
     }
   | CustomerInvoiceUpdateInvoice
   | {
-      type: ActionType.AddLine;
-      payload: InvoiceLine;
+      type: ActionType.UpsertLine;
+      payload: { invoiceLine: InvoiceLine };
     };

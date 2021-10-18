@@ -154,14 +154,17 @@ export const reducer = (
           break;
         }
 
-        case ActionType.AddLine: {
+        case ActionType.UpsertLine: {
           const { draft } = state;
-          const { payload: item } = action;
+          const { payload } = action;
+          const { invoiceLine } = payload;
 
           draft.lines.push({
-            ...item,
+            ...invoiceLine,
             updateQuantity: (quantity: number) =>
-              dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
+              dispatch?.(
+                OutboundAction.updateQuantity(invoiceLine.id, quantity)
+              ),
           });
 
           draft.update = (key, value) => {

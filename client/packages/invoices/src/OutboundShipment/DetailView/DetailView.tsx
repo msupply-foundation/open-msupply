@@ -74,8 +74,8 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     addItem(item);
     hideDialog();
   };
-  const addItem = (item: InvoiceLine) => {
-    dispatch({ type: ActionType.AddLine, payload: item });
+  const addItem = (invoiceLine: InvoiceLine) => {
+    dispatch({ type: ActionType.UpsertLine, payload: { invoiceLine } });
     reset();
   };
   const cancelItem = () => {
