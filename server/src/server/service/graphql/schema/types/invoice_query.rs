@@ -71,8 +71,13 @@ pub enum InvoiceNodeType {
 #[graphql(remote = "crate::domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
+    /// For customer invoices: In DRAFT mode only the available_number_of_packs in a stock line gets
+    /// updated when items are added to the invoice.
     Draft,
+    /// For customer invoices: When an invoice is CONFIRMED available_number_of_packs and
+    /// total_number_of_packs get updated when items are added to the invoice.
     Confirmed,
+    /// A FINALISED invoice can't be edited nor deleted.
     Finalised,
 }
 

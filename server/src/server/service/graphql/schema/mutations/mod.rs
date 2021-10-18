@@ -9,12 +9,12 @@ use crate::{
     service::{
         invoice::{
             delete_customer_invoice, delete_supplier_invoice, get_invoice, insert_customer_invoice,
-            insert_supplier_invoice, update_supplier_invoice,
+            insert_supplier_invoice, update_customer_invoice, update_supplier_invoice,
         },
         invoice_line::{
-            delete_supplier_invoice_line, get_invoice_line, insert_customer_invoice_line,
-            insert_supplier_invoice_line, update_customer_invoice_line,
-            update_supplier_invoice_line,
+            delete_customer_invoice_line, delete_supplier_invoice_line, get_invoice_line,
+            insert_customer_invoice_line, insert_supplier_invoice_line,
+            update_customer_invoice_line, update_supplier_invoice_line,
         },
     },
 };
@@ -32,7 +32,6 @@ impl Mutations {
         input: InsertCustomerInvoiceInput,
     ) -> InsertCustomerInvoiceResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
         match insert_customer_invoice(connection_manager, input.into()) {
             Ok(id) => get_invoice(connection_manager, id).into(),
             Err(error) => error.into(),
@@ -43,8 +42,12 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         input: UpdateCustomerInvoiceInput,
-    ) -> UpdateCustomerInvoiceResultUnion {
-        todo!()
+    ) -> UpdateCustomerInvoiceResponse {
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        match update_customer_invoice(connection_manager, input.into()) {
+            Ok(id) => get_invoice(connection_manager, id).into(),
+            Err(error) => error.into(),
+        }
     }
 
     async fn delete_customer_invoice(
@@ -87,7 +90,9 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteCustomerInvoiceLineInput,
     ) -> DeleteCustomerInvoiceLineResponse {
-        todo!()
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
+        delete_customer_invoice_line(connection_manager, input.into()).into()
     }
 
     async fn insert_supplier_invoice(

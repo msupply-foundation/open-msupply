@@ -5,6 +5,7 @@ pub mod item;
 pub mod name;
 pub mod stock_line;
 pub mod supplier_invoice;
+
 use chrono::NaiveDateTime;
 
 #[derive(Clone)]
