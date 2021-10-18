@@ -1,7 +1,7 @@
 import React from 'react';
 import create from 'zustand';
 import { LocaleKey } from '../intl/intlHelpers';
-import { MenuDots, ButtonWithIcon } from '../ui';
+import { MenuDotsIcon, ButtonWithIcon } from '../ui';
 
 type DetailPanelController = {
   actions: Action[];
@@ -48,7 +48,7 @@ export const useDetailPanel = (): DetailPanel => {
   const OpenButton =
     isOpen || isEmpty ? null : (
       <ButtonWithIcon
-        Icon={<MenuDots />}
+        Icon={<MenuDotsIcon />}
         labelKey="button.more"
         onClick={() => open()}
       />

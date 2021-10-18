@@ -2,13 +2,13 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { FlatButton } from './FlatButton';
-import { Book } from '../../icons';
+import { BookIcon } from '../../icons';
 
 const Template: ComponentStory<typeof FlatButton> = args => (
   <Box>
     <FlatButton
       {...args}
-      icon={<Book color={args.color} />}
+      icon={<BookIcon color={args.color} />}
       labelKey="button.docs"
       onClick={() => console.info('clicked')}
     />

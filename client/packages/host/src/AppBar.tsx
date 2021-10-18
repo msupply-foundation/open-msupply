@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
+  ArrowLeftIcon,
   styled,
   AppBarContent,
   Toolbar,
@@ -30,7 +30,7 @@ const AppBar: React.FC = () => {
     <StyledContainer ref={ref}>
       <Toolbar disableGutters>
         <IconButton
-          icon={<ArrowLeft />}
+          icon={<ArrowLeftIcon color="primary" />}
           labelKey="button.go-back"
           onClick={() => navigate(-1)}
         />

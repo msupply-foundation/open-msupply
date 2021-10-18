@@ -2,12 +2,12 @@ import React, { FC, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   AppBarButtonsPortal,
-  Book,
+  BookIcon,
   Box,
-  Circle,
-  Clock,
+  CircleIcon,
+  ClockIcon,
   Column,
-  Copy,
+  CopyIcon,
   DialogButton,
   FormProvider,
   Grid,
@@ -15,8 +15,8 @@ import {
   PanelField,
   PanelLabel,
   PanelRow,
-  PlusCircle,
-  Rewind,
+  PlusCircleIcon,
+  RewindIcon,
   TabContext,
   TabPanel,
   TableProvider,
@@ -34,7 +34,7 @@ import {
   useTranslation,
   ButtonWithIcon,
   XCircleIcon,
-  Download,
+  DownloadIcon,
   ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
@@ -111,7 +111,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <PanelRow>
               <PanelLabel>{t('label.color')}</PanelLabel>
               <PanelField>
-                <Circle htmlColor={draft?.color} sx={{ width: 8 }} />
+                <CircleIcon htmlColor={draft?.color} sx={{ width: 8 }} />
                 <span
                   style={{
                     color: draft?.color,
@@ -142,17 +142,17 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   useEffect(() => {
     setActions([
       {
-        icon: <Clock />,
+        icon: <ClockIcon />,
         titleKey: 'link.history',
         onClick: warning('No history available'),
       },
       {
-        icon: <Rewind />,
+        icon: <RewindIcon />,
         titleKey: 'link.backorders',
         onClick: warning('No back orders available'),
       },
       {
-        icon: <Copy />,
+        icon: <CopyIcon />,
         titleKey: 'link.copy-to-clipboard',
         onClick: copyToClipboard,
       },
@@ -177,11 +177,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         <Grid container gap={1}>
           <ButtonWithIcon
             labelKey="button.add-item"
-            Icon={<PlusCircle />}
+            Icon={<PlusCircleIcon />}
             onClick={showDialog}
           />
           <ButtonWithIcon
-            Icon={<Book />}
+            Icon={<BookIcon />}
             labelKey="button.docs"
             onClick={() => (location.href = ExternalURL.PublicDocs)}
           />
@@ -242,7 +242,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               onClick={() => navigate(-1)}
             />
             <ButtonWithIcon
-              Icon={<Download />}
+              Icon={<DownloadIcon />}
               labelKey="button.save"
               variant="contained"
               color="secondary"

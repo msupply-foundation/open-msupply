@@ -2,42 +2,42 @@ import React, { ChangeEvent, useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { SvgIconProps } from '.';
-import { ArrowLeft } from './ArrowLeft';
+import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
-import { Book } from './Book';
+import { BookIcon } from './Book';
 import { CheckIcon } from './Check';
-import { CheckboxChecked } from './CheckboxChecked';
-import { CheckboxEmpty } from './CheckboxEmpty';
-import { CheckboxIndeterminate } from './CheckboxIndeterminate';
-import { ChevronDown } from './ChevronDown';
-import { Circle } from './Circle';
-import { Clock } from './Clock';
-import { Close } from './Close';
-import { Copy } from './Copy';
-import { Customers } from './Customers';
-import { Dashboard } from './Dashboard';
-import { Delete } from './Delete';
-import { Download } from './Download';
-import { Edit } from './Edit';
-import { Home } from './Home';
+import { CheckboxCheckedIcon } from './CheckboxChecked';
+import { CheckboxEmptyIcon } from './CheckboxEmpty';
+import { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
+import { ChevronDownIcon } from './ChevronDown';
+import { CircleIcon } from './Circle';
+import { ClockIcon } from './Clock';
+import { CloseIcon } from './Close';
+import { CopyIcon } from './Copy';
+import { CustomersIcon } from './Customers';
+import { DashboardIcon } from './Dashboard';
+import { DeleteIcon } from './Delete';
+import { DownloadIcon } from './Download';
+import { EditIcon } from './Edit';
+import { HomeIcon } from './Home';
 import { InfoIcon } from './Info';
 import { InvoiceIcon } from './Invoice';
 import { MSupplyGuy } from './MSupplyGuy';
-import { MenuDots } from './MenuDots';
-import { Messages } from './Messages';
-import { PlusCircle } from './PlusCircle';
-import { Power } from './Power';
-import { Printer } from './Printer';
-import { Radio } from './Radio';
-import { Reports } from './Reports';
-import { Rewind } from './Rewind';
-import { Settings } from './Settings';
-import { SortAsc } from './SortAsc';
-import { SortDesc } from './SortDesc';
-import { Stock } from './Stock';
-import { Suppliers } from './Suppliers';
-import { Tools } from './Tools';
-import { Translate } from './Translate';
+import { MenuDotsIcon } from './MenuDots';
+import { MessagesIcon } from './Messages';
+import { PlusCircleIcon } from './PlusCircle';
+import { PowerIcon } from './Power';
+import { PrinterIcon } from './Printer';
+import { RadioIcon } from './Radio';
+import { ReportsIcon } from './Reports';
+import { RewindIcon } from './Rewind';
+import { SettingsIcon } from './Settings';
+import { SortAscIcon } from './SortAsc';
+import { SortDescIcon } from './SortDesc';
+import { StockIcon } from './Stock';
+import { SuppliersIcon } from './Suppliers';
+import { ToolsIcon } from './Tools';
+import { TranslateIcon } from './Translate';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
@@ -63,45 +63,45 @@ type Icon = {
 
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
-    { icon: <ArrowLeft {...args} />, name: 'ArrowLeft' },
+    { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
-    { icon: <Book {...args} />, name: 'Book' },
+    { icon: <BookIcon {...args} />, name: 'Book' },
     { icon: <CheckIcon {...args} />, name: 'Check' },
-    { icon: <CheckboxChecked {...args} />, name: 'CheckboxChecked' },
+    { icon: <CheckboxCheckedIcon {...args} />, name: 'CheckboxChecked' },
     {
-      icon: <CheckboxIndeterminate {...args} />,
+      icon: <CheckboxIndeterminateIcon {...args} />,
       name: 'Checkbox Indeterminate',
     },
-    { icon: <CheckboxEmpty {...args} />, name: 'CheckboxEmpty' },
-    { icon: <ChevronDown {...args} />, name: 'ChevronDown' },
-    { icon: <Circle htmlColor="#e95c30" {...args} />, name: 'Circle' },
-    { icon: <Clock {...args} />, name: 'Clock' },
-    { icon: <Close {...args} />, name: 'Close' },
-    { icon: <Copy {...args} />, name: 'Copy' },
-    { icon: <Customers {...args} />, name: 'Customers' },
-    { icon: <Dashboard {...args} />, name: 'Dashboard' },
-    { icon: <Delete {...args} />, name: 'Delete' },
-    { icon: <Download {...args} />, name: 'Download' },
-    { icon: <Edit {...args} />, name: 'Edit' },
-    { icon: <Home {...args} />, name: 'Home' },
+    { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
+    { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
+    { icon: <CircleIcon {...args} />, name: 'Circle' },
+    { icon: <ClockIcon {...args} />, name: 'Clock' },
+    { icon: <CloseIcon {...args} />, name: 'Close' },
+    { icon: <CopyIcon {...args} />, name: 'Copy' },
+    { icon: <CustomersIcon {...args} />, name: 'Customers' },
+    { icon: <DashboardIcon {...args} />, name: 'Dashboard' },
+    { icon: <DeleteIcon {...args} />, name: 'Delete' },
+    { icon: <DownloadIcon {...args} />, name: 'Download' },
+    { icon: <EditIcon {...args} />, name: 'Edit' },
+    { icon: <HomeIcon {...args} />, name: 'Home' },
     { icon: <InfoIcon {...args} />, name: 'Info' },
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
-    { icon: <MenuDots {...args} />, name: 'MenuDots' },
-    { icon: <Messages {...args} />, name: 'Messages' },
-    { icon: <PlusCircle {...args} />, name: 'PlusCircle' },
-    { icon: <Power {...args} />, name: 'Power' },
-    { icon: <Printer {...args} />, name: 'Printer' },
-    { icon: <Radio {...args} />, name: 'Radio' },
-    { icon: <Reports {...args} />, name: 'Reports' },
-    { icon: <Rewind {...args} />, name: 'Rewind' },
-    { icon: <Settings {...args} />, name: 'Settings' },
-    { icon: <SortAsc {...args} />, name: 'SortAsc' },
-    { icon: <SortDesc {...args} />, name: 'SortDesc' },
-    { icon: <Stock {...args} />, name: 'Stock' },
-    { icon: <Suppliers {...args} />, name: 'Suppliers' },
-    { icon: <Tools {...args} />, name: 'Tools' },
-    { icon: <Translate {...args} />, name: 'Translate' },
+    { icon: <MenuDotsIcon {...args} />, name: 'MenuDots' },
+    { icon: <MessagesIcon {...args} />, name: 'Messages' },
+    { icon: <PlusCircleIcon {...args} />, name: 'PlusCircle' },
+    { icon: <PowerIcon {...args} />, name: 'Power' },
+    { icon: <PrinterIcon {...args} />, name: 'Printer' },
+    { icon: <RadioIcon {...args} />, name: 'Radio' },
+    { icon: <ReportsIcon {...args} />, name: 'Reports' },
+    { icon: <RewindIcon {...args} />, name: 'Rewind' },
+    { icon: <SettingsIcon {...args} />, name: 'Settings' },
+    { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
+    { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
+    { icon: <StockIcon {...args} />, name: 'Stock' },
+    { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
+    { icon: <ToolsIcon {...args} />, name: 'Tools' },
+    { icon: <TranslateIcon {...args} />, name: 'Translate' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
   ];
@@ -139,5 +139,6 @@ export const Primary = Template.bind({});
 export const Secondary = Template.bind({});
 export const Small = Template.bind({});
 
+Primary.args = { color: 'primary' } as SvgIconProps;
 Secondary.args = { color: 'secondary' } as SvgIconProps;
-Small.args = { fontSize: 'small' } as SvgIconProps;
+Small.args = { fontSize: 'small', color: 'primary' } as SvgIconProps;
