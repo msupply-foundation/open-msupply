@@ -233,7 +233,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
-        <Box display="flex" alignItems="flex-end" height={40}>
+        <Box display="flex" alignItems="flex-end" height={40} marginRight={2}>
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
             <ButtonWithIcon
               Icon={<XCircleIcon />}
@@ -254,6 +254,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <ButtonWithIcon
               Icon={<ArrowRightIcon />}
               labelKey="button.save-and"
+              labelProps={{ status: draft.status }}
               variant="contained"
               color="secondary"
               onClick={() => {
