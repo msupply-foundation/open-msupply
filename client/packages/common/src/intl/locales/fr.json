@@ -31,7 +31,7 @@
   "button.ok": "OK",
   "button.open-the-menu": "Ouvrir le menu",
   "button.print": "Imprimer",
-  "button.save-and": "Save & #{status}",
+  "button.save-and": "Save & {status}",
   "button.save": "Save",
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",
