@@ -88,7 +88,7 @@ const createInvoiceLines = (
   const invoiceLines: InvoiceLine[][] = [];
 
   invoices.forEach(invoice => {
-    takeRandomSubsetFrom(items).forEach(item => {
+    takeRandomSubsetFrom(items, 10).forEach(item => {
       const stockLinesToUse = takeRandomSubsetFrom(
         getStockLinesForItem(item, stockLines)
       );

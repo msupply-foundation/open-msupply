@@ -12,7 +12,6 @@ import {
   DialogButton,
   FormProvider,
   Grid,
-  Item,
   PanelField,
   PanelLabel,
   PanelRow,
@@ -33,13 +32,14 @@ import {
   useNotification,
   useTabs,
   useTranslation,
+  InvoiceLine,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
-import { ItemRow } from './types';
+import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
 
 const useDraftOutbound = () => {
@@ -59,7 +59,7 @@ const useDraftOutbound = () => {
 };
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
-  const { draft, onChangeSortBy, sortBy } = useDraftOutbound();
+  const { draft, dispatch, onChangeSortBy, sortBy } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -70,13 +70,12 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     reset,
     handleSubmit,
   } = methods;
-  const addItemClose = (item: Item) => {
+  const addItemClose = (item: InvoiceLine) => {
     addItem(item);
     hideDialog();
   };
-  const addItem = (item: any) => {
-    // TODO: add to dataset and have the reducer add the fn
-    draft?.lines?.push({ ...item, updateQuantity: () => {} });
+  const addItem = (item: InvoiceLine) => {
+    dispatch({ type: ActionType.AddLine, payload: item });
     reset();
   };
   const cancelItem = () => {

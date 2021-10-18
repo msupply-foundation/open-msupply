@@ -31,8 +31,11 @@ export const takeRandomElementFrom = <T>(array: T[]): T => {
   return array[randomIdx] as T;
 };
 
-export const takeRandomSubsetFrom = <T>(array: T[]): T[] => {
-  const sizeOfSubset = takeRandomNumberFrom(0, array.length);
+export const takeRandomSubsetFrom = <T>(array: T[], max?: number): T[] => {
+  const sizeOfSubset = takeRandomNumberFrom(
+    0,
+    Math.min(array.length, max || array.length)
+  );
   return Array.from({ length: sizeOfSubset }).map(() =>
     takeRandomElementFrom(array)
   );

@@ -90,13 +90,15 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ item, onSubmit }) => {
     value: Item | null
   ) => {
     setSelectedItem(value);
-    setValue('id', value?.id || '');
-    setValue('code', value?.code || '');
-    setValue('name', value?.name || '');
-    trigger('id');
+    setValue('itemId', value?.id || '');
+    setValue('itemCode', value?.code || '');
+    setValue('itemName', value?.name || '');
+    setValue('item', value);
+    setValue('expiry', new Date());
+    trigger('itemId');
   };
 
-  register('id', { required: true });
+  register('itemId', { required: true });
   return (
     <form onSubmit={onSubmit}>
       <Grid container gap={0.5}>

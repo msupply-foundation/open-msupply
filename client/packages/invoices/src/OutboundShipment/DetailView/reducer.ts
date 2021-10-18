@@ -153,6 +153,23 @@ export const reducer = (
 
           break;
         }
+
+        case ActionType.AddLine: {
+          const { draft } = state;
+          const { payload: item } = action;
+
+          draft.lines.push({
+            ...item,
+            updateQuantity: (quantity: number) =>
+              dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
+          });
+
+          draft.update = (key, value) => {
+            dispatch?.(OutboundAction.updateInvoice(key, value));
+          };
+
+          break;
+        }
       }
     }
   );
