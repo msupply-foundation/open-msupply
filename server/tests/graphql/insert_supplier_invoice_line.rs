@@ -298,9 +298,7 @@ mod graphql {
         // Check total calculation
         assert_eq!(
             new_line.total_after_tax,
-            new_line.pack_size as f64
-                * new_line.number_of_packs as f64
-                * new_line.cost_price_per_pack
+            new_line.number_of_packs as f64 * new_line.cost_price_per_pack
         );
     }
 

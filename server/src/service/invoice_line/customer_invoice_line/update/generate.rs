@@ -119,9 +119,8 @@ fn generate_line(
         .map(u32_to_i32)
         .unwrap_or(update_line.number_of_packs);
 
-    update_line.total_after_tax = update_line.cost_price_per_pack
-        * update_line.pack_size as f64
-        * update_line.number_of_packs as f64;
+    update_line.total_after_tax =
+        update_line.sell_price_per_pack * update_line.number_of_packs as f64;
 
     update_line
 }

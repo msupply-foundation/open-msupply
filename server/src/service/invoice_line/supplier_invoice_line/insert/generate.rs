@@ -46,7 +46,7 @@ fn generate_line(
         ..
     }: ItemRow,
 ) -> InvoiceLineRow {
-    let total_after_tax = cost_price_per_pack * pack_size as f64 * number_of_packs as f64;
+    let total_after_tax = cost_price_per_pack * number_of_packs as f64;
 
     InvoiceLineRow {
         id,

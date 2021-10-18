@@ -80,9 +80,8 @@ fn generate_line(
         update_line.item_name = item.name;
     }
 
-    update_line.total_after_tax = update_line.cost_price_per_pack
-        * update_line.pack_size as f64
-        * update_line.number_of_packs as f64;
+    update_line.total_after_tax =
+        update_line.cost_price_per_pack * update_line.number_of_packs as f64;
 
     update_line
 }
