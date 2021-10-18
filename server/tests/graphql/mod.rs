@@ -16,6 +16,7 @@ pub mod common;
 mod customer_invoice_insert;
 mod delete_supplier_invoice;
 mod delete_supplier_invoice_line;
+mod insert_customer_invoice_line;
 mod insert_supplier_invoice;
 mod insert_supplier_invoice_line;
 mod invoice_query;
@@ -219,3 +220,13 @@ pub struct DeleteSupplierInvoiceLineFull;
     normalization = "Rust"
 )]
 pub struct UpdateCustomerInvoiceLineFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct InsertCustomerInvoiceLineFull;
