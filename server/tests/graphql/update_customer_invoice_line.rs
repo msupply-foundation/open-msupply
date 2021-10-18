@@ -252,9 +252,17 @@ mod graphql {
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
 
         let error_variant = assert_unwrap_error!(response);
-        let line_variant = assert_unwrap_enum!(error_variant, NotEnoughStockForReduction).line;
+        let error = assert_unwrap_enum!(error_variant, NotEnoughStockForReduction);
+
+        let stock_line_variant = error.batch.clone();
+        let stock_line =
+            assert_unwrap_enum!(stock_line_variant, update::StockLineResponse::StockLineNode);
+
+        let line_variant = assert_unwrap_optional_key!(error, line);
         let line = assert_unwrap_enum!(line_variant, update::InvoiceLineResponse::InvoiceLineNode);
+
         assert_eq!(line.id, main_draft_line.id);
+        assert_eq!(stock_line.id, main_draft_stock_line_id);
 
         // Test ItemDoesNotMatchStockLine stock line not in input
 
@@ -310,8 +318,8 @@ mod graphql {
 
         let start_stock_line = get_stock_line_inline!(&main_draft_stock_line_id, &connection);
         let available_plus_adjusted =
-            stock_line.available_number_of_packs + main_draft_line.number_of_packs;
-        let new_number_of_packs = main_draft_line.number_of_packs + 2;
+            stock_line.available_number_of_packs + main_draft_line.number_of_packs as i64;
+        let new_number_of_packs = main_draft_line.number_of_packs as i64 + 2;
 
         let mut variables = base_variables.clone();
         variables.number_of_packs_ucil = Some(new_number_of_packs as i64);
@@ -325,9 +333,9 @@ mod graphql {
         let new_line = get_invoice_line_inline!(&variables.id, &connection);
         let new_stock_line = get_stock_line_inline!(&start_stock_line.id, &connection);
 
-        assert_eq!(new_line.number_of_packs, new_number_of_packs);
+        assert_eq!(new_line.number_of_packs as i64, new_number_of_packs);
         assert_eq!(
-            new_stock_line.available_number_of_packs,
+            new_stock_line.available_number_of_packs as i64,
             available_plus_adjusted - new_number_of_packs
         );
 
@@ -460,6 +468,7 @@ mod graphql {
             // for some reason expiry_date is not set to None (NULL) in postgres
             // but ok in sqlite (also setting batch to None works correctly)
             // must be something to do with Date type
+            // https://github.com/openmsupply/remote-server/issues/482
         }
     }
 }
