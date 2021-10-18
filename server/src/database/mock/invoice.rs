@@ -34,6 +34,23 @@ pub fn mock_customer_invoice_b() -> InvoiceRow {
     }
 }
 
+// Added for CI update
+pub fn mock_customer_invoice_confirmed() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_confirmed"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 3,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
+    }
+}
+
 pub fn mock_customer_invoice_finalised() -> InvoiceRow {
     InvoiceRow {
         id: String::from("customer_invoice_finalised"),
@@ -50,6 +67,7 @@ pub fn mock_customer_invoice_finalised() -> InvoiceRow {
     }
 }
 
+// Added for CI delete test
 pub fn mock_customer_invoice_no_lines() -> InvoiceRow {
     InvoiceRow {
         id: String::from("customer_invoice_no_lines"),
@@ -58,6 +76,24 @@ pub fn mock_customer_invoice_no_lines() -> InvoiceRow {
         invoice_number: 3,
         r#type: InvoiceRowType::CustomerInvoice,
         status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
+    }
+}
+
+// Added for CI update test
+// invoice containing invoice lines without stock line
+pub fn mock_customer_invoice_invalid_stock_line() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_invalid_stock_line"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 3,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
         entry_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
@@ -98,6 +134,7 @@ pub fn mock_supplier_invoice_b() -> InvoiceRow {
     }
 }
 
+// Added for CI delete test
 pub fn mock_supplier_invoice_no_lines() -> InvoiceRow {
     InvoiceRow {
         id: String::from("supplier_invoice_no_lines"),
@@ -118,8 +155,10 @@ pub fn mock_customer_invoices() -> Vec<InvoiceRow> {
     vec![
         mock_customer_invoice_a(),
         mock_customer_invoice_b(),
+        mock_customer_invoice_confirmed(),
         mock_customer_invoice_finalised(),
         mock_customer_invoice_no_lines(),
+        mock_customer_invoice_invalid_stock_line(),
     ]
 }
 
