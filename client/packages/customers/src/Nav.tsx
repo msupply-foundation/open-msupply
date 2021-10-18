@@ -1,7 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { useMatch } from 'react-router-dom';
 import {
-  Customers,
+  CustomersIcon,
   Collapse,
   List,
   useDrawer,
@@ -40,7 +40,7 @@ const Nav: FC = () => {
       <NavLink
         end={false}
         to={AppRoute.Customers}
-        icon={<Customers color="primary" />}
+        icon={<CustomersIcon color="primary" />}
         expandOnHover
         text={t('app.customers')}
       />

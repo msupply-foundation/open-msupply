@@ -2,12 +2,12 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { IconButton } from './IconButton';
-import { Book, SvgIconProps } from '../../icons';
+import { BookIcon, SvgIconProps } from '../../icons';
 
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => (
   <Box>
     <IconButton
-      icon={<Book {...args} />}
+      icon={<BookIcon {...args} />}
       labelKey="button.docs"
       onClick={() => console.info('clicked')}
     />
