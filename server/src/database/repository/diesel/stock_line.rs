@@ -1,11 +1,17 @@
-use super::StorageConnection;
+use super::{DBType, StorageConnection};
 
 use crate::{
     database::{
         repository::RepositoryError,
-        schema::{diesel_schema::stock_line::dsl as stock_line_dsl, StockLineRow},
+        schema::{
+            diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
+            StockLineRow,
+        },
     },
-    domain::stock_line::StockLine,
+    domain::{
+        stock_line::{StockLine, StockLineFilter, StockLineSort},
+        Pagination,
+    },
 };
 
 use diesel::prelude::*;
@@ -78,6 +84,39 @@ impl<'a> StockLineRepository<'a> {
             .first(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<StockLineFilter>,
+        _: Option<StockLineSort>,
+    ) -> Result<Vec<StockLine>, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
+
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<StockLineRow>(&self.connection.connection)?;
+
+        Ok(result.into_iter().map(StockLine::from).collect())
+    }
+}
+
+type BoxedInvoiceLineQuery = stock_line::BoxedQuery<'static, DBType>;
+
+fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedInvoiceLineQuery {
+    let mut query = stock_line::table.into_boxed();
+
+    if let Some(f) = filter {
+        if let Some(value) = f.id {
+            if let Some(eq) = value.equal_to {
+                query = query.filter(stock_line_dsl::id.eq(eq));
+            }
+        }
+    }
+
+    query
 }
 
 impl From<StockLineRow> for StockLine {
