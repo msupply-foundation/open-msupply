@@ -1,5 +1,3 @@
-use serde::{de::DeserializeOwned, Serialize};
-
 macro_rules! get_invoice_inline {
     ($filter:expr, $connection:expr) => {{
         remote_server::database::repository::InvoiceQueryRepository::new($connection)
@@ -14,6 +12,22 @@ macro_rules! get_invoice_lines_inline {
     ($invoice_id:expr, $connection:expr) => {{
         remote_server::database::repository::InvoiceLineRepository::new($connection)
             .find_many_by_invoice_id($invoice_id)
+            .unwrap()
+    }};
+}
+
+macro_rules! get_stock_line_inline {
+    ($stock_line_id:expr, $connection:expr) => {{
+        remote_server::database::repository::StockLineRepository::new($connection)
+            .find_one_by_id($stock_line_id)
+            .unwrap()
+    }};
+}
+
+macro_rules! get_invoice_line_inline {
+    ($invoice_line_id:expr, $connection:expr) => {{
+        remote_server::database::repository::InvoiceLineRepository::new($connection)
+            .find_one_by_id($invoice_line_id)
             .unwrap()
     }};
 }
@@ -73,14 +87,6 @@ macro_rules! assert_unwrap_optional_key {
     }};
 }
 
-pub fn convert_graphql_client_type<FROM, TO>(f: FROM) -> TO
-where
-    FROM: Serialize,
-    TO: DeserializeOwned,
-{
-    serde_json::from_str(&serde_json::to_string(&f).unwrap()).unwrap()
-}
-
 pub fn compare_option<A, B>(a: &Option<A>, b: &B) -> bool
 where
     B: PartialEq<A>,
@@ -96,5 +102,7 @@ pub(crate) use assert_matches;
 pub(crate) use assert_unwrap_enum;
 pub(crate) use assert_unwrap_optional_key;
 pub(crate) use get_invoice_inline;
+pub(crate) use get_invoice_line_inline;
 pub(crate) use get_invoice_lines_inline;
 pub(crate) use get_name_inline;
+pub(crate) use get_stock_line_inline;
