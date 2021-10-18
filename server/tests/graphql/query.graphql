@@ -284,6 +284,56 @@ fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErr
   ...ItemDoesNotMatchStockLine
 }
 
+# INSERTS CUSTOMER INVOICE LINE
+
+mutation insertCustomerInvoiceLineFull(
+  $id: String!
+  $invoiceId_icil: String!
+  $itemId_icil: String!
+  $numberOfPacks_icil: Int!
+  $stockLineId_icil: String!
+) {
+  insertCustomerInvoiceLine(
+    input: {
+      id: $id
+      invoiceId: $invoiceId_icil
+      itemId: $itemId_icil
+      numberOfPacks: $numberOfPacks_icil
+      stockLineId: $stockLineId_icil
+    }
+  ) {
+    ...InsertCustomerInvoiceLineResponse
+  }
+}
+
+fragment InsertCustomerInvoiceLineResponse on InsertCustomerInvoiceLineResponse {
+  __typename
+  ...InsertCustomerInvoiceLineError
+  ...NodeError
+  ...InvoiceLineNode
+}
+
+fragment InsertCustomerInvoiceLineError on InsertCustomerInvoiceLineError {
+  error {
+    ...InsertCustomerInvoiceLineErrorInterface
+  }
+}
+
+fragment InsertCustomerInvoiceLineErrorInterface on InsertCustomerInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...ItemDoesNotMatchStockLine
+  ...NotACustomerInvoice
+  ...NotEnoughStockForReduction
+  ...RangeError
+  ...RecordAlreadyExist
+  ...StockLineAlreadyExistsInInvoice
+  ...StockLineDoesNotBelongToCurrentStore
+}
+
 # DELETE SUPPLIER INVOICE LINE
 
 mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId_dsil: String!) {
@@ -556,6 +606,9 @@ fragment StockLineAlreadyExistsInInvoice on StockLineAlreadyExistsInInvoice {
 
 fragment NotEnoughStockForReduction on NotEnoughStockForReduction {
   description
+  batch {
+    ...StockLineResponse
+  }
   line {
     ...InvoiceLineResponse
   }
