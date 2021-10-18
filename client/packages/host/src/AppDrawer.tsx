@@ -141,7 +141,7 @@ const AppDrawer: React.FC = () => {
         <List>
           <NavLink
             to={AppRoute.Dashboard}
-            icon={<DashboardIcon color="primary" />}
+            icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('app.dashboard')}
           />
           <React.Suspense fallback={null}>
@@ -149,27 +149,27 @@ const AppDrawer: React.FC = () => {
           </React.Suspense>
           <NavLink
             to={AppRoute.Suppliers}
-            icon={<SuppliersIcon color="primary" />}
+            icon={<SuppliersIcon fontSize="small" color="primary" />}
             text={t('app.suppliers')}
           />
           <NavLink
             to={AppRoute.Stock}
-            icon={<StockIcon color="primary" />}
+            icon={<StockIcon fontSize="small" color="primary" />}
             text={t('app.stock')}
           />
           <NavLink
             to={AppRoute.Tools}
-            icon={<ToolsIcon color="primary" />}
+            icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('app.tools')}
           />
           <NavLink
             to={AppRoute.Reports}
-            icon={<ReportsIcon color="primary" />}
+            icon={<ReportsIcon fontSize="small" color="primary" />}
             text={t('app.reports')}
           />
           <NavLink
             to={AppRoute.Messages}
-            icon={<MessagesIcon color="primary" />}
+            icon={<MessagesIcon fontSize="small" color="primary" />}
             text={t('app.messages')}
           />
         </List>
@@ -179,17 +179,17 @@ const AppDrawer: React.FC = () => {
           {drawer.isOpen && <StyledDivider />}
           <NavLink
             to={AppRoute.Sync}
-            icon={<RadioIcon color="primary" />}
+            icon={<RadioIcon fontSize="small" color="primary" />}
             text={t('app.sync')}
           />
           <NavLink
             to={AppRoute.Admin}
-            icon={<SettingsIcon color="primary" />}
+            icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('app.admin')}
           />
           <NavLink
             to={AppRoute.Logout}
-            icon={<PowerIcon color="primary" />}
+            icon={<PowerIcon fontSize="small" color="primary" />}
             text={t('app.logout')}
           />
         </List>
