@@ -48,7 +48,11 @@ export const getEditableQuantityColumn = <
 
     return (
       <BasicTextInput
-        sx={{ maxHeight: 40 }}
+        sx={{
+          maxHeight: 40,
+          paddingTop: '3px',
+          '& .MuiInput-input': { textAlign: 'right', width: '75px' },
+        }}
         error={error}
         size="small"
         helperText="Incorrect value"
