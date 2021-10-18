@@ -4,7 +4,7 @@ import { Route } from 'react-router-dom';
 
 import { NavLink, NavLinkProps } from './NavLink';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
-import { Customers } from '../../../icons';
+import { CustomersIcon } from '../../../icons';
 import { useDrawer } from '../../../../hooks';
 import { Box } from '@mui/system';
 
@@ -46,7 +46,7 @@ export const Collapsed = Template.bind({});
 Collapsed.args = {
   end: false,
   text: 'Customers',
-  icon: <Customers />,
+  icon: <CustomersIcon />,
   to: 'outbound-shipments',
   collapsed: true,
 };
@@ -55,7 +55,7 @@ export const Expanded = Template.bind({});
 Expanded.args = {
   end: false,
   text: 'Customers',
-  icon: <Customers />,
+  icon: <CustomersIcon />,
   to: 'outbound-shipments',
   collapsed: false,
 };

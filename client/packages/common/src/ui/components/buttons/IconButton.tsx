@@ -24,7 +24,7 @@ export const IconButton: React.FC<ButtonProps> = ({
         disabled={disabled}
         onClick={onClick}
         aria-label={tooltip}
-        size="large"
+        size="small"
       >
         {icon}
       </MuiIconButton>

@@ -2,9 +2,9 @@ import React, { FC } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 import { FlatButton } from './FlatButton';
-import { Book } from '../../icons';
+import { BookIcon } from '../../icons';
 import { BaseButton, ButtonWithIcon } from '.';
-import { Customers } from '../../icons';
+import { CustomersIcon } from '../../icons';
 import { DialogButton, IconButton } from '..';
 
 const getOnClick = (someText: string) => () => {
@@ -79,7 +79,7 @@ const Template: Story = () => (
       <ButtonWithIcon
         variant="contained"
         color="primary"
-        Icon={<Customers />}
+        Icon={<CustomersIcon />}
         labelKey="app.customers"
         onClick={getOnClick('With Icon!')}
       />
@@ -89,7 +89,7 @@ const Template: Story = () => (
       <ButtonWithIcon
         variant="contained"
         color="secondary"
-        Icon={<Customers />}
+        Icon={<CustomersIcon />}
         labelKey="app.customers"
         onClick={getOnClick('With Icon!')}
       />
@@ -99,7 +99,7 @@ const Template: Story = () => (
       <ButtonWithIcon
         variant="outlined"
         color="primary"
-        Icon={<Customers />}
+        Icon={<CustomersIcon />}
         labelKey="app.customers"
         onClick={getOnClick('With Icon!')}
       />
@@ -109,7 +109,7 @@ const Template: Story = () => (
       <ButtonWithIcon
         variant="outlined"
         color="secondary"
-        Icon={<Customers />}
+        Icon={<CustomersIcon />}
         labelKey="app.customers"
         onClick={getOnClick('With Icon!')}
       />
@@ -129,7 +129,7 @@ const Template: Story = () => (
 
     <Wrapper text="Flat button">
       <FlatButton
-        icon={<Book />}
+        icon={<BookIcon />}
         labelKey="button.docs"
         onClick={() => console.info('clicked')}
       />
@@ -137,7 +137,7 @@ const Template: Story = () => (
 
     <Wrapper text="Icon button">
       <IconButton
-        icon={<Book />}
+        icon={<BookIcon />}
         labelKey="button.docs"
         onClick={() => console.info('clicked')}
       />

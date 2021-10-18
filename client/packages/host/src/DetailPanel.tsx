@@ -4,8 +4,8 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  ChevronDown,
-  Close,
+  ChevronDownIcon,
+  CloseIcon,
   FlatButton,
   Grid,
   Theme,
@@ -78,7 +78,7 @@ const DetailPanel: React.FC = () => {
         {sections.map((section, index) => (
           <Box key={`action.titleKey_${index}`}>
             <StyledAccordion>
-              <AccordionSummary expandIcon={<ChevronDown color="secondary" />}>
+              <AccordionSummary expandIcon={<ChevronDownIcon />}>
                 <Typography sx={{ fontWeight: 'bold' }}>
                   {t(section.titleKey)}
                 </Typography>
@@ -138,7 +138,7 @@ const DetailPanel: React.FC = () => {
               color="inherit"
               labelKey="button.close"
               onClick={close}
-              icon={<Close color="inherit" />}
+              icon={<CloseIcon color="inherit" />}
             />
           </ButtonContainer>
         </Grid>

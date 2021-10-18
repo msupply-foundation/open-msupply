@@ -1,9 +1,8 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const Copy = (props: SvgIconProps): JSX.Element => {
+export const CopyIcon = (props: SvgIconProps): JSX.Element => {
   const combinedProps: SvgIconProps = {
-    color: 'primary',
     style: {
       fill: 'none',
     },
