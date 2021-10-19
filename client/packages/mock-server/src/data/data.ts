@@ -166,6 +166,7 @@ export const createInvoice = (
     color: 'grey',
     type: 'Customer invoice',
     comment: takeRandomElementFrom(comments),
+    hold: false,
     ...seeded,
   };
 };

@@ -37,6 +37,7 @@ import {
   XCircleIcon,
   DownloadIcon,
   ArrowRightIcon,
+  ToggleButton,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -239,13 +240,27 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
+
         <Box
+          sx={{
+            backgroundColor: theme => theme.palette.background.menu,
+          }}
+          gap={2}
           display="flex"
-          alignItems="flex-end"
-          height={40}
-          marginRight={2}
-          marginLeft={3}
+          flexDirection="row"
+          alignItems="center"
+          height={64}
+          paddingRight={2}
+          paddingLeft={3}
         >
+          <ToggleButton
+            value={!!draft.hold}
+            selected={!!draft.hold}
+            onClick={(_, value) => {
+              draft.update?.('hold', !value);
+            }}
+            labelKey="label.hold"
+          />
           <StatusCrumbs
             statuses={outboundStatuses}
             currentStatus={draft.status}

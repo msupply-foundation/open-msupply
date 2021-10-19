@@ -15,6 +15,7 @@ export const placeholderInvoice: OutboundShipment = {
   invoiceNumber: '',
   lines: [],
   dispatch: null,
+  hold: false,
   name: {
     id: '',
     name: '',
