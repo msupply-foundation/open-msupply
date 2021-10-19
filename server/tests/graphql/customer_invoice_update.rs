@@ -61,7 +61,7 @@ mod graphql {
                 .unwrap();
         }
 
-        let query = r#"mutation DeleteCustomerInvoice($input: UpdateCustomerInvoiceInput!) {
+        let query = r#"mutation UpdateCustomerInvoice($input: UpdateCustomerInvoiceInput!) {
             updateCustomerInvoice(input: $input) {
                 ... on UpdateCustomerInvoiceError {
                   error {
