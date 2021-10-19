@@ -33,7 +33,7 @@ const outboundStatuses: OutboundShipmentStatus[] = [
   'delivered',
 ];
 
-const Template: ComponentStory<typeof LoadingSpinner> = () => {
+const Template: ComponentStory<typeof StatusCrumbs> = () => {
   const [currentStatus, setCurrentStatus] = useState(
     outboundStatuses[0] as OutboundShipmentStatus
   );
