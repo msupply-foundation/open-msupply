@@ -16,7 +16,7 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_after_tax: 1.0,
-        number_of_packs: 1,
+        number_of_packs: 10,
     };
 
     let mock_customer_invoice_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -32,12 +32,30 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_after_tax: 2.0,
+        number_of_packs: 4,
+    };
+
+    // Added for CI update test
+    let mock_customer_invoice_line_no_stock_line: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("customer_invoice_line_no_stock_line"),
+        invoice_id: String::from("customer_invoice_invalid_stock_line"),
+        item_id: String::from("item_with_no_stock_line"),
+        item_name: String::from("item_b"),
+        item_code: String::from("item_b"),
+        stock_line_id: None,
+        batch: Some(String::from("item_a_line_a")),
+        expiry_date: Some(NaiveDate::from_ymd(2020, 8, 2)),
+        pack_size: 1,
+        cost_price_per_pack: 0.0,
+        sell_price_per_pack: 0.0,
+        total_after_tax: 2.0,
         number_of_packs: 1,
     };
 
     vec![
         mock_customer_invoice_a_invoice_line_a,
         mock_customer_invoice_a_invoice_line_b,
+        mock_customer_invoice_line_no_stock_line,
     ]
 }
 
@@ -55,7 +73,7 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_after_tax: 3.0,
-        number_of_packs: 1,
+        number_of_packs: 3,
     };
 
     let mock_customer_invoice_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -71,7 +89,7 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_after_tax: 4.0,
-        number_of_packs: 1,
+        number_of_packs: 5,
     };
 
     vec![

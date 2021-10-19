@@ -72,19 +72,22 @@ pub fn generate_batches(
     connection: &StorageConnection,
 ) -> Result<Vec<StockLineRow>, UpdateCustomerInvoiceError> {
     let invoice_lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
-    let item_ids = invoice_lines
+    let stock_line_ids = invoice_lines
         .iter()
-        .map(|line| line.item_id.to_owned())
+        .filter_map(|line| line.stock_line_id.clone())
         .collect::<Vec<String>>();
-    let stock_lines = StockLineRepository::new(connection).find_many_by_item_ids(&item_ids)?;
+    let stock_lines = StockLineRepository::new(connection).find_many_by_ids(&stock_line_ids)?;
 
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
+        let stock_line_id = invoice_line.stock_line_id.ok_or(
+            UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(invoice_line.item_id.to_owned()),
+        )?;
         let stock_line = stock_lines
             .iter()
-            .find(|stock_line| invoice_line.item_id == stock_line.item_id)
+            .find(|stock_line| stock_line_id == stock_line.id)
             .ok_or(UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(
-                invoice_line.item_id,
+                invoice_line.item_id.to_owned(),
             ))?;
         result.push(StockLineRow {
             id: stock_line.id.to_owned(),
