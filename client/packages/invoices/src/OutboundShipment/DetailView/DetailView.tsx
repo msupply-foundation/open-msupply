@@ -31,7 +31,7 @@ import {
   InvoiceLine,
   ButtonWithIcon,
   XCircleIcon,
-  DownloadIcon,
+  SaveIcon,
   ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
@@ -220,7 +220,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             {isInvoiceSaveable(draft) && (
               <>
                 <ButtonWithIcon
-                  Icon={<DownloadIcon />}
+                  Icon={<SaveIcon />}
                   labelKey="button.save"
                   variant="contained"
                   color="secondary"
