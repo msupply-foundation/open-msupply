@@ -12,6 +12,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 export interface AutocompleteProps<T> {
+  defaultValue?: T;
   getOptionDisabled?: (option: T) => boolean;
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
@@ -27,6 +28,7 @@ export interface AutocompleteProps<T> {
 }
 
 export function Autocomplete<T>({
+  defaultValue,
   filterOptionConfig,
   getOptionDisabled,
   loading,
@@ -52,6 +54,7 @@ export function Autocomplete<T>({
 
   return (
     <MuiAutocomplete
+      defaultValue={defaultValue}
       disableClearable={!clearable}
       value={value}
       getOptionDisabled={getOptionDisabled}
