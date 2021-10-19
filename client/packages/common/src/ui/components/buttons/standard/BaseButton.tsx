@@ -22,6 +22,10 @@ export const StyledBaseButton = styled(MuiButton)(
         : 'white';
 
     return {
+      '&.MuiButton-outlined': {
+        backgroundColor: 'white',
+      },
+
       borderRadius: 24,
       fontWeight: 700,
       height: 40,

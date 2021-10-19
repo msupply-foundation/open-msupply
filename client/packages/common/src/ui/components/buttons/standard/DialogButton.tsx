@@ -56,7 +56,12 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       variant={buttonVariant}
       labelKey={labelKey}
       sx={
-        disabled ? { '& svg': { color: theme => theme.palette.midGrey } } : {}
+        disabled
+          ? {
+              '& svg': { color: theme => theme.palette.midGrey },
+              fontSize: '12px',
+            }
+          : {}
       }
     />
   );
