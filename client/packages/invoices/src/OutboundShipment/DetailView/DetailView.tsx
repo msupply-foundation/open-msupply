@@ -254,6 +254,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
           paddingLeft={3}
         >
           <ToggleButton
+            disabled={!isInvoiceSaveable(draft)}
             value={!!draft.hold}
             selected={!!draft.hold}
             onClick={(_, value) => {
