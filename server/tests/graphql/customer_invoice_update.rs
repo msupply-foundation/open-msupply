@@ -12,9 +12,8 @@ mod graphql {
                 get_repositories, InvoiceLineRepository, InvoiceRepository, ItemRepository,
                 NameRepository, StockLineRepository, StorageConnectionManager, StoreRepository,
             },
-            schema::InvoiceLineRow,
+            schema::{InvoiceLineRow, StockLineRow},
         },
-        domain::stock_line::StockLine,
         util::test_db,
     };
     use serde_json::json;
@@ -195,45 +194,41 @@ mod graphql {
         assert_gql_query(&settings, query, &variables, &expected).await;
 
         // helpers to compare totals
-        let stock_lines_for_invoice_lines = |invoice_lines: &Vec<InvoiceLineRow>| {
-            let stock_line_ids: Vec<String> = invoice_lines
-                .iter()
-                .filter_map(|invoice| invoice.stock_line_id.to_owned())
-                .collect();
-            stock_line_repository
-                .find_many_by_ids(&stock_line_ids)
+        // fetches all invoice lines and all matching stock lines
+        let invoice_lines_and_stock_lines = |invoice_id: &str| {
+            let combined_lines: Vec<(StockLineRow, InvoiceLineRow)> = invoice_line_repository
+                .find_many_by_invoice_id(invoice_id)
                 .unwrap()
-        };
-        // calculates the expected stock line total for every invoice line row
-        let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
-            let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-            let expected_stock_line_totals: Vec<(StockLine, i32)> = stock_lines
                 .into_iter()
                 .map(|line| {
-                    let invoice_line = invoice_lines
-                        .iter()
-                        .find(|il| il.stock_line_id.clone().unwrap() == line.id)
-                        .unwrap();
-                    let expected_total = line.total_number_of_packs - invoice_line.number_of_packs;
-                    (line, expected_total)
+                    let stock_line_id = line.stock_line_id.as_ref().unwrap();
+                    (
+                        stock_line_repository
+                            .find_one_by_id(&stock_line_id)
+                            .unwrap(),
+                        line,
+                    )
                 })
                 .collect();
-            expected_stock_line_totals
+            combined_lines
         };
-        let assert_stock_line_totals =
-            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLine, i32)>| {
-                let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-                for line in stock_lines {
-                    let expected = expected.iter().find(|l| l.0.id == line.id).unwrap();
-                    assert_eq!(line.total_number_of_packs, expected.1);
-                }
-            };
+        // asserts that current stock line totals are updated correctly
+        let assert_stock_lines_updated = |pairs: &Vec<(StockLineRow, InvoiceLineRow)>| {
+            for (old_stock_line, line) in pairs {
+                let new_stock_line = stock_line_repository
+                    .find_one_by_id(&old_stock_line.id)
+                    .unwrap();
+                assert_eq!(
+                    new_stock_line.total_number_of_packs,
+                    old_stock_line.total_number_of_packs - line.number_of_packs,
+                    "error matching total_number_of_packs {:#?}",
+                    (&new_stock_line, old_stock_line, line)
+                );
+            }
+        };
 
         // test DRAFT to CONFIRMED
-        let invoice_lines = invoice_line_repository
-            .find_many_by_invoice_id("customer_invoice_a")
-            .unwrap();
-        let expected_totals = expected_stock_line_totals(&invoice_lines);
+        let prev_lines = invoice_lines_and_stock_lines("customer_invoice_a");
         let variables = Some(json!({
           "input": {
             "id": "customer_invoice_a",
@@ -249,13 +244,10 @@ mod graphql {
           }
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
-        assert_stock_line_totals(&invoice_lines, &expected_totals);
+        assert_stock_lines_updated(&prev_lines);
 
         // test DRAFT to FINALISED
-        let invoice_lines = invoice_line_repository
-            .find_many_by_invoice_id("customer_invoice_b")
-            .unwrap();
-        let expected_totals = expected_stock_line_totals(&invoice_lines);
+        let prev_lines = invoice_lines_and_stock_lines("customer_invoice_b");
         let variables = Some(json!({
           "input": {
             "id": "customer_invoice_b",
@@ -271,6 +263,6 @@ mod graphql {
           }
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
-        assert_stock_line_totals(&invoice_lines, &expected_totals);
+        assert_stock_lines_updated(&prev_lines);
     }
 }
