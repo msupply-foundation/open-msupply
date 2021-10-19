@@ -1,6 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
+  StatusCrumbs,
   AppBarButtonsPortal,
   BookIcon,
   Box,
@@ -44,6 +45,12 @@ import { ItemDetails } from './modals/ItemDetails';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
+import {
+  getNextOutboundStatusButtonTranslation,
+  getStatusTranslation,
+  isInvoiceSaveable,
+  outboundStatuses,
+} from '../utils';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -63,7 +70,6 @@ const useDraftOutbound = () => {
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
   const { draft, dispatch, onChangeSortBy, save, sortBy } = useDraftOutbound();
-  const { draft, onChangeSortBy, sortBy, save } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -129,7 +135,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             </PanelRow>
             <PanelRow>
               <PanelLabel>{t('label.status')}</PanelLabel>
-              <PanelField>{draft?.status}</PanelField>
+              <PanelField>{t(getStatusTranslation(draft?.status))}</PanelField>
             </PanelRow>
           </Grid>,
         ],
@@ -233,7 +239,18 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
-        <Box display="flex" alignItems="flex-end" height={40} marginRight={2}>
+        <Box
+          display="flex"
+          alignItems="flex-end"
+          height={40}
+          marginRight={2}
+          marginLeft={3}
+        >
+          <StatusCrumbs
+            statuses={outboundStatuses}
+            currentStatus={draft.status}
+            statusFormatter={getStatusTranslation}
+          />
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
             <ButtonWithIcon
               Icon={<XCircleIcon />}
@@ -241,28 +258,36 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               color="secondary"
               onClick={() => navigate(-1)}
             />
-            <ButtonWithIcon
-              Icon={<DownloadIcon />}
-              labelKey="button.save"
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                success('Saved invoice! 🥳 ')();
-                save(draft);
-              }}
-            />
-            <ButtonWithIcon
-              Icon={<ArrowRightIcon />}
-              labelKey="button.save-and"
-              labelProps={{ status: draft.status }}
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                success('Saved invoice! 🥳 ')();
-                draft.update?.('status', 'finalised');
-                save(draft);
-              }}
-            />
+            {isInvoiceSaveable(draft) && (
+              <>
+                <ButtonWithIcon
+                  Icon={<DownloadIcon />}
+                  labelKey="button.save"
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    success('Saved invoice! 🥳 ')();
+                    save(draft);
+                  }}
+                />
+                <ButtonWithIcon
+                  Icon={<ArrowRightIcon />}
+                  labelKey="button.save-and-confirm-status"
+                  labelProps={{
+                    status: t(
+                      getNextOutboundStatusButtonTranslation(draft.status)
+                    ),
+                  }}
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    success('Saved invoice! 🥳 ')();
+                    draft.update?.('status', 'finalised');
+                    save(draft);
+                  }}
+                />
+              </>
+            )}
           </Box>
         </Box>
       </Box>

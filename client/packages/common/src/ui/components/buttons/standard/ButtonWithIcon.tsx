@@ -41,7 +41,7 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   const text = shrink ? null : t(labelKey, labelProps);
 
   return (
-    <Tooltip title={t(labelKey)}>
+    <Tooltip disableHoverListener={!shrink} title={t(labelKey, labelProps)}>
       <ShrinkableBaseButton
         disabled={disabled}
         shrink={shrink}
