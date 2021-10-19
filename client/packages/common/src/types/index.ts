@@ -79,6 +79,7 @@ export interface Invoice extends DomainObject {
   total: string;
   name?: Name;
   otherPartyName: string;
+  hold: boolean;
   lines: InvoiceLine[];
 }
 

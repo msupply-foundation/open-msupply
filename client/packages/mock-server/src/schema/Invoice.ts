@@ -17,6 +17,7 @@ type Invoice {
     total: String
     name: Name
     otherPartyName: String
+    hold: Boolean
     lines: [InvoiceLine]
 }
 

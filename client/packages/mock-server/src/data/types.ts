@@ -63,6 +63,7 @@ export interface Invoice {
   invoiceNumber: number;
   total: string;
   nameId: string;
+  hold: boolean;
 }
 
 export interface ResolvedInvoice extends Invoice {
