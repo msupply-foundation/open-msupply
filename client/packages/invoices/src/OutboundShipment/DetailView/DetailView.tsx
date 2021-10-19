@@ -286,6 +286,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
                   }}
                 />
                 <ButtonWithIcon
+                  disabled={draft.hold}
                   Icon={<ArrowRightIcon />}
                   labelKey="button.save-and-confirm-status"
                   labelProps={{
