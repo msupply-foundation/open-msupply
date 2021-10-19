@@ -1,6 +1,10 @@
 import { JSXElementConstructor } from 'react';
 import { SortBy } from '../../../../hooks';
-import { LocaleKey } from './../../../../intl/intlHelpers';
+import {
+  LocaleKey,
+  useTranslation,
+  useFormatDate,
+} from './../../../../intl/intlHelpers';
 import { DomainObject } from './../../../../types';
 
 export interface CellProps<T extends DomainObject> {
@@ -31,7 +35,15 @@ export type ColumnDataAccessor<T extends DomainObject> = (
   rowData: T
 ) => unknown;
 
-export type ColumnDataFormatter = (rowDataValue: unknown) => string;
+export type Translators = {
+  t: ReturnType<typeof useTranslation>;
+  d: ReturnType<typeof useFormatDate>;
+};
+
+export type ColumnDataFormatter = (
+  rowDataValue: unknown,
+  t: Translators
+) => string;
 
 export enum GenericColumnKey {
   Selection = 'selection',
