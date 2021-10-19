@@ -2,10 +2,10 @@
   "name": "@openmsupply-client/mock-server",
   "version": "0.0.0",
   "private": true,
-  "main": "./src/index.js",
+  "main": "./src/index.ts",
   "scripts": {
     "tsc": "tsc --build",
-    "start": "ts-node -P ./tsconfig.json ./src/index.ts"
+    "start": "nodemon ./src/index.ts"
   },
   "devDependencies": {
     "@types/faker": "^5.5.8",
@@ -22,6 +22,7 @@
     "@openmsupply-client/config": "^0.0.0",
     "apollo-server": "^3.1.1",
     "faker": "^5.5.3",
-    "graphql": "^15.5.1"
+    "graphql": "^15.5.1",
+    "nodemon": "^2.0.13"
   }
 }
