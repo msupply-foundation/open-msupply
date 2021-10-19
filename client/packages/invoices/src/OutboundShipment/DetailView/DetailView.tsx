@@ -1,6 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
+  StatusCrumbs,
   AppBarButtonsPortal,
   BookIcon,
   Box,
@@ -48,6 +49,7 @@ import {
   getNextOutboundStatusButtonTranslation,
   getStatusTranslation,
   isInvoiceSaveable,
+  outboundStatuses,
 } from '../utils';
 
 const useDraftOutbound = () => {
@@ -237,7 +239,18 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
-        <Box display="flex" alignItems="flex-end" height={40} marginRight={2}>
+        <Box
+          display="flex"
+          alignItems="flex-end"
+          height={40}
+          marginRight={2}
+          marginLeft={3}
+        >
+          <StatusCrumbs
+            statuses={outboundStatuses}
+            currentStatus={draft.status}
+            statusFormatter={getStatusTranslation}
+          />
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
             <ButtonWithIcon
               Icon={<XCircleIcon />}
