@@ -18,6 +18,7 @@ interface ItemDetailsFormProps {
   isLoading: boolean;
   items?: Item[];
   onChangeItem?: AutocompleteOnChange<Item>;
+  onChangeQuantity: (quantity: number) => void;
   register: UseFormRegister<FieldValues>;
 }
 
@@ -47,6 +48,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   isLoading,
   items,
   onChangeItem,
+  onChangeQuantity,
   register,
 }) => {
   const t = useTranslation();
@@ -82,6 +84,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           required: true,
           min: { value: 1, message: t('error.greater-than-zero-required') },
           pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
+          onChange: event => onChangeQuantity(Number(event.target.value)),
         })}
         labelKey="label.quantity"
         defaultValue={invoiceLine?.quantity}

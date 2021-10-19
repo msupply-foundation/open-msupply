@@ -20,15 +20,17 @@ import {
   useTranslation,
   NumericTextInput,
 } from '@openmsupply-client/common';
+import { BatchRow } from '../types';
 
 export interface BatchesTableProps {
   item: Item | null;
   onChange: (invoiceLine: InvoiceLine) => void;
   register: UseFormRegister<FieldValues>;
+  rows: BatchRow[];
 }
 
 type BatchRowProps = {
-  batch: StockLine;
+  batch: BatchRow;
   label: string;
   onChangeLine: (line: StockLine, quantity: number) => void;
 };
@@ -107,6 +109,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   item,
   onChange,
   register,
+  rows,
 }) => {
   if (!item) return null;
 
@@ -164,7 +167,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {item?.availableBatches.nodes.map((batch, index) => (
+            {rows.map((batch, index) => (
               <BatchRow
                 batch={batch}
                 key={batch.id}
