@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { ChangeEventHandler } from 'react';
 import {
-  BasicTextInput,
+  Checkbox,
+  Divider,
+  FieldValues,
+  InfoIcon,
+  InvoiceLine,
   Item,
   StockLine,
   Table,
@@ -10,22 +14,31 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  UseFormRegister,
   useFormContext,
   useFormatDate,
   useTranslation,
-  Checkbox,
-  Divider,
-  InfoIcon,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 
-export interface ItemBatchesProps {
+export interface BatchesTableProps {
   item: Item | null;
+  onChange: (invoiceLine: InvoiceLine) => void;
+  register: UseFormRegister<FieldValues>;
 }
 
-const BatchRow = ({ batch, label }: { batch: StockLine; label: string }) => {
+type BatchRowProps = {
+  batch: StockLine;
+  label: string;
+  onChangeLine: (line: StockLine, quantity: number) => void;
+};
+const BatchRow: React.FC<BatchRowProps> = ({ batch, label, onChangeLine }) => {
   const { register } = useFormContext();
   const t = useTranslation();
   const d = useFormatDate();
+
+  const onChange: ChangeEventHandler<HTMLInputElement> = event =>
+    onChangeLine(batch, Number(event.target.value));
 
   const stockLineInputProps = register(batch.id, {
     min: { value: 1, message: t('error.greater-than-zero-required') },
@@ -37,9 +50,10 @@ const BatchRow = ({ batch, label }: { batch: StockLine; label: string }) => {
     <TableRow>
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
-        <BasicTextInput
+        <NumericTextInput
           {...stockLineInputProps}
           sx={{ height: '32px' }}
+          onChange={onChange}
           disabled={batch.availableNumberOfPacks === 0}
         />
       </BasicCell>
@@ -89,15 +103,45 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
   />
 );
 
-export const ItemBatches: React.FC<ItemBatchesProps> = ({ item }) => {
+export const BatchesTable: React.FC<BatchesTableProps> = ({
+  item,
+  onChange,
+  register,
+}) => {
   if (!item) return null;
 
   const t = useTranslation();
-  const { register } = useFormContext();
   const placeholderInputProps = register('placeholder', {
     min: { value: 1, message: t('error.greater-than-zero-required') },
     pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
   });
+
+  const changeLine = (line: StockLine, quantity: number) => {
+    const invoiceLine = {
+      id: '',
+      itemName: item.name,
+      stockLineId: line.id,
+      itemCode: item.code,
+      quantity,
+      invoiceId: '',
+      expiry: line.expiryDate,
+    };
+
+    onChange(invoiceLine);
+  };
+  const changePlaceholderQuantity: ChangeEventHandler<HTMLInputElement> =
+    event => {
+      const invoiceLine = {
+        id: 'placeholder',
+        itemName: item.name,
+        stockLineId: 'placholder',
+        itemCode: item.code,
+        quantity: Number(event.target.value),
+        invoiceId: 'placeholder',
+        expiry: '',
+      };
+      onChange(invoiceLine);
+    };
 
   return (
     <>
@@ -120,11 +164,12 @@ export const ItemBatches: React.FC<ItemBatchesProps> = ({ item }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {item.availableBatches.nodes.map((batch, index) => (
+            {item?.availableBatches.nodes.map((batch, index) => (
               <BatchRow
                 batch={batch}
                 key={batch.id}
                 label={t('label.line', { number: index + 1 })}
+                onChangeLine={changeLine}
               />
             ))}
             <TableRow>
@@ -132,7 +177,10 @@ export const ItemBatches: React.FC<ItemBatchesProps> = ({ item }) => {
                 {t('label.placeholder')}
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
-                <BasicTextInput {...placeholderInputProps} />
+                <NumericTextInput
+                  {...placeholderInputProps}
+                  onChange={changePlaceholderQuantity}
+                />
               </BasicCell>
             </TableRow>
           </TableBody>
