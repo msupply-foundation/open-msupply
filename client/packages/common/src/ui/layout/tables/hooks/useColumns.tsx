@@ -3,7 +3,6 @@ import { DomainObject } from '../../../../types/index';
 import {
   ColumnDefinition,
   ColumnFormat,
-  ColumnDataAccessor,
   ColumnAlign,
   Column,
 } from '../columns/types';
@@ -39,9 +38,6 @@ export const useColumns = <T extends DomainObject>(
   options?: ColumnOptions<T>,
   depsArray: DependencyList = []
 ): Column<T>[] => {
-  const formatDate = useFormatDate();
-  const defaultAccessor = getAccessor<T>(formatDate);
-
   const columnDefinitions = new ColumnDefinitionSetBuilder<T>()
     .addColumns(columnsToCreate)
     .build();
@@ -51,17 +47,18 @@ export const useColumns = <T extends DomainObject>(
       columnDefinitions.map(column => {
         const defaults: Omit<Column<T>, 'key'> = {
           label: '',
-          format: ColumnFormat.text,
+          format: ColumnFormat.Text,
           sortable: true,
           Cell: BasicCell,
           Header: BasicHeader,
-          accessor: defaultAccessor(column),
+          accessor: getDefaultAccessor<T>(column),
           sortType: getSortType(column),
-          sortInverted: column.format === ColumnFormat.date,
-          sortDescFirst: column.format === ColumnFormat.date,
+          sortInverted: column.format === ColumnFormat.Date,
+          sortDescFirst: column.format === ColumnFormat.Date,
           align: ColumnAlign.Left,
           onChangeSortBy: options?.onChangeSortBy,
           sortBy: options?.sortBy,
+          formatter: getDefaultFormatter<T>(column),
           ...getColumnWidths(column),
         };
 
@@ -73,33 +70,33 @@ export const useColumns = <T extends DomainObject>(
 
 const getSortType = (column: { format?: ColumnFormat }) => {
   switch (column.format) {
-    case ColumnFormat.date:
+    case ColumnFormat.Date:
       return 'datetime';
-    case ColumnFormat.real:
-    case ColumnFormat.integer:
+    case ColumnFormat.Real:
+    case ColumnFormat.Integer:
       return 'numeric';
     default:
       return 'alphanumeric';
   }
 };
 
-type DateFormatter = (
-  value: number | Date,
-  options?: (Intl.DateTimeFormatOptions & { format?: string }) | undefined
-) => string;
+const getDefaultAccessor =
+  <T extends DomainObject>(column: ColumnDefinition<T>) =>
+  (row: T) =>
+    row[column.key] as string;
 
-const getAccessor = <T extends DomainObject>(
-  formatDate: DateFormatter
-): ((column: {
-  format?: ColumnFormat;
-  key: keyof T;
-}) => ColumnDataAccessor<T>) => {
-  return column => {
-    switch (column.format) {
-      case ColumnFormat.date:
-        return (row: T) => formatDate(new Date(`${row[column.key]}`));
-      default:
-        return (row: T) => row[column.key] as string;
+const getDefaultFormatter = <T extends DomainObject>(
+  column: ColumnDefinition<T>
+) => {
+  switch (column.format) {
+    case ColumnFormat.Date: {
+      return (date: unknown) => {
+        const formatDate = useFormatDate();
+        return formatDate(new Date(date as string));
+      };
     }
-  };
+    default: {
+      return (value: unknown) => String(value);
+    }
+  }
 };

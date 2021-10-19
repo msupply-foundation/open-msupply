@@ -3,6 +3,7 @@ import {
   Column,
   InvoiceLine,
   StockLine,
+  OutboundShipmentStatus,
 } from '@openmsupply-client/common';
 
 export interface ItemRow extends InvoiceLine {
@@ -15,6 +16,7 @@ export interface BatchRow extends StockLine {
 
 export interface OutboundShipment extends Invoice {
   lines: ItemRow[];
+  status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
 }
 
