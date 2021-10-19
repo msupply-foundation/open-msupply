@@ -5,14 +5,11 @@ import { useTranslation } from '../../../../intl';
 
 export * from './DataRow';
 
-const capitalize = (str: string) =>
-  str.slice(0, 1).toUpperCase() + str.slice(1, str.length).toLowerCase();
-
 export const BasicCell = <T extends DomainObject>({
   column,
   rowData,
 }: CellProps<T>): ReactElement => {
-  return <>{capitalize(String(column.accessor(rowData)))}</>;
+  return <>{column.formatter(column.accessor(rowData))}</>;
 };
 
 export const BasicHeader = <T extends DomainObject>({
