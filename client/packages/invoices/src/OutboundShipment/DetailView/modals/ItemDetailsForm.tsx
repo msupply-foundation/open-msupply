@@ -72,6 +72,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           renderOption={renderOption}
           defaultValue={invoiceLine?.item}
           width={540}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
         />
       </ModalRow>
       <ModalInputRow
