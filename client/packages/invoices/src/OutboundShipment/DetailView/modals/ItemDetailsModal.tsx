@@ -140,18 +140,20 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     );
     newLines.push(invoiceLine);
     setLines(newLines);
-
-    const allocatedQuantity = newLines.reduce(
-      (total, line) => (total += line.quantity),
-      0
-    );
-    setValue('allocated', allocatedQuantity >= quantity);
-    trigger('allocated');
   };
 
   React.useEffect(() => {
     if (isOpen) showDialog();
   }, [isOpen]);
+
+  React.useEffect(() => {
+    const allocatedQuantity = lines.reduce(
+      (total, line) => (total += line.quantity),
+      0
+    );
+    setValue('allocated', allocatedQuantity >= quantity);
+    trigger('allocated');
+  }, [lines, quantity]);
 
   React.useEffect(() => {
     let toAllocate = quantity;
@@ -164,6 +166,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       toAllocate -= batch.quantity;
       setValue(batch.id, batch.quantity);
     });
+    setValue('placeholder', toAllocate);
   }, [quantity, selectedItem]);
 
   register('allocated', { required: true });
