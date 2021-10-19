@@ -1,12 +1,11 @@
 mod graphql {
     use crate::graphql::common::{
-        assert_matches, assert_unwrap_enum, assert_unwrap_optional_key,
-        convert_graphql_client_type, get_invoice_inline, get_invoice_lines_inline,
+        assert_matches, assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
+        get_invoice_lines_inline,
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
-        delete_customer_invoice_line_full as delete, invoice_full as get,
-        DeleteCustomerInvoiceLineFull as Delete, InvoiceFull as Get,
+        delete_customer_invoice_line_full as delete, DeleteCustomerInvoiceLineFull as Delete,
     };
 
     use graphql_client::{GraphQLQuery, Response};
@@ -175,21 +174,12 @@ mod graphql {
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-        let invoice: Response<get::ResponseData> = get_gql_result(
-            &settings,
-            Get::build_query(get::Variables {
-                id: draft_customer_invoice.id,
-            }),
-        )
-        .await;
 
-        assert_error!(
-            response,
-            InvoiceLineBelongsToAnotherInvoice(delete::InvoiceLineBelongsToAnotherInvoice {
-                description: "Invoice line belongs to another invoice".to_string(),
-                invoice: convert_graphql_client_type(invoice.data.unwrap().invoice)
-            },)
-        );
+        let error_variant = assert_unwrap_error!(response);
+        let invoice_variant =
+            assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice).invoice;
+        let invoice = assert_unwrap_enum!(invoice_variant, delete::InvoiceResponse::InvoiceNode);
+        assert_eq!(invoice.id, draft_customer_invoice.id);
 
         // Success Draft
 
