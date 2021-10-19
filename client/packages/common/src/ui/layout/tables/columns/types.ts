@@ -15,10 +15,10 @@ export interface HeaderProps<T extends DomainObject> {
 }
 
 export enum ColumnFormat {
-  date,
-  integer,
-  real,
-  text,
+  Date,
+  Integer,
+  Real,
+  Text,
 }
 
 export enum ColumnAlign {
@@ -27,7 +27,11 @@ export enum ColumnAlign {
   Center = 'center',
 }
 
-export type ColumnDataAccessor<T extends DomainObject> = (rowData: T) => string;
+export type ColumnDataAccessor<T extends DomainObject> = (
+  rowData: T
+) => unknown;
+
+export type ColumnDataFormatter = (rowDataValue: unknown) => string;
 
 export enum GenericColumnKey {
   Selection = 'selection',
@@ -56,6 +60,8 @@ export interface Column<T extends DomainObject> {
 
   Cell: JSXElementConstructor<CellProps<T>>;
   Header: JSXElementConstructor<HeaderProps<T>>;
+
+  formatter: ColumnDataFormatter;
 }
 
 export interface ColumnDefinition<T extends DomainObject>
