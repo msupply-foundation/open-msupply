@@ -17,7 +17,7 @@ export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
   width: 350,
   accessor: (rowData: T) => rowData.otherPartyName,
   key: 'otherPartyNameAndColor',
-  Cell: ({ rowData }: { rowData: T }) => {
+  Cell: ({ rowData, column }) => {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -64,7 +64,7 @@ export const getNameAndColorColumn = <T extends DomainObjectWithRequiredFields>(
           }}
         />
         <Box ml={1} />
-        {rowData.otherPartyName}
+        {column.accessor(rowData)}
       </Box>
     );
   },
