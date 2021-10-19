@@ -37,6 +37,11 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
         boxShadow: theme => theme.shadows[1],
         borderRadius: '24px',
         height: '40px',
+
+        // The intention of this padding is for giving a bit of extra space on the
+        // right hand side of the typography as an offset for the checkbox, keeping
+        // everything looking centred.
+        paddingRight: '20px',
         textTransform: 'none',
         ...sx,
       }}
