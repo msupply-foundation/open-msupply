@@ -29,7 +29,10 @@ impl From<TransactionError<InsertCustomerInvoiceError>> for InsertCustomerInvoic
     fn from(error: TransactionError<InsertCustomerInvoiceError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => {
-                InsertCustomerInvoiceError::DatabaseError(RepositoryError::DBError { msg })
+                InsertCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
+                    msg: msg.clone(),
+                    source_msg: msg.clone(),
+                })
             }
             TransactionError::Inner(e) => e,
         }

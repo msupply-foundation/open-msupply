@@ -32,8 +32,8 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 #[error("Failed to translate {table_name} sync record")]
 pub struct SyncTranslationError {
-    table_name: &'static str,
-    source: serde_json::Error,
+    pub table_name: &'static str,
+    pub source: serde_json::Error,
 }
 
 #[derive(Error, Debug)]
