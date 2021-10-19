@@ -34,7 +34,7 @@ import {
   InvoiceLine,
   ButtonWithIcon,
   XCircleIcon,
-  DownloadIcon,
+  SaveIcon,
   ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
@@ -63,7 +63,6 @@ const useDraftOutbound = () => {
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
   const { draft, dispatch, onChangeSortBy, save, sortBy } = useDraftOutbound();
-  const { draft, onChangeSortBy, sortBy, save } = useDraftOutbound();
   const { OpenButton, setActions, setSections } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
@@ -242,7 +241,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               onClick={() => navigate(-1)}
             />
             <ButtonWithIcon
-              Icon={<DownloadIcon />}
+              Icon={<SaveIcon />}
               labelKey="button.save"
               variant="contained"
               color="secondary"

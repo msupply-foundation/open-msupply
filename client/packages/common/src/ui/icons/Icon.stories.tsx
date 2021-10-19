@@ -31,6 +31,7 @@ import { PrinterIcon } from './Printer';
 import { RadioIcon } from './Radio';
 import { ReportsIcon } from './Reports';
 import { RewindIcon } from './Rewind';
+import { SaveIcon } from './Save';
 import { SettingsIcon } from './Settings';
 import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
@@ -95,6 +96,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <RadioIcon {...args} />, name: 'Radio' },
     { icon: <ReportsIcon {...args} />, name: 'Reports' },
     { icon: <RewindIcon {...args} />, name: 'Rewind' },
+    { icon: <SaveIcon {...args} />, name: 'Save' },
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
@@ -138,6 +140,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
 export const Primary = Template.bind({});
 export const Secondary = Template.bind({});
 export const Small = Template.bind({});
+export const DefaultValues = Template.bind({});
 
 Primary.args = { color: 'primary' } as SvgIconProps;
 Secondary.args = { color: 'secondary' } as SvgIconProps;
