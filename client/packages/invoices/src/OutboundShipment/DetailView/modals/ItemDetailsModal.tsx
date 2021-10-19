@@ -24,6 +24,21 @@ interface ItemDetailsModalProps {
   upsertInvoiceLine: (invoiceLine: InvoiceLine) => void;
 }
 
+export const getInvoiceLine = (
+  id: string,
+  item: Item,
+  line: { id: string; expiryDate: string },
+  quantity: number
+): InvoiceLine => ({
+  id,
+  itemName: item.name,
+  stockLineId: line.id,
+  itemCode: item.code,
+  quantity,
+  invoiceId: '',
+  expiry: line.expiryDate,
+});
+
 const listQueryFn = async (): Promise<Item[]> => {
   const { items } = await request(
     Environment.API_URL,
@@ -80,6 +95,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const [batchRows, setBatchRows] = React.useState<BatchRow[]>([]);
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const [quantity, setQuantity] = React.useState(0);
+  const [isAllocated, setIsAllocated] = React.useState(false);
   const [lines, setLines] = React.useState<InvoiceLine[]>(
     invoiceLine ? [invoiceLine] : []
   );
@@ -87,14 +103,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     title: 'heading.add-item',
   });
   const methods = useForm({ mode: 'onBlur' });
-  const {
-    formState: { isDirty, isValid },
-    reset,
-    handleSubmit,
-    register,
-    setValue,
-    trigger,
-  } = methods;
+  const { reset, register, setValue, trigger } = methods;
 
   const onChangeItem = (
     _event: SyntheticEvent<Element, Event>,
@@ -113,26 +122,25 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   };
 
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
-  const onCancel = () => {
-    hideDialog();
-    onClose();
+  const onReset = () => {
     reset();
     setBatchRows([]);
+    setQuantity(0);
+    setValue('quantity', 0);
+  };
+  const onCancel = () => {
+    onClose();
+    onReset();
   };
   const upsert = () => {
     lines.forEach(upsertInvoiceLine);
-    reset();
-    setBatchRows([]);
+    onReset();
   };
   const upsertAndClose = () => {
     upsert();
     onClose();
-    hideDialog();
-    reset();
-    setBatchRows([]);
+    onReset();
   };
-  const onSubmit = handleSubmit(upsertAndClose);
-  const onOkNext = handleSubmit(upsert);
 
   const onChangeInvoiceLine = (invoiceLine: InvoiceLine) => {
     const newLines = lines.filter(
@@ -144,6 +152,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen) showDialog();
+    else hideDialog();
   }, [isOpen]);
 
   React.useEffect(() => {
@@ -151,48 +160,62 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       (total, line) => (total += line.quantity),
       0
     );
-    setValue('allocated', allocatedQuantity >= quantity);
-    trigger('allocated');
+    setIsAllocated(allocatedQuantity >= quantity && allocatedQuantity > 0);
   }, [lines, quantity]);
 
   React.useEffect(() => {
+    if (quantity < 1 || batchRows.length === 0) {
+      setValue('placeholder', quantity);
+      if (quantity > 0 && selectedItem)
+        onChangeInvoiceLine(
+          getInvoiceLine(
+            '',
+            selectedItem,
+            {
+              id: 'placeholder',
+              expiryDate: '',
+            },
+            quantity
+          )
+        );
+      return;
+    }
+
     let toAllocate = quantity;
-    if (quantity === 0 || batchRows.length === 0) return;
+
     batchRows.forEach(batch => {
       batch.quantity = Math.min(
         toAllocate,
         batch.availableNumberOfPacks * batch.packSize
       );
+      if (batch.quantity > 0 && selectedItem)
+        onChangeInvoiceLine(
+          getInvoiceLine('', selectedItem, batch, batch.quantity)
+        );
       toAllocate -= batch.quantity;
       setValue(batch.id, batch.quantity);
     });
     setValue('placeholder', toAllocate);
   }, [quantity, selectedItem]);
 
-  register('allocated', { required: true });
   return (
     <Modal
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
-        <DialogButton
-          variant="next"
-          onClick={onOkNext}
-          disabled={!isDirty || !isValid}
-        />
+        <DialogButton variant="next" onClick={upsert} disabled={true} />
       }
       okButton={
         <DialogButton
           variant="ok"
-          onClick={onSubmit}
-          disabled={!isDirty || !isValid}
+          onClick={upsertAndClose}
+          disabled={!isAllocated}
         />
       }
       height={600}
       width={780}
     >
       <FormProvider {...methods}>
-        {' '}
-        <form onSubmit={onSubmit}>
+        <form>
           <Grid container gap={0.5}>
             <ItemDetailsForm
               invoiceLine={invoiceLine}
