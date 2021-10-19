@@ -13,7 +13,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
 pub mod common;
+mod customer_invoice_delete;
 mod customer_invoice_insert;
+mod customer_invoice_update;
 mod delete_customer_invoice_line;
 mod delete_supplier_invoice;
 mod delete_supplier_invoice_line;
