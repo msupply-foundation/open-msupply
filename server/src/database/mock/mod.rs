@@ -1,3 +1,4 @@
+mod full_invoice;
 mod invoice;
 mod invoice_line;
 mod item;
@@ -9,6 +10,9 @@ mod stock_line;
 mod store;
 mod user_account;
 
+use std::collections::HashMap;
+
+pub use full_invoice::mock_full_invoices;
 pub use invoice::{mock_customer_invoices, mock_invoices};
 pub use invoice_line::mock_invoice_lines;
 pub use item::mock_items;
@@ -19,6 +23,8 @@ pub use requisition_line::mock_requisition_lines;
 pub use stock_line::mock_stock_lines;
 pub use store::mock_stores;
 pub use user_account::mock_user_accounts;
+
+use self::full_invoice::{insert_full_mock_invoice, FullMockInvoice};
 
 use super::{
     repository::{
@@ -36,6 +42,7 @@ pub struct MockData {
     pub invoices: Vec<InvoiceRow>,
     pub stock_lines: Vec<StockLineRow>,
     pub invoice_lines: Vec<InvoiceLineRow>,
+    pub full_invoices: HashMap<String, FullMockInvoice>,
 }
 pub struct MockDataInserts {
     pub names: bool,
@@ -45,6 +52,7 @@ pub struct MockDataInserts {
     pub invoices: bool,
     pub stock_lines: bool,
     pub invoice_lines: bool,
+    pub full_invoices: bool,
 }
 
 impl MockDataInserts {
@@ -57,6 +65,7 @@ impl MockDataInserts {
             invoices: true,
             stock_lines: true,
             invoice_lines: true,
+            full_invoices: true,
         }
     }
 
@@ -69,6 +78,7 @@ impl MockDataInserts {
             invoices: false,
             stock_lines: false,
             invoice_lines: false,
+            full_invoices: false,
         }
     }
 
@@ -106,6 +116,11 @@ impl MockDataInserts {
         self.invoice_lines = true;
         self
     }
+
+    pub fn full_invoices(mut self) -> Self {
+        self.full_invoices = true;
+        self
+    }
 }
 
 pub async fn insert_mock_data(
@@ -120,6 +135,7 @@ pub async fn insert_mock_data(
         invoices: mock_invoices(),
         stock_lines: mock_stock_lines(),
         invoice_lines: mock_invoice_lines(),
+        full_invoices: mock_full_invoices(),
     };
 
     if inserts.names {
@@ -168,6 +184,12 @@ pub async fn insert_mock_data(
         let repo = InvoiceLineRepository::new(connection);
         for row in &result.invoice_lines {
             repo.upsert_one(&row).unwrap();
+        }
+    }
+
+    if inserts.full_invoices {
+        for row in result.full_invoices.values() {
+            insert_full_mock_invoice(row, connection)
         }
     }
 
