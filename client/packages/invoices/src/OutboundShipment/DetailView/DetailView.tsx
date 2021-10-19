@@ -272,6 +272,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               Icon={<XCircleIcon />}
               labelKey="button.cancel"
               color="secondary"
+              sx={{ fontSize: '12px' }}
               onClick={() => navigate(-1)}
             />
             {isInvoiceSaveable(draft) && (
@@ -281,6 +282,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
                   labelKey="button.save"
                   variant="contained"
                   color="secondary"
+                  sx={{ fontSize: '12px' }}
                   onClick={() => {
                     success('Saved invoice! 🥳 ')();
                     save(draft);
@@ -290,6 +292,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
                   disabled={draft.hold}
                   Icon={<ArrowRightIcon />}
                   labelKey="button.save-and-confirm-status"
+                  sx={{ fontSize: '12px' }}
                   labelProps={{
                     status: t(
                       getNextOutboundStatusButtonTranslation(draft.status)

@@ -24,7 +24,11 @@ export const StatusCrumbs = <StatusType extends string>({
     const color = i <= currentIdx ? 'secondary' : theme.palette.midGrey;
 
     return (
-      <Typography key={status} color={color} sx={{ fontWeight: 700 }}>
+      <Typography
+        key={status}
+        color={color}
+        sx={{ fontWeight: 700, fontSize: '12px' }}
+      >
         {t(statusFormatter(status))}
       </Typography>
     );
