@@ -77,18 +77,18 @@ impl SyncReceiverActor {
                             CentralSyncError::PullCentralSyncRecordsError { source } => {
                                 let sync_connection_error = source;
                                 info!("{}", sync_connection_error);
-                                if let SyncConnectionError::ConnectError { source }
-                                | SyncConnectionError::TimedoutError { source }
-                                | SyncConnectionError::BadRequestError { source }
-                                | SyncConnectionError::UnauthorisedError { source }
-                                | SyncConnectionError::NotFoundError { source }
-                                | SyncConnectionError::MethodNotAllowedError { source }
-                                | SyncConnectionError::InternalServerError { source }
-                                | SyncConnectionError::UnknownError { source } =
-                                    sync_connection_error
-                                {
-                                    let reqwest_error = source;
-                                    info!("{}", reqwest_error);
+                                match sync_connection_error {
+                                    SyncConnectionError::ConnectError { source }
+                                    | SyncConnectionError::TimedoutError { source }
+                                    | SyncConnectionError::BadRequestError { source }
+                                    | SyncConnectionError::UnauthorisedError { source }
+                                    | SyncConnectionError::NotFoundError { source }
+                                    | SyncConnectionError::MethodNotAllowedError { source }
+                                    | SyncConnectionError::InternalServerError { source }
+                                    | SyncConnectionError::UnknownError { source } => {
+                                        let reqwest_error = source;
+                                        info!("{}", reqwest_error);
+                                    }
                                 }
                             }
                             CentralSyncError::ImportCentralSyncRecordsError { source } => {
