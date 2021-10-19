@@ -27,12 +27,12 @@ export interface BatchesTableProps {
   rows: BatchRow[];
 }
 
-type BatchRowProps = {
+type BatchesRowProps = {
   batch: BatchRow;
   label: string;
   onChange: (key: string, value: number) => void;
 };
-const BatchRow: React.FC<BatchRowProps> = ({ batch, label, onChange }) => {
+const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const { register } = useFormContext();
   const t = useTranslation();
   const d = useFormatDate();
@@ -142,7 +142,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
           </TableHead>
           <TableBody>
             {rows.map((batch, index) => (
-              <BatchRow
+              <BatchesRow
                 batch={batch}
                 key={batch.id}
                 label={t('label.line', { number: index + 1 })}
