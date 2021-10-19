@@ -67,10 +67,7 @@ impl<'a> StockLineRepository<'a> {
             .collect())
     }
 
-    pub async fn find_one_by_id(
-        &self,
-        stock_line_id: &str,
-    ) -> Result<StockLineRow, RepositoryError> {
+    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(stock_line_id))
             .first(&self.connection.connection)?;
