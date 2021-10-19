@@ -10,7 +10,7 @@ import {
 
 export const Footer: React.FC = () => {
   const { user, store } = useHostContext();
-  const PaddedCell = styled(Box)({ display: 'flex', padding: '0 8px' });
+  const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'midGrey', height: '16px', width: '16px' };
   const textStyles = {
     color: 'midGrey',
@@ -20,11 +20,12 @@ export const Footer: React.FC = () => {
 
   return (
     <Box
+      gap={2}
       sx={{
         backgroundColor: 'background.toolbar',
         height: '32px',
-        paddingLeft: '10px',
       }}
+      marginLeft={3}
       display="flex"
       alignItems="center"
     >

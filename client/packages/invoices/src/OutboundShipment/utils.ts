@@ -2,7 +2,7 @@ import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { OutboundShipmentStatus } from '@openmsupply-client/common';
 import { OutboundShipment } from './DetailView/types';
 
-const outboundStatuses: OutboundShipmentStatus[] = [
+export const outboundStatuses: OutboundShipmentStatus[] = [
   'draft',
   'allocated',
   'picked',
@@ -48,8 +48,8 @@ export const getNextOutboundStatusButtonTranslation = (
 
 export const getStatusTranslation = (
   currentStatus: OutboundShipmentStatus
-): LocaleKey | undefined => {
-  return StatusTranslation[currentStatus];
+): LocaleKey => {
+  return StatusTranslation[currentStatus] ?? StatusTranslation.draft;
 };
 
 export const isInvoiceSaveable = (outbound: OutboundShipment): boolean => {
