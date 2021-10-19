@@ -14,6 +14,7 @@ use serde_json::{json, Value};
 
 pub mod common;
 mod customer_invoice_insert;
+mod delete_customer_invoice_line;
 mod delete_supplier_invoice;
 mod delete_supplier_invoice_line;
 mod insert_customer_invoice_line;
@@ -25,6 +26,8 @@ mod names;
 mod requisition;
 mod update_customer_invoice_line;
 mod update_supplier_invoice;
+mod update_supplier_invoice;
+mod update_supplier_invoice_line;
 mod update_supplier_invoice_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
@@ -230,3 +233,13 @@ pub struct UpdateCustomerInvoiceLineFull;
     normalization = "Rust"
 )]
 pub struct InsertCustomerInvoiceLineFull;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/graphql/schema.graphql",
+    query_path = "tests/graphql/query.graphql",
+    response_derives = "Debug,PartialEq,Clone,Serialize",
+    variables_derives = "Debug,PartialEq,Clone",
+    normalization = "Rust"
+)]
+pub struct DeleteCustomerInvoiceLineFull;
