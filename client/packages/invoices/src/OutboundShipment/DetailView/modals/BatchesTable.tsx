@@ -21,6 +21,7 @@ import {
   NumericTextInput,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
+import { getInvoiceLine } from './ItemDetailsModal';
 
 export interface BatchesTableProps {
   item: Item | null;
@@ -119,31 +120,21 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
     pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
   });
 
-  const changeLine = (line: StockLine, quantity: number) => {
-    const invoiceLine = {
-      id: '',
-      itemName: item.name,
-      stockLineId: line.id,
-      itemCode: item.code,
-      quantity,
-      invoiceId: '',
-      expiry: line.expiryDate,
-    };
-
-    onChange(invoiceLine);
-  };
+  const changeLine = (line: StockLine, quantity: number) =>
+    onChange(getInvoiceLine('', item, line, quantity));
   const changePlaceholderQuantity: ChangeEventHandler<HTMLInputElement> =
     event => {
-      const invoiceLine = {
-        id: 'placeholder',
-        itemName: item.name,
-        stockLineId: 'placholder',
-        itemCode: item.code,
-        quantity: Number(event.target.value),
-        invoiceId: 'placeholder',
-        expiry: '',
-      };
-      onChange(invoiceLine);
+      onChange(
+        getInvoiceLine(
+          'placeholder',
+          item,
+          {
+            id: 'placeholder',
+            expiryDate: '',
+          },
+          Number(event.target.value)
+        )
+      );
     };
 
   return (
