@@ -103,7 +103,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     title: 'heading.add-item',
   });
   const methods = useForm({ mode: 'onBlur' });
-  const { reset, register, setValue, trigger } = methods;
+  const { reset, register, setValue } = methods;
 
   const onChangeItem = (
     _event: SyntheticEvent<Element, Event>,
@@ -116,9 +116,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         .map(batch => ({ ...batch, quantity: 0 }))
         .sort(sortByExpiryDate)
     );
-    setValue('itemId', value?.id || '');
     setValue('code', value?.code || '');
-    trigger('itemId');
   };
 
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
