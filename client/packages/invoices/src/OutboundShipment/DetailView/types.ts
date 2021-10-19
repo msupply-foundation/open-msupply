@@ -1,4 +1,9 @@
-import { Invoice, Column, InvoiceLine } from '@openmsupply-client/common';
+import {
+  Invoice,
+  Column,
+  InvoiceLine,
+  OutboundShipmentStatus,
+} from '@openmsupply-client/common';
 
 export interface ItemRow extends InvoiceLine {
   updateQuantity: (quantity: number) => void;
@@ -6,6 +11,7 @@ export interface ItemRow extends InvoiceLine {
 
 export interface OutboundShipment extends Invoice {
   lines: ItemRow[];
+  status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
 }
 
