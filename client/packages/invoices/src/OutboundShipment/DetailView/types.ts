@@ -2,11 +2,16 @@ import {
   Invoice,
   Column,
   InvoiceLine,
+  StockLine,
   OutboundShipmentStatus,
 } from '@openmsupply-client/common';
 
 export interface ItemRow extends InvoiceLine {
   updateQuantity: (quantity: number) => void;
+}
+
+export interface BatchRow extends StockLine {
+  quantity: number;
 }
 
 export interface OutboundShipment extends Invoice {
