@@ -19,22 +19,22 @@ pub fn delete_customer_invoice_line(
     input: DeleteCustomerInvoiceLine,
 ) -> Result<String, DeleteCustomerInvoiceLineError> {
     let connection = connection_manager.connection()?;
-    // TODO: do inside transaction
-    let line = validate(&input, &connection)?;
 
-    let delete_batch_id_option = line.stock_line_id.clone();
+    // TODO: do inside transaction.
+
+    let line = validate(&input, &connection)?;
+    let stock_line_id_option = line.stock_line_id.clone();
 
     InvoiceLineRepository::new(&connection).delete(&line.id)?;
 
-    if let Some(delete_batch_id) = delete_batch_id_option {
-        let invoice = InvoiceRepository::new(&connection).find_one_by_id(&line.invoice_id)?;
-
+    if let Some(stock_line_id) = stock_line_id_option {
+        let invoice_repository = InvoiceRepository::new(&connection);
         let stock_line_repository = StockLineRepository::new(&connection);
 
-        let mut stock_line = stock_line_repository.find_one_by_id(&delete_batch_id)?;
-
+        let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
         stock_line.available_number_of_packs += line.number_of_packs;
 
+        let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
         if invoice.status == InvoiceRowStatus::Confirmed {
             stock_line.total_number_of_packs += line.number_of_packs;
         }
