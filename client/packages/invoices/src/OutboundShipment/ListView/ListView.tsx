@@ -25,11 +25,13 @@ import {
   BookIcon,
   ButtonWithIcon,
   Grid,
+  OutboundShipmentStatus,
 } from '@openmsupply-client/common';
 
 import { OutboundShipmentListViewApi } from '../../api';
 import { ExternalURL } from '@openmsupply-client/config';
 import { CustomerSearch } from './CustomerSearch';
+import { getStatusTranslation } from '../utils';
 
 const ListViewToolBar: FC<{
   onDelete: (toDelete: Invoice[]) => void;
@@ -105,10 +107,18 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onUpdate({ ...row, color: color.hex });
   };
 
+  const t = useTranslation();
+
   const columns = useColumns<Invoice>(
     [
       getNameAndColorColumn(onColorUpdate),
-      'status',
+      [
+        'status',
+        {
+          formatter: status =>
+            t(getStatusTranslation(status as OutboundShipmentStatus)),
+        },
+      ],
       'invoiceNumber',
       'entered',
       'confirmed',

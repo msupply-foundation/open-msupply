@@ -46,6 +46,7 @@ import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
 import {
   getNextOutboundStatusButtonTranslation,
+  getStatusTranslation,
   isInvoiceSaveable,
 } from '../utils';
 
@@ -132,7 +133,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             </PanelRow>
             <PanelRow>
               <PanelLabel>{t('label.status')}</PanelLabel>
-              <PanelField>{draft?.status}</PanelField>
+              <PanelField>{t(getStatusTranslation(draft?.status))}</PanelField>
             </PanelRow>
           </Grid>,
         ],
