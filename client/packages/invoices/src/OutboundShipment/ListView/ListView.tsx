@@ -107,15 +107,13 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onUpdate({ ...row, color: color.hex });
   };
 
-  const t = useTranslation();
-
   const columns = useColumns<Invoice>(
     [
       getNameAndColorColumn(onColorUpdate),
       [
         'status',
         {
-          formatter: status =>
+          formatter: (status, { t }) =>
             t(getStatusTranslation(status as OutboundShipmentStatus)),
         },
       ],
