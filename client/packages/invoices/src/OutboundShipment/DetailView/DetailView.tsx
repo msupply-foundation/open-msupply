@@ -1,6 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
+  StatusCrumbs,
   AppBarButtonsPortal,
   BookIcon,
   Box,
@@ -8,8 +9,6 @@ import {
   ClockIcon,
   Column,
   CopyIcon,
-  DialogButton,
-  FormProvider,
   Grid,
   PanelField,
   PanelLabel,
@@ -24,9 +23,7 @@ import {
   getEditableQuantityColumn,
   useColumns,
   useDetailPanel,
-  useDialog,
   useDocument,
-  useForm,
   useFormatDate,
   useNotification,
   useTabs,
@@ -40,10 +37,16 @@ import {
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
-import { ItemDetails } from './modals/ItemDetails';
+import { ItemDetailsModal } from './modals/ItemDetailsModal';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
+import {
+  getNextOutboundStatusButtonTranslation,
+  getStatusTranslation,
+  isInvoiceSaveable,
+  outboundStatuses,
+} from '../utils';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -67,29 +70,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
-  const methods = useForm({ mode: 'onBlur' });
-  const {
-    formState: { isDirty, isValid },
-    reset,
-    handleSubmit,
-  } = methods;
-  const addItemClose = (item: InvoiceLine) => {
-    addItem(item);
-    hideDialog();
-  };
-  const addItem = (invoiceLine: InvoiceLine) => {
+  const [itemModalOpen, setItemModalOpen] = React.useState(false);
+  const upsertInvoiceLine = (invoiceLine: InvoiceLine) => {
     dispatch({ type: ActionType.UpsertLine, payload: { invoiceLine } });
-    reset();
   };
-  const cancelItem = () => {
-    hideDialog();
-    reset();
-  };
-  const onSubmit = handleSubmit(addItemClose);
-  const onOkNext = handleSubmit(addItem);
-  const { hideDialog, showDialog, Modal } = useDialog({
-    title: 'heading.add-item',
-  });
+
   const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
 
   const copyToClipboard = () => {
@@ -128,7 +113,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             </PanelRow>
             <PanelRow>
               <PanelLabel>{t('label.status')}</PanelLabel>
-              <PanelField>{draft?.status}</PanelField>
+              <PanelField>{t(getStatusTranslation(draft?.status))}</PanelField>
             </PanelRow>
           </Grid>,
         ],
@@ -177,7 +162,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
           <ButtonWithIcon
             labelKey="button.add-item"
             Icon={<PlusCircleIcon />}
-            onClick={showDialog}
+            onClick={() => setItemModalOpen(true)}
           />
           <ButtonWithIcon
             Icon={<BookIcon />}
@@ -187,30 +172,11 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
           {OpenButton}
         </Grid>
       </AppBarButtonsPortal>
-
-      <Modal
-        cancelButton={<DialogButton variant="cancel" onClick={cancelItem} />}
-        nextButton={
-          <DialogButton
-            variant="next"
-            onClick={onOkNext}
-            disabled={!isDirty || !isValid}
-          />
-        }
-        okButton={
-          <DialogButton
-            variant="ok"
-            onClick={onSubmit}
-            disabled={!isDirty || !isValid}
-          />
-        }
-        height={600}
-        width={780}
-      >
-        <FormProvider {...methods}>
-          <ItemDetails onSubmit={onSubmit} />
-        </FormProvider>
-      </Modal>
+      <ItemDetailsModal
+        isOpen={itemModalOpen}
+        onClose={() => setItemModalOpen(false)}
+        upsertInvoiceLine={upsertInvoiceLine}
+      />
 
       <OutboundShipmentDetailViewToolbar
         draft={draft}
@@ -232,7 +198,18 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
-        <Box display="flex" alignItems="flex-end" height={40} marginRight={2}>
+        <Box
+          display="flex"
+          alignItems="flex-end"
+          height={40}
+          marginRight={2}
+          marginLeft={3}
+        >
+          <StatusCrumbs
+            statuses={outboundStatuses}
+            currentStatus={draft.status}
+            statusFormatter={getStatusTranslation}
+          />
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
             <ButtonWithIcon
               Icon={<XCircleIcon />}
@@ -240,28 +217,36 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               color="secondary"
               onClick={() => navigate(-1)}
             />
-            <ButtonWithIcon
-              Icon={<SaveIcon />}
-              labelKey="button.save"
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                success('Saved invoice! 🥳 ')();
-                save(draft);
-              }}
-            />
-            <ButtonWithIcon
-              Icon={<ArrowRightIcon />}
-              labelKey="button.save-and"
-              labelProps={{ status: draft.status }}
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                success('Saved invoice! 🥳 ')();
-                draft.update?.('status', 'finalised');
-                save(draft);
-              }}
-            />
+            {isInvoiceSaveable(draft) && (
+              <>
+                <ButtonWithIcon
+                  Icon={<SaveIcon />}
+                  labelKey="button.save"
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    success('Saved invoice! 🥳 ')();
+                    save(draft);
+                  }}
+                />
+                <ButtonWithIcon
+                  Icon={<ArrowRightIcon />}
+                  labelKey="button.save-and-confirm-status"
+                  labelProps={{
+                    status: t(
+                      getNextOutboundStatusButtonTranslation(draft.status)
+                    ),
+                  }}
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    success('Saved invoice! 🥳 ')();
+                    draft.update?.('status', 'finalised');
+                    save(draft);
+                  }}
+                />
+              </>
+            )}
           </Box>
         </Box>
       </Box>

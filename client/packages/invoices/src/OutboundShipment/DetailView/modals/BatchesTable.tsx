@@ -1,8 +1,10 @@
 import React from 'react';
 import {
-  BasicTextInput,
+  Checkbox,
+  Divider,
+  FieldValues,
+  InfoIcon,
   Item,
-  StockLine,
   Table,
   TableBody,
   TableCell,
@@ -10,19 +12,27 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  UseFormRegister,
   useFormContext,
   useFormatDate,
   useTranslation,
-  Checkbox,
-  Divider,
-  InfoIcon,
+  NumericTextInput,
 } from '@openmsupply-client/common';
+import { BatchRow } from '../types';
 
-export interface ItemBatchesProps {
+export interface BatchesTableProps {
   item: Item | null;
+  onChange: (key: string, value: number) => void;
+  register: UseFormRegister<FieldValues>;
+  rows: BatchRow[];
 }
 
-const BatchRow = ({ batch, label }: { batch: StockLine; label: string }) => {
+type BatchRowProps = {
+  batch: BatchRow;
+  label: string;
+  onChange: (key: string, value: number) => void;
+};
+const BatchRow: React.FC<BatchRowProps> = ({ batch, label, onChange }) => {
   const { register } = useFormContext();
   const t = useTranslation();
   const d = useFormatDate();
@@ -32,15 +42,19 @@ const BatchRow = ({ batch, label }: { batch: StockLine; label: string }) => {
     pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
   });
 
+  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
+    onChange(batch.id, Number(event.target.value));
+
   // TODO format currency correctly
   return (
     <TableRow>
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
-        <BasicTextInput
+        <NumericTextInput
           {...stockLineInputProps}
           sx={{ height: '32px' }}
           disabled={batch.availableNumberOfPacks === 0}
+          onChange={onChangeValue}
         />
       </BasicCell>
       <BasicCell>
@@ -89,15 +103,22 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
   />
 );
 
-export const ItemBatches: React.FC<ItemBatchesProps> = ({ item }) => {
+export const BatchesTable: React.FC<BatchesTableProps> = ({
+  item,
+  onChange,
+  register,
+  rows,
+}) => {
   if (!item) return null;
 
   const t = useTranslation();
-  const { register } = useFormContext();
   const placeholderInputProps = register('placeholder', {
     min: { value: 1, message: t('error.greater-than-zero-required') },
     pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
   });
+
+  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
+    onChange('placeholder', Number(event.target.value));
 
   return (
     <>
@@ -120,11 +141,12 @@ export const ItemBatches: React.FC<ItemBatchesProps> = ({ item }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {item.availableBatches.nodes.map((batch, index) => (
+            {rows.map((batch, index) => (
               <BatchRow
                 batch={batch}
                 key={batch.id}
                 label={t('label.line', { number: index + 1 })}
+                onChange={onChange}
               />
             ))}
             <TableRow>
@@ -132,7 +154,10 @@ export const ItemBatches: React.FC<ItemBatchesProps> = ({ item }) => {
                 {t('label.placeholder')}
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
-                <BasicTextInput {...placeholderInputProps} />
+                <NumericTextInput
+                  {...placeholderInputProps}
+                  onChange={onChangeValue}
+                />
               </BasicCell>
             </TableRow>
           </TableBody>

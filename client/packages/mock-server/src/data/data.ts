@@ -144,6 +144,8 @@ const createItems = (
   });
 };
 
+const statuses = ['draft', 'allocated', 'picked', 'shipped', 'delivered'];
+
 export const createInvoice = (
   id: string,
   invoiceNumber: number,
@@ -157,7 +159,7 @@ export const createInvoice = (
     id,
     nameId,
     invoiceNumber,
-    status: takeRandomElementFrom(['Confirmed', 'Finalised']),
+    status: takeRandomElementFrom(statuses),
     entered: entered.toString(),
     confirmed: confirmed.toString(),
     total: `$${faker.commerce.price()}`,

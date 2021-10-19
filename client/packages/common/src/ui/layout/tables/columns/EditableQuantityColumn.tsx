@@ -2,7 +2,7 @@ import { InputAdornment, Tooltip, Typography } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { ColumnDefinition } from './types';
 import { DomainObject } from '../../../../types';
-import { BasicTextInput } from '../../../components';
+import { NumericTextInput } from '../../../components';
 
 interface SomeQuantityEntity extends DomainObject {
   quantity: number;
@@ -47,14 +47,12 @@ export const getEditableQuantityColumn = <
     }, [rowData]);
 
     return (
-      <BasicTextInput
+      <NumericTextInput
         sx={{
           maxHeight: 40,
-          '& .MuiInput-input': { textAlign: 'right', width: '75px' },
         }}
         error={error}
         size="small"
-        helperText="Incorrect value"
         hiddenLabel
         value={buffer}
         onBlur={() => rowData.updateQuantity(value)}
