@@ -55,10 +55,7 @@ mod graphql {
             invoice_repository.upsert_one(invoice).unwrap();
         }
         for invoice_line in &mock_invoice_lines {
-            invoice_line_repository
-                .insert_one(invoice_line)
-                .await
-                .unwrap();
+            invoice_line_repository.upsert_one(invoice_line).unwrap();
         }
 
         let query = r#"mutation DeleteCustomerInvoice($id: String!) {
@@ -104,7 +101,7 @@ mod graphql {
 
         // NotACustomerInvoice
         let variables = Some(json!({
-          "id": "supplier_invoice_no_lines"
+          "id": "empty_draft_supplier_invoice"
         }));
         let expected = json!({
             "deleteCustomerInvoice": {

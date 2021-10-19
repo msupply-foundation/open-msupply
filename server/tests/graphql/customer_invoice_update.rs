@@ -5,8 +5,8 @@ mod graphql {
     use remote_server::{
         database::{
             mock::{
-                mock_invoice_lines, mock_invoices, mock_items, mock_names, mock_stock_lines,
-                mock_stores,
+                insert_mock_data, mock_invoice_lines, mock_invoices, mock_items, mock_names,
+                mock_stock_lines, mock_stores, MockDataInserts,
             },
             repository::{
                 get_repositories, InvoiceLineRepository, InvoiceRepository, ItemRepository,
@@ -56,11 +56,11 @@ mod graphql {
             invoice_repository.upsert_one(invoice).unwrap();
         }
         for invoice_line in &mock_invoice_lines {
-            invoice_line_repository
-                .insert_one(invoice_line)
-                .await
-                .unwrap();
+            invoice_line_repository.upsert_one(invoice_line).unwrap();
         }
+
+        let mock_data =
+            insert_mock_data(&connection, MockDataInserts::none().full_invoices()).await;
 
         let query = r#"mutation DeleteCustomerInvoice($input: UpdateCustomerInvoiceInput!) {
             updateCustomerInvoice(input: $input) {
@@ -231,19 +231,19 @@ mod graphql {
 
         // test DRAFT to CONFIRMED
         let invoice_lines = invoice_line_repository
-            .find_many_by_invoice_id("customer_invoice_a")
+            .find_many_by_invoice_id("customer_invoice_c")
             .unwrap();
         let expected_totals = expected_stock_line_totals(&invoice_lines);
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_a",
+            "id": "customer_invoice_c",
             "status": "CONFIRMED",
             "comment": "test_comment"
           }
         }));
         let expected = json!({
             "updateCustomerInvoice": {
-              "id": "customer_invoice_a",
+              "id": "customer_invoice_c",
               "comment": "test_comment"
             }
           }
@@ -252,20 +252,20 @@ mod graphql {
         assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test DRAFT to FINALISED
-        let invoice_lines = invoice_line_repository
-            .find_many_by_invoice_id("customer_invoice_b")
-            .unwrap();
+        let full_invoice = mock_data.full_invoices.get("draft_ci_a").unwrap();
+        let invoice_id = full_invoice.invoice.id.clone();
+        let invoice_lines = full_invoice.get_lines();
         let expected_totals = expected_stock_line_totals(&invoice_lines);
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_b",
+            "id": invoice_id,
             "status": "FINALISED",
             "comment": "test_comment_b"
           }
         }));
         let expected = json!({
             "updateCustomerInvoice": {
-              "id": "customer_invoice_b",
+              "id": invoice_id,
               "comment": "test_comment_b"
             }
           }

@@ -38,6 +38,7 @@ mod graphql {
         let mock_items: Vec<ItemRow> = mock_items();
         let mock_stocks: Vec<StockLineRow> = mock_stock_lines();
         let mut mock_invoices: Vec<InvoiceRow> = mock_invoices();
+        mock_invoices.sort_by(|a, b| a.id.cmp(&b.id));
         let mock_invoice_lines: Vec<InvoiceLineRow> = mock_invoice_lines();
         for name in mock_names {
             name_repository.insert_one(&name).await.unwrap();
@@ -73,7 +74,6 @@ mod graphql {
             }
         }"#;
 
-        mock_invoices.sort_by(|a, b| a.id.cmp(&b.id));
         let expected_json_invoice_nodes = mock_invoices
             .iter()
             .map(|invoice| {
