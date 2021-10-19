@@ -229,6 +229,11 @@ mod graphql {
                 + draft_invoice_line.number_of_packs
         );
 
+        assert_eq!(
+            stock_line_after_deletion.total_number_of_packs,
+            stock_line_before_deletion.total_number_of_packs
+        );
+
         // Success Confirmed
 
         let confirmed_invoice_line = &confirmed_invoice_lines[0];
