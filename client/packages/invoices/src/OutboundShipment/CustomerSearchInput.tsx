@@ -41,6 +41,7 @@ export const CustomerSearchInput: FC<CustomerSearchProps> = ({
       options={defaultOptionMapper(data?.data ?? [], 'name')}
       renderOption={getDefaultOptionRenderer('name')}
       width={width}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
     />
   );
 };

@@ -1,4 +1,5 @@
 import {
+  FieldValues,
   FormProvider,
   useForm,
   useFormContext,
@@ -10,7 +11,7 @@ export { useHostContext } from './useHostContext';
 export { useNotification } from './useNotification';
 export { useRemoteFn } from './useRemoteFn';
 export { useRemoteScript } from './useRemoteScript';
-export { FormProvider, useForm, useFormContext, UseFormRegister };
+export { FieldValues, FormProvider, useForm, useFormContext, UseFormRegister };
 
 export * from './useAppBarRect';
 export * from './useBoundingClientRect';

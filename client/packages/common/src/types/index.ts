@@ -81,3 +81,25 @@ export interface Invoice extends DomainObject {
   otherPartyName: string;
   lines: InvoiceLine[];
 }
+
+export type OutboundShipmentStatus =
+  | 'draft'
+  | 'allocated'
+  | 'picked'
+  | 'shipped'
+  | 'delivered';
+
+export type InboundShipmentStatus =
+  | 'new'
+  | 'allocated'
+  | 'picked'
+  | 'shipped'
+  | 'delivered';
+
+export type SupplierRequisitionStatus =
+  | 'draft'
+  | 'sent'
+  | 'in_progress'
+  | 'finalised';
+
+export type CustomerRequisitionStatus = 'new' | 'in_progress' | 'finalised';
