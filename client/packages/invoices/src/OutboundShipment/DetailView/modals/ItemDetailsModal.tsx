@@ -99,6 +99,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
+    onClose,
   });
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register, setValue, getValues } = methods;
