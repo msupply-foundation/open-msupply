@@ -22,10 +22,10 @@ export const Footer: React.FC = () => {
     <Box
       gap={2}
       sx={{
-        backgroundColor: 'background.toolbar',
+        backgroundColor: theme => theme.palette.background.menu,
         height: '32px',
       }}
-      marginLeft={3}
+      paddingLeft={3}
       display="flex"
       alignItems="center"
     >
