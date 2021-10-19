@@ -26,8 +26,6 @@ mod names;
 mod requisition;
 mod update_customer_invoice_line;
 mod update_supplier_invoice;
-mod update_supplier_invoice;
-mod update_supplier_invoice_line;
 mod update_supplier_invoice_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
