@@ -1,3 +1,4 @@
+use diesel::result::Error as DieselError;
 use thiserror::Error;
 
 #[derive(Clone, Error, Debug, PartialEq)]
@@ -15,8 +16,8 @@ pub enum RepositoryError {
     #[error("actix thread pool canceled")]
     ThreadPoolCanceled,
     /// Other DB related errors
-    #[error("DBError: {msg:?}")]
-    DBError { msg: String },
+    #[error("{msg:?} ({source_msg:?})")]
+    DBError { msg: String, source_msg: String },
 }
 
 #[cfg_attr(any(feature = "sqlite", feature = "postgres"), path = "diesel/mod.rs")]

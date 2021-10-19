@@ -23,7 +23,6 @@ mod storage_connection;
 mod store;
 mod user_account;
 
-use actix_rt::blocking::BlockingError;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use invoice::{CustomerInvoiceRepository, InvoiceRepository};
@@ -45,6 +44,7 @@ pub use storage_connection::{StorageConnection, StorageConnectionManager, Transa
 pub use store::StoreRepository;
 pub use user_account::UserAccountRepository;
 
+use actix_rt::blocking::BlockingError;
 use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool, PooledConnection},
@@ -92,7 +92,10 @@ impl From<DieselError> for RepositoryError {
             _ => "DIESEL_UNKNOWN".to_string(),
         };
 
-        RepositoryError::DBError { msg }
+        RepositoryError::DBError {
+            msg,
+            source_msg: err.to_string(),
+        }
     }
 }
 
@@ -108,8 +111,9 @@ impl From<BlockingError<RepositoryError>> for RepositoryError {
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<PooledConnection<ConnectionManager<DBBackendConnection>>, RepositoryError> {
-    pool.get().map_err(|_| RepositoryError::DBError {
+    pool.get().map_err(|err| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
+        source_msg: err.to_string(),
     })
 }
 

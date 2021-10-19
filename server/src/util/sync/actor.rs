@@ -1,6 +1,10 @@
 use crate::{
+    database::repository::RepositoryError,
     server::data::RepositoryRegistry,
-    util::sync::{SyncError, Synchroniser},
+    util::sync::{
+        translation::SyncImportError, CentralSyncError, SyncConnectionError, SyncError,
+        Synchroniser,
+    },
 };
 
 use log::info;
@@ -63,11 +67,70 @@ impl SyncReceiverActor {
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message");
             info!("Starting sync...");
-            if let Err(error) = synchroniser.sync(registry).await {
-                info!("Sync encountered an error!");
-                match error {
-                    SyncError::CentralSyncError { source } => info!("{:?}", source),
-                    SyncError::RemoteSyncError { source } => info!("{:?}", source),
+            if let Err(sync_error) = synchroniser.sync(registry).await {
+                info!("{}", sync_error);
+                match sync_error {
+                    SyncError::CentralSyncError { source } => {
+                        let central_sync_error = source;
+                        info!("{}", central_sync_error);
+                        match central_sync_error {
+                            CentralSyncError::PullCentralSyncRecordsError { source } => {
+                                let sync_connection_error = source;
+                                info!("{}", sync_connection_error);
+                                if let SyncConnectionError::ConnectError { source }
+                                | SyncConnectionError::TimedoutError { source }
+                                | SyncConnectionError::BadRequestError { source }
+                                | SyncConnectionError::UnauthorisedError { source }
+                                | SyncConnectionError::NotFoundError { source }
+                                | SyncConnectionError::MethodNotAllowedError { source }
+                                | SyncConnectionError::InternalServerError { source }
+                                | SyncConnectionError::UnknownError { source } =
+                                    sync_connection_error
+                                {
+                                    let reqwest_error = source;
+                                    info!("{}", reqwest_error);
+                                }
+                            }
+                            CentralSyncError::ImportCentralSyncRecordsError { source } => {
+                                let sync_import_error = source;
+                                info!("{}", sync_import_error);
+                                match sync_import_error {
+                                    SyncImportError::TranslationError { source } => {
+                                        let sync_translation_error = source;
+                                        info!("{}", sync_translation_error);
+                                        let serde_json_error = sync_translation_error.source;
+                                        info!("{}", serde_json_error);
+                                    }
+                                    SyncImportError::IntegrationError { source } => {
+                                        let repository_error = source;
+                                        info!("{}", repository_error);
+                                        if let RepositoryError::DBError { msg, source_msg } =
+                                            repository_error
+                                        {
+                                            info!("{} ({})", msg, source_msg)
+                                        }
+                                    }
+                                }
+                            }
+                            CentralSyncError::UpdateCentralSyncBufferRecordsError { source }
+                            | CentralSyncError::GetCentralSyncCursorRecordError { source }
+                            | CentralSyncError::GetCentralSyncBufferRecordsError { source }
+                            | CentralSyncError::RemoveCentralSyncBufferRecordsError { source }
+                            | CentralSyncError::DBConnectionError { source } => {
+                                let repository_error = source;
+                                info!("{}", repository_error);
+                                if let RepositoryError::DBError { msg, source_msg } =
+                                    repository_error
+                                {
+                                    info!("{} ({})", msg, source_msg)
+                                }
+                            }
+                        }
+                    }
+                    SyncError::RemoteSyncError { source } => {
+                        let remote_sync_error = source;
+                        info!("{}", remote_sync_error);
+                    }
                 }
             } else {
                 info!("Finished sync!");
