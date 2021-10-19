@@ -1,18 +1,18 @@
 import React, { ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
 import { DomainObject } from '../../../../types';
-import { useTranslation } from '../../../../intl';
+import { useTranslation, useFormatDate } from '../../../../intl';
 
 export * from './DataRow';
-
-const capitalize = (str: string) =>
-  str.slice(0, 1).toUpperCase() + str.slice(1, str.length).toLowerCase();
 
 export const BasicCell = <T extends DomainObject>({
   column,
   rowData,
 }: CellProps<T>): ReactElement => {
-  return <>{capitalize(String(column.accessor(rowData)))}</>;
+  const t = useTranslation();
+  const d = useFormatDate();
+
+  return <>{column.formatter(column.accessor(rowData), { t, d })}</>;
 };
 
 export const BasicHeader = <T extends DomainObject>({
