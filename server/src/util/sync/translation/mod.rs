@@ -27,6 +27,7 @@ use self::{
     name::LegacyNameRow, store::LegacyStoreRow,
 };
 
+use log::{debug, info};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -135,11 +136,19 @@ pub async fn import_sync_records(
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),
     };
+
+    info!(
+        "Translating {} central sync buffer records...",
+        records.len()
+    );
     for record in records {
         do_translation(&record, &mut integration_records)?;
     }
+    info!("Succesfully translated central sync buffer records",);
 
+    info!("Storing integration records...",);
     store_integration_records(registry, &integration_records).await?;
+    info!("Successfully stored integration records",);
 
     Ok(())
 }
@@ -151,6 +160,10 @@ async fn store_integration_records(
     let con = registry.get::<StorageConnectionManager>().connection()?;
     let result = con
         .transaction(|con| async move {
+            info!(
+                "Upserting {} integration records...",
+                &integration_records.upserts.len()
+            );
             for record in &integration_records.upserts {
                 match &record {
                     IntegrationUpsertRecord::Name(record) => {
@@ -173,6 +186,8 @@ async fn store_integration_records(
                     }
                 }
             }
+            info!("Successfully upserted integration records",);
+
             Ok(())
         })
         .await?;
