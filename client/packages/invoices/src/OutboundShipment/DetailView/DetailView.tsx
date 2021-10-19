@@ -33,6 +33,7 @@ import {
   XCircleIcon,
   SaveIcon,
   ArrowRightIcon,
+  ToggleButton,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -198,13 +199,28 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
+
         <Box
+          sx={{
+            backgroundColor: theme => theme.palette.background.menu,
+          }}
+          gap={2}
           display="flex"
-          alignItems="flex-end"
-          height={40}
-          marginRight={2}
-          marginLeft={3}
+          flexDirection="row"
+          alignItems="center"
+          height={64}
+          paddingRight={2}
+          paddingLeft={3}
         >
+          <ToggleButton
+            disabled={!isInvoiceSaveable(draft)}
+            value={!!draft.hold}
+            selected={!!draft.hold}
+            onClick={(_, value) => {
+              draft.update?.('hold', !value);
+            }}
+            labelKey="label.hold"
+          />
           <StatusCrumbs
             statuses={outboundStatuses}
             currentStatus={draft.status}
@@ -215,6 +231,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               Icon={<XCircleIcon />}
               labelKey="button.cancel"
               color="secondary"
+              sx={{ fontSize: '12px' }}
               onClick={() => navigate(-1)}
             />
             {isInvoiceSaveable(draft) && (
@@ -224,14 +241,17 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
                   labelKey="button.save"
                   variant="contained"
                   color="secondary"
+                  sx={{ fontSize: '12px' }}
                   onClick={() => {
                     success('Saved invoice! 🥳 ')();
                     save(draft);
                   }}
                 />
                 <ButtonWithIcon
+                  disabled={draft.hold}
                   Icon={<ArrowRightIcon />}
                   labelKey="button.save-and-confirm-status"
+                  sx={{ fontSize: '12px' }}
                   labelProps={{
                     status: t(
                       getNextOutboundStatusButtonTranslation(draft.status)
