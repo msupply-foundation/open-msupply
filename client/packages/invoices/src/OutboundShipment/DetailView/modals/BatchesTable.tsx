@@ -1,12 +1,10 @@
-import React, { ChangeEventHandler } from 'react';
+import React from 'react';
 import {
   Checkbox,
   Divider,
   FieldValues,
   InfoIcon,
-  InvoiceLine,
   Item,
-  StockLine,
   Table,
   TableBody,
   TableCell,
@@ -21,11 +19,10 @@ import {
   NumericTextInput,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
-import { getInvoiceLine } from './ItemDetailsModal';
 
 export interface BatchesTableProps {
   item: Item | null;
-  onChange: (invoiceLine: InvoiceLine) => void;
+  onChange: (key: string, value: number) => void;
   register: UseFormRegister<FieldValues>;
   rows: BatchRow[];
 }
@@ -33,20 +30,20 @@ export interface BatchesTableProps {
 type BatchRowProps = {
   batch: BatchRow;
   label: string;
-  onChangeLine: (line: StockLine, quantity: number) => void;
+  onChange: (key: string, value: number) => void;
 };
-const BatchRow: React.FC<BatchRowProps> = ({ batch, label, onChangeLine }) => {
+const BatchRow: React.FC<BatchRowProps> = ({ batch, label, onChange }) => {
   const { register } = useFormContext();
   const t = useTranslation();
   const d = useFormatDate();
-
-  const onChange: ChangeEventHandler<HTMLInputElement> = event =>
-    onChangeLine(batch, Number(event.target.value));
 
   const stockLineInputProps = register(batch.id, {
     min: { value: 1, message: t('error.greater-than-zero-required') },
     pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
   });
+
+  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
+    onChange(batch.id, Number(event.target.value));
 
   // TODO format currency correctly
   return (
@@ -56,8 +53,8 @@ const BatchRow: React.FC<BatchRowProps> = ({ batch, label, onChangeLine }) => {
         <NumericTextInput
           {...stockLineInputProps}
           sx={{ height: '32px' }}
-          onChange={onChange}
           disabled={batch.availableNumberOfPacks === 0}
+          onChange={onChangeValue}
         />
       </BasicCell>
       <BasicCell>
@@ -120,22 +117,8 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
     pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
   });
 
-  const changeLine = (line: StockLine, quantity: number) =>
-    onChange(getInvoiceLine('', item, line, quantity));
-  const changePlaceholderQuantity: ChangeEventHandler<HTMLInputElement> =
-    event => {
-      onChange(
-        getInvoiceLine(
-          'placeholder',
-          item,
-          {
-            id: 'placeholder',
-            expiryDate: '',
-          },
-          Number(event.target.value)
-        )
-      );
-    };
+  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
+    onChange('placeholder', Number(event.target.value));
 
   return (
     <>
@@ -163,7 +146,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                 batch={batch}
                 key={batch.id}
                 label={t('label.line', { number: index + 1 })}
-                onChangeLine={changeLine}
+                onChange={onChange}
               />
             ))}
             <TableRow>
@@ -173,7 +156,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <BasicCell sx={{ paddingTop: '3px' }}>
                 <NumericTextInput
                   {...placeholderInputProps}
-                  onChange={changePlaceholderQuantity}
+                  onChange={onChangeValue}
                 />
               </BasicCell>
             </TableRow>

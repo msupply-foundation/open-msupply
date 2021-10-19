@@ -57,8 +57,6 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       ?.filter(item => item.isVisible)
       .map(item => ({ label: item.name, ...item })) || [];
 
-  register('itemId', { required: true });
-
   return (
     <>
       <ModalRow>

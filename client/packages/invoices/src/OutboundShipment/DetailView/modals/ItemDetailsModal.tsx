@@ -96,20 +96,17 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const [quantity, setQuantity] = React.useState(0);
   const [isAllocated, setIsAllocated] = React.useState(false);
-  const [lines, setLines] = React.useState<InvoiceLine[]>(
-    invoiceLine ? [invoiceLine] : []
-  );
+
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
   });
   const methods = useForm({ mode: 'onBlur' });
-  const { reset, register, setValue } = methods;
+  const { reset, register, setValue, getValues } = methods;
 
   const onChangeItem = (
     _event: SyntheticEvent<Element, Event>,
     value: Item | null
   ) => {
-    if (value?.id && value?.id !== selectedItem?.id) setLines([]);
     setSelectedItem(value);
     setBatchRows(
       (selectedItem?.availableBatches.nodes || [])
@@ -124,14 +121,21 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     reset();
     setBatchRows([]);
     setQuantity(0);
-    setValue('quantity', 0);
+    setSelectedItem(null);
+    setValue('quantity', '');
   };
   const onCancel = () => {
     onClose();
     onReset();
   };
   const upsert = () => {
-    lines.forEach(upsertInvoiceLine);
+    if (!selectedItem) return;
+
+    const values = getValues();
+    const invoiceLines = batchRows.map(batch =>
+      getInvoiceLine('', selectedItem, batch, Number(values[batch.id] || 0))
+    );
+    invoiceLines.filter(line => line.quantity > 0).forEach(upsertInvoiceLine);
     onReset();
   };
   const upsertAndClose = () => {
@@ -140,12 +144,47 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     onReset();
   };
 
-  const onChangeInvoiceLine = (invoiceLine: InvoiceLine) => {
-    const newLines = lines.filter(
-      line => line.stockLineId !== invoiceLine.stockLineId
+  const checkAllocatedQuantities = () => {
+    const values = getValues();
+    batchRows.map(batch => console.info(Number(values[batch.id] || 0)));
+
+    const allocatedQuantity = batchRows.reduce(
+      (total, batch) => (total += Number(values[batch.id] || 0)),
+      0
     );
-    newLines.push(invoiceLine);
-    setLines(newLines);
+    setIsAllocated(allocatedQuantity >= quantity && allocatedQuantity > 0);
+  };
+
+  const allocateQuantities = () => {
+    // if invalid quantity entered, don't allocate
+    if (quantity < 1 || Number.isNaN(quantity)) {
+      return;
+    }
+    // if the selected item has no batch rows, allocate all to the placeholder
+    if (batchRows.length === 0) {
+      setValue('placeholder', quantity);
+      return;
+    }
+
+    let toAllocate = 0;
+    toAllocate += quantity;
+
+    batchRows.forEach(batch => {
+      const allocatedQuantity = Math.min(
+        toAllocate,
+        batch.availableNumberOfPacks * batch.packSize
+      );
+      toAllocate -= allocatedQuantity;
+      setValue(batch.id, allocatedQuantity);
+    });
+    // allocate remainder to placeholder
+    setValue('placeholder', toAllocate);
+    checkAllocatedQuantities();
+  };
+
+  const onChangeRowQuantity = (key: string, value: number) => {
+    setValue(key, value);
+    checkAllocatedQuantities();
   };
 
   React.useEffect(() => {
@@ -153,48 +192,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     else hideDialog();
   }, [isOpen]);
 
-  React.useEffect(() => {
-    const allocatedQuantity = lines.reduce(
-      (total, line) => (total += line.quantity),
-      0
-    );
-    setIsAllocated(allocatedQuantity >= quantity && allocatedQuantity > 0);
-  }, [lines, quantity]);
+  React.useEffect(checkAllocatedQuantities, [batchRows, quantity]);
 
-  React.useEffect(() => {
-    if (quantity < 1 || batchRows.length === 0) {
-      setValue('placeholder', quantity);
-      if (quantity > 0 && selectedItem)
-        onChangeInvoiceLine(
-          getInvoiceLine(
-            '',
-            selectedItem,
-            {
-              id: 'placeholder',
-              expiryDate: '',
-            },
-            quantity
-          )
-        );
-      return;
-    }
-
-    let toAllocate = quantity;
-
-    batchRows.forEach(batch => {
-      batch.quantity = Math.min(
-        toAllocate,
-        batch.availableNumberOfPacks * batch.packSize
-      );
-      if (batch.quantity > 0 && selectedItem)
-        onChangeInvoiceLine(
-          getInvoiceLine('', selectedItem, batch, batch.quantity)
-        );
-      toAllocate -= batch.quantity;
-      setValue(batch.id, batch.quantity);
-    });
-    setValue('placeholder', toAllocate);
-  }, [quantity, selectedItem]);
+  React.useEffect(allocateQuantities, [quantity, selectedItem]);
 
   return (
     <Modal
@@ -225,7 +225,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             />
             <BatchesTable
               item={selectedItem}
-              onChange={onChangeInvoiceLine}
+              onChange={onChangeRowQuantity}
               register={register}
               rows={batchRows}
             />
