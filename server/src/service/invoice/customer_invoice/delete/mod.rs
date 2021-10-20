@@ -14,11 +14,21 @@ pub fn delete_customer_invoice(
     id: String,
 ) -> Result<String, DeleteCustomerInvoiceError> {
     let connection = connection_manager.connection()?;
-    connection.transaction_sync(|connection| {
-        validate(&id, &connection)?;
-        InvoiceRepository::new(&connection).delete(&id)?;
-        Ok(())
-    })?;
+
+    connection
+        .transaction_sync(|connection| {
+            validate(&id, &connection)?;
+            InvoiceRepository::new(&connection).delete(&id)?;
+
+            Ok(())
+        })
+        .map_err(
+            |error: TransactionError<DeleteCustomerInvoiceError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
+
     Ok(id)
 }
 
@@ -34,16 +44,5 @@ pub enum DeleteCustomerInvoiceError {
 impl From<RepositoryError> for DeleteCustomerInvoiceError {
     fn from(error: RepositoryError) -> Self {
         DeleteCustomerInvoiceError::DatabaseError(error)
-    }
-}
-
-impl From<TransactionError<DeleteCustomerInvoiceError>> for DeleteCustomerInvoiceError {
-    fn from(error: TransactionError<DeleteCustomerInvoiceError>) -> Self {
-        match error {
-            TransactionError::Transaction { msg } => {
-                DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError { msg })
-            }
-            TransactionError::Inner(e) => e,
-        }
     }
 }

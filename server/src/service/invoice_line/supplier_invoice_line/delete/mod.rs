@@ -1,6 +1,7 @@
 use crate::{
     database::repository::{
         InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+        TransactionError,
     },
     domain::supplier_invoice::DeleteSupplierInvoiceLine,
     service::WithDBError,
@@ -15,17 +16,25 @@ pub fn delete_supplier_invoice_line(
     input: DeleteSupplierInvoiceLine,
 ) -> Result<String, DeleteSupplierInvoiceLineError> {
     let connection = connection_manager.connection()?;
-    // TODO do inside transaction
-    let line = validate(&input, &connection)?;
+    let line = connection
+        .transaction_sync(|connection| {
+            let line = validate(&input, &connection)?;
 
-    let delete_batch_id_option = line.stock_line_id.clone();
+            let delete_batch_id_option = line.stock_line_id.clone();
 
-    InvoiceLineRepository::new(&connection).delete(&line.id)?;
+            InvoiceLineRepository::new(&connection).delete(&line.id)?;
 
-    if let Some(id) = delete_batch_id_option {
-        StockLineRepository::new(&connection).delete(&id)?;
-    }
-
+            if let Some(id) = delete_batch_id_option {
+                StockLineRepository::new(&connection).delete(&id)?;
+            }
+            Ok(line)
+        })
+        .map_err(
+            |error: TransactionError<DeleteSupplierInvoiceLineError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
     Ok(line.id)
 }
 pub enum DeleteSupplierInvoiceLineError {
