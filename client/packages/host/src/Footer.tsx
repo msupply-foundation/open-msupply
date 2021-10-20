@@ -12,23 +12,10 @@ export const Footer: React.FC = () => {
   const { user, store } = useHostContext();
   const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'midGrey', height: '16px', width: '16px' };
-  const textStyles = {
-    color: 'midGrey',
-    fontSize: '12px',
-    padding: '0 0 0 8px',
-  };
+  const textStyles = { color: 'midGrey', fontSize: '12px', paddingLeft: '8px' };
 
   return (
-    <Box
-      gap={2}
-      sx={{
-        backgroundColor: theme => theme.palette.background.menu,
-        height: '32px',
-      }}
-      paddingLeft={3}
-      display="flex"
-      alignItems="center"
-    >
+    <Box gap={2} display="flex" flex={1} alignItems="center">
       <PaddedCell>
         <HomeIcon sx={iconStyles} />
         <Typography sx={textStyles}>{store.name}</Typography>
