@@ -9,14 +9,14 @@ use crate::{
             error::DatabaseError,
             ForeignKey, ForeignKeyError,
         },
-        types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
+        types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode, RecordNotFound},
     },
     service::{invoice::UpdateCustomerInvoiceError, SingleRecordError},
 };
 
 use super::{
     CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,
-    FinalisedInvoiceIsNotEditableError, InvoiceNotFoundError, OtherPartyCannotBeThisStoreError,
+    FinalisedInvoiceIsNotEditableError, OtherPartyCannotBeThisStoreError,
     OtherPartyNotACustomerError,
 };
 
@@ -70,7 +70,7 @@ pub enum UpdateCustomerInvoiceErrorInterface {
     CannotChangeInvoiceBackToDraft(CannotChangeStatusBackToDraftError),
     CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
     InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError),
-    InvoiceDoesNotExists(InvoiceNotFoundError),
+    InvoiceDoesNotExists(RecordNotFound),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
     /// Other party does not exist
     ForeignKeyError(ForeignKeyError),
@@ -91,7 +91,7 @@ impl From<UpdateCustomerInvoiceError> for UpdateCustomerInvoiceResponse {
                 OutError::DatabaseError(DatabaseError(error))
             }
             UpdateCustomerInvoiceError::InvoiceDoesNotExists => {
-                OutError::InvoiceDoesNotExists(InvoiceNotFoundError {})
+                OutError::InvoiceDoesNotExists(RecordNotFound {})
             }
             UpdateCustomerInvoiceError::InvoiceIsFinalised => {
                 OutError::InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError {})

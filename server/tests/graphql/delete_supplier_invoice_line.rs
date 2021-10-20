@@ -102,7 +102,7 @@ mod graphql {
             invoice_id: draft_supplier_invoice.id.clone(),
         };
 
-        // Test RecordDoesNotExist Item
+        // Test RecordNotFound Item
 
         let mut variables = base_variables.clone();
         variables.id = "invalid".to_string();
@@ -112,8 +112,8 @@ mod graphql {
 
         assert_error!(
             response,
-            RecordDoesNotExist(delete::RecordDoesNotExist {
-                description: "Record does not exist".to_string(),
+            RecordNotFound(delete::RecordNotFound {
+                description: "Record not found".to_string(),
             })
         );
 

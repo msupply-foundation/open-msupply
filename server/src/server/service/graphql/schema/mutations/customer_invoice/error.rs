@@ -41,15 +41,6 @@ impl InvoiceDoesNotBelongToCurrentStoreError {
     }
 }
 
-pub struct InvoiceNotFoundError();
-
-#[Object]
-impl InvoiceNotFoundError {
-    pub async fn description(&self) -> &'static str {
-        "Invoice not found."
-    }
-}
-
 pub struct OtherPartyCannotBeThisStoreError;
 
 #[Object]

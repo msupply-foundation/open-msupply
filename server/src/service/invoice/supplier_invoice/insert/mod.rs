@@ -28,7 +28,9 @@ pub fn insert_supplier_invoice(
         })
         .map_err(
             |error: TransactionError<InsertSupplierInvoiceError>| match error {
-                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Transaction { msg } => {
+                    RepositoryError::as_db_error(&msg, "").into()
+                }
                 TransactionError::Inner(error) => error,
             },
         )?;

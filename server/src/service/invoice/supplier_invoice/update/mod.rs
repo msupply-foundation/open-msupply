@@ -41,7 +41,9 @@ pub fn update_supplier_invoice(
         })
         .map_err(
             |error: TransactionError<UpdateSupplierInvoiceError>| match error {
-                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Transaction { msg } => {
+                    RepositoryError::as_db_error(&msg, "").into()
+                }
                 TransactionError::Inner(error) => error,
             },
         )?;

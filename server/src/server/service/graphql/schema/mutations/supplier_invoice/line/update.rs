@@ -6,9 +6,12 @@ use crate::{
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
+            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
         },
-        types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
+        types::{
+            DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField,
+            RecordNotFound,
+        },
     },
     service::{invoice_line::UpdateSupplierInvoiceLineError, SingleRecordError},
 };
@@ -40,7 +43,7 @@ pub enum UpdateSupplierInvoiceLineResponse {
 pub enum UpdateSupplierInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
@@ -90,7 +93,7 @@ impl From<UpdateSupplierInvoiceLineError> for UpdateSupplierInvoiceLineResponse 
         use UpdateSupplierInvoiceLineErrorInterface as OutError;
         let error = match error {
             UpdateSupplierInvoiceLineError::LineDoesNotExist => {
-                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+                OutError::RecordNotFound(RecordNotFound {})
             }
             UpdateSupplierInvoiceLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))

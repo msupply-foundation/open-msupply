@@ -2,9 +2,9 @@ use crate::{
     server::service::graphql::schema::{
         mutations::{
             CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
-            InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice, RecordDoesNotExist,
+            InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice,
         },
-        types::{DatabaseError, ErrorWrapper},
+        types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
     service::invoice::DeleteCustomerInvoiceError,
 };
@@ -20,7 +20,7 @@ pub enum DeleteCustomerInvoiceResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteCustomerInvoiceErrorInterface {
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotACustomerInvoice(NotACustomerInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
@@ -42,7 +42,7 @@ impl From<DeleteCustomerInvoiceError> for DeleteCustomerInvoiceResponse {
         use DeleteCustomerInvoiceErrorInterface as OutError;
         let error = match error {
             DeleteCustomerInvoiceError::InvoiceDoesNotExist => {
-                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+                OutError::RecordNotFound(RecordNotFound {})
             }
             DeleteCustomerInvoiceError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})

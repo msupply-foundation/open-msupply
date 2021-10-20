@@ -31,7 +31,9 @@ pub fn delete_supplier_invoice_line(
         })
         .map_err(
             |error: TransactionError<DeleteSupplierInvoiceLineError>| match error {
-                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Transaction { msg } => {
+                    RepositoryError::as_db_error(&msg, "").into()
+                }
                 TransactionError::Inner(error) => error,
             },
         )?;

@@ -83,7 +83,7 @@ fragment UpdateSupplierInvoiceErrorInterface on UpdateSupplierInvoiceErrorInterf
   ...DatabaseError
   ...ForeignKeyError
   ...OtherPartyNotASupplier
-  ...RecordDoesNotExist
+  ...RecordNotFound
   ...CannotEditFinalisedInvoice
   ...NotASupplierInvoice
   ...InvoiceDoesNotBelongToCurrentStore
@@ -113,7 +113,7 @@ fragment DeleteSupplierInvoiceError on DeleteSupplierInvoiceError {
 fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterface {
   __typename
   ...DatabaseError
-  ...RecordDoesNotExist
+  ...RecordNotFound
   ...CannotEditFinalisedInvoice
   ...NotASupplierInvoice
   ...InvoiceDoesNotBelongToCurrentStore
@@ -227,7 +227,7 @@ fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErr
   ...InvoiceDoesNotBelongToCurrentStore
   ...NotASupplierInvoice
   ...RangeError
-  ...RecordDoesNotExist
+  ...RecordNotFound
   ...BatchIsReserved
   ...InvoiceLineBelongsToAnotherInvoice
 }
@@ -278,7 +278,7 @@ fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErr
   ...NotACustomerInvoice
   ...NotEnoughStockForReduction
   ...RangeError
-  ...RecordDoesNotExist
+  ...RecordNotFound
   ...StockLineAlreadyExistsInInvoice
   ...StockLineDoesNotBelongToCurrentStore
   ...ItemDoesNotMatchStockLine
@@ -361,7 +361,7 @@ fragment DeleteSupplierInvoiceLineErrorInterface on DeleteSupplierInvoiceLineErr
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
   ...NotASupplierInvoice
-  ...RecordDoesNotExist
+  ...RecordNotFound
   ...BatchIsReserved
   ...InvoiceLineBelongsToAnotherInvoice
 }
@@ -393,7 +393,7 @@ fragment DeleteCustomerInvoiceLineErrorInterface on DeleteCustomerInvoiceLineErr
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
   ...NotACustomerInvoice
-  ...RecordDoesNotExist
+  ...RecordNotFound
   ...InvoiceLineBelongsToAnotherInvoice
 }
 
@@ -521,7 +521,7 @@ fragment RecordAlreadyExist on RecordAlreadyExist {
   description
 }
 
-fragment RecordDoesNotExist on RecordDoesNotExist {
+fragment RecordNotFound on RecordNotFound {
   description
 }
 
@@ -540,11 +540,6 @@ fragment OtherPartyNotASupplier on OtherPartyNotASupplier {
   otherParty {
     ...NameNode
   }
-}
-
-fragment RecordNotFound on RecordNotFound {
-  id
-  description
 }
 
 fragment NodeError on NodeError {

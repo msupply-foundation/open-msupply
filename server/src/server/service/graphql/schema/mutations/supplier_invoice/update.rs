@@ -9,9 +9,11 @@ use crate::{
         mutations::{
             CannotChangeInvoiceBackToDraft, CannotEditFinalisedInvoice, ForeignKey,
             ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
-            RecordDoesNotExist,
         },
-        types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
+        types::{
+            DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
+            RecordNotFound,
+        },
     },
     service::{invoice::UpdateSupplierInvoiceError, SingleRecordError},
 };
@@ -39,7 +41,7 @@ pub enum UpdateSupplierInvoiceResponse {
 pub enum UpdateSupplierInvoiceErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotASupplierInvoice(NotASupplierInvoice),
@@ -80,7 +82,7 @@ impl From<UpdateSupplierInvoiceError> for UpdateSupplierInvoiceResponse {
         use UpdateSupplierInvoiceErrorInterface as OutError;
         let error = match error {
             UpdateSupplierInvoiceError::InvoiceDoesNotExist => {
-                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+                OutError::RecordNotFound(RecordNotFound {})
             }
             UpdateSupplierInvoiceError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))

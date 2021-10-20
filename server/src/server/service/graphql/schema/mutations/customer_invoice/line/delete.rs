@@ -6,9 +6,9 @@ use crate::{
         mutations::{
             CannotEditFinalisedInvoice, DeleteResponse, ForeignKey, ForeignKeyError,
             InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
-            NotACustomerInvoice, RecordDoesNotExist,
+            NotACustomerInvoice,
         },
-        types::{DatabaseError, ErrorWrapper},
+        types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
     service::invoice_line::DeleteCustomerInvoiceLineError,
 };
@@ -29,7 +29,7 @@ pub enum DeleteCustomerInvoiceLineResponse {
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteCustomerInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotACustomerInvoice(NotACustomerInvoice),
@@ -60,7 +60,7 @@ impl From<DeleteCustomerInvoiceLineError> for DeleteCustomerInvoiceLineResponse 
         use DeleteCustomerInvoiceLineErrorInterface as OutError;
         let error = match error {
             DeleteCustomerInvoiceLineError::LineDoesNotExist => {
-                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+                OutError::RecordNotFound(RecordNotFound {})
             }
             DeleteCustomerInvoiceLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))

@@ -122,7 +122,7 @@ mod graphql {
             batch_option: Some("some batch name".to_string()),
         };
 
-        // Test RecordDoesNotExist Item
+        // Test RecordNotFound Item
 
         let mut variables = base_variables.clone();
         variables.id = "invalid".to_string();
@@ -132,8 +132,8 @@ mod graphql {
 
         assert_error!(
             response,
-            RecordDoesNotExist(update::RecordDoesNotExist {
-                description: "Record does not exist".to_string(),
+            RecordNotFound(update::RecordNotFound {
+                description: "Record not found".to_string(),
             })
         );
 
