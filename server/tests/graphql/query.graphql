@@ -264,6 +264,37 @@ fragment DeleteSupplierInvoiceLineErrorInterface on DeleteSupplierInvoiceLineErr
   ...InvoiceLineBelongsToAnotherInvoice
 }
 
+# DELETE CUSTOMER INVOICE LINE
+
+mutation deleteCustomerInvoiceLineFull($id: String!, $invoiceId_dcil: String!) {
+  deleteCustomerInvoiceLine(input: { id: $id, invoiceId: $invoiceId_dcil }) {
+    ...DeleteCustomerInvoiceLineResponse
+  }
+}
+
+fragment DeleteCustomerInvoiceLineResponse on DeleteCustomerInvoiceLineResponse {
+  __typename
+  ...DeleteCustomerInvoiceLineError
+  ...DeleteResponse
+}
+
+fragment DeleteCustomerInvoiceLineError on DeleteCustomerInvoiceLineError {
+  error {
+    ...DeleteCustomerInvoiceLineErrorInterface
+  }
+}
+
+fragment DeleteCustomerInvoiceLineErrorInterface on DeleteCustomerInvoiceLineErrorInterface {
+  __typename
+  ...CannotEditFinalisedInvoice
+  ...DatabaseError
+  ...ForeignKeyError
+  ...InvoiceDoesNotBelongToCurrentStore
+  ...NotACustomerInvoice
+  ...RecordDoesNotExist
+  ...InvoiceLineBelongsToAnotherInvoice
+}
+
 # INVOICE
 
 query invoiceFull($id: String!) {
@@ -451,6 +482,10 @@ fragment CannotEditFinalisedInvoice on CannotEditFinalisedInvoice {
 }
 
 fragment NotASupplierInvoice on NotASupplierInvoice {
+  description
+}
+
+fragment NotACustomerInvoice on NotACustomerInvoice {
   description
 }
 
