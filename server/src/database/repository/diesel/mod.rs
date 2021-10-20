@@ -23,6 +23,7 @@ mod storage_connection;
 mod store;
 mod user_account;
 
+use actix_rt::blocking::BlockingError;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use invoice::{CustomerInvoiceRepository, InvoiceRepository};
@@ -44,7 +45,6 @@ pub use storage_connection::{StorageConnection, StorageConnectionManager, Transa
 pub use store::StoreRepository;
 pub use user_account::UserAccountRepository;
 
-use actix_rt::blocking::BlockingError;
 use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool, PooledConnection},
@@ -67,34 +67,44 @@ pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>
 
 impl From<DieselError> for RepositoryError {
     fn from(err: DieselError) -> Self {
-        let msg = match err {
-            DieselError::InvalidCString(_) => "DIESEL_INVALID_C_STRING".to_string(),
-            DieselError::DatabaseError(err, _) => {
-                let err_str = match err {
-                    DieselDatabaseErrorKind::UniqueViolation => {
-                        return RepositoryError::UniqueViolation
-                    }
-                    DieselDatabaseErrorKind::ForeignKeyViolation => {
-                        return RepositoryError::ForeignKeyViolation
-                    }
-                    DieselDatabaseErrorKind::UnableToSendCommand => "UNABLE_TO_SEND_COMMAND",
-                    DieselDatabaseErrorKind::SerializationFailure => "SERIALIZATION_FAILURE",
-                    _ => "UNKNOWN",
-                };
-                format!("DIESEL_DATABASE_ERROR_{}", err_str)
+        use RepositoryError as Error;
+        match err {
+            DieselError::InvalidCString(extra) => {
+                Error::as_db_error("DIESEL_INVALID_C_STRING", extra)
             }
-            DieselError::NotFound => return RepositoryError::NotFound,
-            DieselError::QueryBuilderError(_) => "DIESEL_QUERY_BUILDER_ERROR".to_string(),
-            DieselError::DeserializationError(_) => "DIESEL_DESERIALIZATION_ERROR".to_string(),
-            DieselError::SerializationError(_) => "DIESEL_SERIALIZATION_ERROR".to_string(),
-            DieselError::RollbackTransaction => "DIESEL_ROLLBACK_TRANSACTION".to_string(),
-            DieselError::AlreadyInTransaction => "DIESEL_ALREADY_IN_TRANSACTION".to_string(),
-            _ => "DIESEL_UNKNOWN".to_string(),
-        };
-
-        RepositoryError::DBError {
-            msg,
-            source_msg: err.to_string(),
+            DieselError::DatabaseError(err, extra) => {
+                let extra = format!("{:?}", extra);
+                match err {
+                    DieselDatabaseErrorKind::UniqueViolation => Error::UniqueViolation(extra),
+                    DieselDatabaseErrorKind::ForeignKeyViolation => {
+                        Error::ForeignKeyViolation(extra)
+                    }
+                    DieselDatabaseErrorKind::UnableToSendCommand => {
+                        Error::as_db_error("UNABLE_TO_SEND_COMMAND", extra)
+                    }
+                    DieselDatabaseErrorKind::SerializationFailure => {
+                        Error::as_db_error("SERIALIZATION_FAILURE", extra)
+                    }
+                    DieselDatabaseErrorKind::__Unknown => Error::as_db_error("UNKNOWN", extra),
+                }
+            }
+            DieselError::NotFound => RepositoryError::NotFound,
+            DieselError::QueryBuilderError(extra) => {
+                Error::as_db_error("DIESEL_QUERY_BUILDER_ERROR", extra)
+            }
+            DieselError::DeserializationError(extra) => {
+                Error::as_db_error("DIESEL_DESERIALIZATION_ERROR", extra)
+            }
+            DieselError::SerializationError(extra) => {
+                Error::as_db_error("DIESEL_SERIALIZATION_ERROR", extra)
+            }
+            DieselError::RollbackTransaction => {
+                Error::as_db_error("DIESEL_ROLLBACK_TRANSACTION", "")
+            }
+            DieselError::AlreadyInTransaction => {
+                Error::as_db_error("DIESEL_ALREADY_IN_TRANSACTION", "")
+            }
+            DieselError::__Nonexhaustive => Error::as_db_error("DIESEL_UNKNOWN", ""),
         }
     }
 }
@@ -111,9 +121,9 @@ impl From<BlockingError<RepositoryError>> for RepositoryError {
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<PooledConnection<ConnectionManager<DBBackendConnection>>, RepositoryError> {
-    pool.get().map_err(|err| RepositoryError::DBError {
+    pool.get().map_err(|error| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
-        source_msg: err.to_string(),
+        extra: format!("{:?}", error),
     })
 }
 

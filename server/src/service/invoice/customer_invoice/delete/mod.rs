@@ -43,7 +43,7 @@ impl From<TransactionError<DeleteCustomerInvoiceError>> for DeleteCustomerInvoic
             TransactionError::Transaction { msg } => {
                 DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
                     msg: msg.clone(),
-                    source_msg: msg.clone(),
+                    extra: "".to_string(),
                 })
             }
             TransactionError::Inner(e) => e,
