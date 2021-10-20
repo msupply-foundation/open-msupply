@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import {
+  AppFooterPortal,
   Box,
   AppThemeProvider,
   Typography,
@@ -20,6 +21,7 @@ import {
   KBarResults,
   useDrawer,
   styled,
+  AppFooter,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
@@ -259,7 +261,8 @@ const Host: FC = () => {
                             </Routes>
                           </React.Suspense>
                         </Box>
-                        <Footer />
+                        <AppFooter />
+                        <AppFooterPortal SessionDetails={<Footer />} />
                       </Box>
                       <DetailPanel />
                     </Box>

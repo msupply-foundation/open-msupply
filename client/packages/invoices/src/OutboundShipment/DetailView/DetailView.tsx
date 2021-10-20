@@ -1,7 +1,6 @@
 import React, { FC, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams } from 'react-router';
 import {
-  StatusCrumbs,
   AppBarButtonsPortal,
   BookIcon,
   Box,
@@ -30,10 +29,6 @@ import {
   useTranslation,
   InvoiceLine,
   ButtonWithIcon,
-  XCircleIcon,
-  SaveIcon,
-  ArrowRightIcon,
-  ToggleButton,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -42,12 +37,8 @@ import { ItemDetailsModal } from './modals/ItemDetailsModal';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ActionType, ItemRow } from './types';
 import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
-import {
-  getNextOutboundStatusButtonTranslation,
-  getStatusTranslation,
-  isInvoiceSaveable,
-  outboundStatuses,
-} from '../utils';
+import { getStatusTranslation } from '../utils';
+import { OutboundDetailFooter } from './OutboundDetailFooter';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -163,8 +154,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     [sortBy]
   );
 
-  const navigate = useNavigate();
-
   return draft ? (
     <TabContext value={String(currentTab)}>
       <AppBarButtonsPortal>
@@ -208,76 +197,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
             <span>Transport details coming soon..</span>
           </Box>
         </TabPanel>
-
-        <Box
-          sx={{
-            backgroundColor: theme => theme.palette.background.menu,
-          }}
-          gap={2}
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          height={64}
-          paddingRight={2}
-          paddingLeft={3}
-        >
-          <ToggleButton
-            disabled={!isInvoiceSaveable(draft)}
-            value={!!draft.hold}
-            selected={!!draft.hold}
-            onClick={(_, value) => {
-              draft.update?.('hold', !value);
-            }}
-            labelKey="label.hold"
-          />
-          <StatusCrumbs
-            statuses={outboundStatuses}
-            currentStatus={draft.status}
-            statusFormatter={getStatusTranslation}
-          />
-          <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-            <ButtonWithIcon
-              Icon={<XCircleIcon />}
-              labelKey="button.cancel"
-              color="secondary"
-              sx={{ fontSize: '12px' }}
-              onClick={() => navigate(-1)}
-            />
-            {isInvoiceSaveable(draft) && (
-              <>
-                <ButtonWithIcon
-                  Icon={<SaveIcon />}
-                  labelKey="button.save"
-                  variant="contained"
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => {
-                    success('Saved invoice! 🥳 ')();
-                    save(draft);
-                  }}
-                />
-                <ButtonWithIcon
-                  disabled={draft.hold}
-                  Icon={<ArrowRightIcon />}
-                  labelKey="button.save-and-confirm-status"
-                  sx={{ fontSize: '12px' }}
-                  labelProps={{
-                    status: t(
-                      getNextOutboundStatusButtonTranslation(draft.status)
-                    ),
-                  }}
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => {
-                    success('Saved invoice! 🥳 ')();
-                    draft.update?.('status', 'finalised');
-                    save(draft);
-                  }}
-                />
-              </>
-            )}
-          </Box>
-        </Box>
+        <OutboundDetailFooter draft={draft} save={save} />
       </Box>
     </TabContext>
   ) : null;
