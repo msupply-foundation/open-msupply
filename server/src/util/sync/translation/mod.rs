@@ -6,6 +6,8 @@ mod name;
 mod store;
 pub mod test_data;
 
+use std::fmt::Debug;
+
 use crate::{
     database::{
         repository::{
@@ -144,6 +146,19 @@ pub async fn import_sync_records(
     Ok(())
 }
 
+fn ignore_foreign_key_error<T: Debug>(
+    result: Result<(), RepositoryError>,
+    item: T,
+) -> Result<(), RepositoryError> {
+    match result {
+        Err(RepositoryError::ForeignKeyViolation) => {
+            println!("Failed to import (ignore): {:?}", item);
+            Ok(())
+        }
+        _ => result,
+    }
+}
+
 async fn store_integration_records(
     registry: &RepositoryRegistry,
     integration_records: &IntegrationRecord,
@@ -153,23 +168,31 @@ async fn store_integration_records(
         .transaction(|con| async move {
             for record in &integration_records.upserts {
                 match &record {
-                    IntegrationUpsertRecord::Name(record) => {
-                        NameRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::Item(record) => {
-                        ItemRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::Store(record) => {
-                        StoreRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::MasterList(record) => {
-                        MasterListRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::MasterListLine(record) => {
-                        MasterListLineRepository::new(con).upsert_one(record)?
-                    }
+                    IntegrationUpsertRecord::Name(record) => ignore_foreign_key_error(
+                        NameRepository::new(con).upsert_one(record),
+                        record,
+                    )?,
+                    IntegrationUpsertRecord::Item(record) => ignore_foreign_key_error(
+                        ItemRepository::new(con).upsert_one(record),
+                        record,
+                    )?,
+                    IntegrationUpsertRecord::Store(record) => ignore_foreign_key_error(
+                        StoreRepository::new(con).upsert_one(record),
+                        record,
+                    )?,
+                    IntegrationUpsertRecord::MasterList(record) => ignore_foreign_key_error(
+                        MasterListRepository::new(con).upsert_one(record),
+                        record,
+                    )?,
+                    IntegrationUpsertRecord::MasterListLine(record) => ignore_foreign_key_error(
+                        MasterListLineRepository::new(con).upsert_one(record),
+                        record,
+                    )?,
                     IntegrationUpsertRecord::MasterListNameJoin(record) => {
-                        MasterListNameJoinRepository::new(con).upsert_one(record)?
+                        ignore_foreign_key_error(
+                            MasterListNameJoinRepository::new(con).upsert_one(record),
+                            record,
+                        )?
                     }
                 }
             }
