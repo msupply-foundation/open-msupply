@@ -229,6 +229,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
               draft.update?.('hold', !value);
             }}
             labelKey="label.hold"
+            sx={{ '& .MuiTypography-root': { fontSize: '12px' } }}
           />
           <StatusCrumbs
             statuses={outboundStatuses}

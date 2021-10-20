@@ -11520,10 +11520,10 @@ junk@^3.1.0:
   resolved "https://registry.yarnpkg.com/junk/-/junk-3.1.0.tgz#31499098d902b7e98c5d9b9c80f43457a88abfa1"
   integrity sha512-pBxcB3LFc8QVgdggvZWyeys+hnrNWg4OcZIU/1X59k5jQdLBlCsYGRQaz234SqoRLTCgMH00fY0xRJH+F9METQ==
 
-kbar@^0.1.0-beta.5:
-  version "0.1.0-beta.5"
-  resolved "https://registry.yarnpkg.com/kbar/-/kbar-0.1.0-beta.5.tgz#575d88d8f91106c31f6784cc642514d4b78ee2a8"
-  integrity sha512-QH7wiZgJAmTta8bKoj4wnEwUYmE6pw4kV5iRAEbd3JN/eUAhADq+twiiqY4vEWvJZEKZxNMjQraGf3X7CRgAEQ==
+kbar@0.1.0-beta.12:
+  version "0.1.0-beta.12"
+  resolved "https://registry.yarnpkg.com/kbar/-/kbar-0.1.0-beta.12.tgz#6f8a057f037b589b0da6a16a95a3a3f2e1831abf"
+  integrity sha512-uOBWaiwX5ZY3sLLTNth/rqhrBATUdGnmxg/2OsaoOTmEtfP3/MZCO8vo6ebJ2dra7wBNGsl5kiaDNJ7vEydoVw==
   dependencies:
     "@reach/portal" "^0.16.0"
     fast-equals "^2.0.3"

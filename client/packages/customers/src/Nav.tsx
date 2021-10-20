@@ -40,7 +40,7 @@ const Nav: FC = () => {
       <NavLink
         end={false}
         to={AppRoute.Customers}
-        icon={<CustomersIcon color="primary" />}
+        icon={<CustomersIcon color="primary" fontSize="small" />}
         expandOnHover
         text={t('app.customers')}
       />
