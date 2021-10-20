@@ -6,9 +6,12 @@ use crate::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
             InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
-            NotACustomerInvoice, RecordDoesNotExist,
+            NotACustomerInvoice,
         },
-        types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
+        types::{
+            DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField,
+            RecordNotFound,
+        },
     },
     service::{invoice_line::UpdateCustomerInvoiceLineError, SingleRecordError},
 };
@@ -39,7 +42,7 @@ pub enum UpdateCustomerInvoiceLineResponse {
 pub enum UpdateCustomerInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
@@ -118,7 +121,7 @@ impl From<UpdateCustomerInvoiceLineError> for UpdateCustomerInvoiceLineResponse 
                 OutError::ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine {})
             }
             UpdateCustomerInvoiceLineError::LineDoesNotExist => {
-                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+                OutError::RecordNotFound(RecordNotFound {})
             }
             UpdateCustomerInvoiceLineError::LineDoesNotReferenceStockLine => {
                 OutError::LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine {})

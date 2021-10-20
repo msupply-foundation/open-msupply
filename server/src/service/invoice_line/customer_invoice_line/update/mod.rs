@@ -37,7 +37,9 @@ pub fn update_customer_invoice_line(
         })
         .map_err(
             |error: TransactionError<UpdateCustomerInvoiceLineError>| match error {
-                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Transaction { msg } => {
+                    RepositoryError::as_db_error(&msg, "").into()
+                }
                 TransactionError::Inner(error) => error,
             },
         )?;

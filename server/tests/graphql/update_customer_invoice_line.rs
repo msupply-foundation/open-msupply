@@ -120,7 +120,7 @@ mod graphql {
             stock_line_id_option: Some(main_draft_stock_line_id.clone()),
         };
 
-        // Test RecordDoesNotExist
+        // Test RecordNotFound
 
         let mut variables = base_variables.clone();
         variables.id = "invalid".to_string();
@@ -130,8 +130,8 @@ mod graphql {
 
         assert_error!(
             response,
-            RecordDoesNotExist(update::RecordDoesNotExist {
-                description: "Record does not exist".to_string(),
+            RecordNotFound(update::RecordNotFound {
+                description: "Record not found".to_string(),
             })
         );
 

@@ -190,9 +190,7 @@ impl From<SingleRecordError> for NodeError {
             SingleRecordError::DatabaseError(error) => {
                 NodeErrorInterface::DatabaseError(DatabaseError(error))
             }
-            SingleRecordError::NotFound(id) => {
-                NodeErrorInterface::RecordNotFound(RecordNotFound(id))
-            }
+            SingleRecordError::NotFound(_) => NodeErrorInterface::RecordNotFound(RecordNotFound),
         };
 
         ErrorWrapper { error }
@@ -231,16 +229,12 @@ impl DatabaseError {
     }
 }
 
-pub struct RecordNotFound(pub String);
+pub struct RecordNotFound;
 
 #[Object]
 impl RecordNotFound {
     pub async fn description(&self) -> &'static str {
-        "Record with id not found"
-    }
-
-    pub async fn id(&self) -> &str {
-        &self.0
+        "Record not found"
     }
 }
 

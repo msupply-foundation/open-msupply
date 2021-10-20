@@ -110,7 +110,7 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
 
-        // InvoiceNotFoundError
+        // RecordNotFound
         let variables = Some(json!({
           "input": {
             "id": "does not exist",
@@ -119,7 +119,7 @@ mod graphql {
         let expected = json!({
             "updateCustomerInvoice": {
               "error": {
-                "__typename": "InvoiceNotFoundError"
+                "__typename": "RecordNotFound"
               }
             }
           }

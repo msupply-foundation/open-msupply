@@ -5,9 +5,9 @@ use crate::{
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, DeleteResponse, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
+            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
         },
-        types::{DatabaseError, ErrorWrapper},
+        types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
     service::invoice_line::DeleteSupplierInvoiceLineError,
 };
@@ -30,7 +30,7 @@ pub enum DeleteSupplierInvoiceLineResponse {
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteSupplierInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     NotASupplierInvoice(NotASupplierInvoice),
@@ -62,7 +62,7 @@ impl From<DeleteSupplierInvoiceLineError> for DeleteSupplierInvoiceLineResponse 
         use DeleteSupplierInvoiceLineErrorInterface as OutError;
         let error = match error {
             DeleteSupplierInvoiceLineError::LineDoesNotExist => {
-                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+                OutError::RecordNotFound(RecordNotFound {})
             }
             DeleteSupplierInvoiceLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))

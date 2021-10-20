@@ -78,7 +78,7 @@ mod graphql {
         let expected = json!({
             "deleteCustomerInvoice": {
               "error": {
-                "__typename": "RecordDoesNotExist"
+                "__typename": "RecordNotFound"
               }
             }
           }
