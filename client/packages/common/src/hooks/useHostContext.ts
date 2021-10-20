@@ -5,6 +5,12 @@ import { SupportedLocales } from '../intl/intlHelpers';
 import { Store, User } from '../types';
 
 type HostContext = {
+  setAppSessionDetailsRef: (ref: React.MutableRefObject<null> | null) => void;
+  appSessionDetailsRef: React.MutableRefObject<null> | null;
+
+  setAppFooterRef: (ref: React.MutableRefObject<null> | null) => void;
+  appFooterRef: React.MutableRefObject<null> | null;
+
   setAppBarContentRef: (ref: React.MutableRefObject<null> | null) => void;
   appBarContentRef: React.MutableRefObject<null> | null;
 
@@ -22,6 +28,14 @@ type HostContext = {
 };
 
 export const useHostContext = create<HostContext>(set => ({
+  setAppSessionDetailsRef: (refOrNull: React.MutableRefObject<null> | null) =>
+    set(state => ({ ...state, appSessionDetailsRef: refOrNull })),
+  appSessionDetailsRef: null,
+
+  setAppFooterRef: (refOrNull: React.MutableRefObject<null> | null) =>
+    set(state => ({ ...state, appFooterRef: refOrNull })),
+  appFooterRef: null,
+
   setAppBarContentRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, appBarContentRef: refOrNull })),
   appBarContentRef: null,

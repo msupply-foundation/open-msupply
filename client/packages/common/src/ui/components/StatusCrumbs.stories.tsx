@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { LoadingSpinner } from './LoadingSpinner';
 import { StatusCrumbs } from './StatusCrumbs';
 import { OutboundShipmentStatus } from '../..';
 import { LocaleKey, useTranslation } from '../../intl/intlHelpers';
