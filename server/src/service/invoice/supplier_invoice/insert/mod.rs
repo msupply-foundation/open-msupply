@@ -1,5 +1,7 @@
 use crate::{
-    database::repository::{InvoiceRepository, RepositoryError, StorageConnectionManager},
+    database::repository::{
+        InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
+    },
     domain::{name::Name, supplier_invoice::InsertSupplierInvoice},
     service::WithDBError,
 };
@@ -17,11 +19,19 @@ pub fn insert_supplier_invoice(
     input: InsertSupplierInvoice,
 ) -> Result<String, InsertSupplierInvoiceError> {
     let connection = connection_manager.connection()?;
-    // TODO do inside transaction
-    validate(&input, &connection)?;
-    let new_invoice = generate(input, &connection)?;
-    InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
-
+    let new_invoice = connection
+        .transaction_sync(|connection| {
+            validate(&input, &connection)?;
+            let new_invoice = generate(input, &connection)?;
+            InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
+            Ok(new_invoice)
+        })
+        .map_err(
+            |error: TransactionError<InsertSupplierInvoiceError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
     Ok(new_invoice.id)
 }
 

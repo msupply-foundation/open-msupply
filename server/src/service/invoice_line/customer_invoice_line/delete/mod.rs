@@ -2,7 +2,7 @@ use crate::{
     database::{
         repository::{
             InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
-            StorageConnectionManager,
+            StorageConnectionManager, TransactionError,
         },
         schema::InvoiceRowStatus,
     },
@@ -20,28 +20,35 @@ pub fn delete_customer_invoice_line(
 ) -> Result<String, DeleteCustomerInvoiceLineError> {
     let connection = connection_manager.connection()?;
 
-    // TODO: do inside transaction.
+    let line = connection
+        .transaction_sync(|connection| {
+            let line = validate(&input, &connection)?;
+            let stock_line_id_option = line.stock_line_id.clone();
 
-    let line = validate(&input, &connection)?;
-    let stock_line_id_option = line.stock_line_id.clone();
+            InvoiceLineRepository::new(&connection).delete(&line.id)?;
 
-    InvoiceLineRepository::new(&connection).delete(&line.id)?;
+            if let Some(stock_line_id) = stock_line_id_option {
+                let invoice_repository = InvoiceRepository::new(&connection);
+                let stock_line_repository = StockLineRepository::new(&connection);
 
-    if let Some(stock_line_id) = stock_line_id_option {
-        let invoice_repository = InvoiceRepository::new(&connection);
-        let stock_line_repository = StockLineRepository::new(&connection);
+                let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
+                stock_line.available_number_of_packs += line.number_of_packs;
 
-        let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
-        stock_line.available_number_of_packs += line.number_of_packs;
+                let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
+                if invoice.status == InvoiceRowStatus::Confirmed {
+                    stock_line.total_number_of_packs += line.number_of_packs;
+                }
 
-        let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
-        if invoice.status == InvoiceRowStatus::Confirmed {
-            stock_line.total_number_of_packs += line.number_of_packs;
-        }
-
-        stock_line_repository.upsert_one(&stock_line)?;
-    }
-
+                stock_line_repository.upsert_one(&stock_line)?;
+            }
+            Ok(line)
+        })
+        .map_err(
+            |error: TransactionError<DeleteCustomerInvoiceLineError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
     Ok(line.id)
 }
 

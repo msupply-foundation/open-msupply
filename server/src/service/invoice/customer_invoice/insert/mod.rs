@@ -25,17 +25,6 @@ impl From<RepositoryError> for InsertCustomerInvoiceError {
     }
 }
 
-impl From<TransactionError<InsertCustomerInvoiceError>> for InsertCustomerInvoiceError {
-    fn from(error: TransactionError<InsertCustomerInvoiceError>) -> Self {
-        match error {
-            TransactionError::Transaction { msg } => {
-                InsertCustomerInvoiceError::DatabaseError(RepositoryError::DBError { msg })
-            }
-            TransactionError::Inner(e) => e,
-        }
-    }
-}
-
 /// Insert a new customer invoice and returns the invoice id when successful.
 pub fn insert_customer_invoice(
     connection_manager: &StorageConnectionManager,
@@ -43,13 +32,20 @@ pub fn insert_customer_invoice(
 ) -> Result<String, InsertCustomerInvoiceError> {
     let connection = connection_manager.connection()?;
 
-    let new_invoice_id = connection.transaction_sync(|connection| {
-        validate(&input, &connection)?;
-        let new_invoice = generate(input, &connection)?;
-        InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
+    let new_invoice_id = connection
+        .transaction_sync(|connection| {
+            validate(&input, &connection)?;
+            let new_invoice = generate(input, &connection)?;
+            InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
 
-        Ok(new_invoice.id)
-    })?;
+            Ok(new_invoice.id)
+        })
+        .map_err(
+            |error: TransactionError<InsertCustomerInvoiceError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
 
     Ok(new_invoice_id)
 }
