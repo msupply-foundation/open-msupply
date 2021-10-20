@@ -16,6 +16,24 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   sortBy: SortBy<T>;
 }
 
+const flattenData = (row: ItemRow) => {
+  const { stockLine } = row;
+  const {
+    batch,
+    costPricePerPack: costPrice,
+    packSize,
+    sellPricePerPack: sellPrice,
+  } = stockLine || {};
+
+  return {
+    ...row,
+    batch,
+    costPrice,
+    packSize,
+    sellPrice,
+  };
+};
+
 export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data, columns }) => {
   const numberOfRows = useRowRenderCount();
   const { pagination } = usePagination(numberOfRows);
@@ -28,7 +46,9 @@ export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data, columns }) => {
     <RemoteDataTable
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
-      data={data.slice(pagination.offset, pagination.offset + pagination.first)}
+      data={data
+        .slice(pagination.offset, pagination.offset + pagination.first)
+        .map(flattenData)}
       onChangePage={pagination.onChangePage}
       noDataMessageKey="error.no-items"
     />

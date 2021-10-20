@@ -19,6 +19,7 @@ export interface HeaderProps<T extends DomainObject> {
 }
 
 export enum ColumnFormat {
+  Currency,
   Date,
   Integer,
   Real,

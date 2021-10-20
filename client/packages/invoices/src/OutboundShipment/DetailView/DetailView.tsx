@@ -149,7 +149,16 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   const { currentTab, onChangeTab } = useTabs('general');
 
   const columns = useColumns<ItemRow>(
-    ['itemCode', 'itemName', 'expiry', getEditableQuantityColumn()],
+    [
+      'itemCode',
+      'itemName',
+      'batch',
+      'expiry',
+      'costPrice',
+      'sellPrice',
+      'packSize',
+      getEditableQuantityColumn(),
+    ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
