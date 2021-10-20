@@ -1,8 +1,8 @@
 use crate::{
     database::{
         repository::{
-            CentralSyncBufferRepository, CentralSyncCursorRepository, RepositoryError,
-            StorageConnectionManager,
+            CentralSyncBufferRepository, CentralSyncCursorRepository, NameStoreJoinRepository,
+            RepositoryError, StorageConnectionManager,
         },
         schema::CentralSyncBufferRow,
     },
@@ -183,6 +183,15 @@ impl Synchroniser {
             .await
             .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
 
+        // TODO needs to be done for M1 as name_store_joins are not synced yet but are required in API
+        // these records should actually sync from server in remote sync
+        if records.len() > 0 {
+            match NameStoreJoinRepository::new(&connection).m1_add() {
+                Ok(_) => {}
+                Err(_) => {}
+            };
+        }
+
         central_sync_buffer_repository
             .remove_all()
             .await
@@ -191,11 +200,11 @@ impl Synchroniser {
         Ok(())
     }
 
-    fn integrate_remote_records(&self, records: Vec<RemoteSyncRecord>) {
-        records.iter().for_each(|record| {
-            info!("Integrated remote sync record {}", record.sync_id);
-        });
-    }
+    // fn integrate_remote_records(&self, records: Vec<RemoteSyncRecord>) {
+    //     records.iter().for_each(|record| {
+    //         info!("Integrated remote sync record {}", record.sync_id);
+    //     });
+    // }
 
     pub async fn sync(&mut self, registry: &RepositoryRegistry) -> Result<(), SyncError> {
         info!("Syncing central records...");
@@ -206,13 +215,13 @@ impl Synchroniser {
         self.integrate_central_records(registry).await?;
         info!("Successfully integrated central records");
 
-        info!("Syncing remote records...");
-        let remote_records = self.pull_remote_records().await?;
-        info!("Successfully pulled remote records");
+        // info!("Syncing remote records...");
+        // let remote_records = self.pull_remote_records().await?;
+        // info!("Successfully pulled remote records");
 
-        info!("Integrating remote records...");
-        self.integrate_remote_records(remote_records);
-        info!("Successfully integrated remote records");
+        // info!("Integrating remote records...");
+        // self.integrate_remote_records(remote_records);
+        // info!("Successfully integrated remote records");
 
         Ok(())
     }
