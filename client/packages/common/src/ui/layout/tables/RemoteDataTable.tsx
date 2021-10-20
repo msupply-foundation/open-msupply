@@ -66,7 +66,7 @@ export const RemoteDataTable = <T extends DomainObject>({
         flexDirection: 'column',
       }}
     >
-      <MuiTable sx={{ display: 'block' }}>
+      <MuiTable sx={{ display: 'block', overflow: 'auto' }}>
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <HeaderRow>
             {columns.map(column => (
@@ -74,15 +74,7 @@ export const RemoteDataTable = <T extends DomainObject>({
             ))}
           </HeaderRow>
         </TableHead>
-        <TableBody
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            maxHeight: 500,
-            overflow: 'auto',
-          }}
-        >
+        <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {data.map((row, idx) => {
             return (
               <DataRow<T>
