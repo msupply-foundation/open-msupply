@@ -2,7 +2,7 @@ use crate::database::repository::RepositoryError;
 
 use async_graphql::Object;
 
-pub struct DatabaseError(RepositoryError);
+pub struct DatabaseError(pub RepositoryError);
 
 #[Object]
 impl DatabaseError {

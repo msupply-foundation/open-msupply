@@ -15,6 +15,8 @@ use serde_json::{json, Value};
 pub mod common;
 
 mod delete_customer_invoice_line;
+
+mod customer_invoice_insert;
 mod delete_supplier_invoice;
 mod delete_supplier_invoice_line;
 mod insert_supplier_invoice;

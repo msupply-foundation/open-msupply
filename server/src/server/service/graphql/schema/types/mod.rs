@@ -91,6 +91,10 @@ impl From<PaginationInput> for PaginationOption {
     params(InsertCustomerInvoiceErrorInterface)
 ))]
 #[graphql(concrete(
+    name = "UpdateCustomerInvoiceError",
+    params(UpdateCustomerInvoiceErrorInterface)
+))]
+#[graphql(concrete(
     name = "DeleteCustomerInvoiceError",
     params(DeleteCustomerInvoiceErrorInterface)
 ))]
