@@ -55,6 +55,12 @@ export const getDetailQuery = (): string => gql`
         itemName
         expiry
         quantity
+        stockLine {
+          batch
+          costPricePerPack
+          packSize
+          sellPricePerPack
+        }
       }
     }
   }
