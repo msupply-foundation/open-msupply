@@ -28,7 +28,7 @@ pub fn mock_item_c() -> ItemRow {
 pub fn mock_item_with_no_stock_line() -> ItemRow {
     ItemRow {
         id: String::from("item_with_no_stock_line"),
-        name: String::from("Item with_no_stock_line"),
+        name: String::from("Item with no stock line"),
         code: String::from("code"),
     }
 }

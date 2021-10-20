@@ -164,6 +164,13 @@ table! {
     }
 }
 
+table! {
+    item_is_visible (id) {
+        id -> Text,
+        is_visible -> Bool,
+    }
+}
+
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
 joinable!(requisition -> name_table (name_id));
@@ -183,6 +190,7 @@ joinable!(master_list_line -> master_list (master_list_id));
 joinable!(master_list_line -> item (item_id));
 joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name_table (name_id));
+joinable!(item_is_visible -> item(id));
 
 allow_tables_to_appear_in_same_query!(
     central_sync_buffer,
@@ -199,5 +207,6 @@ allow_tables_to_appear_in_same_query!(
     user_account,
     name_store_join,
     master_list_line,
-    master_list_name_join
+    master_list_name_join,
+    item_is_visible
 );
