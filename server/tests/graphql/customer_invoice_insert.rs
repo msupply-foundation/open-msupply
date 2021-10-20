@@ -59,6 +59,7 @@ mod graphql {
                 ... on InvoiceNode {
                     id
                     otherPartyId
+                    type
                     comment
                 }
             }
@@ -123,6 +124,7 @@ mod graphql {
             "insertCustomerInvoice": {
               "id": "ci_insert_1",
               "otherPartyId": other_party_customer.id,
+              "type": "CUSTOMER_INVOICE",
               "comment": "ci comment",
             }
           }
