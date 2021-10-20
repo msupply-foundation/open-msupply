@@ -1,4 +1,3 @@
-use diesel::result::Error as DieselError;
 use thiserror::Error;
 
 #[derive(Clone, Error, Debug, PartialEq)]
