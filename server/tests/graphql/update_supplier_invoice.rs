@@ -111,10 +111,10 @@ mod graphql {
 
         let base_variables = update::Variables {
             id: draft_supplier_invoice.id.clone(),
-            other_party_id_usi: Some(supplier.id.clone()),
-            status_usi: Some(update::InvoiceNodeStatus::Draft),
-            comment_usi: Some("some comment".to_string()),
-            their_reference_usi: Some("some reference".to_string()),
+            other_party_id_option: Some(supplier.id.clone()),
+            status_option: Some(update::InvoiceNodeStatus::Draft),
+            comment_option: Some("some comment".to_string()),
+            their_reference_option: Some("some reference".to_string()),
         };
 
         // Test RecordDoesNotExist
@@ -135,7 +135,7 @@ mod graphql {
         // Test ForeingKeyError
 
         let mut variables = base_variables.clone();
-        variables.other_party_id_usi = Some("invalid".to_string());
+        variables.other_party_id_option = Some("invalid".to_string());
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -151,7 +151,7 @@ mod graphql {
         // Test OtherPartyNotASupplier
 
         let mut variables = base_variables.clone();
-        variables.other_party_id_usi = Some(not_supplier.id.clone());
+        variables.other_party_id_option = Some(not_supplier.id.clone());
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -179,8 +179,8 @@ mod graphql {
         // Test Confirm
 
         let mut variables = base_variables.clone();
-        variables.status_usi = Some(update::InvoiceNodeStatus::Confirmed);
-        variables.other_party_id_usi = Some(another_name.id.clone());
+        variables.status_option = Some(update::InvoiceNodeStatus::Confirmed);
+        variables.other_party_id_option = Some(another_name.id.clone());
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -215,9 +215,9 @@ mod graphql {
 
         let mut variables = base_variables.clone();
 
-        variables.status_usi = None;
-        variables.comment_usi = None;
-        variables.their_reference_usi = None;
+        variables.status_option = None;
+        variables.comment_option = None;
+        variables.their_reference_option = None;
 
         let start_invoice = InvoiceRepository::new(&connection)
             .find_one_by_id(&variables.id)
@@ -238,7 +238,7 @@ mod graphql {
         // Test Finaized
 
         let mut variables = base_variables.clone();
-        variables.status_usi = Some(update::InvoiceNodeStatus::Finalised);
+        variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -327,16 +327,16 @@ mod graphql {
         fn eq(&self, other: &update::Variables) -> bool {
             let update::Variables {
                 id,
-                other_party_id_usi,
-                status_usi,
-                comment_usi: _,         // Nullable option ?
-                their_reference_usi: _, // Nullable option ?
+                other_party_id_option,
+                status_option,
+                comment_option: _,         // Nullable option ?
+                their_reference_option: _, // Nullable option ?
             } = other;
 
             *id == self.id
-                && compare_option(other_party_id_usi, &self.name_id)
+                && compare_option(other_party_id_option, &self.name_id)
                 && compare_option(
-                    status_usi,
+                    status_option,
                     &update::InvoiceNodeStatus::from(self.status.clone()),
                 )
         }

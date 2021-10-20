@@ -104,10 +104,10 @@ mod graphql {
 
         let base_variables = insert::Variables {
             id: Uuid::new_v4().to_string(),
-            invoice_id_icil: draft_customer_invoice.id.clone(),
-            item_id_icil: item_not_in_invoices_id.clone(),
-            number_of_packs_icil: 3,
-            stock_line_id_icil: stock_line_not_in_invoices_id.clone(),
+            invoice_id: draft_customer_invoice.id.clone(),
+            item_id: item_not_in_invoices_id.clone(),
+            number_of_packs: 3,
+            stock_line_id: stock_line_not_in_invoices_id.clone(),
         };
 
         // Test RecordAlreadyExist
@@ -128,7 +128,7 @@ mod graphql {
         // Test ForeingKeyError Item
 
         let mut variables = base_variables.clone();
-        variables.item_id_icil = "invalid".to_string();
+        variables.item_id = "invalid".to_string();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -143,7 +143,7 @@ mod graphql {
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_icil = "invalid".to_string();
+        variables.invoice_id = "invalid".to_string();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -158,7 +158,7 @@ mod graphql {
         // Test CannotEditFinalisedInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_icil = finalised_customer_invoice.id.clone();
+        variables.invoice_id = finalised_customer_invoice.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -172,7 +172,7 @@ mod graphql {
         // Test NotACustomerInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_icil = supplier_lines[0].invoice_id.clone();
+        variables.invoice_id = supplier_lines[0].invoice_id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -186,7 +186,7 @@ mod graphql {
         // Test RangeError NumberOfPacks
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_icil = 0;
+        variables.number_of_packs = 0;
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -203,8 +203,8 @@ mod graphql {
         // Test StockLineAlreadyExistsInInvoice
 
         let mut variables = base_variables.clone();
-        variables.item_id_icil = draft_lines[1].item_id.clone();
-        variables.stock_line_id_icil = draft_lines[1].stock_line_id.clone().unwrap();
+        variables.item_id = draft_lines[1].item_id.clone();
+        variables.stock_line_id = draft_lines[1].stock_line_id.clone().unwrap();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -219,7 +219,7 @@ mod graphql {
         let stock_line = get_stock_line_inline!(&stock_line_not_in_invoices_id, &connection);
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_icil = stock_line.available_number_of_packs as i64 + 1;
+        variables.number_of_packs = stock_line.available_number_of_packs as i64 + 1;
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -235,7 +235,7 @@ mod graphql {
         // Test ItemDoesNotMatchStockLine
 
         let mut variables = base_variables.clone();
-        variables.item_id_icil = main_draft_line.item_id.clone();
+        variables.item_id = main_draft_line.item_id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -255,7 +255,7 @@ mod graphql {
             .unwrap();
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_icil = number_of_packs;
+        variables.number_of_packs = number_of_packs;
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -291,8 +291,8 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.number_of_packs_icil = number_of_packs;
-        variables.invoice_id_icil = confirmed_customer_invoice.id.clone();
+        variables.number_of_packs = number_of_packs;
+        variables.invoice_id = confirmed_customer_invoice.id.clone();
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;

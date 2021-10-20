@@ -112,14 +112,14 @@ mod graphql {
 
         let base_variables = update::Variables {
             id: draft_invoice_lines[0].id.clone(),
-            invoice_id_usil: draft_supplier_invoice.id.clone(),
-            item_id_usil: Some(item.id.clone()),
-            cost_price_per_pack_usil: Some(5.5),
-            sell_price_per_pack_usil: Some(7.7),
-            pack_size_usil: Some(3),
-            number_of_packs_usil: Some(9),
-            expiry_date_usil: Some(NaiveDate::from_ymd(2020, 8, 3)),
-            batch_usil: Some("some batch name".to_string()),
+            invoice_id: draft_supplier_invoice.id.clone(),
+            item_id_option: Some(item.id.clone()),
+            cost_price_per_pack_option: Some(5.5),
+            sell_price_per_pack_option: Some(7.7),
+            pack_size_option: Some(3),
+            number_of_packs_option: Some(9),
+            expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
+            batch_option: Some("some batch name".to_string()),
         };
 
         // Test RecordDoesNotExist Item
@@ -140,7 +140,7 @@ mod graphql {
         // Test ForeingKeyError Item
 
         let mut variables = base_variables.clone();
-        variables.item_id_usil = Some("invalid".to_string());
+        variables.item_id_option = Some("invalid".to_string());
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -155,7 +155,7 @@ mod graphql {
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_usil = "invalid".to_string();
+        variables.invoice_id = "invalid".to_string();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -171,7 +171,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = finalised_invoice_lines[0].id.clone();
-        variables.invoice_id_usil = finalised_supplier_invoice.id.clone();
+        variables.invoice_id = finalised_supplier_invoice.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -186,7 +186,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = customer_invoice_lines[0].id.clone();
-        variables.invoice_id_usil = customer_invoice.id.clone();
+        variables.invoice_id = customer_invoice.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -200,7 +200,7 @@ mod graphql {
         // Test RangeError NumberOfPacks
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_usil = Some(0);
+        variables.number_of_packs_option = Some(0);
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -217,7 +217,7 @@ mod graphql {
         // Test RangeError PackSize
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_usil = Some(0);
+        variables.number_of_packs_option = Some(0);
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -234,7 +234,7 @@ mod graphql {
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_usil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -249,7 +249,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[1].id.clone();
-        variables.invoice_id_usil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
         let mut stock_line = StockLineRepository::new(&connection)
             .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
@@ -290,7 +290,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[0].id.clone();
-        variables.invoice_id_usil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -319,8 +319,8 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[0].id.clone();
-        variables.invoice_id_usil = confirmed_supplier_invoice.id.clone();
-        variables.item_id_usil = Some(item_not_in_invoices_id.clone());
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.item_id_option = Some(item_not_in_invoices_id.clone());
 
         let deleted_stock_line_id = confirmed_invoice_lines[0].stock_line_id.as_ref().unwrap();
         let new_item = ItemRepository::new(&connection)
@@ -360,14 +360,14 @@ mod graphql {
 
         let variables = update::Variables {
             id: confirmed_invoice_lines[0].id.clone(),
-            invoice_id_usil: confirmed_supplier_invoice.id.clone(),
-            item_id_usil: None,
-            cost_price_per_pack_usil: None,
-            sell_price_per_pack_usil: None,
-            pack_size_usil: None,
-            number_of_packs_usil: None,
-            expiry_date_usil: None,
-            batch_usil: None,
+            invoice_id: confirmed_supplier_invoice.id.clone(),
+            item_id_option: None,
+            cost_price_per_pack_option: None,
+            sell_price_per_pack_option: None,
+            pack_size_option: None,
+            number_of_packs_option: None,
+            expiry_date_option: None,
+            batch_option: None,
         };
         let start_line = InvoiceLineRepository::new(&connection)
             .find_one_by_id(&variables.id)
@@ -397,54 +397,54 @@ mod graphql {
     impl PartialEq<update::Variables> for InvoiceLineRow {
         fn eq(&self, other: &update::Variables) -> bool {
             let update::Variables {
-                batch_usil,
-                cost_price_per_pack_usil,
-                expiry_date_usil,
-                id: id_usil,
-                invoice_id_usil,
-                item_id_usil,
-                number_of_packs_usil,
-                sell_price_per_pack_usil,
-                pack_size_usil,
+                batch_option,
+                cost_price_per_pack_option,
+                expiry_date_option,
+                id: id_option,
+                invoice_id,
+                item_id_option,
+                number_of_packs_option,
+                sell_price_per_pack_option,
+                pack_size_option,
             } = other;
 
-            compare_option(cost_price_per_pack_usil, &self.cost_price_per_pack)
-                && *expiry_date_usil == self.expiry_date
-                && *id_usil == self.id
-                && *invoice_id_usil == self.invoice_id
-                && compare_option(item_id_usil, &self.item_id)
-                && compare_option(number_of_packs_usil, &(self.number_of_packs as i64))
-                && compare_option(sell_price_per_pack_usil, &self.sell_price_per_pack)
-                && *batch_usil == self.batch
-                && compare_option(pack_size_usil, &(self.pack_size as i64))
+            compare_option(cost_price_per_pack_option, &self.cost_price_per_pack)
+                && *expiry_date_option == self.expiry_date
+                && *id_option == self.id
+                && *invoice_id == self.invoice_id
+                && compare_option(item_id_option, &self.item_id)
+                && compare_option(number_of_packs_option, &(self.number_of_packs as i64))
+                && compare_option(sell_price_per_pack_option, &self.sell_price_per_pack)
+                && *batch_option == self.batch
+                && compare_option(pack_size_option, &(self.pack_size as i64))
         }
     }
 
     impl PartialEq<update::Variables> for StockLineRow {
         fn eq(&self, other: &update::Variables) -> bool {
             let update::Variables {
-                batch_usil,
-                cost_price_per_pack_usil,
-                expiry_date_usil,
+                batch_option,
+                cost_price_per_pack_option,
+                expiry_date_option,
                 id: _,
-                invoice_id_usil: _,
-                item_id_usil,
-                number_of_packs_usil,
-                sell_price_per_pack_usil,
-                pack_size_usil,
+                invoice_id: _,
+                item_id_option,
+                number_of_packs_option,
+                sell_price_per_pack_option,
+                pack_size_option,
             } = other;
 
-            compare_option(cost_price_per_pack_usil, &self.cost_price_per_pack)
-                && *expiry_date_usil == self.expiry_date
-                && compare_option(item_id_usil, &self.item_id)
+            compare_option(cost_price_per_pack_option, &self.cost_price_per_pack)
+                && *expiry_date_option == self.expiry_date
+                && compare_option(item_id_option, &self.item_id)
                 && compare_option(
-                    number_of_packs_usil,
+                    number_of_packs_option,
                     &(self.available_number_of_packs as i64),
                 )
-                && compare_option(number_of_packs_usil, &(self.total_number_of_packs as i64))
-                && compare_option(sell_price_per_pack_usil, &self.sell_price_per_pack)
-                && *batch_usil == self.batch
-                && compare_option(pack_size_usil, &(self.pack_size as i64))
+                && compare_option(number_of_packs_option, &(self.total_number_of_packs as i64))
+                && compare_option(sell_price_per_pack_option, &self.sell_price_per_pack)
+                && *batch_option == self.batch
+                && compare_option(pack_size_option, &(self.pack_size as i64))
         }
     }
 }
