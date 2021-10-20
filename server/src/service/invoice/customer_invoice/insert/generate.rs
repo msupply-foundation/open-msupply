@@ -22,7 +22,7 @@ pub fn generate(
     let result = InvoiceRow {
         id: input.id,
         name_id: input.other_party_id,
-        r#type: InvoiceType::SupplierInvoice.into(),
+        r#type: InvoiceType::CustomerInvoice.into(),
         comment: input.comment,
         their_reference: input.their_reference,
         invoice_number: new_invoice_number(),
