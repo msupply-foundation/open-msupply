@@ -194,13 +194,18 @@ async fn store_integration_records(
         .map_err(|error| SyncImportError::as_integration_error(error, ""))?;
     con.transaction(|con| async move {
         for record in &integration_records.upserts {
-            match integrate_record(record, con) {
-                Ok(_) => {}
-                Err(RepositoryError::ForeignKeyViolation(extra)) => {
-                    warn!("Failed to import (ignore): {:?}, error {}", record, extra);
+            let sub_result = con.transaction_sync(|sub_tx| integrate_record(record, sub_tx));
+            match sub_result {
+                Ok(_) => Ok(()),
+                Err(TransactionError::Inner(err @ RepositoryError::ForeignKeyViolation(_))) => {
+                    warn!("Failed to import ({}): {:?}", err, record);
+                    Ok(())
                 }
-                Err(error) => return Err(SyncImportError::as_integration_error(error, record)),
+                _ => sub_result,
             }
+            .map_err(|error| {
+                SyncImportError::as_integration_error(RepositoryError::from(error), "")
+            })?;
         }
         Ok(())
     })
