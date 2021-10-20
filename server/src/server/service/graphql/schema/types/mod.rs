@@ -3,6 +3,7 @@ use crate::{
     domain::PaginationOption,
     service::{usize_to_u32, ListError, ListResult, SingleRecordError},
 };
+
 use async_graphql::*;
 
 // M1 speced API is moved to their own files
@@ -25,8 +26,7 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
-use super::mutations::customer_invoice::*;
-use super::mutations::supplier_invoice::*;
+use super::mutations::{customer_invoice::*, supplier_invoice::*};
 
 /// Generic Connector
 #[derive(SimpleObject)]
@@ -122,6 +122,19 @@ impl From<PaginationInput> for PaginationOption {
     name = "DeleteSupplierInvoiceLineError",
     params(DeleteSupplierInvoiceLineErrorInterface)
 ))]
+#[graphql(concrete(
+    name = "InsertCustomerInvoiceLineError",
+    params(InsertCustomerInvoiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "UpdateCustomerInvoiceLineError",
+    params(UpdateCustomerInvoiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteCustomerInvoiceLineError",
+    params(DeleteCustomerInvoiceLineErrorInterface)
+))]
+
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
@@ -152,17 +165,17 @@ impl From<ListError> for ConnectorError {
             ListError::DatabaseError(error) => {
                 ConnectorErrorInterface::DatabaseError(DatabaseError(error))
             }
-            ListError::LimitBelowMin { limit, min } => {
-                ConnectorErrorInterface::PaginationError(PaginationError {
-                    out_of_range: FirstOutOfRange::Min(min),
-                    first: limit,
-                })
+            ListError::LimitBelowMin(min) => {
+                ConnectorErrorInterface::PaginationError(PaginationError(RangeError {
+                    field: RangeField::First,
+                    range: Range::Min(min),
+                }))
             }
-            ListError::LimitAboveMax { limit, max } => {
-                ConnectorErrorInterface::PaginationError(PaginationError {
-                    out_of_range: FirstOutOfRange::Max(max),
-                    first: limit,
-                })
+            ListError::LimitAboveMax(max) => {
+                ConnectorErrorInterface::PaginationError(PaginationError(RangeError {
+                    field: RangeField::First,
+                    range: Range::Max(max),
+                }))
             }
         };
 
@@ -231,40 +244,60 @@ impl RecordNotFound {
     }
 }
 
-pub enum FirstOutOfRange {
+pub enum Range {
     Max(u32),
     Min(u32),
 }
 
-pub struct PaginationError {
-    out_of_range: FirstOutOfRange,
-    first: u32,
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum RangeField {
+    First,
+    NumberOfPacks,
+    PackSize,
+}
+
+pub struct RangeError {
+    pub field: RangeField,
+    pub range: Range,
 }
 
 #[Object]
-impl PaginationError {
+impl RangeError {
     pub async fn description(&self) -> &'static str {
-        match &self.out_of_range {
-            FirstOutOfRange::Max(_) => "First is too big",
-            FirstOutOfRange::Min(_) => "First is too low",
+        match &self.range {
+            Range::Max(_) => "Value is above maximum",
+            Range::Min(_) => "Value is below minimum",
         }
     }
 
+    pub async fn field(&self) -> &RangeField {
+        &self.field
+    }
+
     pub async fn max(&self) -> Option<u32> {
-        match &self.out_of_range {
-            FirstOutOfRange::Max(max) => Some(max.clone()),
+        match &self.range {
+            Range::Max(max) => Some(max.clone()),
             _ => None,
         }
     }
 
     pub async fn min(&self) -> Option<u32> {
-        match &self.out_of_range {
-            FirstOutOfRange::Min(min) => Some(min.clone()),
+        match &self.range {
+            Range::Min(min) => Some(min.clone()),
             _ => None,
         }
     }
+}
 
-    pub async fn first(&self) -> u32 {
-        self.first
+pub struct PaginationError(RangeError);
+
+#[Object]
+impl PaginationError {
+    pub async fn description(&self) -> &'static str {
+        "Pagination parameter out of range"
+    }
+
+    pub async fn range_error(&self) -> &RangeError {
+        &self.0
     }
 }

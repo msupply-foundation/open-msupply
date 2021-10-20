@@ -1,8 +1,7 @@
 use crate::{
-    database::repository::{
-        InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
-    },
-    domain::{name::NameFilter, supplier_invoice::InsertSupplierInvoice, Pagination},
+    database::repository::{InvoiceRepository, RepositoryError, StorageConnection},
+    domain::supplier_invoice::InsertSupplierInvoice,
+    service::invoice::supplier_invoice::check_other_party,
 };
 
 use super::InsertSupplierInvoiceError;
@@ -12,10 +11,11 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertSupplierInvoiceError> {
     check_invoice_does_not_exists(&input.id, connection)?;
-    check_other_party(&input.other_party_id, connection)
+    check_other_party(Some(input.other_party_id.to_string()), connection)?;
+    Ok(())
 }
 
-pub fn check_invoice_does_not_exists(
+fn check_invoice_does_not_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InsertSupplierInvoiceError> {
@@ -27,29 +27,5 @@ pub fn check_invoice_does_not_exists(
         Err(error.into())
     } else {
         Err(InsertSupplierInvoiceError::InvoiceAlreadyExists)
-    }
-}
-
-pub fn check_other_party(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<(), InsertSupplierInvoiceError> {
-    use InsertSupplierInvoiceError::*;
-    let repository = NameQueryRepository::new(&connection);
-
-    let mut result = repository.query(
-        Pagination::one(),
-        Some(NameFilter::new().match_id(&id)),
-        None,
-    )?;
-
-    if let Some(name) = result.pop() {
-        if name.is_supplier {
-            Ok(())
-        } else {
-            Err(OtherPartyNotASupplier(name))
-        }
-    } else {
-        Err(OtherPartyDoesNotExists)
     }
 }

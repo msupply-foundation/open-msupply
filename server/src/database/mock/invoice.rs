@@ -9,12 +9,12 @@ pub fn mock_customer_invoice_a() -> InvoiceRow {
         store_id: String::from("store_b"),
         invoice_number: 1,
         r#type: InvoiceRowType::CustomerInvoice,
-        status: InvoiceRowStatus::Draft,
+        status: InvoiceRowStatus::Confirmed,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
         entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
-        finalised_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: None,
     }
 }
 
@@ -23,12 +23,61 @@ pub fn mock_customer_invoice_b() -> InvoiceRow {
         id: String::from("customer_invoice_b"),
         name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
+        invoice_number: 2,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Finalised,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
+        confirm_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: Some(Utc::now().naive_utc()),
+    }
+}
+
+pub fn mock_customer_invoice_c() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_c"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
         invoice_number: 3,
         r#type: InvoiceRowType::CustomerInvoice,
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
         entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
+        confirm_datetime: None,
+        finalised_datetime: None,
+    }
+}
+
+pub fn mock_customer_invoice_d() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_d"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 9,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
+        confirm_datetime: Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0)),
+        finalised_datetime: None,
+    }
+}
+
+// Added for CI update
+pub fn mock_customer_invoice_confirmed() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_confirmed"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 3,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
     }
@@ -50,6 +99,7 @@ pub fn mock_customer_invoice_finalised() -> InvoiceRow {
     }
 }
 
+// Added for CI delete test
 pub fn mock_customer_invoice_no_lines() -> InvoiceRow {
     InvoiceRow {
         id: String::from("customer_invoice_no_lines"),
@@ -71,14 +121,14 @@ pub fn mock_supplier_invoice_a() -> InvoiceRow {
         id: String::from("supplier_invoice_a"),
         name_id: String::from("name_store_b"),
         store_id: String::from("store_a"),
-        invoice_number: 2,
+        invoice_number: 4,
         r#type: InvoiceRowType::SupplierInvoice,
-        status: InvoiceRowStatus::Draft,
+        status: InvoiceRowStatus::Confirmed,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
         entry_datetime: NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
-        finalised_datetime: Some(Utc::now().naive_utc()),
+        finalised_datetime: None,
     }
 }
 
@@ -87,9 +137,9 @@ pub fn mock_supplier_invoice_b() -> InvoiceRow {
         id: String::from("supplier_invoice_b"),
         name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
-        invoice_number: 4,
+        invoice_number: 5,
         r#type: InvoiceRowType::SupplierInvoice,
-        status: InvoiceRowStatus::Draft,
+        status: InvoiceRowStatus::Finalised,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
         entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
@@ -98,19 +148,69 @@ pub fn mock_supplier_invoice_b() -> InvoiceRow {
     }
 }
 
-pub fn mock_supplier_invoice_no_lines() -> InvoiceRow {
+pub fn mock_supplier_invoice_c() -> InvoiceRow {
     InvoiceRow {
-        id: String::from("supplier_invoice_no_lines"),
+        id: String::from("supplier_invoice_c"),
         name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
-        invoice_number: 4,
+        invoice_number: 6,
         r#type: InvoiceRowType::SupplierInvoice,
         status: InvoiceRowStatus::Draft,
         comment: Some(String::from("")),
         their_reference: Some(String::from("")),
-        entry_datetime: NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(21, 30, 0, 0),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
+        confirm_datetime: None,
+        finalised_datetime: None,
+    }
+}
+
+pub fn mock_supplier_invoice_d() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("supplier_invoice_d"),
+        name_id: String::from("name_store_c"),
+        store_id: String::from("store_a"),
+        invoice_number: 7,
+        r#type: InvoiceRowType::SupplierInvoice,
+        status: InvoiceRowStatus::Confirmed,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
+        confirm_datetime: Some(NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0)),
+        finalised_datetime: None,
+    }
+}
+
+// Added for CI update test
+// invoice containing invoice lines without stock line
+pub fn mock_customer_invoice_invalid_stock_line() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("customer_invoice_invalid_stock_line"),
+        name_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 3,
+        r#type: InvoiceRowType::CustomerInvoice,
+        status: InvoiceRowStatus::Draft,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+    }
+}
+
+pub fn mock_empty_draft_supplier_invoice() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("empty_draft_supplier_invoice"),
+        name_id: String::from("name_store_c"),
+        store_id: String::from("store_a"),
+        invoice_number: 8,
+        r#type: InvoiceRowType::SupplierInvoice,
+        status: InvoiceRowStatus::Draft,
+        comment: Some(String::from("")),
+        their_reference: Some(String::from("")),
+        entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
+        confirm_datetime: None,
+        finalised_datetime: None,
     }
 }
 
@@ -118,7 +218,11 @@ pub fn mock_customer_invoices() -> Vec<InvoiceRow> {
     vec![
         mock_customer_invoice_a(),
         mock_customer_invoice_b(),
+        mock_customer_invoice_c(),
+        mock_customer_invoice_d(),
         mock_customer_invoice_finalised(),
+        mock_customer_invoice_invalid_stock_line(),
+        mock_customer_invoice_confirmed(),
         mock_customer_invoice_no_lines(),
     ]
 }
@@ -127,7 +231,9 @@ pub fn mock_supplier_invoices() -> Vec<InvoiceRow> {
     vec![
         mock_supplier_invoice_a(),
         mock_supplier_invoice_b(),
-        mock_supplier_invoice_no_lines(),
+        mock_supplier_invoice_c(),
+        mock_supplier_invoice_d(),
+        mock_empty_draft_supplier_invoice(),
     ]
 }
 

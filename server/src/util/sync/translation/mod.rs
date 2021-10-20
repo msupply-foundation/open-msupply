@@ -10,8 +10,8 @@ use crate::{
     database::{
         repository::{
             ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-            MasterListRepository, NameRepository, RepositoryError, StorageConnectionManager,
-            StoreRepository,
+            MasterListRepository, NameRepository, RepositoryError, StorageConnection,
+            StorageConnectionManager, StoreRepository, TransactionError,
         },
         schema::{
             CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -27,13 +27,14 @@ use self::{
     name::LegacyNameRow, store::LegacyStoreRow,
 };
 
+use log::{info, warn};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 #[error("Failed to translate {table_name} sync record")]
 pub struct SyncTranslationError {
-    table_name: &'static str,
-    source: serde_json::Error,
+    pub table_name: &'static str,
+    pub source: serde_json::Error,
 }
 
 #[derive(Error, Debug)]
@@ -45,11 +46,21 @@ pub enum SyncImportError {
     },
     #[error("Failed to integrate sync records")]
     IntegrationError {
-        #[from]
         source: RepositoryError,
+        extra: String,
     },
 }
 
+impl SyncImportError {
+    pub fn as_integration_error<T: std::fmt::Debug>(error: RepositoryError, extra: T) -> Self {
+        SyncImportError::IntegrationError {
+            source: error,
+            extra: format!("{:?}", extra),
+        }
+    }
+}
+
+#[derive(Debug)]
 enum IntegrationUpsertRecord {
     Name(NameRow),
     Item(ItemRow),
@@ -59,6 +70,7 @@ enum IntegrationUpsertRecord {
     MasterListNameJoin(MasterListNameJoinRow),
 }
 
+#[derive(Debug)]
 struct IntegrationRecord {
     pub upserts: Vec<IntegrationUpsertRecord>,
 }
@@ -135,48 +147,70 @@ pub async fn import_sync_records(
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),
     };
+
+    info!(
+        "Translating {} central sync buffer records...",
+        records.len()
+    );
     for record in records {
         do_translation(&record, &mut integration_records)?;
     }
+    info!("Succesfully translated central sync buffer records");
 
+    info!("Storing integration records...");
     store_integration_records(registry, &integration_records).await?;
+    info!("Successfully stored integration records");
 
     Ok(())
+}
+
+fn integrate_record(
+    record: &IntegrationUpsertRecord,
+    con: &StorageConnection,
+) -> Result<(), RepositoryError> {
+    match &record {
+        IntegrationUpsertRecord::Name(record) => NameRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::Item(record) => ItemRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::Store(record) => StoreRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::MasterList(record) => {
+            MasterListRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::MasterListLine(record) => {
+            MasterListLineRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::MasterListNameJoin(record) => {
+            MasterListNameJoinRepository::new(con).upsert_one(record)
+        }
+    }
 }
 
 async fn store_integration_records(
     registry: &RepositoryRegistry,
     integration_records: &IntegrationRecord,
-) -> Result<(), RepositoryError> {
-    let con = registry.get::<StorageConnectionManager>().connection()?;
-    let result = con
-        .transaction(|con| async move {
-            for record in &integration_records.upserts {
-                match &record {
-                    IntegrationUpsertRecord::Name(record) => {
-                        NameRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::Item(record) => {
-                        ItemRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::Store(record) => {
-                        StoreRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::MasterList(record) => {
-                        MasterListRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::MasterListLine(record) => {
-                        MasterListLineRepository::new(con).upsert_one(record)?
-                    }
-                    IntegrationUpsertRecord::MasterListNameJoin(record) => {
-                        MasterListNameJoinRepository::new(con).upsert_one(record)?
-                    }
+) -> Result<(), SyncImportError> {
+    let con = registry
+        .get::<StorageConnectionManager>()
+        .connection()
+        .map_err(|error| SyncImportError::as_integration_error(error, ""))?;
+    con.transaction(|con| async move {
+        for record in &integration_records.upserts {
+            match integrate_record(record, con) {
+                Ok(_) => {}
+                Err(RepositoryError::ForeignKeyViolation(extra)) => {
+                    warn!("Failed to import (ignore): {:?}, error {}", record, extra);
                 }
+                Err(error) => return Err(SyncImportError::as_integration_error(error, record)),
             }
-            Ok(())
-        })
-        .await?;
-    Ok(result)
+        }
+        Ok(())
+    })
+    .await
+    .map_err(|error| match error {
+        TransactionError::Transaction { msg } => {
+            SyncImportError::as_integration_error(RepositoryError::as_db_error(&msg, ""), "")
+        }
+        TransactionError::Inner(e) => e,
+    })
 }
 
 #[cfg(test)]

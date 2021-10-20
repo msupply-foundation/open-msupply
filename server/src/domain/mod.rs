@@ -5,6 +5,7 @@ pub mod item;
 pub mod name;
 pub mod stock_line;
 pub mod supplier_invoice;
+
 use chrono::NaiveDateTime;
 
 #[derive(Clone)]
@@ -21,6 +22,16 @@ pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
     pub after_or_equal_to: Option<NaiveDateTime>,
+}
+
+impl DatetimeFilter {
+    pub fn date_range(from: NaiveDateTime, to: NaiveDateTime) -> DatetimeFilter {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: Some(from),
+            before_or_equal_to: Some(to),
+        }
+    }
 }
 pub struct Sort<T> {
     pub key: T,
