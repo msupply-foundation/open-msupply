@@ -27,7 +27,7 @@ use self::{
     name::LegacyNameRow, store::LegacyStoreRow,
 };
 
-use log::info;
+use log::{info, warn};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -194,8 +194,13 @@ async fn store_integration_records(
         .map_err(|error| SyncImportError::as_integration_error(error, ""))?;
     con.transaction(|con| async move {
         for record in &integration_records.upserts {
-            integrate_record(record, con)
-                .map_err(|error| SyncImportError::as_integration_error(error, record))?;
+            match integrate_record(record, con) {
+                Ok(_) => {}
+                Err(RepositoryError::ForeignKeyViolation(extra)) => {
+                    warn!("Failed to import (ignore): {:?}, error {}", record, extra);
+                }
+                Err(error) => return Err(SyncImportError::as_integration_error(error, record)),
+            }
         }
         Ok(())
     })
