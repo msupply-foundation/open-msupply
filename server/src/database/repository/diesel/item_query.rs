@@ -4,11 +4,10 @@ use crate::{
         repository::RepositoryError,
         schema::{
             diesel_schema::{
-                item, item::dsl as item_dsl, master_list_line,
-                master_list_line::dsl as master_list_line_dsl, master_list_name_join,
-                master_list_name_join::dsl as master_list_name_join_dsl,
+                item, item::dsl as item_dsl, item_is_visible,
+                item_is_visible::dsl as item_is_visible_dsl,
             },
-            ItemRow, MasterListLineRow, MasterListNameJoinRow,
+            ItemIsVisibleRow, ItemRow,
         },
     },
     domain::{
@@ -18,24 +17,19 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{Eq, IntoBoxed, LeftJoin},
+    dsl::{InnerJoin, IntoBoxed},
     prelude::*,
-    query_source::joins::OnClauseWrapper,
 };
 
-type ItemAndMasterList = (
-    ItemRow,
-    Option<MasterListLineRow>,
-    Option<MasterListNameJoinRow>,
-);
+type ItemAndMasterList = (ItemRow, ItemIsVisibleRow);
 
 impl From<ItemAndMasterList> for Item {
-    fn from((item_row, _, master_list_name_join_option): ItemAndMasterList) -> Self {
+    fn from((item_row, item_is_visible_row): ItemAndMasterList) -> Self {
         Item {
             id: item_row.id,
             name: item_row.name,
             code: item_row.code,
-            is_visible: master_list_name_join_option.is_some(),
+            is_visible: item_is_visible_row.is_visible,
         }
     }
 }
@@ -93,32 +87,13 @@ impl<'a> ItemQueryRepository<'a> {
     }
 }
 
-type BoxedItemQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<item::table, master_list_line::table>,
-        OnClauseWrapper<
-            master_list_name_join::table,
-            Eq<
-                master_list_line::columns::master_list_id,
-                master_list_name_join::columns::master_list_id,
-            >,
-        >,
-    >,
-    DBType,
->;
+type BoxedItemQuery = IntoBoxed<'static, InnerJoin<item::table, item_is_visible::table>, DBType>;
+
 pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
     // Join master_list_line
-    let item_and_master_list_line =
-        item_dsl::item.left_join(master_list_line_dsl::master_list_line);
-    // Join master_list_line_join (can only use primary key in joinable!)
-    // and trying to reduce joins (instead of going to master_list then to master_list_name_join)
-    let mut query =
-        item_and_master_list_line
-            .left_join(master_list_name_join_dsl::master_list_name_join.on(
-                master_list_line_dsl::master_list_id.eq(master_list_name_join_dsl::master_list_id),
-            ))
-            .into_boxed();
+    let mut query = item_dsl::item
+        .inner_join(item_is_visible_dsl::item_is_visible)
+        .into_boxed();
 
     if let Some(f) = filter {
         if let Some(code) = f.code {
@@ -136,11 +111,7 @@ pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
             }
         }
         if let Some(is_visible) = f.is_visible.as_ref().map(|v| v.equal_to).flatten() {
-            if is_visible {
-                query = query.filter(master_list_name_join_dsl::id.is_not_null());
-            } else {
-                query = query.filter(master_list_name_join_dsl::id.is_null());
-            }
+            query = query.filter(item_is_visible::is_visible.eq(is_visible));
         }
     }
     query
