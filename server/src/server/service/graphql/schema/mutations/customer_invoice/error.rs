@@ -93,3 +93,11 @@ impl InvoiceLineHasNoStockLineError {
         &self.0
     }
 }
+pub struct LineDoesNotReferenceStockLine;
+
+#[Object]
+impl LineDoesNotReferenceStockLine {
+    pub async fn description(&self) -> &'static str {
+        "Line does not reference any stock line"
+    }
+}

@@ -23,7 +23,7 @@ pub fn delete_customer_invoice(
 }
 
 pub enum DeleteCustomerInvoiceError {
-    InvoiceDoesNotExists,
+    InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
@@ -41,7 +41,10 @@ impl From<TransactionError<DeleteCustomerInvoiceError>> for DeleteCustomerInvoic
     fn from(error: TransactionError<DeleteCustomerInvoiceError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => {
-                DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError { msg })
+                DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
+                    msg,
+                    extra: "".to_string(),
+                })
             }
             TransactionError::Inner(e) => e,
         }

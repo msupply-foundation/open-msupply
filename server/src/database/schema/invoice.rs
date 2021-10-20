@@ -17,7 +17,7 @@ pub enum InvoiceRowStatus {
     Finalised,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
 #[table_name = "invoice"]
 pub struct InvoiceRow {
     pub id: String,

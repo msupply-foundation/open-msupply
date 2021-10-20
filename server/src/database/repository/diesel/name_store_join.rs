@@ -62,7 +62,7 @@ impl<'a> NameStoreJoinRepository<'a> {
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join_dsl::name_store_join)
             .values(row)
-            .on_conflict(id)
+            .on_conflict(name_store_join_dsl::id)
             .do_update()
             .set(row)
             .execute(&self.connection.connection)?;

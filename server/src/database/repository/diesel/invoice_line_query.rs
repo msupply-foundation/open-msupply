@@ -1,12 +1,18 @@
 use crate::{
     database::{
         repository::RepositoryError,
-        schema::{diesel_schema::invoice_line::dsl as invoice_line_dsl, InvoiceLineRow},
+        schema::{
+            diesel_schema::{invoice_line, invoice_line::dsl as invoice_line_dsl},
+            InvoiceLineRow,
+        },
     },
-    domain::invoice_line::InvoiceLine,
+    domain::{
+        invoice_line::{InvoiceLine, InvoiceLineFilter, InvoiceLineSort},
+        Pagination,
+    },
 };
 
-use super::StorageConnection;
+use super::{DBType, StorageConnection};
 
 use diesel::{dsl, prelude::*, sql_types::Double};
 
@@ -44,6 +50,30 @@ impl<'a> InvoiceLineQueryRepository<'a> {
         InvoiceLineQueryRepository { connection }
     }
 
+    pub fn count(&self, filter: Option<InvoiceLineFilter>) -> Result<i64, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
+
+        Ok(query.count().get_result(&self.connection.connection)?)
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<InvoiceLineFilter>,
+        _: Option<InvoiceLineSort>,
+    ) -> Result<Vec<InvoiceLine>, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
+
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<InvoiceLineRow>(&self.connection.connection)?;
+
+        Ok(result.into_iter().map(InvoiceLine::from).collect())
+    }
+
     /// Returns all invoice lines for the provided invoice ids.
     pub fn find_many_by_invoice_ids(
         &self,
@@ -76,4 +106,26 @@ impl<'a> InvoiceLineQueryRepository<'a> {
             })
             .collect())
     }
+}
+
+type BoxedInvoiceLineQuery = invoice_line::BoxedQuery<'static, DBType>;
+
+fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
+    let mut query = invoice_line::table.into_boxed();
+
+    if let Some(f) = filter {
+        if let Some(value) = f.id {
+            if let Some(eq) = value.equal_to {
+                query = query.filter(invoice_line_dsl::id.eq(eq));
+            }
+        }
+
+        if let Some(invoice_id) = f.invoice_id {
+            if let Some(eq) = invoice_id.equal_to {
+                query = query.filter(invoice_line_dsl::invoice_id.eq(eq));
+            }
+        }
+    }
+
+    query
 }

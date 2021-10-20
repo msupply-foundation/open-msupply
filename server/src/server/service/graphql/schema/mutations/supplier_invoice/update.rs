@@ -79,13 +79,13 @@ impl From<UpdateSupplierInvoiceError> for UpdateSupplierInvoiceResponse {
     fn from(error: UpdateSupplierInvoiceError) -> Self {
         use UpdateSupplierInvoiceErrorInterface as OutError;
         let error = match error {
-            UpdateSupplierInvoiceError::InvoiceDoesNotExists => {
+            UpdateSupplierInvoiceError::InvoiceDoesNotExist => {
                 OutError::RecordDoesNotExist(RecordDoesNotExist {})
             }
             UpdateSupplierInvoiceError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            UpdateSupplierInvoiceError::OtherPartyDoesNotExists => {
+            UpdateSupplierInvoiceError::OtherPartyDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
             UpdateSupplierInvoiceError::OtherPartyNotASupplier(name) => {
