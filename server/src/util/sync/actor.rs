@@ -1,10 +1,6 @@
 use crate::{
-    database::repository::RepositoryError,
     server::data::RepositoryRegistry,
-    util::sync::{
-        translation::SyncImportError, CentralSyncError, SyncConnectionError, SyncError,
-        Synchroniser,
-    },
+    util::sync::{SyncError, Synchroniser},
 };
 
 use log::info;
