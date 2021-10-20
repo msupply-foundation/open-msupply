@@ -25,7 +25,7 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
     fn from(error: TransactionError<RepositoryError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => RepositoryError::DBError {
-                msg: msg.clone(),
+                msg,
                 extra: "".to_string(),
             },
             TransactionError::Inner(e) => e,

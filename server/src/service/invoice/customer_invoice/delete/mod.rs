@@ -42,7 +42,7 @@ impl From<TransactionError<DeleteCustomerInvoiceError>> for DeleteCustomerInvoic
         match error {
             TransactionError::Transaction { msg } => {
                 DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
-                    msg: msg.clone(),
+                    msg,
                     extra: "".to_string(),
                 })
             }
