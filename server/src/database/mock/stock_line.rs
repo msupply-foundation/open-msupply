@@ -6,11 +6,11 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         item_id: String::from("item_a"),
         store_id: String::from("store_a"),
         batch: None,
-        available_number_of_packs: 1,
+        available_number_of_packs: 30,
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
-        total_number_of_packs: 1,
+        total_number_of_packs: 40,
         expiry_date: None,
     };
 
@@ -19,11 +19,11 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         item_id: String::from("item_a"),
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
-        available_number_of_packs: 2,
+        available_number_of_packs: 20,
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
-        total_number_of_packs: 1,
+        total_number_of_packs: 30,
         expiry_date: None,
     };
 
@@ -40,7 +40,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
-        total_number_of_packs: 1,
+        total_number_of_packs: 30,
         expiry_date: None,
     };
 
@@ -53,7 +53,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
-        total_number_of_packs: 1,
+        total_number_of_packs: 25,
         expiry_date: None,
     };
 
