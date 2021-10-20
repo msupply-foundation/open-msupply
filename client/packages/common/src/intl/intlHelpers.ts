@@ -1,4 +1,4 @@
-import { useIntl } from 'react-intl';
+import { FormatNumberOptions, useIntl } from 'react-intl';
 import type { PrimitiveType } from 'intl-messageformat';
 
 // "import type" ensures en messages aren't bundled by default
@@ -39,6 +39,14 @@ export const useFormatDate = (): ((
 ) => string) => {
   const intl = useIntl();
   return (value, options) => intl.formatDate(value, options);
+};
+
+export const useFormatNumber = (): ((
+  value: number | bigint,
+  options?: FormatNumberOptions
+) => string) => {
+  const intl = useIntl();
+  return (value, options) => intl.formatNumber(value, options);
 };
 
 export const useRtl = (): boolean => {

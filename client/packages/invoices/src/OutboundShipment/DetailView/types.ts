@@ -7,6 +7,10 @@ import {
 } from '@openmsupply-client/common';
 
 export interface ItemRow extends InvoiceLine {
+  batch?: string;
+  costPrice?: number;
+  packSize?: number;
+  sellPrice?: number;
   updateQuantity: (quantity: number) => void;
 }
 
