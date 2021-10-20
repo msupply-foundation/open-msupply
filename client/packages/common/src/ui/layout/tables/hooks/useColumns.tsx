@@ -6,7 +6,7 @@ import {
   ColumnAlign,
   Column,
 } from '../columns/types';
-import { useFormatDate } from '../../../../intl';
+import { useFormatDate, useFormatNumber } from '../../../../intl';
 import { BasicCell, BasicHeader } from '../components';
 import { SortBy } from '../../../..';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '..';
@@ -72,6 +72,7 @@ const getSortType = (column: { format?: ColumnFormat }) => {
   switch (column.format) {
     case ColumnFormat.Date:
       return 'datetime';
+    case ColumnFormat.Currency:
     case ColumnFormat.Real:
     case ColumnFormat.Integer:
       return 'numeric';
@@ -82,8 +83,9 @@ const getSortType = (column: { format?: ColumnFormat }) => {
 
 const getDefaultAccessor =
   <T extends DomainObject>(column: ColumnDefinition<T>) =>
-  (row: T) =>
-    row[column.key] as string;
+  (row: T) => {
+    return row[column.key] as string;
+  };
 
 const getDefaultFormatter = <T extends DomainObject>(
   column: ColumnDefinition<T>
@@ -93,6 +95,15 @@ const getDefaultFormatter = <T extends DomainObject>(
       return (date: unknown) => {
         const formatDate = useFormatDate();
         return formatDate(new Date(date as string));
+      };
+    }
+    case ColumnFormat.Currency: {
+      return (value: unknown) => {
+        if (Number.isNaN(value)) return '';
+
+        const formatNumber = useFormatNumber();
+        // TODO: fetch currency symbol or use style: 'currency'
+        return `$${formatNumber(Number(value))}`;
       };
     }
     default: {

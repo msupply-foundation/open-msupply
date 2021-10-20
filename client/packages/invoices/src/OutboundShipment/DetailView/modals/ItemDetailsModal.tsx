@@ -147,8 +147,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const checkAllocatedQuantities = () => {
     const values = getValues();
-    batchRows.map(batch => console.info(Number(values[batch.id] || 0)));
-
     const allocatedQuantity = batchRows.reduce(
       (total, batch) => (total += Number(values[batch.id] || 0)),
       0
