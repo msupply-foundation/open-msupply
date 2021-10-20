@@ -75,16 +75,16 @@ mod graphql {
 
         let base_variables = insert::Variables {
             id: Uuid::new_v4().to_string(),
-            other_party_id_isi: supplier.id.clone(),
-            status_isi: insert::InvoiceNodeStatus::Draft,
-            comment_isi: Some("some comment".to_string()),
-            their_reference_isi: Some("some reference".to_string()),
+            other_party_id: supplier.id.clone(),
+            status: insert::InvoiceNodeStatus::Draft,
+            comment_option: Some("some comment_option".to_string()),
+            their_reference_option: Some("some reference".to_string()),
         };
 
         // Test ForeingKeyError
 
         let mut variables = base_variables.clone();
-        variables.other_party_id_isi = "invalid".to_string();
+        variables.other_party_id = "invalid".to_string();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -100,7 +100,7 @@ mod graphql {
         // Test OtherPartyNotASupplier
 
         let mut variables = base_variables.clone();
-        variables.other_party_id_isi = not_supplier.id.clone();
+        variables.other_party_id = not_supplier.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -150,9 +150,9 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.status_isi = insert::InvoiceNodeStatus::Confirmed;
-        variables.comment_isi = None;
-        variables.their_reference_isi = None;
+        variables.status = insert::InvoiceNodeStatus::Confirmed;
+        variables.comment_option = None;
+        variables.their_reference_option = None;
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -180,7 +180,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.status_isi = insert::InvoiceNodeStatus::Finalised;
+        variables.status = insert::InvoiceNodeStatus::Finalised;
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -222,17 +222,17 @@ mod graphql {
         fn eq(&self, other: &insert::Variables) -> bool {
             let insert::Variables {
                 id,
-                other_party_id_isi,
-                status_isi,
-                comment_isi,
-                their_reference_isi,
+                other_party_id,
+                status,
+                comment_option,
+                their_reference_option,
             } = other;
 
             *id == self.id
-                && *other_party_id_isi == self.name_id
-                && *status_isi == self.status.clone().into()
-                && *comment_isi == self.comment
-                && *their_reference_isi == self.their_reference
+                && *other_party_id == self.name_id
+                && *status == self.status.clone().into()
+                && *comment_option == self.comment
+                && *their_reference_option == self.their_reference
         }
     }
 }

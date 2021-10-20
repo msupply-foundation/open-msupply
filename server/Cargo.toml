@@ -9,7 +9,7 @@ default-run = "remote_server"
 path = "src/lib.rs"
 
 [[bin]]
-path = "tests/graphql/export.rs"
+path = "graphql_schema/export.rs"
 name = "export_graphql"
 test = false
 bench = false

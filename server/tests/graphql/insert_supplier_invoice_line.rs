@@ -98,20 +98,20 @@ mod graphql {
 
         let base_variables = insert::Variables {
             id: Uuid::new_v4().to_string(),
-            invoice_id_isil: draft_supplier_invoice.id.clone(),
-            item_id_isil: item.id.clone(),
-            cost_price_per_pack_isil: 5.5,
-            sell_price_per_pack_isil: 7.7,
-            pack_size_isil: 3,
-            number_of_packs_isil: 9,
-            expiry_date_isil: Some(NaiveDate::from_ymd(2020, 8, 3)),
-            batch_isil: Some("some batch name".to_string()),
+            invoice_id: draft_supplier_invoice.id.clone(),
+            item_id: item.id.clone(),
+            cost_price_per_pack: 5.5,
+            sell_price_per_pack: 7.7,
+            pack_size: 3,
+            number_of_packs: 9,
+            expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
+            batch_option: Some("some batch name".to_string()),
         };
 
         // Test ForeingKeyError Item
 
         let mut variables = base_variables.clone();
-        variables.item_id_isil = "invalid".to_string();
+        variables.item_id = "invalid".to_string();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -125,7 +125,7 @@ mod graphql {
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_isil = "invalid".to_string();
+        variables.invoice_id = "invalid".to_string();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -139,7 +139,7 @@ mod graphql {
         // Test CannotEditFinalisedInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_isil = finalised_supplier_invoice.id.clone();
+        variables.invoice_id = finalised_supplier_invoice.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -153,7 +153,7 @@ mod graphql {
         // Test NotASupplierInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_isil = customer_invoice.id.clone();
+        variables.invoice_id = customer_invoice.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -166,7 +166,7 @@ mod graphql {
         // Test RangeError NumberOfPacks
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_isil = 0;
+        variables.number_of_packs = 0;
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -182,7 +182,7 @@ mod graphql {
         // Test RangeError PackSize
 
         let mut variables = base_variables.clone();
-        variables.number_of_packs_isil = 0;
+        variables.number_of_packs = 0;
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -229,7 +229,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.invoice_id_isil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -253,9 +253,9 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.expiry_date_isil = None;
-        variables.batch_isil = None;
-        variables.invoice_id_isil = confirmed_supplier_invoice.id.clone();
+        variables.expiry_date_option = None;
+        variables.batch_option = None;
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -279,7 +279,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.invoice_id_isil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -305,51 +305,51 @@ mod graphql {
     impl PartialEq<insert::Variables> for InvoiceLineRow {
         fn eq(&self, other: &insert::Variables) -> bool {
             let insert::Variables {
-                batch_isil,
-                cost_price_per_pack_isil,
-                expiry_date_isil,
-                id: id_isil,
-                invoice_id_isil,
-                item_id_isil,
-                number_of_packs_isil,
-                sell_price_per_pack_isil,
-                pack_size_isil,
+                batch_option,
+                cost_price_per_pack,
+                expiry_date_option,
+                id,
+                invoice_id,
+                item_id,
+                number_of_packs,
+                sell_price_per_pack,
+                pack_size,
             } = other;
 
-            *cost_price_per_pack_isil == self.cost_price_per_pack
-                && *expiry_date_isil == self.expiry_date
-                && *id_isil == self.id
-                && *invoice_id_isil == self.invoice_id
-                && *item_id_isil == self.item_id
-                && *number_of_packs_isil == self.number_of_packs as i64
-                && *sell_price_per_pack_isil == self.sell_price_per_pack
-                && *batch_isil == self.batch
-                && *pack_size_isil == self.pack_size as i64
+            *cost_price_per_pack == self.cost_price_per_pack
+                && *expiry_date_option == self.expiry_date
+                && *id == self.id
+                && *invoice_id == self.invoice_id
+                && *item_id == self.item_id
+                && *number_of_packs == self.number_of_packs as i64
+                && *sell_price_per_pack == self.sell_price_per_pack
+                && *batch_option == self.batch
+                && *pack_size == self.pack_size as i64
         }
     }
 
     impl PartialEq<insert::Variables> for StockLineRow {
         fn eq(&self, other: &insert::Variables) -> bool {
             let insert::Variables {
-                batch_isil,
-                cost_price_per_pack_isil,
-                expiry_date_isil,
+                batch_option,
+                cost_price_per_pack,
+                expiry_date_option,
                 id: _,
-                invoice_id_isil: _,
-                item_id_isil,
-                number_of_packs_isil,
-                sell_price_per_pack_isil,
-                pack_size_isil,
+                invoice_id: _,
+                item_id,
+                number_of_packs,
+                sell_price_per_pack,
+                pack_size,
             } = other;
 
-            *cost_price_per_pack_isil == self.cost_price_per_pack
-                && *expiry_date_isil == self.expiry_date
-                && *item_id_isil == self.item_id
-                && *number_of_packs_isil == self.available_number_of_packs as i64
-                && *number_of_packs_isil == self.total_number_of_packs as i64
-                && *sell_price_per_pack_isil == self.sell_price_per_pack
-                && *batch_isil == self.batch
-                && *pack_size_isil == self.pack_size as i64
+            *cost_price_per_pack == self.cost_price_per_pack
+                && *expiry_date_option == self.expiry_date
+                && *item_id == self.item_id
+                && *number_of_packs == self.available_number_of_packs as i64
+                && *number_of_packs == self.total_number_of_packs as i64
+                && *sell_price_per_pack == self.sell_price_per_pack
+                && *batch_option == self.batch
+                && *pack_size == self.pack_size as i64
         }
     }
 }

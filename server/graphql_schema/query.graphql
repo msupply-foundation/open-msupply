@@ -4,18 +4,18 @@
 
 mutation insertSupplierInvoiceFull(
   $id: String!
-  $otherPartyId_isi: String!
-  $status_isi: InvoiceNodeStatus!
-  $comment_isi: String
-  $theirReference_isi: String
+  $otherPartyId: String!
+  $status: InvoiceNodeStatus!
+  $comment_option: String
+  $theirReference_option: String
 ) {
   insertSupplierInvoice(
     input: {
       id: $id
-      otherPartyId: $otherPartyId_isi
-      status: $status_isi
-      theirReference: $theirReference_isi
-      comment: $comment_isi
+      otherPartyId: $otherPartyId
+      status: $status
+      theirReference: $theirReference_option
+      comment: $comment_option
     }
   ) {
     ...InsertSupplierInvoiceResponse
@@ -47,18 +47,18 @@ fragment InsertSupplierInvoiceErrorInterface on InsertSupplierInvoiceErrorInterf
 
 mutation updateSupplierInvoiceFull(
   $id: String!
-  $otherPartyId_usi: String
-  $status_usi: InvoiceNodeStatus
-  $comment_usi: String
-  $theirReference_usi: String
+  $otherPartyId_option: String
+  $status_option: InvoiceNodeStatus
+  $comment_option: String
+  $theirReference_option: String
 ) {
   updateSupplierInvoice(
     input: {
       id: $id
-      otherPartyId: $otherPartyId_usi
-      status: $status_usi
-      theirReference: $theirReference_usi
-      comment: $comment_usi
+      otherPartyId: $otherPartyId_option
+      status: $status_option
+      theirReference: $theirReference_option
+      comment: $comment_option
     }
   ) {
     ...UpdateSupplierInvoiceResponse
@@ -123,28 +123,28 @@ fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterf
 # INSERT SUPPLIER INVOICE LINE
 
 mutation insertSupplierInvoiceLineFull(
-  $batch_isil: String
-  $costPricePerPack_isil: Float!
-  $expiryDate_isil: NaiveDate
+  $batch_option: String
+  $costPricePerPack: Float!
+  $expiryDate_option: NaiveDate
   $id: String!
-  $invoiceId_isil: String!
-  $itemId_isil: String!
-  $numberOfPacks_isil: Int!
-  $sellPricePerPack_isil: Float!
-  $packSize_isil: Int!
+  $invoiceId: String!
+  $itemId: String!
+  $numberOfPacks: Int!
+  $sellPricePerPack: Float!
+  $packSize: Int!
 ) {
   insertSupplierInvoiceLine(
     input: {
       id: $id
-      invoiceId: $invoiceId_isil
-      itemId: $itemId_isil
-      packSize: $packSize_isil
-      costPricePerPack: $costPricePerPack_isil
-      sellPricePerPack: $sellPricePerPack_isil
-      numberOfPacks: $numberOfPacks_isil
-      expiryDate: $expiryDate_isil
-      batch: $batch_isil
-      packSize: $packSize_isil
+      invoiceId: $invoiceId
+      itemId: $itemId
+      packSize: $packSize
+      costPricePerPack: $costPricePerPack
+      sellPricePerPack: $sellPricePerPack
+      numberOfPacks: $numberOfPacks
+      expiryDate: $expiryDate_option
+      batch: $batch_option
+      packSize: $packSize
     }
   ) {
     ...InsertSupplierInvoiceLineResponse
@@ -178,28 +178,28 @@ fragment InsertSupplierInvoiceLineErrorInterface on InsertSupplierInvoiceLineErr
 # UPDATES SUPPLIER INVOICE LINE
 
 mutation updateSupplierInvoiceLineFull(
-  $batch_usil: String
-  $costPricePerPack_usil: Float
-  $expiryDate_usil: NaiveDate
+  $batch_option: String
+  $costPricePerPack_option: Float
+  $expiryDate_option: NaiveDate
   $id: String!
-  $invoiceId_usil: String!
-  $itemId_usil: String
-  $numberOfPacks_usil: Int
-  $sellPricePerPack_usil: Float
-  $packSize_usil: Int
+  $invoiceId: String!
+  $itemId_option: String
+  $numberOfPacks_option: Int
+  $sellPricePerPack_option: Float
+  $packSize_option: Int
 ) {
   updateSupplierInvoiceLine(
     input: {
       id: $id
-      invoiceId: $invoiceId_usil
-      itemId: $itemId_usil
-      packSize: $packSize_usil
-      costPricePerPack: $costPricePerPack_usil
-      sellPricePerPack: $sellPricePerPack_usil
-      numberOfPacks: $numberOfPacks_usil
-      expiryDate: $expiryDate_usil
-      batch: $batch_usil
-      packSize: $packSize_usil
+      invoiceId: $invoiceId
+      itemId: $itemId_option
+      packSize: $packSize_option
+      costPricePerPack: $costPricePerPack_option
+      sellPricePerPack: $sellPricePerPack_option
+      numberOfPacks: $numberOfPacks_option
+      expiryDate: $expiryDate_option
+      batch: $batch_option
+      packSize: $packSize_option
     }
   ) {
     ...UpdateSupplierInvoiceLineResponse
@@ -236,18 +236,18 @@ fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErr
 
 mutation updateCustomerInvoiceLineFull(
   $id: String!
-  $invoiceId_ucil: String!
-  $itemId_ucil: String
-  $numberOfPacks_ucil: Int
-  $stockLineId_ucil: String
+  $invoiceId: String!
+  $itemId_option: String
+  $numberOfPacks_option: Int
+  $stockLineId_option: String
 ) {
   updateCustomerInvoiceLine(
     input: {
       id: $id
-      invoiceId: $invoiceId_ucil
-      itemId: $itemId_ucil
-      numberOfPacks: $numberOfPacks_ucil
-      stockLineId: $stockLineId_ucil
+      invoiceId: $invoiceId
+      itemId: $itemId_option
+      numberOfPacks: $numberOfPacks_option
+      stockLineId: $stockLineId_option
     }
   ) {
     ...UpdateCustomerInvoiceLineResponse
@@ -288,18 +288,18 @@ fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErr
 
 mutation insertCustomerInvoiceLineFull(
   $id: String!
-  $invoiceId_icil: String!
-  $itemId_icil: String!
-  $numberOfPacks_icil: Int!
-  $stockLineId_icil: String!
+  $invoiceId: String!
+  $itemId: String!
+  $numberOfPacks: Int!
+  $stockLineId: String!
 ) {
   insertCustomerInvoiceLine(
     input: {
       id: $id
-      invoiceId: $invoiceId_icil
-      itemId: $itemId_icil
-      numberOfPacks: $numberOfPacks_icil
-      stockLineId: $stockLineId_icil
+      invoiceId: $invoiceId
+      itemId: $itemId
+      numberOfPacks: $numberOfPacks
+      stockLineId: $stockLineId
     }
   ) {
     ...InsertCustomerInvoiceLineResponse
@@ -336,8 +336,8 @@ fragment InsertCustomerInvoiceLineErrorInterface on InsertCustomerInvoiceLineErr
 
 # DELETE SUPPLIER INVOICE LINE
 
-mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId_dsil: String!) {
-  deleteSupplierInvoiceLine(input: { id: $id, invoiceId: $invoiceId_dsil }) {
+mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId: String!) {
+  deleteSupplierInvoiceLine(input: { id: $id, invoiceId: $invoiceId }) {
     ...DeleteSupplierInvoiceLineResponse
   }
 }
@@ -368,8 +368,8 @@ fragment DeleteSupplierInvoiceLineErrorInterface on DeleteSupplierInvoiceLineErr
 
 # DELETE CUSTOMER INVOICE LINE
 
-mutation deleteCustomerInvoiceLineFull($id: String!, $invoiceId_dcil: String!) {
-  deleteCustomerInvoiceLine(input: { id: $id, invoiceId: $invoiceId_dcil }) {
+mutation deleteCustomerInvoiceLineFull($id: String!, $invoiceId: String!) {
+  deleteCustomerInvoiceLine(input: { id: $id, invoiceId: $invoiceId }) {
     ...DeleteCustomerInvoiceLineResponse
   }
 }

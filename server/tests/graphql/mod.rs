@@ -146,8 +146,8 @@ use graphql_client::GraphQLQuery;
 type DateTime = ChronoDateTime<Utc>;
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -156,8 +156,8 @@ pub struct InsertSupplierInvoiceFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -166,8 +166,8 @@ pub struct UpdateSupplierInvoiceFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -176,8 +176,8 @@ pub struct DeleteSupplierInvoiceFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -186,8 +186,8 @@ pub struct InsertSupplierInvoiceLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -196,8 +196,8 @@ pub struct UpdateSupplierInvoiceLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -206,8 +206,8 @@ pub struct InvoiceFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -216,8 +216,8 @@ pub struct DeleteSupplierInvoiceLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -226,8 +226,8 @@ pub struct UpdateCustomerInvoiceLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -236,8 +236,8 @@ pub struct InsertCustomerInvoiceLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "tests/graphql/schema.graphql",
-    query_path = "tests/graphql/query.graphql",
+    schema_path = "graphql_schema/schema.graphql",
+    query_path = "graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"

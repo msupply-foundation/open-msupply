@@ -99,7 +99,7 @@ mod graphql {
 
         let base_variables = delete::Variables {
             id: draft_invoice_lines[0].id.clone(),
-            invoice_id_dsil: draft_supplier_invoice.id.clone(),
+            invoice_id: draft_supplier_invoice.id.clone(),
         };
 
         // Test RecordDoesNotExist Item
@@ -120,7 +120,7 @@ mod graphql {
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_dsil = "invalid".to_string();
+        variables.invoice_id = "invalid".to_string();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -136,7 +136,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = finalised_invoice_lines[0].id.clone();
-        variables.invoice_id_dsil = finalised_supplier_invoice.id.clone();
+        variables.invoice_id = finalised_supplier_invoice.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -151,7 +151,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = customer_invoice_lines[0].id.clone();
-        variables.invoice_id_dsil = customer_invoice.id.clone();
+        variables.invoice_id = customer_invoice.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -165,7 +165,7 @@ mod graphql {
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id_dsil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -180,7 +180,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[1].id.clone();
-        variables.invoice_id_dsil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
         let mut stock_line = StockLineRepository::new(&connection)
             .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
@@ -222,7 +222,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[0].id.clone();
-        variables.invoice_id_dsil = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_supplier_invoice.id.clone();
 
         let query = Delete::build_query(variables.clone());
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
