@@ -42,4 +42,9 @@ impl NameFilter {
 
         self
     }
+
+    pub fn match_is_supplier(mut self, value: bool) -> Self {
+        self.is_supplier = Some(value);
+        self
+    }
 }

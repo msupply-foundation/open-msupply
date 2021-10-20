@@ -152,11 +152,12 @@ mod tests {
 
     use crate::{
         database::{
+            mock::MockDataInserts,
             repository::{
                 repository::{
                     MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
                 },
-                ItemQueryRepository, ItemRepository, NameRepository, StorageConnectionManager,
+                ItemQueryRepository, ItemRepository, NameRepository,
             },
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
@@ -189,10 +190,8 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository() {
         // Prepare
-        let (pool, _, _) = test_db::setup_all("test_item_query_repository", false).await;
-        let storage_connection = StorageConnectionManager::new(pool.clone())
-            .connection()
-            .unwrap();
+        let (_, storage_connection, _) =
+            test_db::setup_all("test_item_query_repository", MockDataInserts::none()).await;
         let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let rows = data();
@@ -275,10 +274,11 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository_visibility() {
         // Prepare
-        let (pool, _, _) = test_db::setup_all("test_item_query_repository_visibility", false).await;
-        let storage_connection = StorageConnectionManager::new(pool.clone())
-            .connection()
-            .unwrap();
+        let (_, storage_connection, _) = test_db::setup_all(
+            "test_item_query_repository_visibility",
+            MockDataInserts::none(),
+        )
+        .await;
         let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let item_rows = vec![

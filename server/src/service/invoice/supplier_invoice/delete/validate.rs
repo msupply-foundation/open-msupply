@@ -3,28 +3,30 @@ use crate::{
         repository::{InvoiceLineQueryRepository, StorageConnection},
         schema::InvoiceRow,
     },
+    domain::{invoice::InvoiceType, supplier_invoice::DeleteSupplierInvoice},
     service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, CommonErrors,
+        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
+        InvoiceIsFinalised, WrongInvoiceType,
     },
 };
 
 use super::DeleteSupplierInvoiceError;
 
 pub fn validate(
-    id: &str,
+    input: &DeleteSupplierInvoice,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, DeleteSupplierInvoiceError> {
-    let invoice = check_invoice_exists(&id, connection)?;
+    let invoice = check_invoice_exists(&input.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice)?;
+    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
     check_invoice_finalised(&invoice)?;
-    check_lines_exist(id, connection)?;
+    check_lines_exist(&input.id, connection)?;
 
     Ok(invoice)
 }
 
-pub fn check_lines_exist(
+fn check_lines_exist(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), DeleteSupplierInvoiceError> {
@@ -38,14 +40,20 @@ pub fn check_lines_exist(
     }
 }
 
-impl From<CommonErrors> for DeleteSupplierInvoiceError {
-    fn from(error: CommonErrors) -> Self {
-        use DeleteSupplierInvoiceError::*;
-        match error {
-            CommonErrors::InvoiceDoesNotExists => InvoiceDoesNotExists,
-            CommonErrors::DatabaseError(error) => DatabaseError(error),
-            CommonErrors::InvoiceIsFinalised => CannotEditFinalised,
-            CommonErrors::NotASupplierInvoice => NotASupplierInvoice,
-        }
+impl From<WrongInvoiceType> for DeleteSupplierInvoiceError {
+    fn from(_: WrongInvoiceType) -> Self {
+        DeleteSupplierInvoiceError::NotASupplierInvoice
+    }
+}
+
+impl From<InvoiceIsFinalised> for DeleteSupplierInvoiceError {
+    fn from(_: InvoiceIsFinalised) -> Self {
+        DeleteSupplierInvoiceError::CannotEditFinalised
+    }
+}
+
+impl From<InvoiceDoesNotExist> for DeleteSupplierInvoiceError {
+    fn from(_: InvoiceDoesNotExist) -> Self {
+        DeleteSupplierInvoiceError::InvoiceDoesNotExist
     }
 }

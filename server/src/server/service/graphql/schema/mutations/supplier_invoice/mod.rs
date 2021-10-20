@@ -32,11 +32,3 @@ impl PackSizeAboveZero {
         "Packsize must be above zero"
     }
 }
-
-pub struct NumberOfPacksAboveZero;
-#[Object]
-impl NumberOfPacksAboveZero {
-    pub async fn description(&self) -> &'static str {
-        "Number of packs must be above zero"
-    }
-}

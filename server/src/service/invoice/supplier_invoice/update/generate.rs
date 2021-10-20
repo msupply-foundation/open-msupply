@@ -12,11 +12,16 @@ use crate::{
 
 use super::UpdateSupplierInvoiceError;
 
+pub struct LineAndStockLine {
+    pub stock_line: StockLineRow,
+    pub line: InvoiceLineRow,
+}
+
 pub fn generate(
     existing_invoice: InvoiceRow,
     patch: UpdateSupplierInvoice,
     connection: &StorageConnection,
-) -> Result<(Option<Vec<StockLineRow>>, InvoiceRow), UpdateSupplierInvoiceError> {
+) -> Result<(Option<Vec<LineAndStockLine>>, InvoiceRow), UpdateSupplierInvoiceError> {
     let should_create_batches = should_create_batches(&existing_invoice, &patch);
     let mut update_invoice = existing_invoice;
 
@@ -34,7 +39,10 @@ pub fn generate(
         Ok((None, update_invoice))
     } else {
         Ok((
-            Some(generate_batches(&update_invoice.id, connection)?),
+            Some(generate_lines_and_stock_lines(
+                &update_invoice.id,
+                connection,
+            )?),
             update_invoice,
         ))
     }
@@ -68,26 +76,36 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateSupplierInvoi
     }
 }
 
-pub fn generate_batches(
+pub fn generate_lines_and_stock_lines(
     id: &str,
     connection: &StorageConnection,
-) -> Result<Vec<StockLineRow>, UpdateSupplierInvoiceError> {
-    let invoice_lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
+) -> Result<Vec<LineAndStockLine>, UpdateSupplierInvoiceError> {
+    let lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
-    for InvoiceLineRow {
-        item_id,
-        batch,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        number_of_packs,
-        expiry_date,
-        ..
-    } in invoice_lines.into_iter()
-    {
-        result.push(StockLineRow {
-            id: uuid(),
+    for invoice_lines in lines.into_iter() {
+        let stock_line_id = uuid();
+        let mut line = invoice_lines.clone();
+        line.stock_line_id = Some(stock_line_id.clone());
+
+        let InvoiceLineRow {
+            id: _,
+            invoice_id: _,
+            item_id,
+            item_name: _,
+            item_code: _,
+            stock_line_id: _,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            total_after_tax: _,
+            number_of_packs,
+        }: InvoiceLineRow = invoice_lines;
+
+        let stock_line = StockLineRow {
+            id: stock_line_id,
             item_id,
             store_id: current_store_id(connection)?,
             batch,
@@ -97,7 +115,9 @@ pub fn generate_batches(
             available_number_of_packs: number_of_packs,
             total_number_of_packs: number_of_packs,
             expiry_date,
-        });
+        };
+
+        result.push(LineAndStockLine { line, stock_line });
     }
     Ok(result)
 }

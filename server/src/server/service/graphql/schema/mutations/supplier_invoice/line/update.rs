@@ -1,16 +1,19 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use crate::server::service::graphql::schema::{
-    mutations::{
-        supplier_invoice::{NumberOfPacksAboveZero, PackSizeAboveZero},
-        CannotEditFinalisedInvoice, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
-        NotASupplierInvoice, RecordDoesNotExist,
+use crate::{
+    domain::{invoice_line::InvoiceLine, supplier_invoice::UpdateSupplierInvoiceLine},
+    server::service::graphql::schema::{
+        mutations::{
+            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordDoesNotExist,
+        },
+        types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
-    types::{DatabaseError, ErrorWrapper, InvoiceLineNode},
+    service::{invoice_line::UpdateSupplierInvoiceLineError, SingleRecordError},
 };
 
-use super::InvoiceLineBelongsToAnotherInvoice;
+use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 
 #[derive(InputObject)]
 pub struct UpdateSupplierInvoiceLineInput {
@@ -28,7 +31,8 @@ pub struct UpdateSupplierInvoiceLineInput {
 #[derive(Union)]
 pub enum UpdateSupplierInvoiceLineResponse {
     Error(ErrorWrapper<UpdateSupplierInvoiceLineErrorInterface>),
-    Response(InvoiceLineNode),
+    #[graphql(flatten)]
+    Response(InvoiceLineResponse),
 }
 
 #[derive(Interface)]
@@ -37,10 +41,95 @@ pub enum UpdateSupplierInvoiceLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordDoesNotExist(RecordDoesNotExist),
-    PackSizeAboveOne(PackSizeAboveZero),
-    NumberOfPacksAboveZero(NumberOfPacksAboveZero),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     NotASupplierInvoice(NotASupplierInvoice),
+    BatchIsReserved(BatchIsReserved),
+    RangeError(RangeError),
+}
+
+impl From<UpdateSupplierInvoiceLineInput> for UpdateSupplierInvoiceLine {
+    fn from(
+        UpdateSupplierInvoiceLineInput {
+            id,
+            invoice_id,
+            item_id,
+            pack_size,
+            batch,
+            expiry_date,
+            sell_price_per_pack,
+            cost_price_per_pack,
+            number_of_packs,
+        }: UpdateSupplierInvoiceLineInput,
+    ) -> Self {
+        UpdateSupplierInvoiceLine {
+            id,
+            invoice_id,
+            item_id,
+            pack_size,
+            batch,
+            expiry_date,
+            sell_price_per_pack,
+            cost_price_per_pack,
+            number_of_packs,
+        }
+    }
+}
+
+impl From<Result<InvoiceLine, SingleRecordError>> for UpdateSupplierInvoiceLineResponse {
+    fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
+        let invoice_line_response: InvoiceLineResponse = result.into();
+        // Implemented by flatten union
+        invoice_line_response.into()
+    }
+}
+
+impl From<UpdateSupplierInvoiceLineError> for UpdateSupplierInvoiceLineResponse {
+    fn from(error: UpdateSupplierInvoiceLineError) -> Self {
+        use UpdateSupplierInvoiceLineErrorInterface as OutError;
+        let error = match error {
+            UpdateSupplierInvoiceLineError::LineDoesNotExist => {
+                OutError::RecordDoesNotExist(RecordDoesNotExist {})
+            }
+            UpdateSupplierInvoiceLineError::DatabaseError(error) => {
+                OutError::DatabaseError(DatabaseError(error))
+            }
+            UpdateSupplierInvoiceLineError::InvoiceDoesNotExist => {
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
+            }
+            UpdateSupplierInvoiceLineError::NotASupplierInvoice => {
+                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            }
+            UpdateSupplierInvoiceLineError::NotThisStoreInvoice => {
+                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
+            }
+            UpdateSupplierInvoiceLineError::CannotEditFinalised => {
+                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+            }
+            UpdateSupplierInvoiceLineError::ItemNotFound => {
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
+            }
+            UpdateSupplierInvoiceLineError::NumberOfPacksBelowOne => {
+                OutError::RangeError(RangeError {
+                    field: RangeField::NumberOfPacks,
+                    range: Range::Min(1),
+                })
+            }
+            UpdateSupplierInvoiceLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
+                field: RangeField::PackSize,
+                range: Range::Min(1),
+            }),
+            UpdateSupplierInvoiceLineError::BatchIsReserved => {
+                OutError::BatchIsReserved(BatchIsReserved {})
+            }
+            UpdateSupplierInvoiceLineError::NotThisInvoiceLine(invoice_id) => {
+                OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
+                    invoice_id,
+                ))
+            }
+        };
+
+        UpdateSupplierInvoiceLineResponse::Error(ErrorWrapper { error })
+    }
 }

@@ -74,7 +74,7 @@ impl From<InsertSupplierInvoiceError> for InsertSupplierInvoiceResponse {
             InsertSupplierInvoiceError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            InsertSupplierInvoiceError::OtherPartyDoesNotExists => {
+            InsertSupplierInvoiceError::OtherPartyDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
             InsertSupplierInvoiceError::OtherPartyNotASupplier(name) => {
