@@ -12,6 +12,7 @@ use serde_json::{json, Value};
 
 mod customer_invoice_delete;
 mod customer_invoice_insert;
+mod customer_invoice_update;
 mod invoice_query;
 mod invoices;
 mod names;
