@@ -49,7 +49,7 @@ impl<'a> ItemRepository<'a> {
         Ok(result?)
     }
 
-    pub async fn find_one_by_id(&self, item_id: &str) -> Result<ItemRow, RepositoryError> {
+    pub fn find_one_by_id(&self, item_id: &str) -> Result<ItemRow, RepositoryError> {
         use crate::database::schema::diesel_schema::item::dsl::*;
         let result = item
             .filter(id.eq(item_id))

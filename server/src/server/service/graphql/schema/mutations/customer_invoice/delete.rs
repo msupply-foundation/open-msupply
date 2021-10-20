@@ -41,7 +41,7 @@ impl From<DeleteCustomerInvoiceError> for DeleteCustomerInvoiceResponse {
     fn from(error: DeleteCustomerInvoiceError) -> Self {
         use DeleteCustomerInvoiceErrorInterface as OutError;
         let error = match error {
-            DeleteCustomerInvoiceError::InvoiceDoesNotExists => {
+            DeleteCustomerInvoiceError::InvoiceDoesNotExist => {
                 OutError::RecordDoesNotExist(RecordDoesNotExist {})
             }
             DeleteCustomerInvoiceError::CannotEditFinalised => {

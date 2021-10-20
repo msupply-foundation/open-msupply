@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    domain::supplier_invoice::DeleteSupplierInvoice,
     server::service::graphql::schema::{
         mutations::{
             CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
@@ -10,6 +11,11 @@ use crate::{
     },
     service::invoice::DeleteSupplierInvoiceError,
 };
+
+#[derive(InputObject)]
+pub struct DeleteSupplierInvoiceInput {
+    id: String,
+}
 
 #[derive(Union)]
 pub enum DeleteSupplierInvoiceResponse {
@@ -28,6 +34,12 @@ pub enum DeleteSupplierInvoiceErrorInterface {
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
 }
 
+impl From<DeleteSupplierInvoiceInput> for DeleteSupplierInvoice {
+    fn from(input: DeleteSupplierInvoiceInput) -> Self {
+        DeleteSupplierInvoice { id: input.id }
+    }
+}
+
 impl From<Result<String, DeleteSupplierInvoiceError>> for DeleteSupplierInvoiceResponse {
     fn from(result: Result<String, DeleteSupplierInvoiceError>) -> Self {
         match result {
@@ -41,7 +53,7 @@ impl From<DeleteSupplierInvoiceError> for DeleteSupplierInvoiceResponse {
     fn from(error: DeleteSupplierInvoiceError) -> Self {
         use DeleteSupplierInvoiceErrorInterface as OutError;
         let error = match error {
-            DeleteSupplierInvoiceError::InvoiceDoesNotExists => {
+            DeleteSupplierInvoiceError::InvoiceDoesNotExist => {
                 OutError::RecordDoesNotExist(RecordDoesNotExist {})
             }
             DeleteSupplierInvoiceError::DatabaseError(error) => {

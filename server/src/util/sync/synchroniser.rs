@@ -84,24 +84,34 @@ impl Synchroniser {
         const BATCH_SIZE: u32 = 500;
 
         Ok(loop {
-            info!("Pulling central sync records...");
+            info!("Pulling {} central sync records...", BATCH_SIZE);
             let sync_batch: CentralSyncBatch = self
                 .connection
                 .pull_central_records(cursor, BATCH_SIZE)
                 .await
                 .map_err(|source| CentralSyncError::PullCentralSyncRecordsError { source })?;
-            info!("Pulled central sync records");
 
-            if let Some(central_sync_records) = sync_batch.data {
-                for central_sync_record in central_sync_records {
-                    central_sync_buffer_repository
-                        .insert_one_and_update_cursor(&central_sync_record)
-                        .await
-                        .map_err(|source| {
-                            CentralSyncError::UpdateCentralSyncBufferRecordsError { source }
-                        })?;
-                }
+            let central_sync_records = sync_batch.data.map_or(vec![], |records| records);
+
+            if central_sync_records.len() == 0 {
+                info!("Central sync buffer is up-to-date");
+                break;
             }
+
+            info!(
+                "Inserting {} central sync records into central sync buffer",
+                central_sync_records.len()
+            );
+
+            for central_sync_record in central_sync_records {
+                central_sync_buffer_repository
+                    .insert_one_and_update_cursor(&central_sync_record)
+                    .await
+                    .map_err(
+                        |source| CentralSyncError::UpdateCentralSyncBufferRecordsError { source },
+                    )?;
+            }
+            info!("Successfully inserted central sync records into central sync buffer");
 
             cursor = central_sync_cursor_repository
                 .get_cursor()
@@ -131,7 +141,7 @@ impl Synchroniser {
 
         let mut records: Vec<RemoteSyncRecord> = Vec::new();
         while sync_batch.queue_length > 0 {
-            info!("Pulling remote sync records...");
+            info!("Pulling {} remote sync records...", sync_batch.queue_length);
             sync_batch = self
                 .connection
                 .pull_remote_records()
@@ -140,7 +150,7 @@ impl Synchroniser {
                     msg: "Failed to pull remote sync records",
                     source: anyhow::Error::from(source),
                 })?;
-            info!("Pulled remote sync records");
+            info!("Pulled {} remote sync records", sync_batch.queue_length);
 
             // TODO: acknowledge after integration.
             if let Some(data) = sync_batch.data {
@@ -172,16 +182,27 @@ impl Synchroniser {
 
         let mut records: Vec<CentralSyncBufferRow> = Vec::new();
         for table_name in TRANSLATION_RECORDS {
+            info!("Querying central sync buffer for {} records", table_name);
+
             let mut buffer_rows = central_sync_buffer_repository
                 .get_sync_entries(table_name)
                 .await
                 .map_err(|source| CentralSyncError::GetCentralSyncBufferRecordsError { source })?;
+
+            info!(
+                "Found {} {} records in central sync buffer",
+                buffer_rows.len(),
+                table_name
+            );
+
             records.append(&mut buffer_rows);
         }
 
+        info!("Importing {} central sync buffer records...", records.len());
         import_sync_records(registry, &records)
             .await
             .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
+        info!("Successfully Imported central sync buffer records",);
 
         // TODO needs to be done for M1 as name_store_joins are not synced yet but are required in API
         // these records should actually sync from server in remote sync
@@ -192,10 +213,12 @@ impl Synchroniser {
             };
         }
 
+        info!("Clearing central sync buffer");
         central_sync_buffer_repository
             .remove_all()
             .await
             .map_err(|source| CentralSyncError::RemoveCentralSyncBufferRecordsError { source })?;
+        info!("Successfully cleared central sync buffer");
 
         Ok(())
     }
