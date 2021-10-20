@@ -41,7 +41,10 @@ impl From<TransactionError<DeleteCustomerInvoiceError>> for DeleteCustomerInvoic
     fn from(error: TransactionError<DeleteCustomerInvoiceError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => {
-                DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError { msg })
+                DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
+                    msg,
+                    extra: "".to_string(),
+                })
             }
             TransactionError::Inner(e) => e,
         }
