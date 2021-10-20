@@ -30,7 +30,7 @@ impl From<TransactionError<InsertCustomerInvoiceError>> for InsertCustomerInvoic
         match error {
             TransactionError::Transaction { msg } => {
                 InsertCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
-                    msg: msg.clone(),
+                    msg,
                     extra: "".to_string(),
                 })
             }
