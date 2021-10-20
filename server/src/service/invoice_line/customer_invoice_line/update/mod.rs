@@ -2,6 +2,7 @@ use crate::{
     database::{
         repository::{
             InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+            TransactionError,
         },
         schema::{InvoiceLineRow, StockLineRow},
     },
@@ -20,18 +21,26 @@ pub fn update_customer_invoice_line(
     input: UpdateCustomerInvoiceLine,
 ) -> Result<String, UpdateCustomerInvoiceLineError> {
     let connection = connection_manager.connection()?;
-    // TODO do inside transaction
-    let (line, item, batch_pair, invoice) = validate(&input, &connection)?;
+    let new_line = connection
+        .transaction_sync(|connection| {
+            let (line, item, batch_pair, invoice) = validate(&input, &connection)?;
 
-    let (new_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
-    InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
+            let (new_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
+            InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
 
-    let stock_line_repo = StockLineRepository::new(&connection);
-    stock_line_repo.upsert_one(&batch_pair.main_batch)?;
-    if let Some(previous_batch) = batch_pair.previous_batch_option {
-        stock_line_repo.upsert_one(&previous_batch)?;
-    }
-
+            let stock_line_repo = StockLineRepository::new(&connection);
+            stock_line_repo.upsert_one(&batch_pair.main_batch)?;
+            if let Some(previous_batch) = batch_pair.previous_batch_option {
+                stock_line_repo.upsert_one(&previous_batch)?;
+            }
+            Ok(new_line)
+        })
+        .map_err(
+            |error: TransactionError<UpdateCustomerInvoiceLineError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
     Ok(new_line.id)
 }
 /// During customer invoice line update, stock line may change thus validation and updates need to apply to both batches

@@ -1,5 +1,7 @@
 use crate::{
-    database::repository::{InvoiceRepository, RepositoryError, StorageConnectionManager},
+    database::repository::{
+        InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
+    },
     domain::{invoice_line::InvoiceLine, supplier_invoice::DeleteSupplierInvoice},
     service::WithDBError,
 };
@@ -13,11 +15,18 @@ pub fn delete_supplier_invoice(
     input: DeleteSupplierInvoice,
 ) -> Result<String, DeleteSupplierInvoiceError> {
     let connection = connection_manager.connection()?;
-    // TODO do inside transaction
-    validate(&input, &connection)?;
-
-    InvoiceRepository::new(&connection).delete(&input.id)?;
-
+    connection
+        .transaction_sync(|connection| {
+            validate(&input, &connection)?;
+            InvoiceRepository::new(&connection).delete(&input.id)?;
+            Ok(())
+        })
+        .map_err(
+            |error: TransactionError<DeleteSupplierInvoiceError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
     Ok(input.id)
 }
 

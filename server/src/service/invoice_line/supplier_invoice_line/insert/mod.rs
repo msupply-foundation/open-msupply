@@ -1,6 +1,7 @@
 use crate::{
     database::repository::{
         InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+        TransactionError,
     },
     domain::supplier_invoice::InsertSupplierInvoiceLine,
     service::WithDBError,
@@ -17,15 +18,23 @@ pub fn insert_supplier_invoice_line(
     input: InsertSupplierInvoiceLine,
 ) -> Result<String, InsertSupplierInvoiceLineError> {
     let connection = connection_manager.connection()?;
-    // TODO do inside transaction
-    let (item, invoice) = validate(&input, &connection)?;
-    let (new_line, new_batch_option) = generate(input, item, invoice, &connection)?;
+    let new_line = connection
+        .transaction_sync(|connection| {
+            let (item, invoice) = validate(&input, &connection)?;
+            let (new_line, new_batch_option) = generate(input, item, invoice, &connection)?;
 
-    if let Some(new_batch) = new_batch_option {
-        StockLineRepository::new(&connection).upsert_one(&new_batch)?;
-    }
-    InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
-
+            if let Some(new_batch) = new_batch_option {
+                StockLineRepository::new(&connection).upsert_one(&new_batch)?;
+            }
+            InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
+            Ok(new_line)
+        })
+        .map_err(
+            |error: TransactionError<InsertSupplierInvoiceLineError>| match error {
+                TransactionError::Transaction { msg } => RepositoryError::DBError { msg }.into(),
+                TransactionError::Inner(error) => error,
+            },
+        )?;
     Ok(new_line.id)
 }
 
