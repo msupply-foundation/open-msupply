@@ -26,6 +26,10 @@ impl LegacyListMasterNameJoinRow {
         let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)
             .map_err(|source| SyncTranslationError { table_name, source })?;
 
+        if data.name_ID = "" {
+            return Ok(None);
+        }
+
         Ok(Some(MasterListNameJoinRow {
             id: data.ID,
             master_list_id: data.list_master_ID,
