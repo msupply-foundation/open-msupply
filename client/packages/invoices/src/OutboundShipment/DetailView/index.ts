@@ -10,10 +10,11 @@ export const placeholderInvoice: OutboundShipment = {
   color: 'grey',
   status: 'draft',
   type: '',
-  entered: '',
-  confirmed: '',
+  entryDatetime: '',
+  confirmedDatetime: '',
   invoiceNumber: '',
   lines: [],
+  pricing: { totalAfterTax: 0 },
   dispatch: null,
   hold: false,
   name: {

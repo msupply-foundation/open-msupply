@@ -38,12 +38,12 @@ export const getDetailQuery = (): string => gql`
       comment
       status
       type
-      entered
-      confirmed
+      entryDatetime
+      confirmedDatetime
       invoiceNumber
-      total
-      color
-      hold
+      pricing {
+        totalAfterTax
+      }
       name {
         id
         name
@@ -107,21 +107,54 @@ export const getDeleteMutation = (): string => gql`
 `;
 
 export const getListQuery = (): string => gql`
-  query invoices($first: Int, $offset: Int, $sort: String, $desc: Boolean) {
-    invoices(first: $first, offset: $offset, sort: $sort, desc: $desc) {
-      data {
-        id
-        color
-        comment
-        status
-        type
-        entered
-        confirmed
-        invoiceNumber
-        total
-        otherPartyName
+  query invoices(
+    $first: Int
+    $offset: Int
+    $key: InvoiceSortFieldInput!
+    $desc: Boolean
+  ) {
+    invoices(
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+    ) {
+      ... on ConnectorError {
+        __typename
+        error {
+          description
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+        }
       }
-      totalLength
+      ... on InvoiceConnector {
+        nodes {
+          id
+          invoiceNumber
+          finalisedDatetime
+          entryDatetime
+          confirmedDatetime
+          comment
+          otherPartyName
+          status
+          theirReference
+          type
+          pricing {
+            ... on NodeError {
+              __typename
+              error {
+                description
+              }
+            }
+            ... on InvoicePricingNode {
+              __typename
+              totalAfterTax
+            }
+          }
+        }
+        totalCount
+      }
     }
   }
 `;
@@ -148,15 +181,23 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-}): Promise<{ data: Invoice[]; totalLength: number }> => {
-  const { first, offset, sortBy } = queryParams;
+}): Promise<{ nodes: Invoice[]; totalCount: number }> => {
+  const {
+    first = 20,
+    offset = 0,
+    sortBy = { key: 'TYPE', isDesc: false },
+  } = queryParams;
 
-  const { invoices } = await request(Environment.API_URL, getListQuery(), {
-    first,
-    offset,
-    sort: sortBy.key,
-    desc: sortBy.isDesc,
-  });
+  const { invoices } = await request(
+    'http://localhost:8000/graphql',
+    getListQuery(),
+    {
+      first,
+      offset,
+      key: 'TYPE',
+      desc: sortBy.isDesc,
+    }
+  );
 
   return invoices;
 };

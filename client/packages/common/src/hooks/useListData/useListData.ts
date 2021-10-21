@@ -16,7 +16,7 @@ export interface ListApi<T extends ObjectWithStringKeys> {
     first: number;
     offset: number;
     sortBy: SortBy<T>;
-  }) => () => Promise<{ data: T[]; totalLength: number }>;
+  }) => () => Promise<{ nodes: T[]; totalCount: number }>;
   onDelete: (toDelete: T[]) => Promise<void>;
   onUpdate: (toUpdate: T) => Promise<T>;
   onCreate: (toCreate: Partial<T>) => Promise<T>;
@@ -24,7 +24,7 @@ export interface ListApi<T extends ObjectWithStringKeys> {
 
 interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   data?: T[];
-  totalLength?: number;
+  totalCount?: number;
   invalidate: () => void;
   fullQueryKey: readonly unknown[];
   queryParams: QueryParams<T>;
@@ -82,8 +82,9 @@ export const useListData = <T extends ObjectWithStringKeys>(
   );
 
   return {
-    ...(data ?? {}),
     ...queryParams,
+    totalCount: data?.totalCount,
+    data: data?.nodes,
     onCreate,
     invalidate,
     isCreateLoading,
