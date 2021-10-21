@@ -203,11 +203,11 @@ async fn store_integration_records(
                     warn!("Failed to import ({}): {:?}", err, record);
                     Ok(())
                 }
-                _ => sub_result,
-            }
-            .map_err(|error| {
-                SyncImportError::as_integration_error(RepositoryError::from(error), "")
-            })?;
+                Err(err) => Err(SyncImportError::as_integration_error(
+                    RepositoryError::from(err),
+                    "",
+                )),
+            }?;
         }
         Ok(())
     })
