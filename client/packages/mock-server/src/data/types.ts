@@ -1,3 +1,9 @@
+export interface Store {
+  id: string;
+  code: string;
+  nameId: string;
+}
+
 export interface Item {
   id: string;
   code: string;
@@ -27,6 +33,7 @@ export interface StockLine {
   totalNumberOfPacks: number;
   packSize: number;
   itemId: string;
+  storeId: string;
   costPricePerPack: number;
   sellPricePerPack: number;
 }
@@ -45,6 +52,11 @@ export interface InvoiceLine {
   stockLineId: string;
   itemId: string;
   invoiceId: string;
+  costPricePerPack: number;
+  sellPricePerPack: number;
+  totalAfterTax: number;
+  numberOfPacks: number;
+  packSize: number;
 }
 
 export interface ResolvedInvoiceLine extends InvoiceLine {
@@ -58,12 +70,14 @@ export interface Invoice {
   comment: string;
   status: string;
   type: string;
-  entered: string;
-  confirmed: string;
+  entryDatetime: string;
+  confirmedDatetime: string;
+  finalisedDatetime: string | null;
   invoiceNumber: number;
-  total: string;
   nameId: string;
+  storeId: string;
   hold: boolean;
+  pricing: { totalAfterTax: string };
 }
 
 export interface ResolvedInvoice extends Invoice {

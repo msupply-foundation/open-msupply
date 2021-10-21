@@ -5,26 +5,32 @@ import { PaginationOptions } from '../index';
 import { Invoice as InvoiceType } from '../data/types';
 
 const Types = `
-type Invoice {
+  type Invoice {
     id: String
     color: String
     comment: String
     status: String
     type: String
-    entered: String
-    confirmed: String
+    entryDatetime: String
+    confirmedDatetime: String
+    finalisedDatetime: String
     invoiceNumber: Int
     total: String
     name: Name
     otherPartyName: String
     hold: Boolean
     lines: [InvoiceLine]
-}
+    pricing: InvoicePricingNode
+  }
 
-type InvoiceResponse { 
-  data: [Invoice]
-  totalLength: Int
-}
+  type InvoicePricingNode {
+    totalAfterTax: Float
+  }
+
+  type InvoiceResponse { 
+    nodes: [Invoice]
+    totalCount: Int
+  }
 `;
 
 const QueryResolvers = {

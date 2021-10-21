@@ -41,7 +41,7 @@ export const insert = {
       ) + 1;
 
     const createdInvoice = db.insert.invoice(
-      createInvoice(invoice.id, invoiceNumber, invoice.nameId)
+      createInvoice(invoice.id, invoiceNumber, invoice.nameId, '')
     );
 
     return createdInvoice;
