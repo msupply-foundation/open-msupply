@@ -89,7 +89,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
 
   const {
-    totalLength,
+    totalCount,
     data,
     isLoading,
     onDelete,
@@ -118,10 +118,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
         },
       ],
       'invoiceNumber',
-      'entered',
-      'confirmed',
-      'total',
+      'entryDatetime',
+      'confirmedDatetime',
       'comment',
+      ['total', { accessor: invoice => invoice.pricing.totalAfterTax }],
       'selection',
     ],
     { onChangeSortBy, sortBy },
@@ -183,7 +183,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       </AppBarButtonsPortal>
 
       <RemoteDataTable
-        pagination={{ ...pagination, total: totalLength }}
+        pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}
         data={data?.slice(0, numberOfRows) || []}

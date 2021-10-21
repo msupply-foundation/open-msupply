@@ -59,8 +59,8 @@ describe('ColumnDefinitionSetBuilder', () => {
       .addColumn('type', { order: 0 })
       .addColumn({ key: 'status' })
       .addColumn({ key: 'invoiceNumber' })
-      .addColumn('confirmed', { order: 3 })
-      .addColumn('entered', { order: 1 })
+      .addColumn('confirmedDatetime', { order: 3 })
+      .addColumn('entryDatetime', { order: 1 })
       .build();
 
     expect(columns).toEqual([

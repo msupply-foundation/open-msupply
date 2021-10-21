@@ -67,7 +67,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     dispatch({ type: ActionType.UpsertLine, payload: { invoiceLine } });
   };
 
-  const entered = draft?.entered ? d(new Date(draft.entered)) : '-';
+  const entered = draft?.entryDatetime ? d(new Date(draft.entryDatetime)) : '-';
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');

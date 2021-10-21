@@ -73,14 +73,17 @@ export interface Invoice extends DomainObject {
   theirReference: string;
   status: string;
   type: string;
-  entered: string;
-  confirmed: string;
+  entryDatetime: string;
+  confirmedDatetime: string;
   invoiceNumber: string;
   total: string;
   name?: Name;
   otherPartyName: string;
   hold: boolean;
   lines: InvoiceLine[];
+  pricing: {
+    totalAfterTax: number;
+  };
 }
 
 export type OutboundShipmentStatus =
