@@ -104,8 +104,8 @@ impl From<DieselError> for RepositoryError {
             DieselError::AlreadyInTransaction => {
                 Error::as_db_error("DIESEL_ALREADY_IN_TRANSACTION", "")
             }
-            DieselError::__Nonexhaustive => {
-                // get a more detailed diesel msg:
+            _ => {
+                // try to get a more detailed diesel msg:
                 let diesel_msg = format!("{}", err);
                 Error::as_db_error("DIESEL_UNKNOWN", diesel_msg)
             }
