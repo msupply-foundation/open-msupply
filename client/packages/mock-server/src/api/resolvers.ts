@@ -90,9 +90,12 @@ export const ResolverService = {
       return createListResponse(items.length, data);
     },
 
-    name: (): ListResponse<Name> => {
+    name: (type: 'customer' | 'supplier'): ListResponse<Name> => {
       // TODO: Filter customers/suppliers etc
-      const names = db.get.all.name();
+      const names = db.get.all.name().filter(({ isCustomer }) => {
+        return isCustomer === (type === 'customer');
+      });
+
       return createListResponse(names.length, names);
     },
     stockLine: (): ListResponse<ResolvedStockLine> => {

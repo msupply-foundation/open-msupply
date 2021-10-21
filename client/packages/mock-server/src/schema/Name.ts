@@ -23,7 +23,7 @@ const Queries = `
 
 const QueryResolvers = {
   names: (): ListResponse<NameType> => {
-    return Api.ResolverService.list.name();
+    return Api.ResolverService.list.name('customer');
   },
 };
 

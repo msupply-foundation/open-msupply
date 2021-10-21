@@ -42,7 +42,7 @@ export const namesList = graphql.query<
   Record<string, unknown>,
   PaginationOptions
 >('names', (_, response, context) => {
-  const result = Api.ResolverService.list.name();
+  const result = Api.ResolverService.list.name('customer');
 
   return response(context.data({ names: result }));
 });
