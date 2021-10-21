@@ -16,7 +16,10 @@ use chrono::{DateTime, Utc};
 #[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
 #[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
 pub struct SortInput<T: InputType> {
+    /// Sort query result by `key`
     pub key: T,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
     pub desc: Option<bool>,
 }
 
@@ -50,7 +53,9 @@ where
 
 #[derive(InputObject, Clone)]
 pub struct SimpleStringFilterInput {
+    /// Search term must be an exact match (case sensitive)
     equal_to: Option<String>,
+    /// Search term must be included in search candidate (case insensitive)
     like: Option<String>,
 }
 
@@ -67,6 +72,7 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
 
 #[derive(InputObject, Clone)]
 pub struct EqualFilterStringInput {
+    /// Search term must be an exact match
     equal_to: Option<String>,
 }
 

@@ -17,9 +17,13 @@ pub type NameSortInput = SortInput<NameSortFieldInput>;
 
 #[derive(InputObject, Clone)]
 pub struct NameFilterInput {
+    /// Filter by name
     pub name: Option<SimpleStringFilterInput>,
+    /// Filter by code
     pub code: Option<SimpleStringFilterInput>,
+    /// Filter by customer property
     pub is_customer: Option<bool>,
+    /// Filter by supplier property
     pub is_supplier: Option<bool>,
 }
 
