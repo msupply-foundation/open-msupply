@@ -72,13 +72,18 @@ where
 #[derive(InputObject)]
 pub struct PaginationInput {
     /// Max number of returned items
-    pub limit: Option<u32>,
+    pub first: Option<u32>,
     /// First returned item is at the `offset` position in the full list
     pub offset: Option<u32>,
 }
 
 impl From<PaginationInput> for PaginationOption {
-    fn from(PaginationInput { limit, offset }: PaginationInput) -> Self {
+    fn from(
+        PaginationInput {
+            first: limit,
+            offset,
+        }: PaginationInput,
+    ) -> Self {
         PaginationOption { limit, offset }
     }
 }

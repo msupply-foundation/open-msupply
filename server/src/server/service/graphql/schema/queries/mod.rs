@@ -24,7 +24,7 @@ impl Queries {
     pub async fn names(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (limit and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<NameFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
@@ -43,7 +43,7 @@ impl Queries {
     pub async fn items(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (limit and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<ItemFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ItemSortInput>>,
@@ -70,7 +70,7 @@ impl Queries {
     pub async fn invoices(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (limit and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
