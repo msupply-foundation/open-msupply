@@ -20,12 +20,13 @@ impl Queries {
         "1.0".to_string()
     }
 
+    /// Query omSupply "name" entries
     pub async fn names(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "pagination (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "filters option")] filter: Option<NameFilterInput>,
-        #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<NameFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
     ) -> NamesResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
@@ -38,12 +39,13 @@ impl Queries {
         .into()
     }
 
+    /// Query omSupply "item" entries
     pub async fn items(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "pagination (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "filters option")] filter: Option<ItemFilterInput>,
-        #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ItemFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ItemSortInput>>,
     ) -> ItemsResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
@@ -68,9 +70,9 @@ impl Queries {
     pub async fn invoices(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "pagination (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "filters option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "sort options (only first sort input is evaluated for this endpoint)")]
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> InvoicesResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
