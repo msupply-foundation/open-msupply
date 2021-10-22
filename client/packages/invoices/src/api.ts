@@ -13,21 +13,41 @@ import { Environment } from '@openmsupply-client/config';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
-  mutation insertInvoice($invoice: InvoicePatch) {
-    insertInvoice(invoice: $invoice) {
-      id
-      invoiceNumber
+  mutation insertInvoice($id: String!, $otherPartyId: String!) {
+    insertCustomerInvoice(input: { id: $id, otherPartyId: $otherPartyId }) {
+      __typename
+      ... on InvoiceNode {
+        id
+        comment
+        confirmedDatetime
+        entryDatetime
+        finalisedDatetime
+        invoiceNumber
+      }
+      ... on NodeError {
+        __typename
+        error {
+          description
+        }
+      }
+      ... on InsertCustomerInvoiceError {
+        __typename
+        error {
+          description
+        }
+      }
     }
   }
 `;
 
 export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
   const result = await request(Environment.API_URL, getInsertInvoiceQuery(), {
-    invoice,
+    id: invoice.id,
+    otherPartyId: invoice['nameId'],
   });
-  const { insertInvoice } = result;
+  const { insertCustomerInvoice } = result;
 
-  return insertInvoice;
+  return insertCustomerInvoice;
 };
 
 export const getDetailQuery = (): string => gql`
@@ -81,22 +101,16 @@ export const getDetailQuery = (): string => gql`
 
 export const getNameListQuery = (): string => gql`
   query names {
-    names {
+    names(filter: { isCustomer: true }) {
       ... on NameConnector {
         nodes {
-          code
           id
-          isCustomer
-          isSupplier
+          code
           name
+          isSupplier
+          isCustomer
         }
         totalCount
-      }
-      ... on ConnectorError {
-        __typename
-        error {
-          description
-        }
       }
     }
   }
