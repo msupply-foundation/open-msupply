@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   getNextOutboundStatusButtonTranslation,
   getStatusTranslation,
-  isInvoiceSaveable,
+  isInvoiceEditable,
   outboundStatuses,
 } from '../utils';
 import { OutboundShipment } from './types';
@@ -44,7 +44,7 @@ export const OutboundDetailFooter: FC<OutboundDetailFooterProps> = ({
           height={64}
         >
           <ToggleButton
-            disabled={!isInvoiceSaveable(draft)}
+            disabled={!isInvoiceEditable(draft)}
             value={!!draft.hold}
             selected={!!draft.hold}
             onClick={(_, value) => {
@@ -65,7 +65,7 @@ export const OutboundDetailFooter: FC<OutboundDetailFooterProps> = ({
               sx={{ fontSize: '12px' }}
               onClick={() => navigate(-1)}
             />
-            {isInvoiceSaveable(draft) && (
+            {isInvoiceEditable(draft) && (
               <>
                 <ButtonWithIcon
                   Icon={<SaveIcon />}

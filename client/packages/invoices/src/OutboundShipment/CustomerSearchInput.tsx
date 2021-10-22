@@ -17,17 +17,20 @@ interface CustomerSearchProps {
   onChange: (name: Name) => void;
   width?: number;
   value?: Name;
+  disabled?: boolean;
 }
 
 export const CustomerSearchInput: FC<CustomerSearchProps> = ({
   onChange,
   width = 250,
   value,
+  disabled = false,
 }) => {
   const { data, isLoading } = useQuery(['names', 'list'], nameListQueryFn);
 
   return (
     <Autocomplete
+      disabled={disabled}
       clearable={false}
       value={
         value && {

@@ -26,6 +26,7 @@ export interface AutocompleteProps<T> {
   value?: AutocompleteOption<T>;
   clearable?: boolean;
   isOptionEqualToValue?: (option: T, value: T) => boolean;
+  disabled?: boolean;
 }
 
 export function Autocomplete<T>({
@@ -43,6 +44,7 @@ export function Autocomplete<T>({
   value,
   isOptionEqualToValue,
   clearable = true,
+  disabled,
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -56,6 +58,7 @@ export function Autocomplete<T>({
 
   return (
     <MuiAutocomplete
+      disabled={disabled}
       isOptionEqualToValue={isOptionEqualToValue}
       defaultValue={defaultValue}
       disableClearable={!clearable}
