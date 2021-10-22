@@ -36,8 +36,8 @@ import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 import { ExternalURL } from '@openmsupply-client/config';
 import { ActionType, ItemRow } from './types';
-import { OutboundShipmentDetailViewToolbar } from './OutboundShipmentDetailViewToolbar';
-import { getStatusTranslation } from '../utils';
+import { OutboundDetailToolbar } from './OutboundDetailToolbar';
+import { getStatusTranslation, isInvoiceEditable } from '../utils';
 import { OutboundDetailFooter } from './OutboundDetailFooter';
 
 const useDraftOutbound = () => {
@@ -159,6 +159,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       <AppBarButtonsPortal>
         <Grid container gap={1}>
           <ButtonWithIcon
+            disabled={!isInvoiceEditable(draft)}
             labelKey="button.add-item"
             Icon={<PlusCircleIcon />}
             onClick={() => setItemModalOpen(true)}
@@ -177,7 +178,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         upsertInvoiceLine={upsertInvoiceLine}
       />
 
-      <OutboundShipmentDetailViewToolbar
+      <OutboundDetailToolbar
         draft={draft}
         onChangeTab={(val: string) => onChangeTab(val)}
         currentTab={currentTab}
