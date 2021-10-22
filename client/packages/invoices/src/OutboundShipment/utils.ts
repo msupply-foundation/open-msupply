@@ -52,6 +52,6 @@ export const getStatusTranslation = (
   return StatusTranslation[currentStatus] ?? StatusTranslation.draft;
 };
 
-export const isInvoiceSaveable = (outbound: OutboundShipment): boolean => {
+export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
   return outbound.status !== 'shipped' && outbound.status !== 'delivered';
 };
