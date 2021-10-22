@@ -69,13 +69,13 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  if (!detailPanelRef) return null;
-
   useEffect(() => {
     if (isSmallScreen && isOpen) close();
     if (!isSmallScreen && !isOpen) open();
     return () => close();
   }, [isSmallScreen]);
+
+  if (!detailPanelRef) return null;
 
   return (
     <Portal container={detailPanelRef.current}>
