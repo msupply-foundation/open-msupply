@@ -27,7 +27,7 @@ const adjustStockLineQuantity = (
 };
 
 export const insert = {
-  invoice: (invoice: Invoice): Invoice => {
+  invoice: (invoice: Invoice): Invoice & { __typename: string } => {
     const existing = db.get.byId.invoice(invoice.id);
     if (existing.id) {
       throw new Error(`Invoice with the ID ${invoice.id} already exists!`);
@@ -44,7 +44,7 @@ export const insert = {
       createInvoice(invoice.id, invoiceNumber, invoice.otherPartyId, '')
     );
 
-    return createdInvoice;
+    return { ...createdInvoice, __typename: 'InvoiceNode' };
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
     const existing = db.get.byId.invoiceLine(invoiceLine.id);

@@ -35,9 +35,9 @@ const MutationResolvers = {
   },
   insertCustomerInvoice: (
     _: any,
-    { invoice }: { invoice: InvoiceType }
+    { input }: { input: InvoiceType }
   ): InvoiceType => {
-    return Api.MutationService.insert.invoice(invoice);
+    return Api.MutationService.insert.invoice(input);
   },
   deleteCustomerInvoice: (
     _: any,
