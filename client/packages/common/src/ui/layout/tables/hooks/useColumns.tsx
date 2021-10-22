@@ -94,10 +94,6 @@ const getDefaultFormatter = <T extends DomainObject>(
     case ColumnFormat.Date: {
       return (date: unknown) => {
         const formatDate = useFormatDate();
-        console.log('-------------------------------------------');
-        console.log('column', column.key);
-        console.log('date', date);
-        console.log('-------------------------------------------');
         return formatDate(new Date(date as string));
       };
     }

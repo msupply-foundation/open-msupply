@@ -13,19 +13,12 @@ const QueryResolvers = {
       sort: { key: string; desc: boolean };
     }
   ): ListResponse<InvoiceType> => {
-    console.log('-------------------------------------------');
-    console.log('1');
-    console.log('-------------------------------------------');
-    const x = Api.ResolverService.list.invoice({
+    return Api.ResolverService.list.invoice({
       first: page.first,
       offset: page.offset,
       desc: sort.desc,
       sort: sort.key,
     });
-    console.log('-------------------------------------------');
-    console.log('2');
-    console.log('-------------------------------------------');
-    return x;
   },
 
   invoice: (_: any, { id }: { id: string }): InvoiceType => {
