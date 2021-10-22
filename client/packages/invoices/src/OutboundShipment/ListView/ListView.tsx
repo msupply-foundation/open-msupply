@@ -16,7 +16,6 @@ import {
   useListData,
   getNameAndColorColumn,
   DeleteIcon,
-  EditIcon,
   TableProvider,
   createTableStore,
   useTableStore,
@@ -39,7 +38,7 @@ const ListViewToolBar: FC<{
 }> = ({ onDelete, data }) => {
   const t = useTranslation();
 
-  const { success, info, warning } = useNotification();
+  const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -67,18 +66,6 @@ const ListViewToolBar: FC<{
     <DropdownMenu label="Select">
       <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
         {t('button.delete-lines')}
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        IconComponent={EditIcon}
-        onClick={warning('Whats this do?')}
-      >
-        Edit
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        IconComponent={DownloadIcon}
-        onClick={success('Successfully exported to CSV!')}
-      >
-        {t('button.export-to-csv')}
       </DropdownMenuItem>
     </DropdownMenu>
   );
