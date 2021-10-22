@@ -1,4 +1,4 @@
-import { PaginationOptions } from './../index';
+import { PaginationOptions } from './../data/types';
 import { graphql, rest } from 'msw';
 import { Api } from '../api';
 

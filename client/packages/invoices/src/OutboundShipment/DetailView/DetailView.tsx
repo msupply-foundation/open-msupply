@@ -46,7 +46,7 @@ const useDraftOutbound = () => {
   const { draft, save, dispatch, state } = useDocument(
     ['invoice', id ?? 'new'],
     reducer,
-    getOutboundShipmentDetailViewApi(Number(id))
+    getOutboundShipmentDetailViewApi(id ?? '')
   );
 
   const onChangeSortBy: (sortBy: Column<ItemRow>) => void = column => {
@@ -144,9 +144,9 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       'itemCode',
       'itemName',
       'batch',
-      'expiry',
-      'costPrice',
-      'sellPrice',
+      'expiryDate',
+      'costPricePerPack',
+      'sellPricePerPack',
       'packSize',
       getEditableQuantityColumn(),
     ],

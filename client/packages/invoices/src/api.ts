@@ -31,35 +31,48 @@ export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
 };
 
 export const getDetailQuery = (): string => gql`
-  query invoiceByInvoiceNumber($invoiceNumber: Int) {
-    invoiceByInvoiceNumber(invoiceNumber: $invoiceNumber) {
-      id
-      color
-      comment
-      status
-      type
-      entryDatetime
-      confirmedDatetime
-      invoiceNumber
-      pricing {
-        totalAfterTax
-      }
-      name {
+  query invoice($id: String!) {
+    invoice(id: $id) {
+      ... on InvoiceNode {
         id
-        name
-        code
+        comment
+        confirmedDatetime
+        entryDatetime
+        finalisedDatetime
+        invoiceNumber
+        lines {
+          ... on InvoiceLineConnector {
+            nodes {
+              batch
+              costPricePerPack
+              expiryDate
+              id
+              itemCode
+              itemId
+              itemName
+              numberOfPacks
+              packSize
+              sellPricePerPack
+            }
+            totalCount
+          }
+        }
+        otherPartyId
+        otherPartyName
+        pricing {
+          ... on InvoicePricingNode {
+            __typename
+            totalAfterTax
+          }
+        }
+        status
+        theirReference
+        type
       }
-      lines {
-        id
-        itemCode
-        itemName
-        expiry
-        quantity
-        stockLine {
-          batch
-          costPricePerPack
-          packSize
-          sellPricePerPack
+      ... on NodeError {
+        __typename
+        error {
+          description
         }
       }
     }
@@ -69,14 +82,22 @@ export const getDetailQuery = (): string => gql`
 export const getNameListQuery = (): string => gql`
   query names {
     names {
-      data {
-        id
-        name
-        code
-        isCustomer
-        isSupplier
+      ... on NameConnector {
+        nodes {
+          code
+          id
+          isCustomer
+          isSupplier
+          name
+        }
+        totalCount
       }
-      totalLength
+      ... on ConnectorError {
+        __typename
+        error {
+          description
+        }
+      }
     }
   }
 `;
@@ -85,7 +106,6 @@ export const getMutation = (): string => gql`
   mutation updateInvoice($invoicePatch: InvoicePatch) {
     updateInvoice(invoice: $invoicePatch) {
       id
-      color
       comment
       status
       type
@@ -93,7 +113,6 @@ export const getMutation = (): string => gql`
       confirmed
       invoiceNumber
       total
-      color
     }
   }
 `;
@@ -170,8 +189,8 @@ export const deleteFn = async (invoices: Invoice[]) => {
 };
 
 export const nameListQueryFn = async (): Promise<{
-  data: Name[];
-  totalLength: number;
+  nodes: Name[];
+  totalCount: number;
 }> => {
   const { names } = await request(Environment.API_URL, getNameListQuery());
   return names;
@@ -189,12 +208,13 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   } = queryParams;
 
   const { invoices } = await request(
-    'http://localhost:8000/graphql',
+    // 'http://localhost:8000/graphql',
+    Environment.API_URL,
     getListQuery(),
     {
       first,
       offset,
-      key: 'TYPE',
+      key: sortBy.key,
       desc: sortBy.isDesc,
     }
   );
@@ -202,15 +222,16 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
   return invoices;
 };
 
-export const detailQueryFn =
-  (invoiceNumber: number) => async (): Promise<Invoice> => {
-    const result = await request(Environment.API_URL, getDetailQuery(), {
-      invoiceNumber,
-    });
-    const { invoiceByInvoiceNumber } = result;
+export const detailQueryFn = (id: string) => async (): Promise<Invoice> => {
+  const result = await request(Environment.API_URL, getDetailQuery(), {
+    id,
+  });
+  const { invoice } = result;
 
-    return invoiceByInvoiceNumber;
-  };
+  const mapped = { ...invoice, lines: invoice.lines.nodes };
+
+  return mapped;
+};
 
 export const updateFn = async (updated: Invoice): Promise<Invoice> => {
   const invoicePatch: Partial<Invoice> = { ...updated };
@@ -240,9 +261,9 @@ interface Api<ReadType, UpdateType> {
 }
 
 export const getOutboundShipmentDetailViewApi: (
-  invoiceNumber: number
-) => Api<Invoice, OutboundShipment> = (invoiceNumber: number) => ({
-  onRead: detailQueryFn(invoiceNumber),
+  id: string
+) => Api<Invoice, OutboundShipment> = (id: string) => ({
+  onRead: detailQueryFn(id),
   onUpdate: async (outboundShipment: OutboundShipment): Promise<Invoice> => {
     const result = await updateFn(outboundShipment);
     return result;

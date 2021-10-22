@@ -1,31 +1,5 @@
-import { ListResponse } from './../index';
 import { Api } from '../api';
-import { Item as ItemType } from '../data/types';
-
-const Types = `
-type AvailableBatches {
-  nodes: [StockLine]
-}
-
-type Item {
-    id: String
-    isVisible: Boolean
-    name: String
-    code: String
-    availableQuantity: Int
-    availableBatches: AvailableBatches
-}
-
-type ItemResponse { 
-    data: [Item],
-    totalLength: Int
-}
-
-`;
-
-const Queries = `
-    items: ItemResponse
-`;
+import { ListResponse, Item as ItemType } from '../data/types';
 
 const QueryResolvers = {
   items: (): ListResponse<ItemType> => {
@@ -33,4 +7,4 @@ const QueryResolvers = {
   },
 };
 
-export const Item = { Types, Queries, QueryResolvers };
+export const Item = { QueryResolvers };

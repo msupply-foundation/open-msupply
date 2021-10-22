@@ -96,7 +96,7 @@ export const reducer = (
             draft[key] = data[key];
           });
 
-          draft.lines = draft.lines.map(item => ({
+          draft.lines = draft.lines?.map(item => ({
             ...item,
             updateQuantity: (quantity: number) =>
               dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
@@ -136,7 +136,7 @@ export const reducer = (
           const { payload } = action;
           const { rowKey, quantity } = payload;
 
-          const row = state.draft.lines.find(({ id }) => id === rowKey);
+          const row = state.draft.lines?.find(({ id }) => id === rowKey);
 
           if (row) {
             row.quantity = quantity;

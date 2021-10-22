@@ -1,25 +1,5 @@
-import { ListResponse } from './../index';
 import { Api } from '../api';
-import { Name as NameType } from '../data/types';
-
-const Types = `
-type Name {
-    id: String
-    name: String
-    code: String
-    isCustomer: Boolean
-    isSupplier: Boolean
-}
-
-type NameResponse { 
-    data: [Name],
-    totalLength: Int
-}
-`;
-
-const Queries = `
-    names: NameResponse
-`;
+import { ListResponse, Name as NameType } from '../data/types';
 
 const QueryResolvers = {
   names: (): ListResponse<NameType> => {
@@ -27,4 +7,4 @@ const QueryResolvers = {
   },
 };
 
-export const Name = { Types, Queries, QueryResolvers };
+export const Name = { QueryResolvers };
