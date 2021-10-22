@@ -41,7 +41,7 @@ export const insert = {
       ) + 1;
 
     const createdInvoice = db.insert.invoice(
-      createInvoice(invoice.id, invoiceNumber, invoice.nameId, '')
+      createInvoice(invoice.id, invoiceNumber, invoice.otherPartyId, '')
     );
 
     return createdInvoice;
@@ -80,7 +80,7 @@ export const remove = {
   invoice: (invoiceId: string): string => {
     const resolvedInvoice = Api.ResolverService.byId.invoice(String(invoiceId));
 
-    resolvedInvoice.lines.forEach(line => {
+    resolvedInvoice.lines.nodes.forEach(line => {
       remove.invoiceLine(line.id);
     });
 

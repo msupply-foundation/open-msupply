@@ -45,23 +45,34 @@ const listQueryFn = async (): Promise<Item[]> => {
     gql`
       query items {
         items {
-          data {
-            id
-            isVisible
-            name
-            code
-            availableQuantity
-            availableBatches {
-              nodes {
-                id
-                batch
-                expiryDate
-                packSize
-                costPricePerPack
-                sellPricePerPack
-                availableNumberOfPacks
-                totalNumberOfPacks
+          ... on ItemConnector {
+            nodes {
+              id
+              code
+              availableBatches {
+                ... on StockLineConnector {
+                  nodes {
+                    availableNumberOfPacks
+                    batch
+                    costPricePerPack
+                    expiryDate
+                    id
+                    itemId
+                    packSize
+                    sellPricePerPack
+                    storeId
+                    totalNumberOfPacks
+                  }
+                }
+                ... on ConnectorError {
+                  __typename
+                  error {
+                    description
+                  }
+                }
               }
+              isVisible
+              name
             }
           }
         }
@@ -69,7 +80,7 @@ const listQueryFn = async (): Promise<Item[]> => {
     `
   );
 
-  return items.data;
+  return items.nodes;
 };
 
 const sortByExpiryDate = (a: BatchRow, b: BatchRow) => {
