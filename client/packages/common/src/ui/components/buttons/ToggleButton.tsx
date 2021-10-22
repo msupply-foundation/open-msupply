@@ -37,6 +37,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
         boxShadow: theme => theme.shadows[1],
         borderRadius: '24px',
         height: '40px',
+        justifyContent: 'center',
 
         // The intention of this padding is for giving a bit of extra space on the
         // right hand side of the typography as an offset for the checkbox, keeping
@@ -53,7 +54,9 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
         }}
         checked={selected}
       />
-      <Typography variant="body2">{label}</Typography>
+      <Typography sx={{ fontSize: '12px' }} variant="body2">
+        {label}
+      </Typography>
     </MuiToggleButton>
   );
 };
