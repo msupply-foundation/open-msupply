@@ -10,6 +10,27 @@ mSupply remote server is a component of the Open mSupply system:
 
 ### Windows
 
+- Install [rustup.exe](https://www.rust-lang.org/tools/install), following the instructions for installing Visual Studio C++ Build Tools if prompted.
+- Install [PostgreSQL](enterprisedb.com/downloads/postgres-postgresql-downloads).
+- Locate your `PostgresSQL` installation directory (e.g. `C:\Program Files\PostgreSQL\14\`).
+- Update `Path` and `PQ_LIB_DIR` environment variables:
+
+```
+> $env:PQ_LIB_DIR='C:\Program Files\PostgreSQL\14\lib'
+> $env:Path+='C:\Program Files\PostgreSQL\14\lib;C:\Program Files\PostgreSQL\14\bin'
+```
+
+- To persist `Path` and `PQ_LIB_DIR` for all future sessions, paste the following into a powershell terminal (requires administrator privileges):
+
+```
+# CAUTION: this is irreversable!
+Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $env:Path
+Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PQ_LIB_DIR -Value $env:PQ_LIB_DIR
+```
+
+### Windows Subsystem for Linux (WSL)
+
+
 - Install [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and [Ubuntu 20.04 LTS](https://www.microsoft.com/en-nz/p/ubuntu-2004-lts/9n6svws3rx71).
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install) for `Windows Subsystem for Linux` users.
 - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-windows/wsl) for WLS2.
