@@ -1,4 +1,4 @@
 server:
-  host: 127.0.01
+  host: 127.0.0.1
 sync:
-  host: 127.0.01
+  host: 127.0.0.1
