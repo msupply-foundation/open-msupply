@@ -1,4 +1,4 @@
-import { PaginationOptions } from './../index';
+import { PaginationOptions, Invoice } from './../data/types';
 import { graphql, rest } from 'msw';
 import { Api } from '../api';
 
@@ -18,11 +18,14 @@ const insertInvoice = graphql.mutation(
   'insertInvoice',
   (request, response, context) => {
     const { variables } = request;
-    const { invoice } = variables;
+    const { id, otherPartyId } = variables;
 
-    const result = Api.MutationService.insert.invoice(invoice);
+    const result = Api.MutationService.insert.invoice({
+      id,
+      otherPartyId,
+    } as unknown as Invoice);
 
-    return response(context.data({ insertInvoice: result }));
+    return response(context.data({ insertCustomerInvoice: result }));
   }
 );
 
@@ -42,7 +45,7 @@ export const namesList = graphql.query<
   Record<string, unknown>,
   PaginationOptions
 >('names', (_, response, context) => {
-  const result = Api.ResolverService.list.name();
+  const result = Api.ResolverService.list.name('customer');
 
   return response(context.data({ names: result }));
 });

@@ -4,8 +4,10 @@ import {
   ResolvedStockLine,
   ResolvedInvoiceLine,
   Name,
+  PaginationOptions,
+  ListResponse,
 } from './../data/types';
-import { PaginationOptions, ListResponse } from './../index';
+
 import { getSumFn, getDataSorter } from '../utils';
 import { db } from '../data/database';
 
@@ -16,9 +18,14 @@ const getAvailableQuantity = (itemId: string): number => {
   return quantity;
 };
 
-const createListResponse = <T>(totalLength: number, data: T[]) => ({
-  totalLength,
-  data,
+const createListResponse = <T>(
+  totalCount: number,
+  nodes: T[],
+  typeName: string
+) => ({
+  totalCount,
+  nodes,
+  __typename: typeName,
 });
 
 export const ResolverService = {
@@ -26,17 +33,25 @@ export const ResolverService = {
     get: {
       byInvoiceNumber: (invoiceNumber: number): ResolvedInvoice => {
         const invoice = db.invoice.get.byInvoiceNumber(invoiceNumber);
-        const name = db.get.byId.name(invoice.nameId);
+        const name = db.get.byId.name(invoice.otherPartyId);
+
+        const lines = db.get.invoiceLines
+          .byInvoiceId(invoice.id)
+          .map(({ id: invoiceLineId }) =>
+            ResolverService.byId.invoiceLine(invoiceLineId)
+          );
+        const resolvedLinesList = createListResponse(
+          lines.length,
+          lines,
+          'InvoiceLineConnector'
+        );
 
         return {
+          __typename: 'InvoiceNode',
           ...invoice,
           name,
           otherPartyName: name.name,
-          lines: db.get.invoiceLines
-            .byInvoiceId(invoice.id)
-            .map(({ id: invoiceLineId }) =>
-              ResolverService.byId.invoiceLine(invoiceLineId)
-            ),
+          lines: resolvedLinesList,
         };
       },
     },
@@ -60,7 +75,7 @@ export const ResolverService = {
         return ResolverService.byId.invoice(invoice.id);
       });
 
-      return createListResponse(invoices.length, data);
+      return createListResponse(invoices.length, data, 'InvoiceConnector');
     },
     invoiceLine: ({
       first = 50,
@@ -80,46 +95,51 @@ export const ResolverService = {
         return ResolverService.byId.invoiceLine(invoice.id);
       });
 
-      return createListResponse(invoiceLines.length, data);
+      return createListResponse(invoiceLines.length, data, 'InvoiceConnector');
     },
     item: (): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
       const data = items.map(item => {
         return ResolverService.byId.item(item.id);
       });
-      return createListResponse(items.length, data);
+      return createListResponse(items.length, data, 'ItemConnector');
     },
 
-    name: (): ListResponse<Name> => {
+    name: (type: 'customer' | 'supplier'): ListResponse<Name> => {
       // TODO: Filter customers/suppliers etc
-      const names = db.get.all.name();
-      return createListResponse(names.length, names);
-    },
-    stockLine: (): ListResponse<ResolvedStockLine> => {
-      const stockLines = db.get.all.stockLine();
-
-      const data = stockLines.map(stockLine => {
-        return ResolverService.byId.stockLine(stockLine.id);
+      const names = db.get.all.name().filter(({ isCustomer }) => {
+        return isCustomer === (type === 'customer');
       });
-      return createListResponse(data.length, data);
+
+      return createListResponse(names.length, names, 'NameConnector');
     },
   },
 
   byId: {
     item: (id: string): ResolvedItem => {
       const item = db.get.byId.item(id);
+      const stockLines = db.get.stockLines.byItemId(id);
+      const resolvedStockLines = stockLines.map(stockLine =>
+        db.get.byId.stockLine(stockLine.id)
+      );
+      const availableBatches = createListResponse(
+        resolvedStockLines.length,
+        resolvedStockLines,
+        'StockLineConnector'
+      );
+
       return {
+        __typename: 'ItemNode',
         ...item,
         availableQuantity: getAvailableQuantity(id),
-        availableBatches: {
-          nodes: db.get.stockLines.byItemId(id),
-        },
+        availableBatches,
       };
     },
     stockLine: (id: string): ResolvedStockLine => {
       const stockLine = db.get.byId.stockLine(id);
       return {
         ...stockLine,
+        __typename: 'StockLineNode',
         item: ResolverService.byId.item(stockLine.itemId),
       };
     },
@@ -127,6 +147,7 @@ export const ResolverService = {
       const invoiceLine = db.get.byId.invoiceLine(id);
 
       return {
+        __typename: 'InvoiceLineNode',
         ...invoiceLine,
         stockLine: ResolverService.byId.stockLine(invoiceLine.stockLineId),
         item: ResolverService.byId.item(invoiceLine.itemId),
@@ -137,16 +158,25 @@ export const ResolverService = {
     },
     invoice: (id: string): ResolvedInvoice => {
       const invoice = db.get.byId.invoice(id);
-      const name = db.get.byId.name(invoice.nameId);
+      const name = db.get.byId.name(invoice.otherPartyId);
+
+      const lines = db.get.invoiceLines
+        .byInvoiceId(invoice.id)
+        .map(({ id: invoiceLineId }) =>
+          ResolverService.byId.invoiceLine(invoiceLineId)
+        );
+      const resolvedLinesList = createListResponse(
+        lines.length,
+        lines,
+        'InvoiceLineConnector'
+      );
+
       return {
+        __typename: 'InvoiceNode',
         ...invoice,
         name,
         otherPartyName: name.name,
-        lines: db.get.invoiceLines
-          .byInvoiceId(invoice.id)
-          .map(({ id: invoiceLineId }) =>
-            ResolverService.byId.invoiceLine(invoiceLineId)
-          ),
+        lines: resolvedLinesList,
       };
     },
   },

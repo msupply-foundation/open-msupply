@@ -14,8 +14,8 @@ export type ColumnKey =
   | 'invoiceNumber'
   | 'type'
   | 'status'
-  | 'entered'
-  | 'confirmed'
+  | 'entryDatetime'
+  | 'confirmedDatetime'
   | 'total'
   | 'comment'
   | 'selection'
@@ -25,17 +25,17 @@ export type ColumnKey =
   | 'quantity'
   | 'itemCode'
   | 'itemName'
-  | 'expiry'
+  | 'expiryDate'
   | 'batch'
-  | 'costPrice'
-  | 'sellPrice';
+  | 'costPricePerPack'
+  | 'sellPricePerPack';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
-  expiry: {
-    key: 'expiry',
+  expiryDate: {
+    key: 'expiryDate',
     format: ColumnFormat.Date,
     label: 'label.expiry',
     width: 50,
@@ -58,7 +58,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   invoiceNumber: {
     key: 'invoiceNumber',
     label: 'label.invoice-number',
-    width: 75,
+    width: 50,
   },
   type: {
     label: 'label.type',
@@ -68,17 +68,17 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   status: {
     label: 'label.status',
     key: 'status',
-    width: 100,
+    width: 75,
   },
-  entered: {
+  entryDatetime: {
     label: 'label.entered',
-    key: 'entered',
+    key: 'entryDatetime',
     format: ColumnFormat.Date,
     width: 100,
   },
-  confirmed: {
+  confirmedDatetime: {
     label: 'label.confirmed',
-    key: 'confirmed',
+    key: 'confirmedDatetime',
     format: ColumnFormat.Date,
     width: 100,
   },
@@ -86,7 +86,8 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   total: {
     label: 'label.total',
     key: 'total',
-    width: 75,
+    width: 100,
+    format: ColumnFormat.Currency,
     align: ColumnAlign.Right,
   },
   comment: {
@@ -117,14 +118,14 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     key: 'batch',
     width: 50,
   },
-  costPrice: {
+  costPricePerPack: {
     label: 'label.cost',
     key: 'costPricePerPack',
     width: 35,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },
-  sellPrice: {
+  sellPricePerPack: {
     label: 'label.sell',
     key: 'sellPricePerPack',
     width: 35,
