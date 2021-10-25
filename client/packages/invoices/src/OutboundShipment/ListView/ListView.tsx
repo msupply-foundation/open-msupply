@@ -88,7 +88,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onChangePage,
     pagination,
     invalidate,
-  } = useListData({ key: 'color' }, 'invoice', OutboundShipmentListViewApi);
+  } = useListData({ key: 'TYPE' }, 'invoice', OutboundShipmentListViewApi);
 
   const onColorUpdate = (row: Invoice, color: Color) => {
     onUpdate({ ...row, color: color.hex });
@@ -134,7 +134,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
             const result = await onCreate(invoice);
 
             invalidate();
-            navigate(`/customers/customer-invoice/${result.invoiceNumber}`);
+            navigate(`/customers/customer-invoice/${result.id}`);
           };
 
           createInvoice();
@@ -176,7 +176,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         data={data?.slice(0, numberOfRows) || []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/customers/customer-invoice/${row.invoiceNumber}`);
+          navigate(`/customers/customer-invoice/${row.id}`);
         }}
       />
     </>

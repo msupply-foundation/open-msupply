@@ -1,3 +1,9 @@
+export interface ListResponse<T> {
+  __typename: string;
+  totalCount: number;
+  nodes: T[];
+}
+
 export interface Store {
   id: string;
   code: string;
@@ -20,6 +26,7 @@ export interface Name {
 }
 
 export interface ResolvedItem extends Item {
+  __typename: string;
   availableBatches: { nodes: StockLine[] };
   availableQuantity: number;
 }
@@ -39,6 +46,7 @@ export interface StockLine {
 }
 
 export interface ResolvedStockLine extends StockLine {
+  __typename: string;
   item: Item;
 }
 
@@ -48,7 +56,7 @@ export interface InvoiceLine {
   itemCode?: string;
   quantity: number;
   batchName?: string;
-  expiry: string;
+  expiryDate: string;
   stockLineId: string;
   itemId: string;
   invoiceId: string;
@@ -60,6 +68,7 @@ export interface InvoiceLine {
 }
 
 export interface ResolvedInvoiceLine extends InvoiceLine {
+  __typename: string;
   stockLine: StockLine;
   item: Item;
 }
@@ -74,14 +83,27 @@ export interface Invoice {
   confirmedDatetime: string;
   finalisedDatetime: string | null;
   invoiceNumber: number;
-  nameId: string;
+  otherPartyId: string;
   storeId: string;
   hold: boolean;
-  pricing: { totalAfterTax: string };
+  pricing: { __typename: string; totalAfterTax: string };
 }
 
 export interface ResolvedInvoice extends Invoice {
-  lines: InvoiceLine[];
+  __typename: string;
+  lines: ListResponse<InvoiceLine>;
   name: Name;
   otherPartyName: string;
+}
+
+export interface PaginationOptions {
+  first: number;
+  offset: number;
+  sort?: string;
+  desc: boolean;
+}
+
+export interface ListResponse<T> {
+  totalCount: number;
+  nodes: T[];
 }

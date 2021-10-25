@@ -93,9 +93,10 @@ export const createInvoiceLines = (
   const invoiceLines: InvoiceLine[][] = [];
 
   invoices.forEach(invoice => {
-    takeRandomSubsetFrom(items, 10).forEach(item => {
+    takeRandomSubsetFrom(items, 50).forEach(item => {
       const stockLinesToUse = takeRandomSubsetFrom(
-        getStockLinesForItem(item, stockLines)
+        getStockLinesForItem(item, stockLines),
+        2
       );
 
       const invoiceLinesForStockLines = stockLinesToUse.map(
@@ -125,8 +126,8 @@ export const createInvoiceLines = (
 
             stockLineId: stockLine.id,
 
-            batch: stockLine.name,
-            expiry: stockLine.expiryDate,
+            batch: stockLine.batch,
+            expiryDate: stockLine.expiryDate,
 
             costPricePerPack,
             sellPricePerPack,
@@ -172,7 +173,7 @@ const statuses = ['DRAFT', 'CONFIRMED', 'FINALISED'];
 export const createInvoice = (
   id: string,
   invoiceNumber: number,
-  nameId: string,
+  otherPartyId: string,
   storeId: string,
   seeded?: Partial<Invoice>
 ): Invoice => {
@@ -181,13 +182,16 @@ export const createInvoice = (
 
   return {
     id,
-    nameId,
+    otherPartyId,
     invoiceNumber,
     status: takeRandomElementFrom(statuses),
     entryDatetime: entered.toISOString(),
     confirmedDatetime: confirmed.toISOString(),
     finalisedDatetime: null,
-    pricing: { totalAfterTax: faker.commerce.price() },
+    pricing: {
+      __typename: 'InvoicePricingNode',
+      totalAfterTax: faker.commerce.price(),
+    },
     color: 'grey',
     type: 'CUSTOMER_INVOICE',
     comment: takeRandomElementFrom(comments),
@@ -200,7 +204,7 @@ export const createInvoice = (
 export const createInvoices = (
   customers = NameData,
   stores: Store[],
-  numberToCreate = randomInteger({ min: 10, max: 10 })
+  numberToCreate = randomInteger({ min: 1, max: 100 })
 ): Invoice[] => {
   const invoices = stores
     .map(store => {
@@ -221,7 +225,7 @@ export const createInvoices = (
   return invoices;
 };
 
-export const createNames = (
+export const createCustomers = (
   numberToCreate = randomInteger({ min: 10, max: 100 })
 ): Name[] => {
   const getNameAndCode = () => {
@@ -230,13 +234,33 @@ export const createNames = (
 
   return Array.from({ length: numberToCreate }).map((_, i) => {
     const { name, code } = getNameAndCode();
-    const isCustomer = faker.datatype.boolean();
+
     return {
       id: `${i}`,
       name,
       code,
-      isCustomer,
-      isSupplier: !isCustomer,
+      isCustomer: true,
+      isSupplier: false,
+    };
+  });
+};
+
+export const createSuppliers = (
+  numberToCreate = randomInteger({ min: 2, max: 2 })
+): Name[] => {
+  const getNameAndCode = () => {
+    return takeRandomElementFrom(names);
+  };
+
+  return Array.from({ length: numberToCreate }).map((_, i) => {
+    const { name, code } = getNameAndCode();
+
+    return {
+      id: `${i}`,
+      name,
+      code,
+      isCustomer: false,
+      isSupplier: true,
     };
   });
 };
@@ -257,7 +281,7 @@ const createStores = (names: Name[]): Store[] => {
   return stores;
 };
 
-export let NameData = createNames();
+export let NameData = [...createCustomers(), ...createSuppliers()];
 export let ItemData = createItems();
 export let StoreData = createStores(NameData);
 export let StockLineData = createStockLines(ItemData, StoreData);
