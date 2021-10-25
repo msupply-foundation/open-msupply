@@ -22,7 +22,7 @@ export const CustomerSearch: FC<CustomerSearchProps> = ({
     <ListSearch
       loading={isLoading}
       open={open}
-      options={data?.data ?? []}
+      options={data?.nodes ?? []}
       onClose={onClose}
       title="label.customer"
       optionKey="name"

@@ -25,17 +25,17 @@ export type ColumnKey =
   | 'quantity'
   | 'itemCode'
   | 'itemName'
-  | 'expiry'
+  | 'expiryDate'
   | 'batch'
-  | 'costPrice'
-  | 'sellPrice';
+  | 'costPricePerPack'
+  | 'sellPricePerPack';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
-  expiry: {
-    key: 'expiry',
+  expiryDate: {
+    key: 'expiryDate',
     format: ColumnFormat.Date,
     label: 'label.expiry',
     width: 50,
@@ -118,14 +118,14 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     key: 'batch',
     width: 50,
   },
-  costPrice: {
+  costPricePerPack: {
     label: 'label.cost',
     key: 'costPricePerPack',
     width: 35,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },
-  sellPrice: {
+  sellPricePerPack: {
     label: 'label.sell',
     key: 'sellPricePerPack',
     width: 35,
