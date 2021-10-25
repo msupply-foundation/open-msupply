@@ -18,7 +18,7 @@ export {
   TableRow,
 };
 export * from './hooks';
-export * from './RemoteDataTable';
+export * from './DataTable';
 export * from './types';
 export * from './columns';
 export * from './utils';
