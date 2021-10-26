@@ -94,8 +94,19 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
   }
 );
 
-export const itemList = graphql.query('items', (_, response, context) => {
-  const result = Api.ResolverService.list.item();
+export const itemList = graphql.query<
+  Record<string, unknown>,
+  PaginationOptions
+>('items', (request, response, context) => {
+  const {
+    variables = {
+      first: 50,
+      offset: 0,
+      sort: 'NAME',
+      desc: false,
+    },
+  } = request;
+  const result = Api.ResolverService.list.item(variables);
 
   return response(context.data({ items: result }));
 });

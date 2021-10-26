@@ -97,11 +97,27 @@ export const ResolverService = {
 
       return createListResponse(invoiceLines.length, data, 'InvoiceConnector');
     },
-    item: (): ListResponse<ResolvedItem> => {
+    item: ({
+      first = 50,
+      offset = 0,
+      sort,
+      desc,
+    }: PaginationOptions): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
-      const data = items.map(item => {
+
+      const sortKey = sort === 'NAME' ? 'name' : 'code';
+
+      if (sort) {
+        const sortData = getDataSorter(sortKey, desc);
+        items.sort(sortData);
+      }
+
+      const paged = items.slice(offset, offset + first);
+
+      const data = paged.map(item => {
         return ResolverService.byId.item(item.id);
       });
+
       return createListResponse(items.length, data, 'ItemConnector');
     },
 
