@@ -44,8 +44,16 @@ const deleteInvoice = graphql.mutation(
 export const namesList = graphql.query<
   Record<string, unknown>,
   PaginationOptions
->('names', (_, response, context) => {
-  const result = Api.ResolverService.list.name('customer');
+>('names', (request, response, context) => {
+  const {
+    variables = {
+      first: 50,
+      offset: 0,
+      sort: 'name',
+      desc: false,
+    },
+  } = request;
+  const result = Api.ResolverService.list.name('customer', variables);
 
   return response(context.data({ names: result }));
 });
