@@ -1,6 +1,7 @@
 {
   "app.admin": "Admin",
   "app.catalogue": "Catalogue",
+  "app.customers": "Customers",
   "app.customer-requisition": "Réquisitions clients",
   "app.dashboard": "Tableau de bord",
   "app.distribution": "Distribution",
