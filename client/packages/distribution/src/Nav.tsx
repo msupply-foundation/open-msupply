@@ -1,7 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { useMatch } from 'react-router-dom';
 import {
-  CustomersIcon,
+  TruckIcon,
   Collapse,
   List,
   useDrawer,
@@ -31,7 +31,7 @@ const useNestedNav = (path: string) => {
 
 const Nav: FC = () => {
   const { isActive } = useNestedNav(
-    RouteBuilder.create(AppRoute.Customers).addWildCard().build()
+    RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
   );
   const t = useTranslation();
 
@@ -39,25 +39,25 @@ const Nav: FC = () => {
     <>
       <NavLink
         end={false}
-        to={AppRoute.Customers}
-        icon={<CustomersIcon color="primary" fontSize="small" />}
+        to={AppRoute.Distribution}
+        icon={<TruckIcon color="primary" fontSize="small" />}
         expandOnHover
-        text={t('app.customers')}
+        text={t('app.distribution')}
       />
       <Collapse in={isActive}>
         <List>
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Customers)
-              .addPart(AppRoute.CustomerInvoice)
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.OutboundShipment)
               .build()}
-            text={t('app.customer-invoice')}
+            text={t('app.outbound-shipment')}
           />
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Customers)
+            to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.CustomerRequisition)
               .build()}
             text={t('app.customer-requisition')}

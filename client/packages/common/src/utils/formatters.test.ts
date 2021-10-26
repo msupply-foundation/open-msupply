@@ -4,23 +4,25 @@ import { RouteBuilder } from './formatters';
 describe('Formatters', () => {
   it('builds a route with an appended wildcard', () => {
     expect(
-      RouteBuilder.create(AppRoute.Customers)
-        .addPart(AppRoute.CustomerInvoice)
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.OutboundShipment)
         .addWildCard()
         .build()
-    ).toBe('/customers/customer-invoice/*');
+    ).toBe('/distribution/outbound-shipment/*');
   });
 
   it('builds a route', () => {
     expect(
-      RouteBuilder.create(AppRoute.Customers)
-        .addPart(AppRoute.CustomerInvoice)
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.OutboundShipment)
         .build()
-    ).toBe('/customers/customer-invoice');
+    ).toBe('/distribution/outbound-shipment');
   });
 
   it('can be used to create multiple routes from the same builder', () => {
-    expect(RouteBuilder.create(AppRoute.Customers).build()).toBe('/customers');
+    expect(RouteBuilder.create(AppRoute.Distribution).build()).toBe(
+      '/distribution'
+    );
     expect(RouteBuilder.create(AppRoute.Suppliers).build()).toBe('/suppliers');
   });
 });

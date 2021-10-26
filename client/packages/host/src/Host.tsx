@@ -41,8 +41,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const CustomerContainer = React.lazy(
-  () => import('@openmsupply-client/customers/src/CustomerContainer')
+const DistributionContainer = React.lazy(
+  () => import('@openmsupply-client/distribution/src/DistributionContainer')
 );
 const DashboardService = React.lazy(
   () => import('@openmsupply-client/dashboard/src/DashboardService')
@@ -86,7 +86,7 @@ const CommandK: FC = ({ children }) => {
       name: 'Navigation actions',
       shortcut: ['c'],
       keywords: 'navigation, back',
-      children: ['navigation:go-back', 'navigation:customer-invoice'],
+      children: ['navigation:go-back', 'navigation:outbound-shipment'],
     },
 
     {
@@ -111,37 +111,37 @@ const CommandK: FC = ({ children }) => {
       perform: () => drawer.open(),
     },
     {
-      id: 'navigation:customer-invoice',
-      name: 'Go to: Customer Invoices',
+      id: 'navigation:outbound-shipment',
+      name: 'Go to: Outbound Shipments',
       shortcut: ['c'],
-      keywords: 'customer',
+      keywords: 'shipment',
       perform: () =>
         navigate(
-          RouteBuilder.create(AppRoute.Customers)
-            .addPart(AppRoute.CustomerInvoice)
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.OutboundShipment)
             .build()
         ),
     },
     {
-      id: 'navigation:customer-invoice/new',
-      name: 'Create: New Customer Invoice',
-      shortcut: ['c'],
-      keywords: 'customer',
-      perform: () => navigate('/customers/customer-invoice/new'),
+      id: 'navigation:outbound-shipment/new',
+      name: 'Create: New Outbound Shipment',
+      shortcut: ['o'],
+      keywords: 'distribution',
+      perform: () => navigate('/distribution/outbound-shipment/new'),
     },
     {
       id: 'navigation:dashboard',
       name: 'Go to: Dashboard',
       shortcut: ['d'],
-      keywords: 'customer',
+      keywords: 'dashboard',
       perform: () => navigate('/dashboard'),
     },
     {
       id: 'navigation:customer-requisition',
       name: 'Go to: Customer Requisition',
       shortcut: ['r'],
-      keywords: 'customer',
-      perform: () => navigate('/customers/customer-requisition'),
+      keywords: 'distribution',
+      perform: () => navigate('/distribution/customer-requisition'),
     },
     {
       id: 'navigation:reports',
@@ -202,10 +202,10 @@ const Host: FC = () => {
                                 element={<DashboardService />}
                               />
                               <Route
-                                path={RouteBuilder.create(AppRoute.Customers)
+                                path={RouteBuilder.create(AppRoute.Distribution)
                                   .addWildCard()
                                   .build()}
-                                element={<CustomerContainer />}
+                                element={<DistributionContainer />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Suppliers)

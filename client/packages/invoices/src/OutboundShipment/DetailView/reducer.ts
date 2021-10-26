@@ -11,7 +11,7 @@ import { placeholderInvoice } from './index';
 import {
   ActionType,
   OutboundShipment,
-  CustomerInvoiceAction,
+  OutboundShipmentAction,
   ItemRow,
 } from './types';
 
@@ -44,18 +44,18 @@ export const OutboundAction = {
   updateInvoice: <K extends keyof Invoice>(
     key: K,
     value: Invoice[K]
-  ): CustomerInvoiceAction => ({
+  ): OutboundShipmentAction => ({
     type: ActionType.UpdateInvoice,
     payload: { key, value },
   }),
   updateQuantity: (
     rowKey: string,
     quantity: number
-  ): CustomerInvoiceAction => ({
+  ): OutboundShipmentAction => ({
     type: ActionType.UpdateQuantity,
     payload: { rowKey, quantity },
   }),
-  onSortBy: (column: Column<ItemRow>): CustomerInvoiceAction => ({
+  onSortBy: (column: Column<ItemRow>): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
   }),
@@ -73,15 +73,15 @@ export const getInitialState = (): OutboundShipmentStateShape => ({
 
 export const reducer = (
   data: Invoice = placeholderInvoice,
-  dispatch: Dispatch<DocumentActionSet<CustomerInvoiceAction>> | null
+  dispatch: Dispatch<DocumentActionSet<OutboundShipmentAction>> | null
 ): ((
   state: OutboundShipmentStateShape | undefined,
-  action: DocumentActionSet<CustomerInvoiceAction>
+  action: DocumentActionSet<OutboundShipmentAction>
 ) => OutboundShipmentStateShape) =>
   produce(
     (
       state: OutboundShipmentStateShape = getInitialState(),
-      action: DocumentActionSet<CustomerInvoiceAction>
+      action: DocumentActionSet<OutboundShipmentAction>
     ) => {
       switch (action.type) {
         case DocumentActionType.Init: {

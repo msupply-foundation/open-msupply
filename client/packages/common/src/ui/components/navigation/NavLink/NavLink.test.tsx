@@ -5,7 +5,7 @@ import { Route } from 'react-router';
 import { NavLink } from './NavLink';
 import { useDrawer } from '../../../../hooks';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
-import { CustomersIcon } from '../../../icons';
+import { TruckIcon } from '../../../icons';
 
 const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   const drawer = useDrawer();
@@ -22,16 +22,16 @@ describe('NavLink', () => {
   it('Correctly renders a link item with the name correct name and href when the nav link is collapsed', () => {
     const { getByRole } = render(
       <TestingProvider>
-        <TestingRouter initialEntries={['/customers']}>
+        <TestingRouter initialEntries={['/distribution']}>
           <Route
             path="*"
             element={
               <Box>
                 <Wrapper collapsed />
                 <NavLink
-                  to="/customer-invoice"
-                  icon={<CustomersIcon />}
-                  text="Customers"
+                  to="/outbound-shipment"
+                  icon={<TruckIcon />}
+                  text="Distribution"
                   end={false}
                 />
               </Box>
@@ -41,25 +41,25 @@ describe('NavLink', () => {
       </TestingProvider>
     );
 
-    const node = getByRole('link', { name: /customer/i });
+    const node = getByRole('link', { name: /distribution/i });
 
     expect(node).toBeInTheDocument();
-    expect(node).toHaveAttribute('href', '/customer-invoice');
+    expect(node).toHaveAttribute('href', '/outbound-shipment');
   });
 
   it('Correctly renders a link item with the name correct name and href when the nav link is not collapsed', () => {
     const { getByRole } = render(
       <TestingProvider>
-        <TestingRouter initialEntries={['/customers']}>
+        <TestingRouter initialEntries={['/distribution']}>
           <Route
             path="*"
             element={
               <Box>
                 <Wrapper collapsed={false} />
                 <NavLink
-                  to="/customer-invoice"
-                  icon={<CustomersIcon />}
-                  text="Customers"
+                  to="/outbound-shipment"
+                  icon={<TruckIcon />}
+                  text="Distribution"
                   end={false}
                 />
               </Box>
@@ -69,25 +69,25 @@ describe('NavLink', () => {
       </TestingProvider>
     );
 
-    const node = getByRole('link', { name: /customer/i });
+    const node = getByRole('link', { name: /distribution/i });
 
     expect(node).toBeInTheDocument();
-    expect(node).toHaveAttribute('href', '/customer-invoice');
+    expect(node).toHaveAttribute('href', '/outbound-shipment');
   });
 
   it('Correctly renders a span in place of a link for top level hover items', () => {
     const { getByTestId } = render(
       <TestingProvider>
-        <TestingRouter initialEntries={['/customers']}>
+        <TestingRouter initialEntries={['/distribution']}>
           <Route
             path="*"
             element={
               <Box>
                 <Wrapper collapsed />
                 <NavLink
-                  to="/customer-invoice"
-                  icon={<CustomersIcon />}
-                  text="Customers"
+                  to="/outbound-shipment"
+                  icon={<TruckIcon />}
+                  text="Distribution"
                   end={false}
                   expandOnHover
                 />
@@ -98,7 +98,7 @@ describe('NavLink', () => {
       </TestingProvider>
     );
 
-    const node = getByTestId('/customer-invoice_hover');
+    const node = getByTestId('/outbound-shipment_hover');
 
     expect(node).toBeInTheDocument();
   });

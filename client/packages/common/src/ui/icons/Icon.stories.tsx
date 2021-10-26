@@ -5,6 +5,7 @@ import { SvgIconProps } from '.';
 import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
 import { BookIcon } from './Book';
+import { CartIcon } from './Cart';
 import { CheckIcon } from './Check';
 import { CheckboxCheckedIcon } from './CheckboxChecked';
 import { CheckboxEmptyIcon } from './CheckboxEmpty';
@@ -39,6 +40,7 @@ import { StockIcon } from './Stock';
 import { SuppliersIcon } from './Suppliers';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
+import { TruckIcon } from './Truck';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
@@ -67,6 +69,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
     { icon: <BookIcon {...args} />, name: 'Book' },
+    { icon: <CartIcon {...args} />, name: 'Cart' },
     { icon: <CheckIcon {...args} />, name: 'Check' },
     { icon: <CheckboxCheckedIcon {...args} />, name: 'CheckboxChecked' },
     {
@@ -104,6 +107,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
+    { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
   ];

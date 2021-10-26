@@ -16,7 +16,7 @@ export default {
 
 const Template: ComponentStory<typeof OutboundShipmentListView> = args => (
   <TestingProvider>
-    <TestingRouter initialEntries={['/customers/customer-invoice']}>
+    <TestingRouter initialEntries={['/distribution/outbound-shipment']}>
       <Route path="*" element={<OutboundShipmentListView {...args} />} />
     </TestingRouter>
   </TestingProvider>

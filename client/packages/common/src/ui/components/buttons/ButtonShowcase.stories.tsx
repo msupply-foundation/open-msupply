@@ -4,7 +4,7 @@ import { Story } from '@storybook/react';
 import { FlatButton } from './FlatButton';
 import { BookIcon } from '../../icons';
 import { BaseButton, ButtonWithIcon } from '.';
-import { CustomersIcon } from '../../icons';
+import { TruckIcon } from '../../icons';
 import { DialogButton, IconButton } from '..';
 import { ToggleButton } from './ToggleButton';
 
@@ -82,8 +82,8 @@ const Template: Story = () => {
         <ButtonWithIcon
           variant="contained"
           color="primary"
-          Icon={<CustomersIcon />}
-          labelKey="app.customers"
+          Icon={<TruckIcon />}
+          labelKey="app.distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -92,8 +92,8 @@ const Template: Story = () => {
         <ButtonWithIcon
           variant="contained"
           color="secondary"
-          Icon={<CustomersIcon />}
-          labelKey="app.customers"
+          Icon={<TruckIcon />}
+          labelKey="app.distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -102,8 +102,8 @@ const Template: Story = () => {
         <ButtonWithIcon
           variant="outlined"
           color="primary"
-          Icon={<CustomersIcon />}
-          labelKey="app.customers"
+          Icon={<TruckIcon />}
+          labelKey="app.distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -112,8 +112,8 @@ const Template: Story = () => {
         <ButtonWithIcon
           variant="outlined"
           color="secondary"
-          Icon={<CustomersIcon />}
-          labelKey="app.customers"
+          Icon={<TruckIcon />}
+          labelKey="app.distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>

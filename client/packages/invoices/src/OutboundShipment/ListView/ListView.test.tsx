@@ -14,7 +14,7 @@ describe('OutboundShipmentListView', () => {
   it('Renders all the headers for the list', async () => {
     const { getByRole } = render(
       <TestingProvider>
-        <TestingRouter initialEntries={['/customers/customer-invoice']}>
+        <TestingRouter initialEntries={['/distribution/outbound-shipment']}>
           <Route path="*" element={<OutboundShipmentListView />} />
         </TestingRouter>
       </TestingProvider>
@@ -50,7 +50,7 @@ describe('OutboundShipmentListView', () => {
   it('Selects all rows when the select all checkbox is checked and deletes them after clicking delete all selected rows', async () => {
     const { getAllByRole, getByRole, getByText, queryAllByRole } = render(
       <TestingProvider>
-        <TestingRouter initialEntries={['/customers/customer-invoice']}>
+        <TestingRouter initialEntries={['/distribution/outbound-shipment']}>
           <Route
             path="*"
             element={

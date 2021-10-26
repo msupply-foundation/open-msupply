@@ -10,8 +10,8 @@ import { act } from 'react-dom/test-utils';
 describe('OutboundShipmentDetailView', () => {
   const ExampleDetailView = () => (
     <TestingProvider>
-      <TestingRouter initialEntries={['/customers/customer-invoice/3']}>
-        <Route path="customers/customer-invoice">
+      <TestingRouter initialEntries={['/distribution/outbound-shipment/3']}>
+        <Route path="distribution/outbound-shipment">
           <Route
             path={':id'}
             element={

@@ -4,7 +4,7 @@ import { Route } from 'react-router-dom';
 
 import { NavLink, NavLinkProps } from './NavLink';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
-import { CustomersIcon } from '../../../icons';
+import { TruckIcon } from '../../../icons';
 import { useDrawer } from '../../../../hooks';
 import { Box } from '@mui/system';
 
@@ -27,7 +27,7 @@ const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
 const Template: Story<NavLinkProps & { collapsed: boolean }> = args => {
   return (
     <TestingProvider>
-      <TestingRouter initialEntries={['/customers']}>
+      <TestingRouter initialEntries={['/distribution']}>
         <Route
           path="*"
           element={
@@ -45,8 +45,8 @@ const Template: Story<NavLinkProps & { collapsed: boolean }> = args => {
 export const Collapsed = Template.bind({});
 Collapsed.args = {
   end: false,
-  text: 'Customers',
-  icon: <CustomersIcon />,
+  text: 'Distribution',
+  icon: <TruckIcon />,
   to: 'outbound-shipments',
   collapsed: true,
 };
@@ -54,8 +54,8 @@ Collapsed.args = {
 export const Expanded = Template.bind({});
 Expanded.args = {
   end: false,
-  text: 'Customers',
-  icon: <CustomersIcon />,
+  text: 'Distribution',
+  icon: <TruckIcon />,
   to: 'outbound-shipments',
   collapsed: false,
 };

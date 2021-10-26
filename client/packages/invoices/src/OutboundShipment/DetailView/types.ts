@@ -31,12 +31,12 @@ export enum ActionType {
   UpsertLine = 'OutboundShipment/upsertLine',
 }
 
-type CustomerInvoiceUpdateInvoice = {
+type OutboundShipmentUpdateInvoice = {
   type: ActionType.UpdateInvoice;
   payload: { key: keyof Invoice; value: Invoice[keyof Invoice] };
 };
 
-export type CustomerInvoiceAction =
+export type OutboundShipmentAction =
   | {
       type: ActionType.UpdateQuantity;
       payload: { rowKey: string; quantity: number };
@@ -45,7 +45,7 @@ export type CustomerInvoiceAction =
       type: ActionType.SortBy;
       payload: { column: Column<ItemRow> };
     }
-  | CustomerInvoiceUpdateInvoice
+  | OutboundShipmentUpdateInvoice
   | {
       type: ActionType.UpsertLine;
       payload: { invoiceLine: InvoiceLine };
