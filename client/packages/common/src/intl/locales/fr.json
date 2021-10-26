@@ -1,11 +1,12 @@
 {
   "app.admin": "Admin",
-  "app.outbound-shipment": "Outbound Shipment",
+  "app.catalogue": "Catalogue",
   "app.customer-requisition": "Réquisitions clients",
   "app.dashboard": "Tableau de bord",
   "app.distribution": "Distribution",
   "app.logout": "Déconnexion",
   "app.messages": "Messages",
+  "app.outbound-shipment": "Outbound Shipment",
   "app.reports": "Rapports",
   "app.stock": "Stock",
   "app.suppliers": "Fournisseurs",
