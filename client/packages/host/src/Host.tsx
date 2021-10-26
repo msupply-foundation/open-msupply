@@ -48,6 +48,10 @@ const DashboardService = React.lazy(
   () => import('@openmsupply-client/dashboard/src/DashboardService')
 );
 
+const CatalogueContainer = React.lazy(
+  () => import('@openmsupply-client/catalogue/src/Container')
+);
+
 const Heading: FC<{ locale: string }> = props => (
   <div style={{ margin: 50 }}>
     <Typography>[ Placeholder page: {props.children} ]</Typography>
@@ -200,6 +204,12 @@ const Host: FC = () => {
                                   .addWildCard()
                                   .build()}
                                 element={<DashboardService />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(AppRoute.Catalogue)
+                                  .addWildCard()
+                                  .build()}
+                                element={<CatalogueContainer />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Distribution)
