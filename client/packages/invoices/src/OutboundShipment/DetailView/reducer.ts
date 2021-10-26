@@ -174,5 +174,6 @@ export const reducer = (
           break;
         }
       }
+      return state;
     }
   );

@@ -27,7 +27,7 @@ const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
 const getListItemCommonStyles = (isOpen: boolean) => ({
   height: 40,
   borderRadius: 20,
-  width: isOpen ? 160 : 40,
+  width: isOpen ? 200 : 40,
   justifyContent: 'center',
   alignItems: 'center',
 });

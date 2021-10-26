@@ -45,9 +45,9 @@ export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
     id: invoice.id,
     otherPartyId: invoice['nameId'],
   });
-  const { insertOutboundShipment } = result;
+  const { insertCustomerInvoice } = result;
 
-  return insertOutboundShipment;
+  return insertCustomerInvoice;
 };
 
 export const getDetailQuery = (): string => gql`
