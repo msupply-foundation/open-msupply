@@ -17,7 +17,7 @@ const fullOutboundShipmentPath = RouteBuilder.create(AppRoute.Distribution)
   .build();
 
 const fullCustomerRequisitionPath = RouteBuilder.create(AppRoute.Distribution)
-  .addPart(AppRoute.OutboundShipment)
+  .addPart(AppRoute.CustomerRequisition)
   .addWildCard()
   .build();
 

@@ -58,7 +58,7 @@ const StyledDivider = styled(Divider)({
   width: 152,
 });
 
-const drawerWidth = 200;
+const drawerWidth = 240;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
   backgroundColor: theme.palette.background.menu,
