@@ -19,7 +19,7 @@ import { DomainObject } from '../../../types';
 import { useTranslation } from '../../../intl';
 import { useTableStore } from './context';
 
-export const RemoteDataTable = <T extends DomainObject>({
+export const DataTable = <T extends DomainObject>({
   columns,
   data = [],
   isLoading = false,

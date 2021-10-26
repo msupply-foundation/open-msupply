@@ -5,7 +5,7 @@ import {
   DownloadIcon,
   PlusCircleIcon,
   PrinterIcon,
-  RemoteDataTable,
+  DataTable,
   useColumns,
   useNotification,
   Invoice,
@@ -26,7 +26,6 @@ import {
   Grid,
   OutboundShipmentStatus,
 } from '@openmsupply-client/common';
-
 import { OutboundShipmentListViewApi } from '../../api';
 import { ExternalURL } from '@openmsupply-client/config';
 import { CustomerSearch } from './CustomerSearch';
@@ -169,7 +168,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         </Grid>
       </AppBarButtonsPortal>
 
-      <RemoteDataTable
+      <DataTable
         pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}
