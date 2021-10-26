@@ -50,7 +50,7 @@ export const OutboundDetailToolbar: FC<OutboundShipmentToolbarProps> = ({
                   disabled
                   size="small"
                   sx={{ width: 250 }}
-                  value={draft.theirReference}
+                  value={draft?.theirReference ?? ''}
                   onChange={event => {
                     draft.update?.('theirReference', event.target.value);
                   }}
