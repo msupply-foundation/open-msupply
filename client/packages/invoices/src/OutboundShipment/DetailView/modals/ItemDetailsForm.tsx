@@ -85,7 +85,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
           onChange: event => onChangeQuantity(Number(event.target.value)),
         })}
-        labelKey="label.quantity"
+        labelKey="label.pack-quantity"
         defaultValue={invoiceLine?.quantity}
       />
     </>
