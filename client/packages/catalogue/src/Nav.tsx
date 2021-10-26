@@ -7,7 +7,7 @@ import {
   useTranslation,
   RouteBuilder,
   NavLink,
-  MedicineIcon,
+  ListIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -40,7 +40,7 @@ const Nav: FC = () => {
       <NavLink
         end={false}
         to={AppRoute.Catalogue}
-        icon={<MedicineIcon color="primary" />}
+        icon={<ListIcon color="primary" />}
         expandOnHover
         text={t('app.catalogue')}
       />

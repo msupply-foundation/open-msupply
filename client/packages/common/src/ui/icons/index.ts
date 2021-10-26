@@ -19,6 +19,7 @@ export { EditIcon } from './Edit';
 export { HomeIcon } from './Home';
 export { InfoIcon } from './Info';
 export { InvoiceIcon } from './Invoice';
+export { ListIcon } from './ListIcon';
 export { MenuDotsIcon } from './MenuDots';
 export { MessagesIcon } from './Messages';
 export { MSupplyGuy } from './MSupplyGuy';
