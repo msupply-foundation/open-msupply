@@ -5,15 +5,12 @@ import {
   Divider,
   List,
   MSupplyGuy,
-  MessagesIcon,
   PowerIcon,
   RadioIcon,
   ReportsIcon,
   SettingsIcon,
   StockIcon,
-  SuppliersIcon,
   Theme,
-  ToolsIcon,
   IconButton,
   styled,
   useDrawer,
@@ -24,8 +21,8 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { Property } from 'csstype';
 
-const CustomersNav = React.lazy(
-  () => import('@openmsupply-client/customers/src/Nav')
+const DistributionNav = React.lazy(
+  () => import('@openmsupply-client/distribution/src/Nav')
 );
 
 const ToolbarIconContainer = styled(Box)({
@@ -61,7 +58,7 @@ const StyledDivider = styled(Divider)({
   width: 152,
 });
 
-const drawerWidth = 200;
+const drawerWidth = 240;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
   backgroundColor: theme.palette.background.menu,
@@ -145,33 +142,33 @@ const AppDrawer: React.FC = () => {
             text={t('app.dashboard')}
           />
           <React.Suspense fallback={null}>
-            <CustomersNav />
+            <DistributionNav />
           </React.Suspense>
-          <NavLink
+          {/* <NavLink
             to={AppRoute.Suppliers}
             icon={<SuppliersIcon fontSize="small" color="primary" />}
             text={t('app.suppliers')}
-          />
+          /> */}
           <NavLink
             to={AppRoute.Stock}
             icon={<StockIcon fontSize="small" color="primary" />}
             text={t('app.stock')}
           />
-          <NavLink
+          {/* <NavLink
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('app.tools')}
-          />
+          /> */}
           <NavLink
             to={AppRoute.Reports}
             icon={<ReportsIcon fontSize="small" color="primary" />}
             text={t('app.reports')}
           />
-          <NavLink
+          {/* <NavLink
             to={AppRoute.Messages}
             icon={<MessagesIcon fontSize="small" color="primary" />}
             text={t('app.messages')}
-          />
+          /> */}
         </List>
       </UpperListContainer>
       <LowerListContainer>

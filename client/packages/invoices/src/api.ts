@@ -14,7 +14,7 @@ import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
   mutation insertInvoice($id: String!, $otherPartyId: String!) {
-    insertCustomerInvoice(input: { id: $id, otherPartyId: $otherPartyId }) {
+    insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
       __typename
       ... on InvoiceNode {
         id

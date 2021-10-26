@@ -15,8 +15,8 @@ describe('useDocument', () => {
   const Wrapper: FC = ({ children }) => {
     return (
       <TestingProvider>
-        <TestingRouter initialEntries={['/customers/customer-invoice/1']}>
-          <Route path="customers/customer-invoice">
+        <TestingRouter initialEntries={['/distribution/outbound-shipment/1']}>
+          <Route path="distribution/outbound-shipment">
             <Route path={':id'} element={<>{children}</>} />
           </Route>
         </TestingRouter>

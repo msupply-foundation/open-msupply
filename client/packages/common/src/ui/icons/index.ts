@@ -1,6 +1,7 @@
 export { ArrowLeftIcon } from './ArrowLeft';
 export { ArrowRightIcon } from './ArrowRight';
 export { BookIcon } from './Book';
+export { CartIcon } from './Cart';
 export { CheckIcon } from './Check';
 export { CheckboxCheckedIcon } from './CheckboxChecked';
 export { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
@@ -35,6 +36,7 @@ export { StockIcon } from './Stock';
 export { SuppliersIcon } from './Suppliers';
 export { ToolsIcon } from './Tools';
 export { TranslateIcon } from './Translate';
+export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';

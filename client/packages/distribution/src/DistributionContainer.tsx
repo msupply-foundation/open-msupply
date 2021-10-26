@@ -11,25 +11,25 @@ const RequisitionService: React.FC = () => (
   <Typography style={{ margin: 25 }}>coming soon..</Typography>
 );
 
-const fullCustomerInvoicePath = RouteBuilder.create(AppRoute.Customers)
-  .addPart(AppRoute.CustomerInvoice)
+const fullOutboundShipmentPath = RouteBuilder.create(AppRoute.Distribution)
+  .addPart(AppRoute.OutboundShipment)
   .addWildCard()
   .build();
 
-const fullCustomerRequisitionPath = RouteBuilder.create(AppRoute.Customers)
+const fullCustomerRequisitionPath = RouteBuilder.create(AppRoute.Distribution)
   .addPart(AppRoute.CustomerRequisition)
   .addWildCard()
   .build();
 
-const CustomerContainer: FC = () => {
-  if (useMatch(fullCustomerInvoicePath)) {
+const DistributionContainer: FC = () => {
+  if (useMatch(fullOutboundShipmentPath)) {
     return <InvoiceService />;
   }
   if (useMatch(fullCustomerRequisitionPath)) {
     return <RequisitionService />;
   }
 
-  if (!useMatch(AppRoute.Customers)) {
+  if (!useMatch(AppRoute.Distribution)) {
     const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
     return <Navigate to={notFoundRoute} />;
   }
@@ -37,4 +37,4 @@ const CustomerContainer: FC = () => {
   return <></>;
 };
 
-export default CustomerContainer;
+export default DistributionContainer;

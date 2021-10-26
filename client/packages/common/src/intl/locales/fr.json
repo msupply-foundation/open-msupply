@@ -1,11 +1,9 @@
 {
   "app.admin": "Admin",
-  "app.customer_invoices": "Facture Clients",
-  "app.customer-invoice": "Facture Client",
+  "app.outbound-shipment": "Outbound Shipment",
   "app.customer-requisition": "Réquisitions clients",
-  "app.customers": "Clients",
   "app.dashboard": "Tableau de bord",
-  "app.invoices": "Invoices",
+  "app.distribution": "Distribution",
   "app.logout": "Déconnexion",
   "app.messages": "Messages",
   "app.reports": "Rapports",
