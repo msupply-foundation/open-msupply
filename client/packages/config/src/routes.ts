@@ -21,6 +21,9 @@ export enum AppRoute {
 
   Logout = 'logout',
 
+  Catalogue = 'catalogue',
+  Items = 'items',
+
   PageNotFound = 'page-not-found',
 }
 
