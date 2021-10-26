@@ -25,6 +25,10 @@ const DistributionNav = React.lazy(
   () => import('@openmsupply-client/distribution/src/Nav')
 );
 
+const CatalogueNav = React.lazy(
+  () => import('@openmsupply-client/catalogue/src/Nav')
+);
+
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
   height: 90,
@@ -144,6 +148,11 @@ const AppDrawer: React.FC = () => {
           <React.Suspense fallback={null}>
             <DistributionNav />
           </React.Suspense>
+
+          <React.Suspense fallback={null}>
+            <CatalogueNav />
+          </React.Suspense>
+
           {/* <NavLink
             to={AppRoute.Suppliers}
             icon={<SuppliersIcon fontSize="small" color="primary" />}
