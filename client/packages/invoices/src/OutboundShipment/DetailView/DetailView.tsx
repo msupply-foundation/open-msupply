@@ -22,7 +22,6 @@ import {
   TableProvider,
   Typography,
   createTableStore,
-  getEditableQuantityColumn,
   useColumns,
   useDetailPanel,
   useDocument,
@@ -88,7 +87,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       'costPricePerPack',
       'sellPricePerPack',
       'packSize',
-      getEditableQuantityColumn(),
+      'numberOfPacks',
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
