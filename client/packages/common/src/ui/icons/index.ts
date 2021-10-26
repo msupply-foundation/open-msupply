@@ -2,14 +2,14 @@ export { ArrowLeftIcon } from './ArrowLeft';
 export { ArrowRightIcon } from './ArrowRight';
 export { BookIcon } from './Book';
 export { CartIcon } from './Cart';
-export { CheckIcon } from './Check';
 export { CheckboxCheckedIcon } from './CheckboxChecked';
-export { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 export { CheckboxEmptyIcon } from './CheckboxEmpty';
+export { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
+export { CheckIcon } from './Check';
 export { ChevronDownIcon } from './ChevronDown';
 export { CircleIcon } from './Circle';
-export { CloseIcon } from './Close';
 export { ClockIcon } from './Clock';
+export { CloseIcon } from './Close';
 export { CopyIcon } from './Copy';
 export { CustomersIcon } from './Customers';
 export { DashboardIcon } from './Dashboard';
@@ -40,6 +40,7 @@ export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
+export { Medicine } from './Medicine';
 
 type Color =
   | 'inherit'
