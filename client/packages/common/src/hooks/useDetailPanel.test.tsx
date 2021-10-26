@@ -1,23 +1,14 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import { render } from '@testing-library/react';
 import { IntlTestProvider } from '../intl';
 import { act } from 'react-dom/test-utils';
-import { Section, useDetailPanel } from './useDetailPanel';
+import { useDetailPanel } from './useDetailPanel';
 import userEvent from '@testing-library/user-event';
 import { setScreenSize_ONLY_FOR_TESTING } from '../utils/testing';
 
 describe('useDetailPanel', () => {
   const DetailPanelExample: FC = () => {
-    const { OpenButton, setSections } = useDetailPanel();
-
-    const sections: Section[] = [
-      {
-        titleKey: 'heading.comment',
-        children: [<span key="0" />],
-      },
-    ];
-
-    useEffect(() => setSections(sections), []);
+    const { OpenButton } = useDetailPanel();
 
     return (
       <IntlTestProvider locale="en">

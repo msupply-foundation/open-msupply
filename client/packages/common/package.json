@@ -20,7 +20,7 @@
     "graphql-request": "^3.6.0",
     "history": "^5.0.0",
     "immer": "^9.0.6",
-    "kbar": "^0.1.0-beta.5",
+    "kbar": "0.1.0-beta.12",
     "notistack": "^1.0.6-next.3",
     "react-hook-form": "^7.17.0",
     "react-query": "^3.24.3",

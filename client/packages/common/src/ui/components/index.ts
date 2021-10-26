@@ -25,6 +25,7 @@ export * from './RemoteComponent';
 export * from './StatusCrumbs';
 export * from './menus';
 export * from './modals';
+export * from './panels';
 
 export {
   Accordion,

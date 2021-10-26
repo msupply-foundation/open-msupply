@@ -17,6 +17,9 @@ type HostContext = {
   setAppBarButtonsRef: (ref: React.MutableRefObject<null> | null) => void;
   appBarButtonsRef: React.MutableRefObject<null> | null;
 
+  setDetailPanelRef: (ref: React.MutableRefObject<null> | null) => void;
+  detailPanelRef: React.MutableRefObject<null> | null;
+
   setLocale: (locale: SupportedLocales) => void;
   locale: SupportedLocales;
 
@@ -43,6 +46,10 @@ export const useHostContext = create<HostContext>(set => ({
   setAppBarButtonsRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, appBarButtonsRef: refOrNull })),
   appBarButtonsRef: null,
+
+  setDetailPanelRef: (refOrNull: React.MutableRefObject<null> | null) =>
+    set(state => ({ ...state, detailPanelRef: refOrNull })),
+  detailPanelRef: null,
 
   setLocale: locale => set(state => ({ ...state, locale })),
   locale: LocalStorage.getItem('/localisation/locale') ?? 'en',

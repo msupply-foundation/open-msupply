@@ -21,6 +21,7 @@ import {
   KBarResults,
   useDrawer,
   styled,
+  DetailPanel,
   AppFooter,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -28,7 +29,6 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
 import { LanguageMenu } from './LanguageMenu';
-import DetailPanel from './DetailPanel';
 import Viewport from './Viewport';
 import NotFound from './NotFound';
 import { Footer } from './Footer';
