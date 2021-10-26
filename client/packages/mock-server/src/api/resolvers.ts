@@ -121,13 +121,25 @@ export const ResolverService = {
       return createListResponse(items.length, data, 'ItemConnector');
     },
 
-    name: (type: 'customer' | 'supplier'): ListResponse<Name> => {
+    name: (
+      type: 'customer' | 'supplier',
+      { first = 50, offset = 0, sort, desc }: PaginationOptions
+    ): ListResponse<Name> => {
       // TODO: Filter customers/suppliers etc
       const names = db.get.all.name().filter(({ isCustomer }) => {
         return isCustomer === (type === 'customer');
       });
 
-      return createListResponse(names.length, names, 'NameConnector');
+      const sortKey = sort === 'NAME' ? 'name' : 'code';
+
+      if (sort) {
+        const sortData = getDataSorter(sortKey, desc);
+        names.sort(sortData);
+      }
+
+      const paged = names.slice(offset, offset + first);
+
+      return createListResponse(paged.length, paged, 'NameConnector');
     },
   },
 
