@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import {
-  RemoteDataTable,
+  DataTable,
   ObjectWithStringKeys,
   SortBy,
   usePagination,
@@ -25,7 +25,7 @@ export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data, columns }) => {
   }, [numberOfRows, pagination.first]);
 
   return (
-    <RemoteDataTable
+    <DataTable
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
       data={data.slice(pagination.offset, pagination.offset + pagination.first)}
