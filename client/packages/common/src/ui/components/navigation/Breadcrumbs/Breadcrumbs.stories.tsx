@@ -32,14 +32,14 @@ const Template: Story<{ initialEntries: string[] }> = ({ initialEntries }) => {
 
 export const Short = Template.bind({});
 Short.args = {
-  initialEntries: [RouteBuilder.create(AppRoute.Customers).build()],
+  initialEntries: [RouteBuilder.create(AppRoute.Distribution).build()],
 };
 
 export const Medium = Template.bind({});
 Medium.args = {
   initialEntries: [
-    RouteBuilder.create(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
+    RouteBuilder.create(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
       .addPart('3')
       .build(),
   ],
@@ -48,24 +48,24 @@ Medium.args = {
 export const TooLong = Template.bind({});
 TooLong.args = {
   initialEntries: [
-    RouteBuilder.create(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
-      .addPart(AppRoute.Customers)
-      .addPart(AppRoute.CustomerInvoice)
+    RouteBuilder.create(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
+      .addPart(AppRoute.Distribution)
+      .addPart(AppRoute.OutboundShipment)
       .addPart('3')
       .build(),
   ],

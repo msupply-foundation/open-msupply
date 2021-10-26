@@ -61,14 +61,13 @@ describe('AppDrawer', () => {
     );
 
     await waitFor(() => {
-      expect(getByText(/customers/i)).toBeVisible();
+      expect(getByText(/distribution/i)).toBeVisible();
       expect(getByText(/dashboard/i)).toBeVisible();
-      expect(getByText(/customers/i)).toBeVisible();
-      expect(getByText(/suppliers/i)).toBeVisible();
+      // expect(getByText(/suppliers/i)).toBeVisible();
       expect(getByText(/stock/i)).toBeVisible();
-      expect(getByText(/tools/i)).toBeVisible();
+      // expect(getByText(/tools/i)).toBeVisible();
       expect(getByText(/reports/i)).toBeVisible();
-      expect(getByText(/messages/i)).toBeVisible();
+      // expect(getByText(/messages/i)).toBeVisible();
     });
   });
   it('Text is invisible when the menu is collapsed', async () => {
@@ -87,9 +86,8 @@ describe('AppDrawer', () => {
     });
 
     waitFor(() => {
-      expect(getByText(/customers/i)).not.toBeVisible();
       expect(getByText(/dashboard/i)).not.toBeVisible();
-      expect(getByText(/customers/i)).not.toBeVisible();
+      expect(getByText(/distribution/i)).not.toBeVisible();
       expect(getByText(/suppliers/i)).not.toBeVisible();
       expect(getByText(/stock/i)).not.toBeVisible();
       expect(getByText(/tools/i)).not.toBeVisible();

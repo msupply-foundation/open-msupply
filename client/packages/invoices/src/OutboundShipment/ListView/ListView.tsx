@@ -133,7 +133,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
             const result = await onCreate(invoice);
 
             invalidate();
-            navigate(`/customers/customer-invoice/${result.id}`);
+            navigate(`/distribution/outbound-shipment/${result.id}`);
           };
 
           createInvoice();
@@ -175,7 +175,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         data={data?.slice(0, numberOfRows) || []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/customers/customer-invoice/${row.id}`);
+          navigate(`/distribution/outbound-shipment/${row.id}`);
         }}
       />
     </>

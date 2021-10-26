@@ -48,13 +48,13 @@ module.exports = {
   },
   plugins: [
     new ModuleFederationPlugin({
-      name: 'customers',
+      name: 'distribution',
       filename: 'remoteEntry.js',
       remotes: {
         invoices: 'invoices@http://localhost:3005/remoteEntry.js',
       },
       exposes: {
-        './CustomerContainer': './src/CustomerContainer',
+        './DistributionContainer': './src/DistributionContainer',
         './Nav': './src/Nav',
       },
       // Shared dependencies can be updated, but these defaults should suffice.

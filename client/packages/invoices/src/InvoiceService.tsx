@@ -9,22 +9,22 @@ import {
 } from './OutboundShipment';
 
 const InvoiceService: FC = () => {
-  const customerInvoicesRoute = RouteBuilder.create(
-    AppRoute.CustomerInvoice
+  const outboundShipmentsRoute = RouteBuilder.create(
+    AppRoute.OutboundShipment
   ).build();
 
-  const customerInvoiceRoute = RouteBuilder.create(AppRoute.CustomerInvoice)
+  const outboundShipmentRoute = RouteBuilder.create(AppRoute.OutboundShipment)
     .addPart(':id')
     .build();
 
   return (
     <Routes>
       <Route
-        path={customerInvoicesRoute}
+        path={outboundShipmentsRoute}
         element={<OutboundShipmentListView />}
       />
       <Route
-        path={customerInvoiceRoute}
+        path={outboundShipmentRoute}
         element={<OutboundShipmentDetailView />}
       />
     </Routes>

@@ -14,7 +14,7 @@ import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
   mutation insertInvoice($id: String!, $otherPartyId: String!) {
-    insertCustomerInvoice(input: { id: $id, otherPartyId: $otherPartyId }) {
+    insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
       __typename
       ... on InvoiceNode {
         id
@@ -45,9 +45,9 @@ export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
     id: invoice.id,
     otherPartyId: invoice['nameId'],
   });
-  const { insertCustomerInvoice } = result;
+  const { insertOutboundShipment } = result;
 
-  return insertCustomerInvoice;
+  return insertOutboundShipment;
 };
 
 export const getDetailQuery = (): string => gql`
