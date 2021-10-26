@@ -65,8 +65,8 @@ describe('ColumnDefinitionSetBuilder', () => {
 
     expect(columns).toEqual([
       expect.objectContaining({ key: 'type' }),
-      expect.objectContaining({ key: 'entered' }),
-      expect.objectContaining({ key: 'confirmed' }),
+      expect.objectContaining({ key: 'entryDatetime' }),
+      expect.objectContaining({ key: 'confirmedDatetime' }),
       expect.objectContaining({ key: 'status' }),
       expect.objectContaining({ key: 'invoiceNumber' }),
     ]);

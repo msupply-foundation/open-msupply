@@ -66,7 +66,7 @@ describe('Breadcrumbs', () => {
       <TestingProvider>
         <TestingRouter
           initialEntries={[
-            RouteBuilder.create(AppRoute.OutboundShipment)
+            RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.OutboundShipment)
               .build(),
           ]}
@@ -76,7 +76,7 @@ describe('Breadcrumbs', () => {
       </TestingProvider>
     );
 
-    const node = getByText(/invoice/i);
+    const node = getByText(/outbound shipment/i);
     const closestAnchor = node.closest('a');
 
     expect(closestAnchor).toEqual(null);
