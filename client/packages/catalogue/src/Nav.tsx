@@ -1,14 +1,13 @@
 import React, { FC, useEffect } from 'react';
 import { useMatch } from 'react-router-dom';
 import {
-  TruckIcon,
   Collapse,
   List,
   useDrawer,
   useTranslation,
   RouteBuilder,
   NavLink,
-  Medicine,
+  MedicineIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -41,7 +40,7 @@ const Nav: FC = () => {
       <NavLink
         end={false}
         to={AppRoute.Catalogue}
-        icon={<Medicine color="primary" />}
+        icon={<MedicineIcon color="primary" />}
         expandOnHover
         text={t('app.catalogue')}
       />
