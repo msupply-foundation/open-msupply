@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import { useParams } from 'react-router';
 import {
   AppBarButtonsPortal,
@@ -8,6 +8,9 @@ import {
   ClockIcon,
   Column,
   CopyIcon,
+  DetailPanelAction,
+  DetailPanelPortal,
+  DetailPanelSection,
   Grid,
   PanelField,
   PanelLabel,
@@ -58,7 +61,7 @@ const useDraftOutbound = () => {
 
 export const OutboundShipmentDetailViewComponent: FC = () => {
   const { draft, dispatch, onChangeSortBy, save, sortBy } = useDraftOutbound();
-  const { OpenButton, setActions, setSections } = useDetailPanel();
+  const { OpenButton } = useDetailPanel();
   const t = useTranslation();
   const d = useFormatDate();
   const { success, warning } = useNotification();
@@ -73,69 +76,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
     success('Copied to clipboard successfully')();
   };
-
-  useEffect(() => {
-    setSections([
-      {
-        titleKey: 'heading.comment',
-        children: [<Typography key="comment">{draft?.comment}</Typography>],
-      },
-      {
-        titleKey: 'heading.additional-info',
-        children: [
-          <Grid container key="additional-info">
-            <PanelRow>
-              <PanelLabel>{t('label.color')}</PanelLabel>
-              <PanelField>
-                <CircleIcon htmlColor={draft?.color} sx={{ width: 8 }} />
-                <span
-                  style={{
-                    color: draft?.color,
-                    verticalAlign: 'bottom',
-                    marginLeft: 5,
-                  }}
-                >
-                  {draft?.color}
-                </span>
-              </PanelField>
-            </PanelRow>
-            <PanelRow>
-              <PanelLabel>{t('label.entered')}</PanelLabel>
-              <PanelField>{entered}</PanelField>
-            </PanelRow>
-            <PanelRow>
-              <PanelLabel>{t('label.status')}</PanelLabel>
-              <PanelField>{t(getStatusTranslation(draft?.status))}</PanelField>
-            </PanelRow>
-          </Grid>,
-        ],
-      },
-    ]);
-    // clean up on unload: will hide the details panel
-    return () => setSections([]);
-  }, [draft?.comment, draft?.color, draft?.status]);
-
-  useEffect(() => {
-    setActions([
-      {
-        icon: <ClockIcon />,
-        titleKey: 'link.history',
-        onClick: warning('No history available'),
-      },
-      {
-        icon: <RewindIcon />,
-        titleKey: 'link.backorders',
-        onClick: warning('No back orders available'),
-      },
-      {
-        icon: <CopyIcon />,
-        titleKey: 'link.copy-to-clipboard',
-        onClick: copyToClipboard,
-      },
-    ]);
-
-    return () => setActions([]);
-  }, []);
 
   const { currentTab, onChangeTab } = useTabs('general');
 
@@ -200,6 +140,62 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         </TabPanel>
         <OutboundDetailFooter draft={draft} save={save} />
       </Box>
+      <DetailPanelPortal
+        Actions={
+          <>
+            <DetailPanelAction
+              icon={<ClockIcon />}
+              titleKey="link.history"
+              onClick={warning('No history available')}
+            />
+            <DetailPanelAction
+              icon={<RewindIcon />}
+              titleKey="link.backorders"
+              onClick={warning('No back orders available')}
+            />
+            <DetailPanelAction
+              icon={<CopyIcon />}
+              titleKey="link.copy-to-clipboard"
+              onClick={copyToClipboard}
+            />
+          </>
+        }
+      >
+        <>
+          <DetailPanelSection titleKey="heading.comment">
+            <Typography key="comment">{draft?.comment}</Typography>
+          </DetailPanelSection>
+          <DetailPanelSection titleKey="heading.additional-info">
+            <Grid container key="additional-info">
+              <PanelRow>
+                <PanelLabel>{t('label.color')}</PanelLabel>
+                <PanelField>
+                  <CircleIcon htmlColor={draft?.color} sx={{ width: 8 }} />
+                  <span
+                    style={{
+                      color: draft?.color,
+                      verticalAlign: 'bottom',
+                      marginLeft: 5,
+                    }}
+                  >
+                    {draft?.color}
+                  </span>
+                </PanelField>
+              </PanelRow>
+              <PanelRow>
+                <PanelLabel>{t('label.entered')}</PanelLabel>
+                <PanelField>{entered}</PanelField>
+              </PanelRow>
+              <PanelRow>
+                <PanelLabel>{t('label.status')}</PanelLabel>
+                <PanelField>
+                  {t(getStatusTranslation(draft?.status))}
+                </PanelField>
+              </PanelRow>
+            </Grid>
+          </DetailPanelSection>
+        </>
+      </DetailPanelPortal>
     </TabContext>
   ) : null;
 };
