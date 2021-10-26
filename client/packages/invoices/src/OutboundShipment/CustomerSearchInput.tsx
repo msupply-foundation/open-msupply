@@ -33,10 +33,12 @@ export const CustomerSearchInput: FC<CustomerSearchProps> = ({
       disabled={disabled}
       clearable={false}
       value={
-        value && {
-          ...value,
-          label: String(value?.name),
-        }
+        value && !!value.name
+          ? {
+              ...value,
+              label: String(value?.name ?? ''),
+            }
+          : undefined
       }
       filterOptionConfig={filterOptions}
       loading={isLoading}
