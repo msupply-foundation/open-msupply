@@ -25,10 +25,13 @@ export type ColumnKey =
   | 'quantity'
   | 'itemCode'
   | 'itemName'
+  | 'itemUnit'
   | 'expiryDate'
   | 'batch'
   | 'costPricePerPack'
-  | 'sellPricePerPack';
+  | 'sellPricePerPack'
+  | 'location'
+  | 'unitQuantity';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
@@ -104,13 +107,13 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   packSize: {
     label: 'label.packSize',
     key: 'packSize',
-    width: 75,
+    width: 50,
     align: ColumnAlign.Right,
   },
   quantity: {
-    label: 'label.quantity',
+    label: 'label.pack-quantity',
     key: 'quantity',
-    width: 20,
+    width: 50,
     align: ColumnAlign.Right,
   },
   batch: {
@@ -131,6 +134,24 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 35,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
+  },
+  location: {
+    label: 'label.location',
+    key: 'location',
+    width: 100,
+  },
+  unitQuantity: {
+    label: 'label.unit-quantity',
+    key: 'unitQuantity',
+    width: 50,
+    accessor: row =>
+      String(Number(row['quantity'] ?? 0) * Number(row['packSize'] ?? 0)),
+    align: ColumnAlign.Right,
+  },
+  itemUnit: {
+    label: 'label.unit',
+    key: 'unit',
+    width: 75,
   },
 });
 

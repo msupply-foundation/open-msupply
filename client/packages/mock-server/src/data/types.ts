@@ -15,6 +15,7 @@ export interface Item {
   code: string;
   name: string;
   isVisible: boolean;
+  unit: string;
 }
 
 export interface Name {
@@ -43,6 +44,7 @@ export interface StockLine {
   storeId: string;
   costPricePerPack: number;
   sellPricePerPack: number;
+  location: string;
 }
 
 export interface ResolvedStockLine extends StockLine {
@@ -54,6 +56,7 @@ export interface InvoiceLine {
   id: string;
   itemName: string;
   itemCode?: string;
+  itemUnit?: string;
   quantity: number;
   batchName?: string;
   expiryDate: string;
