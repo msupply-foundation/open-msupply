@@ -18,6 +18,19 @@ import { items } from './items';
 import { comments } from './comments';
 import { names } from './names';
 
+const units = [
+  'Tablet',
+  'Tab',
+  'Bottle',
+  'Roll',
+  'Vial',
+  'Each',
+  'Sachet',
+  'Ampoule',
+  'Capsule',
+  'Amp',
+];
+
 export const getStockLinesForItem = (
   item: Item,
   stockLines: StockLine[] = StockLineData
@@ -66,6 +79,7 @@ export const createStockLines = (
           packSize: 1,
           expiryDate: faker.date.future(0.5).toISOString(),
           batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
+          location: `${alphaString(1)}${faker.datatype.number(9)}`,
           storeId: store.id,
           availableNumberOfPacks,
           totalNumberOfPacks:
@@ -123,8 +137,10 @@ export const createInvoiceLines = (
             itemId: item.id,
             itemName: item.name,
             itemCode: item.code,
+            itemUnit: item.unit,
 
             stockLineId: stockLine.id,
+            location: stockLine.location,
 
             batch: stockLine.batch,
             expiryDate: stockLine.expiryDate,
@@ -161,6 +177,7 @@ export const createItems = (
       id: itemId,
       code,
       name,
+      unit: takeRandomElementFrom(units),
       isVisible: faker.datatype.boolean(),
     };
 
