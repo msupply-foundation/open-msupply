@@ -40,7 +40,7 @@ export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
-export { Medicine } from './Medicine';
+export { MedicineIcon } from './MedicineIcon';
 
 type Color =
   | 'inherit'
