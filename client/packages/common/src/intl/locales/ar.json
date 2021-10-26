@@ -1,6 +1,7 @@
 {
   "app.admin": "مشرف",
   "app.catalogue": "Catalogue",
+  "app.customers": "Customer",
   "app.customer-requisition": "طلبات الشراء",
   "app.dashboard": "لوحة القيادة",
   "app.distribution": "توزيع",
