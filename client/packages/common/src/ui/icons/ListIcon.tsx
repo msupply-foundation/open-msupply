@@ -6,9 +6,8 @@ export const ListIcon = (props: SvgIconProps): JSX.Element => {
     <SvgIcon
       {...props}
       stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
       viewBox="0 0 21 20"
     >
       <line x1="8" y1="6" x2="21" y2="6"></line>
