@@ -5,21 +5,21 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
 import { handlers } from '@openmsupply-client/mock-server/src/worker/handlers';
 
-import { OutboundShipmentDetailView } from './DetailView';
+import { DetailView } from './DetailView';
 
 export default {
   title: 'Page/OutboundShipmentDetailView',
-  component: OutboundShipmentDetailView,
+  component: DetailView,
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof OutboundShipmentDetailView>;
+} as ComponentMeta<typeof DetailView>;
 
-const Template: ComponentStory<typeof OutboundShipmentDetailView> = args => (
+const Template: ComponentStory<typeof DetailView> = args => (
   <TestingProvider>
     <TestingRouter initialEntries={['/distribution/outbound-shipment/3']}>
       <Route path="/distribution/outbound-shipment">
-        <Route path=":id" element={<OutboundShipmentDetailView {...args} />} />
+        <Route path=":id" element={<DetailView {...args} />} />
       </Route>
     </TestingRouter>
   </TestingProvider>

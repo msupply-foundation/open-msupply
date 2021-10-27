@@ -10,13 +10,11 @@ import { CustomerSearchInput } from '../CustomerSearchInput';
 import { OutboundShipment } from './types';
 import { isInvoiceEditable } from '../utils';
 
-interface OutboundShipmentToolbarProps {
+interface ToolbarProps {
   draft: OutboundShipment;
 }
 
-export const OutboundDetailToolbar: FC<OutboundShipmentToolbarProps> = ({
-  draft,
-}) => {
+export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container flexDirection="column" display="flex" flex={1}>
