@@ -13,22 +13,22 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
 pub mod common;
-mod outbound_shipment_delete;
-mod outbound_shipment_insert;
-mod outbound_shipment_update;
-mod delete_outbound_shipment_line;
-mod delete_inbound_shipment;
-mod delete_inbound_shipment_line;
-mod insert_outbound_shipment_line;
-mod insert_inbound_shipment;
-mod insert_inbound_shipment_line;
+mod inbound_shipment_delete;
+mod inbound_shipment_insert;
+mod inbound_shipment_line_delete;
+mod inbound_shipment_line_insert;
+mod inbound_shipment_update;
+mod inbound_shipment_update;
 mod invoice_query;
 mod invoices;
 mod names;
+mod outbound_shipment_delete;
+mod outbound_shipment_insert;
+mod outbound_shipment_line_delete;
+mod outbound_shipment_line_insert;
+mod outbound_shipment_line_update;
+mod outbound_shipment_update;
 mod requisition;
-mod update_outbound_shipment_line;
-mod update_inbound_shipment;
-mod update_inbound_shipment_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
 where
