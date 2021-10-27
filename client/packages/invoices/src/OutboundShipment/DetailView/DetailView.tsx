@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { useParams } from 'react-router';
 import {
+  TextArea,
   AppBarButtonsPortal,
   BookIcon,
   Box,
@@ -18,7 +19,6 @@ import {
   PlusCircleIcon,
   RewindIcon,
   TableProvider,
-  Typography,
   createTableStore,
   useColumns,
   useDetailPanel,
@@ -146,7 +146,10 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
       >
         <>
           <DetailPanelSection titleKey="heading.comment">
-            <Typography key="comment">{draft?.comment}</Typography>
+            <TextArea
+              onChange={e => draft.update?.('comment', e.target.value)}
+              value={draft.comment}
+            />
           </DetailPanelSection>
           <DetailPanelSection titleKey="heading.additional-info">
             <Grid container key="additional-info">
