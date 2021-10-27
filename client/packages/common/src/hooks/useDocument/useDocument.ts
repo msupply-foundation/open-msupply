@@ -57,7 +57,6 @@ export const useDocument = <
   // background re-fetches to keep an upto date reference to the server state.
   const { data } = useQuery(queryKey, api.onRead, {
     enabled: !isNew,
-    notifyOnChangeProps: ['data'],
   });
 
   // Mutation to sync our client state with the server state. The onUpdate function should take the full
