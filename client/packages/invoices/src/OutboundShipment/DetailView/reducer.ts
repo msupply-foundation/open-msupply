@@ -106,6 +106,13 @@ export const reducer = (
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
 
+          draft.upsertLine = invoiceLine => {
+            dispatch?.({
+              type: ActionType.UpsertLine,
+              payload: { invoiceLine },
+            });
+          };
+
           break;
         }
 

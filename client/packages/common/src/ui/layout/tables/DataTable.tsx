@@ -77,7 +77,7 @@ export const DataTable = <T extends DomainObject>({
         <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {data.map((row, idx) => {
             return (
-              <DataRow<T>
+              <DataRow
                 columns={columns}
                 key={row.id}
                 onClick={onRowClick}

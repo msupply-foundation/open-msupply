@@ -1,2 +1,2 @@
 export { OutboundShipmentListView } from './ListView';
-export { OutboundShipmentDetailView } from './DetailView';
+export { DetailView } from './DetailView';

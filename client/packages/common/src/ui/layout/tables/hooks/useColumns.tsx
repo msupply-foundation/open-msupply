@@ -64,7 +64,7 @@ export const useColumns = <T extends DomainObject>(
 
         return { ...defaults, ...column };
       }),
-    [depsArray]
+    depsArray
   );
 };
 

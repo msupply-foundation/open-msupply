@@ -2,7 +2,6 @@ import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   ObjectWithStringKeys,
-  SortBy,
   usePagination,
   useRowRenderCount,
   Column,
@@ -13,10 +12,12 @@ import { ItemRow } from '../types';
 interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
   columns: Column<T>[];
-  sortBy: SortBy<T>;
 }
 
-export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data, columns }) => {
+export const GeneralTabComponent: FC<GeneralTabProps<ItemRow>> = ({
+  data,
+  columns,
+}) => {
   const numberOfRows = useRowRenderCount();
   const { pagination } = usePagination(numberOfRows);
 
@@ -34,3 +35,5 @@ export const GeneralTab: FC<GeneralTabProps<ItemRow>> = ({ data, columns }) => {
     />
   );
 };
+
+export const GeneralTab = React.memo(GeneralTabComponent);
