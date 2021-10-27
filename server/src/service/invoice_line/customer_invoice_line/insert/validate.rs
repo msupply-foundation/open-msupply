@@ -3,7 +3,7 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceRow, ItemRow, StockLineRow},
     },
-    domain::{customer_invoice::InsertCustomerInvoiceLine, invoice::InvoiceType},
+    domain::{invoice::InvoiceType, outbound_shipment::InsertOutboundShipmentLine},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
@@ -21,12 +21,12 @@ use crate::{
     },
 };
 
-use super::InsertCustomerInvoiceLineError;
+use super::InsertOutboundShipmentLineError;
 
 pub fn validate(
-    input: &InsertCustomerInvoiceLine,
+    input: &InsertOutboundShipmentLine,
     connection: &StorageConnection,
-) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertCustomerInvoiceLineError> {
+) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutboundShipmentLineError> {
     check_line_does_not_exists(&input.id, connection)?;
     check_number_of_packs(Some(input.number_of_packs))?;
     let batch = check_batch_exists(&input.stock_line_id, connection)?;
@@ -40,7 +40,7 @@ pub fn validate(
         connection,
     )?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::CustomerInvoice)?;
+    check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
     check_invoice_finalised(&invoice)?;
 
     check_reduction_below_zero(&input, &batch)?;
@@ -49,11 +49,11 @@ pub fn validate(
 }
 
 fn check_reduction_below_zero(
-    input: &InsertCustomerInvoiceLine,
+    input: &InsertOutboundShipmentLine,
     batch: &StockLineRow,
-) -> Result<(), InsertCustomerInvoiceLineError> {
+) -> Result<(), InsertOutboundShipmentLineError> {
     if batch.available_number_of_packs < u32_to_i32(input.number_of_packs) {
-        Err(InsertCustomerInvoiceLineError::ReductionBelowZero {
+        Err(InsertOutboundShipmentLineError::ReductionBelowZero {
             stock_line_id: batch.id.clone(),
         })
     } else {
@@ -61,56 +61,56 @@ fn check_reduction_below_zero(
     }
 }
 
-impl From<StockLineAlreadyExistsInInvoice> for InsertCustomerInvoiceLineError {
+impl From<StockLineAlreadyExistsInInvoice> for InsertOutboundShipmentLineError {
     fn from(error: StockLineAlreadyExistsInInvoice) -> Self {
-        InsertCustomerInvoiceLineError::StockLineAlreadyExistsInInvoice(error.0)
+        InsertOutboundShipmentLineError::StockLineAlreadyExistsInInvoice(error.0)
     }
 }
 
-impl From<ItemDoesNotMatchStockLine> for InsertCustomerInvoiceLineError {
+impl From<ItemDoesNotMatchStockLine> for InsertOutboundShipmentLineError {
     fn from(_: ItemDoesNotMatchStockLine) -> Self {
-        InsertCustomerInvoiceLineError::ItemDoesNotMatchStockLine
+        InsertOutboundShipmentLineError::ItemDoesNotMatchStockLine
     }
 }
 
-impl From<ItemNotFound> for InsertCustomerInvoiceLineError {
+impl From<ItemNotFound> for InsertOutboundShipmentLineError {
     fn from(_: ItemNotFound) -> Self {
-        InsertCustomerInvoiceLineError::ItemNotFound
+        InsertOutboundShipmentLineError::ItemNotFound
     }
 }
 
-impl From<StockLineNotFound> for InsertCustomerInvoiceLineError {
+impl From<StockLineNotFound> for InsertOutboundShipmentLineError {
     fn from(_: StockLineNotFound) -> Self {
-        InsertCustomerInvoiceLineError::StockLineNotFound
+        InsertOutboundShipmentLineError::StockLineNotFound
     }
 }
 
-impl From<NumberOfPacksBelowOne> for InsertCustomerInvoiceLineError {
+impl From<NumberOfPacksBelowOne> for InsertOutboundShipmentLineError {
     fn from(_: NumberOfPacksBelowOne) -> Self {
-        InsertCustomerInvoiceLineError::NumberOfPacksBelowOne
+        InsertOutboundShipmentLineError::NumberOfPacksBelowOne
     }
 }
 
-impl From<LineAlreadyExists> for InsertCustomerInvoiceLineError {
+impl From<LineAlreadyExists> for InsertOutboundShipmentLineError {
     fn from(_: LineAlreadyExists) -> Self {
-        InsertCustomerInvoiceLineError::LineAlreadyExists
+        InsertOutboundShipmentLineError::LineAlreadyExists
     }
 }
 
-impl From<WrongInvoiceType> for InsertCustomerInvoiceLineError {
+impl From<WrongInvoiceType> for InsertOutboundShipmentLineError {
     fn from(_: WrongInvoiceType) -> Self {
-        InsertCustomerInvoiceLineError::NotACustomerInvoice
+        InsertOutboundShipmentLineError::NotAnOutboundShipment
     }
 }
 
-impl From<InvoiceIsFinalised> for InsertCustomerInvoiceLineError {
+impl From<InvoiceIsFinalised> for InsertOutboundShipmentLineError {
     fn from(_: InvoiceIsFinalised) -> Self {
-        InsertCustomerInvoiceLineError::CannotEditFinalised
+        InsertOutboundShipmentLineError::CannotEditFinalised
     }
 }
 
-impl From<InvoiceDoesNotExist> for InsertCustomerInvoiceLineError {
+impl From<InvoiceDoesNotExist> for InsertOutboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        InsertCustomerInvoiceLineError::InvoiceDoesNotExist
+        InsertOutboundShipmentLineError::InvoiceDoesNotExist
     }
 }

@@ -6,7 +6,7 @@ use crate::{
         },
         schema::{InvoiceLineRow, StockLineRow},
     },
-    domain::customer_invoice::UpdateCustomerInvoiceLine,
+    domain::outbound_shipment::UpdateOutboundShipmentLine,
     service::{u32_to_i32, WithDBError},
 };
 
@@ -16,10 +16,10 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-pub fn update_customer_invoice_line(
+pub fn update_outbound_shipment_line(
     connection_manager: &StorageConnectionManager,
-    input: UpdateCustomerInvoiceLine,
-) -> Result<String, UpdateCustomerInvoiceLineError> {
+    input: UpdateOutboundShipmentLine,
+) -> Result<String, UpdateOutboundShipmentLineError> {
     let connection = connection_manager.connection()?;
     let new_line = connection
         .transaction_sync(|connection| {
@@ -36,7 +36,7 @@ pub fn update_customer_invoice_line(
             Ok(new_line)
         })
         .map_err(
-            |error: TransactionError<UpdateCustomerInvoiceLineError>| match error {
+            |error: TransactionError<UpdateOutboundShipmentLineError>| match error {
                 TransactionError::Transaction { msg } => {
                     RepositoryError::as_db_error(&msg, "").into()
                 }
@@ -45,7 +45,7 @@ pub fn update_customer_invoice_line(
         )?;
     Ok(new_line.id)
 }
-/// During customer invoice line update, stock line may change thus validation and updates need to apply to both batches
+/// During outbound shipment line update, stock line may change thus validation and updates need to apply to both batches
 pub struct BatchPair {
     /// Main batch to be updated
     pub main_batch: StockLineRow,
@@ -57,7 +57,7 @@ impl BatchPair {
     /// Calculate reduction amount to apply to main batch
     pub fn get_main_batch_reduction(
         &self,
-        input: &UpdateCustomerInvoiceLine,
+        input: &UpdateOutboundShipmentLine,
         existing_line: &InvoiceLineRow,
     ) -> i32 {
         // Previous batch exists, this mean new batch was requested means:
@@ -80,11 +80,11 @@ impl BatchPair {
     }
 }
 
-pub enum UpdateCustomerInvoiceLineError {
+pub enum UpdateOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NotACustomerInvoice,
+    NotAnOutboundShipment,
     NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditFinalised,
@@ -100,15 +100,15 @@ pub enum UpdateCustomerInvoiceLineError {
     },
 }
 
-impl From<RepositoryError> for UpdateCustomerInvoiceLineError {
+impl From<RepositoryError> for UpdateOutboundShipmentLineError {
     fn from(error: RepositoryError) -> Self {
-        UpdateCustomerInvoiceLineError::DatabaseError(error)
+        UpdateOutboundShipmentLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for UpdateCustomerInvoiceLineError
+impl<ERR> From<WithDBError<ERR>> for UpdateOutboundShipmentLineError
 where
-    ERR: Into<UpdateCustomerInvoiceLineError>,
+    ERR: Into<UpdateOutboundShipmentLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {

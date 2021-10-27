@@ -2,26 +2,26 @@ use async_graphql::*;
 
 use crate::{
     domain::{
+        inbound_shipment::UpdateInboundShipment,
         invoice::{Invoice, InvoiceStatus},
-        supplier_invoice::UpdateSupplierInvoice,
     },
     server::service::graphql::schema::{
         mutations::{
             CannotChangeInvoiceBackToDraft, CannotEditFinalisedInvoice, ForeignKey,
-            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
+            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
         },
         types::{
             DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
             RecordNotFound,
         },
     },
-    service::{invoice::UpdateSupplierInvoiceError, SingleRecordError},
+    service::{invoice::UpdateInboundShipmentError, SingleRecordError},
 };
 
 use super::OtherPartyNotASupplier;
 
 #[derive(InputObject)]
-pub struct UpdateSupplierInvoiceInput {
+pub struct UpdateInboundShipmentInput {
     pub id: String,
     pub other_party_id: Option<String>,
     pub status: Option<InvoiceNodeStatus>,
@@ -30,36 +30,36 @@ pub struct UpdateSupplierInvoiceInput {
 }
 
 #[derive(Union)]
-pub enum UpdateSupplierInvoiceResponse {
-    Error(ErrorWrapper<UpdateSupplierInvoiceErrorInterface>),
+pub enum UpdateInboundShipmentResponse {
+    Error(ErrorWrapper<UpdateInboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateSupplierInvoiceErrorInterface {
+pub enum UpdateInboundShipmentErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
-    NotASupplierInvoice(NotASupplierInvoice),
+    NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft),
 }
 
-impl From<UpdateSupplierInvoiceInput> for UpdateSupplierInvoice {
+impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
     fn from(
-        UpdateSupplierInvoiceInput {
+        UpdateInboundShipmentInput {
             id,
             other_party_id,
             status,
             comment,
             their_reference,
-        }: UpdateSupplierInvoiceInput,
+        }: UpdateInboundShipmentInput,
     ) -> Self {
-        UpdateSupplierInvoice {
+        UpdateInboundShipment {
             id,
             other_party_id,
             status: status.map(InvoiceStatus::from),
@@ -69,7 +69,7 @@ impl From<UpdateSupplierInvoiceInput> for UpdateSupplierInvoice {
     }
 }
 
-impl From<Result<Invoice, SingleRecordError>> for UpdateSupplierInvoiceResponse {
+impl From<Result<Invoice, SingleRecordError>> for UpdateInboundShipmentResponse {
     fn from(result: Result<Invoice, SingleRecordError>) -> Self {
         let invoice_response: InvoiceResponse = result.into();
         // Implemented by flatten union
@@ -77,36 +77,36 @@ impl From<Result<Invoice, SingleRecordError>> for UpdateSupplierInvoiceResponse 
     }
 }
 
-impl From<UpdateSupplierInvoiceError> for UpdateSupplierInvoiceResponse {
-    fn from(error: UpdateSupplierInvoiceError) -> Self {
-        use UpdateSupplierInvoiceErrorInterface as OutError;
+impl From<UpdateInboundShipmentError> for UpdateInboundShipmentResponse {
+    fn from(error: UpdateInboundShipmentError) -> Self {
+        use UpdateInboundShipmentErrorInterface as OutError;
         let error = match error {
-            UpdateSupplierInvoiceError::InvoiceDoesNotExist => {
+            UpdateInboundShipmentError::InvoiceDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
             }
-            UpdateSupplierInvoiceError::DatabaseError(error) => {
+            UpdateInboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            UpdateSupplierInvoiceError::OtherPartyDoesNotExist => {
+            UpdateInboundShipmentError::OtherPartyDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
-            UpdateSupplierInvoiceError::OtherPartyNotASupplier(name) => {
+            UpdateInboundShipmentError::OtherPartyNotASupplier(name) => {
                 OutError::OtherPartyNotASupplier(OtherPartyNotASupplier(NameNode { name }))
             }
-            UpdateSupplierInvoiceError::NotASupplierInvoice => {
-                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            UpdateInboundShipmentError::NotAnInboundShipment => {
+                OutError::NotAnInboundShipment(NotAnInboundShipment {})
             }
-            UpdateSupplierInvoiceError::NotThisStoreInvoice => {
+            UpdateInboundShipmentError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            UpdateSupplierInvoiceError::CannotChangeInvoiceBackToDraft => {
+            UpdateInboundShipmentError::CannotChangeInvoiceBackToDraft => {
                 OutError::CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft {})
             }
-            UpdateSupplierInvoiceError::CannotEditFinalised => {
+            UpdateInboundShipmentError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
         };
 
-        UpdateSupplierInvoiceResponse::Error(ErrorWrapper { error })
+        UpdateInboundShipmentResponse::Error(ErrorWrapper { error })
     }
 }

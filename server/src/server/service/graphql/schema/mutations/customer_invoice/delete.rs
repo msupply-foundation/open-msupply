@@ -2,65 +2,65 @@ use crate::{
     server::service::graphql::schema::{
         mutations::{
             CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
-            InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice,
+            InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
         },
         types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
-    service::invoice::DeleteCustomerInvoiceError,
+    service::invoice::DeleteOutboundShipmentError,
 };
 
 use async_graphql::{Interface, Union};
 
 #[derive(Union)]
-pub enum DeleteCustomerInvoiceResponse {
-    Error(ErrorWrapper<DeleteCustomerInvoiceErrorInterface>),
+pub enum DeleteOutboundShipmentResponse {
+    Error(ErrorWrapper<DeleteOutboundShipmentErrorInterface>),
     Response(DeleteResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum DeleteCustomerInvoiceErrorInterface {
+pub enum DeleteOutboundShipmentErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
-    NotACustomerInvoice(NotACustomerInvoice),
+    NotAnOutboundShipment(NotAnOutboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
     DatabaseError(DatabaseError),
 }
 
-impl From<Result<String, DeleteCustomerInvoiceError>> for DeleteCustomerInvoiceResponse {
-    fn from(result: Result<String, DeleteCustomerInvoiceError>) -> Self {
+impl From<Result<String, DeleteOutboundShipmentError>> for DeleteOutboundShipmentResponse {
+    fn from(result: Result<String, DeleteOutboundShipmentError>) -> Self {
         match result {
-            Ok(id) => DeleteCustomerInvoiceResponse::Response(DeleteResponse(id)),
+            Ok(id) => DeleteOutboundShipmentResponse::Response(DeleteResponse(id)),
             Err(error) => error.into(),
         }
     }
 }
 
-impl From<DeleteCustomerInvoiceError> for DeleteCustomerInvoiceResponse {
-    fn from(error: DeleteCustomerInvoiceError) -> Self {
-        use DeleteCustomerInvoiceErrorInterface as OutError;
+impl From<DeleteOutboundShipmentError> for DeleteOutboundShipmentResponse {
+    fn from(error: DeleteOutboundShipmentError) -> Self {
+        use DeleteOutboundShipmentErrorInterface as OutError;
         let error = match error {
-            DeleteCustomerInvoiceError::InvoiceDoesNotExist => {
+            DeleteOutboundShipmentError::InvoiceDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
             }
-            DeleteCustomerInvoiceError::CannotEditFinalised => {
+            DeleteOutboundShipmentError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
-            DeleteCustomerInvoiceError::NotThisStoreInvoice => {
+            DeleteOutboundShipmentError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            DeleteCustomerInvoiceError::InvoiceLinesExists(lines) => {
+            DeleteOutboundShipmentError::InvoiceLinesExists(lines) => {
                 OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(lines.into()))
             }
-            DeleteCustomerInvoiceError::DatabaseError(error) => {
+            DeleteOutboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            DeleteCustomerInvoiceError::NotACustomerInvoice => {
-                OutError::NotACustomerInvoice(NotACustomerInvoice {})
+            DeleteOutboundShipmentError::NotAnOutboundShipment => {
+                OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
             }
         };
 
-        DeleteCustomerInvoiceResponse::Error(ErrorWrapper { error })
+        DeleteOutboundShipmentResponse::Error(ErrorWrapper { error })
     }
 }

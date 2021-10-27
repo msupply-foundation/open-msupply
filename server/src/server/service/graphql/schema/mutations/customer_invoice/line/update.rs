@@ -1,19 +1,19 @@
 use async_graphql::*;
 
 use crate::{
-    domain::{customer_invoice::UpdateCustomerInvoiceLine, invoice_line::InvoiceLine},
+    domain::{invoice_line::InvoiceLine, outbound_shipment::UpdateOutboundShipmentLine},
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
             InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
-            NotACustomerInvoice,
+            NotAnOutboundShipment,
         },
         types::{
             DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField,
             RecordNotFound,
         },
     },
-    service::{invoice_line::UpdateCustomerInvoiceLineError, SingleRecordError},
+    service::{invoice_line::UpdateOutboundShipmentLineError, SingleRecordError},
 };
 
 use super::{
@@ -22,7 +22,7 @@ use super::{
 };
 
 #[derive(InputObject)]
-pub struct UpdateCustomerInvoiceLineInput {
+pub struct UpdateOutboundShipmentLineInput {
     id: String,
     invoice_id: String,
     item_id: Option<String>,
@@ -31,15 +31,15 @@ pub struct UpdateCustomerInvoiceLineInput {
 }
 
 #[derive(Union)]
-pub enum UpdateCustomerInvoiceLineResponse {
-    Error(ErrorWrapper<UpdateCustomerInvoiceLineErrorInterface>),
+pub enum UpdateOutboundShipmentLineResponse {
+    Error(ErrorWrapper<UpdateOutboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateCustomerInvoiceLineErrorInterface {
+pub enum UpdateOutboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
@@ -50,22 +50,22 @@ pub enum UpdateCustomerInvoiceLineErrorInterface {
     ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
-    NotACustomerInvoice(NotACustomerInvoice),
+    NotAnOutboundShipment(NotAnOutboundShipment),
     RangeError(RangeError),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
 }
 
-impl From<UpdateCustomerInvoiceLineInput> for UpdateCustomerInvoiceLine {
+impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
     fn from(
-        UpdateCustomerInvoiceLineInput {
+        UpdateOutboundShipmentLineInput {
             id,
             invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
-        }: UpdateCustomerInvoiceLineInput,
+        }: UpdateOutboundShipmentLineInput,
     ) -> Self {
-        UpdateCustomerInvoiceLine {
+        UpdateOutboundShipmentLine {
             id,
             invoice_id,
             item_id,
@@ -75,7 +75,7 @@ impl From<UpdateCustomerInvoiceLineInput> for UpdateCustomerInvoiceLine {
     }
 }
 
-impl From<Result<InvoiceLine, SingleRecordError>> for UpdateCustomerInvoiceLineResponse {
+impl From<Result<InvoiceLine, SingleRecordError>> for UpdateOutboundShipmentLineResponse {
     fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
         let invoice_line_response: InvoiceLineResponse = result.into();
         // Implemented by flatten union
@@ -83,63 +83,63 @@ impl From<Result<InvoiceLine, SingleRecordError>> for UpdateCustomerInvoiceLineR
     }
 }
 
-impl From<UpdateCustomerInvoiceLineError> for UpdateCustomerInvoiceLineResponse {
-    fn from(error: UpdateCustomerInvoiceLineError) -> Self {
-        use UpdateCustomerInvoiceLineErrorInterface as OutError;
+impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineResponse {
+    fn from(error: UpdateOutboundShipmentLineError) -> Self {
+        use UpdateOutboundShipmentLineErrorInterface as OutError;
         let error = match error {
-            UpdateCustomerInvoiceLineError::DatabaseError(error) => {
+            UpdateOutboundShipmentLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            UpdateCustomerInvoiceLineError::InvoiceDoesNotExist => {
+            UpdateOutboundShipmentLineError::InvoiceDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
             }
-            UpdateCustomerInvoiceLineError::NotACustomerInvoice => {
-                OutError::NotACustomerInvoice(NotACustomerInvoice {})
+            UpdateOutboundShipmentLineError::NotAnOutboundShipment => {
+                OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
             }
-            UpdateCustomerInvoiceLineError::NotThisStoreInvoice => {
+            UpdateOutboundShipmentLineError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            UpdateCustomerInvoiceLineError::CannotEditFinalised => {
+            UpdateOutboundShipmentLineError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
-            UpdateCustomerInvoiceLineError::ItemNotFound => {
+            UpdateOutboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
             }
-            UpdateCustomerInvoiceLineError::NumberOfPacksBelowOne => {
+            UpdateOutboundShipmentLineError::NumberOfPacksBelowOne => {
                 OutError::RangeError(RangeError {
                     field: RangeField::NumberOfPacks,
                     range: Range::Min(1),
                 })
             }
-            UpdateCustomerInvoiceLineError::StockLineNotFound => {
+            UpdateOutboundShipmentLineError::StockLineNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::StockLineId))
             }
-            UpdateCustomerInvoiceLineError::StockLineAlreadyExistsInInvoice(line_id) => {
+            UpdateOutboundShipmentLineError::StockLineAlreadyExistsInInvoice(line_id) => {
                 OutError::StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice(line_id))
             }
-            UpdateCustomerInvoiceLineError::ItemDoesNotMatchStockLine => {
+            UpdateOutboundShipmentLineError::ItemDoesNotMatchStockLine => {
                 OutError::ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine {})
             }
-            UpdateCustomerInvoiceLineError::LineDoesNotExist => {
+            UpdateOutboundShipmentLineError::LineDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
             }
-            UpdateCustomerInvoiceLineError::LineDoesNotReferenceStockLine => {
+            UpdateOutboundShipmentLineError::LineDoesNotReferenceStockLine => {
                 OutError::LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine {})
             }
-            UpdateCustomerInvoiceLineError::ReductionBelowZero {
+            UpdateOutboundShipmentLineError::ReductionBelowZero {
                 stock_line_id,
                 line_id,
             } => OutError::NotEnoughStockForReduction(NotEnoughStockForReduction {
                 stock_line_id,
                 line_id: Some(line_id),
             }),
-            UpdateCustomerInvoiceLineError::NotThisInvoiceLine(invoice_id) => {
+            UpdateOutboundShipmentLineError::NotThisInvoiceLine(invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
                     invoice_id,
                 ))
             }
         };
 
-        UpdateCustomerInvoiceLineResponse::Error(ErrorWrapper { error })
+        UpdateOutboundShipmentLineResponse::Error(ErrorWrapper { error })
     }
 }

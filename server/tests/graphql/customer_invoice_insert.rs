@@ -16,8 +16,8 @@ mod graphql {
     use serde_json::json;
 
     #[actix_rt::test]
-    async fn test_graphql_customer_invoice_insert() {
-        let settings = test_db::get_test_settings("omsupply-database-gql-customer_invoice_insert");
+    async fn test_graphql_outbound_shipment_insert() {
+        let settings = test_db::get_test_settings("omsupply-database-gql-outbound_shipment_insert");
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
@@ -44,9 +44,9 @@ mod graphql {
         let other_party_supplier = &mock_names[2];
         let other_party_customer = &mock_names[0];
 
-        let query = r#"mutation InsertCustomerInvoice($input: InsertCustomerInvoiceInput!) {
-            insertCustomerInvoice(input: $input) {
-                ... on InsertCustomerInvoiceError {
+        let query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
+            insertOutboundShipment(input: $input) {
+                ... on InsertOutboundShipmentError {
                   error {
                     __typename
                   }
@@ -73,7 +73,7 @@ mod graphql {
           }
         }));
         let expected = json!({
-            "insertCustomerInvoice": {
+            "insertOutboundShipment": {
               "error": {
                 "__typename": "OtherPartyNotACustomerError"
               }
@@ -83,9 +83,9 @@ mod graphql {
         assert_gql_query(&settings, query, &variables, &expected).await;
 
         // ForeignKeyError (OtherPartyIdNotFoundError)
-        let foreign_key_query = r#"mutation InsertCustomerInvoice($input: InsertCustomerInvoiceInput!) {
-          insertCustomerInvoice(input: $input) {
-              ... on InsertCustomerInvoiceError {
+        let foreign_key_query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
+          insertOutboundShipment(input: $input) {
+              ... on InsertOutboundShipmentError {
                 error {
                   ... on ForeignKeyError {
                     __typename
@@ -102,7 +102,7 @@ mod graphql {
           }
         }));
         let expected = json!({
-            "insertCustomerInvoice": {
+            "insertOutboundShipment": {
               "error": {
                 "__typename": "ForeignKeyError",
                 "key": "OTHER_PARTY_ID"
@@ -121,10 +121,10 @@ mod graphql {
           }
         }));
         let expected = json!({
-            "insertCustomerInvoice": {
+            "insertOutboundShipment": {
               "id": "ci_insert_1",
               "otherPartyId": other_party_customer.id,
-              "type": "CUSTOMER_INVOICE",
+              "type": "OUTBOUND_SHIPMENT",
               "comment": "ci comment",
             }
           }
@@ -141,7 +141,7 @@ mod graphql {
           }
         }));
         let expected = json!({
-            "insertCustomerInvoice": {
+            "insertOutboundShipment": {
               "error": {
                 "__typename": "RecordAlreadyExist"
               }

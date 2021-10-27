@@ -1,18 +1,18 @@
 use async_graphql::*;
 
 use crate::{
-    domain::{invoice::Invoice, supplier_invoice::InsertSupplierInvoice},
+    domain::{inbound_shipment::InsertInboundShipment, invoice::Invoice},
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
-    service::{invoice::InsertSupplierInvoiceError, SingleRecordError},
+    service::{invoice::InsertInboundShipmentError, SingleRecordError},
 };
 
 use super::OtherPartyNotASupplier;
 
 #[derive(InputObject)]
-pub struct InsertSupplierInvoiceInput {
+pub struct InsertInboundShipmentInput {
     pub id: String,
     pub other_party_id: String,
     pub status: InvoiceNodeStatus,
@@ -21,32 +21,32 @@ pub struct InsertSupplierInvoiceInput {
 }
 
 #[derive(Union)]
-pub enum InsertSupplierInvoiceResponse {
-    Error(ErrorWrapper<InsertSupplierInvoiceErrorInterface>),
+pub enum InsertInboundShipmentResponse {
+    Error(ErrorWrapper<InsertInboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertSupplierInvoiceErrorInterface {
+pub enum InsertInboundShipmentErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
 }
 
-impl From<InsertSupplierInvoiceInput> for InsertSupplierInvoice {
+impl From<InsertInboundShipmentInput> for InsertInboundShipment {
     fn from(
-        InsertSupplierInvoiceInput {
+        InsertInboundShipmentInput {
             id,
             other_party_id,
             status,
             comment,
             their_reference,
-        }: InsertSupplierInvoiceInput,
+        }: InsertInboundShipmentInput,
     ) -> Self {
-        InsertSupplierInvoice {
+        InsertInboundShipment {
             id,
             other_party_id,
             status: status.into(),
@@ -56,7 +56,7 @@ impl From<InsertSupplierInvoiceInput> for InsertSupplierInvoice {
     }
 }
 
-impl From<Result<Invoice, SingleRecordError>> for InsertSupplierInvoiceResponse {
+impl From<Result<Invoice, SingleRecordError>> for InsertInboundShipmentResponse {
     fn from(result: Result<Invoice, SingleRecordError>) -> Self {
         let invoice_response: InvoiceResponse = result.into();
         // Implemented by flatten union
@@ -64,24 +64,24 @@ impl From<Result<Invoice, SingleRecordError>> for InsertSupplierInvoiceResponse 
     }
 }
 
-impl From<InsertSupplierInvoiceError> for InsertSupplierInvoiceResponse {
-    fn from(error: InsertSupplierInvoiceError) -> Self {
-        use InsertSupplierInvoiceErrorInterface as OutError;
+impl From<InsertInboundShipmentError> for InsertInboundShipmentResponse {
+    fn from(error: InsertInboundShipmentError) -> Self {
+        use InsertInboundShipmentErrorInterface as OutError;
         let error = match error {
-            InsertSupplierInvoiceError::InvoiceAlreadyExists => {
+            InsertInboundShipmentError::InvoiceAlreadyExists => {
                 OutError::RecordAlreadyExist(RecordAlreadyExist {})
             }
-            InsertSupplierInvoiceError::DatabaseError(error) => {
+            InsertInboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            InsertSupplierInvoiceError::OtherPartyDoesNotExist => {
+            InsertInboundShipmentError::OtherPartyDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
-            InsertSupplierInvoiceError::OtherPartyNotASupplier(name) => {
+            InsertInboundShipmentError::OtherPartyNotASupplier(name) => {
                 OutError::OtherPartyNotASupplier(OtherPartyNotASupplier(NameNode { name }))
             }
         };
 
-        InsertSupplierInvoiceResponse::Error(ErrorWrapper { error })
+        InsertInboundShipmentResponse::Error(ErrorWrapper { error })
     }
 }

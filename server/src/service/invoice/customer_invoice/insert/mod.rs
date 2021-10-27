@@ -2,7 +2,7 @@ use crate::{
     database::repository::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
-    domain::{customer_invoice::InsertCustomerInvoice, name::Name},
+    domain::{name::Name, outbound_shipment::InsertOutboundShipment},
 };
 
 pub mod generate;
@@ -11,7 +11,7 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
-pub enum InsertCustomerInvoiceError {
+pub enum InsertOutboundShipmentError {
     OtherPartyCannotBeThisStore,
     OtherPartyIdNotFound(String),
     OtherPartyNotACustomer(Name),
@@ -19,17 +19,17 @@ pub enum InsertCustomerInvoiceError {
     DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for InsertCustomerInvoiceError {
+impl From<RepositoryError> for InsertOutboundShipmentError {
     fn from(error: RepositoryError) -> Self {
-        InsertCustomerInvoiceError::DatabaseError(error)
+        InsertOutboundShipmentError::DatabaseError(error)
     }
 }
 
-impl From<TransactionError<InsertCustomerInvoiceError>> for InsertCustomerInvoiceError {
-    fn from(error: TransactionError<InsertCustomerInvoiceError>) -> Self {
+impl From<TransactionError<InsertOutboundShipmentError>> for InsertOutboundShipmentError {
+    fn from(error: TransactionError<InsertOutboundShipmentError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => {
-                InsertCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
+                InsertOutboundShipmentError::DatabaseError(RepositoryError::DBError {
                     msg,
                     extra: "".to_string(),
                 })
@@ -39,11 +39,11 @@ impl From<TransactionError<InsertCustomerInvoiceError>> for InsertCustomerInvoic
     }
 }
 
-/// Insert a new customer invoice and returns the invoice id when successful.
-pub fn insert_customer_invoice(
+/// Insert a new outbound shipment and returns the invoice id when successful.
+pub fn insert_outbound_shipment(
     connection_manager: &StorageConnectionManager,
-    input: InsertCustomerInvoice,
-) -> Result<String, InsertCustomerInvoiceError> {
+    input: InsertOutboundShipment,
+) -> Result<String, InsertOutboundShipmentError> {
     let connection = connection_manager.connection()?;
 
     let new_invoice_id = connection.transaction_sync(|connection| {

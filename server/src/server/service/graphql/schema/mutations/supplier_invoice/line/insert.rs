@@ -2,19 +2,19 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
-    domain::{invoice_line::InvoiceLine, supplier_invoice::InsertSupplierInvoiceLine},
+    domain::{inbound_shipment::InsertInboundShipmentLine, invoice_line::InvoiceLine},
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice, RecordAlreadyExist,
+            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, RecordAlreadyExist,
         },
         types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
-    service::{invoice_line::InsertSupplierInvoiceLineError, SingleRecordError},
+    service::{invoice_line::InsertInboundShipmentLineError, SingleRecordError},
 };
 
 #[derive(InputObject)]
-pub struct InsertSupplierInvoiceLineInput {
+pub struct InsertInboundShipmentLineInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
@@ -27,27 +27,27 @@ pub struct InsertSupplierInvoiceLineInput {
 }
 
 #[derive(Union)]
-pub enum InsertSupplierInvoiceLineResponse {
-    Error(ErrorWrapper<InsertSupplierInvoiceLineErrorInterface>),
+pub enum InsertInboundShipmentLineResponse {
+    Error(ErrorWrapper<InsertInboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertSupplierInvoiceLineErrorInterface {
+pub enum InsertInboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
     RangeError(RangeError),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
-    NotASupplierInvoice(NotASupplierInvoice),
+    NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
 }
 
-impl From<InsertSupplierInvoiceLineInput> for InsertSupplierInvoiceLine {
+impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
     fn from(
-        InsertSupplierInvoiceLineInput {
+        InsertInboundShipmentLineInput {
             id,
             invoice_id,
             item_id,
@@ -57,9 +57,9 @@ impl From<InsertSupplierInvoiceLineInput> for InsertSupplierInvoiceLine {
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
-        }: InsertSupplierInvoiceLineInput,
+        }: InsertInboundShipmentLineInput,
     ) -> Self {
-        InsertSupplierInvoiceLine {
+        InsertInboundShipmentLine {
             id,
             invoice_id,
             item_id,
@@ -73,7 +73,7 @@ impl From<InsertSupplierInvoiceLineInput> for InsertSupplierInvoiceLine {
     }
 }
 
-impl From<Result<InvoiceLine, SingleRecordError>> for InsertSupplierInvoiceLineResponse {
+impl From<Result<InvoiceLine, SingleRecordError>> for InsertInboundShipmentLineResponse {
     fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
         let invoice_line_response: InvoiceLineResponse = result.into();
         // Implemented by flatten union
@@ -81,43 +81,43 @@ impl From<Result<InvoiceLine, SingleRecordError>> for InsertSupplierInvoiceLineR
     }
 }
 
-impl From<InsertSupplierInvoiceLineError> for InsertSupplierInvoiceLineResponse {
-    fn from(error: InsertSupplierInvoiceLineError) -> Self {
-        use InsertSupplierInvoiceLineErrorInterface as OutError;
+impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse {
+    fn from(error: InsertInboundShipmentLineError) -> Self {
+        use InsertInboundShipmentLineErrorInterface as OutError;
         let error = match error {
-            InsertSupplierInvoiceLineError::LineAlreadyExists => {
+            InsertInboundShipmentLineError::LineAlreadyExists => {
                 OutError::RecordAlreadyExist(RecordAlreadyExist {})
             }
-            InsertSupplierInvoiceLineError::DatabaseError(error) => {
+            InsertInboundShipmentLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            InsertSupplierInvoiceLineError::InvoiceDoesNotExist => {
+            InsertInboundShipmentLineError::InvoiceDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
             }
-            InsertSupplierInvoiceLineError::NotASupplierInvoice => {
-                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            InsertInboundShipmentLineError::NotAnInboundShipment => {
+                OutError::NotAnInboundShipment(NotAnInboundShipment {})
             }
-            InsertSupplierInvoiceLineError::NotThisStoreInvoice => {
+            InsertInboundShipmentLineError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            InsertSupplierInvoiceLineError::CannotEditFinalised => {
+            InsertInboundShipmentLineError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
-            InsertSupplierInvoiceLineError::ItemNotFound => {
+            InsertInboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
             }
-            InsertSupplierInvoiceLineError::NumberOfPacksBelowOne => {
+            InsertInboundShipmentLineError::NumberOfPacksBelowOne => {
                 OutError::RangeError(RangeError {
                     field: RangeField::NumberOfPacks,
                     range: Range::Min(1),
                 })
             }
-            InsertSupplierInvoiceLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
+            InsertInboundShipmentLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
                 field: RangeField::PackSize,
                 range: Range::Min(1),
             }),
         };
 
-        InsertSupplierInvoiceLineResponse::Error(ErrorWrapper { error })
+        InsertInboundShipmentLineResponse::Error(ErrorWrapper { error })
     }
 }

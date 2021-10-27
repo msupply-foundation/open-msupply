@@ -5,7 +5,7 @@ mod graphql {
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
-        delete_supplier_invoice_full as delete, DeleteSupplierInvoiceFull as Delete,
+        delete_inbound_shipment_full as delete, DeleteInboundShipmentFull as Delete,
     };
 
     use graphql_client::{GraphQLQuery, Response};
@@ -16,11 +16,11 @@ mod graphql {
         util::test_db,
     };
 
-    use delete::DeleteSupplierInvoiceErrorInterface::*;
+    use delete::DeleteInboundShipmentErrorInterface::*;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
-            assert_unwrap_optional_key!($response, data).delete_supplier_invoice
+            assert_unwrap_optional_key!($response, data).delete_inbound_shipment
         };
     }
 
@@ -29,7 +29,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             assert_unwrap_enum!(
                 response_variant,
-                delete::DeleteSupplierInvoiceResponse::DeleteResponse
+                delete::DeleteInboundShipmentResponse::DeleteResponse
             )
         }};
     }
@@ -39,7 +39,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             let error_wrapper = assert_unwrap_enum!(
                 response_variant,
-                delete::DeleteSupplierInvoiceResponse::DeleteSupplierInvoiceError
+                delete::DeleteInboundShipmentResponse::DeleteInboundShipmentError
             );
             error_wrapper.error
         }};
@@ -54,23 +54,23 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_delete_supplier_invoice() {
+    async fn test_delete_inbound_shipment() {
         let (_, connection, settings) =
-            test_db::setup_all("test_delete_supplier_invoice_query", MockDataInserts::all()).await;
+            test_db::setup_all("test_delete_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
-        let invoice_with_lines_id = "supplier_invoice_a";
-        let empty_draft_invoice_id = "empty_draft_supplier_invoice";
+        let invoice_with_lines_id = "inbound_shipment_a";
+        let empty_draft_invoice_id = "empty_draft_inbound_shipment";
 
-        let finalised_supplier_invoice = get_invoice_inline!(
+        let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
+                .match_inbound_shipment()
                 .match_finalised(),
             &connection
         );
 
-        let customer_invoice =
-            get_invoice_inline!(InvoiceFilter::new().match_customer_invoice(), &connection);
+        let outbound_shipment =
+            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
         let lines_in_invoice = get_invoice_lines_inline!(invoice_with_lines_id, &connection);
 
         let base_variables = delete::Variables {
@@ -92,25 +92,25 @@ mod graphql {
             },)
         );
 
-        // Test NotASupplierInvoice
+        // Test NotAnInboundShipment
 
         let mut variables = base_variables.clone();
-        variables.id = customer_invoice.id.clone();
+        variables.id = outbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
 
         assert_error!(
             response,
-            NotASupplierInvoice(delete::NotASupplierInvoice {
-                description: "Invoice is not Supplier Invoice".to_string(),
+            NotAnInboundShipment(delete::NotAnInboundShipment {
+                description: "Invoice is not Inbound Shipment".to_string(),
             },)
         );
 
         // Test CannotEditFinalisedInvoice
 
         let mut variables = base_variables.clone();
-        variables.id = finalised_supplier_invoice.id.clone();
+        variables.id = finalised_inbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;

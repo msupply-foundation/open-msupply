@@ -13,7 +13,7 @@ mod user_account;
 use std::collections::HashMap;
 
 pub use full_invoice::mock_full_invoices;
-pub use invoice::{mock_customer_invoices, mock_invoices};
+pub use invoice::{mock_outbound_shipments, mock_invoices};
 pub use invoice_line::mock_invoice_lines;
 pub use item::mock_items;
 pub use name::mock_names;

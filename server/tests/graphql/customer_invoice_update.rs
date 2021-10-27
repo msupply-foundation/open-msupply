@@ -20,8 +20,8 @@ mod graphql {
     use serde_json::json;
 
     #[actix_rt::test]
-    async fn test_graphql_customer_invoice_update() {
-        let settings = test_db::get_test_settings("omsupply-database-gql-customer_invoice_update");
+    async fn test_graphql_outbound_shipment_update() {
+        let settings = test_db::get_test_settings("omsupply-database-gql-outbound_shipment_update");
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
@@ -62,9 +62,9 @@ mod graphql {
         let mock_data =
             insert_mock_data(&connection, MockDataInserts::none().full_invoices()).await;
 
-        let query = r#"mutation DeleteCustomerInvoice($input: UpdateCustomerInvoiceInput!) {
-            updateCustomerInvoice(input: $input) {
-                ... on UpdateCustomerInvoiceError {
+        let query = r#"mutation DeleteOutboundShipment($input: UpdateOutboundShipmentInput!) {
+            updateOutboundShipment(input: $input) {
+                ... on UpdateOutboundShipmentError {
                   error {
                     __typename
                   }
@@ -79,12 +79,12 @@ mod graphql {
         // CannotChangeStatusBackToDraftError
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_confirmed",
+            "id": "outbound_shipment_confirmed",
             "status": "DRAFT"
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
                 "__typename": "CannotChangeStatusBackToDraftError"
               }
@@ -96,12 +96,12 @@ mod graphql {
         // FinalisedInvoiceIsNotEditableError
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_finalised",
+            "id": "outbound_shipment_finalised",
             "status": "DRAFT"
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
                 "__typename": "FinalisedInvoiceIsNotEditableError"
               }
@@ -117,7 +117,7 @@ mod graphql {
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -129,12 +129,12 @@ mod graphql {
         // ForeignKeyError (Other party does not exist)
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_a",
+            "id": "outbound_shipment_a",
             "otherPartyId": "invalid_other_party"
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
                 "__typename": "ForeignKeyError"
               }
@@ -147,12 +147,12 @@ mod graphql {
         let other_party_supplier = &mock_names[2];
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_a",
+            "id": "outbound_shipment_a",
             "otherPartyId": other_party_supplier.id
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
                 "__typename": "OtherPartyNotACustomerError"
               }
@@ -161,16 +161,16 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
 
-        // NotACustomerInvoiceError
+        // NotAnOutboundShipmentError
         let variables = Some(json!({
           "input": {
-            "id": "supplier_invoice_a",
+            "id": "inbound_shipment_a",
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
-                "__typename": "NotACustomerInvoiceError"
+                "__typename": "NotAnOutboundShipmentError"
               }
             }
           }
@@ -180,12 +180,12 @@ mod graphql {
         // InvoiceLineHasNoStockLineError
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_invalid_stock_line",
+            "id": "outbound_shipment_invalid_stock_line",
             "status": "FINALISED"
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "error": {
                 "__typename": "InvoiceLineHasNoStockLineError"
               }
@@ -231,19 +231,19 @@ mod graphql {
 
         // test DRAFT to CONFIRMED
         let invoice_lines = invoice_line_repository
-            .find_many_by_invoice_id("customer_invoice_c")
+            .find_many_by_invoice_id("outbound_shipment_c")
             .unwrap();
         let expected_totals = expected_stock_line_totals(&invoice_lines);
         let variables = Some(json!({
           "input": {
-            "id": "customer_invoice_c",
+            "id": "outbound_shipment_c",
             "status": "CONFIRMED",
             "comment": "test_comment"
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
-              "id": "customer_invoice_c",
+            "updateOutboundShipment": {
+              "id": "outbound_shipment_c",
               "comment": "test_comment"
             }
           }
@@ -264,7 +264,7 @@ mod graphql {
           }
         }));
         let expected = json!({
-            "updateCustomerInvoice": {
+            "updateOutboundShipment": {
               "id": invoice_id,
               "comment": "test_comment_b"
             }

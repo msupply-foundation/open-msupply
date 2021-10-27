@@ -1,13 +1,13 @@
 use crate::{
     domain::{
-        customer_invoice::InsertCustomerInvoice,
         invoice::{Invoice, InvoiceStatus},
+        outbound_shipment::InsertOutboundShipment,
     },
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
-    service::{invoice::InsertCustomerInvoiceError, SingleRecordError},
+    service::{invoice::InsertOutboundShipmentError, SingleRecordError},
 };
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
@@ -17,7 +17,7 @@ use async_graphql::{InputObject, Interface, Union};
 use async_graphql::*;
 
 #[derive(InputObject)]
-pub struct InsertCustomerInvoiceInput {
+pub struct InsertOutboundShipmentInput {
     /// The new invoice id provided by the client
     id: String,
     /// The other party must be an customer of the current store
@@ -27,9 +27,9 @@ pub struct InsertCustomerInvoiceInput {
     their_reference: Option<String>,
 }
 
-impl From<InsertCustomerInvoiceInput> for InsertCustomerInvoice {
-    fn from(input: InsertCustomerInvoiceInput) -> Self {
-        InsertCustomerInvoice {
+impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
+    fn from(input: InsertOutboundShipmentInput) -> Self {
+        InsertOutboundShipment {
             id: input.id,
             other_party_id: input.other_party_id,
             status: input
@@ -43,15 +43,15 @@ impl From<InsertCustomerInvoiceInput> for InsertCustomerInvoice {
 }
 
 #[derive(Union)]
-pub enum InsertCustomerInvoiceResponse {
-    Error(ErrorWrapper<InsertCustomerInvoiceErrorInterface>),
+pub enum InsertOutboundShipmentResponse {
+    Error(ErrorWrapper<InsertOutboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-pub enum InsertCustomerInvoiceErrorInterface {
+pub enum InsertOutboundShipmentErrorInterface {
     InvoiceAlreadyExists(RecordAlreadyExist),
     ForeignKeyError(ForeignKeyError),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
@@ -59,7 +59,7 @@ pub enum InsertCustomerInvoiceErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-impl From<Result<Invoice, SingleRecordError>> for InsertCustomerInvoiceResponse {
+impl From<Result<Invoice, SingleRecordError>> for InsertOutboundShipmentResponse {
     fn from(result: Result<Invoice, SingleRecordError>) -> Self {
         let invoice_response: InvoiceResponse = result.into();
         // Implemented by flatten union
@@ -67,27 +67,27 @@ impl From<Result<Invoice, SingleRecordError>> for InsertCustomerInvoiceResponse 
     }
 }
 
-impl From<InsertCustomerInvoiceError> for InsertCustomerInvoiceResponse {
-    fn from(error: InsertCustomerInvoiceError) -> Self {
-        use InsertCustomerInvoiceErrorInterface as OutError;
+impl From<InsertOutboundShipmentError> for InsertOutboundShipmentResponse {
+    fn from(error: InsertOutboundShipmentError) -> Self {
+        use InsertOutboundShipmentErrorInterface as OutError;
         let error = match error {
-            InsertCustomerInvoiceError::OtherPartyCannotBeThisStore => {
+            InsertOutboundShipmentError::OtherPartyCannotBeThisStore => {
                 OutError::OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError {})
             }
-            InsertCustomerInvoiceError::OtherPartyIdNotFound(_) => {
+            InsertOutboundShipmentError::OtherPartyIdNotFound(_) => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
-            InsertCustomerInvoiceError::OtherPartyNotACustomer(name) => {
+            InsertOutboundShipmentError::OtherPartyNotACustomer(name) => {
                 OutError::OtherPartyNotACustomer(OtherPartyNotACustomerError(NameNode { name }))
             }
-            InsertCustomerInvoiceError::DatabaseError(error) => {
+            InsertOutboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            InsertCustomerInvoiceError::InvoiceAlreadyExists => {
+            InsertOutboundShipmentError::InvoiceAlreadyExists => {
                 OutError::InvoiceAlreadyExists(RecordAlreadyExist {})
             }
         };
 
-        InsertCustomerInvoiceResponse::Error(ErrorWrapper { error })
+        InsertOutboundShipmentResponse::Error(ErrorWrapper { error })
     }
 }

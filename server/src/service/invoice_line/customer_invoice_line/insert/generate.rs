@@ -1,17 +1,17 @@
 use crate::{
     database::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
-    domain::customer_invoice::InsertCustomerInvoiceLine,
+    domain::outbound_shipment::InsertOutboundShipmentLine,
     service::u32_to_i32,
 };
 
-use super::InsertCustomerInvoiceLineError;
+use super::InsertOutboundShipmentLineError;
 
 pub fn generate(
-    input: InsertCustomerInvoiceLine,
+    input: InsertOutboundShipmentLine,
     item_row: ItemRow,
     batch: StockLineRow,
     invoice: InvoiceRow,
-) -> Result<(InvoiceLineRow, StockLineRow), InsertCustomerInvoiceLineError> {
+) -> Result<(InvoiceLineRow, StockLineRow), InsertOutboundShipmentLineError> {
     let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Confirmed;
 
     let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
@@ -21,7 +21,7 @@ pub fn generate(
 }
 
 fn generate_batch_update(
-    input: &InsertCustomerInvoiceLine,
+    input: &InsertOutboundShipmentLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
@@ -38,13 +38,13 @@ fn generate_batch_update(
 }
 
 fn generate_line(
-    InsertCustomerInvoiceLine {
+    InsertOutboundShipmentLine {
         id,
         invoice_id,
         item_id,
         stock_line_id,
         number_of_packs,
-    }: InsertCustomerInvoiceLine,
+    }: InsertOutboundShipmentLine,
     ItemRow {
         name: item_name,
         code: item_code,

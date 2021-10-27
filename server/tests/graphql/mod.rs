@@ -13,22 +13,22 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
 pub mod common;
-mod customer_invoice_delete;
-mod customer_invoice_insert;
-mod customer_invoice_update;
-mod delete_customer_invoice_line;
-mod delete_supplier_invoice;
-mod delete_supplier_invoice_line;
-mod insert_customer_invoice_line;
-mod insert_supplier_invoice;
-mod insert_supplier_invoice_line;
+mod outbound_shipment_delete;
+mod outbound_shipment_insert;
+mod outbound_shipment_update;
+mod delete_outbound_shipment_line;
+mod delete_inbound_shipment;
+mod delete_inbound_shipment_line;
+mod insert_outbound_shipment_line;
+mod insert_inbound_shipment;
+mod insert_inbound_shipment_line;
 mod invoice_query;
 mod invoices;
 mod names;
 mod requisition;
-mod update_customer_invoice_line;
-mod update_supplier_invoice;
-mod update_supplier_invoice_line;
+mod update_outbound_shipment_line;
+mod update_inbound_shipment;
+mod update_inbound_shipment_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
 where
@@ -152,7 +152,7 @@ type DateTime = ChronoDateTime<Utc>;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct InsertSupplierInvoiceFull;
+pub struct InsertInboundShipmentFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -162,7 +162,7 @@ pub struct InsertSupplierInvoiceFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct UpdateSupplierInvoiceFull;
+pub struct UpdateInboundShipmentFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -172,7 +172,7 @@ pub struct UpdateSupplierInvoiceFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct DeleteSupplierInvoiceFull;
+pub struct DeleteInboundShipmentFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -182,7 +182,7 @@ pub struct DeleteSupplierInvoiceFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct InsertSupplierInvoiceLineFull;
+pub struct InsertInboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -192,7 +192,7 @@ pub struct InsertSupplierInvoiceLineFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct UpdateSupplierInvoiceLineFull;
+pub struct UpdateInboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -212,7 +212,7 @@ pub struct InvoiceFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct DeleteSupplierInvoiceLineFull;
+pub struct DeleteInboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -222,7 +222,7 @@ pub struct DeleteSupplierInvoiceLineFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct UpdateCustomerInvoiceLineFull;
+pub struct UpdateOutboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -232,7 +232,7 @@ pub struct UpdateCustomerInvoiceLineFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct InsertCustomerInvoiceLineFull;
+pub struct InsertOutboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -242,4 +242,4 @@ pub struct InsertCustomerInvoiceLineFull;
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
 )]
-pub struct DeleteCustomerInvoiceLineFull;
+pub struct DeleteOutboundShipmentLineFull;

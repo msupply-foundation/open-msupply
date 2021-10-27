@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 
 use super::invoice::InvoiceStatus;
 
-pub struct InsertSupplierInvoice {
+pub struct InsertInboundShipment {
     pub id: String,
     pub other_party_id: String,
     pub status: InvoiceStatus,
@@ -10,18 +10,18 @@ pub struct InsertSupplierInvoice {
     pub their_reference: Option<String>,
 }
 
-pub struct UpdateSupplierInvoice {
+pub struct UpdateInboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,
     pub status: Option<InvoiceStatus>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }
-pub struct DeleteSupplierInvoice {
+pub struct DeleteInboundShipment {
     pub id: String,
 }
 
-pub struct InsertSupplierInvoiceLine {
+pub struct InsertInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
@@ -33,7 +33,7 @@ pub struct InsertSupplierInvoiceLine {
     pub number_of_packs: u32,
 }
 
-pub struct UpdateSupplierInvoiceLine {
+pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: Option<String>,
@@ -45,7 +45,7 @@ pub struct UpdateSupplierInvoiceLine {
     pub number_of_packs: Option<u32>,
 }
 
-pub struct DeleteSupplierInvoiceLine {
+pub struct DeleteInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
 }

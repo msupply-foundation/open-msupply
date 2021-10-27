@@ -1,6 +1,6 @@
 use super::invoice::InvoiceStatus;
 
-pub struct InsertCustomerInvoice {
+pub struct InsertOutboundShipment {
     pub id: String,
     pub other_party_id: String,
     pub status: InvoiceStatus,
@@ -8,7 +8,7 @@ pub struct InsertCustomerInvoice {
     pub their_reference: Option<String>,
 }
 
-pub struct UpdateCustomerInvoice {
+pub struct UpdateOutboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,
     pub status: Option<InvoiceStatus>,
@@ -16,7 +16,7 @@ pub struct UpdateCustomerInvoice {
     pub their_reference: Option<String>,
 }
 
-pub struct InsertCustomerInvoiceLine {
+pub struct InsertOutboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
@@ -24,7 +24,7 @@ pub struct InsertCustomerInvoiceLine {
     pub number_of_packs: u32,
 }
 
-pub struct UpdateCustomerInvoiceLine {
+pub struct UpdateOutboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: Option<String>,
@@ -32,7 +32,7 @@ pub struct UpdateCustomerInvoiceLine {
     pub number_of_packs: Option<u32>,
 }
 
-pub struct DeleteCustomerInvoiceLine {
+pub struct DeleteOutboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
 }

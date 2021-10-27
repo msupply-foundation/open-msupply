@@ -3,19 +3,19 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
     },
-    domain::supplier_invoice::UpdateSupplierInvoiceLine,
-    service::{invoice_line::supplier_invoice_line::generate_batch, u32_to_i32},
+    domain::inbound_shipment::UpdateInboundShipmentLine,
+    service::{invoice_line::inbound_shipment_line::generate_batch, u32_to_i32},
 };
 
-use super::UpdateSupplierInvoiceLineError;
+use super::UpdateInboundShipmentLineError;
 
 pub fn generate(
-    input: UpdateSupplierInvoiceLine,
+    input: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
     InvoiceRow { status, .. }: InvoiceRow,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, Option<StockLineRow>, Option<String>), UpdateSupplierInvoiceLineError>
+) -> Result<(InvoiceLineRow, Option<StockLineRow>, Option<String>), UpdateInboundShipmentLineError>
 {
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
@@ -49,7 +49,7 @@ fn get_batch_to_delete_id(
 }
 
 fn generate_line(
-    UpdateSupplierInvoiceLine {
+    UpdateInboundShipmentLine {
         pack_size,
         batch,
         expiry_date,
@@ -57,7 +57,7 @@ fn generate_line(
         cost_price_per_pack,
         number_of_packs,
         ..
-    }: UpdateSupplierInvoiceLine,
+    }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
 ) -> InvoiceLineRow {

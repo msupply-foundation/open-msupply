@@ -2,7 +2,7 @@ use crate::{
     database::repository::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
-    domain::{name::Name, supplier_invoice::InsertSupplierInvoice},
+    domain::{inbound_shipment::InsertInboundShipment, name::Name},
     service::WithDBError,
 };
 
@@ -14,10 +14,10 @@ use validate::validate;
 
 use super::OtherPartyError;
 
-pub fn insert_supplier_invoice(
+pub fn insert_inbound_shipment(
     connection_manager: &StorageConnectionManager,
-    input: InsertSupplierInvoice,
-) -> Result<String, InsertSupplierInvoiceError> {
+    input: InsertInboundShipment,
+) -> Result<String, InsertInboundShipmentError> {
     let connection = connection_manager.connection()?;
     let new_invoice = connection
         .transaction_sync(|connection| {
@@ -27,7 +27,7 @@ pub fn insert_supplier_invoice(
             Ok(new_invoice)
         })
         .map_err(
-            |error: TransactionError<InsertSupplierInvoiceError>| match error {
+            |error: TransactionError<InsertInboundShipmentError>| match error {
                 TransactionError::Transaction { msg } => {
                     RepositoryError::as_db_error(&msg, "").into()
                 }
@@ -37,22 +37,22 @@ pub fn insert_supplier_invoice(
     Ok(new_invoice.id)
 }
 
-pub enum InsertSupplierInvoiceError {
+pub enum InsertInboundShipmentError {
     InvoiceAlreadyExists,
     DatabaseError(RepositoryError),
     OtherPartyDoesNotExist,
     OtherPartyNotASupplier(Name),
 }
 
-impl From<RepositoryError> for InsertSupplierInvoiceError {
+impl From<RepositoryError> for InsertInboundShipmentError {
     fn from(error: RepositoryError) -> Self {
-        InsertSupplierInvoiceError::DatabaseError(error)
+        InsertInboundShipmentError::DatabaseError(error)
     }
 }
 
-impl From<OtherPartyError> for InsertSupplierInvoiceError {
+impl From<OtherPartyError> for InsertInboundShipmentError {
     fn from(error: OtherPartyError) -> Self {
-        use InsertSupplierInvoiceError::*;
+        use InsertInboundShipmentError::*;
         match error {
             OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
             OtherPartyError::DoesNotExist => OtherPartyDoesNotExist,
@@ -61,9 +61,9 @@ impl From<OtherPartyError> for InsertSupplierInvoiceError {
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for InsertSupplierInvoiceError
+impl<ERR> From<WithDBError<ERR>> for InsertInboundShipmentError
 where
-    ERR: Into<InsertSupplierInvoiceError>,
+    ERR: Into<InsertInboundShipmentError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {

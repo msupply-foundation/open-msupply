@@ -63,12 +63,12 @@ impl OtherPartyNotACustomerError {
     }
 }
 
-pub struct NotACustomerInvoiceError;
+pub struct NotAnOutboundShipmentError;
 
 #[Object]
-impl NotACustomerInvoiceError {
+impl NotAnOutboundShipmentError {
     pub async fn description(&self) -> &'static str {
-        "Not a customer invoice."
+        "Not a outbound shipment."
     }
 }
 

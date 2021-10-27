@@ -3,23 +3,23 @@ use crate::{
         repository::{InvoiceLineQueryRepository, StorageConnection},
         schema::InvoiceRow,
     },
-    domain::{invoice::InvoiceType, supplier_invoice::DeleteSupplierInvoice},
+    domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType},
     service::invoice::{
         check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
         InvoiceIsFinalised, WrongInvoiceType,
     },
 };
 
-use super::DeleteSupplierInvoiceError;
+use super::DeleteInboundShipmentError;
 
 pub fn validate(
-    input: &DeleteSupplierInvoice,
+    input: &DeleteInboundShipment,
     connection: &StorageConnection,
-) -> Result<InvoiceRow, DeleteSupplierInvoiceError> {
+) -> Result<InvoiceRow, DeleteInboundShipmentError> {
     let invoice = check_invoice_exists(&input.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
+    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
     check_lines_exist(&input.id, connection)?;
 
@@ -29,31 +29,31 @@ pub fn validate(
 fn check_lines_exist(
     id: &str,
     connection: &StorageConnection,
-) -> Result<(), DeleteSupplierInvoiceError> {
+) -> Result<(), DeleteInboundShipmentError> {
     let lines =
         InvoiceLineQueryRepository::new(connection).find_many_by_invoice_ids(&[id.to_string()])?;
 
     if lines.len() > 0 {
-        Err(DeleteSupplierInvoiceError::InvoiceLinesExists(lines))
+        Err(DeleteInboundShipmentError::InvoiceLinesExists(lines))
     } else {
         Ok(())
     }
 }
 
-impl From<WrongInvoiceType> for DeleteSupplierInvoiceError {
+impl From<WrongInvoiceType> for DeleteInboundShipmentError {
     fn from(_: WrongInvoiceType) -> Self {
-        DeleteSupplierInvoiceError::NotASupplierInvoice
+        DeleteInboundShipmentError::NotAnInboundShipment
     }
 }
 
-impl From<InvoiceIsFinalised> for DeleteSupplierInvoiceError {
+impl From<InvoiceIsFinalised> for DeleteInboundShipmentError {
     fn from(_: InvoiceIsFinalised) -> Self {
-        DeleteSupplierInvoiceError::CannotEditFinalised
+        DeleteInboundShipmentError::CannotEditFinalised
     }
 }
 
-impl From<InvoiceDoesNotExist> for DeleteSupplierInvoiceError {
+impl From<InvoiceDoesNotExist> for DeleteInboundShipmentError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        DeleteSupplierInvoiceError::InvoiceDoesNotExist
+        DeleteInboundShipmentError::InvoiceDoesNotExist
     }
 }

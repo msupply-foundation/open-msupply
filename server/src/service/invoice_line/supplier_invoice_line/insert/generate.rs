@@ -3,18 +3,18 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
     },
-    domain::supplier_invoice::InsertSupplierInvoiceLine,
+    domain::inbound_shipment::InsertInboundShipmentLine,
     service::{invoice_line::generate_batch, u32_to_i32},
 };
 
-use super::InsertSupplierInvoiceLineError;
+use super::InsertInboundShipmentLineError;
 
 pub fn generate(
-    input: InsertSupplierInvoiceLine,
+    input: InsertInboundShipmentLine,
     item_row: ItemRow,
     InvoiceRow { status, .. }: InvoiceRow,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, Option<StockLineRow>), InsertSupplierInvoiceLineError> {
+) -> Result<(InvoiceLineRow, Option<StockLineRow>), InsertInboundShipmentLineError> {
     let mut new_line = generate_line(input, item_row);
 
     let new_batch_option = if status != InvoiceRowStatus::Draft {
@@ -29,7 +29,7 @@ pub fn generate(
 }
 
 fn generate_line(
-    InsertSupplierInvoiceLine {
+    InsertInboundShipmentLine {
         id,
         invoice_id,
         item_id,
@@ -39,7 +39,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
-    }: InsertSupplierInvoiceLine,
+    }: InsertInboundShipmentLine,
     ItemRow {
         name: item_name,
         code: item_code,

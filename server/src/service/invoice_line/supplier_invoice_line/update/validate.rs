@@ -3,14 +3,14 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceLineRow, InvoiceRow, ItemRow},
     },
-    domain::{invoice::InvoiceType, supplier_invoice::UpdateSupplierInvoiceLine},
+    domain::{inbound_shipment::UpdateInboundShipmentLine, invoice::InvoiceType},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type,
             validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
         },
         invoice_line::{
-            supplier_invoice_line::{check_batch, check_pack_size},
+            inbound_shipment_line::{check_batch, check_pack_size},
             validate::{
                 check_item, check_line_belongs_to_invoice, check_line_exists,
                 check_number_of_packs, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
@@ -21,12 +21,12 @@ use crate::{
     },
 };
 
-use super::UpdateSupplierInvoiceLineError;
+use super::UpdateInboundShipmentLineError;
 
 pub fn validate(
-    input: &UpdateSupplierInvoiceLine,
+    input: &UpdateInboundShipmentLine,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, Option<ItemRow>, InvoiceRow), UpdateSupplierInvoiceLineError> {
+) -> Result<(InvoiceLineRow, Option<ItemRow>, InvoiceRow), UpdateInboundShipmentLineError> {
     let line = check_line_exists(&input.id, connection)?;
     check_pack_size(input.pack_size.clone())?;
     check_number_of_packs(input.number_of_packs.clone())?;
@@ -36,7 +36,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
+    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
 
     check_batch(&line, connection)?;
@@ -47,7 +47,7 @@ pub fn validate(
 fn check_item_option(
     item_id_option: &Option<String>,
     connection: &StorageConnection,
-) -> Result<Option<ItemRow>, UpdateSupplierInvoiceLineError> {
+) -> Result<Option<ItemRow>, UpdateInboundShipmentLineError> {
     if let Some(item_id) = item_id_option {
         Ok(Some(check_item(item_id, connection)?))
     } else {
@@ -55,56 +55,56 @@ fn check_item_option(
     }
 }
 
-impl From<ItemNotFound> for UpdateSupplierInvoiceLineError {
+impl From<ItemNotFound> for UpdateInboundShipmentLineError {
     fn from(_: ItemNotFound) -> Self {
-        UpdateSupplierInvoiceLineError::ItemNotFound
+        UpdateInboundShipmentLineError::ItemNotFound
     }
 }
 
-impl From<NumberOfPacksBelowOne> for UpdateSupplierInvoiceLineError {
+impl From<NumberOfPacksBelowOne> for UpdateInboundShipmentLineError {
     fn from(_: NumberOfPacksBelowOne) -> Self {
-        UpdateSupplierInvoiceLineError::NumberOfPacksBelowOne
+        UpdateInboundShipmentLineError::NumberOfPacksBelowOne
     }
 }
 
-impl From<PackSizeBelowOne> for UpdateSupplierInvoiceLineError {
+impl From<PackSizeBelowOne> for UpdateInboundShipmentLineError {
     fn from(_: PackSizeBelowOne) -> Self {
-        UpdateSupplierInvoiceLineError::PackSizeBelowOne
+        UpdateInboundShipmentLineError::PackSizeBelowOne
     }
 }
 
-impl From<LineDoesNotExist> for UpdateSupplierInvoiceLineError {
+impl From<LineDoesNotExist> for UpdateInboundShipmentLineError {
     fn from(_: LineDoesNotExist) -> Self {
-        UpdateSupplierInvoiceLineError::LineDoesNotExist
+        UpdateInboundShipmentLineError::LineDoesNotExist
     }
 }
 
-impl From<WrongInvoiceType> for UpdateSupplierInvoiceLineError {
+impl From<WrongInvoiceType> for UpdateInboundShipmentLineError {
     fn from(_: WrongInvoiceType) -> Self {
-        UpdateSupplierInvoiceLineError::NotASupplierInvoice
+        UpdateInboundShipmentLineError::NotAnInboundShipment
     }
 }
 
-impl From<InvoiceIsFinalised> for UpdateSupplierInvoiceLineError {
+impl From<InvoiceIsFinalised> for UpdateInboundShipmentLineError {
     fn from(_: InvoiceIsFinalised) -> Self {
-        UpdateSupplierInvoiceLineError::CannotEditFinalised
+        UpdateInboundShipmentLineError::CannotEditFinalised
     }
 }
 
-impl From<NotInvoiceLine> for UpdateSupplierInvoiceLineError {
+impl From<NotInvoiceLine> for UpdateInboundShipmentLineError {
     fn from(error: NotInvoiceLine) -> Self {
-        UpdateSupplierInvoiceLineError::NotThisInvoiceLine(error.0)
+        UpdateInboundShipmentLineError::NotThisInvoiceLine(error.0)
     }
 }
 
-impl From<BatchIsReserved> for UpdateSupplierInvoiceLineError {
+impl From<BatchIsReserved> for UpdateInboundShipmentLineError {
     fn from(_: BatchIsReserved) -> Self {
-        UpdateSupplierInvoiceLineError::BatchIsReserved
+        UpdateInboundShipmentLineError::BatchIsReserved
     }
 }
 
-impl From<InvoiceDoesNotExist> for UpdateSupplierInvoiceLineError {
+impl From<InvoiceDoesNotExist> for UpdateInboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        UpdateSupplierInvoiceLineError::InvoiceDoesNotExist
+        UpdateInboundShipmentLineError::InvoiceDoesNotExist
     }
 }

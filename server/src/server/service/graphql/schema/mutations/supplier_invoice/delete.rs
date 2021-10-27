@@ -1,79 +1,79 @@
 use async_graphql::*;
 
 use crate::{
-    domain::supplier_invoice::DeleteSupplierInvoice,
+    domain::inbound_shipment::DeleteInboundShipment,
     server::service::graphql::schema::{
         mutations::{
             CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
-            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
+            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
         },
         types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
-    service::invoice::DeleteSupplierInvoiceError,
+    service::invoice::DeleteInboundShipmentError,
 };
 
 #[derive(InputObject)]
-pub struct DeleteSupplierInvoiceInput {
+pub struct DeleteInboundShipmentInput {
     id: String,
 }
 
 #[derive(Union)]
-pub enum DeleteSupplierInvoiceResponse {
-    Error(ErrorWrapper<DeleteSupplierInvoiceErrorInterface>),
+pub enum DeleteInboundShipmentResponse {
+    Error(ErrorWrapper<DeleteInboundShipmentErrorInterface>),
     Response(DeleteResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum DeleteSupplierInvoiceErrorInterface {
+pub enum DeleteInboundShipmentErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
-    NotASupplierInvoice(NotASupplierInvoice),
+    NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
 }
 
-impl From<DeleteSupplierInvoiceInput> for DeleteSupplierInvoice {
-    fn from(input: DeleteSupplierInvoiceInput) -> Self {
-        DeleteSupplierInvoice { id: input.id }
+impl From<DeleteInboundShipmentInput> for DeleteInboundShipment {
+    fn from(input: DeleteInboundShipmentInput) -> Self {
+        DeleteInboundShipment { id: input.id }
     }
 }
 
-impl From<Result<String, DeleteSupplierInvoiceError>> for DeleteSupplierInvoiceResponse {
-    fn from(result: Result<String, DeleteSupplierInvoiceError>) -> Self {
+impl From<Result<String, DeleteInboundShipmentError>> for DeleteInboundShipmentResponse {
+    fn from(result: Result<String, DeleteInboundShipmentError>) -> Self {
         match result {
-            Ok(id) => DeleteSupplierInvoiceResponse::Response(DeleteResponse(id)),
+            Ok(id) => DeleteInboundShipmentResponse::Response(DeleteResponse(id)),
             Err(error) => error.into(),
         }
     }
 }
 
-impl From<DeleteSupplierInvoiceError> for DeleteSupplierInvoiceResponse {
-    fn from(error: DeleteSupplierInvoiceError) -> Self {
-        use DeleteSupplierInvoiceErrorInterface as OutError;
+impl From<DeleteInboundShipmentError> for DeleteInboundShipmentResponse {
+    fn from(error: DeleteInboundShipmentError) -> Self {
+        use DeleteInboundShipmentErrorInterface as OutError;
         let error = match error {
-            DeleteSupplierInvoiceError::InvoiceDoesNotExist => {
+            DeleteInboundShipmentError::InvoiceDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
             }
-            DeleteSupplierInvoiceError::DatabaseError(error) => {
+            DeleteInboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
 
-            DeleteSupplierInvoiceError::NotASupplierInvoice => {
-                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            DeleteInboundShipmentError::NotAnInboundShipment => {
+                OutError::NotAnInboundShipment(NotAnInboundShipment {})
             }
-            DeleteSupplierInvoiceError::NotThisStoreInvoice => {
+            DeleteInboundShipmentError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            DeleteSupplierInvoiceError::CannotEditFinalised => {
+            DeleteInboundShipmentError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
-            DeleteSupplierInvoiceError::InvoiceLinesExists(lines) => {
+            DeleteInboundShipmentError::InvoiceLinesExists(lines) => {
                 OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(lines.into()))
             }
         };
 
-        DeleteSupplierInvoiceResponse::Error(ErrorWrapper { error })
+        DeleteInboundShipmentResponse::Error(ErrorWrapper { error })
     }
 }

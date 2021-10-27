@@ -1,15 +1,15 @@
 use crate::{
     database::repository::{InvoiceRepository, RepositoryError, StorageConnection},
-    domain::supplier_invoice::InsertSupplierInvoice,
-    service::invoice::supplier_invoice::check_other_party,
+    domain::inbound_shipment::InsertInboundShipment,
+    service::invoice::inbound_shipment::check_other_party,
 };
 
-use super::InsertSupplierInvoiceError;
+use super::InsertInboundShipmentError;
 
 pub fn validate(
-    input: &InsertSupplierInvoice,
+    input: &InsertInboundShipment,
     connection: &StorageConnection,
-) -> Result<(), InsertSupplierInvoiceError> {
+) -> Result<(), InsertInboundShipmentError> {
     check_invoice_does_not_exists(&input.id, connection)?;
     check_other_party(Some(input.other_party_id.to_string()), connection)?;
     Ok(())
@@ -18,7 +18,7 @@ pub fn validate(
 fn check_invoice_does_not_exists(
     id: &str,
     connection: &StorageConnection,
-) -> Result<(), InsertSupplierInvoiceError> {
+) -> Result<(), InsertInboundShipmentError> {
     let result = InvoiceRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
@@ -26,6 +26,6 @@ fn check_invoice_does_not_exists(
     } else if let Err(error) = result {
         Err(error.into())
     } else {
-        Err(InsertSupplierInvoiceError::InvoiceAlreadyExists)
+        Err(InsertInboundShipmentError::InvoiceAlreadyExists)
     }
 }

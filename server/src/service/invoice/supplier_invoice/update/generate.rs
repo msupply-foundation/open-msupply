@@ -5,12 +5,12 @@ use crate::{
         repository::{InvoiceLineRepository, StorageConnection},
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
     },
-    domain::{invoice::InvoiceStatus, supplier_invoice::UpdateSupplierInvoice},
+    domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus},
     service::invoice::current_store_id,
     util::uuid::uuid,
 };
 
-use super::UpdateSupplierInvoiceError;
+use super::UpdateInboundShipmentError;
 
 pub struct LineAndStockLine {
     pub stock_line: StockLineRow,
@@ -19,9 +19,9 @@ pub struct LineAndStockLine {
 
 pub fn generate(
     existing_invoice: InvoiceRow,
-    patch: UpdateSupplierInvoice,
+    patch: UpdateInboundShipment,
     connection: &StorageConnection,
-) -> Result<(Option<Vec<LineAndStockLine>>, InvoiceRow), UpdateSupplierInvoiceError> {
+) -> Result<(Option<Vec<LineAndStockLine>>, InvoiceRow), UpdateInboundShipmentError> {
     let should_create_batches = should_create_batches(&existing_invoice, &patch);
     let mut update_invoice = existing_invoice;
 
@@ -48,7 +48,7 @@ pub fn generate(
     }
 }
 
-pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateSupplierInvoice) -> bool {
+pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
     match (&invoice.status, &patch.status) {
         (InvoiceRowStatus::Draft, Some(InvoiceStatus::Confirmed)) => true,
         (InvoiceRowStatus::Draft, Some(InvoiceStatus::Finalised)) => true,
@@ -56,7 +56,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateSupplierInvoice
     }
 }
 
-fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateSupplierInvoice) {
+fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipment) {
     let current_datetime = Utc::now().naive_utc();
 
     if let Some(InvoiceStatus::Finalised) = &patch.status {
@@ -79,7 +79,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateSupplierInvoi
 pub fn generate_lines_and_stock_lines(
     id: &str,
     connection: &StorageConnection,
-) -> Result<Vec<LineAndStockLine>, UpdateSupplierInvoiceError> {
+) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
