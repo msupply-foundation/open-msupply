@@ -1,34 +1,34 @@
 type BatchIsReserved implements UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface {
-  description: String!
+	description: String!
 }
 type CanOnlyEditInvoicesInLoggedInStoreError implements UpdateOutboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
 type CannotChangeInvoiceBackToDraft implements UpdateInboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
 type CannotChangeStatusBackToDraftError implements UpdateOutboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
-type CannotDeleteInvoiceWithLines implements DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentErrorInterface {
-  description: String!
-  lines: InvoiceLineConnector!
+type CannotDeleteInvoiceWithLines implements DeleteOutboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface {
+	description: String!
+	lines: InvoiceLineConnector!
 }
-type CannotEditFinalisedInvoice implements UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface {
-  description: String!
+type CannotEditFinalisedInvoice implements DeleteInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
+	description: String!
 }
 """
 Generic Error Wrapper
 """
 type ConnectorError {
-  error: ConnectorErrorInterface!
+	error: ConnectorErrorInterface!
 }
 interface ConnectorErrorInterface {
-  description: String!
+	description: String!
 }
-type DatabaseError implements UpdateInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & ConnectorErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & NodeErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
-  description: String!
-  fullError: String!
+type DatabaseError implements NodeErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & ConnectorErrorInterface & InsertInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface {
+	description: String!
+	fullError: String!
 }
 """
 Implement the DateTime<Utc> scalar
@@ -37,591 +37,581 @@ The input/output is a string in RFC3339 format.
 """
 scalar DateTime
 input DatetimeFilterInput {
-  equalTo: DateTime
-  beforeOrEqualTo: DateTime
-  afterOrEqualTo: DateTime
-}
-"""
-Generic Error Wrapper
-"""
-type DeleteOutboundShipmentError {
-  error: DeleteOutboundShipmentErrorInterface!
-}
-interface DeleteOutboundShipmentErrorInterface {
-  description: String!
-}
-"""
-Generic Error Wrapper
-"""
-type DeleteOutboundShipmentLineError {
-  error: DeleteOutboundShipmentLineErrorInterface!
-}
-interface DeleteOutboundShipmentLineErrorInterface {
-  description: String!
-}
-input DeleteOutboundShipmentLineInput {
-  id: String!
-  invoiceId: String!
-}
-union DeleteOutboundShipmentLineResponse =
-    DeleteOutboundShipmentLineError
-  | DeleteResponse
-union DeleteOutboundShipmentResponse =
-    DeleteOutboundShipmentError
-  | DeleteResponse
-type DeleteResponse {
-  id: String!
+	equalTo: DateTime
+	beforeOrEqualTo: DateTime
+	afterOrEqualTo: DateTime
 }
 """
 Generic Error Wrapper
 """
 type DeleteInboundShipmentError {
-  error: DeleteInboundShipmentErrorInterface!
+	error: DeleteInboundShipmentErrorInterface!
 }
 interface DeleteInboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
 input DeleteInboundShipmentInput {
-  id: String!
+	id: String!
 }
 """
 Generic Error Wrapper
 """
 type DeleteInboundShipmentLineError {
-  error: DeleteInboundShipmentLineErrorInterface!
+	error: DeleteInboundShipmentLineErrorInterface!
 }
 interface DeleteInboundShipmentLineErrorInterface {
-  description: String!
+	description: String!
 }
 input DeleteInboundShipmentLineInput {
-  id: String!
-  invoiceId: String!
+	id: String!
+	invoiceId: String!
 }
-union DeleteInboundShipmentLineResponse =
-    DeleteInboundShipmentLineError
-  | DeleteResponse
-union DeleteInboundShipmentResponse =
-    DeleteInboundShipmentError
-  | DeleteResponse
+union DeleteInboundShipmentLineResponse = | DeleteInboundShipmentLineError | DeleteResponse
+union DeleteInboundShipmentResponse = | DeleteInboundShipmentError | DeleteResponse
+"""
+Generic Error Wrapper
+"""
+type DeleteOutboundShipmentError {
+	error: DeleteOutboundShipmentErrorInterface!
+}
+interface DeleteOutboundShipmentErrorInterface {
+	description: String!
+}
+"""
+Generic Error Wrapper
+"""
+type DeleteOutboundShipmentLineError {
+	error: DeleteOutboundShipmentLineErrorInterface!
+}
+interface DeleteOutboundShipmentLineErrorInterface {
+	description: String!
+}
+input DeleteOutboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+}
+union DeleteOutboundShipmentLineResponse = | DeleteOutboundShipmentLineError | DeleteResponse
+union DeleteOutboundShipmentResponse = | DeleteOutboundShipmentError | DeleteResponse
+type DeleteResponse {
+	id: String!
+}
 input EqualFilterBoolInput {
-  equalTo: Boolean
+	equalTo: Boolean
 }
 input EqualFilterInvoiceStatusInput {
-  equalTo: InvoiceNodeStatus
+	equalTo: InvoiceNodeStatus
 }
 input EqualFilterInvoiceTypeInput {
-  equalTo: InvoiceNodeType
+	equalTo: InvoiceNodeType
 }
 input EqualFilterStringInput {
-  equalTo: String
+	"""
+	Search term must be an exact match
+	"""
+	equalTo: String
 }
 type FinalisedInvoiceIsNotEditableError implements UpdateOutboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
 enum ForeignKey {
-  OTHER_PARTY_ID
-  ITEM_ID
-  INVOICE_ID
-  STOCK_LINE_ID
+	OTHER_PARTY_ID
+	ITEM_ID
+	INVOICE_ID
+	STOCK_LINE_ID
 }
-type ForeignKeyError implements InsertInboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface {
-  description: String!
-  key: ForeignKey!
+type ForeignKeyError implements InsertInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface {
+	description: String!
+	key: ForeignKey!
 }
-"""
-Generic Error Wrapper
-"""
-type InsertOutboundShipmentError {
-  error: InsertOutboundShipmentErrorInterface!
-}
-interface InsertOutboundShipmentErrorInterface {
-  description: String!
-}
-input InsertOutboundShipmentInput {
-  """
-  The new invoice id provided by the client
-  """
-  id: String!
-  """
-  The other party must be an customer of the current store
-  """
-  otherPartyId: String!
-  status: InvoiceNodeStatus
-  comment: String
-  theirReference: String
-}
-"""
-Generic Error Wrapper
-"""
-type InsertOutboundShipmentLineError {
-  error: InsertOutboundShipmentLineErrorInterface!
-}
-interface InsertOutboundShipmentLineErrorInterface {
-  description: String!
-}
-input InsertOutboundShipmentLineInput {
-  id: String!
-  invoiceId: String!
-  itemId: String!
-  stockLineId: String!
-  numberOfPacks: Int!
-}
-union InsertOutboundShipmentLineResponse =
-    InsertOutboundShipmentLineError
-  | NodeError
-  | InvoiceLineNode
-union InsertOutboundShipmentResponse =
-    InsertOutboundShipmentError
-  | NodeError
-  | InvoiceNode
 """
 Generic Error Wrapper
 """
 type InsertInboundShipmentError {
-  error: InsertInboundShipmentErrorInterface!
+	error: InsertInboundShipmentErrorInterface!
 }
 interface InsertInboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
 input InsertInboundShipmentInput {
-  id: String!
-  otherPartyId: String!
-  status: InvoiceNodeStatus!
-  comment: String
-  theirReference: String
+	id: String!
+	otherPartyId: String!
+	status: InvoiceNodeStatus!
+	comment: String
+	theirReference: String
 }
 """
 Generic Error Wrapper
 """
 type InsertInboundShipmentLineError {
-  error: InsertInboundShipmentLineErrorInterface!
+	error: InsertInboundShipmentLineErrorInterface!
 }
 interface InsertInboundShipmentLineErrorInterface {
-  description: String!
+	description: String!
 }
 input InsertInboundShipmentLineInput {
-  id: String!
-  invoiceId: String!
-  itemId: String!
-  packSize: Int!
-  batch: String
-  costPricePerPack: Float!
-  sellPricePerPack: Float!
-  expiryDate: NaiveDate
-  numberOfPacks: Int!
+	id: String!
+	invoiceId: String!
+	itemId: String!
+	packSize: Int!
+	batch: String
+	costPricePerPack: Float!
+	sellPricePerPack: Float!
+	expiryDate: NaiveDate
+	numberOfPacks: Int!
 }
-union InsertInboundShipmentLineResponse =
-    InsertInboundShipmentLineError
-  | NodeError
-  | InvoiceLineNode
-union InsertInboundShipmentResponse =
-    InsertInboundShipmentError
-  | NodeError
-  | InvoiceNode
+union InsertInboundShipmentLineResponse = | InsertInboundShipmentLineError | NodeError | InvoiceLineNode
+union InsertInboundShipmentResponse = | InsertInboundShipmentError | NodeError | InvoiceNode
+"""
+Generic Error Wrapper
+"""
+type InsertOutboundShipmentError {
+	error: InsertOutboundShipmentErrorInterface!
+}
+interface InsertOutboundShipmentErrorInterface {
+	description: String!
+}
+input InsertOutboundShipmentInput {
+	"""
+	The new invoice id provided by the client
+	"""
+	id: String!
+	"""
+	The other party must be an customer of the current store
+	"""
+	otherPartyId: String!
+	status: InvoiceNodeStatus
+	comment: String
+	theirReference: String
+}
+"""
+Generic Error Wrapper
+"""
+type InsertOutboundShipmentLineError {
+	error: InsertOutboundShipmentLineErrorInterface!
+}
+interface InsertOutboundShipmentLineErrorInterface {
+	description: String!
+}
+input InsertOutboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String!
+	stockLineId: String!
+	numberOfPacks: Int!
+}
+union InsertOutboundShipmentLineResponse = | InsertOutboundShipmentLineError | NodeError | InvoiceLineNode
+union InsertOutboundShipmentResponse = | InsertOutboundShipmentError | NodeError | InvoiceNode
 """
 Generic Connector
 """
 type InvoiceConnector {
-  totalCount: Int!
-  nodes: [InvoiceNode!]!
+	totalCount: Int!
+	nodes: [InvoiceNode!]!
 }
-type InvoiceDoesNotBelongToCurrentStore implements InsertOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
-  description: String!
+type InvoiceDoesNotBelongToCurrentStore implements UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface {
+	description: String!
 }
 input InvoiceFilterInput {
-  nameId: EqualFilterStringInput
-  storeId: EqualFilterStringInput
-  type: EqualFilterInvoiceTypeInput
-  status: EqualFilterInvoiceStatusInput
-  comment: SimpleStringFilterInput
-  theirReference: EqualFilterStringInput
-  entryDatetime: DatetimeFilterInput
-  confirmDatetime: DatetimeFilterInput
-  finalisedDatetime: DatetimeFilterInput
+	nameId: EqualFilterStringInput
+	storeId: EqualFilterStringInput
+	type: EqualFilterInvoiceTypeInput
+	status: EqualFilterInvoiceStatusInput
+	comment: SimpleStringFilterInput
+	theirReference: EqualFilterStringInput
+	entryDatetime: DatetimeFilterInput
+	confirmDatetime: DatetimeFilterInput
+	finalisedDatetime: DatetimeFilterInput
 }
-type InvoiceLineBelongsToAnotherInvoice implements DeleteInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface {
-  description: String!
-  invoice: InvoiceResponse!
+type InvoiceLineBelongsToAnotherInvoice implements UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+	invoice: InvoiceResponse!
 }
 """
 Generic Connector
 """
 type InvoiceLineConnector {
-  totalCount: Int!
-  nodes: [InvoiceLineNode!]!
+	totalCount: Int!
+	nodes: [InvoiceLineNode!]!
 }
 type InvoiceLineHasNoStockLineError implements UpdateOutboundShipmentErrorInterface {
-  description: String!
-  invoiceLineId: String!
+	description: String!
+	invoiceLineId: String!
 }
 type InvoiceLineNode {
-  id: String!
-  itemId: String!
-  itemName: String!
-  itemCode: String!
-  packSize: Int!
-  numberOfPacks: Int!
-  costPricePerPack: Float!
-  sellPricePerPack: Float!
-  batch: String
-  expiryDate: NaiveDate
-  stockLine: StockLineResponse
+	id: String!
+	itemId: String!
+	itemName: String!
+	itemCode: String!
+	packSize: Int!
+	numberOfPacks: Int!
+	costPricePerPack: Float!
+	sellPricePerPack: Float!
+	batch: String
+	expiryDate: NaiveDate
+	stockLine: StockLineResponse
 }
-union InvoiceLineResponse = NodeError | InvoiceLineNode
-union InvoiceLinesResponse = ConnectorError | InvoiceLineConnector
+union InvoiceLineResponse = | NodeError | InvoiceLineNode
+union InvoiceLinesResponse = | ConnectorError | InvoiceLineConnector
 type InvoiceNode {
-  id: String!
-  otherPartyName: String!
-  otherPartyId: String!
-  type: InvoiceNodeType!
-  status: InvoiceNodeStatus!
-  invoiceNumber: Int!
-  theirReference: String
-  comment: String
-  entryDatetime: DateTime!
-  confirmedDatetime: DateTime
-  finalisedDatetime: DateTime
-  lines: InvoiceLinesResponse!
-  pricing: InvoicePriceResponse!
+	id: String!
+	otherPartyName: String!
+	otherPartyId: String!
+	type: InvoiceNodeType!
+	status: InvoiceNodeStatus!
+	invoiceNumber: Int!
+	theirReference: String
+	comment: String
+	entryDatetime: DateTime!
+	confirmedDatetime: DateTime
+	finalisedDatetime: DateTime
+	lines: InvoiceLinesResponse!
+	pricing: InvoicePriceResponse!
 }
 enum InvoiceNodeStatus {
-  DRAFT
-  CONFIRMED
-  FINALISED
+	DRAFT
+	CONFIRMED
+	FINALISED
 }
 enum InvoiceNodeType {
-  OUTBOUND_SHIPMENT
-  INBOUND_SHIPMENT
+	OUTBOUND_SHIPMENT
+	INBOUND_SHIPMENT
 }
-union InvoicePriceResponse = NodeError | InvoicePricingNode
+union InvoicePriceResponse = | NodeError | InvoicePricingNode
 type InvoicePricingNode {
-  totalAfterTax: Float!
+	totalAfterTax: Float!
 }
-union InvoiceResponse = NodeError | InvoiceNode
+union InvoiceResponse = | NodeError | InvoiceNode
 enum InvoiceSortFieldInput {
-  TYPE
-  STATUS
-  ENTRY_DATETIME
-  CONFIRM_DATETIME
-  FINALISED_DATE_TIME
+	TYPE
+	STATUS
+	ENTRY_DATETIME
+	CONFIRM_DATETIME
+	FINALISED_DATE_TIME
 }
 input InvoiceSortInput {
-  key: InvoiceSortFieldInput!
-  desc: Boolean
+	"""
+	Sort query result by `key`
+	"""
+	key: InvoiceSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
 }
-union InvoicesResponse = ConnectorError | InvoiceConnector
+union InvoicesResponse = | ConnectorError | InvoiceConnector
 """
 Generic Connector
 """
 type ItemConnector {
-  totalCount: Int!
-  nodes: [ItemNode!]!
+	totalCount: Int!
+	nodes: [ItemNode!]!
 }
 type ItemDoesNotMatchStockLine implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
-  description: String!
+	description: String!
 }
 input ItemFilterInput {
-  name: SimpleStringFilterInput
-  code: SimpleStringFilterInput
-  isVisible: EqualFilterBoolInput
+	name: SimpleStringFilterInput
+	code: SimpleStringFilterInput
+	isVisible: EqualFilterBoolInput
 }
 type ItemNode {
-  id: String!
-  name: String!
-  code: String!
-  isVisible: Boolean!
-  availableBatches: StockLinesResponse!
+	id: String!
+	name: String!
+	code: String!
+	isVisible: Boolean!
+	availableBatches: StockLinesResponse!
 }
 enum ItemSortFieldInput {
-  NAME
-  CODE
+	NAME
+	CODE
 }
 input ItemSortInput {
-  key: ItemSortFieldInput!
-  desc: Boolean
+	"""
+	Sort query result by `key`
+	"""
+	key: ItemSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
 }
-union ItemsResponse = ConnectorError | ItemConnector
+union ItemsResponse = | ConnectorError | ItemConnector
 type LineDoesNotReferenceStockLine implements UpdateOutboundShipmentLineErrorInterface {
-  description: String!
+	description: String!
 }
 type Mutations {
-  insertOutboundShipment(
-    input: InsertOutboundShipmentInput!
-  ): InsertOutboundShipmentResponse!
-  updateOutboundShipment(
-    input: UpdateOutboundShipmentInput!
-  ): UpdateOutboundShipmentResponse!
-  deleteOutboundShipment(id: String!): DeleteOutboundShipmentResponse!
-  insertOutboundShipmentLine(
-    input: InsertOutboundShipmentLineInput!
-  ): InsertOutboundShipmentLineResponse!
-  updateOutboundShipmentLine(
-    input: UpdateOutboundShipmentLineInput!
-  ): UpdateOutboundShipmentLineResponse!
-  deleteOutboundShipmentLine(
-    input: DeleteOutboundShipmentLineInput!
-  ): DeleteOutboundShipmentLineResponse!
-  insertInboundShipment(
-    input: InsertInboundShipmentInput!
-  ): InsertInboundShipmentResponse!
-  updateInboundShipment(
-    input: UpdateInboundShipmentInput!
-  ): UpdateInboundShipmentResponse!
-  deleteInboundShipment(
-    input: DeleteInboundShipmentInput!
-  ): DeleteInboundShipmentResponse!
-  insertInboundShipmentLine(
-    input: InsertInboundShipmentLineInput!
-  ): InsertInboundShipmentLineResponse!
-  updateInboundShipmentLine(
-    input: UpdateInboundShipmentLineInput!
-  ): UpdateInboundShipmentLineResponse!
-  deleteInboundShipmentLine(
-    input: DeleteInboundShipmentLineInput!
-  ): DeleteInboundShipmentLineResponse!
+	insertOutboundShipment(input: InsertOutboundShipmentInput!): InsertOutboundShipmentResponse!
+	updateOutboundShipment(input: UpdateOutboundShipmentInput!): UpdateOutboundShipmentResponse!
+	deleteOutboundShipment(id: String!): DeleteOutboundShipmentResponse!
+	insertOutboundShipmentLine(input: InsertOutboundShipmentLineInput!): InsertOutboundShipmentLineResponse!
+	updateOutboundShipmentLine(input: UpdateOutboundShipmentLineInput!): UpdateOutboundShipmentLineResponse!
+	deleteOutboundShipmentLine(input: DeleteOutboundShipmentLineInput!): DeleteOutboundShipmentLineResponse!
+	insertInboundShipment(input: InsertInboundShipmentInput!): InsertInboundShipmentResponse!
+	updateInboundShipment(input: UpdateInboundShipmentInput!): UpdateInboundShipmentResponse!
+	deleteInboundShipment(input: DeleteInboundShipmentInput!): DeleteInboundShipmentResponse!
+	insertInboundShipmentLine(input: InsertInboundShipmentLineInput!): InsertInboundShipmentLineResponse!
+	updateInboundShipmentLine(input: UpdateInboundShipmentLineInput!): UpdateInboundShipmentLineResponse!
+	deleteInboundShipmentLine(input: DeleteInboundShipmentLineInput!): DeleteInboundShipmentLineResponse!
 }
 scalar NaiveDate
 """
 Generic Connector
 """
 type NameConnector {
-  totalCount: Int!
-  nodes: [NameNode!]!
+	totalCount: Int!
+	nodes: [NameNode!]!
 }
 input NameFilterInput {
-  name: SimpleStringFilterInput
-  code: SimpleStringFilterInput
-  isCustomer: Boolean
-  isSupplier: Boolean
+	"""
+	Filter by name
+	"""
+	name: SimpleStringFilterInput
+	"""
+	Filter by code
+	"""
+	code: SimpleStringFilterInput
+	"""
+	Filter by customer property
+	"""
+	isCustomer: Boolean
+	"""
+	Filter by supplier property
+	"""
+	isSupplier: Boolean
 }
 type NameNode {
-  id: String!
-  name: String!
-  code: String!
-  isCustomer: Boolean!
-  isSupplier: Boolean!
+	id: String!
+	name: String!
+	code: String!
+	isCustomer: Boolean!
+	isSupplier: Boolean!
 }
 enum NameSortFieldInput {
-  NAME
-  CODE
+	NAME
+	CODE
 }
 input NameSortInput {
-  key: NameSortFieldInput!
-  desc: Boolean
+	"""
+	Sort query result by `key`
+	"""
+	key: NameSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
 }
-union NamesResponse = ConnectorError | NameConnector
+union NamesResponse = | ConnectorError | NameConnector
 """
 Generic Error Wrapper
 """
 type NodeError {
-  error: NodeErrorInterface!
+	error: NodeErrorInterface!
 }
 interface NodeErrorInterface {
-  description: String!
+	description: String!
 }
-type NotAnOutboundShipment implements DeleteOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
-  description: String!
+type NotAnInboundShipment implements UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface {
+	description: String!
+}
+type NotAnOutboundShipment implements UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface {
+	description: String!
 }
 type NotAnOutboundShipmentError implements UpdateOutboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
-type NotAnInboundShipment implements UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface {
-  description: String!
+type NotEnoughStockForReduction implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+	description: String!
+	line: InvoiceLineResponse
+	batch: StockLineResponse!
 }
-type NotEnoughStockForReduction implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
-  description: String!
-  line: InvoiceLineResponse
-  batch: StockLineResponse!
-}
-type OtherPartyCannotBeThisStoreError implements InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface {
-  description: String!
+type OtherPartyCannotBeThisStoreError implements UpdateOutboundShipmentErrorInterface & InsertOutboundShipmentErrorInterface {
+	description: String!
 }
 type OtherPartyNotACustomerError implements InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface {
-  description: String!
-  otherParty: NameNode!
+	description: String!
+	otherParty: NameNode!
 }
-type OtherPartyNotASupplier implements InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface {
-  description: String!
-  otherParty: NameNode!
+type OtherPartyNotASupplier implements UpdateInboundShipmentErrorInterface & InsertInboundShipmentErrorInterface {
+	description: String!
+	otherParty: NameNode!
 }
 type PaginationError implements ConnectorErrorInterface {
-  description: String!
-  rangeError: RangeError!
+	description: String!
+	rangeError: RangeError!
 }
 """
-Generic Pagination Input
+Pagination input.
+
+Option to limit the number of returned items and/or queries large lists in "pages".
 """
 input PaginationInput {
-  first: Int
-  offset: Int
+	"""
+	Max number of returned items
+	"""
+	first: Int
+	"""
+	First returned item is at the `offset` position in the full list
+	"""
+	offset: Int
 }
 type Queries {
-  apiVersion: String!
-  names(
-    page: PaginationInput
-    filter: NameFilterInput
-    sort: [NameSortInput!]
-  ): NamesResponse!
-  items(
-    page: PaginationInput
-    filter: ItemFilterInput
-    sort: [ItemSortInput!]
-  ): ItemsResponse!
-  invoice(id: String!): InvoiceResponse!
-  invoices(
-    page: PaginationInput
-    filter: InvoiceFilterInput
-    sort: [InvoiceSortInput!]
-  ): InvoicesResponse!
+	apiVersion: String!
+	"""
+	Query omSupply "name" entries
+	"""
+	names(page: PaginationInput, filter: NameFilterInput, sort: [NameSortInput!]): NamesResponse!
+	"""
+	Query omSupply "item" entries
+	"""
+	items(page: PaginationInput, filter: ItemFilterInput, sort: [ItemSortInput!]): ItemsResponse!
+	invoice(id: String!): InvoiceResponse!
+	invoices(page: PaginationInput, filter: InvoiceFilterInput, sort: [InvoiceSortInput!]): InvoicesResponse!
 }
 type RangeError implements UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
-  description: String!
-  field: RangeField!
-  max: Int
-  min: Int
+	description: String!
+	field: RangeField!
+	max: Int
+	min: Int
 }
 enum RangeField {
-  FIRST
-  NUMBER_OF_PACKS
-  PACK_SIZE
+	FIRST
+	NUMBER_OF_PACKS
+	PACK_SIZE
 }
-type RecordAlreadyExist implements InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertInboundShipmentErrorInterface {
-  description: String!
+type RecordAlreadyExist implements InsertInboundShipmentErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
+	description: String!
 }
-type RecordNotFound implements NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface {
-  description: String!
+type RecordNotFound implements UpdateInboundShipmentErrorInterface & NodeErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface {
+	description: String!
 }
 input SimpleStringFilterInput {
-  equalTo: String
-  like: String
+	"""
+	Search term must be an exact match (case sensitive)
+	"""
+	equalTo: String
+	"""
+	Search term must be included in search candidate (case insensitive)
+	"""
+	like: String
 }
-type StockLineAlreadyExistsInInvoice implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
-  description: String!
-  line: InvoiceLineResponse!
+type StockLineAlreadyExistsInInvoice implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+	description: String!
+	line: InvoiceLineResponse!
 }
 """
 Generic Connector
 """
 type StockLineConnector {
-  totalCount: Int!
-  nodes: [StockLineNode!]!
+	totalCount: Int!
+	nodes: [StockLineNode!]!
 }
-type StockLineDoesNotBelongToCurrentStore implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
-  description: String!
+type StockLineDoesNotBelongToCurrentStore implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+	description: String!
 }
 type StockLineNode {
-  id: String!
-  itemId: String!
-  storeId: String!
-  batch: String
-  packSize: Int!
-  costPricePerPack: Float!
-  sellPricePerPack: Float!
-  availableNumberOfPacks: Int!
-  totalNumberOfPacks: Int!
-  expiryDate: NaiveDate
+	id: String!
+	itemId: String!
+	storeId: String!
+	batch: String
+	packSize: Int!
+	costPricePerPack: Float!
+	sellPricePerPack: Float!
+	availableNumberOfPacks: Int!
+	totalNumberOfPacks: Int!
+	expiryDate: NaiveDate
 }
-union StockLineResponse = NodeError | StockLineNode
-union StockLinesResponse = ConnectorError | StockLineConnector
-"""
-Generic Error Wrapper
-"""
-type UpdateOutboundShipmentError {
-  error: UpdateOutboundShipmentErrorInterface!
-}
-interface UpdateOutboundShipmentErrorInterface {
-  description: String!
-}
-input UpdateOutboundShipmentInput {
-  """
-  The new invoice id provided by the client
-  """
-  id: String!
-  """
-  	The other party must be a customer of the current store.
-  This field can be used to change the other_party of an invoice
-  """
-  otherPartyId: String
-  """
-  	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
-  existing invoice items gets updated.
-  """
-  status: InvoiceNodeStatus
-  comment: String
-  """
-  External invoice reference, e.g. purchase or shipment number
-  """
-  theirReference: String
-}
-"""
-Generic Error Wrapper
-"""
-type UpdateOutboundShipmentLineError {
-  error: UpdateOutboundShipmentLineErrorInterface!
-}
-interface UpdateOutboundShipmentLineErrorInterface {
-  description: String!
-}
-input UpdateOutboundShipmentLineInput {
-  id: String!
-  invoiceId: String!
-  itemId: String
-  stockLineId: String
-  numberOfPacks: Int
-}
-union UpdateOutboundShipmentLineResponse =
-    UpdateOutboundShipmentLineError
-  | NodeError
-  | InvoiceLineNode
-union UpdateOutboundShipmentResponse =
-    UpdateOutboundShipmentError
-  | NodeError
-  | InvoiceNode
+union StockLineResponse = | NodeError | StockLineNode
+union StockLinesResponse = | ConnectorError | StockLineConnector
 """
 Generic Error Wrapper
 """
 type UpdateInboundShipmentError {
-  error: UpdateInboundShipmentErrorInterface!
+	error: UpdateInboundShipmentErrorInterface!
 }
 interface UpdateInboundShipmentErrorInterface {
-  description: String!
+	description: String!
 }
 input UpdateInboundShipmentInput {
-  id: String!
-  otherPartyId: String
-  status: InvoiceNodeStatus
-  comment: String
-  theirReference: String
+	id: String!
+	otherPartyId: String
+	status: InvoiceNodeStatus
+	comment: String
+	theirReference: String
 }
 """
 Generic Error Wrapper
 """
 type UpdateInboundShipmentLineError {
-  error: UpdateInboundShipmentLineErrorInterface!
+	error: UpdateInboundShipmentLineErrorInterface!
 }
 interface UpdateInboundShipmentLineErrorInterface {
-  description: String!
+	description: String!
 }
 input UpdateInboundShipmentLineInput {
-  id: String!
-  invoiceId: String!
-  itemId: String
-  packSize: Int
-  batch: String
-  costPricePerPack: Float
-  sellPricePerPack: Float
-  expiryDate: NaiveDate
-  numberOfPacks: Int
+	id: String!
+	invoiceId: String!
+	itemId: String
+	packSize: Int
+	batch: String
+	costPricePerPack: Float
+	sellPricePerPack: Float
+	expiryDate: NaiveDate
+	numberOfPacks: Int
 }
-union UpdateInboundShipmentLineResponse =
-    UpdateInboundShipmentLineError
-  | NodeError
-  | InvoiceLineNode
-union UpdateInboundShipmentResponse =
-    UpdateInboundShipmentError
-  | NodeError
-  | InvoiceNode
+union UpdateInboundShipmentLineResponse = | UpdateInboundShipmentLineError | NodeError | InvoiceLineNode
+union UpdateInboundShipmentResponse = | UpdateInboundShipmentError | NodeError | InvoiceNode
+"""
+Generic Error Wrapper
+"""
+type UpdateOutboundShipmentError {
+	error: UpdateOutboundShipmentErrorInterface!
+}
+interface UpdateOutboundShipmentErrorInterface {
+	description: String!
+}
+input UpdateOutboundShipmentInput {
+	"""
+	The new invoice id provided by the client
+	"""
+	id: String!
+	"""
+	The other party must be a customer of the current store.
+This field can be used to change the other_party of an invoice
+	"""
+	otherPartyId: String
+	"""
+	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
+existing invoice items gets updated.
+	"""
+	status: InvoiceNodeStatus
+	comment: String
+	"""
+	External invoice reference, e.g. purchase or shipment number
+	"""
+	theirReference: String
+}
+"""
+Generic Error Wrapper
+"""
+type UpdateOutboundShipmentLineError {
+	error: UpdateOutboundShipmentLineErrorInterface!
+}
+interface UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+}
+input UpdateOutboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	stockLineId: String
+	numberOfPacks: Int
+}
+union UpdateOutboundShipmentLineResponse = | UpdateOutboundShipmentLineError | NodeError | InvoiceLineNode
+union UpdateOutboundShipmentResponse = | UpdateOutboundShipmentError | NodeError | InvoiceNode
 schema {
-  query: Queries
-  mutation: Mutations
+	query: Queries
+	mutation: Mutations
 }
