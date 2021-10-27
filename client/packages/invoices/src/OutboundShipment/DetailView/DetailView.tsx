@@ -17,8 +17,6 @@ import {
   PanelRow,
   PlusCircleIcon,
   RewindIcon,
-  TabContext,
-  TabPanel,
   TableProvider,
   Typography,
   createTableStore,
@@ -27,7 +25,6 @@ import {
   useDocument,
   useFormatDate,
   useNotification,
-  useTabs,
   useTranslation,
   InvoiceLine,
   ButtonWithIcon,
@@ -76,8 +73,6 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
     success('Copied to clipboard successfully')();
   };
 
-  const { currentTab, onChangeTab } = useTabs('general');
-
   const columns = useColumns<ItemRow>(
     [
       'itemCode',
@@ -94,7 +89,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
   );
 
   return draft ? (
-    <TabContext value={String(currentTab)}>
+    <>
       <AppBarButtonsPortal>
         <Grid container gap={1}>
           <ButtonWithIcon
@@ -117,26 +112,15 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
         upsertInvoiceLine={upsertInvoiceLine}
       />
 
-      <OutboundDetailToolbar
-        draft={draft}
-        onChangeTab={(val: string) => onChangeTab(val)}
-        currentTab={currentTab}
-      />
+      <OutboundDetailToolbar draft={draft} />
 
       <Box display="flex" flex={1} flexDirection="column">
-        <TabPanel sx={{ flex: 1, padding: 0, display: 'flex' }} value="general">
-          <GeneralTab
-            columns={columns}
-            data={draft.lines ?? []}
-            sortBy={sortBy}
-          />
-        </TabPanel>
+        <GeneralTab
+          columns={columns}
+          data={draft.lines ?? []}
+          sortBy={sortBy}
+        />
 
-        <TabPanel sx={{ flex: 1 }} value="transport">
-          <Box sx={{ flex: 1, display: 'flex' }}>
-            <span>Transport details coming soon..</span>
-          </Box>
-        </TabPanel>
         <OutboundDetailFooter draft={draft} save={save} />
       </Box>
       <DetailPanelPortal
@@ -195,7 +179,7 @@ export const OutboundShipmentDetailViewComponent: FC = () => {
           </DetailPanelSection>
         </>
       </DetailPanelPortal>
-    </TabContext>
+    </>
   ) : null;
 };
 
