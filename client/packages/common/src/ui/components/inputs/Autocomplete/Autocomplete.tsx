@@ -62,7 +62,7 @@ export function Autocomplete<T>({
       isOptionEqualToValue={isOptionEqualToValue}
       defaultValue={defaultValue}
       disableClearable={!clearable}
-      value={value}
+      value={value ?? ({ label: '' } as AutocompleteOption<T>)}
       getOptionDisabled={getOptionDisabled}
       filterOptions={filterOptions}
       loading={loading}
