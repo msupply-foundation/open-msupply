@@ -16,24 +16,24 @@ Multiple mutations in a single request are supported and each mutation will be r
 
 For full list of errors see [custom error section](/docs/api/custom_errors)
 
-## Customer Invoice
+## Outbound Shipment
 
-#### Customer Invoice Insert
+#### Outbound Shipment Insert
 
 ```graphql
 query {
-    insertCustomerInvoice(input: InsertCustomerInvoiceInput): Invoice
+    insertOutboundShipment(input: InsertOutboundShipmentInput): Invoice
 }
 
-type InsertCustomerInvoiceInput {
+type InsertOutboundShipmentInput {
     otherPartyId: String!
     status: InvoiceStatus!
     comment: String
     theirReference: String
-    lines: [InsertCustomerInvoiceLineInput]
+    lines: [InsertOutboundShipmentLineInput]
 }
 
-type InsertCustomerInvoiceLineInput {
+type InsertOutboundShipmentLineInput {
     clientId: String
     id: String
     itemId: String
@@ -43,27 +43,27 @@ type InsertCustomerInvoiceLineInput {
 }
 ```
 
-[InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert)
+[InsertOutboundShipmentLineInput](/docs/api/mutations/#customer-invoice-line-insert)
 
-#### Customer Invoice Update
+#### Outbound Shipment Update
 
 
 ```graphql
 query {
-    updateCustomerInvoice(input: UpdateCustomerInvoiceInput): Invoice
+    updateOutboundShipment(input: UpdateOutboundShipmentInput): Invoice
 }
 
-type UpdateCustomerInvoiceInput {
+type UpdateOutboundShipmentInput {
     id: String!
     otherPartyId: String
     status: InvoiceStatus
     comment: String
     theirReference: String
-    lines: [UpsertCustomerInvoiceLineInput]
+    lines: [UpsertOutboundShipmentLineInput]
 }
 
-# Intersection of InsertCustomerInvoiceLineInput or UpdateCustomerInvoiceLineInput
-type UpsertCustomerInvoiceLineInput {
+# Intersection of InsertOutboundShipmentLineInput or UpdateOutboundShipmentLineInput
+type UpsertOutboundShipmentLineInput {
     clientId: String
     id: String
     itemId: String
@@ -72,8 +72,8 @@ type UpsertCustomerInvoiceLineInput {
 }
 ```
 
-[InsertCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-insert)
-[UpdateCustomerInvoiceLineInput](/docs/api/mutations/#customer-invoice-line-update)
+[InsertOutboundShipmentLineInput](/docs/api/mutations/#customer-invoice-line-insert)
+[UpdateOutboundShipmentLineInput](/docs/api/mutations/#customer-invoice-line-update)
 
 Invoice lines that previously existed but are missing in `lines` list will be deleted. 
 
@@ -89,7 +89,7 @@ Base table: `invoice`
 
 All other fields are translated directly to snake case equivalent.
 
-`type` to be set as: `CUSTOMER_INVOICE`
+`type` to be set as: `OUTBOUND_SHIPMENT`
 `store_id` to be set as current logged in store in session
 
 On Insertion `entry_datetime` is set.
@@ -101,14 +101,14 @@ On status change the datetime fields are set:
 </details>
 &nbsp;
 
-## Customer Invoice Line
+## Outbound Shipment Line
 
-Customer invoice lines are always linked to an invoice, and are mutated via [Custom Invoice](/docs/api/mutations/#customer-invoice) mutations.
+Outbound Shipment lines are always linked to an invoice, and are mutated via [Custom Invoice](/docs/api/mutations/#customer-invoice) mutations.
 
-#### Customer Invoice Line Insert
+#### Outbound Shipment Line Insert
 
 ```GraphQL
-type InsertCustomerInvoiceLineInput {
+type InsertOutboundShipmentLineInput {
     clientId: String
     itemId: String!
     stockLineId: String!
@@ -117,10 +117,10 @@ type InsertCustomerInvoiceLineInput {
 }
 ```
 
-#### Customer Invoice Line Update
+#### Outbound Shipment Line Update
 
 ```GraphQL
-type UpdateCustomerInvoiceLineInput {
+type UpdateOutboundShipmentLineInput {
     clientId: String
     id: String!
     itemId: String
@@ -130,9 +130,9 @@ type UpdateCustomerInvoiceLineInput {
 }
 ```
 
-#### Customer Invoice Line Upsert
+#### Outbound Shipment Line Upsert
 
-`UpsertCustomerInvoiceLineInput` is an intersection of `InsertCustomerInvoiceLineInput` and `UpdateCustomerInvoiceLineInput`, the type is narrowed down by checking presence of value in **id** field
+`UpsertOutboundShipmentLineInput` is an intersection of `InsertOutboundShipmentLineInput` and `UpdateOutboundShipmentLineInput`, the type is narrowed down by checking presence of value in **id** field
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -160,24 +160,24 @@ Validation of reduction to be checked against each `stock_line`, and reduction a
 </details>
 &nbsp;
 
-## Supplier Invoice
+## Inbound Shipment
 
-### Supplier Invoice Insert
+### Inbound Shipment Insert
 
 ```graphql
 query {
-    insertSupplierInvoice(input: InsertSupplierInvoiceInput): Invoice
+    insertInboundShipment(input: InsertInboundShipmentInput): Invoice
 }
 
-type InsertSupplierInvoiceInput {
+type InsertInboundShipmentInput {
     otherPartyId: String!
     status: InvoiceStatus!
     comment: String
     theirReference: String
-    lines: [InsertSupplierInvoiceLineInput]
+    lines: [InsertInboundShipmentLineInput]
 }
 
-type InsertSupplierInvoiceLineInput {
+type InsertInboundShipmentLineInput {
     clientId: String
     itemId: String!
     # GraphQL Validation > 0
@@ -193,26 +193,26 @@ type InsertSupplierInvoiceLineInput {
 }
 ```
 
-[InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
+[InsertInboundShipmentLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
 
-### Supplier Invoice Update
+### Inbound Shipment Update
 
 ```graphql
 query {
-    updateSupplierInvoice(input: UpdateSupplierInvoiceInput): Invoice
+    updateInboundShipment(input: UpdateInboundShipmentInput): Invoice
 }
 
-type UpdateSupplierInvoiceInput {
+type UpdateInboundShipmentInput {
     id: String
     otherPartyId: String
     status: InvoiceStatus
     comment: String
     theirReference: String
-    lines: [UpsertSupplierInvoiceLineInput]
+    lines: [UpsertInboundShipmentLineInput]
 }
 
-# Intersection of InsertSupplierInvoiceLineInput or UpdateSupplierInvoiceLineInput
-type UpsertSupplierInvoiceLineInput {
+# Intersection of InsertInboundShipmentLineInput or UpdateInboundShipmentLineInput
+type UpsertInboundShipmentLineInput {
     clientId: String
     id: String
     itemId: String
@@ -229,8 +229,8 @@ type UpsertSupplierInvoiceLineInput {
 }
 ```
 
-[InsertSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
-[UpdateSupplierInvoiceLineInput](/docs/api/mutations/#supplier-invoice-line-update)
+[InsertInboundShipmentLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
+[UpdateInboundShipmentLineInput](/docs/api/mutations/#supplier-invoice-line-update)
 
 _{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}_           
 
@@ -244,7 +244,7 @@ Base table: `invoice`
 
 All other fields are translated directly to snake case equivalent.
 
-`type` to be set as: `SUPPLIER_INVOICE`
+`type` to be set as: `INBOUND_SHIPMENT`
 `store_id` to be set as current logged in store in session _{TODO can this be broken, if user is switched, and goes to an existing tab and looks at another invoice?}_
 
 On status change the datetime fields are set:
@@ -253,14 +253,14 @@ On status change the datetime fields are set:
 
 </details>
 
-## Supplier Invoice Line
+## Inbound Shipment Line
 
-Supplier invoice lines are always linked to an invoice, and are mutated via [Supplier Invoice](/docs/api/mutations/#supplier-invoice) mutations.
+Inbound Shipment lines are always linked to an invoice, and are mutated via [Inbound Shipment](/docs/api/mutations/#supplier-invoice) mutations.
 
-#### Supplier Invoice Line Insert
+#### Inbound Shipment Line Insert
 
 ```GraphQL
-type InsertSupplierInvoiceLineInput = {
+type InsertInboundShipmentLineInput = {
     clientId: String
     itemId: String!
     # GraphQL Validation > 0
@@ -276,10 +276,10 @@ type InsertSupplierInvoiceLineInput = {
 }
 ```       
 
-#### Supplier Invoice Line Update
+#### Inbound Shipment Line Update
 
 ```GraphQL
-type UpdateSupplierInvoiceLineInput = {
+type UpdateInboundShipmentLineInput = {
     clientId: String
     id: String!
     itemId: String
@@ -296,9 +296,9 @@ type UpdateSupplierInvoiceLineInput = {
 }
 ```
 
-#### Supplier Invoice Line Upsert
+#### Inbound Shipment Line Upsert
 
-`UpsertSupplierInvoiceLineInput` is an intersection of `InsertSupplierInvoiceLineInput` and `UpdateSupplierInvoiceLineInput`, the type is narrowed down by checking presence of value in **id** field
+`UpsertInboundShipmentLineInput` is an intersection of `InsertInboundShipmentLineInput` and `UpdateInboundShipmentLineInput`, the type is narrowed down by checking presence of value in **id** field
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -324,7 +324,7 @@ During confirmation and any further subsequent change will result in:
 * invoice_line.`number_of_pack` -> stock_line.`available_number_of_packs`, `total_number_of_packs`
 * invoice_line.`pack_size`, `batch`, `expiry`, `sell_price_per_pack`, `cost_price_per_pack`, `item_id` -> to stock_line fields with the same name
 
-When stock in supplier invoice is reserved by another invoice, `invoice_line` becomes not editable.
+When stock in inbound shipment is reserved by another invoice, `invoice_line` becomes not editable.
 
 Invoice lines are delete if they are missing in mutation but are present in database, in which case we have to make sure to delete associated `stock_line`
 

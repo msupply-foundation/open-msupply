@@ -19,8 +19,8 @@ mod graphql {
     use serde_json::json;
 
     #[actix_rt::test]
-    async fn test_graphql_customer_invoice_insert() {
-        let settings = test_db::get_test_settings("omsupply-database-gql-customer_invoice_delete");
+    async fn test_graphql_outbound_shipment_insert() {
+        let settings = test_db::get_test_settings("omsupply-database-gql-outbound_shipment_delete");
         test_db::setup(&settings.database).await;
         let repositories = get_repositories(&settings).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
@@ -58,9 +58,9 @@ mod graphql {
             invoice_line_repository.upsert_one(invoice_line).unwrap();
         }
 
-        let query = r#"mutation DeleteCustomerInvoice($id: String!) {
-            deleteCustomerInvoice(id: $id) {
-                ... on DeleteCustomerInvoiceError {
+        let query = r#"mutation DeleteOutboundShipment($id: String!) {
+            deleteOutboundShipment(id: $id) {
+                ... on DeleteOutboundShipmentError {
                   error {
                     __typename
                   }
@@ -76,7 +76,7 @@ mod graphql {
           "id": "does not exist"
         }));
         let expected = json!({
-            "deleteCustomerInvoice": {
+            "deleteOutboundShipment": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -87,10 +87,10 @@ mod graphql {
 
         // CannotEditFinalisedInvoice
         let variables = Some(json!({
-          "id": "customer_invoice_finalised"
+          "id": "outbound_shipment_finalised"
         }));
         let expected = json!({
-            "deleteCustomerInvoice": {
+            "deleteOutboundShipment": {
               "error": {
                 "__typename": "CannotEditFinalisedInvoice"
               }
@@ -99,14 +99,14 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
 
-        // NotACustomerInvoice
+        // NotAnOutboundShipment
         let variables = Some(json!({
-          "id": "empty_draft_supplier_invoice"
+          "id": "empty_draft_inbound_shipment"
         }));
         let expected = json!({
-            "deleteCustomerInvoice": {
+            "deleteOutboundShipment": {
               "error": {
-                "__typename": "NotACustomerInvoice"
+                "__typename": "NotAnOutboundShipment"
               }
             }
           }
@@ -115,10 +115,10 @@ mod graphql {
 
         // CannotDeleteInvoiceWithLines
         let variables = Some(json!({
-          "id": "customer_invoice_a"
+          "id": "outbound_shipment_a"
         }));
         let expected = json!({
-            "deleteCustomerInvoice": {
+            "deleteOutboundShipment": {
               "error": {
                 "__typename": "CannotDeleteInvoiceWithLines"
               }
@@ -129,11 +129,11 @@ mod graphql {
 
         // Test succeeding delete
         let variables = Some(json!({
-          "id": "customer_invoice_no_lines"
+          "id": "outbound_shipment_no_lines"
         }));
         let expected = json!({
-            "deleteCustomerInvoice": {
-              "id": "customer_invoice_no_lines"
+            "deleteOutboundShipment": {
+              "id": "outbound_shipment_no_lines"
             }
           }
         );
@@ -141,7 +141,7 @@ mod graphql {
         // test entry has been deleted
         assert_eq!(
             invoice_repository
-                .find_one_by_id("customer_invoice_no_lines")
+                .find_one_by_id("outbound_shipment_no_lines")
                 .expect_err("Invoice not deleted"),
             RepositoryError::NotFound
         );

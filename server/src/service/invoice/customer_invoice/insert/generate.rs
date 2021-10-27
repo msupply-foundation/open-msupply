@@ -6,23 +6,23 @@ use crate::{
         schema::InvoiceRow,
     },
     domain::{
-        customer_invoice::InsertCustomerInvoice,
         invoice::{InvoiceStatus, InvoiceType},
+        outbound_shipment::InsertOutboundShipment,
     },
 };
 
-use super::InsertCustomerInvoiceError;
+use super::InsertOutboundShipmentError;
 
 pub fn generate(
-    input: InsertCustomerInvoice,
+    input: InsertOutboundShipment,
     connection: &StorageConnection,
-) -> Result<InvoiceRow, InsertCustomerInvoiceError> {
+) -> Result<InvoiceRow, InsertOutboundShipmentError> {
     let current_datetime = Utc::now().naive_utc();
 
     let result = InvoiceRow {
         id: input.id,
         name_id: input.other_party_id,
-        r#type: InvoiceType::CustomerInvoice.into(),
+        r#type: InvoiceType::OutboundShipment.into(),
         comment: input.comment,
         their_reference: input.their_reference,
         invoice_number: new_invoice_number(),

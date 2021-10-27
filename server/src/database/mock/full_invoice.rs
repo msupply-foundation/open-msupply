@@ -28,7 +28,7 @@ impl FullMockInvoice {
     }
 }
 
-pub fn mock_full_draft_customer_invoice_a() -> FullMockInvoice {
+pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
     let invoice_id = "draft_ci_a".to_string();
     let invoice_line_a_id = "draft_ci_a_line_a".to_string();
     let invoice_line_b_id = "draft_ci_a_line_b".to_string();
@@ -41,7 +41,7 @@ pub fn mock_full_draft_customer_invoice_a() -> FullMockInvoice {
             name_id: String::from("name_store_a"),
             store_id: String::from("store_b"),
             invoice_number: 10,
-            r#type: InvoiceRowType::CustomerInvoice,
+            r#type: InvoiceRowType::OutboundShipment,
             status: InvoiceRowStatus::Draft,
             comment: None,
             their_reference: None,
@@ -129,7 +129,7 @@ pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageC
 pub fn mock_full_invoices() -> HashMap<String, FullMockInvoice> {
     vec![(
         "draft_ci_a".to_string(),
-        mock_full_draft_customer_invoice_a(),
+        mock_full_draft_outbound_shipment_a(),
     )]
     .into_iter()
     .collect()

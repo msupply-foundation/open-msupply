@@ -3,12 +3,12 @@ mod graphql {
         assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
     };
     use crate::graphql::{
-        get_gql_result, insert_supplier_invoice_line_full as insert,
-        InsertSupplierInvoiceLineFull as Insert,
+        get_gql_result, insert_inbound_shipment_line_full as insert,
+        InsertInboundShipmentLineFull as Insert,
     };
     use chrono::NaiveDate;
     use graphql_client::{GraphQLQuery, Response};
-    use insert::InsertSupplierInvoiceLineErrorInterface::*;
+    use insert::InsertInboundShipmentLineErrorInterface::*;
     use remote_server::{
         database::{
             mock::MockDataInserts,
@@ -22,7 +22,7 @@ mod graphql {
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
-            assert_unwrap_optional_key!($response, data).insert_supplier_invoice_line
+            assert_unwrap_optional_key!($response, data).insert_inbound_shipment_line
         };
     }
 
@@ -31,7 +31,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             assert_unwrap_enum!(
                 response_variant,
-                insert::InsertSupplierInvoiceLineResponse::InvoiceLineNode
+                insert::InsertInboundShipmentLineResponse::InvoiceLineNode
             )
         }};
     }
@@ -51,7 +51,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             let error_wrapper = assert_unwrap_enum!(
                 response_variant,
-                insert::InsertSupplierInvoiceLineResponse::InsertSupplierInvoiceLineError
+                insert::InsertInboundShipmentLineResponse::InsertInboundShipmentLineError
             );
             error_wrapper.error
         }};
@@ -66,39 +66,39 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_insert_supplier_invoice_line() {
+    async fn test_insert_inbound_shipment_line() {
         let (mut mock_data, connection, settings) = test_db::setup_all(
-            "test_insert_supplier_invoice_line_query",
+            "test_insert_inbound_shipment_line_query",
             MockDataInserts::all(),
         )
         .await;
 
         // Setup
 
-        let draft_supplier_invoice = get_invoice_inline!(
-            InvoiceFilter::new().match_supplier_invoice().match_draft(),
+        let draft_inbound_shipment = get_invoice_inline!(
+            InvoiceFilter::new().match_inbound_shipment().match_draft(),
             &connection
         );
-        let confirmed_supplier_invoice = get_invoice_inline!(
+        let confirmed_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
+                .match_inbound_shipment()
                 .match_confirmed(),
             &connection
         );
-        let finalised_supplier_invoice = get_invoice_inline!(
+        let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
+                .match_inbound_shipment()
                 .match_finalised(),
             &connection
         );
-        let customer_invoice =
-            get_invoice_inline!(InvoiceFilter::new().match_customer_invoice(), &connection);
+        let outbound_shipment =
+            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
         let item = mock_data.items.pop().unwrap();
         let existing_line = mock_data.invoice_lines.pop().unwrap();
 
         let base_variables = insert::Variables {
             id: Uuid::new_v4().to_string(),
-            invoice_id: draft_supplier_invoice.id.clone(),
+            invoice_id: draft_inbound_shipment.id.clone(),
             item_id: item.id.clone(),
             cost_price_per_pack: 5.5,
             sell_price_per_pack: 7.7,
@@ -139,7 +139,7 @@ mod graphql {
         // Test CannotEditFinalisedInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = finalised_supplier_invoice.id.clone();
+        variables.invoice_id = finalised_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -150,17 +150,17 @@ mod graphql {
             },)
         );
 
-        // Test NotASupplierInvoice
+        // Test NotAnInboundShipment
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = customer_invoice.id.clone();
+        variables.invoice_id = outbound_shipment.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            NotASupplierInvoice(insert::NotASupplierInvoice {
-                description: "Invoice is not Supplier Invoice".to_string(),
+            NotAnInboundShipment(insert::NotAnInboundShipment {
+                description: "Invoice is not Inbound Shipment".to_string(),
             })
         );
         // Test RangeError NumberOfPacks
@@ -229,7 +229,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -255,7 +255,7 @@ mod graphql {
         variables.id = Uuid::new_v4().to_string();
         variables.expiry_date_option = None;
         variables.batch_option = None;
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -279,7 +279,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = Uuid::new_v4().to_string();
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 

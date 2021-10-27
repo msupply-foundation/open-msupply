@@ -6,7 +6,7 @@ use crate::{
         },
         schema::InvoiceRowStatus,
     },
-    domain::customer_invoice::DeleteCustomerInvoiceLine,
+    domain::outbound_shipment::DeleteOutboundShipmentLine,
     service::WithDBError,
 };
 
@@ -14,10 +14,10 @@ mod validate;
 
 use validate::validate;
 
-pub fn delete_customer_invoice_line(
+pub fn delete_outbound_shipment_line(
     connection_manager: &StorageConnectionManager,
-    input: DeleteCustomerInvoiceLine,
-) -> Result<String, DeleteCustomerInvoiceLineError> {
+    input: DeleteOutboundShipmentLine,
+) -> Result<String, DeleteOutboundShipmentLineError> {
     let connection = connection_manager.connection()?;
 
     let line = connection
@@ -44,7 +44,7 @@ pub fn delete_customer_invoice_line(
             Ok(line)
         })
         .map_err(
-            |error: TransactionError<DeleteCustomerInvoiceLineError>| match error {
+            |error: TransactionError<DeleteOutboundShipmentLineError>| match error {
                 TransactionError::Transaction { msg } => {
                     RepositoryError::as_db_error(&msg, "").into()
                 }
@@ -54,25 +54,25 @@ pub fn delete_customer_invoice_line(
     Ok(line.id)
 }
 
-pub enum DeleteCustomerInvoiceLineError {
+pub enum DeleteOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NotACustomerInvoice,
+    NotAnOutboundShipment,
     NotThisStoreInvoice,
     CannotEditFinalised,
     NotThisInvoiceLine(String),
 }
 
-impl From<RepositoryError> for DeleteCustomerInvoiceLineError {
+impl From<RepositoryError> for DeleteOutboundShipmentLineError {
     fn from(error: RepositoryError) -> Self {
-        DeleteCustomerInvoiceLineError::DatabaseError(error)
+        DeleteOutboundShipmentLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for DeleteCustomerInvoiceLineError
+impl<ERR> From<WithDBError<ERR>> for DeleteOutboundShipmentLineError
 where
-    ERR: Into<DeleteCustomerInvoiceLineError>,
+    ERR: Into<DeleteOutboundShipmentLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {

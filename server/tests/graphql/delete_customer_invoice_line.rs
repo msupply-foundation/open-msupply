@@ -5,7 +5,7 @@ mod graphql {
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
-        delete_customer_invoice_line_full as delete, DeleteCustomerInvoiceLineFull as Delete,
+        delete_outbound_shipment_line_full as delete, DeleteOutboundShipmentLineFull as Delete,
     };
 
     use graphql_client::{GraphQLQuery, Response};
@@ -19,11 +19,11 @@ mod graphql {
         util::test_db,
     };
 
-    use delete::DeleteCustomerInvoiceLineErrorInterface::*;
+    use delete::DeleteOutboundShipmentLineErrorInterface::*;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
-            assert_unwrap_optional_key!($response, data).delete_customer_invoice_line
+            assert_unwrap_optional_key!($response, data).delete_outbound_shipment_line
         };
     }
 
@@ -32,7 +32,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             assert_unwrap_enum!(
                 response_variant,
-                delete::DeleteCustomerInvoiceLineResponse::DeleteResponse
+                delete::DeleteOutboundShipmentLineResponse::DeleteResponse
             )
         }};
     }
@@ -42,7 +42,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             let error_wrapper = assert_unwrap_enum!(
                 response_variant,
-                delete::DeleteCustomerInvoiceLineResponse::DeleteCustomerInvoiceLineError
+                delete::DeleteOutboundShipmentLineResponse::DeleteOutboundShipmentLineError
             );
             error_wrapper.error
         }};
@@ -57,54 +57,54 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_delete_customer_invoice_line() {
+    async fn test_delete_outbound_shipment_line() {
         let (_, connection, settings) = test_db::setup_all(
-            "test_delete_customer_invoice_line_query",
+            "test_delete_outbound_shipment_line_query",
             MockDataInserts::all(),
         )
         .await;
 
         // Setup
 
-        let draft_customer_invoice = get_invoice_inline!(
+        let draft_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_customer_invoice()
+                .match_outbound_shipment()
                 .match_draft()
-                .match_id("customer_invoice_c"),
+                .match_id("outbound_shipment_c"),
             &connection
         );
-        let confirmed_customer_invoice = get_invoice_inline!(
+        let confirmed_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_customer_invoice()
+                .match_outbound_shipment()
                 .match_confirmed()
-                .match_id("customer_invoice_a"),
+                .match_id("outbound_shipment_a"),
             &connection
         );
-        let finalised_customer_invoice = get_invoice_inline!(
+        let finalised_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_customer_invoice()
+                .match_outbound_shipment()
                 .match_finalised()
-                .match_id("customer_invoice_b"),
+                .match_id("outbound_shipment_b"),
             &connection
         );
-        let supplier_invoice = get_invoice_inline!(
+        let inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
-                .match_id("supplier_invoice_a"),
+                .match_inbound_shipment()
+                .match_id("inbound_shipment_a"),
             &connection
         );
         let confirmed_invoice_lines =
-            get_invoice_lines_inline!(&confirmed_customer_invoice.id.clone(), &connection);
-        let supplier_invoice_lines =
-            get_invoice_lines_inline!(&supplier_invoice.id.clone(), &connection);
+            get_invoice_lines_inline!(&confirmed_outbound_shipment.id.clone(), &connection);
+        let inbound_shipment_lines =
+            get_invoice_lines_inline!(&inbound_shipment.id.clone(), &connection);
         let finalised_invoice_lines =
-            get_invoice_lines_inline!(&finalised_customer_invoice.id.clone(), &connection);
+            get_invoice_lines_inline!(&finalised_outbound_shipment.id.clone(), &connection);
         let draft_invoice_lines =
-            get_invoice_lines_inline!(&draft_customer_invoice.id.clone(), &connection);
+            get_invoice_lines_inline!(&draft_outbound_shipment.id.clone(), &connection);
 
         let base_variables = delete::Variables {
             id: draft_invoice_lines[0].id.clone(),
-            invoice_id: draft_customer_invoice.id.clone(),
+            invoice_id: draft_outbound_shipment.id.clone(),
         };
 
         // Test RecordNotFound Item
@@ -141,7 +141,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = finalised_invoice_lines[0].id.clone();
-        variables.invoice_id = finalised_customer_invoice.id.clone();
+        variables.invoice_id = finalised_outbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -152,25 +152,25 @@ mod graphql {
             },)
         );
 
-        // Test NotACustomerInvoice
+        // Test NotAnOutboundShipment
 
         let mut variables = base_variables.clone();
-        variables.id = supplier_invoice_lines[0].id.clone();
-        variables.invoice_id = supplier_invoice.id.clone();
+        variables.id = inbound_shipment_lines[0].id.clone();
+        variables.invoice_id = inbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            NotACustomerInvoice(delete::NotACustomerInvoice {
-                description: "Invoice is not Customer Invoice".to_string(),
+            NotAnOutboundShipment(delete::NotAnOutboundShipment {
+                description: "Invoice is not Outbound Shipment".to_string(),
             })
         );
 
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = confirmed_customer_invoice.id.clone();
+        variables.invoice_id = confirmed_outbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -179,7 +179,7 @@ mod graphql {
         let invoice_variant =
             assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice).invoice;
         let invoice = assert_unwrap_enum!(invoice_variant, delete::InvoiceResponse::InvoiceNode);
-        assert_eq!(invoice.id, draft_customer_invoice.id);
+        assert_eq!(invoice.id, draft_outbound_shipment.id);
 
         // Success Draft
 
@@ -230,7 +230,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_line.id.clone();
-        variables.invoice_id = confirmed_customer_invoice.id.clone();
+        variables.invoice_id = confirmed_outbound_shipment.id.clone();
 
         let stock_line_id = confirmed_invoice_line.stock_line_id.as_ref().unwrap();
         let stock_line_before_deletion = StockLineRepository::new(&connection)

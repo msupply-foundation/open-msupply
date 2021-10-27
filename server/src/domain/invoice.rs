@@ -10,8 +10,8 @@ pub enum InvoiceStatus {
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum InvoiceType {
-    CustomerInvoice,
-    SupplierInvoice,
+    OutboundShipment,
+    InboundShipment,
 }
 
 #[derive(PartialEq, Debug)]
@@ -66,17 +66,17 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn match_supplier_invoice(mut self) -> Self {
+    pub fn match_inbound_shipment(mut self) -> Self {
         self.r#type = Some(EqualFilter {
-            equal_to: Some(InvoiceType::SupplierInvoice),
+            equal_to: Some(InvoiceType::InboundShipment),
         });
 
         self
     }
 
-    pub fn match_customer_invoice(mut self) -> Self {
+    pub fn match_outbound_shipment(mut self) -> Self {
         self.r#type = Some(EqualFilter {
-            equal_to: Some(InvoiceType::CustomerInvoice),
+            equal_to: Some(InvoiceType::OutboundShipment),
         });
 
         self

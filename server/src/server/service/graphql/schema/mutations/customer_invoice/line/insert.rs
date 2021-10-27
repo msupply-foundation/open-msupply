@@ -1,16 +1,16 @@
 use async_graphql::*;
 
 use crate::{
-    domain::{customer_invoice::InsertCustomerInvoiceLine, invoice_line::InvoiceLine},
+    domain::{invoice_line::InvoiceLine, outbound_shipment::InsertOutboundShipmentLine},
     server::service::graphql::schema::{
         mutations::{
-            customer_invoice::NotEnoughStockForReduction, CannotEditFinalisedInvoice, ForeignKey,
-            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotACustomerInvoice,
+            outbound_shipment::NotEnoughStockForReduction, CannotEditFinalisedInvoice, ForeignKey,
+            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
             RecordAlreadyExist,
         },
         types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
-    service::{invoice_line::InsertCustomerInvoiceLineError, SingleRecordError},
+    service::{invoice_line::InsertOutboundShipmentLineError, SingleRecordError},
 };
 
 use super::{
@@ -19,7 +19,7 @@ use super::{
 };
 
 #[derive(InputObject)]
-pub struct InsertCustomerInvoiceLineInput {
+pub struct InsertOutboundShipmentLineInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
@@ -28,21 +28,21 @@ pub struct InsertCustomerInvoiceLineInput {
 }
 
 #[derive(Union)]
-pub enum InsertCustomerInvoiceLineResponse {
-    Error(ErrorWrapper<InsertCustomerInvoiceLineErrorInterface>),
+pub enum InsertOutboundShipmentLineResponse {
+    Error(ErrorWrapper<InsertOutboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertCustomerInvoiceLineErrorInterface {
+pub enum InsertOutboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
     RangeError(RangeError),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
-    NotACustomerInvoice(NotACustomerInvoice),
+    NotAnOutboundShipment(NotAnOutboundShipment),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
     ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
@@ -50,17 +50,17 @@ pub enum InsertCustomerInvoiceLineErrorInterface {
     NotEnoughStockForReduction(NotEnoughStockForReduction),
 }
 
-impl From<InsertCustomerInvoiceLineInput> for InsertCustomerInvoiceLine {
+impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
     fn from(
-        InsertCustomerInvoiceLineInput {
+        InsertOutboundShipmentLineInput {
             id,
             invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
-        }: InsertCustomerInvoiceLineInput,
+        }: InsertOutboundShipmentLineInput,
     ) -> Self {
-        InsertCustomerInvoiceLine {
+        InsertOutboundShipmentLine {
             id,
             invoice_id,
             item_id,
@@ -70,7 +70,7 @@ impl From<InsertCustomerInvoiceLineInput> for InsertCustomerInvoiceLine {
     }
 }
 
-impl From<Result<InvoiceLine, SingleRecordError>> for InsertCustomerInvoiceLineResponse {
+impl From<Result<InvoiceLine, SingleRecordError>> for InsertOutboundShipmentLineResponse {
     fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
         let invoice_line_response: InvoiceLineResponse = result.into();
         // Implemented by flatten union
@@ -78,47 +78,47 @@ impl From<Result<InvoiceLine, SingleRecordError>> for InsertCustomerInvoiceLineR
     }
 }
 
-impl From<InsertCustomerInvoiceLineError> for InsertCustomerInvoiceLineResponse {
-    fn from(error: InsertCustomerInvoiceLineError) -> Self {
-        use InsertCustomerInvoiceLineErrorInterface as OutError;
+impl From<InsertOutboundShipmentLineError> for InsertOutboundShipmentLineResponse {
+    fn from(error: InsertOutboundShipmentLineError) -> Self {
+        use InsertOutboundShipmentLineErrorInterface as OutError;
         let error = match error {
-            InsertCustomerInvoiceLineError::LineAlreadyExists => {
+            InsertOutboundShipmentLineError::LineAlreadyExists => {
                 OutError::RecordAlreadyExist(RecordAlreadyExist {})
             }
-            InsertCustomerInvoiceLineError::DatabaseError(error) => {
+            InsertOutboundShipmentLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            InsertCustomerInvoiceLineError::InvoiceDoesNotExist => {
+            InsertOutboundShipmentLineError::InvoiceDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
             }
-            InsertCustomerInvoiceLineError::NotACustomerInvoice => {
-                OutError::NotACustomerInvoice(NotACustomerInvoice {})
+            InsertOutboundShipmentLineError::NotAnOutboundShipment => {
+                OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
             }
-            InsertCustomerInvoiceLineError::NotThisStoreInvoice => {
+            InsertOutboundShipmentLineError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            InsertCustomerInvoiceLineError::CannotEditFinalised => {
+            InsertOutboundShipmentLineError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
-            InsertCustomerInvoiceLineError::ItemNotFound => {
+            InsertOutboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
             }
-            InsertCustomerInvoiceLineError::NumberOfPacksBelowOne => {
+            InsertOutboundShipmentLineError::NumberOfPacksBelowOne => {
                 OutError::RangeError(RangeError {
                     field: RangeField::NumberOfPacks,
                     range: Range::Min(1),
                 })
             }
-            InsertCustomerInvoiceLineError::StockLineNotFound => {
+            InsertOutboundShipmentLineError::StockLineNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::StockLineId))
             }
-            InsertCustomerInvoiceLineError::StockLineAlreadyExistsInInvoice(line_id) => {
+            InsertOutboundShipmentLineError::StockLineAlreadyExistsInInvoice(line_id) => {
                 OutError::StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice(line_id))
             }
-            InsertCustomerInvoiceLineError::ItemDoesNotMatchStockLine => {
+            InsertOutboundShipmentLineError::ItemDoesNotMatchStockLine => {
                 OutError::ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine {})
             }
-            InsertCustomerInvoiceLineError::ReductionBelowZero { stock_line_id } => {
+            InsertOutboundShipmentLineError::ReductionBelowZero { stock_line_id } => {
                 OutError::NotEnoughStockForReduction(NotEnoughStockForReduction {
                     stock_line_id,
                     line_id: None,
@@ -126,6 +126,6 @@ impl From<InsertCustomerInvoiceLineError> for InsertCustomerInvoiceLineResponse 
             }
         };
 
-        InsertCustomerInvoiceLineResponse::Error(ErrorWrapper { error })
+        InsertOutboundShipmentLineResponse::Error(ErrorWrapper { error })
     }
 }

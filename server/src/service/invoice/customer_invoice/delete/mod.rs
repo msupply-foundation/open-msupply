@@ -9,10 +9,10 @@ pub mod validate;
 
 use validate::validate;
 
-pub fn delete_customer_invoice(
+pub fn delete_outbound_shipment(
     connection_manager: &StorageConnectionManager,
     id: String,
-) -> Result<String, DeleteCustomerInvoiceError> {
+) -> Result<String, DeleteOutboundShipmentError> {
     let connection = connection_manager.connection()?;
     connection.transaction_sync(|connection| {
         validate(&id, &connection)?;
@@ -22,26 +22,26 @@ pub fn delete_customer_invoice(
     Ok(id)
 }
 
-pub enum DeleteCustomerInvoiceError {
+pub enum DeleteOutboundShipmentError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
     InvoiceLinesExists(Vec<InvoiceLine>),
-    NotACustomerInvoice,
+    NotAnOutboundShipment,
 }
 
-impl From<RepositoryError> for DeleteCustomerInvoiceError {
+impl From<RepositoryError> for DeleteOutboundShipmentError {
     fn from(error: RepositoryError) -> Self {
-        DeleteCustomerInvoiceError::DatabaseError(error)
+        DeleteOutboundShipmentError::DatabaseError(error)
     }
 }
 
-impl From<TransactionError<DeleteCustomerInvoiceError>> for DeleteCustomerInvoiceError {
-    fn from(error: TransactionError<DeleteCustomerInvoiceError>) -> Self {
+impl From<TransactionError<DeleteOutboundShipmentError>> for DeleteOutboundShipmentError {
+    fn from(error: TransactionError<DeleteOutboundShipmentError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => {
-                DeleteCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
+                DeleteOutboundShipmentError::DatabaseError(RepositoryError::DBError {
                     msg,
                     extra: "".to_string(),
                 })

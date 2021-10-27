@@ -4,26 +4,26 @@ use crate::{
         schema::{InvoiceRow, InvoiceRowStatus},
     },
     domain::{
+        inbound_shipment::UpdateInboundShipment,
         invoice::{InvoiceStatus, InvoiceType},
-        supplier_invoice::UpdateSupplierInvoice,
     },
     service::invoice::{
         check_invoice_exists, check_invoice_finalised, check_invoice_type,
-        supplier_invoice::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
+        inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
         OtherPartyError, WrongInvoiceType,
     },
 };
 
-use super::UpdateSupplierInvoiceError;
+use super::UpdateInboundShipmentError;
 
 pub fn validate(
-    patch: &UpdateSupplierInvoice,
+    patch: &UpdateInboundShipment,
     connection: &StorageConnection,
-) -> Result<InvoiceRow, UpdateSupplierInvoiceError> {
+) -> Result<InvoiceRow, UpdateInboundShipmentError> {
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
+    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
     check_invoice_status(patch, &invoice)?;
     check_other_party(patch.other_party_id.clone(), connection)?;
@@ -32,20 +32,20 @@ pub fn validate(
 }
 
 fn check_invoice_status(
-    patch: &UpdateSupplierInvoice,
+    patch: &UpdateInboundShipment,
     invoice: &InvoiceRow,
-) -> Result<(), UpdateSupplierInvoiceError> {
+) -> Result<(), UpdateInboundShipmentError> {
     match (&invoice.status, &patch.status) {
         (InvoiceRowStatus::Confirmed, Some(InvoiceStatus::Draft)) => {
-            Err(UpdateSupplierInvoiceError::CannotChangeInvoiceBackToDraft)
+            Err(UpdateInboundShipmentError::CannotChangeInvoiceBackToDraft)
         }
         _ => Ok(()),
     }
 }
 
-impl From<OtherPartyError> for UpdateSupplierInvoiceError {
+impl From<OtherPartyError> for UpdateInboundShipmentError {
     fn from(error: OtherPartyError) -> Self {
-        use UpdateSupplierInvoiceError::*;
+        use UpdateInboundShipmentError::*;
         match error {
             OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
             OtherPartyError::DoesNotExist => OtherPartyDoesNotExist,
@@ -54,20 +54,20 @@ impl From<OtherPartyError> for UpdateSupplierInvoiceError {
     }
 }
 
-impl From<WrongInvoiceType> for UpdateSupplierInvoiceError {
+impl From<WrongInvoiceType> for UpdateInboundShipmentError {
     fn from(_: WrongInvoiceType) -> Self {
-        UpdateSupplierInvoiceError::NotASupplierInvoice
+        UpdateInboundShipmentError::NotAnInboundShipment
     }
 }
 
-impl From<InvoiceIsFinalised> for UpdateSupplierInvoiceError {
+impl From<InvoiceIsFinalised> for UpdateInboundShipmentError {
     fn from(_: InvoiceIsFinalised) -> Self {
-        UpdateSupplierInvoiceError::CannotEditFinalised
+        UpdateInboundShipmentError::CannotEditFinalised
     }
 }
 
-impl From<InvoiceDoesNotExist> for UpdateSupplierInvoiceError {
+impl From<InvoiceDoesNotExist> for UpdateInboundShipmentError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        UpdateSupplierInvoiceError::InvoiceDoesNotExist
+        UpdateInboundShipmentError::InvoiceDoesNotExist
     }
 }

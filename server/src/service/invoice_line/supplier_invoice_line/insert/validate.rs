@@ -3,14 +3,14 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceRow, ItemRow},
     },
-    domain::{invoice::InvoiceType, supplier_invoice::InsertSupplierInvoiceLine},
+    domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type,
             validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
         },
         invoice_line::{
-            supplier_invoice_line::check_pack_size,
+            inbound_shipment_line::check_pack_size,
             validate::{
                 check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
                 LineAlreadyExists, NumberOfPacksBelowOne,
@@ -20,12 +20,12 @@ use crate::{
     },
 };
 
-use super::InsertSupplierInvoiceLineError;
+use super::InsertInboundShipmentLineError;
 
 pub fn validate(
-    input: &InsertSupplierInvoiceLine,
+    input: &InsertInboundShipmentLine,
     connection: &StorageConnection,
-) -> Result<(ItemRow, InvoiceRow), InsertSupplierInvoiceLineError> {
+) -> Result<(ItemRow, InvoiceRow), InsertInboundShipmentLineError> {
     check_line_does_not_exists(&input.id, connection)?;
     check_pack_size(Some(input.pack_size))?;
     check_number_of_packs(Some(input.number_of_packs))?;
@@ -33,50 +33,50 @@ pub fn validate(
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::SupplierInvoice)?;
+    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
 
     Ok((item, invoice))
 }
 
-impl From<ItemNotFound> for InsertSupplierInvoiceLineError {
+impl From<ItemNotFound> for InsertInboundShipmentLineError {
     fn from(_: ItemNotFound) -> Self {
-        InsertSupplierInvoiceLineError::ItemNotFound
+        InsertInboundShipmentLineError::ItemNotFound
     }
 }
 
-impl From<NumberOfPacksBelowOne> for InsertSupplierInvoiceLineError {
+impl From<NumberOfPacksBelowOne> for InsertInboundShipmentLineError {
     fn from(_: NumberOfPacksBelowOne) -> Self {
-        InsertSupplierInvoiceLineError::NumberOfPacksBelowOne
+        InsertInboundShipmentLineError::NumberOfPacksBelowOne
     }
 }
 
-impl From<PackSizeBelowOne> for InsertSupplierInvoiceLineError {
+impl From<PackSizeBelowOne> for InsertInboundShipmentLineError {
     fn from(_: PackSizeBelowOne) -> Self {
-        InsertSupplierInvoiceLineError::PackSizeBelowOne
+        InsertInboundShipmentLineError::PackSizeBelowOne
     }
 }
 
-impl From<LineAlreadyExists> for InsertSupplierInvoiceLineError {
+impl From<LineAlreadyExists> for InsertInboundShipmentLineError {
     fn from(_: LineAlreadyExists) -> Self {
-        InsertSupplierInvoiceLineError::LineAlreadyExists
+        InsertInboundShipmentLineError::LineAlreadyExists
     }
 }
 
-impl From<WrongInvoiceType> for InsertSupplierInvoiceLineError {
+impl From<WrongInvoiceType> for InsertInboundShipmentLineError {
     fn from(_: WrongInvoiceType) -> Self {
-        InsertSupplierInvoiceLineError::NotASupplierInvoice
+        InsertInboundShipmentLineError::NotAnInboundShipment
     }
 }
 
-impl From<InvoiceIsFinalised> for InsertSupplierInvoiceLineError {
+impl From<InvoiceIsFinalised> for InsertInboundShipmentLineError {
     fn from(_: InvoiceIsFinalised) -> Self {
-        InsertSupplierInvoiceLineError::CannotEditFinalised
+        InsertInboundShipmentLineError::CannotEditFinalised
     }
 }
 
-impl From<InvoiceDoesNotExist> for InsertSupplierInvoiceLineError {
+impl From<InvoiceDoesNotExist> for InsertInboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        InsertSupplierInvoiceLineError::InvoiceDoesNotExist
+        InsertInboundShipmentLineError::InvoiceDoesNotExist
     }
 }

@@ -1,10 +1,10 @@
-pub mod customer_invoice;
+pub mod inbound_shipment;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod name;
+pub mod outbound_shipment;
 pub mod stock_line;
-pub mod supplier_invoice;
 
 use chrono::NaiveDateTime;
 

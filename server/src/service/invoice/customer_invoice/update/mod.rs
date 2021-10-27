@@ -3,7 +3,7 @@ use crate::{
         InvoiceRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
         TransactionError,
     },
-    domain::{customer_invoice::UpdateCustomerInvoice, name::Name},
+    domain::{name::Name, outbound_shipment::UpdateOutboundShipment},
 };
 
 pub mod generate;
@@ -12,10 +12,10 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
-pub fn update_customer_invoice(
+pub fn update_outbound_shipment(
     connection_manager: &StorageConnectionManager,
-    patch: UpdateCustomerInvoice,
-) -> Result<String, UpdateCustomerInvoiceError> {
+    patch: UpdateOutboundShipment,
+) -> Result<String, UpdateOutboundShipmentError> {
     let connection = connection_manager.connection()?;
     let updated_invoice_id = connection.transaction_sync(|connection| {
         let invoice = validate(&patch, &connection)?;
@@ -35,7 +35,7 @@ pub fn update_customer_invoice(
     Ok(updated_invoice_id)
 }
 
-pub enum UpdateCustomerInvoiceError {
+pub enum UpdateOutboundShipmentError {
     CannotChangeInvoiceBackToDraft,
     InvoiceDoesNotExists,
     InvoiceIsFinalised,
@@ -43,22 +43,22 @@ pub enum UpdateCustomerInvoiceError {
     OtherPartyDoesNotExists,
     OtherPartyNotACustomer(Name),
     OtherPartyCannotBeThisStore,
-    NotACustomerInvoice,
+    NotAnOutboundShipment,
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
 }
 
-impl From<RepositoryError> for UpdateCustomerInvoiceError {
+impl From<RepositoryError> for UpdateOutboundShipmentError {
     fn from(error: RepositoryError) -> Self {
-        UpdateCustomerInvoiceError::DatabaseError(error)
+        UpdateOutboundShipmentError::DatabaseError(error)
     }
 }
 
-impl From<TransactionError<UpdateCustomerInvoiceError>> for UpdateCustomerInvoiceError {
-    fn from(error: TransactionError<UpdateCustomerInvoiceError>) -> Self {
+impl From<TransactionError<UpdateOutboundShipmentError>> for UpdateOutboundShipmentError {
+    fn from(error: TransactionError<UpdateOutboundShipmentError>) -> Self {
         match error {
             TransactionError::Transaction { msg } => {
-                UpdateCustomerInvoiceError::DatabaseError(RepositoryError::DBError {
+                UpdateOutboundShipmentError::DatabaseError(RepositoryError::DBError {
                     msg,
                     extra: "".to_string(),
                 })

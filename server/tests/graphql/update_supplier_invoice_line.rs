@@ -5,7 +5,7 @@ mod graphql {
     };
     use crate::graphql::get_gql_result;
     use crate::graphql::{
-        update_supplier_invoice_line_full as update, UpdateSupplierInvoiceLineFull as Update,
+        update_inbound_shipment_line_full as update, UpdateInboundShipmentLineFull as Update,
     };
     use chrono::NaiveDate;
     use graphql_client::{GraphQLQuery, Response};
@@ -20,11 +20,11 @@ mod graphql {
         util::test_db,
     };
 
-    use update::UpdateSupplierInvoiceLineErrorInterface::*;
+    use update::UpdateInboundShipmentLineErrorInterface::*;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
-            assert_unwrap_optional_key!($response, data).update_supplier_invoice_line
+            assert_unwrap_optional_key!($response, data).update_inbound_shipment_line
         };
     }
 
@@ -33,7 +33,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             assert_unwrap_enum!(
                 response_variant,
-                update::UpdateSupplierInvoiceLineResponse::InvoiceLineNode
+                update::UpdateInboundShipmentLineResponse::InvoiceLineNode
             )
         }};
     }
@@ -53,7 +53,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             let error_wrapper = assert_unwrap_enum!(
                 response_variant,
-                update::UpdateSupplierInvoiceLineResponse::UpdateSupplierInvoiceLineError
+                update::UpdateInboundShipmentLineResponse::UpdateInboundShipmentLineError
             );
             error_wrapper.error
         }};
@@ -68,51 +68,51 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_update_supplier_invoice_line() {
+    async fn test_update_inbound_shipment_line() {
         let (mock_data, connection, settings) = test_db::setup_all(
-            "test_update_supplier_invoice_line_query",
+            "test_update_inbound_shipment_line_query",
             MockDataInserts::all(),
         )
         .await;
 
         // Setup
 
-        let draft_supplier_invoice = get_invoice_inline!(
+        let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
+                .match_inbound_shipment()
                 .match_draft()
-                .match_id("supplier_invoice_c"),
+                .match_id("inbound_shipment_c"),
             &connection
         );
-        let confirmed_supplier_invoice = get_invoice_inline!(
+        let confirmed_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
+                .match_inbound_shipment()
                 .match_confirmed()
-                .match_id("supplier_invoice_d"),
+                .match_id("inbound_shipment_d"),
             &connection
         );
-        let finalised_supplier_invoice = get_invoice_inline!(
+        let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_supplier_invoice()
+                .match_inbound_shipment()
                 .match_finalised(),
             &connection
         );
-        let customer_invoice =
-            get_invoice_inline!(InvoiceFilter::new().match_customer_invoice(), &connection);
+        let outbound_shipment =
+            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
         let item = mock_data.items.first().unwrap();
         let confirmed_invoice_lines =
-            get_invoice_lines_inline!(&confirmed_supplier_invoice.id.clone(), &connection);
-        let customer_invoice_lines =
-            get_invoice_lines_inline!(&customer_invoice.id.clone(), &connection);
+            get_invoice_lines_inline!(&confirmed_inbound_shipment.id.clone(), &connection);
+        let outbound_shipment_lines =
+            get_invoice_lines_inline!(&outbound_shipment.id.clone(), &connection);
         let finalised_invoice_lines =
-            get_invoice_lines_inline!(&finalised_supplier_invoice.id.clone(), &connection);
+            get_invoice_lines_inline!(&finalised_inbound_shipment.id.clone(), &connection);
         let draft_invoice_lines =
-            get_invoice_lines_inline!(&draft_supplier_invoice.id.clone(), &connection);
+            get_invoice_lines_inline!(&draft_inbound_shipment.id.clone(), &connection);
         let item_not_in_invoices_id = "item_c".to_string();
 
         let base_variables = update::Variables {
             id: draft_invoice_lines[0].id.clone(),
-            invoice_id: draft_supplier_invoice.id.clone(),
+            invoice_id: draft_inbound_shipment.id.clone(),
             item_id_option: Some(item.id.clone()),
             cost_price_per_pack_option: Some(5.5),
             sell_price_per_pack_option: Some(7.7),
@@ -171,7 +171,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = finalised_invoice_lines[0].id.clone();
-        variables.invoice_id = finalised_supplier_invoice.id.clone();
+        variables.invoice_id = finalised_inbound_shipment.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -182,18 +182,18 @@ mod graphql {
             },)
         );
 
-        // Test NotASupplierInvoice
+        // Test NotAnInboundShipment
 
         let mut variables = base_variables.clone();
-        variables.id = customer_invoice_lines[0].id.clone();
-        variables.invoice_id = customer_invoice.id.clone();
+        variables.id = outbound_shipment_lines[0].id.clone();
+        variables.invoice_id = outbound_shipment.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            NotASupplierInvoice(update::NotASupplierInvoice {
-                description: "Invoice is not Supplier Invoice".to_string(),
+            NotAnInboundShipment(update::NotAnInboundShipment {
+                description: "Invoice is not Inbound Shipment".to_string(),
             })
         );
 
@@ -234,7 +234,7 @@ mod graphql {
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -243,13 +243,13 @@ mod graphql {
         let invoice_variant =
             assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice).invoice;
         let invoice = assert_unwrap_enum!(invoice_variant, update::InvoiceResponse::InvoiceNode);
-        assert_eq!(invoice.id, draft_supplier_invoice.id);
+        assert_eq!(invoice.id, draft_inbound_shipment.id);
 
         // Test BatchIsReserved
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[1].id.clone();
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
         let mut stock_line = StockLineRepository::new(&connection)
             .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
@@ -290,7 +290,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[0].id.clone();
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -319,7 +319,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[0].id.clone();
-        variables.invoice_id = confirmed_supplier_invoice.id.clone();
+        variables.invoice_id = confirmed_inbound_shipment.id.clone();
         variables.item_id_option = Some(item_not_in_invoices_id.clone());
 
         let deleted_stock_line_id = confirmed_invoice_lines[0].stock_line_id.as_ref().unwrap();
@@ -360,7 +360,7 @@ mod graphql {
 
         let variables = update::Variables {
             id: confirmed_invoice_lines[0].id.clone(),
-            invoice_id: confirmed_supplier_invoice.id.clone(),
+            invoice_id: confirmed_inbound_shipment.id.clone(),
             item_id_option: None,
             cost_price_per_pack_option: None,
             sell_price_per_pack_option: None,

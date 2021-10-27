@@ -60,13 +60,13 @@ impl<'a> InvoiceRepository<'a> {
     }
 }
 
-pub struct CustomerInvoiceRepository<'a> {
+pub struct OutboundShipmentRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> CustomerInvoiceRepository<'a> {
+impl<'a> OutboundShipmentRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        CustomerInvoiceRepository { connection }
+        OutboundShipmentRepository { connection }
     }
 
     pub async fn find_many_by_name_id(
@@ -77,7 +77,7 @@ impl<'a> CustomerInvoiceRepository<'a> {
         let result = invoice
             .filter(
                 type_
-                    .eq(InvoiceRowType::CustomerInvoice)
+                    .eq(InvoiceRowType::OutboundShipment)
                     .and(name_id.eq(name)),
             )
             .get_results(&self.connection.connection)?;
@@ -89,7 +89,7 @@ impl<'a> CustomerInvoiceRepository<'a> {
         let result = invoice
             .filter(
                 type_
-                    .eq(InvoiceRowType::CustomerInvoice)
+                    .eq(InvoiceRowType::OutboundShipment)
                     .and(store_id.eq(store)),
             )
             .get_results(&self.connection.connection)?;

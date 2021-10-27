@@ -4,17 +4,17 @@ use crate::{
         schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     },
     domain::{
-        customer_invoice::UpdateCustomerInvoice, invoice::InvoiceStatus, name::NameFilter,
+        invoice::InvoiceStatus, name::NameFilter, outbound_shipment::UpdateOutboundShipment,
         Pagination,
     },
 };
 
-use super::UpdateCustomerInvoiceError;
+use super::UpdateOutboundShipmentError;
 
 pub fn validate(
-    patch: &UpdateCustomerInvoice,
+    patch: &UpdateOutboundShipment,
     connection: &StorageConnection,
-) -> Result<InvoiceRow, UpdateCustomerInvoiceError> {
+) -> Result<InvoiceRow, UpdateOutboundShipmentError> {
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
@@ -29,38 +29,38 @@ pub fn validate(
 fn check_invoice_exists(
     id: &str,
     connection: &StorageConnection,
-) -> Result<InvoiceRow, UpdateCustomerInvoiceError> {
+) -> Result<InvoiceRow, UpdateOutboundShipmentError> {
     let result = InvoiceRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
-        return Err(UpdateCustomerInvoiceError::InvoiceDoesNotExists);
+        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);
     }
     Ok(result?)
 }
 
 fn check_invoice_status(
-    patch: &UpdateCustomerInvoice,
+    patch: &UpdateOutboundShipment,
     invoice: &InvoiceRow,
-) -> Result<(), UpdateCustomerInvoiceError> {
+) -> Result<(), UpdateOutboundShipmentError> {
     match (&invoice.status, &patch.status) {
         (InvoiceRowStatus::Confirmed, Some(InvoiceStatus::Draft)) => {
-            Err(UpdateCustomerInvoiceError::CannotChangeInvoiceBackToDraft)
+            Err(UpdateOutboundShipmentError::CannotChangeInvoiceBackToDraft)
         }
         _ => Ok(()),
     }
 }
 
-fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateCustomerInvoiceError> {
-    if invoice.r#type != InvoiceRowType::CustomerInvoice {
-        Err(UpdateCustomerInvoiceError::NotACustomerInvoice)
+fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
+    if invoice.r#type != InvoiceRowType::OutboundShipment {
+        Err(UpdateOutboundShipmentError::NotAnOutboundShipment)
     } else {
         Ok(())
     }
 }
 
-fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), UpdateCustomerInvoiceError> {
+fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
     if invoice.status == InvoiceRowStatus::Finalised {
-        Err(UpdateCustomerInvoiceError::InvoiceIsFinalised)
+        Err(UpdateOutboundShipmentError::InvoiceIsFinalised)
     } else {
         Ok(())
     }
@@ -69,8 +69,8 @@ fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), UpdateCustomerInv
 pub fn check_other_party(
     id_option: &Option<String>,
     connection: &StorageConnection,
-) -> Result<(), UpdateCustomerInvoiceError> {
-    use UpdateCustomerInvoiceError::*;
+) -> Result<(), UpdateOutboundShipmentError> {
+    use UpdateOutboundShipmentError::*;
 
     if let Some(id) = id_option {
         let repository = NameQueryRepository::new(&connection);

@@ -2,24 +2,24 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
-    domain::{invoice_line::InvoiceLine, supplier_invoice::UpdateSupplierInvoiceLine},
+    domain::{inbound_shipment::UpdateInboundShipmentLine, invoice_line::InvoiceLine},
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotASupplierInvoice,
+            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
         },
         types::{
             DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField,
             RecordNotFound,
         },
     },
-    service::{invoice_line::UpdateSupplierInvoiceLineError, SingleRecordError},
+    service::{invoice_line::UpdateInboundShipmentLineError, SingleRecordError},
 };
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 
 #[derive(InputObject)]
-pub struct UpdateSupplierInvoiceLineInput {
+pub struct UpdateInboundShipmentLineInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: Option<String>,
@@ -32,29 +32,29 @@ pub struct UpdateSupplierInvoiceLineInput {
 }
 
 #[derive(Union)]
-pub enum UpdateSupplierInvoiceLineResponse {
-    Error(ErrorWrapper<UpdateSupplierInvoiceLineErrorInterface>),
+pub enum UpdateInboundShipmentLineResponse {
+    Error(ErrorWrapper<UpdateInboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateSupplierInvoiceLineErrorInterface {
+pub enum UpdateInboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
     CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
-    NotASupplierInvoice(NotASupplierInvoice),
+    NotAnInboundShipment(NotAnInboundShipment),
     BatchIsReserved(BatchIsReserved),
     RangeError(RangeError),
 }
 
-impl From<UpdateSupplierInvoiceLineInput> for UpdateSupplierInvoiceLine {
+impl From<UpdateInboundShipmentLineInput> for UpdateInboundShipmentLine {
     fn from(
-        UpdateSupplierInvoiceLineInput {
+        UpdateInboundShipmentLineInput {
             id,
             invoice_id,
             item_id,
@@ -64,9 +64,9 @@ impl From<UpdateSupplierInvoiceLineInput> for UpdateSupplierInvoiceLine {
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
-        }: UpdateSupplierInvoiceLineInput,
+        }: UpdateInboundShipmentLineInput,
     ) -> Self {
-        UpdateSupplierInvoiceLine {
+        UpdateInboundShipmentLine {
             id,
             invoice_id,
             item_id,
@@ -80,7 +80,7 @@ impl From<UpdateSupplierInvoiceLineInput> for UpdateSupplierInvoiceLine {
     }
 }
 
-impl From<Result<InvoiceLine, SingleRecordError>> for UpdateSupplierInvoiceLineResponse {
+impl From<Result<InvoiceLine, SingleRecordError>> for UpdateInboundShipmentLineResponse {
     fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
         let invoice_line_response: InvoiceLineResponse = result.into();
         // Implemented by flatten union
@@ -88,51 +88,51 @@ impl From<Result<InvoiceLine, SingleRecordError>> for UpdateSupplierInvoiceLineR
     }
 }
 
-impl From<UpdateSupplierInvoiceLineError> for UpdateSupplierInvoiceLineResponse {
-    fn from(error: UpdateSupplierInvoiceLineError) -> Self {
-        use UpdateSupplierInvoiceLineErrorInterface as OutError;
+impl From<UpdateInboundShipmentLineError> for UpdateInboundShipmentLineResponse {
+    fn from(error: UpdateInboundShipmentLineError) -> Self {
+        use UpdateInboundShipmentLineErrorInterface as OutError;
         let error = match error {
-            UpdateSupplierInvoiceLineError::LineDoesNotExist => {
+            UpdateInboundShipmentLineError::LineDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
             }
-            UpdateSupplierInvoiceLineError::DatabaseError(error) => {
+            UpdateInboundShipmentLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            UpdateSupplierInvoiceLineError::InvoiceDoesNotExist => {
+            UpdateInboundShipmentLineError::InvoiceDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
             }
-            UpdateSupplierInvoiceLineError::NotASupplierInvoice => {
-                OutError::NotASupplierInvoice(NotASupplierInvoice {})
+            UpdateInboundShipmentLineError::NotAnInboundShipment => {
+                OutError::NotAnInboundShipment(NotAnInboundShipment {})
             }
-            UpdateSupplierInvoiceLineError::NotThisStoreInvoice => {
+            UpdateInboundShipmentLineError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            UpdateSupplierInvoiceLineError::CannotEditFinalised => {
+            UpdateInboundShipmentLineError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
             }
-            UpdateSupplierInvoiceLineError::ItemNotFound => {
+            UpdateInboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
             }
-            UpdateSupplierInvoiceLineError::NumberOfPacksBelowOne => {
+            UpdateInboundShipmentLineError::NumberOfPacksBelowOne => {
                 OutError::RangeError(RangeError {
                     field: RangeField::NumberOfPacks,
                     range: Range::Min(1),
                 })
             }
-            UpdateSupplierInvoiceLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
+            UpdateInboundShipmentLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
                 field: RangeField::PackSize,
                 range: Range::Min(1),
             }),
-            UpdateSupplierInvoiceLineError::BatchIsReserved => {
+            UpdateInboundShipmentLineError::BatchIsReserved => {
                 OutError::BatchIsReserved(BatchIsReserved {})
             }
-            UpdateSupplierInvoiceLineError::NotThisInvoiceLine(invoice_id) => {
+            UpdateInboundShipmentLineError::NotThisInvoiceLine(invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
                     invoice_id,
                 ))
             }
         };
 
-        UpdateSupplierInvoiceLineResponse::Error(ErrorWrapper { error })
+        UpdateInboundShipmentLineResponse::Error(ErrorWrapper { error })
     }
 }

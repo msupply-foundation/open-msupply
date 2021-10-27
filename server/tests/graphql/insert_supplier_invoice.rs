@@ -17,14 +17,14 @@ mod graphql {
     use uuid::Uuid;
 
     use crate::graphql::{
-        insert_supplier_invoice_full as insert, InsertSupplierInvoiceFull as Insert,
+        insert_inbound_shipment_full as insert, InsertInboundShipmentFull as Insert,
     };
 
-    use insert::InsertSupplierInvoiceErrorInterface::*;
+    use insert::InsertInboundShipmentErrorInterface::*;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
-            assert_unwrap_optional_key!($response, data).insert_supplier_invoice
+            assert_unwrap_optional_key!($response, data).insert_inbound_shipment
         };
     }
 
@@ -33,7 +33,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             assert_unwrap_enum!(
                 response_variant,
-                insert::InsertSupplierInvoiceResponse::InvoiceNode
+                insert::InsertInboundShipmentResponse::InvoiceNode
             )
         }};
     }
@@ -43,7 +43,7 @@ mod graphql {
             let response_variant = assert_unwrap_response_variant!($response);
             let error_wrapper = assert_unwrap_enum!(
                 response_variant,
-                insert::InsertSupplierInvoiceResponse::InsertSupplierInvoiceError
+                insert::InsertInboundShipmentResponse::InsertInboundShipmentError
             );
             error_wrapper.error
         }};
@@ -58,9 +58,9 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_insert_supplier_invoice() {
+    async fn test_insert_inbound_shipment() {
         let (_, connection, settings) =
-            test_db::setup_all("test_insert_supplier_invoice_query", MockDataInserts::all()).await;
+            test_db::setup_all("test_insert_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
         let start = Utc::now().naive_utc();
@@ -124,7 +124,7 @@ mod graphql {
             .find_one_by_id(&variables.id)
             .unwrap();
 
-        assert_eq!(new_invoice.r#type, InvoiceRowType::SupplierInvoice);
+        assert_eq!(new_invoice.r#type, InvoiceRowType::InboundShipment);
 
         assert_eq!(new_invoice, variables);
         assert!(new_invoice.entry_datetime > start);
@@ -164,7 +164,7 @@ mod graphql {
             .find_one_by_id(&variables.id)
             .unwrap();
 
-        assert_eq!(new_invoice.r#type, InvoiceRowType::SupplierInvoice);
+        assert_eq!(new_invoice.r#type, InvoiceRowType::InboundShipment);
 
         assert_eq!(new_invoice, variables);
         assert!(new_invoice.entry_datetime > start);
@@ -192,7 +192,7 @@ mod graphql {
             .find_one_by_id(&variables.id)
             .unwrap();
 
-        assert_eq!(new_invoice.r#type, InvoiceRowType::SupplierInvoice);
+        assert_eq!(new_invoice.r#type, InvoiceRowType::InboundShipment);
         assert_eq!(new_invoice, variables);
 
         assert!(new_invoice.entry_datetime > start);

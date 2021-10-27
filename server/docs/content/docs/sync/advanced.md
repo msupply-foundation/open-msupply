@@ -18,17 +18,17 @@ One of the reposibilities of the sync system is to effect "transfers" between st
 
 Some examples of transfers:
 
-* Customer invoices, where the customer is an mSupply store.
+* Outbound Shipments, where the customer is an mSupply store.
 * Supplier credits, where the supplier is  an mSupply store.
 * Supplier requisitions or purchase orders, where the supplier is an mSupply store.
 
 For a transfer to be effected, the status of the initiating invoice or requisition must be `finalised` (or `confirmed`, in the case of purchase orders):
 
-* When `Store A` finalises a customer invoice for `Store B`, a new supplier invoice is created for `Store B`.
+* When `Store A` finalises a outbound shipment for `Store B`, a new inbound shipment is created for `Store B`.
 * When `Store A` finalises a supplier credit for `Store B`, a new customer credit is created for `Store B`.
 * When `Store A` finalises a supplier requisition for `Store B`, a new customer requisition is created for `Store B`.
 * When `Store A` confirms a purchase order for `Store B`, a new customer requisition is created for `Store B`.
-* When `Store B` finalises a customer invoice generated from the customer requisition, a new goods received record is created for `Store A`.
+* When `Store B` finalises a outbound shipment generated from the customer requisition, a new goods received record is created for `Store A`.
 
 ### Local transfers
 

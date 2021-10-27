@@ -54,20 +54,20 @@ Database field `Invoice.status`
 
 | Value     | Description                                                                                        |
 |-----------|----------------------------------------------------------------------------------------------------|
-| DRAFT     | Editable with stock *reserved** (`CUSTOMER_INVOICE`)                                               |
-| CONFIRMED | Editable with stock *reserved** (`CUSTOMER_INVOICE`) and *adjusted** (`CUSTOMER/SUPPLIER_INVOICE`) |
+| DRAFT     | Editable with stock *reserved** (`OUTBOUND_SHIPMENT`)                                               |
+| CONFIRMED | Editable with stock *reserved** (`OUTBOUND_SHIPMENT`) and *adjusted** (`CUSTOMER/INBOUND_SHIPMENT`) |
 | FINALISED | Non editable with stock                                                                            |
 
 <details>
 <summary>IMPLEMENTATION DETAILS*</summary>
 
-For `CUSTOMER_INVOICE`
+For `OUTBOUND_SHIPMENT`
 
 *reserved**: Invoice's invoice_lines -> (stock_line.`available_number_of_packs`) is adjusted with invoice_line.`number_of_packs`
 
 *adjusted**: Invoice's Invoice_lines -> (stock_line.`total_number_of_packs`) is adjusted with invoice_line.`number_of_packs`)
 
-For `SUPPLIER_INVOICE`
+For `INBOUND_SHIPMENT`
 
 When invoice is `CONFIRMED`, stock_line is created and *adjusted**. Any further changes to invoice_line would translated to changes in stock_line
 
@@ -81,8 +81,8 @@ When invoice is `CONFIRMED`, stock_line is created and *adjusted**. Any further 
 ### Enum - InvoiceType
 ```graphql
 type InvoiceStatus {
-    CUSTOMER_INVOICE
-    SUPPLIER_INVOICE
+    OUTBOUND_SHIPMENT
+    INBOUND_SHIPMENT
 }
 ```
 
@@ -92,5 +92,5 @@ From perspective of `Invoice.store_id` store
 
 | Value            | Description    |
 | ---------------- | -------------- |
-| CUSTOMER_INVOICE | Outgoing stock |
-| SUPPLIER_INVOICE | Incoming stock |
+| OUTBOUND_SHIPMENT | Outgoing stock |
+| INBOUND_SHIPMENT | Incoming stock |

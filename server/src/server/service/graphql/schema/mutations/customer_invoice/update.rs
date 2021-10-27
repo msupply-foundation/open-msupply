@@ -1,17 +1,17 @@
 use crate::{
     domain::{
-        customer_invoice::UpdateCustomerInvoice,
         invoice::{Invoice, InvoiceStatus},
+        outbound_shipment::UpdateOutboundShipment,
     },
     server::service::graphql::schema::{
         mutations::{
-            customer_invoice::{InvoiceLineHasNoStockLineError, NotACustomerInvoiceError},
             error::DatabaseError,
+            outbound_shipment::{InvoiceLineHasNoStockLineError, NotAnOutboundShipmentError},
             ForeignKey, ForeignKeyError,
         },
         types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode, RecordNotFound},
     },
-    service::{invoice::UpdateCustomerInvoiceError, SingleRecordError},
+    service::{invoice::UpdateOutboundShipmentError, SingleRecordError},
 };
 
 use super::{
@@ -23,7 +23,7 @@ use super::{
 use async_graphql::{InputObject, Interface, Union};
 
 #[derive(InputObject)]
-pub struct UpdateCustomerInvoiceInput {
+pub struct UpdateOutboundShipmentInput {
     /// The new invoice id provided by the client
     id: String,
     /// The other party must be a customer of the current store.
@@ -37,9 +37,9 @@ pub struct UpdateCustomerInvoiceInput {
     their_reference: Option<String>,
 }
 
-impl From<UpdateCustomerInvoiceInput> for UpdateCustomerInvoice {
-    fn from(input: UpdateCustomerInvoiceInput) -> Self {
-        UpdateCustomerInvoice {
+impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
+    fn from(input: UpdateOutboundShipmentInput) -> Self {
+        UpdateOutboundShipment {
             id: input.id,
             other_party_id: input.other_party_id,
             status: input.status.map(InvoiceStatus::from),
@@ -50,13 +50,13 @@ impl From<UpdateCustomerInvoiceInput> for UpdateCustomerInvoice {
 }
 
 #[derive(Union)]
-pub enum UpdateCustomerInvoiceResponse {
-    Error(ErrorWrapper<UpdateCustomerInvoiceErrorInterface>),
+pub enum UpdateOutboundShipmentResponse {
+    Error(ErrorWrapper<UpdateOutboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
 }
 
-impl From<Result<Invoice, SingleRecordError>> for UpdateCustomerInvoiceResponse {
+impl From<Result<Invoice, SingleRecordError>> for UpdateOutboundShipmentResponse {
     fn from(result: Result<Invoice, SingleRecordError>) -> Self {
         let invoice_response: InvoiceResponse = result.into();
         // Implemented by flatten union
@@ -66,7 +66,7 @@ impl From<Result<Invoice, SingleRecordError>> for UpdateCustomerInvoiceResponse 
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-pub enum UpdateCustomerInvoiceErrorInterface {
+pub enum UpdateOutboundShipmentErrorInterface {
     CannotChangeInvoiceBackToDraft(CannotChangeStatusBackToDraftError),
     CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
     InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError),
@@ -75,44 +75,44 @@ pub enum UpdateCustomerInvoiceErrorInterface {
     /// Other party does not exist
     ForeignKeyError(ForeignKeyError),
     OtherPartyNotACustomer(OtherPartyNotACustomerError),
-    NotACustomerInvoice(NotACustomerInvoiceError),
+    NotAnOutboundShipment(NotAnOutboundShipmentError),
     DatabaseError(DatabaseError),
     InvalidInvoiceLine(InvoiceLineHasNoStockLineError),
 }
 
-impl From<UpdateCustomerInvoiceError> for UpdateCustomerInvoiceResponse {
-    fn from(error: UpdateCustomerInvoiceError) -> Self {
-        use UpdateCustomerInvoiceErrorInterface as OutError;
+impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
+    fn from(error: UpdateOutboundShipmentError) -> Self {
+        use UpdateOutboundShipmentErrorInterface as OutError;
         let error = match error {
-            UpdateCustomerInvoiceError::CannotChangeInvoiceBackToDraft => {
+            UpdateOutboundShipmentError::CannotChangeInvoiceBackToDraft => {
                 OutError::CannotChangeInvoiceBackToDraft(CannotChangeStatusBackToDraftError {})
             }
-            UpdateCustomerInvoiceError::DatabaseError(error) => {
+            UpdateOutboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
             }
-            UpdateCustomerInvoiceError::InvoiceDoesNotExists => {
+            UpdateOutboundShipmentError::InvoiceDoesNotExists => {
                 OutError::InvoiceDoesNotExists(RecordNotFound {})
             }
-            UpdateCustomerInvoiceError::InvoiceIsFinalised => {
+            UpdateOutboundShipmentError::InvoiceIsFinalised => {
                 OutError::InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError {})
             }
-            UpdateCustomerInvoiceError::OtherPartyDoesNotExists => {
+            UpdateOutboundShipmentError::OtherPartyDoesNotExists => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
             }
-            UpdateCustomerInvoiceError::OtherPartyNotACustomer(name) => {
+            UpdateOutboundShipmentError::OtherPartyNotACustomer(name) => {
                 OutError::OtherPartyNotACustomer(OtherPartyNotACustomerError(NameNode { name }))
             }
-            UpdateCustomerInvoiceError::OtherPartyCannotBeThisStore => {
+            UpdateOutboundShipmentError::OtherPartyCannotBeThisStore => {
                 OutError::OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError {})
             }
-            UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(id) => {
+            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(id) => {
                 OutError::InvalidInvoiceLine(InvoiceLineHasNoStockLineError(id))
             }
-            UpdateCustomerInvoiceError::NotACustomerInvoice => {
-                OutError::NotACustomerInvoice(NotACustomerInvoiceError {})
+            UpdateOutboundShipmentError::NotAnOutboundShipment => {
+                OutError::NotAnOutboundShipment(NotAnOutboundShipmentError {})
             }
         };
 
-        UpdateCustomerInvoiceResponse::Error(ErrorWrapper { error })
+        UpdateOutboundShipmentResponse::Error(ErrorWrapper { error })
     }
 }

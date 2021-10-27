@@ -172,7 +172,7 @@ mod repository_test {
                 name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
-                r#type: InvoiceRowType::SupplierInvoice,
+                r#type: InvoiceRowType::InboundShipment,
                 status: InvoiceRowStatus::Draft,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
@@ -189,7 +189,7 @@ mod repository_test {
                 name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
-                r#type: InvoiceRowType::CustomerInvoice,
+                r#type: InvoiceRowType::OutboundShipment,
                 status: InvoiceRowStatus::Draft,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
@@ -293,7 +293,7 @@ mod repository_test {
         database::{
             repository::{
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
-                CustomerInvoiceRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
+                OutboundShipmentRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
                 InvoiceRepository, ItemRepository, MasterListLineRepository,
                 MasterListNameJoinRepository, NameQueryRepository, NameRepository,
                 RequisitionLineRepository, RequisitionRepository, StockLineRepository,
@@ -660,23 +660,23 @@ mod repository_test {
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
         let repo = InvoiceRepository::new(&connection);
-        let customer_invoice_repo = CustomerInvoiceRepository::new(&connection);
+        let outbound_shipment_repo = OutboundShipmentRepository::new(&connection);
 
         let item1 = data::invoice_1();
         repo.upsert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
-        // customer invoice
+        // outbound shipment
         let item1 = data::invoice_2();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = customer_invoice_repo
+        let loaded_item = outbound_shipment_repo
             .find_many_by_name_id(&item1.name_id)
             .await
             .unwrap();
         assert_eq!(1, loaded_item.len());
 
-        let loaded_item = customer_invoice_repo
+        let loaded_item = outbound_shipment_repo
             .find_many_by_store_id(&item1.store_id)
             .unwrap();
         assert_eq!(1, loaded_item.len());

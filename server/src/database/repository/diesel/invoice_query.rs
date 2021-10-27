@@ -39,8 +39,8 @@ impl From<InvoiceRowType> for InvoiceType {
     fn from(r#type: InvoiceRowType) -> Self {
         use InvoiceType::*;
         match r#type {
-            InvoiceRowType::CustomerInvoice => CustomerInvoice,
-            InvoiceRowType::SupplierInvoice => SupplierInvoice,
+            InvoiceRowType::OutboundShipment => OutboundShipment,
+            InvoiceRowType::InboundShipment => InboundShipment,
         }
     }
 }
@@ -60,8 +60,8 @@ impl From<InvoiceType> for InvoiceRowType {
     fn from(r#type: InvoiceType) -> Self {
         use InvoiceRowType::*;
         match r#type {
-            InvoiceType::CustomerInvoice => CustomerInvoice,
-            InvoiceType::SupplierInvoice => SupplierInvoice,
+            InvoiceType::OutboundShipment => OutboundShipment,
+            InvoiceType::InboundShipment => InboundShipment,
         }
     }
 }

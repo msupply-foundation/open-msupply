@@ -30,7 +30,7 @@ enum CustomErrorCodes {
   FirstNotInRange = "FIRST_NOT_IN_RANGE",
   // Singular query
   RecordNotFound = "RECORD_NOT_FOUND",
-  // Customer and Supplier Invoice Mutation
+  // Customer and Inbound Shipment Mutation
   OtherPartyIdNotFound = "OTHER_PARTY_ID_NOT_FOUND",
   OtherPartyCannotBeThisStore = "OTHER_PARTY_CANNOT_BE_THIS_STORE",
   OtherPartyIdMissing = "OTHER_PARTY_ID_MISSING",
@@ -40,9 +40,9 @@ enum CustomErrorCodes {
   CanOnlyEditInvoicesInLoggedInStore = "CAN_ONLY_EDIT_INVOICE_IN_LOGGED_IN_STORE",
   InvoiceNotFound = "INVOICE_NOT_FOUND",
   InvoiceLineError = "INVOICE_LINE_ERROR",
-  // Customer Invoice Mutation
+  // Outbound Shipment Mutation
   OtherPartyNotACustomerOfThisStore = "OTHER_PARTY_NOT_A_CUSTOMER_OF_THIS_STORE",
-  // Supplier Invoice Mutation
+  // Inbound Shipment Mutation
   OtherPartyNotASupplierOfThisStore = "OTHER_PARTY_NOT_A_SUPPLIER_OF_THIS_STORE",
 }
 ```
@@ -95,7 +95,7 @@ type SingleQueryArguments = "id"
 
 ```
 
-## [Customer And Supplier Invoice Mutation](/docs/api/mutations/#mutations)
+## [Customer And Inbound Shipment Mutation](/docs/api/mutations/#mutations)
 
 #### Insert And Update {#customer-and-supplier-invoice-insert-and-update}
 
@@ -150,7 +150,7 @@ interface InvoiceNotFound extends CustomError {
 }
 ```
 
-## [Customer Invoice Mutation](/docs/api/mutations/#customer-invoice)
+## [Outbound Shipment Mutation](/docs/api/mutations/#customer-invoice)
 
 #### Insert and Update
 
@@ -161,7 +161,7 @@ interface OtherPartyNotACustomerOfThisStore extends CustomError {
 }
 ```
 
-## [Supplier Invoice Mutation](/docs/api/mutations/#SUPPLIER-invoice)
+## [Inbound Shipment Mutation](/docs/api/mutations/#SUPPLIER-invoice)
 
 Also see [CannotDeleteReservedBatch](/docs/api/custom-errors/#supplier-invoice-line-delete)
 
@@ -174,7 +174,7 @@ interface OtherPartyNotASupplierOfThisStore extends CustomError {
 }
 ```
 
-## [Customer And Supplier Invoice Line Mutation](/docs/api/mutations/#mutation)
+## [Customer And Inbound Shipment Line Mutation](/docs/api/mutations/#mutation)
 
 There errors are categories under `CustomErrorCodes.InvoiceLineError`
 
@@ -191,18 +191,18 @@ interface InvoiceLineError {
 }
 
 enum InvoiceLineErrorCodes {
-  // Customer Invoice and Supplier Invoice Line Mutation
+  // Outbound Shipment and Inbound Shipment Line Mutation
   NumberOfPacksMissingInInvoiceLine = "NUMBER_OF_PACKS_MISSING_IN_INVOICE_LINE",
   ItemIdMissingInInvoiceLine = "ITEM_ID_MISSING_IN_INVOICE_LINE",
   InvoiceLineNotFound = "INVOICE_LINE_NOT_FOUND",
-    // Customer Invoice Line Mutation
+    // Outbound Shipment Line Mutation
   ItemIdDoesNotMatchStockLineId = "ITEM_ID_DOES_NOT_MATCH_STOCK_LINE_ID",
   StockLineIdMissingInInvoiceLine =  "STOCK_LINE_ID_MISSING_IN_INVOICE_LINE",
   BatchReductionBelowZero = "BATCH_REDUCTION_BELOW_ZERO",
-    // Supplier Invoice Line Mutation
+    // Inbound Shipment Line Mutation
   CannotDeleteReservedBatch = "CANNOT_DELETE_RESERVED_BATCH",
-  ReservedSupplierInvoiceLineIsNotEditable = "RESERVED_SUPPLIER_INVOICE_LINE_IS_NOT_EDITABLE",
-  ReservedSupplierInvoiceLineIsNotDeletable = "RESERVED_SUPPLIER_INVOICE_LINE_IS_NOT_DELETABLE"
+  ReservedInboundShipmentLineIsNotEditable = "RESERVED_INBOUND_SHIPMENT_LINE_IS_NOT_EDITABLE",
+  ReservedInboundShipmentLineIsNotDeletable = "RESERVED_INBOUND_SHIPMENT_LINE_IS_NOT_DELETABLE"
 }
 ```
 
@@ -232,7 +232,7 @@ interface InvoiceLineNotFound extends InvoiceLineError {
   id: string
 }
 
-## [Customer Invoice Line Mutation](/docs/api/mutations/#customer-invoice-line)
+## [Outbound Shipment Line Mutation](/docs/api/mutations/#customer-invoice-line)
 
 #### Insert and Update
 
@@ -276,7 +276,7 @@ interface BatchReductionBelowZero  extends InvoiceLineError {
 }
 ```
 
-## [Supplier Invoice Line Mutation](/docs/api/mutations/#supplier-invoice-line)
+## [Inbound Shipment Line Mutation](/docs/api/mutations/#supplier-invoice-line)
 
 #### Delete {#supplier-invoice-line-delete}
 
@@ -292,8 +292,8 @@ interface CannotDeleteReservedBatch  extends InvoiceLineError {
 #### Update
 
 ```TypeScript
-interface ReservedSupplierInvoiceLineIsNotEditable  extends InvoiceLineError {
-  code: InvoiceLineErrorCodes.ReservedSupplierInvoiceLineIsNotEditable,
+interface ReservedInboundShipmentLineIsNotEditable  extends InvoiceLineError {
+  code: InvoiceLineErrorCodes.ReservedInboundShipmentLineIsNotEditable,
   clientId?: string 
   id: string,
   stockLineId: string,
@@ -303,4 +303,4 @@ interface ReservedSupplierInvoiceLineIsNotEditable  extends InvoiceLineError {
 
 When batch is already used, no changes are allowed to the invoice line 
 
-{TODO remember for delete: CannotDeleteSupplierInvoiceWithReservedBatch}
+{TODO remember for delete: CannotDeleteInboundShipmentWithReservedBatch}

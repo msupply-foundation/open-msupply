@@ -26,7 +26,7 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
-use super::mutations::{customer_invoice::*, supplier_invoice::*};
+use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 
 /// Generic Connector
 #[derive(SimpleObject)]
@@ -93,52 +93,52 @@ impl From<PaginationInput> for PaginationOption {
 #[graphql(concrete(name = "ConnectorError", params(ConnectorErrorInterface)))]
 #[graphql(concrete(name = "NodeError", params(NodeErrorInterface)))]
 #[graphql(concrete(
-    name = "InsertCustomerInvoiceError",
-    params(InsertCustomerInvoiceErrorInterface)
+    name = "InsertOutboundShipmentError",
+    params(InsertOutboundShipmentErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "UpdateCustomerInvoiceError",
-    params(UpdateCustomerInvoiceErrorInterface)
+    name = "UpdateOutboundShipmentError",
+    params(UpdateOutboundShipmentErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "DeleteCustomerInvoiceError",
-    params(DeleteCustomerInvoiceErrorInterface)
+    name = "DeleteOutboundShipmentError",
+    params(DeleteOutboundShipmentErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "InsertSupplierInvoiceError",
-    params(InsertSupplierInvoiceErrorInterface)
+    name = "InsertInboundShipmentError",
+    params(InsertInboundShipmentErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "UpdateSupplierInvoiceError",
-    params(UpdateSupplierInvoiceErrorInterface)
+    name = "UpdateInboundShipmentError",
+    params(UpdateInboundShipmentErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "DeleteSupplierInvoiceError",
-    params(DeleteSupplierInvoiceErrorInterface)
+    name = "DeleteInboundShipmentError",
+    params(DeleteInboundShipmentErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "InsertSupplierInvoiceLineError",
-    params(InsertSupplierInvoiceLineErrorInterface)
+    name = "InsertInboundShipmentLineError",
+    params(InsertInboundShipmentLineErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "UpdateSupplierInvoiceLineError",
-    params(UpdateSupplierInvoiceLineErrorInterface)
+    name = "UpdateInboundShipmentLineError",
+    params(UpdateInboundShipmentLineErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "DeleteSupplierInvoiceLineError",
-    params(DeleteSupplierInvoiceLineErrorInterface)
+    name = "DeleteInboundShipmentLineError",
+    params(DeleteInboundShipmentLineErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "InsertCustomerInvoiceLineError",
-    params(InsertCustomerInvoiceLineErrorInterface)
+    name = "InsertOutboundShipmentLineError",
+    params(InsertOutboundShipmentLineErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "UpdateCustomerInvoiceLineError",
-    params(UpdateCustomerInvoiceLineErrorInterface)
+    name = "UpdateOutboundShipmentLineError",
+    params(UpdateOutboundShipmentLineErrorInterface)
 ))]
 #[graphql(concrete(
-    name = "DeleteCustomerInvoiceLineError",
-    params(DeleteCustomerInvoiceLineErrorInterface)
+    name = "DeleteOutboundShipmentLineError",
+    params(DeleteOutboundShipmentLineErrorInterface)
 ))]
 
 pub struct ErrorWrapper<T: OutputType> {

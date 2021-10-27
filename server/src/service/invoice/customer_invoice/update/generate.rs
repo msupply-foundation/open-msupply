@@ -5,16 +5,16 @@ use crate::{
         repository::{InvoiceLineRepository, StockLineRepository, StorageConnection},
         schema::{InvoiceRow, InvoiceRowStatus, StockLineRow},
     },
-    domain::{customer_invoice::UpdateCustomerInvoice, invoice::InvoiceStatus},
+    domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment},
 };
 
-use super::UpdateCustomerInvoiceError;
+use super::UpdateOutboundShipmentError;
 
 pub fn generate(
     existing_invoice: InvoiceRow,
-    patch: UpdateCustomerInvoice,
+    patch: UpdateOutboundShipment,
     connection: &StorageConnection,
-) -> Result<(Option<Vec<StockLineRow>>, InvoiceRow), UpdateCustomerInvoiceError> {
+) -> Result<(Option<Vec<StockLineRow>>, InvoiceRow), UpdateOutboundShipmentError> {
     let should_create_batches = should_update_batches(&existing_invoice, &patch);
     let mut update_invoice = existing_invoice;
 
@@ -38,7 +38,7 @@ pub fn generate(
     }
 }
 
-pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateCustomerInvoice) -> bool {
+pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateOutboundShipment) -> bool {
     match (&invoice.status, &patch.status) {
         (InvoiceRowStatus::Draft, Some(InvoiceStatus::Confirmed)) => true,
         (InvoiceRowStatus::Draft, Some(InvoiceStatus::Finalised)) => true,
@@ -46,7 +46,7 @@ pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateCustomerInvoice
     }
 }
 
-fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateCustomerInvoice) {
+fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateOutboundShipment) {
     let current_datetime = Utc::now().naive_utc();
 
     if let Some(InvoiceStatus::Finalised) = &patch.status {
@@ -70,7 +70,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateCustomerInvoi
 pub fn generate_batches(
     id: &str,
     connection: &StorageConnection,
-) -> Result<Vec<StockLineRow>, UpdateCustomerInvoiceError> {
+) -> Result<Vec<StockLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
     let stock_line_ids = invoice_lines
         .iter()
@@ -81,12 +81,12 @@ pub fn generate_batches(
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
         let stock_line_id = invoice_line.stock_line_id.ok_or(
-            UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(invoice_line.item_id.to_owned()),
+            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(invoice_line.item_id.to_owned()),
         )?;
         let stock_line = stock_lines
             .iter()
             .find(|stock_line| stock_line_id == stock_line.id)
-            .ok_or(UpdateCustomerInvoiceError::InvoiceLineHasNoStockLine(
+            .ok_or(UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(
                 invoice_line.item_id.to_owned(),
             ))?;
         result.push(StockLineRow {

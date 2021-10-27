@@ -3,7 +3,7 @@ use crate::{
         InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
         TransactionError,
     },
-    domain::customer_invoice::InsertCustomerInvoiceLine,
+    domain::outbound_shipment::InsertOutboundShipmentLine,
     service::WithDBError,
 };
 
@@ -13,10 +13,10 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-pub fn insert_customer_invoice_line(
+pub fn insert_outbound_shipment_line(
     connection_manager: &StorageConnectionManager,
-    input: InsertCustomerInvoiceLine,
-) -> Result<String, InsertCustomerInvoiceLineError> {
+    input: InsertOutboundShipmentLine,
+) -> Result<String, InsertOutboundShipmentLineError> {
     let connection = connection_manager.connection()?;
     let new_line = connection
         .transaction_sync(|connection| {
@@ -27,7 +27,7 @@ pub fn insert_customer_invoice_line(
             Ok(new_line)
         })
         .map_err(
-            |error: TransactionError<InsertCustomerInvoiceLineError>| match error {
+            |error: TransactionError<InsertOutboundShipmentLineError>| match error {
                 TransactionError::Transaction { msg } => {
                     RepositoryError::as_db_error(&msg, "").into()
                 }
@@ -37,11 +37,11 @@ pub fn insert_customer_invoice_line(
     Ok(new_line.id)
 }
 
-pub enum InsertCustomerInvoiceLineError {
+pub enum InsertOutboundShipmentLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NotACustomerInvoice,
+    NotAnOutboundShipment,
     NotThisStoreInvoice,
     CannotEditFinalised,
     ItemNotFound,
@@ -52,15 +52,15 @@ pub enum InsertCustomerInvoiceLineError {
     ReductionBelowZero { stock_line_id: String },
 }
 
-impl From<RepositoryError> for InsertCustomerInvoiceLineError {
+impl From<RepositoryError> for InsertOutboundShipmentLineError {
     fn from(error: RepositoryError) -> Self {
-        InsertCustomerInvoiceLineError::DatabaseError(error)
+        InsertOutboundShipmentLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for InsertCustomerInvoiceLineError
+impl<ERR> From<WithDBError<ERR>> for InsertOutboundShipmentLineError
 where
-    ERR: Into<InsertCustomerInvoiceLineError>,
+    ERR: Into<InsertOutboundShipmentLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {

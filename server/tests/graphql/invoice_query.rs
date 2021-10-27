@@ -4,7 +4,7 @@ mod graphql {
     use remote_server::{
         database::{
             mock::{
-                mock_customer_invoices, mock_invoice_lines, mock_invoices, mock_items, mock_names,
+                mock_outbound_shipments, mock_invoice_lines, mock_invoices, mock_items, mock_names,
                 mock_stock_lines, mock_stores,
             },
             repository::{
@@ -61,7 +61,7 @@ mod graphql {
             invoice_line_repository.upsert_one(&invoice_line).unwrap();
         }
 
-        let invoice = mock_customer_invoices()[0].clone();
+        let invoice = mock_outbound_shipments()[0].clone();
         let query = r#"query Invoice($id: String) {            
                 invoice(id: $id) {
                     ... on InvoiceNode {

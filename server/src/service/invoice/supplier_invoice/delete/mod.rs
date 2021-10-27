@@ -2,7 +2,7 @@ use crate::{
     database::repository::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
-    domain::{invoice_line::InvoiceLine, supplier_invoice::DeleteSupplierInvoice},
+    domain::{inbound_shipment::DeleteInboundShipment, invoice_line::InvoiceLine},
     service::WithDBError,
 };
 
@@ -10,10 +10,10 @@ mod validate;
 
 use validate::validate;
 
-pub fn delete_supplier_invoice(
+pub fn delete_inbound_shipment(
     connection_manager: &StorageConnectionManager,
-    input: DeleteSupplierInvoice,
-) -> Result<String, DeleteSupplierInvoiceError> {
+    input: DeleteInboundShipment,
+) -> Result<String, DeleteInboundShipmentError> {
     let connection = connection_manager.connection()?;
     connection
         .transaction_sync(|connection| {
@@ -22,7 +22,7 @@ pub fn delete_supplier_invoice(
             Ok(())
         })
         .map_err(
-            |error: TransactionError<DeleteSupplierInvoiceError>| match error {
+            |error: TransactionError<DeleteInboundShipmentError>| match error {
                 TransactionError::Transaction { msg } => {
                     RepositoryError::as_db_error(&msg, "").into()
                 }
@@ -32,24 +32,24 @@ pub fn delete_supplier_invoice(
     Ok(input.id)
 }
 
-pub enum DeleteSupplierInvoiceError {
+pub enum DeleteInboundShipmentError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
-    NotASupplierInvoice,
+    NotAnInboundShipment,
     NotThisStoreInvoice,
     CannotEditFinalised,
     InvoiceLinesExists(Vec<InvoiceLine>),
 }
 
-impl From<RepositoryError> for DeleteSupplierInvoiceError {
+impl From<RepositoryError> for DeleteInboundShipmentError {
     fn from(error: RepositoryError) -> Self {
-        DeleteSupplierInvoiceError::DatabaseError(error)
+        DeleteInboundShipmentError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for DeleteSupplierInvoiceError
+impl<ERR> From<WithDBError<ERR>> for DeleteInboundShipmentError
 where
-    ERR: Into<DeleteSupplierInvoiceError>,
+    ERR: Into<DeleteInboundShipmentError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {
