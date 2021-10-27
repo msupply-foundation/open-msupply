@@ -22,6 +22,7 @@ export interface OutboundShipment extends Invoice {
   lines: ItemRow[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
+  upsertLine?: (line: InvoiceLine) => void;
 }
 
 export enum ActionType {

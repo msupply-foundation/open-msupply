@@ -33,13 +33,7 @@ describe('GeneralTab', () => {
       onChangeSortBy: () => {},
     });
 
-    return (
-      <GeneralTab
-        data={lines}
-        columns={columns}
-        sortBy={{ key: 'quantity', direction: 'asc' }}
-      />
-    );
+    return <GeneralTab data={lines} columns={columns} />;
   };
 
   it('renders the passed values into a row', async () => {

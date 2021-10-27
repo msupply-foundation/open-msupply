@@ -30,3 +30,4 @@ export * from './useSortedData';
 export * from './useWindowDimensions';
 export * from './useDebounce';
 export * from './useDocument';
+export * from './useToggle';
