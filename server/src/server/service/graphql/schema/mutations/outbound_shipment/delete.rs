@@ -28,15 +28,6 @@ pub enum DeleteOutboundShipmentErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-impl From<Result<String, DeleteOutboundShipmentError>> for DeleteOutboundShipmentResponse {
-    fn from(result: Result<String, DeleteOutboundShipmentError>) -> Self {
-        match result {
-            Ok(id) => DeleteOutboundShipmentResponse::Response(DeleteResponse(id)),
-            Err(error) => error.into(),
-        }
-    }
-}
-
 impl From<DeleteOutboundShipmentError> for DeleteOutboundShipmentResponse {
     fn from(error: DeleteOutboundShipmentError) -> Self {
         use DeleteOutboundShipmentErrorInterface as OutError;

@@ -2,18 +2,17 @@ mod error;
 pub mod inbound_shipment;
 pub mod outbound_shipment;
 
-use super::types::{Connector, InvoiceLineNode, InvoiceResponse};
+use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
 use crate::{
     database::repository::StorageConnectionManager,
-    server::service::graphql::ContextExt,
+    server::service::graphql::{schema::types::get_invoice_line_response, ContextExt},
     service::{
         invoice::{
-            delete_inbound_shipment, delete_outbound_shipment, get_invoice,
-            insert_inbound_shipment, insert_outbound_shipment, update_inbound_shipment,
-            update_outbound_shipment,
+            delete_inbound_shipment, delete_outbound_shipment, insert_inbound_shipment,
+            insert_outbound_shipment, update_inbound_shipment, update_outbound_shipment,
         },
         invoice_line::{
-            delete_inbound_shipment_line, delete_outbound_shipment_line, get_invoice_line,
+            delete_inbound_shipment_line, delete_outbound_shipment_line,
             insert_inbound_shipment_line, insert_outbound_shipment_line,
             update_inbound_shipment_line, update_outbound_shipment_line,
         },
@@ -32,9 +31,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertOutboundShipmentInput,
     ) -> InsertOutboundShipmentResponse {
+        use InsertOutboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
         match insert_outbound_shipment(connection_manager, input.into()) {
-            Ok(id) => get_invoice(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -44,9 +45,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateOutboundShipmentInput,
     ) -> UpdateOutboundShipmentResponse {
+        use UpdateOutboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+
         match update_outbound_shipment(connection_manager, input.into()) {
-            Ok(id) => get_invoice(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -56,8 +59,13 @@ impl Mutations {
         ctx: &Context<'_>,
         id: String,
     ) -> DeleteOutboundShipmentResponse {
+        use DeleteOutboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        delete_outbound_shipment(connection_manager, id).into()
+
+        match delete_outbound_shipment(connection_manager, id) {
+            Ok(id) => Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
     }
 
     async fn insert_outbound_shipment_line(
@@ -65,10 +73,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertOutboundShipmentLineInput,
     ) -> InsertOutboundShipmentLineResponse {
+        use InsertOutboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
         match insert_outbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -78,10 +87,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateOutboundShipmentLineInput,
     ) -> UpdateOutboundShipmentLineResponse {
+        use UpdateOutboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
         match update_outbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -91,9 +101,13 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteOutboundShipmentLineInput,
     ) -> DeleteOutboundShipmentLineResponse {
+        use DeleteOutboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_outbound_shipment_line(connection_manager, input.into()).into()
+        match delete_outbound_shipment_line(connection_manager, input.into()) {
+            Ok(id) => Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
     }
 
     async fn insert_inbound_shipment(
@@ -101,10 +115,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertInboundShipmentInput,
     ) -> InsertInboundShipmentResponse {
+        use InsertInboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
         match insert_inbound_shipment(connection_manager, input.into()) {
-            Ok(id) => get_invoice(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -114,10 +129,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateInboundShipmentInput,
     ) -> UpdateInboundShipmentResponse {
+        use UpdateInboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
         match update_inbound_shipment(connection_manager, input.into()) {
-            Ok(id) => get_invoice(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -127,9 +143,13 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteInboundShipmentInput,
     ) -> DeleteInboundShipmentResponse {
+        use DeleteInboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_inbound_shipment(connection_manager, input.into()).into()
+        match delete_inbound_shipment(connection_manager, input.into()) {
+            Ok(id) => Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
     }
 
     async fn insert_inbound_shipment_line(
@@ -137,10 +157,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertInboundShipmentLineInput,
     ) -> InsertInboundShipmentLineResponse {
+        use InsertInboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
         match insert_inbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -150,10 +171,11 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateInboundShipmentLineInput,
     ) -> UpdateInboundShipmentLineResponse {
+        use UpdateInboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
         match update_inbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => get_invoice_line(connection_manager, id).into(),
+            Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
             Err(error) => error.into(),
         }
     }
@@ -163,9 +185,13 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteInboundShipmentLineInput,
     ) -> DeleteInboundShipmentLineResponse {
+        use DeleteInboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_inbound_shipment_line(connection_manager, input.into()).into()
+        match delete_inbound_shipment_line(connection_manager, input.into()) {
+            Ok(id) => Response(DeleteResponse(id)),
+            Err(error) => error.into(),
+        }
     }
 }
 
@@ -276,6 +302,6 @@ impl InvoiceLineBelongsToAnotherInvoice {
     pub async fn invoice(&self, ctx: &Context<'_>) -> InvoiceResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        get_invoice(connection_manager, self.0.clone()).into()
+        get_invoice_response(connection_manager, self.0.clone())
     }
 }

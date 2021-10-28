@@ -40,15 +40,6 @@ impl From<DeleteInboundShipmentInput> for DeleteInboundShipment {
     }
 }
 
-impl From<Result<String, DeleteInboundShipmentError>> for DeleteInboundShipmentResponse {
-    fn from(result: Result<String, DeleteInboundShipmentError>) -> Self {
-        match result {
-            Ok(id) => DeleteInboundShipmentResponse::Response(DeleteResponse(id)),
-            Err(error) => error.into(),
-        }
-    }
-}
-
 impl From<DeleteInboundShipmentError> for DeleteInboundShipmentResponse {
     fn from(error: DeleteInboundShipmentError) -> Self {
         use DeleteInboundShipmentErrorInterface as OutError;

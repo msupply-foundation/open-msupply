@@ -75,19 +75,6 @@ pub enum NamesResponse {
     Response(CurrentConnector),
 }
 
-impl<T, E> From<Result<T, E>> for NamesResponse
-where
-    CurrentConnector: From<T>,
-    ConnectorError: From<E>,
-{
-    fn from(result: Result<T, E>) -> Self {
-        match result {
-            Ok(response) => NamesResponse::Response(response.into()),
-            Err(error) => NamesResponse::Error(error.into()),
-        }
-    }
-}
-
 impl From<Name> for NameNode {
     fn from(name: Name) -> Self {
         NameNode { name }

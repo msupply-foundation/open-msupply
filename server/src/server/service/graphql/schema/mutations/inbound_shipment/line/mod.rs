@@ -2,9 +2,9 @@ use async_graphql::*;
 
 pub mod delete;
 use crate::database::repository::StorageConnectionManager;
+use crate::server::service::graphql::schema::types::get_invoice_response;
 use crate::server::service::graphql::schema::types::InvoiceResponse;
 use crate::server::service::graphql::ContextExt;
-use crate::service::invoice::get_invoice;
 
 pub use self::delete::*;
 
@@ -32,6 +32,6 @@ impl InvoiceLineBelongsToAnotherInvoice {
     pub async fn invoice(&self, ctx: &Context<'_>) -> InvoiceResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        get_invoice(connection_manager, self.0.clone()).into()
+        get_invoice_response(connection_manager, self.0.clone())
     }
 }

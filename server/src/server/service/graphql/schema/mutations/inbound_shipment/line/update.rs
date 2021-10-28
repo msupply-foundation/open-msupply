@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
-    domain::{inbound_shipment::UpdateInboundShipmentLine, invoice_line::InvoiceLine},
+    domain::inbound_shipment::UpdateInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -13,7 +13,7 @@ use crate::{
             RecordNotFound,
         },
     },
-    service::{invoice_line::UpdateInboundShipmentLineError, SingleRecordError},
+    service::invoice_line::UpdateInboundShipmentLineError,
 };
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
@@ -77,14 +77,6 @@ impl From<UpdateInboundShipmentLineInput> for UpdateInboundShipmentLine {
             cost_price_per_pack,
             number_of_packs,
         }
-    }
-}
-
-impl From<Result<InvoiceLine, SingleRecordError>> for UpdateInboundShipmentLineResponse {
-    fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
-        let invoice_line_response: InvoiceLineResponse = result.into();
-        // Implemented by flatten union
-        invoice_line_response.into()
     }
 }
 

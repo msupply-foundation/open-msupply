@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use crate::{
-    domain::{invoice_line::InvoiceLine, outbound_shipment::InsertOutboundShipmentLine},
+    domain::outbound_shipment::InsertOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             outbound_shipment::NotEnoughStockForReduction, CannotEditFinalisedInvoice, ForeignKey,
@@ -10,7 +10,7 @@ use crate::{
         },
         types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
-    service::{invoice_line::InsertOutboundShipmentLineError, SingleRecordError},
+    service::invoice_line::InsertOutboundShipmentLineError,
 };
 
 use super::{
@@ -67,14 +67,6 @@ impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
             stock_line_id,
             number_of_packs,
         }
-    }
-}
-
-impl From<Result<InvoiceLine, SingleRecordError>> for InsertOutboundShipmentLineResponse {
-    fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
-        let invoice_line_response: InvoiceLineResponse = result.into();
-        // Implemented by flatten union
-        invoice_line_response.into()
     }
 }
 

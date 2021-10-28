@@ -1,8 +1,5 @@
 use crate::{
-    domain::{
-        invoice::{Invoice, InvoiceStatus},
-        outbound_shipment::UpdateOutboundShipment,
-    },
+    domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment},
     server::service::graphql::schema::{
         mutations::{
             error::DatabaseError,
@@ -11,7 +8,7 @@ use crate::{
         },
         types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode, RecordNotFound},
     },
-    service::{invoice::UpdateOutboundShipmentError, SingleRecordError},
+    service::invoice::UpdateOutboundShipmentError,
 };
 
 use super::{
@@ -54,14 +51,6 @@ pub enum UpdateOutboundShipmentResponse {
     Error(ErrorWrapper<UpdateOutboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
-}
-
-impl From<Result<Invoice, SingleRecordError>> for UpdateOutboundShipmentResponse {
-    fn from(result: Result<Invoice, SingleRecordError>) -> Self {
-        let invoice_response: InvoiceResponse = result.into();
-        // Implemented by flatten union
-        invoice_response.into()
-    }
 }
 
 #[derive(Interface)]

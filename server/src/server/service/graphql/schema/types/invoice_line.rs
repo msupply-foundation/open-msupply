@@ -1,7 +1,9 @@
 use super::{Connector, ConnectorError, NodeError, StockLineResponse};
 use crate::{
-    database::loader::StockLineByIdLoader, domain::invoice_line::InvoiceLine,
+    database::{loader::StockLineByIdLoader, repository::StorageConnectionManager},
+    domain::invoice_line::InvoiceLine,
     server::service::graphql::ContextExt,
+    service::invoice_line::get_invoice_line,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
@@ -46,18 +48,14 @@ impl InvoiceLineNode {
     async fn stock_line(&self, ctx: &Context<'_>) -> Option<StockLineResponse> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 
-        if let Some(invoice_line_id) = &self.invoice_line.stock_line_id {
-            let result = match loader.load_one(invoice_line_id.clone()).await {
-                Ok(response) => match response {
-                    None => return None,
-                    Some(result) => Ok(result),
-                },
-                Err(error) => Err(error),
-            };
-
-            Some(result.into())
-        } else {
-            None
+        match &self.invoice_line.stock_line_id {
+            Some(invoice_line_id) => match loader.load_one(invoice_line_id.clone()).await {
+                Ok(response) => {
+                    response.map(|stock_line| StockLineResponse::Response(stock_line.into()))
+                }
+                Err(error) => Some(StockLineResponse::Error(error.into())),
+            },
+            None => None,
         }
     }
 }
@@ -76,16 +74,13 @@ pub enum InvoiceLineResponse {
     Response(InvoiceLineNode),
 }
 
-impl<T, E> From<Result<T, E>> for InvoiceLinesResponse
-where
-    CurrentConnector: From<T>,
-    ConnectorError: From<E>,
-{
-    fn from(result: Result<T, E>) -> Self {
-        match result {
-            Ok(response) => InvoiceLinesResponse::Response(response.into()),
-            Err(error) => InvoiceLinesResponse::Error(error.into()),
-        }
+pub fn get_invoice_line_response(
+    connection_manager: &StorageConnectionManager,
+    id: String,
+) -> InvoiceLineResponse {
+    match get_invoice_line(connection_manager, id) {
+        Ok(invoice_line) => InvoiceLineResponse::Response(invoice_line.into()),
+        Err(error) => InvoiceLineResponse::Error(error.into()),
     }
 }
 
@@ -93,19 +88,6 @@ impl From<Vec<InvoiceLine>> for InvoiceLinesResponse {
     fn from(result: Vec<InvoiceLine>) -> Self {
         let nodes: CurrentConnector = result.into();
         nodes.into()
-    }
-}
-
-impl<T, E> From<Result<T, E>> for InvoiceLineResponse
-where
-    InvoiceLineNode: From<T>,
-    NodeError: From<E>,
-{
-    fn from(result: Result<T, E>) -> Self {
-        match result {
-            Ok(response) => InvoiceLineResponse::Response(response.into()),
-            Err(error) => InvoiceLineResponse::Error(error.into()),
-        }
     }
 }
 
