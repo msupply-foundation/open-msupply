@@ -6,18 +6,24 @@ import { ModalLabel } from './ModalLabel';
 import { ModalRow } from './ModalRow';
 
 interface InputRowProps {
+  appendedText?: string;
   defaultValue?: unknown;
   inputProps: UseFormRegisterReturn;
   labelKey: LocaleKey;
 }
 
 export const ModalInputRow: React.FC<InputRowProps> = ({
+  appendedText,
   defaultValue,
   inputProps,
   labelKey,
 }) => (
   <ModalRow>
     <ModalLabel labelKey={labelKey} />
-    <ModalInput defaultValue={defaultValue} inputProps={inputProps} />
+    <ModalInput
+      defaultValue={defaultValue}
+      inputProps={inputProps}
+      appendedText={appendedText}
+    />
   </ModalRow>
 );
