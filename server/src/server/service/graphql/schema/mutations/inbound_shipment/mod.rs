@@ -13,6 +13,9 @@ pub use self::update::*;
 pub mod line;
 pub use self::line::*;
 
+pub mod batch;
+pub use self::batch::*;
+
 pub struct OtherPartyNotASupplier(NameNode);
 #[Object]
 impl OtherPartyNotASupplier {
