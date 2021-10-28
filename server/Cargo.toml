@@ -28,6 +28,7 @@ assert-json-diff = "2.0.1"
 async-graphql = { version = "2.9.8", features = ["dataloader", "chrono"] }
 async-graphql-actix-web = "2.9.8"
 async-trait = "0.1.16"
+bcrypt = "0.10.1"
 diesel = { version = "1.4.7", default-features = false, features = ["sqlite", "postgres", "r2d2", "numeric", "chrono"] }
 diesel-derive-enum = { version = "1.1.1", features = ["sqlite", "postgres"] }
 diesel_migrations = "1.4.0"

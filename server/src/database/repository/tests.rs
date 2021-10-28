@@ -293,9 +293,9 @@ mod repository_test {
         database::{
             repository::{
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
-                OutboundShipmentRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
-                InvoiceRepository, ItemRepository, MasterListLineRepository,
-                MasterListNameJoinRepository, NameQueryRepository, NameRepository,
+                InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
+                ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+                NameQueryRepository, NameRepository, OutboundShipmentRepository,
                 RequisitionLineRepository, RequisitionRepository, StockLineRepository,
                 StorageConnectionManager, StoreRepository, UserAccountRepository,
             },
@@ -778,14 +778,14 @@ mod repository_test {
 
         let repo = UserAccountRepository::new(&connection);
         let item1 = data::user_account_1();
-        repo.insert_one(&item1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
+        repo.insert_one(&item1).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // optional email
         let item2 = data::user_account_2();
-        repo.insert_one(&item2).await.unwrap();
-        let loaded_item = repo.find_one_by_id(item2.id.as_str()).await.unwrap();
+        repo.insert_one(&item2).unwrap();
+        let loaded_item = repo.find_one_by_id(item2.id.as_str()).unwrap();
         assert_eq!(item2, loaded_item);
     }
 
