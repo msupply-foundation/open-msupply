@@ -60,6 +60,13 @@ export const getDetailQuery = (): string => gql`
         entryDatetime
         finalisedDatetime
         invoiceNumber
+
+        draftDatetime
+        allocatedDatetime
+        pickedDatetime
+        shippedDatetime
+        deliveredDatetime
+
         lines {
           ... on InvoiceLineConnector {
             nodes {

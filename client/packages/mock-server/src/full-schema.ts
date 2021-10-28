@@ -326,6 +326,12 @@ export default gql`
     finalisedDatetime: DateTime
     lines: InvoiceLinesResponse!
     pricing: InvoicePriceResponse!
+
+    draftDatetime: DateTime
+    allocatedDatetime: DateTime
+    pickedDatetime: DateTime
+    shippedDatetime: DateTime
+    deliveredDatetime: DateTime
   }
 
   enum InvoiceNodeStatus {
