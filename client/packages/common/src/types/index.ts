@@ -87,11 +87,11 @@ export interface Invoice extends DomainObject {
 }
 
 export type OutboundShipmentStatus =
-  | 'draft'
-  | 'allocated'
-  | 'picked'
-  | 'shipped'
-  | 'delivered';
+  | 'DRAFT'
+  | 'ALLOCATED'
+  | 'PICKED'
+  | 'SHIPPED'
+  | 'DELIVERED';
 
 export type InboundShipmentStatus =
   | 'new'
