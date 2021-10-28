@@ -148,6 +148,17 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       getInvoiceLine('', selectedItem, batch, Number(values[batch.id] || 0))
     );
     invoiceLines.filter(line => line.quantity > 0).forEach(upsertInvoiceLine);
+    const placeholderValue = Number(values['placeholder'] || 0);
+    if (placeholderValue > 0) {
+      invoiceLines.push(
+        getInvoiceLine(
+          'placeholder',
+          selectedItem,
+          { id: 'placeholder', expiryDate: '' },
+          placeholderValue
+        )
+      );
+    }
     onReset();
   };
   const upsertAndClose = () => {
@@ -160,8 +171,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     const values = getValues();
     const allocatedQuantity = batchRows.reduce(
       (total, batch) => (total += Number(values[batch.id] || 0)),
-      0
+      Number(values['placeholder'] || 0)
     );
+
     setIsAllocated(allocatedQuantity >= quantity && allocatedQuantity > 0);
   };
 
@@ -173,6 +185,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     // if the selected item has no batch rows, allocate all to the placeholder
     if (batchRows.length === 0) {
       setValue('placeholder', quantity);
+      setIsAllocated(true);
       return;
     }
 
@@ -189,7 +202,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     });
     // allocate remainder to placeholder
     setValue('placeholder', toAllocate);
-    checkAllocatedQuantities();
+    setIsAllocated(true);
   };
 
   const onChangeRowQuantity = (key: string, value: number) => {
@@ -202,7 +215,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     else hideDialog();
   }, [isOpen]);
 
-  React.useEffect(checkAllocatedQuantities, [batchRows, quantity]);
+  React.useEffect(checkAllocatedQuantities, [batchRows]);
 
   React.useEffect(allocateQuantities, [quantity, selectedItem]);
 
