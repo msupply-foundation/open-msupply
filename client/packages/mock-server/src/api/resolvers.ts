@@ -97,21 +97,49 @@ export const ResolverService = {
 
       return createListResponse(invoiceLines.length, data, 'InvoiceConnector');
     },
-    item: (): ListResponse<ResolvedItem> => {
+    item: ({
+      first = 50,
+      offset = 0,
+      sort,
+      desc,
+    }: PaginationOptions): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
-      const data = items.map(item => {
+
+      const sortKey = sort === 'NAME' ? 'name' : 'code';
+
+      if (sort) {
+        const sortData = getDataSorter(sortKey, desc);
+        items.sort(sortData);
+      }
+
+      const paged = items.slice(offset, offset + first);
+
+      const data = paged.map(item => {
         return ResolverService.byId.item(item.id);
       });
+
       return createListResponse(items.length, data, 'ItemConnector');
     },
 
-    name: (type: 'customer' | 'supplier'): ListResponse<Name> => {
+    name: (
+      type: 'customer' | 'supplier',
+      { first = 50, offset = 0, sort, desc }: PaginationOptions
+    ): ListResponse<Name> => {
       // TODO: Filter customers/suppliers etc
       const names = db.get.all.name().filter(({ isCustomer }) => {
         return isCustomer === (type === 'customer');
       });
 
-      return createListResponse(names.length, names, 'NameConnector');
+      const sortKey = sort === 'NAME' ? 'name' : 'code';
+
+      if (sort) {
+        const sortData = getDataSorter(sortKey, desc);
+        names.sort(sortData);
+      }
+
+      const paged = names.slice(offset, offset + first);
+
+      return createListResponse(paged.length, paged, 'NameConnector');
     },
   },
 

@@ -168,7 +168,7 @@ export const createInvoiceLines = (
 };
 
 export const createItems = (
-  numberToCreate = randomInteger({ min: 25, max: 50 })
+  numberToCreate = randomInteger({ min: 50, max: 100 })
 ): Item[] => {
   return items.slice(0, numberToCreate).map(({ code, name }, j) => {
     const itemId = `item-${j}`;

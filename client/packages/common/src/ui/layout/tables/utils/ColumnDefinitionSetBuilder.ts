@@ -31,12 +31,20 @@ export type ColumnKey =
   | 'costPricePerPack'
   | 'sellPricePerPack'
   | 'location'
-  | 'unitQuantity';
+  | 'unitQuantity'
+  | 'numberOfPacks';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
+  numberOfPacks: {
+    key: 'numberOfPacks',
+    format: ColumnFormat.Integer,
+    align: ColumnAlign.Right,
+    label: 'label.pack-quantity',
+    width: 75,
+  },
   expiryDate: {
     key: 'expiryDate',
     format: ColumnFormat.Date,
