@@ -7,14 +7,10 @@ use crate::{
     database::repository::StorageConnectionManager,
     server::service::graphql::{schema::types::get_invoice_line_response, ContextExt},
     service::{
-        invoice::{
-            delete_inbound_shipment, delete_outbound_shipment, insert_inbound_shipment,
-            insert_outbound_shipment, update_inbound_shipment, update_outbound_shipment,
-        },
+        invoice::{delete_outbound_shipment, insert_outbound_shipment, update_outbound_shipment},
         invoice_line::{
-            delete_inbound_shipment_line, delete_outbound_shipment_line,
-            insert_inbound_shipment_line, insert_outbound_shipment_line,
-            update_inbound_shipment_line, update_outbound_shipment_line,
+            delete_outbound_shipment_line, insert_outbound_shipment_line,
+            update_outbound_shipment_line,
         },
     },
 };
@@ -115,13 +111,8 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertInboundShipmentInput,
     ) -> InsertInboundShipmentResponse {
-        use InsertInboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
-        match insert_inbound_shipment(connection_manager, input.into()) {
-            Ok(id) => Response(get_invoice_response(connection_manager, id)),
-            Err(error) => error.into(),
-        }
+        get_insert_inbound_shipment_response(connection_manager, input)
     }
 
     async fn update_inbound_shipment(
@@ -129,13 +120,8 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateInboundShipmentInput,
     ) -> UpdateInboundShipmentResponse {
-        use UpdateInboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
-        match update_inbound_shipment(connection_manager, input.into()) {
-            Ok(id) => Response(get_invoice_response(connection_manager, id)),
-            Err(error) => error.into(),
-        }
+        get_update_inbound_shipment_response(connection_manager, input)
     }
 
     async fn delete_inbound_shipment(
@@ -143,13 +129,8 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteInboundShipmentInput,
     ) -> DeleteInboundShipmentResponse {
-        use DeleteInboundShipmentResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
-        match delete_inbound_shipment(connection_manager, input.into()) {
-            Ok(id) => Response(DeleteResponse(id)),
-            Err(error) => error.into(),
-        }
+        get_delete_inbound_shipment_response(connection_manager, input)
     }
 
     async fn insert_inbound_shipment_line(
@@ -157,13 +138,8 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertInboundShipmentLineInput,
     ) -> InsertInboundShipmentLineResponse {
-        use InsertInboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
-        match insert_inbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
-            Err(error) => error.into(),
-        }
+        get_insert_inbound_shipment_line_response(connection_manager, input)
     }
 
     async fn update_inbound_shipment_line(
@@ -171,13 +147,8 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateInboundShipmentLineInput,
     ) -> UpdateInboundShipmentLineResponse {
-        use UpdateInboundShipmentLineResponse::*;
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-
-        match update_inbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
-            Err(error) => error.into(),
-        }
+        get_update_inbound_shipment_line_response(connection_manager, input)
     }
 
     async fn delete_inbound_shipment_line(
@@ -185,13 +156,31 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteInboundShipmentLineInput,
     ) -> DeleteInboundShipmentLineResponse {
-        use DeleteInboundShipmentLineResponse::*;
+        let connection_manager = ctx.get_repository::<StorageConnectionManager>();
+        get_delete_inbound_shipment_line_response(connection_manager, input)
+    }
+
+    async fn batch_inbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
+        insert_inbound_shipment_lines: Option<Vec<InsertInboundShipmentLineInput>>,
+        update_inbound_shipment_lines: Option<Vec<UpdateInboundShipmentLineInput>>,
+        delete_inbound_shipment_lines: Option<Vec<DeleteInboundShipmentLineInput>>,
+        update_inbound_shipments: Option<Vec<UpdateInboundShipmentInput>>,
+        delete_inbound_shipments: Option<Vec<DeleteInboundShipmentInput>>,
+    ) -> BatchInboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match delete_inbound_shipment_line(connection_manager, input.into()) {
-            Ok(id) => Response(DeleteResponse(id)),
-            Err(error) => error.into(),
-        }
+        get_batch_inbound_shipment_response(
+            connection_manager,
+            insert_inbound_shipments,
+            insert_inbound_shipment_lines,
+            update_inbound_shipment_lines,
+            delete_inbound_shipment_lines,
+            update_inbound_shipments,
+            delete_inbound_shipments,
+        )
     }
 }
 
@@ -304,4 +293,35 @@ impl InvoiceLineBelongsToAnotherInvoice {
 
         get_invoice_response(connection_manager, self.0.clone())
     }
+}
+
+#[derive(SimpleObject)]
+#[graphql(concrete(
+    name = "InsertInboundShipmentResponseWithId",
+    params(InsertInboundShipmentResponse)
+))]
+#[graphql(concrete(
+    name = "UpdateInboundShipmentResponseWithId",
+    params(UpdateInboundShipmentResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteInboundShipmentResponseWithId",
+    params(DeleteInboundShipmentResponse)
+))]
+#[graphql(concrete(
+    name = "InsertInboundShipmentLineResponseWithId",
+    params(InsertInboundShipmentLineResponse)
+))]
+#[graphql(concrete(
+    name = "UpdateInboundShipmentLineResponseWithId",
+    params(UpdateInboundShipmentLineResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteInboundShipmentLineResponseWithId",
+    params(DeleteInboundShipmentLineResponse)
+))]
+
+pub struct MutationWithId<T: OutputType> {
+    pub id: String,
+    pub response: T,
 }

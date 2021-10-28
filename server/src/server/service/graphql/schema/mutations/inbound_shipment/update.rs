@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus},
     server::service::graphql::schema::{
         mutations::{
@@ -8,11 +9,11 @@ use crate::{
             ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
         },
         types::{
-            DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
-            RecordNotFound,
+            get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
+            NameNode, RecordNotFound,
         },
     },
-    service::invoice::UpdateInboundShipmentError,
+    service::invoice::{update_inbound_shipment, UpdateInboundShipmentError},
 };
 
 use super::OtherPartyNotASupplier;
@@ -31,6 +32,17 @@ pub enum UpdateInboundShipmentResponse {
     Error(ErrorWrapper<UpdateInboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
+}
+
+pub fn get_update_inbound_shipment_response(
+    connection_manager: &StorageConnectionManager,
+    input: UpdateInboundShipmentInput,
+) -> UpdateInboundShipmentResponse {
+    use UpdateInboundShipmentResponse::*;
+    match update_inbound_shipment(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]

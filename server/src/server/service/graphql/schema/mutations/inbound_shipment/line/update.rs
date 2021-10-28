@@ -2,6 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::inbound_shipment::UpdateInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
@@ -9,11 +10,11 @@ use crate::{
             InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
         },
         types::{
-            DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField,
-            RecordNotFound,
+            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+            RangeError, RangeField, RecordNotFound,
         },
     },
-    service::invoice_line::UpdateInboundShipmentLineError,
+    service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError},
 };
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
@@ -36,6 +37,17 @@ pub enum UpdateInboundShipmentLineResponse {
     Error(ErrorWrapper<UpdateInboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
+}
+
+pub fn get_update_inbound_shipment_line_response(
+    connection_manager: &StorageConnectionManager,
+    input: UpdateInboundShipmentLineInput,
+) -> UpdateInboundShipmentLineResponse {
+    use UpdateInboundShipmentLineResponse::*;
+    match update_inbound_shipment_line(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]

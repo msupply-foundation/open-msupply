@@ -2,15 +2,19 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::inbound_shipment::InsertInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
             InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, RecordAlreadyExist,
         },
-        types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
+        types::{
+            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+            RangeError, RangeField,
+        },
     },
-    service::invoice_line::InsertInboundShipmentLineError,
+    service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError},
 };
 
 #[derive(InputObject)]
@@ -31,6 +35,17 @@ pub enum InsertInboundShipmentLineResponse {
     Error(ErrorWrapper<InsertInboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
+}
+
+pub fn get_insert_inbound_shipment_line_response(
+    connection_manager: &StorageConnectionManager,
+    input: InsertInboundShipmentLineInput,
+) -> InsertInboundShipmentLineResponse {
+    use InsertInboundShipmentLineResponse::*;
+    match insert_inbound_shipment_line(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]
