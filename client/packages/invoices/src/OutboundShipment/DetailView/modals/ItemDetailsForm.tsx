@@ -11,6 +11,7 @@ import {
   UseFormRegister,
   styled,
   useTranslation,
+  Typography,
 } from '@openmsupply-client/common';
 
 interface ItemDetailsFormProps {
@@ -20,6 +21,7 @@ interface ItemDetailsFormProps {
   items?: Item[];
   onChangeItem?: AutocompleteOnChange<Item>;
   onChangeQuantity: (quantity: number) => void;
+  quantity?: number;
   register: UseFormRegister<FieldValues>;
 }
 
@@ -51,6 +53,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   items,
   onChangeItem,
   onChangeQuantity,
+  quantity,
   register,
 }) => {
   const t = useTranslation();
@@ -58,6 +61,18 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
     items
       ?.filter(item => item.isVisible)
       .map(item => ({ label: item.name, ...item })) || [];
+
+  const quantityDescription = allocatedQuantity ? (
+    <Typography
+      sx={{
+        color: allocatedQuantity < (quantity || 0) ? 'error.main' : undefined,
+        fontSize: '12px',
+        marginLeft: '16px',
+        alignSelf: 'center',
+        display: 'inline-flex',
+      }}
+    >{`${allocatedQuantity} ${t('label.allocated')}`}</Typography>
+  ) : undefined;
 
   return (
     <>
@@ -89,11 +104,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         })}
         labelKey="label.pack-quantity"
         defaultValue={invoiceLine?.quantity}
-        appendedText={
-          allocatedQuantity
-            ? `${allocatedQuantity} ${t('label.allocated')}`
-            : undefined
-        }
+        appendix={quantityDescription}
       />
     </>
   );

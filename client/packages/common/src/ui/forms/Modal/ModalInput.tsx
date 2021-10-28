@@ -1,17 +1,17 @@
 import React from 'react';
-import { Grid, Typography } from '@mui/material';
+import { Grid } from '@mui/material';
 import { get, UseFormRegisterReturn, useFormState } from 'react-hook-form';
 
 import { BasicTextInput } from '../../components/inputs/TextInput/BasicTextInput';
 
 export interface ModalInputProps {
-  appendedText?: string;
+  appendix?: React.ReactNode;
   defaultValue?: unknown;
   inputProps: UseFormRegisterReturn;
 }
 
 export const ModalInput: React.FC<ModalInputProps> = ({
-  appendedText,
+  appendix,
   defaultValue,
   inputProps,
 }) => {
@@ -36,19 +36,7 @@ export const ModalInput: React.FC<ModalInputProps> = ({
         {...errorProps}
         {...inputProps}
       />
-      {appendedText && (
-        <Typography
-          style={{
-            fontSize: 12,
-            marginLeft: 16,
-            alignSelf: 'center',
-            display: 'inline-flex',
-          }}
-          component="div"
-        >
-          {appendedText}
-        </Typography>
-      )}
+      {appendix}
     </Grid>
   );
 };

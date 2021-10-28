@@ -64,7 +64,7 @@ export const createStockLines = (
           id: `${itemId}-${store.id}-${i++}`,
           name: `${itemId}-${i++}`,
           packSize: 1,
-          expiryDate: faker.date.future(0.5).toISOString(),
+          expiryDate: faker.date.future(1.5).toISOString(),
           batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
           storeId: store.id,
           availableNumberOfPacks,

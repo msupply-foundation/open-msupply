@@ -4,6 +4,7 @@ import {
   Divider,
   FieldValues,
   InfoIcon,
+  isAlmostExpired,
   Item,
   Table,
   TableBody,
@@ -45,6 +46,8 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange(batch.id, Number(event.target.value));
 
+  const expiryDate = new Date(batch.expiryDate);
+
   // TODO format currency correctly
   return (
     <TableRow>
@@ -64,7 +67,11 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>
       <BasicCell align="right">{batch.packSize}</BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
-      <BasicCell>{d(new Date(batch.expiryDate))}</BasicCell>
+      <BasicCell
+        sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : undefined }}
+      >
+        {d(expiryDate)}
+      </BasicCell>
       <BasicCell align="right">${batch.costPricePerPack}</BasicCell>
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
       <BasicCell>
