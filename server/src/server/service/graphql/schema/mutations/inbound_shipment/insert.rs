@@ -1,12 +1,12 @@
 use async_graphql::*;
 
 use crate::{
-    domain::{inbound_shipment::InsertInboundShipment, invoice::Invoice},
+    domain::inbound_shipment::InsertInboundShipment,
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
-    service::{invoice::InsertInboundShipmentError, SingleRecordError},
+    service::invoice::InsertInboundShipmentError,
 };
 
 use super::OtherPartyNotASupplier;
@@ -53,14 +53,6 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
             comment,
             their_reference,
         }
-    }
-}
-
-impl From<Result<Invoice, SingleRecordError>> for InsertInboundShipmentResponse {
-    fn from(result: Result<Invoice, SingleRecordError>) -> Self {
-        let invoice_response: InvoiceResponse = result.into();
-        // Implemented by flatten union
-        invoice_response.into()
     }
 }
 

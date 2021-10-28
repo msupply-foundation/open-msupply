@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use crate::{
-    domain::{invoice_line::InvoiceLine, outbound_shipment::UpdateOutboundShipmentLine},
+    domain::outbound_shipment::UpdateOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -13,7 +13,7 @@ use crate::{
             RecordNotFound,
         },
     },
-    service::{invoice_line::UpdateOutboundShipmentLineError, SingleRecordError},
+    service::invoice_line::UpdateOutboundShipmentLineError,
 };
 
 use super::{
@@ -72,14 +72,6 @@ impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
             stock_line_id,
             number_of_packs,
         }
-    }
-}
-
-impl From<Result<InvoiceLine, SingleRecordError>> for UpdateOutboundShipmentLineResponse {
-    fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
-        let invoice_line_response: InvoiceLineResponse = result.into();
-        // Implemented by flatten union
-        invoice_line_response.into()
     }
 }
 

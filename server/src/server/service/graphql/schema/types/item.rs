@@ -1,9 +1,7 @@
 use crate::database::loader::StockLineByItemIdLoader;
 use crate::domain::item::{Item, ItemFilter};
-use crate::domain::stock_line::StockLine;
 use crate::domain::{EqualFilter, SimpleStringFilter};
 use crate::server::service::graphql::ContextExt;
-use crate::service::{ListError, ListResult};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 
@@ -62,11 +60,12 @@ impl ItemNode {
 
     async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {
         let loader = ctx.get_loader::<DataLoader<StockLineByItemIdLoader>>();
-        loader
-            .load_one(self.item.id.to_string())
-            .await
-            .map(|result: Option<Vec<StockLine>>| result.unwrap_or(Vec::new()))
-            .into()
+        match loader.load_one(self.item.id.to_string()).await {
+            Ok(result_option) => {
+                StockLinesResponse::Response(result_option.unwrap_or(Vec::new()).into())
+            }
+            Err(error) => StockLinesResponse::Error(error.into()),
+        }
     }
 }
 
@@ -74,15 +73,6 @@ impl ItemNode {
 pub enum ItemsResponse {
     Error(ConnectorError),
     Response(Connector<ItemNode>),
-}
-
-impl From<Result<ListResult<Item>, ListError>> for ItemsResponse {
-    fn from(result: Result<ListResult<Item>, ListError>) -> Self {
-        match result {
-            Ok(response) => ItemsResponse::Response(response.into()),
-            Err(error) => ItemsResponse::Error(error.into()),
-        }
-    }
 }
 
 impl From<Item> for ItemNode {
