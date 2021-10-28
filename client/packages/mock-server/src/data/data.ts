@@ -31,6 +31,8 @@ const units = [
   'Amp',
 ];
 
+const packSizes = [1, 1, 1, 1, 10, 100];
+
 export const getStockLinesForItem = (
   item: Item,
   stockLines: StockLine[] = StockLineData
@@ -76,7 +78,7 @@ export const createStockLines = (
         const stockLine = {
           id: `${itemId}-${store.id}-${i++}`,
           name: `${itemId}-${i++}`,
-          packSize: 1,
+          packSize: takeRandomElementFrom(packSizes),
           expiryDate: faker.date.future(1.5).toISOString(),
           batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
           location: `${alphaString(1)}${faker.datatype.number(9)}`,
@@ -151,7 +153,7 @@ export const createInvoiceLines = (
             totalAfterTax: sellPricePerPack * numberOfPacks,
             quantity: numberOfPacks,
             numberOfPacks,
-            packSize: 1,
+            packSize: takeRandomElementFrom(packSizes),
           } as InvoiceLine;
 
           stockLine.availableNumberOfPacks =
