@@ -245,6 +245,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               register={register}
               isLoading={isLoading}
               allocatedQuantity={allocated}
+              quantity={quantity}
             />
             <BatchesTable
               item={selectedItem}

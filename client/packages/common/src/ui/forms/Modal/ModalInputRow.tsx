@@ -6,14 +6,14 @@ import { ModalLabel } from './ModalLabel';
 import { ModalRow } from './ModalRow';
 
 interface InputRowProps {
-  appendedText?: string;
+  appendix?: React.ReactNode;
   defaultValue?: unknown;
   inputProps: UseFormRegisterReturn;
   labelKey: LocaleKey;
 }
 
 export const ModalInputRow: React.FC<InputRowProps> = ({
-  appendedText,
+  appendix,
   defaultValue,
   inputProps,
   labelKey,
@@ -23,7 +23,7 @@ export const ModalInputRow: React.FC<InputRowProps> = ({
     <ModalInput
       defaultValue={defaultValue}
       inputProps={inputProps}
-      appendedText={appendedText}
+      appendix={appendix}
     />
   </ModalRow>
 );
