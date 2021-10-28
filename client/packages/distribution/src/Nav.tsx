@@ -62,6 +62,14 @@ const Nav: FC = () => {
               .build()}
             text={t('app.customer-requisition')}
           />
+          <NavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.Customer)
+              .build()}
+            text={t('app.customers')}
+          />
         </List>
       </Collapse>
     </>

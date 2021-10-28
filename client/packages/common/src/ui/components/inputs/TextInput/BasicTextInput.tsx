@@ -19,12 +19,13 @@ export const BasicTextInput: FC<StandardTextFieldProps> = React.forwardRef(
       size="small"
       InputProps={{
         disableUnderline: true,
+        ...InputProps,
         sx: {
           backgroundColor: theme => theme.palette.background.menu,
           borderRadius: '8px',
           padding: '4px 8px',
+          ...InputProps?.sx,
         },
-        ...InputProps,
       }}
       {...props}
     />

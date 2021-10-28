@@ -43,27 +43,42 @@ const deleteInvoice = graphql.mutation(
 
 export const namesList = graphql.query<
   Record<string, unknown>,
-  PaginationOptions
->('names', (_, response, context) => {
-  const result = Api.ResolverService.list.name('customer');
+  PaginationOptions & { key: string }
+>('names', (request, response, context) => {
+  const {
+    variables = {
+      first: 50,
+      offset: 0,
+      key: 'NAME',
+      desc: false,
+    },
+  } = request;
+
+  const result = Api.ResolverService.list.name('customer', {
+    ...variables,
+    sort: variables.key,
+  });
 
   return response(context.data({ names: result }));
 });
 
 export const invoiceList = graphql.query<
   Record<string, unknown>,
-  PaginationOptions
+  PaginationOptions & { key: string }
 >('invoices', (request, response, context) => {
   const {
     variables = {
       first: 50,
       offset: 0,
-      sort: 'name',
+      key: 'STATUS',
       desc: false,
     },
   } = request;
 
-  const result = Api.ResolverService.list.invoice(variables);
+  const result = Api.ResolverService.list.invoice({
+    ...variables,
+    sort: variables.key,
+  });
 
   return response(context.data({ invoices: result }));
 });
@@ -94,8 +109,22 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
   }
 );
 
-export const itemList = graphql.query('items', (_, response, context) => {
-  const result = Api.ResolverService.list.item();
+export const itemList = graphql.query<
+  Record<string, unknown>,
+  PaginationOptions & { key: string }
+>('items', (request, response, context) => {
+  const {
+    variables = {
+      first: 50,
+      offset: 0,
+      key: 'NAME',
+      desc: false,
+    },
+  } = request;
+  const result = Api.ResolverService.list.item({
+    ...variables,
+    sort: variables.key,
+  });
 
   return response(context.data({ items: result }));
 });

@@ -25,10 +25,7 @@ interface OutboundDetailFooterProps {
   save: (draft: OutboundShipment) => void;
 }
 
-export const OutboundDetailFooter: FC<OutboundDetailFooterProps> = ({
-  draft,
-  save,
-}) => {
+export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
   const t = useTranslation();
   const { success } = useNotification();

@@ -69,6 +69,6 @@ export const getEditableQuantityColumn = <
       />
     );
   },
-  label: 'label.quantity',
+  label: 'label.pack-quantity',
   accessor: (row: T) => String(row.quantity),
 });

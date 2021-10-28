@@ -4,30 +4,19 @@ import {
   Box,
   InputWithLabelRow,
   BasicTextInput,
-  TabList,
-  Tab,
   Grid,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '../CustomerSearchInput';
 import { OutboundShipment } from './types';
 import { isInvoiceEditable } from '../utils';
 
-interface OutboundShipmentToolbarProps {
+interface ToolbarProps {
   draft: OutboundShipment;
-  currentTab: string;
-  onChangeTab: (newTab: string) => void;
 }
 
-export const OutboundDetailToolbar: FC<OutboundShipmentToolbarProps> = ({
-  draft,
-  onChangeTab,
-  currentTab,
-}) => {
-  const t = useTranslation();
-
+export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
   return (
-    <AppBarContentPortal sx={{ display: 'flex', flex: 1 }}>
+    <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container flexDirection="column" display="flex" flex={1}>
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
@@ -50,7 +39,7 @@ export const OutboundDetailToolbar: FC<OutboundShipmentToolbarProps> = ({
                   disabled
                   size="small"
                   sx={{ width: 250 }}
-                  value={draft.theirReference}
+                  value={draft?.theirReference ?? ''}
                   onChange={event => {
                     draft.update?.('theirReference', event.target.value);
                   }}
@@ -58,18 +47,6 @@ export const OutboundDetailToolbar: FC<OutboundShipmentToolbarProps> = ({
               }
             />
           </Box>
-        </Grid>
-        <Grid item display="flex" flex={1}>
-          <Box display="flex" flex={1} />
-
-          <Box display="flex" flex={1} justifyContent="center">
-            <TabList value={currentTab} onChange={(_, val) => onChangeTab(val)}>
-              <Tab value="general" label={t('label.general')} />
-              <Tab value="transport" label={t('label.transport')} />
-            </TabList>
-          </Box>
-
-          <Box display="flex" flex={1} />
         </Grid>
       </Grid>
     </AppBarContentPortal>

@@ -2,6 +2,7 @@ export enum AppRoute {
   Distribution = 'distribution',
   OutboundShipment = 'outbound-shipment',
   CustomerRequisition = 'customer-requisition',
+  Customer = 'customers',
 
   Dashboard = 'dashboard',
 
@@ -20,6 +21,9 @@ export enum AppRoute {
   Admin = 'admin',
 
   Logout = 'logout',
+
+  Catalogue = 'catalogue',
+  Items = 'items',
 
   PageNotFound = 'page-not-found',
 }

@@ -4,7 +4,6 @@ import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
 import { DomainObject } from '../../../../../types';
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 interface DataRowProps<T extends DomainObject> {
   columns: Column<T>[];
   onClick?: (rowValues: T) => void;
