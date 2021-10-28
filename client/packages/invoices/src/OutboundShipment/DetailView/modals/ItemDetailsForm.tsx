@@ -14,6 +14,7 @@ import {
 } from '@openmsupply-client/common';
 
 interface ItemDetailsFormProps {
+  allocatedQuantity: number;
   invoiceLine?: InvoiceLine;
   isLoading: boolean;
   items?: Item[];
@@ -44,6 +45,7 @@ const renderOption = (
 );
 
 export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
+  allocatedQuantity,
   invoiceLine,
   isLoading,
   items,
@@ -87,6 +89,11 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         })}
         labelKey="label.pack-quantity"
         defaultValue={invoiceLine?.quantity}
+        appendedText={
+          allocatedQuantity
+            ? `${allocatedQuantity} ${t('label.allocated')}`
+            : undefined
+        }
       />
     </>
   );

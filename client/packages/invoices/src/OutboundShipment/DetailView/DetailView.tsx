@@ -59,7 +59,7 @@ export const DetailView: FC = () => {
   return draft ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
-        isDisabled={isInvoiceEditable(draft)}
+        isDisabled={!isInvoiceEditable(draft)}
         onAddItem={itemModalControl.toggleOn}
       />
 

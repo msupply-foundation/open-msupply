@@ -106,7 +106,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const [batchRows, setBatchRows] = React.useState<BatchRow[]>([]);
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const [quantity, setQuantity] = React.useState(0);
-  const [isAllocated, setIsAllocated] = React.useState(false);
+  const [allocated, setAllocated] = React.useState(0);
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
@@ -173,19 +173,18 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       (total, batch) => (total += Number(values[batch.id] || 0)),
       Number(values['placeholder'] || 0)
     );
-
-    setIsAllocated(allocatedQuantity >= quantity && allocatedQuantity > 0);
+    setAllocated(allocatedQuantity);
   };
 
   const allocateQuantities = () => {
     // if invalid quantity entered, don't allocate
-    if (quantity < 1 || Number.isNaN(quantity)) {
+    if (quantity < 1 || Number.isNaN(quantity) || !selectedItem) {
       return;
     }
     // if the selected item has no batch rows, allocate all to the placeholder
     if (batchRows.length === 0) {
       setValue('placeholder', quantity);
-      setIsAllocated(true);
+      setAllocated(quantity);
       return;
     }
 
@@ -202,7 +201,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     });
     // allocate remainder to placeholder
     setValue('placeholder', toAllocate);
-    setIsAllocated(true);
+    setAllocated(quantity);
   };
 
   const onChangeRowQuantity = (key: string, value: number) => {
@@ -229,7 +228,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           variant="ok"
           onClick={upsertAndClose}
-          disabled={!isAllocated}
+          disabled={allocated < quantity || allocated === 0}
         />
       }
       height={600}
@@ -245,6 +244,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               onChangeQuantity={setQuantity}
               register={register}
               isLoading={isLoading}
+              allocatedQuantity={allocated}
             />
             <BatchesTable
               item={selectedItem}
