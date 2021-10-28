@@ -3,11 +3,13 @@ import {
   Autocomplete,
   AutocompleteOnChange,
   FieldValues,
+  Grid,
   InvoiceLine,
   Item,
-  ModalInputRow,
+  ModalInput,
   ModalLabel,
   ModalRow,
+  NumericTextInput,
   UseFormRegister,
   styled,
   useTranslation,
@@ -90,22 +92,39 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           isOptionEqualToValue={(option, value) => option.id === value.id}
         />
       </ModalRow>
-      <ModalInputRow
-        inputProps={register('code', { disabled: true })}
-        labelKey="label.code"
-        defaultValue={invoiceLine?.itemCode}
-      />
-      <ModalInputRow
-        inputProps={register('quantity', {
-          required: true,
-          min: { value: 1, message: t('error.greater-than-zero-required') },
-          pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
-          onChange: event => onChangeQuantity(Number(event.target.value)),
-        })}
-        labelKey="label.pack-quantity"
-        defaultValue={invoiceLine?.quantity}
-        appendix={quantityDescription}
-      />
+      <ModalRow>
+        <ModalLabel labelKey="label.available" />
+        <NumericTextInput
+          defaultValue={invoiceLine?.itemCode}
+          inputProps={register('availableQuantity')}
+          disabled
+        />
+        <Grid
+          style={{ display: 'flex', flexBasis: '25%', marginRight: '58px' }}
+          justifyContent="flex-end"
+          flex={1}
+        >
+          <ModalLabel labelKey="label.code" />
+          <ModalInput
+            defaultValue={invoiceLine?.itemCode}
+            inputProps={register('code', { disabled: true })}
+            width={150}
+          />
+        </Grid>
+      </ModalRow>
+      <ModalRow>
+        <ModalLabel labelKey="label.pack-quantity" />
+        <NumericTextInput
+          inputProps={register('quantity', {
+            required: true,
+            min: { value: 1, message: t('error.greater-than-zero-required') },
+            pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
+            onChange: event => onChangeQuantity(Number(event.target.value)),
+          })}
+          defaultValue={invoiceLine?.quantity}
+        />
+        {quantityDescription}
+      </ModalRow>
     </>
   );
 };

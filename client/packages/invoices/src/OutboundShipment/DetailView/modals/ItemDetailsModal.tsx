@@ -126,6 +126,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         .sort(sortByExpiryDate)
     );
     setValue('code', value?.code || '');
+    setValue('availableQuantity', value?.availableQuantity || 0);
   };
 
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
