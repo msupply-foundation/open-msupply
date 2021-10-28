@@ -86,6 +86,13 @@ export interface Invoice {
   otherPartyId: string;
   storeId: string;
   hold: boolean;
+
+  draftDatetime?: string;
+  allocatedDatetime?: string;
+  pickedDatetime?: string;
+  shippedDatetime?: string;
+  deliveredDatetime?: string;
+
   pricing: { __typename: string; totalAfterTax: string };
 }
 
