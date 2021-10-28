@@ -2,10 +2,10 @@ use crate::database::schema::InvoiceLineRow;
 
 use chrono::NaiveDate;
 
-pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_customer_invoice_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_a_line_a"),
-        invoice_id: String::from("customer_invoice_a"),
+pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_outbound_shipment_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_a_line_a"),
+        invoice_id: String::from("outbound_shipment_a"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -19,9 +19,9 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 10,
     };
 
-    let mock_customer_invoice_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_a_line_b"),
-        invoice_id: String::from("customer_invoice_a"),
+    let mock_outbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_a_line_b"),
+        invoice_id: String::from("outbound_shipment_a"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -36,9 +36,9 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     // Added for CI update test
-    let mock_customer_invoice_line_no_stock_line: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_line_no_stock_line"),
-        invoice_id: String::from("customer_invoice_invalid_stock_line"),
+    let mock_outbound_shipment_line_no_stock_line: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_line_no_stock_line"),
+        invoice_id: String::from("outbound_shipment_invalid_stock_line"),
         item_id: String::from("item_with_no_stock_line"),
         item_name: String::from("item_b"),
         item_code: String::from("item_b"),
@@ -53,16 +53,16 @@ pub fn mock_customer_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_customer_invoice_a_invoice_line_a,
-        mock_customer_invoice_a_invoice_line_b,
-        mock_customer_invoice_line_no_stock_line,
+        mock_outbound_shipment_a_invoice_line_a,
+        mock_outbound_shipment_a_invoice_line_b,
+        mock_outbound_shipment_line_no_stock_line,
     ]
 }
 
-pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_customer_invoice_b_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_b_line_a"),
-        invoice_id: String::from("customer_invoice_b"),
+pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_outbound_shipment_b_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_b_line_a"),
+        invoice_id: String::from("outbound_shipment_b"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -76,9 +76,9 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 3,
     };
 
-    let mock_customer_invoice_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_b_line_b"),
-        invoice_id: String::from("customer_invoice_b"),
+    let mock_outbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_b_line_b"),
+        invoice_id: String::from("outbound_shipment_b"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -93,15 +93,15 @@ pub fn mock_customer_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_customer_invoice_b_invoice_line_a,
-        mock_customer_invoice_b_invoice_line_b,
+        mock_outbound_shipment_b_invoice_line_a,
+        mock_outbound_shipment_b_invoice_line_b,
     ]
 }
 
-pub fn mock_customer_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_customer_invoice_c_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_c_line_a"),
-        invoice_id: String::from("customer_invoice_c"),
+pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_outbound_shipment_c_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_c_line_a"),
+        invoice_id: String::from("outbound_shipment_c"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -115,9 +115,9 @@ pub fn mock_customer_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 3,
     };
 
-    let mock_customer_invoice_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_c_line_b"),
-        invoice_id: String::from("customer_invoice_c"),
+    let mock_outbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_c_line_b"),
+        invoice_id: String::from("outbound_shipment_c"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -132,15 +132,15 @@ pub fn mock_customer_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_customer_invoice_c_invoice_line_a,
-        mock_customer_invoice_c_invoice_line_b,
+        mock_outbound_shipment_c_invoice_line_a,
+        mock_outbound_shipment_c_invoice_line_b,
     ]
 }
 
-pub fn mock_customer_invoice_d_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_customer_invoice_d_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("customer_invoice_d_line_a"),
-        invoice_id: String::from("customer_invoice_d"),
+pub fn mock_outbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_outbound_shipment_d_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("outbound_shipment_d_line_a"),
+        invoice_id: String::from("outbound_shipment_d"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -154,13 +154,13 @@ pub fn mock_customer_invoice_d_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 2,
     };
 
-    vec![mock_customer_invoice_d_invoice_line_a]
+    vec![mock_outbound_shipment_d_invoice_line_a]
 }
 
-pub fn mock_supplier_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_supplier_invoice_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_a_line_a"),
-        invoice_id: String::from("supplier_invoice_a"),
+pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_inbound_shipment_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_a_line_a"),
+        invoice_id: String::from("inbound_shipment_a"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -174,9 +174,9 @@ pub fn mock_supplier_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 1,
     };
 
-    let mock_supplier_invoice_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_a_line_b"),
-        invoice_id: String::from("supplier_invoice_a"),
+    let mock_inbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_a_line_b"),
+        invoice_id: String::from("inbound_shipment_a"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -191,15 +191,15 @@ pub fn mock_supplier_invoice_a_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_supplier_invoice_a_invoice_line_a,
-        mock_supplier_invoice_a_invoice_line_b,
+        mock_inbound_shipment_a_invoice_line_a,
+        mock_inbound_shipment_a_invoice_line_b,
     ]
 }
 
-pub fn mock_supplier_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_supplier_invoice_b_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_b_line_a"),
-        invoice_id: String::from("supplier_invoice_b"),
+pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_inbound_shipment_b_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_b_line_a"),
+        invoice_id: String::from("inbound_shipment_b"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -213,9 +213,9 @@ pub fn mock_supplier_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 1,
     };
 
-    let mock_supplier_invoice_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_b_line_b"),
-        invoice_id: String::from("supplier_invoice_b"),
+    let mock_inbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_b_line_b"),
+        invoice_id: String::from("inbound_shipment_b"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -230,15 +230,15 @@ pub fn mock_supplier_invoice_b_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_supplier_invoice_b_invoice_line_a,
-        mock_supplier_invoice_b_invoice_line_b,
+        mock_inbound_shipment_b_invoice_line_a,
+        mock_inbound_shipment_b_invoice_line_b,
     ]
 }
 
-pub fn mock_supplier_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_supplier_invoice_c_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_c_line_a"),
-        invoice_id: String::from("supplier_invoice_c"),
+pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_inbound_shipment_c_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_c_line_a"),
+        invoice_id: String::from("inbound_shipment_c"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -252,9 +252,9 @@ pub fn mock_supplier_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 3,
     };
 
-    let mock_supplier_invoice_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_c_line_b"),
-        invoice_id: String::from("supplier_invoice_c"),
+    let mock_inbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_c_line_b"),
+        invoice_id: String::from("inbound_shipment_c"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -269,15 +269,15 @@ pub fn mock_supplier_invoice_c_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_supplier_invoice_c_invoice_line_a,
-        mock_supplier_invoice_c_invoice_line_b,
+        mock_inbound_shipment_c_invoice_line_a,
+        mock_inbound_shipment_c_invoice_line_b,
     ]
 }
 
-pub fn mock_supplier_invoice_d_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_supplier_invoice_d_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_d_line_a"),
-        invoice_id: String::from("supplier_invoice_d"),
+pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_inbound_shipment_d_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_d_line_a"),
+        invoice_id: String::from("inbound_shipment_d"),
         item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("item_a_code"),
@@ -291,9 +291,9 @@ pub fn mock_supplier_invoice_d_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 7,
     };
 
-    let mock_supplier_invoice_d_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("supplier_invoice_d_line_b"),
-        invoice_id: String::from("supplier_invoice_d"),
+    let mock_inbound_shipment_d_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
+        id: String::from("inbound_shipment_d_line_b"),
+        invoice_id: String::from("inbound_shipment_d"),
         item_id: String::from("item_b"),
         item_name: String::from("Item B"),
         item_code: String::from("item_b_code"),
@@ -308,38 +308,38 @@ pub fn mock_supplier_invoice_d_invoice_lines() -> Vec<InvoiceLineRow> {
     };
 
     vec![
-        mock_supplier_invoice_d_invoice_line_a,
-        mock_supplier_invoice_d_invoice_line_b,
+        mock_inbound_shipment_d_invoice_line_a,
+        mock_inbound_shipment_d_invoice_line_b,
     ]
 }
 
-pub fn mock_customer_invoice_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mut mock_customer_invoice_invoice_lines = Vec::new();
+pub fn mock_outbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mut mock_outbound_shipment_invoice_lines = Vec::new();
 
-    mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_a_invoice_lines());
-    mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_b_invoice_lines());
-    mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_c_invoice_lines());
-    mock_customer_invoice_invoice_lines.extend(mock_customer_invoice_d_invoice_lines());
+    mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_a_invoice_lines());
+    mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_b_invoice_lines());
+    mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_c_invoice_lines());
+    mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_d_invoice_lines());
 
-    mock_customer_invoice_invoice_lines
+    mock_outbound_shipment_invoice_lines
 }
 
-pub fn mock_supplier_invoice_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mut mock_supplier_invoice_invoice_lines = Vec::new();
+pub fn mock_inbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mut mock_inbound_shipment_invoice_lines = Vec::new();
 
-    mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_a_invoice_lines());
-    mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_b_invoice_lines());
-    mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_c_invoice_lines());
-    mock_supplier_invoice_invoice_lines.extend(mock_supplier_invoice_d_invoice_lines());
+    mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_a_invoice_lines());
+    mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_b_invoice_lines());
+    mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_c_invoice_lines());
+    mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_d_invoice_lines());
 
-    mock_supplier_invoice_invoice_lines
+    mock_inbound_shipment_invoice_lines
 }
 
 pub fn mock_invoice_lines() -> Vec<InvoiceLineRow> {
     let mut mock_invoice_lines: Vec<InvoiceLineRow> = Vec::new();
 
-    mock_invoice_lines.extend(mock_customer_invoice_invoice_lines());
-    mock_invoice_lines.extend(mock_supplier_invoice_invoice_lines());
+    mock_invoice_lines.extend(mock_outbound_shipment_invoice_lines());
+    mock_invoice_lines.extend(mock_inbound_shipment_invoice_lines());
 
     mock_invoice_lines
 }

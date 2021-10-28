@@ -63,18 +63,18 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
 #[graphql(remote = "crate::domain::invoice::InvoiceType")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvoiceNodeType {
-    CustomerInvoice,
-    SupplierInvoice,
+    OutboundShipment,
+    InboundShipment,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[graphql(remote = "crate::domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
-    /// For customer invoices: In DRAFT mode only the available_number_of_packs in a stock line gets
+    /// For outbound shipments: In DRAFT mode only the available_number_of_packs in a stock line gets
     /// updated when items are added to the invoice.
     Draft,
-    /// For customer invoices: When an invoice is CONFIRMED available_number_of_packs and
+    /// For outbound shipments: When an invoice is CONFIRMED available_number_of_packs and
     /// total_number_of_packs get updated when items are added to the invoice.
     Confirmed,
     /// A FINALISED invoice can't be edited nor deleted.

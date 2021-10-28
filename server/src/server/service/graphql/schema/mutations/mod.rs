@@ -1,6 +1,6 @@
-pub mod customer_invoice;
 mod error;
-pub mod supplier_invoice;
+pub mod inbound_shipment;
+pub mod outbound_shipment;
 
 use super::types::{Connector, InvoiceLineNode, InvoiceResponse};
 use crate::{
@@ -8,163 +8,164 @@ use crate::{
     server::service::graphql::ContextExt,
     service::{
         invoice::{
-            delete_customer_invoice, delete_supplier_invoice, get_invoice, insert_customer_invoice,
-            insert_supplier_invoice, update_customer_invoice, update_supplier_invoice,
+            delete_inbound_shipment, delete_outbound_shipment, get_invoice,
+            insert_inbound_shipment, insert_outbound_shipment, update_inbound_shipment,
+            update_outbound_shipment,
         },
         invoice_line::{
-            delete_customer_invoice_line, delete_supplier_invoice_line, get_invoice_line,
-            insert_customer_invoice_line, insert_supplier_invoice_line,
-            update_customer_invoice_line, update_supplier_invoice_line,
+            delete_inbound_shipment_line, delete_outbound_shipment_line, get_invoice_line,
+            insert_inbound_shipment_line, insert_outbound_shipment_line,
+            update_inbound_shipment_line, update_outbound_shipment_line,
         },
     },
 };
 use async_graphql::*;
-use customer_invoice::*;
-use supplier_invoice::*;
+use inbound_shipment::*;
+use outbound_shipment::*;
 
 pub struct Mutations;
 
 #[Object]
 impl Mutations {
-    async fn insert_customer_invoice(
+    async fn insert_outbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: InsertCustomerInvoiceInput,
-    ) -> InsertCustomerInvoiceResponse {
+        input: InsertOutboundShipmentInput,
+    ) -> InsertOutboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        match insert_customer_invoice(connection_manager, input.into()) {
+        match insert_outbound_shipment(connection_manager, input.into()) {
             Ok(id) => get_invoice(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn update_customer_invoice(
+    async fn update_outbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: UpdateCustomerInvoiceInput,
-    ) -> UpdateCustomerInvoiceResponse {
+        input: UpdateOutboundShipmentInput,
+    ) -> UpdateOutboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        match update_customer_invoice(connection_manager, input.into()) {
+        match update_outbound_shipment(connection_manager, input.into()) {
             Ok(id) => get_invoice(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn delete_customer_invoice(
+    async fn delete_outbound_shipment(
         &self,
         ctx: &Context<'_>,
         id: String,
-    ) -> DeleteCustomerInvoiceResponse {
+    ) -> DeleteOutboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        delete_customer_invoice(connection_manager, id).into()
+        delete_outbound_shipment(connection_manager, id).into()
     }
 
-    async fn insert_customer_invoice_line(
+    async fn insert_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: InsertCustomerInvoiceLineInput,
-    ) -> InsertCustomerInvoiceLineResponse {
+        input: InsertOutboundShipmentLineInput,
+    ) -> InsertOutboundShipmentLineResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match insert_customer_invoice_line(connection_manager, input.into()) {
+        match insert_outbound_shipment_line(connection_manager, input.into()) {
             Ok(id) => get_invoice_line(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn update_customer_invoice_line(
+    async fn update_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: UpdateCustomerInvoiceLineInput,
-    ) -> UpdateCustomerInvoiceLineResponse {
+        input: UpdateOutboundShipmentLineInput,
+    ) -> UpdateOutboundShipmentLineResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match update_customer_invoice_line(connection_manager, input.into()) {
+        match update_outbound_shipment_line(connection_manager, input.into()) {
             Ok(id) => get_invoice_line(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn delete_customer_invoice_line(
+    async fn delete_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: DeleteCustomerInvoiceLineInput,
-    ) -> DeleteCustomerInvoiceLineResponse {
+        input: DeleteOutboundShipmentLineInput,
+    ) -> DeleteOutboundShipmentLineResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_customer_invoice_line(connection_manager, input.into()).into()
+        delete_outbound_shipment_line(connection_manager, input.into()).into()
     }
 
-    async fn insert_supplier_invoice(
+    async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: InsertSupplierInvoiceInput,
-    ) -> InsertSupplierInvoiceResponse {
+        input: InsertInboundShipmentInput,
+    ) -> InsertInboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match insert_supplier_invoice(connection_manager, input.into()) {
+        match insert_inbound_shipment(connection_manager, input.into()) {
             Ok(id) => get_invoice(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn update_supplier_invoice(
+    async fn update_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: UpdateSupplierInvoiceInput,
-    ) -> UpdateSupplierInvoiceResponse {
+        input: UpdateInboundShipmentInput,
+    ) -> UpdateInboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match update_supplier_invoice(connection_manager, input.into()) {
+        match update_inbound_shipment(connection_manager, input.into()) {
             Ok(id) => get_invoice(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn delete_supplier_invoice(
+    async fn delete_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: DeleteSupplierInvoiceInput,
-    ) -> DeleteSupplierInvoiceResponse {
+        input: DeleteInboundShipmentInput,
+    ) -> DeleteInboundShipmentResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_supplier_invoice(connection_manager, input.into()).into()
+        delete_inbound_shipment(connection_manager, input.into()).into()
     }
 
-    async fn insert_supplier_invoice_line(
+    async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: InsertSupplierInvoiceLineInput,
-    ) -> InsertSupplierInvoiceLineResponse {
+        input: InsertInboundShipmentLineInput,
+    ) -> InsertInboundShipmentLineResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match insert_supplier_invoice_line(connection_manager, input.into()) {
+        match insert_inbound_shipment_line(connection_manager, input.into()) {
             Ok(id) => get_invoice_line(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn update_supplier_invoice_line(
+    async fn update_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: UpdateSupplierInvoiceLineInput,
-    ) -> UpdateSupplierInvoiceLineResponse {
+        input: UpdateInboundShipmentLineInput,
+    ) -> UpdateInboundShipmentLineResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        match update_supplier_invoice_line(connection_manager, input.into()) {
+        match update_inbound_shipment_line(connection_manager, input.into()) {
             Ok(id) => get_invoice_line(connection_manager, id).into(),
             Err(error) => error.into(),
         }
     }
 
-    async fn delete_supplier_invoice_line(
+    async fn delete_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: DeleteSupplierInvoiceLineInput,
-    ) -> DeleteSupplierInvoiceLineResponse {
+        input: DeleteInboundShipmentLineInput,
+    ) -> DeleteInboundShipmentLineResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
 
-        delete_supplier_invoice_line(connection_manager, input.into()).into()
+        delete_inbound_shipment_line(connection_manager, input.into()).into()
     }
 }
 
@@ -213,19 +214,19 @@ impl CannotEditFinalisedInvoice {
     }
 }
 
-pub struct NotASupplierInvoice;
+pub struct NotAnInboundShipment;
 #[Object]
-impl NotASupplierInvoice {
+impl NotAnInboundShipment {
     pub async fn description(&self) -> &'static str {
-        "Invoice is not Supplier Invoice"
+        "Invoice is not Inbound Shipment"
     }
 }
 
-pub struct NotACustomerInvoice;
+pub struct NotAnOutboundShipment;
 #[Object]
-impl NotACustomerInvoice {
+impl NotAnOutboundShipment {
     pub async fn description(&self) -> &'static str {
-        "Invoice is not Customer Invoice"
+        "Invoice is not Outbound Shipment"
     }
 }
 

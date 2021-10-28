@@ -49,16 +49,16 @@ mutation addStock(
   $packSize: Int!
   $sellPricePerPack: Float!
 ) {
-  insertSupplierInvoice(
+  insertInboundShipment(
     input: { id: $invoiceId, otherPartyId: $otherPartyId, status: DRAFT }
   ) {
-    ... on InsertSupplierInvoiceError {
+    ... on InsertInboundShipmentError {
       error {
         __typename
       }
     }
   }
-  insertSupplierInvoiceLine(
+  insertInboundShipmentLine(
     input: {
       id: $lineId
       invoiceId: $invoiceId
@@ -69,14 +69,14 @@ mutation addStock(
       numberOfPacks: $numberOfPacks
     }
   ) {
-    ... on InsertSupplierInvoiceLineError {
+    ... on InsertInboundShipmentLineError {
       error {
         __typename
       }
     }
   }
-  updateSupplierInvoice(input: { id: $invoiceId, status: FINALISED }) {
-    ... on UpdateSupplierInvoiceError {
+  updateInboundShipment(input: { id: $invoiceId, status: FINALISED }) {
+    ... on UpdateInboundShipmentError {
       error {
         __typename
       }
@@ -134,16 +134,16 @@ mutation issueStock(
   $itemId: String!
   $numberOfPacks: Int!
 ) {
-  insertCustomerInvoice(
+  insertOutboundShipment(
     input: { id: $invoiceId, otherPartyId: $otherPartyId }
   ) {
-    ... on InsertCustomerInvoiceError {
+    ... on InsertOutboundShipmentError {
       error {
         __typename
       }
     }
   }
-  insertCustomerInvoiceLine(
+  insertOutboundShipmentLine(
     input: {
       id: $lineId
       invoiceId: $invoiceId
@@ -152,13 +152,13 @@ mutation issueStock(
       numberOfPacks: $numberOfPacks
     }
   ) {
-    ... on InsertCustomerInvoiceLineError {
+    ... on InsertOutboundShipmentLineError {
       error {
         __typename
       }
     }
   }
-  updateCustomerInvoice(input: { id: $invoiceId, status: CONFIRMED }) {
+  updateOutboundShipment(input: { id: $invoiceId, status: CONFIRMED }) {
     ... on InvoiceNode {
       id
       confirmedDatetime

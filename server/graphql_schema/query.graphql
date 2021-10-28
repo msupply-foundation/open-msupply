@@ -1,15 +1,15 @@
 # Queries must match the schema.graphql file, see readme.md test section.
 
-# INSERT SUPPLIER INVOICE
+# INSERT INBOUND SHIPMENT
 
-mutation insertSupplierInvoiceFull(
+mutation insertInboundShipmentFull(
   $id: String!
   $otherPartyId: String!
   $status: InvoiceNodeStatus!
   $comment_option: String
   $theirReference_option: String
 ) {
-  insertSupplierInvoice(
+  insertInboundShipment(
     input: {
       id: $id
       otherPartyId: $otherPartyId
@@ -18,24 +18,24 @@ mutation insertSupplierInvoiceFull(
       comment: $comment_option
     }
   ) {
-    ...InsertSupplierInvoiceResponse
+    ...InsertInboundShipmentResponse
   }
 }
 
-fragment InsertSupplierInvoiceResponse on InsertSupplierInvoiceResponse {
+fragment InsertInboundShipmentResponse on InsertInboundShipmentResponse {
   __typename
-  ...InsertSupplierInvoiceError
+  ...InsertInboundShipmentError
   ...NodeError
   ...InvoiceNode
 }
 
-fragment InsertSupplierInvoiceError on InsertSupplierInvoiceError {
+fragment InsertInboundShipmentError on InsertInboundShipmentError {
   error {
-    ...InsertSupplierInvoiceErrorInterface
+    ...InsertInboundShipmentErrorInterface
   }
 }
 
-fragment InsertSupplierInvoiceErrorInterface on InsertSupplierInvoiceErrorInterface {
+fragment InsertInboundShipmentErrorInterface on InsertInboundShipmentErrorInterface {
   __typename
   ...DatabaseError
   ...ForeignKeyError
@@ -43,16 +43,16 @@ fragment InsertSupplierInvoiceErrorInterface on InsertSupplierInvoiceErrorInterf
   ...RecordAlreadyExist
 }
 
-# UPDATE SUPPLIER INVOICE
+# UPDATE INBOUND SHIPMENT
 
-mutation updateSupplierInvoiceFull(
+mutation updateInboundShipmentFull(
   $id: String!
   $otherPartyId_option: String
   $status_option: InvoiceNodeStatus
   $comment_option: String
   $theirReference_option: String
 ) {
-  updateSupplierInvoice(
+  updateInboundShipment(
     input: {
       id: $id
       otherPartyId: $otherPartyId_option
@@ -61,68 +61,68 @@ mutation updateSupplierInvoiceFull(
       comment: $comment_option
     }
   ) {
-    ...UpdateSupplierInvoiceResponse
+    ...UpdateInboundShipmentResponse
   }
 }
 
-fragment UpdateSupplierInvoiceResponse on UpdateSupplierInvoiceResponse {
+fragment UpdateInboundShipmentResponse on UpdateInboundShipmentResponse {
   __typename
-  ...UpdateSupplierInvoiceError
+  ...UpdateInboundShipmentError
   ...NodeError
   ...InvoiceNode
 }
 
-fragment UpdateSupplierInvoiceError on UpdateSupplierInvoiceError {
+fragment UpdateInboundShipmentError on UpdateInboundShipmentError {
   error {
-    ...UpdateSupplierInvoiceErrorInterface
+    ...UpdateInboundShipmentErrorInterface
   }
 }
 
-fragment UpdateSupplierInvoiceErrorInterface on UpdateSupplierInvoiceErrorInterface {
+fragment UpdateInboundShipmentErrorInterface on UpdateInboundShipmentErrorInterface {
   __typename
   ...DatabaseError
   ...ForeignKeyError
   ...OtherPartyNotASupplier
   ...RecordNotFound
   ...CannotEditFinalisedInvoice
-  ...NotASupplierInvoice
+  ...NotAnInboundShipment
   ...InvoiceDoesNotBelongToCurrentStore
   ...CannotChangeInvoiceBackToDraft
 }
 
-# DELETE SUPPLIER INVOICE
+# DELETE INBOUND SHIPMENT
 
-mutation deleteSupplierInvoiceFull($id: String!) {
-  deleteSupplierInvoice(input: { id: $id }) {
-    ...DeleteSupplierInvoiceResponse
+mutation deleteInboundShipmentFull($id: String!) {
+  deleteInboundShipment(input: { id: $id }) {
+    ...DeleteInboundShipmentResponse
   }
 }
 
-fragment DeleteSupplierInvoiceResponse on DeleteSupplierInvoiceResponse {
+fragment DeleteInboundShipmentResponse on DeleteInboundShipmentResponse {
   __typename
-  ...DeleteSupplierInvoiceError
+  ...DeleteInboundShipmentError
   ...DeleteResponse
 }
 
-fragment DeleteSupplierInvoiceError on DeleteSupplierInvoiceError {
+fragment DeleteInboundShipmentError on DeleteInboundShipmentError {
   error {
-    ...DeleteSupplierInvoiceErrorInterface
+    ...DeleteInboundShipmentErrorInterface
   }
 }
 
-fragment DeleteSupplierInvoiceErrorInterface on DeleteSupplierInvoiceErrorInterface {
+fragment DeleteInboundShipmentErrorInterface on DeleteInboundShipmentErrorInterface {
   __typename
   ...DatabaseError
   ...RecordNotFound
   ...CannotEditFinalisedInvoice
-  ...NotASupplierInvoice
+  ...NotAnInboundShipment
   ...InvoiceDoesNotBelongToCurrentStore
   ...CannotDeleteInvoiceWithLines
 }
 
-# INSERT SUPPLIER INVOICE LINE
+# INSERT INBOUND SHIPMENT LINE
 
-mutation insertSupplierInvoiceLineFull(
+mutation insertInboundShipmentLineFull(
   $batch_option: String
   $costPricePerPack: Float!
   $expiryDate_option: NaiveDate
@@ -133,7 +133,7 @@ mutation insertSupplierInvoiceLineFull(
   $sellPricePerPack: Float!
   $packSize: Int!
 ) {
-  insertSupplierInvoiceLine(
+  insertInboundShipmentLine(
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -147,37 +147,37 @@ mutation insertSupplierInvoiceLineFull(
       packSize: $packSize
     }
   ) {
-    ...InsertSupplierInvoiceLineResponse
+    ...InsertInboundShipmentLineResponse
   }
 }
 
-fragment InsertSupplierInvoiceLineResponse on InsertSupplierInvoiceLineResponse {
+fragment InsertInboundShipmentLineResponse on InsertInboundShipmentLineResponse {
   __typename
-  ...InsertSupplierInvoiceLineError
+  ...InsertInboundShipmentLineError
   ...NodeError
   ...InvoiceLineNode
 }
 
-fragment InsertSupplierInvoiceLineError on InsertSupplierInvoiceLineError {
+fragment InsertInboundShipmentLineError on InsertInboundShipmentLineError {
   error {
-    ...InsertSupplierInvoiceLineErrorInterface
+    ...InsertInboundShipmentLineErrorInterface
   }
 }
 
-fragment InsertSupplierInvoiceLineErrorInterface on InsertSupplierInvoiceLineErrorInterface {
+fragment InsertInboundShipmentLineErrorInterface on InsertInboundShipmentLineErrorInterface {
   __typename
   ...CannotEditFinalisedInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
-  ...NotASupplierInvoice
+  ...NotAnInboundShipment
   ...RangeError
   ...RecordAlreadyExist
 }
 
-# UPDATES SUPPLIER INVOICE LINE
+# UPDATES INBOUND SHIPMENT LINE
 
-mutation updateSupplierInvoiceLineFull(
+mutation updateInboundShipmentLineFull(
   $batch_option: String
   $costPricePerPack_option: Float
   $expiryDate_option: NaiveDate
@@ -188,7 +188,7 @@ mutation updateSupplierInvoiceLineFull(
   $sellPricePerPack_option: Float
   $packSize_option: Int
 ) {
-  updateSupplierInvoiceLine(
+  updateInboundShipmentLine(
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -202,46 +202,46 @@ mutation updateSupplierInvoiceLineFull(
       packSize: $packSize_option
     }
   ) {
-    ...UpdateSupplierInvoiceLineResponse
+    ...UpdateInboundShipmentLineResponse
   }
 }
 
-fragment UpdateSupplierInvoiceLineResponse on UpdateSupplierInvoiceLineResponse {
+fragment UpdateInboundShipmentLineResponse on UpdateInboundShipmentLineResponse {
   __typename
-  ...UpdateSupplierInvoiceLineError
+  ...UpdateInboundShipmentLineError
   ...NodeError
   ...InvoiceLineNode
 }
 
-fragment UpdateSupplierInvoiceLineError on UpdateSupplierInvoiceLineError {
+fragment UpdateInboundShipmentLineError on UpdateInboundShipmentLineError {
   error {
-    ...UpdateSupplierInvoiceLineErrorInterface
+    ...UpdateInboundShipmentLineErrorInterface
   }
 }
 
-fragment UpdateSupplierInvoiceLineErrorInterface on UpdateSupplierInvoiceLineErrorInterface {
+fragment UpdateInboundShipmentLineErrorInterface on UpdateInboundShipmentLineErrorInterface {
   __typename
   ...CannotEditFinalisedInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
-  ...NotASupplierInvoice
+  ...NotAnInboundShipment
   ...RangeError
   ...RecordNotFound
   ...BatchIsReserved
   ...InvoiceLineBelongsToAnotherInvoice
 }
 
-# UPDATES CUSTOMER INVOICE LINE
+# UPDATES OUTBOUND SHIPMENT LINE
 
-mutation updateCustomerInvoiceLineFull(
+mutation updateOutboundShipmentLineFull(
   $id: String!
   $invoiceId: String!
   $itemId_option: String
   $numberOfPacks_option: Int
   $stockLineId_option: String
 ) {
-  updateCustomerInvoiceLine(
+  updateOutboundShipmentLine(
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -250,24 +250,24 @@ mutation updateCustomerInvoiceLineFull(
       stockLineId: $stockLineId_option
     }
   ) {
-    ...UpdateCustomerInvoiceLineResponse
+    ...UpdateOutboundShipmentLineResponse
   }
 }
 
-fragment UpdateCustomerInvoiceLineResponse on UpdateCustomerInvoiceLineResponse {
+fragment UpdateOutboundShipmentLineResponse on UpdateOutboundShipmentLineResponse {
   __typename
-  ...UpdateCustomerInvoiceLineError
+  ...UpdateOutboundShipmentLineError
   ...NodeError
   ...InvoiceLineNode
 }
 
-fragment UpdateCustomerInvoiceLineError on UpdateCustomerInvoiceLineError {
+fragment UpdateOutboundShipmentLineError on UpdateOutboundShipmentLineError {
   error {
-    ...UpdateCustomerInvoiceLineErrorInterface
+    ...UpdateOutboundShipmentLineErrorInterface
   }
 }
 
-fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErrorInterface {
+fragment UpdateOutboundShipmentLineErrorInterface on UpdateOutboundShipmentLineErrorInterface {
   __typename
   ...CannotEditFinalisedInvoice
   ...DatabaseError
@@ -275,7 +275,7 @@ fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErr
   ...InvoiceDoesNotBelongToCurrentStore
   ...InvoiceLineBelongsToAnotherInvoice
   ...LineDoesNotReferenceStockLine
-  ...NotACustomerInvoice
+  ...NotAnOutboundShipment
   ...NotEnoughStockForReduction
   ...RangeError
   ...RecordNotFound
@@ -284,16 +284,16 @@ fragment UpdateCustomerInvoiceLineErrorInterface on UpdateCustomerInvoiceLineErr
   ...ItemDoesNotMatchStockLine
 }
 
-# INSERTS CUSTOMER INVOICE LINE
+# INSERTS OUTBOUND SHIPMENT LINE
 
-mutation insertCustomerInvoiceLineFull(
+mutation insertOutboundShipmentLineFull(
   $id: String!
   $invoiceId: String!
   $itemId: String!
   $numberOfPacks: Int!
   $stockLineId: String!
 ) {
-  insertCustomerInvoiceLine(
+  insertOutboundShipmentLine(
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -302,31 +302,31 @@ mutation insertCustomerInvoiceLineFull(
       stockLineId: $stockLineId
     }
   ) {
-    ...InsertCustomerInvoiceLineResponse
+    ...InsertOutboundShipmentLineResponse
   }
 }
 
-fragment InsertCustomerInvoiceLineResponse on InsertCustomerInvoiceLineResponse {
+fragment InsertOutboundShipmentLineResponse on InsertOutboundShipmentLineResponse {
   __typename
-  ...InsertCustomerInvoiceLineError
+  ...InsertOutboundShipmentLineError
   ...NodeError
   ...InvoiceLineNode
 }
 
-fragment InsertCustomerInvoiceLineError on InsertCustomerInvoiceLineError {
+fragment InsertOutboundShipmentLineError on InsertOutboundShipmentLineError {
   error {
-    ...InsertCustomerInvoiceLineErrorInterface
+    ...InsertOutboundShipmentLineErrorInterface
   }
 }
 
-fragment InsertCustomerInvoiceLineErrorInterface on InsertCustomerInvoiceLineErrorInterface {
+fragment InsertOutboundShipmentLineErrorInterface on InsertOutboundShipmentLineErrorInterface {
   __typename
   ...CannotEditFinalisedInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
   ...ItemDoesNotMatchStockLine
-  ...NotACustomerInvoice
+  ...NotAnOutboundShipment
   ...NotEnoughStockForReduction
   ...RangeError
   ...RecordAlreadyExist
@@ -334,65 +334,65 @@ fragment InsertCustomerInvoiceLineErrorInterface on InsertCustomerInvoiceLineErr
   ...StockLineDoesNotBelongToCurrentStore
 }
 
-# DELETE SUPPLIER INVOICE LINE
+# DELETE INBOUND SHIPMENT LINE
 
-mutation deleteSupplierInvoiceLineFull($id: String!, $invoiceId: String!) {
-  deleteSupplierInvoiceLine(input: { id: $id, invoiceId: $invoiceId }) {
-    ...DeleteSupplierInvoiceLineResponse
+mutation deleteInboundShipmentLineFull($id: String!, $invoiceId: String!) {
+  deleteInboundShipmentLine(input: { id: $id, invoiceId: $invoiceId }) {
+    ...DeleteInboundShipmentLineResponse
   }
 }
 
-fragment DeleteSupplierInvoiceLineResponse on DeleteSupplierInvoiceLineResponse {
+fragment DeleteInboundShipmentLineResponse on DeleteInboundShipmentLineResponse {
   __typename
-  ...DeleteSupplierInvoiceLineError
+  ...DeleteInboundShipmentLineError
   ...DeleteResponse
 }
 
-fragment DeleteSupplierInvoiceLineError on DeleteSupplierInvoiceLineError {
+fragment DeleteInboundShipmentLineError on DeleteInboundShipmentLineError {
   error {
-    ...DeleteSupplierInvoiceLineErrorInterface
+    ...DeleteInboundShipmentLineErrorInterface
   }
 }
 
-fragment DeleteSupplierInvoiceLineErrorInterface on DeleteSupplierInvoiceLineErrorInterface {
+fragment DeleteInboundShipmentLineErrorInterface on DeleteInboundShipmentLineErrorInterface {
   __typename
   ...CannotEditFinalisedInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
-  ...NotASupplierInvoice
+  ...NotAnInboundShipment
   ...RecordNotFound
   ...BatchIsReserved
   ...InvoiceLineBelongsToAnotherInvoice
 }
 
-# DELETE CUSTOMER INVOICE LINE
+# DELETE OUTBOUND SHIPMENT LINE
 
-mutation deleteCustomerInvoiceLineFull($id: String!, $invoiceId: String!) {
-  deleteCustomerInvoiceLine(input: { id: $id, invoiceId: $invoiceId }) {
-    ...DeleteCustomerInvoiceLineResponse
+mutation deleteOutboundShipmentLineFull($id: String!, $invoiceId: String!) {
+  deleteOutboundShipmentLine(input: { id: $id, invoiceId: $invoiceId }) {
+    ...DeleteOutboundShipmentLineResponse
   }
 }
 
-fragment DeleteCustomerInvoiceLineResponse on DeleteCustomerInvoiceLineResponse {
+fragment DeleteOutboundShipmentLineResponse on DeleteOutboundShipmentLineResponse {
   __typename
-  ...DeleteCustomerInvoiceLineError
+  ...DeleteOutboundShipmentLineError
   ...DeleteResponse
 }
 
-fragment DeleteCustomerInvoiceLineError on DeleteCustomerInvoiceLineError {
+fragment DeleteOutboundShipmentLineError on DeleteOutboundShipmentLineError {
   error {
-    ...DeleteCustomerInvoiceLineErrorInterface
+    ...DeleteOutboundShipmentLineErrorInterface
   }
 }
 
-fragment DeleteCustomerInvoiceLineErrorInterface on DeleteCustomerInvoiceLineErrorInterface {
+fragment DeleteOutboundShipmentLineErrorInterface on DeleteOutboundShipmentLineErrorInterface {
   __typename
   ...CannotEditFinalisedInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
-  ...NotACustomerInvoice
+  ...NotAnOutboundShipment
   ...RecordNotFound
   ...InvoiceLineBelongsToAnotherInvoice
 }
@@ -584,11 +584,11 @@ fragment CannotEditFinalisedInvoice on CannotEditFinalisedInvoice {
   description
 }
 
-fragment NotASupplierInvoice on NotASupplierInvoice {
+fragment NotAnInboundShipment on NotAnInboundShipment {
   description
 }
 
-fragment NotACustomerInvoice on NotACustomerInvoice {
+fragment NotAnOutboundShipment on NotAnOutboundShipment {
   description
 }
 
