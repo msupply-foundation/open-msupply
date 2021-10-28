@@ -18,6 +18,14 @@ export interface BatchRow extends StockLine {
   quantity: number;
 }
 
+export interface InvoiceStatusLog {
+  draft?: string;
+  allocated?: string;
+  picked?: string;
+  shipped?: string;
+  finalised?: string;
+}
+
 export interface OutboundShipment extends Invoice {
   lines: ItemRow[];
   status: OutboundShipmentStatus;
