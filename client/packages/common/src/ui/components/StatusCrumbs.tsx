@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Box from '@mui/material/Box';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 import { useAppTheme } from '../../styles';
 import { ChevronDownIcon } from '../icons';
@@ -14,6 +14,7 @@ import Popper, { PopperProps } from '@mui/material/Popper';
 
 import Fade from '@mui/material/Fade';
 import Paper from '@mui/material/Paper';
+import { VerticalStepper } from './steppers/VerticalStepper';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
@@ -29,6 +30,11 @@ export const StatusCrumbs = <StatusType extends string>({
   const t = useTranslation();
   const d = useFormatDate();
   const theme = useAppTheme();
+
+  const currentStep = statuses.reduce((acc, status, idx) => {
+    if (statusLog[status]) return idx;
+    return acc;
+  }, 0);
 
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<PopperProps['anchorEl']>(null);
@@ -68,11 +74,7 @@ export const StatusCrumbs = <StatusType extends string>({
   });
 
   return (
-    <div
-      onMouseOver={handleOpen}
-      onMouseLeave={handleClose}
-      onClick={handleOpen}
-    >
+    <>
       <Popper
         open={open}
         anchorEl={anchorEl}
@@ -85,49 +87,64 @@ export const StatusCrumbs = <StatusType extends string>({
               sx={{
                 width: 240,
                 height: 200,
+
                 boxShadow: theme => theme.shadows[7],
               }}
             >
-              <Typography sx={{ fontWeight: 'bold' }}>Order History</Typography>
-              {statuses.map(status => {
-                const isoDate = statusLog[status];
-                const dateString = isoDate ? d(new Date(isoDate)) : '';
-
-                return (
-                  <Box
-                    key={status}
-                    display="flex"
-                    flexDirection="row"
-                    justifyContent="space-between"
-                  >
-                    <Typography>{t(statusFormatter(status))}</Typography>
-                    <Typography key={status}>{dateString}</Typography>
-                  </Box>
-                );
-              })}
+              <Box
+                gap={2}
+                p={3}
+                flexDirection="column"
+                display="flex"
+                justifyContent="center"
+                flex={1}
+              >
+                <Typography fontWeight="700">Order history</Typography>
+                <VerticalStepper
+                  activeStep={currentStep}
+                  steps={statuses.map(status => ({
+                    label: statusFormatter(status),
+                    description: statusLog[status]
+                      ? d(new Date(statusLog[status] ?? ''))
+                      : '',
+                  }))}
+                />
+              </Box>
             </Paper>
           </Fade>
         )}
       </Popper>
-      <Breadcrumbs
-        separator={
-          <ChevronDownIcon
-            fontSize="small"
-            htmlColor={theme.palette.midGrey}
-            sx={{
-              // TODO: Add a ChevronLeftIcon..
-              transform: 'rotate(270deg)',
-
-              // These special margins give some space between each crumb. Could have added it to the Typography
-              // but this seemed fine
-              marginLeft: '5px',
-              marginRight: '5px',
-            }}
-          />
-        }
+      <div
+        style={{
+          cursor: 'help',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+        onMouseOver={handleOpen}
+        onMouseLeave={handleClose}
+        onClick={handleOpen}
       >
-        {crumbs}
-      </Breadcrumbs>
-    </div>
+        <Breadcrumbs
+          separator={
+            <ChevronDownIcon
+              fontSize="small"
+              htmlColor={theme.palette.midGrey}
+              sx={{
+                // TODO: Add a ChevronLeftIcon..
+                transform: 'rotate(270deg)',
+
+                // These special margins give some space between each crumb. Could have added it to the Typography
+                // but this seemed fine
+                marginLeft: '5px',
+                marginRight: '5px',
+              }}
+            />
+          }
+        >
+          {crumbs}
+        </Breadcrumbs>
+      </div>
+    </>
   );
 };
