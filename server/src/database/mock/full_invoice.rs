@@ -43,6 +43,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
             invoice_number: 10,
             r#type: InvoiceRowType::OutboundShipment,
             status: InvoiceRowStatus::Draft,
+            on_hold: false,
             comment: None,
             their_reference: None,
             entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
@@ -112,6 +113,50 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
     }
 }
 
+pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
+    let invoice_id = "on_hold_is_a".to_string();
+
+    FullMockInvoice {
+        invoice: InvoiceRow {
+            id: invoice_id.clone(),
+            name_id: String::from("name_store_a"),
+            store_id: String::from("store_b"),
+            invoice_number: 11,
+            r#type: InvoiceRowType::InboundShipment,
+            status: InvoiceRowStatus::Draft,
+            on_hold: true,
+            comment: None,
+            their_reference: None,
+            entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
+            confirm_datetime: None,
+            finalised_datetime: None,
+        },
+        lines: Vec::new(),
+    }
+}
+
+pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
+    let invoice_id = "on_hold_os_a".to_string();
+
+    FullMockInvoice {
+        invoice: InvoiceRow {
+            id: invoice_id.clone(),
+            name_id: String::from("name_store_a"),
+            store_id: String::from("store_b"),
+            invoice_number: 11,
+            r#type: InvoiceRowType::OutboundShipment,
+            status: InvoiceRowStatus::Draft,
+            on_hold: true,
+            comment: None,
+            their_reference: None,
+            entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
+            confirm_datetime: None,
+            finalised_datetime: None,
+        },
+        lines: Vec::new(),
+    }
+}
+
 pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageConnection) {
     InvoiceRepository::new(&connection)
         .upsert_one(&invoice.invoice)
@@ -127,10 +172,20 @@ pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageC
 }
 
 pub fn mock_full_invoices() -> HashMap<String, FullMockInvoice> {
-    vec![(
-        "draft_ci_a".to_string(),
-        mock_full_draft_outbound_shipment_a(),
-    )]
+    vec![
+        (
+            "draft_ci_a".to_string(),
+            mock_full_draft_outbound_shipment_a(),
+        ),
+        (
+            "inbound_shipment_on_hold".to_string(),
+            mock_full_draft_inbound_shipment_on_hold(),
+        ),
+        (
+            "outbound_shipment_on_hold".to_string(),
+            mock_full_draft_outbound_shipment_on_hold(),
+        ),
+    ]
     .into_iter()
     .collect()
 }
