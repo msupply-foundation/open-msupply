@@ -73,6 +73,7 @@ impl From<InvoiceQueryJoin> for Invoice {
             other_party_name: name_row.name,
             other_party_id: name_row.id,
             status: InvoiceStatus::from(invoice_row.status),
+            on_hold: invoice_row.on_hold,
             r#type: InvoiceType::from(invoice_row.r#type),
             invoice_number: invoice_row.invoice_number,
             their_reference: invoice_row.their_reference,

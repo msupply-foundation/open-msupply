@@ -9,6 +9,7 @@ CREATE TABLE invoice (
     invoice_number integer NOT NULL,
     type TEXT CHECK (type IN ('OUTBOUND_SHIPMENT', 'INBOUND_SHIPMENT')) NOT NULL,
     status text CHECK (status IN ('DRAFT', 'CONFIRMED', 'FINALISED')) NOT NULL,
+    on_hold boolean NOT NULL,
     comment text,
     their_reference text,
     entry_datetime text NOT NULL,
