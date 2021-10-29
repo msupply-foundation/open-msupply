@@ -11,6 +11,8 @@ use chrono::Utc;
 use jsonwebtoken::errors::{Error as JWTError, ErrorKind as JWTErrorKind};
 use serde::{Deserialize, Serialize};
 
+use super::token_bucket::TokenBucket;
+
 #[derive(Debug, Serialize, Deserialize)]
 enum Audience {
     /// Token is for general api usage
@@ -76,6 +78,8 @@ pub enum JWTValidationError {
     ExpiredSignature,
     NotAnApiToken,
     InvalidToken(JWTError),
+    /// Token has been invalidated on the backend
+    TokenInvalided,
 }
 
 #[derive(Debug)]
@@ -84,21 +88,33 @@ pub enum JWTRefreshError {
     NotARefreshToken,
     InvalidToken(JWTError),
     FailedToCreateNewToken(JWTError),
+    /// Token has been invalidated on the backend
+    TokenInvalided,
 }
 
 #[derive(Debug)]
 pub struct TokenPair {
+    /// The JWT token
     pub token: String,
+    /// expiry date of the token
+    pub expiry_date: usize,
+    /// The JWT refresh token
     pub refresh: String,
+    /// Expiry date of the refresh token
+    pub refresh_expiry_date: usize,
 }
 
 pub struct UserAccountService<'a> {
     connection: &'a StorageConnection,
+    token_bucket: &'a mut dyn TokenBucket,
 }
 
 impl<'a> UserAccountService<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        UserAccountService { connection }
+    pub fn new(connection: &'a StorageConnection, token_bucket: &'a mut dyn TokenBucket) -> Self {
+        UserAccountService {
+            connection,
+            token_bucket,
+        }
     }
 
     pub fn create_user(
@@ -141,7 +157,7 @@ impl<'a> UserAccountService<'a> {
     /// * `valid_for` - duration (sec) for how long the token will be valid
     /// * `refresh_token_valid_for` - duration (sec) for how long the refresh token will be valid
     pub fn jwt_token(
-        &self,
+        &mut self,
         username: &str,
         password: &str,
         valid_for: usize,
@@ -161,26 +177,16 @@ impl<'a> UserAccountService<'a> {
             return Err(JWTIssuingError::InvalidCredentials);
         }
 
-        create_jwt_pair(&user.id, valid_for, refresh_token_valid_for)
-            .map_err(|err| JWTIssuingError::CanNotCreateToken(err))
-    }
+        let pair = create_jwt_pair(&user.id, valid_for, refresh_token_valid_for)
+            .map_err(|err| JWTIssuingError::CanNotCreateToken(err))?;
 
-    pub fn verify_token(&self, token: &str) -> Result<OmSupplyClaim, JWTValidationError> {
-        let mut validation = jsonwebtoken::Validation::default();
-        validation.set_audience(&vec![format!("{:?}", Audience::Api)]);
-        validation.iss = Some(ISSUER.to_string());
-        let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
-            token,
-            &jsonwebtoken::DecodingKey::from_secret(JWT_TOKEN_SECRET),
-            &validation,
-        )
-        .map_err(|err| match err.kind() {
-            JWTErrorKind::ExpiredSignature => JWTValidationError::ExpiredSignature,
-            JWTErrorKind::InvalidAudience => JWTValidationError::NotAnApiToken,
-            _ => JWTValidationError::InvalidToken(err),
-        })?;
+        // add tokens to bucket
+        self.token_bucket
+            .put(&user.id, &pair.token, pair.expiry_date);
+        self.token_bucket
+            .put(&user.id, &pair.refresh, pair.refresh_expiry_date);
 
-        Ok(decoded.claims)
+        Ok(pair)
     }
 
     /// Get a new token and also update the refresh token
@@ -189,7 +195,7 @@ impl<'a> UserAccountService<'a> {
     /// * `valid_for` - duration (sec) for how long the token will be valid
     /// * `refresh_token_valid_for` - duration (sec) for how long the refresh token will be valid
     pub fn refresh_token(
-        &self,
+        &mut self,
         refresh_token: &str,
         valid_for: usize,
         refresh_token_valid_for: usize,
@@ -209,8 +215,58 @@ impl<'a> UserAccountService<'a> {
         })?;
 
         let user_id = decoded.claims.sub;
-        create_jwt_pair(&user_id, valid_for, refresh_token_valid_for)
-            .map_err(|err| JWTRefreshError::FailedToCreateNewToken(err))
+        let pair = create_jwt_pair(&user_id, valid_for, refresh_token_valid_for)
+            .map_err(|err| JWTRefreshError::FailedToCreateNewToken(err))?;
+        // Check token is still in the list of valid tokens
+        if !self.token_bucket.contains(&user_id, refresh_token) {
+            return Err(JWTRefreshError::TokenInvalided);
+        }
+
+        // add tokens to bucket
+        self.token_bucket
+            .put(&user_id, &pair.token, pair.expiry_date);
+        self.token_bucket
+            .put(&user_id, &pair.refresh, pair.refresh_expiry_date);
+        // Shorten the expiry time of the old refresh token.
+        //
+        // Note, if the client goes offline before receiving the new refresh token the user might
+        // need to login again. This might seem random to the user. Lets see if that becomes a real
+        // issue.
+        let reduced_expiry =
+            std::cmp::min(Utc::now().timestamp() as usize + 5 * 60, decoded.claims.exp);
+        self.token_bucket
+            .put(&user_id, refresh_token, reduced_expiry);
+
+        Ok(pair)
+    }
+
+    pub fn verify_token(&self, token: &str) -> Result<OmSupplyClaim, JWTValidationError> {
+        let mut validation = jsonwebtoken::Validation::default();
+        validation.set_audience(&vec![format!("{:?}", Audience::Api)]);
+        validation.iss = Some(ISSUER.to_string());
+        let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
+            token,
+            &jsonwebtoken::DecodingKey::from_secret(JWT_TOKEN_SECRET),
+            &validation,
+        )
+        .map_err(|err| match err.kind() {
+            jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
+                JWTValidationError::ExpiredSignature
+            }
+            jsonwebtoken::errors::ErrorKind::InvalidAudience => JWTValidationError::NotAnApiToken,
+            _ => JWTValidationError::InvalidToken(err),
+        })?;
+
+        // Check token is still in the list of valid tokens
+        if !self.token_bucket.contains(&decoded.claims.sub, token) {
+            return Err(JWTValidationError::TokenInvalided);
+        }
+        Ok(decoded.claims)
+    }
+
+    /// Log a user out of all sessions
+    pub fn logout(&mut self, user_id: &str) {
+        self.token_bucket.clear(user_id);
     }
 }
 
@@ -221,10 +277,12 @@ fn create_jwt_pair(
     refresh_valid_for: usize,
 ) -> Result<TokenPair, JWTError> {
     let now = Utc::now().timestamp() as usize;
+    let expiry_date = now + valid_for;
+    let refresh_expiry_date = now + refresh_valid_for;
 
     // api token
     let api_claims = OmSupplyClaim {
-        exp: now + valid_for,
+        exp: expiry_date,
         aud: Audience::Api,
         iat: now,
         iss: ISSUER.to_string(),
@@ -238,7 +296,7 @@ fn create_jwt_pair(
 
     // refresh token
     let refresh_claims = OmSupplyClaim {
-        exp: now + refresh_valid_for,
+        exp: refresh_expiry_date,
         aud: Audience::TokenRefresh,
         iat: now,
         iss: ISSUER.to_string(),
@@ -252,7 +310,9 @@ fn create_jwt_pair(
 
     Ok(TokenPair {
         token: api_token,
+        expiry_date,
         refresh: refresh_token,
+        refresh_expiry_date,
     })
 }
 
@@ -260,6 +320,7 @@ fn create_jwt_pair(
 mod user_account_test {
     use crate::{
         database::repository::{get_repositories, StorageConnectionManager},
+        service::token_bucket::InMemoryTokenBucket,
         util::test_db,
     };
 
@@ -273,7 +334,8 @@ mod user_account_test {
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
-        let service = UserAccountService::new(&connection);
+        let mut bucket = InMemoryTokenBucket::new();
+        let mut service = UserAccountService::new(&connection, &mut bucket);
 
         // should be able to create a new user
         let password: &str = "passw0rd";
@@ -307,6 +369,15 @@ mod user_account_test {
         let claims = service.verify_token(&token_pair.token).unwrap();
         // important: sub must still match the user id:
         assert_eq!(user.id, claims.sub);
+
+        // should fail to verify and refresh when logged out
+        service.logout(&user.id);
+        let err = service.verify_token(&token_pair.token).unwrap_err();
+        assert!(matches!(err, JWTValidationError::TokenInvalided));
+        let err = service
+            .refresh_token(&token_pair.refresh, 60, 120)
+            .unwrap_err();
+        assert!(matches!(err, JWTRefreshError::TokenInvalided));
     }
 
     #[actix_rt::test]
@@ -317,7 +388,8 @@ mod user_account_test {
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
-        let service = UserAccountService::new(&connection);
+        let mut bucket = InMemoryTokenBucket::new();
+        let mut service = UserAccountService::new(&connection, &mut bucket);
 
         // should be able to create a new user
         let password: &str = "passw0rd";
