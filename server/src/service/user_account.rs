@@ -297,4 +297,36 @@ mod user_account_test {
         // important: sub must still match the user id:
         assert_eq!(user.id, claims.sub);
     }
+
+    #[actix_rt::test]
+    async fn test_user_auth_token_expiry() {
+        let settings = test_db::get_test_settings("omsupply-database-user-account-token-expiry");
+        test_db::setup(&settings.database).await;
+        let registry = get_repositories(&settings).await;
+        let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
+        let connection = connection_manager.connection().unwrap();
+
+        let service = UserAccountService::new(&connection);
+
+        // should be able to create a new user
+        let password: &str = "passw0rd";
+        let user = service
+            .create_user(CreateUserAccount {
+                username: "testuser".to_string(),
+                password: password.to_string(),
+                email: None,
+            })
+            .unwrap();
+        let token_pair = service.jwt_token(&user.username, password, 1).unwrap();
+        // should be able to verify token
+        let claims = service.verify_token(&token_pair.token).unwrap();
+        assert_eq!(user.id, claims.sub);
+
+        // granularity is 1 sec so need to wait 2 sec
+        std::thread::sleep(std::time::Duration::from_millis(2000));
+        let err = service.verify_token(&token_pair.token).unwrap_err();
+        assert!(matches!(err, JWTValidationError::ExpiredSignature));
+        let err = service.refresh_token(&token_pair.refresh, 1).unwrap_err();
+        assert!(matches!(err, JWTRefreshError::ExpiredSignature));
+    }
 }
