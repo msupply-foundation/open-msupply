@@ -50,6 +50,8 @@ export interface InvoiceLine extends DomainObject {
   quantity: number;
   batchName?: string;
   expiry: string;
+  itemUnit?: string;
+  location?: string;
 }
 
 export type Test = {
