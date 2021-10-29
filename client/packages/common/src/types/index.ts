@@ -36,6 +36,7 @@ export interface StockLine extends DomainObject {
   packSize: number;
   sellPricePerPack: number;
   totalNumberOfPacks: number;
+  location: string;
   onHold: boolean;
 }
 

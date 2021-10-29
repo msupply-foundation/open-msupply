@@ -66,19 +66,19 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell sx={{ width: '88px' }}>
         <ReadOnlyInput number {...register(`${batch.id}_total`)} />
       </BasicCell>
-      <BasicCell>
-        <Checkbox disabled checked={batch.onHold} />
-      </BasicCell>
-      <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>
+      <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
       <BasicCell
         sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : undefined }}
       >
         {d(expiryDate)}
       </BasicCell>
-      <BasicCell align="right">${batch.costPricePerPack}</BasicCell>
+      <BasicCell>{batch.location}</BasicCell>
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
+      <BasicCell align="center">
+        <Checkbox disabled checked={batch.onHold} />
+      </BasicCell>
       <BasicCell>
         <InfoIcon
           fontSize="small"
@@ -143,14 +143,13 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <HeaderCell>{t('label.num-packs')}</HeaderCell>
               <HeaderCell>{t('label.pack')}</HeaderCell>
               <HeaderCell>{t('label.unit-quantity')}</HeaderCell>
-              <HeaderCell>{t('label.hold')}</HeaderCell>
               <HeaderCell>{t('label.available')}</HeaderCell>
               <HeaderCell>{t('label.in-store')}</HeaderCell>
-              <HeaderCell>{t('label.unit-quantity')}</HeaderCell>
               <HeaderCell>{t('label.batch')}</HeaderCell>
               <HeaderCell>{t('label.expiry')}</HeaderCell>
-              <HeaderCell>{t('label.cost')}</HeaderCell>
+              <HeaderCell>{t('label.location')}</HeaderCell>
               <HeaderCell>{t('label.sell')}</HeaderCell>
+              <HeaderCell>{t('label.on-hold')}</HeaderCell>
               <HeaderCell></HeaderCell>
             </TableRow>
           </TableHead>

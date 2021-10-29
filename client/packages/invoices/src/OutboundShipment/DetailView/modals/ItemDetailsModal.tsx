@@ -247,7 +247,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         />
       }
       height={600}
-      width={780}
+      width={900}
     >
       <FormProvider {...methods}>
         <form>
