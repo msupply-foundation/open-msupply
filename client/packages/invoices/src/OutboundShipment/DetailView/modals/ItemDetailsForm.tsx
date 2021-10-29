@@ -25,7 +25,15 @@ interface ItemDetailsFormProps {
   onChangeQuantity: (quantity: number) => void;
   quantity?: number;
   register: UseFormRegister<FieldValues>;
+  selectedItem?: Item;
 }
+
+const SimpleText = styled(Typography)({
+  fontSize: 12,
+  marginLeft: 16,
+  alignSelf: 'center',
+  display: 'inline-flex',
+});
 
 const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.midGrey,
@@ -57,6 +65,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   onChangeQuantity,
   quantity,
   register,
+  selectedItem,
 }) => {
   const t = useTranslation();
   const options =
@@ -64,16 +73,12 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       ?.filter(item => item.isVisible)
       .map(item => ({ label: item.name, ...item })) || [];
 
-  const quantityDescription = allocatedQuantity ? (
-    <Typography
+  const quantityDescription = quantity ? (
+    <SimpleText
       sx={{
         color: allocatedQuantity < (quantity || 0) ? 'error.main' : undefined,
-        fontSize: '12px',
-        marginLeft: '16px',
-        alignSelf: 'center',
-        display: 'inline-flex',
       }}
-    >{`${allocatedQuantity} ${t('label.allocated')}`}</Typography>
+    >{`${allocatedQuantity} ${t('label.allocated')}`}</SimpleText>
   ) : undefined;
 
   return (
@@ -122,6 +127,14 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           defaultValue={invoiceLine?.quantity}
         />
         {quantityDescription}
+        <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
+          <ModalLabel labelKey="label.unit" />
+          <ModalInput
+            defaultValue={selectedItem?.unit}
+            inputProps={register('unit', { disabled: true })}
+            width={150}
+          />
+        </Grid>
       </ModalRow>
     </Grid>
   );

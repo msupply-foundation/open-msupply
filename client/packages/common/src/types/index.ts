@@ -23,6 +23,7 @@ export interface Item extends DomainObject {
   availableBatches: {
     nodes: StockLine[];
   };
+  unit: string;
 }
 
 export interface StockLine extends DomainObject {
