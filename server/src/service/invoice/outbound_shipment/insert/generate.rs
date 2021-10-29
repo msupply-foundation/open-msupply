@@ -30,6 +30,7 @@ pub fn generate(
         confirm_datetime: confirm_datetime(&input.status, &current_datetime),
         finalised_datetime: finalised_datetime(&input.status, &current_datetime),
         status: input.status.into(),
+        on_hold: input.on_hold.unwrap_or(false),
         entry_datetime: current_datetime,
     };
 
