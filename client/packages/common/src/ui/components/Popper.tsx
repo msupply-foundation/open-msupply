@@ -58,6 +58,7 @@ export const Popper: React.FC<PopperProps> = ({
                 width,
                 height,
                 boxShadow: theme => theme.shadows[7],
+                borderRadius: '16px',
               }}
             >
               {content}

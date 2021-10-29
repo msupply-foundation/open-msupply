@@ -21,6 +21,7 @@ import {
   NumericTextInput,
   ReadOnlyInput,
   Popper,
+  Typography,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
 
@@ -84,16 +85,11 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell>
         <Popper
           content={
-            <Grid
-              spacing={2}
-              container
-              sx={{ fontSize: '12px', padding: '20px' }}
-            >
+            <Grid spacing={2} container sx={{ padding: '20px' }}>
               <Grid item>
-                {batch.totalNumberOfPacks - batch.availableNumberOfPacks} packs
-                are allocated to other shipments.
+                <Typography sx={{ fontWeight: 'bold' }}>Details</Typography>
               </Grid>
-              <Grid item>
+              <Grid item sx={{ fontSize: '12px' }}>
                 <Grid container>
                   <Grid container justifyContent="space-between">
                     <Grid item>Invoice #xxxx</Grid>
