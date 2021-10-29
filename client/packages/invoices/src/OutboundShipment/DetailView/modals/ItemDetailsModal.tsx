@@ -83,7 +83,16 @@ const listQueryFn = async (): Promise<Item[]> => {
   return items.nodes;
 };
 
-const sortByExpiryDate = (a: BatchRow, b: BatchRow) => {
+const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
+  const disabledA = a.onHold || a.availableNumberOfPacks === 0;
+  const disabledB = b.onHold || b.availableNumberOfPacks === 0;
+  if (!disabledA && disabledB) {
+    return -1;
+  }
+  if (disabledA && !disabledB) {
+    return 1;
+  }
+
   const expiryA = new Date(a.expiryDate);
   const expiryB = new Date(b.expiryDate);
 
@@ -123,7 +132,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     setBatchRows(
       (selectedItem?.availableBatches.nodes || [])
         .map(batch => ({ ...batch, quantity: 0 }))
-        .sort(sortByExpiryDate)
+        .sort(sortByDisabledThenExpiryDate)
     );
     setValue('code', value?.code || '');
     setValue('availableQuantity', value?.availableQuantity || 0);

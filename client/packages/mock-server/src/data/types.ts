@@ -43,6 +43,7 @@ export interface StockLine {
   storeId: string;
   costPricePerPack: number;
   sellPricePerPack: number;
+  onHold: boolean;
 }
 
 export interface ResolvedStockLine extends StockLine {
