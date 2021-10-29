@@ -3,10 +3,8 @@ use crate::{
         repository::{InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection},
         schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     },
-    domain::{
-        invoice::InvoiceStatus, name::NameFilter, outbound_shipment::UpdateOutboundShipment,
-        Pagination,
-    },
+    domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment, Pagination},
+    service::invoice::{check_invoice_status, InvoiceStatusError},
 };
 
 use super::UpdateOutboundShipmentError;
@@ -20,7 +18,7 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice)?;
     check_invoice_finalised(&invoice)?;
-    check_invoice_status(patch, &invoice)?;
+    check_invoice_status(&invoice, &patch.status, &patch.on_hold)?;
     check_other_party(&patch.other_party_id, connection)?;
 
     Ok(invoice)
@@ -36,18 +34,6 @@ fn check_invoice_exists(
         return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);
     }
     Ok(result?)
-}
-
-fn check_invoice_status(
-    patch: &UpdateOutboundShipment,
-    invoice: &InvoiceRow,
-) -> Result<(), UpdateOutboundShipmentError> {
-    match (&invoice.status, &patch.status) {
-        (InvoiceRowStatus::Confirmed, Some(InvoiceStatus::Draft)) => {
-            Err(UpdateOutboundShipmentError::CannotChangeInvoiceBackToDraft)
-        }
-        _ => Ok(()),
-    }
 }
 
 fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
@@ -92,5 +78,17 @@ pub fn check_other_party(
         }
     } else {
         Ok(())
+    }
+}
+
+impl From<InvoiceStatusError> for UpdateOutboundShipmentError {
+    fn from(error: InvoiceStatusError) -> Self {
+        use UpdateOutboundShipmentError::*;
+        match error {
+            InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold => {
+                CannotChangeStatusOfInvoiceOnHold
+            }
+            InvoiceStatusError::CannotChangeInvoiceBackToDraft => CannotChangeInvoiceBackToDraft,
+        }
     }
 }

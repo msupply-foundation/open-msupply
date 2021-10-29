@@ -23,6 +23,7 @@ pub fn generate(
     update_invoice.name_id = patch.other_party_id.unwrap_or(update_invoice.name_id);
     update_invoice.comment = patch.comment.or(update_invoice.comment);
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
+    update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
 
     if let Some(status) = patch.status {
         update_invoice.status = status.into()
