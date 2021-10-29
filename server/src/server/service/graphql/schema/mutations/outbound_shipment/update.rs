@@ -3,7 +3,10 @@ use crate::{
     server::service::graphql::schema::{
         mutations::{
             error::DatabaseError,
-            outbound_shipment::{InvoiceLineHasNoStockLineError, NotAnOutboundShipmentError},
+            outbound_shipment::{
+                CannotChangeStatusOfInvoiceOnHold, InvoiceLineHasNoStockLineError,
+                NotAnOutboundShipmentError,
+            },
             ForeignKey, ForeignKeyError,
         },
         types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode, RecordNotFound},
@@ -29,6 +32,7 @@ pub struct UpdateOutboundShipmentInput {
     /// When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
     /// existing invoice items gets updated.
     status: Option<InvoiceNodeStatus>,
+    on_hold: Option<bool>,
     comment: Option<String>,
     /// External invoice reference, e.g. purchase or shipment number
     their_reference: Option<String>,
@@ -40,6 +44,7 @@ impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
             id: input.id,
             other_party_id: input.other_party_id,
             status: input.status.map(InvoiceStatus::from),
+            on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,
         }
@@ -57,6 +62,7 @@ pub enum UpdateOutboundShipmentResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateOutboundShipmentErrorInterface {
     CannotChangeInvoiceBackToDraft(CannotChangeStatusBackToDraftError),
+    CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
     InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError),
     InvoiceDoesNotExists(RecordNotFound),
@@ -99,6 +105,9 @@ impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
             }
             UpdateOutboundShipmentError::NotAnOutboundShipment => {
                 OutError::NotAnOutboundShipment(NotAnOutboundShipmentError {})
+            }
+            UpdateOutboundShipmentError::CannotChangeStatusOfInvoiceOnHold => {
+                OutError::CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold {})
             }
         };
 
