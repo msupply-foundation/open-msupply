@@ -75,6 +75,7 @@
   "label.line": "Ligne {number}",
   "label.name": "Name",
   "label.new": "New",
+  "label.num-packs": "# Packs",
   "label.pack": "Pack",
   "label.packSize": "Pack size",
   "label.picked": "Picked",
