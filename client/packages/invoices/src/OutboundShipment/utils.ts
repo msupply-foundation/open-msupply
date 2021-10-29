@@ -3,27 +3,27 @@ import { OutboundShipmentStatus } from '@openmsupply-client/common';
 import { OutboundShipment } from './DetailView/types';
 
 export const outboundStatuses: OutboundShipmentStatus[] = [
-  'draft',
-  'allocated',
-  'picked',
-  'shipped',
-  'delivered',
+  'DRAFT',
+  'ALLOCATED',
+  'PICKED',
+  'SHIPPED',
+  'DELIVERED',
 ];
 
 const NextStatusButtonTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
-  draft: 'label.draft',
-  allocated: 'label.allocation',
-  picked: 'label.picked',
-  shipped: 'label.shipped',
-  delivered: 'label.delivered',
+  DRAFT: 'label.draft',
+  ALLOCATED: 'label.allocation',
+  PICKED: 'label.picked',
+  SHIPPED: 'label.shipped',
+  DELIVERED: 'label.delivered',
 };
 
 const StatusTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
-  draft: 'label.draft',
-  allocated: 'label.allocated',
-  picked: 'label.picked',
-  shipped: 'label.shipped',
-  delivered: 'label.delivered',
+  DRAFT: 'label.draft',
+  ALLOCATED: 'label.allocated',
+  PICKED: 'label.picked',
+  SHIPPED: 'label.shipped',
+  DELIVERED: 'label.delivered',
 };
 
 const getNextOutboundStatus = (
@@ -49,9 +49,9 @@ export const getNextOutboundStatusButtonTranslation = (
 export const getStatusTranslation = (
   currentStatus: OutboundShipmentStatus
 ): LocaleKey => {
-  return StatusTranslation[currentStatus] ?? StatusTranslation.draft;
+  return StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT;
 };
 
 export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
-  return outbound.status !== 'shipped' && outbound.status !== 'delivered';
+  return outbound.status !== 'SHIPPED' && outbound.status !== 'DELIVERED';
 };

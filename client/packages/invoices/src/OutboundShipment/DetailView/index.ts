@@ -8,7 +8,7 @@ export const placeholderInvoice: OutboundShipment = {
   comment: '',
   theirReference: '',
   color: 'grey',
-  status: 'draft',
+  status: 'DRAFT',
   type: '',
   entryDatetime: '',
   confirmedDatetime: '',
@@ -17,6 +17,13 @@ export const placeholderInvoice: OutboundShipment = {
   pricing: { totalAfterTax: 0 },
   dispatch: null,
   hold: false,
+
+  draftDatetime: '',
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
+
   name: {
     id: '',
     name: '',

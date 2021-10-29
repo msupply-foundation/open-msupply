@@ -25,6 +25,24 @@ interface OutboundDetailFooterProps {
   save: (draft: OutboundShipment) => void;
 }
 
+const createStatusLog = (draft: OutboundShipment) => {
+  const {
+    draftDatetime,
+    allocatedDatetime,
+    shippedDatetime,
+    pickedDatetime,
+    deliveredDatetime,
+  } = draft;
+
+  return {
+    DRAFT: draftDatetime as string,
+    ALLOCATED: allocatedDatetime as string,
+    SHIPPED: shippedDatetime as string,
+    PICKED: pickedDatetime as string,
+    DELIVERED: deliveredDatetime as string,
+  };
+};
+
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
   const t = useTranslation();
@@ -49,11 +67,13 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
             }}
             labelKey="label.hold"
           />
+
           <StatusCrumbs
             statuses={outboundStatuses}
-            currentStatus={draft.status}
+            statusLog={createStatusLog(draft)}
             statusFormatter={getStatusTranslation}
           />
+
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
             <ButtonWithIcon
               Icon={<XCircleIcon />}

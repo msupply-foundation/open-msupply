@@ -11,31 +11,47 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 
 const StatusTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
-  draft: 'label.draft',
-  allocated: 'label.allocated',
-  picked: 'label.picked',
-  shipped: 'label.shipped',
-  delivered: 'label.delivered',
+  DRAFT: 'label.draft',
+  ALLOCATED: 'label.allocated',
+  PICKED: 'label.picked',
+  SHIPPED: 'label.shipped',
+  DELIVERED: 'label.delivered',
 };
 
 export const getStatusTranslation = (
   currentStatus: OutboundShipmentStatus
 ): LocaleKey => {
-  return StatusTranslation[currentStatus] ?? StatusTranslation.draft;
+  return StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT;
 };
 
 const outboundStatuses: OutboundShipmentStatus[] = [
-  'draft',
-  'allocated',
-  'picked',
-  'shipped',
-  'delivered',
+  'DRAFT',
+  'ALLOCATED',
+  'PICKED',
+  'SHIPPED',
+  'DELIVERED',
 ];
 
 const Template: ComponentStory<typeof StatusCrumbs> = () => {
   const [currentStatus, setCurrentStatus] = useState(
     outboundStatuses[0] as OutboundShipmentStatus
   );
+
+  const draft = {
+    draftDatetime: '2021-08-02T21:54:09.531Z',
+    allocatedDatetime: '2021-08-19T01:51:51.022Z',
+    shippedDatetime: '2021-09-08T19:31:54.245Z',
+    pickedDatetime: '2021-09-06T17:41:49.548Z',
+    deliveredDatetime: null,
+  };
+
+  const statusLog = {
+    DRAFT: draft.draftDatetime,
+    ALLOCATED: draft.allocatedDatetime,
+    SHIPPED: draft.shippedDatetime,
+    PICKED: draft.pickedDatetime,
+    DELIVERED: draft.deliveredDatetime,
+  };
 
   const t = useTranslation();
 
@@ -65,7 +81,7 @@ const Template: ComponentStory<typeof StatusCrumbs> = () => {
 
       <StatusCrumbs
         statuses={outboundStatuses}
-        currentStatus={currentStatus}
+        statusLog={statusLog}
         statusFormatter={getStatusTranslation}
       />
     </Stack>

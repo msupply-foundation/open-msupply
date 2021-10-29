@@ -185,7 +185,50 @@ export const createItems = (
   });
 };
 
-const statuses = ['DRAFT', 'CONFIRMED', 'FINALISED'];
+const statuses = ['DRAFT', 'ALLOCATED', 'PICKED', 'SHIPPED', 'DELIVERED'];
+
+const createStatusLog = (status: string, entered: Date) => {
+  const statusIdx = statuses.findIndex(s => status === s);
+
+  const statusTimes: {
+    draftDatetime?: Date;
+    allocatedDatetime?: Date;
+    pickedDatetime?: Date;
+    shippedDatetime?: Date;
+    deliveredDatetime?: Date;
+  } = {};
+
+  if (statusIdx >= 0) {
+    statusTimes.draftDatetime = faker.date.future(0.1, entered);
+  }
+  if (statusIdx >= 1) {
+    statusTimes.allocatedDatetime = faker.date.future(
+      0.1,
+      statusTimes.draftDatetime
+    );
+  }
+  if (statusIdx >= 2) {
+    statusTimes.pickedDatetime = faker.date.future(
+      0.1,
+      statusTimes.allocatedDatetime
+    );
+  }
+  if (statusIdx >= 3) {
+    statusTimes.shippedDatetime = faker.date.future(
+      0.1,
+      statusTimes.pickedDatetime
+    );
+  }
+
+  if (statusIdx >= 4) {
+    statusTimes.deliveredDatetime = faker.date.future(
+      0.1,
+      statusTimes.shippedDatetime
+    );
+  }
+
+  return statusTimes;
+};
 
 export const createInvoice = (
   id: string,
@@ -197,11 +240,14 @@ export const createInvoice = (
   const confirmed = faker.date.past(1);
   const entered = faker.date.past(0.25, confirmed);
 
+  const status = takeRandomElementFrom(statuses);
+  const statusTimes = createStatusLog(status, entered);
+
   return {
     id,
     otherPartyId,
     invoiceNumber,
-    status: takeRandomElementFrom(statuses),
+    status,
     entryDatetime: entered.toISOString(),
     confirmedDatetime: confirmed.toISOString(),
     finalisedDatetime: null,
@@ -214,6 +260,11 @@ export const createInvoice = (
     comment: takeRandomElementFrom(comments),
     hold: false,
     storeId,
+    draftDatetime: statusTimes.draftDatetime?.toISOString(),
+    allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
+    pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
+    shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
+    deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
     ...seeded,
   };
 };
