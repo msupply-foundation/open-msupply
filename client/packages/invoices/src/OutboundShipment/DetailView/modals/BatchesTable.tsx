@@ -18,12 +18,13 @@ import {
   useFormatDate,
   useTranslation,
   NumericTextInput,
+  ReadOnlyInput,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
 
 export interface BatchesTableProps {
   item: Item | null;
-  onChange: (key: string, value: number) => void;
+  onChange: (key: string, value: number, packSize: number) => void;
   register: UseFormRegister<FieldValues>;
   rows: BatchRow[];
 }
@@ -31,7 +32,7 @@ export interface BatchesTableProps {
 type BatchesRowProps = {
   batch: BatchRow;
   label: string;
-  onChange: (key: string, value: number) => void;
+  onChange: (key: string, value: number, packSize: number) => void;
 };
 const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const { register } = useFormContext();
@@ -44,7 +45,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   });
 
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
-    onChange(batch.id, Number(event.target.value));
+    onChange(batch.id, Number(event.target.value), batch.packSize);
 
   const expiryDate = new Date(batch.expiryDate);
   const isDisabled = batch.availableNumberOfPacks === 0 || batch.onHold;
@@ -62,6 +63,9 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
         />
       </BasicCell>
       <BasicCell align="right">{batch.packSize}</BasicCell>
+      <BasicCell sx={{ width: '88px' }}>
+        <ReadOnlyInput number {...register(`${batch.id}_total`)} />
+      </BasicCell>
       <BasicCell>
         <Checkbox disabled checked={batch.onHold} />
       </BasicCell>
@@ -126,7 +130,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   });
 
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
-    onChange('placeholder', Number(event.target.value));
+    onChange('placeholder', Number(event.target.value), 1);
 
   return (
     <>
@@ -138,9 +142,11 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <HeaderCell></HeaderCell>
               <HeaderCell>{t('label.num-packs')}</HeaderCell>
               <HeaderCell>{t('label.pack')}</HeaderCell>
+              <HeaderCell>{t('label.unit-quantity')}</HeaderCell>
               <HeaderCell>{t('label.hold')}</HeaderCell>
               <HeaderCell>{t('label.available')}</HeaderCell>
               <HeaderCell>{t('label.in-store')}</HeaderCell>
+              <HeaderCell>{t('label.unit-quantity')}</HeaderCell>
               <HeaderCell>{t('label.batch')}</HeaderCell>
               <HeaderCell>{t('label.expiry')}</HeaderCell>
               <HeaderCell>{t('label.cost')}</HeaderCell>
