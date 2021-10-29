@@ -47,6 +47,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
     onChange(batch.id, Number(event.target.value));
 
   const expiryDate = new Date(batch.expiryDate);
+  const isDisabled = batch.availableNumberOfPacks === 0 || batch.onHold;
 
   // TODO format currency correctly
   return (
@@ -56,12 +57,12 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
         <NumericTextInput
           {...stockLineInputProps}
           sx={{ height: '32px' }}
-          disabled={batch.availableNumberOfPacks === 0}
+          disabled={isDisabled}
           onChange={onChangeValue}
         />
       </BasicCell>
       <BasicCell>
-        <Checkbox disabled={batch.availableNumberOfPacks === 0} />
+        <Checkbox disabled checked={batch.onHold} />
       </BasicCell>
       <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>

@@ -73,6 +73,7 @@ export const createStockLines = (
           itemId,
           costPricePerPack,
           sellPricePerPack,
+          onHold: faker.datatype.number(10) < 2,
         } as StockLine;
 
         quantityToUse = quantityToUse - availableNumberOfPacks;
