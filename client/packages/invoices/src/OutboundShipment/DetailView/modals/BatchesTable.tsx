@@ -3,6 +3,7 @@ import {
   Checkbox,
   Divider,
   FieldValues,
+  Grid,
   InfoIcon,
   isAlmostExpired,
   Item,
@@ -19,6 +20,7 @@ import {
   useTranslation,
   NumericTextInput,
   ReadOnlyInput,
+  Popper,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
 
@@ -80,10 +82,51 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
         <Checkbox disabled checked={batch.onHold} />
       </BasicCell>
       <BasicCell>
-        <InfoIcon
-          fontSize="small"
-          sx={{ color: theme => theme.palette.lightGrey }}
-        />
+        <Popper
+          content={
+            <Grid
+              spacing={2}
+              container
+              sx={{ fontSize: '12px', padding: '20px' }}
+            >
+              <Grid item>
+                {batch.totalNumberOfPacks - batch.availableNumberOfPacks} packs
+                are allocated to other shipments.
+              </Grid>
+              <Grid item>
+                <Grid container>
+                  <Grid container justifyContent="space-between">
+                    <Grid item>Invoice #xxxx</Grid>
+                    <Grid item>
+                      {`${
+                        (batch.totalNumberOfPacks -
+                          batch.availableNumberOfPacks) /
+                        2
+                      } packs`}
+                    </Grid>
+                  </Grid>
+                  <Grid container justifyContent="space-between">
+                    <Grid item>Invoice #yyyy</Grid>
+                    <Grid item>
+                      {`${
+                        (batch.totalNumberOfPacks -
+                          batch.availableNumberOfPacks) /
+                        2
+                      } packs`}
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+          }
+          placement="left"
+          width={250}
+        >
+          <InfoIcon
+            fontSize="small"
+            sx={{ color: theme => theme.palette.lightGrey, cursor: 'help' }}
+          />
+        </Popper>
       </BasicCell>
     </TableRow>
   );
