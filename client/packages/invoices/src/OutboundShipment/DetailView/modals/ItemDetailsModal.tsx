@@ -214,8 +214,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     setAllocated(quantity);
   };
 
-  const onChangeRowQuantity = (key: string, value: number) => {
+  const onChangeRowQuantity = (
+    key: string,
+    value: number,
+    packSize: number
+  ) => {
     setValue(key, value);
+    setValue(`${key}_total`, value * packSize);
     checkAllocatedQuantities();
   };
 
