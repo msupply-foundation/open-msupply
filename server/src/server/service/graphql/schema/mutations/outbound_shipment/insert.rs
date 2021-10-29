@@ -18,6 +18,7 @@ pub struct InsertOutboundShipmentInput {
     /// The other party must be an customer of the current store
     other_party_id: String,
     status: Option<InvoiceNodeStatus>,
+    on_hold: Option<bool>,
     comment: Option<String>,
     their_reference: Option<String>,
 }
@@ -31,6 +32,7 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
                 .status
                 .map(|s| s.into())
                 .unwrap_or(InvoiceStatus::Draft),
+            on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,
         }
