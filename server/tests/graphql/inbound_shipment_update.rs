@@ -60,7 +60,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_update_inbound_shipment() {
-        let (_, connection, settings) =
+        let (mock_data, connection, settings) =
             test_db::setup_all("test_update_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
@@ -113,6 +113,7 @@ mod graphql {
             id: draft_inbound_shipment.id.clone(),
             other_party_id_option: Some(supplier.id.clone()),
             status_option: Some(update::InvoiceNodeStatus::Draft),
+            on_hold_option: None,
             comment_option: Some("some comment".to_string()),
             their_reference_option: Some("some reference".to_string()),
         };
@@ -235,10 +236,11 @@ mod graphql {
 
         assert_eq!(start_invoice.id, end_invoice.id);
 
-        // Test Finaized
+        // Test Finaized (while setting invoice status onHold to true)
 
         let mut variables = base_variables.clone();
         variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
+        variables.on_hold_option = Some(true);
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -275,6 +277,51 @@ mod graphql {
                 description: "Cannot edit finalised invoice".to_string(),
             },)
         );
+
+        // Test CannotChangeStatusOfInvoiceOnHold
+
+        let full_invoice = mock_data
+            .full_invoices
+            .get("inbound_shipment_on_hold")
+            .unwrap();
+
+        let mut variables = base_variables.clone();
+        variables.id = full_invoice.invoice.id.clone();
+        variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
+        let query = Update::build_query(variables);
+        let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
+
+        assert_error!(
+            response,
+            CannotChangeStatusOfInvoiceOnHold(update::CannotChangeStatusOfInvoiceOnHold {
+                description: "Invoice is on hold, status cannot be changed.".to_string(),
+            },)
+        );
+
+        // Test can change status if on hold is update in the same mutation
+
+        let full_invoice = mock_data
+            .full_invoices
+            .get("inbound_shipment_on_hold")
+            .unwrap();
+
+        let mut variables = base_variables.clone();
+        variables.id = full_invoice.invoice.id.clone();
+        variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
+        variables.on_hold_option = Some(false);
+        let query = Update::build_query(variables.clone());
+        let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
+
+        let invoice = assert_unwrap_invoice_response!(response);
+        assert_eq!(invoice.id, variables.id);
+
+        let updated_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+
+        assert_eq!(updated_invoice.r#type, InvoiceRowType::InboundShipment);
+
+        assert_eq!(updated_invoice, variables);
     }
 
     #[derive(Debug)]
@@ -329,12 +376,14 @@ mod graphql {
                 id,
                 other_party_id_option,
                 status_option,
+                on_hold_option,
                 comment_option: _,         // Nullable option ?
                 their_reference_option: _, // Nullable option ?
             } = other;
 
             *id == self.id
                 && compare_option(other_party_id_option, &self.name_id)
+                && compare_option(on_hold_option, &self.on_hold)
                 && compare_option(
                     status_option,
                     &update::InvoiceNodeStatus::from(self.status.clone()),
