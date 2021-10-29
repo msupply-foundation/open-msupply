@@ -27,6 +27,7 @@ pub struct InvoiceRow {
     #[column_name = "type_"]
     pub r#type: InvoiceRowType,
     pub status: InvoiceRowStatus,
+    pub on_hold: bool,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub entry_datetime: NaiveDateTime,
