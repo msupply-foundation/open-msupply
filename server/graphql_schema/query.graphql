@@ -6,6 +6,7 @@ mutation insertInboundShipmentFull(
   $id: String!
   $otherPartyId: String!
   $status: InvoiceNodeStatus!
+  $on_hold_option: Boolean
   $comment_option: String
   $theirReference_option: String
 ) {
@@ -14,6 +15,7 @@ mutation insertInboundShipmentFull(
       id: $id
       otherPartyId: $otherPartyId
       status: $status
+      onHold: $on_hold_option
       theirReference: $theirReference_option
       comment: $comment_option
     }
@@ -49,6 +51,7 @@ mutation updateInboundShipmentFull(
   $id: String!
   $otherPartyId_option: String
   $status_option: InvoiceNodeStatus
+  $on_hold_option: Boolean
   $comment_option: String
   $theirReference_option: String
 ) {
@@ -57,6 +60,7 @@ mutation updateInboundShipmentFull(
       id: $id
       otherPartyId: $otherPartyId_option
       status: $status_option
+      onHold: $on_hold_option
       theirReference: $theirReference_option
       comment: $comment_option
     }
@@ -88,6 +92,7 @@ fragment UpdateInboundShipmentErrorInterface on UpdateInboundShipmentErrorInterf
   ...NotAnInboundShipment
   ...InvoiceDoesNotBelongToCurrentStore
   ...CannotChangeInvoiceBackToDraft
+  ...CannotChangeStatusOfInvoiceOnHold
 }
 
 # DELETE INBOUND SHIPMENT
@@ -593,6 +598,10 @@ fragment NotAnOutboundShipment on NotAnOutboundShipment {
 }
 
 fragment InvoiceDoesNotBelongToCurrentStore on InvoiceDoesNotBelongToCurrentStore {
+  description
+}
+
+fragment CannotChangeStatusOfInvoiceOnHold on CannotChangeStatusOfInvoiceOnHold {
   description
 }
 
