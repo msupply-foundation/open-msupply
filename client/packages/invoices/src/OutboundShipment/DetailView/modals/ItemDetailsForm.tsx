@@ -77,20 +77,22 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   ) : undefined;
 
   return (
-    <>
+    <Grid container gap={0.5}>
       <ModalRow>
         <ModalLabel labelKey="label.item" />
-        <Autocomplete
-          filterOptionConfig={filterOptions}
-          loading={isLoading}
-          noOptionsText={t('error.no-items')}
-          onChange={onChangeItem}
-          options={options}
-          renderOption={renderOption}
-          defaultValue={invoiceLine?.item}
-          width={540}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-        />
+        <Grid item flex={1}>
+          <Autocomplete
+            filterOptionConfig={filterOptions}
+            loading={isLoading}
+            noOptionsText={t('error.no-items')}
+            onChange={onChangeItem}
+            options={options}
+            renderOption={renderOption}
+            defaultValue={invoiceLine?.item}
+            width="100%"
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+          />
+        </Grid>
       </ModalRow>
       <ModalRow>
         <ModalLabel labelKey="label.available" />
@@ -99,11 +101,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           inputProps={register('availableQuantity')}
           disabled
         />
-        <Grid
-          style={{ display: 'flex', flexBasis: '25%', marginRight: '58px' }}
-          justifyContent="flex-end"
-          flex={1}
-        >
+        <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.code" />
           <ModalInput
             defaultValue={invoiceLine?.itemCode}
@@ -125,6 +123,6 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         />
         {quantityDescription}
       </ModalRow>
-    </>
+    </Grid>
   );
 };
