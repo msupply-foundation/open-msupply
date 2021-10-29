@@ -1,6 +1,6 @@
 mod graphql {
     use crate::graphql::{
-        common::{assert_unwrap_enum, assert_unwrap_optional_key, get_name_inline},
+        common::{assert_unwrap_enum, assert_unwrap_optional_key, compare_option, get_name_inline},
         get_gql_result,
     };
     use chrono::{Duration, Utc};
@@ -77,6 +77,7 @@ mod graphql {
             id: Uuid::new_v4().to_string(),
             other_party_id: supplier.id.clone(),
             status: insert::InvoiceNodeStatus::Draft,
+            on_hold_option: None,
             comment_option: Some("some comment_option".to_string()),
             their_reference_option: Some("some reference".to_string()),
         };
@@ -131,6 +132,24 @@ mod graphql {
         assert!(new_invoice.entry_datetime < end);
         assert_eq!(new_invoice.confirm_datetime, None);
         assert_eq!(new_invoice.finalised_datetime, None);
+
+        // Test Success On Hold
+
+        let mut variables = base_variables.clone();
+        variables.id = Uuid::new_v4().to_string();
+        variables.on_hold_option = Some(true);
+
+        let query = Insert::build_query(variables.clone());
+        let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+
+        let invoice = assert_unwrap_invoice_response!(response);
+        assert_eq!(invoice.id, variables.id);
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+
+        assert_eq!(new_invoice, variables);
 
         // Test RecordAlreadyExist
 
@@ -224,6 +243,7 @@ mod graphql {
                 id,
                 other_party_id,
                 status,
+                on_hold_option,
                 comment_option,
                 their_reference_option,
             } = other;
@@ -231,6 +251,7 @@ mod graphql {
             *id == self.id
                 && *other_party_id == self.name_id
                 && *status == self.status.clone().into()
+                && compare_option(on_hold_option, &self.on_hold)
                 && *comment_option == self.comment
                 && *their_reference_option == self.their_reference
         }

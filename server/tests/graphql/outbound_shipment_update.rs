@@ -251,7 +251,7 @@ mod graphql {
         assert_gql_query(&settings, query, &variables, &expected).await;
         assert_stock_line_totals(&invoice_lines, &expected_totals);
 
-        // test DRAFT to FINALISED
+        // test DRAFT to FINALISED (while setting onHold to true)
         let full_invoice = mock_data.full_invoices.get("draft_ci_a").unwrap();
         let invoice_id = full_invoice.invoice.id.clone();
         let invoice_lines = full_invoice.get_lines();
@@ -260,7 +260,8 @@ mod graphql {
           "input": {
             "id": invoice_id,
             "status": "FINALISED",
-            "comment": "test_comment_b"
+            "comment": "test_comment_b",
+            "onHold": true,
           }
         }));
         let expected = json!({
@@ -272,5 +273,52 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
         assert_stock_line_totals(&invoice_lines, &expected_totals);
+
+        // test Status Change on Hold
+        let full_invoice = mock_data
+            .full_invoices
+            .get("outbound_shipment_on_hold")
+            .unwrap();
+        let invoice_id = full_invoice.invoice.id.clone();
+
+        let variables = Some(json!({
+          "input": {
+            "id": invoice_id,
+            "status": "FINALISED",
+            "comment": "test_comment_b"
+          }
+        }));
+        let expected = json!({
+            "updateOutboundShipment": {
+              "error": {
+                "__typename": "CannotChangeStatusOfInvoiceOnHold"
+              }
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected).await;
+
+        // test Status Change and on hold change
+        let full_invoice = mock_data
+            .full_invoices
+            .get("outbound_shipment_on_hold")
+            .unwrap();
+        let invoice_id = full_invoice.invoice.id.clone();
+
+        let variables = Some(json!({
+          "input": {
+            "id": invoice_id,
+            "status": "FINALISED",
+            "onHold": false,
+          }
+        }));
+        let expected = json!({
+            "updateOutboundShipment": {
+              "id": invoice_id,
+              "comment": null
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected).await;
     }
 }
