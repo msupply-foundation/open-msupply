@@ -61,12 +61,12 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
           onChange={onChangeValue}
         />
       </BasicCell>
+      <BasicCell align="right">{batch.packSize}</BasicCell>
       <BasicCell>
         <Checkbox disabled checked={batch.onHold} />
       </BasicCell>
       <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>
-      <BasicCell align="right">{batch.packSize}</BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
       <BasicCell
         sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : undefined }}
@@ -136,11 +136,11 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
           <TableHead>
             <TableRow>
               <HeaderCell></HeaderCell>
-              <HeaderCell>{t('label.issue')}</HeaderCell>
+              <HeaderCell>{t('label.num-packs')}</HeaderCell>
+              <HeaderCell>{t('label.pack')}</HeaderCell>
               <HeaderCell>{t('label.hold')}</HeaderCell>
               <HeaderCell>{t('label.available')}</HeaderCell>
               <HeaderCell>{t('label.in-store')}</HeaderCell>
-              <HeaderCell>{t('label.pack')}</HeaderCell>
               <HeaderCell>{t('label.batch')}</HeaderCell>
               <HeaderCell>{t('label.expiry')}</HeaderCell>
               <HeaderCell>{t('label.cost')}</HeaderCell>
