@@ -135,6 +135,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         .sort(sortByDisabledThenExpiryDate)
     );
     setValue('code', value?.code || '');
+    setValue('unit', value?.unit || '');
     setValue('availableQuantity', value?.availableQuantity || 0);
   };
 
@@ -204,10 +205,11 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     batchRows.forEach(batch => {
       const allocatedQuantity = Math.min(
         toAllocate,
-        batch.availableNumberOfPacks * batch.packSize
+        batch.availableNumberOfPacks
       );
       toAllocate -= allocatedQuantity;
       setValue(batch.id, allocatedQuantity);
+      setValue(`${batch.id}_total`, allocatedQuantity * batch.packSize);
     });
     // allocate remainder to placeholder
     setValue('placeholder', toAllocate);
@@ -261,7 +263,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               isLoading={isLoading}
               allocatedQuantity={allocated}
               quantity={quantity}
-              selectedItem={selectedItem || undefined}
             />
             <BatchesTable
               item={selectedItem}

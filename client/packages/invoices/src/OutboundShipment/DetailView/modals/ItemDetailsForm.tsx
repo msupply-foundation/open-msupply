@@ -25,7 +25,6 @@ interface ItemDetailsFormProps {
   onChangeQuantity: (quantity: number) => void;
   quantity?: number;
   register: UseFormRegister<FieldValues>;
-  selectedItem?: Item;
 }
 
 const SimpleText = styled(Typography)({
@@ -65,7 +64,6 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   onChangeQuantity,
   quantity,
   register,
-  selectedItem,
 }) => {
   const t = useTranslation();
   const options =
@@ -130,8 +128,9 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.unit" />
           <ModalInput
-            defaultValue={selectedItem?.unit}
-            inputProps={register('unit', { disabled: true })}
+            inputProps={register('unit', {
+              disabled: true,
+            })}
             width={150}
           />
         </Grid>
