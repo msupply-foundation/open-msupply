@@ -35,6 +35,7 @@ import { ReportsIcon } from './Reports';
 import { RewindIcon } from './Rewind';
 import { SaveIcon } from './Save';
 import { SettingsIcon } from './Settings';
+import { SidebarIcon } from './Sidebar';
 import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
 import { StockIcon } from './Stock';
@@ -103,6 +104,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <RewindIcon {...args} />, name: 'Rewind' },
     { icon: <SaveIcon {...args} />, name: 'Save' },
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
+    { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
     { icon: <StockIcon {...args} />, name: 'Stock' },
