@@ -81,6 +81,11 @@ export interface Invoice extends DomainObject {
   otherPartyName: string;
   hold: boolean;
   lines: InvoiceLine[];
+  draftDatetime: string;
+  allocatedDatetime: string;
+  shippedDatetime: string;
+  pickedDatetime: string;
+  deliveredDatetime: string;
   pricing: {
     totalAfterTax: number;
   };
