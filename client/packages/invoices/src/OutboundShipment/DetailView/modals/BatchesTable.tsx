@@ -43,8 +43,9 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const d = useFormatDate();
 
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event => {
-    const newValue = Number(event.target.value);
-    if (newValue < 0 || newValue > batch.availableNumberOfPacks) return;
+    const value = Math.max(Number(event.target.value), 0);
+    const newValue = Math.min(value, batch.availableNumberOfPacks);
+
     onChange(batch.id, newValue, batch.packSize);
   };
 
