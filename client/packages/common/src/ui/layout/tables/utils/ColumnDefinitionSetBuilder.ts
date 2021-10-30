@@ -113,7 +113,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 20,
   },
   packSize: {
-    label: 'label.packSize',
+    label: 'label.pack-size',
     key: 'packSize',
     width: 50,
     align: ColumnAlign.Right,
