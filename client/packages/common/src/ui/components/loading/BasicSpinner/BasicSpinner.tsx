@@ -21,7 +21,7 @@ const StyledText = styled(Typography)(({ theme }) => ({
   },
 }));
 
-export const LoadingSpinner: FC = () => {
+export const BasicSpinner: FC = () => {
   return (
     <Container>
       <CircularProgress />

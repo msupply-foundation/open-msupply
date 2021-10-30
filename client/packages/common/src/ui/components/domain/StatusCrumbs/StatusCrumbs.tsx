@@ -3,15 +3,15 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
-import { useAppTheme } from '../../styles';
-import { ChevronDownIcon } from '../icons';
+import { useAppTheme } from '../../../../styles';
+import { ChevronDownIcon } from '../../../icons';
 import {
   LocaleKey,
   useTranslation,
   useFormatDate,
-} from '../../intl/intlHelpers';
-import { VerticalStepper } from './steppers/VerticalStepper';
-import { usePopover } from './popover';
+} from '../../../../intl/intlHelpers';
+import { VerticalStepper } from '../../steppers/VerticalStepper';
+import { usePopover } from '../../popover';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
