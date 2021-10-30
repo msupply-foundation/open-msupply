@@ -12,7 +12,6 @@ import {
   ListApi,
   createTableStore,
   SortBy,
-  useContentAreaHeight,
 } from '@openmsupply-client/common';
 
 const getNameListQuery = (): string => gql`
@@ -83,8 +82,6 @@ const Api: ListApi<Name> = {
 };
 
 export const ListView: FC = () => {
-  const contentHeight = useContentAreaHeight();
-  const tableHeight = contentHeight - 40;
   const {
     totalCount,
     data,
@@ -104,7 +101,6 @@ export const ListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
       <DataTable
-        height={tableHeight}
         pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}

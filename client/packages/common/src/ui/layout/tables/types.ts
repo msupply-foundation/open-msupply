@@ -19,7 +19,6 @@ export interface QueryResponse<T> {
 export interface TableProps<T extends DomainObject> {
   columns: Column<T>[];
   data?: T[];
-  height: number;
   isLoading?: boolean;
   pagination: Pagination & { total?: number };
   onChangePage: (page: number) => void;

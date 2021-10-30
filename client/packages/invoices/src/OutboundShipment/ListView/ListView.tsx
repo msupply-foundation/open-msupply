@@ -25,7 +25,6 @@ import {
   ButtonWithIcon,
   Grid,
   OutboundShipmentStatus,
-  useContentAreaHeight,
 } from '@openmsupply-client/common';
 import { OutboundShipmentListViewApi } from '../../api';
 import { ExternalURL } from '@openmsupply-client/config';
@@ -74,9 +73,6 @@ const ListViewToolBar: FC<{
 export const OutboundShipmentListViewComponent: FC = () => {
   const { info, success } = useNotification();
   const navigate = useNavigate();
-  const contentHeight = useContentAreaHeight();
-  // This accounts for the pagination row under the table.
-  const tableHeight = contentHeight - 40;
 
   const {
     totalCount,
@@ -172,7 +168,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
       </AppBarButtonsPortal>
 
       <DataTable
-        height={tableHeight}
         pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}
