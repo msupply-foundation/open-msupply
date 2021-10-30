@@ -1,9 +1,11 @@
 import React from 'react';
 import { Grid, InputLabel } from '@mui/material';
 import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { Property } from 'csstype';
 
 export interface ModalLabelProps {
   labelKey: LocaleKey;
+  justifyContent?: Property.JustifyContent;
 }
 
 const labelStyle = {
@@ -11,14 +13,17 @@ const labelStyle = {
   paddingRight: '19px',
 };
 
-export const ModalLabel: React.FC<ModalLabelProps> = ({ labelKey }) => {
+export const ModalLabel: React.FC<ModalLabelProps> = ({
+  labelKey,
+  justifyContent = 'flex-start',
+}) => {
   const t = useTranslation();
   return (
     <Grid
       item
       xs={2}
       alignItems="center"
-      justifyContent="flex-start"
+      justifyContent={justifyContent}
       sx={{
         alignItems: 'center',
         display: 'flex',

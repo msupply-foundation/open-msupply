@@ -116,6 +116,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const [quantity, setQuantity] = React.useState(0);
   const [allocated, setAllocated] = React.useState(0);
+  const [packSize, setPackSize] = React.useState(1);
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
@@ -130,7 +131,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   ) => {
     setSelectedItem(value);
     setBatchRows(
-      (selectedItem?.availableBatches.nodes || [])
+      (value?.availableBatches.nodes || [])
         .map(batch => ({ ...batch, quantity: 0 }))
         .sort(sortByDisabledThenExpiryDate)
     );
@@ -180,11 +181,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const checkAllocatedQuantities = () => {
     const values = getValues();
-    const allocatedQuantity = batchRows.reduce(
-      (total, batch) => (total += Number(values[batch.id] || 0)),
+    const allocatedUnits = batchRows.reduce(
+      (total, batch) =>
+        (total += Number(values[batch.id] || 0) * batch.packSize),
       Number(values['placeholder'] || 0)
     );
-    setAllocated(allocatedQuantity);
+    setAllocated(Math.floor(allocatedUnits / packSize));
   };
 
   const allocateQuantities = () => {
@@ -199,18 +201,32 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       return;
     }
 
-    let toAllocate = 0;
-    toAllocate += quantity;
+    // calculations are normalised to units
+    let toAllocate = quantity * packSize;
+    let batchAllocation = 0;
 
     batchRows.forEach(batch => {
-      const allocatedQuantity = Math.min(
-        toAllocate,
-        batch.availableNumberOfPacks
-      );
-      toAllocate -= allocatedQuantity;
-      setValue(batch.id, allocatedQuantity);
-      setValue(`${batch.id}_total`, allocatedQuantity * batch.packSize);
+      batchAllocation = 0;
+      // skip bigger pack sizes
+      const validBatch =
+        batch.packSize <= packSize &&
+        batch.availableNumberOfPacks > 0 &&
+        !batch.onHold;
+
+      if (validBatch) {
+        const allocatedUnits = Math.min(
+          toAllocate,
+          batch.availableNumberOfPacks * batch.packSize
+        );
+
+        batchAllocation = Math.floor(allocatedUnits / batch.packSize);
+        toAllocate -= batchAllocation * batch.packSize;
+      }
+
+      setValue(batch.id, batchAllocation);
+      setValue(`${batch.id}_total`, batchAllocation * batch.packSize);
     });
+
     // allocate remainder to placeholder
     setValue('placeholder', toAllocate);
     setAllocated(quantity);
@@ -233,7 +249,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   React.useEffect(checkAllocatedQuantities, [batchRows]);
 
-  React.useEffect(allocateQuantities, [quantity, selectedItem]);
+  React.useEffect(allocateQuantities, [quantity, selectedItem, packSize]);
 
   return (
     <Modal
@@ -263,6 +279,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               isLoading={isLoading}
               allocatedQuantity={allocated}
               quantity={quantity}
+              selectedItem={selectedItem || undefined}
+              packSize={packSize}
+              setPackSize={setPackSize}
             />
             <BatchesTable
               item={selectedItem}

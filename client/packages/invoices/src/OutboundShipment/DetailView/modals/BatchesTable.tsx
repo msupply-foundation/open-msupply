@@ -6,6 +6,7 @@ import {
   Grid,
   InfoIcon,
   isAlmostExpired,
+  ModalNumericInput,
   Item,
   Table,
   TableBody,
@@ -18,7 +19,6 @@ import {
   useFormContext,
   useFormatDate,
   useTranslation,
-  NumericTextInput,
   ReadOnlyInput,
   Popper,
   Typography,
@@ -42,13 +42,21 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const t = useTranslation();
   const d = useFormatDate();
 
-  const stockLineInputProps = register(batch.id, {
-    min: { value: 1, message: t('error.greater-than-zero-required') },
-    pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
-  });
+  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event => {
+    const newValue = Number(event.target.value);
+    if (newValue < 0 || newValue > batch.availableNumberOfPacks) return;
+    onChange(batch.id, newValue, batch.packSize);
+  };
 
-  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
-    onChange(batch.id, Number(event.target.value), batch.packSize);
+  const stockLineInputProps = register(batch.id, {
+    min: { value: 0, message: t('error.invalid-value') },
+    max: {
+      value: batch.availableNumberOfPacks,
+      message: t('error.invalid-value'),
+    },
+    pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
+    onChange: onChangeValue,
+  });
 
   const expiryDate = new Date(batch.expiryDate);
   const isDisabled = batch.availableNumberOfPacks === 0 || batch.onHold;
@@ -58,11 +66,9 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
     <TableRow>
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
-        <NumericTextInput
-          {...stockLineInputProps}
-          sx={{ height: '32px' }}
+        <ModalNumericInput
+          inputProps={stockLineInputProps}
           disabled={isDisabled}
-          onChange={onChangeValue}
         />
       </BasicCell>
       <BasicCell align="right">{batch.packSize}</BasicCell>
@@ -163,13 +169,13 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   if (!item) return null;
 
   const t = useTranslation();
-  const placeholderInputProps = register('placeholder', {
-    min: { value: 1, message: t('error.greater-than-zero-required') },
-    pattern: { value: /^[0-9]+$/, message: t('error.number-required') },
-  });
-
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange('placeholder', Number(event.target.value), 1);
+  const placeholderInputProps = register('placeholder', {
+    min: { value: 0, message: t('error.invalid-value') },
+    pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
+    onChange: onChangeValue,
+  });
 
   return (
     <>
@@ -206,10 +212,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                 {t('label.placeholder')}
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
-                <NumericTextInput
-                  {...placeholderInputProps}
-                  onChange={onChangeValue}
-                />
+                <ModalNumericInput inputProps={placeholderInputProps} />
               </BasicCell>
             </TableRow>
           </TableBody>
