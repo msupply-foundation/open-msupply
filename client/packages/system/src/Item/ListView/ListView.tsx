@@ -12,6 +12,7 @@ import {
   ListApi,
   createTableStore,
   SortBy,
+  useContentAreaHeight,
 } from '@openmsupply-client/common';
 
 const listQueryFn = async ({
@@ -98,11 +99,12 @@ const Api: ListApi<Item> = {
 };
 
 export const ListView: FC = () => {
+  const contentHeight = useContentAreaHeight();
+  const tableHeight = contentHeight - 40;
   const {
     totalCount,
     data,
     isLoading,
-    numberOfRows,
     onChangePage,
     pagination,
     sortBy,
@@ -118,10 +120,11 @@ export const ListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
       <DataTable
+        height={tableHeight}
         pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data?.slice(0, numberOfRows) || []}
+        data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/catalogue/items/${row.id}`);

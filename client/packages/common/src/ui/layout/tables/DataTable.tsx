@@ -27,6 +27,7 @@ export const DataTable = <T extends DomainObject>({
   pagination,
   onChangePage,
   noDataMessageKey,
+  height,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setActiveRows } = useTableStore();
@@ -59,35 +60,37 @@ export const DataTable = <T extends DomainObject>({
   }
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexDirection: 'column',
-      }}
-    >
-      <MuiTable sx={{ display: 'block', overflow: 'auto' }}>
-        <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <HeaderRow>
-            {columns.map(column => (
-              <HeaderCell column={column} key={String(column.key)} />
-            ))}
-          </HeaderRow>
-        </TableHead>
-        <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {data.map((row, idx) => {
-            return (
-              <DataRow
-                columns={columns}
-                key={row.id}
-                onClick={onRowClick}
-                rowData={row}
-                rowKey={String(idx)}
-              />
-            );
-          })}
-        </TableBody>
-      </MuiTable>
+    <Box flexDirection="column" width="100%">
+      <TableContainer>
+        <MuiTable
+          sx={{
+            height,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <TableHead>
+            <HeaderRow>
+              {columns.map(column => (
+                <HeaderCell column={column} key={String(column.key)} />
+              ))}
+            </HeaderRow>
+          </TableHead>
+          <TableBody sx={{ overflow: 'auto', flex: 1 }}>
+            {data.map((row, idx) => {
+              return (
+                <DataRow
+                  columns={columns}
+                  key={row.id}
+                  onClick={onRowClick}
+                  rowData={row}
+                  rowKey={String(idx)}
+                />
+              );
+            })}
+          </TableBody>
+        </MuiTable>
+      </TableContainer>
       <PaginationRow
         page={pagination.page}
         offset={pagination.offset}
@@ -95,6 +98,6 @@ export const DataTable = <T extends DomainObject>({
         total={pagination.total ?? 0}
         onChange={onChangePage}
       />
-    </TableContainer>
+    </Box>
   );
 };
