@@ -36,7 +36,6 @@ interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   isUpdateLoading: boolean;
   isDeleteLoading: boolean;
   isLoading: boolean;
-  numberOfRows: number;
 }
 
 export const useListData = <T extends ObjectWithStringKeys>(
@@ -46,8 +45,7 @@ export const useListData = <T extends ObjectWithStringKeys>(
   onError?: (e: ClientError) => void
 ): ListDataState<T> => {
   const queryClient = useQueryClient();
-  const { queryParams, first, offset, sortBy, numberOfRows } =
-    useQueryParams(initialSortBy);
+  const { queryParams, first, offset, sortBy } = useQueryParams(initialSortBy);
   const fullQueryKey = [queryKey, 'list', queryParams];
   const { error } = useNotification();
   const defaultErrorHandler = (e: ClientError) =>
@@ -84,11 +82,10 @@ export const useListData = <T extends ObjectWithStringKeys>(
   return {
     ...queryParams,
     totalCount: data?.totalCount,
-    data: data?.nodes,
+    data: data?.nodes.slice(0, 20),
     onCreate,
     invalidate,
     isCreateLoading,
-    numberOfRows,
     fullQueryKey,
     queryParams,
     onUpdate,

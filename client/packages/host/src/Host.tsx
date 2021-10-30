@@ -189,12 +189,7 @@ const Host: FC = () => {
                   <Viewport>
                     <Box display="flex">
                       <AppDrawer />
-                      <Box
-                        overflow="auto"
-                        flex={1}
-                        display="flex"
-                        flexDirection="column"
-                      >
+                      <Box flex={1} display="flex" flexDirection="column">
                         <AppBar />
                         <Box display="flex" flex={1}>
                           <React.Suspense fallback={'Loading'}>

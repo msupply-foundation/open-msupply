@@ -1,11 +1,11 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   DataTable,
   ObjectWithStringKeys,
   usePagination,
-  useRowRenderCount,
   Column,
   DomainObject,
+  useContentAreaHeight,
 } from '@openmsupply-client/common';
 import { ItemRow } from '../types';
 
@@ -18,15 +18,16 @@ export const GeneralTabComponent: FC<GeneralTabProps<ItemRow>> = ({
   data,
   columns,
 }) => {
-  const numberOfRows = useRowRenderCount();
-  const { pagination } = usePagination(numberOfRows);
+  const tableHeight = useContentAreaHeight();
+  const { pagination } = usePagination(20);
 
-  useEffect(() => {
-    pagination.onChangeFirst(numberOfRows);
-  }, [numberOfRows, pagination.first]);
+  // This accounts for the pagination below the table and the row of buttons
+  // and status.
+  const heightOffset = 110;
 
   return (
     <DataTable
+      height={tableHeight - heightOffset}
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
       data={data.slice(pagination.offset, pagination.offset + pagination.first)}
