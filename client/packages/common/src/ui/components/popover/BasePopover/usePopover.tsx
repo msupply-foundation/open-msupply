@@ -1,4 +1,5 @@
 import React, { Dispatch, FC, useState, useRef, MutableRefObject } from 'react';
+import { useDebounceCallback } from '../../../../hooks/useDebounce';
 import { BasePopover } from './BasePopover';
 
 type VirtualElement = { getBoundingClientRect: () => DOMRect };
@@ -33,26 +34,35 @@ export const usePopover = (): UsePopoverControl => {
   // yourself wanting to have the anchor of a popover be some other element,
   // there was no real reason I made this not generic other than that was all I needed
   // at the time.
-  const show: React.MouseEventHandler<HTMLDivElement | HTMLButtonElement> =
-    e => {
-      // TODO: This virtual rect is use to create a virtual element to anchor the popover on. These
-      // values make the popover show above the element. If needing a different position, passing
-      // a key as a parameter which could change this func and the props to the popover component
-      // could be the way to go.
 
-      const getBoundingClientRect = () =>
-        ({
-          top: e.clientY,
-          left: e.clientX,
-          bottom: e.clientY,
-          right: e.clientX,
-          width: 0,
-          height: 0,
-        } as DOMRect);
+  const showCallback: React.MouseEventHandler<
+    HTMLDivElement | HTMLButtonElement
+  > = e => {
+    // TODO: This virtual rect is use to create a virtual element to anchor the popover on. These
+    // values make the popover show above the element. If needing a different position, passing
+    // a key as a parameter which could change this func and the props to the popover component
+    // could be the way to go.
 
-      isOpenCallback.current?.(true);
-      setAnchorElCallback.current?.({ getBoundingClientRect });
-    };
+    const getBoundingClientRect = () =>
+      ({
+        top: e.clientY,
+        left: e.clientX,
+        bottom: e.clientY,
+        right: e.clientX,
+        width: 0,
+        height: 0,
+      } as DOMRect);
+
+    setAnchorElCallback.current?.({ getBoundingClientRect });
+    isOpenCallback.current?.(true);
+  };
+
+  const hideCallback = () => {
+    isOpenCallback.current?.(false);
+  };
+
+  const show = useDebounceCallback(showCallback, [], 250);
+  const hide = useDebounceCallback(hideCallback, []);
 
   const Popover: FC = React.useCallback(props => {
     const [internalAnchorEl, setInternalAnchorEl] =
@@ -75,8 +85,6 @@ export const usePopover = (): UsePopoverControl => {
   return {
     Popover,
     show,
-    hide: () => {
-      isOpenCallback.current?.(false);
-    },
+    hide,
   };
 };

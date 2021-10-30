@@ -1,6 +1,10 @@
 import React from 'react';
 import { Box } from '@mui/system';
-import { act, render, waitForElementToBeRemoved } from '@testing-library/react';
+import {
+  render,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react';
 import { BaseButton, usePopover } from '../..';
 import userEvent from '@testing-library/user-event';
 
@@ -20,17 +24,11 @@ describe('usePopover', () => {
   };
 
   it('Has visible content when opened', () => {
-    const { queryByRole } = render(<Example />);
+    const { getByRole, queryByRole } = render(<Example />);
 
-    const open = queryByRole('button', { name: /show/i });
+    userEvent.click(getByRole('button', { name: /show/i }));
 
-    act(() => {
-      if (open) userEvent.click(open);
-    });
-
-    const content = queryByRole('tooltip');
-
-    expect(content).toBeInTheDocument();
+    return waitFor(() => expect(queryByRole('tooltip')).toBeInTheDocument());
   });
 
   it('does not have visible content before opening', () => {
@@ -47,8 +45,7 @@ describe('usePopover', () => {
 
     userEvent.click(show);
 
-    const content = queryByRole('tooltip');
-    expect(content).toBeVisible();
+    await waitFor(() => expect(queryByRole('tooltip')).toBeVisible());
 
     userEvent.click(hide);
 
