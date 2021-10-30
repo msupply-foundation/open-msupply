@@ -60,7 +60,7 @@ export const StatusCrumbs = <StatusType extends string>({
           justifyContent="center"
           flex={1}
         >
-          <Typography fontWeight="700">Order history</Typography>
+          <Typography fontWeight="700">{t('label.order-history')}</Typography>
           <VerticalStepper
             activeStep={currentStep}
             steps={statuses.map(status => ({
