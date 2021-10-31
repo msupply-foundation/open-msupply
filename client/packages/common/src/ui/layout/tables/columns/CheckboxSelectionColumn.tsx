@@ -34,7 +34,7 @@ export const getCheckboxSelectionColumn = <
   key: GenericColumnKey.Selection,
   sortable: false,
   align: ColumnAlign.Right,
-  width: 40,
+  width: 60,
   Header: () => {
     const { toggleAll, allSelected, someSelected } = useTableStore(state => {
       const allSelected =

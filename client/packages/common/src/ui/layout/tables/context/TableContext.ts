@@ -9,8 +9,10 @@ export interface RowState {
 export interface TableStore {
   rowState: Record<string, RowState>;
   numberSelected: number;
+  numberExpanded: number;
 
   toggleExpanded: (id: string) => void;
+  toggleAllExpanded: () => void;
   toggleSelected: (id: string) => void;
   toggleAll: () => void;
   setActiveRows: (id: string[]) => void;
@@ -23,6 +25,7 @@ export const createTableStore = (): UseStore<TableStore> =>
   create<TableStore>(set => ({
     rowState: {},
     numberSelected: 0,
+    numberExpanded: 0,
 
     toggleAll: () => {
       set(state => {
@@ -58,6 +61,7 @@ export const createTableStore = (): UseStore<TableStore> =>
           (newRowState, id) => {
             return {
               ...newRowState,
+
               [id]: {
                 ...rowState[id],
                 isSelected: rowState[id]?.isSelected ?? false,
@@ -72,7 +76,12 @@ export const createTableStore = (): UseStore<TableStore> =>
           ({ isSelected }) => isSelected
         ).length;
 
-        return { ...state, numberSelected, rowState: newRowState };
+        return {
+          ...state,
+          numberSelected,
+          numberExpanded: 0,
+          rowState: newRowState,
+        };
       });
     },
 
@@ -105,18 +114,47 @@ export const createTableStore = (): UseStore<TableStore> =>
 
     toggleExpanded: (id: string) => {
       set(state => {
-        const { rowState } = state;
+        const { numberExpanded, rowState } = state;
+
+        const newExpanded = !rowState[id]?.isExpanded;
+        const newNumberExpanded = numberExpanded + (newExpanded ? 1 : -1);
 
         return {
           ...state,
+          numberExpanded: newNumberExpanded,
           rowState: {
             ...rowState,
             [id]: {
               ...rowState[id],
               isSelected: rowState[id]?.isSelected ?? false,
-              isExpanded: !rowState[id]?.isExpanded,
+              isExpanded: newExpanded,
             },
           },
+        };
+      });
+    },
+
+    toggleAllExpanded: () => {
+      set(state => {
+        const rowIds = Object.keys(state.rowState);
+        const numberOfRows = rowIds.length;
+        const isExpanded = state.numberExpanded !== numberOfRows;
+        const numberExpanded = isExpanded ? numberOfRows : 0;
+
+        return {
+          ...state,
+          numberExpanded,
+          rowState: Object.keys(state.rowState).reduce(
+            (newState, id) => ({
+              ...newState,
+              [id]: {
+                ...state.rowState[id],
+                isExpanded,
+                isSelected: state.rowState[id]?.isSelected ?? false,
+              },
+            }),
+            state.rowState
+          ),
         };
       });
     },
