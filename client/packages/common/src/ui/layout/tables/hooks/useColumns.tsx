@@ -9,7 +9,7 @@ import {
 import { useFormatDate, useFormatNumber } from '../../../../intl';
 import { BasicCell, BasicHeader } from '../components';
 import { SortBy } from '../../../..';
-import { ColumnDefinitionSetBuilder, ColumnKey } from '..';
+import { ColumnDefinitionSetBuilder, ColumnKey, ColumnDataAccessor } from '..';
 
 const getColumnWidths = <T extends DomainObject>(
   column: ColumnDefinition<T>
@@ -18,54 +18,6 @@ const getColumnWidths = <T extends DomainObject>(
   const width = column.width || 100;
 
   return { minWidth, width };
-};
-
-interface ColumnOptions<T extends DomainObject> {
-  onChangeSortBy?: (column: Column<T>) => void;
-  sortBy?: SortBy<T>;
-}
-
-// TODO: Currently columns won't update if they're changed.
-// This will need to change when we add functionality to
-// add/remove columns.
-export const useColumns = <T extends DomainObject>(
-  columnsToCreate: (
-    | ColumnDefinition<T>
-    | ColumnKey
-    | [ColumnKey | ColumnDefinition<T>, Omit<ColumnDefinition<T>, 'key'>]
-    | [ColumnKey]
-  )[],
-  options?: ColumnOptions<T>,
-  depsArray: DependencyList = []
-): Column<T>[] => {
-  const columnDefinitions = new ColumnDefinitionSetBuilder<T>()
-    .addColumns(columnsToCreate)
-    .build();
-
-  return useMemo(
-    () =>
-      columnDefinitions.map(column => {
-        const defaults: Omit<Column<T>, 'key'> = {
-          label: '',
-          format: ColumnFormat.Text,
-          sortable: true,
-          Cell: BasicCell,
-          Header: BasicHeader,
-          accessor: getDefaultAccessor<T>(column),
-          sortType: getSortType(column),
-          sortInverted: column.format === ColumnFormat.Date,
-          sortDescFirst: column.format === ColumnFormat.Date,
-          align: ColumnAlign.Left,
-          onChangeSortBy: options?.onChangeSortBy,
-          sortBy: options?.sortBy,
-          formatter: getDefaultFormatter<T>(column),
-          ...getColumnWidths(column),
-        };
-
-        return { ...defaults, ...column };
-      }),
-    depsArray
-  );
 };
 
 const getSortType = (column: { format?: ColumnFormat }) => {
@@ -82,7 +34,9 @@ const getSortType = (column: { format?: ColumnFormat }) => {
 };
 
 const getDefaultAccessor =
-  <T extends DomainObject>(column: ColumnDefinition<T>) =>
+  <T extends DomainObject>(
+    column: ColumnDefinition<T>
+  ): ColumnDataAccessor<T> =>
   (row: T) => {
     return row[column.key] as string;
   };
@@ -102,6 +56,7 @@ const getDefaultFormatter = <T extends DomainObject>(
         if (Number.isNaN(value)) return '';
 
         const formatNumber = useFormatNumber();
+
         // TODO: fetch currency symbol or use style: 'currency'
         return `$${formatNumber(Number(value))}`;
       };
@@ -110,4 +65,91 @@ const getDefaultFormatter = <T extends DomainObject>(
       return (value: unknown) => String(value);
     }
   }
+};
+
+const getDefaultColumnAlign = <T extends DomainObject>(
+  column: ColumnDefinition<T>
+) => {
+  const { format } = column;
+
+  switch (format) {
+    case ColumnFormat.Date: {
+      return ColumnAlign.Right;
+    }
+    case ColumnFormat.Currency: {
+      return ColumnAlign.Right;
+    }
+    case ColumnFormat.Integer: {
+      return ColumnAlign.Right;
+    }
+    case ColumnFormat.Real: {
+      return ColumnAlign.Right;
+    }
+    case ColumnFormat.Text: {
+      return ColumnAlign.Left;
+    }
+  }
+
+  return ColumnAlign.Left;
+};
+
+interface ColumnOptions<T extends DomainObject> {
+  onChangeSortBy?: (column: Column<T>) => void;
+  sortBy?: SortBy<T>;
+}
+
+type ColumnDescription<T extends DomainObject> =
+  | ColumnDefinition<T>
+  | ColumnKey
+  | [ColumnKey | ColumnDefinition<T>, Omit<ColumnDefinition<T>, 'key'>]
+  | [ColumnKey];
+
+export const createColumnWithDefaults = <T extends DomainObject>(
+  column: ColumnDefinition<T>,
+  options?: ColumnOptions<T>
+): Column<T> => {
+  const defaults: Omit<Column<T>, 'key'> = {
+    label: '',
+    format: ColumnFormat.Text,
+
+    Cell: BasicCell,
+    Header: BasicHeader,
+
+    sortable: true,
+    sortInverted: column.format === ColumnFormat.Date,
+    sortDescFirst: column.format === ColumnFormat.Date,
+
+    onChangeSortBy: options?.onChangeSortBy,
+    sortBy: options?.sortBy,
+
+    accessor: getDefaultAccessor<T>(column),
+    sortType: getSortType(column),
+    align: getDefaultColumnAlign(column),
+    formatter: getDefaultFormatter<T>(column),
+
+    ...getColumnWidths(column),
+  };
+
+  return { ...defaults, ...column };
+};
+
+export const createColumns = <T extends DomainObject>(
+  columnsToCreate: ColumnDescription<T>[],
+  options?: ColumnOptions<T>
+): Column<T>[] => {
+  const columnDefinitions = new ColumnDefinitionSetBuilder<T>()
+    .addColumns(columnsToCreate)
+    .build();
+
+  return columnDefinitions.map(column => {
+    return createColumnWithDefaults(column, options);
+  });
+};
+
+export const useColumns = <T extends DomainObject>(
+  columnsToCreate: ColumnDescription<T>[],
+  options?: ColumnOptions<T>,
+  depsArray: DependencyList = []
+): Column<T>[] => {
+  return useMemo(() => createColumns(columnsToCreate, options), depsArray);
 };
