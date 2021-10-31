@@ -139,4 +139,35 @@ describe('TableContext', () => {
     expect(result.current.rowState['c']?.isSelected).toBe(false);
     expect(result.current.numberSelected).toBe(0);
   });
+
+  it('sets a single row as expanded once called', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows, toggleExpanded } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+      toggleExpanded('a');
+    });
+
+    expect(result.current.rowState['a']?.isExpanded).toBe(true);
+    expect(result.current.rowState['b']?.isExpanded).toBe(false);
+    expect(result.current.rowState['c']?.isExpanded).toBe(false);
+  });
+
+  it('sets a single row as not expanded when called twice', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows, toggleExpanded } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+      toggleExpanded('a');
+      toggleExpanded('a');
+    });
+
+    expect(result.current.rowState['a']?.isExpanded).toBe(false);
+    expect(result.current.rowState['b']?.isExpanded).toBe(false);
+    expect(result.current.rowState['c']?.isExpanded).toBe(false);
+  });
 });
