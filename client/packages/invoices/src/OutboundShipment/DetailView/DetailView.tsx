@@ -7,6 +7,7 @@ import {
   useColumns,
   useDocument,
   useToggle,
+  getRowExpandColumn,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -51,6 +52,7 @@ export const DetailView: FC = () => {
       'sellPricePerPack',
       'packSize',
       'numberOfPacks',
+      getRowExpandColumn<ItemRow>(),
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
