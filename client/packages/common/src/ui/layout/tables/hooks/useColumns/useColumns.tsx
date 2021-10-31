@@ -1,15 +1,19 @@
 import { DependencyList, useMemo } from 'react';
-import { DomainObject } from '../../../../types/index';
+import { DomainObject } from '../../../../../types/index';
 import {
   ColumnDefinition,
   ColumnFormat,
   ColumnAlign,
   Column,
-} from '../columns/types';
-import { useFormatDate, useFormatNumber } from '../../../../intl';
-import { BasicCell, BasicHeader } from '../components';
-import { SortBy } from '../../../..';
-import { ColumnDefinitionSetBuilder, ColumnKey, ColumnDataAccessor } from '..';
+} from '../../columns/types';
+import { useFormatDate, useFormatNumber } from '../../../../../intl';
+import { BasicCell, BasicHeader } from '../../components';
+import { SortBy } from '../../../../..';
+import {
+  ColumnDefinitionSetBuilder,
+  ColumnKey,
+  ColumnDataAccessor,
+} from '../..';
 
 const getColumnWidths = <T extends DomainObject>(
   column: ColumnDefinition<T>
