@@ -170,4 +170,78 @@ describe('TableContext', () => {
     expect(result.current.rowState['b']?.isExpanded).toBe(false);
     expect(result.current.rowState['c']?.isExpanded).toBe(false);
   });
+
+  it('sets all active rows as expanded when expand all is called', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows, toggleAllExpanded } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+      toggleAllExpanded();
+    });
+
+    expect(result.current.rowState['a']?.isExpanded).toBe(true);
+    expect(result.current.rowState['b']?.isExpanded).toBe(true);
+    expect(result.current.rowState['c']?.isExpanded).toBe(true);
+  });
+
+  it('sets all active rows as not expanded when expand all is called twice', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows, toggleAllExpanded } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+      toggleAllExpanded();
+      toggleAllExpanded();
+    });
+
+    expect(result.current.rowState['a']?.isExpanded).toBe(false);
+    expect(result.current.rowState['b']?.isExpanded).toBe(false);
+    expect(result.current.rowState['c']?.isExpanded).toBe(false);
+  });
+
+  it('sets all active rows as expanded when expand all is called in an indeterminate state', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows, toggleExpanded, toggleAllExpanded } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+      toggleAllExpanded();
+      toggleExpanded('b');
+      toggleAllExpanded();
+    });
+
+    expect(result.current.rowState['a']?.isExpanded).toBe(true);
+    expect(result.current.rowState['b']?.isExpanded).toBe(true);
+    expect(result.current.rowState['c']?.isExpanded).toBe(true);
+  });
+
+  it('only sets the expanded state when toggling, not the selected state', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows, toggleExpanded } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+      toggleExpanded('a');
+    });
+
+    expect(result.current.rowState['a']?.isExpanded).toBe(true);
+    expect(result.current.rowState['a']?.isSelected).toBe(false);
+  });
+
+  it('after setting active rows, there are no expanded rows', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
+
+    const { setActiveRows } = result.current;
+
+    act(() => {
+      setActiveRows(['a', 'b', 'c']);
+    });
+
+    expect(result.current.numberExpanded).toBe(0);
+  });
 });
