@@ -129,7 +129,7 @@ const themeOptions = {
     midGrey: '#8f90a6',
     border: '#e4e4eb',
     primary: { 500: '#e95c30' },
-    secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
+    secondary: { main: '#3e7bfa', light: '#ccddff', dark: '#5b8def' },
 
     background: {
       menu: '#f2f2f5',

@@ -87,7 +87,7 @@ export const StatusCrumbs = <StatusType extends string>({
               sx={{
                 width: 240,
                 height: 200,
-
+                borderRadius: '16px',
                 boxShadow: theme => theme.shadows[7],
               }}
             >
