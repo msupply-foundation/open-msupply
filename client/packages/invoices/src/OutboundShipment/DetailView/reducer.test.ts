@@ -20,6 +20,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '3',
@@ -29,6 +30,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '5',
@@ -38,6 +40,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '2',
@@ -47,6 +50,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '4',
@@ -56,6 +60,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '1',
@@ -65,6 +70,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
   ];
 
@@ -170,6 +176,24 @@ describe('DetailView reducer', () => {
     if (!line) throw new Error('This test is broken!');
 
     expect(line.quantity).toBe(10);
+  });
+
+  it('updates the correct line with the correct comment', () => {
+    const state: OutboundShipmentStateShape = {
+      draft: { ...placeholderInvoice, lines },
+      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+    };
+
+    const reducerResult = reducer(undefined, null)(
+      state,
+      OutboundAction.updateComment('1', 'comment')
+    );
+
+    const line = reducerResult.draft.lines.find(({ id }) => id === '1');
+
+    if (!line) throw new Error('This test is broken!');
+
+    expect(line.comment).toBe('comment');
   });
 
   it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
