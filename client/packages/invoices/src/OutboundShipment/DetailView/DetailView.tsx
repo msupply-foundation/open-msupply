@@ -7,6 +7,7 @@ import {
   useColumns,
   useDocument,
   useToggle,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -43,6 +44,7 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
+      getCommentPopoverColumn<ItemRow>(),
       'itemCode',
       'itemName',
       'batch',

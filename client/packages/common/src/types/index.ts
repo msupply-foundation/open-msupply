@@ -51,6 +51,7 @@ export interface InvoiceLine extends DomainObject {
   expiry: string;
   itemUnit?: string;
   location?: string;
+  comment?: string;
 }
 
 export type Test = {

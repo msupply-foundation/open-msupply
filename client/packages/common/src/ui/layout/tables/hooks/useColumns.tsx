@@ -56,7 +56,7 @@ export const useColumns = <T extends DomainObject>(
           sortInverted: column.format === ColumnFormat.Date,
           sortDescFirst: column.format === ColumnFormat.Date,
           align: ColumnAlign.Left,
-          onChangeSortBy: options?.onChangeSortBy,
+          onChangeSortBy: column.sortable ? options?.onChangeSortBy : undefined,
           sortBy: options?.sortBy,
           formatter: getDefaultFormatter<T>(column),
           ...getColumnWidths(column),
