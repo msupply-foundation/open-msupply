@@ -3,6 +3,7 @@ import createContext from 'zustand/context';
 
 export interface RowState {
   isSelected: boolean;
+  isExpanded: boolean;
 }
 
 export interface TableStore {
@@ -35,7 +36,11 @@ export const createTableStore = (): UseStore<TableStore> =>
           rowState: Object.keys(state.rowState).reduce(
             (newState, id) => ({
               ...newState,
-              [id]: { isSelected },
+              [id]: {
+                ...state.rowState[id],
+                isSelected,
+                isExpanded: state.rowState[id]?.isExpanded ?? false,
+              },
             }),
             state.rowState
           ),
@@ -52,7 +57,10 @@ export const createTableStore = (): UseStore<TableStore> =>
           (newRowState, id) => {
             return {
               ...newRowState,
-              [id]: { isSelected: rowState[id]?.isSelected ?? false },
+              [id]: {
+                ...rowState[id],
+                isSelected: rowState[id]?.isSelected ?? false,
+              },
             };
           },
           {}
@@ -83,7 +91,11 @@ export const createTableStore = (): UseStore<TableStore> =>
           numberSelected: newNumberSelected,
           rowState: {
             ...state.rowState,
-            [id]: { ...state.rowState[id], isSelected },
+            [id]: {
+              ...state.rowState[id],
+              isSelected,
+              isExpanded: state.rowState[id]?.isExpanded ?? false,
+            },
           },
         };
       });
