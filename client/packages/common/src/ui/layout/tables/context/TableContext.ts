@@ -10,6 +10,7 @@ export interface TableStore {
   rowState: Record<string, RowState>;
   numberSelected: number;
 
+  toggleExpanded: (id: string) => void;
   toggleSelected: (id: string) => void;
   toggleAll: () => void;
   setActiveRows: (id: string[]) => void;
@@ -60,6 +61,7 @@ export const createTableStore = (): UseStore<TableStore> =>
               [id]: {
                 ...rowState[id],
                 isSelected: rowState[id]?.isSelected ?? false,
+                isExpanded: false,
               },
             };
           },
@@ -95,6 +97,24 @@ export const createTableStore = (): UseStore<TableStore> =>
               ...state.rowState[id],
               isSelected,
               isExpanded: state.rowState[id]?.isExpanded ?? false,
+            },
+          },
+        };
+      });
+    },
+
+    toggleExpanded: (id: string) => {
+      set(state => {
+        const { rowState } = state;
+
+        return {
+          ...state,
+          rowState: {
+            ...rowState,
+            [id]: {
+              ...rowState[id],
+              isSelected: rowState[id]?.isSelected ?? false,
+              isExpanded: !rowState[id]?.isExpanded,
             },
           },
         };
