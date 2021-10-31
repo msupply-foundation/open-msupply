@@ -64,6 +64,8 @@
   "label.delivered": "Delivered",
   "label.draft": "Draft",
   "label.entered": "Entered",
+  "label.expand": "Expand",
+  "label.expand-all": "Expand all",
   "label.expiry": "Expiry",
   "label.general": "General",
   "label.hold": "Hold",
