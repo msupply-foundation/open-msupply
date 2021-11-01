@@ -2,18 +2,22 @@ import React from 'react';
 import { Grid } from '@mui/material';
 import { get, UseFormRegisterReturn, useFormState } from 'react-hook-form';
 
-import { BasicTextInput } from '../../components/inputs/TextInput/BasicTextInput';
+import { NumericTextInput } from '../../components/inputs/TextInput/NumericTextInput';
 
-export interface ModalInputProps {
+export interface ModalNumericInputProps {
   defaultValue?: unknown;
+  disabled?: boolean;
+  height?: number;
   inputProps: UseFormRegisterReturn;
   width?: number;
 }
 
-export const ModalInput: React.FC<ModalInputProps> = ({
+export const ModalNumericInput: React.FC<ModalNumericInputProps> = ({
   defaultValue,
+  disabled,
+  height = 32,
   inputProps,
-  width = 240,
+  width = 85,
 }) => {
   const { errors } = useFormState();
   const error = get(errors, inputProps.name);
@@ -31,9 +35,10 @@ export const ModalInput: React.FC<ModalInputProps> = ({
         flexBasis: '0',
       }}
     >
-      <BasicTextInput
+      <NumericTextInput
         defaultValue={defaultValue}
-        sx={{ width: `${width}px` }}
+        disabled={disabled}
+        sx={{ width: `${width}px`, height: `${height}px` }}
         {...errorProps}
         {...inputProps}
       />

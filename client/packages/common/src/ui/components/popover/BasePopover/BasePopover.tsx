@@ -8,6 +8,8 @@ export interface BasePopoverProps extends Omit<PopperProps, 'open'> {
   isOpen: boolean;
   anchorEl: PopperProps['anchorEl'];
   paperProps?: PaperProps;
+  width?: number;
+  height?: number;
 }
 
 export const BasePopover: FC<BasePopoverProps> = ({
@@ -15,6 +17,8 @@ export const BasePopover: FC<BasePopoverProps> = ({
   isOpen,
   anchorEl,
   paperProps,
+  width = 240,
+  height = 200,
   ...popperProps
 }) => {
   return (
@@ -30,8 +34,8 @@ export const BasePopover: FC<BasePopoverProps> = ({
           <Paper
             {...paperProps}
             sx={{
-              width: 240,
-              height: 200,
+              width,
+              height,
               boxShadow: theme => theme.shadows[7],
               ...paperProps?.sx,
             }}
