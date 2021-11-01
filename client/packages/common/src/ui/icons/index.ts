@@ -23,6 +23,7 @@ export { InvoiceIcon } from './Invoice';
 export { ListIcon } from './ListIcon';
 export { MenuDotsIcon } from './MenuDots';
 export { MessagesIcon } from './Messages';
+export { MessageSquareIcon } from './MessageSquare';
 export { MSupplyGuy } from './MSupplyGuy';
 export { PlusCircleIcon } from './PlusCircle';
 export { PowerIcon } from './Power';
