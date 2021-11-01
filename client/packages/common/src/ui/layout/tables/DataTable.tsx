@@ -27,6 +27,7 @@ export const DataTable = <T extends DomainObject>({
   pagination,
   onChangePage,
   noDataMessageKey,
+  ExpandContent,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setActiveRows } = useTableStore();
@@ -72,6 +73,7 @@ export const DataTable = <T extends DomainObject>({
           {data.map((row, idx) => {
             return (
               <DataRow
+                ExpandContent={ExpandContent}
                 columns={columns}
                 key={row.id}
                 onClick={onRowClick}
