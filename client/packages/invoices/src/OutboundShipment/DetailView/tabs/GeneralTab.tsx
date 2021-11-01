@@ -32,7 +32,7 @@ export const GeneralTabComponent: FC<GeneralTabProps<ItemRow>> = ({
   data,
   columns,
 }) => {
-  const { pagination } = usePagination(20);
+  const { pagination } = usePagination();
 
   return (
     <DataTable
