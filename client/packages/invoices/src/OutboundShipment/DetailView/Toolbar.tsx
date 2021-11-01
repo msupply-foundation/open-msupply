@@ -37,7 +37,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
       const successSnack = success(`Deleted ${selectedRows?.length} lines`);
       successSnack();
     } else {
-      const infoSnack = info('Select rows to delete them');
+      const infoSnack = info(t('label.select-rows-to-delete-them'));
       infoSnack();
     }
   };
@@ -81,7 +81,10 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             />
           </Box>
         </Grid>
-        <DropdownMenu label="Select">
+        <DropdownMenu
+          disabled={!isInvoiceEditable(draft)}
+          label={t('label.select')}
+        >
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines')}
           </DropdownMenuItem>
