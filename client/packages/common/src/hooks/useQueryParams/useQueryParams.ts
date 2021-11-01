@@ -16,7 +16,7 @@ export interface QueryParamsState<T extends ObjectWithStringKeys>
 export const useQueryParams = <T extends ObjectWithStringKeys>(
   initialSortBy: SortRule<T>
 ): QueryParamsState<T> => {
-  const pagination = usePagination(20);
+  const pagination = usePagination();
   const { sortBy, onChangeSortBy } = useSortBy<T>(initialSortBy);
 
   const queryParams = { ...pagination, pagination, sortBy, onChangeSortBy };
