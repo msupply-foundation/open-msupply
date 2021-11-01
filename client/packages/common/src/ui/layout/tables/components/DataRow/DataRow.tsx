@@ -25,11 +25,13 @@ export const DataRow = <T extends DomainObject>({
   const { isExpanded } = useExpanded(rowData.id);
 
   const onRowClick = () => onClick && onClick(rowData);
+  const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
 
   return (
     <>
       <TableRow
         sx={{
+          minWidth,
           alignItems: 'center',
           height: '40px',
           maxHeight: '45px',

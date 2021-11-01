@@ -15,7 +15,7 @@ export const getRowExpandColumn = <
 >(): ColumnDefinition<T> => ({
   key: 'expand',
   sortable: false,
-  align: ColumnAlign.Center,
+  align: ColumnAlign.Right,
   width: 60,
   Header: () => {
     const { numberExpanded, toggleAllExpanded } = useTableStore();
