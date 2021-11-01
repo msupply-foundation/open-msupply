@@ -42,6 +42,14 @@ const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
 };
 
 export const OutboundAction = {
+  upsertLine: (invoiceLine: InvoiceLine): OutboundShipmentAction => ({
+    type: ActionType.UpsertLine,
+    payload: { invoiceLine },
+  }),
+  deleteLine: (invoiceLine: InvoiceLine): OutboundShipmentAction => ({
+    type: ActionType.DeleteLine,
+    payload: { invoiceLine },
+  }),
   updateInvoice: <K extends keyof Invoice>(
     key: K,
     value: Invoice[K]
@@ -69,11 +77,13 @@ export const OutboundAction = {
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
   sortBy: SortBy<ItemRow>;
+  deletedLines: InvoiceLine[];
 }
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderInvoice,
   sortBy: { key: 'quantity', isDesc: true, direction: 'asc' },
+  deletedLines: [],
 });
 
 export const reducer = (
@@ -107,12 +117,11 @@ export const reducer = (
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
 
-          draft.upsertLine = invoiceLine => {
-            dispatch?.({
-              type: ActionType.UpsertLine,
-              payload: { invoiceLine },
-            });
-          };
+          draft.upsertLine = invoiceLine =>
+            dispatch?.(OutboundAction.upsertLine(invoiceLine));
+
+          draft.deleteLine = invoiceLine =>
+            dispatch?.(OutboundAction.deleteLine(invoiceLine));
 
           break;
         }
@@ -185,6 +194,18 @@ export const reducer = (
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
+
+          break;
+        }
+
+        case ActionType.DeleteLine: {
+          const { draft, deletedLines } = state;
+          const { payload } = action;
+          const { invoiceLine } = payload;
+
+          const idx = draft.lines.findIndex(({ id }) => id === invoiceLine.id);
+          draft.lines.splice(idx, 1);
+          deletedLines.push(invoiceLine);
 
           break;
         }

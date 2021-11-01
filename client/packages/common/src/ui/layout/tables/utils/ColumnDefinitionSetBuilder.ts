@@ -43,23 +43,23 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     format: ColumnFormat.Integer,
     align: ColumnAlign.Right,
     label: 'label.pack-quantity',
-    width: 75,
+    width: 100,
   },
   expiryDate: {
     key: 'expiryDate',
     format: ColumnFormat.Date,
     label: 'label.expiry',
-    width: 50,
+    width: 100,
   },
   itemCode: {
     key: 'itemCode',
     label: 'label.code',
-    width: 50,
+    width: 100,
   },
   itemName: {
     key: 'itemName',
     label: 'label.name',
-    width: 250,
+    width: 300,
   },
   name: {
     key: 'name',
@@ -115,19 +115,19 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   packSize: {
     label: 'label.pack-size',
     key: 'packSize',
-    width: 50,
+    width: 100,
     align: ColumnAlign.Right,
   },
   quantity: {
     label: 'label.pack-quantity',
     key: 'quantity',
-    width: 50,
+    width: 100,
     align: ColumnAlign.Right,
   },
   batch: {
     label: 'label.batch',
     key: 'batch',
-    width: 50,
+    width: 100,
   },
   costPricePerPack: {
     label: 'label.cost',
@@ -139,7 +139,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   sellPricePerPack: {
     label: 'label.sell',
     key: 'sellPricePerPack',
-    width: 50,
+    width: 100,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },
@@ -151,7 +151,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   unitQuantity: {
     label: 'label.unit-quantity',
     key: 'unitQuantity',
-    width: 50,
+    width: 100,
     accessor: row =>
       String(Number(row['quantity'] ?? 0) * Number(row['packSize'] ?? 0)),
     align: ColumnAlign.Right,

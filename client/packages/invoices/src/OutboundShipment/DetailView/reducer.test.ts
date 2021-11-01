@@ -60,7 +60,7 @@ describe('DetailView reducer', () => {
       updateComment: () => {},
     },
     {
-      id: '1',
+      id: '2',
       quantity: 1,
       stockLineId: '',
       itemName: 'd',
@@ -75,6 +75,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     const [quantityColumn] = createColumns<ItemRow>(['quantity']);
@@ -87,7 +88,7 @@ describe('DetailView reducer', () => {
 
     expect(reducerResult.draft.lines).toEqual([
       expect.objectContaining({ id: '1' }),
-      expect.objectContaining({ id: '1' }),
+      expect.objectContaining({ id: '2' }),
       expect.objectContaining({ id: '2' }),
       expect.objectContaining({ id: '3' }),
       expect.objectContaining({ id: '4' }),
@@ -99,6 +100,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
+      deletedLines: [],
     };
 
     const [quantityColumn] = createColumns<ItemRow>(['quantity']);
@@ -111,7 +113,7 @@ describe('DetailView reducer', () => {
 
     expect(reducerResult.draft.lines).toEqual(
       [
-        expect.objectContaining({ id: '1' }),
+        expect.objectContaining({ id: '2' }),
         expect.objectContaining({ id: '1' }),
         expect.objectContaining({ id: '2' }),
         expect.objectContaining({ id: '3' }),
@@ -125,6 +127,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     const [itemNameColumn] = createColumns<ItemRow>(['itemName']);
@@ -139,7 +142,7 @@ describe('DetailView reducer', () => {
       expect.objectContaining({ id: '1' }),
       expect.objectContaining({ id: '5' }),
       expect.objectContaining({ id: '3' }),
-      expect.objectContaining({ id: '1' }),
+      expect.objectContaining({ id: '2' }),
       expect.objectContaining({ id: '2' }),
       expect.objectContaining({ id: '4' }),
     ]);
@@ -149,6 +152,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     const reducerResult = reducer(undefined, null)(
@@ -167,6 +171,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     const reducerResult = reducer(undefined, null)(
@@ -185,6 +190,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     // Create some server data which is the same except every line has 99 quantity.
@@ -204,6 +210,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     // Create a server invoice which has a different comment and merge. The resulting invoice should be the same, except
@@ -220,5 +227,69 @@ describe('DetailView reducer', () => {
         expect(JSON.stringify(value)).toEqual(JSON.stringify(state.draft[key]));
       }
     });
+  });
+
+  it('transfers deleted lines from the draft to the deleted lines cache', () => {
+    const state: OutboundShipmentStateShape = {
+      draft: { ...placeholderInvoice, lines },
+      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
+    };
+
+    const lineToDelete = lines[0] as ItemRow;
+    const reducerResult = reducer({ ...state.draft }, null)(
+      state,
+      OutboundAction.deleteLine(lineToDelete)
+    );
+
+    // Try find the lines we just deleted
+    const line = reducerResult.draft.lines.find(
+      ({ id }) => lineToDelete.id === id
+    );
+
+    expect(line).toBeFalsy();
+    expect(reducerResult.deletedLines[0]).toEqual(lines[0]);
+  });
+
+  // it('updates an existing line when upserting', () => {
+  //   const state: OutboundShipmentStateShape = {
+  //     draft: { ...placeholderInvoice, lines },
+  //     sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+  //     deletedLines: [],
+  //   };
+
+  //   const lineToDelete = { ...lines[0], quantity: 999 } as ItemRow;
+  //   const reducerResult = reducer({ ...state.draft }, null)(
+  //     state,
+  //     OutboundAction.upsertLine(lineToDelete)
+  //   );
+
+  //   // Try find the lines we just deleted
+  //   const line = reducerResult.draft.lines.find(
+  //     ({ id }) => lineToDelete.id === id
+  //   );
+
+  //   expect(line?.quantity).toBe(999);
+  // });
+
+  it('inserts an invoice line when it does not exist', () => {
+    const state: OutboundShipmentStateShape = {
+      draft: { ...placeholderInvoice, lines },
+      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
+    };
+
+    const lineToInsert = { ...lines[0], id: '999' } as ItemRow;
+    const reducerResult = reducer({ ...state.draft }, null)(
+      state,
+      OutboundAction.upsertLine(lineToInsert)
+    );
+
+    // Try find the lines we just deleted
+    const line = reducerResult.draft.lines.find(
+      ({ id }) => lineToInsert.id === id
+    );
+
+    expect(line).toBeTruthy();
   });
 });
