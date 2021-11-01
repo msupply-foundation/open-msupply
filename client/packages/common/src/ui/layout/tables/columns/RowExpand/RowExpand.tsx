@@ -31,7 +31,7 @@ export const getRowExpandColumn = <
                 theme.transitions.create('transform', {
                   duration: theme.transitions.duration.leavingScreen,
                 }),
-              transform: !!numberExpanded ? 'rotate(360deg)' : 'rotate(270deg)',
+              transform: !!numberExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
             }}
           >
             <ChevronsDownIcon />
@@ -58,7 +58,7 @@ export const getRowExpandColumn = <
                   easing: theme.transitions.easing.sharp,
                   duration: theme.transitions.duration.leavingScreen,
                 }),
-              transform: isExpanded ? 'rotate(360deg)' : 'rotate(270deg)',
+              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
             }}
           >
             <ChevronDownIcon />
