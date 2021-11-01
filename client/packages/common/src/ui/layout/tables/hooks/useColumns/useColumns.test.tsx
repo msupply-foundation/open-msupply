@@ -39,8 +39,8 @@ describe('useColumns', () => {
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Right,
-      width: 100,
-      minWidth: 100,
+      width: 60,
+      minWidth: 60,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
@@ -125,6 +125,14 @@ describe('useColumns', () => {
       useColumns<Test>([{ key: 'default', width: 200, minWidth: 100 }])
     );
     const defaults = { width: 200, minWidth: 100 };
+    expect(result.current[0]).toEqual(expect.objectContaining(defaults));
+  });
+
+  it('defaults to a width of 60 for integers', () => {
+    const { result } = renderHook(() =>
+      useColumns<Test>([{ key: 'default', format: ColumnFormat.Integer }])
+    );
+    const defaults = { width: 60, minWidth: 60 };
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
   });
 
