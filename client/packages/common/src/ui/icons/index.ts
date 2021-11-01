@@ -42,6 +42,7 @@ export { UnhappyMan } from './UnhappyMan';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
 export { MedicineIcon } from './MedicineIcon';
+export { SidebarIcon } from './Sidebar';
 
 type Color =
   | 'inherit'
