@@ -37,7 +37,8 @@ module.exports = env => {
     },
     output: {
       publicPath: isProduction ? '/' : 'http://localhost:3003/',
-      chunkFilename: '[id].[contenthash].js',
+      filename: '[name].[contenthash].js',
+      chunkFilename: '[contenthash].js',
       clean: true,
     },
     optimization: {
