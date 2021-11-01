@@ -4,6 +4,7 @@ import { ObjectWithStringKeys } from '../../../../../types/utility';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
+import { useDebounceCallback } from '../../../../..';
 
 export const HeaderRow: FC = props => (
   <TableRow
@@ -41,15 +42,15 @@ export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
 
   const isSorted = key === currentSortKey;
 
+  const onSort = useDebounceCallback(
+    () => onChangeSortBy && sortable && onChangeSortBy(column),
+    [column]
+  );
+
   return (
     <TableCell
       role="columnheader"
-      onClick={
-        onChangeSortBy &&
-        (() => {
-          sortable && onChangeSortBy(column);
-        })
-      }
+      onClick={onSort}
       align={align}
       padding={'none'}
       sx={{
