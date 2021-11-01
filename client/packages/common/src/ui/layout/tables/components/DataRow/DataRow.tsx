@@ -25,16 +25,17 @@ export const DataRow = <T extends DomainObject>({
   const { isExpanded } = useExpanded(rowData.id);
 
   const onRowClick = () => onClick && onClick(rowData);
+  const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
 
   return (
     <>
       <TableRow
         sx={{
+          minWidth,
           alignItems: 'center',
           height: '40px',
           maxHeight: '45px',
           boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-          padding: '0px 20px',
           display: 'flex',
           flex: '1 0 auto',
         }}
@@ -52,7 +53,7 @@ export const DataRow = <T extends DomainObject>({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                padding: 0,
+                paddingLeft: '16px',
                 paddingRight: '16px',
                 ...(hasOnClick && { cursor: 'pointer' }),
                 flex: `${column.width} 0 auto`,

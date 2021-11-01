@@ -7,6 +7,7 @@ import {
   useColumns,
   useDocument,
   useToggle,
+  GenericColumnKey,
   getCommentPopoverColumn,
   getRowExpandColumn,
 } from '@openmsupply-client/common';
@@ -57,6 +58,7 @@ export const DetailView: FC = () => {
       'unitQuantity',
       'numberOfPacks',
       getRowExpandColumn<ItemRow>(),
+      GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
     [sortBy]

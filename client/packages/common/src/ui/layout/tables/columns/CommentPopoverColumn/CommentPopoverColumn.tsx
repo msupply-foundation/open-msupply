@@ -14,7 +14,7 @@ export const getCommentPopoverColumn = <
   key: 'comment',
   sortable: false,
   align: ColumnAlign.Center,
-  width: 20,
+  width: 60,
   accessor: rowData => rowData.comment,
   Header: () => {
     return null;
