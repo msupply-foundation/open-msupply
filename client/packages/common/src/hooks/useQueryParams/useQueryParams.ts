@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import { ObjectWithStringKeys } from './../../types/utility';
-import { useRowRenderCount } from '../useRowRenderCount';
 import { usePagination, PaginationState } from '../usePagination';
 import { useSortBy, SortState, SortRule } from '../useSortBy';
 
@@ -13,21 +11,13 @@ export interface QueryParamsState<T extends ObjectWithStringKeys>
     PaginationState {
   pagination: PaginationState;
   queryParams: QueryParams<T>;
-  numberOfRows: number;
 }
 
 export const useQueryParams = <T extends ObjectWithStringKeys>(
   initialSortBy: SortRule<T>
 ): QueryParamsState<T> => {
-  const numberOfRows = useRowRenderCount();
-  const pagination = usePagination(numberOfRows);
+  const pagination = usePagination();
   const { sortBy, onChangeSortBy } = useSortBy<T>(initialSortBy);
-
-  useEffect(() => {
-    if (numberOfRows > pagination.first) {
-      pagination.onChangeFirst(numberOfRows);
-    }
-  }, [numberOfRows, pagination.first]);
 
   const queryParams = { ...pagination, pagination, sortBy, onChangeSortBy };
 
@@ -37,6 +27,5 @@ export const useQueryParams = <T extends ObjectWithStringKeys>(
     sortBy,
     onChangeSortBy,
     queryParams,
-    numberOfRows,
   };
 };

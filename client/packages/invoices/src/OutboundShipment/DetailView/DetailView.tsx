@@ -8,6 +8,7 @@ import {
   useDocument,
   useToggle,
   getCommentPopoverColumn,
+  getRowExpandColumn,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -55,6 +56,7 @@ export const DetailView: FC = () => {
       'itemUnit',
       'unitQuantity',
       'numberOfPacks',
+      getRowExpandColumn<ItemRow>(),
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
@@ -63,7 +65,7 @@ export const DetailView: FC = () => {
   return draft ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
-        isDisabled={isInvoiceEditable(draft)}
+        isDisabled={!isInvoiceEditable(draft)}
         onAddItem={itemModalControl.toggleOn}
       />
 

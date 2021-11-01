@@ -59,7 +59,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   itemName: {
     key: 'itemName',
     label: 'label.name',
-    width: 125,
+    width: 250,
   },
   name: {
     key: 'name',
@@ -113,7 +113,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 20,
   },
   packSize: {
-    label: 'label.packSize',
+    label: 'label.pack-size',
     key: 'packSize',
     width: 50,
     align: ColumnAlign.Right,
@@ -132,14 +132,14 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   costPricePerPack: {
     label: 'label.cost',
     key: 'costPricePerPack',
-    width: 35,
+    width: 50,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },
   sellPricePerPack: {
     label: 'label.sell',
     key: 'sellPricePerPack',
-    width: 35,
+    width: 50,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },

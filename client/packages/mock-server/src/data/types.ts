@@ -44,6 +44,7 @@ export interface StockLine {
   storeId: string;
   costPricePerPack: number;
   sellPricePerPack: number;
+  onHold: boolean;
   location: string;
 }
 
