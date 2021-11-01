@@ -14,9 +14,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         '& .MuiInput-input': { textAlign: 'right', width: `${width}px` },
         ...sx,
       }}
-      InputProps={{
-        ...InputProps,
-      }}
+      InputProps={InputProps}
       type="number"
       {...props}
     />

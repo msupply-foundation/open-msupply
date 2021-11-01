@@ -299,6 +299,7 @@ export default gql`
     itemId: String!
     itemName: String!
     itemCode: String!
+    itemUnit: String!
     packSize: Int!
     numberOfPacks: Int!
     costPricePerPack: Float!
@@ -306,6 +307,7 @@ export default gql`
     batch: String
     expiryDate: NaiveDate
     stockLine: StockLineResponse
+    location: String
   }
 
   union InvoiceLineResponse = NodeError | InvoiceLineNode
