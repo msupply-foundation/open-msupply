@@ -7,6 +7,7 @@ export { CheckboxEmptyIcon } from './CheckboxEmpty';
 export { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 export { CheckIcon } from './Check';
 export { ChevronDownIcon } from './ChevronDown';
+export { ChevronsDownIcon } from './ChevronsDown';
 export { CircleIcon } from './Circle';
 export { ClockIcon } from './Clock';
 export { CloseIcon } from './Close';
@@ -22,6 +23,7 @@ export { InvoiceIcon } from './Invoice';
 export { ListIcon } from './ListIcon';
 export { MenuDotsIcon } from './MenuDots';
 export { MessagesIcon } from './Messages';
+export { MessageSquareIcon } from './MessageSquare';
 export { MSupplyGuy } from './MSupplyGuy';
 export { PlusCircleIcon } from './PlusCircle';
 export { PowerIcon } from './Power';
@@ -42,6 +44,7 @@ export { UnhappyMan } from './UnhappyMan';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
 export { MedicineIcon } from './MedicineIcon';
+export { SidebarIcon } from './Sidebar';
 
 type Color =
   | 'inherit'

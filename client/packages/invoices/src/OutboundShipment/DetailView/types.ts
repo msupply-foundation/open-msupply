@@ -12,6 +12,7 @@ export interface ItemRow extends InvoiceLine {
   packSize?: number;
   sellPrice?: number;
   updateQuantity: (quantity: number) => void;
+  updateComment: (rowId: string, comment: string) => void;
 }
 
 export interface BatchRow extends StockLine {
@@ -36,6 +37,7 @@ export interface OutboundShipment extends Invoice {
 
 export enum ActionType {
   UpdateQuantity = 'OutboundShipment/updateQuantity',
+  UpdateComment = 'OutboundShipment/updateComment',
   UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
   UpsertLine = 'OutboundShipment/upsertLine',
@@ -51,6 +53,10 @@ export type OutboundShipmentAction =
   | {
       type: ActionType.UpdateQuantity;
       payload: { rowKey: string; quantity: number };
+    }
+  | {
+      type: ActionType.UpdateComment;
+      payload: { rowKey: string; comment: string };
     }
   | {
       type: ActionType.SortBy;

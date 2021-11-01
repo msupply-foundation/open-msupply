@@ -1,11 +1,8 @@
-import { renderHook } from '@testing-library/react-hooks';
 import {
-  TestingProvider,
-  useColumns,
   DocumentAction,
   Invoice,
+  createColumns,
 } from '@openmsupply-client/common';
-
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import { ItemRow } from './types';
@@ -20,6 +17,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '3',
@@ -29,6 +27,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '5',
@@ -38,6 +37,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '2',
@@ -47,6 +47,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '4',
@@ -56,6 +57,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
     {
       id: '2',
@@ -65,6 +67,7 @@ describe('DetailView reducer', () => {
       expiry: '',
       invoiceId: '',
       updateQuantity: () => {},
+      updateComment: () => {},
     },
   ];
 
@@ -74,12 +77,8 @@ describe('DetailView reducer', () => {
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
-    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
-      wrapper: TestingProvider,
-    });
 
-    const quantityColumn = result.current[0];
-
+    const [quantityColumn] = createColumns<ItemRow>(['quantity']);
     if (!quantityColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -103,12 +102,8 @@ describe('DetailView reducer', () => {
       sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
       deletedLines: [],
     };
-    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
-      wrapper: TestingProvider,
-    });
 
-    const quantityColumn = result.current[0];
-
+    const [quantityColumn] = createColumns<ItemRow>(['quantity']);
     if (!quantityColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -134,12 +129,8 @@ describe('DetailView reducer', () => {
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
-    const { result } = renderHook(() => useColumns<ItemRow>(['itemName']), {
-      wrapper: TestingProvider,
-    });
 
-    const itemNameColumn = result.current[0];
-
+    const [itemNameColumn] = createColumns<ItemRow>(['itemName']);
     if (!itemNameColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -174,6 +165,24 @@ describe('DetailView reducer', () => {
     if (!line) throw new Error('This test is broken!');
 
     expect(line.quantity).toBe(10);
+  });
+
+  it('updates the correct line with the correct comment', () => {
+    const state: OutboundShipmentStateShape = {
+      draft: { ...placeholderInvoice, lines },
+      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+    };
+
+    const reducerResult = reducer(undefined, null)(
+      state,
+      OutboundAction.updateComment('1', 'comment')
+    );
+
+    const line = reducerResult.draft.lines.find(({ id }) => id === '1');
+
+    if (!line) throw new Error('This test is broken!');
+
+    expect(line.comment).toBe('comment');
   });
 
   it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {

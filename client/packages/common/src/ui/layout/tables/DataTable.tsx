@@ -27,6 +27,7 @@ export const DataTable = <T extends DomainObject>({
   pagination,
   onChangePage,
   noDataMessageKey,
+  ExpandContent,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setActiveRows } = useTableStore();
@@ -59,14 +60,8 @@ export const DataTable = <T extends DomainObject>({
   }
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexDirection: 'column',
-      }}
-    >
-      <MuiTable sx={{ display: 'block', overflow: 'auto' }}>
+    <TableContainer sx={{ display: 'flex', flexDirection: 'column' }}>
+      <MuiTable sx={{ overflow: 'auto', display: 'block' }}>
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <HeaderRow>
             {columns.map(column => (
@@ -78,6 +73,7 @@ export const DataTable = <T extends DomainObject>({
           {data.map((row, idx) => {
             return (
               <DataRow
+                ExpandContent={ExpandContent}
                 columns={columns}
                 key={row.id}
                 onClick={onRowClick}

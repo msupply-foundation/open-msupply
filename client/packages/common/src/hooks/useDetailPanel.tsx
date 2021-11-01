@@ -1,6 +1,6 @@
 import React from 'react';
 import create from 'zustand';
-import { MenuDotsIcon, ButtonWithIcon } from '../ui';
+import { SidebarIcon, ButtonWithIcon } from '../ui';
 
 type DetailPanelController = {
   isOpen: boolean;
@@ -23,7 +23,7 @@ export const useDetailPanel = (): DetailPanel => {
   const { isOpen, open, close } = useDetailPanelStore();
   const OpenButton = isOpen ? null : (
     <ButtonWithIcon
-      Icon={<MenuDotsIcon />}
+      Icon={<SidebarIcon />}
       labelKey="button.more"
       onClick={() => open()}
     />

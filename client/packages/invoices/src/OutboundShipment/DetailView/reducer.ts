@@ -1,4 +1,4 @@
-import { InvoiceLine } from './../../../../common/src/types/index';
+import { InvoiceLine } from './../../../../common/src/types';
 import { Dispatch } from 'react';
 import { produce } from 'immer';
 import {
@@ -64,6 +64,10 @@ export const OutboundAction = {
     type: ActionType.UpdateQuantity,
     payload: { rowKey, quantity },
   }),
+  updateComment: (rowKey: string, comment: string): OutboundShipmentAction => ({
+    type: ActionType.UpdateComment,
+    payload: { rowKey, comment },
+  }),
   onSortBy: (column: Column<ItemRow>): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
@@ -107,11 +111,7 @@ export const reducer = (
             draft[key] = data[key];
           });
 
-          draft.lines = draft.lines?.map(item => ({
-            ...item,
-            updateQuantity: (quantity: number) =>
-              dispatch?.(OutboundAction.updateQuantity(item.id, quantity)),
-          }));
+          draft.lines = draft.lines?.map(item => createLine(item, dispatch));
 
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
@@ -162,6 +162,19 @@ export const reducer = (
           break;
         }
 
+        case ActionType.UpdateComment: {
+          const { payload } = action;
+          const { rowKey, comment } = payload;
+
+          const row = state.draft.lines?.find(({ id }) => id === rowKey);
+
+          if (row) {
+            row.comment = comment;
+          }
+
+          break;
+        }
+
         case ActionType.UpdateInvoice: {
           const { payload } = action;
           const { key, value } = payload;
@@ -176,13 +189,7 @@ export const reducer = (
           const { payload } = action;
           const { invoiceLine } = payload;
 
-          draft.lines.push({
-            ...invoiceLine,
-            updateQuantity: (quantity: number) =>
-              dispatch?.(
-                OutboundAction.updateQuantity(invoiceLine.id, quantity)
-              ),
-          });
+          draft.lines.push(createLine(invoiceLine, dispatch));
 
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
@@ -206,3 +213,16 @@ export const reducer = (
       return state;
     }
   );
+
+const createLine = (
+  line: InvoiceLine,
+  dispatch: Dispatch<DocumentActionSet<OutboundShipmentAction>> | null
+) => {
+  return {
+    ...line,
+    updateQuantity: (quantity: number) =>
+      dispatch?.(OutboundAction.updateQuantity(line.id, quantity)),
+    updateComment: (comment: string) =>
+      dispatch?.(OutboundAction.updateComment(line.id, comment)),
+  };
+};

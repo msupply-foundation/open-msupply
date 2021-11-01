@@ -16,6 +16,7 @@
     "@mui/lab": "^5.0.0-alpha.47",
     "@mui/material": "^5.0.0",
     "@openmsupply-client/config": "^0.0.0",
+    "date-fns": "^2.25.0",
     "graphql": "^15.5.1",
     "graphql-request": "^3.6.0",
     "history": "^5.0.0",

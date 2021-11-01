@@ -81,7 +81,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onDelete,
     onUpdate,
     sortBy,
-    numberOfRows,
     onChangeSortBy,
     onCreate,
     onChangePage,
@@ -172,7 +171,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data?.slice(0, numberOfRows) || []}
+        data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/distribution/outbound-shipment/${row.id}`);
