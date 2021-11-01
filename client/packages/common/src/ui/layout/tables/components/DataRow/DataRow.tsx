@@ -70,9 +70,13 @@ export const DataRow = <T extends DomainObject>({
           );
         })}
       </TableRow>
-      <Collapse in={isExpanded}>
-        {ExpandContent ? <ExpandContent /> : null}
-      </Collapse>
+      <tr>
+        <td style={{ display: 'flex' }}>
+          <Collapse sx={{ flex: 1 }} in={isExpanded}>
+            {ExpandContent ? <ExpandContent /> : null}
+          </Collapse>
+        </td>
+      </tr>
     </>
   );
 };
