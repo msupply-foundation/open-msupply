@@ -117,19 +117,11 @@ export const reducer = (
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
 
-          draft.upsertLine = invoiceLine => {
-            dispatch?.({
-              type: ActionType.UpsertLine,
-              payload: { invoiceLine },
-            });
-          };
+          draft.upsertLine = invoiceLine =>
+            dispatch?.(OutboundAction.upsertLine(invoiceLine));
 
-          draft.deleteLine = invoiceLine => {
-            dispatch?.({
-              type: ActionType.DeleteLine,
-              payload: { invoiceLine },
-            });
-          };
+          draft.deleteLine = invoiceLine =>
+            dispatch?.(OutboundAction.deleteLine(invoiceLine));
 
           break;
         }
