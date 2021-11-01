@@ -11,6 +11,7 @@ import { CheckboxCheckedIcon } from './CheckboxChecked';
 import { CheckboxEmptyIcon } from './CheckboxEmpty';
 import { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 import { ChevronDownIcon } from './ChevronDown';
+import { ChevronsDownIcon } from './ChevronsDown';
 import { CircleIcon } from './Circle';
 import { ClockIcon } from './Clock';
 import { CloseIcon } from './Close';
@@ -80,6 +81,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     },
     { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
+    { icon: <ChevronsDownIcon {...args} />, name: 'ChevronsDown' },
     { icon: <CircleIcon {...args} />, name: 'Circle' },
     { icon: <ClockIcon {...args} />, name: 'Clock' },
     { icon: <CloseIcon {...args} />, name: 'Close' },
