@@ -38,7 +38,7 @@ export const usePopover = (): UsePopoverControl => {
   const showCallback: React.MouseEventHandler<
     HTMLDivElement | HTMLButtonElement
   > = e => {
-    // TODO: This virtual rect is use to create a virtual element to anchor the popover on. These
+    // TODO: This virtual rect is used to create a virtual element to anchor the popover on. These
     // values make the popover show above the element. If needing a different position, passing
     // a key as a parameter which could change this func and the props to the popover component
     // could be the way to go.
