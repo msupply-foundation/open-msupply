@@ -187,16 +187,16 @@ const Host: FC = () => {
               <CommandK>
                 <SnackbarProvider maxSnack={3}>
                   <Viewport>
-                    <Box display="flex">
+                    <Box display="flex" height="100%">
                       <AppDrawer />
                       <Box
-                        overflow="auto"
                         flex={1}
                         display="flex"
                         flexDirection="column"
+                        overflow="hidden"
                       >
                         <AppBar />
-                        <Box display="flex" flex={1}>
+                        <Box display="flex" flex={1} overflow="hidden">
                           <React.Suspense fallback={'Loading'}>
                             <Routes>
                               <Route

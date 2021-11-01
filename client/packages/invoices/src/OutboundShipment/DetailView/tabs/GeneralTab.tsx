@@ -1,9 +1,8 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   DataTable,
   ObjectWithStringKeys,
   usePagination,
-  useRowRenderCount,
   Column,
   DomainObject,
 } from '@openmsupply-client/common';
@@ -18,12 +17,7 @@ export const GeneralTabComponent: FC<GeneralTabProps<ItemRow>> = ({
   data,
   columns,
 }) => {
-  const numberOfRows = useRowRenderCount();
-  const { pagination } = usePagination(numberOfRows);
-
-  useEffect(() => {
-    pagination.onChangeFirst(numberOfRows);
-  }, [numberOfRows, pagination.first]);
+  const { pagination } = usePagination(20);
 
   return (
     <DataTable

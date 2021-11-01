@@ -59,14 +59,8 @@ export const DataTable = <T extends DomainObject>({
   }
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexDirection: 'column',
-      }}
-    >
-      <MuiTable sx={{ display: 'block', overflow: 'auto' }}>
+    <TableContainer sx={{ display: 'flex', flexDirection: 'column' }}>
+      <MuiTable sx={{ overflow: 'auto', display: 'block' }}>
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <HeaderRow>
             {columns.map(column => (
