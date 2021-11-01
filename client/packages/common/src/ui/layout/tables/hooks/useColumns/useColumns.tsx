@@ -18,8 +18,20 @@ import {
 const getColumnWidths = <T extends DomainObject>(
   column: ColumnDefinition<T>
 ) => {
-  const minWidth = column.minWidth || column.width || 100;
-  const width = column.width || 100;
+  const getDefaultWidth = () => {
+    switch (column.format) {
+      case ColumnFormat.Integer:
+        return 60;
+      default: {
+        return 100;
+      }
+    }
+  };
+
+  const defaultWidth = getDefaultWidth();
+
+  const minWidth = column.minWidth || column.width || defaultWidth;
+  const width = column.width || defaultWidth;
 
   return { minWidth, width };
 };
