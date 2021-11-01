@@ -1,7 +1,10 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use crate::domain::stock_line::StockLine;
+use crate::{
+    database::repository::StorageConnectionManager, domain::stock_line::StockLine,
+    service::stock_line::get_stock_line,
+};
 
 use super::{Connector, ConnectorError, NodeError};
 
@@ -57,29 +60,13 @@ pub enum StockLineResponse {
     Response(StockLineNode),
 }
 
-impl<T, E> From<Result<T, E>> for StockLinesResponse
-where
-    CurrentConnector: From<T>,
-    ConnectorError: From<E>,
-{
-    fn from(result: Result<T, E>) -> Self {
-        match result {
-            Ok(response) => StockLinesResponse::Response(response.into()),
-            Err(error) => StockLinesResponse::Error(error.into()),
-        }
-    }
-}
-
-impl<T, E> From<Result<T, E>> for StockLineResponse
-where
-    StockLineNode: From<T>,
-    NodeError: From<E>,
-{
-    fn from(result: Result<T, E>) -> Self {
-        match result {
-            Ok(response) => StockLineResponse::Response(response.into()),
-            Err(error) => StockLineResponse::Error(error.into()),
-        }
+pub fn get_stock_line_response(
+    connection_manager: &StorageConnectionManager,
+    id: String,
+) -> StockLineResponse {
+    match get_stock_line(connection_manager, id) {
+        Ok(stock_line) => StockLineResponse::Response(stock_line.into()),
+        Err(error) => StockLineResponse::Error(error.into()),
     }
 }
 

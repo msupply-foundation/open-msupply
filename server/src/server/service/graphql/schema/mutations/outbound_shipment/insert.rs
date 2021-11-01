@@ -1,20 +1,15 @@
 use crate::{
-    domain::{
-        invoice::{Invoice, InvoiceStatus},
-        outbound_shipment::InsertOutboundShipment,
-    },
+    domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment},
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
     },
-    service::{invoice::InsertOutboundShipmentError, SingleRecordError},
+    service::invoice::InsertOutboundShipmentError,
 };
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 
 use async_graphql::{InputObject, Interface, Union};
-
-use async_graphql::*;
 
 #[derive(InputObject)]
 pub struct InsertOutboundShipmentInput {
@@ -57,14 +52,6 @@ pub enum InsertOutboundShipmentErrorInterface {
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
     OtherPartyNotACustomer(OtherPartyNotACustomerError),
     DatabaseError(DatabaseError),
-}
-
-impl From<Result<Invoice, SingleRecordError>> for InsertOutboundShipmentResponse {
-    fn from(result: Result<Invoice, SingleRecordError>) -> Self {
-        let invoice_response: InvoiceResponse = result.into();
-        // Implemented by flatten union
-        invoice_response.into()
-    }
 }
 
 impl From<InsertOutboundShipmentError> for InsertOutboundShipmentResponse {

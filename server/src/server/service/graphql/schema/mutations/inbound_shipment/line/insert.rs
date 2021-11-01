@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
-    domain::{inbound_shipment::InsertInboundShipmentLine, invoice_line::InvoiceLine},
+    domain::inbound_shipment::InsertInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -10,7 +10,7 @@ use crate::{
         },
         types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
     },
-    service::{invoice_line::InsertInboundShipmentLineError, SingleRecordError},
+    service::invoice_line::InsertInboundShipmentLineError,
 };
 
 #[derive(InputObject)]
@@ -70,14 +70,6 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
             cost_price_per_pack,
             number_of_packs,
         }
-    }
-}
-
-impl From<Result<InvoiceLine, SingleRecordError>> for InsertInboundShipmentLineResponse {
-    fn from(result: Result<InvoiceLine, SingleRecordError>) -> Self {
-        let invoice_line_response: InvoiceLineResponse = result.into();
-        // Implemented by flatten union
-        invoice_line_response.into()
     }
 }
 

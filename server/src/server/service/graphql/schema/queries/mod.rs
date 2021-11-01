@@ -1,12 +1,11 @@
-use crate::database::repository::StorageConnectionManager;
 use crate::domain::invoice::InvoiceFilter;
 use crate::domain::item::ItemFilter;
 use crate::domain::name::NameFilter;
 use crate::domain::PaginationOption;
 use crate::server::service::graphql::ContextExt;
-use crate::service::invoice::{get_invoice, get_invoices};
 use crate::service::item::get_items;
 use crate::service::name::get_names;
+use crate::{database::repository::StorageConnectionManager, service::invoice::get_invoices};
 
 use async_graphql::{Context, Object};
 
@@ -30,13 +29,15 @@ impl Queries {
         sort: Option<Vec<NameSortInput>>,
     ) -> NamesResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        get_names(
+        match get_names(
             connection_manager,
             page.map(PaginationOption::from),
             filter.map(NameFilter::from),
             convert_sort(sort),
-        )
-        .into()
+        ) {
+            Ok(names) => NamesResponse::Response(names.into()),
+            Err(error) => NamesResponse::Error(error.into()),
+        }
     }
 
     /// Query omSupply "item" entries
@@ -49,13 +50,15 @@ impl Queries {
         sort: Option<Vec<ItemSortInput>>,
     ) -> ItemsResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        get_items(
+        match get_items(
             connection_manager,
             page.map(PaginationOption::from),
             filter.map(ItemFilter::from),
             convert_sort(sort),
-        )
-        .into()
+        ) {
+            Ok(items) => ItemsResponse::Response(items.into()),
+            Err(error) => ItemsResponse::Error(error.into()),
+        }
     }
 
     pub async fn invoice(
@@ -64,7 +67,7 @@ impl Queries {
         #[graphql(desc = "id of the invoice")] id: String,
     ) -> InvoiceResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        get_invoice(connection_manager, id).into()
+        get_invoice_response(connection_manager, id)
     }
 
     pub async fn invoices(
@@ -76,12 +79,14 @@ impl Queries {
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> InvoicesResponse {
         let connection_manager = ctx.get_repository::<StorageConnectionManager>();
-        get_invoices(
+        match get_invoices(
             connection_manager,
             page.map(PaginationOption::from),
             filter.map(InvoiceFilter::from),
             convert_sort(sort),
-        )
-        .into()
+        ) {
+            Ok(invoices) => InvoicesResponse::Response(invoices.into()),
+            Err(error) => InvoicesResponse::Error(error.into()),
+        }
     }
 }
