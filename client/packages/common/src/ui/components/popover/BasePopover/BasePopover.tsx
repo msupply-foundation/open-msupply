@@ -23,11 +23,11 @@ export const BasePopover: FC<BasePopoverProps> = ({
 }) => {
   return (
     <Popper
-      {...popperProps}
       open={isOpen}
       anchorEl={anchorEl}
       transition
       placement="bottom-start"
+      {...popperProps}
     >
       {({ TransitionProps }) => (
         <Fade {...TransitionProps} timeout={350}>

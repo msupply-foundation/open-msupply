@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { StatusCrumbs } from './StatusCrumbs';
-import { OutboundShipmentStatus } from '../..';
-import { LocaleKey, useTranslation } from '../../intl/intlHelpers';
+import { OutboundShipmentStatus } from '../../../..';
+import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
