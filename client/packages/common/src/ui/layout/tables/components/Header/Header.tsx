@@ -12,9 +12,9 @@ export const HeaderRow: FC = props => (
       display: 'flex',
       flex: '1 0 auto',
       height: '60px',
-      paddingLeft: '20px',
-      paddingRight: '20px',
       alignItems: 'center',
+      paddingLeft: '16px',
+      paddingRight: '16px',
     }}
   />
 );
@@ -56,7 +56,6 @@ export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
         backgroundColor: 'transparent',
         borderBottom: '0px',
         padding: 0,
-        paddingRight: '16px',
         width,
         minWidth,
         flex: `${width} 0 auto`,

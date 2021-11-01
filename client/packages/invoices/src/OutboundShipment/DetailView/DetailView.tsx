@@ -7,6 +7,7 @@ import {
   useColumns,
   useDocument,
   useToggle,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -53,6 +54,7 @@ export const DetailView: FC = () => {
       'itemUnit',
       'unitQuantity',
       'numberOfPacks',
+      GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
