@@ -31,6 +31,7 @@ export interface OutboundShipment extends Invoice {
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: InvoiceLine) => void;
+  deleteLine?: (line: InvoiceLine) => void;
 }
 
 export enum ActionType {
@@ -38,6 +39,7 @@ export enum ActionType {
   UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
   UpsertLine = 'OutboundShipment/upsertLine',
+  DeleteLine = 'OutboundShipment/deleteLine',
 }
 
 type OutboundShipmentUpdateInvoice = {
@@ -57,5 +59,9 @@ export type OutboundShipmentAction =
   | OutboundShipmentUpdateInvoice
   | {
       type: ActionType.UpsertLine;
+      payload: { invoiceLine: InvoiceLine };
+    }
+  | {
+      type: ActionType.DeleteLine;
       payload: { invoiceLine: InvoiceLine };
     };
