@@ -171,6 +171,7 @@ describe('DetailView reducer', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      deletedLines: [],
     };
 
     const reducerResult = reducer(undefined, null)(
