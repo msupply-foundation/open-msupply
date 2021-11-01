@@ -4,7 +4,6 @@ import { Divider } from './divider/Divider';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -27,6 +26,7 @@ export * from './menus';
 export * from './modals';
 export * from './panels';
 export * from './popover';
+export * from './Popper';
 
 export {
   Accordion,
@@ -41,7 +41,6 @@ export {
   GlobalStyles,
   Menu,
   MenuItem,
-  Select,
   Typography,
   TextField,
   Tooltip,
