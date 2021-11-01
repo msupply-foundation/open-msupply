@@ -3,7 +3,6 @@ import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '../../styles';
 import { renderHook } from '@testing-library/react-hooks';
 import { useQueryParams } from './useQueryParams';
-import { act } from 'react-dom/test-utils';
 
 type TestSortBy = {
   id: string;
@@ -78,68 +77,10 @@ describe('useQueryParams', () => {
     expect(result.current).toEqual(
       expect.objectContaining({
         sortBy: { key: 'id', isDesc: false, direction: 'asc' },
-        pagination: expect.objectContaining({ page: 0, offset: 0, first: 100 }),
+        pagination: expect.objectContaining({ page: 0, offset: 0, first: 20 }),
         page: 0,
         offset: 0,
-        first: 100,
-      })
-    );
-  });
-
-  it('when the number of rows changes to be more than the amount of data cached, the pagination first value changes', () => {
-    window.resizeTo(1000, 1000);
-
-    const { result } = renderHook(
-      () => useQueryParams<TestSortBy>({ key: 'id' }),
-      {
-        wrapper: getWrapper(),
-      }
-    );
-
-    act(() => {
-      window.resizeTo(2000, 2000);
-    });
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    expect(result.current).toEqual(
-      expect.objectContaining({
-        sortBy: { key: 'id', isDesc: false, direction: 'asc' },
-        pagination: expect.objectContaining({ page: 0, offset: 0, first: 200 }),
-        page: 0,
-        offset: 0,
-        first: 200,
-      })
-    );
-  });
-
-  it('when the number of rows changes to be less than the amount of data cached, the pagination first value does not change', () => {
-    window.resizeTo(1000, 1000);
-
-    const { result } = renderHook(
-      () => useQueryParams<TestSortBy>({ key: 'id' }),
-      {
-        wrapper: getWrapper(),
-      }
-    );
-
-    act(() => {
-      window.resizeTo(500, 500);
-    });
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    expect(result.current).toEqual(
-      expect.objectContaining({
-        sortBy: { key: 'id', isDesc: false, direction: 'asc' },
-        pagination: expect.objectContaining({ page: 0, offset: 0, first: 100 }),
-        page: 0,
-        offset: 0,
-        first: 100,
+        first: 20,
       })
     );
   });

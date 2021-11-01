@@ -27,7 +27,7 @@ const Template: Story = () => (
     <Grid item>
       <StyledPaper>
         <Typography>Basic autocomplete</Typography>
-        <Autocomplete options={options.map(({ name }) => name)} width={300} />
+        <Autocomplete options={options.map(({ name }) => name)} width="300px" />
       </StyledPaper>
     </Grid>
     <Grid item>

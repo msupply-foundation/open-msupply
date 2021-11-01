@@ -8,6 +8,8 @@ import {
   useDocument,
   useToggle,
   GenericColumnKey,
+  getCommentPopoverColumn,
+  getRowExpandColumn,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
@@ -44,6 +46,7 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
+      getCommentPopoverColumn<ItemRow>(),
       'itemCode',
       'itemName',
       'batch',
@@ -54,6 +57,7 @@ export const DetailView: FC = () => {
       'itemUnit',
       'unitQuantity',
       'numberOfPacks',
+      getRowExpandColumn<ItemRow>(),
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
@@ -63,7 +67,7 @@ export const DetailView: FC = () => {
   return draft ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
-        isDisabled={isInvoiceEditable(draft)}
+        isDisabled={!isInvoiceEditable(draft)}
         onAddItem={itemModalControl.toggleOn}
       />
 
