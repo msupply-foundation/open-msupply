@@ -13,7 +13,7 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '../CustomerSearchInput';
-import { OutboundShipment } from './types';
+import { ItemRow, OutboundShipment } from './types';
 import { isInvoiceEditable } from '../utils';
 
 interface ToolbarProps {
@@ -28,11 +28,12 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => draft.lines.find(({ id }) => selectedId === id))
-      .filter(Boolean),
+      .filter(Boolean) as ItemRow[],
   }));
 
   const deleteAction = () => {
     if (selectedRows && selectedRows?.length > 0) {
+      selectedRows.forEach(line => draft.deleteLine?.(line));
       const successSnack = success(`Deleted ${selectedRows?.length} lines`);
       successSnack();
     } else {
