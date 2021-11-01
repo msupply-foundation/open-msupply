@@ -5,6 +5,12 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
+  DropdownMenu,
+  DropdownMenuItem,
+  DeleteIcon,
+  useTranslation,
+  useNotification,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '../CustomerSearchInput';
 import { OutboundShipment } from './types';
@@ -15,9 +21,35 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+  const t = useTranslation();
+  const { success, info } = useNotification();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => draft.lines.find(({ id }) => selectedId === id))
+      .filter(Boolean),
+  }));
+
+  const deleteAction = () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      const successSnack = success(`Deleted ${selectedRows?.length} lines`);
+      successSnack();
+    } else {
+      const infoSnack = info('Select rows to delete them');
+      infoSnack();
+    }
+  };
+
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid container flexDirection="column" display="flex" flex={1}>
+      <Grid
+        container
+        flexDirection="row"
+        display="flex"
+        flex={1}
+        alignItems="flex-end"
+      >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             <InputWithLabelRow
@@ -48,6 +80,11 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             />
           </Box>
         </Grid>
+        <DropdownMenu label="Select">
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+            {t('button.delete-lines')}
+          </DropdownMenuItem>
+        </DropdownMenu>
       </Grid>
     </AppBarContentPortal>
   );

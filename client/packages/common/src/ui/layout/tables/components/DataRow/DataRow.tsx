@@ -18,7 +18,6 @@ export const DataRow = <T extends DomainObject>({
   rowKey,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
-
   const onRowClick = () => onClick && onClick(rowData);
 
   return (
@@ -28,7 +27,8 @@ export const DataRow = <T extends DomainObject>({
         height: '40px',
         maxHeight: '45px',
         boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-        padding: '0px 20px',
+        paddingLeft: '16px',
+        paddingRight: '16px',
         display: 'flex',
         flex: '1 0 auto',
       }}
@@ -47,7 +47,6 @@ export const DataRow = <T extends DomainObject>({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               padding: 0,
-              paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
               flex: `${column.width} 0 auto`,
               minWidth: column.minWidth,
