@@ -83,7 +83,16 @@ const listQueryFn = async (): Promise<Item[]> => {
   return items.nodes;
 };
 
-const sortByExpiryDate = (a: BatchRow, b: BatchRow) => {
+const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
+  const disabledA = a.onHold || a.availableNumberOfPacks === 0;
+  const disabledB = b.onHold || b.availableNumberOfPacks === 0;
+  if (!disabledA && disabledB) {
+    return -1;
+  }
+  if (disabledA && !disabledB) {
+    return 1;
+  }
+
   const expiryA = new Date(a.expiryDate);
   const expiryB = new Date(b.expiryDate);
 
@@ -106,7 +115,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const [batchRows, setBatchRows] = React.useState<BatchRow[]>([]);
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const [quantity, setQuantity] = React.useState(0);
-  const [isAllocated, setIsAllocated] = React.useState(false);
+  const [allocated, setAllocated] = React.useState(0);
+  const [packSize, setPackSize] = React.useState(1);
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
@@ -121,11 +131,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   ) => {
     setSelectedItem(value);
     setBatchRows(
-      (selectedItem?.availableBatches.nodes || [])
+      (value?.availableBatches.nodes || [])
         .map(batch => ({ ...batch, quantity: 0 }))
-        .sort(sortByExpiryDate)
+        .sort(sortByDisabledThenExpiryDate)
     );
     setValue('code', value?.code || '');
+    setValue('unit', value?.unit || '');
+    setValue('availableQuantity', value?.availableQuantity || 0);
   };
 
   const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
@@ -169,44 +181,64 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const checkAllocatedQuantities = () => {
     const values = getValues();
-    const allocatedQuantity = batchRows.reduce(
-      (total, batch) => (total += Number(values[batch.id] || 0)),
+    const allocatedUnits = batchRows.reduce(
+      (total, batch) =>
+        (total += Number(values[batch.id] || 0) * batch.packSize),
       Number(values['placeholder'] || 0)
     );
-
-    setIsAllocated(allocatedQuantity >= quantity && allocatedQuantity > 0);
+    setAllocated(Math.floor(allocatedUnits / packSize));
   };
 
   const allocateQuantities = () => {
     // if invalid quantity entered, don't allocate
-    if (quantity < 1 || Number.isNaN(quantity)) {
+    if (quantity < 1 || Number.isNaN(quantity) || !selectedItem) {
       return;
     }
     // if the selected item has no batch rows, allocate all to the placeholder
     if (batchRows.length === 0) {
       setValue('placeholder', quantity);
-      setIsAllocated(true);
+      setAllocated(quantity);
       return;
     }
 
-    let toAllocate = 0;
-    toAllocate += quantity;
+    // calculations are normalised to units
+    let toAllocate = quantity * packSize;
+    let batchAllocation = 0;
 
     batchRows.forEach(batch => {
-      const allocatedQuantity = Math.min(
-        toAllocate,
-        batch.availableNumberOfPacks * batch.packSize
-      );
-      toAllocate -= allocatedQuantity;
-      setValue(batch.id, allocatedQuantity);
+      batchAllocation = 0;
+      // skip bigger pack sizes
+      const validBatch =
+        batch.packSize <= packSize &&
+        batch.availableNumberOfPacks > 0 &&
+        !batch.onHold;
+
+      if (validBatch) {
+        const allocatedUnits = Math.min(
+          toAllocate,
+          batch.availableNumberOfPacks * batch.packSize
+        );
+
+        batchAllocation = Math.floor(allocatedUnits / batch.packSize);
+        toAllocate -= batchAllocation * batch.packSize;
+      }
+
+      setValue(batch.id, batchAllocation);
+      setValue(`${batch.id}_total`, batchAllocation * batch.packSize);
     });
+
     // allocate remainder to placeholder
     setValue('placeholder', toAllocate);
-    setIsAllocated(true);
+    setAllocated(quantity);
   };
 
-  const onChangeRowQuantity = (key: string, value: number) => {
+  const onChangeRowQuantity = (
+    key: string,
+    value: number,
+    packSize: number
+  ) => {
     setValue(key, value);
+    setValue(`${key}_total`, value * packSize);
     checkAllocatedQuantities();
   };
 
@@ -217,7 +249,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   React.useEffect(checkAllocatedQuantities, [batchRows]);
 
-  React.useEffect(allocateQuantities, [quantity, selectedItem]);
+  React.useEffect(allocateQuantities, [quantity, selectedItem, packSize]);
 
   return (
     <Modal
@@ -229,11 +261,11 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           variant="ok"
           onClick={upsertAndClose}
-          disabled={!isAllocated}
+          disabled={allocated < quantity || allocated === 0}
         />
       }
       height={600}
-      width={780}
+      width={900}
     >
       <FormProvider {...methods}>
         <form>
@@ -245,6 +277,11 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               onChangeQuantity={setQuantity}
               register={register}
               isLoading={isLoading}
+              allocatedQuantity={allocated}
+              quantity={quantity}
+              selectedItem={selectedItem || undefined}
+              packSize={packSize}
+              setPackSize={setPackSize}
             />
             <BatchesTable
               item={selectedItem}

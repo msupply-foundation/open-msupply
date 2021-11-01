@@ -20,7 +20,7 @@ export interface AutocompleteProps<T> {
   noOptionsText?: React.ReactNode;
   onChange?: AutocompleteOnChange<T>;
   options: readonly T[];
-  width?: number;
+  width?: string;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
   renderOption?: AutocompleteOptionRenderer<T>;
   value?: AutocompleteOption<T>;
@@ -40,7 +40,7 @@ export function Autocomplete<T>({
   options,
   renderInput,
   renderOption,
-  width,
+  width = 'auto',
   value,
   isOptionEqualToValue,
   clearable = true,
@@ -52,12 +52,9 @@ export function Autocomplete<T>({
     <BasicTextInput
       {...props}
       InputProps={{ disableUnderline: false, ...props.InputProps }}
-      sx={{ width: width ? `${width}px` : 'auto' }}
+      sx={{ width }}
     />
   );
-
-  // using an empty value here rather than undefined to force the component to be controlled
-  const emptyValue = { label: '' } as AutocompleteOption<T>;
 
   return (
     <MuiAutocomplete
@@ -65,7 +62,7 @@ export function Autocomplete<T>({
       isOptionEqualToValue={isOptionEqualToValue}
       defaultValue={defaultValue}
       disableClearable={!clearable}
-      value={value ?? emptyValue}
+      value={value}
       getOptionDisabled={getOptionDisabled}
       filterOptions={filterOptions}
       loading={loading}

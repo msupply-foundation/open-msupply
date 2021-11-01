@@ -18,6 +18,21 @@ import { items } from './items';
 import { comments } from './comments';
 import { names } from './names';
 
+const units = [
+  'Tablet',
+  'Tab',
+  'Bottle',
+  'Roll',
+  'Vial',
+  'Each',
+  'Sachet',
+  'Ampoule',
+  'Capsule',
+  'Amp',
+];
+
+const packSizes = [1, 1, 1, 1, 10, 100];
+
 export const getStockLinesForItem = (
   item: Item,
   stockLines: StockLine[] = StockLineData
@@ -63,9 +78,10 @@ export const createStockLines = (
         const stockLine = {
           id: `${itemId}-${store.id}-${i++}`,
           name: `${itemId}-${i++}`,
-          packSize: 1,
-          expiryDate: faker.date.future(0.5).toISOString(),
+          packSize: takeRandomElementFrom(packSizes),
+          expiryDate: faker.date.future(1.5).toISOString(),
           batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
+          location: `${alphaString(1)}${faker.datatype.number(9)}`,
           storeId: store.id,
           availableNumberOfPacks,
           totalNumberOfPacks:
@@ -73,6 +89,7 @@ export const createStockLines = (
           itemId,
           costPricePerPack,
           sellPricePerPack,
+          onHold: faker.datatype.number(10) < 2,
         } as StockLine;
 
         quantityToUse = quantityToUse - availableNumberOfPacks;
@@ -123,8 +140,10 @@ export const createInvoiceLines = (
             itemId: item.id,
             itemName: item.name,
             itemCode: item.code,
+            itemUnit: item.unit,
 
             stockLineId: stockLine.id,
+            location: stockLine.location,
 
             batch: stockLine.batch,
             expiryDate: stockLine.expiryDate,
@@ -134,7 +153,7 @@ export const createInvoiceLines = (
             totalAfterTax: sellPricePerPack * numberOfPacks,
             quantity: numberOfPacks,
             numberOfPacks,
-            packSize: 1,
+            packSize: takeRandomElementFrom(packSizes),
           } as InvoiceLine;
 
           stockLine.availableNumberOfPacks =
@@ -161,6 +180,7 @@ export const createItems = (
       id: itemId,
       code,
       name,
+      unit: takeRandomElementFrom(units),
       isVisible: faker.datatype.boolean(),
     };
 

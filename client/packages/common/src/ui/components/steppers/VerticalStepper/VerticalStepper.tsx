@@ -26,7 +26,7 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
     // This margin is an adjustment as the icon we use: the circle, is smaller
     // than what is the default size, so this tries to centre align the connector by
     // overriding the default.
-    marginLeft: '3px',
+    marginLeft: '5px',
   },
   [`& .${stepConnectorClasses.line}`]: {
     borderColor: theme.palette.secondary.light,
@@ -34,8 +34,8 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
     // The width is for the connector which is significantly thicker than the default.
     // Additionally the height has been shrunk so that each connector hits the icons
     // on the top and bottom sufficiently.
-    borderWidth: 6,
-    minHeight: 12,
+    borderWidth: '0 0 0 6px',
+    minHeight: 16,
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
@@ -81,9 +81,9 @@ const Circle = styled('div', {
     // our designs have the circle icon at 16px - with the border I
     // believe this is 15px.. either 4px on the border or 13px on the
     // dimensions and it looks a bit off.. maybe this isn't how it works.
-    borderWidth: '3px',
-    width: '12px',
-    height: '12px',
+    borderWidth: '4px',
+    width: '16px',
+    height: '16px',
     borderRadius: '16px',
     ...colors,
   };
@@ -124,7 +124,12 @@ export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => {
                     position: 'relative',
                     height: '8px',
                   },
-                  fontSize: 'small',
+                  '& .MuiStepLabel-iconContainer': {
+                    paddingLeft: 0,
+                  },
+                  '& .MuiStepLabel-labelContainer': {
+                    paddingLeft: '8px',
+                  },
                 }}
                 StepIconComponent={Circle}
               >
@@ -135,14 +140,19 @@ export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => {
                   alignItems="center"
                   justifyContent="space-between"
                 >
-                  <Typography variant="body2" lineHeight={0} fontSize="small">
+                  <Typography
+                    variant="body2"
+                    lineHeight={0}
+                    fontSize="12px"
+                    fontWeight="bold"
+                  >
                     {t(step.label)}
                   </Typography>
                   <Typography
                     color="midGrey"
                     variant="body2"
                     lineHeight={0}
-                    fontSize="small"
+                    fontSize="12px"
                   >
                     {step.description}
                   </Typography>

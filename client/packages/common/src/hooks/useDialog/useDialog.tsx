@@ -53,7 +53,13 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
     <BasicModal open={open} onClose={handleClose} width={width} height={height}>
       <ModalTitle title={title} />
       <DialogContent>{children}</DialogContent>
-      <DialogActions sx={{ justifyContent: 'center' }}>
+      <DialogActions
+        sx={{
+          justifyContent: 'center',
+          marginBottom: '30px',
+          marginTop: '30px',
+        }}
+      >
         {cancelButton}
         {okButton}
         {nextButton}

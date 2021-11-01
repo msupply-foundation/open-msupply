@@ -77,6 +77,8 @@ export const getDetailQuery = (): string => gql`
               itemCode
               itemId
               itemName
+              itemUnit
+              location
               numberOfPacks
               packSize
               sellPricePerPack
