@@ -27,8 +27,6 @@ export const DataRow = <T extends DomainObject>({
         height: '40px',
         maxHeight: '45px',
         boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-        paddingLeft: '16px',
-        paddingRight: '16px',
         display: 'flex',
         flex: '1 0 auto',
       }}
@@ -46,7 +44,8 @@ export const DataRow = <T extends DomainObject>({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              padding: 0,
+              paddingLeft: '16px',
+              paddingRight: '16px',
               ...(hasOnClick && { cursor: 'pointer' }),
               flex: `${column.width} 0 auto`,
               minWidth: column.minWidth,
