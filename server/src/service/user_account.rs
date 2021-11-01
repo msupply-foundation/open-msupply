@@ -23,8 +23,6 @@ enum Audience {
 
 // TODO: make the issuer configurable?
 const ISSUER: &str = "om-supply-remote-server";
-// TODO
-const JWT_TOKEN_SECRET: &[u8] = "TODO: store me somewhere else!".as_bytes();
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OmSupplyClaim {
@@ -107,13 +105,19 @@ pub struct TokenPair {
 pub struct UserAccountService<'a> {
     connection: &'a StorageConnection,
     token_bucket: &'a mut TokenBucket,
+    jwt_token_secret: &'a [u8],
 }
 
 impl<'a> UserAccountService<'a> {
-    pub fn new(connection: &'a StorageConnection, token_bucket: &'a mut TokenBucket) -> Self {
+    pub fn new(
+        connection: &'a StorageConnection,
+        token_bucket: &'a mut TokenBucket,
+        jwt_token_secret: &'a [u8],
+    ) -> Self {
         UserAccountService {
             connection,
             token_bucket,
+            jwt_token_secret,
         }
     }
 
@@ -177,8 +181,13 @@ impl<'a> UserAccountService<'a> {
             return Err(JWTIssuingError::InvalidCredentials);
         }
 
-        let pair = create_jwt_pair(&user.id, valid_for, refresh_token_valid_for)
-            .map_err(|err| JWTIssuingError::CanNotCreateToken(err))?;
+        let pair = create_jwt_pair(
+            &user.id,
+            self.jwt_token_secret,
+            valid_for,
+            refresh_token_valid_for,
+        )
+        .map_err(|err| JWTIssuingError::CanNotCreateToken(err))?;
 
         // add tokens to bucket
         self.token_bucket
@@ -205,7 +214,7 @@ impl<'a> UserAccountService<'a> {
         validation.iss = Some(ISSUER.to_string());
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             refresh_token,
-            &jsonwebtoken::DecodingKey::from_secret(JWT_TOKEN_SECRET),
+            &jsonwebtoken::DecodingKey::from_secret(self.jwt_token_secret),
             &validation,
         )
         .map_err(|err| match err.kind() {
@@ -215,8 +224,13 @@ impl<'a> UserAccountService<'a> {
         })?;
 
         let user_id = decoded.claims.sub;
-        let pair = create_jwt_pair(&user_id, valid_for, refresh_token_valid_for)
-            .map_err(|err| JWTRefreshError::FailedToCreateNewToken(err))?;
+        let pair = create_jwt_pair(
+            &user_id,
+            self.jwt_token_secret,
+            valid_for,
+            refresh_token_valid_for,
+        )
+        .map_err(|err| JWTRefreshError::FailedToCreateNewToken(err))?;
         // Check token is still in the list of valid tokens
         if !self.token_bucket.contains(&user_id, refresh_token) {
             return Err(JWTRefreshError::TokenInvalided);
@@ -246,7 +260,7 @@ impl<'a> UserAccountService<'a> {
         validation.iss = Some(ISSUER.to_string());
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             token,
-            &jsonwebtoken::DecodingKey::from_secret(JWT_TOKEN_SECRET),
+            &jsonwebtoken::DecodingKey::from_secret(self.jwt_token_secret),
             &validation,
         )
         .map_err(|err| match err.kind() {
@@ -273,6 +287,7 @@ impl<'a> UserAccountService<'a> {
 /// Creates a token and refresh token pair
 fn create_jwt_pair(
     user_id: &str,
+    jwt_token_secret: &[u8],
     valid_for: usize,
     refresh_valid_for: usize,
 ) -> Result<TokenPair, JWTError> {
@@ -291,7 +306,7 @@ fn create_jwt_pair(
     let api_token = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &api_claims,
-        &jsonwebtoken::EncodingKey::from_secret(JWT_TOKEN_SECRET),
+        &jsonwebtoken::EncodingKey::from_secret(jwt_token_secret),
     )?;
 
     // refresh token
@@ -305,7 +320,7 @@ fn create_jwt_pair(
     let refresh_token = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &refresh_claims,
-        &jsonwebtoken::EncodingKey::from_secret(JWT_TOKEN_SECRET),
+        &jsonwebtoken::EncodingKey::from_secret(jwt_token_secret),
     )?;
 
     Ok(TokenPair {
@@ -335,7 +350,8 @@ mod user_account_test {
         let connection = connection_manager.connection().unwrap();
 
         let mut bucket = TokenBucket::new();
-        let mut service = UserAccountService::new(&connection, &mut bucket);
+        const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
+        let mut service = UserAccountService::new(&connection, &mut bucket, JWT_TOKEN_SECRET);
 
         // should be able to create a new user
         let password: &str = "passw0rd";
@@ -389,7 +405,8 @@ mod user_account_test {
         let connection = connection_manager.connection().unwrap();
 
         let mut bucket = TokenBucket::new();
-        let mut service = UserAccountService::new(&connection, &mut bucket);
+        const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
+        let mut service = UserAccountService::new(&connection, &mut bucket, JWT_TOKEN_SECRET);
 
         // should be able to create a new user
         let password: &str = "passw0rd";
