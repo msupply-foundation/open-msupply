@@ -42,19 +42,21 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
 
   return (
     <Tooltip disableHoverListener={!shrink} title={t(labelKey, labelProps)}>
-      <ShrinkableBaseButton
-        disabled={disabled}
-        shrink={shrink}
-        onClick={onClick}
-        variant={variant}
-        color={color}
-        size="small"
-        startIcon={startIcon}
-        {...buttonProps}
-      >
-        {centeredIcon}
-        {text}
-      </ShrinkableBaseButton>
+      <span>
+        <ShrinkableBaseButton
+          disabled={disabled}
+          shrink={shrink}
+          onClick={onClick}
+          variant={variant}
+          color={color}
+          size="small"
+          startIcon={startIcon}
+          {...buttonProps}
+        >
+          {centeredIcon}
+          {text}
+        </ShrinkableBaseButton>
+      </span>
     </Tooltip>
   );
 };
