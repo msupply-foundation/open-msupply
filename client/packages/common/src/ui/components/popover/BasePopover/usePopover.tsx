@@ -23,7 +23,7 @@ export const usePopover = (): UsePopoverControl => {
   // The Popover component itself carries the state and
   // assigns callbacks to these refs which can control
   // the state. This is done so that we can control the
-  // state, but also ensure the Popover component doesn't
+  // state, but also ensures the Popover component doesn't
   // remount every time the state changes rather than a
   // re-render, as that causes some janky animations when
   // open and moving the mouse.
