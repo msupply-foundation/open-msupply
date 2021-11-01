@@ -86,7 +86,6 @@ export const ListView: FC = () => {
     totalCount,
     data,
     isLoading,
-    numberOfRows,
     onChangePage,
     pagination,
     sortBy,
@@ -105,7 +104,7 @@ export const ListView: FC = () => {
         pagination={{ ...pagination, total: totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data?.slice(0, numberOfRows) || []}
+        data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/distribution/customer/${row.id}`);

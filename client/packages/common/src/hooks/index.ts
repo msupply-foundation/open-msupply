@@ -31,3 +31,4 @@ export * from './useWindowDimensions';
 export * from './useDebounce';
 export * from './useDocument';
 export * from './useToggle';
+export * from './useContentAreaHeight';

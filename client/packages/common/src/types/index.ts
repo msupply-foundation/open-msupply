@@ -23,6 +23,7 @@ export interface Item extends DomainObject {
   availableBatches: {
     nodes: StockLine[];
   };
+  unit: string;
 }
 
 export interface StockLine extends DomainObject {
@@ -36,6 +37,8 @@ export interface StockLine extends DomainObject {
   packSize: number;
   sellPricePerPack: number;
   totalNumberOfPacks: number;
+  location: string;
+  onHold: boolean;
 }
 
 export interface InvoiceLine extends DomainObject {
@@ -84,6 +87,11 @@ export interface Invoice extends DomainObject {
   otherPartyName: string;
   hold: boolean;
   lines: InvoiceLine[];
+  draftDatetime: string;
+  allocatedDatetime: string;
+  shippedDatetime: string;
+  pickedDatetime: string;
+  deliveredDatetime: string;
   pricing: {
     totalAfterTax: number;
   };

@@ -35,11 +35,11 @@ const createStatusLog = (draft: OutboundShipment) => {
   } = draft;
 
   return {
-    DRAFT: draftDatetime as string,
-    ALLOCATED: allocatedDatetime as string,
-    SHIPPED: shippedDatetime as string,
-    PICKED: pickedDatetime as string,
-    DELIVERED: deliveredDatetime as string,
+    DRAFT: draftDatetime,
+    ALLOCATED: allocatedDatetime,
+    SHIPPED: shippedDatetime,
+    PICKED: pickedDatetime,
+    DELIVERED: deliveredDatetime,
   };
 };
 
