@@ -1,11 +1,8 @@
-import { renderHook } from '@testing-library/react-hooks';
 import {
-  TestingProvider,
-  useColumns,
   DocumentAction,
   Invoice,
+  createColumns,
 } from '@openmsupply-client/common';
-
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import { ItemRow } from './types';
@@ -73,12 +70,8 @@ describe('DetailView reducer', () => {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
-    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
-      wrapper: TestingProvider,
-    });
 
-    const quantityColumn = result.current[0];
-
+    const [quantityColumn] = createColumns<ItemRow>(['quantity']);
     if (!quantityColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -101,12 +94,8 @@ describe('DetailView reducer', () => {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
     };
-    const { result } = renderHook(() => useColumns<ItemRow>(['quantity']), {
-      wrapper: TestingProvider,
-    });
 
-    const quantityColumn = result.current[0];
-
+    const [quantityColumn] = createColumns<ItemRow>(['quantity']);
     if (!quantityColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -131,12 +120,8 @@ describe('DetailView reducer', () => {
       draft: { ...placeholderInvoice, lines },
       sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
     };
-    const { result } = renderHook(() => useColumns<ItemRow>(['itemName']), {
-      wrapper: TestingProvider,
-    });
 
-    const itemNameColumn = result.current[0];
-
+    const [itemNameColumn] = createColumns<ItemRow>(['itemName']);
     if (!itemNameColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
