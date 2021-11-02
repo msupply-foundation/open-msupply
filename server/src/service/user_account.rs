@@ -8,6 +8,7 @@ use crate::{
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
 use chrono::Utc;
+use jsonwebtoken::errors::{Error as JWTError, ErrorKind as JWTErrorKind};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -66,7 +67,7 @@ pub enum JWTIssuingError {
     InvalidCredentials,
     /// Invalid account data on the backend
     InvalidCredentialsBackend(bcrypt::BcryptError),
-    CanNotCreateToken(jsonwebtoken::errors::Error),
+    CanNotCreateToken(JWTError),
     DatabaseError(RepositoryError),
 }
 
@@ -74,15 +75,15 @@ pub enum JWTIssuingError {
 pub enum JWTValidationError {
     ExpiredSignature,
     NotAnApiToken,
-    InvalidToken(jsonwebtoken::errors::Error),
+    InvalidToken(JWTError),
 }
 
 #[derive(Debug)]
 pub enum JWTRefreshError {
     ExpiredSignature,
     NotARefreshToken,
-    InvalidToken(jsonwebtoken::errors::Error),
-    FailedToCreateNewToken(jsonwebtoken::errors::Error),
+    InvalidToken(JWTError),
+    FailedToCreateNewToken(JWTError),
 }
 
 #[derive(Debug)]
@@ -171,10 +172,8 @@ impl<'a> UserAccountService<'a> {
             &validation,
         )
         .map_err(|err| match err.kind() {
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
-                JWTValidationError::ExpiredSignature
-            }
-            jsonwebtoken::errors::ErrorKind::InvalidAudience => JWTValidationError::NotAnApiToken,
+            JWTErrorKind::ExpiredSignature => JWTValidationError::ExpiredSignature,
+            JWTErrorKind::InvalidAudience => JWTValidationError::NotAnApiToken,
             _ => JWTValidationError::InvalidToken(err),
         })?;
 
@@ -195,8 +194,8 @@ impl<'a> UserAccountService<'a> {
             &validation,
         )
         .map_err(|err| match err.kind() {
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => JWTRefreshError::ExpiredSignature,
-            jsonwebtoken::errors::ErrorKind::InvalidAudience => JWTRefreshError::NotARefreshToken,
+            JWTErrorKind::ExpiredSignature => JWTRefreshError::ExpiredSignature,
+            JWTErrorKind::InvalidAudience => JWTRefreshError::NotARefreshToken,
             _ => JWTRefreshError::InvalidToken(err),
         })?;
 
