@@ -4,41 +4,29 @@ use chrono::Utc;
 
 use crate::util::auth::sha256;
 
-/// Tracks if a token is valid or if a user has been logged out
-pub trait TokenBucket {
-    /// Checks if the token is known for the given user
-    fn contains(&self, user_id: &str, token: &str) -> bool;
-    /// Adds a token for a given user.
-    /// If token is already known the expiry_date is updated.
-    /// This can be used to reduce the expiry date of a token on the server
-    fn put(&mut self, user_id: &str, token: &str, expiry_date: usize);
-    /// Removes all known tokens for a given user
-    fn clear(&mut self, user_id: &str);
-}
-
 struct TokenInfo {
     token_hash: String,
     expiry_date: usize,
-}
-
-pub struct InMemoryTokenBucket {
-    users: HashMap<String, Vec<TokenInfo>>,
-}
-
-impl InMemoryTokenBucket {
-    pub fn new() -> Self {
-        InMemoryTokenBucket {
-            users: HashMap::new(),
-        }
-    }
 }
 
 fn token_hash(token: &str) -> String {
     sha256(token)
 }
 
-impl TokenBucket for InMemoryTokenBucket {
-    fn contains(&self, user_id: &str, token: &str) -> bool {
+/// Tracks if a token is valid or if a user has been logged out
+pub struct TokenBucket {
+    users: HashMap<String, Vec<TokenInfo>>,
+}
+
+impl TokenBucket {
+    pub fn new() -> Self {
+        TokenBucket {
+            users: HashMap::new(),
+        }
+    }
+
+    /// Checks if the token is known for the given user
+    pub fn contains(&self, user_id: &str, token: &str) -> bool {
         let user_tokens = match self.users.get(user_id) {
             Some(value) => value,
             None => return false,
@@ -57,7 +45,11 @@ impl TokenBucket for InMemoryTokenBucket {
         existing_token.expiry_date >= now
     }
 
-    fn put(&mut self, user_id: &str, token: &str, expiry_date: usize) {
+    /// Adds a token for a given user.
+    /// If token is already known the expiry_date is updated.
+    /// This can be used to reduce the expiry date of a token on the server, e.g. to reduce the
+    /// token expiry time of a token that just has been refreshed.
+    pub fn put(&mut self, user_id: &str, token: &str, expiry_date: usize) {
         let now = Utc::now().timestamp() as usize;
         if expiry_date < now {
             return;
@@ -86,7 +78,8 @@ impl TokenBucket for InMemoryTokenBucket {
         });
     }
 
-    fn clear(&mut self, user_id: &str) {
+    /// Removes all known tokens for a given user
+    pub fn clear(&mut self, user_id: &str) {
         self.users.remove(user_id);
     }
 }

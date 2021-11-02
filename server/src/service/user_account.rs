@@ -106,11 +106,11 @@ pub struct TokenPair {
 
 pub struct UserAccountService<'a> {
     connection: &'a StorageConnection,
-    token_bucket: &'a mut dyn TokenBucket,
+    token_bucket: &'a mut TokenBucket,
 }
 
 impl<'a> UserAccountService<'a> {
-    pub fn new(connection: &'a StorageConnection, token_bucket: &'a mut dyn TokenBucket) -> Self {
+    pub fn new(connection: &'a StorageConnection, token_bucket: &'a mut TokenBucket) -> Self {
         UserAccountService {
             connection,
             token_bucket,
@@ -320,7 +320,7 @@ fn create_jwt_pair(
 mod user_account_test {
     use crate::{
         database::repository::{get_repositories, StorageConnectionManager},
-        service::token_bucket::InMemoryTokenBucket,
+        service::token_bucket::TokenBucket,
         util::test_db,
     };
 
@@ -334,7 +334,7 @@ mod user_account_test {
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
-        let mut bucket = InMemoryTokenBucket::new();
+        let mut bucket = TokenBucket::new();
         let mut service = UserAccountService::new(&connection, &mut bucket);
 
         // should be able to create a new user
@@ -388,7 +388,7 @@ mod user_account_test {
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
-        let mut bucket = InMemoryTokenBucket::new();
+        let mut bucket = TokenBucket::new();
         let mut service = UserAccountService::new(&connection, &mut bucket);
 
         // should be able to create a new user
