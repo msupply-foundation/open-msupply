@@ -138,12 +138,14 @@ impl<'a> UserAccountService<'a> {
     ///
     /// # Arguments
     ///
-    /// * `valid_for` - duration [s] for how long the token will be valid
+    /// * `valid_for` - duration (sec) for how long the token will be valid
+    /// * `refresh_token_valid_for` - duration (sec) for how long the refresh token will be valid
     pub fn jwt_token(
         &self,
         username: &str,
         password: &str,
         valid_for: usize,
+        refresh_token_valid_for: usize,
     ) -> Result<TokenPair, JWTIssuingError> {
         let repo = UserAccountRepository::new(self.connection);
         let user = repo
@@ -159,7 +161,8 @@ impl<'a> UserAccountService<'a> {
             return Err(JWTIssuingError::InvalidCredentials);
         }
 
-        create_jwt_pair(&user.id, valid_for).map_err(|err| JWTIssuingError::CanNotCreateToken(err))
+        create_jwt_pair(&user.id, valid_for, refresh_token_valid_for)
+            .map_err(|err| JWTIssuingError::CanNotCreateToken(err))
     }
 
     pub fn verify_token(&self, token: &str) -> Result<OmSupplyClaim, JWTValidationError> {
@@ -180,10 +183,16 @@ impl<'a> UserAccountService<'a> {
         Ok(decoded.claims)
     }
 
+    /// Get a new token and also update the refresh token
+    ///
+    /// # Arguments
+    /// * `valid_for` - duration (sec) for how long the token will be valid
+    /// * `refresh_token_valid_for` - duration (sec) for how long the refresh token will be valid
     pub fn refresh_token(
         &self,
         refresh_token: &str,
         valid_for: usize,
+        refresh_token_valid_for: usize,
     ) -> Result<TokenPair, JWTRefreshError> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.set_audience(&vec![format!("{:?}", Audience::TokenRefresh)]);
@@ -200,7 +209,7 @@ impl<'a> UserAccountService<'a> {
         })?;
 
         let user_id = decoded.claims.sub;
-        create_jwt_pair(&user_id, valid_for)
+        create_jwt_pair(&user_id, valid_for, refresh_token_valid_for)
             .map_err(|err| JWTRefreshError::FailedToCreateNewToken(err))
     }
 }
@@ -209,7 +218,8 @@ impl<'a> UserAccountService<'a> {
 fn create_jwt_pair(
     user_id: &str,
     valid_for: usize,
-) -> Result<TokenPair, jsonwebtoken::errors::Error> {
+    refresh_valid_for: usize,
+) -> Result<TokenPair, JWTError> {
     let now = Utc::now().timestamp() as usize;
 
     // api token
@@ -228,7 +238,7 @@ fn create_jwt_pair(
 
     // refresh token
     let refresh_claims = OmSupplyClaim {
-        exp: now + valid_for,
+        exp: now + refresh_valid_for,
         aud: Audience::TokenRefresh,
         iat: now,
         iss: ISSUER.to_string(),
@@ -274,7 +284,9 @@ mod user_account_test {
                 email: None,
             })
             .unwrap();
-        let token_pair = service.jwt_token(&user.username, password, 60).unwrap();
+        let token_pair = service
+            .jwt_token(&user.username, password, 60, 120)
+            .unwrap();
 
         // should be able to verify token
         let claims = service.verify_token(&token_pair.token).unwrap();
@@ -285,11 +297,13 @@ mod user_account_test {
         assert!(matches!(err, JWTValidationError::NotAnApiToken));
 
         // should fail to refresh token refresh with api token
-        let err = service.refresh_token(&token_pair.token, 60).unwrap_err();
+        let err = service
+            .refresh_token(&token_pair.token, 60, 120)
+            .unwrap_err();
         assert!(matches!(err, JWTRefreshError::NotARefreshToken));
 
         // should succeed to refresh token
-        let token_pair = service.refresh_token(&token_pair.refresh, 60).unwrap();
+        let token_pair = service.refresh_token(&token_pair.refresh, 60, 120).unwrap();
         let claims = service.verify_token(&token_pair.token).unwrap();
         // important: sub must still match the user id:
         assert_eq!(user.id, claims.sub);
@@ -314,7 +328,7 @@ mod user_account_test {
                 email: None,
             })
             .unwrap();
-        let token_pair = service.jwt_token(&user.username, password, 1).unwrap();
+        let token_pair = service.jwt_token(&user.username, password, 1, 1).unwrap();
         // should be able to verify token
         let claims = service.verify_token(&token_pair.token).unwrap();
         assert_eq!(user.id, claims.sub);
@@ -323,7 +337,9 @@ mod user_account_test {
         std::thread::sleep(std::time::Duration::from_millis(2000));
         let err = service.verify_token(&token_pair.token).unwrap_err();
         assert!(matches!(err, JWTValidationError::ExpiredSignature));
-        let err = service.refresh_token(&token_pair.refresh, 1).unwrap_err();
+        let err = service
+            .refresh_token(&token_pair.refresh, 1, 1)
+            .unwrap_err();
         assert!(matches!(err, JWTRefreshError::ExpiredSignature));
     }
 }
