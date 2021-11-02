@@ -344,6 +344,12 @@ enum InvoiceNodeStatus {
 
   # A FINALISED invoice can't be edited nor deleted.
   FINALISED
+
+  # {UPDATES}
+  ALLOCATED
+  PICKED
+  SHIPPED
+  DELIVERED
 }
 
 enum InvoiceNodeType {
