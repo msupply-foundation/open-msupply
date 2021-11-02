@@ -7,9 +7,14 @@ import {
   SortBy,
   ListApi,
   Invoice,
+  GraphQLClient,
+  getSdk,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
+
+const client = new GraphQLClient(Environment.API_URL);
+const api = getSdk(client);
 
 export const getInsertInvoiceQuery = (): string => gql`
   mutation insertInvoice($id: String!, $otherPartyId: String!) {
@@ -245,14 +250,27 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
 };
 
 export const detailQueryFn = (id: string) => async (): Promise<Invoice> => {
-  const result = await request(Environment.API_URL, getDetailQuery(), {
-    id,
-  });
+  const result = await api.invoice({ id });
+
   const { invoice } = result;
 
-  const mapped = { ...invoice, lines: invoice.lines.nodes };
-
-  return mapped;
+  if (invoice.__typename === 'InvoiceNode') {
+    return {
+      ...invoice,
+      lines:
+        invoice.lines.__typename === 'InvoiceLineConnector'
+          ? invoice.lines.nodes
+          : [],
+      pricing: {
+        totalAfterTax:
+          invoice.pricing.__typename === 'InvoicePricingNode'
+            ? invoice.pricing.totalAfterTax
+            : 0,
+      },
+    };
+  } else {
+    throw new Error('uhoh');
+  }
 };
 
 export const updateFn = async (updated: Invoice): Promise<Invoice> => {

@@ -149,36 +149,6 @@ describe('PaginationRow', () => {
     expect(onChange).toBeCalledWith(0);
   });
 
-  it('does not trigger the callback when the ellipsis is pressed', () => {
-    const offset = 0;
-    const first = 10;
-
-    const total = 20000;
-    const onChange = jest.fn();
-
-    const { getByLabelText } = render(
-      <TestingProvider>
-        <TableProvider createStore={createTableStore}>
-          <PaginationRow
-            page={0}
-            offset={offset}
-            total={total}
-            first={first}
-            onChange={onChange}
-          />
-        </TableProvider>
-      </TestingProvider>
-    );
-
-    const node = getByLabelText(/ellipsis/i);
-
-    act(() => {
-      userEvent.click(node);
-    });
-
-    expect(onChange).toBeCalledTimes(0);
-  });
-
   it('has a disabled back button when on page 1', () => {
     const offset = 0;
     const first = 10;

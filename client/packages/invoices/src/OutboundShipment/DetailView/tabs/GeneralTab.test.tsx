@@ -2,38 +2,51 @@ import React from 'react';
 import { TestingProvider, useColumns } from '@openmsupply-client/common';
 import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
-import { ItemRow } from '../types';
+import { InvoiceLineRow } from '../types';
 
-const lines: ItemRow[] = [
+const lines: InvoiceLineRow[] = [
   {
     id: '1',
+    itemId: '1',
+    itemUnit: 'bottle',
+    packSize: 1,
+    numberOfPacks: 100,
+    costPricePerPack: 0,
+    sellPricePerPack: 0,
     itemCode: 'abc123',
     itemName: 'ibuprofen',
-    quantity: 100,
     expiry: '1/1/2020',
     invoiceId: '',
     stockLineId: '',
-    updateQuantity: () => {},
+    updateNumberOfPacks: () => {},
     updateComment: () => {},
   },
   {
     id: '2',
+    itemId: '1',
+    itemUnit: 'bottle',
+    packSize: 1,
+    numberOfPacks: 100,
+    costPricePerPack: 0,
+    sellPricePerPack: 0,
     itemCode: 'def123',
     itemName: 'amox',
-    quantity: 100,
     expiry: '1/1/2020',
     invoiceId: '',
     stockLineId: '',
-    updateQuantity: () => {},
+    updateNumberOfPacks: () => {},
     updateComment: () => {},
   },
 ];
 
 describe('GeneralTab', () => {
   const Example = () => {
-    const columns = useColumns<ItemRow>(['itemCode', 'itemName', 'quantity'], {
-      onChangeSortBy: () => {},
-    });
+    const columns = useColumns<InvoiceLineRow>(
+      ['itemCode', 'itemName', 'numberOfPacks'],
+      {
+        onChangeSortBy: () => {},
+      }
+    );
 
     return <GeneralTab data={lines} columns={columns} />;
   };

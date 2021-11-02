@@ -13,7 +13,7 @@ import { usePopover } from '../../popover';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
-  statusLog: Record<StatusType, string | null>;
+  statusLog: Record<StatusType, string | null | undefined>;
   statusFormatter: (status: StatusType) => LocaleKey;
 }
 

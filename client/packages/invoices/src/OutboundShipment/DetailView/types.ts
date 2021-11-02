@@ -6,12 +6,8 @@ import {
   OutboundShipmentStatus,
 } from '@openmsupply-client/common';
 
-export interface ItemRow extends InvoiceLine {
-  batch?: string;
-  costPrice?: number;
-  packSize?: number;
-  sellPrice?: number;
-  updateQuantity: (quantity: number) => void;
+export interface InvoiceLineRow extends InvoiceLine {
+  updateNumberOfPacks: (quantity: number) => void;
   updateComment: (rowId: string, comment: string) => void;
 }
 
@@ -28,7 +24,7 @@ export interface InvoiceStatusLog {
 }
 
 export interface OutboundShipment extends Invoice {
-  lines: ItemRow[];
+  lines: InvoiceLineRow[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: InvoiceLine) => void;
@@ -36,7 +32,7 @@ export interface OutboundShipment extends Invoice {
 }
 
 export enum ActionType {
-  UpdateQuantity = 'OutboundShipment/updateQuantity',
+  UpdateNumberOfPacks = 'OutboundShipment/updateNumberOfPacks',
   UpdateComment = 'OutboundShipment/updateComment',
   UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
@@ -51,8 +47,8 @@ type OutboundShipmentUpdateInvoice = {
 
 export type OutboundShipmentAction =
   | {
-      type: ActionType.UpdateQuantity;
-      payload: { rowKey: string; quantity: number };
+      type: ActionType.UpdateNumberOfPacks;
+      payload: { rowKey: string; numberOfPacks: number };
     }
   | {
       type: ActionType.UpdateComment;
@@ -60,7 +56,7 @@ export type OutboundShipmentAction =
     }
   | {
       type: ActionType.SortBy;
-      payload: { column: Column<ItemRow> };
+      payload: { column: Column<InvoiceLineRow> };
     }
   | OutboundShipmentUpdateInvoice
   | {
