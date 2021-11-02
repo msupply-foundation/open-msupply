@@ -54,64 +54,6 @@ export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
   return insertCustomerInvoice;
 };
 
-export const getDetailQuery = (): string => gql`
-  query invoice($id: String!) {
-    invoice(id: $id) {
-      ... on InvoiceNode {
-        id
-        comment
-        confirmedDatetime
-        entryDatetime
-        finalisedDatetime
-        invoiceNumber
-
-        draftDatetime
-        allocatedDatetime
-        pickedDatetime
-        shippedDatetime
-        deliveredDatetime
-
-        lines {
-          ... on InvoiceLineConnector {
-            nodes {
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemCode
-              itemId
-              itemName
-              itemUnit
-              location
-              numberOfPacks
-              packSize
-              sellPricePerPack
-            }
-            totalCount
-          }
-        }
-        otherPartyId
-        otherPartyName
-        pricing {
-          ... on InvoicePricingNode {
-            __typename
-            totalAfterTax
-          }
-        }
-        status
-        theirReference
-        type
-      }
-      ... on NodeError {
-        __typename
-        error {
-          description
-        }
-      }
-    }
-  }
-`;
-
 export const getNameListQuery = (): string => gql`
   query names {
     names(filter: { isCustomer: true }) {
