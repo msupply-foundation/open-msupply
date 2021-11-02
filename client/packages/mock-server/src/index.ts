@@ -4,7 +4,7 @@ import { ApolloServer } from 'apollo-server';
 import { Schema } from './schema';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const typeDefs = require('../../common/src/schema.graphql');
+const typeDefs = require('@openmsupply-client/common/src/schema.graphql');
 
 const resolvers = {
   Queries: {
