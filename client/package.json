@@ -11,7 +11,8 @@
     "pre-commit-lint": "yarn compile && yarn lint-staged",
     "test": "jest --config ./jest.config.js --maxWorkers=50%",
     "storybook": "start-storybook -s ./packages/host/public  -p 6006",
-    "build-storybook": "build-storybook -s ./packages/host/public "
+    "build-storybook": "build-storybook -s ./packages/host/public ",
+    "generate": "graphql-codegen --config codegen.yml"
   },
   "workspaces": {
     "packages": [
@@ -20,6 +21,10 @@
   },
   "devDependencies": {
     "@emotion/styled": "^11.0.0-next.19",
+    "@graphql-codegen/cli": "2.2.2",
+    "@graphql-codegen/typescript": "2.3.0",
+    "@graphql-codegen/typescript-graphql-request": "^4.2.0",
+    "@graphql-codegen/typescript-operations": "^2.2.0",
     "@storybook/addon-actions": "^6.3.7",
     "@storybook/addon-essentials": "^6.3.7",
     "@storybook/addon-links": "^6.3.7",
@@ -60,6 +65,7 @@
   },
   "dependencies": {
     "@types/react-dom": "^17.0.9",
+    "graphql": "16.0.0",
     "react-intl": "^5.20.6"
   },
   "msw": {
