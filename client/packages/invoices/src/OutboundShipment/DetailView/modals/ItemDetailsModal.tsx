@@ -31,9 +31,15 @@ export const getInvoiceLine = (
   quantity: number
 ): InvoiceLine => ({
   id,
+  itemId: '',
   itemName: item.name,
+  itemCode: '',
+  itemUnit: '',
+  packSize: 0,
+  numberOfPacks: 0,
+  costPricePerPack: 0,
+  sellPricePerPack: 0,
   stockLineId: line.id,
-  itemCode: item.code,
   quantity,
   invoiceId: '',
   expiry: line.expiryDate,
@@ -159,7 +165,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     const invoiceLines = batchRows.map(batch =>
       getInvoiceLine('', selectedItem, batch, Number(values[batch.id] || 0))
     );
-    invoiceLines.filter(line => line.quantity > 0).forEach(upsertInvoiceLine);
+    invoiceLines
+      .filter(line => line.numberOfPacks > 0)
+      .forEach(upsertInvoiceLine);
     const placeholderValue = Number(values['placeholder'] || 0);
     if (placeholderValue > 0) {
       invoiceLines.push(

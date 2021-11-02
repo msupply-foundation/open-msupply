@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
-import { render } from '@testing-library/react';
+import { waitFor, render } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react-dom/test-utils';
 import { useColumns } from '../..';
 import { Item, TestingProvider } from '../../../../..';
 
@@ -77,9 +76,9 @@ describe('HeaderRow', () => {
 
     const nameHeader = getByRole('button', { name: /name/i });
 
-    act(() => userEvent.click(nameHeader));
+    userEvent.click(nameHeader);
 
-    expect(onSortBy).toBeCalledTimes(1);
+    waitFor(() => expect(onSortBy).toBeCalledTimes(1));
   });
 
   it('calls the provided sortBy function with the values of the column', () => {
@@ -92,10 +91,12 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const idHeader = getByRole('button', { name: /name/i });
+    const nameHeader = getByRole('button', { name: /name/i });
 
-    act(() => userEvent.click(idHeader));
+    userEvent.click(nameHeader);
 
-    expect(onSortBy).toBeCalledWith(expect.objectContaining({ key: 'name' }));
+    waitFor(() => {
+      expect(onSortBy).toBeCalledWith(expect.objectContaining({ key: 'name' }));
+    });
   });
 });

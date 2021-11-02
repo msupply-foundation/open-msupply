@@ -122,7 +122,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             onChange={onChangeItem}
             options={options}
             renderOption={renderOption}
-            defaultValue={invoiceLine?.item}
+            defaultValue={selectedItem}
             width="100%"
             isOptionEqualToValue={(option, value) => option.id === value.id}
           />
@@ -154,7 +154,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
             onChange: event => onChangeQuantity(Number(event.target.value)),
           })}
-          defaultValue={invoiceLine?.quantity}
+          defaultValue={invoiceLine?.numberOfPacks}
         />
         <Grid
           item

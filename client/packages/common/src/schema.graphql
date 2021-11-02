@@ -323,8 +323,12 @@ type InvoiceNode {
   entryDatetime: DateTime!
   confirmedDatetime: DateTime
   finalisedDatetime: DateTime
+
   lines: InvoiceLinesResponse!
   pricing: InvoicePriceResponse!
+
+  color: String!
+  hold: Boolean!
 
   draftDatetime: DateTime
   allocatedDatetime: DateTime

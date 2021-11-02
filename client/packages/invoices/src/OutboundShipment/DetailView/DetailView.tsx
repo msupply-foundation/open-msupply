@@ -16,7 +16,7 @@ import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
-import { ItemRow } from './types';
+import { InvoiceLineRow } from './types';
 import { Toolbar } from './Toolbar';
 import { isInvoiceEditable } from '../utils';
 import { Footer } from './Footer';
@@ -32,7 +32,7 @@ const useDraftOutbound = () => {
     getOutboundShipmentDetailViewApi(id ?? '')
   );
 
-  const onChangeSortBy = (column: Column<ItemRow>) => {
+  const onChangeSortBy = (column: Column<InvoiceLineRow>) => {
     dispatch(OutboundAction.onSortBy(column));
   };
 
@@ -46,7 +46,7 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
-      getCommentPopoverColumn<ItemRow>(),
+      getCommentPopoverColumn<InvoiceLineRow>(),
       'itemCode',
       'itemName',
       'batch',
@@ -57,7 +57,7 @@ export const DetailView: FC = () => {
       'itemUnit',
       'unitQuantity',
       'numberOfPacks',
-      getRowExpandColumn<ItemRow>(),
+      getRowExpandColumn<InvoiceLineRow>(),
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },

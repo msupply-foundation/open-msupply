@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC } from 'react';
 import { act } from 'react-dom/test-utils';
 import { waitFor } from '@testing-library/dom';
 import { renderHook } from '@testing-library/react-hooks';
@@ -7,6 +7,7 @@ import { useTheme } from '../../styles';
 import { TestingProvider, TestingRouter } from '../../utils';
 import { useRowRenderCount } from './useRowRenderCount';
 import { useAppBarRectStore } from '../useAppBarRect';
+import { Route } from 'react-router';
 
 type ThemeChangererProps = {
   paginationRowHeight: number;
@@ -42,20 +43,19 @@ describe('useRowRenderCount', () => {
       paginationRowHeight = 0,
       saveButtonRowHeight = 0,
       footerHeight = 0
-    ) =>
-    ({ children }: { children: ReactNode[] }) => {
+    ): FC =>
+    ({ children }) => {
       return (
         <TestingProvider>
-          <TestingRouter initialEntries={['']}>
-            <ThemeChangerer
-              paginationRowHeight={paginationRowHeight}
-              dataRowHeight={dataRowHeight}
-              headerRowHeight={headerRowHeight}
-              footerHeight={footerHeight}
-              saveButtonRowHeight={saveButtonRowHeight}
-            >
-              {children}
-            </ThemeChangerer>
+          <ThemeChangerer
+            paginationRowHeight={paginationRowHeight}
+            dataRowHeight={dataRowHeight}
+            headerRowHeight={headerRowHeight}
+            footerHeight={footerHeight}
+            saveButtonRowHeight={saveButtonRowHeight}
+          />
+          <TestingRouter initialEntries={['/']}>
+            <Route path="/" element={<>{children}</>} />
           </TestingRouter>
         </TestingProvider>
       );

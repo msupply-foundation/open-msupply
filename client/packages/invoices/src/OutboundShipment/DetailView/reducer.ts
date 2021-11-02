@@ -13,7 +13,7 @@ import {
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
-  ItemRow,
+  InvoiceLineRow,
 } from './types';
 
 const parseValue = (object: any, key: string) => {
@@ -57,18 +57,18 @@ export const OutboundAction = {
     type: ActionType.UpdateInvoice,
     payload: { key, value },
   }),
-  updateQuantity: (
+  updateNumberOfPacks: (
     rowKey: string,
-    quantity: number
+    numberOfPacks: number
   ): OutboundShipmentAction => ({
-    type: ActionType.UpdateQuantity,
-    payload: { rowKey, quantity },
+    type: ActionType.UpdateNumberOfPacks,
+    payload: { rowKey, numberOfPacks },
   }),
   updateComment: (rowKey: string, comment: string): OutboundShipmentAction => ({
     type: ActionType.UpdateComment,
     payload: { rowKey, comment },
   }),
-  onSortBy: (column: Column<ItemRow>): OutboundShipmentAction => ({
+  onSortBy: (column: Column<InvoiceLineRow>): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
   }),
@@ -76,13 +76,13 @@ export const OutboundAction = {
 
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
-  sortBy: SortBy<ItemRow>;
+  sortBy: SortBy<InvoiceLineRow>;
   deletedLines: InvoiceLine[];
 }
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderInvoice,
-  sortBy: { key: 'quantity', isDesc: true, direction: 'asc' },
+  sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'asc' },
   deletedLines: [],
 });
 
@@ -149,14 +149,14 @@ export const reducer = (
           break;
         }
 
-        case ActionType.UpdateQuantity: {
+        case ActionType.UpdateNumberOfPacks: {
           const { payload } = action;
-          const { rowKey, quantity } = payload;
+          const { rowKey, numberOfPacks } = payload;
 
           const row = state.draft.lines?.find(({ id }) => id === rowKey);
 
           if (row) {
-            row.quantity = quantity;
+            row.numberOfPacks = numberOfPacks;
           }
 
           break;
@@ -220,8 +220,8 @@ const createLine = (
 ) => {
   return {
     ...line,
-    updateQuantity: (quantity: number) =>
-      dispatch?.(OutboundAction.updateQuantity(line.id, quantity)),
+    updateNumberOfPacks: (numberOfPacks: number) =>
+      dispatch?.(OutboundAction.updateNumberOfPacks(line.id, numberOfPacks)),
     updateComment: (comment: string) =>
       dispatch?.(OutboundAction.updateComment(line.id, comment)),
   };

@@ -8,6 +8,15 @@ query invoice($id: String!) {
       finalisedDatetime
       invoiceNumber
 
+      draftDatetime
+      allocatedDatetime
+      pickedDatetime
+      shippedDatetime
+      deliveredDatetime
+
+      hold
+      color
+
       lines {
         ... on InvoiceLineConnector {
           nodes {
@@ -18,6 +27,7 @@ query invoice($id: String!) {
             itemCode
             itemId
             itemName
+            itemUnit
             numberOfPacks
             packSize
             sellPricePerPack
