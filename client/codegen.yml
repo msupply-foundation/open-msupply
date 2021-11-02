@@ -1,0 +1,9 @@
+overwrite: true
+schema: "./packages/common/src/schema.graphql"
+documents: './packages/common/src/operations.graphql'
+generates:
+  ./packages/common/src/types/schema.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-graphql-request

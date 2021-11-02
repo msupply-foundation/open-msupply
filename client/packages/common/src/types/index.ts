@@ -1,6 +1,7 @@
 import { ObjectWithStringKeys } from './utility';
 
 export * from './utility';
+export * from './schema';
 
 type RecordWithId = { id: string };
 

@@ -1,6 +1,10 @@
+require('graphql-import-node/register');
+
 import { ApolloServer } from 'apollo-server';
 import { Schema } from './schema';
-import schema from './full-schema';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const typeDefs = require('@openmsupply-client/common/src/schema.graphql');
 
 const resolvers = {
   Queries: {
@@ -16,7 +20,7 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({ typeDefs: schema, resolvers });
+const server = new ApolloServer({ typeDefs, resolvers });
 
 server.listen().then(({ url }) => {
   console.log(

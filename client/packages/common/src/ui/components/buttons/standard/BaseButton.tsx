@@ -13,13 +13,10 @@ export const StyledBaseButton = styled(MuiButton)(
       hoverBgColor = 'white';
     } else {
       if (color === 'primary') hoverBgColor = 'rgb(163, 64, 33)';
-      else hoverBgColor = theme.palette[color ?? 'secondary'].main;
+      else hoverBgColor = color ?? theme.palette.secondary.main;
     }
 
-    const hoverColor =
-      variant === 'contained'
-        ? theme.palette[color ?? 'primary'].main
-        : 'white';
+    const hoverColor = variant === 'contained' ? color : 'white';
 
     return {
       '&.MuiButton-outlined': {
