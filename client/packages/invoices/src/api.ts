@@ -9,7 +9,6 @@ import {
   Invoice,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 export const getInsertInvoiceQuery = (): string => gql`
