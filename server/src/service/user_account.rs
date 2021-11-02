@@ -63,7 +63,9 @@ impl From<RepositoryError> for CreateUserAccountError {
 #[derive(Debug)]
 pub enum JWTIssuingError {
     UserNameDoesNotExist,
-    InvalidCredentials(Result<bool, bcrypt::BcryptError>),
+    InvalidCredentials,
+    /// Invalid account data on the backend
+    InvalidCredentialsBackend(bcrypt::BcryptError),
     CanNotCreateToken(jsonwebtoken::errors::Error),
     DatabaseError(RepositoryError),
 }
@@ -150,14 +152,10 @@ impl<'a> UserAccountService<'a> {
                 _ => JWTIssuingError::DatabaseError(err),
             })?;
         // verify password
-        let password_result = verify(password, &user.password);
-        match password_result {
-            Ok(valid) => {
-                if !valid {
-                    return Err(JWTIssuingError::InvalidCredentials(password_result));
-                }
-            }
-            _ => return Err(JWTIssuingError::InvalidCredentials(password_result)),
+        if !verify(password, &user.password)
+            .map_err(|err| JWTIssuingError::InvalidCredentialsBackend(err))?
+        {
+            return Err(JWTIssuingError::InvalidCredentials);
         }
 
         create_jwt_pair(&user.id, valid_for).map_err(|err| JWTIssuingError::CanNotCreateToken(err))
