@@ -56,23 +56,6 @@ export const createFn = async (invoice: Partial<Invoice>): Promise<Invoice> => {
   return insertCustomerInvoice;
 };
 
-export const getNameListQuery = (): string => gql`
-  query names {
-    names(filter: { isCustomer: true }) {
-      ... on NameConnector {
-        nodes {
-          id
-          code
-          name
-          isSupplier
-          isCustomer
-        }
-        totalCount
-      }
-    }
-  }
-`;
-
 export const getMutation = (): string => gql`
   mutation updateInvoice($invoicePatch: InvoicePatch) {
     updateInvoice(invoice: $invoicePatch) {
@@ -110,8 +93,13 @@ export const nameListQueryFn = async (): Promise<{
   nodes: Name[];
   totalCount: number;
 }> => {
-  const { names } = await request(Environment.API_URL, getNameListQuery());
-  return names;
+  const { names } = await api.names();
+
+  if (names.__typename === 'NameConnector') {
+    return names;
+  }
+
+  throw new Error(names.error.description);
 };
 
 export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {

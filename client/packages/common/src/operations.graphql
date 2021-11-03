@@ -56,21 +56,6 @@ query invoice($id: String!) {
   }
 }
 
-query names {
-  names(filter: { isCustomer: true }) {
-    ... on NameConnector {
-      nodes {
-        id
-        code
-        name
-        isSupplier
-        isCustomer
-      }
-      totalCount
-    }
-  }
-}
-
 query invoices(
   $first: Int
   $offset: Int
@@ -141,6 +126,43 @@ query invoices(
             totalAfterTax
           }
         }
+      }
+      totalCount
+    }
+  }
+}
+
+query names($filter: NameFilterInput) {
+  names(filter: $filter) {
+    ... on ConnectorError {
+      __typename
+      error {
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        description
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+    ... on NameConnector {
+      __typename
+      nodes {
+        code
+        id
+        isCustomer
+        isSupplier
+        name
       }
       totalCount
     }

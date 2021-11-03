@@ -925,26 +925,6 @@ export type InvoiceQuery = {
       };
 };
 
-export type NamesQueryVariables = Exact<{ [key: string]: never }>;
-
-export type NamesQuery = {
-  __typename?: 'Queries';
-  names:
-    | { __typename?: 'ConnectorError' }
-    | {
-        __typename?: 'NameConnector';
-        totalCount: number;
-        nodes: Array<{
-          __typename?: 'NameNode';
-          id: string;
-          code: string;
-          name: string;
-          isSupplier: boolean;
-          isCustomer: boolean;
-        }>;
-      };
-};
-
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
@@ -1007,6 +987,47 @@ export type InvoicesQuery = {
       };
 };
 
+export type NamesQueryVariables = Exact<{
+  filter?: Maybe<NameFilterInput>;
+}>;
+
+export type NamesQuery = {
+  __typename?: 'Queries';
+  names:
+    | {
+        __typename: 'ConnectorError';
+        error:
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | {
+              __typename: 'PaginationError';
+              description: string;
+              rangeError: {
+                __typename?: 'RangeError';
+                description: string;
+                field: RangeField;
+                max?: number | null | undefined;
+                min?: number | null | undefined;
+              };
+            };
+      }
+    | {
+        __typename: 'NameConnector';
+        totalCount: number;
+        nodes: Array<{
+          __typename?: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          name: string;
+        }>;
+      };
+};
+
 export const InvoiceDocument = gql`
   query invoice($id: String!) {
     invoice(id: $id) {
@@ -1059,22 +1080,6 @@ export const InvoiceDocument = gql`
         error {
           description
         }
-      }
-    }
-  }
-`;
-export const NamesDocument = gql`
-  query names {
-    names(filter: { isCustomer: true }) {
-      ... on NameConnector {
-        nodes {
-          id
-          code
-          name
-          isSupplier
-          isCustomer
-        }
-        totalCount
       }
     }
   }
@@ -1151,6 +1156,44 @@ export const InvoicesDocument = gql`
     }
   }
 `;
+export const NamesDocument = gql`
+  query names($filter: NameFilterInput) {
+    names(filter: $filter) {
+      ... on ConnectorError {
+        __typename
+        error {
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+          description
+          ... on PaginationError {
+            __typename
+            description
+            rangeError {
+              description
+              field
+              max
+              min
+            }
+          }
+        }
+      }
+      ... on NameConnector {
+        __typename
+        nodes {
+          code
+          id
+          isCustomer
+          isSupplier
+          name
+        }
+        totalCount
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1177,19 +1220,6 @@ export function getSdk(
         'invoice'
       );
     },
-    names(
-      variables?: NamesQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
-    ): Promise<NamesQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<NamesQuery>(NamesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'names'
-      );
-    },
     invoices(
       variables: InvoicesQueryVariables,
       requestHeaders?: Dom.RequestInit['headers']
@@ -1201,6 +1231,19 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'invoices'
+      );
+    },
+    names(
+      variables?: NamesQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<NamesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<NamesQuery>(NamesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'names'
       );
     },
   };
