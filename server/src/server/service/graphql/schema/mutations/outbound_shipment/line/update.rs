@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::outbound_shipment::UpdateOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
@@ -9,11 +10,11 @@ use crate::{
             NotAnOutboundShipment,
         },
         types::{
-            DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField,
-            RecordNotFound,
+            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+            RangeError, RangeField, RecordNotFound,
         },
     },
-    service::invoice_line::UpdateOutboundShipmentLineError,
+    service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError},
 };
 
 use super::{
@@ -23,11 +24,22 @@ use super::{
 
 #[derive(InputObject)]
 pub struct UpdateOutboundShipmentLineInput {
-    id: String,
+    pub id: String,
     invoice_id: String,
     item_id: Option<String>,
     stock_line_id: Option<String>,
     number_of_packs: Option<u32>,
+}
+
+pub fn get_update_outbound_shipment_line_response(
+    connection_manager: &StorageConnectionManager,
+    input: UpdateOutboundShipmentLineInput,
+) -> UpdateOutboundShipmentLineResponse {
+    use UpdateOutboundShipmentLineResponse::*;
+    match update_outbound_shipment_line(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Union)]

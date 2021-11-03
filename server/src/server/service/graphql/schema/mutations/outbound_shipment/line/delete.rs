@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::outbound_shipment::DeleteOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
@@ -10,7 +11,7 @@ use crate::{
         },
         types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
-    service::invoice_line::DeleteOutboundShipmentLineError,
+    service::invoice_line::{delete_outbound_shipment_line, DeleteOutboundShipmentLineError},
 };
 
 #[derive(InputObject)]
@@ -23,6 +24,17 @@ pub struct DeleteOutboundShipmentLineInput {
 pub enum DeleteOutboundShipmentLineResponse {
     Error(ErrorWrapper<DeleteOutboundShipmentLineErrorInterface>),
     Response(DeleteResponse),
+}
+
+pub fn get_delete_outbound_shipment_line_response(
+    connection_manager: &StorageConnectionManager,
+    input: DeleteOutboundShipmentLineInput,
+) -> DeleteOutboundShipmentLineResponse {
+    use DeleteOutboundShipmentLineResponse::*;
+    match delete_outbound_shipment_line(connection_manager, input.into()) {
+        Ok(id) => Response(DeleteResponse(id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]
