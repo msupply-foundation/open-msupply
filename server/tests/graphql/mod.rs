@@ -21,6 +21,7 @@ mod inbound_shipment_line_update;
 mod inbound_shipment_update;
 mod invoice_query;
 mod invoices;
+mod items;
 mod names;
 mod outbound_shipment_delete;
 mod outbound_shipment_insert;
