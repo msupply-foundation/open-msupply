@@ -956,7 +956,7 @@ export type InvoicesQuery = {
             };
       }
     | {
-        __typename?: 'InvoiceConnector';
+        __typename: 'InvoiceConnector';
         totalCount: number;
         nodes: Array<{
           __typename?: 'InvoiceNode';
@@ -988,7 +988,10 @@ export type InvoicesQuery = {
 };
 
 export type NamesQueryVariables = Exact<{
-  filter?: Maybe<NameFilterInput>;
+  key: NameSortFieldInput;
+  desc?: Maybe<Scalars['Boolean']>;
+  first?: Maybe<Scalars['Int']>;
+  offset?: Maybe<Scalars['Int']>;
 }>;
 
 export type NamesQuery = {
@@ -1117,6 +1120,7 @@ export const InvoicesDocument = gql`
         }
       }
       ... on InvoiceConnector {
+        __typename
         nodes {
           comment
           confirmedDatetime
@@ -1157,8 +1161,17 @@ export const InvoicesDocument = gql`
   }
 `;
 export const NamesDocument = gql`
-  query names($filter: NameFilterInput) {
-    names(filter: $filter) {
+  query names(
+    $key: NameSortFieldInput!
+    $desc: Boolean
+    $first: Int
+    $offset: Int
+  ) {
+    names(
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+      filter: { isCustomer: true }
+    ) {
       ... on ConnectorError {
         __typename
         error {
@@ -1234,7 +1247,7 @@ export function getSdk(
       );
     },
     names(
-      variables?: NamesQueryVariables,
+      variables: NamesQueryVariables,
       requestHeaders?: Dom.RequestInit['headers']
     ): Promise<NamesQuery> {
       return withWrapper(

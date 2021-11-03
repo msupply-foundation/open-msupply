@@ -11,6 +11,7 @@ import {
   getSdk,
   InvoiceSortFieldInput,
   InvoiceRow,
+  NameSortFieldInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
@@ -89,11 +90,27 @@ export const deleteFn = async (invoices: InvoiceRow[]) => {
   );
 };
 
-export const nameListQueryFn = async (): Promise<{
+export const nameListQueryFn = async ({
+  first,
+  offset,
+  sortBy,
+}: {
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<Name>;
+} = {}): Promise<{
   nodes: Name[];
   totalCount: number;
 }> => {
-  const { names } = await api.names();
+  const key =
+    sortBy?.key === 'name' ? NameSortFieldInput.Name : NameSortFieldInput.Code;
+
+  const { names } = await api.names({
+    first,
+    offset,
+    key,
+    desc: sortBy?.isDesc,
+  });
 
   if (names.__typename === 'NameConnector') {
     return names;
@@ -137,7 +154,11 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
     };
   }
 
-  throw new Error('uh oh');
+  console.log('-------------------------------------------');
+  console.log('result', result);
+  console.log('-------------------------------------------');
+
+  throw new Error(result.invoices.error.description);
 };
 
 export const detailQueryFn = (id: string) => async (): Promise<Invoice> => {

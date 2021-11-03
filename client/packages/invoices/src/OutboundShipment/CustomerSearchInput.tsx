@@ -26,7 +26,9 @@ export const CustomerSearchInput: FC<CustomerSearchProps> = ({
   value,
   disabled = false,
 }) => {
-  const { data, isLoading } = useQuery(['names', 'list'], nameListQueryFn);
+  const { data, isLoading } = useQuery(['names', 'list'], () =>
+    nameListQueryFn()
+  );
 
   return (
     <Autocomplete
