@@ -20,6 +20,7 @@ CREATE TABLE invoice (
     invoice_number integer NOT NULL,
     type invoice_type NOT NULL,
     status invoice_status NOT NULL,
+    on_hold boolean NOT NULL,
     comment text,
     their_reference text,
     entry_datetime timestamp NOT NULL,

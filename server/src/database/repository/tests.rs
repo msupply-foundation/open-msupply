@@ -174,6 +174,7 @@ mod repository_test {
                 invoice_number: 12,
                 r#type: InvoiceRowType::InboundShipment,
                 status: InvoiceRowStatus::Draft,
+                on_hold: false,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
                 // Note: keep nsecs small enough for Postgres which has limited precision.
@@ -191,6 +192,7 @@ mod repository_test {
                 invoice_number: 12,
                 r#type: InvoiceRowType::OutboundShipment,
                 status: InvoiceRowStatus::Draft,
+                on_hold: false,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
                 entry_datetime: NaiveDateTime::from_timestamp(2000, 0),
@@ -293,9 +295,9 @@ mod repository_test {
         database::{
             repository::{
                 get_repositories, repository::MasterListRepository, CentralSyncBufferRepository,
-                OutboundShipmentRepository, InvoiceLineQueryRepository, InvoiceLineRepository,
-                InvoiceRepository, ItemRepository, MasterListLineRepository,
-                MasterListNameJoinRepository, NameQueryRepository, NameRepository,
+                InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository,
+                ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+                NameQueryRepository, NameRepository, OutboundShipmentRepository,
                 RequisitionLineRepository, RequisitionRepository, StockLineRepository,
                 StorageConnectionManager, StoreRepository, UserAccountRepository,
             },

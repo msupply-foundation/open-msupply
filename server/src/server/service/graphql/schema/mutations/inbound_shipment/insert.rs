@@ -20,6 +20,7 @@ pub struct InsertInboundShipmentInput {
     pub id: String,
     pub other_party_id: String,
     pub status: InvoiceNodeStatus,
+    pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }
@@ -57,6 +58,7 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
             id,
             other_party_id,
             status,
+            on_hold,
             comment,
             their_reference,
         }: InsertInboundShipmentInput,
@@ -65,6 +67,7 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
             id,
             other_party_id,
             status: status.into(),
+            on_hold,
             comment,
             their_reference,
         }

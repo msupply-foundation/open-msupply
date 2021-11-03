@@ -1,16 +1,10 @@
 use crate::{
-    database::{
-        repository::StorageConnection,
-        schema::{InvoiceRow, InvoiceRowStatus},
-    },
-    domain::{
-        inbound_shipment::UpdateInboundShipment,
-        invoice::{InvoiceStatus, InvoiceType},
-    },
+    database::{repository::StorageConnection, schema::InvoiceRow},
+    domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceType},
     service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type,
+        check_invoice_exists, check_invoice_finalised, check_invoice_status, check_invoice_type,
         inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
-        OtherPartyError, WrongInvoiceType,
+        InvoiceStatusError, OtherPartyError, WrongInvoiceType,
     },
 };
 
@@ -25,22 +19,10 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
-    check_invoice_status(patch, &invoice)?;
+    check_invoice_status(&invoice, &patch.status, &patch.on_hold)?;
     check_other_party(patch.other_party_id.clone(), connection)?;
 
     Ok(invoice)
-}
-
-fn check_invoice_status(
-    patch: &UpdateInboundShipment,
-    invoice: &InvoiceRow,
-) -> Result<(), UpdateInboundShipmentError> {
-    match (&invoice.status, &patch.status) {
-        (InvoiceRowStatus::Confirmed, Some(InvoiceStatus::Draft)) => {
-            Err(UpdateInboundShipmentError::CannotChangeInvoiceBackToDraft)
-        }
-        _ => Ok(()),
-    }
 }
 
 impl From<OtherPartyError> for UpdateInboundShipmentError {
@@ -69,5 +51,17 @@ impl From<InvoiceIsFinalised> for UpdateInboundShipmentError {
 impl From<InvoiceDoesNotExist> for UpdateInboundShipmentError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         UpdateInboundShipmentError::InvoiceDoesNotExist
+    }
+}
+
+impl From<InvoiceStatusError> for UpdateInboundShipmentError {
+    fn from(error: InvoiceStatusError) -> Self {
+        use UpdateInboundShipmentError::*;
+        match error {
+            InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold => {
+                CannotChangeStatusOfInvoiceOnHold
+            }
+            InvoiceStatusError::CannotChangeInvoiceBackToDraft => CannotChangeInvoiceBackToDraft,
+        }
     }
 }
