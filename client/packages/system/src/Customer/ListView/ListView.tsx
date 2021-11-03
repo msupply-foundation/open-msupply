@@ -5,40 +5,18 @@ import {
   TableProvider,
   DataTable,
   useListData,
-  request,
   Name,
-  gql,
   useColumns,
   ListApi,
   createTableStore,
   SortBy,
+  getSdk,
+  GraphQLClient,
+  NameSortFieldInput,
 } from '@openmsupply-client/common';
 
-const getNameListQuery = (): string => gql`
-  query names(
-    $first: Int
-    $offset: Int
-    $key: NameSortFieldInput!
-    $desc: Boolean
-  ) {
-    names(
-      page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
-      filter: { isCustomer: true }
-    ) {
-      ... on NameConnector {
-        nodes {
-          id
-          code
-          name
-          isSupplier
-          isCustomer
-        }
-        totalCount
-      }
-    }
-  }
-`;
+const client = new GraphQLClient(Environment.API_URL);
+const api = getSdk(client);
 
 const listQueryFn = async ({
   first,
@@ -52,17 +30,21 @@ const listQueryFn = async ({
   nodes: Name[];
   totalCount: number;
 }> => {
-  // TODO: Need to add a `sortByKey` to the Column type
-  const key = sortBy.key === 'name' ? 'NAME' : 'CODE';
+  const key =
+    sortBy.key === 'name' ? NameSortFieldInput.Name : NameSortFieldInput.Code;
 
-  const { names } = await request(Environment.API_URL, getNameListQuery(), {
+  const { names } = await api.names({
     first,
     offset,
     key,
     desc: sortBy.isDesc,
   });
 
-  return names;
+  if (names.__typename === 'NameConnector') {
+    return names;
+  }
+
+  throw new Error(names.error.description);
 };
 
 const Api: ListApi<Name> = {
@@ -90,7 +72,7 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData({ key: 'NAME' }, ['names', 'list'], Api);
+  } = useListData({ key: NameSortFieldInput.Name }, ['names', 'list'], Api);
   const navigate = useNavigate();
 
   const columns = useColumns<Name>(['name', 'code'], {
