@@ -22,8 +22,13 @@ impl LegacyListMasterLineRow {
         if sync_record.table_name != table_name {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)
-            .map_err(|source| SyncTranslationError { table_name, source })?;
+        let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data).map_err(
+            |source| SyncTranslationError {
+                table_name,
+                source,
+                record: sync_record.data.clone(),
+            },
+        )?;
 
         Ok(Some(MasterListLineRow {
             id: data.ID,

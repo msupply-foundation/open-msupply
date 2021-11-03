@@ -23,8 +23,13 @@ impl LegacyStoreRow {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)
-            .map_err(|source| SyncTranslationError { table_name, source })?;
+        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data).map_err(|source| {
+            SyncTranslationError {
+                table_name,
+                source,
+                record: sync_record.data.clone(),
+            }
+        })?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
