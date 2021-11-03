@@ -284,6 +284,7 @@ fragment UpdateOutboundShipmentLineErrorInterface on UpdateOutboundShipmentLineE
   ...NotEnoughStockForReduction
   ...RangeError
   ...RecordNotFound
+  ...StockLineIsOnHold
   ...StockLineAlreadyExistsInInvoice
   ...StockLineDoesNotBelongToCurrentStore
   ...ItemDoesNotMatchStockLine
@@ -335,6 +336,7 @@ fragment InsertOutboundShipmentLineErrorInterface on InsertOutboundShipmentLineE
   ...NotEnoughStockForReduction
   ...RangeError
   ...RecordAlreadyExist
+  ...StockLineIsOnHold
   ...StockLineAlreadyExistsInInvoice
   ...StockLineDoesNotBelongToCurrentStore
 }
@@ -621,6 +623,10 @@ fragment BatchIsReserved on BatchIsReserved {
 }
 
 fragment StockLineDoesNotBelongToCurrentStore on StockLineDoesNotBelongToCurrentStore {
+  description
+}
+
+fragment StockLineIsOnHold on StockLineIsOnHold {
   description
 }
 
