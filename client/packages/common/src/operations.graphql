@@ -38,6 +38,22 @@ query invoice($id: String!) {
       otherPartyId
       otherPartyName
       pricing {
+        __typename
+        ... on NodeError {
+          __typename
+          error {
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            description
+          }
+        }
         ... on InvoicePricingNode {
           __typename
           totalAfterTax
@@ -107,6 +123,7 @@ query invoices(
         type
 
         pricing {
+          __typename
           ... on NodeError {
             __typename
             error {
