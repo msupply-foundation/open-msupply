@@ -8,7 +8,7 @@ import {
   DataTable,
   useColumns,
   useNotification,
-  Invoice,
+  InvoiceRow,
   DropdownMenu,
   DropdownMenuItem,
   AppBarContentPortal,
@@ -32,8 +32,8 @@ import { CustomerSearch } from './CustomerSearch';
 import { getStatusTranslation } from '../utils';
 
 const ListViewToolBar: FC<{
-  onDelete: (toDelete: Invoice[]) => void;
-  data?: Invoice[];
+  onDelete: (toDelete: InvoiceRow[]) => void;
+  data?: InvoiceRow[];
 }> = ({ onDelete, data }) => {
   const t = useTranslation();
 
@@ -43,7 +43,7 @@ const ListViewToolBar: FC<{
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as Invoice[],
+      .filter(Boolean) as InvoiceRow[],
   }));
 
   const deleteAction = () => {
@@ -88,11 +88,11 @@ export const OutboundShipmentListViewComponent: FC = () => {
     invalidate,
   } = useListData({ key: 'TYPE' }, 'invoice', OutboundShipmentListViewApi);
 
-  const onColorUpdate = (row: Invoice, color: Color) => {
+  const onColorUpdate = (row: InvoiceRow, color: Color) => {
     onUpdate({ ...row, color: color.hex });
   };
 
-  const columns = useColumns<Invoice>(
+  const columns = useColumns<InvoiceRow>(
     [
       getNameAndColorColumn(onColorUpdate),
       [
