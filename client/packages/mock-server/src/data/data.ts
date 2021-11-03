@@ -181,6 +181,7 @@ export const createItems = (
       code,
       name,
       unit: takeRandomElementFrom(units),
+      onHold: faker.datatype.number(10) < 2,
       isVisible: faker.datatype.boolean(),
     };
 

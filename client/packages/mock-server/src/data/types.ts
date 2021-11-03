@@ -16,6 +16,7 @@ export interface Item {
   name: string;
   isVisible: boolean;
   unit: string;
+  onHold: boolean;
 }
 
 export interface Name {

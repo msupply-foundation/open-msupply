@@ -5,12 +5,14 @@ import {
   Grid,
   InvoiceLine,
   Item,
-  gql,
-  request,
+  getSdk,
+  GraphQLClient,
   useForm,
   useQuery,
   useDialog,
   FormProvider,
+  SortBy,
+  ItemSortFieldInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { BatchesTable } from './BatchesTable';
@@ -27,7 +29,7 @@ interface ItemDetailsModalProps {
 export const getInvoiceLine = (
   id: string,
   item: Item,
-  line: { id: string; expiryDate: string },
+  line: { id: string; expiryDate?: string | null },
   quantity: number
 ): InvoiceLine => ({
   id,
@@ -45,48 +47,49 @@ export const getInvoiceLine = (
   expiry: line.expiryDate,
 });
 
-const listQueryFn = async (): Promise<Item[]> => {
-  const { items } = await request(
-    Environment.API_URL,
-    gql`
-      query items {
-        items {
-          ... on ItemConnector {
-            nodes {
-              id
-              code
-              availableBatches {
-                ... on StockLineConnector {
-                  nodes {
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    id
-                    itemId
-                    packSize
-                    sellPricePerPack
-                    storeId
-                    totalNumberOfPacks
-                  }
-                }
-                ... on ConnectorError {
-                  __typename
-                  error {
-                    description
-                  }
-                }
-              }
-              isVisible
-              name
-            }
-          }
-        }
-      }
-    `
-  );
+const client = new GraphQLClient(Environment.API_URL);
+const api = getSdk(client);
 
-  return items.nodes;
+const listQueryFn = async ({
+  first = 999,
+  offset,
+  sortBy,
+}: {
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<Item>;
+} = {}): Promise<{
+  nodes: Item[];
+  totalCount: number;
+}> => {
+  // TODO: Need to add a `sortByKey` to the Column type
+  const key =
+    sortBy?.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
+
+  const { items } = await api.items({
+    first,
+    offset,
+    key,
+    desc: sortBy?.isDesc,
+  });
+
+  if (items.__typename === 'ItemConnector') {
+    const itemRows: Item[] = items.nodes.map(item => ({
+      ...item,
+      availableQuantity: 0,
+      unit: '',
+      availableBatches:
+        item.availableBatches.__typename === 'StockLineConnector'
+          ? item.availableBatches.nodes
+          : [],
+    }));
+
+    return {
+      totalCount: items.totalCount,
+      nodes: itemRows,
+    };
+  }
+  throw new Error(items.error.description);
 };
 
 const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
@@ -99,8 +102,8 @@ const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
     return 1;
   }
 
-  const expiryA = new Date(a.expiryDate);
-  const expiryB = new Date(b.expiryDate);
+  const expiryA = new Date(a.expiryDate ?? '');
+  const expiryB = new Date(b.expiryDate ?? '');
 
   if (expiryA < expiryB) {
     return -1;
@@ -137,7 +140,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   ) => {
     setSelectedItem(value);
     setBatchRows(
-      (value?.availableBatches.nodes || [])
+      (value?.availableBatches || [])
         .map(batch => ({ ...batch, quantity: 0 }))
         .sort(sortByDisabledThenExpiryDate)
     );
@@ -146,7 +149,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     setValue('availableQuantity', value?.availableQuantity || 0);
   };
 
-  const { data, isLoading } = useQuery(['item', 'list'], listQueryFn);
+  const { data, isLoading } = useQuery(['item', 'list'], () => listQueryFn());
+
   const onReset = () => {
     reset();
     setBatchRows([]);
@@ -280,7 +284,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           <Grid container gap={0.5}>
             <ItemDetailsForm
               invoiceLine={invoiceLine}
-              items={data}
+              items={data?.nodes ?? []}
               onChangeItem={onChangeItem}
               onChangeQuantity={setQuantity}
               register={register}

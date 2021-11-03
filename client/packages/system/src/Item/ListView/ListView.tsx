@@ -5,14 +5,18 @@ import {
   TableProvider,
   DataTable,
   useListData,
-  request,
   Item,
-  gql,
   useColumns,
   ListApi,
   createTableStore,
   SortBy,
+  getSdk,
+  GraphQLClient,
+  ItemSortFieldInput,
 } from '@openmsupply-client/common';
+
+const client = new GraphQLClient(Environment.API_URL);
+const api = getSdk(client);
 
 const listQueryFn = async ({
   first,
@@ -27,64 +31,33 @@ const listQueryFn = async ({
   totalCount: number;
 }> => {
   // TODO: Need to add a `sortByKey` to the Column type
-  const key = sortBy.key === 'name' ? 'NAME' : 'CODE';
+  const key =
+    sortBy.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
 
-  const { items } = await request(
-    Environment.API_URL,
-    gql`
-      query items(
-        $first: Int
-        $offset: Int
-        $key: ItemSortFieldInput!
-        $desc: Boolean
-      ) {
-        items(
-          page: { first: $first, offset: $offset }
-          sort: { key: $key, desc: $desc }
-        ) {
-          ... on ItemConnector {
-            totalCount
-            nodes {
-              id
-              code
-              availableBatches {
-                ... on StockLineConnector {
-                  nodes {
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    id
-                    itemId
-                    packSize
-                    sellPricePerPack
-                    storeId
-                    totalNumberOfPacks
-                  }
-                }
-                ... on ConnectorError {
-                  __typename
-                  error {
-                    description
-                  }
-                }
-              }
-              isVisible
-              name
-            }
-          }
-        }
-      }
-    `,
-    {
-      first,
-      offset,
-      key,
-      desc: sortBy.isDesc,
-    }
-  );
+  const { items } = await api.items({
+    first,
+    offset,
+    key,
+    desc: sortBy.isDesc,
+  });
 
-  return { nodes: items.nodes, totalCount: items.totalCount };
+  if (items.__typename === 'ItemConnector') {
+    const itemRows: Item[] = items.nodes.map(item => ({
+      ...item,
+      availableQuantity: 0,
+      unit: '',
+      availableBatches:
+        item.availableBatches.__typename === 'StockLineConnector'
+          ? item.availableBatches.nodes
+          : [],
+    }));
+
+    return {
+      totalCount: items.totalCount,
+      nodes: itemRows,
+    };
+  }
+  throw new Error(items.error.description);
 };
 
 const Api: ListApi<Item> = {
