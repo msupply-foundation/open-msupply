@@ -1,10 +1,14 @@
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment},
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
-        types::{DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode},
+        types::{
+            get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
+            NameNode,
+        },
     },
-    service::invoice::InsertOutboundShipmentError,
+    service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError},
 };
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
@@ -14,7 +18,7 @@ use async_graphql::{InputObject, Interface, Union};
 #[derive(InputObject)]
 pub struct InsertOutboundShipmentInput {
     /// The new invoice id provided by the client
-    id: String,
+    pub id: String,
     /// The other party must be an customer of the current store
     other_party_id: String,
     status: Option<InvoiceNodeStatus>,
@@ -42,6 +46,17 @@ pub enum InsertOutboundShipmentResponse {
     Error(ErrorWrapper<InsertOutboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
+}
+
+pub fn get_insert_outbound_shipment_response(
+    connection_manager: &StorageConnectionManager,
+    input: InsertOutboundShipmentInput,
+) -> InsertOutboundShipmentResponse {
+    use InsertOutboundShipmentResponse::*;
+    match insert_outbound_shipment(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]

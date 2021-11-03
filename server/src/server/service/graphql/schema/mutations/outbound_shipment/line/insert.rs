@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::outbound_shipment::InsertOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
@@ -8,9 +9,12 @@ use crate::{
             ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
             RecordAlreadyExist,
         },
-        types::{DatabaseError, ErrorWrapper, InvoiceLineResponse, Range, RangeError, RangeField},
+        types::{
+            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+            RangeError, RangeField,
+        },
     },
-    service::invoice_line::InsertOutboundShipmentLineError,
+    service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError},
 };
 
 use super::{
@@ -32,6 +36,17 @@ pub enum InsertOutboundShipmentLineResponse {
     Error(ErrorWrapper<InsertOutboundShipmentLineErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceLineResponse),
+}
+
+pub fn get_insert_outbound_shipment_line_response(
+    connection_manager: &StorageConnectionManager,
+    input: InsertOutboundShipmentLineInput,
+) -> InsertOutboundShipmentLineResponse {
+    use InsertOutboundShipmentLineResponse::*;
+    match insert_outbound_shipment_line(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]
