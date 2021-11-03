@@ -11,6 +11,15 @@ impl CannotChangeStatusBackToDraftError {
     }
 }
 
+pub struct CannotChangeStatusOfInvoiceOnHold;
+
+#[Object]
+impl CannotChangeStatusOfInvoiceOnHold {
+    pub async fn description(&self) -> &'static str {
+        "Invoice is on hold, status cannot be changed."
+    }
+}
+
 pub struct CanOnlyEditInvoicesInLoggedInStoreError;
 
 #[Object]

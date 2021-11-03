@@ -5,8 +5,9 @@ use crate::{
     domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus},
     server::service::graphql::schema::{
         mutations::{
-            CannotChangeInvoiceBackToDraft, CannotEditFinalisedInvoice, ForeignKey,
-            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
+            outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotChangeInvoiceBackToDraft,
+            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
         },
         types::{
             get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
@@ -23,6 +24,7 @@ pub struct UpdateInboundShipmentInput {
     pub id: String,
     pub other_party_id: Option<String>,
     pub status: Option<InvoiceNodeStatus>,
+    pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }
@@ -56,6 +58,7 @@ pub enum UpdateInboundShipmentErrorInterface {
     NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft),
+    CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
 }
 
 impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
@@ -64,6 +67,7 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             id,
             other_party_id,
             status,
+            on_hold,
             comment,
             their_reference,
         }: UpdateInboundShipmentInput,
@@ -72,6 +76,7 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             id,
             other_party_id,
             status: status.map(InvoiceStatus::from),
+            on_hold,
             comment,
             their_reference,
         }
@@ -105,6 +110,9 @@ impl From<UpdateInboundShipmentError> for UpdateInboundShipmentResponse {
             }
             UpdateInboundShipmentError::CannotEditFinalised => {
                 OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+            }
+            UpdateInboundShipmentError::CannotChangeStatusOfInvoiceOnHold => {
+                OutError::CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold {})
             }
         };
 

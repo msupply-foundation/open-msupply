@@ -20,6 +20,7 @@ pub struct Invoice {
     pub other_party_name: String,
     pub other_party_id: String,
     pub status: InvoiceStatus,
+    pub on_hold: bool,
     pub r#type: InvoiceType,
     pub invoice_number: i32,
     pub their_reference: Option<String>,

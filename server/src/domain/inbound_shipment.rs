@@ -6,6 +6,7 @@ pub struct InsertInboundShipment {
     pub id: String,
     pub other_party_id: String,
     pub status: InvoiceStatus,
+    pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }
@@ -14,6 +15,7 @@ pub struct UpdateInboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,
     pub status: Option<InvoiceStatus>,
+    pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
 }

@@ -94,6 +94,7 @@ table! {
         invoice_number -> Integer,
         #[sql_name = "type"] type_ -> crate::database::schema::invoice::InvoiceRowTypeMapping,
         status -> crate::database::schema::invoice::InvoiceRowStatusMapping,
+        on_hold -> Bool,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
         entry_datetime -> Timestamp,

@@ -61,6 +61,8 @@ mod graphql {
                     otherPartyId
                     type
                     comment
+                    theirReference
+                    onHold
                 }
             }
         }"#;
@@ -117,7 +119,7 @@ mod graphql {
           "input": {
             "id": "ci_insert_1",
             "otherPartyId": other_party_customer.id,
-            "comment": "ci comment"
+            "comment": "ci comment",
           }
         }));
         let expected = json!({
@@ -126,12 +128,36 @@ mod graphql {
               "otherPartyId": other_party_customer.id,
               "type": "OUTBOUND_SHIPMENT",
               "comment": "ci comment",
+              "theirReference": null,
+              "onHold": false,
             }
           }
         );
         assert_gql_query(&settings, query, &variables, &expected).await;
         // make sure item has been inserted
         invoice_repository.find_one_by_id("ci_insert_1").unwrap();
+
+        // Test succeeding insert on_hold and their_reference
+        let variables = Some(json!({
+          "input": {
+            "id": "ci_insert_2",
+            "otherPartyId": other_party_customer.id,
+            "theirReference": "reference",
+            "onHold": true,
+          }
+        }));
+        let expected = json!({
+            "insertOutboundShipment": {
+              "id": "ci_insert_2",
+              "otherPartyId": other_party_customer.id,
+              "type": "OUTBOUND_SHIPMENT",
+              "comment": null,
+              "theirReference":"reference",
+              "onHold": true,
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected).await;
 
         // RecordAlreadyExist,
         let variables = Some(json!({
@@ -148,6 +174,7 @@ mod graphql {
             }
           }
         );
+
         assert_gql_query(&settings, query, &variables, &expected).await;
     }
 }

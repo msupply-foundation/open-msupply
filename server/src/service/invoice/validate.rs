@@ -3,7 +3,7 @@ use crate::{
         repository::{InvoiceRepository, RepositoryError, StorageConnection},
         schema::{InvoiceRow, InvoiceRowStatus},
     },
-    domain::invoice::InvoiceType,
+    domain::invoice::{InvoiceStatus, InvoiceType},
     service::WithDBError,
 };
 
@@ -28,6 +28,32 @@ pub fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), InvoiceIsFina
     } else {
         Ok(())
     }
+}
+pub enum InvoiceStatusError {
+    CannotChangeStatusOfInvoiceOnHold,
+    CannotChangeInvoiceBackToDraft,
+}
+
+pub fn check_invoice_status(
+    invoice: &InvoiceRow,
+    status_option: &Option<InvoiceStatus>,
+    on_hold_option: &Option<bool>,
+) -> Result<(), InvoiceStatusError> {
+    if let Some(new_status) = status_option {
+        let existing_status: InvoiceStatus = invoice.status.clone().into();
+        // When we update invoice, error will trigger if
+        // * invoice is currently on hold and is not being change to be not on hold
+        let is_not_on_hold = !invoice.on_hold || !on_hold_option.unwrap_or(true);
+
+        if *new_status != existing_status && !is_not_on_hold {
+            return Err(InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold);
+        }
+        if *new_status == InvoiceStatus::Draft && existing_status == InvoiceStatus::Confirmed {
+            return Err(InvoiceStatusError::CannotChangeInvoiceBackToDraft);
+        }
+    }
+
+    Ok(())
 }
 
 pub struct InvoiceDoesNotExist;

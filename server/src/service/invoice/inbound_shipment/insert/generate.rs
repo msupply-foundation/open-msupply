@@ -18,6 +18,7 @@ pub fn generate(
         id,
         other_party_id,
         status,
+        on_hold,
         comment,
         their_reference,
     }: InsertInboundShipment,
@@ -36,6 +37,7 @@ pub fn generate(
         confirm_datetime: confirm_datetime(&status, &current_datetime),
         finalised_datetime: finalised_datetime(&status, &current_datetime),
         status: status.into(),
+        on_hold: on_hold.unwrap_or(false),
         entry_datetime: current_datetime,
     };
 

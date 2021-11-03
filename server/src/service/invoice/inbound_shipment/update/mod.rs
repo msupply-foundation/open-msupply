@@ -59,6 +59,7 @@ pub enum UpdateInboundShipmentError {
     NotThisStoreInvoice,
     CannotChangeInvoiceBackToDraft,
     CannotEditFinalised,
+    CannotChangeStatusOfInvoiceOnHold,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {

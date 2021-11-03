@@ -122,6 +122,10 @@ impl InvoiceNode {
         &self.invoice.comment
     }
 
+    pub async fn on_hold(&self) -> bool {
+        self.invoice.on_hold
+    }
+
     pub async fn entry_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.invoice.entry_datetime, Utc)
     }
