@@ -4,6 +4,7 @@ pub mod master_list_line;
 pub mod master_list_name_join;
 pub mod name;
 pub mod store;
+pub mod unit;
 
 use crate::{
     database::{
@@ -12,11 +13,11 @@ use crate::{
                 MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
             },
             ItemRepository, NameRepository, RepositoryError, StorageConnectionManager,
-            StoreRepository,
+            StoreRepository, UnitRowRepository,
         },
         schema::{
             CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
-            NameRow, StoreRow,
+            NameRow, StoreRow, UnitRow,
         },
     },
     server::data::RepositoryRegistry,
@@ -25,6 +26,7 @@ use crate::{
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum TestSyncDataRecord {
+    Unit(Option<UnitRow>),
     Item(Option<ItemRow>),
     Store(Option<StoreRow>),
     Name(Option<NameRow>),
@@ -119,6 +121,14 @@ pub async fn check_records_against_database(
             TestSyncDataRecord::MasterListNameJoin(comparison_record) => {
                 assert_eq!(
                     MasterListNameJoinRepository::new(&connection)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
+                        .await,
+                    from_option_to_db_result(comparison_record)
+                )
+            }
+            TestSyncDataRecord::Unit(comparison_record) => {
+                assert_eq!(
+                    UnitRowRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
