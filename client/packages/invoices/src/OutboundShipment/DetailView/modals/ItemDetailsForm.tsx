@@ -95,7 +95,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
     setPackSize(newPackSize);
   };
 
-  selectedItem?.availableBatches.nodes.forEach(batch => {
+  selectedItem?.availableBatches.forEach(batch => {
     if (packSizes.every(pack => pack !== batch.packSize)) {
       packSizes.push(batch.packSize);
     }

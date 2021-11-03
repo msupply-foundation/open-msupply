@@ -21,9 +21,7 @@ export interface Item extends DomainObject {
   code: string;
   name: string;
   availableQuantity: number;
-  availableBatches: {
-    nodes: StockLine[];
-  };
+  availableBatches: StockLine[];
   unit: string;
 }
 
@@ -31,14 +29,14 @@ export interface StockLine extends DomainObject {
   id: string;
   availableNumberOfPacks: number;
   costPricePerPack: number;
-  expiryDate: string;
-  batch: string;
-  item: Item;
+  expiryDate?: string | null;
+  batch?: string | null;
+  // item: Item;
   name: string;
   packSize: number;
   sellPricePerPack: number;
   totalNumberOfPacks: number;
-  location: string;
+  location?: string | null;
   onHold: boolean;
 }
 

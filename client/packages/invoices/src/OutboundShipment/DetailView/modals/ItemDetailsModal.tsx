@@ -27,7 +27,7 @@ interface ItemDetailsModalProps {
 export const getInvoiceLine = (
   id: string,
   item: Item,
-  line: { id: string; expiryDate: string },
+  line: { id: string; expiryDate?: string | null },
   quantity: number
 ): InvoiceLine => ({
   id,
@@ -99,8 +99,8 @@ const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
     return 1;
   }
 
-  const expiryA = new Date(a.expiryDate);
-  const expiryB = new Date(b.expiryDate);
+  const expiryA = new Date(a.expiryDate ?? '');
+  const expiryB = new Date(b.expiryDate ?? '');
 
   if (expiryA < expiryB) {
     return -1;
@@ -137,7 +137,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   ) => {
     setSelectedItem(value);
     setBatchRows(
-      (value?.availableBatches.nodes || [])
+      (value?.availableBatches || [])
         .map(batch => ({ ...batch, quantity: 0 }))
         .sort(sortByDisabledThenExpiryDate)
     );
