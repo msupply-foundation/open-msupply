@@ -9,6 +9,8 @@ pub mod invoice_line;
 pub mod item;
 pub mod name;
 pub mod stock_line;
+pub mod token_bucket;
+pub mod user_account;
 
 pub struct ListResult<T> {
     pub rows: Vec<T>,
