@@ -6,4 +6,5 @@ pub struct ItemRow {
     pub id: String,
     pub name: String,
     pub code: String,
+    pub unit_id: Option<String>,
 }
