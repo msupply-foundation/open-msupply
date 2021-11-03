@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::inbound_shipment::DeleteInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
@@ -9,7 +10,7 @@ use crate::{
         },
         types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
-    service::invoice_line::DeleteInboundShipmentLineError,
+    service::invoice_line::{delete_inbound_shipment_line, DeleteInboundShipmentLineError},
 };
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
@@ -24,6 +25,17 @@ pub struct DeleteInboundShipmentLineInput {
 pub enum DeleteInboundShipmentLineResponse {
     Error(ErrorWrapper<DeleteInboundShipmentLineErrorInterface>),
     Response(DeleteResponse),
+}
+
+pub fn get_delete_inbound_shipment_line_response(
+    connection_manager: &StorageConnectionManager,
+    input: DeleteInboundShipmentLineInput,
+) -> DeleteInboundShipmentLineResponse {
+    use DeleteInboundShipmentLineResponse::*;
+    match delete_inbound_shipment_line(connection_manager, input.into()) {
+        Ok(id) => Response(DeleteResponse(id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]
