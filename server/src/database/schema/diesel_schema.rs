@@ -14,10 +14,20 @@ table! {
 }
 
 table! {
+    unit (id) {
+        id -> Text,
+        name -> Text,
+        description -> Nullable<Text>,
+        index -> Integer,
+    }
+}
+
+table! {
     item (id) {
         id -> Text,
         name -> Text,
         code -> Text,
+        unit_id -> Nullable<Text>,
     }
 }
 
@@ -172,6 +182,7 @@ table! {
     }
 }
 
+joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
 joinable!(requisition -> name_table (name_id));
@@ -194,6 +205,7 @@ joinable!(master_list_name_join -> name_table (name_id));
 joinable!(item_is_visible -> item(id));
 
 allow_tables_to_appear_in_same_query!(
+    unit,
     central_sync_buffer,
     central_sync_cursor,
     item,
