@@ -5,85 +5,105 @@ import {
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
-import { ItemRow } from './types';
+import { InvoiceLineRow } from './types';
 
 describe('DetailView reducer', () => {
-  const lines: ItemRow[] = [
+  const lines: InvoiceLineRow[] = [
     {
       id: '1',
-      quantity: 1,
-      stockLineId: '',
-      itemName: 'a',
-      expiry: '',
-      invoiceId: '',
-      updateQuantity: () => {},
+      updateNumberOfPacks: () => {},
       updateComment: () => {},
+      itemId: '1',
+      itemUnit: 'bottle',
+      itemCode: 'a',
+      packSize: 1,
+      numberOfPacks: 1,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+      itemName: 'a',
     },
     {
       id: '3',
-      quantity: 3,
-      stockLineId: '',
-      itemName: 'c',
-      expiry: '',
-      invoiceId: '',
-      updateQuantity: () => {},
+      updateNumberOfPacks: () => {},
       updateComment: () => {},
+      numberOfPacks: 3,
+      itemId: '1',
+      itemUnit: 'bottle',
+      itemCode: 'a',
+      packSize: 1,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+      itemName: 'c',
     },
     {
       id: '5',
-      quantity: 5,
-      stockLineId: '',
-      itemName: 'b',
-      expiry: '',
-      invoiceId: '',
-      updateQuantity: () => {},
+      updateNumberOfPacks: () => {},
       updateComment: () => {},
+      numberOfPacks: 5,
+      itemId: '1',
+      itemUnit: 'bottle',
+      itemCode: 'a',
+      packSize: 1,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+      itemName: 'b',
     },
     {
       id: '2',
-      quantity: 2,
-      stockLineId: '',
-      itemName: 'e',
-      expiry: '',
-      invoiceId: '',
-      updateQuantity: () => {},
+      updateNumberOfPacks: () => {},
       updateComment: () => {},
+      itemId: '1',
+      itemUnit: 'bottle',
+      itemCode: 'a',
+      packSize: 1,
+      numberOfPacks: 2,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+      itemName: 'e',
     },
     {
       id: '4',
-      quantity: 4,
-      stockLineId: '',
-      itemName: 'f',
-      expiry: '',
-      invoiceId: '',
-      updateQuantity: () => {},
+      updateNumberOfPacks: () => {},
       updateComment: () => {},
+      numberOfPacks: 4,
+      itemId: '1',
+      itemUnit: 'bottle',
+      itemCode: 'a',
+      packSize: 1,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+      itemName: 'f',
     },
     {
       id: '2',
-      quantity: 1,
-      stockLineId: '',
-      itemName: 'd',
-      expiry: '',
-      invoiceId: '',
-      updateQuantity: () => {},
+      updateNumberOfPacks: () => {},
       updateComment: () => {},
+      numberOfPacks: 1,
+      itemId: '1',
+      itemUnit: 'bottle',
+      itemCode: 'a',
+      packSize: 1,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+      itemName: 'd',
     },
   ];
 
   it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
-    const [quantityColumn] = createColumns<ItemRow>(['quantity']);
-    if (!quantityColumn) throw new Error('This test is broken!');
+    const [numberOfPacksColumn] = createColumns<InvoiceLineRow>([
+      'numberOfPacks',
+    ]);
+    if (!numberOfPacksColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
       state,
-      OutboundAction.onSortBy(quantityColumn)
+      OutboundAction.onSortBy(numberOfPacksColumn)
     );
 
     expect(reducerResult.draft.lines).toEqual([
@@ -99,16 +119,18 @@ describe('DetailView reducer', () => {
   it('sorts the lines by the provided key in descending order when already in ascending order for the same key.', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: false, direction: 'asc' },
+      sortBy: { key: 'numberOfPacks', isDesc: false, direction: 'asc' },
       deletedLines: [],
     };
 
-    const [quantityColumn] = createColumns<ItemRow>(['quantity']);
-    if (!quantityColumn) throw new Error('This test is broken!');
+    const [numberOfPacksColumn] = createColumns<InvoiceLineRow>([
+      'numberOfPacks',
+    ]);
+    if (!numberOfPacksColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
       state,
-      OutboundAction.onSortBy(quantityColumn)
+      OutboundAction.onSortBy(numberOfPacksColumn)
     );
 
     expect(reducerResult.draft.lines).toEqual(
@@ -126,11 +148,11 @@ describe('DetailView reducer', () => {
   it('sorts the lines by the provided key in ascending order when sorted by some other key.', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
-    const [itemNameColumn] = createColumns<ItemRow>(['itemName']);
+    const [itemNameColumn] = createColumns<InvoiceLineRow>(['itemName']);
     if (!itemNameColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -148,29 +170,29 @@ describe('DetailView reducer', () => {
     ]);
   });
 
-  it('updates the correct line with the correct quantity', () => {
+  it('updates the correct line with the correct numberOfPacks', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
     const reducerResult = reducer(undefined, null)(
       state,
-      OutboundAction.updateQuantity('1', 10)
+      OutboundAction.updateNumberOfPacks('1', 10)
     );
 
     const line = reducerResult.draft.lines.find(({ id }) => id === '1');
 
     if (!line) throw new Error('This test is broken!');
 
-    expect(line.quantity).toBe(10);
+    expect(line.numberOfPacks).toBe(10);
   });
 
   it('updates the correct line with the correct comment', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
@@ -189,27 +211,29 @@ describe('DetailView reducer', () => {
   it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberofpacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
-    // Create some server data which is the same except every line has 99 quantity.
-    // Then after merging, every line should have 99 quantity.
-    const dataLines = lines.map(line => ({ ...line, quantity: 99 }));
+    // Create some server data which is the same except every line has 99 numberOfPacks.
+    // Then after merging, every line should have 99 numberOfPacks.
+    const dataLines = lines.map(line => ({ ...line, numberOfPacks: 99 }));
     const data: Invoice = { ...placeholderInvoice, lines: dataLines };
 
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
-    // Check for any lines that don't have a quantity of 99. If there are any, the merge was wrong.
+    // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
     expect(
-      reducerResult.draft.lines.filter(({ quantity }) => quantity !== 99).length
+      reducerResult.draft.lines.filter(
+        ({ numberOfPacks }) => numberOfPacks !== 99
+      ).length
     ).toBe(0);
   });
 
   it('updates the client side draft state by merging the server invoice into the client data invoice draft, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
@@ -218,7 +242,7 @@ describe('DetailView reducer', () => {
     const data: Invoice = { ...state.draft, comment: 'josh' };
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
-    // Check for any lines that don't have a quantity of 99. If there are any, the merge was wrong.
+    // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
 
     Object.entries(reducerResult.draft).forEach(([key, value]) => {
       if (key === 'comment') {
@@ -232,11 +256,11 @@ describe('DetailView reducer', () => {
   it('transfers deleted lines from the draft to the deleted lines cache', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
-    const lineToDelete = lines[0] as ItemRow;
+    const lineToDelete = lines[0] as InvoiceLineRow;
     const reducerResult = reducer({ ...state.draft }, null)(
       state,
       OutboundAction.deleteLine(lineToDelete)
@@ -254,11 +278,11 @@ describe('DetailView reducer', () => {
   // it('updates an existing line when upserting', () => {
   //   const state: OutboundShipmentStateShape = {
   //     draft: { ...placeholderInvoice, lines },
-  //     sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+  //     sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
   //     deletedLines: [],
   //   };
 
-  //   const lineToDelete = { ...lines[0], quantity: 999 } as ItemRow;
+  //   const lineToDelete = { ...lines[0], numberOfPacks: 999 } as InvoiceLineRow;
   //   const reducerResult = reducer({ ...state.draft }, null)(
   //     state,
   //     OutboundAction.upsertLine(lineToDelete)
@@ -269,17 +293,17 @@ describe('DetailView reducer', () => {
   //     ({ id }) => lineToDelete.id === id
   //   );
 
-  //   expect(line?.quantity).toBe(999);
+  //   expect(line?.numberOfPacks).toBe(999);
   // });
 
   it('inserts an invoice line when it does not exist', () => {
     const state: OutboundShipmentStateShape = {
       draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'quantity', isDesc: true, direction: 'desc' },
+      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
       deletedLines: [],
     };
 
-    const lineToInsert = { ...lines[0], id: '999' } as ItemRow;
+    const lineToInsert = { ...lines[0], id: '999' } as InvoiceLineRow;
     const reducerResult = reducer({ ...state.draft }, null)(
       state,
       OutboundAction.upsertLine(lineToInsert)

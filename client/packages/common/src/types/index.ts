@@ -42,22 +42,6 @@ export interface StockLine extends DomainObject {
   onHold: boolean;
 }
 
-export interface InvoiceLine extends DomainObject {
-  id: string;
-  itemName: string;
-  stockLineId: string;
-  invoiceId: string;
-  itemCode?: string;
-  stockLine?: StockLine;
-  item?: Item;
-  quantity: number;
-  batchName?: string;
-  expiry: string;
-  itemUnit?: string;
-  location?: string;
-  comment?: string;
-}
-
 export type Test = {
   id: number;
   message: string;
@@ -73,26 +57,62 @@ export type Store = {
   name: string;
 };
 
-export interface Invoice extends DomainObject {
+export interface InvoiceLine extends DomainObject {
+  id: string;
+
+  itemId: string;
+  itemName: string;
+  itemCode: string;
+  itemUnit: string;
+  packSize: number;
+  numberOfPacks: number;
+  costPricePerPack: number;
+  sellPricePerPack: number;
+
+  expiryDate?: string | null;
+
+  batch?: string | null;
+
+  stockLine?: StockLine | null;
+
+  location?: string;
+  comment?: string;
+}
+
+export interface InvoiceRow extends DomainObject {
   id: string;
   color: string;
-  comment: string;
-  theirReference: string;
+  comment?: string | null;
   status: string;
   type: string;
   entryDatetime: string;
-  confirmedDatetime: string;
-  invoiceNumber: string;
-  total: string;
+  confirmedDatetime?: string | null;
+  invoiceNumber: number;
+  otherPartyName: string;
+  pricing: {
+    totalAfterTax: number;
+  };
+}
+
+export interface Invoice extends DomainObject {
+  id: string;
+  color: string;
+  comment?: string | null;
+  theirReference?: string | null;
+  status: string;
+  type: string;
+  entryDatetime: string;
+  confirmedDatetime?: string | null;
+  invoiceNumber: number;
   name?: Name;
   otherPartyName: string;
   hold: boolean;
   lines: InvoiceLine[];
-  draftDatetime: string;
-  allocatedDatetime: string;
-  shippedDatetime: string;
-  pickedDatetime: string;
-  deliveredDatetime: string;
+  draftDatetime?: string;
+  allocatedDatetime?: string;
+  shippedDatetime?: string;
+  pickedDatetime?: string;
+  deliveredDatetime?: string;
   pricing: {
     totalAfterTax: number;
   };

@@ -8,6 +8,15 @@ query invoice($id: String!) {
       finalisedDatetime
       invoiceNumber
 
+      draftDatetime
+      allocatedDatetime
+      pickedDatetime
+      shippedDatetime
+      deliveredDatetime
+
+      hold
+      color
+
       lines {
         ... on InvoiceLineConnector {
           nodes {
@@ -18,6 +27,7 @@ query invoice($id: String!) {
             itemCode
             itemId
             itemName
+            itemUnit
             numberOfPacks
             packSize
             sellPricePerPack
@@ -80,24 +90,49 @@ query invoices(
           description
           fullError
         }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
       }
     }
     ... on InvoiceConnector {
       nodes {
+        comment
+
+        confirmedDatetime
+        entryDatetime
+
         id
         invoiceNumber
-        finalisedDatetime
-        entryDatetime
-        confirmedDatetime
-        comment
+
+        otherPartyId
         otherPartyName
+
         status
+        color
         theirReference
         type
+
         pricing {
           ... on NodeError {
             __typename
             error {
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on DatabaseError {
+                __typename
+                description
+                fullError
+              }
               description
             }
           }

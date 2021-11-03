@@ -18,11 +18,6 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /**
-   * Implement the DateTime<Utc> scalar
-   *
-   * The input/output is a string in RFC3339 format.
-   */
   DateTime: any;
   NaiveDate: any;
 };
@@ -71,7 +66,6 @@ export type CannotEditFinalisedInvoice = DeleteCustomerInvoiceErrorInterface &
     description: Scalars['String'];
   };
 
-/** Generic Error Wrapper */
 export type ConnectorError = {
   __typename?: 'ConnectorError';
   error: ConnectorErrorInterface;
@@ -106,7 +100,6 @@ export type DatetimeFilterInput = {
   equalTo?: Maybe<Scalars['DateTime']>;
 };
 
-/** Generic Error Wrapper */
 export type DeleteCustomerInvoiceError = {
   __typename?: 'DeleteCustomerInvoiceError';
   error: DeleteCustomerInvoiceErrorInterface;
@@ -116,7 +109,6 @@ export type DeleteCustomerInvoiceErrorInterface = {
   description: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type DeleteCustomerInvoiceLineError = {
   __typename?: 'DeleteCustomerInvoiceLineError';
   error: DeleteCustomerInvoiceLineErrorInterface;
@@ -144,7 +136,6 @@ export type DeleteResponse = {
   id: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type DeleteSupplierInvoiceError = {
   __typename?: 'DeleteSupplierInvoiceError';
   error: DeleteSupplierInvoiceErrorInterface;
@@ -158,7 +149,6 @@ export type DeleteSupplierInvoiceInput = {
   id: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type DeleteSupplierInvoiceLineError = {
   __typename?: 'DeleteSupplierInvoiceLineError';
   error: DeleteSupplierInvoiceLineErrorInterface;
@@ -225,7 +215,6 @@ export type ForeignKeyError = DeleteCustomerInvoiceLineErrorInterface &
     key: ForeignKey;
   };
 
-/** Generic Error Wrapper */
 export type InsertCustomerInvoiceError = {
   __typename?: 'InsertCustomerInvoiceError';
   error: InsertCustomerInvoiceErrorInterface;
@@ -237,15 +226,12 @@ export type InsertCustomerInvoiceErrorInterface = {
 
 export type InsertCustomerInvoiceInput = {
   comment?: Maybe<Scalars['String']>;
-  /** The new invoice id provided by the client */
   id: Scalars['String'];
-  /** The other party must be an customer of the current store */
   otherPartyId: Scalars['String'];
   status?: Maybe<InvoiceNodeStatus>;
   theirReference?: Maybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type InsertCustomerInvoiceLineError = {
   __typename?: 'InsertCustomerInvoiceLineError';
   error: InsertCustomerInvoiceLineErrorInterface;
@@ -273,7 +259,6 @@ export type InsertCustomerInvoiceResponse =
   | InvoiceNode
   | NodeError;
 
-/** Generic Error Wrapper */
 export type InsertSupplierInvoiceError = {
   __typename?: 'InsertSupplierInvoiceError';
   error: InsertSupplierInvoiceErrorInterface;
@@ -291,7 +276,6 @@ export type InsertSupplierInvoiceInput = {
   theirReference?: Maybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type InsertSupplierInvoiceLineError = {
   __typename?: 'InsertSupplierInvoiceLineError';
   error: InsertSupplierInvoiceLineErrorInterface;
@@ -323,7 +307,6 @@ export type InsertSupplierInvoiceResponse =
   | InvoiceNode
   | NodeError;
 
-/** Generic Connector */
 export type InvoiceConnector = {
   __typename?: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
@@ -366,7 +349,6 @@ export type InvoiceLineBelongsToAnotherInvoice =
       invoice: InvoiceResponse;
     };
 
-/** Generic Connector */
 export type InvoiceLineConnector = {
   __typename?: 'InvoiceLineConnector';
   nodes: Array<InvoiceLineNode>;
@@ -389,6 +371,8 @@ export type InvoiceLineNode = {
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
   itemName: Scalars['String'];
+  itemUnit: Scalars['String'];
+  location?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
@@ -401,34 +385,36 @@ export type InvoiceLinesResponse = ConnectorError | InvoiceLineConnector;
 
 export type InvoiceNode = {
   __typename?: 'InvoiceNode';
+  allocatedDatetime?: Maybe<Scalars['DateTime']>;
+  color: Scalars['String'];
   comment?: Maybe<Scalars['String']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']>;
+  deliveredDatetime?: Maybe<Scalars['DateTime']>;
+  draftDatetime?: Maybe<Scalars['DateTime']>;
   entryDatetime: Scalars['DateTime'];
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
+  hold: Scalars['Boolean'];
   id: Scalars['String'];
   invoiceNumber: Scalars['Int'];
   lines: InvoiceLinesResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: InvoicePriceResponse;
+  shippedDatetime?: Maybe<Scalars['DateTime']>;
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
 };
 
 export enum InvoiceNodeStatus {
-  /**
-   * For customer invoices: When an invoice is CONFIRMED available_number_of_packs and
-   * total_number_of_packs get updated when items are added to the invoice.
-   */
+  Allocated = 'ALLOCATED',
   Confirmed = 'CONFIRMED',
-  /**
-   * For customer invoices: In DRAFT mode only the available_number_of_packs in a stock line gets
-   * updated when items are added to the invoice.
-   */
+  Delivered = 'DELIVERED',
   Draft = 'DRAFT',
-  /** A FINALISED invoice can't be edited nor deleted. */
   Finalised = 'FINALISED',
+  Picked = 'PICKED',
+  Shipped = 'SHIPPED',
 }
 
 export enum InvoiceNodeType {
@@ -460,7 +446,6 @@ export type InvoiceSortInput = {
 
 export type InvoicesResponse = ConnectorError | InvoiceConnector;
 
-/** Generic Connector */
 export type ItemConnector = {
   __typename?: 'ItemConnector';
   nodes: Array<ItemNode>;
@@ -571,7 +556,6 @@ export type MutationsUpdateSupplierInvoiceLineArgs = {
   input: UpdateSupplierInvoiceLineInput;
 };
 
-/** Generic Connector */
 export type NameConnector = {
   __typename?: 'NameConnector';
   nodes: Array<NameNode>;
@@ -606,7 +590,6 @@ export type NameSortInput = {
 
 export type NamesResponse = ConnectorError | NameConnector;
 
-/** Generic Error Wrapper */
 export type NodeError = {
   __typename?: 'NodeError';
   error: NodeErrorInterface;
@@ -674,7 +657,6 @@ export type PaginationError = ConnectorErrorInterface & {
   rangeError: RangeError;
 };
 
-/** Generic Pagination Input */
 export type PaginationInput = {
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
@@ -682,7 +664,6 @@ export type PaginationInput = {
 
 export type Queries = {
   __typename?: 'Queries';
-  apiVersion: Scalars['String'];
   invoice: InvoiceResponse;
   invoices: InvoicesResponse;
   items: ItemsResponse;
@@ -762,7 +743,6 @@ export type StockLineAlreadyExistsInInvoice =
       line: InvoiceLineResponse;
     };
 
-/** Generic Connector */
 export type StockLineConnector = {
   __typename?: 'StockLineConnector';
   nodes: Array<StockLineNode>;
@@ -794,7 +774,6 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
 
-/** Generic Error Wrapper */
 export type UpdateCustomerInvoiceError = {
   __typename?: 'UpdateCustomerInvoiceError';
   error: UpdateCustomerInvoiceErrorInterface;
@@ -806,23 +785,12 @@ export type UpdateCustomerInvoiceErrorInterface = {
 
 export type UpdateCustomerInvoiceInput = {
   comment?: Maybe<Scalars['String']>;
-  /** The new invoice id provided by the client */
   id: Scalars['String'];
-  /**
-   * The other party must be a customer of the current store.
-   * This field can be used to change the other_party of an invoice
-   */
   otherPartyId?: Maybe<Scalars['String']>;
-  /**
-   * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
-   * existing invoice items gets updated.
-   */
   status?: Maybe<InvoiceNodeStatus>;
-  /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: Maybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type UpdateCustomerInvoiceLineError = {
   __typename?: 'UpdateCustomerInvoiceLineError';
   error: UpdateCustomerInvoiceLineErrorInterface;
@@ -850,7 +818,6 @@ export type UpdateCustomerInvoiceResponse =
   | NodeError
   | UpdateCustomerInvoiceError;
 
-/** Generic Error Wrapper */
 export type UpdateSupplierInvoiceError = {
   __typename?: 'UpdateSupplierInvoiceError';
   error: UpdateSupplierInvoiceErrorInterface;
@@ -868,7 +835,6 @@ export type UpdateSupplierInvoiceInput = {
   theirReference?: Maybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type UpdateSupplierInvoiceLineError = {
   __typename?: 'UpdateSupplierInvoiceLineError';
   error: UpdateSupplierInvoiceLineErrorInterface;
@@ -915,6 +881,13 @@ export type InvoiceQuery = {
         entryDatetime: any;
         finalisedDatetime?: any | null | undefined;
         invoiceNumber: number;
+        draftDatetime?: any | null | undefined;
+        allocatedDatetime?: any | null | undefined;
+        pickedDatetime?: any | null | undefined;
+        shippedDatetime?: any | null | undefined;
+        deliveredDatetime?: any | null | undefined;
+        hold: boolean;
+        color: string;
         otherPartyId: string;
         otherPartyName: string;
         status: InvoiceNodeStatus;
@@ -934,6 +907,7 @@ export type InvoiceQuery = {
                 itemCode: string;
                 itemId: string;
                 itemName: string;
+                itemUnit: string;
                 numberOfPacks: number;
                 packSize: number;
                 sellPricePerPack: number;
@@ -989,21 +963,32 @@ export type InvoicesQuery = {
               description: string;
               fullError: string;
             }
-          | { __typename?: 'PaginationError'; description: string };
+          | {
+              __typename: 'PaginationError';
+              description: string;
+              rangeError: {
+                __typename?: 'RangeError';
+                description: string;
+                field: RangeField;
+                max?: number | null | undefined;
+                min?: number | null | undefined;
+              };
+            };
       }
     | {
         __typename?: 'InvoiceConnector';
         totalCount: number;
         nodes: Array<{
           __typename?: 'InvoiceNode';
+          comment?: string | null | undefined;
+          confirmedDatetime?: any | null | undefined;
+          entryDatetime: any;
           id: string;
           invoiceNumber: number;
-          finalisedDatetime?: any | null | undefined;
-          entryDatetime: any;
-          confirmedDatetime?: any | null | undefined;
-          comment?: string | null | undefined;
+          otherPartyId: string;
           otherPartyName: string;
           status: InvoiceNodeStatus;
+          color: string;
           theirReference?: string | null | undefined;
           type: InvoiceNodeType;
           pricing:
@@ -1011,8 +996,12 @@ export type InvoicesQuery = {
             | {
                 __typename: 'NodeError';
                 error:
-                  | { __typename?: 'DatabaseError'; description: string }
-                  | { __typename?: 'RecordNotFound'; description: string };
+                  | {
+                      __typename: 'DatabaseError';
+                      description: string;
+                      fullError: string;
+                    }
+                  | { __typename: 'RecordNotFound'; description: string };
               };
         }>;
       };
@@ -1028,6 +1017,13 @@ export const InvoiceDocument = gql`
         entryDatetime
         finalisedDatetime
         invoiceNumber
+        draftDatetime
+        allocatedDatetime
+        pickedDatetime
+        shippedDatetime
+        deliveredDatetime
+        hold
+        color
         lines {
           ... on InvoiceLineConnector {
             nodes {
@@ -1038,6 +1034,7 @@ export const InvoiceDocument = gql`
               itemCode
               itemId
               itemName
+              itemUnit
               numberOfPacks
               packSize
               sellPricePerPack
@@ -1102,24 +1099,44 @@ export const InvoicesDocument = gql`
             description
             fullError
           }
+          ... on PaginationError {
+            __typename
+            description
+            rangeError {
+              description
+              field
+              max
+              min
+            }
+          }
         }
       }
       ... on InvoiceConnector {
         nodes {
+          comment
+          confirmedDatetime
+          entryDatetime
           id
           invoiceNumber
-          finalisedDatetime
-          entryDatetime
-          confirmedDatetime
-          comment
+          otherPartyId
           otherPartyName
           status
+          color
           theirReference
           type
           pricing {
             ... on NodeError {
               __typename
               error {
+                ... on RecordNotFound {
+                  __typename
+                  description
+                }
+                ... on DatabaseError {
+                  __typename
+                  description
+                  fullError
+                }
                 description
               }
             }
@@ -1140,7 +1157,7 @@ export type SdkFunctionWrapper = <T>(
   operationName: string
 ) => Promise<T>;
 
-const defaultWrapper: SdkFunctionWrapper = action => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
 
 export function getSdk(
   client: GraphQLClient,
