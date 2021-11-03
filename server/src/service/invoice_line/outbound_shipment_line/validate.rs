@@ -66,3 +66,12 @@ pub fn check_item_matches_batch(
         Ok(())
     }
 }
+pub struct BatchIsOnHold;
+
+pub fn check_batch_on_hold(batch: &StockLineRow) -> Result<(), BatchIsOnHold> {
+    if batch.on_hold {
+        Err(BatchIsOnHold {})
+    } else {
+        Ok(())
+    }
+}

@@ -10,13 +10,15 @@ use crate::{
             InvoiceIsFinalised, WrongInvoiceType,
         },
         invoice_line::{
-            check_batch_exists, check_item_matches_batch, check_unique_stock_line,
+            check_batch_exists, check_batch_on_hold, check_item_matches_batch,
+            check_unique_stock_line,
             validate::{
                 check_item, check_line_belongs_to_invoice, check_line_exists,
                 check_number_of_packs, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
                 NumberOfPacksBelowOne,
             },
-            ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice, StockLineNotFound,
+            BatchIsOnHold, ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
+            StockLineNotFound,
         },
     },
 };
@@ -48,6 +50,7 @@ pub fn validate(
     let item = check_item_option(input.item_id.clone(), &line, connection)?;
     check_item_matches_batch(&batch_pair.main_batch, &item)?;
 
+    check_batch_on_hold(&batch_pair.main_batch)?;
     check_reduction_below_zero(&input, &line, &batch_pair)?;
 
     Ok((line, item, batch_pair, invoice))
@@ -120,6 +123,12 @@ fn check_batch_exists_option(
 impl From<ItemDoesNotMatchStockLine> for UpdateOutboundShipmentLineError {
     fn from(_: ItemDoesNotMatchStockLine) -> Self {
         UpdateOutboundShipmentLineError::ItemDoesNotMatchStockLine
+    }
+}
+
+impl From<BatchIsOnHold> for UpdateOutboundShipmentLineError {
+    fn from(_: BatchIsOnHold) -> Self {
+        UpdateOutboundShipmentLineError::BatchIsOnHold
     }
 }
 

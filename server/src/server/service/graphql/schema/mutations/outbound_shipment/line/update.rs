@@ -19,7 +19,7 @@ use crate::{
 
 use super::{
     ItemDoesNotMatchStockLine, LineDoesNotReferenceStockLine, NotEnoughStockForReduction,
-    StockLineAlreadyExistsInInvoice, StockLineDoesNotBelongToCurrentStore,
+    StockLineAlreadyExistsInInvoice, StockLineDoesNotBelongToCurrentStore, StockLineIsOnHold,
 };
 
 #[derive(InputObject)]
@@ -64,6 +64,7 @@ pub enum UpdateOutboundShipmentLineErrorInterface {
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     NotAnOutboundShipment(NotAnOutboundShipment),
     RangeError(RangeError),
+    StockLineIsOnHold(StockLineIsOnHold),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
 }
 
@@ -141,6 +142,9 @@ impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineRespons
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice(
                     invoice_id,
                 ))
+            }
+            UpdateOutboundShipmentLineError::BatchIsOnHold => {
+                OutError::StockLineIsOnHold(StockLineIsOnHold {})
             }
         };
 
