@@ -14,6 +14,7 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 0.0,
         total_number_of_packs: 40,
         expiry_date: None,
+        on_hold: false,
     };
 
     let mock_item_a_line_b: StockLineRow = StockLineRow {
@@ -27,6 +28,7 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 0.0,
         total_number_of_packs: 30,
         expiry_date: None,
+        on_hold: false,
     };
 
     vec![mock_item_a_line_a, mock_item_a_line_b]
@@ -44,6 +46,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 0.0,
         total_number_of_packs: 30,
         expiry_date: None,
+        on_hold: false,
     };
 
     let mock_item_b_line_b: StockLineRow = StockLineRow {
@@ -57,6 +60,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 0.0,
         total_number_of_packs: 25,
         expiry_date: None,
+        on_hold: false,
     };
 
     vec![mock_item_b_line_a, mock_item_b_line_b]
@@ -74,6 +78,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 15.0,
         total_number_of_packs: 1,
         expiry_date: None,
+        on_hold: false,
     };
 
     let mock_item_c_line_b: StockLineRow = StockLineRow {
@@ -87,6 +92,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 0.0,
         total_number_of_packs: 1,
         expiry_date: None,
+        on_hold: false,
     };
 
     vec![mock_item_c_line_a, mock_item_c_line_b]
@@ -104,6 +110,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         sell_price_per_pack: 18.0,
         total_number_of_packs: 7,
         expiry_date: None,
+        on_hold: false,
     };
 
     let mock_stock_line_si_d_siline_b: StockLineRow = StockLineRow {
@@ -117,6 +124,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         sell_price_per_pack: 34.0,
         total_number_of_packs: 2,
         expiry_date: Some(NaiveDate::from_ymd(2020, 8, 11)),
+        on_hold: false,
     };
 
     vec![mock_stock_line_si_d_siline_a, mock_stock_line_si_d_siline_b]
@@ -134,6 +142,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         sell_price_per_pack: 9.0,
         total_number_of_packs: 8,
         expiry_date: Some(NaiveDate::from_ymd(2020, 1, 4)),
+        on_hold: false,
     };
 
     let mock_stock_line_ci_c_siline_b: StockLineRow = StockLineRow {
@@ -147,6 +156,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         sell_price_per_pack: 34.0,
         total_number_of_packs: 21,
         expiry_date: Some(NaiveDate::from_ymd(2020, 3, 23)),
+        on_hold: false,
     };
 
     vec![mock_stock_line_ci_c_siline_a, mock_stock_line_ci_c_siline_b]
@@ -164,6 +174,7 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
         sell_price_per_pack: 11.0,
         total_number_of_packs: 10,
         expiry_date: Some(NaiveDate::from_ymd(2020, 1, 4)),
+        on_hold: false,
     };
 
     vec![mock_stock_line_ci_d_siline_a]
@@ -181,9 +192,28 @@ pub fn mock_item_query_test1() -> Vec<StockLineRow> {
         sell_price_per_pack: 11.0,
         total_number_of_packs: 3,
         expiry_date: None,
+        on_hold: false,
     };
 
     vec![mock_item_query_test1]
+}
+
+pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
+    let mock_stock_line_on_hold: StockLineRow = StockLineRow {
+        id: "stock_line_on_hold".to_owned(),
+        item_id: "item_c".to_owned(),
+        store_id: "store_a".to_owned(),
+        batch: None,
+        available_number_of_packs: 100,
+        pack_size: 1,
+        cost_price_per_pack: 0.0,
+        sell_price_per_pack: 0.0,
+        total_number_of_packs: 100,
+        expiry_date: None,
+        on_hold: true,
+    };
+
+    vec![mock_stock_line_on_hold]
 }
 
 pub fn mock_stock_lines() -> Vec<StockLineRow> {
@@ -196,6 +226,7 @@ pub fn mock_stock_lines() -> Vec<StockLineRow> {
     mock_stock_lines.extend(mock_stock_line_ci_c());
     mock_stock_lines.extend(mock_stock_line_ci_d());
     mock_stock_lines.extend(mock_item_query_test1());
+    mock_stock_lines.extend(mock_stock_line_on_hold());
 
     mock_stock_lines
 }

@@ -183,6 +183,20 @@ mod graphql {
             })
         );
 
+        // Test StockLineIsOnHold
+
+        let mut variables = base_variables.clone();
+        variables.stock_line_id = "stock_line_on_hold".to_string();
+
+        let query = Insert::build_query(variables);
+        let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+        assert_error!(
+            response,
+            StockLineIsOnHold(insert::StockLineIsOnHold {
+                description: "Cannot issue from stock line that is on hold".to_string(),
+            })
+        );
+
         // Test RangeError NumberOfPacks
 
         let mut variables = base_variables.clone();
@@ -335,6 +349,7 @@ mod graphql {
                 store_id: _,
                 available_number_of_packs: _,
                 total_number_of_packs: _,
+                on_hold: _,
             } = self;
 
             let line = &other.0;
