@@ -133,7 +133,7 @@ const ITEM_1_UPSERT: (&'static str, &'static str) = (
     "account_stock_ID": "52923505A91447B9923BA34A4F332014",
     "account_purchases_ID": "330ACC81721C4126BD5DD6769466C5C4",
     "account_income_ID": "EF34ADD07C014AB8914E30CA2E3FEA8D",
-    "unit_ID": "",
+    "unit_ID": "A02C91EB6C77400BA783C4CD7C565F29",
     "outer_pack_size": 0,
     "category_ID": "",
     "ABC_category": "",
@@ -170,6 +170,7 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
             id: ITEM_1.0.to_owned(),
             name: "Non stock items".to_owned(),
             code: "NSI".to_owned(),
+            unit_id: None,
         })),
         identifier: "Non stock items",
         central_sync_buffer_row: CentralSyncBufferRow {
@@ -187,6 +188,7 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
             id: ITEM_1_UPSERT.0.to_owned(),
             name: "Non stock items 2".to_owned(),
             code: "NSI".to_owned(),
+            unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
         })),
         identifier: "Non stock items 2",
         central_sync_buffer_row: CentralSyncBufferRow {

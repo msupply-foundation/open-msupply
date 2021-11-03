@@ -21,12 +21,13 @@ mod requisition_line;
 mod stock_line;
 mod storage_connection;
 mod store;
+mod unit_row;
 mod user_account;
 
 use actix_rt::blocking::BlockingError;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
-pub use invoice::{OutboundShipmentRepository, InvoiceRepository};
+pub use invoice::{InvoiceRepository, OutboundShipmentRepository};
 pub use invoice_line::InvoiceLineRepository;
 pub use invoice_line_query::{InvoiceLineQueryRepository, InvoiceLineStats};
 pub use invoice_query::InvoiceQueryRepository;
@@ -43,6 +44,7 @@ pub use requisition_line::RequisitionLineRepository;
 pub use stock_line::StockLineRepository;
 pub use storage_connection::{StorageConnection, StorageConnectionManager, TransactionError};
 pub use store::StoreRepository;
+pub use unit_row::UnitRowRepository;
 pub use user_account::UserAccountRepository;
 
 use diesel::{
