@@ -130,21 +130,26 @@ export const onRead = async <T extends ObjectWithStringKeys>(queryParams: {
     sortBy = { key: 'TYPE', isDesc: false },
   } = queryParams;
 
-  const result = await api.invoices({
-    first,
-    offset,
-    key: InvoiceSortFieldInput.Type,
-    desc: sortBy.isDesc,
-  });
+  try {
+    const result = await api.invoices({
+      first,
+      offset,
+      key: InvoiceSortFieldInput.Type,
+      desc: sortBy.isDesc,
+    });
 
-  const invoices = invoicesGuard(result);
+    const invoices = invoicesGuard(result);
 
-  const nodes = invoices.nodes.map(invoice => ({
-    ...invoice,
-    pricing: pricingGuard(invoice.pricing),
-  }));
+    const nodes = invoices.nodes.map(invoice => ({
+      ...invoice,
+      pricing: pricingGuard(invoice.pricing),
+    }));
 
-  return { nodes, totalCount: invoices.totalCount };
+    return { nodes, totalCount: invoices.totalCount };
+  } catch (e) {
+    // TODO: Handle error statuses from API nicely
+    throw e;
+  }
 };
 
 export const OutboundShipmentListViewApi: ListApi<InvoiceRow> = {
