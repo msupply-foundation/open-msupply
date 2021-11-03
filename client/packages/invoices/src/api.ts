@@ -154,10 +154,6 @@ export const listQueryFn = async <T extends ObjectWithStringKeys>(queryParams: {
     };
   }
 
-  console.log('-------------------------------------------');
-  console.log('result', result);
-  console.log('-------------------------------------------');
-
   throw new Error(result.invoices.error.description);
 };
 
