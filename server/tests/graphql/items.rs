@@ -16,6 +16,13 @@ mod graphql {
                       code
                       isVisible
                       unitName
+                      availableBatches {
+                         ... on StockLineConnector {
+                            nodes {
+                                id
+                            }
+                          }
+                      }
                   }
                }
             }
@@ -38,13 +45,19 @@ mod graphql {
                           "code": "code_item_query_test1",
                           "isVisible": true,
                           "unitName": null,
+                          "availableBatches": {
+                              "nodes": [ { "id": "item_query_test1" } ]
+                          }
                       },
                       {
                           "id": "item_query_test2",
                           "name": "name_item_query_test2",
                           "code": "code_item_query_test2",
                           "isVisible": false,
-                          "unitName": "name_item_query_test2"
+                          "unitName": "name_item_query_test2",
+                           "availableBatches": {
+                              "nodes": []
+                          }
                       }
                   ]
               }
