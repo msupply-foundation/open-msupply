@@ -1,4 +1,5 @@
 use crate::{
+    database::repository::StorageConnectionManager,
     domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment},
     server::service::graphql::schema::{
         mutations::{
@@ -9,9 +10,12 @@ use crate::{
             },
             ForeignKey, ForeignKeyError,
         },
-        types::{ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode, RecordNotFound},
+        types::{
+            get_invoice_response, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
+            RecordNotFound,
+        },
     },
-    service::invoice::UpdateOutboundShipmentError,
+    service::invoice::{update_outbound_shipment, UpdateOutboundShipmentError},
 };
 
 use super::{
@@ -25,7 +29,7 @@ use async_graphql::{InputObject, Interface, Union};
 #[derive(InputObject)]
 pub struct UpdateOutboundShipmentInput {
     /// The new invoice id provided by the client
-    id: String,
+    pub id: String,
     /// The other party must be a customer of the current store.
     /// This field can be used to change the other_party of an invoice
     other_party_id: Option<String>,
@@ -56,6 +60,17 @@ pub enum UpdateOutboundShipmentResponse {
     Error(ErrorWrapper<UpdateOutboundShipmentErrorInterface>),
     #[graphql(flatten)]
     Response(InvoiceResponse),
+}
+
+pub fn get_update_outbound_shipment_response(
+    connection_manager: &StorageConnectionManager,
+    input: UpdateOutboundShipmentInput,
+) -> UpdateOutboundShipmentResponse {
+    use UpdateOutboundShipmentResponse::*;
+    match update_outbound_shipment(connection_manager, input.into()) {
+        Ok(id) => Response(get_invoice_response(connection_manager, id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]
