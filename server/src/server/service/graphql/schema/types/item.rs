@@ -58,6 +58,10 @@ impl ItemNode {
         self.item.is_visible
     }
 
+    pub async fn unit_name(&self) -> &Option<String> {
+        &self.item.unit_name
+    }
+
     async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {
         let loader = ctx.get_loader::<DataLoader<StockLineByItemIdLoader>>();
         match loader.load_one(self.item.id.to_string()).await {
