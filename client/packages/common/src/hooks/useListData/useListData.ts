@@ -8,7 +8,7 @@ import { ClientError } from 'graphql-request';
 import { useNotification } from '../../hooks';
 
 export interface ListApi<T extends ObjectWithStringKeys> {
-  onQuery: ({
+  onRead: ({
     first,
     offset,
     sortBy,
@@ -53,7 +53,7 @@ export const useListData = <T extends ObjectWithStringKeys>(
 
   const { data, isLoading: isQueryLoading } = useQuery(
     fullQueryKey,
-    api.onQuery({ first, offset, sortBy }),
+    api.onRead({ first, offset, sortBy }),
     {
       onError: onError || defaultErrorHandler,
       useErrorBoundary: (error: ClientError): boolean =>

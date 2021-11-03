@@ -30,7 +30,7 @@ describe('useListData', () => {
   );
 
   const ServerErrorApi: ListApi<Test> = {
-    onQuery: () => async () => {
+    onRead: () => async () => {
       return await request('http://localhost:4000', getServerErrorQuery());
     },
     onDelete: async () => {},
@@ -47,7 +47,7 @@ describe('useListData', () => {
   `;
 
   const PermissionErrorApi: ListApi<Test> = {
-    onQuery: () => async () => {
+    onRead: () => async () => {
       return await request(
         'http://localhost:4000',
         getPermissionErrorQuery(),

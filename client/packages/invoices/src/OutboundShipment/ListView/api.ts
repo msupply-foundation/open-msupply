@@ -36,18 +36,6 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
   throw new Error(invoicesQuery.invoices.error.description);
 };
 
-export const onUpdate = async (updated: InvoiceRow): Promise<InvoiceRow> => {
-  const invoicePatch: Partial<Invoice> = { ...updated };
-  delete invoicePatch['lines'];
-
-  const patch = { invoicePatch };
-
-  const result = await request(Environment.API_URL, getMutation(), patch);
-
-  const { updateInvoice } = result;
-  return updateInvoice;
-};
-
 export const getInsertInvoiceQuery = (): string => gql`
   mutation insertInvoice($id: String!, $otherPartyId: String!) {
     insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
@@ -76,16 +64,6 @@ export const getInsertInvoiceQuery = (): string => gql`
   }
 `;
 
-export const onCreate = async (invoice: Partial<Invoice>): Promise<Invoice> => {
-  const result = await request(Environment.API_URL, getInsertInvoiceQuery(), {
-    id: invoice.id,
-    otherPartyId: invoice['nameId'],
-  });
-  const { insertCustomerInvoice } = result;
-
-  return insertCustomerInvoice;
-};
-
 export const getMutation = (): string => gql`
   mutation updateInvoice($invoicePatch: InvoicePatch) {
     updateInvoice(invoice: $invoicePatch) {
@@ -109,6 +87,16 @@ export const getDeleteMutation = (): string => gql`
   }
 `;
 
+export const onCreate = async (invoice: Partial<Invoice>): Promise<Invoice> => {
+  const result = await request(Environment.API_URL, getInsertInvoiceQuery(), {
+    id: invoice.id,
+    otherPartyId: invoice['nameId'],
+  });
+  const { insertCustomerInvoice } = result;
+
+  return insertCustomerInvoice;
+};
+
 export const onDelete = async (invoices: InvoiceRow[]) => {
   await batchRequests(
     Environment.API_URL,
@@ -130,30 +118,37 @@ export const onRead = async <T extends ObjectWithStringKeys>(queryParams: {
     sortBy = { key: 'TYPE', isDesc: false },
   } = queryParams;
 
-  try {
-    const result = await api.invoices({
-      first,
-      offset,
-      key: InvoiceSortFieldInput.Type,
-      desc: sortBy.isDesc,
-    });
+  const result = await api.invoices({
+    first,
+    offset,
+    key: InvoiceSortFieldInput.Type,
+    desc: sortBy.isDesc,
+  });
 
-    const invoices = invoicesGuard(result);
+  const invoices = invoicesGuard(result);
 
-    const nodes = invoices.nodes.map(invoice => ({
-      ...invoice,
-      pricing: pricingGuard(invoice.pricing),
-    }));
+  const nodes = invoices.nodes.map(invoice => ({
+    ...invoice,
+    pricing: pricingGuard(invoice.pricing),
+  }));
 
-    return { nodes, totalCount: invoices.totalCount };
-  } catch (e) {
-    // TODO: Handle error statuses from API nicely
-    throw e;
-  }
+  return { nodes, totalCount: invoices.totalCount };
+};
+
+export const onUpdate = async (updated: InvoiceRow): Promise<InvoiceRow> => {
+  const invoicePatch: Partial<Invoice> = { ...updated };
+  delete invoicePatch['lines'];
+
+  const patch = { invoicePatch };
+
+  const result = await request(Environment.API_URL, getMutation(), patch);
+
+  const { updateInvoice } = result;
+  return updateInvoice;
 };
 
 export const OutboundShipmentListViewApi: ListApi<InvoiceRow> = {
-  onQuery:
+  onRead:
     ({ first, offset, sortBy }) =>
     () =>
       onRead({ first, offset, sortBy }),

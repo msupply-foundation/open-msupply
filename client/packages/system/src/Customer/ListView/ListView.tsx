@@ -48,7 +48,7 @@ const listQueryFn = async ({
 };
 
 const Api: ListApi<Name> = {
-  onQuery:
+  onRead:
     ({ first, offset, sortBy }) =>
     () =>
       listQueryFn({ first, offset, sortBy }),
