@@ -169,6 +169,23 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
     vec![mock_stock_line_ci_d_siline_a]
 }
 
+pub fn mock_item_query_test1() -> Vec<StockLineRow> {
+    let mock_item_query_test1: StockLineRow = StockLineRow {
+        id: "item_query_test1".to_owned(),
+        item_id: "item_query_test1".to_owned(),
+        store_id: "store_a".to_owned(),
+        batch: None,
+        available_number_of_packs: 3,
+        pack_size: 12,
+        cost_price_per_pack: 2.0,
+        sell_price_per_pack: 11.0,
+        total_number_of_packs: 3,
+        expiry_date: None,
+    };
+
+    vec![mock_item_query_test1]
+}
+
 pub fn mock_stock_lines() -> Vec<StockLineRow> {
     let mut mock_stock_lines: Vec<StockLineRow> = Vec::new();
 
@@ -178,6 +195,7 @@ pub fn mock_stock_lines() -> Vec<StockLineRow> {
     mock_stock_lines.extend(mock_stock_line_si_d());
     mock_stock_lines.extend(mock_stock_line_ci_c());
     mock_stock_lines.extend(mock_stock_line_ci_d());
+    mock_stock_lines.extend(mock_item_query_test1());
 
     mock_stock_lines
 }
