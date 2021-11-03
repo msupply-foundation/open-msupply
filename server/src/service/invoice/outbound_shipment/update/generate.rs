@@ -82,13 +82,13 @@ pub fn generate_batches(
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
         let stock_line_id = invoice_line.stock_line_id.ok_or(
-            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(invoice_line.item_id.to_owned()),
+            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(invoice_line.id.to_owned()),
         )?;
         let stock_line = stock_lines
             .iter()
             .find(|stock_line| stock_line_id == stock_line.id)
             .ok_or(UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(
-                invoice_line.item_id.to_owned(),
+                invoice_line.id.to_owned(),
             ))?;
         result.push(StockLineRow {
             id: stock_line.id.to_owned(),
@@ -101,6 +101,7 @@ pub fn generate_batches(
             available_number_of_packs: stock_line.available_number_of_packs,
             total_number_of_packs: stock_line.total_number_of_packs - invoice_line.number_of_packs,
             expiry_date: stock_line.expiry_date,
+            on_hold: stock_line.on_hold,
         });
     }
     Ok(result)

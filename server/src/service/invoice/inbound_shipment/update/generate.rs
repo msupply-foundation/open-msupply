@@ -116,6 +116,7 @@ pub fn generate_lines_and_stock_lines(
             available_number_of_packs: number_of_packs,
             total_number_of_packs: number_of_packs,
             expiry_date,
+            on_hold: false,
         };
 
         result.push(LineAndStockLine { line, stock_line });

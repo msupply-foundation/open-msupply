@@ -84,6 +84,7 @@ pub fn generate_batch(
         available_number_of_packs: number_of_packs,
         total_number_of_packs: number_of_packs,
         expiry_date,
+        on_hold: false,
     };
 
     Ok(batch)
