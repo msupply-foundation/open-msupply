@@ -96,59 +96,6 @@ export const getDeleteMutation = (): string => gql`
   }
 `;
 
-export const getListQuery = (): string => gql`
-  query invoices(
-    $first: Int
-    $offset: Int
-    $key: InvoiceSortFieldInput!
-    $desc: Boolean
-  ) {
-    invoices(
-      page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
-    ) {
-      ... on ConnectorError {
-        __typename
-        error {
-          description
-          ... on DatabaseError {
-            __typename
-            description
-            fullError
-          }
-        }
-      }
-      ... on InvoiceConnector {
-        nodes {
-          id
-          invoiceNumber
-          finalisedDatetime
-          entryDatetime
-          confirmedDatetime
-          comment
-          otherPartyName
-          status
-          theirReference
-          type
-          pricing {
-            ... on NodeError {
-              __typename
-              error {
-                description
-              }
-            }
-            ... on InvoicePricingNode {
-              __typename
-              totalAfterTax
-            }
-          }
-        }
-        totalCount
-      }
-    }
-  }
-`;
-
 export const deleteFn = async (invoices: InvoiceRow[]) => {
   await batchRequests(
     Environment.API_URL,
