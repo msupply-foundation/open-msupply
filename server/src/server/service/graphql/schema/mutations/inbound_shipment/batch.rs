@@ -33,113 +33,6 @@ pub struct BatchInboundShipmentResponse {
     delete_inbound_shipments: Option<Vec<MutationWithId<DeleteInboundShipmentResponse>>>,
 }
 
-trait IsError {
-    fn is_error(&self) -> bool;
-}
-trait GetId {
-    fn get_id(&self) -> String;
-}
-
-impl IsError for InsertInboundShipmentResponse {
-    fn is_error(&self) -> bool {
-        matches!(self, InsertInboundShipmentResponse::Error(_))
-    }
-}
-
-impl GetId for InsertInboundShipmentInput {
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-}
-
-impl IsError for UpdateInboundShipmentResponse {
-    fn is_error(&self) -> bool {
-        matches!(self, UpdateInboundShipmentResponse::Error(_))
-    }
-}
-
-impl GetId for UpdateInboundShipmentInput {
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-}
-
-impl IsError for DeleteInboundShipmentResponse {
-    fn is_error(&self) -> bool {
-        matches!(self, DeleteInboundShipmentResponse::Error(_))
-    }
-}
-
-impl GetId for DeleteInboundShipmentInput {
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-}
-
-impl IsError for InsertInboundShipmentLineResponse {
-    fn is_error(&self) -> bool {
-        matches!(self, InsertInboundShipmentLineResponse::Error(_))
-    }
-}
-
-impl GetId for InsertInboundShipmentLineInput {
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-}
-
-impl IsError for UpdateInboundShipmentLineResponse {
-    fn is_error(&self) -> bool {
-        matches!(self, UpdateInboundShipmentLineResponse::Error(_))
-    }
-}
-
-impl GetId for UpdateInboundShipmentLineInput {
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-}
-
-impl IsError for DeleteInboundShipmentLineResponse {
-    fn is_error(&self) -> bool {
-        matches!(self, DeleteInboundShipmentLineResponse::Error(_))
-    }
-}
-
-impl GetId for DeleteInboundShipmentLineInput {
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-}
-
-fn do_mutations<Input, Output, F>(
-    con: &StorageConnectionManager,
-    inputs: Option<Vec<Input>>,
-    f: F,
-) -> (bool, Option<Vec<MutationWithId<Output>>>)
-where
-    Input: GetId,
-    Output: OutputType + IsError,
-    F: FnOnce(&StorageConnectionManager, Input) -> Output + Copy,
-{
-    if let Some(inputs) = inputs {
-        let mut responses = Vec::new();
-        for input in inputs.into_iter() {
-            let id = input.get_id();
-            responses.push(MutationWithId {
-                id,
-                response: f(con, input),
-            });
-        }
-        let has_errors = responses
-            .iter()
-            .any(|mutation_with_id| mutation_with_id.response.is_error());
-        (has_errors, Some(responses))
-    } else {
-        (false, None)
-    }
-}
-
 pub fn get_batch_inbound_shipment_response(
     connection_manager: &StorageConnectionManager,
     insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
@@ -158,65 +51,185 @@ pub fn get_batch_inbound_shipment_response(
         delete_inbound_shipments: None,
     };
 
-    let (has_errors, responses) = do_mutations(
-        connection_manager,
-        insert_inbound_shipments,
-        get_insert_inbound_shipment_response,
-    );
-    result.insert_inbound_shipments = responses;
-    if has_errors {
-        return result;
+    if let Some(inputs) = insert_inbound_shipments {
+        let (has_errors, responses) = do_insert_inbound_shipments(connection_manager, inputs);
+        result.insert_inbound_shipments = Some(responses);
+        if has_errors {
+            return result;
+        }
     }
 
-    let (has_errors, responses) = do_mutations(
-        connection_manager,
-        insert_inbound_shipment_lines,
-        get_insert_inbound_shipment_line_response,
-    );
-    result.insert_inbound_shipment_lines = responses;
-    if has_errors {
-        return result;
+    if let Some(inputs) = insert_inbound_shipment_lines {
+        let (has_errors, responses) = do_insert_inbound_shipment_lines(connection_manager, inputs);
+        result.insert_inbound_shipment_lines = Some(responses);
+        if has_errors {
+            return result;
+        }
     }
 
-    let (has_errors, responses) = do_mutations(
-        connection_manager,
-        update_inbound_shipment_lines,
-        get_update_inbound_shipment_line_response,
-    );
-    result.update_inbound_shipment_lines = responses;
-    if has_errors {
-        return result;
+    if let Some(inputs) = update_inbound_shipment_lines {
+        let (has_errors, responses) = do_update_inbound_shipment_lines(connection_manager, inputs);
+        result.update_inbound_shipment_lines = Some(responses);
+        if has_errors {
+            return result;
+        }
     }
 
-    let (has_errors, responses) = do_mutations(
-        connection_manager,
-        delete_inbound_shipment_lines,
-        get_delete_inbound_shipment_line_response,
-    );
-    result.delete_inbound_shipment_lines = responses;
-    if has_errors {
-        return result;
+    if let Some(inputs) = delete_inbound_shipment_lines {
+        let (has_errors, responses) = do_delete_inbound_shipment_lines(connection_manager, inputs);
+        result.delete_inbound_shipment_lines = Some(responses);
+        if has_errors {
+            return result;
+        }
     }
 
-    let (has_errors, responses) = do_mutations(
-        connection_manager,
-        update_inbound_shipments,
-        get_update_inbound_shipment_response,
-    );
-    result.update_inbound_shipments = responses;
-    if has_errors {
-        return result;
+    if let Some(inputs) = update_inbound_shipments {
+        let (has_errors, responses) = do_update_inbound_shipments(connection_manager, inputs);
+        result.update_inbound_shipments = Some(responses);
+        if has_errors {
+            return result;
+        }
     }
 
-    let (has_errors, responses) = do_mutations(
-        connection_manager,
-        delete_inbound_shipments,
-        get_delete_inbound_shipment_response,
-    );
-    result.delete_inbound_shipments = responses;
-    if has_errors {
-        return result;
+    if let Some(inputs) = delete_inbound_shipments {
+        let (has_errors, responses) = do_delete_inbound_shipments(connection_manager, inputs);
+        result.delete_inbound_shipments = Some(responses);
+        if has_errors {
+            return result;
+        }
     }
 
     result
+}
+
+pub fn do_insert_inbound_shipments(
+    connection: &StorageConnectionManager,
+    inputs: Vec<InsertInboundShipmentInput>,
+) -> (bool, Vec<MutationWithId<InsertInboundShipmentResponse>>) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_insert_inbound_shipment_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            InsertInboundShipmentResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_update_inbound_shipments(
+    connection: &StorageConnectionManager,
+    inputs: Vec<UpdateInboundShipmentInput>,
+) -> (bool, Vec<MutationWithId<UpdateInboundShipmentResponse>>) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_update_inbound_shipment_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            UpdateInboundShipmentResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_delete_inbound_shipments(
+    connection: &StorageConnectionManager,
+    inputs: Vec<DeleteInboundShipmentInput>,
+) -> (bool, Vec<MutationWithId<DeleteInboundShipmentResponse>>) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_delete_inbound_shipment_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            DeleteInboundShipmentResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_insert_inbound_shipment_lines(
+    connection: &StorageConnectionManager,
+    inputs: Vec<InsertInboundShipmentLineInput>,
+) -> (bool, Vec<MutationWithId<InsertInboundShipmentLineResponse>>) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_insert_inbound_shipment_line_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            InsertInboundShipmentLineResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_update_inbound_shipment_lines(
+    connection: &StorageConnectionManager,
+    inputs: Vec<UpdateInboundShipmentLineInput>,
+) -> (bool, Vec<MutationWithId<UpdateInboundShipmentLineResponse>>) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_update_inbound_shipment_line_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            UpdateInboundShipmentLineResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_delete_inbound_shipment_lines(
+    connection: &StorageConnectionManager,
+    inputs: Vec<DeleteInboundShipmentLineInput>,
+) -> (bool, Vec<MutationWithId<DeleteInboundShipmentLineResponse>>) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_delete_inbound_shipment_line_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            DeleteInboundShipmentLineResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
 }
