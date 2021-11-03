@@ -26,7 +26,7 @@ import {
   Grid,
   OutboundShipmentStatus,
 } from '@openmsupply-client/common';
-import { OutboundShipmentListViewApi } from '../../api';
+import { OutboundShipmentListViewApi } from './api';
 import { ExternalURL } from '@openmsupply-client/config';
 import { CustomerSearch } from './CustomerSearch';
 import { getStatusTranslation } from '../utils';
