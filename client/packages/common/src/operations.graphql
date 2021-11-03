@@ -215,6 +215,7 @@ query items(
       nodes {
         __typename
         availableBatches {
+          __typename
           ... on ConnectorError {
             __typename
             error {
@@ -237,6 +238,7 @@ query items(
             }
           }
           ... on StockLineConnector {
+            __typename
             nodes {
               __typename
               availableNumberOfPacks
