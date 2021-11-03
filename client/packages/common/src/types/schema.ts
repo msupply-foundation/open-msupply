@@ -963,21 +963,32 @@ export type InvoicesQuery = {
               description: string;
               fullError: string;
             }
-          | { __typename?: 'PaginationError'; description: string };
+          | {
+              __typename: 'PaginationError';
+              description: string;
+              rangeError: {
+                __typename?: 'RangeError';
+                description: string;
+                field: RangeField;
+                max?: number | null | undefined;
+                min?: number | null | undefined;
+              };
+            };
       }
     | {
         __typename?: 'InvoiceConnector';
         totalCount: number;
         nodes: Array<{
           __typename?: 'InvoiceNode';
+          comment?: string | null | undefined;
+          confirmedDatetime?: any | null | undefined;
+          entryDatetime: any;
           id: string;
           invoiceNumber: number;
-          finalisedDatetime?: any | null | undefined;
-          entryDatetime: any;
-          confirmedDatetime?: any | null | undefined;
-          comment?: string | null | undefined;
+          otherPartyId: string;
           otherPartyName: string;
           status: InvoiceNodeStatus;
+          color: string;
           theirReference?: string | null | undefined;
           type: InvoiceNodeType;
           pricing:
@@ -985,8 +996,12 @@ export type InvoicesQuery = {
             | {
                 __typename: 'NodeError';
                 error:
-                  | { __typename?: 'DatabaseError'; description: string }
-                  | { __typename?: 'RecordNotFound'; description: string };
+                  | {
+                      __typename: 'DatabaseError';
+                      description: string;
+                      fullError: string;
+                    }
+                  | { __typename: 'RecordNotFound'; description: string };
               };
         }>;
       };
@@ -1084,24 +1099,44 @@ export const InvoicesDocument = gql`
             description
             fullError
           }
+          ... on PaginationError {
+            __typename
+            description
+            rangeError {
+              description
+              field
+              max
+              min
+            }
+          }
         }
       }
       ... on InvoiceConnector {
         nodes {
+          comment
+          confirmedDatetime
+          entryDatetime
           id
           invoiceNumber
-          finalisedDatetime
-          entryDatetime
-          confirmedDatetime
-          comment
+          otherPartyId
           otherPartyName
           status
+          color
           theirReference
           type
           pricing {
             ... on NodeError {
               __typename
               error {
+                ... on RecordNotFound {
+                  __typename
+                  description
+                }
+                ... on DatabaseError {
+                  __typename
+                  description
+                  fullError
+                }
                 description
               }
             }

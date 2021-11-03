@@ -79,6 +79,21 @@ export interface InvoiceLine extends DomainObject {
   comment?: string;
 }
 
+export interface InvoiceRow extends DomainObject {
+  id: string;
+  color: string;
+  comment?: string | null;
+  status: string;
+  type: string;
+  entryDatetime: string;
+  confirmedDatetime?: string | null;
+  invoiceNumber: number;
+  otherPartyName: string;
+  pricing: {
+    totalAfterTax: number;
+  };
+}
+
 export interface Invoice extends DomainObject {
   id: string;
   color: string;
