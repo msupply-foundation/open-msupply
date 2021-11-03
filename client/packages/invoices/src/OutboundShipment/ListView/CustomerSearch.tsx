@@ -16,7 +16,9 @@ export const CustomerSearch: FC<CustomerSearchProps> = ({
   onClose,
   onChange,
 }) => {
-  const { data, isLoading } = useQuery(['names', 'list'], nameListQueryFn);
+  const { data, isLoading } = useQuery(['names', 'list'], () =>
+    nameListQueryFn()
+  );
 
   return (
     <ListSearch
