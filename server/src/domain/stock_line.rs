@@ -14,6 +14,7 @@ pub struct StockLine {
     pub available_number_of_packs: i32,
     pub total_number_of_packs: i32,
     pub expiry_date: Option<NaiveDate>,
+    pub on_hold: bool,
 }
 
 pub struct StockLineFilter {
