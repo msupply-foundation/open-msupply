@@ -1,67 +1,22 @@
 mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_gql_query};
-    use chrono::{DateTime, Utc};
     use remote_server::{
-        database::{
-            mock::{
-                mock_outbound_shipments, mock_invoice_lines, mock_invoices, mock_items, mock_names,
-                mock_stock_lines, mock_stores,
-            },
-            repository::{
-                get_repositories, InvoiceLineRepository, InvoiceRepository, ItemRepository,
-                NameRepository, StockLineRepository, StorageConnectionManager, StoreRepository,
-            },
-            schema::{InvoiceLineRow, InvoiceRow, ItemRow, NameRow, StockLineRow, StoreRow},
-        },
-        domain::invoice::InvoiceStatus,
-        server::service::graphql::schema::types::InvoiceNodeStatus,
-        util::test_db,
+        database::mock::MockDataInserts, domain::invoice::InvoiceStatus,
+        server::service::graphql::schema::types::InvoiceNodeStatus, util::test_db,
     };
 
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_invoice_query() {
-        let settings = test_db::get_test_settings("omsupply-database-gql-invoice-query");
-        test_db::setup(&settings.database).await;
-        let repositories = get_repositories(&settings).await;
-        let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
-        let connection = connection_manager.connection().unwrap();
+        let (mock_data, _, settings) = test_db::setup_all(
+            "omsupply-database-gql-invoice-query",
+            MockDataInserts::all(),
+        )
+        .await;
 
-        // setup
-        let name_repository = NameRepository::new(&connection);
-        let store_repository = StoreRepository::new(&connection);
-        let item_repository = ItemRepository::new(&connection);
-        let stock_repository = StockLineRepository::new(&connection);
-        let invoice_repository = InvoiceRepository::new(&connection);
-        let invoice_line_repository = InvoiceLineRepository::new(&connection);
-        let mock_names: Vec<NameRow> = mock_names();
-        let mock_stores: Vec<StoreRow> = mock_stores();
-        let mock_items: Vec<ItemRow> = mock_items();
-        let mock_stocks: Vec<StockLineRow> = mock_stock_lines();
-        let mut mock_invoices: Vec<InvoiceRow> = mock_invoices();
-        mock_invoices.sort_by(|a, b| a.id.cmp(&b.id));
-        let mock_invoice_lines: Vec<InvoiceLineRow> = mock_invoice_lines();
-        for name in mock_names {
-            name_repository.insert_one(&name).await.unwrap();
-        }
-        for store in mock_stores {
-            store_repository.insert_one(&store).await.unwrap();
-        }
-        for item in mock_items {
-            item_repository.insert_one(&item).await.unwrap();
-        }
-        for stock_line in &mock_stocks {
-            stock_repository.insert_one(&stock_line).await.unwrap();
-        }
-        for invoice in &mock_invoices {
-            invoice_repository.upsert_one(&invoice).unwrap();
-        }
-        for invoice_line in &mock_invoice_lines {
-            invoice_line_repository.upsert_one(&invoice_line).unwrap();
-        }
+        let full_invoice = mock_data.full_invoices.get("draft_ci_a").unwrap();
 
-        let invoice = mock_outbound_shipments()[0].clone();
         let query = r#"query Invoice($id: String) {            
                 invoice(id: $id) {
                     ... on InvoiceNode {
@@ -84,33 +39,23 @@ mod graphql {
             }"#;
 
         let variables = Some(json!({
-          "id": invoice.id
+          "id": full_invoice.invoice.id
         }));
 
         let expected = json!({
             "invoice": {
-                "id": invoice.id,
+                "id": full_invoice.invoice.id,
                 "lines": {
-                    "nodes": &mock_invoice_lines
+                    "nodes": full_invoice.lines
                         .iter()
-                        .filter(|invoice_line| invoice_line.invoice_id == invoice.id)
-                        .map(|invoice_line| json!({
-                            "id": invoice_line.id,
+                        .map(|line_and_stock| json!({
+                            "id": line_and_stock.line.id,
                             "stockLine": {
-                                "availableNumberOfPacks": (&mock_stocks)
-                                    .iter()
-                                    .find(|stock_line|
-                                        invoice_line.stock_line_id
-                                        .as_ref()
-                                        .map(|stock_line_id| &stock_line.id == stock_line_id)
-                                        .unwrap_or(false))
-                                    .unwrap()
-                                    .available_number_of_packs
-                            },
-                        }))
-                        .collect::<Vec<serde_json::Value>>(),
+                                "availableNumberOfPacks": line_and_stock.stock_line.available_number_of_packs
+                            }
+                        })).collect::<Vec<serde_json::Value>>(),
                 },
-                "status": InvoiceNodeStatus::from(InvoiceStatus::from(invoice.status)),
+                "status": InvoiceNodeStatus::from(InvoiceStatus::from(full_invoice.invoice.status.clone())),
             },
         });
         assert_gql_query(&settings, &query, &variables, &expected).await;
@@ -133,35 +78,5 @@ mod graphql {
             })),
         )
         .await;
-
-        // test time range filter
-        let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
-                invoices(filter: $filter){
-                    ... on InvoiceConnector {
-                        nodes {
-                            id
-                        }
-                    }
-                }
-            }"#;
-
-        let filter_time = mock_invoices.get(1).unwrap().entry_datetime;
-        let variables = Some(json!({
-          "filter": {
-            "entryDatetime": {
-                "beforeOrEqualTo": DateTime::<Utc>::from_utc(filter_time, Utc).to_rfc3339()
-            },
-          }
-        }));
-        let expected = json!({
-            "invoices": {
-                "nodes": mock_invoices.iter()
-                    .filter(|invoice| invoice.entry_datetime <= filter_time)
-                    .map(|invoice| json!({
-                        "id": invoice.id,
-                    })).collect::<Vec<serde_json::Value>>(),
-            },
-        });
-        assert_gql_query(&settings, &query, &variables, &expected).await;
     }
 }
