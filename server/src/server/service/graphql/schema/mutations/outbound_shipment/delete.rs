@@ -1,4 +1,5 @@
 use crate::{
+    database::repository::StorageConnectionManager,
     server::service::graphql::schema::{
         mutations::{
             CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
@@ -6,7 +7,7 @@ use crate::{
         },
         types::{DatabaseError, ErrorWrapper, RecordNotFound},
     },
-    service::invoice::DeleteOutboundShipmentError,
+    service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError},
 };
 
 use async_graphql::{Interface, Union};
@@ -15,6 +16,17 @@ use async_graphql::{Interface, Union};
 pub enum DeleteOutboundShipmentResponse {
     Error(ErrorWrapper<DeleteOutboundShipmentErrorInterface>),
     Response(DeleteResponse),
+}
+
+pub fn get_delete_outbound_shipment_response(
+    connection_manager: &StorageConnectionManager,
+    input: String,
+) -> DeleteOutboundShipmentResponse {
+    use DeleteOutboundShipmentResponse::*;
+    match delete_outbound_shipment(connection_manager, input.into()) {
+        Ok(id) => Response(DeleteResponse(id)),
+        Err(error) => error.into(),
+    }
 }
 
 #[derive(Interface)]
