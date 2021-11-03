@@ -178,3 +178,88 @@ query names(
     }
   }
 }
+
+query items(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+) {
+  items(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        availableBatches {
+          ... on ConnectorError {
+            __typename
+            error {
+              description
+              ... on DatabaseError {
+                __typename
+                description
+                fullError
+              }
+              ... on PaginationError {
+                __typename
+                description
+                rangeError {
+                  description
+                  field
+                  max
+                  min
+                }
+              }
+            }
+          }
+          ... on StockLineConnector {
+            nodes {
+              __typename
+              availableNumberOfPacks
+              batch
+              costPricePerPack
+              expiryDate
+              id
+              itemId
+              packSize
+              sellPricePerPack
+              storeId
+              totalNumberOfPacks
+              onHold
+            }
+            totalCount
+          }
+        }
+        code
+        id
+        isVisible
+        name
+      }
+      totalCount
+    }
+  }
+}

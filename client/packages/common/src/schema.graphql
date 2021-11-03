@@ -638,6 +638,8 @@ type StockLineNode {
   availableNumberOfPacks: Int!
   totalNumberOfPacks: Int!
   expiryDate: NaiveDate
+  location: String
+  onHold: Boolean!
 }
 
 union StockLineResponse = NodeError | StockLineNode

@@ -59,7 +59,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
     onChange: onChangeValue,
   });
 
-  const expiryDate = new Date(batch.expiryDate);
+  const expiryDate = new Date(batch.expiryDate ?? '');
   const isDisabled = batch.availableNumberOfPacks === 0 || batch.onHold;
 
   // TODO format currency correctly
