@@ -1,6 +1,9 @@
 use super::StorageConnection;
 
-use crate::database::{repository::RepositoryError, schema::UserAccountRow};
+use crate::database::{
+    repository::RepositoryError,
+    schema::{diesel_schema::user_account::dsl as user_account_dsl, UserAccountRow},
+};
 
 use diesel::prelude::*;
 
@@ -13,32 +16,30 @@ impl<'a> UserAccountRepository<'a> {
         UserAccountRepository { connection }
     }
 
-    pub async fn insert_one(
-        &self,
-        user_account_row: &UserAccountRow,
-    ) -> Result<(), RepositoryError> {
-        use crate::database::schema::diesel_schema::user_account::dsl::*;
-        diesel::insert_into(user_account)
+    pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(user_account_dsl::user_account)
             .values(user_account_row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn find_one_by_id(
-        &self,
-        account_id: &str,
-    ) -> Result<UserAccountRow, RepositoryError> {
-        use crate::database::schema::diesel_schema::user_account::dsl::*;
-        let result = user_account
-            .filter(id.eq(account_id))
+    pub fn find_one_by_id(&self, account_id: &str) -> Result<UserAccountRow, RepositoryError> {
+        let result = user_account_dsl::user_account
+            .filter(user_account_dsl::id.eq(account_id))
+            .first(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_user_name(&self, username: &str) -> Result<UserAccountRow, RepositoryError> {
+        let result = user_account_dsl::user_account
+            .filter(user_account_dsl::username.eq(username))
             .first(&self.connection.connection)?;
         Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
-        use crate::database::schema::diesel_schema::user_account::dsl::*;
-        let result = user_account
-            .filter(id.eq_any(ids))
+        let result = user_account_dsl::user_account
+            .filter(user_account_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
     }
