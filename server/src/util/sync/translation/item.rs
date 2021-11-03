@@ -11,6 +11,7 @@ pub struct LegacyItemRow {
     ID: String,
     item_name: String,
     code: String,
+    unit_ID: String,
 }
 
 impl LegacyItemRow {
@@ -22,14 +23,26 @@ impl LegacyItemRow {
         if sync_record.table_name != table_name {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)
-            .map_err(|source| SyncTranslationError { table_name, source })?;
+        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data).map_err(|source| {
+            SyncTranslationError {
+                table_name,
+                source,
+                record: sync_record.data.clone(),
+            }
+        })?;
 
-        Ok(Some(ItemRow {
+        let mut result = ItemRow {
             id: data.ID,
             name: data.item_name,
             code: data.code,
-        }))
+            unit_id: None,
+        };
+
+        if data.unit_ID != "" {
+            result.unit_id = Some(data.unit_ID);
+        }
+
+        Ok(Some(result))
     }
 }
 
