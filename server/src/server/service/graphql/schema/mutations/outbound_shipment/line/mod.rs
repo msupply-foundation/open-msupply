@@ -37,6 +37,14 @@ impl StockLineAlreadyExistsInInvoice {
     }
 }
 
+pub struct StockLineIsOnHold;
+#[Object]
+impl StockLineIsOnHold {
+    pub async fn description(&self) -> &'static str {
+        "Cannot issue from stock line that is on hold"
+    }
+}
+
 pub struct NotEnoughStockForReduction {
     pub stock_line_id: String,
     pub line_id: Option<String>,
