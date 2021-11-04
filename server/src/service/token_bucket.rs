@@ -13,7 +13,12 @@ fn token_hash(token: &str) -> String {
     sha256(token)
 }
 
-/// Tracks if a token is valid or if a user has been logged out
+/// Tracks if a token is still valid
+///
+/// There are two ways a token can expire prematurely:
+/// 1) User logs out and token is removed from the bucket
+/// 2) Token expiry time is reduce (server side), e.g. when an token has been renewed and the old
+/// token should expiry sooner.
 pub struct TokenBucket {
     users: HashMap<String, Vec<TokenInfo>>,
 }
@@ -41,6 +46,7 @@ impl TokenBucket {
             None => return false,
         };
 
+        // check that expiry date of the token hasn't been shorten on the server side:
         let now = Utc::now().timestamp() as usize;
         existing_token.expiry_date >= now
     }
@@ -62,20 +68,20 @@ impl TokenBucket {
         // clean up expired tokens
         user_tokens.retain(|item| item.expiry_date > now);
 
-        // update existing
+        // update existing or add new token
         let token_hash = token_hash(token);
-        if let Some(value) = user_tokens
+        let existing_token = user_tokens
             .iter_mut()
-            .find(|item| item.token_hash == token_hash)
-        {
-            value.expiry_date = expiry_date;
-            return;
+            .find(|item| item.token_hash == token_hash);
+        match existing_token {
+            Some(existing) => existing.expiry_date = expiry_date,
+            None => {
+                user_tokens.push(TokenInfo {
+                    token_hash,
+                    expiry_date,
+                });
+            }
         }
-
-        user_tokens.push(TokenInfo {
-            token_hash,
-            expiry_date,
-        });
     }
 
     /// Removes all known tokens for a given user
