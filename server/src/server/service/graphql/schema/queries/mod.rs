@@ -14,6 +14,8 @@ pub struct Queries;
 
 pub mod auth_token;
 pub use self::auth_token::*;
+pub mod refresh_token;
+pub use self::refresh_token::*;
 
 #[Object]
 impl Queries {
@@ -31,6 +33,12 @@ impl Queries {
         #[graphql(desc = "Password")] password: String,
     ) -> AuthTokenResponse {
         auth_token(ctx, &username, &password)
+    }
+
+    /// Retrieves a new auth bearer and refresh token
+    /// The refresh token is returned as a cookie
+    pub async fn refresh_token(&self, ctx: &Context<'_>) -> RefreshTokenResponse {
+        refresh_token(ctx)
     }
 
     /// Query omSupply "name" entries

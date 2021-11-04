@@ -128,23 +128,29 @@ pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthToke
         }
     };
 
-    // Store refresh token in a cookie:
-    // - HttpOnly cookie (not readable from js).
-    // - Secure (https only)
-    // - SameSite (only attached to request originating from the same site)
-    // Also see:
-    // https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/
-    let secure = if auth_data.debug_no_ssl {
-        " Secure;"
-    } else {
-        ""
-    };
+    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.debug_no_ssl);
+
+    AuthTokenResponse::Response(AuthToken { pair })
+}
+
+/// Store refresh token in a cookie:
+/// - HttpOnly cookie (not readable from js).
+/// - Secure (https only)
+/// - SameSite (only attached to request originating from the same site)
+/// Also see:
+/// https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/
+pub fn set_refresh_token_cookie(
+    ctx: &Context<'_>,
+    refresh_token: &str,
+    max_age: usize,
+    no_ssl: bool,
+) {
+    let secure = if no_ssl { "" } else { "; Secure" };
     ctx.insert_http_header(
         SET_COOKIE,
         format!(
-            "refresh_token={}; Max-Age={};{} HttpOnly; SameSite=Strict",
-            pair.refresh, max_age_refresh, secure
+            "refresh_token={}; Max-Age={}{}; HttpOnly; SameSite=Strict",
+            refresh_token, max_age, secure
         ),
     );
-    AuthTokenResponse::Response(AuthToken { pair })
 }
