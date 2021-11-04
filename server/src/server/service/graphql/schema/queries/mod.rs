@@ -12,11 +12,25 @@ use async_graphql::{Context, Object};
 use super::types::*;
 pub struct Queries;
 
+pub mod auth_token;
+pub use self::auth_token::*;
+
 #[Object]
 impl Queries {
     #[allow(non_snake_case)]
     pub async fn apiVersion(&self) -> String {
         "1.0".to_string()
+    }
+
+    /// Retrieves a new auth bearer and refresh token
+    /// The refresh token is returned as a cookie
+    pub async fn auth_token(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "UserName")] username: String,
+        #[graphql(desc = "Password")] password: String,
+    ) -> AuthTokenResponse {
+        auth_token(ctx, &username, &password)
     }
 
     /// Query omSupply "name" entries

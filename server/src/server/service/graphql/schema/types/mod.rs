@@ -1,6 +1,7 @@
 use crate::{
     database::repository::RepositoryError,
     domain::PaginationOption,
+    server::service::graphql::schema::queries::AuthTokenErrorInterface,
     service::{usize_to_u32, ListError, ListResult, SingleRecordError},
 };
 
@@ -140,7 +141,7 @@ impl From<PaginationInput> for PaginationOption {
     name = "DeleteOutboundShipmentLineError",
     params(DeleteOutboundShipmentLineErrorInterface)
 ))]
-
+#[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
