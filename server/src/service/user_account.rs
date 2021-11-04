@@ -1,3 +1,5 @@
+use std::sync::RwLock;
+
 use crate::{
     database::{
         repository::{RepositoryError, StorageConnection, TransactionError, UserAccountRepository},
@@ -6,6 +8,7 @@ use crate::{
     util::uuid::uuid,
 };
 
+use anyhow::anyhow;
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
 use chrono::Utc;
 use jsonwebtoken::errors::{Error as JWTError, ErrorKind as JWTErrorKind};
@@ -69,6 +72,7 @@ pub enum JWTIssuingError {
     InvalidCredentialsBackend(bcrypt::BcryptError),
     CanNotCreateToken(JWTError),
     DatabaseError(RepositoryError),
+    ConcurrencyLockError(anyhow::Error),
 }
 
 #[derive(Debug)]
@@ -78,6 +82,7 @@ pub enum JWTValidationError {
     InvalidToken(JWTError),
     /// Token has been invalidated on the backend
     TokenInvalided,
+    ConcurrencyLockError(anyhow::Error),
 }
 
 #[derive(Debug)]
@@ -88,6 +93,12 @@ pub enum JWTRefreshError {
     FailedToCreateNewToken(JWTError),
     /// Token has been invalidated on the backend
     TokenInvalided,
+    ConcurrencyLockError(anyhow::Error),
+}
+
+#[derive(Debug)]
+pub enum JWTLogoutError {
+    ConcurrencyLockError(anyhow::Error),
 }
 
 #[derive(Debug)]
@@ -104,14 +115,14 @@ pub struct TokenPair {
 
 pub struct UserAccountService<'a> {
     connection: &'a StorageConnection,
-    token_bucket: &'a mut TokenBucket,
+    token_bucket: &'a RwLock<TokenBucket>,
     jwt_token_secret: &'a [u8],
 }
 
 impl<'a> UserAccountService<'a> {
     pub fn new(
         connection: &'a StorageConnection,
-        token_bucket: &'a mut TokenBucket,
+        token_bucket: &'a RwLock<TokenBucket>,
         jwt_token_secret: &'a [u8],
     ) -> Self {
         UserAccountService {
@@ -190,10 +201,12 @@ impl<'a> UserAccountService<'a> {
         .map_err(|err| JWTIssuingError::CanNotCreateToken(err))?;
 
         // add tokens to bucket
-        self.token_bucket
-            .put(&user.id, &pair.token, pair.expiry_date);
-        self.token_bucket
-            .put(&user.id, &pair.refresh, pair.refresh_expiry_date);
+        let mut token_bucket = self
+            .token_bucket
+            .write()
+            .map_err(|e| JWTIssuingError::ConcurrencyLockError(anyhow!("jwt_token: {}", e)))?;
+        token_bucket.put(&user.id, &pair.token, pair.expiry_date);
+        token_bucket.put(&user.id, &pair.refresh, pair.refresh_expiry_date);
 
         Ok(pair)
     }
@@ -231,16 +244,19 @@ impl<'a> UserAccountService<'a> {
             refresh_token_valid_for,
         )
         .map_err(|err| JWTRefreshError::FailedToCreateNewToken(err))?;
+
         // Check token is still in the list of valid tokens
-        if !self.token_bucket.contains(&user_id, refresh_token) {
+        let mut token_bucket = self
+            .token_bucket
+            .write()
+            .map_err(|e| JWTRefreshError::ConcurrencyLockError(anyhow!("refresh_token: {}", e)))?;
+        if !token_bucket.contains(&user_id, refresh_token) {
             return Err(JWTRefreshError::TokenInvalided);
         }
 
-        // add tokens to bucket
-        self.token_bucket
-            .put(&user_id, &pair.token, pair.expiry_date);
-        self.token_bucket
-            .put(&user_id, &pair.refresh, pair.refresh_expiry_date);
+        // add new tokens to bucket
+        token_bucket.put(&user_id, &pair.token, pair.expiry_date);
+        token_bucket.put(&user_id, &pair.refresh, pair.refresh_expiry_date);
         // Shorten the expiry time of the old refresh token.
         //
         // Note, if the client goes offline before receiving the new refresh token the user might
@@ -248,8 +264,7 @@ impl<'a> UserAccountService<'a> {
         // issue.
         let reduced_expiry =
             std::cmp::min(Utc::now().timestamp() as usize + 5 * 60, decoded.claims.exp);
-        self.token_bucket
-            .put(&user_id, refresh_token, reduced_expiry);
+        token_bucket.put(&user_id, refresh_token, reduced_expiry);
 
         Ok(pair)
     }
@@ -272,15 +287,23 @@ impl<'a> UserAccountService<'a> {
         })?;
 
         // Check token is still in the list of valid tokens
-        if !self.token_bucket.contains(&decoded.claims.sub, token) {
+        let token_bucket = self.token_bucket.read().map_err(|e| {
+            JWTValidationError::ConcurrencyLockError(anyhow!("verify_token: {}", e))
+        })?;
+        if !token_bucket.contains(&decoded.claims.sub, token) {
             return Err(JWTValidationError::TokenInvalided);
         }
         Ok(decoded.claims)
     }
 
     /// Log a user out of all sessions
-    pub fn logout(&mut self, user_id: &str) {
-        self.token_bucket.clear(user_id);
+    pub fn logout(&mut self, user_id: &str) -> Result<(), JWTLogoutError> {
+        let mut token_bucket = self
+            .token_bucket
+            .write()
+            .map_err(|e| JWTLogoutError::ConcurrencyLockError(anyhow!("logout: {}", e)))?;
+        token_bucket.clear(user_id);
+        Ok(())
     }
 }
 
@@ -349,9 +372,9 @@ mod user_account_test {
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
-        let mut bucket = TokenBucket::new();
+        let bucket = RwLock::new(TokenBucket::new());
         const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
-        let mut service = UserAccountService::new(&connection, &mut bucket, JWT_TOKEN_SECRET);
+        let mut service = UserAccountService::new(&connection, &bucket, JWT_TOKEN_SECRET);
 
         // should be able to create a new user
         let password: &str = "passw0rd";
@@ -387,7 +410,7 @@ mod user_account_test {
         assert_eq!(user.id, claims.sub);
 
         // should fail to verify and refresh when logged out
-        service.logout(&user.id);
+        service.logout(&user.id).unwrap();
         let err = service.verify_token(&token_pair.token).unwrap_err();
         assert!(matches!(err, JWTValidationError::TokenInvalided));
         let err = service
@@ -404,9 +427,9 @@ mod user_account_test {
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 
-        let mut bucket = TokenBucket::new();
+        let bucket = RwLock::new(TokenBucket::new());
         const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
-        let mut service = UserAccountService::new(&connection, &mut bucket, JWT_TOKEN_SECRET);
+        let mut service = UserAccountService::new(&connection, &bucket, JWT_TOKEN_SECRET);
 
         // should be able to create a new user
         let password: &str = "passw0rd";
