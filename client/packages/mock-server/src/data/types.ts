@@ -40,7 +40,13 @@ export interface ResolvedItem extends Item {
   availableQuantity: number;
 }
 
-export type StockLine = StockLineNode;
+export interface StockLine extends StockLineNode {
+  location: {
+    id: string;
+    code: string;
+    description: string;
+  };
+}
 
 export interface ResolvedStockLine extends StockLine {
   __typename: 'StockLineNode';
@@ -50,6 +56,11 @@ export interface ResolvedStockLine extends StockLine {
 export interface InvoiceLine extends InvoiceLineNode {
   id: string;
   itemName: string;
+  location: {
+    id: string;
+    code: string;
+    description: string;
+  };
   itemCode: string;
   itemUnit: string;
   quantity: number;

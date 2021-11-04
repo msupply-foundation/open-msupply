@@ -253,6 +253,13 @@ union InsertSupplierInvoiceResponse =
   | NodeError
   | InvoiceNode
 
+type LocationNode {
+  code: String!
+  description: String!
+}
+
+union LocationResponse = LocationNode | NodeError
+
 # Generic Connector
 type InvoiceConnector {
   totalCount: Int!
@@ -305,6 +312,7 @@ type InvoiceLineNode {
   expiryDate: NaiveDate
   stockLine: StockLineResponse
 
+  location: LocationResponse
   locationDescription: String
   note: String
 }
@@ -657,6 +665,7 @@ type StockLineNode {
   availableNumberOfPacks: Int!
   totalNumberOfPacks: Int!
   expiryDate: NaiveDate
+  location: LocationResponse
   locationDescription: String
   onHold: Boolean!
   note: String
