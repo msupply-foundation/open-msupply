@@ -23,5 +23,14 @@ export const placeholderInvoice: OutboundShipment = {
   shippedDatetime: '',
   pickedDatetime: '',
   deliveredDatetime: '',
+
+  purchaseOrderNumber: undefined,
+  goodsReceiptNumber: undefined,
+  requisitionNumber: undefined,
+  inboundShipmentNumber: undefined,
+
+  transportReference: undefined,
+  shippingMethod: undefined,
+
   otherParty: undefined,
 };
