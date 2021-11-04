@@ -79,9 +79,11 @@ fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
     let headers = http_req.headers();
     // retrieve auth token
     let auth_token = headers.get("Authorization").and_then(|header_value| {
-        header_value.to_str().ok().map(|header| {
-            let jwt_start_index = "Bearer ".len();
-            header[jwt_start_index..header.len()].to_string()
+        header_value.to_str().ok().and_then(|header| {
+            if header.starts_with("Bearer ") {
+                return Some(header["Bearer ".len()..header.len()].to_string());
+            }
+            None
         })
     });
 
