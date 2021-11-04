@@ -102,6 +102,7 @@ pub fn generate_batches(
             total_number_of_packs: stock_line.total_number_of_packs - invoice_line.number_of_packs,
             expiry_date: stock_line.expiry_date,
             on_hold: stock_line.on_hold,
+            note: stock_line.note.clone(),
         });
     }
     Ok(result)
