@@ -4,9 +4,13 @@ use reqwest::header::SET_COOKIE;
 
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::ContextExt;
+use crate::service::token::TokenService;
 use crate::{
     database::repository::StorageConnectionManager,
-    service::user_account::{JWTIssuingError, TokenPair, UserAccountService},
+    service::{
+        token::{JWTIssuingError, TokenPair},
+        user_account::UserAccountService,
+    },
 };
 
 use super::{DatabaseError, ErrorWrapper};
@@ -74,36 +78,44 @@ pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthToke
             })
         }
     };
+    let user_service = UserAccountService::new(&con);
+    let user_account = match user_service.verify_password(username, password) {
+        Ok(user) => user,
+        Err(err) => return AuthTokenResponse::Error(ErrorWrapper {
+            error: match err {
+                crate::service::user_account::VerifyPasswordError::UsernameDoesNotExist => {
+                    AuthTokenErrorInterface::UserNameDoesNotExist(UserNameDoesNotExist)
+                }
+                crate::service::user_account::VerifyPasswordError::InvalidCredentials => {
+                    AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials)
+                }
+                crate::service::user_account::VerifyPasswordError::InvalidCredentialsBackend(e) => {
+                    error!("{}", e);
+                    AuthTokenErrorInterface::InternalError(InternalError(
+                        "Failed to read credentials".to_string(),
+                    ))
+                }
+                crate::service::user_account::VerifyPasswordError::DatabaseError(e) => {
+                    AuthTokenErrorInterface::DatabaseError(DatabaseError(e))
+                }
+            },
+        }),
+    };
+
     let auth_data = ctx.get_auth_data();
-    let mut service = UserAccountService::new(
-        &con,
+    let mut token_service = TokenService::new(
         &auth_data.token_bucket,
         auth_data.auth_token_secret.as_bytes(),
     );
     let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
     let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
-    let pair = match service.jwt_token(username, &password, max_age_token, max_age_refresh) {
+    let pair = match token_service.jwt_token(&user_account.id, max_age_token, max_age_refresh) {
         Ok(pair) => pair,
         Err(err) => {
             return AuthTokenResponse::Error(ErrorWrapper {
                 error: match err {
-                    JWTIssuingError::UserNameDoesNotExist => {
-                        AuthTokenErrorInterface::UserNameDoesNotExist(UserNameDoesNotExist)
-                    }
-                    JWTIssuingError::InvalidCredentials => {
-                        AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials)
-                    }
                     JWTIssuingError::CanNotCreateToken(_) => {
                         AuthTokenErrorInterface::CanNotCreateToken(CanNotCreateToken)
-                    }
-                    JWTIssuingError::DatabaseError(err) => {
-                        AuthTokenErrorInterface::DatabaseError(DatabaseError(err))
-                    }
-                    JWTIssuingError::InvalidCredentialsBackend(e) => {
-                        error!("{}", e);
-                        AuthTokenErrorInterface::InternalError(InternalError(
-                            "Failed to read credentials".to_string(),
-                        ))
                     }
                     JWTIssuingError::ConcurrencyLockError(e) => {
                         error!("{}", e);
