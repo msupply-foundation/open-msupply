@@ -3,7 +3,7 @@ import { Api } from '../api';
 import { ListResponse, Name as NameType } from '../data/types';
 
 const QueryResolvers = {
-  items: (
+  names: (
     _: any,
     vars: {
       page?: { first?: number; offset?: number };
