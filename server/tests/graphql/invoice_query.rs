@@ -22,6 +22,11 @@ mod graphql {
                     ... on InvoiceNode {
                         id
                         status
+                        otherParty {
+                            ... on NameNode {
+                                id
+                            }
+                        }
                         lines {
                             ... on InvoiceLineConnector {
                                 nodes {
@@ -45,6 +50,9 @@ mod graphql {
         let expected = json!({
             "invoice": {
                 "id": full_invoice.invoice.id,
+                "otherParty": {
+                    "id": full_invoice.invoice.name_id
+                },
                 "lines": {
                     "nodes": full_invoice.lines
                         .iter()
