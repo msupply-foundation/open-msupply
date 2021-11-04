@@ -1,33 +1,60 @@
 query invoice($id: String!) {
   invoice(id: $id) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
     ... on InvoiceNode {
+      __typename
       id
       comment
       confirmedDatetime
       entryDatetime
       finalisedDatetime
       invoiceNumber
-
       draftDatetime
       allocatedDatetime
       pickedDatetime
       shippedDatetime
       deliveredDatetime
-
       hold
       color
-
       lines {
+        ... on ConnectorError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+          }
+        }
         ... on InvoiceLineConnector {
+          __typename
           nodes {
+            __typename
             batch
             costPricePerPack
             expiryDate
             id
             itemCode
+            itemUnit
             itemId
             itemName
-            itemUnit
             numberOfPacks
             packSize
             sellPricePerPack
@@ -42,16 +69,16 @@ query invoice($id: String!) {
         ... on NodeError {
           __typename
           error {
-            ... on RecordNotFound {
-              __typename
-              description
-            }
+            description
             ... on DatabaseError {
               __typename
               description
               fullError
             }
-            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
           }
         }
         ... on InvoicePricingNode {
@@ -62,12 +89,6 @@ query invoice($id: String!) {
       status
       theirReference
       type
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-      }
     }
   }
 }

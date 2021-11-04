@@ -7,12 +7,46 @@ import {
   GraphQLClient,
   getSdk,
   NameSortFieldInput,
+  InvoiceQuery,
+  InvoiceLineConnector,
+  InvoicePriceResponse,
+  ConnectorError,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
+
+const pricingGuard = (pricing: InvoicePriceResponse) => {
+  if (pricing.__typename === 'InvoicePricingNode') {
+    return pricing;
+  } else if (pricing.__typename === 'NodeError') {
+    throw new Error(pricing.error.description);
+  } else {
+    throw new Error('Unknown');
+  }
+};
+
+const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
+  if (invoiceQuery.invoice.__typename === 'InvoiceNode') {
+    return invoiceQuery.invoice;
+  }
+
+  throw new Error(invoiceQuery.invoice.error.description);
+};
+
+const linesGuard = (invoiceLines: InvoiceLineConnector | ConnectorError) => {
+  if (invoiceLines.__typename === 'InvoiceLineConnector') {
+    return invoiceLines.nodes;
+  }
+
+  if (invoiceLines.__typename === 'ConnectorError') {
+    throw new Error(invoiceLines.error.description);
+  }
+
+  throw new Error('Unknown');
+};
 
 export const getMutation = (): string => gql`
   mutation updateInvoice($invoicePatch: InvoicePatch) {
@@ -58,53 +92,33 @@ export const nameListQueryFn = async ({
   throw new Error(names.error.description);
 };
 
-export const detailQueryFn = (id: string) => async (): Promise<Invoice> => {
+export const onRead = async (id: string): Promise<Invoice> => {
   const result = await api.invoice({ id });
 
-  const { invoice } = result;
+  const invoice = invoiceGuard(result);
 
-  if (invoice.__typename === 'InvoiceNode') {
-    return {
-      ...invoice,
-      lines:
-        invoice.lines.__typename === 'InvoiceLineConnector'
-          ? invoice.lines.nodes
-          : [],
-      pricing: {
-        totalAfterTax:
-          invoice.pricing.__typename === 'InvoicePricingNode'
-            ? invoice.pricing.totalAfterTax
-            : 0,
-      },
-    };
-  } else {
-    throw new Error('uhoh');
-  }
+  return {
+    ...invoice,
+    lines: linesGuard(invoice.lines),
+    pricing: pricingGuard(invoice.pricing),
+  };
 };
 
-export const updateInvoiceFn = async (updated: Invoice): Promise<Invoice> => {
+export const onUpdate = async (updated: Invoice): Promise<Invoice> => {
   const invoicePatch: Partial<Invoice> = { ...updated };
   delete invoicePatch['lines'];
-
   const patch = { invoicePatch };
-
   const result = await request(Environment.API_URL, getMutation(), patch);
-
   const { updateInvoice } = result;
   return updateInvoice;
 };
 
 interface Api<ReadType, UpdateType> {
-  onRead: () => Promise<ReadType>;
+  onRead: (id: string) => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<ReadType>;
 }
 
-export const getOutboundShipmentDetailViewApi: (
-  id: string
-) => Api<Invoice, OutboundShipment> = (id: string) => ({
-  onRead: detailQueryFn(id),
-  onUpdate: async (outboundShipment: OutboundShipment): Promise<Invoice> => {
-    const result = await updateInvoiceFn(outboundShipment);
-    return result;
-  },
-});
+export const OutboundShipmentDetailViewApi: Api<Invoice, OutboundShipment> = {
+  onRead,
+  onUpdate,
+};

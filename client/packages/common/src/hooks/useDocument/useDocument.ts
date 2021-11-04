@@ -11,6 +11,7 @@ import {
   DocumentActionSet,
 } from './types';
 import { DomainObject } from '../../types';
+import { useParams } from 'react-router';
 
 export const DocumentAction = {
   init: (): DefaultDocumentAction => ({
@@ -48,6 +49,7 @@ export const useDocument = <
 ): DocumentState<Document, State, ServerData, DocumentActionSet<ActionSet>> => {
   // A query key which contains new, means it has not been created on the server yet.
   // TODO: Far more robust method needed here.
+  const { id } = useParams();
   const isNew = queryKey.includes('new');
 
   const queryClient = useQueryClient();
@@ -55,7 +57,7 @@ export const useDocument = <
   // Data is the current data on the server and our most up to date snapshot of the server state.
   // We're keeping it around, separate from our client state as to reference when needed and period
   // background re-fetches to keep an upto date reference to the server state.
-  const { data } = useQuery(queryKey, api.onRead, {
+  const { data } = useQuery(queryKey, () => api.onRead(String(id)), {
     enabled: !isNew,
   });
 

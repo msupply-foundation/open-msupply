@@ -8,6 +8,7 @@ if (process.env.NODE_ENV === 'development') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
   } = require('@openmsupply-client/mock-server/src/worker/client');
   const worker = setupMockWorker();
+
   worker.start();
 }
 

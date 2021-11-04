@@ -12,7 +12,7 @@ import {
   getRowExpandColumn,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
-import { getOutboundShipmentDetailViewApi } from '../../api';
+import { OutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
@@ -29,7 +29,7 @@ const useDraftOutbound = () => {
   const { draft, save, dispatch, state } = useDocument(
     ['invoice', id],
     reducer,
-    getOutboundShipmentDetailViewApi(id ?? '')
+    OutboundShipmentDetailViewApi
   );
 
   const onChangeSortBy = (column: Column<InvoiceLineRow>) => {
