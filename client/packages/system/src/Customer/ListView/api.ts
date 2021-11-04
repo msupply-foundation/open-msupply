@@ -1,16 +1,11 @@
-import { Environment } from '@openmsupply-client/config';
 import {
   Name,
   ListApi,
   SortBy,
-  getSdk,
-  GraphQLClient,
   NameSortFieldInput,
   NamesQuery,
+  OmSupplyApi,
 } from '@openmsupply-client/common';
-
-const client = new GraphQLClient(Environment.API_URL);
-const api = getSdk(client);
 
 const namesGuard = (namesQuery: NamesQuery) => {
   if (namesQuery.names.__typename === 'NameConnector') {
@@ -19,43 +14,44 @@ const namesGuard = (namesQuery: NamesQuery) => {
   throw new Error(namesQuery.names.error.description);
 };
 
-const listQueryFn = async ({
-  first,
-  offset,
-  sortBy,
-}: {
-  first: number;
-  offset: number;
-  sortBy: SortBy<Name>;
-}): Promise<{
-  nodes: Name[];
-  totalCount: number;
-}> => {
-  const key =
-    sortBy.key === 'name' ? NameSortFieldInput.Name : NameSortFieldInput.Code;
-
-  const result = await api.names({
+const onRead =
+  (api: OmSupplyApi) =>
+  async ({
     first,
     offset,
-    key,
-    desc: sortBy.isDesc,
-  });
+    sortBy,
+  }: {
+    first: number;
+    offset: number;
+    sortBy: SortBy<Name>;
+  }): Promise<{
+    nodes: Name[];
+    totalCount: number;
+  }> => {
+    const key =
+      sortBy.key === 'name' ? NameSortFieldInput.Name : NameSortFieldInput.Code;
 
-  return namesGuard(result);
-};
+    const result = await api.names({
+      first,
+      offset,
+      key,
+      desc: sortBy.isDesc,
+    });
 
-export const CustomerListViewApi: ListApi<Name> = {
+    return namesGuard(result);
+  };
+
+export const getCustomerListViewApi = (api: OmSupplyApi): ListApi<Name> => ({
   onRead:
     ({ first, offset, sortBy }) =>
     () =>
-      listQueryFn({ first, offset, sortBy }),
+      onRead(api)({ first, offset, sortBy }),
   // TODO: Mutations!
   onDelete: async () => {},
-
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   onUpdate: async () => {},
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   onCreate: async () => {},
-};
+});

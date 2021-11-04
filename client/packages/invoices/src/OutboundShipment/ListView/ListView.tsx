@@ -11,8 +11,9 @@ import {
   createTableStore,
   Color,
   OutboundShipmentStatus,
+  useOmSupplyApi,
 } from '@openmsupply-client/common';
-import { OutboundShipmentListViewApi } from './api';
+import { getOutboundShipmentListViewApi } from './api';
 
 import { CustomerSearch } from './CustomerSearch';
 import { getStatusTranslation } from '../utils';
@@ -21,6 +22,7 @@ import { AppBarButtons } from './AppBarButtons';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
+  const omSupplyApi = useOmSupplyApi();
 
   const {
     totalCount,
@@ -34,7 +36,11 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onChangePage,
     pagination,
     invalidate,
-  } = useListData({ key: 'status' }, 'invoice', OutboundShipmentListViewApi);
+  } = useListData(
+    { key: 'status' },
+    'invoice',
+    getOutboundShipmentListViewApi(omSupplyApi)
+  );
 
   const onColorUpdate = (row: InvoiceRow, color: Color) => {
     onUpdate({ ...row, color: color.hex });
