@@ -7,7 +7,6 @@ import {
   Name,
   useColumns,
   createTableStore,
-  NameSortFieldInput,
 } from '@openmsupply-client/common';
 import { CustomerListViewApi } from './api';
 
@@ -20,11 +19,7 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData(
-    { key: NameSortFieldInput.Name },
-    ['names', 'list'],
-    CustomerListViewApi
-  );
+  } = useListData({ key: 'name' }, ['names', 'list'], CustomerListViewApi);
   const navigate = useNavigate();
 
   const columns = useColumns<Name>(['name', 'code'], {
