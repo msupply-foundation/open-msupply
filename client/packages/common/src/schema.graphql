@@ -304,7 +304,9 @@ type InvoiceLineNode {
   batch: String
   expiryDate: NaiveDate
   stockLine: StockLineResponse
-  location: String
+
+  locationDescription: String
+  note: String
 }
 
 union InvoiceLineResponse = NodeError | InvoiceLineNode
@@ -327,14 +329,21 @@ type InvoiceNode {
   lines: InvoiceLinesResponse!
   pricing: InvoicePriceResponse!
 
-  color: String!
-  hold: Boolean!
-
   draftDatetime: DateTime
   allocatedDatetime: DateTime
   pickedDatetime: DateTime
   shippedDatetime: DateTime
   deliveredDatetime: DateTime
+  color: String!
+  hold: Boolean!
+  enteredBy: String!
+  donorName: String!
+  purchaseOrderNumber: Int
+  requisitionNumber: Int
+  goodsReceiptNumber: Int
+  inboundShipmentNumber: Int
+  shippingMethod: String
+  transportReference: String
 }
 
 enum InvoiceNodeStatus {
@@ -365,6 +374,8 @@ union InvoicePriceResponse = NodeError | InvoicePricingNode
 
 type InvoicePricingNode {
   totalAfterTax: Float!
+  taxPercentage: Float!
+  subtotal: Float!
 }
 
 union InvoiceResponse = NodeError | InvoiceNode
@@ -404,6 +415,7 @@ type ItemNode {
   id: String!
   name: String!
   code: String!
+  unitName: String!
   isVisible: Boolean!
   availableBatches: StockLinesResponse!
 }
@@ -638,8 +650,9 @@ type StockLineNode {
   availableNumberOfPacks: Int!
   totalNumberOfPacks: Int!
   expiryDate: NaiveDate
-  location: String
+  locationDescription: String
   onHold: Boolean!
+  note: String
 }
 
 union StockLineResponse = NodeError | StockLineNode
