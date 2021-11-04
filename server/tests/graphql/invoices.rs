@@ -60,17 +60,18 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &None, &expected).await;
 
-        // test time range filter
+        // filter query
         let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
-                invoices(filter: $filter){
-                    ... on InvoiceConnector {
-                        nodes {
-                            id
-                        }
+            invoices(filter: $filter){
+                ... on InvoiceConnector {
+                    nodes {
+                        id
                     }
                 }
-            }"#;
+            }
+        }"#;
 
+        // test time range filter
         let filter_time = invoices.get(1).unwrap().entry_datetime;
         let variables = Some(json!({
           "filter": {
@@ -83,6 +84,25 @@ mod graphql {
             "invoices": {
                 "nodes": invoices.iter()
                     .filter(|invoice| invoice.entry_datetime <= filter_time)
+                    .map(|invoice| json!({
+                        "id": invoice.id,
+                    })).collect::<Vec<serde_json::Value>>(),
+            },
+        });
+        assert_gql_query(&settings, &query, &variables, &expected).await;
+
+        // test invoice number filter
+        let variables = Some(json!({
+          "filter": {
+            "invoiceNumber": {
+                "equalTo": 3
+            },
+          }
+        }));
+        let expected = json!({
+            "invoices": {
+                "nodes": invoices.iter()
+                    .filter(|invoice| invoice.invoice_number == 3)
                     .map(|invoice| json!({
                         "id": invoice.id,
                     })).collect::<Vec<serde_json::Value>>(),
