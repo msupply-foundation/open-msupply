@@ -1,3 +1,4 @@
+import { InvoiceSortFieldInput } from '@openmsupply-client/common/src/types/schema';
 import { Api } from '../api';
 
 import { ListResponse, Invoice as InvoiceType } from '../data/types';
@@ -5,19 +6,16 @@ import { ListResponse, Invoice as InvoiceType } from '../data/types';
 const QueryResolvers = {
   invoices: (
     _: any,
-    {
-      page = { first: 10, offset: 0 },
-      sort = { key: 'TYPE', desc: false },
-    }: {
-      page: { first: number; offset: number };
-      sort: { key: string; desc: boolean };
+    vars: {
+      page?: { first?: number; offset?: number };
+      sort: [{ key: InvoiceSortFieldInput; desc: boolean }];
     }
   ): ListResponse<InvoiceType> => {
     return Api.ResolverService.list.invoice({
-      first: page.first,
-      offset: page.offset,
-      desc: sort.desc,
-      sort: sort.key,
+      first: vars.page?.first ?? 20,
+      offset: vars.page?.offset ?? 0,
+      desc: vars.sort[0].desc ?? false,
+      key: vars.sort[0].key ?? InvoiceSortFieldInput.Status,
     });
   },
 

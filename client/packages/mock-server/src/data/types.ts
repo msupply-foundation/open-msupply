@@ -108,13 +108,6 @@ export interface ResolvedInvoice extends Invoice {
   otherPartyName: string;
 }
 
-export interface PaginationOptions {
-  first: number;
-  offset: number;
-  sort?: string;
-  desc: boolean;
-}
-
 export interface ListResponse<T> {
   totalCount: number;
   nodes: T[];
