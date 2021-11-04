@@ -1,11 +1,8 @@
 import React, { FC, useEffect, useState } from 'react';
-import { GraphQLClient } from 'graphql-request';
 import { createContext } from 'react';
-import { getSdk } from '..';
+import { OmSupplyApi, createOmSupplyApi } from '.';
 
-const Context = createContext<ReturnType<typeof getSdk>>(
-  getSdk(new GraphQLClient(''))
-);
+const Context = createContext<OmSupplyApi>(createOmSupplyApi(''));
 
 const { Provider, Consumer } = Context;
 
@@ -13,24 +10,22 @@ interface ApiProviderProps {
   url: string;
 }
 
-export const OmsupplyApiProvider: FC<ApiProviderProps> = ({
+export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
   url,
   children,
 }) => {
-  const [api, setApi] = useState<ReturnType<typeof getSdk>>(() =>
-    getSdk(new GraphQLClient(url))
-  );
+  const [api, setApi] = useState<OmSupplyApi>(() => createOmSupplyApi(url));
 
   useEffect(() => {
-    setApi(getSdk(new GraphQLClient(url)));
+    setApi(createOmSupplyApi(url));
   }, [url]);
 
   return <Provider value={api}>{children}setApi</Provider>;
 };
 
-export const OmsupplyApiConsumer = Consumer;
+export const OmSupplyApiConsumer = Consumer;
 
-export const useOmsupplyApi = (): ReturnType<typeof getSdk> | null => {
+export const useOmSupplyApi = (): OmSupplyApi => {
   const api = React.useContext(Context);
   return api;
 };
