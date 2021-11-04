@@ -68,46 +68,30 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
     }
 }
 
-// string equal filter
-
 #[derive(InputObject, Clone)]
-pub struct EqualFilterStringInput {
-    /// Search term must be an exact match
-    equal_to: Option<String>,
-}
-
-impl From<EqualFilterStringInput> for EqualFilter<String> {
-    fn from(f: EqualFilterStringInput) -> Self {
-        EqualFilter {
-            equal_to: f.equal_to,
-            equal_any: None,
-        }
-    }
-}
-
-// bool equal filter
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterBoolInput {
-    equal_to: Option<bool>,
-}
-
-impl From<EqualFilterBoolInput> for EqualFilter<bool> {
-    fn from(f: EqualFilterBoolInput) -> Self {
-        EqualFilter {
-            equal_to: f.equal_to,
-            equal_any: None,
-        }
-    }
-}
-
-// generic equal filters
-
-#[derive(InputObject, Clone)]
+#[graphql(concrete(name = "EqualFilterStringInput", params(String)))]
+#[graphql(concrete(name = "EqualFilterBooleanInput", params(bool)))]
+#[graphql(concrete(name = "EqualFilterNumberInput", params(i32)))]
 #[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceNodeType)))]
 #[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceNodeStatus)))]
 pub struct EqualFilterInput<T: InputType> {
     equal_to: Option<T>,
+}
+
+pub type EqualFilterBoolInput = EqualFilterInput<bool>;
+pub type EqualFilterStringInput = EqualFilterInput<String>;
+pub type EqualFilterNumberInput = EqualFilterInput<i32>;
+
+impl<T> From<EqualFilterInput<T>> for EqualFilter<T>
+where
+    T: InputType,
+{
+    fn from(input: EqualFilterInput<T>) -> Self {
+        EqualFilter {
+            equal_to: input.equal_to,
+            equal_any: None,
+        }
+    }
 }
 
 impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
