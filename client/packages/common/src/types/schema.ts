@@ -876,7 +876,7 @@ export type InvoiceQuery = {
   __typename?: 'Queries';
   invoice:
     | {
-        __typename?: 'InvoiceNode';
+        __typename: 'InvoiceNode';
         id: string;
         comment?: string | null | undefined;
         confirmedDatetime?: any | null | undefined;
@@ -896,20 +896,29 @@ export type InvoiceQuery = {
         theirReference?: string | null | undefined;
         type: InvoiceNodeType;
         lines:
-          | { __typename?: 'ConnectorError' }
           | {
-              __typename?: 'InvoiceLineConnector';
+              __typename: 'ConnectorError';
+              error:
+                | {
+                    __typename: 'DatabaseError';
+                    description: string;
+                    fullError: string;
+                  }
+                | { __typename?: 'PaginationError'; description: string };
+            }
+          | {
+              __typename: 'InvoiceLineConnector';
               totalCount: number;
               nodes: Array<{
-                __typename?: 'InvoiceLineNode';
+                __typename: 'InvoiceLineNode';
                 batch?: string | null | undefined;
                 costPricePerPack: number;
                 expiryDate?: any | null | undefined;
                 id: string;
                 itemCode: string;
+                itemUnit: string;
                 itemId: string;
                 itemName: string;
-                itemUnit: string;
                 numberOfPacks: number;
                 packSize: number;
                 sellPricePerPack: number;
@@ -931,8 +940,12 @@ export type InvoiceQuery = {
     | {
         __typename: 'NodeError';
         error:
-          | { __typename?: 'DatabaseError'; description: string }
-          | { __typename?: 'RecordNotFound'; description: string };
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
       };
 };
 
@@ -1127,7 +1140,24 @@ export type ItemsQuery = {
 export const InvoiceDocument = gql`
   query invoice($id: String!) {
     invoice(id: $id) {
+      __typename
+      ... on NodeError {
+        __typename
+        error {
+          description
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+        }
+      }
       ... on InvoiceNode {
+        __typename
         id
         comment
         confirmedDatetime
@@ -1142,16 +1172,29 @@ export const InvoiceDocument = gql`
         hold
         color
         lines {
+          ... on ConnectorError {
+            __typename
+            error {
+              description
+              ... on DatabaseError {
+                __typename
+                description
+                fullError
+              }
+            }
+          }
           ... on InvoiceLineConnector {
+            __typename
             nodes {
+              __typename
               batch
               costPricePerPack
               expiryDate
               id
               itemCode
+              itemUnit
               itemId
               itemName
-              itemUnit
               numberOfPacks
               packSize
               sellPricePerPack
@@ -1166,16 +1209,16 @@ export const InvoiceDocument = gql`
           ... on NodeError {
             __typename
             error {
-              ... on RecordNotFound {
-                __typename
-                description
-              }
+              description
               ... on DatabaseError {
                 __typename
                 description
                 fullError
               }
-              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
             }
           }
           ... on InvoicePricingNode {
@@ -1186,12 +1229,6 @@ export const InvoiceDocument = gql`
         status
         theirReference
         type
-      }
-      ... on NodeError {
-        __typename
-        error {
-          description
-        }
       }
     }
   }

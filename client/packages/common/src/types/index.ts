@@ -69,9 +69,7 @@ export interface InvoiceLine extends DomainObject {
 
   batch?: string | null;
 
-  stockLine?: StockLine | null;
-
-  location?: string;
+  location?: string | null;
   comment?: string;
 }
 
