@@ -3,7 +3,10 @@ import {
   CircularProgress,
   Paper,
   Box,
-  styled,
+  Grid,
+  LocaleKey,
+  Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 const Loading = () => (
@@ -13,22 +16,27 @@ const Loading = () => (
 );
 
 interface WidgetProps {
-  children: JSX.Element | JSX.Element[];
   height?: number | string;
+  titleKey: LocaleKey;
 }
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  display: 'flex',
-  overflow: 'auto',
-  height: '240px',
-  flexDirection: 'column',
-}));
+const Widget: React.FC<WidgetProps> = ({
+  children,
+  height = '100%',
+  titleKey,
+}) => {
+  const t = useTranslation();
+  return (
+    <Grid item>
+      <Paper style={{ borderRadius: 16, height, padding: 24, width: 400 }}>
+        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+          {t(titleKey)}
+        </Typography>
 
-const Widget: React.FC<WidgetProps> = props => (
-  <StyledPaper>
-    <React.Suspense fallback={<Loading />}>{props.children}</React.Suspense>
-  </StyledPaper>
-);
+        <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
+      </Paper>
+    </Grid>
+  );
+};
 
 export default Widget;
