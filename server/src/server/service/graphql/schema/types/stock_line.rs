@@ -47,6 +47,9 @@ impl StockLineNode {
     pub async fn on_hold(&self) -> bool {
         self.stock_line.on_hold
     }
+    pub async fn note(&self) -> &Option<String> {
+        &self.stock_line.note
+    }
 }
 
 type CurrentConnector = Connector<StockLineNode>;
