@@ -11,7 +11,7 @@ describe('HeaderRow', () => {
     sortBy: { key: keyof Item; direction: 'asc' | 'desc' };
   }> = ({ onChangeSortBy, sortBy }) => {
     const [column1, column2] = useColumns(
-      ['name', ['packSize', { sortable: false }]],
+      ['status', ['packSize', { sortable: false }]],
       { onChangeSortBy, sortBy },
       [sortBy]
     );
@@ -40,7 +40,7 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const nameHeader = getByRole('columnheader', { name: /name/i });
+    const nameHeader = getByRole('columnheader', { name: /status/i });
     const packSizeHeader = getByRole('columnheader', { name: /packSize/i });
 
     expect(nameHeader).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const nameHeader = getByRole('button', { name: /name/i });
+    const nameHeader = getByRole('button', { name: /status/i });
     const packSizeHeader = queryByRole('button', { name: /pack size/i });
 
     expect(nameHeader).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const nameHeader = getByRole('button', { name: /name/i });
+    const nameHeader = getByRole('button', { name: /status/i });
 
     userEvent.click(nameHeader);
 
@@ -91,12 +91,14 @@ describe('HeaderRow', () => {
       </TestingProvider>
     );
 
-    const nameHeader = getByRole('button', { name: /name/i });
+    const nameHeader = getByRole('button', { name: /status/i });
 
     userEvent.click(nameHeader);
 
     waitFor(() => {
-      expect(onSortBy).toBeCalledWith(expect.objectContaining({ key: 'name' }));
+      expect(onSortBy).toBeCalledWith(
+        expect.objectContaining({ key: 'status' })
+      );
     });
   });
 });
