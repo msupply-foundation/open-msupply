@@ -41,13 +41,19 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
     api: OmSupplyApi;
   }>(() => createOmSupplyApi(url));
 
-  const setUrl = useCallback((newUrl: string) => {
-    client.setEndpoint(newUrl);
-  }, []);
+  const setUrl = useCallback(
+    (newUrl: string) => {
+      client.setEndpoint(newUrl);
+    },
+    [client]
+  );
 
-  const setHeader = useCallback((key: string, value: string) => {
-    client.setHeader(key, value);
-  }, []);
+  const setHeader = useCallback(
+    (key: string, value: string) => {
+      client.setHeader(key, value);
+    },
+    [client]
+  );
 
   useEffect(() => {
     setApi(createOmSupplyApi(url));
