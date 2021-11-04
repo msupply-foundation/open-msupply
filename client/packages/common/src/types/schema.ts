@@ -402,6 +402,7 @@ export type InvoiceNode = {
   inboundShipmentNumber?: Maybe<Scalars['Int']>;
   invoiceNumber: Scalars['Int'];
   lines: InvoiceLinesResponse;
+  otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
   pickedDatetime?: Maybe<Scalars['DateTime']>;
@@ -593,6 +594,8 @@ export type NameNode = {
   isSupplier: Scalars['Boolean'];
   name: Scalars['String'];
 };
+
+export type NameResponse = NameNode | NodeError;
 
 export enum NameSortFieldInput {
   Code = 'CODE',
@@ -912,6 +915,25 @@ export type InvoiceQuery = {
         status: InvoiceNodeStatus;
         theirReference?: string | null | undefined;
         type: InvoiceNodeType;
+        otherParty:
+          | {
+              __typename: 'NameNode';
+              id: string;
+              name: string;
+              code: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+            }
+          | {
+              __typename: 'NodeError';
+              error:
+                | {
+                    __typename: 'DatabaseError';
+                    description: string;
+                    fullError: string;
+                  }
+                | { __typename: 'RecordNotFound'; description: string };
+            };
         lines:
           | {
               __typename: 'ConnectorError';
@@ -1198,6 +1220,32 @@ export const InvoiceDocument = gql`
         deliveredDatetime
         hold
         color
+        otherParty {
+          __typename
+          ... on NameNode {
+            __typename
+            id
+            name
+            code
+            isCustomer
+            isSupplier
+          }
+          ... on NodeError {
+            __typename
+            error {
+              description
+              ... on DatabaseError {
+                __typename
+                description
+                fullError
+              }
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+            }
+          }
+        }
         lines {
           ... on ConnectorError {
             __typename

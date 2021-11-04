@@ -23,12 +23,5 @@ export const placeholderInvoice: OutboundShipment = {
   shippedDatetime: '',
   pickedDatetime: '',
   deliveredDatetime: '',
-
-  name: {
-    id: '',
-    name: '',
-    code: '',
-    isCustomer: true,
-    isSupplier: false,
-  },
+  otherParty: undefined,
 };

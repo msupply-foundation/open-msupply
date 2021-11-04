@@ -31,6 +31,34 @@ query invoice($id: String!) {
       deliveredDatetime
       hold
       color
+      otherParty {
+        __typename
+        ... on NameNode {
+          __typename
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+
+        ... on NodeError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+      }
+
       lines {
         ... on ConnectorError {
           __typename

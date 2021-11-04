@@ -26,6 +26,7 @@ export interface Item {
 }
 
 export interface Name {
+  __typename?: 'NameNode';
   id: string;
   code: string;
   name: string;
@@ -70,7 +71,7 @@ export interface ResolvedInvoiceLine extends InvoiceLine {
   item: Item;
 }
 
-export interface Invoice extends Omit<InvoiceNode, 'lines'> {
+export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
   totalAfterTax: number;
   pricing: {
     __typename: 'InvoicePricingNode';
@@ -83,7 +84,7 @@ export interface Invoice extends Omit<InvoiceNode, 'lines'> {
 export interface ResolvedInvoice extends Invoice {
   __typename: 'InvoiceNode';
   lines: ListResponse<InvoiceLine>;
-  name: Name;
+  otherParty: Name;
   otherPartyName: string;
 }
 

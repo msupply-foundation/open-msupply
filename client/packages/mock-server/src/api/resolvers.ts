@@ -110,7 +110,7 @@ export const ResolverService = {
         return {
           __typename: 'InvoiceNode',
           ...invoice,
-          name,
+          otherParty: name,
           otherPartyName: name.name,
           lines: resolvedLinesList,
         };
@@ -239,7 +239,7 @@ export const ResolverService = {
       return {
         __typename: 'InvoiceNode',
         ...invoice,
-        name,
+        otherParty: { __typename: 'NameNode', ...name },
         otherPartyName: name.name,
         lines: resolvedLinesList,
       };
