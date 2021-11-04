@@ -58,7 +58,6 @@ const onRead = async ({
 
   const nodes: Item[] = items.nodes.map(item => ({
     ...item,
-    unit: '',
     availableBatches: availableBatchesGuard(item.availableBatches),
   }));
 

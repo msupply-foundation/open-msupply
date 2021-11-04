@@ -332,6 +332,7 @@ query items(
         id
         isVisible
         name
+        unitName
       }
       totalCount
     }
