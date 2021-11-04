@@ -313,6 +313,8 @@ union InvoiceLineResponse = NodeError | InvoiceLineNode
 
 union InvoiceLinesResponse = ConnectorError | InvoiceLineConnector
 
+union NameResponse = NodeError | NameNode
+
 type InvoiceNode {
   id: String!
   otherPartyName: String!
@@ -329,6 +331,7 @@ type InvoiceNode {
   lines: InvoiceLinesResponse!
   pricing: InvoicePriceResponse!
 
+  otherParty: NameResponse!
   draftDatetime: DateTime
   allocatedDatetime: DateTime
   pickedDatetime: DateTime
