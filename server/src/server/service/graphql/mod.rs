@@ -68,8 +68,6 @@ pub fn config(
     }
 }
 
-// TODO remove dead_code macro (for auth_token)
-#[allow(dead_code)]
 pub struct RequestUserData {
     auth_token: Option<String>,
     refresh_token: Option<String>,

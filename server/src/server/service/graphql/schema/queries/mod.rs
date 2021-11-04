@@ -14,6 +14,8 @@ pub struct Queries;
 
 pub mod auth_token;
 pub use self::auth_token::*;
+pub mod logout;
+pub use self::logout::*;
 pub mod refresh_token;
 pub use self::refresh_token::*;
 
@@ -33,6 +35,10 @@ impl Queries {
         #[graphql(desc = "Password")] password: String,
     ) -> AuthTokenResponse {
         auth_token(ctx, &username, &password)
+    }
+
+    pub async fn logout(&self, ctx: &Context<'_>) -> LogoutResponse {
+        logout(ctx)
     }
 
     /// Retrieves a new auth bearer and refresh token
