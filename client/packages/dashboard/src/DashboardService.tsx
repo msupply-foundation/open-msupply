@@ -10,7 +10,7 @@ import { OutboundShipmentsWidget } from './OutboundShipmentsWidget';
 
 const InboundShipmentsWidget = () => (
   <Widget titleKey="app.inbound-shipments">
-    <Grid container justifyContent="flex-start" sx={{ height: '100%' }}>
+    <Grid container justifyContent="flex-start" flex={1}>
       <Grid item>
         <StatsPanel
           titleKey="app.inbound-shipments"
@@ -20,14 +20,21 @@ const InboundShipmentsWidget = () => (
           ]}
         />
       </Grid>
-      <Grid item flex={1} sx={{ verticalAlign: 'bottom' }}>
-        <Grid container>
-          <ButtonWithIcon
-            Icon={<PlusCircleIcon />}
-            labelKey="button.new-inbound-shipment"
-            onClick={() => alert('create')}
-          />
-        </Grid>
+      <Grid
+        item
+        flex={1}
+        container
+        justifyContent="flex-end"
+        alignItems="flex-end"
+      >
+        <ButtonWithIcon
+          disabled
+          variant="contained"
+          color="secondary"
+          Icon={<PlusCircleIcon />}
+          labelKey="button.new-inbound-shipment"
+          onClick={() => alert('create')}
+        />
       </Grid>
     </Grid>
   </Widget>
@@ -39,7 +46,6 @@ const Dashboard: React.FC = () => (
   <Grid
     container
     sx={{ backgroundColor: 'background.toolbar', padding: '32px' }}
-    spacing="22px"
   >
     <InboundShipmentsWidget />
     <OutboundShipmentsWidget />
