@@ -22,7 +22,7 @@ export interface Item extends DomainObject {
   name: string;
   availableQuantity: number;
   availableBatches: StockLine[];
-  unit: string;
+  unitName: string;
 }
 
 export interface StockLine extends DomainObject {

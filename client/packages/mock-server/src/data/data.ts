@@ -152,7 +152,7 @@ export const createInvoiceLines = (
             itemId: item.id,
             itemName: item.name,
             itemCode: item.code,
-            itemUnit: item.unit,
+            itemUnit: item.unitName,
 
             stockLineId: stockLine.id,
             locationDescription: stockLine.locationDescription,
@@ -193,8 +193,7 @@ export const createItems = (
       id: itemId,
       code,
       name,
-      unit: takeRandomElementFrom(units),
-      onHold: faker.datatype.number(10) < 2,
+      unitName: takeRandomElementFrom(units),
       isVisible: faker.datatype.boolean(),
     };
 

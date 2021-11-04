@@ -1,6 +1,7 @@
 import {
   InvoiceLineNode,
   InvoiceNode,
+  ItemNode,
   StockLineNode,
 } from '@openmsupply-client/common/src/types/schema';
 
@@ -16,13 +17,12 @@ export interface Store {
   nameId: string;
 }
 
-export interface Item {
-  id: string;
-  code: string;
-  name: string;
-  isVisible: boolean;
-  unit: string;
-  onHold: boolean;
+export type Item = Omit<ItemNode, 'availableBatches' | 'availableQuantity'>;
+
+export interface ResolvedItem extends Item {
+  __typename: 'ItemNode';
+  availableBatches: { nodes: StockLine[] };
+  availableQuantity: number;
 }
 
 export interface Name {
@@ -32,12 +32,6 @@ export interface Name {
   name: string;
   isCustomer: boolean;
   isSupplier: boolean;
-}
-
-export interface ResolvedItem extends Item {
-  __typename: string;
-  availableBatches: { nodes: StockLine[] };
-  availableQuantity: number;
 }
 
 export interface StockLine extends StockLineNode {

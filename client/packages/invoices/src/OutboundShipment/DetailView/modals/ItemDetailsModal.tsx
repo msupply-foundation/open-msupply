@@ -76,7 +76,6 @@ const listQueryFn = async ({
   if (items.__typename === 'ItemConnector') {
     const itemRows: Item[] = items.nodes.map(item => ({
       ...item,
-      unit: '',
       availableBatches:
         item.availableBatches.__typename === 'StockLineConnector'
           ? item.availableBatches.nodes
@@ -144,7 +143,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         .sort(sortByDisabledThenExpiryDate)
     );
     setValue('code', value?.code || '');
-    setValue('unit', value?.unit || '');
+    setValue('unitName', value?.unitName || '');
     setValue('availableQuantity', value?.availableQuantity || 0);
   };
 
