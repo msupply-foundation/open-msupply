@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use super::token_bucket::TokenBucket;
 
 #[derive(Debug, Serialize, Deserialize)]
-enum Audience {
+pub enum Audience {
     /// Token is for general api usage
     Api,
     /// Token can be used for a token refresh
@@ -21,16 +21,16 @@ const ISSUER: &str = "om-supply-remote-server";
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OmSupplyClaim {
     /// Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-    exp: usize,
+    pub exp: usize,
 
     /// Audience
-    aud: Audience,
+    pub aud: Audience,
     /// Issued at (as UTC timestamp)
-    iat: usize,
+    pub iat: usize,
     /// Issuer
-    iss: String,
+    pub iss: String,
     /// Subject (user id the token refers to)
-    sub: String,
+    pub sub: String,
 }
 
 /// Error for getting a JWT token
