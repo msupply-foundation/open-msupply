@@ -1,3 +1,4 @@
+import { OmSupplyApi } from './../../common/src/api/index';
 import {
   request,
   gql,
@@ -92,17 +93,19 @@ export const nameListQueryFn = async ({
   throw new Error(names.error.description);
 };
 
-export const onRead = async (id: string): Promise<Invoice> => {
-  const result = await api.invoice({ id });
+export const onRead =
+  (api: OmSupplyApi) =>
+  async (id: string): Promise<Invoice> => {
+    const result = await api.invoice({ id });
 
-  const invoice = invoiceGuard(result);
+    const invoice = invoiceGuard(result);
 
-  return {
-    ...invoice,
-    lines: linesGuard(invoice.lines),
-    pricing: pricingGuard(invoice.pricing),
+    return {
+      ...invoice,
+      lines: linesGuard(invoice.lines),
+      pricing: pricingGuard(invoice.pricing),
+    };
   };
-};
 
 export const onUpdate = async (updated: Invoice): Promise<Invoice> => {
   const invoicePatch: Partial<Invoice> = { ...updated };
@@ -118,7 +121,9 @@ interface Api<ReadType, UpdateType> {
   onUpdate: (val: UpdateType) => Promise<ReadType>;
 }
 
-export const OutboundShipmentDetailViewApi: Api<Invoice, OutboundShipment> = {
-  onRead,
+export const getOutboundShipmentDetailViewApi = (
+  api: OmSupplyApi
+): Api<Invoice, OutboundShipment> => ({
+  onRead: onRead(api),
   onUpdate,
-};
+});
