@@ -34,7 +34,7 @@ export interface StockLine extends DomainObject {
   packSize: number;
   sellPricePerPack: number;
   totalNumberOfPacks: number;
-  location?: string | null;
+  locationDescription?: string | null;
   onHold: boolean;
 }
 
@@ -69,7 +69,7 @@ export interface InvoiceLine extends DomainObject {
 
   batch?: string | null;
 
-  location?: string | null;
+  locationDescription?: string | null;
   comment?: string;
 }
 
