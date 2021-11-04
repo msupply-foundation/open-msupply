@@ -44,6 +44,7 @@ table! {
         total_number_of_packs -> Integer,
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
+        note -> Nullable<Text>,
     }
 }
 
@@ -129,6 +130,7 @@ table! {
         sell_price_per_pack -> Double,
         total_after_tax -> Double,
         number_of_packs -> Integer,
+        note -> Nullable<Text>,
     }
 }
 

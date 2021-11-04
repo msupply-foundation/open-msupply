@@ -18,4 +18,5 @@ pub struct InvoiceLineRow {
     pub sell_price_per_pack: f64,
     pub total_after_tax: f64,
     pub number_of_packs: i32,
+    pub note: Option<String>,
 }

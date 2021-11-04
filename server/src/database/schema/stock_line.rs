@@ -16,4 +16,5 @@ pub struct StockLineRow {
     pub total_number_of_packs: i32,
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
+    pub note: Option<String>
 }
