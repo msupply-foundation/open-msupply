@@ -1,22 +1,20 @@
+import { ItemSortFieldInput } from '@openmsupply-client/common/src/types/schema';
 import { Api } from '../api';
 import { ListResponse, Item as ItemType } from '../data/types';
 
 const QueryResolvers = {
   items: (
     _: any,
-    {
-      page = { first: 100, offset: 0 },
-      sort = [{ key: 'NAME', desc: false }],
-    }: {
-      page: { first: number; offset: number };
-      sort: { key: string; desc: boolean }[];
+    vars: {
+      page?: { first?: number; offset?: number };
+      sort: [{ key: ItemSortFieldInput; desc: boolean }];
     }
   ): ListResponse<ItemType> => {
     return Api.ResolverService.list.item({
-      first: page.first,
-      offset: page.offset,
-      desc: sort[0]?.desc ?? false,
-      sort: sort[0]?.key ?? 'NAME',
+      first: vars?.page?.first ?? 20,
+      offset: vars?.page?.offset ?? 0,
+      desc: vars.sort[0]?.desc ?? false,
+      key: vars.sort[0]?.key ?? ItemSortFieldInput.Name,
     });
   },
 };

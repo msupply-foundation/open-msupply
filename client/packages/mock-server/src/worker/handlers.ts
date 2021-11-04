@@ -1,6 +1,11 @@
-import { PaginationOptions, Invoice } from './../data/types';
+import { Invoice } from './../data/types';
 import { graphql, rest } from 'msw';
 import { Api } from '../api';
+import {
+  InvoicesQueryVariables,
+  ItemsQueryVariables,
+  NamesQueryVariables,
+} from '@openmsupply-client/common';
 
 const updateInvoice = graphql.mutation(
   'updateInvoice',
@@ -43,42 +48,22 @@ const deleteInvoice = graphql.mutation(
 
 export const namesList = graphql.query<
   Record<string, unknown>,
-  PaginationOptions & { key: string }
+  NamesQueryVariables
 >('names', (request, response, context) => {
-  const {
-    variables = {
-      first: 50,
-      offset: 0,
-      key: 'NAME',
-      desc: false,
-    },
-  } = request;
+  const { variables } = request;
 
-  const result = Api.ResolverService.list.name('customer', {
-    ...variables,
-    sort: variables.key,
-  });
+  const result = Api.ResolverService.list.name(variables);
 
   return response(context.data({ names: result }));
 });
 
 export const invoiceList = graphql.query<
-  Record<string, unknown>,
-  PaginationOptions & { key: string }
+  Record<string, any>,
+  InvoicesQueryVariables
 >('invoices', (request, response, context) => {
-  const {
-    variables = {
-      first: 50,
-      offset: 0,
-      key: 'STATUS',
-      desc: false,
-    },
-  } = request;
+  const { variables } = request;
 
-  const result = Api.ResolverService.list.invoice({
-    ...variables,
-    sort: variables.key,
-  });
+  const result = Api.ResolverService.list.invoice(variables);
 
   return response(context.data({ invoices: result }));
 });
@@ -111,20 +96,10 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
 
 export const itemList = graphql.query<
   Record<string, unknown>,
-  PaginationOptions & { key: string }
+  ItemsQueryVariables
 >('items', (request, response, context) => {
-  const {
-    variables = {
-      first: 50,
-      offset: 0,
-      key: 'NAME',
-      desc: false,
-    },
-  } = request;
-  const result = Api.ResolverService.list.item({
-    ...variables,
-    sort: variables.key,
-  });
+  const { variables } = request;
+  const result = Api.ResolverService.list.item(variables);
 
   return response(context.data({ items: result }));
 });

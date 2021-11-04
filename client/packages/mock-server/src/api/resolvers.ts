@@ -4,18 +4,67 @@ import {
   ResolvedStockLine,
   ResolvedInvoiceLine,
   Name,
-  PaginationOptions,
   ListResponse,
 } from './../data/types';
 
 import { getSumFn, getDataSorter } from '../utils';
 import { db } from '../data/database';
+import {
+  InvoiceSortFieldInput,
+  InvoicesQueryVariables,
+  ItemsQueryVariables,
+  NamesQueryVariables,
+  ItemSortFieldInput,
+  NameSortFieldInput,
+} from '@openmsupply-client/common/src/types/schema';
 
 const getAvailableQuantity = (itemId: string): number => {
   const stockLines = db.get.stockLines.byItemId(itemId);
   const sumFn = getSumFn('availableNumberOfPacks');
   const quantity = stockLines.reduce(sumFn, 0);
   return quantity;
+};
+
+const getInvoiceSortKey = (key: string) => {
+  switch (key) {
+    case InvoiceSortFieldInput.ConfirmDatetime: {
+      return 'confirmedDatetime';
+    }
+    case InvoiceSortFieldInput.EntryDatetime: {
+      return 'entryDatetime';
+    }
+    case InvoiceSortFieldInput.FinalisedDateTime: {
+      return 'finalisedDatetime';
+    }
+    case InvoiceSortFieldInput.Status:
+    default: {
+      return 'status';
+    }
+  }
+};
+
+const getItemsSortKey = (key: string) => {
+  switch (key) {
+    case ItemSortFieldInput.Code: {
+      return 'code';
+    }
+    case ItemSortFieldInput.Name:
+    default: {
+      return 'name';
+    }
+  }
+};
+
+const getNamesSortKey = (key: string) => {
+  switch (key) {
+    case NameSortFieldInput.Code: {
+      return 'code';
+    }
+    case NameSortFieldInput.Name:
+    default: {
+      return 'name';
+    }
+  }
 };
 
 const createListResponse = <T>(
@@ -60,59 +109,37 @@ export const ResolverService = {
     invoice: ({
       first = 50,
       offset = 0,
-      sort,
+      key,
       desc,
-    }: PaginationOptions): ListResponse<ResolvedInvoice> => {
+    }: InvoicesQueryVariables): ListResponse<ResolvedInvoice> => {
       const invoices = db.get.all.invoice();
 
-      if (sort) {
-        const sortData = getDataSorter(sort as string, desc);
+      if (key) {
+        const sortData = getDataSorter(getInvoiceSortKey(key), !!desc);
         invoices.sort(sortData);
       }
 
-      const paged = invoices.slice(offset, offset + first);
+      const paged = invoices.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
       const data = paged.map(invoice => {
         return ResolverService.byId.invoice(invoice.id);
       });
 
       return createListResponse(invoices.length, data, 'InvoiceConnector');
     },
-    invoiceLine: ({
-      first = 50,
-      offset = 0,
-      sort,
-      desc,
-    }: PaginationOptions): ListResponse<ResolvedInvoiceLine> => {
-      const invoiceLines = db.get.all.invoiceLine();
-
-      if (sort) {
-        const sortData = getDataSorter(sort as string, desc);
-        invoiceLines.sort(sortData);
-      }
-
-      const paged = invoiceLines.slice(offset, offset + first);
-      const data = paged.map(invoice => {
-        return ResolverService.byId.invoiceLine(invoice.id);
-      });
-
-      return createListResponse(invoiceLines.length, data, 'InvoiceConnector');
-    },
     item: ({
       first = 50,
       offset = 0,
-      sort,
+      key,
       desc,
-    }: PaginationOptions): ListResponse<ResolvedItem> => {
+    }: ItemsQueryVariables): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
 
-      const sortKey = sort === 'NAME' ? 'name' : 'code';
-
-      if (sort) {
-        const sortData = getDataSorter(sortKey, desc);
+      if (key) {
+        const sortData = getDataSorter(getItemsSortKey(key), !!desc);
         items.sort(sortData);
       }
 
-      const paged = items.slice(offset, offset + first);
+      const paged = items.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
 
       const data = paged.map(item => {
         return ResolverService.byId.item(item.id);
@@ -121,23 +148,21 @@ export const ResolverService = {
       return createListResponse(items.length, data, 'ItemConnector');
     },
 
-    name: (
-      type: 'customer' | 'supplier',
-      { first = 50, offset = 0, sort, desc }: PaginationOptions
-    ): ListResponse<Name> => {
+    name: ({
+      first = 50,
+      offset = 0,
+      key,
+      desc,
+    }: NamesQueryVariables): ListResponse<Name> => {
       // TODO: Filter customers/suppliers etc
-      const names = db.get.all.name().filter(({ isCustomer }) => {
-        return isCustomer === (type === 'customer');
-      });
+      const names = db.get.all.name().filter(({ isCustomer }) => isCustomer);
 
-      const sortKey = sort === 'NAME' ? 'name' : 'code';
-
-      if (sort) {
-        const sortData = getDataSorter(sortKey, desc);
+      if (key) {
+        const sortData = getDataSorter(getNamesSortKey(key), !!desc);
         names.sort(sortData);
       }
 
-      const paged = names.slice(offset, offset + first);
+      const paged = names.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
 
       return createListResponse(paged.length, paged, 'NameConnector');
     },
