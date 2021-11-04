@@ -1,5 +1,5 @@
+import { OutboundShipment } from './../DetailView/types';
 import {
-  ObjectWithStringKeys,
   InvoicesQuery,
   request,
   gql,
@@ -10,6 +10,7 @@ import {
   GraphQLClient,
   getSdk,
   InvoiceSortFieldInput,
+  InvoicesQueryVariables,
   InvoiceRow,
   InvoicePriceResponse,
 } from '@openmsupply-client/common';
@@ -107,23 +108,10 @@ export const onDelete = async (invoices: InvoiceRow[]) => {
   );
 };
 
-export const onRead = async <T extends ObjectWithStringKeys>(queryParams: {
-  first: number;
-  offset: number;
-  sortBy: SortBy<T>;
-}): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
-  const {
-    first = 20,
-    offset = 0,
-    sortBy = { key: 'TYPE', isDesc: false },
-  } = queryParams;
-
-  const result = await api.invoices({
-    first,
-    offset,
-    key: InvoiceSortFieldInput.Type,
-    desc: sortBy.isDesc,
-  });
+export const onRead = async (
+  queryParams: InvoicesQueryVariables
+): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
+  const result = await api.invoices(queryParams);
 
   const invoices = invoicesGuard(result);
 
@@ -147,11 +135,41 @@ export const onUpdate = async (updated: InvoiceRow): Promise<InvoiceRow> => {
   return updateInvoice;
 };
 
+const getSortKey = (
+  sortBy: SortBy<OutboundShipment>
+): InvoiceSortFieldInput => {
+  switch (sortBy.key) {
+    case 'confirmedDatetime': {
+      return InvoiceSortFieldInput.ConfirmDatetime;
+    }
+    case 'entryDatetime': {
+      return InvoiceSortFieldInput.EntryDatetime;
+    }
+    case 'finalisedDateTime': {
+      return InvoiceSortFieldInput.FinalisedDateTime;
+    }
+    case 'status':
+    default: {
+      return InvoiceSortFieldInput.Status;
+    }
+  }
+};
+
+const getSortDesc = (sortBy: SortBy<OutboundShipment>): boolean => {
+  return !!sortBy.isDesc;
+};
+
 export const OutboundShipmentListViewApi: ListApi<InvoiceRow> = {
-  onRead:
-    ({ first, offset, sortBy }) =>
-    () =>
-      onRead({ first, offset, sortBy }),
+  onRead: ({ first, offset, sortBy }) => {
+    const queryParams: InvoicesQueryVariables = {
+      first,
+      offset,
+      key: getSortKey(sortBy),
+      desc: getSortDesc(sortBy),
+    };
+
+    return () => onRead(queryParams);
+  },
   onDelete,
   onUpdate,
   onCreate,

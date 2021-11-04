@@ -86,7 +86,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onChangePage,
     pagination,
     invalidate,
-  } = useListData({ key: 'TYPE' }, 'invoice', OutboundShipmentListViewApi);
+  } = useListData({ key: 'status' }, 'invoice', OutboundShipmentListViewApi);
 
   const onColorUpdate = (row: InvoiceRow, color: Color) => {
     onUpdate({ ...row, color: color.hex });

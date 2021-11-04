@@ -19,7 +19,7 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData({ key: 'NAME' }, ['items', 'list'], ItemListViewApi);
+  } = useListData({ key: 'name' }, ['items', 'list'], ItemListViewApi);
   const navigate = useNavigate();
 
   const columns = useColumns<Item>(['name', 'code'], {
