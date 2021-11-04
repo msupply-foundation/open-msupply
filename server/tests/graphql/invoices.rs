@@ -11,9 +11,9 @@ mod graphql {
     use serde_json::json;
 
     #[actix_rt::test]
-    async fn test_graphql_invoices_query() {
+    async fn test_graphql_invoices_query_pricing() {
         let (_, connection, settings) = test_db::setup_all(
-            "omsupply-database-gql-invoices-query",
+            "omsupply-database-gql-invoices-query-pricing",
             MockDataInserts::all(),
         )
         .await;
@@ -59,6 +59,19 @@ mod graphql {
          }
         );
         assert_gql_query(&settings, query, &None, &expected).await;
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_invoices_query_filters() {
+        let (_, connection, settings) = test_db::setup_all(
+            "omsupply-database-gql-invoices-query-filters",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let invoices = InvoiceQueryRepository::new(&connection)
+            .query(Pagination::new(), None, None)
+            .unwrap();
 
         // filter query
         let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
@@ -108,6 +121,91 @@ mod graphql {
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
+        assert_gql_query(&settings, &query, &variables, &expected).await;
+    }
+
+    macro_rules! sort_test {
+        ($key:expr, $field:ident, $gql_field:expr, $invoices:expr, $desc:expr) => {{
+            let query = r#"query Invoices($sort: [InvoiceSortInput]) {
+                invoices(sort: $sort){
+                    ... on InvoiceConnector {
+                        nodes {
+                            $gql_field 
+                        }
+                    }
+                }
+            }"#.replace("$gql_field", $gql_field);
+
+            let variables = Some(json!({
+                "sort": [{
+                  "key": $key,
+                  "desc": $desc,
+                }]
+              }));
+
+              if $desc {
+                $invoices.sort_by(|b, a| a.$field.cmp(&b.$field));
+              } else {
+                $invoices.sort_by(|a, b| a.$field.cmp(&b.$field));
+              }
+
+              let expected = json!({
+                "invoices": {
+                    "nodes": $invoices.iter()
+                        .map(|invoice| json!({
+                            $gql_field: invoice.$field,
+                        })).collect::<Vec<serde_json::Value>>(),
+                },
+            });
+
+              (query, variables, expected)
+        }};
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_invoices_query_sort() {
+        let (_, connection, settings) = test_db::setup_all(
+            "omsupply-database-gql-invoices-query-sort",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let mut invoices = InvoiceQueryRepository::new(&connection)
+            .query(Pagination::new(), None, None)
+            .unwrap();
+        // invoice number
+        let (query, variables, expected) = sort_test!(
+            "INVOICE_NUMBER",
+            invoice_number,
+            "invoiceNumber",
+            invoices,
+            true
+        );
+        assert_gql_query(&settings, &query, &variables, &expected).await;
+        let (query, variables, expected) = sort_test!(
+            "INVOICE_NUMBER",
+            invoice_number,
+            "invoiceNumber",
+            invoices,
+            false
+        );
+        assert_gql_query(&settings, &query, &variables, &expected).await;
+        // other party name
+        let (query, variables, expected) = sort_test!(
+            "OTHER_PARTY_NAME",
+            other_party_name,
+            "otherPartyName",
+            invoices,
+            true
+        );
+        assert_gql_query(&settings, &query, &variables, &expected).await;
+        let (query, variables, expected) = sort_test!(
+            "OTHER_PARTY_NAME",
+            other_party_name,
+            "otherPartyName",
+            invoices,
+            false
+        );
         assert_gql_query(&settings, &query, &variables, &expected).await;
     }
 }
