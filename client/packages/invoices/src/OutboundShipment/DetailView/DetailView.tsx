@@ -10,9 +10,10 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   getRowExpandColumn,
+  useOmSupplyApi,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction } from './reducer';
-import { OutboundShipmentDetailViewApi } from '../../api';
+import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
@@ -25,11 +26,12 @@ import { SidePanel } from './SidePanel';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
+  const { api } = useOmSupplyApi();
 
   const { draft, save, dispatch, state } = useDocument(
     ['invoice', id],
     reducer,
-    OutboundShipmentDetailViewApi
+    getOutboundShipmentDetailViewApi(api)
   );
 
   const onChangeSortBy = (column: Column<InvoiceLineRow>) => {
