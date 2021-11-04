@@ -6,12 +6,14 @@ use async_graphql::{Context, EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
 
 use self::schema::{Mutations, Queries, Schema};
+use crate::server::data::auth::AuthData;
 use crate::server::data::{LoaderRegistry, RepositoryRegistry};
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 trait ContextExt {
     fn get_repository<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
+    fn get_auth_data(&self) -> &AuthData;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -21,6 +23,10 @@ impl<'a> ContextExt for Context<'a> {
 
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T {
         self.data_unchecked::<Data<LoaderRegistry>>().get::<T>()
+    }
+
+    fn get_auth_data(&self) -> &AuthData {
+        self.data_unchecked()
     }
 }
 

@@ -1,4 +1,5 @@
 mod actor;
+pub mod auth;
 mod loader;
 mod repository;
 
