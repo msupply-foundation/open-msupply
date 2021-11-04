@@ -18,7 +18,7 @@ pub use invoice_line::{InvoiceLineLoader, InvoiceLineStatsLoader};
 pub use invoice_line_query::InvoiceLineQueryLoader;
 pub use item::ItemLoader;
 pub use loader::get_loaders;
-pub use name::NameLoader;
+pub use name::NameByIdLoader;
 pub use requisition::RequisitionLoader;
 pub use requisition_line::RequisitionLineLoader;
 pub use stock_line::{StockLineByIdLoader, StockLineByItemIdLoader};
