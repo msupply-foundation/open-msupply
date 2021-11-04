@@ -7,6 +7,8 @@ import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes } from 'react-router';
 import { TableProvider, createTableStore } from '../ui/layout/tables';
+import { OmSupplyApiProvider } from '..';
+import { Environment } from '@openmsupply-client/config';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,13 +41,15 @@ export const TestingProvider: FC<TestingProviderProps> = ({
   locale = 'en',
 }) => (
   <QueryClientProvider client={queryClient}>
-    <SnackbarProvider maxSnack={3}>
-      <IntlTestProvider locale={locale}>
-        <TableProvider createStore={createTableStore}>
-          <AppThemeProvider>{children}</AppThemeProvider>
-        </TableProvider>
-      </IntlTestProvider>
-    </SnackbarProvider>
+    <OmSupplyApiProvider url={Environment.API_URL}>
+      <SnackbarProvider maxSnack={3}>
+        <IntlTestProvider locale={locale}>
+          <TableProvider createStore={createTableStore}>
+            <AppThemeProvider>{children}</AppThemeProvider>
+          </TableProvider>
+        </IntlTestProvider>
+      </SnackbarProvider>
+    </OmSupplyApiProvider>
   </QueryClientProvider>
 );
 

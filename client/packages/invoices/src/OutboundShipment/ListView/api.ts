@@ -7,17 +7,13 @@ import {
   SortBy,
   ListApi,
   Invoice,
-  GraphQLClient,
-  getSdk,
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
   InvoiceRow,
   InvoicePriceResponse,
+  OmSupplyApi,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-
-const client = new GraphQLClient(Environment.API_URL);
-const api = getSdk(client);
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
@@ -108,20 +104,22 @@ export const onDelete = async (invoices: InvoiceRow[]) => {
   );
 };
 
-export const onRead = async (
-  queryParams: InvoicesQueryVariables
-): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
-  const result = await api.invoices(queryParams);
+export const onRead =
+  (api: OmSupplyApi) =>
+  async (
+    queryParams: InvoicesQueryVariables
+  ): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
+    const result = await api.invoices(queryParams);
 
-  const invoices = invoicesGuard(result);
+    const invoices = invoicesGuard(result);
 
-  const nodes = invoices.nodes.map(invoice => ({
-    ...invoice,
-    pricing: pricingGuard(invoice.pricing),
-  }));
+    const nodes = invoices.nodes.map(invoice => ({
+      ...invoice,
+      pricing: pricingGuard(invoice.pricing),
+    }));
 
-  return { nodes, totalCount: invoices.totalCount };
-};
+    return { nodes, totalCount: invoices.totalCount };
+  };
 
 export const onUpdate = async (updated: InvoiceRow): Promise<InvoiceRow> => {
   const invoicePatch: Partial<Invoice> = { ...updated };
@@ -171,7 +169,9 @@ const getSortDesc = (sortBy: SortBy<OutboundShipment>): boolean => {
   return !!sortBy.isDesc;
 };
 
-export const OutboundShipmentListViewApi: ListApi<InvoiceRow> = {
+export const getOutboundShipmentListViewApi = (
+  omSupplyApi: OmSupplyApi
+): ListApi<InvoiceRow> => ({
   onRead: ({ first, offset, sortBy }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
@@ -180,9 +180,10 @@ export const OutboundShipmentListViewApi: ListApi<InvoiceRow> = {
       desc: getSortDesc(sortBy),
     };
 
-    return () => onRead(queryParams);
+    const onReadFn = onRead(omSupplyApi);
+    return () => onReadFn(queryParams);
   },
   onDelete,
   onUpdate,
   onCreate,
-};
+});
