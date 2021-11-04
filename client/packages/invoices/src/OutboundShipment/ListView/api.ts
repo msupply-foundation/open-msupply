@@ -138,9 +138,6 @@ export const onUpdate = async (updated: InvoiceRow): Promise<InvoiceRow> => {
 const getSortKey = (
   sortBy: SortBy<OutboundShipment>
 ): InvoiceSortFieldInput => {
-  console.log('-------------------------------------------');
-  console.log('sortBy.key', sortBy.key);
-  console.log('-------------------------------------------');
   switch (sortBy.key) {
     case 'confirmedDatetime': {
       return InvoiceSortFieldInput.ConfirmDatetime;
