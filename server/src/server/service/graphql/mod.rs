@@ -1,9 +1,12 @@
 pub mod schema;
 
+use actix_web::cookie::Cookie;
+use actix_web::HttpRequest;
 use actix_web::{guard::fn_guard, web::Data, HttpResponse, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{Context, EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
+use reqwest::header::COOKIE;
 
 use self::schema::{Mutations, Queries, Schema};
 use crate::server::data::auth::AuthData;
@@ -26,7 +29,7 @@ impl<'a> ContextExt for Context<'a> {
     }
 
     fn get_auth_data(&self) -> &AuthData {
-        self.data_unchecked()
+        self.data_unchecked::<Data<AuthData>>()
     }
 }
 
@@ -39,11 +42,13 @@ pub fn build_schema() -> Builder {
 pub fn config(
     repository_registry: Data<RepositoryRegistry>,
     loader_registry: Data<LoaderRegistry>,
+    auth_data: Data<AuthData>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let schema = build_schema()
             .data(repository_registry)
             .data(loader_registry)
+            .data(auth_data)
             .finish();
         cfg.service(
             actix_web::web::scope("/graphql")
@@ -63,12 +68,50 @@ pub fn config(
     }
 }
 
-async fn graphql(schema: Data<Schema>, req: Request) -> Response {
-    schema.execute(req.into_inner()).await.into()
+// TODO remove dead_code macro (for auth_token)
+#[allow(dead_code)]
+pub struct RequestUserData {
+    auth_token: Option<String>,
+    refresh_token: Option<String>,
+}
+
+fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
+    let headers = http_req.headers();
+    // retrieve auth token
+    let auth_token = headers.get("Authorization").and_then(|header_value| {
+        header_value.to_str().ok().map(|header| {
+            let jwt_start_index = "Bearer ".len();
+            header[jwt_start_index..header.len()].to_string()
+        })
+    });
+
+    // retrieve refresh token
+    let refresh_token = headers.get(COOKIE).and_then(|header_value| {
+        header_value
+            .to_str()
+            .ok()
+            .and_then(|header| Cookie::parse(header).ok())
+            .map(|cookie| cookie.value().to_owned())
+    });
+
+    RequestUserData {
+        auth_token,
+        refresh_token,
+    }
+}
+
+async fn graphql(schema: Data<Schema>, http_req: HttpRequest, req: Request) -> Response {
+    let user_data = auth_data_from_request(&http_req);
+    let query = req.into_inner().data(user_data);
+    schema.execute(query).await.into()
 }
 
 async fn playground() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(playground_source(GraphQLPlaygroundConfig::new("/graphql"))))
+        .body(playground_source(
+            GraphQLPlaygroundConfig::new("/graphql")
+                // allow to set cookies
+                .with_setting("request.credentials", "same-origin"),
+        )))
 }

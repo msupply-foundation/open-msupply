@@ -65,13 +65,13 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(repository_registry_data_app.clone())
             .app_data(actor_registry_data.clone())
-            .app_data(auth_data.clone())
             .wrap(logger_middleware())
             .wrap(Cors::permissive())
             .wrap(compress_middleware())
             .configure(graphql_config(
                 repository_registry_data_app.clone(),
                 loader_registry_data.clone(),
+                auth_data.clone(),
             ))
             .configure(rest_config)
     })
