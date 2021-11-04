@@ -3,7 +3,6 @@ import {
   CircularProgress,
   Paper,
   Box,
-  Grid,
   LocaleKey,
   Typography,
   useTranslation,
@@ -27,15 +26,23 @@ const Widget: React.FC<WidgetProps> = ({
 }) => {
   const t = useTranslation();
   return (
-    <Grid item>
-      <Paper style={{ borderRadius: 16, height, padding: 24, width: 400 }}>
-        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
-          {t(titleKey)}
-        </Typography>
+    <Paper
+      style={{
+        borderRadius: 16,
+        height,
+        padding: 24,
+        width: 400,
+        display: 'flex',
+        flexDirection: 'column',
+        margin: 11,
+      }}
+    >
+      <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+        {t(titleKey)}
+      </Typography>
 
-        <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
-      </Paper>
-    </Grid>
+      <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
+    </Paper>
   );
 };
 

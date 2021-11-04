@@ -45,25 +45,28 @@ export const OutboundShipmentsWidget: React.FC = () => {
         }}
       />
 
-      <Widget titleKey="app.inbound-shipments">
-        <Grid container justifyContent="flex-start" sx={{ height: '100%' }}>
+      <Widget titleKey="app.outbound-shipments">
+        <Grid container justifyContent="flex-start" flex={1}>
           <Grid item>
             <StatsPanel
-              titleKey="app.inbound-shipments"
-              stats={[
-                { labelKey: 'label.today', value: 5 },
-                { labelKey: 'label.this-week', value: 53 },
-              ]}
+              titleKey="heading.shipments-to-be-picked"
+              stats={[{ labelKey: 'label.today', value: 5 }]}
             />
           </Grid>
-          <Grid item flex={1} sx={{ verticalAlign: 'bottom' }}>
-            <Grid container>
-              <ButtonWithIcon
-                Icon={<PlusCircleIcon />}
-                labelKey="button.new-inbound-shipment"
-                onClick={() => setOpen(true)}
-              />
-            </Grid>
+          <Grid
+            item
+            flex={1}
+            container
+            justifyContent="flex-end"
+            alignItems="flex-end"
+          >
+            <ButtonWithIcon
+              variant="contained"
+              color="secondary"
+              Icon={<PlusCircleIcon />}
+              labelKey="button.new-outbound-shipment"
+              onClick={() => setOpen(true)}
+            />
           </Grid>
         </Grid>
       </Widget>
