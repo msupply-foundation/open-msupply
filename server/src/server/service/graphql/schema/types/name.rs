@@ -5,7 +5,7 @@ use crate::domain::{
 
 use async_graphql::*;
 
-use super::{Connector, ConnectorError, SimpleStringFilterInput, SortInput};
+use super::{Connector, ConnectorError, NodeError, SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "crate::domain::name::NameSortField")]
@@ -73,6 +73,12 @@ type CurrentConnector = Connector<NameNode>;
 pub enum NamesResponse {
     Error(ConnectorError),
     Response(CurrentConnector),
+}
+
+#[derive(Union)]
+pub enum NameResponse {
+    Error(NodeError),
+    Response(NameNode),
 }
 
 impl From<Name> for NameNode {
