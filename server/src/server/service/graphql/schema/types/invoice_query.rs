@@ -25,6 +25,9 @@ use super::{
 #[graphql(remote = "crate::domain::invoice::InvoiceSortField")]
 pub enum InvoiceSortFieldInput {
     Type,
+    OtherPartyName,
+    InvoiceNumber,
+    Comment,
     Status,
     EntryDatetime,
     ConfirmDatetime,

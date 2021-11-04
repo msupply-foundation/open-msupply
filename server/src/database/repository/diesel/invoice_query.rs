@@ -149,6 +149,27 @@ impl<'a> InvoiceQueryRepository<'a> {
                         query = query.order(invoice_dsl::finalised_datetime.asc());
                     }
                 }
+                InvoiceSortField::OtherPartyName => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(invoice_dsl::name_id.desc());
+                    } else {
+                        query = query.order(invoice_dsl::name_id.asc());
+                    }
+                }
+                InvoiceSortField::InvoiceNumber => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(invoice_dsl::invoice_number.desc());
+                    } else {
+                        query = query.order(invoice_dsl::invoice_number.asc());
+                    }
+                }
+                InvoiceSortField::Comment => {
+                    if sort.desc.unwrap_or(false) {
+                        query = query.order(invoice_dsl::comment.desc());
+                    } else {
+                        query = query.order(invoice_dsl::comment.asc());
+                    }
+                }
             }
         } else {
             query = query.order(invoice_dsl::id.asc())
