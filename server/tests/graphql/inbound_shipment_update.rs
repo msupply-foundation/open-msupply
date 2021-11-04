@@ -354,6 +354,7 @@ mod graphql {
                 sell_price_per_pack,
                 total_after_tax: _,
                 number_of_packs,
+                note,
             } = self;
 
             let stock_line = &other.0;
@@ -367,6 +368,7 @@ mod graphql {
                 && *sell_price_per_pack == stock_line.sell_price_per_pack
                 && *number_of_packs == stock_line.available_number_of_packs
                 && *number_of_packs == stock_line.total_number_of_packs
+                && *note == stock_line.note
         }
     }
 

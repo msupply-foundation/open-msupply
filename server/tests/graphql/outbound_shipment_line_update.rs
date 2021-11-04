@@ -469,6 +469,7 @@ mod graphql {
                 available_number_of_packs: _,
                 total_number_of_packs: _,
                 on_hold: _,
+                note,
             } = self;
 
             let line = &other.0;
@@ -479,6 +480,7 @@ mod graphql {
                 && *pack_size == line.pack_size
                 && *cost_price_per_pack == line.cost_price_per_pack
                 && *sell_price_per_pack == line.sell_price_per_pack
+                && *note == line.note
             //    && *expiry_date == line.expiry_date
             // TODO test fails if expiry_date in stock_line is None
             // for some reason expiry_date is not set to None (NULL) in postgres
