@@ -36,6 +36,18 @@ const getInvoiceSortKey = (key: string) => {
     case InvoiceSortFieldInput.FinalisedDateTime: {
       return 'finalisedDatetime';
     }
+    case InvoiceSortFieldInput.Comment: {
+      return 'comment';
+    }
+    case InvoiceSortFieldInput.TotalAfterTax: {
+      return 'totalAfterTax';
+    }
+    case InvoiceSortFieldInput.OtherPartyName: {
+      return 'otherPartyName';
+    }
+    case InvoiceSortFieldInput.InvoiceNumber: {
+      return 'invoiceNumber';
+    }
     case InvoiceSortFieldInput.Status:
     default: {
       return 'status';
@@ -114,15 +126,15 @@ export const ResolverService = {
     }: InvoicesQueryVariables): ListResponse<ResolvedInvoice> => {
       const invoices = db.get.all.invoice();
 
-      if (key) {
-        const sortData = getDataSorter(getInvoiceSortKey(key), !!desc);
-        invoices.sort(sortData);
-      }
-
       const paged = invoices.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
       const data = paged.map(invoice => {
         return ResolverService.byId.invoice(invoice.id);
       });
+
+      if (key) {
+        const sortData = getDataSorter(getInvoiceSortKey(key), !!desc);
+        data.sort(sortData);
+      }
 
       return createListResponse(invoices.length, data, 'InvoiceConnector');
     },

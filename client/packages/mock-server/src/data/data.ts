@@ -250,7 +250,7 @@ const shippingMethods = ['Air', 'Sea', 'Road', 'Rail'];
 export const createInvoice = (
   id: string,
   invoiceNumber: number,
-  otherPartyId: string,
+  otherParty: Name,
   seeded?: Partial<Invoice>
 ): Invoice => {
   const confirmed = faker.date.past(1);
@@ -265,12 +265,13 @@ export const createInvoice = (
 
   return {
     id,
-    otherPartyId,
+    otherPartyId: otherParty.id,
     invoiceNumber,
     status,
     entryDatetime: entered.toISOString(),
     confirmedDatetime: confirmed.toISOString(),
     finalisedDatetime: null,
+    totalAfterTax,
     pricing: {
       __typename: 'InvoicePricingNode',
       totalAfterTax,
@@ -288,7 +289,7 @@ export const createInvoice = (
     deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
     enteredBy: randomName(),
     donorName: randomName(),
-    otherPartyName: randomName(),
+    otherPartyName: otherParty.name,
     purchaseOrderNumber: randomInteger({ min: 100, max: 999 }),
     requisitionNumber: randomInteger({ min: 100, max: 999 }),
     goodsReceiptNumber: randomInteger({ min: 100, max: 999 }),
@@ -308,7 +309,7 @@ export const createInvoices = (
     .map(() => {
       return Array.from({ length: numberToCreate }).map((_, i) => {
         const name = takeRandomElementFrom(customers);
-        const invoice = createInvoice(faker.datatype.uuid(), i, name.id);
+        const invoice = createInvoice(faker.datatype.uuid(), i, name);
 
         return invoice;
       });

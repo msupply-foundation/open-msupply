@@ -86,7 +86,11 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onChangePage,
     pagination,
     invalidate,
-  } = useListData({ key: 'status' }, 'invoice', OutboundShipmentListViewApi);
+  } = useListData(
+    { key: 'otherPartyName' },
+    'invoice',
+    OutboundShipmentListViewApi
+  );
 
   const onColorUpdate = (row: InvoiceRow, color: Color) => {
     onUpdate({ ...row, color: color.hex });
@@ -106,7 +110,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       'entryDatetime',
       'confirmedDatetime',
       'comment',
-      ['total', { accessor: invoice => invoice.pricing.totalAfterTax }],
+      ['totalAfterTax', { accessor: invoice => invoice.pricing.totalAfterTax }],
       'selection',
     ],
     { onChangeSortBy, sortBy },
