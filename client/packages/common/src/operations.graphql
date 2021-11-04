@@ -285,6 +285,7 @@ query items(
       __typename
       nodes {
         __typename
+        availableQuantity
         availableBatches {
           __typename
           ... on ConnectorError {

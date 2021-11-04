@@ -433,6 +433,7 @@ type ItemNode {
   unitName: String!
   isVisible: Boolean!
   availableBatches: StockLinesResponse!
+  availableQuantity: Float!
 }
 
 enum ItemSortFieldInput {

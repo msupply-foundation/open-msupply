@@ -44,7 +44,6 @@ const onRead = async ({
   nodes: Item[];
   totalCount: number;
 }> => {
-  // TODO: Need to add a `sortByKey` to the Column type
   const key =
     sortBy.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
 
@@ -59,7 +58,6 @@ const onRead = async ({
 
   const nodes: Item[] = items.nodes.map(item => ({
     ...item,
-    availableQuantity: 0,
     unit: '',
     availableBatches: availableBatchesGuard(item.availableBatches),
   }));
