@@ -62,6 +62,7 @@ impl InvoiceFilter {
     pub fn match_id(mut self, id: &str) -> Self {
         self.id = Some(EqualFilter {
             equal_to: Some(id.to_owned()),
+            equal_any: None,
         });
 
         self
@@ -70,6 +71,7 @@ impl InvoiceFilter {
     pub fn match_inbound_shipment(mut self) -> Self {
         self.r#type = Some(EqualFilter {
             equal_to: Some(InvoiceType::InboundShipment),
+            equal_any: None,
         });
 
         self
@@ -78,6 +80,7 @@ impl InvoiceFilter {
     pub fn match_outbound_shipment(mut self) -> Self {
         self.r#type = Some(EqualFilter {
             equal_to: Some(InvoiceType::OutboundShipment),
+            equal_any: None,
         });
 
         self
@@ -86,6 +89,7 @@ impl InvoiceFilter {
     pub fn match_draft(mut self) -> Self {
         self.status = Some(EqualFilter {
             equal_to: Some(InvoiceStatus::Draft),
+            equal_any: None,
         });
 
         self
@@ -94,6 +98,7 @@ impl InvoiceFilter {
     pub fn match_confirmed(mut self) -> Self {
         self.status = Some(EqualFilter {
             equal_to: Some(InvoiceStatus::Confirmed),
+            equal_any: None,
         });
 
         self
@@ -102,6 +107,7 @@ impl InvoiceFilter {
     pub fn match_finalised(mut self) -> Self {
         self.status = Some(EqualFilter {
             equal_to: Some(InvoiceStatus::Finalised),
+            equal_any: None,
         });
 
         self

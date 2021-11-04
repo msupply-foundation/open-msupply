@@ -410,6 +410,7 @@ mod tests {
                     // query invisible rows
                     is_visible: Some(EqualFilter {
                         equal_to: Some(false),
+                        equal_any: None,
                     }),
                 }),
                 None,
@@ -426,6 +427,7 @@ mod tests {
                     // query invisible rows
                     is_visible: Some(EqualFilter {
                         equal_to: Some(true),
+                        equal_any: None,
                     }),
                 }),
                 None,
