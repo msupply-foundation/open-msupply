@@ -372,7 +372,8 @@ export type InvoiceLineNode = {
   itemId: Scalars['String'];
   itemName: Scalars['String'];
   itemUnit: Scalars['String'];
-  location?: Maybe<Scalars['String']>;
+  locationDescription?: Maybe<Scalars['String']>;
+  note?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
@@ -390,20 +391,28 @@ export type InvoiceNode = {
   comment?: Maybe<Scalars['String']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']>;
   deliveredDatetime?: Maybe<Scalars['DateTime']>;
+  donorName: Scalars['String'];
   draftDatetime?: Maybe<Scalars['DateTime']>;
+  enteredBy: Scalars['String'];
   entryDatetime: Scalars['DateTime'];
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
+  goodsReceiptNumber?: Maybe<Scalars['Int']>;
   hold: Scalars['Boolean'];
   id: Scalars['String'];
+  inboundShipmentNumber?: Maybe<Scalars['Int']>;
   invoiceNumber: Scalars['Int'];
   lines: InvoiceLinesResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
   pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: InvoicePriceResponse;
+  purchaseOrderNumber?: Maybe<Scalars['Int']>;
+  requisitionNumber?: Maybe<Scalars['Int']>;
   shippedDatetime?: Maybe<Scalars['DateTime']>;
+  shippingMethod?: Maybe<Scalars['String']>;
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
+  transportReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
 };
 
@@ -426,6 +435,8 @@ export type InvoicePriceResponse = InvoicePricingNode | NodeError;
 
 export type InvoicePricingNode = {
   __typename?: 'InvoicePricingNode';
+  subtotal: Scalars['Float'];
+  taxPercentage: Scalars['Float'];
   totalAfterTax: Scalars['Float'];
 };
 
@@ -472,6 +483,7 @@ export type ItemNode = {
   id: Scalars['String'];
   isVisible: Scalars['Boolean'];
   name: Scalars['String'];
+  unitName: Scalars['String'];
 };
 
 export enum ItemSortFieldInput {
@@ -764,7 +776,8 @@ export type StockLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId: Scalars['String'];
-  location?: Maybe<Scalars['String']>;
+  locationDescription?: Maybe<Scalars['String']>;
+  note?: Maybe<Scalars['String']>;
   onHold: Scalars['Boolean'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
@@ -925,7 +938,12 @@ export type InvoiceQuery = {
               }>;
             };
         pricing:
-          | { __typename: 'InvoicePricingNode'; totalAfterTax: number }
+          | {
+              __typename: 'InvoicePricingNode';
+              totalAfterTax: number;
+              subtotal: number;
+              taxPercentage: number;
+            }
           | {
               __typename: 'NodeError';
               error:
@@ -996,7 +1014,12 @@ export type InvoicesQuery = {
           theirReference?: string | null | undefined;
           type: InvoiceNodeType;
           pricing:
-            | { __typename: 'InvoicePricingNode'; totalAfterTax: number }
+            | {
+                __typename: 'InvoicePricingNode';
+                totalAfterTax: number;
+                subtotal: number;
+                taxPercentage: number;
+              }
             | {
                 __typename: 'NodeError';
                 error:
@@ -1224,6 +1247,8 @@ export const InvoiceDocument = gql`
           ... on InvoicePricingNode {
             __typename
             totalAfterTax
+            subtotal
+            taxPercentage
           }
         }
         status
@@ -1299,6 +1324,8 @@ export const InvoicesDocument = gql`
             ... on InvoicePricingNode {
               __typename
               totalAfterTax
+              subtotal
+              taxPercentage
             }
           }
         }
