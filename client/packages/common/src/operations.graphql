@@ -85,6 +85,7 @@ query invoice($id: String!) {
             itemName
             numberOfPacks
             packSize
+            locationDescription
             sellPricePerPack
           }
           totalCount

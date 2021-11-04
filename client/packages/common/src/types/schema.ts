@@ -960,6 +960,7 @@ export type InvoiceQuery = {
                 itemName: string;
                 numberOfPacks: number;
                 packSize: number;
+                locationDescription?: string | null | undefined;
                 sellPricePerPack: number;
               }>;
             };
@@ -1272,6 +1273,7 @@ export const InvoiceDocument = gql`
               itemName
               numberOfPacks
               packSize
+              locationDescription
               sellPricePerPack
             }
             totalCount
