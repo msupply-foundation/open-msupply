@@ -16,9 +16,9 @@ use dataloader::DataLoader;
 use serde::Serialize;
 
 use super::{
-    Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterStringInput,
-    ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError, NodeErrorInterface,
-    SimpleStringFilterInput, SortInput,
+    Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterNumberInput,
+    EqualFilterStringInput, ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError,
+    NodeErrorInterface, SimpleStringFilterInput, SortInput,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -35,6 +35,7 @@ pub type InvoiceSortInput = SortInput<InvoiceSortFieldInput>;
 
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
+    pub invoice_number: Option<EqualFilterNumberInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterInput<InvoiceNodeType>>,
@@ -50,6 +51,7 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
     fn from(f: InvoiceFilterInput) -> Self {
         InvoiceFilter {
             id: None,
+            invoice_number: f.invoice_number.map(EqualFilter::from),
             name_id: f.name_id.map(EqualFilter::from),
             store_id: f.store_id.map(EqualFilter::from),
             r#type: f.r#type.map(EqualFilter::from),
