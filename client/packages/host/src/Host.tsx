@@ -23,8 +23,9 @@ import {
   styled,
   DetailPanel,
   AppFooter,
+  OmSupplyApiProvider,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import AppDrawer from './AppDrawer';
 import AppBar from './AppBar';
@@ -182,106 +183,113 @@ const Host: FC = () => {
     <IntlProvider locale={locale}>
       <ErrorBoundary Fallback={GenericErrorFallback}>
         <QueryClientProvider client={queryClient}>
-          <AppThemeProvider>
-            <BrowserRouter>
-              <CommandK>
-                <SnackbarProvider maxSnack={3}>
-                  <Viewport>
-                    <Box display="flex" height="100%">
-                      <AppDrawer />
-                      <Box
-                        flex={1}
-                        display="flex"
-                        flexDirection="column"
-                        overflow="hidden"
-                      >
-                        <AppBar />
-                        <Box display="flex" flex={1} overflow="hidden">
-                          <React.Suspense fallback={'Loading'}>
-                            <Routes>
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Dashboard)
-                                  .addWildCard()
-                                  .build()}
-                                element={<DashboardService />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Catalogue)
-                                  .addWildCard()
-                                  .build()}
-                                element={<CatalogueContainer />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Distribution)
-                                  .addWildCard()
-                                  .build()}
-                                element={<DistributionContainer />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Suppliers)
-                                  .addWildCard()
-                                  .build()}
-                                element={
-                                  <Heading locale={locale}>suppliers</Heading>
-                                }
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Stock)
-                                  .addWildCard()
-                                  .build()}
-                                element={
-                                  <Heading locale={locale}>stock</Heading>
-                                }
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Tools)
-                                  .addWildCard()
-                                  .build()}
-                                element={
-                                  <Heading locale={locale}>tools</Heading>
-                                }
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Reports)
-                                  .addWildCard()
-                                  .build()}
-                                element={
-                                  <Heading locale={locale}>reports</Heading>
-                                }
-                              />
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Messages)
-                                  .addWildCard()
-                                  .build()}
-                                element={
-                                  <Heading locale={locale}>messages</Heading>
-                                }
-                              />
+          <OmSupplyApiProvider url={Environment.API_URL}>
+            <AppThemeProvider>
+              <BrowserRouter>
+                <CommandK>
+                  <SnackbarProvider maxSnack={3}>
+                    <Viewport>
+                      <Box display="flex" height="100%">
+                        <AppDrawer />
+                        <Box
+                          flex={1}
+                          display="flex"
+                          flexDirection="column"
+                          overflow="hidden"
+                        >
+                          <AppBar />
+                          <Box display="flex" flex={1} overflow="hidden">
+                            <React.Suspense fallback={'Loading'}>
+                              <Routes>
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Dashboard)
+                                    .addWildCard()
+                                    .build()}
+                                  element={<DashboardService />}
+                                />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Catalogue)
+                                    .addWildCard()
+                                    .build()}
+                                  element={<CatalogueContainer />}
+                                />
+                                <Route
+                                  path={RouteBuilder.create(
+                                    AppRoute.Distribution
+                                  )
+                                    .addWildCard()
+                                    .build()}
+                                  element={<DistributionContainer />}
+                                />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Suppliers)
+                                    .addWildCard()
+                                    .build()}
+                                  element={
+                                    <Heading locale={locale}>suppliers</Heading>
+                                  }
+                                />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Stock)
+                                    .addWildCard()
+                                    .build()}
+                                  element={
+                                    <Heading locale={locale}>stock</Heading>
+                                  }
+                                />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Tools)
+                                    .addWildCard()
+                                    .build()}
+                                  element={
+                                    <Heading locale={locale}>tools</Heading>
+                                  }
+                                />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Reports)
+                                    .addWildCard()
+                                    .build()}
+                                  element={
+                                    <Heading locale={locale}>reports</Heading>
+                                  }
+                                />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Messages)
+                                    .addWildCard()
+                                    .build()}
+                                  element={
+                                    <Heading locale={locale}>messages</Heading>
+                                  }
+                                />
 
-                              <Route
-                                path={RouteBuilder.create(AppRoute.Admin)
-                                  .addWildCard()
-                                  .build()}
-                                element={<LanguageMenu />}
-                              />
+                                <Route
+                                  path={RouteBuilder.create(AppRoute.Admin)
+                                    .addWildCard()
+                                    .build()}
+                                  element={<LanguageMenu />}
+                                />
 
-                              <Route path="/" element={<DashboardService />} />
+                                <Route
+                                  path="/"
+                                  element={<DashboardService />}
+                                />
 
-                              <Route path="*" element={<NotFound />} />
-                            </Routes>
-                          </React.Suspense>
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
+                            </React.Suspense>
+                          </Box>
+                          <AppFooter />
+                          <AppFooterPortal SessionDetails={<Footer />} />
                         </Box>
-                        <AppFooter />
-                        <AppFooterPortal SessionDetails={<Footer />} />
+                        <DetailPanel />
                       </Box>
-                      <DetailPanel />
-                    </Box>
-                  </Viewport>
-                </SnackbarProvider>
-              </CommandK>
-            </BrowserRouter>
-          </AppThemeProvider>
-          <ReactQueryDevtools initialIsOpen />
+                    </Viewport>
+                  </SnackbarProvider>
+                </CommandK>
+              </BrowserRouter>
+            </AppThemeProvider>
+            <ReactQueryDevtools initialIsOpen />
+          </OmSupplyApiProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </IntlProvider>

@@ -1,18 +1,13 @@
-import { Environment } from '@openmsupply-client/config';
 import {
   Item,
   ListApi,
   SortBy,
-  getSdk,
-  GraphQLClient,
   ItemSortFieldInput,
   ItemsQuery,
   StockLineConnector,
   ConnectorError,
+  OmSupplyApi,
 } from '@openmsupply-client/common';
-
-const client = new GraphQLClient(Environment.API_URL);
-const api = getSdk(client);
 
 const itemsGuard = (itemsQuery: ItemsQuery) => {
   if (itemsQuery.items.__typename === 'ItemConnector') {
@@ -32,47 +27,49 @@ const availableBatchesGuard = (
   throw new Error(availableBatches.error.description);
 };
 
-const onRead = async ({
-  first,
-  offset,
-  sortBy,
-}: {
-  first: number;
-  offset: number;
-  sortBy: SortBy<Item>;
-}): Promise<{
-  nodes: Item[];
-  totalCount: number;
-}> => {
-  // TODO: Need to add a `sortByKey` to the Column type
-  const key =
-    sortBy.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
-
-  const result = await api.items({
+const onRead =
+  (api: OmSupplyApi) =>
+  async ({
     first,
     offset,
-    key,
-    desc: sortBy.isDesc,
-  });
+    sortBy,
+  }: {
+    first: number;
+    offset: number;
+    sortBy: SortBy<Item>;
+  }): Promise<{
+    nodes: Item[];
+    totalCount: number;
+  }> => {
+    // TODO: Need to add a `sortByKey` to the Column type
+    const key =
+      sortBy.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
 
-  const items = itemsGuard(result);
+    const result = await api.items({
+      first,
+      offset,
+      key,
+      desc: sortBy.isDesc,
+    });
 
-  const nodes: Item[] = items.nodes.map(item => ({
-    ...item,
-    availableQuantity: 0,
-    unit: '',
-    availableBatches: availableBatchesGuard(item.availableBatches),
-  }));
+    const items = itemsGuard(result);
 
-  return { totalCount: items.totalCount, nodes };
-};
+    const nodes: Item[] = items.nodes.map(item => ({
+      ...item,
+      availableQuantity: 0,
+      unit: '',
+      availableBatches: availableBatchesGuard(item.availableBatches),
+    }));
 
-export const ItemListViewApi: ListApi<Item> = {
+    return { totalCount: items.totalCount, nodes };
+  };
+
+export const getItemListViewApi = (api: OmSupplyApi): ListApi<Item> => ({
   onRead:
     ({ first, offset, sortBy }) =>
     () =>
-      onRead({ first, offset, sortBy }),
+      onRead(api)({ first, offset, sortBy }),
   onDelete: () => null,
   onUpdate: () => null,
   onCreate: () => null,
-};
+});

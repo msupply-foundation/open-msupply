@@ -7,10 +7,13 @@ import {
   Name,
   useColumns,
   createTableStore,
+  useOmSupplyApi,
 } from '@openmsupply-client/common';
-import { CustomerListViewApi } from './api';
+import { getCustomerListViewApi } from './api';
 
 export const ListView: FC = () => {
+  const navigate = useNavigate();
+  const { api } = useOmSupplyApi();
   const {
     totalCount,
     data,
@@ -19,8 +22,11 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData({ key: 'name' }, ['names', 'list'], CustomerListViewApi);
-  const navigate = useNavigate();
+  } = useListData(
+    { key: 'name' },
+    ['names', 'list'],
+    getCustomerListViewApi(api)
+  );
 
   const columns = useColumns<Name>(['name', 'code'], {
     sortBy,
