@@ -443,10 +443,14 @@ export type InvoicePricingNode = {
 export type InvoiceResponse = InvoiceNode | NodeError;
 
 export enum InvoiceSortFieldInput {
+  Comment = 'COMMENT',
   ConfirmDatetime = 'CONFIRM_DATETIME',
   EntryDatetime = 'ENTRY_DATETIME',
   FinalisedDateTime = 'FINALISED_DATE_TIME',
+  InvoiceNumber = 'INVOICE_NUMBER',
+  OtherPartyName = 'OTHER_PARTY_NAME',
   Status = 'STATUS',
+  TotalAfterTax = 'TOTAL_AFTER_TAX',
   Type = 'TYPE',
 }
 

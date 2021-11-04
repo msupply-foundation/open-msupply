@@ -71,6 +71,7 @@ export interface ResolvedInvoiceLine extends InvoiceLine {
 }
 
 export interface Invoice extends Omit<InvoiceNode, 'lines'> {
+  totalAfterTax: number;
   pricing: {
     __typename: 'InvoicePricingNode';
     totalAfterTax: number;
