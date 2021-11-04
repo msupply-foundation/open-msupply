@@ -21,6 +21,7 @@ pub struct AuthToken {
 
 #[Object]
 impl AuthToken {
+    /// Bearer token
     pub async fn token(&self) -> &str {
         &self.pair.token
     }
