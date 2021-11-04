@@ -1,4 +1,3 @@
-import { Environment } from '@openmsupply-client/config';
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,61 +6,10 @@ import {
   useListData,
   Name,
   useColumns,
-  ListApi,
   createTableStore,
-  SortBy,
-  getSdk,
-  GraphQLClient,
   NameSortFieldInput,
 } from '@openmsupply-client/common';
-
-const client = new GraphQLClient(Environment.API_URL);
-const api = getSdk(client);
-
-const listQueryFn = async ({
-  first,
-  offset,
-  sortBy,
-}: {
-  first: number;
-  offset: number;
-  sortBy: SortBy<Name>;
-}): Promise<{
-  nodes: Name[];
-  totalCount: number;
-}> => {
-  const key =
-    sortBy.key === 'name' ? NameSortFieldInput.Name : NameSortFieldInput.Code;
-
-  const { names } = await api.names({
-    first,
-    offset,
-    key,
-    desc: sortBy.isDesc,
-  });
-
-  if (names.__typename === 'NameConnector') {
-    return names;
-  }
-
-  throw new Error(names.error.description);
-};
-
-const Api: ListApi<Name> = {
-  onQuery:
-    ({ first, offset, sortBy }) =>
-    () =>
-      listQueryFn({ first, offset, sortBy }),
-  // TODO: Mutations!
-  onDelete: async () => {},
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  onUpdate: async () => {},
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  onCreate: async () => {},
-};
+import { CustomerListViewApi } from './api';
 
 export const ListView: FC = () => {
   const {
@@ -72,7 +20,11 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData({ key: NameSortFieldInput.Name }, ['names', 'list'], Api);
+  } = useListData(
+    { key: NameSortFieldInput.Name },
+    ['names', 'list'],
+    CustomerListViewApi
+  );
   const navigate = useNavigate();
 
   const columns = useColumns<Name>(['name', 'code'], {

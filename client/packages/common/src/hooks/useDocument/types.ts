@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 
 export interface Api<ServerData, Document> {
-  onRead: () => Promise<ServerData>;
+  onRead: (id: string) => Promise<ServerData>;
   onUpdate: (val: Document) => Promise<ServerData>;
 }
 
