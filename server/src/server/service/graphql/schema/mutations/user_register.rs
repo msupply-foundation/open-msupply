@@ -63,12 +63,7 @@ pub fn user_register(ctx: &Context<'_>, input: UserRegisterInput) -> UserRegiste
             })
         }
     };
-    let auth_data = ctx.get_auth_data();
-    let service = UserAccountService::new(
-        &con,
-        &auth_data.token_bucket,
-        auth_data.auth_token_secret.as_bytes(),
-    );
+    let service = UserAccountService::new(&con);
     let user = match service.create_user(CreateUserAccount {
         username: input.username,
         password: input.password,
