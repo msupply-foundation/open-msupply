@@ -12,7 +12,7 @@ import {
 import { getItemListViewApi } from './api';
 
 export const ListView: FC = () => {
-  const omSupplyApi = useOmSupplyApi();
+  const { api } = useOmSupplyApi();
   const {
     totalCount,
     data,
@@ -21,11 +21,7 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData(
-    { key: 'name' },
-    ['items', 'list'],
-    getItemListViewApi(omSupplyApi)
-  );
+  } = useListData({ key: 'name' }, ['items', 'list'], getItemListViewApi(api));
   const navigate = useNavigate();
 
   const columns = useColumns<Item>(['name', 'code'], {
