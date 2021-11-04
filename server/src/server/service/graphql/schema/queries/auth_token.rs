@@ -2,6 +2,7 @@ use async_graphql::*;
 use log::error;
 use reqwest::header::SET_COOKIE;
 
+use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::ContextExt;
 use crate::{
     database::repository::StorageConnectionManager,
@@ -34,14 +35,6 @@ pub struct InvalidCredentials;
 impl InvalidCredentials {
     pub async fn description(&self) -> &'static str {
         "Invalid credentials"
-    }
-}
-
-pub struct InternalError;
-#[Object]
-impl InternalError {
-    pub async fn description(&self) -> &'static str {
-        "Internal Error"
     }
 }
 
@@ -108,11 +101,15 @@ pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthToke
                     }
                     JWTIssuingError::InvalidCredentialsBackend(e) => {
                         error!("{}", e);
-                        AuthTokenErrorInterface::InternalError(InternalError)
+                        AuthTokenErrorInterface::InternalError(InternalError(
+                            "Failed to read credentials".to_string(),
+                        ))
                     }
                     JWTIssuingError::ConcurrencyLockError(e) => {
                         error!("{}", e);
-                        AuthTokenErrorInterface::InternalError(InternalError)
+                        AuthTokenErrorInterface::InternalError(InternalError(
+                            "Lock error".to_string(),
+                        ))
                     }
                 },
             })
