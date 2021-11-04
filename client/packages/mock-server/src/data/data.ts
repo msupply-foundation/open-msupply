@@ -38,6 +38,12 @@ const units = [
 
 const packSizes = [1, 1, 1, 1, 10, 100];
 
+const locations = Array.from({ length: 50 }).map(() => ({
+  id: faker.datatype.uuid(),
+  description: `${alphaString(1)}${faker.datatype.number(9)}`,
+  code: `${alphaString(3)}${faker.datatype.number({ min: 100, max: 999 })}`,
+}));
+
 export const getStockLinesForItem = (
   item: Item,
   stockLines: StockLine[] = StockLineData
@@ -86,6 +92,7 @@ export const createStockLines = (
           expiryDate: faker.date.future(1.5).toISOString(),
           batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
           locationDescription: `${alphaString(1)}${faker.datatype.number(9)}`,
+          location: takeRandomElementFrom(locations),
           storeId: store.id,
           availableNumberOfPacks,
           totalNumberOfPacks:
@@ -149,6 +156,7 @@ export const createInvoiceLines = (
 
             stockLineId: stockLine.id,
             locationDescription: stockLine.locationDescription,
+            location: stockLine.location,
 
             batch: stockLine.batch ?? '',
             expiryDate: stockLine.expiryDate,
