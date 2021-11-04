@@ -85,6 +85,8 @@ export interface InvoiceRow extends DomainObject {
   otherPartyName: string;
   pricing: {
     totalAfterTax: number;
+    subtotal: number;
+    taxPercentage: number;
   };
 }
 
@@ -109,6 +111,8 @@ export interface Invoice extends DomainObject {
   deliveredDatetime?: string;
   pricing: {
     totalAfterTax: number;
+    subtotal: number;
+    taxPercentage: number;
   };
 }
 

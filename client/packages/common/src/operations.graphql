@@ -84,6 +84,8 @@ query invoice($id: String!) {
         ... on InvoicePricingNode {
           __typename
           totalAfterTax
+          subtotal
+          taxPercentage
         }
       }
       status
@@ -163,6 +165,8 @@ query invoices(
           ... on InvoicePricingNode {
             __typename
             totalAfterTax
+            subtotal
+            taxPercentage
           }
         }
       }
