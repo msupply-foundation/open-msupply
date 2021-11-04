@@ -62,6 +62,7 @@ pub fn generate_batch(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
+        note,
         ..
     }: InvoiceLineRow,
     keep_existing_batch: bool,
@@ -85,6 +86,7 @@ pub fn generate_batch(
         total_number_of_packs: number_of_packs,
         expiry_date,
         on_hold: false,
+        note,
     };
 
     Ok(batch)

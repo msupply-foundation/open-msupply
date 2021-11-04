@@ -95,6 +95,7 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        note,
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
@@ -112,6 +113,7 @@ fn generate_line(
         item_code,
         stock_line_id: Some(stock_line_id),
         total_after_tax,
+        note,
     };
 
     update_line.number_of_packs = input
