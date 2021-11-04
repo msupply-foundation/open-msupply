@@ -13,6 +13,7 @@ pub struct RefreshToken {
 
 #[Object]
 impl RefreshToken {
+    /// New Bearer token
     pub async fn token(&self) -> &str {
         &self.pair.token
     }
