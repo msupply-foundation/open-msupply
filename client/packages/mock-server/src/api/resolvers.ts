@@ -7,7 +7,7 @@ import {
   ListResponse,
 } from './../data/types';
 
-import { getSumFn, getDataSorter } from '../utils';
+import { getDataSorter } from '../utils';
 import { db } from '../data/database';
 import {
   InvoiceSortFieldInput,
@@ -20,9 +20,14 @@ import {
 
 const getAvailableQuantity = (itemId: string): number => {
   const stockLines = db.get.stockLines.byItemId(itemId);
-  const sumFn = getSumFn('availableNumberOfPacks');
-  const quantity = stockLines.reduce(sumFn, 0);
-  return quantity;
+  const availableQuantity = stockLines.reduce(
+    (sum, { availableNumberOfPacks, packSize }) => {
+      return sum + availableNumberOfPacks * packSize;
+    },
+    0
+  );
+
+  return availableQuantity;
 };
 
 const getInvoiceSortKey = (key: string) => {
