@@ -14,7 +14,6 @@ import {
   useOmSupplyApi,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentListViewApi } from './api';
-
 import { CustomerSearch } from './CustomerSearch';
 import { getStatusTranslation } from '../utils';
 import { Toolbar } from './Toolbar';
@@ -22,7 +21,7 @@ import { AppBarButtons } from './AppBarButtons';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
-  const omSupplyApi = useOmSupplyApi();
+  const { api } = useOmSupplyApi();
 
   const {
     totalCount,
@@ -39,7 +38,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   } = useListData(
     { key: 'status' },
     'invoice',
-    getOutboundShipmentListViewApi(omSupplyApi)
+    getOutboundShipmentListViewApi(api)
   );
 
   const onColorUpdate = (row: InvoiceRow, color: Color) => {

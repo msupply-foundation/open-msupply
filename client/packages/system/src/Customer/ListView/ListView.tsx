@@ -13,7 +13,7 @@ import { getCustomerListViewApi } from './api';
 
 export const ListView: FC = () => {
   const navigate = useNavigate();
-  const omSupplyApi = useOmSupplyApi();
+  const { api } = useOmSupplyApi();
   const {
     totalCount,
     data,
@@ -25,7 +25,7 @@ export const ListView: FC = () => {
   } = useListData(
     { key: 'name' },
     ['names', 'list'],
-    getCustomerListViewApi(omSupplyApi)
+    getCustomerListViewApi(api)
   );
 
   const columns = useColumns<Name>(['name', 'code'], {

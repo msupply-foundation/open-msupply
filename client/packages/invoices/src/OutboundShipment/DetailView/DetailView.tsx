@@ -26,12 +26,12 @@ import { SidePanel } from './SidePanel';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
-  const omSupplyApi = useOmSupplyApi();
+  const { api } = useOmSupplyApi();
 
   const { draft, save, dispatch, state } = useDocument(
     ['invoice', id],
     reducer,
-    getOutboundShipmentDetailViewApi(omSupplyApi)
+    getOutboundShipmentDetailViewApi(api)
   );
 
   const onChangeSortBy = (column: Column<InvoiceLineRow>) => {
