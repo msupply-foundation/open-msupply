@@ -22,5 +22,6 @@ export * from './intl';
 export * from './styles';
 export * from './localStorage';
 export * from './types';
+export * from './api';
 
 export { zustand, UseStore, SetState };
