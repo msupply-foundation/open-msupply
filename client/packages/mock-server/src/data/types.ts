@@ -1,3 +1,9 @@
+import {
+  InvoiceLineNode,
+  InvoiceNode,
+  StockLineNode,
+} from '@openmsupply-client/common/src/types/schema';
+
 export interface ListResponse<T> {
   __typename: string;
   totalCount: number;
@@ -33,76 +39,48 @@ export interface ResolvedItem extends Item {
   availableQuantity: number;
 }
 
-export interface StockLine {
-  id: string;
-  expiryDate: string;
-  batch: string;
-  name: string;
-  availableNumberOfPacks: number;
-  totalNumberOfPacks: number;
-  packSize: number;
-  itemId: string;
-  storeId: string;
-  costPricePerPack: number;
-  sellPricePerPack: number;
-  onHold: boolean;
-  location: string;
-}
+export type StockLine = StockLineNode;
 
 export interface ResolvedStockLine extends StockLine {
-  __typename: string;
+  __typename: 'StockLineNode';
   item: Item;
 }
 
-export interface InvoiceLine {
+export interface InvoiceLine extends InvoiceLineNode {
   id: string;
   itemName: string;
-  itemCode?: string;
-  itemUnit?: string;
+  itemCode: string;
+  itemUnit: string;
   quantity: number;
-  batchName?: string;
+  batch?: string;
   expiryDate: string;
   stockLineId: string;
   itemId: string;
   invoiceId: string;
   costPricePerPack: number;
   sellPricePerPack: number;
-  totalAfterTax: number;
   numberOfPacks: number;
   packSize: number;
+  note?: string;
 }
 
 export interface ResolvedInvoiceLine extends InvoiceLine {
-  __typename: string;
+  __typename: 'InvoiceLineNode';
   stockLine: StockLine;
   item: Item;
 }
 
-export interface Invoice {
-  id: string;
-  color: string;
-  comment: string;
-  status: string;
-  type: string;
-  entryDatetime: string;
-  confirmedDatetime: string;
-  finalisedDatetime: string | null;
-  invoiceNumber: number;
-  otherPartyId: string;
-  storeId: string;
-  hold: boolean;
-
-  draftDatetime?: string;
-  allocatedDatetime?: string;
-  pickedDatetime?: string;
-  shippedDatetime?: string;
-  deliveredDatetime?: string;
-
-  pricing: { __typename: string; totalAfterTax: string };
+export interface Invoice extends Omit<InvoiceNode, 'lines'> {
+  pricing: {
+    __typename: 'InvoicePricingNode';
+    totalAfterTax: number;
+    taxPercentage: number;
+    subtotal: number;
+  };
 }
 
 export interface ResolvedInvoice extends Invoice {
-  __typename: string;
+  __typename: 'InvoiceNode';
   lines: ListResponse<InvoiceLine>;
   name: Name;
   otherPartyName: string;

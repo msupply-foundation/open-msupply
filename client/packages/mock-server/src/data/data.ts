@@ -1,3 +1,4 @@
+import { randomFloat, randomName } from './../utils';
 /* eslint-disable prefer-const */
 import { Store, StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import {
@@ -17,6 +18,10 @@ import {
 import { items } from './items';
 import { comments } from './comments';
 import { names } from './names';
+import {
+  InvoiceNodeStatus,
+  InvoiceNodeType,
+} from '@openmsupply-client/common/src/types/schema';
 
 const units = [
   'Tablet',
@@ -75,13 +80,12 @@ export const createStockLines = (
           2
         );
 
-        const stockLine = {
+        const stockLine: StockLine = {
           id: `${itemId}-${store.id}-${i++}`,
-          name: `${itemId}-${i++}`,
           packSize: takeRandomElementFrom(packSizes),
           expiryDate: faker.date.future(1.5).toISOString(),
           batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
-          location: `${alphaString(1)}${faker.datatype.number(9)}`,
+          locationDescription: `${alphaString(1)}${faker.datatype.number(9)}`,
           storeId: store.id,
           availableNumberOfPacks,
           totalNumberOfPacks:
@@ -90,7 +94,8 @@ export const createStockLines = (
           costPricePerPack,
           sellPricePerPack,
           onHold: faker.datatype.number(10) < 2,
-        } as StockLine;
+          note: faker.commerce.productDescription(),
+        };
 
         quantityToUse = quantityToUse - availableNumberOfPacks;
 
@@ -134,7 +139,7 @@ export const createInvoiceLines = (
             2
           );
 
-          const invoiceLine = {
+          const invoiceLine: InvoiceLine = {
             id: `${faker.datatype.uuid()}`,
             invoiceId: invoice.id,
             itemId: item.id,
@@ -143,18 +148,18 @@ export const createInvoiceLines = (
             itemUnit: item.unit,
 
             stockLineId: stockLine.id,
-            location: stockLine.location,
+            locationDescription: stockLine.locationDescription,
 
-            batch: stockLine.batch,
+            batch: stockLine.batch ?? '',
             expiryDate: stockLine.expiryDate,
 
             costPricePerPack,
             sellPricePerPack,
-            totalAfterTax: sellPricePerPack * numberOfPacks,
             quantity: numberOfPacks,
             numberOfPacks,
             packSize: takeRandomElementFrom(packSizes),
-          } as InvoiceLine;
+            note: stockLine.note ?? '',
+          };
 
           stockLine.availableNumberOfPacks =
             (stockLine.availableNumberOfPacks as number) - numberOfPacks;
@@ -189,7 +194,13 @@ export const createItems = (
   });
 };
 
-const statuses = ['DRAFT', 'ALLOCATED', 'PICKED', 'SHIPPED', 'DELIVERED'];
+const statuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.Draft,
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+];
 
 const createStatusLog = (status: string, entered: Date) => {
   const statusIdx = statuses.findIndex(s => status === s);
@@ -234,11 +245,12 @@ const createStatusLog = (status: string, entered: Date) => {
   return statusTimes;
 };
 
+const shippingMethods = ['Air', 'Sea', 'Road', 'Rail'];
+
 export const createInvoice = (
   id: string,
   invoiceNumber: number,
   otherPartyId: string,
-  storeId: string,
   seeded?: Partial<Invoice>
 ): Invoice => {
   const confirmed = faker.date.past(1);
@@ -246,6 +258,10 @@ export const createInvoice = (
 
   const status = takeRandomElementFrom(statuses);
   const statusTimes = createStatusLog(status, entered);
+
+  const taxPercentage = randomFloat(10, 40);
+  const subtotal = randomFloat(100, 1000);
+  const totalAfterTax = subtotal * (1 + taxPercentage / 100);
 
   return {
     id,
@@ -257,18 +273,28 @@ export const createInvoice = (
     finalisedDatetime: null,
     pricing: {
       __typename: 'InvoicePricingNode',
-      totalAfterTax: faker.commerce.price(),
+      totalAfterTax,
+      subtotal,
+      taxPercentage,
     },
     color: 'grey',
-    type: 'CUSTOMER_INVOICE',
+    type: InvoiceNodeType.CustomerInvoice,
     comment: takeRandomElementFrom(comments),
     hold: false,
-    storeId,
     draftDatetime: statusTimes.draftDatetime?.toISOString(),
     allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
     pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
     shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
     deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
+    enteredBy: randomName(),
+    donorName: randomName(),
+    otherPartyName: randomName(),
+    purchaseOrderNumber: randomInteger({ min: 100, max: 999 }),
+    requisitionNumber: randomInteger({ min: 100, max: 999 }),
+    goodsReceiptNumber: randomInteger({ min: 100, max: 999 }),
+    inboundShipmentNumber: randomInteger({ min: 100, max: 999 }),
+    shippingMethod: takeRandomElementFrom(shippingMethods),
+    transportReference: 'Whats a transport reference?',
     ...seeded,
   };
 };
@@ -279,15 +305,10 @@ export const createInvoices = (
   numberToCreate = randomInteger({ min: 1, max: 100 })
 ): Invoice[] => {
   const invoices = stores
-    .map(store => {
+    .map(() => {
       return Array.from({ length: numberToCreate }).map((_, i) => {
         const name = takeRandomElementFrom(customers);
-        const invoice = createInvoice(
-          faker.datatype.uuid(),
-          i,
-          name.id,
-          store.id
-        );
+        const invoice = createInvoice(faker.datatype.uuid(), i, name.id);
 
         return invoice;
       });
