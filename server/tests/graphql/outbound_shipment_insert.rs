@@ -82,7 +82,7 @@ mod graphql {
             "insertOutboundShipment": {
               "error": {
                 "__typename": "ForeignKeyError",
-                "key": "OTHER_PARTY_ID"
+                "key": "otherPartyId"
               }
             }
           }
