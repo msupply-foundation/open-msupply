@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
+import { Name } from '@openmsupply-client/common';
 import {
   Autocomplete,
-  Name,
   defaultOptionMapper,
   getDefaultOptionRenderer,
-} from '@openmsupply-client/common';
+} from '@openmsupply-client/common/src/ui/components/inputs/Autocomplete';
 import { useNames } from '../../hooks';
 
 const filterOptions = {
@@ -15,7 +15,7 @@ const filterOptions = {
 interface NameSearchInputProps {
   onChange: (name: Name) => void;
   width?: number;
-  value: Name;
+  value: Name | null;
   disabled?: boolean;
 }
 
@@ -31,10 +31,12 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
     <Autocomplete
       disabled={disabled}
       clearable={false}
-      value={{
-        ...value,
-        label: value.name,
-      }}
+      value={
+        value && {
+          ...value,
+          label: value.name,
+        }
+      }
       filterOptionConfig={filterOptions}
       loading={isLoading}
       onChange={(_, name) => name && onChange(name)}
