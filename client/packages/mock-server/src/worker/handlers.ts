@@ -3,7 +3,7 @@ import { graphql, rest } from 'msw';
 import { Api } from '../api';
 import {
   InvoicesQueryVariables,
-  ItemsQueryVariables,
+  ItemsListViewQueryVariables,
   NamesQueryVariables,
 } from '@openmsupply-client/common';
 
@@ -94,10 +94,20 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
   }
 );
 
-export const itemList = graphql.query<
+export const itemsWithStockLines = graphql.query<
   Record<string, unknown>,
-  ItemsQueryVariables
->('items', (request, response, context) => {
+  ItemsListViewQueryVariables
+>('itemsWithStockLines', (request, response, context) => {
+  const { variables } = request;
+  const result = Api.ResolverService.list.item(variables);
+
+  return response(context.data({ items: result }));
+});
+
+export const itemsListView = graphql.query<
+  Record<string, unknown>,
+  ItemsListViewQueryVariables
+>('itemsListView', (request, response, context) => {
   const { variables } = request;
   const result = Api.ResolverService.list.item(variables);
 
@@ -179,6 +189,7 @@ export const handlers = [
   serverError,
   insertInvoice,
   namesList,
-  itemList,
+  itemsListView,
+  itemsWithStockLines,
   batchMutationHandler,
 ];

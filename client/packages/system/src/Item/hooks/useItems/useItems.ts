@@ -1,14 +1,14 @@
 import { ItemSortFieldInput } from '@openmsupply-client/common/src/types/schema';
 import {
   useOmSupplyApi,
-  ItemsQuery,
+  ItemsWithStockLinesQuery,
   Item,
   StockLineConnector,
   ConnectorError,
 } from '@openmsupply-client/common';
 import { useQuery, UseQueryResult } from 'react-query';
 
-const itemsGuard = (itemsQuery: ItemsQuery) => {
+const itemsGuard = (itemsQuery: ItemsWithStockLinesQuery) => {
   if (itemsQuery.items.__typename === 'ItemConnector') {
     return itemsQuery.items;
   } else {
@@ -34,7 +34,9 @@ export const useItems = (): UseQueryResult<{
 }> => {
   const { api } = useOmSupplyApi();
   return useQuery(['items', 'list'], async () => {
-    const result = await api.items({ key: ItemSortFieldInput.Name });
+    const result = await api.itemsWithStockLines({
+      key: ItemSortFieldInput.Name,
+    });
 
     const items = itemsGuard(result);
 
