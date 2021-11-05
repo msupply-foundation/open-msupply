@@ -9,7 +9,7 @@ import {
   useFormatDate,
 } from '../../../../intl/intlHelpers';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
-import { PaperPopover } from '../../popover';
+import { PaperPopover, PaperPopoverSection } from '../../popover';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
@@ -47,10 +47,9 @@ export const StatusCrumbs = <StatusType extends string>(
       placement="top"
       height={200}
       Content={
-        <Box gap={2} p={3} flexDirection="column" display="flex">
-          <Typography fontWeight="700">{t('label.order-history')}</Typography>
+        <PaperPopoverSection labelKey={'label.order-history'}>
           <VerticalStepper activeStep={currentStep} steps={steps} />
-        </Box>
+        </PaperPopoverSection>
       }
     >
       <Box
