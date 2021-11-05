@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { ListSearch, Name } from '@openmsupply-client/common';
-import { useCustomers } from '../../hooks';
+import { useNames } from '../../hooks';
 
-interface CustomerSearchProps {
+interface NameSearchProps {
   open: boolean;
   onClose: () => void;
   onChange: (name: Name) => void;
@@ -11,12 +11,12 @@ interface CustomerSearchProps {
 // TODO: Would be better to disable this query until the button to open the modal
 // has been hovered, so we could still pre-fetch the data but not fetch if the user
 // is looking at existing invoices.
-export const CustomerSearchModal: FC<CustomerSearchProps> = ({
+export const NameSearchModal: FC<NameSearchProps> = ({
   open,
   onClose,
   onChange,
 }) => {
-  const { data, isLoading } = useCustomers();
+  const { data, isLoading } = useNames();
 
   return (
     <ListSearch

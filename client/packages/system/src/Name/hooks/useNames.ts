@@ -16,7 +16,7 @@ const namesGuard = (
   }
 };
 
-export const useCustomers = (): UseQueryResult<{
+export const useNames = (): UseQueryResult<{
   nodes: Name[];
   totalCount: number;
 }> => {

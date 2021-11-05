@@ -5,27 +5,27 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
-import { useCustomers } from '../../hooks';
+import { useNames } from '../../hooks';
 
 const filterOptions = {
   stringify: (name: Name) => `${name.code} ${name.name}`,
   limit: 100,
 };
 
-interface CustomerSearchProps {
+interface NameSearchInputProps {
   onChange: (name: Name) => void;
   width?: number;
   value: Name;
   disabled?: boolean;
 }
 
-export const CustomerSearchInput: FC<CustomerSearchProps> = ({
+export const NameSearchInput: FC<NameSearchInputProps> = ({
   onChange,
   width = 250,
   value,
   disabled = false,
 }) => {
-  const { data, isLoading } = useCustomers();
+  const { data, isLoading } = useNames();
 
   return (
     <Autocomplete
