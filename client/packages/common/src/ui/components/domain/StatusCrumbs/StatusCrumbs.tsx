@@ -9,7 +9,7 @@ import {
   useFormatDate,
 } from '../../../../intl/intlHelpers';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
-import { usePopover } from '../../popover';
+import { PaperPopover } from '../../popover';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
@@ -35,7 +35,6 @@ export const StatusCrumbs = <StatusType extends string>(
   const { statuses, statusLog, statusFormatter } = props;
   const t = useTranslation();
 
-  const { show, hide, Popover } = usePopover();
   const steps = useSteps(props);
 
   const currentStep = statuses.reduce((acc, status, idx) => {
@@ -44,21 +43,20 @@ export const StatusCrumbs = <StatusType extends string>(
   }, 0);
 
   return (
-    <>
-      <Popover>
+    <PaperPopover
+      placement="top"
+      height={200}
+      Content={
         <Box gap={2} p={3} flexDirection="column" display="flex">
           <Typography fontWeight="700">{t('label.order-history')}</Typography>
           <VerticalStepper activeStep={currentStep} steps={steps} />
         </Box>
-      </Popover>
-
+      }
+    >
       <Box
         height="100%"
         display="flex"
         alignItems="center"
-        onMouseOver={show}
-        onMouseLeave={hide}
-        onClick={show}
         sx={{ cursor: 'help' }}
       >
         <Breadcrumbs
@@ -91,6 +89,6 @@ export const StatusCrumbs = <StatusType extends string>(
           })}
         </Breadcrumbs>
       </Box>
-    </>
+    </PaperPopover>
   );
 };

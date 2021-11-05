@@ -20,7 +20,7 @@ import {
   useFormatDate,
   useTranslation,
   ReadOnlyInput,
-  Popper,
+  PaperPopover,
   Typography,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
@@ -90,8 +90,8 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
         <Checkbox disabled checked={batch.onHold} />
       </BasicCell>
       <BasicCell>
-        <Popper
-          content={
+        <PaperPopover
+          Content={
             <Grid spacing={2} container sx={{ padding: '20px' }}>
               <Grid item>
                 <Typography sx={{ fontWeight: 'bold' }}>Details</Typography>
@@ -122,14 +122,12 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
               </Grid>
             </Grid>
           }
-          placement="left"
-          width={250}
         >
           <InfoIcon
             fontSize="small"
             sx={{ color: theme => theme.palette.lightGrey, cursor: 'help' }}
           />
-        </Popper>
+        </PaperPopover>
       </BasicCell>
     </TableRow>
   );
