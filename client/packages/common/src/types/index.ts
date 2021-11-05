@@ -22,7 +22,7 @@ export interface Item extends DomainObject {
   name: string;
   availableQuantity: number;
   availableBatches: StockLine[];
-  unit: string;
+  unitName: string;
 }
 
 export interface StockLine extends DomainObject {
@@ -34,7 +34,7 @@ export interface StockLine extends DomainObject {
   packSize: number;
   sellPricePerPack: number;
   totalNumberOfPacks: number;
-  location?: string | null;
+  locationDescription?: string | null;
   onHold: boolean;
 }
 
@@ -69,7 +69,7 @@ export interface InvoiceLine extends DomainObject {
 
   batch?: string | null;
 
-  location?: string | null;
+  locationDescription?: string | null;
   comment?: string;
 }
 
@@ -85,6 +85,8 @@ export interface InvoiceRow extends DomainObject {
   otherPartyName: string;
   pricing: {
     totalAfterTax: number;
+    subtotal: number;
+    taxPercentage: number;
   };
 }
 
@@ -98,7 +100,7 @@ export interface Invoice extends DomainObject {
   entryDatetime: string;
   confirmedDatetime?: string | null;
   invoiceNumber: number;
-  name?: Name;
+  otherParty?: Name;
   otherPartyName: string;
   hold: boolean;
   lines: InvoiceLine[];
@@ -109,6 +111,8 @@ export interface Invoice extends DomainObject {
   deliveredDatetime?: string;
   pricing: {
     totalAfterTax: number;
+    subtotal: number;
+    taxPercentage: number;
   };
 }
 

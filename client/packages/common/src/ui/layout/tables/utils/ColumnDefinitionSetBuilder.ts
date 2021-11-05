@@ -16,7 +16,7 @@ export type ColumnKey =
   | 'status'
   | 'entryDatetime'
   | 'confirmedDatetime'
-  | 'total'
+  | 'totalAfterTax'
   | 'comment'
   | 'selection'
   | 'name'
@@ -30,9 +30,10 @@ export type ColumnKey =
   | 'batch'
   | 'costPricePerPack'
   | 'sellPricePerPack'
-  | 'location'
+  | 'locationDescription'
   | 'unitQuantity'
-  | 'numberOfPacks';
+  | 'numberOfPacks'
+  | 'otherPartyName';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
@@ -65,13 +66,16 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     key: 'name',
     label: 'label.name',
     width: 75,
-    sortable: false,
+  },
+  otherPartyName: {
+    key: 'otherPartyName',
+    label: 'label.name',
+    width: 75,
   },
   invoiceNumber: {
     key: 'invoiceNumber',
     label: 'label.invoice-number',
     width: 50,
-    sortable: false,
   },
   type: {
     label: 'label.type',
@@ -96,19 +100,17 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 100,
   },
 
-  total: {
+  totalAfterTax: {
     label: 'label.total',
-    key: 'total',
+    key: 'totalAfterTax',
     width: 100,
     format: ColumnFormat.Currency,
     align: ColumnAlign.Right,
-    sortable: false,
   },
   comment: {
     label: 'label.comment',
     key: 'comment',
     width: 250,
-    sortable: false,
   },
   selection: getCheckboxSelectionColumn(),
   code: {
@@ -147,9 +149,9 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },
-  location: {
+  locationDescription: {
     label: 'label.location',
-    key: 'location',
+    key: 'locationDescription',
     width: 100,
   },
   unitQuantity: {

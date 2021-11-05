@@ -253,6 +253,13 @@ union InsertSupplierInvoiceResponse =
   | NodeError
   | InvoiceNode
 
+type LocationNode {
+  code: String!
+  description: String!
+}
+
+union LocationResponse = LocationNode | NodeError
+
 # Generic Connector
 type InvoiceConnector {
   totalCount: Int!
@@ -304,12 +311,17 @@ type InvoiceLineNode {
   batch: String
   expiryDate: NaiveDate
   stockLine: StockLineResponse
-  location: String
+
+  location: LocationResponse
+  locationDescription: String
+  note: String
 }
 
 union InvoiceLineResponse = NodeError | InvoiceLineNode
 
 union InvoiceLinesResponse = ConnectorError | InvoiceLineConnector
+
+union NameResponse = NodeError | NameNode
 
 type InvoiceNode {
   id: String!
@@ -327,14 +339,22 @@ type InvoiceNode {
   lines: InvoiceLinesResponse!
   pricing: InvoicePriceResponse!
 
-  color: String!
-  hold: Boolean!
-
+  otherParty: NameResponse!
   draftDatetime: DateTime
   allocatedDatetime: DateTime
   pickedDatetime: DateTime
   shippedDatetime: DateTime
   deliveredDatetime: DateTime
+  color: String!
+  hold: Boolean!
+  enteredBy: String!
+  donorName: String!
+  purchaseOrderNumber: Int
+  requisitionNumber: Int
+  goodsReceiptNumber: Int
+  inboundShipmentNumber: Int
+  shippingMethod: String
+  transportReference: String
 }
 
 enum InvoiceNodeStatus {
@@ -365,6 +385,8 @@ union InvoicePriceResponse = NodeError | InvoicePricingNode
 
 type InvoicePricingNode {
   totalAfterTax: Float!
+  taxPercentage: Float!
+  subtotal: Float!
 }
 
 union InvoiceResponse = NodeError | InvoiceNode
@@ -375,6 +397,10 @@ enum InvoiceSortFieldInput {
   ENTRY_DATETIME
   CONFIRM_DATETIME
   FINALISED_DATE_TIME
+  COMMENT
+  TOTAL_AFTER_TAX
+  OTHER_PARTY_NAME
+  INVOICE_NUMBER
 }
 
 input InvoiceSortInput {
@@ -404,8 +430,10 @@ type ItemNode {
   id: String!
   name: String!
   code: String!
+  unitName: String!
   isVisible: Boolean!
   availableBatches: StockLinesResponse!
+  availableQuantity: Float!
 }
 
 enum ItemSortFieldInput {
@@ -638,8 +666,10 @@ type StockLineNode {
   availableNumberOfPacks: Int!
   totalNumberOfPacks: Int!
   expiryDate: NaiveDate
-  location: String
+  location: LocationResponse
+  locationDescription: String
   onHold: Boolean!
+  note: String
 }
 
 union StockLineResponse = NodeError | StockLineNode
