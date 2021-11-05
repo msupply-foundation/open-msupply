@@ -70,7 +70,7 @@ export interface InvoiceLine extends DomainObject {
   batch?: string | null;
 
   locationDescription?: string | null;
-  comment?: string;
+  note?: string | null;
 }
 
 export interface InvoiceRow extends DomainObject {

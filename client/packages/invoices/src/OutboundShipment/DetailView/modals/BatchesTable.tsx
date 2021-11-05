@@ -92,7 +92,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell>
         <PaperPopover
           Content={
-            <PaperPopoverSection labelKey="app.admin">
+            <PaperPopoverSection labelKey="label.details">
               <Grid container fontSize="12px">
                 <Grid container justifyContent="space-between">
                   <Grid item>Invoice #xxxx</Grid>
