@@ -81,7 +81,7 @@ export const StatusCrumbs = <StatusType extends string>(
 
             return (
               <Typography
-                color={date ? 'secondary' : 'midGrey'}
+                color={date ? 'secondary' : 'gray.main'}
                 key={status}
                 sx={{ fontWeight: 700, fontSize: '12px' }}
               >

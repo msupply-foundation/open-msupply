@@ -41,7 +41,7 @@ const SimpleText = styled(Typography)({
 });
 
 const ItemOption = styled('li')(({ theme }) => ({
-  color: theme.palette.midGrey,
+  color: theme.palette.gray.main,
   backgroundColor: theme.palette.background.toolbar,
 }));
 

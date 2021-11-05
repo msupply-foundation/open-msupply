@@ -31,7 +31,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({ stats, titleKey }) => {
       <Grid
         item
         sx={{
-          color: '#8f90a6',
+          color: 'gray.main',
           fontSize: '12px',
           fontWeight: 500,
           marginLeft: '8px',
@@ -44,12 +44,11 @@ export const StatsPanel: FC<StatsPanelProps> = ({ stats, titleKey }) => {
 
   return (
     <Paper
-      style={{
-        borderRadius: 16,
-        marginTop: 14,
-        marginBottom: 21,
-        boxShadow:
-          '0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08)',
+      sx={{
+        borderRadius: '16px',
+        marginTop: '14px',
+        marginBottom: '21px',
+        boxShadow: theme => theme.shadows[1],
         padding: '14px 24px',
       }}
     >
