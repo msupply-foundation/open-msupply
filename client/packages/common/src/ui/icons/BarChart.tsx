@@ -1,7 +1,19 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { useTheme } from '@mui/material';
 
+const getPaletteColour = (color?: string) => {
+  switch (color) {
+    case 'secondary':
+      return 'secondary';
+    default:
+      return 'primary';
+  }
+};
 export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
+  const theme = useTheme();
+  const colour = theme.palette[getPaletteColour(props.color)];
+
   return (
     <SvgIcon {...props} viewBox="0 0 125 46" strokeLinecap="round">
       <line
@@ -9,7 +21,7 @@ export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
         y1="2"
         x2="121"
         y2="46"
-        stroke="#3e7bfa"
+        stroke={colour.main}
         strokeWidth="4"
       ></line>
       <line
@@ -17,7 +29,7 @@ export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
         y1="6.5"
         x2="112"
         y2="46"
-        stroke="#3e7bfa"
+        stroke={colour.main}
         strokeWidth="4"
       ></line>
       <line
@@ -25,7 +37,7 @@ export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
         y1="0.5"
         x2="103.2"
         y2="46"
-        stroke="#3568d4"
+        stroke={colour.dark}
         strokeWidth="4"
       ></line>
       <line
@@ -33,7 +45,7 @@ export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
         y1="16"
         x2="94.2"
         y2="46"
-        stroke="#3e7bfa"
+        stroke={colour.main}
         strokeWidth="4"
       ></line>
       <line
@@ -41,7 +53,7 @@ export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
         y1="6.5"
         x2="85.3"
         y2="46"
-        stroke="#3e7bfa"
+        stroke={colour.main}
         strokeWidth="4"
       ></line>
       <line
@@ -49,7 +61,7 @@ export const BarChartIcon = ({ ...props }: SvgIconProps): JSX.Element => {
         y1="14"
         x2="76.6"
         y2="46"
-        stroke="#3e7bfa"
+        stroke={colour.main}
         strokeWidth="4"
       ></line>
       <line
