@@ -4,6 +4,7 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { SvgIconProps } from '.';
 import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
+import { BarChartIcon } from './BarChart';
 import { BookIcon } from './Book';
 import { CartIcon } from './Cart';
 import { CheckIcon } from './Check';
@@ -72,6 +73,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
+    { icon: <BarChartIcon {...args} />, name: 'BarChart' },
     { icon: <BookIcon {...args} />, name: 'Book' },
     { icon: <CartIcon {...args} />, name: 'Cart' },
     { icon: <CheckIcon {...args} />, name: 'Check' },

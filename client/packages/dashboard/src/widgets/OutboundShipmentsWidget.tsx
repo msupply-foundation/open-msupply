@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
 // TODO: move this into system perhaps
 import { CustomerSearch } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/CustomerSearch';
-import { OutboundShipmentListViewApi } from '@openmsupply-client/invoices/src/api';
+import { getOutboundShipmentListViewApi } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/api';
 import {
   ButtonWithIcon,
   Grid,
   PlusCircleIcon,
   useListData,
+  useOmSupplyApi,
 } from '@openmsupply-client/common';
 import Widget from './Widget';
-import { StatsPanel } from './StatsPanel';
+import { StatsPanel } from '../StatsPanel';
 import { useNavigate } from 'react-router';
 
 export const OutboundShipmentsWidget: React.FC = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  const { api } = useOmSupplyApi();
   const { onCreate, invalidate } = useListData(
-    { key: 'TYPE' },
+    { key: 'otherPartyName' },
     'invoice',
-    OutboundShipmentListViewApi
+    getOutboundShipmentListViewApi(api)
   );
 
   return (
@@ -50,7 +53,7 @@ export const OutboundShipmentsWidget: React.FC = () => {
           <Grid item>
             <StatsPanel
               titleKey="heading.shipments-to-be-picked"
-              stats={[{ labelKey: 'label.today', value: 5 }]}
+              stats={[{ labelKey: 'label.today', value: 9 }]}
             />
           </Grid>
           <Grid
