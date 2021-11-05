@@ -9,6 +9,7 @@ use super::{Connector, ConnectorError, NodeError, SimpleStringFilterInput, SortI
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "crate::domain::name::NameSortField")]
+#[graphql(rename_items = "camelCase")]
 pub enum NameSortFieldInput {
     Name,
     Code,
