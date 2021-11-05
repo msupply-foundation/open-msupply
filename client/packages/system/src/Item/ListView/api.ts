@@ -22,9 +22,11 @@ const availableBatchesGuard = (
 ) => {
   if (availableBatches.__typename === 'StockLineConnector') {
     return availableBatches.nodes;
+  } else if (availableBatches.__typename === 'ConnectorError') {
+    throw new Error(availableBatches.error.description);
   }
 
-  throw new Error(availableBatches.error.description);
+  throw new Error('Unknown');
 };
 
 const onRead =
@@ -41,7 +43,6 @@ const onRead =
     nodes: Item[];
     totalCount: number;
   }> => {
-    // TODO: Need to add a `sortByKey` to the Column type
     const key =
       sortBy.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
 
@@ -67,7 +68,7 @@ export const getItemListViewApi = (api: OmSupplyApi): ListApi<Item> => ({
     ({ first, offset, sortBy }) =>
     () =>
       onRead(api)({ first, offset, sortBy }),
-  onDelete: () => null,
-  onUpdate: () => null,
-  onCreate: () => null,
+  onDelete: async () => {},
+  onUpdate: async (toUpdate: Item) => toUpdate,
+  onCreate: async (toCreate: Partial<Item>) => toCreate as Item,
 });
