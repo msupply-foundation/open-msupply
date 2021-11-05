@@ -85,7 +85,10 @@ export const StatsPanel: FC<StatsPanelProps> = ({ stats, titleKey }) => {
             ))}
           </Grid>
           <Grid item>
-            <BarChartIcon sx={{ height: '50px', width: '125px' }} />
+            <BarChartIcon
+              sx={{ height: '50px', width: '125px' }}
+              color="secondary"
+            />
           </Grid>
         </Grid>
       </Grid>
