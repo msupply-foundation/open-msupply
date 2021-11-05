@@ -12,6 +12,7 @@ use super::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "crate::domain::item::ItemSortField")]
+#[graphql(rename_items = "camelCase")]
 pub enum ItemSortFieldInput {
     Name,
     Code,
