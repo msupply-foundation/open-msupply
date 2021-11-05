@@ -64,7 +64,7 @@ mod graphql {
           names(sort: $sort){
               ... on NameConnector {
                 nodes {
-                    id
+                    name
                 }
               }
           }
@@ -76,11 +76,11 @@ mod graphql {
           }]
         }));
         let mut sorted_mock_names = mock_names.clone();
-        sorted_mock_names.sort_by(|a, b| b.name.cmp(&a.name));
+        sorted_mock_names.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
         let expected = json!({
           "names": {
               "nodes": sorted_mock_names.iter().map(|name| json!({
-                "id": name.id,
+                "name": name.name,
               })).collect::<serde_json::Value>(),
             }
           }
