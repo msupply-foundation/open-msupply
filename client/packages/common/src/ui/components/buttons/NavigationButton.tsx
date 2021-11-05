@@ -13,7 +13,7 @@ interface NavigationButtonProps {
 
 const StyledButton = styled(MuiButton)(({ theme }) => ({
   ...DefaultButtonStyles,
-  boxShadow: theme.shadows[1],
+  boxShadow: theme.shadows[2],
   color: theme.palette.primary.main,
   minWidth: 115,
 }));

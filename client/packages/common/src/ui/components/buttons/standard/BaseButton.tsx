@@ -31,7 +31,7 @@ export const StyledBaseButton = styled(MuiButton)(
       fontWeight: 700,
       height: 40,
       textTransform: 'none' as Property.TextTransform,
-      boxShadow: theme.shadows[1],
+      boxShadow: theme.shadows[2],
 
       minWidth: '115px',
 

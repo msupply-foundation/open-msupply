@@ -3,7 +3,7 @@ import { styled } from '@mui/material';
 import { AutocompleteOptionRenderer } from '../../../..';
 
 export const DefaultAutocompleteItemOption = styled('li')(({ theme }) => ({
-  color: theme.palette.midGrey,
+  color: theme.palette.gray.main,
   backgroundColor: theme.palette.background.toolbar,
 }));
 
