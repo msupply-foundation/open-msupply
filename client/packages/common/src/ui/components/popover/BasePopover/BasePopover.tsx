@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
 import Fade from '@mui/material/Fade';
 import Popper, { PopperProps } from '@mui/material/Popper';
+import { useAppTheme } from '../../../../styles';
 
 export interface BasePopoverProps extends Omit<PopperProps, 'open'> {
-  // I like having is as a prefix for boolean props
   isOpen: boolean;
   anchorEl: PopperProps['anchorEl'];
   width?: number;
@@ -16,13 +16,17 @@ export const BasePopover: FC<BasePopoverProps> = ({
   anchorEl,
   ...popperProps
 }) => {
+  const theme = useAppTheme();
+
   return (
     <Popper
       open={isOpen}
       anchorEl={anchorEl}
       transition
       placement="bottom-start"
-      style={{ zIndex: 1301 }}
+      style={{
+        zIndex: theme.zIndex.tooltip,
+      }}
       {...popperProps}
     >
       {({ TransitionProps }) => (

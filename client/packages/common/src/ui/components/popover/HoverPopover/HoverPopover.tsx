@@ -14,7 +14,12 @@ export const HoverPopover: React.FC<PopoverProps> = ({
   const { show, hide, Popover } = usePopover();
 
   return (
-    <div onMouseOver={show} onMouseLeave={hide} onClick={show}>
+    <div
+      style={{ cursor: 'help' }}
+      onMouseOver={show}
+      onMouseLeave={hide}
+      onClick={show}
+    >
       <Popover placement={placement}>{Content}</Popover>
       {children}
     </div>
