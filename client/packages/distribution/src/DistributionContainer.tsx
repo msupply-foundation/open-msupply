@@ -8,7 +8,7 @@ const InvoiceService = React.lazy(
 );
 
 const CustomerService = React.lazy(
-  () => import('@openmsupply-client/system/src/Customer/Service/Service')
+  () => import('@openmsupply-client/system/src/Name')
 );
 
 const RequisitionService: React.FC = () => (

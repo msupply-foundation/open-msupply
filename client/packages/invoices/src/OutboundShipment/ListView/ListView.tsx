@@ -14,7 +14,7 @@ import {
   useOmSupplyApi,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentListViewApi } from './api';
-import { CustomerSearchModal } from '@openmsupply-client/system/src/Customer';
+import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslation } from '../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -70,7 +70,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   return (
     <>
-      <CustomerSearchModal
+      <NameSearchModal
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {
