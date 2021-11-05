@@ -1,6 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     database::{
+        diesel_extensions::OrderByExtensions,
         repository::RepositoryError,
         schema::{
             diesel_schema::{
@@ -62,16 +63,16 @@ impl<'a> ItemQueryRepository<'a> {
             match sort.key {
                 ItemSortField::Name => {
                     if sort.desc.unwrap_or(false) {
-                        query = query.order(item_dsl::name.desc());
+                        query = query.order(item_dsl::name.desc_no_case());
                     } else {
-                        query = query.order(item_dsl::name.asc());
+                        query = query.order(item_dsl::name.asc_no_case());
                     }
                 }
                 ItemSortField::Code => {
                     if sort.desc.unwrap_or(false) {
-                        query = query.order(item_dsl::code.desc());
+                        query = query.order(item_dsl::code.desc_no_case());
                     } else {
-                        query = query.order(item_dsl::code.asc());
+                        query = query.order(item_dsl::code.asc_no_case());
                     }
                 }
             }
@@ -139,7 +140,7 @@ mod tests {
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
         domain::{
-            item::{Item, ItemFilter},
+            item::{Item, ItemFilter, ItemSort, ItemSortField},
             EqualFilter, Pagination, DEFAULT_LIMIT,
         },
         util::test_db,
@@ -434,5 +435,54 @@ mod tests {
             )
             .unwrap();
         assert_eq!(results.len(), 4);
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_sort() {
+        let (_, connection, _) =
+            test_db::setup_all("test_item_query_sort", MockDataInserts::all()).await;
+        let repo = ItemQueryRepository::new(&connection);
+
+        let mut items = repo.query(Pagination::new(), None, None).unwrap();
+
+        let sorted = repo
+            .query(
+                Pagination::new(),
+                None,
+                Some(ItemSort {
+                    key: ItemSortField::Name,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        items.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+        for (count, item) in items.iter().enumerate() {
+            assert_eq!(
+                item.name.clone().to_lowercase(),
+                sorted[count].name.clone().to_lowercase(),
+            );
+        }
+
+        let sorted = repo
+            .query(
+                Pagination::new(),
+                None,
+                Some(ItemSort {
+                    key: ItemSortField::Code,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
+
+        items.sort_by(|b, a| a.code.to_lowercase().cmp(&b.code.to_lowercase()));
+
+        for (count, item) in items.iter().enumerate() {
+            assert_eq!(
+                item.code.clone().to_lowercase(),
+                sorted[count].code.clone().to_lowercase(),
+            );
+        }
     }
 }
