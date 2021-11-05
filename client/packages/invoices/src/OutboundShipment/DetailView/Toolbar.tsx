@@ -12,7 +12,7 @@ import {
   useNotification,
   useTableStore,
 } from '@openmsupply-client/common';
-import { CustomerSearchInput } from '../CustomerSearchInput';
+import { CustomerSearchInput } from '@openmsupply-client/system/src/Customer';
 import { InvoiceLineRow, OutboundShipment } from './types';
 import { isInvoiceEditable } from '../utils';
 

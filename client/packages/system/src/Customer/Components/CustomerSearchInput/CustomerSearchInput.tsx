@@ -2,11 +2,10 @@ import React, { FC } from 'react';
 import {
   Autocomplete,
   Name,
-  useQuery,
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
-import { nameListQueryFn } from '../api';
+import { useCustomers } from '../../hooks';
 
 const filterOptions = {
   stringify: (name: Name) => `${name.code} ${name.name}`,
@@ -26,9 +25,7 @@ export const CustomerSearchInput: FC<CustomerSearchProps> = ({
   value,
   disabled = false,
 }) => {
-  const { data, isLoading } = useQuery(['names', 'list'], () =>
-    nameListQueryFn()
-  );
+  const { data, isLoading } = useCustomers();
 
   return (
     <Autocomplete
