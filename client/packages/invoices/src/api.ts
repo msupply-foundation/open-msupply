@@ -12,12 +12,23 @@ import {
   InvoiceLineConnector,
   InvoicePriceResponse,
   ConnectorError,
+  NameResponse,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
+
+const otherPartyGuard = (otherParty: NameResponse) => {
+  if (otherParty.__typename === 'NameNode') {
+    return otherParty;
+  } else if (otherParty.__typename === 'NodeError') {
+    throw new Error(otherParty.error.description);
+  }
+
+  throw new Error('Unknown');
+};
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
@@ -104,6 +115,7 @@ export const onRead =
       ...invoice,
       lines: linesGuard(invoice.lines),
       pricing: pricingGuard(invoice.pricing),
+      otherParty: otherPartyGuard(invoice.otherParty),
     };
   };
 

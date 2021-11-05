@@ -56,8 +56,6 @@ const onRead =
 
     const nodes: Item[] = items.nodes.map(item => ({
       ...item,
-      availableQuantity: 0,
-      unit: '',
       availableBatches: availableBatchesGuard(item.availableBatches),
     }));
 

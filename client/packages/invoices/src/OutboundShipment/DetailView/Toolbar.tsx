@@ -53,18 +53,20 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
-            <InputWithLabelRow
-              label="label.customer-name"
-              Input={
-                <CustomerSearchInput
-                  disabled={!isInvoiceEditable(draft)}
-                  value={draft.name}
-                  onChange={name => {
-                    draft.update?.('name', name);
-                  }}
-                />
-              }
-            />
+            {draft.otherParty && (
+              <InputWithLabelRow
+                label="label.customer-name"
+                Input={
+                  <CustomerSearchInput
+                    disabled={!isInvoiceEditable(draft)}
+                    value={draft.otherParty}
+                    onChange={name => {
+                      draft.update?.('name', name);
+                    }}
+                  />
+                }
+              />
+            )}
             <InputWithLabelRow
               label="label.customer-ref"
               Input={
