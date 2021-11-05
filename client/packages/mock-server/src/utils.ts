@@ -10,6 +10,22 @@ export const randomInteger = ({
   return faker.datatype.number({ min, max });
 };
 
+export const randomName = (): string => {
+  return `${faker.name.firstName()} ${faker.name.lastName()}`;
+};
+
+export const randomFloat = (
+  min: number,
+  max: number,
+  precision = 2
+): number => {
+  return faker.datatype.float({
+    min,
+    max,
+    precision,
+  });
+};
+
 export const randomPercentage = (min: number): number =>
   faker.datatype.number(100) / 100 + min / 100;
 

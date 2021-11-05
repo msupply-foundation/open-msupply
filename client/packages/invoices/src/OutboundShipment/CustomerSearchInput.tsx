@@ -16,7 +16,7 @@ const filterOptions = {
 interface CustomerSearchProps {
   onChange: (name: Name) => void;
   width?: number;
-  value?: Name;
+  value: Name;
   disabled?: boolean;
 }
 
@@ -34,14 +34,10 @@ export const CustomerSearchInput: FC<CustomerSearchProps> = ({
     <Autocomplete
       disabled={disabled}
       clearable={false}
-      value={
-        value && !!value.name
-          ? {
-              ...value,
-              label: String(value?.name ?? ''),
-            }
-          : undefined
-      }
+      value={{
+        ...value,
+        label: value.name,
+      }}
       filterOptionConfig={filterOptions}
       loading={isLoading}
       onChange={(_, name) => name && onChange(name)}

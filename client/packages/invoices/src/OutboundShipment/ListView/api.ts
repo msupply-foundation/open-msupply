@@ -146,6 +146,18 @@ const getSortKey = (
     case 'finalisedDateTime': {
       return InvoiceSortFieldInput.FinalisedDateTime;
     }
+    case 'comment': {
+      return InvoiceSortFieldInput.Comment;
+    }
+    case 'invoiceNumber': {
+      return InvoiceSortFieldInput.InvoiceNumber;
+    }
+    case 'otherPartyName': {
+      return InvoiceSortFieldInput.OtherPartyName;
+    }
+    case 'totalAfterTax': {
+      return InvoiceSortFieldInput.TotalAfterTax;
+    }
     case 'status':
     default: {
       return InvoiceSortFieldInput.Status;
