@@ -21,7 +21,7 @@ import {
   useTranslation,
   ReadOnlyInput,
   PaperPopover,
-  Typography,
+  PaperPopoverSection,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
 
@@ -92,35 +92,30 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell>
         <PaperPopover
           Content={
-            <Grid spacing={2} container sx={{ padding: '20px' }}>
-              <Grid item>
-                <Typography sx={{ fontWeight: 'bold' }}>Details</Typography>
-              </Grid>
-              <Grid item sx={{ fontSize: '12px' }}>
-                <Grid container>
-                  <Grid container justifyContent="space-between">
-                    <Grid item>Invoice #xxxx</Grid>
-                    <Grid item>
-                      {`${
-                        (batch.totalNumberOfPacks -
-                          batch.availableNumberOfPacks) /
-                        2
-                      } packs`}
-                    </Grid>
+            <PaperPopoverSection labelKey="app.admin">
+              <Grid container fontSize="12px">
+                <Grid container justifyContent="space-between">
+                  <Grid item>Invoice #xxxx</Grid>
+                  <Grid item>
+                    {`${
+                      (batch.totalNumberOfPacks -
+                        batch.availableNumberOfPacks) /
+                      2
+                    } packs`}
                   </Grid>
-                  <Grid container justifyContent="space-between">
-                    <Grid item>Invoice #yyyy</Grid>
-                    <Grid item>
-                      {`${
-                        (batch.totalNumberOfPacks -
-                          batch.availableNumberOfPacks) /
-                        2
-                      } packs`}
-                    </Grid>
+                </Grid>
+                <Grid container justifyContent="space-between">
+                  <Grid item>Invoice #yyyy</Grid>
+                  <Grid item>
+                    {`${
+                      (batch.totalNumberOfPacks -
+                        batch.availableNumberOfPacks) /
+                      2
+                    } packs`}
                   </Grid>
                 </Grid>
               </Grid>
-            </Grid>
+            </PaperPopoverSection>
           }
         >
           <InfoIcon
