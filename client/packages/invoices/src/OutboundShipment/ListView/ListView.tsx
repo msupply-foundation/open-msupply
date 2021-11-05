@@ -36,7 +36,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     pagination,
     invalidate,
   } = useListData(
-    { key: 'status' },
+    { key: 'otherPartyName' },
     'invoice',
     getOutboundShipmentListViewApi(api)
   );
@@ -59,7 +59,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       'entryDatetime',
       'confirmedDatetime',
       'comment',
-      ['total', { accessor: invoice => invoice.pricing.totalAfterTax }],
+      ['totalAfterTax', { accessor: invoice => invoice.pricing.totalAfterTax }],
       'selection',
     ],
     { onChangeSortBy, sortBy },

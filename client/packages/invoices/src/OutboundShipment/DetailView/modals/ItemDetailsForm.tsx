@@ -176,7 +176,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.unit" justifyContent="flex-end" />
           <ModalInput
-            inputProps={register('unit', {
+            inputProps={register('unitName', {
               disabled: true,
             })}
             width={150}

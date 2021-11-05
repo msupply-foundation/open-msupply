@@ -84,7 +84,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       >
         {d(expiryDate)}
       </BasicCell>
-      <BasicCell>{batch.location}</BasicCell>
+      <BasicCell>{batch.locationDescription}</BasicCell>
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
       <BasicCell align="center">
         <Checkbox disabled checked={batch.onHold} />

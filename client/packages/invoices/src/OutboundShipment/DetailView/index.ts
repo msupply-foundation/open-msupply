@@ -14,7 +14,7 @@ export const placeholderInvoice: OutboundShipment = {
   confirmedDatetime: '',
   invoiceNumber: 0,
   lines: [],
-  pricing: { totalAfterTax: 0 },
+  pricing: { totalAfterTax: 0, subtotal: 0, taxPercentage: 0 },
   dispatch: null,
   hold: false,
 
@@ -24,11 +24,13 @@ export const placeholderInvoice: OutboundShipment = {
   pickedDatetime: '',
   deliveredDatetime: '',
 
-  name: {
-    id: '',
-    name: '',
-    code: '',
-    isCustomer: true,
-    isSupplier: false,
-  },
+  purchaseOrderNumber: undefined,
+  goodsReceiptNumber: undefined,
+  requisitionNumber: undefined,
+  inboundShipmentNumber: undefined,
+
+  transportReference: undefined,
+  shippingMethod: undefined,
+
+  otherParty: undefined,
 };

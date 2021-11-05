@@ -7,7 +7,7 @@ import {
   ListResponse,
 } from './../data/types';
 
-import { getSumFn, getDataSorter } from '../utils';
+import { getDataSorter } from '../utils';
 import { db } from '../data/database';
 import {
   InvoiceSortFieldInput,
@@ -20,9 +20,14 @@ import {
 
 const getAvailableQuantity = (itemId: string): number => {
   const stockLines = db.get.stockLines.byItemId(itemId);
-  const sumFn = getSumFn('availableNumberOfPacks');
-  const quantity = stockLines.reduce(sumFn, 0);
-  return quantity;
+  const availableQuantity = stockLines.reduce(
+    (sum, { availableNumberOfPacks, packSize }) => {
+      return sum + availableNumberOfPacks * packSize;
+    },
+    0
+  );
+
+  return availableQuantity;
 };
 
 const getInvoiceSortKey = (key: string) => {
@@ -35,6 +40,18 @@ const getInvoiceSortKey = (key: string) => {
     }
     case InvoiceSortFieldInput.FinalisedDateTime: {
       return 'finalisedDatetime';
+    }
+    case InvoiceSortFieldInput.Comment: {
+      return 'comment';
+    }
+    case InvoiceSortFieldInput.TotalAfterTax: {
+      return 'totalAfterTax';
+    }
+    case InvoiceSortFieldInput.OtherPartyName: {
+      return 'otherPartyName';
+    }
+    case InvoiceSortFieldInput.InvoiceNumber: {
+      return 'invoiceNumber';
     }
     case InvoiceSortFieldInput.Status:
     default: {
@@ -98,7 +115,7 @@ export const ResolverService = {
         return {
           __typename: 'InvoiceNode',
           ...invoice,
-          name,
+          otherParty: name,
           otherPartyName: name.name,
           lines: resolvedLinesList,
         };
@@ -114,15 +131,15 @@ export const ResolverService = {
     }: InvoicesQueryVariables): ListResponse<ResolvedInvoice> => {
       const invoices = db.get.all.invoice();
 
-      if (key) {
-        const sortData = getDataSorter(getInvoiceSortKey(key), !!desc);
-        invoices.sort(sortData);
-      }
-
       const paged = invoices.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
       const data = paged.map(invoice => {
         return ResolverService.byId.invoice(invoice.id);
       });
+
+      if (key) {
+        const sortData = getDataSorter(getInvoiceSortKey(key), !!desc);
+        data.sort(sortData);
+      }
 
       return createListResponse(invoices.length, data, 'InvoiceConnector');
     },
@@ -227,7 +244,7 @@ export const ResolverService = {
       return {
         __typename: 'InvoiceNode',
         ...invoice,
-        name,
+        otherParty: { __typename: 'NameNode', ...name },
         otherPartyName: name.name,
         lines: resolvedLinesList,
       };
