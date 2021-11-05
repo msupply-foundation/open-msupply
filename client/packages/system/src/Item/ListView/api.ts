@@ -3,30 +3,17 @@ import {
   ListApi,
   SortBy,
   ItemSortFieldInput,
-  ItemsQuery,
-  StockLineConnector,
-  ConnectorError,
   OmSupplyApi,
+  ItemsListViewQuery,
 } from '@openmsupply-client/common';
+import { ItemRow } from '../types';
 
-const itemsGuard = (itemsQuery: ItemsQuery) => {
+const itemsGuard = (itemsQuery: ItemsListViewQuery) => {
   if (itemsQuery.items.__typename === 'ItemConnector') {
     return itemsQuery.items;
   }
 
   throw new Error(itemsQuery.items.error.description);
-};
-
-const availableBatchesGuard = (
-  availableBatches: StockLineConnector | ConnectorError
-) => {
-  if (availableBatches.__typename === 'StockLineConnector') {
-    return availableBatches.nodes;
-  } else if (availableBatches.__typename === 'ConnectorError') {
-    throw new Error(availableBatches.error.description);
-  }
-
-  throw new Error('Unknown');
 };
 
 const onRead =
@@ -40,13 +27,13 @@ const onRead =
     offset: number;
     sortBy: SortBy<Item>;
   }): Promise<{
-    nodes: Item[];
+    nodes: ItemRow[];
     totalCount: number;
   }> => {
     const key =
       sortBy.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
 
-    const result = await api.items({
+    const result = await api.itemsListView({
       first,
       offset,
       key,
@@ -54,21 +41,17 @@ const onRead =
     });
 
     const items = itemsGuard(result);
-
-    const nodes: Item[] = items.nodes.map(item => ({
-      ...item,
-      availableBatches: availableBatchesGuard(item.availableBatches),
-    }));
+    const nodes: ItemRow[] = items.nodes.map(item => ({ ...item }));
 
     return { totalCount: items.totalCount, nodes };
   };
 
-export const getItemListViewApi = (api: OmSupplyApi): ListApi<Item> => ({
+export const getItemListViewApi = (api: OmSupplyApi): ListApi<ItemRow> => ({
   onRead:
     ({ first, offset, sortBy }) =>
     () =>
       onRead(api)({ first, offset, sortBy }),
   onDelete: async () => {},
-  onUpdate: async (toUpdate: Item) => toUpdate,
-  onCreate: async (toCreate: Partial<Item>) => toCreate as Item,
+  onUpdate: async (toUpdate: ItemRow) => toUpdate,
+  onCreate: async (toCreate: Partial<ItemRow>) => toCreate as ItemRow,
 });
