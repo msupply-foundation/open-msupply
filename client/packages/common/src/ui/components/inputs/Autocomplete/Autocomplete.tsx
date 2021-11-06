@@ -23,7 +23,7 @@ export interface AutocompleteProps<T> {
   width?: string;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
   renderOption?: AutocompleteOptionRenderer<T>;
-  value?: AutocompleteOption<T>;
+  value?: AutocompleteOption<T> | null;
   clearable?: boolean;
   isOptionEqualToValue?: (option: T, value: T) => boolean;
   disabled?: boolean;

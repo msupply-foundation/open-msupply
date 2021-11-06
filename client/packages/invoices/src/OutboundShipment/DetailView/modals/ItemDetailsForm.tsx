@@ -1,7 +1,5 @@
 import React, { ChangeEventHandler } from 'react';
 import {
-  Autocomplete,
-  AutocompleteOnChange,
   FieldValues,
   Grid,
   InvoiceLine,
@@ -18,18 +16,17 @@ import {
   InputLabel,
   ModalNumericInput,
 } from '@openmsupply-client/common';
+import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
 
 interface ItemDetailsFormProps {
   allocatedQuantity: number;
   invoiceLine?: InvoiceLine;
-  isLoading: boolean;
-  items?: Item[];
-  onChangeItem?: AutocompleteOnChange<Item>;
-  onChangeQuantity: (quantity: number) => void;
   quantity?: number;
   register: UseFormRegister<FieldValues>;
   selectedItem?: Item;
   packSize: number;
+  onChangeItem: (newItem: Item) => void;
+  onChangeQuantity: (quantity: number) => void;
   setPackSize: (packSize: number) => void;
 }
 
@@ -40,32 +37,9 @@ const SimpleText = styled(Typography)({
   display: 'inline-flex',
 });
 
-const ItemOption = styled('li')(({ theme }) => ({
-  color: theme.palette.gray.main,
-  backgroundColor: theme.palette.background.toolbar,
-}));
-
-const filterOptions = {
-  stringify: (item: Item) => `${item.code} ${item.name}`,
-  limit: 100,
-};
-
-const renderOption = (
-  props: React.HTMLAttributes<HTMLLIElement>,
-  item: Item
-) => (
-  <ItemOption {...props} key={item.code}>
-    <span style={{ width: 100 }}>{item.code}</span>
-    <span style={{ width: 500 }}>{item.name}</span>
-    <span>{item.availableQuantity}</span>
-  </ItemOption>
-);
-
 export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   allocatedQuantity,
   invoiceLine,
-  isLoading,
-  items,
   onChangeItem,
   onChangeQuantity,
   quantity,
@@ -75,10 +49,6 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   packSize,
 }) => {
   const t = useTranslation();
-  const options =
-    items
-      ?.filter(item => item.isVisible)
-      .map(item => ({ label: item.name, ...item })) || [];
 
   const quantityDescription = quantity ? (
     <SimpleText
@@ -115,17 +85,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       <ModalRow>
         <ModalLabel labelKey="label.item" />
         <Grid item flex={1}>
-          <Autocomplete
-            filterOptionConfig={filterOptions}
-            loading={isLoading}
-            noOptionsText={t('error.no-items')}
-            onChange={onChangeItem}
-            options={options}
-            renderOption={renderOption}
-            defaultValue={selectedItem}
-            width="100%"
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-          />
+          <ItemSearchInput value={selectedItem} onChange={onChangeItem} />
         </Grid>
       </ModalRow>
       <ModalRow>

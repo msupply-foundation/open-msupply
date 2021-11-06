@@ -41,7 +41,7 @@ const onRead =
     return namesGuard(result);
   };
 
-export const getCustomerListViewApi = (api: OmSupplyApi): ListApi<Name> => ({
+export const getNameListViewApi = (api: OmSupplyApi): ListApi<Name> => ({
   onRead:
     ({ first, offset, sortBy }) =>
     () =>
