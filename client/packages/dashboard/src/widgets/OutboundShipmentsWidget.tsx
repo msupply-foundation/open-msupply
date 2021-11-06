@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // TODO: move this into system perhaps
-import { NameSearchModal } from '@openmsupply-client/system/src/name';
+import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getOutboundShipmentListViewApi } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/api';
 import {
   ButtonWithIcon,

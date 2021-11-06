@@ -10,11 +10,10 @@ import {
   TextArea,
   useNotification,
   useTranslation,
-  useFormatDate,
   ColorSelectButton,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
-import { getStatusTranslation } from '../utils';
+import { isInvoiceEditable } from '../utils';
 import { OutboundShipment } from './types';
 
 interface SidePanelProps {
@@ -24,10 +23,6 @@ interface SidePanelProps {
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
   const t = useTranslation();
-  const d = useFormatDate();
-
-  // TODO: Extract to helper
-  const entered = draft?.entryDatetime ? d(new Date(draft.entryDatetime)) : '-';
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
@@ -44,31 +39,29 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
         />
       }
     >
-      <DetailPanelSection titleKey="heading.comment">
-        <TextArea
-          onChange={e => draft.update?.('comment', e.target.value)}
-          value={draft.comment}
-        />
-      </DetailPanelSection>
       <DetailPanelSection titleKey="heading.additional-info">
-        <Grid container key="additional-info">
+        <Grid container gap={0.5} key="additional-info">
+          <PanelRow>
+            <PanelLabel>{t('label.entered-by')}</PanelLabel>
+            <PanelField>{draft.enteredByName}</PanelField>
+          </PanelRow>
+
           <PanelRow>
             <PanelLabel>{t('label.color')}</PanelLabel>
             <PanelField>
               <ColorSelectButton
+                disabled={!isInvoiceEditable(draft)}
                 onChange={color => draft.update?.('color', color.hex)}
                 color={draft.color}
               />
             </PanelField>
           </PanelRow>
-          <PanelRow>
-            <PanelLabel>{t('label.entered')}</PanelLabel>
-            <PanelField>{entered}</PanelField>
-          </PanelRow>
-          <PanelRow>
-            <PanelLabel>{t('label.status')}</PanelLabel>
-            <PanelField>{t(getStatusTranslation(draft?.status))}</PanelField>
-          </PanelRow>
+          <PanelLabel>{t('heading.comment')}</PanelLabel>
+          <TextArea
+            disabled={!isInvoiceEditable(draft)}
+            onChange={e => draft.update?.('comment', e.target.value)}
+            value={draft.comment}
+          />
         </Grid>
       </DetailPanelSection>
     </DetailPanelPortal>
