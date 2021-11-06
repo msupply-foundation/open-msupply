@@ -9,7 +9,12 @@ import {
 const Dashboard: React.FC = () => (
   <Grid
     container
-    sx={{ backgroundColor: 'background.toolbar', padding: '32px' }}
+    sx={{
+      backgroundColor: 'background.toolbar',
+      paddingBottom: '32px',
+    }}
+    justifyContent="space-evenly"
+    wrap="nowrap"
   >
     <InboundShipmentsWidget />
     <OutboundShipmentsWidget />

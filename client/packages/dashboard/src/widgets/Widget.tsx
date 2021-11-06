@@ -27,14 +27,14 @@ const Widget: React.FC<WidgetProps> = ({
   const t = useTranslation();
   return (
     <Paper
-      style={{
-        borderRadius: 16,
+      sx={{
+        borderRadius: '16px',
         height,
-        padding: 24,
-        width: 400,
+        padding: '24px',
         display: 'flex',
         flexDirection: 'column',
-        margin: 11,
+        margin: '11px',
+        boxShadow: theme => theme.shadows[2],
       }}
     >
       <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>

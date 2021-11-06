@@ -49,7 +49,12 @@ export const OutboundShipmentsWidget: React.FC = () => {
       />
 
       <Widget titleKey="app.outbound-shipments">
-        <Grid container justifyContent="flex-start" flex={1}>
+        <Grid
+          container
+          justifyContent="flex-start"
+          flex={1}
+          flexDirection="column"
+        >
           <Grid item>
             <StatsPanel
               titleKey="heading.shipments-to-be-picked"
