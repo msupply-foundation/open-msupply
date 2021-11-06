@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMatch, useNavigate } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   styled,
@@ -11,23 +11,31 @@ import {
   useAppBarRect,
   AppBarButtons,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   marginRight: 0,
   minHeight: 90,
-  paddingLeft: '16px',
-  paddingRight: '16px',
+  paddingLeft: 16,
+  paddingRight: 16,
 
-  boxShadow: theme.shadows[2],
   ...theme.mixins.header,
 }));
 
 const AppBar: React.FC = () => {
   const navigate = useNavigate();
   const { ref } = useAppBarRect();
+  const isDashboard = useMatch(AppRoute.Dashboard);
 
-  return (
-    <StyledContainer ref={ref}>
+  return isDashboard ? (
+    <StyledContainer ref={ref} sx={{ borderBottom: 0, minHeight: '50px' }}>
+      <Toolbar disableGutters>
+        <AppBarButtons />
+      </Toolbar>
+      <AppBarContent />
+    </StyledContainer>
+  ) : (
+    <StyledContainer ref={ref} sx={{ boxShadow: theme => theme.shadows[2] }}>
       <Toolbar disableGutters>
         <IconButton
           icon={<ArrowLeftIcon color="primary" />}

@@ -53,9 +53,8 @@ declare module '@mui/material/Checkbox' {
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
-    gray: PaletteColor;
+    gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
-    paleGrey: string;
     form: TypeForm;
   }
   interface TypeBackground {
@@ -116,8 +115,12 @@ const themeOptions = {
     outline: { main: '#555770' },
     divider: '#eaeaea',
     error: { main: '#e63535' },
-    gray: { main: '#8f90a6', light: '#c7c9d9', dark: '#555770' },
-    paleGrey: '#ccddff',
+    gray: {
+      main: '#8f90a6',
+      light: '#c7c9d9',
+      dark: '#555770',
+      pale: '#ccddff',
+    },
     border: '#e4e4eb',
     primary: { main: '#e95c30', light: '#fc8058', dark: '#c43c11' },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },

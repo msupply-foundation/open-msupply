@@ -5,7 +5,7 @@ import { StatsPanel } from '../StatsPanel';
 
 export const StockWidget: React.FC = () => (
   <Widget titleKey="app.stock">
-    <Grid container justifyContent="flex-start" flex={1}>
+    <Grid container justifyContent="flex-start" flex={1} flexDirection="column">
       <Grid item>
         <StatsPanel
           titleKey="heading.expiring-stock"

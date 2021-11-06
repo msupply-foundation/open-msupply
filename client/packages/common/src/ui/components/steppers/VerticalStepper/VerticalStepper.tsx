@@ -29,7 +29,7 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
     marginLeft: '5px',
   },
   [`& .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.paleGrey,
+    borderColor: theme.palette.gray.pale,
 
     // The width is for the connector which is significantly thicker than the default.
     // Additionally the height has been shrunk so that each connector hits the icons
@@ -59,8 +59,8 @@ const Circle = styled('div', {
 }>(({ active, completed, theme }) => {
   // Base colours for all uncompleted and non-active steps.
   const colors = {
-    borderColor: theme.palette.paleGrey,
-    backgroundColor: theme.palette.paleGrey,
+    borderColor: theme.palette.gray.pale,
+    backgroundColor: theme.palette.gray.pale,
   };
 
   // If the step is completed, then everything is light.

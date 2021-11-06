@@ -9,7 +9,7 @@ import { StatsPanel } from '../StatsPanel';
 
 export const InboundShipmentsWidget: React.FC = () => (
   <Widget titleKey="app.inbound-shipments">
-    <Grid container justifyContent="flex-start" flex={1}>
+    <Grid container justifyContent="flex-start" flex={1} flexDirection="column">
       <Grid item>
         <StatsPanel
           titleKey="app.inbound-shipments"
