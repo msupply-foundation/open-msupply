@@ -250,7 +250,7 @@ query names(
   }
 }
 
-query items(
+query itemsWithStockLines(
   $first: Int
   $offset: Int
   $key: ItemSortFieldInput!
@@ -328,6 +328,53 @@ query items(
             totalCount
           }
         }
+        code
+        id
+        isVisible
+        name
+        unitName
+      }
+      totalCount
+    }
+  }
+}
+
+query itemsListView(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+) {
+  items(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        availableQuantity
         code
         id
         isVisible

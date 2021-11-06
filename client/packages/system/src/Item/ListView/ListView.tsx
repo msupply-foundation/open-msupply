@@ -4,12 +4,12 @@ import {
   TableProvider,
   DataTable,
   useListData,
-  Item,
   useColumns,
   createTableStore,
   useOmSupplyApi,
 } from '@openmsupply-client/common';
 import { getItemListViewApi } from './api';
+import { ItemRow } from '../types';
 
 export const ListView: FC = () => {
   const { api } = useOmSupplyApi();
@@ -24,10 +24,14 @@ export const ListView: FC = () => {
   } = useListData({ key: 'name' }, ['items', 'list'], getItemListViewApi(api));
   const navigate = useNavigate();
 
-  const columns = useColumns<Item>(['name', 'code'], {
-    sortBy,
-    onChangeSortBy,
-  });
+  const columns = useColumns<ItemRow>(
+    ['name', 'code'],
+    {
+      sortBy,
+      onChangeSortBy,
+    },
+    [sortBy]
+  );
 
   return (
     <TableProvider createStore={createTableStore}>

@@ -1,20 +1,15 @@
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 
 import {
   DialogButton,
   Grid,
   InvoiceLine,
   Item,
-  getSdk,
-  GraphQLClient,
   useForm,
-  useQuery,
   useDialog,
   FormProvider,
-  SortBy,
-  ItemSortFieldInput,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
+
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import { BatchRow } from '../types';
@@ -46,49 +41,6 @@ export const getInvoiceLine = (
   invoiceId: '',
   expiry: line.expiryDate,
 });
-
-const client = new GraphQLClient(Environment.API_URL);
-const api = getSdk(client);
-
-const listQueryFn = async ({
-  first = 999,
-  offset,
-  sortBy,
-}: {
-  first?: number;
-  offset?: number;
-  sortBy?: SortBy<Item>;
-} = {}): Promise<{
-  nodes: Item[];
-  totalCount: number;
-}> => {
-  // TODO: Need to add a `sortByKey` to the Column type
-  const key =
-    sortBy?.key === 'name' ? ItemSortFieldInput.Name : ItemSortFieldInput.Code;
-
-  const { items } = await api.items({
-    first,
-    offset,
-    key,
-    desc: sortBy?.isDesc,
-  });
-
-  if (items.__typename === 'ItemConnector') {
-    const itemRows: Item[] = items.nodes.map(item => ({
-      ...item,
-      availableBatches:
-        item.availableBatches.__typename === 'StockLineConnector'
-          ? item.availableBatches.nodes
-          : [],
-    }));
-
-    return {
-      totalCount: items.totalCount,
-      nodes: itemRows,
-    };
-  }
-  throw new Error(items.error.description);
-};
 
 const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
   const disabledA = a.onHold || a.availableNumberOfPacks === 0;
@@ -132,10 +84,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register, setValue, getValues } = methods;
 
-  const onChangeItem = (
-    _event: SyntheticEvent<Element, Event>,
-    value: Item | null
-  ) => {
+  const onChangeItem = (value: Item | null) => {
     setSelectedItem(value);
     setBatchRows(
       (value?.availableBatches || [])
@@ -146,8 +95,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     setValue('unitName', value?.unitName || '');
     setValue('availableQuantity', value?.availableQuantity || 0);
   };
-
-  const { data, isLoading } = useQuery(['item', 'list'], () => listQueryFn());
 
   const onReset = () => {
     reset();
@@ -282,11 +229,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           <Grid container gap={0.5}>
             <ItemDetailsForm
               invoiceLine={invoiceLine}
-              items={data?.nodes ?? []}
               onChangeItem={onChangeItem}
               onChangeQuantity={setQuantity}
               register={register}
-              isLoading={isLoading}
               allocatedQuantity={allocated}
               quantity={quantity}
               selectedItem={selectedItem || undefined}

@@ -24,10 +24,14 @@ export const ListView: FC = () => {
     onChangeSortBy,
   } = useListData({ key: 'name' }, ['names', 'list'], getNameListViewApi(api));
 
-  const columns = useColumns<Name>(['name', 'code'], {
-    sortBy,
-    onChangeSortBy,
-  });
+  const columns = useColumns<Name>(
+    ['name', 'code'],
+    {
+      sortBy,
+      onChangeSortBy,
+    },
+    [sortBy]
+  );
 
   return (
     <TableProvider createStore={createTableStore}>
