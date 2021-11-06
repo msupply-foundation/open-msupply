@@ -7,12 +7,14 @@ interface ColorSelectButtonProps {
   color: string;
   onChange: (color: Color) => void;
   colors?: Color[];
+  disabled?: boolean;
 }
 
 export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
   onChange,
   colors,
   color,
+  disabled = false,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -38,6 +40,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
       <IconButton
         labelKey="button.select-a-color"
         height="16px"
+        disabled={disabled}
         icon={
           <CircleIcon
             htmlColor={color}
