@@ -7,6 +7,8 @@ interface ButtonProps {
   icon: React.ReactNode;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   labelKey: LocaleKey;
+  width?: string;
+  height?: string;
 }
 
 export const IconButton: React.FC<ButtonProps> = ({
@@ -14,6 +16,8 @@ export const IconButton: React.FC<ButtonProps> = ({
   icon,
   onClick,
   labelKey,
+  width,
+  height,
 }) => {
   const t = useTranslation();
 
@@ -21,6 +25,7 @@ export const IconButton: React.FC<ButtonProps> = ({
   return (
     <Tooltip title={tooltip}>
       <MuiIconButton
+        sx={{ width, height }}
         disabled={disabled}
         onClick={onClick}
         aria-label={tooltip}

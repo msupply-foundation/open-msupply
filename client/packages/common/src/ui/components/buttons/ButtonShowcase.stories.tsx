@@ -5,8 +5,9 @@ import { FlatButton } from './FlatButton';
 import { BookIcon } from '../../icons';
 import { BaseButton, ButtonWithIcon } from '.';
 import { TruckIcon } from '../../icons';
-import { DialogButton, IconButton } from '..';
+import { Color, DialogButton, IconButton } from '..';
 import { ToggleButton } from './ToggleButton';
+import { ColorSelectButton } from './ColorSelectButton';
 
 const getOnClick = (someText: string) => () => {
   alert(someText);
@@ -36,6 +37,11 @@ const Wrapper: FC<{ text: string }> = ({ children, text }) => {
 
 const Template: Story = () => {
   const [selected, setSelected] = useState(false);
+  const [color, setColor] = useState<Color>({
+    hex: '#8f90a6',
+    name: 'grey',
+  });
+
   return (
     <Grid container gap={2}>
       <Wrapper text="Base Button: Outlined variant, primary color">
@@ -152,6 +158,14 @@ const Template: Story = () => {
           selected={selected}
           onClick={() => setSelected(state => !state)}
           labelKey="app.admin"
+        />
+      </Wrapper>
+
+      <Wrapper text="Color select">
+        <Typography>Selected color: {JSON.stringify(color)}</Typography>
+        <ColorSelectButton
+          color={color.hex}
+          onChange={newColor => setColor(newColor)}
         />
       </Wrapper>
     </Grid>
