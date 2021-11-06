@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // TODO: move this into system perhaps
-import { CustomerSearch } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/CustomerSearch';
+import { NameSearchModal } from '@openmsupply-client/system/src/name';
 import { getOutboundShipmentListViewApi } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/api';
 import {
   ButtonWithIcon,
@@ -26,7 +26,7 @@ export const OutboundShipmentsWidget: React.FC = () => {
 
   return (
     <>
-      <CustomerSearch
+      <NameSearchModal
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {
