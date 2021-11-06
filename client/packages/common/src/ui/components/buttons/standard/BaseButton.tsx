@@ -16,7 +16,11 @@ export const StyledBaseButton = styled(MuiButton)(
       else hoverBgColor = color ?? theme.palette.secondary.main;
     }
 
-    const hoverColor = variant === 'contained' ? color : 'white';
+    const getHoverColor = () => {
+      if (variant !== 'contained') return 'white';
+      if (!color || color === 'inherit') return theme.palette['primary'].main;
+      return theme.palette[color].main;
+    };
 
     return {
       '&.MuiButton-outlined': {
@@ -27,7 +31,7 @@ export const StyledBaseButton = styled(MuiButton)(
       fontWeight: 700,
       height: 40,
       textTransform: 'none' as Property.TextTransform,
-      boxShadow: theme.shadows[1],
+      boxShadow: theme.shadows[2],
 
       minWidth: '115px',
 
@@ -35,7 +39,7 @@ export const StyledBaseButton = styled(MuiButton)(
 
       '&:hover': {
         border: 'none',
-        color: hoverColor,
+        color: getHoverColor(),
         backgroundColor: hoverBgColor,
       },
     };

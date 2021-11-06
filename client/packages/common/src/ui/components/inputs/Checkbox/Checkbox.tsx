@@ -10,7 +10,7 @@ import {
 export const Checkbox: FC<CheckboxProps> = props => {
   return (
     <MuiCheckbox
-      color="darkGrey"
+      color="outline"
       size="small"
       icon={<CheckboxEmptyIcon />}
       checkedIcon={<CheckboxCheckedIcon />}

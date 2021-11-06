@@ -29,7 +29,7 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
     marginLeft: '5px',
   },
   [`& .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.secondary.light,
+    borderColor: theme.palette.gray.pale,
 
     // The width is for the connector which is significantly thicker than the default.
     // Additionally the height has been shrunk so that each connector hits the icons
@@ -39,13 +39,13 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      borderColor: theme.palette.secondary.dark,
+      borderColor: theme.palette.secondary.light,
     },
   },
 
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      borderColor: theme.palette.secondary.dark,
+      borderColor: theme.palette.secondary.light,
     },
   },
 }));
@@ -59,14 +59,14 @@ const Circle = styled('div', {
 }>(({ active, completed, theme }) => {
   // Base colours for all uncompleted and non-active steps.
   const colors = {
-    borderColor: theme.palette.secondary.light,
-    backgroundColor: theme.palette.secondary.light,
+    borderColor: theme.palette.gray.pale,
+    backgroundColor: theme.palette.gray.pale,
   };
 
-  // If the step is completed, then everything is dark.
+  // If the step is completed, then everything is light.
   if (completed) {
-    colors.backgroundColor = theme.palette.secondary.dark;
-    colors.borderColor = theme.palette.secondary.dark;
+    colors.backgroundColor = theme.palette.secondary.light;
+    colors.borderColor = theme.palette.secondary.light;
   }
 
   // If the step is active, the center of the circle is white
@@ -149,7 +149,7 @@ export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => {
                     {t(step.label)}
                   </Typography>
                   <Typography
-                    color="midGrey"
+                    color="gray.main"
                     variant="body2"
                     lineHeight={0}
                     fontSize="12px"

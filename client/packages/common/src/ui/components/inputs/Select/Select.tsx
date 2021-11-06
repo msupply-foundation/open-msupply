@@ -22,7 +22,7 @@ export const Select: FC<SelectProps> = React.forwardRef(
       ref={ref}
       sx={{
         '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-        '& .MuiInput-input': { color: theme => theme.palette.darkGrey.main },
+        '& .MuiInput-input': { color: theme => theme.palette.gray.dark },
         ...sx,
       }}
       select
