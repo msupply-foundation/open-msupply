@@ -178,7 +178,6 @@ const CommandK: FC = ({ children }) => {
 
 const Host: FC = () => {
   const { locale } = useHostContext();
-
   return (
     <IntlProvider locale={locale}>
       <ErrorBoundary Fallback={GenericErrorFallback}>

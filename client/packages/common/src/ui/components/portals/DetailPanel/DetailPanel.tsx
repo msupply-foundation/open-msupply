@@ -84,7 +84,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
           <Box
             sx={{
               alignItems: 'center',
-              color: 'midGrey',
+              color: 'gray.main',
               display: 'flex',
               height: 56,
               justifyContent: 'flex-end',
