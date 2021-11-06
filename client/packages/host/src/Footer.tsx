@@ -11,8 +11,12 @@ import {
 export const Footer: React.FC = () => {
   const { user, store } = useHostContext();
   const PaddedCell = styled(Box)({ display: 'flex' });
-  const iconStyles = { color: 'midGrey', height: '16px', width: '16px' };
-  const textStyles = { color: 'midGrey', fontSize: '12px', paddingLeft: '8px' };
+  const iconStyles = { color: 'gray.main', height: '16px', width: '16px' };
+  const textStyles = {
+    color: 'gray.main',
+    fontSize: '12px',
+    paddingLeft: '8px',
+  };
 
   return (
     <Box gap={2} display="flex" flex={1} alignItems="center">

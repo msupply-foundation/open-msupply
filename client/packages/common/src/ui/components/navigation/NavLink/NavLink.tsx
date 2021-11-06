@@ -39,7 +39,7 @@ const StyledListItem = styled<
 })(({ theme, isOpen, isSelected }) => ({
   ...getListItemCommonStyles(isOpen),
   backgroundColor: isSelected ? theme.palette.background.white : 'transparent',
-  boxShadow: isSelected ? theme.shadows[2] : 'none',
+  boxShadow: isSelected ? theme.shadows[3] : 'none',
   marginTop: 5,
   '&:hover': {
     boxShadow: theme.shadows[8],

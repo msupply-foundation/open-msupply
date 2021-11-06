@@ -1,5 +1,6 @@
 export { ArrowLeftIcon } from './ArrowLeft';
 export { ArrowRightIcon } from './ArrowRight';
+export { BarChartIcon } from './BarChart';
 export { BookIcon } from './Book';
 export { CartIcon } from './Cart';
 export { CheckboxCheckedIcon } from './CheckboxChecked';
