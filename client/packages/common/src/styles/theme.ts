@@ -46,25 +46,15 @@ declare module '@mui/material/styles/createMixins' {
 
 declare module '@mui/material/Checkbox' {
   export interface CheckboxPropsColorOverrides {
-    darkGrey: true;
-  }
-}
-
-declare module '@mui/material/styles' {
-  interface Palette {
-    darkGrey: Palette['primary'];
-  }
-  interface PaletteOptions {
-    darkGrey: PaletteOptions['primary'];
+    outline: true;
   }
 }
 
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
-    darkGrey: Palette['primary'];
-    lightGrey: string;
-    midGrey: string;
+    gray: PaletteColor & { pale: string };
+    outline: Palette['primary'];
     form: TypeForm;
   }
   interface TypeBackground {
@@ -122,15 +112,18 @@ const themeOptions = {
     },
   },
   palette: {
-    darkGrey: { main: '#555770' },
+    outline: { main: '#555770' },
     divider: '#eaeaea',
     error: { main: '#e63535' },
-    lightGrey: '#c7c9d9',
-    midGrey: '#8f90a6',
+    gray: {
+      main: '#8f90a6',
+      light: '#c7c9d9',
+      dark: '#555770',
+      pale: '#ccddff',
+    },
     border: '#e4e4eb',
-    primary: { 500: '#e95c30' },
-    secondary: { main: '#3e7bfa', light: '#ccddff', dark: '#5b8def' },
-
+    primary: { main: '#e95c30', light: '#fc8058', dark: '#c43c11' },
+    secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
       menu: '#f2f2f5',
       toolbar: '#fafafc',
@@ -161,8 +154,10 @@ const themeOptions = {
 const theme = createTheme(themeOptions);
 
 theme.shadows[1] =
-  '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
+  '0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08)';
 theme.shadows[2] =
+  '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
+theme.shadows[3] =
   '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
 
 export default theme;

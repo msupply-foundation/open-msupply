@@ -120,7 +120,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
         >
           <InfoIcon
             fontSize="small"
-            sx={{ color: theme => theme.palette.lightGrey, cursor: 'help' }}
+            sx={{ color: 'gray.light', cursor: 'help' }}
           />
         </PaperPopover>
       </BasicCell>
@@ -145,7 +145,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
     {...props}
     sx={{
       borderBottomWidth: 0,
-      color: theme => theme.palette.darkGrey.main,
+      color: 'gray.dark',
       fontSize: '12px',
       padding: '0 8px',
       whiteSpace: 'nowrap',
