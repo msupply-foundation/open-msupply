@@ -336,9 +336,13 @@ export const createCustomers = (
     return takeRandomElementFrom(names);
   };
 
-  return Array.from({ length: numberToCreate }).map((_, i) => {
-    const { name, code } = getNameAndCode();
+  const customers = new Map();
+  Array.from({ length: numberToCreate }).forEach(() => {
+    const { code, name } = getNameAndCode();
+    customers.set(name, code);
+  });
 
+  return Array.from(customers.entries()).map(([name, code], i) => {
     return {
       id: `${i}`,
       name,

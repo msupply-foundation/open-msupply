@@ -19,10 +19,7 @@ const Example = () => {
 
   return (
     <Box>
-      <Box
-        bgcolor={theme.palette.darkGrey.main}
-        height={table.headerRow.height}
-      >
+      <Box bgcolor={theme.palette.gray.dark} height={table.headerRow.height}>
         <Typography variant="h5">
           Adjust your browser window or viewport height to change the number of
           rows rendered
@@ -42,7 +39,7 @@ const Example = () => {
       })}
 
       <Box
-        bgcolor={theme.palette.darkGrey.main}
+        bgcolor={theme.palette.gray.dark}
         height={table.paginationRow.height}
       >
         <Typography variant="h4">Footer / Pagination</Typography>

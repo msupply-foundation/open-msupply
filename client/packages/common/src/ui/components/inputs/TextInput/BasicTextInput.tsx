@@ -12,7 +12,7 @@ export const BasicTextInput: FC<StandardTextFieldProps> = React.forwardRef(
       ref={ref}
       sx={{
         '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-        '& .MuiInput-input': { color: theme => theme.palette.darkGrey.main },
+        '& .MuiInput-input': { color: 'gray.dark' },
         ...sx,
       }}
       variant="standard"

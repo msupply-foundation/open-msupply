@@ -1,7 +1,8 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { NameSearchModal } from './NameSearchModal';
-import { BaseButton, useToggle } from '@openmsupply-client/common';
+import { useToggle } from '@openmsupply-client/common';
+import { BaseButton } from '@openmsupply-client/common/src/ui/components/buttons';
 
 export default {
   title: 'Name/NameSearchModal',
