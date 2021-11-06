@@ -23,10 +23,9 @@ export const defaultOptionMapper = <T extends Record<keyof T, unknown>>(
 
 export const getDefaultOptionRenderer: <T>(
   key: keyof T
-) => AutocompleteOptionRenderer<T> = key => (props, item) => {
-  return (
+) => AutocompleteOptionRenderer<T> = key => (props, item) =>
+  (
     <DefaultAutocompleteItemOption {...props}>
       <span>{String(item?.[key])}</span>
     </DefaultAutocompleteItemOption>
   );
-};
