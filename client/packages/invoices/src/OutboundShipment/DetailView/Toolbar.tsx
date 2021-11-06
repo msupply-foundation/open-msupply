@@ -12,7 +12,7 @@ import {
   useNotification,
   useTableStore,
 } from '@openmsupply-client/common';
-import { CustomerSearchInput } from '../CustomerSearchInput';
+import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 import { InvoiceLineRow, OutboundShipment } from './types';
 import { isInvoiceEditable } from '../utils';
 
@@ -57,7 +57,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               <InputWithLabelRow
                 label="label.customer-name"
                 Input={
-                  <CustomerSearchInput
+                  <NameSearchInput
                     disabled={!isInvoiceEditable(draft)}
                     value={draft.otherParty}
                     onChange={name => {

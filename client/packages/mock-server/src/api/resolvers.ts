@@ -12,7 +12,7 @@ import { db } from '../data/database';
 import {
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
-  ItemsQueryVariables,
+  ItemsListViewQueryVariables,
   NamesQueryVariables,
   ItemSortFieldInput,
   NameSortFieldInput,
@@ -148,7 +148,7 @@ export const ResolverService = {
       offset = 0,
       key,
       desc,
-    }: ItemsQueryVariables): ListResponse<ResolvedItem> => {
+    }: ItemsListViewQueryVariables): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
 
       if (key) {
