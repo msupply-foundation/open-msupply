@@ -53,6 +53,7 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
           color={color}
           size="small"
           startIcon={startIcon}
+          aria-label={t(labelKey, labelProps)}
           {...buttonProps}
         >
           {centeredIcon}
