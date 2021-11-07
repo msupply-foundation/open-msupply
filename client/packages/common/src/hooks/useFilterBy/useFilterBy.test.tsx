@@ -39,7 +39,7 @@ describe('useFilterBy', () => {
       );
     });
 
-    expect(result.current.filterBy.confirmedDatetime.beforeOrEqualTo).toEqual(
+    expect(result.current.filterBy?.confirmedDatetime?.beforeOrEqualTo).toEqual(
       now
     );
   });
@@ -77,7 +77,7 @@ describe('useFilterBy', () => {
       result.current.onChangeStringFilterRule('comment', 'equalTo', 'josh');
     });
 
-    expect(result.current.filterBy.comment.equalTo).toEqual('josh');
+    expect(result.current.filterBy?.comment?.equalTo).toEqual('josh');
   });
 
   it('updates string filters', () => {
