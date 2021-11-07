@@ -36,7 +36,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     pagination,
     invalidate,
   } = useListData(
-    { key: 'otherPartyName' },
+    { initialSortBy: { key: 'otherPartyName' } },
     'invoice',
     getOutboundShipmentListViewApi(api)
   );

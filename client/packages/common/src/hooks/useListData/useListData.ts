@@ -1,9 +1,11 @@
+import { useFilterBy } from './../useFilterBy/useFilterBy';
 import { ObjectWithStringKeys } from './../../types/utility';
 import { SortBy } from './../useSortBy/useSortBy';
 import { UseMutateAsyncFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
 import { SortRule } from '../useSortBy';
+import { FilterBy } from '../useFilterBy';
 import { ClientError } from 'graphql-request';
 import { useNotification } from '../../hooks';
 
@@ -12,10 +14,12 @@ export interface ListApi<T extends ObjectWithStringKeys> {
     first,
     offset,
     sortBy,
+    filterBy,
   }: {
     first: number;
     offset: number;
     sortBy: SortBy<T>;
+    filterBy: FilterBy<T> | null;
   }) => () => Promise<{ nodes: T[]; totalCount: number }>;
   onDelete: (toDelete: T[]) => Promise<void>;
   onUpdate: (toUpdate: T) => Promise<T>;
@@ -39,12 +43,17 @@ interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
 }
 
 export const useListData = <T extends ObjectWithStringKeys>(
-  initialSortBy: SortRule<T>,
+  initialListParameters: {
+    initialSortBy: SortRule<T>;
+    initialFilterBy?: FilterBy<T> | null;
+  },
   queryKey: string | readonly unknown[],
   api: ListApi<T>,
   onError?: (e: ClientError) => void
 ): ListDataState<T> => {
+  const { initialSortBy, initialFilterBy } = initialListParameters;
   const queryClient = useQueryClient();
+  const { filterBy } = useFilterBy<T>(initialFilterBy);
   const { queryParams, first, offset, sortBy } = useQueryParams(initialSortBy);
   const fullQueryKey = [queryKey, 'list', queryParams];
   const { error } = useNotification();
@@ -53,7 +62,12 @@ export const useListData = <T extends ObjectWithStringKeys>(
 
   const { data, isLoading: isQueryLoading } = useQuery(
     fullQueryKey,
-    api.onRead({ first, offset, sortBy }),
+    api.onRead({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }),
     {
       onError: onError || defaultErrorHandler,
       useErrorBoundary: (error: ClientError): boolean =>
