@@ -79,10 +79,10 @@ const themeOptions = {
   breakpoints: {
     values: {
       xs: 0,
-      sm: 600,
-      md: 1024,
-      lg: 1440,
-      xl: 1536,
+      sm: 599,
+      md: 1025,
+      lg: 1441,
+      xl: 1535,
     },
   },
   direction: 'rtl' as Direction,

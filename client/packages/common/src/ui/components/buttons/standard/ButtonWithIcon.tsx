@@ -5,8 +5,8 @@ import {
   LocaleProps,
   useTranslation,
 } from '../../../../intl/intlHelpers';
-import { useIsSmallScreen } from '../../../../hooks';
 import { ShrinkableBaseButton } from './ShrinkableBaseButton';
+import { useIsScreen } from '../../../../hooks/useIsScreen';
 
 interface ButtonWithIconProps extends ButtonProps {
   Icon: React.ReactNode;
@@ -17,6 +17,7 @@ interface ButtonWithIconProps extends ButtonProps {
   variant?: 'outlined' | 'contained';
   color?: 'primary' | 'secondary';
   disabled?: boolean;
+  shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
@@ -28,14 +29,15 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   color = 'primary',
   disabled,
   labelProps,
+  shrinkThreshold = 'md',
   ...buttonProps
 }) => {
   const t = useTranslation();
-  const isSmallScreen = useIsSmallScreen();
+  const isShrinkThreshold = useIsScreen(shrinkThreshold);
 
   // On small screens, if the button shouldShrink, then
   // only display a centered icon, with no text.
-  const shrink = isSmallScreen && shouldShrink;
+  const shrink = isShrinkThreshold && shouldShrink;
   const startIcon = shrink ? null : Icon;
   const centeredIcon = shrink ? Icon : null;
   const text = shrink ? null : t(labelKey, labelProps);
