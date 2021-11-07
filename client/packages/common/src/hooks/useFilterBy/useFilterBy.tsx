@@ -13,7 +13,7 @@ type FilterRule = {
 
 export type FilterBy<T> = Partial<Record<Partial<keyof T>, FilterRule>>;
 
-interface UseFilterByControl<T> {
+export interface FilterState<T> {
   filterBy: FilterBy<T> | null;
 
   onChangeDateFilterRule: (
@@ -33,7 +33,7 @@ interface UseFilterByControl<T> {
 
 export const useFilterBy = <T extends unknown>(
   initialFilterBy?: FilterBy<T> | null
-): UseFilterByControl<T> => {
+): FilterState<T> => {
   const [filterBy, setFilterBy] = useState<FilterBy<T> | null>(
     initialFilterBy ?? null
   );
