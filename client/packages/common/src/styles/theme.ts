@@ -82,7 +82,7 @@ const themeOptions = {
       sm: 599,
       md: 1025,
       lg: 1441,
-      xl: 1535,
+      xl: 1537,
     },
   },
   direction: 'rtl' as Direction,
