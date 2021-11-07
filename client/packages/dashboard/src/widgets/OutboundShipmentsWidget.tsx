@@ -19,7 +19,7 @@ export const OutboundShipmentsWidget: React.FC = () => {
 
   const { api } = useOmSupplyApi();
   const { onCreate, invalidate } = useListData(
-    { key: 'otherPartyName' },
+    { initialSortBy: { key: 'otherPartyName' } },
     'invoice',
     getOutboundShipmentListViewApi(api)
   );

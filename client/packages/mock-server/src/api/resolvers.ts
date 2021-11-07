@@ -128,6 +128,7 @@ export const ResolverService = {
       offset = 0,
       key,
       desc,
+      filter,
     }: InvoicesQueryVariables): ListResponse<ResolvedInvoice> => {
       const invoices = db.get.all.invoice();
 
@@ -141,7 +142,26 @@ export const ResolverService = {
         data.sort(sortData);
       }
 
-      return createListResponse(invoices.length, data, 'InvoiceConnector');
+      let filteredData = data;
+      if (filter) {
+        filteredData = data.filter(({ otherPartyName }) => {
+          if (filter.otherPartyName?.equalTo) {
+            return otherPartyName === filter.otherPartyName.equalTo;
+          }
+
+          if (filter.otherPartyName?.like) {
+            return otherPartyName.includes(filter.otherPartyName.like ?? '');
+          }
+
+          return true;
+        });
+      }
+
+      return createListResponse(
+        invoices.length,
+        filteredData,
+        'InvoiceConnector'
+      );
     },
     item: ({
       first = 50,
