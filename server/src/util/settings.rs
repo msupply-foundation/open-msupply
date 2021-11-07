@@ -20,8 +20,7 @@ pub struct ServerSettings {
 
 #[derive(serde::Deserialize)]
 pub struct SyncSettings {
-    pub host: String,
-    pub port: u16,
+    pub url: String,
     pub username: String,
     pub password: String,
     pub interval: u64,
