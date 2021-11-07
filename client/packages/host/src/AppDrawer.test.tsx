@@ -11,6 +11,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 describe('AppDrawer', () => {
   it('Collapses when clicking the drawer open/close button for the first time on a large screen', async () => {
+    setScreenSize_ONLY_FOR_TESTING(1441);
     const { getByRole, getByTestId } = render(
       <TestingProvider>
         <BrowserRouter>
@@ -51,7 +52,8 @@ describe('AppDrawer', () => {
       expect(drawer).toHaveAttribute('aria-expanded', 'true');
     });
   });
-  it('Text is visibility when the menu is expanded', async () => {
+  it('has visible text when the menu is expanded', async () => {
+    setScreenSize_ONLY_FOR_TESTING(1441);
     const { getByText } = render(
       <TestingProvider>
         <BrowserRouter>
@@ -71,6 +73,7 @@ describe('AppDrawer', () => {
     });
   });
   it('Text is invisible when the menu is collapsed', async () => {
+    setScreenSize_ONLY_FOR_TESTING(1442);
     const { getByText } = render(
       <TestingProvider>
         <BrowserRouter>
