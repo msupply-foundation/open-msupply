@@ -4,7 +4,7 @@ import { Grid } from '@mui/material';
 export const PanelLabel: React.FC = props => (
   <Grid
     item
-    flex={1}
+    flex={2}
     {...props}
     sx={{
       color: theme => theme.palette.form.label,

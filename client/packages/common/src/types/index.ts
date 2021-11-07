@@ -110,6 +110,12 @@ export interface Invoice extends DomainObject {
   pickedDatetime?: string;
   deliveredDatetime?: string;
   enteredByName?: string;
+
+  purchaseOrderNumber?: number | null;
+  requisitionNumber?: number | null;
+  goodsReceiptNumber?: number | null;
+  inboundShipmentNumber?: number | null;
+
   pricing: {
     totalAfterTax: number;
     subtotal: number;

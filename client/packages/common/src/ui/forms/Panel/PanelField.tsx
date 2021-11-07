@@ -8,6 +8,7 @@ export const PanelField: React.FC = props => (
     {...props}
     sx={{
       color: theme => theme.palette.form.field,
+      textAlign: 'right',
       fontSize: '12px',
     }}
   />
