@@ -78,7 +78,7 @@ describe('useListData', () => {
     const onError = jest.fn();
     const ErrorTest = () => {
       const { data } = useListData(
-        { key: 'message' },
+        { initialSortBy: { key: 'message' } },
         '401test',
         PermissionErrorApi,
         onError
@@ -102,7 +102,7 @@ describe('useListData', () => {
   it('calls error boundary on server error', async () => {
     const ErrorTest = () => {
       const { data } = useListData(
-        { key: 'message' },
+        { initialSortBy: { key: 'message' } },
         '500test',
         ServerErrorApi
       );

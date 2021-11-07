@@ -11,55 +11,52 @@ type FilterRule = {
     | FilterByConditionByType['date']]?: unknown;
 };
 
-type FilterBy<PossibleFilterKey extends string> = Record<
-  PossibleFilterKey,
-  FilterRule
->;
+export type FilterBy<T> = Partial<Record<Partial<keyof T>, FilterRule>>;
 
-interface UseFilterByControl<PossibleFilterKey extends string> {
-  filterBy: FilterBy<PossibleFilterKey>;
+interface UseFilterByControl<T> {
+  filterBy: FilterBy<T> | null;
 
   onChangeDateFilterRule: (
-    key: PossibleFilterKey,
+    key: keyof T,
     condition: FilterByConditionByType['date'],
     value: Date
   ) => void;
 
   onChangeStringFilterRule: (
-    key: PossibleFilterKey,
+    key: keyof T,
     condition: FilterByConditionByType['string'],
     value: string
   ) => void;
 
-  onClearFilterRule: (key: PossibleFilterKey) => void;
+  onClearFilterRule: (key: keyof T) => void;
 }
 
-export const useFilterBy = <PossibleFilterKey extends string>(
-  initialFilterBy: FilterBy<PossibleFilterKey>
-): UseFilterByControl<PossibleFilterKey> => {
-  const [filterBy, setFilterBy] =
-    useState<FilterBy<PossibleFilterKey>>(initialFilterBy);
+export const useFilterBy = <T extends unknown>(
+  initialFilterBy?: FilterBy<T> | null
+): UseFilterByControl<T> => {
+  const [filterBy, setFilterBy] = useState<FilterBy<T> | null>(
+    initialFilterBy ?? null
+  );
 
   const onChangeStringFilterRule = (
-    key: PossibleFilterKey,
+    key: keyof T,
     condition: FilterByConditionByType['string'],
     value: string
   ) => {
-    const newFilterRule = { [key]: { [condition]: value } };
-
-    setFilterBy({ ...filterBy, ...newFilterRule });
+    const newFilter = { [key]: { [condition]: value } };
+    setFilterBy({ ...filterBy, ...newFilter });
   };
 
   const onChangeDateFilterRule = (
-    key: PossibleFilterKey,
+    key: keyof T,
     condition: FilterByConditionByType['date'],
     value: Date
   ) => {
-    const newFilterRule = { [key]: { [condition]: value } };
-    setFilterBy({ ...filterBy, ...newFilterRule });
+    const newFilter = { [key]: { [condition]: value } };
+    setFilterBy({ ...filterBy, ...newFilter });
   };
 
-  const onClearFilterRule = (key: PossibleFilterKey) => {
+  const onClearFilterRule = (key: keyof T) => {
     setFilterBy({ ...filterBy, [key]: null });
   };
 
