@@ -36,7 +36,7 @@ async fn main() -> std::io::Result<()> {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     let auth_data = Data::new(AuthData {
-        auth_token_secret: "TODO: get secret from somewhere else, e.g. DB table?".to_string(),
+        auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
