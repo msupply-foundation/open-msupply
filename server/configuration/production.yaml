@@ -1,4 +1,4 @@
 server:
   host: 0.0.0.0
 sync:
-  host: 0.0.0.0
+  url: "http://localhost:2048"

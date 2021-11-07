@@ -108,8 +108,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
         sync: SyncSettings {
             username: "postgres".to_string(),
             password: "password".to_string(),
-            port: 5432,
-            host: "localhost".to_string(),
+            url: "http://localhost:5432".to_string(),
             interval: 100000000,
         },
     }
