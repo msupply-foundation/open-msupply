@@ -3,24 +3,34 @@ import { Property } from 'csstype';
 import {
   Button as MuiButton,
   ButtonProps as MuiButtonProps,
+  styled,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 
 export const StyledBaseButton = styled(MuiButton)(
   ({ theme, color, variant }) => {
-    let hoverBgColor = variant === 'contained' ? 'white' : 'rgb(163, 64, 33)';
-    if (variant === 'contained') {
-      hoverBgColor = 'white';
-    } else {
-      if (color === 'primary') hoverBgColor = 'rgb(163, 64, 33)';
-      else hoverBgColor = color ?? theme.palette.secondary.main;
-    }
+    const getHoverBgColor = () => {
+      if (variant === 'contained') {
+        return 'white';
+      }
+
+      if (color === 'primary') {
+        return 'rgb(163, 64, 33)';
+      }
+
+      if (color === 'secondary') {
+        return theme.palette.secondary.main;
+      }
+    };
 
     const getHoverColor = () => {
-      if (variant !== 'contained') return 'white';
-      if (!color || color === 'inherit') return theme.palette['primary'].main;
-      return theme.palette[color].main;
+      if (variant === 'contained') {
+        return theme.palette.secondary.main;
+      }
+      return 'white';
     };
+
+    const hoverBgColor = getHoverBgColor();
+    const hoverColor = getHoverColor();
 
     return {
       '&.MuiButton-outlined': {
@@ -39,7 +49,7 @@ export const StyledBaseButton = styled(MuiButton)(
 
       '&:hover': {
         border: 'none',
-        color: getHoverColor(),
+        color: hoverColor,
         backgroundColor: hoverBgColor,
       },
     };

@@ -1,6 +1,5 @@
-import { useMediaQuery, useTheme } from '@mui/material';
+import { useIsScreen } from './useIsScreen';
 
 export const useIsSmallScreen = (): boolean => {
-  const theme = useTheme();
-  return useMediaQuery(theme.breakpoints.down('md'));
+  return useIsScreen('md');
 };

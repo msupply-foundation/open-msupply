@@ -20,8 +20,8 @@ import {
   useFormatDate,
   useTranslation,
   ReadOnlyInput,
-  Popper,
-  Typography,
+  PaperPopover,
+  PaperPopoverSection,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../types';
 
@@ -90,46 +90,39 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
         <Checkbox disabled checked={batch.onHold} />
       </BasicCell>
       <BasicCell>
-        <Popper
-          content={
-            <Grid spacing={2} container sx={{ padding: '20px' }}>
-              <Grid item>
-                <Typography sx={{ fontWeight: 'bold' }}>Details</Typography>
-              </Grid>
-              <Grid item sx={{ fontSize: '12px' }}>
-                <Grid container>
-                  <Grid container justifyContent="space-between">
-                    <Grid item>Invoice #xxxx</Grid>
-                    <Grid item>
-                      {`${
-                        (batch.totalNumberOfPacks -
-                          batch.availableNumberOfPacks) /
-                        2
-                      } packs`}
-                    </Grid>
+        <PaperPopover
+          Content={
+            <PaperPopoverSection labelKey="label.details">
+              <Grid container fontSize="12px">
+                <Grid container justifyContent="space-between">
+                  <Grid item>Invoice #xxxx</Grid>
+                  <Grid item>
+                    {`${
+                      (batch.totalNumberOfPacks -
+                        batch.availableNumberOfPacks) /
+                      2
+                    } packs`}
                   </Grid>
-                  <Grid container justifyContent="space-between">
-                    <Grid item>Invoice #yyyy</Grid>
-                    <Grid item>
-                      {`${
-                        (batch.totalNumberOfPacks -
-                          batch.availableNumberOfPacks) /
-                        2
-                      } packs`}
-                    </Grid>
+                </Grid>
+                <Grid container justifyContent="space-between">
+                  <Grid item>Invoice #yyyy</Grid>
+                  <Grid item>
+                    {`${
+                      (batch.totalNumberOfPacks -
+                        batch.availableNumberOfPacks) /
+                      2
+                    } packs`}
                   </Grid>
                 </Grid>
               </Grid>
-            </Grid>
+            </PaperPopoverSection>
           }
-          placement="left"
-          width={250}
         >
           <InfoIcon
             fontSize="small"
             sx={{ color: 'gray.light', cursor: 'help' }}
           />
-        </Popper>
+        </PaperPopover>
       </BasicCell>
     </TableRow>
   );

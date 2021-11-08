@@ -8,7 +8,7 @@ import {
   useDocument,
   useToggle,
   GenericColumnKey,
-  getCommentPopoverColumn,
+  getNotePopoverColumn,
   getRowExpandColumn,
   useOmSupplyApi,
 } from '@openmsupply-client/common';
@@ -48,7 +48,7 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
-      getCommentPopoverColumn<InvoiceLineRow>(),
+      getNotePopoverColumn<InvoiceLineRow>(),
       'itemCode',
       'itemName',
       'batch',

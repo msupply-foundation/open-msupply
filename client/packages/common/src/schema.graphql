@@ -347,7 +347,7 @@ type InvoiceNode {
   deliveredDatetime: DateTime
   color: String!
   hold: Boolean!
-  enteredBy: String!
+  enteredByName: String!
   donorName: String!
   purchaseOrderNumber: Int
   requisitionNumber: Int

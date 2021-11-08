@@ -12,7 +12,6 @@ describe('DetailView reducer', () => {
     {
       id: '1',
       updateNumberOfPacks: () => {},
-      updateComment: () => {},
       itemId: '1',
       itemUnit: 'bottle',
       itemCode: 'a',
@@ -25,7 +24,6 @@ describe('DetailView reducer', () => {
     {
       id: '3',
       updateNumberOfPacks: () => {},
-      updateComment: () => {},
       numberOfPacks: 3,
       itemId: '1',
       itemUnit: 'bottle',
@@ -38,7 +36,6 @@ describe('DetailView reducer', () => {
     {
       id: '5',
       updateNumberOfPacks: () => {},
-      updateComment: () => {},
       numberOfPacks: 5,
       itemId: '1',
       itemUnit: 'bottle',
@@ -51,7 +48,6 @@ describe('DetailView reducer', () => {
     {
       id: '2',
       updateNumberOfPacks: () => {},
-      updateComment: () => {},
       itemId: '1',
       itemUnit: 'bottle',
       itemCode: 'a',
@@ -64,7 +60,6 @@ describe('DetailView reducer', () => {
     {
       id: '4',
       updateNumberOfPacks: () => {},
-      updateComment: () => {},
       numberOfPacks: 4,
       itemId: '1',
       itemUnit: 'bottle',
@@ -77,7 +72,6 @@ describe('DetailView reducer', () => {
     {
       id: '2',
       updateNumberOfPacks: () => {},
-      updateComment: () => {},
       numberOfPacks: 1,
       itemId: '1',
       itemUnit: 'bottle',
@@ -187,25 +181,6 @@ describe('DetailView reducer', () => {
     if (!line) throw new Error('This test is broken!');
 
     expect(line.numberOfPacks).toBe(10);
-  });
-
-  it('updates the correct line with the correct comment', () => {
-    const state: OutboundShipmentStateShape = {
-      draft: { ...placeholderInvoice, lines },
-      sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'desc' },
-      deletedLines: [],
-    };
-
-    const reducerResult = reducer(undefined, null)(
-      state,
-      OutboundAction.updateComment('1', 'comment')
-    );
-
-    const line = reducerResult.draft.lines.find(({ id }) => id === '1');
-
-    if (!line) throw new Error('This test is broken!');
-
-    expect(line.comment).toBe('comment');
   });
 
   it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {

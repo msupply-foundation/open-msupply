@@ -70,7 +70,7 @@ export interface InvoiceLine extends DomainObject {
   batch?: string | null;
 
   locationDescription?: string | null;
-  comment?: string;
+  note?: string | null;
 }
 
 export interface InvoiceRow extends DomainObject {
@@ -109,6 +109,13 @@ export interface Invoice extends DomainObject {
   shippedDatetime?: string;
   pickedDatetime?: string;
   deliveredDatetime?: string;
+  enteredByName?: string;
+
+  purchaseOrderNumber?: number | null;
+  requisitionNumber?: number | null;
+  goodsReceiptNumber?: number | null;
+  inboundShipmentNumber?: number | null;
+
   pricing: {
     totalAfterTax: number;
     subtotal: number;
