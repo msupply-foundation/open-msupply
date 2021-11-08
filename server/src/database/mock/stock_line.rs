@@ -15,6 +15,7 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         total_number_of_packs: 40,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     let mock_item_a_line_b: StockLineRow = StockLineRow {
@@ -29,6 +30,7 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         total_number_of_packs: 30,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     vec![mock_item_a_line_a, mock_item_a_line_b]
@@ -47,6 +49,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         total_number_of_packs: 30,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     let mock_item_b_line_b: StockLineRow = StockLineRow {
@@ -61,6 +64,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         total_number_of_packs: 25,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     vec![mock_item_b_line_a, mock_item_b_line_b]
@@ -79,6 +83,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         total_number_of_packs: 1,
         expiry_date: None,
         on_hold: false,
+        note: Some("stock line note".to_owned()),
     };
 
     let mock_item_c_line_b: StockLineRow = StockLineRow {
@@ -93,6 +98,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         total_number_of_packs: 1,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     vec![mock_item_c_line_a, mock_item_c_line_b]
@@ -111,6 +117,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         total_number_of_packs: 7,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     let mock_stock_line_si_d_siline_b: StockLineRow = StockLineRow {
@@ -125,6 +132,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         total_number_of_packs: 2,
         expiry_date: Some(NaiveDate::from_ymd(2020, 8, 11)),
         on_hold: false,
+        note: None,
     };
 
     vec![mock_stock_line_si_d_siline_a, mock_stock_line_si_d_siline_b]
@@ -143,6 +151,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         total_number_of_packs: 8,
         expiry_date: Some(NaiveDate::from_ymd(2020, 1, 4)),
         on_hold: false,
+        note: None,
     };
 
     let mock_stock_line_ci_c_siline_b: StockLineRow = StockLineRow {
@@ -157,6 +166,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         total_number_of_packs: 21,
         expiry_date: Some(NaiveDate::from_ymd(2020, 3, 23)),
         on_hold: false,
+        note: None,
     };
 
     vec![mock_stock_line_ci_c_siline_a, mock_stock_line_ci_c_siline_b]
@@ -175,6 +185,7 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
         total_number_of_packs: 10,
         expiry_date: Some(NaiveDate::from_ymd(2020, 1, 4)),
         on_hold: false,
+        note: None,
     };
 
     vec![mock_stock_line_ci_d_siline_a]
@@ -193,6 +204,7 @@ pub fn mock_item_query_test1() -> Vec<StockLineRow> {
         total_number_of_packs: 3,
         expiry_date: None,
         on_hold: false,
+        note: None,
     };
 
     vec![mock_item_query_test1]
@@ -211,6 +223,7 @@ pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
         total_number_of_packs: 100,
         expiry_date: None,
         on_hold: true,
+        note: None,
     };
 
     vec![mock_stock_line_on_hold]

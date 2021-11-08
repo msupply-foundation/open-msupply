@@ -37,6 +37,7 @@ impl From<InvoiceLineRow> for InvoiceLine {
             sell_price_per_pack: invoice_line.sell_price_per_pack,
             batch: invoice_line.batch,
             expiry_date: invoice_line.expiry_date,
+            note: invoice_line.note,
         }
     }
 }

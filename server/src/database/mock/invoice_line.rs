@@ -17,6 +17,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 1.0,
         number_of_packs: 10,
+        note: None,
     };
 
     let mock_outbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -33,6 +34,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 2.0,
         number_of_packs: 4,
+        note: None,
     };
 
     // Added for CI update test
@@ -50,6 +52,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 2.0,
         number_of_packs: 1,
+        note: None,
     };
 
     vec![
@@ -74,6 +77,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 3.0,
         number_of_packs: 3,
+        note: None,
     };
 
     let mock_outbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -90,6 +94,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 4.0,
         number_of_packs: 5,
+        note: None,
     };
 
     vec![
@@ -113,6 +118,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 9.0,
         total_after_tax: 27.0,
         number_of_packs: 3,
+        note: None,
     };
 
     let mock_outbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -129,6 +135,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 34.0,
         total_after_tax: 34.0,
         number_of_packs: 1,
+        note: None,
     };
 
     vec![
@@ -152,6 +159,7 @@ pub fn mock_outbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 11.0,
         total_after_tax: 22.0,
         number_of_packs: 2,
+        note: None,
     };
 
     vec![mock_outbound_shipment_d_invoice_line_a]
@@ -172,6 +180,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 5.0,
         number_of_packs: 1,
+        note: None,
     };
 
     let mock_inbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -188,6 +197,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 6.0,
         number_of_packs: 1,
+        note: None,
     };
 
     vec![
@@ -211,6 +221,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 7.0,
         number_of_packs: 1,
+        note: None,
     };
 
     let mock_inbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -227,6 +238,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 0.0,
         total_after_tax: 8.0,
         number_of_packs: 1,
+        note: None,
     };
 
     vec![
@@ -250,6 +262,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 5.0,
         total_after_tax: 21.0,
         number_of_packs: 3,
+        note: None,
     };
 
     let mock_inbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -266,6 +279,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 2.0,
         total_after_tax: 8.0,
         number_of_packs: 2,
+        note: None,
     };
 
     vec![
@@ -289,6 +303,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 18.0,
         total_after_tax: 14.0,
         number_of_packs: 7,
+        note: None,
     };
 
     let mock_inbound_shipment_d_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -305,6 +320,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         sell_price_per_pack: 34.0,
         total_after_tax: 270.0,
         number_of_packs: 2,
+        note: None,
     };
 
     vec![

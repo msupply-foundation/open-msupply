@@ -133,6 +133,7 @@ impl From<StockLineRow> for StockLine {
             total_number_of_packs,
             expiry_date,
             on_hold,
+            note,
         }: StockLineRow,
     ) -> Self {
         StockLine {
@@ -147,6 +148,7 @@ impl From<StockLineRow> for StockLine {
             total_number_of_packs,
             expiry_date,
             on_hold,
+            note,
         }
     }
 }

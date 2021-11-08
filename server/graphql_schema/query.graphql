@@ -473,6 +473,7 @@ fragment InvoiceLineNode on InvoiceLineNode {
   numberOfPacks
   packSize
   sellPricePerPack
+  note
   stockLine {
     ...StockLineResponse
   }
@@ -504,6 +505,8 @@ fragment StockLineNode on StockLineNode {
   sellPricePerPack
   storeId
   totalNumberOfPacks
+  onHold
+  note
 }
 
 # NAME

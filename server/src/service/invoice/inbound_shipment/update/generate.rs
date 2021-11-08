@@ -103,6 +103,7 @@ pub fn generate_lines_and_stock_lines(
             sell_price_per_pack,
             total_after_tax: _,
             number_of_packs,
+            note,
         }: InvoiceLineRow = invoice_lines;
 
         let stock_line = StockLineRow {
@@ -117,6 +118,7 @@ pub fn generate_lines_and_stock_lines(
             total_number_of_packs: number_of_packs,
             expiry_date,
             on_hold: false,
+            note,
         };
 
         result.push(LineAndStockLine { line, stock_line });
