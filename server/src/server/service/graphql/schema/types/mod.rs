@@ -1,6 +1,10 @@
 use crate::{
     database::repository::RepositoryError,
     domain::PaginationOption,
+    server::service::graphql::schema::{
+        mutations::UserRegisterErrorInterface,
+        queries::{AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface},
+    },
     service::{usize_to_u32, ListError, ListResult, SingleRecordError},
 };
 
@@ -140,7 +144,10 @@ impl From<PaginationInput> for PaginationOption {
     name = "DeleteOutboundShipmentLineError",
     params(DeleteOutboundShipmentLineErrorInterface)
 ))]
-
+#[graphql(concrete(name = "UserRegisterError", params(UserRegisterErrorInterface)))]
+#[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
+#[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
+#[graphql(concrete(name = "LogoutError", params(LogoutErrorInterface)))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
@@ -238,6 +245,19 @@ impl DatabaseError {
 
     pub async fn full_error(&self) -> String {
         format!("{:#}", self.0)
+    }
+}
+
+pub struct InternalError(pub String);
+
+#[Object]
+impl InternalError {
+    pub async fn description(&self) -> &'static str {
+        "Internal Error"
+    }
+
+    pub async fn full_error(&self) -> String {
+        format!("Internal Error: {}", self.0)
     }
 }
 

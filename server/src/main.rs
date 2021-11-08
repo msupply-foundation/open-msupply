@@ -4,10 +4,14 @@ use actix_cors::Cors;
 use remote_server::{
     database::{loader::get_loaders, repository::get_repositories},
     server::{
-        data::{ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap, RepositoryRegistry},
+        data::{
+            auth::AuthData, ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap,
+            RepositoryRegistry,
+        },
         middleware::{compress as compress_middleware, logger as logger_middleware},
         service::{graphql::config as graphql_config, rest::config as rest_config},
     },
+    service::token_bucket::TokenBucket,
     util::{
         configuration,
         settings::Settings,
@@ -19,7 +23,7 @@ use actix_web::{web::Data, App, HttpServer};
 use std::{
     env,
     net::TcpListener,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
     time::Duration,
 };
 
@@ -31,6 +35,12 @@ async fn main() -> std::io::Result<()> {
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
+    let auth_data = Data::new(AuthData {
+        auth_token_secret: settings.auth.token_secret.to_owned(),
+        token_bucket: RwLock::new(TokenBucket::new()),
+        // TODO: configure ssl
+        debug_no_ssl: true,
+    });
     let repositories: RepositoryMap = get_repositories(&settings).await;
     let loaders: LoaderMap = get_loaders(&settings).await;
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
@@ -61,6 +71,7 @@ async fn main() -> std::io::Result<()> {
             .configure(graphql_config(
                 repository_registry_data_app.clone(),
                 loader_registry_data.clone(),
+                auth_data.clone(),
             ))
             .configure(rest_config)
     })

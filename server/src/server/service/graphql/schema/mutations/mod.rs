@@ -1,17 +1,28 @@
 mod error;
+
 pub mod inbound_shipment;
 pub mod outbound_shipment;
+pub mod user_register;
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
 use crate::{database::repository::StorageConnectionManager, server::service::graphql::ContextExt};
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
+pub use user_register::*;
 
 pub struct Mutations;
 
 #[Object]
 impl Mutations {
+    async fn register_user(
+        &self,
+        ctx: &Context<'_>,
+        input: UserRegisterInput,
+    ) -> UserRegisterResponse {
+        user_register(ctx, input)
+    }
+
     async fn insert_outbound_shipment(
         &self,
         ctx: &Context<'_>,
