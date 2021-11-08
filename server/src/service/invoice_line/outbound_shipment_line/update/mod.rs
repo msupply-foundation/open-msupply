@@ -93,6 +93,7 @@ pub enum UpdateOutboundShipmentLineError {
     NumberOfPacksBelowOne,
     ItemDoesNotMatchStockLine,
     LineDoesNotReferenceStockLine,
+    BatchIsOnHold,
     StockLineAlreadyExistsInInvoice(String),
     ReductionBelowZero {
         stock_line_id: String,

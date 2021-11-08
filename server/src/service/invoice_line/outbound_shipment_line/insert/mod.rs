@@ -49,6 +49,7 @@ pub enum InsertOutboundShipmentLineError {
     NumberOfPacksBelowOne,
     StockLineAlreadyExistsInInvoice(String),
     ItemDoesNotMatchStockLine,
+    BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
 }
 

@@ -78,6 +78,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     sell_price_per_pack: 32.0,
                     total_number_of_packs: 30,
                     expiry_date: None,
+                    on_hold: false,
                 },
             },
             FullMockInvoiceLine {
@@ -107,6 +108,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     sell_price_per_pack: 21.0,
                     total_number_of_packs: 12,
                     expiry_date: None,
+                    on_hold: false,
                 },
             },
         ],

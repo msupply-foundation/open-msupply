@@ -10,12 +10,14 @@ use crate::{
             InvoiceIsFinalised, WrongInvoiceType,
         },
         invoice_line::{
-            check_batch_exists, check_item_matches_batch, check_unique_stock_line,
+            check_batch_exists, check_batch_on_hold, check_item_matches_batch,
+            check_unique_stock_line,
             validate::{
                 check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
                 LineAlreadyExists, NumberOfPacksBelowOne,
             },
-            ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice, StockLineNotFound,
+            BatchIsOnHold, ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
+            StockLineNotFound,
         },
         u32_to_i32,
     },
@@ -43,6 +45,7 @@ pub fn validate(
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
     check_invoice_finalised(&invoice)?;
 
+    check_batch_on_hold(&batch)?;
     check_reduction_below_zero(&input, &batch)?;
 
     Ok((item, invoice, batch))
@@ -58,6 +61,12 @@ fn check_reduction_below_zero(
         })
     } else {
         Ok(())
+    }
+}
+
+impl From<BatchIsOnHold> for InsertOutboundShipmentLineError {
+    fn from(_: BatchIsOnHold) -> Self {
+        InsertOutboundShipmentLineError::BatchIsOnHold
     }
 }
 

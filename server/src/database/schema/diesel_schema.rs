@@ -43,6 +43,7 @@ table! {
         available_number_of_packs -> Integer,
         total_number_of_packs -> Integer,
         expiry_date -> Nullable<Date>,
+        on_hold -> Bool,
     }
 }
 
