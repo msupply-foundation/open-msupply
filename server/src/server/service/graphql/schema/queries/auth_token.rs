@@ -42,21 +42,12 @@ impl InvalidCredentials {
     }
 }
 
-pub struct CanNotCreateToken;
-#[Object]
-impl CanNotCreateToken {
-    pub async fn description(&self) -> &'static str {
-        "Invalid credentials"
-    }
-}
-
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum AuthTokenErrorInterface {
     DatabaseError(DatabaseError),
     UserNameDoesNotExist(UserNameDoesNotExist),
     InvalidCredentials(InvalidCredentials),
-    CanNotCreateToken(CanNotCreateToken),
     InternalError(InternalError),
 }
 
@@ -114,7 +105,9 @@ pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthToke
             return AuthTokenResponse::Error(ErrorWrapper {
                 error: match err {
                     JWTIssuingError::CanNotCreateToken(_) => {
-                        AuthTokenErrorInterface::CanNotCreateToken(CanNotCreateToken)
+                        AuthTokenErrorInterface::InternalError(InternalError(
+                            "Can not create token".to_string(),
+                        ))
                     }
                     JWTIssuingError::ConcurrencyLockError(_) => {
                         AuthTokenErrorInterface::InternalError(InternalError(
