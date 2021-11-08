@@ -2,7 +2,6 @@ use async_graphql::*;
 
 use crate::{
     database::repository::StorageConnectionManager,
-    domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus},
     server::service::graphql::schema::{
         mutations::{
             outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotChangeInvoiceBackToDraft,
@@ -16,6 +15,7 @@ use crate::{
     },
     service::invoice::{update_inbound_shipment, UpdateInboundShipmentError},
 };
+use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 
 use super::OtherPartyNotASupplier;
 

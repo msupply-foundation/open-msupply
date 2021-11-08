@@ -2,7 +2,6 @@ use async_graphql::*;
 
 use crate::{
     database::repository::StorageConnectionManager,
-    domain::outbound_shipment::UpdateOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -16,6 +15,7 @@ use crate::{
     },
     service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError},
 };
+use domain::outbound_shipment::UpdateOutboundShipmentLine;
 
 use super::{
     ItemDoesNotMatchStockLine, LineDoesNotReferenceStockLine, NotEnoughStockForReduction,

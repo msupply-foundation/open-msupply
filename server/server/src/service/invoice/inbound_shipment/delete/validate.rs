@@ -3,12 +3,12 @@ use crate::{
         repository::{InvoiceLineQueryRepository, StorageConnection},
         schema::InvoiceRow,
     },
-    domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType},
     service::invoice::{
         check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
         InvoiceIsFinalised, WrongInvoiceType,
     },
 };
+use domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType};
 
 use super::DeleteInboundShipmentError;
 

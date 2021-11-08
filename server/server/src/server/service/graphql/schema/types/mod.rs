@@ -1,12 +1,12 @@
 use crate::{
     database::repository::RepositoryError,
-    domain::PaginationOption,
     server::service::graphql::schema::{
         mutations::UserRegisterErrorInterface,
         queries::{AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface},
     },
     service::{usize_to_u32, ListError, ListResult, SingleRecordError},
 };
+use domain::PaginationOption;
 
 use async_graphql::*;
 

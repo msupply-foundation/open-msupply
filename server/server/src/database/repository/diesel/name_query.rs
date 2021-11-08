@@ -1,20 +1,18 @@
 use super::{DBType, StorageConnection};
-use crate::{
-    database::{
-        diesel_extensions::OrderByExtensions,
-        repository::RepositoryError,
-        schema::{
-            diesel_schema::{
-                name_store_join, name_store_join::dsl as name_store_join_dsl, name_table,
-                name_table::dsl as name_table_dsl,
-            },
-            NameRow, NameStoreJoinRow,
+use crate::database::{
+    diesel_extensions::OrderByExtensions,
+    repository::RepositoryError,
+    schema::{
+        diesel_schema::{
+            name_store_join, name_store_join::dsl as name_store_join_dsl, name_table,
+            name_table::dsl as name_table_dsl,
         },
+        NameRow, NameStoreJoinRow,
     },
-    domain::{
-        name::{Name, NameFilter, NameSort, NameSortField},
-        Pagination,
-    },
+};
+use domain::{
+    name::{Name, NameFilter, NameSort, NameSortField},
+    Pagination,
 };
 
 use diesel::{
@@ -23,26 +21,6 @@ use diesel::{
 };
 
 type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>);
-
-impl From<NameAndNameStoreJoin> for Name {
-    fn from((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Self {
-        let (is_customer, is_supplier) = match name_store_join_row_option {
-            Some(name_store_join_row) => (
-                name_store_join_row.name_is_customer,
-                name_store_join_row.name_is_supplier,
-            ),
-            None => (false, false),
-        };
-
-        Name {
-            id: name_row.id,
-            name: name_row.name,
-            code: name_row.code,
-            is_customer,
-            is_supplier,
-        }
-    }
-}
 
 pub struct NameQueryRepository<'a> {
     connection: &'a StorageConnection,
@@ -95,7 +73,28 @@ impl<'a> NameQueryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<NameAndNameStoreJoin>(&self.connection.connection)?;
 
-        Ok(result.into_iter().map(Name::from).collect())
+        Ok(result
+            .into_iter()
+            .map(
+                |(name_row, name_store_join_row_option): NameAndNameStoreJoin| {
+                    let (is_customer, is_supplier) = match name_store_join_row_option {
+                        Some(name_store_join_row) => (
+                            name_store_join_row.name_is_customer,
+                            name_store_join_row.name_is_supplier,
+                        ),
+                        None => (false, false),
+                    };
+
+                    Name {
+                        id: name_row.id,
+                        name: name_row.name,
+                        code: name_row.code,
+                        is_customer,
+                        is_supplier,
+                    }
+                },
+            )
+            .collect())
     }
 }
 
@@ -151,11 +150,11 @@ mod tests {
             repository::{NameQueryRepository, NameRepository},
             schema::NameRow,
         },
-        domain::{
-            name::{Name, NameSort, NameSortField},
-            Pagination, DEFAULT_LIMIT,
-        },
         util::test_db,
+    };
+    use domain::{
+        name::{Name, NameSort, NameSortField},
+        Pagination, DEFAULT_LIMIT,
     };
     use std::convert::TryFrom;
 

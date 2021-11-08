@@ -1,8 +1,10 @@
 use crate::database::repository::{
     NameQueryRepository, RepositoryError, StorageConnection, StoreRepository,
 };
-use crate::domain::name::{Name, NameFilter};
-use crate::domain::Pagination;
+use domain::{
+    name::{Name, NameFilter},
+    Pagination,
+};
 
 pub mod insert;
 pub use self::insert::*;

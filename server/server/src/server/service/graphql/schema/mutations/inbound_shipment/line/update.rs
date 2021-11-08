@@ -3,7 +3,6 @@ use chrono::NaiveDate;
 
 use crate::{
     database::repository::StorageConnectionManager,
-    domain::inbound_shipment::UpdateInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -16,6 +15,7 @@ use crate::{
     },
     service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError},
 };
+use domain::inbound_shipment::UpdateInboundShipmentLine;
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 

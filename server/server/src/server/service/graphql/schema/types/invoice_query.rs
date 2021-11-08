@@ -3,16 +3,16 @@ use crate::{
         loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
         repository::StorageConnectionManager,
     },
-    domain::{
-        invoice::{Invoice, InvoiceFilter, InvoicePricing},
-        DatetimeFilter, EqualFilter, SimpleStringFilter,
-    },
     server::service::graphql::ContextExt,
     service::invoice::get_invoice,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
+use domain::{
+    invoice::{Invoice, InvoiceFilter, InvoicePricing},
+    DatetimeFilter, EqualFilter, SimpleStringFilter,
+};
 use serde::Serialize;
 
 use super::{
@@ -22,7 +22,7 @@ use super::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "crate::domain::invoice::InvoiceSortField")]
+#[graphql(remote = "domain::invoice::InvoiceSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum InvoiceSortFieldInput {
     Type,
@@ -70,7 +70,7 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[graphql(remote = "crate::domain::invoice::InvoiceType")]
+#[graphql(remote = "domain::invoice::InvoiceType")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvoiceNodeType {
     OutboundShipment,
@@ -78,7 +78,7 @@ pub enum InvoiceNodeType {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[graphql(remote = "crate::domain::invoice::InvoiceStatus")]
+#[graphql(remote = "domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
     /// For outbound shipments: In DRAFT mode only the available_number_of_packs in a stock line gets

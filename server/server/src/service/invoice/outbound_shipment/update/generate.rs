@@ -1,12 +1,10 @@
 use chrono::Utc;
 
-use crate::{
-    database::{
-        repository::{InvoiceLineRepository, StockLineRepository, StorageConnection},
-        schema::{InvoiceRow, InvoiceRowStatus, StockLineRow},
-    },
-    domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment},
+use crate::database::{
+    repository::{InvoiceLineRepository, StockLineRepository, StorageConnection},
+    schema::{InvoiceRow, InvoiceRowStatus, StockLineRow},
 };
+use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
 
 use super::UpdateOutboundShipmentError;
 

@@ -3,7 +3,6 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceRow, ItemRow},
     },
-    domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type,
@@ -19,6 +18,7 @@ use crate::{
         },
     },
 };
+use domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType};
 
 use super::InsertInboundShipmentLineError;
 

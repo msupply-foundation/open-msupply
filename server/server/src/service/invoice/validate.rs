@@ -3,9 +3,9 @@ use crate::{
         repository::{InvoiceRepository, RepositoryError, StorageConnection},
         schema::{InvoiceRow, InvoiceRowStatus},
     },
-    domain::invoice::{InvoiceStatus, InvoiceType},
     service::WithDBError,
 };
+use domain::invoice::{InvoiceStatus, InvoiceType};
 
 pub struct WrongInvoiceType;
 

@@ -3,7 +3,7 @@ use crate::database::repository::{
     StorageConnectionManager,
 };
 use crate::database::schema::InvoiceLineRow;
-use crate::domain::invoice::InvoicePricing;
+use domain::invoice::InvoicePricing;
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

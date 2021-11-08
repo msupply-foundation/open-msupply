@@ -1,10 +1,8 @@
-use crate::{
-    database::repository::{
-        InvoiceRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
-        TransactionError,
-    },
-    domain::{name::Name, outbound_shipment::UpdateOutboundShipment},
+use crate::database::repository::{
+    InvoiceRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    TransactionError,
 };
+use domain::{name::Name, outbound_shipment::UpdateOutboundShipment};
 
 pub mod generate;
 pub mod validate;

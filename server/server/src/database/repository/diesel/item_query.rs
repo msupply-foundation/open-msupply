@@ -1,20 +1,18 @@
 use super::{DBType, StorageConnection};
-use crate::{
-    database::{
-        diesel_extensions::OrderByExtensions,
-        repository::RepositoryError,
-        schema::{
-            diesel_schema::{
-                item, item::dsl as item_dsl, item_is_visible,
-                item_is_visible::dsl as item_is_visible_dsl, unit, unit::dsl as unit_dsl,
-            },
-            ItemIsVisibleRow, ItemRow, UnitRow,
+use crate::database::{
+    diesel_extensions::OrderByExtensions,
+    repository::RepositoryError,
+    schema::{
+        diesel_schema::{
+            item, item::dsl as item_dsl, item_is_visible,
+            item_is_visible::dsl as item_is_visible_dsl, unit, unit::dsl as unit_dsl,
         },
+        ItemIsVisibleRow, ItemRow, UnitRow,
     },
-    domain::{
-        item::{Item, ItemFilter, ItemSort, ItemSortField},
-        Pagination,
-    },
+};
+use domain::{
+    item::{Item, ItemFilter, ItemSort, ItemSortField},
+    Pagination,
 };
 
 use diesel::{
@@ -23,18 +21,6 @@ use diesel::{
 };
 
 type ItemAndMasterList = (ItemRow, ItemIsVisibleRow, Option<UnitRow>);
-
-impl From<ItemAndMasterList> for Item {
-    fn from((item_row, item_is_visible_row, unit_row_option): ItemAndMasterList) -> Self {
-        Item {
-            id: item_row.id,
-            name: item_row.name,
-            code: item_row.code,
-            is_visible: item_is_visible_row.is_visible,
-            unit_name: unit_row_option.map(|unit| unit.name),
-        }
-    }
-}
 
 pub struct ItemQueryRepository<'a> {
     connection: &'a StorageConnection,
@@ -85,7 +71,18 @@ impl<'a> ItemQueryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<ItemAndMasterList>(&self.connection.connection)?;
 
-        Ok(result.into_iter().map(Item::from).collect())
+        Ok(result
+            .into_iter()
+            .map(
+                |(item_row, item_is_visible_row, unit_row_option): ItemAndMasterList| Item {
+                    id: item_row.id,
+                    name: item_row.name,
+                    code: item_row.code,
+                    is_visible: item_is_visible_row.is_visible,
+                    unit_name: unit_row_option.map(|unit| unit.name),
+                },
+            )
+            .collect())
     }
 }
 
@@ -139,11 +136,11 @@ mod tests {
             },
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
         },
-        domain::{
-            item::{Item, ItemFilter, ItemSort, ItemSortField},
-            EqualFilter, Pagination, DEFAULT_LIMIT,
-        },
         util::test_db,
+    };
+    use domain::{
+        item::{Item, ItemFilter, ItemSort, ItemSortField},
+        EqualFilter, Pagination, DEFAULT_LIMIT,
     };
 
     impl PartialEq<ItemRow> for Item {

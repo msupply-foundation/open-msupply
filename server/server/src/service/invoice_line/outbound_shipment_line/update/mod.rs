@@ -6,9 +6,9 @@ use crate::{
         },
         schema::{InvoiceLineRow, StockLineRow},
     },
-    domain::outbound_shipment::UpdateOutboundShipmentLine,
     service::{u32_to_i32, WithDBError},
 };
+use domain::outbound_shipment::UpdateOutboundShipmentLine;
 
 mod generate;
 mod validate;

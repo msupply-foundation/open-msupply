@@ -1,10 +1,10 @@
 use crate::{
     database::repository::{StockLineRepository, StorageConnectionManager},
-    domain::{
-        stock_line::{StockLine, StockLineFilter},
-        Pagination,
-    },
     service::SingleRecordError,
+};
+use domain::{
+    stock_line::{StockLine, StockLineFilter},
+    Pagination,
 };
 
 pub const MAX_LIMIT: u32 = 1000;

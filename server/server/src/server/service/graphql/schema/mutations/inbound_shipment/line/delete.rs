@@ -2,7 +2,6 @@ use async_graphql::*;
 
 use crate::{
     database::repository::StorageConnectionManager,
-    domain::inbound_shipment::DeleteInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, DeleteResponse, ForeignKey, ForeignKeyError,
@@ -12,6 +11,7 @@ use crate::{
     },
     service::invoice_line::{delete_inbound_shipment_line, DeleteInboundShipmentLineError},
 };
+use domain::inbound_shipment::DeleteInboundShipmentLine;
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 

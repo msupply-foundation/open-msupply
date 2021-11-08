@@ -314,11 +314,11 @@ mod repository_test {
                 RequisitionRowType, StockLineRow, StoreRow, UserAccountRow,
             },
         },
-        domain::{
-            name::{NameFilter, NameSort, NameSortField},
-            Pagination, SimpleStringFilter,
-        },
         util::test_db,
+    };
+    use domain::{
+        name::{NameFilter, NameSort, NameSortField},
+        Pagination, SimpleStringFilter,
     };
 
     #[actix_rt::test]

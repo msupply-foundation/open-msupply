@@ -1,15 +1,13 @@
-use crate::{
-    database::{
-        repository::RepositoryError,
-        schema::{
-            diesel_schema::{invoice_line, invoice_line::dsl as invoice_line_dsl},
-            InvoiceLineRow,
-        },
+use crate::database::{
+    repository::RepositoryError,
+    schema::{
+        diesel_schema::{invoice_line, invoice_line::dsl as invoice_line_dsl},
+        InvoiceLineRow,
     },
-    domain::{
-        invoice_line::{InvoiceLine, InvoiceLineFilter, InvoiceLineSort},
-        Pagination,
-    },
+};
+use domain::{
+    invoice_line::{InvoiceLine, InvoiceLineFilter, InvoiceLineSort},
+    Pagination,
 };
 
 use super::{DBType, StorageConnection};

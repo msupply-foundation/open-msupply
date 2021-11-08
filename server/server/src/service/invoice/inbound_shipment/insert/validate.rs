@@ -1,8 +1,8 @@
 use crate::{
     database::repository::{InvoiceRepository, RepositoryError, StorageConnection},
-    domain::inbound_shipment::InsertInboundShipment,
     service::invoice::inbound_shipment::check_other_party,
 };
+use domain::inbound_shipment::InsertInboundShipment;
 
 use super::InsertInboundShipmentError;
 

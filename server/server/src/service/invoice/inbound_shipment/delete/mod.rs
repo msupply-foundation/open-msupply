@@ -2,9 +2,9 @@ use crate::{
     database::repository::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
-    domain::{inbound_shipment::DeleteInboundShipment, invoice_line::InvoiceLine},
     service::WithDBError,
 };
+use domain::{inbound_shipment::DeleteInboundShipment, invoice_line::InvoiceLine};
 
 mod validate;
 

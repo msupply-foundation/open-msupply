@@ -3,7 +3,6 @@ use chrono::NaiveDate;
 
 use crate::{
     database::repository::StorageConnectionManager,
-    domain::inbound_shipment::InsertInboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -16,6 +15,7 @@ use crate::{
     },
     service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError},
 };
+use domain::inbound_shipment::InsertInboundShipmentLine;
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentLineInput {

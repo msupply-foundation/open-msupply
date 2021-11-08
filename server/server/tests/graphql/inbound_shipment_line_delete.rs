@@ -8,6 +8,7 @@ mod graphql {
         delete_inbound_shipment_line_full as delete, DeleteInboundShipmentLineFull as Delete,
     };
 
+    use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use remote_server::database::repository::RepositoryError;
     use remote_server::{
@@ -15,7 +16,6 @@ mod graphql {
             mock::MockDataInserts,
             repository::{InvoiceLineRepository, StockLineRepository},
         },
-        domain::{invoice::InvoiceFilter, Pagination},
         util::test_db,
     };
 

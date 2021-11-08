@@ -7,14 +7,11 @@ mod graphql {
     use crate::graphql::{
         insert_outbound_shipment_line_full as insert, InsertOutboundShipmentLineFull as Insert,
     };
+    use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use remote_server::database::repository::ItemRepository;
     use remote_server::database::schema::{InvoiceLineRow, StockLineRow};
-    use remote_server::{
-        database::mock::MockDataInserts,
-        domain::{invoice::InvoiceFilter, Pagination},
-        util::test_db,
-    };
+    use remote_server::{database::mock::MockDataInserts, util::test_db};
 
     use insert::InsertOutboundShipmentLineErrorInterface::*;
     use uuid::Uuid;

@@ -1,10 +1,8 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use crate::{
-    database::repository::StorageConnectionManager, domain::stock_line::StockLine,
-    service::stock_line::get_stock_line,
-};
+use crate::{database::repository::StorageConnectionManager, service::stock_line::get_stock_line};
+use domain::stock_line::StockLine;
 
 use super::{Connector, ConnectorError, NodeError};
 

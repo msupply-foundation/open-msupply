@@ -3,7 +3,6 @@ use crate::{
         repository::StorageConnection,
         schema::{InvoiceLineRow, InvoiceRow, ItemRow},
     },
-    domain::{invoice::InvoiceType, outbound_shipment::UpdateOutboundShipmentLine},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
@@ -22,6 +21,7 @@ use crate::{
         },
     },
 };
+use domain::{invoice::InvoiceType, outbound_shipment::UpdateOutboundShipmentLine};
 
 use super::{BatchPair, UpdateOutboundShipmentLineError};
 

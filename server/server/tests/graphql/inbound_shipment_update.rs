@@ -10,6 +10,7 @@ mod graphql {
         update_inbound_shipment_full as update, UpdateInboundShipmentFull as Update,
     };
     use chrono::{Duration, Utc};
+    use domain::{invoice::InvoiceFilter, name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use remote_server::{
         database::{
@@ -17,7 +18,6 @@ mod graphql {
             repository::{InvoiceRepository, StockLineRepository},
             schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
         },
-        domain::{invoice::InvoiceFilter, name::NameFilter, Pagination},
         util::test_db,
     };
 

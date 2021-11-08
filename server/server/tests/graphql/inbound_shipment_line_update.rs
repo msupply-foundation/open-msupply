@@ -8,6 +8,7 @@ mod graphql {
         update_inbound_shipment_line_full as update, UpdateInboundShipmentLineFull as Update,
     };
     use chrono::NaiveDate;
+    use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use remote_server::database::repository::{ItemRepository, RepositoryError};
     use remote_server::{
@@ -16,7 +17,6 @@ mod graphql {
             repository::{InvoiceLineRepository, StockLineRepository},
             schema::{InvoiceLineRow, StockLineRow},
         },
-        domain::{invoice::InvoiceFilter, Pagination},
         util::test_db,
     };
 

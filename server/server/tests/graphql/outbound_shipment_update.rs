@@ -2,13 +2,13 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
+    use domain::stock_line::StockLine;
     use remote_server::{
         database::{
             mock::MockDataInserts,
             repository::{InvoiceLineRepository, StockLineRepository},
             schema::InvoiceLineRow,
         },
-        domain::stock_line::StockLine,
         util::test_db,
     };
     use serde_json::json;

@@ -1,14 +1,12 @@
 use chrono::{NaiveDateTime, Utc};
 
-use crate::{
-    database::{
-        repository::{RepositoryError, StorageConnection, StoreRepository},
-        schema::InvoiceRow,
-    },
-    domain::{
-        invoice::{InvoiceStatus, InvoiceType},
-        outbound_shipment::InsertOutboundShipment,
-    },
+use crate::database::{
+    repository::{RepositoryError, StorageConnection, StoreRepository},
+    schema::InvoiceRow,
+};
+use domain::{
+    invoice::{InvoiceStatus, InvoiceType},
+    outbound_shipment::InsertOutboundShipment,
 };
 
 use super::InsertOutboundShipmentError;
