@@ -11,11 +11,6 @@ type FilterRule = {
     | FilterByConditionByType['date']]?: unknown;
 };
 
-// type FilterRule = Record<
-//   FilterByConditionByType['string'] | FilterByConditionByType['date'],
-//   unknown
-// >;
-
 export type FilterBy<T> = Partial<Record<Partial<keyof T>, FilterRule>>;
 
 export interface FilterController<T> {
