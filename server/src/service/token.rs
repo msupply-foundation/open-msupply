@@ -110,7 +110,10 @@ impl<'a> TokenService<'a> {
             valid_for,
             refresh_token_valid_for,
         )
-        .map_err(|err| JWTIssuingError::CanNotCreateToken(err))?;
+        .map_err(|err| {
+            error!("jwt_token: {}", err);
+            JWTIssuingError::CanNotCreateToken(err)
+        })?;
 
         // add tokens to bucket
         let mut token_bucket = self.token_bucket.write().map_err(|e| {
