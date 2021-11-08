@@ -79,7 +79,7 @@ const themeOptions = {
   breakpoints: {
     values: {
       xs: 0,
-      sm: 599,
+      sm: 601,
       md: 1025,
       lg: 1441,
       xl: 1537,
