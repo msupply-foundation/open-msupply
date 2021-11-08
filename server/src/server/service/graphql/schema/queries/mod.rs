@@ -12,8 +12,8 @@ use async_graphql::{Context, Object};
 use super::types::*;
 pub struct Queries;
 
-pub mod auth_token;
-pub use self::auth_token::*;
+pub mod login;
+pub use self::login::*;
 pub mod logout;
 pub use self::logout::*;
 pub mod refresh_token;
@@ -34,7 +34,7 @@ impl Queries {
         #[graphql(desc = "UserName")] username: String,
         #[graphql(desc = "Password")] password: String,
     ) -> AuthTokenResponse {
-        auth_token(ctx, &username, &password)
+        login(ctx, &username, &password)
     }
 
     pub async fn logout(&self, ctx: &Context<'_>) -> LogoutResponse {

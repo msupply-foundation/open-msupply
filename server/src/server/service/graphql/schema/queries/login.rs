@@ -59,7 +59,7 @@ pub enum AuthTokenResponse {
     Response(AuthToken),
 }
 
-pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResponse {
+pub fn login(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResponse {
     let connection_manager = ctx.get_repository::<StorageConnectionManager>();
     let con = match connection_manager.connection() {
         Ok(con) => con,
