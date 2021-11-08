@@ -25,8 +25,13 @@ impl LegacyNameRow {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)
-            .map_err(|source| SyncTranslationError { table_name, source })?;
+        let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data).map_err(|source| {
+            SyncTranslationError {
+                table_name,
+                source,
+                record: sync_record.data.clone(),
+            }
+        })?;
 
         Ok(Some(NameRow {
             id: data.ID.to_string(),

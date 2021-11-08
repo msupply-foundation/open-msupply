@@ -5,20 +5,22 @@ mod list_master_name_join;
 mod name;
 mod store;
 pub mod test_data;
+mod unit;
 
 use crate::{
     database::{
         repository::{
             ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
             MasterListRepository, NameRepository, RepositoryError, StorageConnection,
-            StorageConnectionManager, StoreRepository, TransactionError,
+            StorageConnectionManager, StoreRepository, TransactionError, UnitRowRepository,
         },
         schema::{
             CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
-            NameRow, StoreRow,
+            NameRow, StoreRow, UnitRow,
         },
     },
     server::data::RepositoryRegistry,
+    util::sync::translation::unit::LegacyUnitRow,
 };
 
 use self::{
@@ -35,6 +37,7 @@ use thiserror::Error;
 pub struct SyncTranslationError {
     pub table_name: &'static str,
     pub source: serde_json::Error,
+    pub record: String,
 }
 
 #[derive(Error, Debug)]
@@ -62,6 +65,7 @@ impl SyncImportError {
 
 #[derive(Debug)]
 enum IntegrationUpsertRecord {
+    Unit(UnitRow),
     Name(NameRow),
     Item(ItemRow),
     Store(StoreRow),
@@ -84,6 +88,11 @@ fn do_translation(
     use IntegrationUpsertRecord::*;
     if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
         records.upserts.push(Name(row));
+        return Ok(());
+    }
+
+    if let Some(row) = LegacyUnitRow::try_translate(sync_record)? {
+        records.upserts.push(Unit(row));
         return Ok(());
     }
 
@@ -121,6 +130,7 @@ fn do_translation(
 }
 
 pub const TRANSLATION_RECORD_NAME: &str = "name";
+pub const TRANSLATION_RECORD_UNIT: &str = "unit";
 pub const TRANSLATION_RECORD_ITEM: &str = "item";
 pub const TRANSLATION_RECORD_STORE: &str = "store";
 pub const TRANSLATION_RECORD_LIST_MASTER: &str = "list_master";
@@ -131,6 +141,7 @@ pub const TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN: &str = "list_master_name_joi
 /// at the beginning of the list don't rely on later items to be translated first.
 pub const TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_NAME,
+    TRANSLATION_RECORD_UNIT,
     TRANSLATION_RECORD_ITEM,
     TRANSLATION_RECORD_STORE,
     TRANSLATION_RECORD_LIST_MASTER,
@@ -170,6 +181,7 @@ fn integrate_record(
 ) -> Result<(), RepositoryError> {
     match &record {
         IntegrationUpsertRecord::Name(record) => NameRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::Unit(record) => UnitRowRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::Item(record) => ItemRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::Store(record) => StoreRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::MasterList(record) => {
@@ -238,6 +250,7 @@ mod tests {
         master_list_line::get_test_master_list_line_records,
         master_list_name_join::get_test_master_list_name_join_records,
         name::{get_test_name_records, get_test_name_upsert_records},
+        unit::{get_test_unit_records, get_test_unit_upsert_records},
     };
 
     #[actix_rt::test]
@@ -253,6 +266,7 @@ mod tests {
         // Need to be in order of reference dependency
         records.append(&mut get_test_name_records());
         records.append(&mut get_test_store_records());
+        records.append(&mut get_test_unit_records());
         records.append(&mut get_test_item_records());
         records.append(&mut get_test_master_list_records());
         records.append(&mut get_test_master_list_line_records());
@@ -277,9 +291,11 @@ mod tests {
 
         let mut init_records = Vec::new();
         init_records.append(&mut get_test_name_records());
+        init_records.append(&mut get_test_unit_records());
         init_records.append(&mut get_test_item_records());
         init_records.append(&mut get_test_master_list_records());
         let mut upsert_records = Vec::new();
+        upsert_records.append(&mut get_test_unit_upsert_records());
         upsert_records.append(&mut get_test_item_upsert_records());
         upsert_records.append(&mut get_test_name_upsert_records());
         upsert_records.append(&mut get_test_master_list_upsert_records());

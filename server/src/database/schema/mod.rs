@@ -14,12 +14,14 @@ mod requisition_line;
 mod stock_line;
 mod store;
 mod sync_out;
+mod unit;
 mod user_account;
 
 pub mod diesel_schema;
 
 #[derive(Clone)]
 pub enum DatabaseRow {
+    Unit(UnitRow),
     Item(ItemRow),
     StockLine(StockLineRow),
     Name(NameRow),
@@ -48,4 +50,5 @@ pub use requisition_line::RequisitionLineRow;
 pub use stock_line::StockLineRow;
 pub use store::StoreRow;
 pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
+pub use unit::UnitRow;
 pub use user_account::UserAccountRow;
