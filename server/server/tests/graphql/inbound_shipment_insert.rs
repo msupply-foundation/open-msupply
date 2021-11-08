@@ -4,6 +4,7 @@ mod graphql {
         get_gql_result,
     };
     use chrono::{Duration, Utc};
+    use domain::{name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use remote_server::{
         database::{
@@ -11,7 +12,6 @@ mod graphql {
             repository::InvoiceRepository,
             schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
         },
-        domain::{name::NameFilter, Pagination},
         util::test_db,
     };
     use uuid::Uuid;

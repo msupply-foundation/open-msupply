@@ -1,13 +1,13 @@
 use super::{Connector, ConnectorError, NodeError, StockLineResponse};
 use crate::{
     database::{loader::StockLineByIdLoader, repository::StorageConnectionManager},
-    domain::invoice_line::InvoiceLine,
     server::service::graphql::ContextExt,
     service::invoice_line::get_invoice_line,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
+use domain::invoice_line::InvoiceLine;
 
 pub struct InvoiceLineNode {
     invoice_line: InvoiceLine,

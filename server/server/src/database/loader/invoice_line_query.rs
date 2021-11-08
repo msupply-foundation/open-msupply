@@ -1,6 +1,6 @@
 use crate::database::repository::{InvoiceLineQueryRepository, StorageConnectionManager};
-use crate::domain::invoice_line::InvoiceLine;
 use crate::service::ListError;
+use domain::invoice_line::InvoiceLine;
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

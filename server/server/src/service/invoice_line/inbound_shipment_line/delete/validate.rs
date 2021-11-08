@@ -1,6 +1,5 @@
 use crate::{
     database::{repository::StorageConnection, schema::InvoiceLineRow},
-    domain::{inbound_shipment::DeleteInboundShipmentLine, invoice::InvoiceType},
     service::{
         invoice::{
             check_invoice_exists, check_invoice_finalised, check_invoice_type,
@@ -15,6 +14,7 @@ use crate::{
         },
     },
 };
+use domain::{inbound_shipment::DeleteInboundShipmentLine, invoice::InvoiceType};
 
 use super::DeleteInboundShipmentLineError;
 

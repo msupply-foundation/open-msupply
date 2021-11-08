@@ -1,9 +1,11 @@
 use crate::database::loader::StockLineByItemIdLoader;
-use crate::domain::item::{Item, ItemFilter};
-use crate::domain::{EqualFilter, SimpleStringFilter};
 use crate::server::service::graphql::ContextExt;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use domain::{
+    item::{Item, ItemFilter},
+    EqualFilter, SimpleStringFilter,
+};
 
 use super::{
     Connector, ConnectorError, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
@@ -11,7 +13,7 @@ use super::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "crate::domain::item::ItemSortField")]
+#[graphql(remote = "domain::item::ItemSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum ItemSortFieldInput {
     Name,

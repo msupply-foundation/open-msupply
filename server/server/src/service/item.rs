@@ -1,9 +1,7 @@
-use crate::{
-    database::repository::{ItemQueryRepository, StorageConnectionManager},
-    domain::{
-        item::{Item, ItemFilter, ItemSort},
-        PaginationOption,
-    },
+use crate::database::repository::{ItemQueryRepository, StorageConnectionManager};
+use domain::{
+    item::{Item, ItemFilter, ItemSort},
+    PaginationOption,
 };
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};

@@ -1,17 +1,15 @@
 use super::{DBType, StorageConnection};
 
-use crate::{
-    database::{
-        repository::RepositoryError,
-        schema::{
-            diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
-            StockLineRow,
-        },
+use crate::database::{
+    repository::RepositoryError,
+    schema::{
+        diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
+        StockLineRow,
     },
-    domain::{
-        stock_line::{StockLine, StockLineFilter, StockLineSort},
-        Pagination,
-    },
+};
+use domain::{
+    stock_line::{StockLine, StockLineFilter, StockLineSort},
+    Pagination,
 };
 
 use diesel::prelude::*;

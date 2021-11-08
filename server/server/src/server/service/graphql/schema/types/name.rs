@@ -1,4 +1,4 @@
-use crate::domain::{
+use domain::{
     name::{Name, NameFilter},
     SimpleStringFilter,
 };
@@ -8,7 +8,7 @@ use async_graphql::*;
 use super::{Connector, ConnectorError, NodeError, SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "crate::domain::name::NameSortField")]
+#[graphql(remote = "domain::name::NameSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum NameSortFieldInput {
     Name,

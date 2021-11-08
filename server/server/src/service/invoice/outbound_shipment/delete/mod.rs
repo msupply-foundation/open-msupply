@@ -1,9 +1,7 @@
-use crate::{
-    database::repository::{
-        InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
-    },
-    domain::invoice_line::InvoiceLine,
+use crate::database::repository::{
+    InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
 };
+use domain::invoice_line::InvoiceLine;
 
 pub mod validate;
 

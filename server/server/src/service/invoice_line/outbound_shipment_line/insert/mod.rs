@@ -3,9 +3,9 @@ use crate::{
         InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
         TransactionError,
     },
-    domain::outbound_shipment::InsertOutboundShipmentLine,
     service::WithDBError,
 };
+use domain::outbound_shipment::InsertOutboundShipmentLine;
 
 mod generate;
 mod validate;

@@ -1,7 +1,8 @@
 mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_gql_query};
+    use domain::invoice::InvoiceStatus;
     use remote_server::{
-        database::mock::MockDataInserts, domain::invoice::InvoiceStatus,
+        database::mock::MockDataInserts,
         server::service::graphql::schema::types::InvoiceNodeStatus, util::test_db,
     };
 

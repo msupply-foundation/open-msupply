@@ -7,6 +7,7 @@ mod graphql {
         InsertInboundShipmentLineFull as Insert,
     };
     use chrono::NaiveDate;
+    use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use insert::InsertInboundShipmentLineErrorInterface::*;
     use remote_server::{
@@ -15,7 +16,6 @@ mod graphql {
             repository::{InvoiceLineRepository, StockLineRepository},
             schema::{InvoiceLineRow, StockLineRow},
         },
-        domain::{invoice::InvoiceFilter, Pagination},
         util::test_db,
     };
     use uuid::Uuid;

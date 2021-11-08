@@ -1,11 +1,8 @@
-use crate::domain::invoice::InvoiceFilter;
-use crate::domain::item::ItemFilter;
-use crate::domain::name::NameFilter;
-use crate::domain::PaginationOption;
 use crate::server::service::graphql::ContextExt;
 use crate::service::item::get_items;
 use crate::service::name::get_names;
 use crate::{database::repository::StorageConnectionManager, service::invoice::get_invoices};
+use domain::{invoice::InvoiceFilter, item::ItemFilter, name::NameFilter, PaginationOption};
 
 use async_graphql::{Context, Object};
 

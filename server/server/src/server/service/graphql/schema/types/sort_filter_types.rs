@@ -3,7 +3,7 @@ use super::{
     NameSortFieldInput,
 };
 
-use crate::domain::{
+use domain::{
     invoice::{InvoiceStatus, InvoiceType},
     DatetimeFilter, EqualFilter, SimpleStringFilter, Sort,
 };

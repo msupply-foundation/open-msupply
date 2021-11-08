@@ -1,5 +1,5 @@
 use crate::database::repository::{RepositoryError, StockLineRepository, StorageConnectionManager};
-use crate::domain::stock_line::StockLine;
+use domain::stock_line::StockLine;
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

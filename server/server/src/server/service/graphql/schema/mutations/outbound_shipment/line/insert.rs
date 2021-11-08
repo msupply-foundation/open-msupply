@@ -2,7 +2,6 @@ use async_graphql::*;
 
 use crate::{
     database::repository::StorageConnectionManager,
-    domain::outbound_shipment::InsertOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
             outbound_shipment::{NotEnoughStockForReduction, StockLineIsOnHold},
@@ -16,6 +15,7 @@ use crate::{
     },
     service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError},
 };
+use domain::outbound_shipment::InsertOutboundShipmentLine;
 
 use super::{
     ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,

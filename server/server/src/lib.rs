@@ -10,7 +10,6 @@
 extern crate diesel;
 
 pub mod database;
-pub mod domain;
 pub mod server;
 pub mod service;
 pub mod util;

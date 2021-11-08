@@ -6,9 +6,9 @@ use crate::{
         },
         schema::InvoiceRowStatus,
     },
-    domain::outbound_shipment::DeleteOutboundShipmentLine,
     service::WithDBError,
 };
+use domain::outbound_shipment::DeleteOutboundShipmentLine;
 
 mod validate;
 

@@ -2,9 +2,9 @@ use crate::{
     database::repository::{
         InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
     },
-    domain::{inbound_shipment::InsertInboundShipment, name::Name},
     service::WithDBError,
 };
+use domain::{inbound_shipment::InsertInboundShipment, name::Name};
 
 mod generate;
 mod validate;
