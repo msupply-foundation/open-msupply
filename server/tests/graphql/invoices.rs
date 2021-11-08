@@ -175,7 +175,7 @@ mod graphql {
             .unwrap();
         // invoice number
         let (query, variables, expected) = sort_test!(
-            "INVOICE_NUMBER",
+            "invoiceNumber",
             invoice_number,
             "invoiceNumber",
             invoices,
@@ -183,7 +183,7 @@ mod graphql {
         );
         assert_gql_query(&settings, &query, &variables, &expected).await;
         let (query, variables, expected) = sort_test!(
-            "INVOICE_NUMBER",
+            "invoiceNumber",
             invoice_number,
             "invoiceNumber",
             invoices,
@@ -192,7 +192,7 @@ mod graphql {
         assert_gql_query(&settings, &query, &variables, &expected).await;
         // other party name
         let (query, variables, expected) = sort_test!(
-            "OTHER_PARTY_NAME",
+            "otherPartyName",
             other_party_name,
             "otherPartyName",
             invoices,
@@ -200,7 +200,7 @@ mod graphql {
         );
         assert_gql_query(&settings, &query, &variables, &expected).await;
         let (query, variables, expected) = sort_test!(
-            "OTHER_PARTY_NAME",
+            "otherPartyName",
             other_party_name,
             "otherPartyName",
             invoices,
