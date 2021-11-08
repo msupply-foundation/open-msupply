@@ -1,4 +1,4 @@
-import { OmSupplyApi } from '@openmsupply-client/common';
+import { InvoiceNodeType, OmSupplyApi } from '@openmsupply-client/common';
 
 export const getOutboundShipmentCountQueryFn =
   (omSupplyApi: OmSupplyApi) =>
@@ -6,7 +6,7 @@ export const getOutboundShipmentCountQueryFn =
     toBePicked: number;
   }> => {
     const result = await omSupplyApi.invoiceCounts({
-      isInbound: false,
+      type: InvoiceNodeType.CustomerInvoice,
     });
 
     if (result.invoiceCounts.__typename === 'InvoiceCountsConnector') {
@@ -25,7 +25,7 @@ export const getInboundShipmentCountQueryFn =
     thisWeek: number;
   }> => {
     const result = await omSupplyApi.invoiceCounts({
-      isInbound: true,
+      type: InvoiceNodeType.SupplierInvoice,
     });
 
     if (result.invoiceCounts.__typename === 'InvoiceCountsConnector') {

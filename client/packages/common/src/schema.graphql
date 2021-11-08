@@ -612,7 +612,7 @@ type Queries {
     # sort options (only first sort input is evaluated for this endpoint)
     sort: [InvoiceSortInput!]
   ): InvoicesResponse!
-  invoiceCounts(isInbound: Boolean!): InvoiceCountsResponse!
+  invoiceCounts(type: InvoiceNodeType!): InvoiceCountsResponse!
   stockCounts: StockCountsResponse!
 }
 
