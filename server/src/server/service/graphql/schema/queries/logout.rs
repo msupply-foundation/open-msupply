@@ -118,7 +118,10 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
             return LogoutResponse::Error(ErrorWrapper { error: e });
         }
     };
-    // do the actual logout
+
+    // invalid the refresh token cookie first (just in case logout returns with an error)
+    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.debug_no_ssl);
+    // invalided all tokens of the user on the server
     let user_id = claims.sub;
     match service.logout(&user_id) {
         Ok(_) => {}
@@ -132,8 +135,6 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
             }
         },
     };
-    // invalid the refresh token cookie
-    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.debug_no_ssl);
 
     LogoutResponse::Response(Logout { user_id })
 }
