@@ -1,6 +1,6 @@
 use crate::{
     database::{
-        loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader},
+        loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
         repository::StorageConnectionManager,
     },
     domain::{
@@ -17,7 +17,8 @@ use serde::Serialize;
 
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterStringInput,
-    InvoiceLinesResponse, NodeError, SimpleStringFilterInput, SortInput,
+    ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError, NodeErrorInterface,
+    SimpleStringFilterInput, SortInput,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -164,6 +165,20 @@ impl InvoiceNode {
             }
             // TODO report error
             Err(error) => InvoicePriceResponse::Error(error.into()),
+        }
+    }
+
+    async fn other_party(&self, ctx: &Context<'_>) -> NameResponse {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        match loader.load_one(self.invoice.other_party_id.clone()).await {
+            Ok(response_option) => match response_option {
+                Some(name) => NameResponse::Response(name.into()),
+                None => NameResponse::Error(ErrorWrapper {
+                    error: NodeErrorInterface::record_not_found(),
+                }),
+            },
+            Err(error) => NameResponse::Error(error.into()),
         }
     }
 }

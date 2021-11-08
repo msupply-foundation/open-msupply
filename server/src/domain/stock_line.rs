@@ -15,7 +15,7 @@ pub struct StockLine {
     pub total_number_of_packs: i32,
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
-    pub note: Option<String>
+    pub note: Option<String>,
 }
 
 pub struct StockLineFilter {
@@ -30,6 +30,7 @@ impl StockLineFilter {
     pub fn match_id(mut self, id: &str) -> Self {
         self.id = Some(EqualFilter {
             equal_to: Some(id.to_owned()),
+            equal_any: None,
         });
 
         self

@@ -1,32 +1,35 @@
-use crate::database::repository::{NameRepository, RepositoryError, StorageConnectionManager};
-use crate::database::schema::NameRow;
-
 use async_graphql::dataloader::*;
-use async_graphql::*;
 use std::collections::HashMap;
 
-pub struct NameLoader {
+use crate::{
+    database::repository::{NameQueryRepository, RepositoryError, StorageConnectionManager},
+    domain::{
+        name::{Name, NameFilter},
+        Pagination,
+    },
+};
+
+pub struct NameByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for NameLoader {
-    type Value = NameRow;
+impl Loader<String> for NameByIdLoader {
+    type Value = Name;
     type Error = RepositoryError;
 
-    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = NameRepository::new(&connection);
+        let repo = NameQueryRepository::new(&connection);
 
         Ok(repo
-            .find_many_by_id(keys)
-            .unwrap()
-            .iter()
-            .map(|name: &NameRow| {
-                let name_id = name.id.clone();
-                let name = name.clone();
-                (name_id, name)
-            })
+            .query(
+                Pagination::new(),
+                Some(NameFilter::new().any_id(ids.to_owned())),
+                None,
+            )?
+            .into_iter()
+            .map(|name| (name.id.clone(), name))
             .collect())
     }
 }

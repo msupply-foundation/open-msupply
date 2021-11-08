@@ -1,6 +1,6 @@
 use super::{EqualFilter, SimpleStringFilter, Sort};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Name {
     pub id: String,
     pub name: String,
@@ -38,6 +38,16 @@ impl NameFilter {
     pub fn match_id(mut self, id: &str) -> Self {
         self.id = Some(EqualFilter {
             equal_to: Some(id.to_owned()),
+            equal_any: None,
+        });
+
+        self
+    }
+
+    pub fn any_id(mut self, ids: Vec<String>) -> Self {
+        self.id = Some(EqualFilter {
+            equal_to: None,
+            equal_any: Some(ids),
         });
 
         self

@@ -111,6 +111,10 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
             if let Some(eq) = value.equal_to {
                 query = query.filter(name_table_dsl::id.eq(eq));
             }
+
+            if let Some(equal_any) = value.equal_any {
+                query = query.filter(name_table_dsl::id.eq_any(equal_any));
+            }
         }
 
         if let Some(code) = f.code {

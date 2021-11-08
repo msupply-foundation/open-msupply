@@ -164,6 +164,12 @@ pub enum NodeErrorInterface {
     RecordNotFound(RecordNotFound),
 }
 
+impl NodeErrorInterface {
+    pub fn record_not_found() -> NodeErrorInterface {
+        NodeErrorInterface::RecordNotFound(RecordNotFound {})
+    }
+}
+
 /// Convert from ListError (service result) to Generic connector error
 impl From<ListError> for ConnectorError {
     fn from(error: ListError) -> Self {
