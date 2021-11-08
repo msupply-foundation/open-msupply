@@ -72,13 +72,12 @@ pub struct SyncConnection {
 
 impl SyncConnection {
     pub fn new(settings: &SyncSettings) -> SyncConnection {
-        let host = settings.host.clone();
-        let port = settings.port.clone();
+        let url = &settings.url;
         let username = &settings.username;
         let password = &settings.password;
 
         let client = Client::new();
-        let server = SyncServer::new(host, port);
+        let server = SyncServer::new(url);
         let credentials = SyncCredentials::new(username, password);
 
         SyncConnection {
@@ -221,16 +220,14 @@ mod tests {
         let mock_password = "password".to_owned();
 
         let mock_sync_settings_with_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: mock_username.clone(),
             password: mock_password.clone(),
             interval: 0,
         };
 
         let mock_sync_settings_without_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: "".to_owned(),
             password: "".to_owned(),
             interval: 0,
@@ -286,16 +283,14 @@ mod tests {
         let mock_password = "password".to_owned();
 
         let mock_sync_settings_with_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: mock_username.clone(),
             password: mock_password.clone(),
             interval: 0,
         };
 
         let mock_sync_settings_without_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: "".to_owned(),
             password: "".to_owned(),
             interval: 0,
@@ -367,16 +362,14 @@ mod tests {
         let mock_password = "password".to_owned();
 
         let mock_sync_settings_with_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: mock_username.clone(),
             password: mock_password.clone(),
             interval: 0,
         };
 
         let mock_sync_settings_without_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: "".to_owned(),
             password: "".to_owned(),
             interval: 0,
@@ -445,16 +438,14 @@ mod tests {
         let mock_password = "password".to_owned();
 
         let mock_sync_settings_with_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: mock_username.clone(),
             password: mock_password.clone(),
             interval: 0,
         };
 
         let mock_sync_settings_without_auth = SyncSettings {
-            host: mock_server.host().clone(),
-            port: mock_server.port().clone(),
+            url: mock_server.url(""),
             username: "".to_owned(),
             password: "".to_owned(),
             interval: 0,

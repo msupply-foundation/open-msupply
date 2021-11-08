@@ -14,9 +14,9 @@ pub struct SyncServer {
 }
 
 impl SyncServer {
-    pub fn new(host: String, port: u16) -> SyncServer {
+    pub fn new(url: &str) -> SyncServer {
         // TODO: add error handling.
-        let url = Url::parse(&format!("http://{}:{}", host, port)).unwrap();
+        let url = Url::parse(url).unwrap();
         SyncServer { url }
     }
 
