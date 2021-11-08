@@ -16,7 +16,7 @@ export const placeholderInvoice: OutboundShipment = {
   lines: [],
   pricing: { totalAfterTax: 0, subtotal: 0, taxPercentage: 0 },
   dispatch: null,
-  hold: false,
+  onHold: false,
 
   draftDatetime: '',
   allocatedDatetime: '',
