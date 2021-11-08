@@ -99,7 +99,12 @@ describe('useFilterBy', () => {
   });
 
   it('updates string filters', () => {
-    const { result } = renderHook(() => useFilterBy<X>());
+    const { result } = renderHook(() =>
+      useFilterBy({
+        comment: { equalTo: 'a' },
+        confirmedDatetime: { equalTo: '1/1/2020' },
+      })
+    );
 
     act(() => {
       result.current.onClearFilterRule('comment');
@@ -111,7 +116,3 @@ describe('useFilterBy', () => {
     });
   });
 });
-
-interface X {
-  comment: string;
-}
