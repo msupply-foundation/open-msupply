@@ -54,9 +54,7 @@ export const onDelete =
     const result = await api.deleteOutboundShipments({
       ids: invoices.map(invoice => invoice.id),
     });
-    console.log('-------------------------------------------');
-    console.log('result', result);
-    console.log('-------------------------------------------');
+
     const { batchOutboundShipment } = result;
     if (batchOutboundShipment.deleteOutboundShipments) {
       return batchOutboundShipment.deleteOutboundShipments.map(({ id }) => id);
