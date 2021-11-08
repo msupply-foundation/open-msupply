@@ -9,13 +9,20 @@ import {
   useFormatDate,
 } from '../../../../intl/intlHelpers';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
-import { usePopover } from '../../popover';
+import { PaperPopover, PaperPopoverSection } from '../../popover';
+import { useIsSmallScreen } from '../../../..';
+import { styled } from '@mui/system';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
   statusLog: Record<StatusType, string | null | undefined>;
   statusFormatter: (status: StatusType) => LocaleKey;
 }
+
+const StyledText = styled(Typography)({
+  fontWeight: 700,
+  fontSize: '12px',
+});
 
 const useSteps = <StatusType extends string>({
   statuses,
@@ -31,11 +38,11 @@ const useSteps = <StatusType extends string>({
 
 export const StatusCrumbs = <StatusType extends string>(
   props: StatusCrumbsProps<StatusType>
-): JSX.Element => {
+): JSX.Element | null => {
   const { statuses, statusLog, statusFormatter } = props;
   const t = useTranslation();
+  const isSmallScreen = useIsSmallScreen();
 
-  const { show, hide, Popover } = usePopover();
   const steps = useSteps(props);
 
   const currentStep = statuses.reduce((acc, status, idx) => {
@@ -43,22 +50,44 @@ export const StatusCrumbs = <StatusType extends string>(
     return acc;
   }, 0);
 
-  return (
-    <>
-      <Popover>
-        <Box gap={2} p={3} flexDirection="column" display="flex">
-          <Typography fontWeight="700">{t('label.order-history')}</Typography>
-          <VerticalStepper activeStep={currentStep} steps={steps} />
-        </Box>
-      </Popover>
+  let Crumbs = null;
+  if (isSmallScreen) {
+    const stepKey = statuses[currentStep];
+    if (!stepKey) return null;
+    Crumbs = (
+      <Box flexDirection="row" display="flex" gap={1} justifyContent="center">
+        <StyledText>{t('label.status')}</StyledText>
+        <StyledText color={'secondary'}>
+          {t(statusFormatter(stepKey))}
+        </StyledText>
+      </Box>
+    );
+  } else {
+    Crumbs = statuses.map(status => {
+      const date = statusLog[status];
 
+      return (
+        <StyledText color={date ? 'secondary' : 'gray.main'} key={status}>
+          {t(statusFormatter(status))}
+        </StyledText>
+      );
+    });
+  }
+
+  return (
+    <PaperPopover
+      placement="top"
+      height={200}
+      Content={
+        <PaperPopoverSection labelKey={'label.order-history'}>
+          <VerticalStepper activeStep={currentStep} steps={steps} />
+        </PaperPopoverSection>
+      }
+    >
       <Box
         height="100%"
         display="flex"
         alignItems="center"
-        onMouseOver={show}
-        onMouseLeave={hide}
-        onClick={show}
         sx={{ cursor: 'help' }}
       >
         <Breadcrumbs
@@ -76,21 +105,9 @@ export const StatusCrumbs = <StatusType extends string>(
             />
           }
         >
-          {statuses.map(status => {
-            const date = statusLog[status];
-
-            return (
-              <Typography
-                color={date ? 'secondary' : 'gray.main'}
-                key={status}
-                sx={{ fontWeight: 700, fontSize: '12px' }}
-              >
-                {t(statusFormatter(status))}
-              </Typography>
-            );
-          })}
+          {Crumbs}
         </Breadcrumbs>
       </Box>
-    </>
+    </PaperPopover>
   );
 };

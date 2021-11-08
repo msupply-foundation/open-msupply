@@ -101,7 +101,10 @@ export const createStockLines = (
           costPricePerPack,
           sellPricePerPack,
           onHold: faker.datatype.number(10) < 2,
-          note: faker.commerce.productDescription(),
+          note:
+            faker.datatype.number(10) < 2
+              ? faker.commerce.productDescription()
+              : null,
         };
 
         quantityToUse = quantityToUse - availableNumberOfPacks;
@@ -294,7 +297,7 @@ export const createInvoice = (
     pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
     shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
     deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
-    enteredBy: randomName(),
+    enteredByName: randomName(),
     donorName: randomName(),
     otherPartyName: otherParty.name,
     purchaseOrderNumber: randomInteger({ min: 100, max: 999 }),

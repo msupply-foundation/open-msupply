@@ -76,6 +76,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
 
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
             <ButtonWithIcon
+              shrinkThreshold="lg"
               Icon={<XCircleIcon />}
               labelKey="button.cancel"
               color="secondary"
@@ -85,6 +86,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
             {isInvoiceEditable(draft) && (
               <>
                 <ButtonWithIcon
+                  shrinkThreshold="lg"
                   Icon={<SaveIcon />}
                   labelKey="button.save"
                   variant="contained"
@@ -96,6 +98,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                   }}
                 />
                 <ButtonWithIcon
+                  shrinkThreshold="lg"
                   disabled={draft.hold}
                   Icon={<ArrowRightIcon />}
                   labelKey="button.save-and-confirm-status"

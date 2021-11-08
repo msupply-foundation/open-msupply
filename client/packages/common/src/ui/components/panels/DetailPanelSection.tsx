@@ -21,16 +21,18 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
 
 export interface DetailPanelSectionProps {
   titleKey: LocaleKey;
+  defaultExpanded?: boolean;
 }
 
 export const DetailPanelSection: React.FC<DetailPanelSectionProps> = ({
   children,
   titleKey,
+  defaultExpanded = true,
 }) => {
   const t = useTranslation();
   return (
     <Box>
-      <StyledAccordion>
+      <StyledAccordion defaultExpanded={defaultExpanded}>
         <AccordionSummary expandIcon={<ChevronDownIcon />}>
           <Typography sx={{ fontWeight: 'bold' }}>{t(titleKey)}</Typography>
         </AccordionSummary>

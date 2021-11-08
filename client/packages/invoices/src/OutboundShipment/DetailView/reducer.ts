@@ -64,10 +64,6 @@ export const OutboundAction = {
     type: ActionType.UpdateNumberOfPacks,
     payload: { rowKey, numberOfPacks },
   }),
-  updateComment: (rowKey: string, comment: string): OutboundShipmentAction => ({
-    type: ActionType.UpdateComment,
-    payload: { rowKey, comment },
-  }),
   onSortBy: (column: Column<InvoiceLineRow>): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
@@ -162,19 +158,6 @@ export const reducer = (
           break;
         }
 
-        case ActionType.UpdateComment: {
-          const { payload } = action;
-          const { rowKey, comment } = payload;
-
-          const row = state.draft.lines?.find(({ id }) => id === rowKey);
-
-          if (row) {
-            row.comment = comment;
-          }
-
-          break;
-        }
-
         case ActionType.UpdateInvoice: {
           const { payload } = action;
           const { key, value } = payload;
@@ -222,7 +205,5 @@ const createLine = (
     ...line,
     updateNumberOfPacks: (numberOfPacks: number) =>
       dispatch?.(OutboundAction.updateNumberOfPacks(line.id, numberOfPacks)),
-    updateComment: (comment: string) =>
-      dispatch?.(OutboundAction.updateComment(line.id, comment)),
   };
 };
