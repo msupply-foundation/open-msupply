@@ -16,6 +16,7 @@ pub struct SimpleStringFilter {
 #[derive(Clone)]
 pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
+    pub equal_any: Option<Vec<T>>,
 }
 #[derive(Clone)]
 pub struct DatetimeFilter {

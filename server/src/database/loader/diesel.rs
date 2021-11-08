@@ -1,8 +1,8 @@
 use crate::{
     database::{
         loader::{
-            InvoiceLineLoader, InvoiceLoader, ItemLoader, NameLoader, RequisitionLineLoader,
-            RequisitionLoader, StoreLoader, UserAccountLoader,
+            InvoiceLineLoader, InvoiceLoader, ItemLoader, RequisitionLineLoader, RequisitionLoader,
+            StoreLoader, UserAccountLoader,
         },
         repository::StorageConnectionManager,
     },
@@ -21,7 +21,8 @@ use diesel::PgConnection as DBBackendConnection;
 use diesel::SqliteConnection as DBBackendConnection;
 
 use super::{
-    InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineByIdLoader, StockLineByItemIdLoader,
+    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineByIdLoader,
+    StockLineByItemIdLoader,
 };
 
 pub async fn get_loaders(settings: &Settings) -> LoaderMap {
@@ -40,10 +41,6 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
     });
 
     let requisition_line_loader = DataLoader::new(RequisitionLineLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
-    });
-
-    let name_loader = DataLoader::new(NameLoader {
         connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
@@ -79,10 +76,14 @@ pub async fn get_loaders(settings: &Settings) -> LoaderMap {
         connection_manager: StorageConnectionManager::new(pool.clone()),
     });
 
+    let name_by_id_loader = DataLoader::new(NameByIdLoader {
+        connection_manager: StorageConnectionManager::new(pool.clone()),
+    });
+
     loaders.insert(item_loader);
     loaders.insert(requisition_loader);
     loaders.insert(requisition_line_loader);
-    loaders.insert(name_loader);
+    loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
     loaders.insert(invoice_loader);
     loaders.insert(invoice_line_loader);

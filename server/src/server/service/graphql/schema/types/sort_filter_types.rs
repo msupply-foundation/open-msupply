@@ -80,6 +80,7 @@ impl From<EqualFilterStringInput> for EqualFilter<String> {
     fn from(f: EqualFilterStringInput) -> Self {
         EqualFilter {
             equal_to: f.equal_to,
+            equal_any: None,
         }
     }
 }
@@ -95,6 +96,7 @@ impl From<EqualFilterBoolInput> for EqualFilter<bool> {
     fn from(f: EqualFilterBoolInput) -> Self {
         EqualFilter {
             equal_to: f.equal_to,
+            equal_any: None,
         }
     }
 }
@@ -112,6 +114,7 @@ impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
     fn from(f: EqualFilterInput<InvoiceNodeType>) -> Self {
         EqualFilter {
             equal_to: f.equal_to.map(InvoiceType::from),
+            equal_any: None,
         }
     }
 }
@@ -120,6 +123,7 @@ impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
     fn from(f: EqualFilterInput<InvoiceNodeStatus>) -> Self {
         EqualFilter {
             equal_to: f.equal_to.map(InvoiceStatus::from),
+            equal_any: None,
         }
     }
 }

@@ -35,6 +35,7 @@ impl InvoiceLineFilter {
     pub fn match_id(mut self, id: &str) -> Self {
         self.id = Some(EqualFilter {
             equal_to: Some(id.to_owned()),
+            equal_any: None,
         });
 
         self
@@ -43,6 +44,7 @@ impl InvoiceLineFilter {
     pub fn match_invoice_id(mut self, id: &str) -> Self {
         self.invoice_id = Some(EqualFilter {
             equal_to: Some(id.to_owned()),
+            equal_any: None,
         });
 
         self
