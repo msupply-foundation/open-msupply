@@ -14,6 +14,17 @@ describe('useIsExtraLargeScreen', () => {
     expect(current).toBe(true);
   });
 
+  it('Returns false when the screen is 1536', () => {
+    setScreenSize_ONLY_FOR_TESTING(1536);
+
+    const { result } = renderHook(useIsExtraLargeScreen, {
+      wrapper: TestingProvider,
+    });
+    const { current } = result;
+
+    expect(current).toBe(false);
+  });
+
   it('Returns false when the screen is less than 1536', () => {
     setScreenSize_ONLY_FOR_TESTING(1535);
 

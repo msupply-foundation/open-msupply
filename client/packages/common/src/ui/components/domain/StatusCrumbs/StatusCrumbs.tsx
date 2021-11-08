@@ -10,12 +10,19 @@ import {
 } from '../../../../intl/intlHelpers';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperPopover, PaperPopoverSection } from '../../popover';
+import { useIsSmallScreen } from '../../../..';
+import { styled } from '@mui/system';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
   statusLog: Record<StatusType, string | null | undefined>;
   statusFormatter: (status: StatusType) => LocaleKey;
 }
+
+const StyledText = styled(Typography)({
+  fontWeight: 700,
+  fontSize: '12px',
+});
 
 const useSteps = <StatusType extends string>({
   statuses,
@@ -31,9 +38,10 @@ const useSteps = <StatusType extends string>({
 
 export const StatusCrumbs = <StatusType extends string>(
   props: StatusCrumbsProps<StatusType>
-): JSX.Element => {
+): JSX.Element | null => {
   const { statuses, statusLog, statusFormatter } = props;
   const t = useTranslation();
+  const isSmallScreen = useIsSmallScreen();
 
   const steps = useSteps(props);
 
@@ -41,6 +49,30 @@ export const StatusCrumbs = <StatusType extends string>(
     if (statusLog[status]) return idx;
     return acc;
   }, 0);
+
+  let Crumbs = null;
+  if (isSmallScreen) {
+    const stepKey = statuses[currentStep];
+    if (!stepKey) return null;
+    Crumbs = (
+      <Box flexDirection="row" display="flex" gap={1} justifyContent="center">
+        <StyledText>{t('label.status')}</StyledText>
+        <StyledText color={'secondary'}>
+          {t(statusFormatter(stepKey))}
+        </StyledText>
+      </Box>
+    );
+  } else {
+    Crumbs = statuses.map(status => {
+      const date = statusLog[status];
+
+      return (
+        <StyledText color={date ? 'secondary' : 'gray.main'} key={status}>
+          {t(statusFormatter(status))}
+        </StyledText>
+      );
+    });
+  }
 
   return (
     <PaperPopover
@@ -73,19 +105,7 @@ export const StatusCrumbs = <StatusType extends string>(
             />
           }
         >
-          {statuses.map(status => {
-            const date = statusLog[status];
-
-            return (
-              <Typography
-                color={date ? 'secondary' : 'gray.main'}
-                key={status}
-                sx={{ fontWeight: 700, fontSize: '12px' }}
-              >
-                {t(statusFormatter(status))}
-              </Typography>
-            );
-          })}
+          {Crumbs}
         </Breadcrumbs>
       </Box>
     </PaperPopover>
