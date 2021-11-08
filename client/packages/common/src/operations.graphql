@@ -29,6 +29,7 @@ query invoice($id: String!) {
       pickedDatetime
       shippedDatetime
       deliveredDatetime
+      enteredByName
       hold
       color
       otherParty {

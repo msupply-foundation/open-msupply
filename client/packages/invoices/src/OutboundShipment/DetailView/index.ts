@@ -33,4 +33,6 @@ export const placeholderInvoice: OutboundShipment = {
   shippingMethod: undefined,
 
   otherParty: undefined,
+
+  enteredByName: '',
 };

@@ -394,7 +394,7 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']>;
   donorName: Scalars['String'];
   draftDatetime?: Maybe<Scalars['DateTime']>;
-  enteredBy: Scalars['String'];
+  enteredByName: Scalars['String'];
   entryDatetime: Scalars['DateTime'];
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
   goodsReceiptNumber?: Maybe<Scalars['Int']>;
@@ -919,6 +919,7 @@ export type InvoiceQuery = {
         pickedDatetime?: any | null | undefined;
         shippedDatetime?: any | null | undefined;
         deliveredDatetime?: any | null | undefined;
+        enteredByName: string;
         hold: boolean;
         color: string;
         otherPartyId: string;
@@ -1277,6 +1278,7 @@ export const InvoiceDocument = gql`
         pickedDatetime
         shippedDatetime
         deliveredDatetime
+        enteredByName
         hold
         color
         otherParty {
