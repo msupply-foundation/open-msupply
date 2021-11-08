@@ -7,6 +7,7 @@ pub struct Item {
     pub code: String,
     // Is visible is from master list join
     pub is_visible: bool,
+    pub unit_name: Option<String>,
 }
 #[derive(Clone)]
 pub struct ItemFilter {

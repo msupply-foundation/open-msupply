@@ -5,9 +5,9 @@ use crate::{
         schema::{
             diesel_schema::{
                 item, item::dsl as item_dsl, item_is_visible,
-                item_is_visible::dsl as item_is_visible_dsl,
+                item_is_visible::dsl as item_is_visible_dsl, unit, unit::dsl as unit_dsl,
             },
-            ItemIsVisibleRow, ItemRow,
+            ItemIsVisibleRow, ItemRow, UnitRow,
         },
     },
     domain::{
@@ -17,19 +17,20 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
-type ItemAndMasterList = (ItemRow, ItemIsVisibleRow);
+type ItemAndMasterList = (ItemRow, ItemIsVisibleRow, Option<UnitRow>);
 
 impl From<ItemAndMasterList> for Item {
-    fn from((item_row, item_is_visible_row): ItemAndMasterList) -> Self {
+    fn from((item_row, item_is_visible_row, unit_row_option): ItemAndMasterList) -> Self {
         Item {
             id: item_row.id,
             name: item_row.name,
             code: item_row.code,
             is_visible: item_is_visible_row.is_visible,
+            unit_name: unit_row_option.map(|unit| unit.name),
         }
     }
 }
@@ -87,12 +88,17 @@ impl<'a> ItemQueryRepository<'a> {
     }
 }
 
-type BoxedItemQuery = IntoBoxed<'static, InnerJoin<item::table, item_is_visible::table>, DBType>;
+type BoxedItemQuery = IntoBoxed<
+    'static,
+    LeftJoin<InnerJoin<item::table, item_is_visible::table>, unit::table>,
+    DBType,
+>;
 
 pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
     // Join master_list_line
     let mut query = item_dsl::item
         .inner_join(item_is_visible_dsl::item_is_visible)
+        .left_join(unit_dsl::unit)
         .into_boxed();
 
     if let Some(f) = filter {
