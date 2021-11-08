@@ -7,6 +7,7 @@ import {
   Grid,
   PlusCircleIcon,
   useListData,
+  useNotification,
   useOmSupplyApi,
 } from '@openmsupply-client/common';
 import Widget from './Widget';
@@ -14,6 +15,7 @@ import { StatsPanel } from '../StatsPanel';
 import { useNavigate } from 'react-router';
 
 export const OutboundShipmentsWidget: React.FC = () => {
+  const { error } = useNotification();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -38,10 +40,16 @@ export const OutboundShipmentsWidget: React.FC = () => {
               nameId: name?.id,
             };
 
-            const result = await onCreate(invoice);
-
-            invalidate();
-            navigate(`/distribution/outbound-shipment/${result.id}`);
+            try {
+              const result = await onCreate(invoice);
+              invalidate();
+              navigate(`/distribution/outbound-shipment/${result}`);
+            } catch (e) {
+              const errorSnack = error(
+                'Failed to create invoice! ' + (e as Error).message
+              );
+              errorSnack();
+            }
           };
 
           createInvoice();

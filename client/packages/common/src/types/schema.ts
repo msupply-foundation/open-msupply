@@ -1389,6 +1389,58 @@ export type ItemsListViewQuery = {
       };
 };
 
+export type InsertOutboundShipmentMutationVariables = Exact<{
+  id: Scalars['String'];
+  otherPartyId: Scalars['String'];
+}>;
+
+export type InsertOutboundShipmentMutation = {
+  __typename?: 'Mutations';
+  insertOutboundShipment:
+    | {
+        __typename: 'InsertOutboundShipmentError';
+        error:
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: ForeignKey;
+            }
+          | {
+              __typename: 'OtherPartyCannotBeThisStoreError';
+              description: string;
+            }
+          | {
+              __typename: 'OtherPartyNotACustomerError';
+              description: string;
+              otherParty: {
+                __typename?: 'NameNode';
+                code: string;
+                id: string;
+                isCustomer: boolean;
+                isSupplier: boolean;
+                name: string;
+              };
+            }
+          | { __typename: 'RecordAlreadyExist'; description: string };
+      }
+    | { __typename: 'InvoiceNode'; id: string }
+    | {
+        __typename: 'NodeError';
+        error:
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
 export const InvoiceDocument = gql`
   query invoice($id: String!) {
     invoice(id: $id) {
@@ -1782,6 +1834,66 @@ export const ItemsListViewDocument = gql`
     }
   }
 `;
+export const InsertOutboundShipmentDocument = gql`
+  mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
+    insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
+      __typename
+      ... on InvoiceNode {
+        id
+      }
+      ... on InsertOutboundShipmentError {
+        __typename
+        error {
+          description
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+          ... on OtherPartyCannotBeThisStoreError {
+            __typename
+            description
+          }
+          ... on OtherPartyNotACustomerError {
+            __typename
+            description
+            otherParty {
+              code
+              id
+              isCustomer
+              isSupplier
+              name
+            }
+          }
+          ... on RecordAlreadyExist {
+            __typename
+            description
+          }
+        }
+      }
+      ... on NodeError {
+        __typename
+        error {
+          description
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1859,6 +1971,20 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'itemsListView'
+      );
+    },
+    insertOutboundShipment(
+      variables: InsertOutboundShipmentMutationVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<InsertOutboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertOutboundShipmentMutation>(
+            InsertOutboundShipmentDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertOutboundShipment'
       );
     },
   };

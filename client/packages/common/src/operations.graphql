@@ -394,3 +394,62 @@ query itemsListView(
     }
   }
 }
+
+mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
+  insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertOutboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on OtherPartyCannotBeThisStoreError {
+          __typename
+          description
+        }
+        ... on OtherPartyNotACustomerError {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
