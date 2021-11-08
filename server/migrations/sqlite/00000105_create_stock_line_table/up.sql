@@ -9,5 +9,6 @@ CREATE TABLE stock_line (
     available_number_of_packs INTEGER NOT NULL,
     total_number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL,
-    on_hold BOOLEAN NOT NULL
+    on_hold BOOLEAN NOT NULL,
+    note TEXT
 )

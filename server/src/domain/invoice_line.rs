@@ -16,6 +16,7 @@ pub struct InvoiceLine {
     pub sell_price_per_pack: f64,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
+    pub note: Option<String>,
 }
 
 pub struct InvoiceLineFilter {

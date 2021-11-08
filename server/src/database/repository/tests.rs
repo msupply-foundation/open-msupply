@@ -76,6 +76,7 @@ mod repository_test {
                 total_number_of_packs: 1,
                 expiry_date: None,
                 on_hold: false,
+                note: None,
             }
         }
 
@@ -219,6 +220,7 @@ mod repository_test {
                 sell_price_per_pack: 0.0,
                 total_after_tax: 1.0,
                 number_of_packs: 1,
+                note: None,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
@@ -236,6 +238,7 @@ mod repository_test {
                 sell_price_per_pack: 0.0,
                 total_after_tax: 2.0,
                 number_of_packs: 1,
+                note: None,
             }
         }
 
@@ -254,6 +257,7 @@ mod repository_test {
                 sell_price_per_pack: 0.0,
                 total_after_tax: 3.0,
                 number_of_packs: 1,
+                note: None,
             }
         }
 

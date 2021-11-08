@@ -11,6 +11,7 @@ CREATE TABLE invoice_line (
     sell_price_per_pack REAL NOT NULL,
     total_after_tax REAL NOT NULL,
     number_of_packs INTEGER NOT NULL,
-    pack_size INTEGER NOT NULL
+    pack_size INTEGER NOT NULL,
+    note TEXT
 );
 

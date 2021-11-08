@@ -62,5 +62,6 @@ fn generate_line(
         item_code,
         stock_line_id: None,
         total_after_tax,
+        note: None,
     }
 }
