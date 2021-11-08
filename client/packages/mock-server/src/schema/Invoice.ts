@@ -1,3 +1,4 @@
+import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
 import {
   InvoiceSortFieldInput,
   InvoiceFilterInput,
@@ -32,9 +33,9 @@ const QueryResolvers = {
 const MutationResolvers = {
   updateOutboundShipment: (
     _: any,
-    { invoice }: { invoice: InvoiceType }
+    { input }: { input: UpdateOutboundShipmentInput }
   ): InvoiceType => {
-    return Api.MutationService.update.invoice(invoice);
+    return Api.MutationService.update.invoice(input);
   },
   insertOutboundShipment: (
     _: any,

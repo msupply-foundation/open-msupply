@@ -453,3 +453,33 @@ mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
     }
   }
 }
+
+mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
+  updateOutboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateOutboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

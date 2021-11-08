@@ -1,9 +1,10 @@
 import { ResolverService } from './resolvers';
 import { createInvoice } from './../data/data';
 import { Api } from './index';
-import { StockLine } from './../data/types';
+import { StockLine, ResolvedInvoice } from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
+import { UpdateOutboundShipmentInput } from '@openmsupply-client/common';
 
 const adjustStockLineQuantity = (
   stockLineId: string,
@@ -63,8 +64,10 @@ export const insert = {
 };
 
 export const update = {
-  invoice: (invoice: Invoice): Invoice => {
-    return db.update.invoice(invoice);
+  invoice: (invoice: UpdateOutboundShipmentInput): ResolvedInvoice => {
+    const updated = db.update.invoice(invoice);
+    const resolvedInvoice = ResolverService.byId.invoice(updated.id);
+    return resolvedInvoice;
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
     const currentInvoiceLine = db.get.byId.invoiceLine(invoiceLine.id);

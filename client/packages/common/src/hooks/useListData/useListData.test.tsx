@@ -3,10 +3,12 @@ import React from 'react';
 import { setLogger } from 'react-query';
 import { render, waitFor } from '@testing-library/react';
 import { request, gql } from 'graphql-request';
-import { Test } from '../../types';
+import { Test, DomainObject } from '../../types';
 import { ListApi, useListData } from './useListData';
 import { ErrorBoundary } from '../../ui/components/errors';
 import { TestingProvider } from '../../utils/testing';
+
+interface TestType extends Test, DomainObject {}
 
 beforeEach(() => {
   jest.spyOn(console, 'error');
@@ -29,12 +31,12 @@ describe('useListData', () => {
     })
   );
 
-  const ServerErrorApi: ListApi<Test> = {
+  const ServerErrorApi: ListApi<TestType> = {
     onRead: () => async () => {
       return await request('http://localhost:4000', getServerErrorQuery());
     },
     onDelete: async () => {},
-    onUpdate: async () => ({} as Test),
+    onUpdate: async () => '',
     onCreate: async () => '',
   };
 
@@ -46,7 +48,7 @@ describe('useListData', () => {
     }
   `;
 
-  const PermissionErrorApi: ListApi<Test> = {
+  const PermissionErrorApi: ListApi<TestType> = {
     onRead: () => async () => {
       return await request(
         'http://localhost:4000',

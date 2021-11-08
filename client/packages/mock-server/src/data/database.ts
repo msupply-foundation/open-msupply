@@ -7,6 +7,7 @@ import {
   NameData,
   removeElement,
 } from './data';
+import { UpdateOutboundShipmentInput } from '@openmsupply-client/common';
 
 // Importing this from utils causes a circular deps loop and you will not have fun :)
 export const getFilter =
@@ -76,10 +77,19 @@ export const get = {
 };
 
 export const update = {
-  invoice: (invoice: Invoice): Invoice => {
+  invoice: (invoice: UpdateOutboundShipmentInput): Invoice => {
     const idx = InvoiceData.findIndex(getFilter(invoice.id, 'id'));
     if (idx < 0) throw new Error('Invalid invoice id');
-    const newInvoice = { ...InvoiceData[idx], ...invoice };
+    const existingInvoice: Invoice = InvoiceData[idx] as Invoice;
+    const newInvoice: Invoice = {
+      ...existingInvoice,
+      color: invoice?.color ?? existingInvoice.color,
+      comment: invoice?.comment ?? existingInvoice.comment,
+      theirReference: invoice?.theirReference ?? existingInvoice.theirReference,
+      onHold: invoice?.onHold ?? existingInvoice.onHold,
+      status: invoice?.status ?? existingInvoice.status,
+      otherPartyId: invoice?.otherPartyId ?? existingInvoice.otherPartyId,
+    };
     InvoiceData[idx] = newInvoice;
     return newInvoice;
   },

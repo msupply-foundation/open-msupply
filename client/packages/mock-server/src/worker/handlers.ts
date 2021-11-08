@@ -1,3 +1,4 @@
+import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
 import { Invoice } from './../data/types';
 import { graphql, rest } from 'msw';
 import { Api } from '../api';
@@ -7,17 +8,14 @@ import {
   NamesQueryVariables,
 } from '@openmsupply-client/common';
 
-const updateInvoice = graphql.mutation(
-  'updateInvoice',
-  (request, response, context) => {
-    const { variables } = request;
-    const { invoicePatch } = variables;
-
-    const result = Api.MutationService.update.invoice(invoicePatch);
-
-    return response(context.data({ updateInvoice: result }));
-  }
-);
+const updateInvoice = graphql.mutation<
+  Record<string, unknown>,
+  { input: UpdateOutboundShipmentInput }
+>('updateOutboundShipment', (request, response, context) => {
+  const { variables } = request;
+  const result = Api.MutationService.update.invoice(variables.input);
+  return response(context.data({ updateOutboundShipment: result }));
+});
 
 const insertInvoice = graphql.mutation(
   'insertOutboundShipment',

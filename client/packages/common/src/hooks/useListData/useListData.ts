@@ -1,4 +1,4 @@
-import { ObjectWithStringKeys } from './../../types/utility';
+import { DomainObject } from './../../types/index';
 import { SortRule, SortBy } from './../useSortBy/useSortBy';
 import { UseMutateAsyncFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
@@ -7,7 +7,7 @@ import { FilterBy } from '../useFilterBy';
 import { ClientError } from 'graphql-request';
 import { useNotification } from '../../hooks';
 
-export interface ListApi<T extends ObjectWithStringKeys> {
+export interface ListApi<T extends DomainObject> {
   onRead: ({
     first,
     offset,
@@ -20,17 +20,22 @@ export interface ListApi<T extends ObjectWithStringKeys> {
     filterBy: FilterBy<T> | null;
   }) => () => Promise<{ nodes: T[]; totalCount: number }>;
   onDelete: (toDelete: T[]) => Promise<void>;
-  onUpdate: (toUpdate: T) => Promise<T>;
+  onUpdate: (toUpdate: Partial<T> & { id: string }) => Promise<string>;
   onCreate: (toCreate: Partial<T>) => Promise<string>;
 }
 
-interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
+interface ListDataState<T extends DomainObject> extends QueryParams<T> {
   data?: T[];
   totalCount?: number;
   invalidate: () => void;
   fullQueryKey: readonly unknown[];
   queryParams: QueryParams<T>;
-  onUpdate: UseMutateAsyncFunction<T, unknown, T, unknown>;
+  onUpdate: UseMutateAsyncFunction<
+    string,
+    unknown,
+    Partial<T> & { id: string },
+    unknown
+  >;
   onDelete: UseMutateAsyncFunction<void, unknown, T[], unknown>;
   onCreate: UseMutateAsyncFunction<string, unknown, Partial<T>, unknown>;
   isCreateLoading: boolean;
@@ -40,7 +45,7 @@ interface ListDataState<T extends ObjectWithStringKeys> extends QueryParams<T> {
   isLoading: boolean;
 }
 
-export const useListData = <T extends ObjectWithStringKeys>(
+export const useListData = <T extends DomainObject>(
   initialListParameters: {
     initialFilterBy?: FilterBy<T>;
     initialSortBy: SortRule<T>;

@@ -1,7 +1,8 @@
 import { OutboundShipment } from './../DetailView/types';
 import {
+  InvoiceNodeStatus,
+  UpdateOutboundShipmentInput,
   InvoicesQuery,
-  request,
   gql,
   batchRequests,
   SortBy,
@@ -100,17 +101,35 @@ export const onRead =
     return { nodes, totalCount: invoices.totalCount };
   };
 
-export const onUpdate = async (updated: InvoiceRow): Promise<InvoiceRow> => {
-  const invoicePatch: Partial<Invoice> = { ...updated };
-  delete invoicePatch['lines'];
-
-  const patch = { invoicePatch };
-
-  const result = await request(Environment.API_URL, getMutation(), patch);
-
-  const { updateInvoice } = result;
-  return updateInvoice;
+const invoiceToInput = (
+  patch: Partial<Invoice> & { id: string }
+): UpdateOutboundShipmentInput => {
+  return {
+    id: patch.id,
+    color: patch.color,
+    comment: patch.comment,
+    status: patch.status as InvoiceNodeStatus,
+    onHold: patch.onHold,
+    otherPartyId: patch.otherParty?.id,
+    theirReference: patch.theirReference,
+  };
 };
+
+export const onUpdate =
+  (api: OmSupplyApi) =>
+  async (patch: Partial<Invoice> & { id: string }): Promise<string> => {
+    const result = await api.updateOutboundShipment({
+      input: invoiceToInput(patch),
+    });
+
+    const { updateOutboundShipment } = result;
+
+    if (updateOutboundShipment.__typename === 'InvoiceNode') {
+      return updateOutboundShipment.id;
+    }
+
+    throw new Error(updateOutboundShipment.error.description);
+  };
 
 const getSortKey = (
   sortBy: SortBy<OutboundShipment>
@@ -164,6 +183,6 @@ export const getOutboundShipmentListViewApi = (
     return () => onReadFn(queryParams);
   },
   onDelete,
-  onUpdate,
+  onUpdate: onUpdate(omSupplyApi),
   onCreate: onCreate(omSupplyApi),
 });

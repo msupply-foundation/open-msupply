@@ -39,7 +39,7 @@ export interface StockLine extends DomainObject {
 }
 
 export type Test = {
-  id: number;
+  id: string;
   message: string;
 };
 
