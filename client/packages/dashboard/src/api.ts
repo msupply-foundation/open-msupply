@@ -6,7 +6,7 @@ export const getOutboundShipmentCountQueryFn =
     toBePicked: number;
   }> => {
     const result = await omSupplyApi.invoiceCounts({
-      type: InvoiceNodeType.CustomerInvoice,
+      type: InvoiceNodeType.OutboundShipment,
     });
 
     if (result.invoiceCounts.__typename === 'InvoiceCountsConnector') {
@@ -25,7 +25,7 @@ export const getInboundShipmentCountQueryFn =
     thisWeek: number;
   }> => {
     const result = await omSupplyApi.invoiceCounts({
-      type: InvoiceNodeType.SupplierInvoice,
+      type: InvoiceNodeType.InboundShipment,
     });
 
     if (result.invoiceCounts.__typename === 'InvoiceCountsConnector') {

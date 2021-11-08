@@ -68,7 +68,7 @@ describe('useQueryParams', () => {
     window.resizeTo(1000, 1000);
 
     const { result } = renderHook(
-      () => useQueryParams<TestSortBy>({ key: 'id' }),
+      () => useQueryParams<TestSortBy>({ initialSortBy: { key: 'id' } }),
       {
         wrapper: getWrapper(),
       }

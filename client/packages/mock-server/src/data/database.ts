@@ -84,12 +84,12 @@ export const get = {
       created: {
         today: InvoiceData.filter(
           invoice =>
-            invoice.type === 'SUPPLIER_INVOICE' &&
+            invoice.type === 'INBOUND_SHIPMENT' &&
             isToday(new Date(invoice.entryDatetime))
         ).length,
         thisWeek: InvoiceData.filter(
           invoice =>
-            invoice.type === 'SUPPLIER_INVOICE' &&
+            invoice.type === 'INBOUND_SHIPMENT' &&
             isThisWeek(new Date(invoice.entryDatetime))
         ).length,
       },
