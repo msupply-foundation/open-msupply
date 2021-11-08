@@ -297,7 +297,7 @@ export const createInvoice = (
     pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
     shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
     deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
-    enteredBy: randomName(),
+    enteredByName: randomName(),
     donorName: randomName(),
     otherPartyName: otherParty.name,
     purchaseOrderNumber: randomInteger({ min: 100, max: 999 }),

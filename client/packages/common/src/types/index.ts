@@ -109,6 +109,7 @@ export interface Invoice extends DomainObject {
   shippedDatetime?: string;
   pickedDatetime?: string;
   deliveredDatetime?: string;
+  enteredByName?: string;
   pricing: {
     totalAfterTax: number;
     subtotal: number;
