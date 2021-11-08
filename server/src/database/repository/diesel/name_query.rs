@@ -1,6 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     database::{
+        diesel_extensions::OrderByExtensions,
         repository::RepositoryError,
         schema::{
             diesel_schema::{
@@ -72,16 +73,16 @@ impl<'a> NameQueryRepository<'a> {
             match sort.key {
                 NameSortField::Name => {
                     if sort.desc.unwrap_or(false) {
-                        query = query.order(name_table_dsl::name.desc());
+                        query = query.order(name_table_dsl::name.desc_no_case());
                     } else {
-                        query = query.order(name_table_dsl::name.asc());
+                        query = query.order(name_table_dsl::name.asc_no_case());
                     }
                 }
                 NameSortField::Code => {
                     if sort.desc.unwrap_or(false) {
-                        query = query.order(name_table_dsl::code.desc());
+                        query = query.order(name_table_dsl::code.desc_no_case());
                     } else {
-                        query = query.order(name_table_dsl::code.asc());
+                        query = query.order(name_table_dsl::code.asc_no_case());
                     }
                 }
             }
@@ -150,7 +151,10 @@ mod tests {
             repository::{NameQueryRepository, NameRepository},
             schema::NameRow,
         },
-        domain::{name::Name, Pagination, DEFAULT_LIMIT},
+        domain::{
+            name::{Name, NameSort, NameSortField},
+            Pagination, DEFAULT_LIMIT,
+        },
         util::test_db,
     };
     use std::convert::TryFrom;
@@ -261,4 +265,53 @@ mod tests {
     // TODO need to test name_store_join, but it also requires 'store' records to be add and name_store_join helpers
     // which i think might be too much for this test ? Ideally we would have a database snapshot to load in tests
     // I've tested locally with graphIQL, seems to work
+
+    #[actix_rt::test]
+    async fn test_name_query_sort() {
+        let (_, connection, _) =
+            test_db::setup_all("test_name_query_sort", MockDataInserts::all()).await;
+        let repo = NameQueryRepository::new(&connection);
+
+        let mut names = repo.query(Pagination::new(), None, None).unwrap();
+
+        let sorted = repo
+            .query(
+                Pagination::new(),
+                None,
+                Some(NameSort {
+                    key: NameSortField::Name,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        names.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+        for (count, name) in names.iter().enumerate() {
+            assert_eq!(
+                name.name.clone().to_lowercase(),
+                sorted[count].name.clone().to_lowercase(),
+            );
+        }
+
+        let sorted = repo
+            .query(
+                Pagination::new(),
+                None,
+                Some(NameSort {
+                    key: NameSortField::Code,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
+
+        names.sort_by(|b, a| a.code.to_lowercase().cmp(&b.code.to_lowercase()));
+
+        for (count, name) in names.iter().enumerate() {
+            assert_eq!(
+                name.code.clone().to_lowercase(),
+                sorted[count].code.clone().to_lowercase(),
+            );
+        }
+    }
 }
