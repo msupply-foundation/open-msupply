@@ -1,10 +1,13 @@
-use actix_web::test::read_body;
+use std::sync::RwLock;
+
+use actix_web::{test::read_body, web::Data};
 use remote_server::{
     database::{loader::get_loaders, repository::get_repositories},
     server::{
-        data::{LoaderRegistry, RepositoryRegistry},
+        data::{auth::AuthData, LoaderRegistry, RepositoryRegistry},
         service::graphql::config as graphql_config,
     },
+    service::token_bucket::TokenBucket,
     util::settings::Settings,
 };
 
@@ -42,11 +45,22 @@ where
     let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
+    let auth_data = Data::new(AuthData {
+        auth_token_secret: settings.auth.token_secret.to_owned(),
+        token_bucket: RwLock::new(TokenBucket::new()),
+        // TODO: configure ssl
+        debug_no_ssl: true,
+    });
+
     let mut app = actix_web::test::init_service(
         actix_web::App::new()
             .data(repository_registry.clone())
             .data(loader_registry.clone())
-            .configure(graphql_config(repository_registry, loader_registry)),
+            .configure(graphql_config(
+                repository_registry,
+                loader_registry,
+                auth_data,
+            )),
     )
     .await;
 
@@ -78,11 +92,22 @@ async fn run_gql_query(
     let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
+    let auth_data = Data::new(AuthData {
+        auth_token_secret: settings.auth.token_secret.to_owned(),
+        token_bucket: RwLock::new(TokenBucket::new()),
+        // TODO: configure ssl
+        debug_no_ssl: true,
+    });
+
     let mut app = actix_web::test::init_service(
         actix_web::App::new()
             .data(repository_registry.clone())
             .data(loader_registry.clone())
-            .configure(graphql_config(repository_registry, loader_registry)),
+            .configure(graphql_config(
+                repository_registry,
+                loader_registry,
+                auth_data,
+            )),
     )
     .await;
 

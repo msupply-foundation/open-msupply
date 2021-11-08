@@ -3,7 +3,7 @@ use crate::database::{
     repository::{DBBackendConnection, StorageConnection, StorageConnectionManager},
 };
 
-use super::settings::{DatabaseSettings, ServerSettings, Settings, SyncSettings};
+use super::settings::{AuthSettings, DatabaseSettings, ServerSettings, Settings, SyncSettings};
 
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel_migrations::{find_migrations_directory, mark_migrations_in_directory};
@@ -110,6 +110,9 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             password: "password".to_string(),
             url: "http://localhost:5432".to_string(),
             interval: 100000000,
+        },
+        auth: AuthSettings {
+            token_secret: "testtokensecret".to_string(),
         },
     }
 }
