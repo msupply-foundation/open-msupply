@@ -19,7 +19,6 @@ const lines: InvoiceLineRow[] = [
     invoiceId: '',
     stockLineId: '',
     updateNumberOfPacks: () => {},
-    updateComment: () => {},
   },
   {
     id: '2',
@@ -35,7 +34,6 @@ const lines: InvoiceLineRow[] = [
     invoiceId: '',
     stockLineId: '',
     updateNumberOfPacks: () => {},
-    updateComment: () => {},
   },
 ];
 

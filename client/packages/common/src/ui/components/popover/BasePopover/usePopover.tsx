@@ -1,4 +1,5 @@
 import React, { Dispatch, FC, useState, useRef, MutableRefObject } from 'react';
+import { BasePopoverProps } from '.';
 import { useDebounceCallback } from '../../../../hooks/useDebounce';
 import { BasePopover } from './BasePopover';
 
@@ -16,7 +17,7 @@ type IsOpenSetterRef = MutableRefObject<Dispatch<
 interface UsePopoverControl {
   show: React.MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
   hide: () => void;
-  Popover: FC;
+  Popover: FC<Partial<BasePopoverProps>>;
 }
 
 export const usePopover = (): UsePopoverControl => {
@@ -64,7 +65,7 @@ export const usePopover = (): UsePopoverControl => {
   const show = useDebounceCallback(showCallback, [], 250);
   const hide = useDebounceCallback(hideCallback, []);
 
-  const Popover: FC = React.useCallback(props => {
+  const Popover: FC<Partial<BasePopoverProps>> = React.useCallback(props => {
     const [internalAnchorEl, setInternalAnchorEl] =
       useState<VirtualElement | null>(null);
 

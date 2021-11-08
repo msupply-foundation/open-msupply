@@ -1,0 +1,37 @@
+import React from 'react';
+import { Story } from '@storybook/react';
+import { HoverPopover } from './HoverPopover';
+import { UnhappyMan } from '../../..';
+import { Box } from '@mui/system';
+import { Typography } from '@mui/material';
+
+export default {
+  title: 'Popover/HoverPopover',
+  component: HoverPopover,
+};
+
+const Example: Story = () => {
+  return (
+    <>
+      <HoverPopover
+        Content={
+          <Box>
+            <UnhappyMan />
+          </Box>
+        }
+      >
+        <Box
+          width={300}
+          height={300}
+          bgcolor="aqua"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Typography>Hover me!</Typography>
+        </Box>
+      </HoverPopover>
+    </>
+  );
+};
+
+export const Primary = Example.bind({});
