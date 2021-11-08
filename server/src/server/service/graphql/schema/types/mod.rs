@@ -256,6 +256,7 @@ pub enum Range {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(rename_items = "camelCase")]
 pub enum RangeField {
     First,
     NumberOfPacks,

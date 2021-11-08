@@ -169,6 +169,7 @@ impl Mutations {
 
 // Common Mutation Errors
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
 pub enum ForeignKey {
     OtherPartyId,
     ItemId,

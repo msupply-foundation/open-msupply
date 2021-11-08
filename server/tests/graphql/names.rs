@@ -71,7 +71,7 @@ mod graphql {
         }"#;
         let variables = Some(json!({
           "sort": [{
-            "key": "NAME",
+            "key": "name",
             "desc": true,
           }]
         }));
