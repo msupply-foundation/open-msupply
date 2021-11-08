@@ -44,6 +44,9 @@ impl StockLineNode {
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
         &self.stock_line.expiry_date
     }
+    pub async fn on_hold(&self) -> bool {
+        self.stock_line.on_hold
+    }
 }
 
 type CurrentConnector = Connector<StockLineNode>;

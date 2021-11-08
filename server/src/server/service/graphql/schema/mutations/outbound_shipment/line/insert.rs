@@ -5,9 +5,9 @@ use crate::{
     domain::outbound_shipment::InsertOutboundShipmentLine,
     server::service::graphql::schema::{
         mutations::{
-            outbound_shipment::NotEnoughStockForReduction, CannotEditFinalisedInvoice, ForeignKey,
-            ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
-            RecordAlreadyExist,
+            outbound_shipment::{NotEnoughStockForReduction, StockLineIsOnHold},
+            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+            InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordAlreadyExist,
         },
         types::{
             get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
@@ -63,6 +63,7 @@ pub enum InsertOutboundShipmentLineErrorInterface {
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
+    StockLineIsOnHold(StockLineIsOnHold),
 }
 
 impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
@@ -130,6 +131,9 @@ impl From<InsertOutboundShipmentLineError> for InsertOutboundShipmentLineRespons
                     stock_line_id,
                     line_id: None,
                 })
+            }
+            InsertOutboundShipmentLineError::BatchIsOnHold => {
+                OutError::StockLineIsOnHold(StockLineIsOnHold {})
             }
         };
 

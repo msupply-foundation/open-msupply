@@ -75,6 +75,7 @@ mod repository_test {
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 1,
                 expiry_date: None,
+                on_hold: false,
             }
         }
 
