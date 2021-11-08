@@ -25,7 +25,7 @@ export const useDetailPanel = (): DetailPanel => {
     <ButtonWithIcon
       Icon={<SidebarIcon />}
       labelKey="button.more"
-      onClick={() => open()}
+      onClick={open}
     />
   );
 
