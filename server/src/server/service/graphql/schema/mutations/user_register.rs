@@ -5,7 +5,9 @@ use crate::server::service::graphql::ContextExt;
 use crate::{
     database::{repository::StorageConnectionManager, schema::UserAccountRow},
     server::service::graphql::schema::types::{DatabaseError, ErrorWrapper},
-    service::user_account::{CreateUserAccount, UserAccountService},
+    service::user_account::{
+        CreateUserAccount, CreateUserAccountError as ServiceError, UserAccountService,
+    },
 };
 
 use super::RecordAlreadyExist;
@@ -73,15 +75,15 @@ pub fn user_register(ctx: &Context<'_>, input: UserRegisterInput) -> UserRegiste
         Err(err) => {
             return UserRegisterResponse::Error(ErrorWrapper {
                 error: match err {
-                    crate::service::user_account::CreateUserAccountError::UserNameExist => {
+                    ServiceError::UserNameExist => {
                         UserRegisterErrorInterface::RecordAlreadyExist(RecordAlreadyExist)
                     }
-                    crate::service::user_account::CreateUserAccountError::PasswordHashError(_) => {
+                    ServiceError::PasswordHashError(_) => {
                         UserRegisterErrorInterface::InternalError(InternalError(
                             "Failed to hash password".to_string(),
                         ))
                     }
-                    crate::service::user_account::CreateUserAccountError::DatabaseError(err) => {
+                    ServiceError::DatabaseError(err) => {
                         UserRegisterErrorInterface::DatabaseError(DatabaseError(err))
                     }
                 },
