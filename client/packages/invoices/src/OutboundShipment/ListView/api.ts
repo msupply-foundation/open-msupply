@@ -34,21 +34,6 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
   throw new Error(invoicesQuery.invoices.error.description);
 };
 
-export const getMutation = (): string => gql`
-  mutation updateInvoice($invoicePatch: InvoicePatch) {
-    updateInvoice(invoice: $invoicePatch) {
-      id
-      comment
-      status
-      type
-      entered
-      confirmed
-      invoiceNumber
-      total
-    }
-  }
-`;
-
 export const getDeleteMutation = (): string => gql`
   mutation deleteInvoice($invoiceId: String) {
     deleteInvoice(invoiceId: $invoiceId) {
