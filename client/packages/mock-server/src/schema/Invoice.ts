@@ -30,19 +30,19 @@ const QueryResolvers = {
 };
 
 const MutationResolvers = {
-  updateCustomerInvoice: (
+  updateOutboundShipment: (
     _: any,
     { invoice }: { invoice: InvoiceType }
   ): InvoiceType => {
     return Api.MutationService.update.invoice(invoice);
   },
-  insertCustomerInvoice: (
+  insertOutboundShipment: (
     _: any,
     { input }: { input: InvoiceType }
   ): InvoiceType => {
     return Api.MutationService.insert.invoice(input);
   },
-  deleteCustomerInvoice: (
+  deleteOutboundShipment: (
     _: any,
     { invoiceId }: { invoiceId: string }
   ): string => {

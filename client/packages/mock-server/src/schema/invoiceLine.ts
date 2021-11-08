@@ -4,19 +4,19 @@ import { InvoiceLine as InvoiceLineType } from './../data/types';
 const QueryResolvers = {};
 
 const MutationResolvers = {
-  updateCustomerInvoiceLine: (
+  updateOutboundShipmentLine: (
     _: any,
     { invoiceLine }: { invoiceLine: InvoiceLineType }
   ): InvoiceLineType => {
     return Api.MutationService.update.invoiceLine(invoiceLine);
   },
-  deleteCustomerInvoiceLine: (
+  deleteOutboundShipmentLine: (
     _: any,
     { invoiceLineId }: { invoiceLineId: string }
   ): string => {
     return Api.MutationService.remove.invoiceLine(invoiceLineId);
   },
-  insertCustomerInvoiceLine: (
+  insertOutboundShipmentLine: (
     _: any,
     { invoiceLine }: { invoiceLine: InvoiceLineType }
   ): InvoiceLineType => {

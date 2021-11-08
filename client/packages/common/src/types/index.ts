@@ -102,7 +102,7 @@ export interface Invoice extends DomainObject {
   invoiceNumber: number;
   otherParty?: Name;
   otherPartyName: string;
-  hold: boolean;
+  onHold: boolean;
   lines: InvoiceLine[];
   draftDatetime?: string;
   allocatedDatetime?: string;
