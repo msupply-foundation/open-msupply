@@ -58,57 +58,45 @@ export const StatsPanel: FC<StatsPanelProps> = ({
         padding: '14px 24px',
       }}
     >
-      {isLoading ? (
-        <Grid
-          style={{ height: 90, width: 300 }}
-          justifyContent="center"
-          alignItems="center"
-          display="flex"
-        >
-          <InlineSpinner color="secondary" />
-        </Grid>
-      ) : (
-        <Grid container>
-          <Grid
-            style={{ height: 90, width: 300 }}
-            justifyContent="center"
-            alignItems="center"
-            display="flex"
-          >
-            <Grid item style={{ marginRight: 8 }}>
-              <StockIcon
-                color="secondary"
-                style={{
-                  height: 16,
-                  width: 16,
-                  fill: '#3568d4',
-                }}
-              />
-            </Grid>
-            <Grid item>
-              <Typography
-                color="secondary"
-                style={{ fontSize: 12, fontWeight: 500 }}
-              >
-                {t(titleKey)}
-              </Typography>
-            </Grid>
+      <Grid container>
+        <Grid alignItems="center" display="flex">
+          <Grid item style={{ marginRight: 8 }}>
+            <StockIcon
+              color="secondary"
+              style={{
+                height: 16,
+                width: 16,
+                fill: '#3568d4',
+              }}
+            />
           </Grid>
-          <Grid container justifyContent="space-between" alignItems="flex-end">
+          <Grid item>
+            <Typography
+              color="secondary"
+              style={{ fontSize: 12, fontWeight: 500 }}
+            >
+              {t(titleKey)}
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid container justifyContent="space-between" alignItems="flex-end">
+          {isLoading ? (
+            <InlineSpinner color="secondary" />
+          ) : (
             <Grid item>
               {stats.map(stat => (
                 <Statistic key={stat.labelKey} {...stat} />
               ))}
             </Grid>
-            <Grid item>
-              <BarChartIcon
-                sx={{ height: '50px', width: '125px' }}
-                color="secondary"
-              />
-            </Grid>
+          )}
+          <Grid item>
+            <BarChartIcon
+              sx={{ height: '50px', width: '125px' }}
+              color="secondary"
+            />
           </Grid>
         </Grid>
-      )}
+      </Grid>
     </Paper>
   );
 };

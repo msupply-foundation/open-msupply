@@ -647,7 +647,7 @@ export type QueriesInvoiceArgs = {
 
 
 export type QueriesInvoiceCountsArgs = {
-  isInbound: Scalars['Boolean'];
+  type: InvoiceNodeType;
 };
 
 
@@ -875,7 +875,7 @@ export type ItemsListViewQueryVariables = Exact<{
 export type ItemsListViewQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', availableQuantity: number, code: string, id: string, isVisible: boolean, name: string, unitName: string }> } };
 
 export type InvoiceCountsQueryVariables = Exact<{
-  isInbound: Scalars['Boolean'];
+  type: InvoiceNodeType;
 }>;
 
 
@@ -1250,8 +1250,8 @@ export const ItemsListViewDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($isInbound: Boolean!) {
-  invoiceCounts(isInbound: $isInbound) {
+    query invoiceCounts($type: InvoiceNodeType!) {
+  invoiceCounts(type: $type) {
     ... on InvoiceCountsConnector {
       __typename
       created {

@@ -2,6 +2,7 @@ import { Invoice } from './../data/types';
 import { graphql } from 'msw'; // , rest } from 'msw';
 import { Api } from '../api';
 import {
+  InvoiceNodeType,
   InvoicesQueryVariables,
   ItemsListViewQueryVariables,
   NamesQueryVariables,
@@ -134,11 +135,11 @@ export const serverError = graphql.query('error500', (_, response, context) =>
 
 export const invoiceCounts = graphql.query<
   Record<string, unknown>,
-  { isInbound: boolean }
+  { type: InvoiceNodeType }
 >('invoiceCounts', (request, response, context) => {
   const { variables } = request;
-  const { isInbound } = variables;
-  const invoiceCounts = Api.ResolverService.statistics.invoice(isInbound);
+  const { type } = variables;
+  const invoiceCounts = Api.ResolverService.statistics.invoice(type);
 
   return response(context.data({ invoiceCounts }));
 });

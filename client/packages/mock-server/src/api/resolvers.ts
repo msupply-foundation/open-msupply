@@ -18,6 +18,7 @@ import {
   NamesQueryVariables,
   ItemSortFieldInput,
   NameSortFieldInput,
+  InvoiceNodeType,
 } from '@openmsupply-client/common/src/types/schema';
 
 const getAvailableQuantity = (itemId: string): number => {
@@ -253,12 +254,21 @@ export const ResolverService = {
     },
   },
   statistics: {
-    invoice: (isInbound: boolean): ResolvedInvoiceCounts => {
+    invoice: (type: InvoiceNodeType): ResolvedInvoiceCounts => {
+      const getStats = (type: InvoiceNodeType) => {
+        switch (type) {
+          case InvoiceNodeType.CustomerInvoice:
+            return db.get.statistics.outboundShipment;
+          case InvoiceNodeType.SupplierInvoice:
+            return db.get.statistics.inboundShipment;
+          default:
+            return {};
+        }
+      };
+
       return {
         __typename: 'InvoiceCountsConnector',
-        ...(isInbound
-          ? db.get.statistics.inboundShipment
-          : db.get.statistics.outboundShipment),
+        ...getStats(type),
       };
     },
     stock: (): ResolvedStockCounts => ({
