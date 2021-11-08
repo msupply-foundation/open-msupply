@@ -12,6 +12,7 @@ import {
   Color,
   OutboundShipmentStatus,
   useOmSupplyApi,
+  useNotification,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
@@ -21,6 +22,7 @@ import { AppBarButtons } from './AppBarButtons';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
+  const { error } = useNotification();
   const { api } = useOmSupplyApi();
 
   const {
@@ -83,10 +85,16 @@ export const OutboundShipmentListViewComponent: FC = () => {
               nameId: name?.id,
             };
 
-            const result = await onCreate(invoice);
-
-            invalidate();
-            navigate(`/distribution/outbound-shipment/${result.id}`);
+            try {
+              const result = await onCreate(invoice);
+              invalidate();
+              navigate(`/distribution/outbound-shipment/${result}`);
+            } catch (e) {
+              const errorSnack = error(
+                'Failed to create invoice! ' + (e as Error).message
+              );
+              errorSnack();
+            }
           };
 
           createInvoice();

@@ -20,7 +20,7 @@ const updateInvoice = graphql.mutation(
 );
 
 const insertInvoice = graphql.mutation(
-  'insertInvoice',
+  'insertOutboundShipment',
   (request, response, context) => {
     const { variables } = request;
     const { id, otherPartyId } = variables;
@@ -30,7 +30,7 @@ const insertInvoice = graphql.mutation(
       otherPartyId,
     } as unknown as Invoice);
 
-    return response(context.data({ insertCustomerInvoice: result }));
+    return response(context.data({ insertOutboundShipment: result }));
   }
 );
 

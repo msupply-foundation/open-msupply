@@ -84,15 +84,22 @@ export const getDeleteMutation = (): string => gql`
   }
 `;
 
-export const onCreate = async (invoice: Partial<Invoice>): Promise<Invoice> => {
-  const result = await request(Environment.API_URL, getInsertInvoiceQuery(), {
-    id: invoice.id,
-    otherPartyId: invoice['nameId'],
-  });
-  const { insertCustomerInvoice } = result;
+export const onCreate =
+  (api: OmSupplyApi) =>
+  async (invoice: Partial<Invoice>): Promise<string> => {
+    const result = await api.insertOutboundShipment({
+      id: invoice.id ?? '',
+      otherPartyId: String(invoice['nameId']) ?? '',
+    });
 
-  return insertCustomerInvoice;
-};
+    const { insertOutboundShipment } = result;
+
+    if (insertOutboundShipment.__typename === 'InvoiceNode') {
+      return insertOutboundShipment.id;
+    }
+
+    throw new Error(insertOutboundShipment.error.description);
+  };
 
 export const onDelete = async (invoices: InvoiceRow[]) => {
   await batchRequests(
@@ -186,5 +193,5 @@ export const getOutboundShipmentListViewApi = (
   },
   onDelete,
   onUpdate,
-  onCreate,
+  onCreate: onCreate(omSupplyApi),
 });
