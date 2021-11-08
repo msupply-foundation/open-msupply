@@ -7,6 +7,7 @@ use crate::{
 };
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
+use log::error;
 
 pub struct CreateUserAccount {
     pub username: String,
@@ -62,7 +63,10 @@ impl<'a> UserAccountService<'a> {
                 }
                 let hashed_password = match hash(user.password, DEFAULT_COST) {
                     Ok(pwd) => pwd,
-                    Err(err) => return Err(CreateUserAccountError::PasswordHashError(err)),
+                    Err(err) => {
+                        error!("create_user: Failed to hash password");
+                        return Err(CreateUserAccountError::PasswordHashError(err));
+                    }
                 };
                 let row = UserAccountRow {
                     id: uuid(),
@@ -98,9 +102,11 @@ impl<'a> UserAccountService<'a> {
             None => return Err(VerifyPasswordError::UsernameDoesNotExist),
         };
         // verify password
-        if !verify(password, &user.password)
-            .map_err(|err| VerifyPasswordError::InvalidCredentialsBackend(err))?
-        {
+        let valid = verify(password, &user.password).map_err(|err| {
+            error!("verify_password: {}", err);
+            VerifyPasswordError::InvalidCredentialsBackend(err)
+        })?;
+        if !valid {
             return Err(VerifyPasswordError::InvalidCredentials);
         }
 

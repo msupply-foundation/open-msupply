@@ -1,5 +1,4 @@
 use async_graphql::*;
-use log::error;
 
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::{ContextExt, RequestUserData};
@@ -106,15 +105,13 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
                 crate::service::token::JWTValidationError::NotAnApiToken => {
                     LogoutErrorInterface::NotAnApiToken(NotAnApiToken)
                 }
-                crate::service::token::JWTValidationError::InvalidToken(e) => {
-                    error!("logout InvalidToken: {}", e);
+                crate::service::token::JWTValidationError::InvalidToken(_) => {
                     LogoutErrorInterface::InvalidToken(InvalidToken)
                 }
                 crate::service::token::JWTValidationError::TokenInvalided => {
                     LogoutErrorInterface::TokenInvalided(TokenInvalided)
                 }
-                crate::service::token::JWTValidationError::ConcurrencyLockError(e) => {
-                    error!("logout ConcurrencyLockError: {}", e);
+                crate::service::token::JWTValidationError::ConcurrencyLockError(_) => {
                     LogoutErrorInterface::InternalError(InternalError("Lock error".to_string()))
                 }
             };
@@ -126,8 +123,7 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
     match service.logout(&user_id) {
         Ok(_) => {}
         Err(e) => match e {
-            crate::service::token::JWTLogoutError::ConcurrencyLockError(e) => {
-                error!("logout ConcurrencyLockError: {}", e);
+            crate::service::token::JWTLogoutError::ConcurrencyLockError(_) => {
                 return LogoutResponse::Error(ErrorWrapper {
                     error: LogoutErrorInterface::InternalError(InternalError(
                         "Lock error".to_string(),
