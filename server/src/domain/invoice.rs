@@ -136,6 +136,9 @@ impl InvoiceFilter {
 
 pub enum InvoiceSortField {
     Type,
+    OtherPartyName,
+    InvoiceNumber,
+    Comment,
     Status,
     EntryDatetime,
     ConfirmDatetime,
