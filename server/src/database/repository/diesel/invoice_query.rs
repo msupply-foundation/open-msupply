@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
-
 use crate::{
     database::{
+        diesel_extensions::OrderByExtensions,
         repository::RepositoryError,
         schema::{
             diesel_schema::{
@@ -151,9 +151,9 @@ impl<'a> InvoiceQueryRepository<'a> {
                 }
                 InvoiceSortField::OtherPartyName => {
                     if sort.desc.unwrap_or(false) {
-                        query = query.order(invoice_dsl::name_id.desc());
+                        query = query.order(invoice_dsl::name_id.desc_no_case());
                     } else {
-                        query = query.order(invoice_dsl::name_id.asc());
+                        query = query.order(invoice_dsl::name_id.asc_no_case());
                     }
                 }
                 InvoiceSortField::InvoiceNumber => {
@@ -165,9 +165,9 @@ impl<'a> InvoiceQueryRepository<'a> {
                 }
                 InvoiceSortField::Comment => {
                     if sort.desc.unwrap_or(false) {
-                        query = query.order(invoice_dsl::comment.desc());
+                        query = query.order(invoice_dsl::comment.desc_no_case());
                     } else {
-                        query = query.order(invoice_dsl::comment.asc());
+                        query = query.order(invoice_dsl::comment.asc_no_case());
                     }
                 }
             }
@@ -286,4 +286,71 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
         }
     }
     query
+}
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+
+    use super::InvoiceQueryRepository;
+    use crate::{
+        database::mock::MockDataInserts,
+        domain::{
+            invoice::{InvoiceSort, InvoiceSortField},
+            Pagination,
+        },
+        util::test_db,
+    };
+    #[actix_rt::test]
+    async fn test_invoice_query_sort() {
+        let (_, connection, _) =
+            test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
+        let repo = InvoiceQueryRepository::new(&connection);
+
+        let mut invoices = repo.query(Pagination::new(), None, None).unwrap();
+
+        let sorted = repo
+            .query(
+                Pagination::new(),
+                None,
+                Some(InvoiceSort {
+                    key: InvoiceSortField::Comment,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        invoices.sort_by(|a, b| match (&a.comment, &b.comment) {
+            (None, None) => Ordering::Equal,
+            (Some(_), None) => Ordering::Greater,
+            (None, Some(_)) => Ordering::Less,
+            (Some(a), Some(b)) => a.to_lowercase().cmp(&b.to_lowercase()),
+        });
+
+        for (count, invoice) in invoices.iter().enumerate() {
+            println!(
+                "{:?} {:?}",
+                invoice
+                    .comment
+                    .clone()
+                    .map(|comment| comment.to_lowercase()),
+                sorted[count]
+                    .comment
+                    .clone()
+                    .map(|comment| comment.to_lowercase()),
+            );
+        }
+
+        for (count, invoice) in invoices.iter().enumerate() {
+            assert_eq!(
+                invoice
+                    .comment
+                    .clone()
+                    .map(|comment| comment.to_lowercase()),
+                sorted[count]
+                    .comment
+                    .clone()
+                    .map(|comment| comment.to_lowercase()),
+            );
+        }
+    }
 }
