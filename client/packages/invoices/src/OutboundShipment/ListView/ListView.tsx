@@ -34,6 +34,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onCreate,
     onChangePage,
     pagination,
+    filter,
     invalidate,
   } = useListData(
     { initialSortBy: { key: 'otherPartyName' } },
@@ -92,7 +93,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         }}
       />
 
-      <Toolbar onDelete={onDelete} data={data} />
+      <Toolbar onDelete={onDelete} data={data} filter={filter} />
       <AppBarButtons onCreate={setOpen} />
 
       <DataTable

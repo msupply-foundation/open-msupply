@@ -9,12 +9,15 @@ import {
   DeleteIcon,
   useTableStore,
   AppBarContentPortal,
+  BasicTextInput,
 } from '@openmsupply-client/common';
+import { FilterController } from '@openmsupply-client/common/src/hooks/useFilterBy';
 
 export const Toolbar: FC<{
   onDelete: (toDelete: InvoiceRow[]) => void;
+  filter: FilterController<InvoiceRow>;
   data?: InvoiceRow[];
-}> = ({ onDelete, data }) => {
+}> = ({ onDelete, data, filter }) => {
   const t = useTranslation();
 
   const { success, info } = useNotification();
@@ -41,8 +44,28 @@ export const Toolbar: FC<{
     ref.current = deleteAction;
   }, [selectedRows]);
 
+  const key = 'otherPartyName' as keyof InvoiceRow;
+  const filterString = filter.filterBy?.[key]?.like;
+
   return (
-    <AppBarContentPortal sx={{ paddingBottom: '16px' }}>
+    <AppBarContentPortal
+      sx={{
+        paddingBottom: '16px',
+        flex: 1,
+        justifyContent: 'space-between',
+        display: 'flex',
+      }}
+    >
+      <BasicTextInput
+        value={filterString}
+        onChange={e =>
+          filter.onChangeStringFilterRule(
+            'otherPartyName',
+            'like',
+            e.target.value
+          )
+        }
+      />
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
           {t('button.delete-lines')}
