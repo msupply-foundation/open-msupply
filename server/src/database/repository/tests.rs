@@ -50,6 +50,7 @@ mod repository_test {
                 id: "item1".to_string(),
                 name: "name1".to_string(),
                 code: "code1".to_string(),
+                unit_id: None,
             }
         }
 
@@ -58,6 +59,7 @@ mod repository_test {
                 id: "item2".to_string(),
                 name: "item-2".to_string(),
                 code: "code2".to_string(),
+                unit_id: None,
             }
         }
 
