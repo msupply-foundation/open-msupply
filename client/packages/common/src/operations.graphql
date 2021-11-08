@@ -385,3 +385,38 @@ query itemsListView(
     }
   }
 }
+
+query invoiceCounts($isInbound: Boolean!) {
+  invoiceCounts(isInbound: $isInbound) {
+    ... on InvoiceCountsConnector {
+      __typename
+      created {
+        today
+        thisWeek
+      }
+      toBePicked
+    }
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+query stockCounts {
+  stockCounts {
+    ... on StockCountsConnector {
+      __typename
+      expired
+      expiringSoon
+    }
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

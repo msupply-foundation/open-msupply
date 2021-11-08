@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-// TODO: move this into system perhaps
-import { NameSearchModal } from '@openmsupply-client/system/src/name';
+import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getOutboundShipmentListViewApi } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/api';
 import {
   ButtonWithIcon,
@@ -8,10 +7,12 @@ import {
   PlusCircleIcon,
   useListData,
   useOmSupplyApi,
+  useQuery,
 } from '@openmsupply-client/common';
 import Widget from './Widget';
 import { StatsPanel } from '../StatsPanel';
 import { useNavigate } from 'react-router';
+import { getOutboundShipmentCountQueryFn } from '../api';
 
 export const OutboundShipmentsWidget: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,11 @@ export const OutboundShipmentsWidget: React.FC = () => {
     { key: 'otherPartyName' },
     'invoice',
     getOutboundShipmentListViewApi(api)
+  );
+  const { data, isLoading } = useQuery(
+    ['outound-shipment', 'count'],
+    getOutboundShipmentCountQueryFn(api),
+    { retry: false }
   );
 
   return (
@@ -57,8 +63,11 @@ export const OutboundShipmentsWidget: React.FC = () => {
         >
           <Grid item>
             <StatsPanel
+              isLoading={isLoading}
               titleKey="heading.shipments-to-be-picked"
-              stats={[{ labelKey: 'label.today', value: 9 }]}
+              stats={[
+                { labelKey: 'label.today', value: data?.toBePicked || 0 },
+              ]}
             />
           </Grid>
           <Grid

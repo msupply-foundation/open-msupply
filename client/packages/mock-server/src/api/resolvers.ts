@@ -5,6 +5,8 @@ import {
   ResolvedInvoiceLine,
   Name,
   ListResponse,
+  ResolvedInvoiceCounts,
+  ResolvedStockCounts,
 } from './../data/types';
 
 import { getDataSorter } from '../utils';
@@ -249,5 +251,19 @@ export const ResolverService = {
         lines: resolvedLinesList,
       };
     },
+  },
+  statistics: {
+    invoice: (isInbound: boolean): ResolvedInvoiceCounts => {
+      return {
+        __typename: 'InvoiceCountsConnector',
+        ...(isInbound
+          ? db.get.statistics.inboundShipment
+          : db.get.statistics.outboundShipment),
+      };
+    },
+    stock: (): ResolvedStockCounts => ({
+      __typename: 'StockCountsConnector',
+      ...db.get.statistics.stock,
+    }),
   },
 };
