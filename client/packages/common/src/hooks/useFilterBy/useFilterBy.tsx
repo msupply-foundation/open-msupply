@@ -11,9 +11,14 @@ type FilterRule = {
     | FilterByConditionByType['date']]?: unknown;
 };
 
+// type FilterRule = Record<
+//   FilterByConditionByType['string'] | FilterByConditionByType['date'],
+//   unknown
+// >;
+
 export type FilterBy<T> = Partial<Record<Partial<keyof T>, FilterRule>>;
 
-export interface FilterState<T> {
+export interface FilterController<T> {
   filterBy: FilterBy<T> | null;
 
   onChangeDateFilterRule: (
@@ -29,6 +34,10 @@ export interface FilterState<T> {
   ) => void;
 
   onClearFilterRule: (key: keyof T) => void;
+}
+
+export interface FilterState<T> extends FilterController<T> {
+  filter: FilterController<T>;
 }
 
 export const useFilterBy = <T extends unknown>(
@@ -60,10 +69,12 @@ export const useFilterBy = <T extends unknown>(
     setFilterBy({ ...filterBy, [key]: null });
   };
 
-  return {
+  const filterState = {
     filterBy,
     onChangeStringFilterRule,
     onChangeDateFilterRule,
     onClearFilterRule,
   };
+
+  return { ...filterState, filter: filterState };
 };

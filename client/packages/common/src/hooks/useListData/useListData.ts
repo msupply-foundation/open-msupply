@@ -91,6 +91,10 @@ export const useListData = <T extends ObjectWithStringKeys>(
     { onSuccess: invalidate }
   );
 
+  console.log('-------------------------------------------');
+  console.log('queryParams', queryParams);
+  console.log('-------------------------------------------');
+
   return {
     ...queryParams,
     totalCount: data?.totalCount,

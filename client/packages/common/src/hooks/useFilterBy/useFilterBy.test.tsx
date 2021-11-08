@@ -99,20 +99,19 @@ describe('useFilterBy', () => {
   });
 
   it('updates string filters', () => {
-    const { result } = renderHook(() =>
-      useFilterBy({
-        comment: { equalTo: 'a' },
-        confirmedDatetime: { equalTo: '1/1/2020' },
-      })
-    );
+    const { result } = renderHook(() => useFilterBy<X>());
 
     act(() => {
       result.current.onClearFilterRule('comment');
     });
 
-    expect(result.current.filterBy).toEqual({
+    expect(result.current.filterBy?.comment?.like).toEqual({
       comment: null,
       confirmedDatetime: { equalTo: '1/1/2020' },
     });
   });
 });
+
+interface X {
+  comment: string;
+}

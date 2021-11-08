@@ -33,6 +33,8 @@ export const useQueryParams = <T extends ObjectWithStringKeys>({
     ...pagination,
     ...filter,
     ...sort,
+    filter,
+    sort,
     pagination,
   };
 
