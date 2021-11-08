@@ -37,11 +37,31 @@ pub fn mock_item_with_no_stock_line() -> ItemRow {
     }
 }
 
+pub fn item_query_test1() -> ItemRow {
+    ItemRow {
+        id: String::from("item_query_test1"),
+        name: String::from("name_item_query_test1"),
+        code: String::from("code_item_query_test1"),
+        unit_id: None,
+    }
+}
+
+pub fn item_query_test2() -> ItemRow {
+    ItemRow {
+        id: String::from("item_query_test2"),
+        name: String::from("name_item_query_test2"),
+        code: String::from("code_item_query_test2"),
+        unit_id: Some("item_query_test2".to_owned()),
+    }
+}
+
 pub fn mock_items() -> Vec<ItemRow> {
     vec![
         mock_item_a(),
         mock_item_b(),
         mock_item_c(),
         mock_item_with_no_stock_line(),
+        item_query_test1(),
+        item_query_test2(),
     ]
 }
