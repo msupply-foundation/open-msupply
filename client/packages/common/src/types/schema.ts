@@ -332,11 +332,12 @@ export type InvoiceFilterInput = {
   confirmDatetime?: Maybe<DatetimeFilterInput>;
   entryDatetime?: Maybe<DatetimeFilterInput>;
   finalisedDatetime?: Maybe<DatetimeFilterInput>;
-  nameId?: Maybe<EqualFilterStringInput>;
-  status?: Maybe<EqualFilterInvoiceStatusInput>;
-  storeId?: Maybe<EqualFilterStringInput>;
-  theirReference?: Maybe<EqualFilterStringInput>;
-  type?: Maybe<EqualFilterInvoiceTypeInput>;
+  nameId?: Maybe<SimpleStringFilterInput>;
+  otherPartyName?: Maybe<SimpleStringFilterInput>;
+  status?: Maybe<SimpleStringFilterInput>;
+  storeId?: Maybe<SimpleStringFilterInput>;
+  theirReference?: Maybe<SimpleStringFilterInput>;
+  type?: Maybe<SimpleStringFilterInput>;
 };
 
 export type InvoiceLineBelongsToAnotherInvoice =
@@ -1015,6 +1016,7 @@ export type InvoicesQueryVariables = Exact<{
   offset?: Maybe<Scalars['Int']>;
   key: InvoiceSortFieldInput;
   desc?: Maybe<Scalars['Boolean']>;
+  filter?: Maybe<InvoiceFilterInput>;
 }>;
 
 export type InvoicesQuery = {
@@ -1386,10 +1388,12 @@ export const InvoicesDocument = gql`
     $offset: Int
     $key: InvoiceSortFieldInput!
     $desc: Boolean
+    $filter: InvoiceFilterInput
   ) {
     invoices(
       page: { first: $first, offset: $offset }
       sort: { key: $key, desc: $desc }
+      filter: $filter
     ) {
       ... on ConnectorError {
         __typename

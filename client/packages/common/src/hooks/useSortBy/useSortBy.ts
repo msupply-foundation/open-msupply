@@ -9,9 +9,14 @@ export interface SortRule<T extends ObjectWithStringKeys> {
 export interface SortBy<T extends ObjectWithStringKeys> extends SortRule<T> {
   direction: 'asc' | 'desc';
 }
-export interface SortState<T extends ObjectWithStringKeys> {
+export interface SortController<T extends ObjectWithStringKeys> {
   sortBy: SortBy<T>;
   onChangeSortBy: (newSortRule: SortRule<T>) => SortBy<T>;
+}
+
+export interface SortState<T extends ObjectWithStringKeys>
+  extends SortController<T> {
+  sort: SortController<T>;
 }
 
 const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
@@ -46,5 +51,5 @@ export const useSortBy = <T extends ObjectWithStringKeys>({
     return { ...newSortBy, direction: getDirection(!!newSortBy?.isDesc) };
   }, []);
 
-  return { sortBy, onChangeSortBy };
+  return { sortBy, onChangeSortBy, sort: { sortBy, onChangeSortBy } };
 };

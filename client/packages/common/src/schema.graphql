@@ -271,12 +271,13 @@ type InvoiceDoesNotBelongToCurrentStore implements InsertCustomerInvoiceLineErro
 }
 
 input InvoiceFilterInput {
-  nameId: EqualFilterStringInput
-  storeId: EqualFilterStringInput
-  type: EqualFilterInvoiceTypeInput
-  status: EqualFilterInvoiceStatusInput
+  otherPartyName: SimpleStringFilterInput
+  nameId: SimpleStringFilterInput
+  storeId: SimpleStringFilterInput
+  type: SimpleStringFilterInput
+  status: SimpleStringFilterInput
   comment: SimpleStringFilterInput
-  theirReference: EqualFilterStringInput
+  theirReference: SimpleStringFilterInput
   entryDatetime: DatetimeFilterInput
   confirmDatetime: DatetimeFilterInput
   finalisedDatetime: DatetimeFilterInput

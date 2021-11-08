@@ -21,7 +21,11 @@ export const ListView: FC = () => {
     pagination,
     sortBy,
     onChangeSortBy,
-  } = useListData({ key: 'name' }, ['items', 'list'], getItemListViewApi(api));
+  } = useListData(
+    { initialSortBy: { key: 'name' } },
+    ['items', 'list'],
+    getItemListViewApi(api)
+  );
   const navigate = useNavigate();
 
   const columns = useColumns<ItemRow>(
