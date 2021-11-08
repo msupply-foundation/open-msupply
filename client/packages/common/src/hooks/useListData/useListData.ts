@@ -19,7 +19,7 @@ export interface ListApi<T extends DomainObject> {
     sortBy: SortBy<T>;
     filterBy: FilterBy<T> | null;
   }) => () => Promise<{ nodes: T[]; totalCount: number }>;
-  onDelete: (toDelete: T[]) => Promise<void>;
+  onDelete: (toDelete: T[]) => Promise<string[]>;
   onUpdate: (toUpdate: Partial<T> & { id: string }) => Promise<string>;
   onCreate: (toCreate: Partial<T>) => Promise<string>;
 }
@@ -36,7 +36,7 @@ interface ListDataState<T extends DomainObject> extends QueryParams<T> {
     Partial<T> & { id: string },
     unknown
   >;
-  onDelete: UseMutateAsyncFunction<void, unknown, T[], unknown>;
+  onDelete: UseMutateAsyncFunction<string[], unknown, T[], unknown>;
   onCreate: UseMutateAsyncFunction<string, unknown, Partial<T>, unknown>;
   isCreateLoading: boolean;
   isQueryLoading: boolean;

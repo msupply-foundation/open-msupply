@@ -35,7 +35,7 @@ describe('useListData', () => {
     onRead: () => async () => {
       return await request('http://localhost:4000', getServerErrorQuery());
     },
-    onDelete: async () => {},
+    onDelete: async () => [''],
     onUpdate: async () => '',
     onCreate: async () => '',
   };

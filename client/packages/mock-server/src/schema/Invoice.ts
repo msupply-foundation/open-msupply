@@ -2,6 +2,7 @@ import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema'
 import {
   InvoiceSortFieldInput,
   InvoiceFilterInput,
+  BatchOutboundShipmentInput,
 } from '@openmsupply-client/common/src/types/schema';
 import { Api } from '../api';
 
@@ -43,11 +44,23 @@ const MutationResolvers = {
   ): InvoiceType => {
     return Api.MutationService.insert.invoice(input);
   },
-  deleteOutboundShipment: (
-    _: any,
-    { invoiceId }: { invoiceId: string }
-  ): string => {
-    return Api.MutationService.remove.invoice(invoiceId);
+  deleteOutboundShipment: (_: any, id: string): string => {
+    return Api.MutationService.remove.invoice(id);
+  },
+  batchOutboundShipment: (_: any, vars: BatchOutboundShipmentInput) => {
+    const response = {
+      __typename: 'BatchOutboundShipmentResponse',
+      deleteOutboundShipments: [] as { id: string }[],
+    };
+    if (vars.deleteOutboundShipments) {
+      response.deleteOutboundShipments = vars.deleteOutboundShipments.map(
+        id => ({
+          id: MutationResolvers.deleteOutboundShipment(null, id),
+        })
+      );
+    }
+
+    return response;
   },
 };
 

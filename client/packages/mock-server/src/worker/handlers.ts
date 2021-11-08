@@ -1,3 +1,4 @@
+import { Invoice as InvoiceSchema } from './../schema/Invoice';
 import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
 import { Invoice } from './../data/types';
 import { graphql, rest } from 'msw';
@@ -32,17 +33,24 @@ const insertInvoice = graphql.mutation(
   }
 );
 
-const deleteInvoice = graphql.mutation(
-  'deleteInvoice',
-  (request, response, context) => {
-    const { variables } = request;
-    const { invoiceId } = variables;
+const deleteOutboundShipments = graphql.mutation<
+  Record<string, any>,
+  { ids: string[] }
+>('deleteOutboundShipments', (request, response, context) => {
+  const { variables } = request;
+  const { ids } = variables;
 
-    Api.MutationService.remove.invoice(invoiceId);
+  const queryResponse = {
+    __typename: 'BatchOutboundShipmentResponse',
+    deleteOutboundShipments: [] as { id: string }[],
+  };
 
-    return response(context.data({ invoiceId }));
-  }
-);
+  queryResponse.deleteOutboundShipments = ids.map(id => ({
+    id: InvoiceSchema.MutationResolvers.deleteOutboundShipment(null, id),
+  }));
+
+  return response(context.data({ batchOutboundShipment: queryResponse }));
+});
 
 export const namesList = graphql.query<
   Record<string, unknown>,
@@ -182,7 +190,7 @@ export const handlers = [
   invoiceDetail,
   invoiceDetailByInvoiceNumber,
   updateInvoice,
-  deleteInvoice,
+  deleteOutboundShipments,
   permissionError,
   serverError,
   insertInvoice,
