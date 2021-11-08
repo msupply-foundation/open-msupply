@@ -47,7 +47,7 @@ export const getNameListViewApi = (api: OmSupplyApi): ListApi<Name> => ({
     () =>
       onRead(api)({ first, offset, sortBy }),
   // TODO: Mutations!
-  onDelete: async () => {},
+  onDelete: async () => [''],
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   onUpdate: async () => {},

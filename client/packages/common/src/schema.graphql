@@ -925,3 +925,12 @@ type LocationNode {
 union LocationResponse = LocationNode | NodeError
 
 union NameResponse = NodeError | NameNode
+
+input BatchOutboundShipmentInput {
+  insertOutboundShipments: [InsertOutboundShipmentInput!]
+  insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
+  updateOutboundShipmentLines: [UpdateOutboundShipmentLineInput!]
+  deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
+  updateOutboundShipments: [UpdateOutboundShipmentInput!]
+  deleteOutboundShipments: [String!]
+}

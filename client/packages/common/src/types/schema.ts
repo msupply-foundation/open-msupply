@@ -44,6 +44,15 @@ export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface &
     description: Scalars['String'];
   };
 
+export type BatchOutboundShipmentInput = {
+  deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineInput>>;
+  deleteOutboundShipments?: Maybe<Array<Scalars['String']>>;
+  insertOutboundShipmentLines?: Maybe<Array<InsertOutboundShipmentLineInput>>;
+  insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
+  updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
+  updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
+};
+
 export type BatchOutboundShipmentResponse = {
   __typename?: 'BatchOutboundShipmentResponse';
   deleteOutboundShipmentLines?: Maybe<
@@ -1495,6 +1504,24 @@ export type UpdateOutboundShipmentMutation = {
       };
 };
 
+export type DeleteOutboundShipmentsMutationVariables = Exact<{
+  ids?: Maybe<Array<Scalars['String']> | Scalars['String']>;
+}>;
+
+export type DeleteOutboundShipmentsMutation = {
+  __typename?: 'Mutations';
+  batchOutboundShipment: {
+    __typename: 'BatchOutboundShipmentResponse';
+    deleteOutboundShipments?:
+      | Array<{
+          __typename: 'DeleteOutboundShipmentResponseWithId';
+          id: string;
+        }>
+      | null
+      | undefined;
+  };
+};
+
 export const InvoiceDocument = gql`
   query invoice($id: String!) {
     invoice(id: $id) {
@@ -1979,6 +2006,17 @@ export const UpdateOutboundShipmentDocument = gql`
     }
   }
 `;
+export const DeleteOutboundShipmentsDocument = gql`
+  mutation deleteOutboundShipments($ids: [String!]) {
+    batchOutboundShipment(deleteOutboundShipments: $ids) {
+      __typename
+      deleteOutboundShipments {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2084,6 +2122,20 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updateOutboundShipment'
+      );
+    },
+    deleteOutboundShipments(
+      variables?: DeleteOutboundShipmentsMutationVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<DeleteOutboundShipmentsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteOutboundShipmentsMutation>(
+            DeleteOutboundShipmentsDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deleteOutboundShipments'
       );
     },
   };

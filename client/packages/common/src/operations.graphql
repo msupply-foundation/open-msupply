@@ -483,3 +483,13 @@ mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
     }
   }
 }
+
+mutation deleteOutboundShipments($ids: [String!]) {
+  batchOutboundShipment(deleteOutboundShipments: $ids) {
+    __typename
+    deleteOutboundShipments {
+      __typename
+      id
+    }
+  }
+}
