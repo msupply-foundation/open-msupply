@@ -920,6 +920,10 @@ export type InvoiceQuery = {
         shippedDatetime?: any | null | undefined;
         deliveredDatetime?: any | null | undefined;
         enteredByName: string;
+        requisitionNumber?: number | null | undefined;
+        purchaseOrderNumber?: number | null | undefined;
+        inboundShipmentNumber?: number | null | undefined;
+        goodsReceiptNumber?: number | null | undefined;
         hold: boolean;
         color: string;
         otherPartyId: string;
@@ -1279,6 +1283,10 @@ export const InvoiceDocument = gql`
         shippedDatetime
         deliveredDatetime
         enteredByName
+        requisitionNumber
+        purchaseOrderNumber
+        inboundShipmentNumber
+        goodsReceiptNumber
         hold
         color
         otherParty {

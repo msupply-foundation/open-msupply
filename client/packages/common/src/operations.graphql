@@ -30,6 +30,12 @@ query invoice($id: String!) {
       shippedDatetime
       deliveredDatetime
       enteredByName
+
+      requisitionNumber
+      purchaseOrderNumber
+      inboundShipmentNumber
+      goodsReceiptNumber
+
       hold
       color
       otherParty {
