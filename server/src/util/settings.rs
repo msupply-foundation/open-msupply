@@ -10,6 +10,7 @@ pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
     pub sync: SyncSettings,
+    pub auth: AuthSettings,
 }
 
 #[derive(serde::Deserialize)]
@@ -68,6 +69,11 @@ impl DatabaseSettings {
     pub fn connection_string_without_db(&self) -> String {
         return self.connection_string();
     }
+}
+
+#[derive(serde::Deserialize)]
+pub struct AuthSettings {
+    pub token_secret: String,
 }
 
 pub enum SettingsError {

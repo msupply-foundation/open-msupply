@@ -45,7 +45,7 @@ where
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
-        auth_token_secret: "secret".to_string(),
+        auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
@@ -92,7 +92,7 @@ async fn run_gql_query(
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
-        auth_token_secret: "secret".to_string(),
+        auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
