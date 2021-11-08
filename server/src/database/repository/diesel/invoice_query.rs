@@ -190,6 +190,12 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
             }
         }
 
+        if let Some(value) = f.invoice_number {
+            if let Some(eq) = value.equal_to {
+                query = query.filter(invoice_dsl::invoice_number.eq(eq));
+            }
+        }
+
         if let Some(value) = f.name_id {
             if let Some(eq) = value.equal_to {
                 query = query.filter(invoice_dsl::name_id.eq(eq));
