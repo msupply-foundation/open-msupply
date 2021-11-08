@@ -33,34 +33,6 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
   throw new Error(invoicesQuery.invoices.error.description);
 };
 
-export const getInsertInvoiceQuery = (): string => gql`
-  mutation insertInvoice($id: String!, $otherPartyId: String!) {
-    insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
-      __typename
-      ... on InvoiceNode {
-        id
-        comment
-        confirmedDatetime
-        entryDatetime
-        finalisedDatetime
-        invoiceNumber
-      }
-      ... on NodeError {
-        __typename
-        error {
-          description
-        }
-      }
-      ... on InsertCustomerInvoiceError {
-        __typename
-        error {
-          description
-        }
-      }
-    }
-  }
-`;
-
 export const getMutation = (): string => gql`
   mutation updateInvoice($invoicePatch: InvoicePatch) {
     updateInvoice(invoice: $invoicePatch) {
