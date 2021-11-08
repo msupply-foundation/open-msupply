@@ -2,10 +2,10 @@ use std::sync::RwLock;
 
 use actix_web::{test::read_body, web::Data};
 use remote_server::{
-    database::{loader::get_loaders, repository::get_repositories},
+    database::repository::get_repositories,
     server::{
         data::{auth::AuthData, LoaderRegistry, RepositoryRegistry},
-        service::graphql::config as graphql_config,
+        service::graphql::{config as graphql_config, loader::get_loaders},
     },
     service::token_bucket::TokenBucket,
     util::settings::Settings,

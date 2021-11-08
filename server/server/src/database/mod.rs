@@ -1,5 +1,4 @@
-pub mod loader;
+pub mod diesel_extensions;
 pub mod mock;
 pub mod repository;
 pub mod schema;
-pub mod diesel_extensions;

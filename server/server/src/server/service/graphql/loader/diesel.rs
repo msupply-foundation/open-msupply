@@ -1,12 +1,12 @@
 use crate::{
-    database::{
-        loader::{
+    database::repository::StorageConnectionManager,
+    server::{
+        data::LoaderMap,
+        service::graphql::loader::{
             InvoiceLineLoader, InvoiceLoader, ItemLoader, RequisitionLineLoader, RequisitionLoader,
             StoreLoader, UserAccountLoader,
         },
-        repository::StorageConnectionManager,
     },
-    server::data::LoaderMap,
     util::settings::Settings,
 };
 

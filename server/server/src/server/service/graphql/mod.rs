@@ -1,3 +1,4 @@
+pub mod loader;
 pub mod schema;
 
 use actix_web::cookie::Cookie;

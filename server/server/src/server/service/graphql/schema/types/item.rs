@@ -1,5 +1,4 @@
-use crate::database::loader::StockLineByItemIdLoader;
-use crate::server::service::graphql::ContextExt;
+use crate::server::service::graphql::{loader::StockLineByItemIdLoader, ContextExt};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use domain::{
