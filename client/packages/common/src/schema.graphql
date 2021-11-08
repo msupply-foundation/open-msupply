@@ -873,6 +873,9 @@ input UpdateOutboundShipmentInput {
 
   # External invoice reference, e.g. purchase or shipment number
   theirReference: String
+
+  ## Additions
+  color: String
 }
 
 # Generic Error Wrapper
