@@ -1,9 +1,9 @@
 use crate::{
-    database::{
+    database::repository::StorageConnectionManager,
+    server::service::graphql::{
         loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
-        repository::StorageConnectionManager,
+        ContextExt,
     },
-    server::service::graphql::ContextExt,
     service::invoice::get_invoice,
 };
 use async_graphql::*;

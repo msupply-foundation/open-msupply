@@ -2,14 +2,17 @@
 
 use actix_cors::Cors;
 use remote_server::{
-    database::{loader::get_loaders, repository::get_repositories},
+    database::repository::get_repositories,
     server::{
         data::{
             auth::AuthData, ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap,
             RepositoryRegistry,
         },
         middleware::{compress as compress_middleware, logger as logger_middleware},
-        service::{graphql::config as graphql_config, rest::config as rest_config},
+        service::{
+            graphql::{config as graphql_config, loader::get_loaders},
+            rest::config as rest_config,
+        },
     },
     service::token_bucket::TokenBucket,
     util::{

@@ -1,7 +1,7 @@
 use super::{Connector, ConnectorError, NodeError, StockLineResponse};
 use crate::{
-    database::{loader::StockLineByIdLoader, repository::StorageConnectionManager},
-    server::service::graphql::ContextExt,
+    database::repository::StorageConnectionManager,
+    server::service::graphql::{loader::StockLineByIdLoader, ContextExt},
     service::invoice_line::get_invoice_line,
 };
 use async_graphql::*;
