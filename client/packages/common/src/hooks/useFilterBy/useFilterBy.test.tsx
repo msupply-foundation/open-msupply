@@ -110,7 +110,7 @@ describe('useFilterBy', () => {
       result.current.onClearFilterRule('comment');
     });
 
-    expect(result.current.filterBy?.comment?.like).toEqual({
+    expect(result.current.filterBy).toEqual({
       comment: null,
       confirmedDatetime: { equalTo: '1/1/2020' },
     });
