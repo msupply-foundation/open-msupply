@@ -1,6 +1,5 @@
 import {
   Grid,
-  CircleIcon,
   CopyIcon,
   DetailPanelAction,
   DetailPanelPortal,
@@ -12,6 +11,7 @@ import {
   useNotification,
   useTranslation,
   useFormatDate,
+  ColorSelectButton,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { getStatusTranslation } from '../utils';
@@ -55,16 +55,10 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
           <PanelRow>
             <PanelLabel>{t('label.color')}</PanelLabel>
             <PanelField>
-              <CircleIcon htmlColor={draft?.color} sx={{ width: 8 }} />
-              <span
-                style={{
-                  color: draft?.color,
-                  verticalAlign: 'bottom',
-                  marginLeft: 5,
-                }}
-              >
-                {draft?.color}
-              </span>
+              <ColorSelectButton
+                onChange={color => draft.update?.('color', color.hex)}
+                color={draft.color}
+              />
             </PanelField>
           </PanelRow>
           <PanelRow>
