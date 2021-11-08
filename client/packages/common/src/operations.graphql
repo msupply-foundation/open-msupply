@@ -36,7 +36,7 @@ query invoice($id: String!) {
       inboundShipmentNumber
       goodsReceiptNumber
 
-      hold
+      onHold
       color
       otherParty {
         __typename
