@@ -60,8 +60,8 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
         >
           <ToggleButton
             disabled={!isInvoiceEditable(draft)}
-            value={!!draft.hold}
-            selected={!!draft.hold}
+            value={!!draft.onHold}
+            selected={!!draft.onHold}
             onClick={(_, value) => {
               draft.update?.('hold', !value);
             }}
@@ -99,7 +99,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                 />
                 <ButtonWithIcon
                   shrinkThreshold="lg"
-                  disabled={draft.hold}
+                  disabled={draft.onHold}
                   Icon={<ArrowRightIcon />}
                   labelKey="button.save-and-confirm-status"
                   sx={{ fontSize: '12px' }}

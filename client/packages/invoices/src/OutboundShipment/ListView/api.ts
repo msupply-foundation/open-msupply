@@ -172,12 +172,13 @@ const getSortDesc = (sortBy: SortBy<OutboundShipment>): boolean => {
 export const getOutboundShipmentListViewApi = (
   omSupplyApi: OmSupplyApi
 ): ListApi<InvoiceRow> => ({
-  onRead: ({ first, offset, sortBy }) => {
+  onRead: ({ first, offset, sortBy, filterBy }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,
       key: getSortKey(sortBy),
       desc: getSortDesc(sortBy),
+      filter: filterBy,
     };
 
     const onReadFn = onRead(omSupplyApi);

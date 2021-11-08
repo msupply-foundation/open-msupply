@@ -36,7 +36,7 @@ query invoice($id: String!) {
       inboundShipmentNumber
       goodsReceiptNumber
 
-      hold
+      onHold
       color
       otherParty {
         __typename
@@ -136,10 +136,12 @@ query invoices(
   $offset: Int
   $key: InvoiceSortFieldInput!
   $desc: Boolean
+  $filter: InvoiceFilterInput
 ) {
   invoices(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
+    filter: $filter
   ) {
     ... on ConnectorError {
       __typename
