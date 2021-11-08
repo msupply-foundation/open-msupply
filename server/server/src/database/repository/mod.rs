@@ -28,7 +28,10 @@ impl RepositoryError {
     }
 }
 
-#[cfg_attr(any(feature = "sqlite", feature = "postgres"), path = "diesel/mod.rs")]
+#[cfg_attr(
+    any(feature = "sqlite", feature = "postgres"),
+    path = "./diesel/mod.rs"
+)]
 pub mod repository;
 mod tests;
 
