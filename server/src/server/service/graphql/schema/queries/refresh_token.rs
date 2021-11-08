@@ -1,5 +1,4 @@
 use async_graphql::*;
-use log::error;
 
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::{ContextExt, RequestUserData};
@@ -107,14 +106,12 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
                     JWTRefreshError::InvalidToken(_) => {
                         RefreshTokenErrorInterface::InvalidToken(InvalidToken)
                     }
-                    JWTRefreshError::FailedToCreateNewToken(e) => {
-                        error!("{}", e);
+                    JWTRefreshError::FailedToCreateNewToken(_) => {
                         RefreshTokenErrorInterface::InternalError(InternalError(
                             "Failed to create new token".to_string(),
                         ))
                     }
-                    JWTRefreshError::ConcurrencyLockError(e) => {
-                        error!("{}", e);
+                    JWTRefreshError::ConcurrencyLockError(_) => {
                         RefreshTokenErrorInterface::InternalError(InternalError(
                             "Lock error".to_string(),
                         ))

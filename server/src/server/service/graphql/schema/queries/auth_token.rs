@@ -1,5 +1,4 @@
 use async_graphql::*;
-use log::error;
 use reqwest::header::SET_COOKIE;
 
 use crate::server::service::graphql::schema::types::InternalError;
@@ -90,8 +89,7 @@ pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthToke
                 crate::service::user_account::VerifyPasswordError::InvalidCredentials => {
                     AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials)
                 }
-                crate::service::user_account::VerifyPasswordError::InvalidCredentialsBackend(e) => {
-                    error!("{}", e);
+                crate::service::user_account::VerifyPasswordError::InvalidCredentialsBackend(_) => {
                     AuthTokenErrorInterface::InternalError(InternalError(
                         "Failed to read credentials".to_string(),
                     ))
@@ -118,8 +116,7 @@ pub fn auth_token(ctx: &Context<'_>, username: &str, password: &str) -> AuthToke
                     JWTIssuingError::CanNotCreateToken(_) => {
                         AuthTokenErrorInterface::CanNotCreateToken(CanNotCreateToken)
                     }
-                    JWTIssuingError::ConcurrencyLockError(e) => {
-                        error!("{}", e);
+                    JWTIssuingError::ConcurrencyLockError(_) => {
                         AuthTokenErrorInterface::InternalError(InternalError(
                             "Lock error".to_string(),
                         ))
