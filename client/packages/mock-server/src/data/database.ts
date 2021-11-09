@@ -8,6 +8,12 @@ import {
   removeElement,
 } from './data';
 import { UpdateOutboundShipmentInput } from '@openmsupply-client/common';
+import {
+  isAlmostExpired,
+  isExpired,
+  isThisWeek,
+  isToday,
+} from '@openmsupply-client/common/src/utils/dateFunctions';
 
 // Importing this from utils causes a circular deps loop and you will not have fun :)
 export const getFilter =
@@ -73,6 +79,34 @@ export const get = {
   invoiceLines: {
     byInvoiceId: (invoiceId: string): InvoiceLine[] =>
       InvoiceLineData.filter(getFilter(invoiceId, 'invoiceId')),
+  },
+  statistics: {
+    inboundShipment: {
+      created: {
+        today: InvoiceData.filter(
+          invoice =>
+            invoice.type === 'INBOUND_SHIPMENT' &&
+            isToday(new Date(invoice.entryDatetime))
+        ).length,
+        thisWeek: InvoiceData.filter(
+          invoice =>
+            invoice.type === 'INBOUND_SHIPMENT' &&
+            isThisWeek(new Date(invoice.entryDatetime))
+        ).length,
+      },
+    },
+    outboundShipment: {
+      toBePicked: InvoiceData.filter(invoice => invoice.status === 'ALLOCATED')
+        .length,
+    },
+    stock: {
+      expired: StockLineData.filter(stockLine =>
+        isExpired(new Date(stockLine.expiryDate))
+      ).length,
+      expiringSoon: StockLineData.filter(stockLine =>
+        isAlmostExpired(new Date(stockLine.expiryDate))
+      ).length,
+    },
   },
 };
 

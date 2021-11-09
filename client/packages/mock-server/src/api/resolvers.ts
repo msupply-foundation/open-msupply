@@ -5,6 +5,8 @@ import {
   ResolvedInvoiceLine,
   Name,
   ListResponse,
+  ResolvedInvoiceCounts,
+  ResolvedStockCounts,
 } from './../data/types';
 
 import { getDataSorter } from '../utils';
@@ -16,6 +18,7 @@ import {
   NamesQueryVariables,
   ItemSortFieldInput,
   NameSortFieldInput,
+  InvoiceNodeType,
 } from '@openmsupply-client/common/src/types/schema';
 
 const getAvailableQuantity = (itemId: string): number => {
@@ -269,5 +272,28 @@ export const ResolverService = {
         lines: resolvedLinesList,
       };
     },
+  },
+  statistics: {
+    invoice: (type: InvoiceNodeType): ResolvedInvoiceCounts => {
+      const getStats = (type: InvoiceNodeType) => {
+        switch (type) {
+          case InvoiceNodeType.OutboundShipment:
+            return db.get.statistics.outboundShipment;
+          case InvoiceNodeType.InboundShipment:
+            return db.get.statistics.inboundShipment;
+          default:
+            return {};
+        }
+      };
+
+      return {
+        __typename: 'InvoiceCountsConnector',
+        ...getStats(type),
+      };
+    },
+    stock: (): ResolvedStockCounts => ({
+      __typename: 'StockCountsConnector',
+      ...db.get.statistics.stock,
+    }),
   },
 };
