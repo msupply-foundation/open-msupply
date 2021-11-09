@@ -29,6 +29,7 @@ export const PaperPopover: FC<PaperPopoverProps> = ({
           sx={{
             width,
             height,
+            borderRadius: '16px',
             boxShadow: theme => theme.shadows[7],
             ...paperProps?.sx,
           }}

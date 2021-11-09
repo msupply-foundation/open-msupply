@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import {
   BarChartIcon,
   Grid,
+  InlineSpinner,
   LocaleKey,
   Paper,
   StockIcon,
@@ -14,11 +15,16 @@ export type Stat = {
   value: number;
 };
 export interface StatsPanelProps {
+  isLoading: boolean;
   stats: Stat[];
   titleKey: LocaleKey;
 }
 
-export const StatsPanel: FC<StatsPanelProps> = ({ stats, titleKey }) => {
+export const StatsPanel: FC<StatsPanelProps> = ({
+  isLoading,
+  stats,
+  titleKey,
+}) => {
   const t = useTranslation();
 
   const Statistic: FC<Stat> = ({ labelKey, value }) => (
@@ -53,12 +59,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({ stats, titleKey }) => {
       }}
     >
       <Grid container>
-        <Grid
-          item
-          display="flex"
-          justifyContent="flex-start"
-          alignItems="center"
-        >
+        <Grid alignItems="center" display="flex">
           <Grid item style={{ marginRight: 8 }}>
             <StockIcon
               color="secondary"
@@ -79,11 +80,15 @@ export const StatsPanel: FC<StatsPanelProps> = ({ stats, titleKey }) => {
           </Grid>
         </Grid>
         <Grid container justifyContent="space-between" alignItems="flex-end">
-          <Grid item>
-            {stats.map(stat => (
-              <Statistic key={stat.labelKey} {...stat} />
-            ))}
-          </Grid>
+          {isLoading ? (
+            <InlineSpinner color="secondary" />
+          ) : (
+            <Grid item>
+              {stats.map(stat => (
+                <Statistic key={stat.labelKey} {...stat} />
+              ))}
+            </Grid>
+          )}
           <Grid item>
             <BarChartIcon
               sx={{ height: '50px', width: '125px' }}
