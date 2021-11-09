@@ -1,9 +1,6 @@
-use crate::{
-    server::data::RepositoryRegistry,
-    util::sync::{
-        translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
-        CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
-    },
+use crate::util::sync::{
+    translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
+    CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
 };
 use repository::{
     repository::{
@@ -63,10 +60,9 @@ pub struct Synchroniser {
 impl Synchroniser {
     pub async fn pull_central_records(
         &mut self,
-        registry: &RepositoryRegistry,
+        connection_manager: &StorageConnectionManager,
     ) -> Result<(), CentralSyncError> {
-        let connection = registry
-            .get::<StorageConnectionManager>()
+        let connection = connection_manager
             .connection()
             .map_err(|source| CentralSyncError::DBConnectionError { source })?;
         let central_sync_cursor_repository = CentralSyncCursorRepository::new(&connection);
@@ -172,10 +168,9 @@ impl Synchroniser {
 
     async fn integrate_central_records(
         &self,
-        registry: &RepositoryRegistry,
+        connection_manager: &StorageConnectionManager,
     ) -> Result<(), CentralSyncError> {
-        let connection = registry
-            .get::<StorageConnectionManager>()
+        let connection = connection_manager
             .connection()
             .map_err(|source| CentralSyncError::DBConnectionError { source })?;
         let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
@@ -199,7 +194,7 @@ impl Synchroniser {
         }
 
         info!("Importing {} central sync buffer records...", records.len());
-        import_sync_records(registry, &records)
+        import_sync_records(connection_manager, &records)
             .await
             .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
         info!("Successfully Imported central sync buffer records",);
@@ -229,13 +224,16 @@ impl Synchroniser {
     //     });
     // }
 
-    pub async fn sync(&mut self, registry: &RepositoryRegistry) -> Result<(), SyncError> {
+    pub async fn sync(
+        &mut self,
+        connection_manager: &StorageConnectionManager,
+    ) -> Result<(), SyncError> {
         info!("Syncing central records...");
-        self.pull_central_records(registry).await?;
+        self.pull_central_records(connection_manager).await?;
         info!("Successfully synced central records");
 
         info!("Integrating central records...");
-        self.integrate_central_records(registry).await?;
+        self.integrate_central_records(connection_manager).await?;
         info!("Successfully integrated central records");
 
         // info!("Syncing remote records...");
@@ -252,28 +250,24 @@ impl Synchroniser {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        server::data::{get_repositories, RepositoryRegistry},
-        util::{
-            configuration,
-            settings::Settings,
-            sync::{
-                translation::test_data::{
-                    check_records_against_database, extract_sync_buffer_rows,
-                    item::get_test_item_records, master_list::get_test_master_list_records,
-                    master_list_line::get_test_master_list_line_records,
-                    master_list_name_join::get_test_master_list_name_join_records,
-                    name::get_test_name_records, store::get_test_store_records,
-                },
-                SyncConnection, Synchroniser,
+    use crate::util::{
+        configuration,
+        settings::Settings,
+        sync::{
+            translation::test_data::{
+                check_records_against_database, extract_sync_buffer_rows,
+                item::get_test_item_records, master_list::get_test_master_list_records,
+                master_list_line::get_test_master_list_line_records,
+                master_list_name_join::get_test_master_list_name_join_records,
+                name::get_test_name_records, store::get_test_store_records,
             },
-            test_utils::get_test_settings,
+            SyncConnection, Synchroniser,
         },
+        test_utils::get_test_settings,
     };
     use repository::{
-        repository::{CentralSyncBufferRepository, StorageConnectionManager},
-        schema::CentralSyncBufferRow,
-        test_db,
+        get_storage_connection_manager, repository::CentralSyncBufferRepository,
+        schema::CentralSyncBufferRow, test_db,
     };
 
     #[actix_rt::test]
@@ -284,12 +278,8 @@ mod tests {
         let sync_connection = SyncConnection::new(&settings.sync);
 
         let settings = get_test_settings("omsupply-database-integrate_central_records");
-
         test_db::setup(&settings.database).await;
-
-        let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings.database).await,
-        };
+        let connection_manager = get_storage_connection_manager(&settings.database);
 
         // use test records with cursors that are out of order
         let mut test_records = Vec::new();
@@ -301,10 +291,7 @@ mod tests {
         test_records.append(&mut get_test_master_list_line_records());
 
         let central_records: Vec<CentralSyncBufferRow> = extract_sync_buffer_rows(&test_records);
-        let connection = registry
-            .get::<StorageConnectionManager>()
-            .connection()
-            .unwrap();
+        let connection = connection_manager.connection().unwrap();
         let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
 
         central_sync_buffer_repository
@@ -316,10 +303,10 @@ mod tests {
         };
 
         synchroniser
-            .integrate_central_records(&registry)
+            .integrate_central_records(&connection_manager)
             .await
             .expect("Failed to integrate central records");
 
-        check_records_against_database(&registry, test_records).await;
+        check_records_against_database(&connection_manager, test_records).await;
     }
 }

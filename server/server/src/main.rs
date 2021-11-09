@@ -2,15 +2,9 @@
 
 use remote_server::{
     server::{
-        data::{
-            auth::AuthData, get_repositories, ActorRegistry, LoaderMap, LoaderRegistry,
-            RepositoryMap, RepositoryRegistry,
-        },
+        data::ActorRegistry,
         middleware::{compress as compress_middleware, logger as logger_middleware},
-        service::{
-            graphql::{config as graphql_config, loader::get_loaders},
-            rest::config as rest_config,
-        },
+        service::rest::config as rest_config,
     },
     util::{
         configuration,
@@ -19,8 +13,12 @@ use remote_server::{
     },
 };
 
-use repository::repository::StorageConnectionManager;
-use service::token_bucket::TokenBucket;
+use graphql::{
+    config as graphql_config,
+    loader::{get_loaders, LoaderMap, LoaderRegistry},
+};
+use repository::get_storage_connection_manager;
+use service::{auth_data::AuthData, token_bucket::TokenBucket};
 
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
@@ -45,22 +43,18 @@ async fn main() -> std::io::Result<()> {
         // TODO: configure ssl
         debug_no_ssl: true,
     });
-    let repositories: RepositoryMap = get_repositories(&settings.database).await;
-    let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
-    let loaders: LoaderMap = get_loaders(connection_manager).await;
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let loaders: LoaderMap = get_loaders(&connection_manager).await;
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors();
 
-    let repository_registry = RepositoryRegistry { repositories };
-    let loader_registry = LoaderRegistry { loaders };
     let actor_registry = ActorRegistry {
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
-    let repository_registry_data_app = Data::new(repository_registry);
-    let repository_registry_data_sync = repository_registry_data_app.clone();
-
-    let loader_registry_data = Data::new(loader_registry);
+    let connection_manager_data_app = Data::new(connection_manager);
+    let connection_manager_data_sync = connection_manager_data_app.clone();
+    let loader_registry_data = Data::new(LoaderRegistry { loaders });
     let actor_registry_data = Data::new(actor_registry);
 
     let listener =
@@ -68,13 +62,13 @@ async fn main() -> std::io::Result<()> {
 
     let http_server = HttpServer::new(move || {
         App::new()
-            .app_data(repository_registry_data_app.clone())
+            .app_data(connection_manager_data_app.clone())
             .app_data(actor_registry_data.clone())
             .wrap(logger_middleware())
             .wrap(Cors::permissive())
             .wrap(compress_middleware())
             .configure(graphql_config(
-                repository_registry_data_app.clone(),
+                connection_manager_data_app.clone(),
                 loader_registry_data.clone(),
                 auth_data.clone(),
             ))
@@ -94,7 +88,7 @@ async fn main() -> std::io::Result<()> {
           sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
         } => unreachable!("Sync receiver unexpectedly died!?"),
         () = async {
-            sync_receiver.listen(&mut synchroniser, &repository_registry_data_sync).await;
+            sync_receiver.listen(&mut synchroniser, &connection_manager_data_sync).await;
         } => unreachable!("Sync scheduler unexpectedly died!?"),
     }
 }

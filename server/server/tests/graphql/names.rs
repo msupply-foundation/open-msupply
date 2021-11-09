@@ -1,13 +1,11 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::{server::data::get_repositories, util::test_utils::get_test_settings};
+    use remote_server::util::test_utils::get_test_settings;
     use repository::{
-        test_db,
+        get_storage_connection_manager, test_db,
         {
             mock::{mock_name_store_joins, mock_names, mock_stores},
-            repository::{
-                NameRepository, NameStoreJoinRepository, StorageConnectionManager, StoreRepository,
-            },
+            repository::{NameRepository, NameStoreJoinRepository, StoreRepository},
             schema::{NameRow, NameStoreJoinRow, StoreRow},
         },
     };
@@ -17,8 +15,7 @@ mod graphql {
     async fn test_graphql_names_query() {
         let settings = get_test_settings("omsupply-database-gql-names-query");
         test_db::setup(&settings.database).await;
-        let repositories = get_repositories(&settings.database).await;
-        let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
+        let connection_manager = get_storage_connection_manager(&settings.database);
         let connection = connection_manager.connection().unwrap();
 
         // setup

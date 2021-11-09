@@ -6,7 +6,6 @@ pub mod name;
 pub mod store;
 pub mod unit;
 
-use crate::server::data::RepositoryRegistry;
 use repository::{
     repository::{
         repository::{
@@ -70,12 +69,10 @@ pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<CentralSyn
 
 #[allow(dead_code)]
 pub async fn check_records_against_database(
-    registry: &RepositoryRegistry,
+    connection_manager: &StorageConnectionManager,
     records: Vec<TestSyncRecord>,
 ) {
-    let connection_manager = registry.get::<StorageConnectionManager>();
     let connection = connection_manager.connection().unwrap();
-
     for record in records {
         match record.translated_record {
             TestSyncDataRecord::Store(comparison_record) => {

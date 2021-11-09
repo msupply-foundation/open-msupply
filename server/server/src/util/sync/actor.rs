@@ -1,9 +1,7 @@
-use crate::{
-    server::data::RepositoryRegistry,
-    util::sync::{SyncError, Synchroniser},
-};
+use crate::util::sync::{SyncError, Synchroniser};
 
 use log::info;
+use repository::repository::StorageConnectionManager;
 use tokio::{
     sync::mpsc::{self, error as mpsc_error, Receiver as MpscReceiver, Sender as MpscSender},
     time::{self, Duration, Interval},
@@ -59,11 +57,15 @@ pub struct SyncReceiverActor {
 #[allow(unused_assignments)]
 impl SyncReceiverActor {
     // Listen for incoming sync messages.
-    pub async fn listen(&mut self, synchroniser: &mut Synchroniser, registry: &RepositoryRegistry) {
+    pub async fn listen(
+        &mut self,
+        synchroniser: &mut Synchroniser,
+        connection_manager: &StorageConnectionManager,
+    ) {
         while let Some(()) = self.receiver.recv().await {
             info!("Received sync message");
             info!("Starting sync...");
-            if let Err(error) = synchroniser.sync(registry).await {
+            if let Err(error) = synchroniser.sync(connection_manager).await {
                 info!("Sync encountered an error!");
                 match error {
                     SyncError::CentralSyncError { source } => info!("{:?}", source),
