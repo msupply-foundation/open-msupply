@@ -33,7 +33,7 @@ export const Breadcrumbs: React.FC = () => {
 
     parts.reduce((fullPath, part) => {
       if (part === '') return '';
-      const path = `/${fullPath}/${part}`;
+      const path = `${fullPath}/${part}`;
       urlParts.push({ path, key: `app.${part}` as LocaleKey, value: part });
       return path;
     }, '');
