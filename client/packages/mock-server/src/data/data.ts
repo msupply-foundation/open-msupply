@@ -102,7 +102,7 @@ export const createStockLines = (
           sellPricePerPack,
           onHold: faker.datatype.number(10) < 2,
           note:
-            faker.datatype.number(10) < 2
+            faker.datatype.number(10) < 4
               ? faker.commerce.productDescription()
               : null,
         };

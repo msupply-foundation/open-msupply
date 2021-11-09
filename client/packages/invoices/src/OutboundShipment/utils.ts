@@ -26,7 +26,7 @@ const StatusTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
   DELIVERED: 'label.delivered',
 };
 
-const getNextOutboundStatus = (
+export const getNextOutboundStatus = (
   currentStatus: OutboundShipmentStatus
 ): OutboundShipmentStatus | undefined => {
   const currentStatusIdx = outboundStatuses.findIndex(

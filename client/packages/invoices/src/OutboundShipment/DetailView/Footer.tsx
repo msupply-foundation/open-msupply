@@ -13,6 +13,7 @@ import {
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  getNextOutboundStatus,
   getNextOutboundStatusButtonTranslation,
   getStatusTranslation,
   isInvoiceEditable,
@@ -22,7 +23,7 @@ import { OutboundShipment } from './types';
 
 interface OutboundDetailFooterProps {
   draft: OutboundShipment;
-  save: (draft: OutboundShipment) => void;
+  save: () => Promise<void>;
 }
 
 const createStatusLog = (draft: OutboundShipment) => {
@@ -94,7 +95,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => {
                     success('Saved invoice! 🥳 ')();
-                    save(draft);
+                    save();
                   }}
                 />
                 <ButtonWithIcon
@@ -110,10 +111,14 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                   }}
                   variant="contained"
                   color="secondary"
-                  onClick={() => {
+                  onClick={async () => {
                     success('Saved invoice! 🥳 ')();
-                    draft.update?.('status', 'finalised');
-                    save(draft);
+                    await draft.update?.(
+                      'status',
+                      getNextOutboundStatus(draft?.status ?? '') ?? ''
+                    );
+
+                    save();
                   }}
                 />
               </>

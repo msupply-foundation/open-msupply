@@ -46,7 +46,7 @@ export const useDocument = <
   queryKey: unknown[],
   reducer: ReducerCreator<ServerData, State, DocumentActionSet<ActionSet>>,
   api: Api<ServerData, Document>
-): DocumentState<Document, State, ServerData, DocumentActionSet<ActionSet>> => {
+): DocumentState<Document, State, DocumentActionSet<ActionSet>> => {
   // A query key which contains new, means it has not been created on the server yet.
   // TODO: Far more robust method needed here.
   const { id } = useParams();
@@ -89,6 +89,12 @@ export const useDocument = <
   }, [data]);
 
   const { draft } = state;
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
-  return { state, draft, save: mutateAsync, dispatch };
+  const save = async () => {
+    mutateAsync(draftRef.current);
+  };
+
+  return { state, draft, save, dispatch };
 };
