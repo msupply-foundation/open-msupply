@@ -67,17 +67,27 @@ cargo install diesel_cli --no-default-features --features "sqlite-bundled postgr
 - Migrate database tables:
 
 ```bash
+# The following commands assume you are in the server directory
+cd server
+
 # postgres
-diesel migration run --database-url='postgres://postgres:password@localhost:5432/omsupply-database' --migration-dir ./repository/migrations/postgres
+diesel migration run --database-url='postgres://postgres:password@localhost:5432/omsupply-database' --migration-dir ../repository/migrations/postgres
 
 # sqlite
-diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ./repository/migrations/sqlite/
+diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ../repository/migrations/sqlite/
 ```
 
 - Build and start the remote server:
 
 ```bash
-APP_ENVIRONMENT=local cargo run # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
+# Make sure you are in the server directory
+cd server
+# Use postgres:
+cargo run --features postgres
+# Use sqlite:
+cargo run --features sqlite
+# optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
+APP_ENVIRONMENT=production cargo run --features sqlite
 ```
 
 ## Tests
