@@ -51,7 +51,7 @@ export const getItemListViewApi = (api: OmSupplyApi): ListApi<ItemRow> => ({
     ({ first, offset, sortBy }) =>
     () =>
       onRead(api)({ first, offset, sortBy }),
-  onDelete: async () => {},
+  onDelete: async () => [''],
   onUpdate: async () => '',
   onCreate: async () => '',
 });

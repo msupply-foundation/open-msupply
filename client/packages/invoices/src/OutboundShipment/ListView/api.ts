@@ -3,8 +3,6 @@ import {
   InvoiceNodeStatus,
   UpdateOutboundShipmentInput,
   InvoicesQuery,
-  gql,
-  batchRequests,
   SortBy,
   ListApi,
   Invoice,
@@ -14,7 +12,6 @@ import {
   InvoicePriceResponse,
   OmSupplyApi,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
@@ -34,14 +31,6 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
   throw new Error(invoicesQuery.invoices.error.description);
 };
 
-export const getDeleteMutation = (): string => gql`
-  mutation deleteInvoice($invoiceId: String) {
-    deleteInvoice(invoiceId: $invoiceId) {
-      id
-    }
-  }
-`;
-
 export const onCreate =
   (api: OmSupplyApi) =>
   async (invoice: Partial<Invoice>): Promise<string> => {
@@ -59,15 +48,20 @@ export const onCreate =
     throw new Error(insertOutboundShipment.error.description);
   };
 
-export const onDelete = async (invoices: InvoiceRow[]) => {
-  await batchRequests(
-    Environment.API_URL,
-    invoices.map(invoice => ({
-      document: getDeleteMutation(),
-      variables: { invoiceId: invoice.id },
-    }))
-  );
-};
+export const onDelete =
+  (api: OmSupplyApi) =>
+  async (invoices: InvoiceRow[]): Promise<string[]> => {
+    const result = await api.deleteOutboundShipments({
+      ids: invoices.map(invoice => invoice.id),
+    });
+
+    const { batchOutboundShipment } = result;
+    if (batchOutboundShipment.deleteOutboundShipments) {
+      return batchOutboundShipment.deleteOutboundShipments.map(({ id }) => id);
+    }
+
+    throw new Error('Unknown');
+  };
 
 export const onRead =
   (api: OmSupplyApi) =>
@@ -86,20 +80,6 @@ export const onRead =
     return { nodes, totalCount: invoices.totalCount };
   };
 
-const invoiceToInput = (
-  patch: Partial<Invoice> & { id: string }
-): UpdateOutboundShipmentInput => {
-  return {
-    id: patch.id,
-    color: patch.color,
-    comment: patch.comment,
-    status: patch.status as InvoiceNodeStatus,
-    onHold: patch.onHold,
-    otherPartyId: patch.otherParty?.id,
-    theirReference: patch.theirReference,
-  };
-};
-
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: Partial<Invoice> & { id: string }): Promise<string> => {
@@ -115,6 +95,20 @@ export const onUpdate =
 
     throw new Error(updateOutboundShipment.error.description);
   };
+
+const invoiceToInput = (
+  patch: Partial<Invoice> & { id: string }
+): UpdateOutboundShipmentInput => {
+  return {
+    id: patch.id,
+    color: patch.color,
+    comment: patch.comment,
+    status: patch.status as InvoiceNodeStatus,
+    onHold: patch.onHold,
+    otherPartyId: patch.otherParty?.id,
+    theirReference: patch.theirReference,
+  };
+};
 
 const getSortKey = (
   sortBy: SortBy<OutboundShipment>
@@ -167,7 +161,7 @@ export const getOutboundShipmentListViewApi = (
     const onReadFn = onRead(omSupplyApi);
     return () => onReadFn(queryParams);
   },
-  onDelete,
+  onDelete: onDelete(omSupplyApi),
   onUpdate: onUpdate(omSupplyApi),
   onCreate: onCreate(omSupplyApi),
 });

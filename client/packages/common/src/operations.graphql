@@ -484,6 +484,16 @@ mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
   }
 }
 
+mutation deleteOutboundShipments($ids: [String!]) {
+  batchOutboundShipment(deleteOutboundShipments: $ids) {
+    __typename
+    deleteOutboundShipments {
+      __typename
+      id
+    }
+  }
+}
+
 query invoiceCounts($type: InvoiceNodeType!) {
   invoiceCounts(type: $type) {
     ... on InvoiceCountsConnector {
