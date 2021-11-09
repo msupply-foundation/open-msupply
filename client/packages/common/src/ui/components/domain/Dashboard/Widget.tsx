@@ -1,12 +1,6 @@
 import React from 'react';
-import {
-  CircularProgress,
-  Paper,
-  Box,
-  LocaleKey,
-  Typography,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
 
 const Loading = () => (
   <Box display="flex" flex={1} justifyContent="center" alignItems="center">
