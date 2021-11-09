@@ -53,6 +53,7 @@ const MutationResolvers = {
       __typename: 'BatchOutboundShipmentResponse',
       deleteOutboundShipments: [] as { id: string }[],
       insertOutboundShipmentLines: [] as { id: string }[],
+      updateOutboundShipments: [] as { id: string }[],
     };
 
     if (vars.deleteOutboundShipments) {
@@ -61,6 +62,14 @@ const MutationResolvers = {
           id: MutationResolvers.deleteOutboundShipment(null, id),
         })
       );
+    }
+
+    if (vars.updateOutboundShipments) {
+      response.updateOutboundShipments = [
+        Api.MutationService.update.invoice(
+          vars.updateOutboundShipments[0] as UpdateOutboundShipmentInput
+        ),
+      ];
     }
 
     if (vars.insertOutboundShipmentLines) {
