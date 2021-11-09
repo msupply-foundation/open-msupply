@@ -720,6 +720,8 @@ type Queries {
     # Sort options (only first sort input is evaluated for this endpoint)
     sort: [InvoiceSortInput!]
   ): InvoicesResponse!
+  invoiceCounts(type: InvoiceNodeType!): InvoiceCountsResponse!
+  stockCounts: StockCountsResponse!
 }
 
 type RangeError implements UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
@@ -907,6 +909,27 @@ union UpdateOutboundShipmentResponse =
   | NodeError
   | InvoiceNode
 
+type CountError {
+  description: String!
+}
+
+type InvoiceCountsCreated {
+  today: Int!
+  thisWeek: Int!
+}
+
+type InvoiceCountsConnector {
+  created: InvoiceCountsCreated
+  toBePicked: Int
+}
+
+type StockCountsConnector {
+  expired: Int!
+  expiringSoon: Int!
+}
+
+union InvoiceCountsResponse = InvoiceCountsConnector | ConnectorError
+union StockCountsResponse = StockCountsConnector | ConnectorError
 type UpdateOutboundShipmentResponseWithId {
   id: String!
   response: UpdateOutboundShipmentResponse!

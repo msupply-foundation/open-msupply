@@ -114,6 +114,11 @@ export type ConnectorErrorInterface = {
   description: Scalars['String'];
 };
 
+export type CountError = {
+  __typename?: 'CountError';
+  description: Scalars['String'];
+};
+
 export type DatabaseError = ConnectorErrorInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
@@ -401,6 +406,20 @@ export type InvoiceConnector = {
   nodes: Array<InvoiceNode>;
   totalCount: Scalars['Int'];
 };
+
+export type InvoiceCountsConnector = {
+  __typename?: 'InvoiceCountsConnector';
+  created?: Maybe<InvoiceCountsCreated>;
+  toBePicked?: Maybe<Scalars['Int']>;
+};
+
+export type InvoiceCountsCreated = {
+  __typename?: 'InvoiceCountsCreated';
+  thisWeek: Scalars['Int'];
+  today: Scalars['Int'];
+};
+
+export type InvoiceCountsResponse = ConnectorError | InvoiceCountsConnector;
 
 export type InvoiceDoesNotBelongToCurrentStore =
   DeleteInboundShipmentErrorInterface &
@@ -806,13 +825,19 @@ export type Queries = {
   __typename?: 'Queries';
   apiVersion: Scalars['String'];
   invoice: InvoiceResponse;
+  invoiceCounts: InvoiceCountsResponse;
   invoices: InvoicesResponse;
   items: ItemsResponse;
   names: NamesResponse;
+  stockCounts: StockCountsResponse;
 };
 
 export type QueriesInvoiceArgs = {
   id: Scalars['String'];
+};
+
+export type QueriesInvoiceCountsArgs = {
+  type: InvoiceNodeType;
 };
 
 export type QueriesInvoicesArgs = {
@@ -875,6 +900,14 @@ export type SimpleStringFilterInput = {
   equalTo?: Maybe<Scalars['String']>;
   like?: Maybe<Scalars['String']>;
 };
+
+export type StockCountsConnector = {
+  __typename?: 'StockCountsConnector';
+  expired: Scalars['Int'];
+  expiringSoon: Scalars['Int'];
+};
+
+export type StockCountsResponse = ConnectorError | StockCountsConnector;
 
 export type StockLineAlreadyExistsInInvoice =
   InsertOutboundShipmentLineErrorInterface &
@@ -1441,6 +1474,51 @@ export type InsertOutboundShipmentMutation = {
       };
 };
 
+export type InvoiceCountsQueryVariables = Exact<{
+  type: InvoiceNodeType;
+}>;
+
+export type InvoiceCountsQuery = {
+  __typename?: 'Queries';
+  invoiceCounts:
+    | {
+        __typename: 'ConnectorError';
+        error:
+          | { __typename?: 'DatabaseError'; description: string }
+          | { __typename?: 'PaginationError'; description: string };
+      }
+    | {
+        __typename: 'InvoiceCountsConnector';
+        toBePicked?: number | null | undefined;
+        created?:
+          | {
+              __typename?: 'InvoiceCountsCreated';
+              today: number;
+              thisWeek: number;
+            }
+          | null
+          | undefined;
+      };
+};
+
+export type StockCountsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type StockCountsQuery = {
+  __typename?: 'Queries';
+  stockCounts:
+    | {
+        __typename: 'ConnectorError';
+        error:
+          | { __typename?: 'DatabaseError'; description: string }
+          | { __typename?: 'PaginationError'; description: string };
+      }
+    | {
+        __typename: 'StockCountsConnector';
+        expired: number;
+        expiringSoon: number;
+      };
+};
+
 export const InvoiceDocument = gql`
   query invoice($id: String!) {
     invoice(id: $id) {
@@ -1894,6 +1972,43 @@ export const InsertOutboundShipmentDocument = gql`
     }
   }
 `;
+export const InvoiceCountsDocument = gql`
+  query invoiceCounts($type: InvoiceNodeType!) {
+    invoiceCounts(type: $type) {
+      ... on InvoiceCountsConnector {
+        __typename
+        created {
+          today
+          thisWeek
+        }
+        toBePicked
+      }
+      ... on ConnectorError {
+        __typename
+        error {
+          description
+        }
+      }
+    }
+  }
+`;
+export const StockCountsDocument = gql`
+  query stockCounts {
+    stockCounts {
+      ... on StockCountsConnector {
+        __typename
+        expired
+        expiringSoon
+      }
+      ... on ConnectorError {
+        __typename
+        error {
+          description
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1985,6 +2100,32 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertOutboundShipment'
+      );
+    },
+    invoiceCounts(
+      variables: InvoiceCountsQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<InvoiceCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'invoiceCounts'
+      );
+    },
+    stockCounts(
+      variables?: StockCountsQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<StockCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StockCountsQuery>(StockCountsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'stockCounts'
       );
     },
   };

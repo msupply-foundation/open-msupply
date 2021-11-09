@@ -97,3 +97,24 @@ export interface ListResponse<T> {
   totalCount: number;
   nodes: T[];
 }
+interface InvoiceCountsCreated {
+  today: number;
+  thisWeek: number;
+}
+export interface InvoiceCounts {
+  created?: InvoiceCountsCreated;
+  toBePicked?: number;
+}
+
+export interface StockCounts {
+  expired: number;
+  expiringSoon: number;
+}
+
+export interface ResolvedInvoiceCounts extends InvoiceCounts {
+  __typename: string;
+}
+
+export interface ResolvedStockCounts extends StockCounts {
+  __typename: string;
+}
