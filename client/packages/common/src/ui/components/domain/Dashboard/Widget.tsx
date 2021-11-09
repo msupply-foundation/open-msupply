@@ -19,7 +19,7 @@ interface WidgetProps {
   titleKey: LocaleKey;
 }
 
-const Widget: React.FC<WidgetProps> = ({
+export const Widget: React.FC<WidgetProps> = ({
   children,
   height = '100%',
   titleKey,
@@ -46,5 +46,3 @@ const Widget: React.FC<WidgetProps> = ({
     </Paper>
   );
 };
-
-export default Widget;
