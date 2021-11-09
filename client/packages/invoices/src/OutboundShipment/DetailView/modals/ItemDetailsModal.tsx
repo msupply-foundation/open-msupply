@@ -11,13 +11,13 @@ import {
 
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
-import { BatchRow, InvoiceLineRow } from '../types';
+import { BatchRow, OutboundShipmentRow } from '../types';
 
 interface ItemDetailsModalProps {
-  invoiceLine?: InvoiceLineRow;
+  invoiceLine?: OutboundShipmentRow;
   isOpen: boolean;
   onClose: () => void;
-  upsertInvoiceLine: (invoiceLine: InvoiceLineRow) => void;
+  upsertInvoiceLine: (invoiceLine: OutboundShipmentRow) => void;
 }
 
 export const getInvoiceLine = (
@@ -25,7 +25,7 @@ export const getInvoiceLine = (
   item: Item,
   line: { id: string; expiryDate?: string | null },
   quantity: number
-): InvoiceLineRow => ({
+): OutboundShipmentRow => ({
   id,
   itemId: '',
   itemName: item.name,

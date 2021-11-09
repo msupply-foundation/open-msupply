@@ -5,10 +5,10 @@ import {
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
-import { InvoiceLineRow } from './types';
+import { OutboundShipmentRow } from './types';
 
 describe('DetailView reducer', () => {
-  const lines: InvoiceLineRow[] = [
+  const lines: OutboundShipmentRow[] = [
     {
       id: '1',
       updateNumberOfPacks: () => {},
@@ -90,7 +90,7 @@ describe('DetailView reducer', () => {
       deletedLines: [],
     };
 
-    const [numberOfPacksColumn] = createColumns<InvoiceLineRow>([
+    const [numberOfPacksColumn] = createColumns<OutboundShipmentRow>([
       'numberOfPacks',
     ]);
     if (!numberOfPacksColumn) throw new Error('This test is broken!');
@@ -117,7 +117,7 @@ describe('DetailView reducer', () => {
       deletedLines: [],
     };
 
-    const [numberOfPacksColumn] = createColumns<InvoiceLineRow>([
+    const [numberOfPacksColumn] = createColumns<OutboundShipmentRow>([
       'numberOfPacks',
     ]);
     if (!numberOfPacksColumn) throw new Error('This test is broken!');
@@ -146,7 +146,7 @@ describe('DetailView reducer', () => {
       deletedLines: [],
     };
 
-    const [itemNameColumn] = createColumns<InvoiceLineRow>(['itemName']);
+    const [itemNameColumn] = createColumns<OutboundShipmentRow>(['itemName']);
     if (!itemNameColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(
@@ -235,7 +235,7 @@ describe('DetailView reducer', () => {
       deletedLines: [],
     };
 
-    const lineToDelete = lines[0] as InvoiceLineRow;
+    const lineToDelete = lines[0] as OutboundShipmentRow;
     const reducerResult = reducer({ ...state.draft }, null)(
       state,
       OutboundAction.deleteLine(lineToDelete)
@@ -257,7 +257,7 @@ describe('DetailView reducer', () => {
   //     deletedLines: [],
   //   };
 
-  //   const lineToDelete = { ...lines[0], numberOfPacks: 999 } as InvoiceLineRow;
+  //   const lineToDelete = { ...lines[0], numberOfPacks: 999 } as OutboundShipmentRow;
   //   const reducerResult = reducer({ ...state.draft }, null)(
   //     state,
   //     OutboundAction.upsertLine(lineToDelete)
@@ -278,7 +278,7 @@ describe('DetailView reducer', () => {
       deletedLines: [],
     };
 
-    const lineToInsert = { ...lines[0], id: '999' } as InvoiceLineRow;
+    const lineToInsert = { ...lines[0], id: '999' } as OutboundShipmentRow;
     const reducerResult = reducer({ ...state.draft }, null)(
       state,
       OutboundAction.upsertLine(lineToInsert)
