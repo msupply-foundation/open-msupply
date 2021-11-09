@@ -42,11 +42,11 @@ const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
 };
 
 export const OutboundAction = {
-  upsertLine: (invoiceLine: InvoiceLine): OutboundShipmentAction => ({
+  upsertLine: (invoiceLine: InvoiceLineRow): OutboundShipmentAction => ({
     type: ActionType.UpsertLine,
     payload: { invoiceLine },
   }),
-  deleteLine: (invoiceLine: InvoiceLine): OutboundShipmentAction => ({
+  deleteLine: (invoiceLine: InvoiceLineRow): OutboundShipmentAction => ({
     type: ActionType.DeleteLine,
     payload: { invoiceLine },
   }),

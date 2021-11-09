@@ -7,7 +7,10 @@ import {
 } from '@openmsupply-client/common';
 
 export interface InvoiceLineRow extends InvoiceLine {
-  updateNumberOfPacks: (quantity: number) => void;
+  updateNumberOfPacks?: (quantity: number) => void;
+  isUpdated?: boolean;
+  isDeleted?: boolean;
+  isCreated?: boolean;
 }
 
 export interface BatchRow extends StockLine {
@@ -26,8 +29,8 @@ export interface OutboundShipment extends Invoice {
   lines: InvoiceLineRow[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
-  upsertLine?: (line: InvoiceLine) => void;
-  deleteLine?: (line: InvoiceLine) => void;
+  upsertLine?: (line: InvoiceLineRow) => void;
+  deleteLine?: (line: InvoiceLineRow) => void;
 }
 
 export enum ActionType {
