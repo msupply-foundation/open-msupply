@@ -71,7 +71,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               label="label.customer-ref"
               Input={
                 <BasicTextInput
-                  disabled
+                  disabled={!isInvoiceEditable(draft)}
                   size="small"
                   sx={{ width: 250 }}
                   value={draft?.theirReference ?? ''}

@@ -111,7 +111,13 @@ export const get = {
 };
 
 export const update = {
-  invoice: (invoice: UpdateOutboundShipmentInput): Invoice => {
+  invoice: (
+    invoice: UpdateOutboundShipmentInput & {
+      allocatedDatetime?: string;
+      shippedDatetime?: string;
+      pickedDatetime?: string;
+    }
+  ): Invoice => {
     const idx = InvoiceData.findIndex(getFilter(invoice.id, 'id'));
     if (idx < 0) throw new Error('Invalid invoice id');
     const existingInvoice: Invoice = InvoiceData[idx] as Invoice;
@@ -123,6 +129,11 @@ export const update = {
       onHold: invoice?.onHold ?? existingInvoice.onHold,
       status: invoice?.status ?? existingInvoice.status,
       otherPartyId: invoice?.otherPartyId ?? existingInvoice.otherPartyId,
+      allocatedDatetime:
+        invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
+      shippedDatetime:
+        invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
+      pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
     };
     InvoiceData[idx] = newInvoice;
     return newInvoice;

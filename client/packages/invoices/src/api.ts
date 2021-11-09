@@ -1,6 +1,4 @@
-import { OmSupplyApi } from './../../common/src/api/index';
 import {
-  request,
   gql,
   Name,
   SortBy,
@@ -13,6 +11,9 @@ import {
   InvoicePriceResponse,
   ConnectorError,
   NameResponse,
+  UpdateOutboundShipmentInput,
+  InvoiceNodeStatus,
+  OmSupplyApi,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { OutboundShipment } from './OutboundShipment/DetailView/types';
@@ -119,14 +120,35 @@ export const onRead =
     };
   };
 
-export const onUpdate = async (updated: Invoice): Promise<Invoice> => {
-  const invoicePatch: Partial<Invoice> = { ...updated };
-  delete invoicePatch['lines'];
-  const patch = { invoicePatch };
-  const result = await request(Environment.API_URL, getMutation(), patch);
-  const { updateInvoice } = result;
-  return updateInvoice;
+const invoiceToInput = (
+  patch: Partial<OutboundShipment> & { id: string }
+): UpdateOutboundShipmentInput => {
+  return {
+    id: patch.id,
+    color: patch.color,
+    comment: patch.comment,
+    status: patch.status as InvoiceNodeStatus,
+    onHold: patch.onHold,
+    otherPartyId: patch.otherParty?.id,
+    theirReference: patch.theirReference,
+  };
 };
+
+export const onUpdate =
+  (api: OmSupplyApi) =>
+  async (patch: OutboundShipment): Promise<OutboundShipment> => {
+    const result = await api.updateOutboundShipment({
+      input: invoiceToInput(patch),
+    });
+
+    const { updateOutboundShipment } = result;
+
+    if (updateOutboundShipment.__typename === 'InvoiceNode') {
+      return patch;
+    }
+
+    throw new Error(updateOutboundShipment.error.description);
+  };
 
 interface Api<ReadType, UpdateType> {
   onRead: (id: string) => Promise<ReadType>;
@@ -137,5 +159,5 @@ export const getOutboundShipmentDetailViewApi = (
   api: OmSupplyApi
 ): Api<Invoice, OutboundShipment> => ({
   onRead: onRead(api),
-  onUpdate,
+  onUpdate: onUpdate(api),
 });

@@ -24,14 +24,15 @@ export const getNotePopoverColumn = <
   },
 
   Cell: props => {
-    const value = String(props.column.accessor(props.rowData));
+    const value = props.column.accessor(props.rowData);
+
     return value ? (
       <PaperPopover
         width={400}
         height={180}
         Content={
           <PaperPopoverSection labelKey="label.notes">
-            {value}
+            {String(value)}
           </PaperPopoverSection>
         }
       >

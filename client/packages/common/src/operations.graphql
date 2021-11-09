@@ -92,6 +92,7 @@ query invoice($id: String!) {
             itemName
             numberOfPacks
             packSize
+            note
             locationDescription
             sellPricePerPack
           }
