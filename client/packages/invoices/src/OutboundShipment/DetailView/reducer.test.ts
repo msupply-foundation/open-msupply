@@ -173,7 +173,7 @@ describe('DetailView reducer', () => {
 
     const reducerResult = reducer(undefined, null)(
       state,
-      OutboundAction.updateNumberOfPacks('1', 10)
+      OutboundAction.updateNumberOfPacks?.('1', 10)
     );
 
     const line = reducerResult.draft.lines.find(({ id }) => id === '1');

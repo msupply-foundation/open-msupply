@@ -3,7 +3,6 @@ import React from 'react';
 import {
   DialogButton,
   Grid,
-  InvoiceLine,
   Item,
   useForm,
   useDialog,
@@ -12,13 +11,13 @@ import {
 
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
-import { BatchRow } from '../types';
+import { BatchRow, InvoiceLineRow } from '../types';
 
 interface ItemDetailsModalProps {
-  invoiceLine?: InvoiceLine;
+  invoiceLine?: InvoiceLineRow;
   isOpen: boolean;
   onClose: () => void;
-  upsertInvoiceLine: (invoiceLine: InvoiceLine) => void;
+  upsertInvoiceLine: (invoiceLine: InvoiceLineRow) => void;
 }
 
 export const getInvoiceLine = (
@@ -26,7 +25,7 @@ export const getInvoiceLine = (
   item: Item,
   line: { id: string; expiryDate?: string | null },
   quantity: number
-): InvoiceLine => ({
+): InvoiceLineRow => ({
   id,
   itemId: '',
   itemName: item.name,
