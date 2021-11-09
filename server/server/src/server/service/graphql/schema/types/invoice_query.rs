@@ -1,9 +1,6 @@
-use crate::{
-    server::service::graphql::{
-        loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
-        ContextExt,
-    },
-    service::invoice::get_invoice,
+use crate::server::service::graphql::{
+    loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
+    ContextExt,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -14,6 +11,7 @@ use domain::{
 };
 use repository::repository::StorageConnectionManager;
 use serde::Serialize;
+use service::invoice::get_invoice;
 
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterNumberInput,

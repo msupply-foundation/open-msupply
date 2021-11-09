@@ -1,17 +1,18 @@
-use std::sync::RwLock;
-
-use actix_web::{test::read_body, web::Data};
 use remote_server::{
     server::{
         data::{auth::AuthData, get_repositories, LoaderRegistry, RepositoryRegistry},
         service::graphql::{config as graphql_config, loader::get_loaders},
     },
-    service::token_bucket::TokenBucket,
     util::settings::Settings,
 };
 
-use assert_json_diff::assert_json_eq;
 use repository::repository::StorageConnectionManager;
+use service::token_bucket::TokenBucket;
+
+use std::sync::RwLock;
+
+use actix_web::{test::read_body, web::Data};
+use assert_json_diff::assert_json_eq;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 

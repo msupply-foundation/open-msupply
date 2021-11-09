@@ -1,6 +1,5 @@
 #![allow(where_clauses_object_safety)]
 
-use actix_cors::Cors;
 use remote_server::{
     server::{
         data::{
@@ -13,7 +12,6 @@ use remote_server::{
             rest::config as rest_config,
         },
     },
-    service::token_bucket::TokenBucket,
     util::{
         configuration,
         settings::Settings,
@@ -21,8 +19,11 @@ use remote_server::{
     },
 };
 
-use actix_web::{web::Data, App, HttpServer};
 use repository::repository::StorageConnectionManager;
+use service::token_bucket::TokenBucket;
+
+use actix_cors::Cors;
+use actix_web::{web::Data, App, HttpServer};
 use std::{
     env,
     net::TcpListener,

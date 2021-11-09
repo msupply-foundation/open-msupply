@@ -1,21 +1,19 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
-        },
-        types::{
-            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
-            RangeError, RangeField, RecordNotFound,
-        },
+use crate::server::service::graphql::schema::{
+    mutations::{
+        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
-    service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError},
+    types::{
+        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+        RangeError, RangeField, RecordNotFound,
+    },
 };
 use domain::inbound_shipment::UpdateInboundShipmentLine;
 use repository::repository::StorageConnectionManager;
+use service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError};
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 

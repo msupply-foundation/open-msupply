@@ -1,17 +1,15 @@
 use async_graphql::*;
 
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
-            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
-        },
-        types::{DatabaseError, ErrorWrapper, RecordNotFound},
+use crate::server::service::graphql::schema::{
+    mutations::{
+        CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
+        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
-    service::invoice::{delete_inbound_shipment, DeleteInboundShipmentError},
+    types::{DatabaseError, ErrorWrapper, RecordNotFound},
 };
 use domain::inbound_shipment::DeleteInboundShipment;
 use repository::repository::StorageConnectionManager;
+use service::invoice::{delete_inbound_shipment, DeleteInboundShipmentError};
 
 #[derive(InputObject)]
 pub struct DeleteInboundShipmentInput {

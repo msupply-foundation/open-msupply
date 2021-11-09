@@ -3,12 +3,12 @@ use reqwest::header::SET_COOKIE;
 
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::ContextExt;
-use crate::service::token::TokenService;
-use crate::service::{
-    token::{JWTIssuingError, TokenPair},
+
+use repository::repository::StorageConnectionManager;
+use service::{
+    token::{JWTIssuingError, TokenPair, TokenService},
     user_account::UserAccountService,
 };
-use repository::repository::StorageConnectionManager;
 
 use super::{DatabaseError, ErrorWrapper};
 
@@ -70,24 +70,26 @@ pub fn login(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResp
     let user_service = UserAccountService::new(&con);
     let user_account = match user_service.verify_password(username, password) {
         Ok(user) => user,
-        Err(err) => return AuthTokenResponse::Error(ErrorWrapper {
-            error: match err {
-                crate::service::user_account::VerifyPasswordError::UsernameDoesNotExist => {
-                    AuthTokenErrorInterface::UserNameDoesNotExist(UserNameDoesNotExist)
-                }
-                crate::service::user_account::VerifyPasswordError::InvalidCredentials => {
-                    AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials)
-                }
-                crate::service::user_account::VerifyPasswordError::InvalidCredentialsBackend(_) => {
-                    AuthTokenErrorInterface::InternalError(InternalError(
-                        "Failed to read credentials".to_string(),
-                    ))
-                }
-                crate::service::user_account::VerifyPasswordError::DatabaseError(e) => {
-                    AuthTokenErrorInterface::DatabaseError(DatabaseError(e))
-                }
-            },
-        }),
+        Err(err) => {
+            return AuthTokenResponse::Error(ErrorWrapper {
+                error: match err {
+                    service::user_account::VerifyPasswordError::UsernameDoesNotExist => {
+                        AuthTokenErrorInterface::UserNameDoesNotExist(UserNameDoesNotExist)
+                    }
+                    service::user_account::VerifyPasswordError::InvalidCredentials => {
+                        AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials)
+                    }
+                    service::user_account::VerifyPasswordError::InvalidCredentialsBackend(_) => {
+                        AuthTokenErrorInterface::InternalError(InternalError(
+                            "Failed to read credentials".to_string(),
+                        ))
+                    }
+                    service::user_account::VerifyPasswordError::DatabaseError(e) => {
+                        AuthTokenErrorInterface::DatabaseError(DatabaseError(e))
+                    }
+                },
+            })
+        }
     };
 
     let auth_data = ctx.get_auth_data();

@@ -1,4 +1,4 @@
-use crate::util::auth;
+use service::util::hash;
 use std::fmt::{self, Debug, Display};
 
 #[derive(Debug)]
@@ -10,7 +10,7 @@ pub struct SyncCredentials {
 impl SyncCredentials {
     pub fn new(username: &str, password: &str) -> SyncCredentials {
         let username = username.to_owned();
-        let password = auth::sha256(password);
+        let password = hash::sha256(password);
 
         SyncCredentials { username, password }
     }

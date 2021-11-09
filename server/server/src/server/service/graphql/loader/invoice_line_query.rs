@@ -4,7 +4,7 @@ use domain::invoice_line::InvoiceLine;
 use repository::repository::{InvoiceLineQueryRepository, StorageConnectionManager};
 use std::collections::HashMap;
 
-use crate::service::ListError;
+use service::ListError;
 
 pub struct InvoiceLineQueryLoader {
     pub connection_manager: StorageConnectionManager,
