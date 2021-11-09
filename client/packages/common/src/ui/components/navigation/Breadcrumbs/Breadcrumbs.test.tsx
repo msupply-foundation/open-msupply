@@ -81,4 +81,30 @@ describe('Breadcrumbs', () => {
 
     expect(closestAnchor).toEqual(null);
   });
+
+  it('has the correct href tags for anchor elements', () => {
+    const { getByRole } = render(
+      <TestingProvider>
+        <TestingRouter
+          initialEntries={[
+            RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.CustomerRequisition)
+              .addPart(AppRoute.OutboundShipment)
+              .build(),
+          ]}
+        >
+          <Route path="*" element={<Breadcrumbs />}></Route>
+        </TestingRouter>
+      </TestingProvider>
+    );
+
+    expect(getByRole('link', { name: /distribution/i })).toHaveAttribute(
+      'href',
+      '/distribution'
+    );
+    expect(getByRole('link', { name: /requisition/i })).toHaveAttribute(
+      'href',
+      '/distribution/customer-requisition'
+    );
+  });
 });
