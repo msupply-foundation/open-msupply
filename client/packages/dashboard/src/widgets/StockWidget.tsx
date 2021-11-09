@@ -1,7 +1,11 @@
 import React from 'react';
-import { Grid, useOmSupplyApi, useQuery } from '@openmsupply-client/common';
-import Widget from './Widget';
-import { StatsPanel } from '../StatsPanel';
+import {
+  Grid,
+  StatsPanel,
+  useOmSupplyApi,
+  useQuery,
+  Widget,
+} from '@openmsupply-client/common';
 import { getStockCountQueryFn } from '../api';
 
 export const StockWidget: React.FC = () => {

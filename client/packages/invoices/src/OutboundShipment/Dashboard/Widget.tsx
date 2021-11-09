@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getOutboundShipmentListViewApi } from '@openmsupply-client/invoices/src/OutboundShipment/ListView/api';
+import { getOutboundShipmentListViewApi } from '../ListView/api';
 import {
   ButtonWithIcon,
   Grid,
@@ -9,13 +9,13 @@ import {
   useNotification,
   useOmSupplyApi,
   useQuery,
+  StatsPanel,
+  Widget,
 } from '@openmsupply-client/common';
-import Widget from './Widget';
-import { StatsPanel } from '../StatsPanel';
 import { useNavigate } from 'react-router';
-import { getOutboundShipmentCountQueryFn } from '../api';
+import { getOutboundShipmentCountQueryFn } from './api';
 
-export const OutboundShipmentsWidget: React.FC = () => {
+export const OutboundShipmentWidget: React.FC = () => {
   const { error } = useNotification();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
