@@ -56,6 +56,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
         marginBottom: '21px',
         boxShadow: theme => theme.shadows[1],
         padding: '14px 24px',
+        minWidth: '300px',
       }}
     >
       <Grid container>

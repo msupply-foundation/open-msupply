@@ -14,7 +14,6 @@ const Dashboard: React.FC = () => (
       paddingBottom: '32px',
     }}
     justifyContent="space-evenly"
-    wrap="nowrap"
   >
     <InboundShipmentsWidget />
     <OutboundShipmentsWidget />
