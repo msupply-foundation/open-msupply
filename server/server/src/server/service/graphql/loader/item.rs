@@ -1,5 +1,7 @@
-use crate::database::repository::{ItemRepository, RepositoryError, StorageConnectionManager};
-use crate::database::schema::ItemRow;
+use repository::{
+    repository::{ItemRepository, RepositoryError, StorageConnectionManager},
+    schema::ItemRow,
+};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

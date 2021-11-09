@@ -1,4 +1,4 @@
-use crate::database::schema::CentralSyncBufferRow;
+use repository::schema::CentralSyncBufferRow;
 
 use serde::{self, Deserialize, Serialize};
 use std::fmt::{self, Debug, Display};

@@ -1,9 +1,7 @@
-use crate::{
-    database::{
-        repository::{RepositoryError, StorageConnection, TransactionError, UserAccountRepository},
-        schema::UserAccountRow,
-    },
-    util::uuid::uuid,
+use crate::util::uuid::uuid;
+use repository::{
+    repository::{RepositoryError, StorageConnection, TransactionError, UserAccountRepository},
+    schema::UserAccountRow,
 };
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
@@ -116,17 +114,16 @@ impl<'a> UserAccountService<'a> {
 
 #[cfg(test)]
 mod user_account_test {
-    use crate::{
-        database::repository::{get_repositories, StorageConnectionManager},
-        util::test_db,
-    };
+    use repository::{repository::StorageConnectionManager, test_db};
+
+    use crate::server::data::get_repositories;
 
     use super::*;
 
     #[actix_rt::test]
     async fn test_user_auth() {
-        let settings = test_db::get_test_settings("omsupply-database-user-account-service");
-        test_db::setup(&settings.database).await;
+        let settings = test_db::get_test_db_settings("omsupply-database-user-account-service");
+        test_db::setup(&settings).await;
         let registry = get_repositories(&settings).await;
         let connection_manager = registry.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();

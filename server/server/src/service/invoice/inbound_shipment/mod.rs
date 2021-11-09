@@ -1,9 +1,9 @@
-use crate::database::repository::{
-    NameQueryRepository, RepositoryError, StorageConnection, StoreRepository,
-};
 use domain::{
     name::{Name, NameFilter},
     Pagination,
+};
+use repository::repository::{
+    NameQueryRepository, RepositoryError, StorageConnection, StoreRepository,
 };
 
 pub mod insert;

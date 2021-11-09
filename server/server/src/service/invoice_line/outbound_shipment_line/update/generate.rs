@@ -1,8 +1,6 @@
-use crate::{
-    database::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
-    service::u32_to_i32,
-};
+use crate::service::u32_to_i32;
 use domain::outbound_shipment::UpdateOutboundShipmentLine;
+use repository::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
 use super::{BatchPair, UpdateOutboundShipmentLineError};
 

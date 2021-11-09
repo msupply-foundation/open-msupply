@@ -6,13 +6,11 @@ mod graphql {
     use chrono::{Duration, Utc};
     use domain::{name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use remote_server::{
-        database::{
-            mock::MockDataInserts,
-            repository::InvoiceRepository,
-            schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-        },
-        util::test_db,
+    use remote_server::util::test_utils::setup_all;
+    use repository::{
+        mock::MockDataInserts,
+        repository::InvoiceRepository,
+        schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     };
     use uuid::Uuid;
 
@@ -60,7 +58,7 @@ mod graphql {
     #[actix_rt::test]
     async fn test_insert_inbound_shipment() {
         let (_, connection, settings) =
-            test_db::setup_all("test_insert_inbound_shipment_query", MockDataInserts::all()).await;
+            setup_all("test_insert_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
         let start = Utc::now().naive_utc();

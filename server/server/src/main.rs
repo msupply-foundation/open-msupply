@@ -2,11 +2,10 @@
 
 use actix_cors::Cors;
 use remote_server::{
-    database::repository::get_repositories,
     server::{
         data::{
-            auth::AuthData, ActorRegistry, LoaderMap, LoaderRegistry, RepositoryMap,
-            RepositoryRegistry,
+            auth::AuthData, get_repositories, ActorRegistry, LoaderMap, LoaderRegistry,
+            RepositoryMap, RepositoryRegistry,
         },
         middleware::{compress as compress_middleware, logger as logger_middleware},
         service::{
@@ -23,6 +22,7 @@ use remote_server::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
+use repository::repository::StorageConnectionManager;
 use std::{
     env,
     net::TcpListener,
@@ -44,8 +44,9 @@ async fn main() -> std::io::Result<()> {
         // TODO: configure ssl
         debug_no_ssl: true,
     });
-    let repositories: RepositoryMap = get_repositories(&settings).await;
-    let loaders: LoaderMap = get_loaders(&settings).await;
+    let repositories: RepositoryMap = get_repositories(&settings.database).await;
+    let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
+    let loaders: LoaderMap = get_loaders(connection_manager).await;
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors();
 

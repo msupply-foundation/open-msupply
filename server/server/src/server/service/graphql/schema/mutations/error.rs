@@ -1,6 +1,5 @@
-use crate::database::repository::RepositoryError;
-
 use async_graphql::Object;
+use repository::repository::RepositoryError;
 
 pub struct DatabaseError(pub RepositoryError);
 

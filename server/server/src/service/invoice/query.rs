@@ -1,11 +1,11 @@
-use crate::{
-    database::repository::{InvoiceQueryRepository, StorageConnectionManager},
-    service::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError},
+use crate::service::{
+    get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError,
 };
 use domain::{
     invoice::{Invoice, InvoiceFilter, InvoiceSort},
     Pagination, PaginationOption,
 };
+use repository::repository::{InvoiceQueryRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

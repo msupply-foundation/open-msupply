@@ -1,11 +1,7 @@
-use crate::{
-    database::{
-        repository::{
-            InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnection,
-        },
-        schema::{InvoiceLineRow, ItemRow, StockLineRow},
-    },
-    service::WithDBError,
+use crate::service::WithDBError;
+use repository::{
+    repository::{InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnection},
+    schema::{InvoiceLineRow, ItemRow, StockLineRow},
 };
 
 pub struct StockLineNotFound;

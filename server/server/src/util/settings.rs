@@ -1,4 +1,5 @@
 use config::ConfigError;
+use repository::database_settings::DatabaseSettings;
 use std::{
     env::VarError,
     fmt::{Debug, Display, Formatter, Result as FmtResult},
@@ -30,43 +31,6 @@ pub struct SyncSettings {
 impl ServerSettings {
     pub fn address(&self) -> String {
         format!("{}:{}", self.host, self.port)
-    }
-}
-
-#[derive(serde::Deserialize)]
-pub struct DatabaseSettings {
-    pub username: String,
-    pub password: String,
-    pub port: u16,
-    pub host: String,
-    pub database_name: String,
-}
-
-#[cfg(not(feature = "sqlite"))]
-impl DatabaseSettings {
-    pub fn connection_string(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.username, self.password, self.host, self.port, self.database_name
-        )
-    }
-
-    pub fn connection_string_without_db(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}",
-            self.username, self.password, self.host, self.port
-        )
-    }
-}
-
-#[cfg(feature = "sqlite")]
-impl DatabaseSettings {
-    pub fn connection_string(&self) -> String {
-        format!("{}.sqlite", self.database_name)
-    }
-
-    pub fn connection_string_without_db(&self) -> String {
-        return self.connection_string();
     }
 }
 

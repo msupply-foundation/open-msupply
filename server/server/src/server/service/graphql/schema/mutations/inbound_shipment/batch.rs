@@ -1,14 +1,12 @@
-use crate::{
-    database::repository::StorageConnectionManager,
-    server::service::graphql::schema::mutations::{
-        inbound_shipment::{
-            delete::get_delete_inbound_shipment_response,
-            get_delete_inbound_shipment_line_response, get_insert_inbound_shipment_line_response,
-            get_update_inbound_shipment_line_response, get_update_inbound_shipment_response,
-        },
-        MutationWithId,
+use crate::server::service::graphql::schema::mutations::{
+    inbound_shipment::{
+        delete::get_delete_inbound_shipment_response, get_delete_inbound_shipment_line_response,
+        get_insert_inbound_shipment_line_response, get_update_inbound_shipment_line_response,
+        get_update_inbound_shipment_response,
     },
+    MutationWithId,
 };
+use repository::repository::StorageConnectionManager;
 
 use super::{
     delete::{DeleteInboundShipmentInput, DeleteInboundShipmentResponse},

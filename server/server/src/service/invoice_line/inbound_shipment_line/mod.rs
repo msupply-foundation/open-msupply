@@ -3,12 +3,10 @@ pub mod insert;
 pub mod update;
 use uuid::Uuid;
 
-use crate::{
-    database::{
-        repository::{RepositoryError, StockLineRepository, StorageConnection},
-        schema::{InvoiceLineRow, StockLineRow},
-    },
-    service::{invoice::current_store_id, WithDBError},
+use crate::service::{invoice::current_store_id, WithDBError};
+use repository::{
+    repository::{RepositoryError, StockLineRepository, StorageConnection},
+    schema::{InvoiceLineRow, StockLineRow},
 };
 
 pub use self::delete::*;

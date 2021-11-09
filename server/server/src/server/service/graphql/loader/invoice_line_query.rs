@@ -1,10 +1,10 @@
-use crate::database::repository::{InvoiceLineQueryRepository, StorageConnectionManager};
-use crate::service::ListError;
-use domain::invoice_line::InvoiceLine;
-
 use async_graphql::dataloader::*;
 use async_graphql::*;
+use domain::invoice_line::InvoiceLine;
+use repository::repository::{InvoiceLineQueryRepository, StorageConnectionManager};
 use std::collections::HashMap;
+
+use crate::service::ListError;
 
 pub struct InvoiceLineQueryLoader {
     pub connection_manager: StorageConnectionManager,

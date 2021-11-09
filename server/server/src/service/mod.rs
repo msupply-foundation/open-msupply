@@ -1,5 +1,5 @@
-use crate::database::repository::RepositoryError;
 use domain::{Pagination, PaginationOption, DEFAULT_LIMIT};
+use repository::repository::RepositoryError;
 use std::convert::TryInto;
 
 pub mod invoice;

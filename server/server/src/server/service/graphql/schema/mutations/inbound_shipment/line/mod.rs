@@ -1,10 +1,10 @@
 use async_graphql::*;
 
 pub mod delete;
-use crate::database::repository::StorageConnectionManager;
 use crate::server::service::graphql::schema::types::get_invoice_response;
 use crate::server::service::graphql::schema::types::InvoiceResponse;
 use crate::server::service::graphql::ContextExt;
+use repository::repository::StorageConnectionManager;
 
 pub use self::delete::*;
 

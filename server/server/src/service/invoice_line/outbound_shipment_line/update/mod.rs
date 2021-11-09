@@ -1,14 +1,12 @@
-use crate::{
-    database::{
-        repository::{
-            InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
-            TransactionError,
-        },
-        schema::{InvoiceLineRow, StockLineRow},
-    },
-    service::{u32_to_i32, WithDBError},
-};
+use crate::service::{u32_to_i32, WithDBError};
 use domain::outbound_shipment::UpdateOutboundShipmentLine;
+use repository::{
+    repository::{
+        InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+        TransactionError,
+    },
+    schema::{InvoiceLineRow, StockLineRow},
+};
 
 mod generate;
 mod validate;

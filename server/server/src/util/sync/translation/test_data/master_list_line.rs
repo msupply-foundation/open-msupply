@@ -1,7 +1,5 @@
-use crate::{
-    database::schema::{CentralSyncBufferRow, MasterListLineRow},
-    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
-};
+use crate::util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
+use repository::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 const MASTER_LIST_LINE_1: &'static str = r#"{
     "ID": "9B02D0770B544BD1AC7DB99BB85FCDD5",

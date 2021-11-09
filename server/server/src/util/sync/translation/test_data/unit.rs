@@ -1,7 +1,5 @@
-use crate::{
-    database::schema::{CentralSyncBufferRow, UnitRow},
-    util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord},
-};
+use crate::util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
+use repository::schema::{CentralSyncBufferRow, UnitRow};
 
 const UNIT_1: (&'static str, &'static str) = (
     "A02C91EB6C77400BA783C4CD7C565F29",

@@ -1,5 +1,4 @@
 use crate::{
-    database::repository::StorageConnectionManager,
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{
@@ -10,6 +9,7 @@ use crate::{
     service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError},
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
+use repository::repository::StorageConnectionManager;
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 

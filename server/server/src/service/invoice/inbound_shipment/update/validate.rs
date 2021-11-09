@@ -1,12 +1,10 @@
-use crate::{
-    database::{repository::StorageConnection, schema::InvoiceRow},
-    service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_status, check_invoice_type,
-        inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
-        InvoiceStatusError, OtherPartyError, WrongInvoiceType,
-    },
+use crate::service::invoice::{
+    check_invoice_exists, check_invoice_finalised, check_invoice_status, check_invoice_type,
+    inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
+    InvoiceStatusError, OtherPartyError, WrongInvoiceType,
 };
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceType};
+use repository::{repository::StorageConnection, schema::InvoiceRow};
 
 use super::UpdateInboundShipmentError;
 

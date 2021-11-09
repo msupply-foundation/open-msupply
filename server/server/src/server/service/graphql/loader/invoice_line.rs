@@ -1,9 +1,11 @@
-use crate::database::repository::{
-    InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceLineStats, RepositoryError,
-    StorageConnectionManager,
-};
-use crate::database::schema::InvoiceLineRow;
 use domain::invoice::InvoicePricing;
+use repository::{
+    repository::{
+        InvoiceLineQueryRepository, InvoiceLineRepository, RepositoryError,
+        StorageConnectionManager,
+    },
+    schema::InvoiceLineRow,
+};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -51,17 +53,14 @@ impl Loader<String> for InvoiceLineStatsLoader {
         Ok(repo
             .stats(invoice_ids)?
             .into_iter()
-            .map(|stats| (stats.invoice_id.clone(), InvoicePricing::from(stats)))
+            .map(|stats| {
+                (
+                    stats.invoice_id.clone(),
+                    InvoicePricing {
+                        total_after_tax: stats.total_after_tax,
+                    },
+                )
+            })
             .collect())
-    }
-}
-
-impl From<InvoiceLineStats> for InvoicePricing {
-    fn from(
-        InvoiceLineStats {
-            total_after_tax, ..
-        }: InvoiceLineStats,
-    ) -> Self {
-        InvoicePricing { total_after_tax }
     }
 }

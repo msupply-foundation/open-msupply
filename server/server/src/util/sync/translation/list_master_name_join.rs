@@ -1,7 +1,7 @@
-use crate::{
-    database::schema::{CentralSyncBufferRow, MasterListNameJoinRow},
-    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN},
+use crate::util::sync::translation::{
+    SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
 };
+use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 use serde::Deserialize;
 

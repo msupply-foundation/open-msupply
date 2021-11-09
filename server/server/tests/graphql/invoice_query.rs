@@ -2,15 +2,15 @@ mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_gql_query};
     use domain::invoice::InvoiceStatus;
     use remote_server::{
-        database::mock::MockDataInserts,
-        server::service::graphql::schema::types::InvoiceNodeStatus, util::test_db,
+        server::service::graphql::schema::types::InvoiceNodeStatus, util::test_utils::setup_all,
     };
 
+    use repository::mock::MockDataInserts;
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_invoice_query() {
-        let (mock_data, _, settings) = test_db::setup_all(
+        let (mock_data, _, settings) = setup_all(
             "omsupply-database-gql-invoice-query",
             MockDataInserts::all(),
         )

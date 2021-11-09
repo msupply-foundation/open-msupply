@@ -1,11 +1,12 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::{database::mock::MockDataInserts, util::test_db};
+    use remote_server::util::test_utils::setup_all;
+    use repository::mock::MockDataInserts;
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_items_query() {
-        let (_, _, settings) = test_db::setup_all("test_items_query", MockDataInserts::all()).await;
+        let (_, _, settings) = setup_all("test_items_query", MockDataInserts::all()).await;
 
         let query = r#"query items($itemFilter: ItemFilterInput!) {
             items(filter: $itemFilter) {

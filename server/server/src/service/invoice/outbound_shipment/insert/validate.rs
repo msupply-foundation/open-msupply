@@ -1,7 +1,7 @@
-use crate::database::repository::{
+use domain::{name::NameFilter, outbound_shipment::InsertOutboundShipment, Pagination};
+use repository::repository::{
     InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
 };
-use domain::{name::NameFilter, outbound_shipment::InsertOutboundShipment, Pagination};
 
 use super::InsertOutboundShipmentError;
 

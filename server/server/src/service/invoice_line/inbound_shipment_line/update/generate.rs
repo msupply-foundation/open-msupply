@@ -1,11 +1,9 @@
-use crate::{
-    database::{
-        repository::StorageConnection,
-        schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
-    },
-    service::{invoice_line::inbound_shipment_line::generate_batch, u32_to_i32},
-};
+use crate::service::{invoice_line::inbound_shipment_line::generate_batch, u32_to_i32};
 use domain::inbound_shipment::UpdateInboundShipmentLine;
+use repository::{
+    repository::StorageConnection,
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
+};
 
 use super::UpdateInboundShipmentLineError;
 

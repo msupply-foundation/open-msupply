@@ -4,13 +4,11 @@ use reqwest::header::SET_COOKIE;
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::ContextExt;
 use crate::service::token::TokenService;
-use crate::{
-    database::repository::StorageConnectionManager,
-    service::{
-        token::{JWTIssuingError, TokenPair},
-        user_account::UserAccountService,
-    },
+use crate::service::{
+    token::{JWTIssuingError, TokenPair},
+    user_account::UserAccountService,
 };
+use repository::repository::StorageConnectionManager;
 
 use super::{DatabaseError, ErrorWrapper};
 

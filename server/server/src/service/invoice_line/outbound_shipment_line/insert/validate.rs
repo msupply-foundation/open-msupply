@@ -1,27 +1,24 @@
-use crate::{
-    database::{
-        repository::StorageConnection,
-        schema::{InvoiceRow, ItemRow, StockLineRow},
+use crate::service::{
+    invoice::{
+        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
+        InvoiceIsFinalised, WrongInvoiceType,
     },
-    service::{
-        invoice::{
-            check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
-            InvoiceIsFinalised, WrongInvoiceType,
+    invoice_line::{
+        check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_unique_stock_line,
+        validate::{
+            check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
+            LineAlreadyExists, NumberOfPacksBelowOne,
         },
-        invoice_line::{
-            check_batch_exists, check_batch_on_hold, check_item_matches_batch,
-            check_unique_stock_line,
-            validate::{
-                check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
-                LineAlreadyExists, NumberOfPacksBelowOne,
-            },
-            BatchIsOnHold, ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
-            StockLineNotFound,
-        },
-        u32_to_i32,
+        BatchIsOnHold, ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
+        StockLineNotFound,
     },
+    u32_to_i32,
 };
 use domain::{invoice::InvoiceType, outbound_shipment::InsertOutboundShipmentLine};
+use repository::{
+    repository::StorageConnection,
+    schema::{InvoiceRow, ItemRow, StockLineRow},
+};
 
 use super::InsertOutboundShipmentLineError;
 
