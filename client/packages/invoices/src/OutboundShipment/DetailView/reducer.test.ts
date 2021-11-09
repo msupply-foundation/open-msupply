@@ -114,8 +114,14 @@ describe('DetailView reducer', () => {
     },
   ];
 
-  const getState = ({ isDesc = true } = {}): OutboundShipmentStateShape => ({
-    draft: { ...placeholderInvoice, lines },
+  const getState = ({
+    isDesc = true,
+    defaultLines = [] as OutboundShipmentRow[],
+  } = {}): OutboundShipmentStateShape => ({
+    draft: {
+      ...placeholderInvoice,
+      lines: defaultLines.length ? defaultLines : lines,
+    },
     sortBy: {
       key: 'numberOfPacks',
       isDesc: isDesc,
@@ -240,6 +246,32 @@ describe('DetailView reducer', () => {
     ).toBe(0);
   });
 
+  it('sets the correct flags for each line when merging new server state', () => {
+    // The shipment has three lines. Two of them are new and one is updated.
+    // When the server state is merged, the created lines should have the isCreated flag set to false
+    // to indicate they have been persisted.
+    const defaultLines = [
+      createLine('1', { isCreated: true }),
+      createLine('2', { isCreated: false }),
+      createLine('3', { isCreated: true }),
+    ];
+
+    const state: OutboundShipmentStateShape = getState({ defaultLines });
+
+    const dataLines = [...defaultLines];
+    const data: Invoice = { ...placeholderInvoice, lines: dataLines };
+
+    const reducerResult = reducer(data, null)(state, DocumentAction.merge());
+
+    // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+    expect(
+      reducerResult.draft.lines.every(
+        ({ isCreated, isDeleted, isUpdated }) =>
+          !isCreated && !isDeleted && isUpdated
+      )
+    ).toBe(true);
+  });
+
   it('updates the client side draft state by merging the server invoice into the client data invoice draft, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = getState();
 
@@ -253,6 +285,9 @@ describe('DetailView reducer', () => {
     Object.entries(reducerResult.draft).forEach(([key, value]) => {
       if (key === 'comment') {
         expect(value).toEqual('josh');
+      } else if (key === 'lines') {
+        // Lines to be handled in their own tests as they're more complex.
+        return;
       } else {
         expect(JSON.stringify(value)).toEqual(JSON.stringify(state.draft[key]));
       }
