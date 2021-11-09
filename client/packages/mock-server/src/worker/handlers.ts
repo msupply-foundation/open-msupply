@@ -1,7 +1,7 @@
 import { Invoice as InvoiceSchema } from './../schema/Invoice';
 import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
-import { Invoice } from './../data/types';
-import { graphql } from 'msw'; // , rest } from 'msw';
+import { Invoice, InvoiceLine } from './../data/types';
+import { graphql } from 'msw';
 import { Api } from '../api';
 import {
   InvoiceNodeType,
@@ -159,54 +159,25 @@ export const stockCounts = graphql.query(
   }
 );
 
-/**
- * MSW Currently does not support batched mutations. Instead, inspect every outgoing POST
- * and check if the body is an array and each of the elements of the array has an existing
- * handler.
- */
-// const batchMutationHandler = rest.post(
-//   'http://localhost:4000',
-//   async (req, res) => {
-//     // This will ensure this handler does not try to handle the request
-//     console.warn('***** request ****', req);
+export const upsertOutboundShipment = graphql.mutation(
+  'upsertOutboundShipment',
+  (request, response, context) => {
+    const { variables } = request;
+    const { insertOutboundShipmentLines, updateOutboundShipments } = variables;
 
-//     if (!Array.isArray(req.body)) {
-//       console.warn('request body is not an array!!');
-//       throw new Error('Unsupported');
-//     }
+    if (updateOutboundShipments.length > 0) {
+      Api.MutationService.update.invoice(updateOutboundShipments[0]);
+    }
 
-//     // If the request body is an array, map each handler to a request and
-//     // find a handler to hand it.
-//     const data = await Promise.all(
-//       req.body.map(async operation => {
-//         const partReq = { ...req, body: operation };
-//         const handler = handlers.find(handler => handler.test(partReq));
+    if (insertOutboundShipmentLines.length > 0) {
+      insertOutboundShipmentLines.forEach((line: InvoiceLine) => {
+        Api.MutationService.insert.invoiceLine(line);
+      });
+    }
 
-//         // no handler matched that operation
-//         if (!handler) {
-//           return Promise.reject(new Error('Unsupported'));
-//         }
-
-//         // execute and return the response-like object
-//         return handler.run(partReq);
-//       })
-//     );
-
-//     return res(res => {
-//       res.headers.set('content-type', 'application/json');
-
-//       // Map all requests back into an array to return
-//       // for the original request.
-//       res.body = JSON.stringify(
-//         data.map(datum => {
-//           return JSON.parse(datum?.response?.body) || {};
-//         })
-//       );
-
-//       return res;
-//     });
-//   }
-// );
+    return response(context.data({ updateOutboundShipment: [] }));
+  }
+);
 
 export const handlers = [
   invoiceList,
@@ -220,6 +191,7 @@ export const handlers = [
   namesList,
   itemsListView,
   itemsWithStockLines,
+  upsertOutboundShipment,
   // batchMutationHandler,
   invoiceCounts,
   stockCounts,

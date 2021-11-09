@@ -7,7 +7,10 @@ import {
   NameData,
   removeElement,
 } from './data';
-import { UpdateOutboundShipmentInput } from '@openmsupply-client/common';
+import {
+  UpdateOutboundShipmentInput,
+  InsertOutboundShipmentLineInput,
+} from '@openmsupply-client/common';
 import {
   isAlmostExpired,
   isExpired,
@@ -160,9 +163,27 @@ export const insert = {
 
     return invoice;
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
-    InvoiceLineData.push(invoiceLine);
-    return invoiceLine;
+  invoiceLine: (invoiceLine: InsertOutboundShipmentLineInput): InvoiceLine => {
+    const item = db.get.byId.item(invoiceLine.itemId);
+    const stockLine = db.get.byId.stockLine(invoiceLine.stockLineId);
+
+    const newInvoiceLine: InvoiceLine = {
+      ...invoiceLine,
+      itemName: item.name,
+      itemCode: item.code,
+      itemUnit: item.unitName,
+      itemId: item.id,
+      expiryDate: stockLine.expiryDate,
+      stockLineId: stockLine.id,
+      costPricePerPack: stockLine.costPricePerPack,
+      sellPricePerPack: stockLine.sellPricePerPack,
+      location: stockLine.location,
+      quantity: invoiceLine.numberOfPacks,
+      packSize: stockLine.packSize,
+    };
+
+    InvoiceLineData.push(newInvoiceLine);
+    return newInvoiceLine;
   },
 };
 

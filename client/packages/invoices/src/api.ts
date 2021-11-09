@@ -14,9 +14,13 @@ import {
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
   OmSupplyApi,
+  InsertOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { OutboundShipment } from './OutboundShipment/DetailView/types';
+import {
+  OutboundShipment,
+  OutboundShipmentRow,
+} from './OutboundShipment/DetailView/types';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
@@ -134,6 +138,18 @@ const invoiceToInput = (
   };
 };
 
+const createInsertOutboundLineInput = (
+  line: OutboundShipmentRow
+): InsertOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    itemId: line.itemId,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+    invoiceId: line.invoiceId,
+  };
+};
+
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
@@ -142,6 +158,18 @@ export const onUpdate =
     });
 
     const { updateOutboundShipment } = result;
+
+    const insertLines = patch.lines.filter(({ isCreated }) => isCreated);
+
+    const result2 = await api.upsertOutboundShipment({
+      insertOutboundShipmentLines: insertLines.map(line =>
+        createInsertOutboundLineInput(line)
+      ),
+      updateOutboundShipments: [invoiceToInput(patch)],
+    });
+    console.log('-------------------------------------------');
+    console.log('result2', result2);
+    console.log('-------------------------------------------');
 
     if (updateOutboundShipment.__typename === 'InvoiceNode') {
       return patch;

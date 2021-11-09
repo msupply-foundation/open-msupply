@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === 'development') {
   } = require('@openmsupply-client/mock-server/src/worker/client');
   const worker = setupMockWorker();
 
-  worker.start();
+  // worker.start();
 }
 
 ReactDOM.render(<App />, document.getElementById('root'));
