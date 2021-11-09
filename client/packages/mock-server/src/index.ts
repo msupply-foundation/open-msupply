@@ -13,6 +13,7 @@ const resolvers = {
     ...Schema.Invoice.QueryResolvers,
     ...Schema.InvoiceLine.QueryResolvers,
     ...Schema.StockLine.QueryResolvers,
+    ...Schema.Statistics.QueryResolvers,
   },
   Mutations: {
     ...Schema.Invoice.MutationResolvers,
