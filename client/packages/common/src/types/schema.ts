@@ -1023,6 +1023,7 @@ export type UpdateOutboundShipmentErrorInterface = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -1471,6 +1472,59 @@ export type InsertOutboundShipmentMutation = {
               fullError: string;
             }
           | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
+export type UpdateOutboundShipmentMutationVariables = Exact<{
+  input: UpdateOutboundShipmentInput;
+}>;
+
+export type UpdateOutboundShipmentMutation = {
+  __typename?: 'Mutations';
+  updateOutboundShipment:
+    | { __typename: 'InvoiceNode'; id: string }
+    | {
+        __typename: 'NodeError';
+        error:
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | {
+        __typename: 'UpdateOutboundShipmentError';
+        error:
+          | {
+              __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError';
+              description: string;
+            }
+          | {
+              __typename?: 'CannotChangeStatusBackToDraftError';
+              description: string;
+            }
+          | {
+              __typename?: 'CannotChangeStatusOfInvoiceOnHold';
+              description: string;
+            }
+          | { __typename?: 'DatabaseError'; description: string }
+          | {
+              __typename?: 'FinalisedInvoiceIsNotEditableError';
+              description: string;
+            }
+          | { __typename?: 'ForeignKeyError'; description: string }
+          | {
+              __typename?: 'InvoiceLineHasNoStockLineError';
+              description: string;
+            }
+          | { __typename?: 'NotAnOutboundShipmentError'; description: string }
+          | {
+              __typename?: 'OtherPartyCannotBeThisStoreError';
+              description: string;
+            }
+          | { __typename?: 'OtherPartyNotACustomerError'; description: string }
+          | { __typename?: 'RecordNotFound'; description: string };
       };
 };
 
@@ -1972,6 +2026,37 @@ export const InsertOutboundShipmentDocument = gql`
     }
   }
 `;
+export const UpdateOutboundShipmentDocument = gql`
+  mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
+    updateOutboundShipment(input: $input) {
+      ... on InvoiceNode {
+        __typename
+        id
+      }
+      ... on NodeError {
+        __typename
+        error {
+          description
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+        }
+      }
+      ... on UpdateOutboundShipmentError {
+        __typename
+        error {
+          description
+        }
+      }
+    }
+  }
+`;
 export const InvoiceCountsDocument = gql`
   query invoiceCounts($type: InvoiceNodeType!) {
     invoiceCounts(type: $type) {
@@ -2100,6 +2185,20 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertOutboundShipment'
+      );
+    },
+    updateOutboundShipment(
+      variables: UpdateOutboundShipmentMutationVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<UpdateOutboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateOutboundShipmentMutation>(
+            UpdateOutboundShipmentDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updateOutboundShipment'
       );
     },
     invoiceCounts(
