@@ -175,19 +175,21 @@ export const reducer = (
 
           const { lines } = draft;
 
-          const existingLine = lines.find(({ id }) => id === line.id);
+          const existingLineIdx = lines.findIndex(({ id }) => id === line.id);
 
-          if (existingLine) {
-            line.isCreated = false;
-            line.isUpdated = true;
-            line.isDeleted = false;
+          if (existingLineIdx >= 0) {
+            lines[existingLineIdx] = {
+              ...lines[existingLineIdx],
+              ...line,
+              isUpdated: true,
+              isDeleted: false,
+            };
           } else {
             line.isCreated = true;
             line.isUpdated = true;
             line.isDeleted = false;
+            draft.lines.push(createLine(line, draft, dispatch));
           }
-
-          draft.lines.push(createLine(line, draft, dispatch));
 
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
