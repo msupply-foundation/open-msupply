@@ -10,11 +10,11 @@ export type ReducerCreator<ServerData, State, ActionSet> = (
   dispatch: Dispatch<DocumentActionSet<ActionSet>> | null
 ) => (state: State | undefined, action: ActionSet) => State;
 
-export interface DocumentState<Document, State, ServerData, ActionSet> {
+export interface DocumentState<Document, State, ActionSet> {
   draft: Document;
   state: State;
   dispatch: Dispatch<DocumentActionSet<ActionSet>>;
-  save: (draft: Document) => Promise<ServerData>;
+  save: () => Promise<void>;
 }
 
 export enum DocumentActionType {

@@ -63,10 +63,30 @@ export const insert = {
   },
 };
 
+const getStatusTime = (status: string | undefined | null) => {
+  switch (status) {
+    case 'ALLOCATED': {
+      return { allocatedDatetime: new Date().toISOString() };
+    }
+    case 'SHIPPED': {
+      return { shippedDatetime: new Date().toISOString() };
+    }
+    case 'PICKED': {
+      return { pickedDatetime: new Date().toISOString() };
+    }
+  }
+
+  return {};
+};
+
 export const update = {
   invoice: (invoice: UpdateOutboundShipmentInput): ResolvedInvoice => {
-    const updated = db.update.invoice(invoice);
+    const updated = db.update.invoice({
+      ...invoice,
+      ...getStatusTime(invoice.status),
+    });
     const resolvedInvoice = ResolverService.byId.invoice(updated.id);
+
     return resolvedInvoice;
   },
   invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
