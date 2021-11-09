@@ -1,14 +1,7 @@
 import React, { FC } from 'react';
-import {
-  BarChartIcon,
-  Grid,
-  InlineSpinner,
-  LocaleKey,
-  Paper,
-  StockIcon,
-  Typography,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Grid, Paper, Typography } from '@mui/material';
+import { BarChartIcon, InlineSpinner, StockIcon } from '../../../';
+import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
 
 export type Stat = {
   labelKey: LocaleKey;
