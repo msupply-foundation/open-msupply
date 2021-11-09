@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { CircularProgress, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
-
+import { useTranslation } from '../../../../intl/intlHelpers';
 const Container = styled(Box)({
   display: 'flex',
   alignItems: 'center',
@@ -22,10 +22,11 @@ const StyledText = styled(Typography)(({ theme }) => ({
 }));
 
 export const BasicSpinner: FC = () => {
+  const t = useTranslation();
   return (
     <Container>
       <CircularProgress />
-      <StyledText>Loading...</StyledText>
+      <StyledText>{t('app.loading')}</StyledText>
     </Container>
   );
 };
