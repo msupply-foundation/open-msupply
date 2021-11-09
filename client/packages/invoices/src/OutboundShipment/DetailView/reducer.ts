@@ -6,6 +6,7 @@ import {
   DocumentActionType,
   SortBy,
   Invoice,
+  InvoiceLine,
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import {
@@ -103,12 +104,19 @@ export const reducer = (
 
           Object.keys(draft).forEach(key => {
             // TODO: Sometimes we want to keep the user entered values?
+            if (key === 'lines') return;
             draft[key] = data[key];
           });
 
-          draft.lines = draft.lines?.map(item =>
-            createLine(item, draft, dispatch)
-          );
+          draft.lines = draft.lines?.map(item => {
+            const serverLine = data.lines.find(line => line.id === item.id);
+
+            if (serverLine) {
+              return mergeLines(serverLine, item);
+            }
+
+            return item;
+          });
 
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
@@ -213,6 +221,21 @@ export const reducer = (
       return state;
     }
   );
+
+const mergeLines = (
+  serverLine: InvoiceLine,
+  clientLine: OutboundShipmentRow
+) => {
+  const newLine = {
+    ...clientLine,
+    ...serverLine,
+    isUpdated: true,
+    isCreated: false,
+    isDeleted: false,
+  };
+
+  return newLine;
+};
 
 const createLine = (
   line: OutboundShipmentRow,
