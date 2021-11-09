@@ -22,9 +22,11 @@ const Template: ComponentStory<typeof StatsPanel> = () => {
       <Box>Sample StatsPanel using the this as the Stats value:</Box>
       <Box
         style={{
-          backgroundColor: '#ddd',
+          backgroundColor: '#eee',
+          borderRadius: 6,
           fontFamily: 'Courier New',
           margin: '20px 60px 0 20px',
+          padding: 15,
           whiteSpace: 'pre-wrap',
         }}
       >
