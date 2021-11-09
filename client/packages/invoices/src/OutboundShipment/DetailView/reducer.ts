@@ -108,14 +108,16 @@ export const reducer = (
             draft[key] = data[key];
           });
 
-          draft.lines = draft.lines?.map(item => {
-            const serverLine = data.lines.find(line => line.id === item.id);
+          draft.lines = data.lines?.map(serverLine => {
+            const draftLine = draft.lines.find(
+              line => line.id === serverLine.id
+            );
 
-            if (serverLine) {
-              return mergeLines(serverLine, item);
+            if (draftLine) {
+              return mergeLines(serverLine, draftLine);
             }
 
-            return item;
+            return createLine(serverLine, draft, dispatch);
           });
 
           draft.update = (key, value) => {
@@ -238,12 +240,13 @@ const mergeLines = (
 };
 
 const createLine = (
-  line: OutboundShipmentRow,
+  line: InvoiceLine,
   draft: OutboundShipment,
   dispatch: Dispatch<DocumentActionSet<OutboundShipmentAction>> | null
-) => {
+): OutboundShipmentRow => {
   return {
     ...line,
+    stockLineId: '',
     invoiceId: draft.id,
     updateNumberOfPacks: (numberOfPacks: number) =>
       dispatch?.(OutboundAction.updateNumberOfPacks(line.id, numberOfPacks)),
