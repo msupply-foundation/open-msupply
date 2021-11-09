@@ -170,23 +170,26 @@ export const upsertOutboundShipment = graphql.mutation(
     const queryResponse = {
       __typename: 'BatchOutboundShipmentResponse',
       insertOutboundShipmentLines: [] as { id: string }[],
-      updateOutboundShipments: [] as { id: string }[],
+      updateOutboundShipments: [] as { id: string; __typename: string }[],
     };
 
     if (updateOutboundShipments.length > 0) {
       queryResponse.updateOutboundShipments = [
-        MutationService.update.invoice(updateOutboundShipments[0]),
+        {
+          ...MutationService.update.invoice(updateOutboundShipments[0]),
+          __typename: 'UpdateOutboundShipmentResponseWithId',
+        },
       ];
     }
 
     if (insertOutboundShipmentLines.length > 0) {
       queryResponse.insertOutboundShipmentLines =
-        insertOutboundShipmentLines.forEach((line: InvoiceLine) => {
+        insertOutboundShipmentLines.map((line: InvoiceLine) => {
           MutationService.insert.invoiceLine(line);
         });
     }
 
-    return response(context.data({ upsertOutboundShipment: queryResponse }));
+    return response(context.data({ batchOutboundShipment: queryResponse }));
   }
 );
 

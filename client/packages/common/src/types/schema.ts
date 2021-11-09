@@ -1613,17 +1613,17 @@ export type UpsertOutboundShipmentMutationVariables = Exact<{
 export type UpsertOutboundShipmentMutation = {
   __typename?: 'Mutations';
   batchOutboundShipment: {
-    __typename?: 'BatchOutboundShipmentResponse';
+    __typename: 'BatchOutboundShipmentResponse';
     insertOutboundShipmentLines?:
       | Array<{
-          __typename?: 'InsertOutboundShipmentLineResponseWithId';
+          __typename: 'InsertOutboundShipmentLineResponseWithId';
           id: string;
         }>
       | null
       | undefined;
     updateOutboundShipments?:
       | Array<{
-          __typename?: 'UpdateOutboundShipmentResponseWithId';
+          __typename: 'UpdateOutboundShipmentResponseWithId';
           id: string;
         }>
       | null
@@ -2173,10 +2173,13 @@ export const UpsertOutboundShipmentDocument = gql`
       insertOutboundShipmentLines: $insertOutboundShipmentLines
       updateOutboundShipments: $updateOutboundShipments
     ) {
+      __typename
       insertOutboundShipmentLines {
+        __typename
         id
       }
       updateOutboundShipments {
+        __typename
         id
       }
     }

@@ -538,10 +538,13 @@ mutation upsertOutboundShipment(
     insertOutboundShipmentLines: $insertOutboundShipmentLines
     updateOutboundShipments: $updateOutboundShipments
   ) {
+    __typename
     insertOutboundShipmentLines {
+      __typename
       id
     }
     updateOutboundShipments {
+      __typename
       id
     }
   }

@@ -153,29 +153,28 @@ const createInsertOutboundLineInput = (
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
-    const result = await api.updateOutboundShipment({
-      input: invoiceToInput(patch),
-    });
-
-    const { updateOutboundShipment } = result;
-
     const insertLines = patch.lines.filter(({ isCreated }) => isCreated);
 
-    const result2 = await api.upsertOutboundShipment({
+    const result = await api.upsertOutboundShipment({
       insertOutboundShipmentLines: insertLines.map(line =>
         createInsertOutboundLineInput(line)
       ),
       updateOutboundShipments: [invoiceToInput(patch)],
     });
-    console.log('-------------------------------------------');
-    console.log('result2', result2);
-    console.log('-------------------------------------------');
 
-    if (updateOutboundShipment.__typename === 'InvoiceNode') {
-      return patch;
+    const { batchOutboundShipment } = result;
+
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      const { updateOutboundShipments } = batchOutboundShipment;
+      if (
+        updateOutboundShipments?.[0]?.__typename ===
+        'UpdateOutboundShipmentResponseWithId'
+      ) {
+        return patch;
+      }
     }
 
-    throw new Error(updateOutboundShipment.error.description);
+    throw new Error(':shrug');
   };
 
 interface Api<ReadType, UpdateType> {
