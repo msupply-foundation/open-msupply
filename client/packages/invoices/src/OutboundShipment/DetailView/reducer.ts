@@ -13,7 +13,7 @@ import {
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
-  InvoiceLineRow,
+  OutboundShipmentRow,
 } from './types';
 
 const parseValue = (object: any, key: string) => {
@@ -42,11 +42,11 @@ const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
 };
 
 export const OutboundAction = {
-  upsertLine: (invoiceLine: InvoiceLineRow): OutboundShipmentAction => ({
+  upsertLine: (invoiceLine: OutboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.UpsertLine,
     payload: { invoiceLine },
   }),
-  deleteLine: (invoiceLine: InvoiceLineRow): OutboundShipmentAction => ({
+  deleteLine: (invoiceLine: OutboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.DeleteLine,
     payload: { invoiceLine },
   }),
@@ -64,7 +64,7 @@ export const OutboundAction = {
     type: ActionType.UpdateNumberOfPacks,
     payload: { rowKey, numberOfPacks },
   }),
-  onSortBy: (column: Column<InvoiceLineRow>): OutboundShipmentAction => ({
+  onSortBy: (column: Column<OutboundShipmentRow>): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
   }),
@@ -72,7 +72,7 @@ export const OutboundAction = {
 
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
-  sortBy: SortBy<InvoiceLineRow>;
+  sortBy: SortBy<OutboundShipmentRow>;
   deletedLines: InvoiceLine[];
 }
 
