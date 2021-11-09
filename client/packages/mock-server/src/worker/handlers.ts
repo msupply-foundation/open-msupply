@@ -1,9 +1,10 @@
-import { Invoice as InvoiceSchema } from './../schema/Invoice';
-import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
-import { Invoice, InvoiceLine } from './../data/types';
 import { graphql } from 'msw';
-import { Api } from '../api';
+import { Invoice as InvoiceSchema } from './../schema/Invoice';
+import { Invoice, InvoiceLine } from './../data/types';
+import { MutationService } from './../api/mutations';
+import { ResolverService } from './../api/resolvers';
 import {
+  UpdateOutboundShipmentInput,
   InvoiceNodeType,
   InvoicesQueryVariables,
   ItemsListViewQueryVariables,
@@ -15,7 +16,8 @@ const updateInvoice = graphql.mutation<
   { input: UpdateOutboundShipmentInput }
 >('updateOutboundShipment', (request, response, context) => {
   const { variables } = request;
-  const result = Api.MutationService.update.invoice(variables.input);
+
+  const result = MutationService.update.invoice(variables.input);
   return response(context.data({ updateOutboundShipment: result }));
 });
 
@@ -25,7 +27,7 @@ const insertInvoice = graphql.mutation(
     const { variables } = request;
     const { id, otherPartyId } = variables;
 
-    const result = Api.MutationService.insert.invoice({
+    const result = MutationService.insert.invoice({
       id,
       otherPartyId,
     } as unknown as Invoice);
@@ -59,7 +61,7 @@ export const namesList = graphql.query<
 >('names', (request, response, context) => {
   const { variables } = request;
 
-  const result = Api.ResolverService.list.name(variables);
+  const result = ResolverService.list.name(variables);
 
   return response(context.data({ names: result }));
 });
@@ -70,7 +72,7 @@ export const invoiceList = graphql.query<
 >('invoices', (request, response, context) => {
   const { variables } = request;
 
-  const result = Api.ResolverService.list.invoice(variables);
+  const result = ResolverService.list.invoice(variables);
 
   return response(context.data({ invoices: result }));
 });
@@ -81,7 +83,7 @@ export const invoiceDetail = graphql.query(
     const { variables } = request;
     const { id } = variables;
 
-    const invoice = Api.ResolverService.byId.invoice(id as string);
+    const invoice = ResolverService.byId.invoice(id as string);
 
     return response(context.data({ invoice }));
   }
@@ -93,7 +95,7 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
     const { variables } = request;
     const { invoiceNumber } = variables;
 
-    const invoice = Api.ResolverService.invoice.get.byInvoiceNumber(
+    const invoice = ResolverService.invoice.get.byInvoiceNumber(
       invoiceNumber as number
     );
 
@@ -106,7 +108,7 @@ export const itemsWithStockLines = graphql.query<
   ItemsListViewQueryVariables
 >('itemsWithStockLines', (request, response, context) => {
   const { variables } = request;
-  const result = Api.ResolverService.list.item(variables);
+  const result = ResolverService.list.item(variables);
 
   return response(context.data({ items: result }));
 });
@@ -116,7 +118,7 @@ export const itemsListView = graphql.query<
   ItemsListViewQueryVariables
 >('itemsListView', (request, response, context) => {
   const { variables } = request;
-  const result = Api.ResolverService.list.item(variables);
+  const result = ResolverService.list.item(variables);
 
   return response(context.data({ items: result }));
 });
@@ -145,7 +147,7 @@ export const invoiceCounts = graphql.query<
 >('invoiceCounts', (request, response, context) => {
   const { variables } = request;
   const { type } = variables;
-  const invoiceCounts = Api.ResolverService.statistics.invoice(type);
+  const invoiceCounts = ResolverService.statistics.invoice(type);
 
   return response(context.data({ invoiceCounts }));
 });
@@ -153,7 +155,7 @@ export const invoiceCounts = graphql.query<
 export const stockCounts = graphql.query(
   'stockCounts',
   (_, response, context) => {
-    const stockCounts = Api.ResolverService.statistics.stock();
+    const stockCounts = ResolverService.statistics.stock();
 
     return response(context.data({ stockCounts }));
   }
@@ -165,17 +167,26 @@ export const upsertOutboundShipment = graphql.mutation(
     const { variables } = request;
     const { insertOutboundShipmentLines, updateOutboundShipments } = variables;
 
+    const queryResponse = {
+      __typename: 'BatchOutboundShipmentResponse',
+      insertOutboundShipmentLines: [] as { id: string }[],
+      updateOutboundShipments: [] as { id: string }[],
+    };
+
     if (updateOutboundShipments.length > 0) {
-      Api.MutationService.update.invoice(updateOutboundShipments[0]);
+      queryResponse.updateOutboundShipments = [
+        MutationService.update.invoice(updateOutboundShipments[0]),
+      ];
     }
 
     if (insertOutboundShipmentLines.length > 0) {
-      insertOutboundShipmentLines.forEach((line: InvoiceLine) => {
-        Api.MutationService.insert.invoiceLine(line);
-      });
+      queryResponse.insertOutboundShipmentLines =
+        insertOutboundShipmentLines.forEach((line: InvoiceLine) => {
+          MutationService.insert.invoiceLine(line);
+        });
     }
 
-    return response(context.data({ updateOutboundShipment: [] }));
+    return response(context.data({ upsertOutboundShipment: queryResponse }));
   }
 );
 
@@ -192,7 +203,6 @@ export const handlers = [
   itemsListView,
   itemsWithStockLines,
   upsertOutboundShipment,
-  // batchMutationHandler,
   invoiceCounts,
   stockCounts,
 ];
