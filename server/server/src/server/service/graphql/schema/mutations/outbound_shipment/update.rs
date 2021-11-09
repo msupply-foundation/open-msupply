@@ -1,5 +1,4 @@
 use crate::{
-    database::repository::StorageConnectionManager,
     server::service::graphql::schema::{
         mutations::{
             error::DatabaseError,
@@ -17,6 +16,7 @@ use crate::{
     service::invoice::{update_outbound_shipment, UpdateOutboundShipmentError},
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
+use repository::repository::StorageConnectionManager;
 
 use super::{
     CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,

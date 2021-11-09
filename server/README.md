@@ -30,7 +30,6 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 ### Windows Subsystem for Linux (WSL)
 
-
 - Install [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and [Ubuntu 20.04 LTS](https://www.microsoft.com/en-nz/p/ubuntu-2004-lts/9n6svws3rx71).
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install) for `Windows Subsystem for Linux` users.
 - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-windows/wsl) for WLS2.
@@ -69,10 +68,10 @@ cargo install diesel_cli --no-default-features --features "sqlite-bundled postgr
 
 ```bash
 # postgres
-diesel migration run --database-url='postgres://postgres:password@localhost:5432/omsupply-database' --migration-dir ./migrations/postgres
+diesel migration run --database-url='postgres://postgres:password@localhost:5432/omsupply-database' --migration-dir ./repository/migrations/postgres
 
 # sqlite
-diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ./migrations/sqlite/
+diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ./repository/migrations/sqlite/
 ```
 
 - Build and start the remote server:

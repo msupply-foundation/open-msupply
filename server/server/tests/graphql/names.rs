@@ -1,23 +1,23 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::{
-        database::{
+    use remote_server::{server::data::get_repositories, util::test_utils::get_test_settings};
+    use repository::{
+        test_db,
+        {
             mock::{mock_name_store_joins, mock_names, mock_stores},
             repository::{
-                get_repositories, NameRepository, NameStoreJoinRepository,
-                StorageConnectionManager, StoreRepository,
+                NameRepository, NameStoreJoinRepository, StorageConnectionManager, StoreRepository,
             },
             schema::{NameRow, NameStoreJoinRow, StoreRow},
         },
-        util::test_db,
     };
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_names_query() {
-        let settings = test_db::get_test_settings("omsupply-database-gql-names-query");
+        let settings = get_test_settings("omsupply-database-gql-names-query");
         test_db::setup(&settings.database).await;
-        let repositories = get_repositories(&settings).await;
+        let repositories = get_repositories(&settings.database).await;
         let connection_manager = repositories.get::<StorageConnectionManager>().unwrap();
         let connection = connection_manager.connection().unwrap();
 

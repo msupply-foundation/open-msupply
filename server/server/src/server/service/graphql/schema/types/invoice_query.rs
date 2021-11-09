@@ -1,5 +1,4 @@
 use crate::{
-    database::repository::StorageConnectionManager,
     server::service::graphql::{
         loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
         ContextExt,
@@ -13,6 +12,7 @@ use domain::{
     invoice::{Invoice, InvoiceFilter, InvoicePricing},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
+use repository::repository::StorageConnectionManager;
 use serde::Serialize;
 
 use super::{

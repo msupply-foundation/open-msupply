@@ -197,20 +197,21 @@ impl SyncConnection {
 
 #[cfg(test)]
 mod tests {
-    use httpmock::prelude::{MockServer, GET, POST};
+    use httpmock::{
+        Method::{GET, POST},
+        MockServer,
+    };
     use reqwest::header::AUTHORIZATION;
     use serde_json;
 
-    use crate::{
-        database::schema::CentralSyncBufferRow,
-        util::{
-            settings::SyncSettings,
-            sync::{
-                CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,
-                RemoteSyncRecordAction, RemoteSyncRecordData, SyncConnection,
-            },
+    use crate::util::{
+        settings::SyncSettings,
+        sync::{
+            CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,
+            RemoteSyncRecordAction, RemoteSyncRecordData, SyncConnection,
         },
     };
+    use repository::schema::CentralSyncBufferRow;
 
     #[actix_rt::test]
     async fn test_initialise_remote_records() {

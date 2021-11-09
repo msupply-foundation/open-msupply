@@ -2,15 +2,13 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::{
-        database::{mock::MockDataInserts, repository::InvoiceRepository},
-        util::test_db,
-    };
+    use remote_server::util::test_utils::setup_all;
+    use repository::{mock::MockDataInserts, repository::InvoiceRepository};
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_insert() {
-        let (mock_data, connection, settings) = test_db::setup_all(
+        let (mock_data, connection, settings) = setup_all(
             "omsupply-database-gql-outbound_shipment_insert",
             MockDataInserts::all(),
         )

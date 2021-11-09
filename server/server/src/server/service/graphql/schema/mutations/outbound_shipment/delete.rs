@@ -1,5 +1,4 @@
 use crate::{
-    database::repository::StorageConnectionManager,
     server::service::graphql::schema::{
         mutations::{
             CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
@@ -9,6 +8,7 @@ use crate::{
     },
     service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError},
 };
+use repository::repository::StorageConnectionManager;
 
 use async_graphql::{Interface, Union};
 

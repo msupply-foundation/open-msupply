@@ -1,24 +1,22 @@
-use crate::{
-    database::{
-        repository::StorageConnection,
-        schema::{InvoiceRow, ItemRow},
+use crate::service::{
+    invoice::{
+        check_invoice_exists, check_invoice_finalised, check_invoice_type,
+        validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
     },
-    service::{
-        invoice::{
-            check_invoice_exists, check_invoice_finalised, check_invoice_type,
-            validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
+    invoice_line::{
+        inbound_shipment_line::check_pack_size,
+        validate::{
+            check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
+            LineAlreadyExists, NumberOfPacksBelowOne,
         },
-        invoice_line::{
-            inbound_shipment_line::check_pack_size,
-            validate::{
-                check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
-                LineAlreadyExists, NumberOfPacksBelowOne,
-            },
-            PackSizeBelowOne,
-        },
+        PackSizeBelowOne,
     },
 };
 use domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType};
+use repository::{
+    repository::StorageConnection,
+    schema::{InvoiceRow, ItemRow},
+};
 
 use super::InsertInboundShipmentLineError;
 

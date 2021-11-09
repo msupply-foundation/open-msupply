@@ -1,83 +1,68 @@
-use crate::{
-    database::repository::StorageConnectionManager,
-    server::{
-        data::LoaderMap,
-        service::graphql::loader::{
-            InvoiceLineLoader, InvoiceLoader, ItemLoader, RequisitionLineLoader, RequisitionLoader,
-            StoreLoader, UserAccountLoader,
-        },
+use crate::server::{
+    data::LoaderMap,
+    service::graphql::loader::{
+        InvoiceLineLoader, InvoiceLoader, ItemLoader, RequisitionLineLoader, RequisitionLoader,
+        StoreLoader, UserAccountLoader,
     },
-    util::settings::Settings,
 };
+use repository::repository::StorageConnectionManager;
 
 use async_graphql::dataloader::DataLoader;
-
-use diesel::r2d2::{ConnectionManager, Pool};
-
-#[cfg(feature = "postgres")]
-use diesel::PgConnection as DBBackendConnection;
-
-#[cfg(feature = "sqlite")]
-use diesel::SqliteConnection as DBBackendConnection;
 
 use super::{
     name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineByIdLoader,
     StockLineByItemIdLoader,
 };
 
-pub async fn get_loaders(settings: &Settings) -> LoaderMap {
-    let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&settings.database.connection_string());
-    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
-
+pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> LoaderMap {
     let mut loaders: LoaderMap = LoaderMap::new();
 
     let item_loader = DataLoader::new(ItemLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let requisition_loader = DataLoader::new(RequisitionLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let requisition_line_loader = DataLoader::new(RequisitionLineLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let store_loader = DataLoader::new(StoreLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let invoice_loader = DataLoader::new(InvoiceLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let invoice_line_query_loader = DataLoader::new(InvoiceLineQueryLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let stock_line_by_item_id_loader = DataLoader::new(StockLineByItemIdLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let stock_line_by_id_loader = DataLoader::new(StockLineByIdLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let user_account_loader = DataLoader::new(UserAccountLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     let name_by_id_loader = DataLoader::new(NameByIdLoader {
-        connection_manager: StorageConnectionManager::new(pool.clone()),
+        connection_manager: connection_manager.clone(),
     });
 
     loaders.insert(item_loader);

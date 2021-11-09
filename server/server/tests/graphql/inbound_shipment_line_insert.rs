@@ -10,13 +10,11 @@ mod graphql {
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use insert::InsertInboundShipmentLineErrorInterface::*;
-    use remote_server::{
-        database::{
-            mock::MockDataInserts,
-            repository::{InvoiceLineRepository, StockLineRepository},
-            schema::{InvoiceLineRow, StockLineRow},
-        },
-        util::test_db,
+    use remote_server::util::test_utils::setup_all;
+    use repository::{
+        mock::MockDataInserts,
+        repository::{InvoiceLineRepository, StockLineRepository},
+        schema::{InvoiceLineRow, StockLineRow},
     };
     use uuid::Uuid;
 
@@ -67,7 +65,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_insert_inbound_shipment_line() {
-        let (mut mock_data, connection, settings) = test_db::setup_all(
+        let (mut mock_data, connection, settings) = setup_all(
             "test_insert_inbound_shipment_line_query",
             MockDataInserts::all(),
         )

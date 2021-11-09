@@ -2,18 +2,16 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::{
-        database::{
-            mock::MockDataInserts,
-            repository::{InvoiceRepository, RepositoryError},
-        },
-        util::test_db,
+    use remote_server::util::test_utils::setup_all;
+    use repository::{
+        mock::MockDataInserts,
+        repository::{InvoiceRepository, RepositoryError},
     };
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_delete() {
-        let (_, connection, settings) = test_db::setup_all(
+        let (_, connection, settings) = setup_all(
             "omsupply-database-gql-outbound_shipment_delete",
             MockDataInserts::all(),
         )

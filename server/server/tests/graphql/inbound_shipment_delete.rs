@@ -10,8 +10,9 @@ mod graphql {
 
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use remote_server::database::repository::{InvoiceLineRepository, RepositoryError};
-    use remote_server::{database::mock::MockDataInserts, util::test_db};
+    use remote_server::util::test_utils::setup_all;
+    use repository::mock::MockDataInserts;
+    use repository::repository::{InvoiceLineRepository, RepositoryError};
 
     use delete::DeleteInboundShipmentErrorInterface::*;
 
@@ -53,7 +54,7 @@ mod graphql {
     #[actix_rt::test]
     async fn test_delete_inbound_shipment() {
         let (_, connection, settings) =
-            test_db::setup_all("test_delete_inbound_shipment_query", MockDataInserts::all()).await;
+            setup_all("test_delete_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
         let invoice_with_lines_id = "inbound_shipment_a";

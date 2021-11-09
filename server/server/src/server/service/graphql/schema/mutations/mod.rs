@@ -5,10 +5,11 @@ pub mod outbound_shipment;
 pub mod user_register;
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
-use crate::{database::repository::StorageConnectionManager, server::service::graphql::ContextExt};
+use crate::server::service::graphql::ContextExt;
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
+use repository::repository::StorageConnectionManager;
 pub use user_register::*;
 
 pub struct Mutations;

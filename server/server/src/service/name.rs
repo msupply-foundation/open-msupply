@@ -1,8 +1,8 @@
-use crate::database::repository::{NameQueryRepository, StorageConnectionManager};
 use domain::{
     name::{Name, NameFilter, NameSort},
     PaginationOption,
 };
+use repository::repository::{NameQueryRepository, StorageConnectionManager};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 

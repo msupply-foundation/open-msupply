@@ -1,14 +1,12 @@
-use crate::{
-    database::{
-        repository::{
-            InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
-            StorageConnectionManager, TransactionError,
-        },
-        schema::InvoiceRowStatus,
-    },
-    service::WithDBError,
-};
+use crate::service::WithDBError;
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
+use repository::{
+    repository::{
+        InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
+        StorageConnectionManager, TransactionError,
+    },
+    schema::InvoiceRowStatus,
+};
 
 mod validate;
 

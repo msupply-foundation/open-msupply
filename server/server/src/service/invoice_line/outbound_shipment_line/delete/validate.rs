@@ -1,16 +1,14 @@
-use crate::{
-    database::{repository::StorageConnection, schema::InvoiceLineRow},
-    service::{
-        invoice::{
-            check_invoice_exists, check_invoice_finalised, check_invoice_type,
-            validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
-        },
-        invoice_line::validate::{
-            check_line_belongs_to_invoice, check_line_exists, LineDoesNotExist, NotInvoiceLine,
-        },
+use crate::service::{
+    invoice::{
+        check_invoice_exists, check_invoice_finalised, check_invoice_type,
+        validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
+    },
+    invoice_line::validate::{
+        check_line_belongs_to_invoice, check_line_exists, LineDoesNotExist, NotInvoiceLine,
     },
 };
 use domain::{invoice::InvoiceType, outbound_shipment::DeleteOutboundShipmentLine};
+use repository::{repository::StorageConnection, schema::InvoiceLineRow};
 
 use super::DeleteOutboundShipmentLineError;
 

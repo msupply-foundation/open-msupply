@@ -1,11 +1,9 @@
-use crate::{
-    database::{
-        repository::{InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection},
-        schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    },
-    service::invoice::{check_invoice_status, InvoiceStatusError},
-};
+use crate::service::invoice::{check_invoice_status, InvoiceStatusError};
 use domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment, Pagination};
+use repository::{
+    repository::{InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection},
+    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+};
 
 use super::UpdateOutboundShipmentError;
 

@@ -1,16 +1,16 @@
 use crate::{
-    database::{
-        repository::{
-            CentralSyncBufferRepository, CentralSyncCursorRepository, NameStoreJoinRepository,
-            RepositoryError, StorageConnectionManager,
-        },
-        schema::CentralSyncBufferRow,
-    },
     server::data::RepositoryRegistry,
     util::sync::{
         translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
         CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
     },
+};
+use repository::{
+    repository::{
+        CentralSyncBufferRepository, CentralSyncCursorRepository, NameStoreJoinRepository,
+        RepositoryError, StorageConnectionManager,
+    },
+    schema::CentralSyncBufferRow,
 };
 
 use log::info;
@@ -253,11 +253,7 @@ impl Synchroniser {
 #[cfg(test)]
 mod tests {
     use crate::{
-        database::{
-            repository::{get_repositories, CentralSyncBufferRepository, StorageConnectionManager},
-            schema::CentralSyncBufferRow,
-        },
-        server::data::RepositoryRegistry,
+        server::data::{get_repositories, RepositoryRegistry},
         util::{
             configuration,
             settings::Settings,
@@ -271,8 +267,13 @@ mod tests {
                 },
                 SyncConnection, Synchroniser,
             },
-            test_db,
+            test_utils::get_test_settings,
         },
+    };
+    use repository::{
+        repository::{CentralSyncBufferRepository, StorageConnectionManager},
+        schema::CentralSyncBufferRow,
+        test_db,
     };
 
     #[actix_rt::test]
@@ -282,12 +283,12 @@ mod tests {
 
         let sync_connection = SyncConnection::new(&settings.sync);
 
-        let settings = test_db::get_test_settings("omsupply-database-integrate_central_records");
+        let settings = get_test_settings("omsupply-database-integrate_central_records");
 
         test_db::setup(&settings.database).await;
 
         let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings).await,
+            repositories: get_repositories(&settings.database).await,
         };
 
         // use test records with cursors that are out of order

@@ -1,8 +1,8 @@
 mod actor;
 pub mod auth;
 mod loader;
-mod repository;
+mod repositories;
 
 pub use actor::ActorRegistry;
 pub use loader::{LoaderMap, LoaderRegistry};
-pub use repository::{RepositoryMap, RepositoryRegistry};
+pub use repositories::{get_repositories, RepositoryMap, RepositoryRegistry};

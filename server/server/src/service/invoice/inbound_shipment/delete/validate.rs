@@ -1,14 +1,12 @@
-use crate::{
-    database::{
-        repository::{InvoiceLineQueryRepository, StorageConnection},
-        schema::InvoiceRow,
-    },
-    service::invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsFinalised, WrongInvoiceType,
-    },
+use crate::service::invoice::{
+    check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
+    InvoiceIsFinalised, WrongInvoiceType,
 };
 use domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType};
+use repository::{
+    repository::{InvoiceLineQueryRepository, StorageConnection},
+    schema::InvoiceRow,
+};
 
 use super::DeleteInboundShipmentError;
 

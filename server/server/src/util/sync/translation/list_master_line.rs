@@ -1,7 +1,5 @@
-use crate::{
-    database::schema::{CentralSyncBufferRow, MasterListLineRow},
-    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE},
-};
+use crate::util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE};
+use repository::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 use serde::Deserialize;
 

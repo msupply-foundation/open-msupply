@@ -3,5 +3,6 @@
 
 members = [
     "domain",
+    "repository",
     "server",
 ]

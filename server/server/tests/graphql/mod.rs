@@ -2,9 +2,8 @@ use std::sync::RwLock;
 
 use actix_web::{test::read_body, web::Data};
 use remote_server::{
-    database::repository::get_repositories,
     server::{
-        data::{auth::AuthData, LoaderRegistry, RepositoryRegistry},
+        data::{auth::AuthData, get_repositories, LoaderRegistry, RepositoryRegistry},
         service::graphql::{config as graphql_config, loader::get_loaders},
     },
     service::token_bucket::TokenBucket,
@@ -12,6 +11,7 @@ use remote_server::{
 };
 
 use assert_json_diff::assert_json_eq;
+use repository::repository::StorageConnectionManager;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
@@ -39,8 +39,8 @@ where
     IN: Serialize,
     OUT: DeserializeOwned,
 {
-    let repositories = get_repositories(settings).await;
-    let loaders = get_loaders(settings).await;
+    let repositories = get_repositories(&settings.database).await;
+    let loaders = get_loaders(&repositories.get::<StorageConnectionManager>().unwrap()).await;
 
     let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
@@ -86,8 +86,8 @@ async fn run_gql_query(
     query: &str,
     variables: &Option<serde_json::Value>,
 ) -> serde_json::Value {
-    let repositories = get_repositories(settings).await;
-    let loaders = get_loaders(settings).await;
+    let repositories = get_repositories(&settings.database).await;
+    let loaders = get_loaders(&repositories.get::<StorageConnectionManager>().unwrap()).await;
 
     let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });

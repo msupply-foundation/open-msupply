@@ -1,7 +1,6 @@
 use async_graphql::*;
 
 use crate::{
-    database::repository::StorageConnectionManager,
     server::service::graphql::schema::{
         mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
         types::{
@@ -12,6 +11,7 @@ use crate::{
     service::invoice::{insert_inbound_shipment, InsertInboundShipmentError},
 };
 use domain::inbound_shipment::InsertInboundShipment;
+use repository::repository::StorageConnectionManager;
 
 use super::OtherPartyNotASupplier;
 

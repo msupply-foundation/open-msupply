@@ -1,7 +1,5 @@
-use crate::{
-    database::schema::{CentralSyncBufferRow, NameRow},
-    util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_NAME},
-};
+use crate::util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_NAME};
+use repository::schema::{CentralSyncBufferRow, NameRow};
 
 use serde::Deserialize;
 

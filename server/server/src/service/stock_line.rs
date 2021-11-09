@@ -1,11 +1,9 @@
-use crate::{
-    database::repository::{StockLineRepository, StorageConnectionManager},
-    service::SingleRecordError,
-};
+use crate::service::SingleRecordError;
 use domain::{
     stock_line::{StockLine, StockLineFilter},
     Pagination,
 };
+use repository::repository::{StockLineRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

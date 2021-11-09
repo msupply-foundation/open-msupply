@@ -7,20 +7,17 @@ mod store;
 pub mod test_data;
 mod unit;
 
-use crate::{
-    database::{
-        repository::{
-            ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-            MasterListRepository, NameRepository, RepositoryError, StorageConnection,
-            StorageConnectionManager, StoreRepository, TransactionError, UnitRowRepository,
-        },
-        schema::{
-            CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
-            NameRow, StoreRow, UnitRow,
-        },
+use crate::{server::data::RepositoryRegistry, util::sync::translation::unit::LegacyUnitRow};
+use repository::{
+    repository::{
+        ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+        MasterListRepository, NameRepository, RepositoryError, StorageConnection,
+        StorageConnectionManager, StoreRepository, TransactionError, UnitRowRepository,
     },
-    server::data::RepositoryRegistry,
-    util::sync::translation::unit::LegacyUnitRow,
+    schema::{
+        CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+        NameRow, StoreRow, UnitRow,
+    },
 };
 
 use self::{
@@ -235,13 +232,13 @@ async fn store_integration_records(
 #[cfg(test)]
 mod tests {
     use crate::{
-        database::repository::repository::get_repositories,
-        server::data::RepositoryRegistry,
+        server::data::{get_repositories, RepositoryRegistry},
         util::{
             sync::translation::{import_sync_records, test_data::store::get_test_store_records},
-            test_db,
+            test_utils::get_test_settings,
         },
     };
+    use repository::test_db;
 
     use super::test_data::{
         check_records_against_database, extract_sync_buffer_rows,
@@ -255,11 +252,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_store_translation_insert() {
-        let settings = test_db::get_test_settings("omsupply-database-translation-insert");
+        let settings = get_test_settings("omsupply-database-translation-insert");
 
         test_db::setup(&settings.database).await;
         let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings).await,
+            repositories: get_repositories(&settings.database).await,
         };
 
         let mut records = Vec::new();
@@ -282,11 +279,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_store_translation_upsert() {
-        let settings = test_db::get_test_settings("omsupply-database-translation-upsert");
+        let settings = get_test_settings("omsupply-database-translation-upsert");
 
         test_db::setup(&settings.database).await;
         let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings).await,
+            repositories: get_repositories(&settings.database).await,
         };
 
         let mut init_records = Vec::new();

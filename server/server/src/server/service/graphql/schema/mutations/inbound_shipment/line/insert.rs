@@ -2,7 +2,6 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use crate::{
-    database::repository::StorageConnectionManager,
     server::service::graphql::schema::{
         mutations::{
             CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
@@ -16,6 +15,7 @@ use crate::{
     service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError},
 };
 use domain::inbound_shipment::InsertInboundShipmentLine;
+use repository::repository::StorageConnectionManager;
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentLineInput {

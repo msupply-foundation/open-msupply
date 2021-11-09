@@ -4,15 +4,13 @@ mod graphql {
     use crate::graphql::{assert_gql_query, common::get_invoice_lines_inline};
     use chrono::{DateTime, Utc};
     use domain::Pagination;
-    use remote_server::{
-        database::{mock::MockDataInserts, repository::InvoiceQueryRepository},
-        util::test_db,
-    };
+    use remote_server::util::test_utils::setup_all;
+    use repository::{mock::MockDataInserts, repository::InvoiceQueryRepository};
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_pricing() {
-        let (_, connection, settings) = test_db::setup_all(
+        let (_, connection, settings) = setup_all(
             "omsupply-database-gql-invoices-query-pricing",
             MockDataInserts::all(),
         )
@@ -63,7 +61,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_filters() {
-        let (_, connection, settings) = test_db::setup_all(
+        let (_, connection, settings) = setup_all(
             "omsupply-database-gql-invoices-query-filters",
             MockDataInserts::all(),
         )
@@ -164,7 +162,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_sort() {
-        let (_, connection, settings) = test_db::setup_all(
+        let (_, connection, settings) = setup_all(
             "omsupply-database-gql-invoices-query-sort",
             MockDataInserts::all(),
         )

@@ -1,11 +1,11 @@
 use async_graphql::dataloader::*;
 use std::collections::HashMap;
 
-use crate::database::repository::{NameQueryRepository, RepositoryError, StorageConnectionManager};
 use domain::{
     name::{Name, NameFilter},
     Pagination,
 };
+use repository::repository::{NameQueryRepository, RepositoryError, StorageConnectionManager};
 
 pub struct NameByIdLoader {
     pub connection_manager: StorageConnectionManager,

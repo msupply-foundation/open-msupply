@@ -1,11 +1,9 @@
-use crate::{
-    database::repository::{
-        InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
-        TransactionError,
-    },
-    service::WithDBError,
-};
+use crate::service::WithDBError;
 use domain::inbound_shipment::UpdateInboundShipmentLine;
+use repository::repository::{
+    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    TransactionError,
+};
 
 mod generate;
 mod validate;

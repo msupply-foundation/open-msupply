@@ -1,11 +1,9 @@
-use crate::{
-    database::repository::{InvoiceLineQueryRepository, StorageConnectionManager},
-    service::SingleRecordError,
-};
+use crate::service::SingleRecordError;
 use domain::{
     invoice_line::{InvoiceLine, InvoiceLineFilter},
     Pagination,
 };
+use repository::repository::{InvoiceLineQueryRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

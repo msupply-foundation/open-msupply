@@ -10,14 +10,11 @@ mod graphql {
     use chrono::NaiveDate;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use remote_server::database::repository::{ItemRepository, RepositoryError};
-    use remote_server::{
-        database::{
-            mock::MockDataInserts,
-            repository::{InvoiceLineRepository, StockLineRepository},
-            schema::{InvoiceLineRow, StockLineRow},
-        },
-        util::test_db,
+    use remote_server::util::test_utils::setup_all;
+    use repository::{
+        mock::MockDataInserts,
+        repository::{InvoiceLineRepository, ItemRepository, RepositoryError, StockLineRepository},
+        schema::{InvoiceLineRow, StockLineRow},
     };
 
     use update::UpdateInboundShipmentLineErrorInterface::*;
@@ -69,7 +66,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_update_inbound_shipment_line() {
-        let (mock_data, connection, settings) = test_db::setup_all(
+        let (mock_data, connection, settings) = setup_all(
             "test_update_inbound_shipment_line_query",
             MockDataInserts::all(),
         )
