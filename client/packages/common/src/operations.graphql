@@ -529,3 +529,20 @@ query stockCounts {
     }
   }
 }
+
+mutation upsertOutboundShipment(
+  $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
+  $updateOutboundShipments: [UpdateOutboundShipmentInput!]
+) {
+  batchOutboundShipment(
+    insertOutboundShipmentLines: $insertOutboundShipmentLines
+    updateOutboundShipments: $updateOutboundShipments
+  ) {
+    insertOutboundShipmentLines {
+      id
+    }
+    updateOutboundShipments {
+      id
+    }
+  }
+}

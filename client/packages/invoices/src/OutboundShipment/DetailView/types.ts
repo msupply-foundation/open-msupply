@@ -8,6 +8,11 @@ import {
 
 export interface OutboundShipmentRow extends InvoiceLine {
   updateNumberOfPacks?: (quantity: number) => void;
+
+  stockLineId: string;
+  invoiceId: string;
+  itemId: string;
+
   isUpdated?: boolean;
   isDeleted?: boolean;
   isCreated?: boolean;
@@ -57,9 +62,9 @@ export type OutboundShipmentAction =
   | OutboundShipmentUpdateInvoice
   | {
       type: ActionType.UpsertLine;
-      payload: { invoiceLine: InvoiceLine };
+      payload: { line: OutboundShipmentRow };
     }
   | {
       type: ActionType.DeleteLine;
-      payload: { invoiceLine: InvoiceLine };
+      payload: { line: OutboundShipmentRow };
     };

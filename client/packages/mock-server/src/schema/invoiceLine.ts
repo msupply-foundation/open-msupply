@@ -16,12 +16,6 @@ const MutationResolvers = {
   ): string => {
     return Api.MutationService.remove.invoiceLine(invoiceLineId);
   },
-  insertOutboundShipmentLine: (
-    _: any,
-    { invoiceLine }: { invoiceLine: InvoiceLineType }
-  ): InvoiceLineType => {
-    return Api.MutationService.insert.invoiceLine(invoiceLine);
-  },
 };
 
 export const InvoiceLine = {

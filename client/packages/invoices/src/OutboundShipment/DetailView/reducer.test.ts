@@ -20,6 +20,8 @@ describe('DetailView reducer', () => {
       costPricePerPack: 0,
       sellPricePerPack: 0,
       itemName: 'a',
+      stockLineId: '',
+      invoiceId: '',
     },
     {
       id: '3',
@@ -32,6 +34,8 @@ describe('DetailView reducer', () => {
       costPricePerPack: 0,
       sellPricePerPack: 0,
       itemName: 'c',
+      stockLineId: '',
+      invoiceId: '',
     },
     {
       id: '5',
@@ -44,6 +48,8 @@ describe('DetailView reducer', () => {
       costPricePerPack: 0,
       sellPricePerPack: 0,
       itemName: 'b',
+      stockLineId: '',
+      invoiceId: '',
     },
     {
       id: '2',
@@ -56,6 +62,8 @@ describe('DetailView reducer', () => {
       costPricePerPack: 0,
       sellPricePerPack: 0,
       itemName: 'e',
+      stockLineId: '',
+      invoiceId: '',
     },
     {
       id: '4',
@@ -68,6 +76,8 @@ describe('DetailView reducer', () => {
       costPricePerPack: 0,
       sellPricePerPack: 0,
       itemName: 'f',
+      stockLineId: '',
+      invoiceId: '',
     },
     {
       id: '2',
@@ -80,6 +90,8 @@ describe('DetailView reducer', () => {
       costPricePerPack: 0,
       sellPricePerPack: 0,
       itemName: 'd',
+      stockLineId: '',
+      invoiceId: '',
     },
   ];
 
