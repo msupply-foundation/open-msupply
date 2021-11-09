@@ -246,7 +246,6 @@ const createLine = (
 ): OutboundShipmentRow => {
   return {
     ...line,
-    stockLineId: '',
     invoiceId: draft.id,
     updateNumberOfPacks: (numberOfPacks: number) =>
       dispatch?.(OutboundAction.updateNumberOfPacks(line.id, numberOfPacks)),

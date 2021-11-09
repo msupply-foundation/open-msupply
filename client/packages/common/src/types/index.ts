@@ -64,6 +64,7 @@ export interface InvoiceLine extends DomainObject {
   numberOfPacks: number;
   costPricePerPack: number;
   sellPricePerPack: number;
+  stockLineId: string;
 
   expiryDate?: string | null;
 

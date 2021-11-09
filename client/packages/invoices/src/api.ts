@@ -118,7 +118,10 @@ export const onRead =
 
     return {
       ...invoice,
-      lines: linesGuard(invoice.lines),
+      lines: linesGuard(invoice.lines).map(line => ({
+        ...line,
+        stockLineId: '',
+      })),
       pricing: pricingGuard(invoice.pricing),
       otherParty: otherPartyGuard(invoice.otherParty),
     };
