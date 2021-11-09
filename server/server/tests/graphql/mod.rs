@@ -1,13 +1,11 @@
-use remote_server::{
-    server::{
-        data::{auth::AuthData, get_repositories, LoaderRegistry, RepositoryRegistry},
-        service::graphql::{config as graphql_config, loader::get_loaders},
-    },
-    util::settings::Settings,
-};
+use remote_server::util::settings::Settings;
 
-use repository::repository::StorageConnectionManager;
-use service::token_bucket::TokenBucket;
+use graphql::{
+    config as graphql_config,
+    loader::{get_loaders, LoaderRegistry},
+};
+use repository::get_storage_connection_manager;
+use service::{auth_data::AuthData, token_bucket::TokenBucket};
 
 use std::sync::RwLock;
 
@@ -40,10 +38,10 @@ where
     IN: Serialize,
     OUT: DeserializeOwned,
 {
-    let repositories = get_repositories(&settings.database).await;
-    let loaders = get_loaders(&repositories.get::<StorageConnectionManager>().unwrap()).await;
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let loaders = get_loaders(&connection_manager).await;
 
-    let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
+    let connection_manager_data = actix_web::web::Data::new(connection_manager);
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
@@ -55,10 +53,10 @@ where
 
     let mut app = actix_web::test::init_service(
         actix_web::App::new()
-            .data(repository_registry.clone())
+            .data(connection_manager_data.clone())
             .data(loader_registry.clone())
             .configure(graphql_config(
-                repository_registry,
+                connection_manager_data,
                 loader_registry,
                 auth_data,
             )),
@@ -87,10 +85,10 @@ async fn run_gql_query(
     query: &str,
     variables: &Option<serde_json::Value>,
 ) -> serde_json::Value {
-    let repositories = get_repositories(&settings.database).await;
-    let loaders = get_loaders(&repositories.get::<StorageConnectionManager>().unwrap()).await;
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let loaders = get_loaders(&connection_manager).await;
 
-    let repository_registry = actix_web::web::Data::new(RepositoryRegistry { repositories });
+    let connection_manager_data = actix_web::web::Data::new(connection_manager);
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
@@ -102,10 +100,10 @@ async fn run_gql_query(
 
     let mut app = actix_web::test::init_service(
         actix_web::App::new()
-            .data(repository_registry.clone())
+            .data(connection_manager_data.clone())
             .data(loader_registry.clone())
             .configure(graphql_config(
-                repository_registry,
+                connection_manager_data,
                 loader_registry,
                 auth_data,
             )),
@@ -173,8 +171,8 @@ use graphql_client::GraphQLQuery;
 type DateTime = ChronoDateTime<Utc>;
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -183,8 +181,8 @@ pub struct InsertInboundShipmentFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -193,8 +191,8 @@ pub struct UpdateInboundShipmentFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -203,8 +201,8 @@ pub struct DeleteInboundShipmentFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -213,8 +211,8 @@ pub struct InsertInboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -223,8 +221,8 @@ pub struct UpdateInboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -233,8 +231,8 @@ pub struct InvoiceFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -243,8 +241,8 @@ pub struct DeleteInboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -253,8 +251,8 @@ pub struct UpdateOutboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"
@@ -263,8 +261,8 @@ pub struct InsertOutboundShipmentLineFull;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql_schema/schema.graphql",
-    query_path = "graphql_schema/query.graphql",
+    schema_path = "../graphql/graphql_schema/schema.graphql",
+    query_path = "../graphql/graphql_schema/query.graphql",
     response_derives = "Debug,PartialEq,Clone,Serialize",
     variables_derives = "Debug,PartialEq,Clone",
     normalization = "Rust"

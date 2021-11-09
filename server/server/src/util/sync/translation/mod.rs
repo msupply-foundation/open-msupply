@@ -7,7 +7,7 @@ mod store;
 pub mod test_data;
 mod unit;
 
-use crate::{server::data::RepositoryRegistry, util::sync::translation::unit::LegacyUnitRow};
+use crate::util::sync::translation::unit::LegacyUnitRow;
 use repository::{
     repository::{
         ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
@@ -149,7 +149,7 @@ pub const TRANSLATION_RECORDS: &[&str] = &[
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
 pub async fn import_sync_records(
-    registry: &RepositoryRegistry,
+    connection_manager: &StorageConnectionManager,
     records: &Vec<CentralSyncBufferRow>,
 ) -> Result<(), SyncImportError> {
     let mut integration_records = IntegrationRecord {
@@ -166,7 +166,7 @@ pub async fn import_sync_records(
     info!("Succesfully translated central sync buffer records");
 
     info!("Storing integration records...");
-    store_integration_records(registry, &integration_records).await?;
+    store_integration_records(connection_manager, &integration_records).await?;
     info!("Successfully stored integration records");
 
     Ok(())
@@ -194,11 +194,10 @@ fn integrate_record(
 }
 
 async fn store_integration_records(
-    registry: &RepositoryRegistry,
+    connection_manager: &StorageConnectionManager,
     integration_records: &IntegrationRecord,
 ) -> Result<(), SyncImportError> {
-    let con = registry
-        .get::<StorageConnectionManager>()
+    let con = connection_manager
         .connection()
         .map_err(|error| SyncImportError::as_integration_error(error, ""))?;
     con.transaction(|con| async move {
@@ -231,14 +230,11 @@ async fn store_integration_records(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        server::data::{get_repositories, RepositoryRegistry},
-        util::{
-            sync::translation::{import_sync_records, test_data::store::get_test_store_records},
-            test_utils::get_test_settings,
-        },
+    use crate::util::{
+        sync::translation::{import_sync_records, test_data::store::get_test_store_records},
+        test_utils::get_test_settings,
     };
-    use repository::test_db;
+    use repository::{get_storage_connection_manager, test_db};
 
     use super::test_data::{
         check_records_against_database, extract_sync_buffer_rows,
@@ -255,9 +251,7 @@ mod tests {
         let settings = get_test_settings("omsupply-database-translation-insert");
 
         test_db::setup(&settings.database).await;
-        let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings.database).await,
-        };
+        let connection_manager = get_storage_connection_manager(&settings.database);
 
         let mut records = Vec::new();
         // Need to be in order of reference dependency
@@ -269,12 +263,12 @@ mod tests {
         records.append(&mut get_test_master_list_line_records());
         records.append(&mut get_test_master_list_name_join_records());
 
-        import_sync_records(&registry, &extract_sync_buffer_rows(&records))
+        import_sync_records(&connection_manager, &extract_sync_buffer_rows(&records))
             .await
             .unwrap();
 
         // Asserts inside this method, to avoid repetition
-        check_records_against_database(&registry, records).await;
+        check_records_against_database(&connection_manager, records).await;
     }
 
     #[actix_rt::test]
@@ -282,9 +276,7 @@ mod tests {
         let settings = get_test_settings("omsupply-database-translation-upsert");
 
         test_db::setup(&settings.database).await;
-        let registry = RepositoryRegistry {
-            repositories: get_repositories(&settings.database).await,
-        };
+        let connection_manager = get_storage_connection_manager(&settings.database);
 
         let mut init_records = Vec::new();
         init_records.append(&mut get_test_name_records());
@@ -301,11 +293,11 @@ mod tests {
         records.append(&mut init_records.iter().cloned().collect());
         records.append(&mut upsert_records.iter().cloned().collect());
 
-        import_sync_records(&registry, &extract_sync_buffer_rows(&records))
+        import_sync_records(&connection_manager, &extract_sync_buffer_rows(&records))
             .await
             .unwrap();
 
         // Asserts inside this method, to avoid repetition
-        check_records_against_database(&registry, upsert_records).await;
+        check_records_against_database(&connection_manager, upsert_records).await;
     }
 }

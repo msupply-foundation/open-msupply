@@ -1654,6 +1654,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+]
+
+[[package]]
 name = "graphql-introspection-query"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2934,15 +2952,12 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "config",
  "domain",
  "env_logger",
+ "graphql",
  "graphql_client",
  "httpmock",
  "log",

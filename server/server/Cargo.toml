@@ -9,29 +9,18 @@ default-run = "remote_server"
 path = "src/lib.rs"
 
 [[bin]]
-path = "graphql_schema/export.rs"
-name = "export_graphql"
-test = false
-bench = false
-
-[[bin]]
 path = "src/main.rs"
 name = "remote_server"
 
 [dependencies]
 domain = { path = "../domain" }
+graphql = { path = "../graphql" }
 repository = { path = "../repository" }
 service = { path = "../service" }
 
 actix-cors = "0.5.4"
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
 anyhow = "1.0.44"
-anymap = "0.12"
-assert-json-diff = "2.0.1"
-async-graphql = { version = "2.9.8", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "2.9.8"
-async-trait = "0.1.16"
-chrono = { version = "0.4", features = ["serde"] }
 config = "0.11.0"
 env_logger = "0.8.3"
 log = "0.4.14"
@@ -40,11 +29,13 @@ serde = "1.0.126"
 serde_json = "1.0.66"
 tokio = { version = "0.2", features = ["macros" ] } # Bumping to v1 requires actix-web >=v4 and reqwest >=0.11.
 thiserror = "1"
-graphql_client="0.10.0"
 
 [dev-dependencies]
-httpmock = "0.6"
 actix-rt = "1.1.1" # for Tokio 0.2
+assert-json-diff = "2.0.1"
+chrono = { version = "0.4", features = ["serde"] }
+graphql_client = "0.10.0"
+httpmock = "0.6"
 
 [features]
 postgres = ["repository/postgres"]

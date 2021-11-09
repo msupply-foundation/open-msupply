@@ -4,6 +4,7 @@
 members = [
     "domain",
     "repository",
+    "graphql",
     "server",
     "service",
 ]
