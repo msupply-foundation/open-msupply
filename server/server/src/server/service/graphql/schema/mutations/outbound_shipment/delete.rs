@@ -1,14 +1,12 @@
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
-            InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
-        },
-        types::{DatabaseError, ErrorWrapper, RecordNotFound},
+use crate::server::service::graphql::schema::{
+    mutations::{
+        CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
+        InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
     },
-    service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError},
+    types::{DatabaseError, ErrorWrapper, RecordNotFound},
 };
 use repository::repository::StorageConnectionManager;
+use service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError};
 
 use async_graphql::{Interface, Union};
 

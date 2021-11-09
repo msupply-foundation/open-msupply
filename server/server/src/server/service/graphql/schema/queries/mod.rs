@@ -1,9 +1,7 @@
 use crate::server::service::graphql::ContextExt;
-use crate::service::invoice::get_invoices;
-use crate::service::item::get_items;
-use crate::service::name::get_names;
 use domain::{invoice::InvoiceFilter, item::ItemFilter, name::NameFilter, PaginationOption};
 use repository::repository::StorageConnectionManager;
+use service::{invoice::get_invoices, item::get_items, name::get_names};
 
 use async_graphql::{Context, Object};
 

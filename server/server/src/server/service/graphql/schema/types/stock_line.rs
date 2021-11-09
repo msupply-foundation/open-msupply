@@ -3,8 +3,7 @@ use chrono::NaiveDate;
 
 use domain::stock_line::StockLine;
 use repository::repository::StorageConnectionManager;
-
-use crate::service::stock_line::get_stock_line;
+use service::stock_line::get_stock_line;
 
 use super::{Connector, ConnectorError, NodeError};
 

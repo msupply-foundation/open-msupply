@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::{ContextExt, RequestUserData};
-use crate::service::token::TokenService;
+use service::token::TokenService;
 
 use super::{set_refresh_token_cookie, ErrorWrapper};
 
@@ -104,17 +104,17 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
         Ok(claims) => claims,
         Err(err) => {
             let e = match err {
-                crate::service::token::JWTValidationError::ExpiredSignature => todo!(),
-                crate::service::token::JWTValidationError::NotAnApiToken => {
+                service::token::JWTValidationError::ExpiredSignature => todo!(),
+                service::token::JWTValidationError::NotAnApiToken => {
                     LogoutErrorInterface::NotAnApiToken(NotAnApiToken)
                 }
-                crate::service::token::JWTValidationError::InvalidToken(_) => {
+                service::token::JWTValidationError::InvalidToken(_) => {
                     LogoutErrorInterface::InvalidToken(InvalidToken)
                 }
-                crate::service::token::JWTValidationError::TokenInvalided => {
+                service::token::JWTValidationError::TokenInvalided => {
                     LogoutErrorInterface::TokenInvalided(TokenInvalided)
                 }
-                crate::service::token::JWTValidationError::ConcurrencyLockError(_) => {
+                service::token::JWTValidationError::ConcurrencyLockError(_) => {
                     LogoutErrorInterface::InternalError(InternalError("Lock error".to_string()))
                 }
             };
@@ -127,7 +127,7 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
     match service.logout(&user_id) {
         Ok(_) => {}
         Err(e) => match e {
-            crate::service::token::JWTLogoutError::ConcurrencyLockError(_) => {
+            service::token::JWTLogoutError::ConcurrencyLockError(_) => {
                 return LogoutResponse::Error(ErrorWrapper {
                     error: LogoutErrorInterface::InternalError(InternalError(
                         "Lock error".to_string(),

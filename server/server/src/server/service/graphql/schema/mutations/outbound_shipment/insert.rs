@@ -1,15 +1,13 @@
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
-        types::{
-            get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
-            NameNode,
-        },
+use crate::server::service::graphql::schema::{
+    mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
+    types::{
+        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
+        NameNode,
     },
-    service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError},
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
 use repository::repository::StorageConnectionManager;
+use service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError};
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 

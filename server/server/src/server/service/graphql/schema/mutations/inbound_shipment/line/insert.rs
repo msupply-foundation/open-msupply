@@ -1,21 +1,19 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, RecordAlreadyExist,
-        },
-        types::{
-            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
-            RangeError, RangeField,
-        },
+use crate::server::service::graphql::schema::{
+    mutations::{
+        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, RecordAlreadyExist,
     },
-    service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError},
+    types::{
+        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+        RangeError, RangeField,
+    },
 };
 use domain::inbound_shipment::InsertInboundShipmentLine;
 use repository::repository::StorageConnectionManager;
+use service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError};
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentLineInput {

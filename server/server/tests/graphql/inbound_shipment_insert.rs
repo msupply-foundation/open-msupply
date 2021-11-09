@@ -12,7 +12,7 @@ mod graphql {
         repository::InvoiceRepository,
         schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     };
-    use uuid::Uuid;
+    use service::util::uuid::uuid;
 
     use crate::graphql::{
         insert_inbound_shipment_full as insert, InsertInboundShipmentFull as Insert,
@@ -72,7 +72,7 @@ mod graphql {
         let supplier = get_name_inline!(NameFilter::new().match_is_supplier(true), &connection);
 
         let base_variables = insert::Variables {
-            id: Uuid::new_v4().to_string(),
+            id: uuid(),
             other_party_id: supplier.id.clone(),
             status: insert::InvoiceNodeStatus::Draft,
             on_hold_option: None,
@@ -134,7 +134,7 @@ mod graphql {
         // Test Success On Hold
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.on_hold_option = Some(true);
 
         let query = Insert::build_query(variables.clone());
@@ -166,7 +166,7 @@ mod graphql {
         // Test Confirmed
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.status = insert::InvoiceNodeStatus::Confirmed;
         variables.comment_option = None;
         variables.their_reference_option = None;
@@ -196,7 +196,7 @@ mod graphql {
         // Test Finaized
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.status = insert::InvoiceNodeStatus::Finalised;
 
         let query = Insert::build_query(variables.clone());

@@ -1,14 +1,12 @@
 use async_graphql::*;
 
 use crate::server::service::graphql::schema::types::InternalError;
+use crate::server::service::graphql::schema::types::{DatabaseError, ErrorWrapper};
 use crate::server::service::graphql::ContextExt;
-use crate::{
-    server::service::graphql::schema::types::{DatabaseError, ErrorWrapper},
-    service::user_account::{
-        CreateUserAccount, CreateUserAccountError as ServiceError, UserAccountService,
-    },
-};
 use repository::{repository::StorageConnectionManager, schema::UserAccountRow};
+use service::user_account::{
+    CreateUserAccount, CreateUserAccountError as ServiceError, UserAccountService,
+};
 
 use super::RecordAlreadyExist;
 

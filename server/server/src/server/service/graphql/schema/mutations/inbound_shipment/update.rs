@@ -1,21 +1,19 @@
 use async_graphql::*;
 
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotChangeInvoiceBackToDraft,
-            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
-        },
-        types::{
-            get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
-            NameNode, RecordNotFound,
-        },
+use crate::server::service::graphql::schema::{
+    mutations::{
+        outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotChangeInvoiceBackToDraft,
+        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
-    service::invoice::{update_inbound_shipment, UpdateInboundShipmentError},
+    types::{
+        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
+        NameNode, RecordNotFound,
+    },
 };
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 use repository::repository::StorageConnectionManager;
+use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError};
 
 use super::OtherPartyNotASupplier;
 

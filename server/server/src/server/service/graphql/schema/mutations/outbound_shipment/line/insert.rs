@@ -1,21 +1,19 @@
 use async_graphql::*;
 
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            outbound_shipment::{NotEnoughStockForReduction, StockLineIsOnHold},
-            CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-            InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordAlreadyExist,
-        },
-        types::{
-            get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
-            RangeError, RangeField,
-        },
+use crate::server::service::graphql::schema::{
+    mutations::{
+        outbound_shipment::{NotEnoughStockForReduction, StockLineIsOnHold},
+        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordAlreadyExist,
     },
-    service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError},
+    types::{
+        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
+        RangeError, RangeField,
+    },
 };
 use domain::outbound_shipment::InsertOutboundShipmentLine;
 use repository::repository::StorageConnectionManager;
+use service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError};
 
 use super::{
     ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,

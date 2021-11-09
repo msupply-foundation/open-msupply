@@ -17,7 +17,7 @@ mod graphql {
     };
 
     use insert::InsertOutboundShipmentLineErrorInterface::*;
-    use uuid::Uuid;
+    use service::util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
@@ -103,7 +103,7 @@ mod graphql {
         let main_draft_line = draft_lines[0].clone();
 
         let base_variables = insert::Variables {
-            id: Uuid::new_v4().to_string(),
+            id: uuid(),
             invoice_id: draft_outbound_shipment.id.clone(),
             item_id: item_not_in_invoices_id.clone(),
             number_of_packs: 3,
@@ -304,7 +304,7 @@ mod graphql {
             .unwrap();
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.number_of_packs = number_of_packs;
         variables.invoice_id = confirmed_outbound_shipment.id.clone();
 

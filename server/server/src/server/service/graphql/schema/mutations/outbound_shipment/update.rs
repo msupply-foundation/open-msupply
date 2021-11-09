@@ -1,22 +1,20 @@
-use crate::{
-    server::service::graphql::schema::{
-        mutations::{
-            error::DatabaseError,
-            outbound_shipment::{
-                CannotChangeStatusOfInvoiceOnHold, InvoiceLineHasNoStockLineError,
-                NotAnOutboundShipmentError,
-            },
-            ForeignKey, ForeignKeyError,
+use crate::server::service::graphql::schema::{
+    mutations::{
+        error::DatabaseError,
+        outbound_shipment::{
+            CannotChangeStatusOfInvoiceOnHold, InvoiceLineHasNoStockLineError,
+            NotAnOutboundShipmentError,
         },
-        types::{
-            get_invoice_response, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
-            RecordNotFound,
-        },
+        ForeignKey, ForeignKeyError,
     },
-    service::invoice::{update_outbound_shipment, UpdateOutboundShipmentError},
+    types::{
+        get_invoice_response, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
+        RecordNotFound,
+    },
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
 use repository::repository::StorageConnectionManager;
+use service::invoice::{update_outbound_shipment, UpdateOutboundShipmentError};
 
 use super::{
     CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,

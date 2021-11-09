@@ -16,7 +16,7 @@ mod graphql {
         repository::{InvoiceLineRepository, StockLineRepository},
         schema::{InvoiceLineRow, StockLineRow},
     };
-    use uuid::Uuid;
+    use service::util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
@@ -95,7 +95,7 @@ mod graphql {
         let existing_line = mock_data.invoice_lines.pop().unwrap();
 
         let base_variables = insert::Variables {
-            id: Uuid::new_v4().to_string(),
+            id: uuid(),
             invoice_id: draft_inbound_shipment.id.clone(),
             item_id: item.id.clone(),
             cost_price_per_pack: 5.5,
@@ -226,7 +226,7 @@ mod graphql {
         // Success Confirmed
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
@@ -250,7 +250,7 @@ mod graphql {
         // Success Confirmed
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.expiry_date_option = None;
         variables.batch_option = None;
         variables.invoice_id = confirmed_inbound_shipment.id.clone();
@@ -276,7 +276,7 @@ mod graphql {
         // Success Confirmed check Item
 
         let mut variables = base_variables.clone();
-        variables.id = Uuid::new_v4().to_string();
+        variables.id = uuid();
         variables.invoice_id = confirmed_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());

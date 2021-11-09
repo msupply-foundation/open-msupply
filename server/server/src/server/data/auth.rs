@@ -1,4 +1,4 @@
-use crate::service::token_bucket::TokenBucket;
+use service::token_bucket::TokenBucket;
 use std::sync::RwLock;
 
 pub struct AuthData {

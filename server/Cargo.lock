@@ -2939,23 +2939,20 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
- "bcrypt",
  "chrono",
  "config",
  "domain",
  "env_logger",
  "graphql_client",
  "httpmock",
- "jsonwebtoken",
  "log",
  "repository",
  "reqwest",
  "serde 1.0.130",
  "serde_json",
- "sha2",
+ "service",
  "thiserror",
  "tokio 0.2.25",
- "uuid",
 ]
 
 [[package]]
@@ -3238,6 +3235,24 @@ dependencies = [
  "itoa",
  "ryu",
  "serde 1.0.130",
+]
+
+[[package]]
+name = "service"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "anyhow",
+ "bcrypt",
+ "chrono",
+ "domain",
+ "jsonwebtoken",
+ "log",
+ "repository",
+ "serde 1.0.130",
+ "serde_json",
+ "sha2",
+ "uuid",
 ]
 
 [[package]]

@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use crate::server::service::graphql::schema::types::InternalError;
 use crate::server::service::graphql::{ContextExt, RequestUserData};
-use crate::service::token::{JWTRefreshError, TokenPair, TokenService};
+use service::token::{JWTRefreshError, TokenPair, TokenService};
 
 use super::{set_refresh_token_cookie, DatabaseError, ErrorWrapper};
 

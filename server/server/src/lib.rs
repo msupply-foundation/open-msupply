@@ -7,5 +7,4 @@
 #![allow(where_clauses_object_safety)]
 
 pub mod server;
-pub mod service;
 pub mod util;
