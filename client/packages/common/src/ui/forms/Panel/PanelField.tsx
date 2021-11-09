@@ -7,7 +7,7 @@ export const PanelField: React.FC = props => (
     flex={1}
     {...props}
     sx={{
-      color: theme => theme.palette.form.field,
+      color: theme => theme.palette.gray.main,
       textAlign: 'right',
       fontSize: '12px',
     }}
