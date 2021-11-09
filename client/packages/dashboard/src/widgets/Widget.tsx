@@ -34,6 +34,7 @@ const Widget: React.FC<WidgetProps> = ({
         display: 'flex',
         flexDirection: 'column',
         margin: '11px',
+        flex: 1,
         boxShadow: theme => theme.shadows[2],
       }}
     >

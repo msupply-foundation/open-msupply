@@ -197,7 +197,7 @@ const Host: FC = () => {
                           overflow="hidden"
                         >
                           <AppBar />
-                          <Box display="flex" flex={1} overflow="hidden">
+                          <Box display="flex" flex={1} overflow="scroll">
                             <React.Suspense fallback={'Loading'}>
                               <Routes>
                                 <Route
