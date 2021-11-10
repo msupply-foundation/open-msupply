@@ -157,25 +157,7 @@ impl<'a> InvoiceQueryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<InvoiceQueryJoin>(&self.connection.connection)?;
 
-        Ok(result
-            .into_iter()
-            .map(
-                |(invoice_row, name_row, _store_row): InvoiceQueryJoin| Invoice {
-                    id: invoice_row.id.to_owned(),
-                    other_party_name: name_row.name,
-                    other_party_id: name_row.id,
-                    status: InvoiceStatus::from(invoice_row.status),
-                    on_hold: invoice_row.on_hold,
-                    r#type: InvoiceType::from(invoice_row.r#type),
-                    invoice_number: invoice_row.invoice_number,
-                    their_reference: invoice_row.their_reference,
-                    comment: invoice_row.comment,
-                    entry_datetime: invoice_row.entry_datetime,
-                    confirm_datetime: invoice_row.confirm_datetime,
-                    finalised_datetime: invoice_row.finalised_datetime,
-                },
-            )
-            .collect())
+        Ok(result.into_iter().map(to_domain).collect())
     }
 
     pub fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceQueryJoin, RepositoryError> {
@@ -184,6 +166,23 @@ impl<'a> InvoiceQueryRepository<'a> {
             .inner_join(name_dsl::name_table)
             .inner_join(store_dsl::store)
             .first::<InvoiceQueryJoin>(&self.connection.connection)?)
+    }
+}
+
+fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
+    Invoice {
+        id: invoice_row.id.to_owned(),
+        other_party_name: name_row.name,
+        other_party_id: name_row.id,
+        status: InvoiceStatus::from(invoice_row.status),
+        on_hold: invoice_row.on_hold,
+        r#type: InvoiceType::from(invoice_row.r#type),
+        invoice_number: invoice_row.invoice_number,
+        their_reference: invoice_row.their_reference,
+        comment: invoice_row.comment,
+        entry_datetime: invoice_row.entry_datetime,
+        confirm_datetime: invoice_row.confirm_datetime,
+        finalised_datetime: invoice_row.finalised_datetime,
     }
 }
 
