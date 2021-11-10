@@ -1,12 +1,6 @@
 import React from 'react';
-import {
-  CircularProgress,
-  Paper,
-  Box,
-  LocaleKey,
-  Typography,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
 
 const Loading = () => (
   <Box display="flex" flex={1} justifyContent="center" alignItems="center">
@@ -19,7 +13,7 @@ interface WidgetProps {
   titleKey: LocaleKey;
 }
 
-const Widget: React.FC<WidgetProps> = ({
+export const Widget: React.FC<WidgetProps> = ({
   children,
   height = '100%',
   titleKey,
@@ -34,6 +28,7 @@ const Widget: React.FC<WidgetProps> = ({
         display: 'flex',
         flexDirection: 'column',
         margin: '11px',
+        flex: 1,
         boxShadow: theme => theme.shadows[2],
       }}
     >
@@ -45,5 +40,3 @@ const Widget: React.FC<WidgetProps> = ({
     </Paper>
   );
 };
-
-export default Widget;

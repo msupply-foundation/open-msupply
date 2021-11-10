@@ -60,9 +60,7 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
   }, [url]);
 
   return (
-    <Provider value={{ api, client, setUrl, setHeader }}>
-      {children}setApi
-    </Provider>
+    <Provider value={{ api, client, setUrl, setHeader }}>{children}</Provider>
   );
 };
 
