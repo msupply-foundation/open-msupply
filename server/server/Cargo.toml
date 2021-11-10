@@ -1,5 +1,5 @@
 [package]
-name = "remote_server"
+name = "server"
 version = "0.1.0"
 authors = ["will"]
 edition = "2018"

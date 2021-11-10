@@ -2,7 +2,7 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::util::test_utils::setup_all;
+    use server::util::test_utils::setup_all;
     use repository::{
         mock::MockDataInserts,
         repository::{InvoiceRepository, RepositoryError},

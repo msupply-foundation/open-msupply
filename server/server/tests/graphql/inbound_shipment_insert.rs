@@ -6,12 +6,12 @@ mod graphql {
     use chrono::{Duration, Utc};
     use domain::{name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use remote_server::util::test_utils::setup_all;
     use repository::{
         mock::MockDataInserts,
         repository::InvoiceRepository,
         schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     };
+    use server::util::test_utils::setup_all;
     use service::util::uuid::uuid;
 
     use crate::graphql::{

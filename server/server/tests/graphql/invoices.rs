@@ -4,7 +4,7 @@ mod graphql {
     use crate::graphql::{assert_gql_query, common::get_invoice_lines_inline};
     use chrono::{DateTime, Utc};
     use domain::Pagination;
-    use remote_server::util::test_utils::setup_all;
+    use server::util::test_utils::setup_all;
     use repository::{mock::MockDataInserts, repository::InvoiceQueryRepository};
     use serde_json::json;
 

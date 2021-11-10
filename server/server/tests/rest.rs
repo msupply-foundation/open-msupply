@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod rest {
-    use remote_server::server;
+    use server::server;
 
     #[actix_rt::test]
     async fn health_check_returns_200() {

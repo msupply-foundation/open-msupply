@@ -1,6 +1,6 @@
 #![allow(where_clauses_object_safety)]
 
-use remote_server::{
+use server::{
     server::{
         data::ActorRegistry,
         middleware::{compress as compress_middleware, logger as logger_middleware},

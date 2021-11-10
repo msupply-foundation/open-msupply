@@ -2,7 +2,7 @@
 
 // mod graphql {
 //     use crate::graphql::assert_gql_query;
-//     use remote_server::{
+//     use server::{
 //         database::{
 //             mock::{mock_names, mock_requisitions, mock_stores},
 //             repository::{

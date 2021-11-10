@@ -2945,32 +2945,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
-name = "remote_server"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-rt",
- "actix-web",
- "anyhow",
- "assert-json-diff",
- "chrono",
- "config",
- "domain",
- "env_logger",
- "graphql",
- "graphql_client",
- "httpmock",
- "log",
- "repository",
- "reqwest",
- "serde 1.0.130",
- "serde_json",
- "service",
- "thiserror",
- "tokio 0.2.25",
-]
-
-[[package]]
 name = "remove_dir_all"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3250,6 +3224,32 @@ dependencies = [
  "itoa",
  "ryu",
  "serde 1.0.130",
+]
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "assert-json-diff",
+ "chrono",
+ "config",
+ "domain",
+ "env_logger",
+ "graphql",
+ "graphql_client",
+ "httpmock",
+ "log",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "tokio 0.2.25",
 ]
 
 [[package]]
