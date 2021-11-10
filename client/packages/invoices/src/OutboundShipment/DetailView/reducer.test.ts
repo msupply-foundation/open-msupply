@@ -356,7 +356,7 @@ describe('DetailView reducer: deleting lines', () => {
   it('a line which is created, then deleted, is removed from state completely', () => {
     const lineToDelete = createLine('99');
     const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
-    const state2 = callReducer(OutboundAction.deleteLine(lineToDelete));
+    const state2 = callReducer(OutboundAction.deleteLine(lineToDelete), state1);
 
     // Find the line in the first state, ensuring we did create it
     const lineCreated = state1.draft.lines.find(
