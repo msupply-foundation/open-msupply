@@ -73,13 +73,11 @@ export const OutboundAction = {
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
   sortBy: SortBy<OutboundShipmentRow>;
-  deletedLines: OutboundShipmentRow[];
 }
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderInvoice,
   sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'asc' },
-  deletedLines: [],
 });
 
 export const reducer = (
@@ -209,13 +207,9 @@ export const reducer = (
         }
 
         case ActionType.DeleteLine: {
-          const { draft, deletedLines } = state;
-          const { payload } = action;
-          const { line } = payload;
-
-          const idx = draft.lines.findIndex(({ id }) => id === line.id);
-          draft.lines.splice(idx, 1);
-          deletedLines.push(line);
+          // const { draft } = state;
+          // const { payload } = action;
+          // const { line } = payload;
 
           break;
         }
