@@ -105,6 +105,7 @@
   "label.placeholder": "Placeholder",
   "label.purchase-order": "Purchase order",
   "label.requisition": "Requisition",
+  "label.search": "Search",
   "label.select-rows-to-delete-them": "Select rows to delete them",
   "label.select": "Select",
   "label.selected": "Selected",
@@ -121,5 +122,6 @@
   "label.unit": "Unit",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
-  "link.history": "History"
+  "link.history": "History",
+  "placeholder.enter-a-customers-name": "Enter a customers name"
 }
