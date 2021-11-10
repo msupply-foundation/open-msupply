@@ -33,15 +33,17 @@ export const GeneralTabComponent: FC<GeneralTabProps<OutboundShipmentRow>> = ({
   columns,
 }) => {
   const { pagination } = usePagination();
+  const activeRows = data.filter(({ isDeleted }) => !isDeleted);
 
   return (
     <DataTable
       ExpandContent={Expand}
-      pagination={{ ...pagination, total: data.length }}
+      pagination={{ ...pagination, total: activeRows.length }}
       columns={columns}
-      data={data
-        .slice(pagination.offset, pagination.offset + pagination.first)
-        .filter(({ isDeleted }) => !isDeleted)}
+      data={activeRows.slice(
+        pagination.offset,
+        pagination.offset + pagination.first
+      )}
       onChangePage={pagination.onChangePage}
       noDataMessageKey="error.no-items"
     />
