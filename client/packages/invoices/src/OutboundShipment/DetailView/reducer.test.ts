@@ -320,49 +320,6 @@ describe('DetailView reducer', () => {
     expect(lineDeleted).toBeFalsy();
   });
 
-  it('inserting a line for an item which already has an invoice line in state for the same item, reuses the same invoice line', () => {
-    // Simulate the user adding a line
-    const lineToCreate = createLine('999', {
-      itemId: 'item1',
-      numberOfPacks: 999,
-      isCreated: true,
-    });
-    const state1 = callReducer(OutboundAction.upsertLine(lineToCreate));
-    const lineCreated1 = state1.draft.lines.find(
-      // The line should exist in the draft with the same ID and have the isCreated tag.
-      ({ id, isCreated }) => lineToCreate.id === id && isCreated
-    );
-    expect(lineCreated1).toBeTruthy();
-
-    // Simulate the user deleting a line.
-    const state2 = callReducer(OutboundAction.deleteLine(lineToCreate));
-    const lineDeleted1 = state2.draft.lines.find(
-      // The line should exist in the draft with the same ID and have the isDeleted tag AND the isCreated tag.
-      ({ id, isDeleted, isCreated }) =>
-        lineToCreate?.id === id && isDeleted && isCreated
-    );
-    expect(lineDeleted1).toBeFalsy();
-
-    // Simulate the user re-adding an invoice line for the same item
-    const lineToCreate2 = createLine('998', {
-      itemId: 'item1',
-      numberOfPacks: 999,
-      isCreated: true,
-    });
-    const state3 = callReducer(OutboundAction.upsertLine(lineToCreate2));
-    const lineDeleted2 = state3.draft.lines.find(
-      // The originally added line should NOT be in the draft, instead replaced by the newly added invoice line.
-      ({ id, isCreated, isDeleted }) =>
-        lineToCreate?.id === id && isCreated && isDeleted
-    );
-    const lineCreated2 = state3.draft.lines.find(
-      ({ id, isCreated, isDeleted }) =>
-        lineToCreate?.id === id && isCreated && isDeleted
-    );
-    expect(lineDeleted2).toBeFalsy();
-    expect(lineCreated2).toBeTruthy();
-  });
-
   it('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
     // Simulate the user adding a line
     const lineToCreate1 = createLine('999', {
