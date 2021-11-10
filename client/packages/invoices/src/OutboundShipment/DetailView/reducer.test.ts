@@ -371,38 +371,32 @@ describe('DetailView reducer: deleting lines', () => {
     expect(lineDeleted).toBeFalsy();
   });
 
-  it('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
-    // Simulate the user adding a line
-    const lineToCreate1 = createLine('999', {
+  it.only('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
+    // Mock an already existing and persisted line, which has been deleted client side.
+    const existingLine = createLine('999', {
       itemId: 'item1',
       numberOfPacks: 999,
       isCreated: false,
       isDeleted: true,
     });
-    const state1 = callReducer(
-      OutboundAction.upsertLine(lineToCreate1),
-      getState({ defaultLines: [lineToCreate1] })
-    );
-    const lineCreated1 = state1.draft.lines.find(
-      // The line should exist in the draft with the same ID and have the isDeleted tag but not the isCreated tag,
-      // which is the state of a line which is persisted on the server, but deleted on the client.
-      ({ id, isCreated, isDeleted }) =>
-        lineToCreate1.id === id && !isCreated && isDeleted
-    );
-    expect(lineCreated1).toBeTruthy();
 
     // Simulate the user adding a new line for the same item.
     const lineToCreate2 = createLine('998', {
       itemId: 'item1',
       numberOfPacks: 999,
     });
-    const state2 = callReducer(OutboundAction.upsertLine(lineToCreate2));
-    const lineCreated2 = state2.draft.lines.find(
-      // The line should exist in the draft with the same ID and have the isDeleted tag AND the isCreated tag.
-      // Not that we are matching on the original line id, not the new line id.
-      ({ id, isDeleted, isCreated }) =>
-        lineToCreate1?.id === id && !isDeleted && isCreated
+    const state = callReducer(
+      OutboundAction.upsertLine(lineToCreate2),
+      // Note the use of the existing line in state.
+      getState({ defaultLines: [existingLine] })
     );
+    const lineCreated2 = state.draft.lines.find(
+      // The line should exist in the draft with the same ID and have the isDeleted tag set to false AND the isCreated tag.
+      // Note that we are matching on the original line id, not the new line id.
+      ({ id, isDeleted, isCreated }) =>
+        existingLine?.id === id && !isDeleted && isCreated
+    );
+
     expect(lineCreated2).toBeTruthy();
   });
 });
