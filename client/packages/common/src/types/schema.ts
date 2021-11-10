@@ -1602,6 +1602,9 @@ export type StockCountsQuery = {
 };
 
 export type UpsertOutboundShipmentMutationVariables = Exact<{
+  deleteOutboundShipmentLines?: Maybe<
+    Array<DeleteOutboundShipmentLineInput> | DeleteOutboundShipmentLineInput
+  >;
   insertOutboundShipmentLines?: Maybe<
     Array<InsertOutboundShipmentLineInput> | InsertOutboundShipmentLineInput
   >;
@@ -1624,6 +1627,13 @@ export type UpsertOutboundShipmentMutation = {
     updateOutboundShipments?:
       | Array<{
           __typename: 'UpdateOutboundShipmentResponseWithId';
+          id: string;
+        }>
+      | null
+      | undefined;
+    deleteOutboundShipmentLines?:
+      | Array<{
+          __typename: 'DeleteOutboundShipmentLineResponseWithId';
           id: string;
         }>
       | null
@@ -2166,10 +2176,12 @@ export const StockCountsDocument = gql`
 `;
 export const UpsertOutboundShipmentDocument = gql`
   mutation upsertOutboundShipment(
+    $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
     $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
     $updateOutboundShipments: [UpdateOutboundShipmentInput!]
   ) {
     batchOutboundShipment(
+      deleteOutboundShipmentLines: $deleteOutboundShipmentLines
       insertOutboundShipmentLines: $insertOutboundShipmentLines
       updateOutboundShipments: $updateOutboundShipments
     ) {
@@ -2179,6 +2191,10 @@ export const UpsertOutboundShipmentDocument = gql`
         id
       }
       updateOutboundShipments {
+        __typename
+        id
+      }
+      deleteOutboundShipmentLines {
         __typename
         id
       }
