@@ -371,7 +371,7 @@ describe('DetailView reducer: deleting lines', () => {
     expect(lineDeleted).toBeFalsy();
   });
 
-  it.only('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
+  it('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
     // Mock an already existing and persisted line, which has been deleted client side.
     const existingLine = createLine('999', {
       itemId: 'item1',
