@@ -71,7 +71,7 @@ cargo install diesel_cli --no-default-features --features "sqlite-bundled postgr
 cd server
 
 # postgres
-diesel migration run --database-url='postgres://postgres:password@localhost:5432/omsupply-database' --migration-dir ../repository/migrations/postgres
+diesel migration run --database-url="postgres://postgres:password@localhost:5432/omsupply-database" --migration-dir ../repository/migrations/postgres
 
 # sqlite
 diesel migration run --database-url ./omsupply-database.sqlite --migration-dir ../repository/migrations/sqlite/
