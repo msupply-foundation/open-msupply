@@ -54,6 +54,7 @@ const MutationResolvers = {
       deleteOutboundShipments: [] as { id: string }[],
       insertOutboundShipmentLines: [] as { id: string }[],
       updateOutboundShipments: [] as { id: string }[],
+      deleteOutboundShipmentLines: [] as { id: string }[],
     };
 
     if (vars.deleteOutboundShipments) {
@@ -77,6 +78,13 @@ const MutationResolvers = {
         vars.insertOutboundShipmentLines.map(line => {
           return MutationService.insert.invoiceLine(line);
         });
+    }
+
+    if (vars.deleteOutboundShipmentLines) {
+      response.deleteOutboundShipmentLines =
+        vars.deleteOutboundShipmentLines.map(line => ({
+          id: MutationService.remove.invoiceLine(line.id),
+        }));
     }
 
     return response;
