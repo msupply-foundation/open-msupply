@@ -71,18 +71,17 @@ impl<'a> ItemQueryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<ItemAndMasterList>(&self.connection.connection)?;
 
-        Ok(result
-            .into_iter()
-            .map(
-                |(item_row, item_is_visible_row, unit_row_option): ItemAndMasterList| Item {
-                    id: item_row.id,
-                    name: item_row.name,
-                    code: item_row.code,
-                    is_visible: item_is_visible_row.is_visible,
-                    unit_name: unit_row_option.map(|unit| unit.name),
-                },
-            )
-            .collect())
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+}
+
+fn to_domain((item_row, item_is_visible_row, unit_row_option): ItemAndMasterList) -> Item {
+    Item {
+        id: item_row.id,
+        name: item_row.name,
+        code: item_row.code,
+        is_visible: item_is_visible_row.is_visible,
+        unit_name: unit_row_option.map(|unit| unit.name),
     }
 }
 

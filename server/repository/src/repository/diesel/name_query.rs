@@ -73,28 +73,25 @@ impl<'a> NameQueryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<NameAndNameStoreJoin>(&self.connection.connection)?;
 
-        Ok(result
-            .into_iter()
-            .map(
-                |(name_row, name_store_join_row_option): NameAndNameStoreJoin| {
-                    let (is_customer, is_supplier) = match name_store_join_row_option {
-                        Some(name_store_join_row) => (
-                            name_store_join_row.name_is_customer,
-                            name_store_join_row.name_is_supplier,
-                        ),
-                        None => (false, false),
-                    };
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+}
 
-                    Name {
-                        id: name_row.id,
-                        name: name_row.name,
-                        code: name_row.code,
-                        is_customer,
-                        is_supplier,
-                    }
-                },
-            )
-            .collect())
+fn to_domain((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Name {
+    let (is_customer, is_supplier) = match name_store_join_row_option {
+        Some(name_store_join_row) => (
+            name_store_join_row.name_is_customer,
+            name_store_join_row.name_is_supplier,
+        ),
+        None => (false, false),
+    };
+
+    Name {
+        id: name_row.id,
+        name: name_row.name,
+        code: name_row.code,
+        is_customer,
+        is_supplier,
     }
 }
 
