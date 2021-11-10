@@ -1,6 +1,6 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use remote_server::util::test_utils::get_test_settings;
+    use server::util::test_utils::get_test_settings;
     use repository::{
         get_storage_connection_manager, test_db,
         {

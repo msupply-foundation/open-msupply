@@ -12,12 +12,12 @@ mod graphql {
     use chrono::{Duration, Utc};
     use domain::{invoice::InvoiceFilter, name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use remote_server::util::test_utils::setup_all;
     use repository::{
         mock::MockDataInserts,
         repository::{InvoiceRepository, StockLineRepository},
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
     };
+    use server::util::test_utils::setup_all;
 
     use update::UpdateInboundShipmentErrorInterface::*;
 

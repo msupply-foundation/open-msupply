@@ -1,4 +1,4 @@
-use remote_server::util::settings::Settings;
+use server::util::settings::Settings;
 
 use graphql::{
     config as graphql_config,

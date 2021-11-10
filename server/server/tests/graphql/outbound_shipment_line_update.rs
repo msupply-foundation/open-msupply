@@ -9,12 +9,12 @@ mod graphql {
     };
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use remote_server::util::test_utils::setup_all;
     use repository::{
         mock::MockDataInserts,
         repository::ItemRepository,
         schema::{InvoiceLineRow, StockLineRow},
     };
+    use server::util::test_utils::setup_all;
 
     use update::UpdateOutboundShipmentLineErrorInterface::*;
 
