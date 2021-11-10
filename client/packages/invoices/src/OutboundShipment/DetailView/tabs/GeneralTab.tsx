@@ -39,7 +39,9 @@ export const GeneralTabComponent: FC<GeneralTabProps<OutboundShipmentRow>> = ({
       ExpandContent={Expand}
       pagination={{ ...pagination, total: data.length }}
       columns={columns}
-      data={data.slice(pagination.offset, pagination.offset + pagination.first)}
+      data={data
+        .slice(pagination.offset, pagination.offset + pagination.first)
+        .filter(({ isDeleted }) => !isDeleted)}
       onChangePage={pagination.onChangePage}
       noDataMessageKey="error.no-items"
     />
