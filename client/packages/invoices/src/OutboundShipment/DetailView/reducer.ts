@@ -189,14 +189,30 @@ export const reducer = (
             lines[existingLineIdx] = {
               ...lines[existingLineIdx],
               ...line,
+              id: lines[existingLineIdx]?.id || line.id,
               isUpdated: true,
               isDeleted: false,
             };
           } else {
-            line.isCreated = true;
-            line.isUpdated = true;
-            line.isDeleted = false;
-            draft.lines.push(createLine(line, draft, dispatch));
+            const existingDeletedLineIdx = lines.findIndex(
+              ({ isDeleted, itemId }) => itemId === line.itemId && isDeleted
+            );
+
+            if (existingDeletedLineIdx >= 0) {
+              lines[existingDeletedLineIdx] = {
+                ...lines[existingDeletedLineIdx],
+                ...line,
+                id: lines[existingDeletedLineIdx]?.id || line.id,
+                isCreated: true,
+                isDeleted: false,
+                isUpdated: true,
+              };
+            } else {
+              line.isCreated = true;
+              line.isUpdated = true;
+              line.isDeleted = false;
+              draft.lines.push(createLine(line, draft, dispatch));
+            }
           }
 
           draft.update = (key, value) => {
@@ -207,9 +223,19 @@ export const reducer = (
         }
 
         case ActionType.DeleteLine: {
-          // const { draft } = state;
-          // const { payload } = action;
-          // const { line } = payload;
+          const { draft } = state;
+          const { payload } = action;
+          const { line } = payload;
+
+          const lineToDelete = draft.lines.find(({ id }) => id === line.id);
+
+          if (lineToDelete) {
+            if (lineToDelete.isCreated) {
+              draft.lines = draft.lines.filter(({ id }) => id !== line.id);
+            } else {
+              lineToDelete.isDeleted = true;
+            }
+          }
 
           break;
         }
