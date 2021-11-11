@@ -15,6 +15,7 @@ import {
   InvoiceNodeStatus,
   OmSupplyApi,
   InsertOutboundShipmentLineInput,
+  DeleteOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import {
@@ -153,14 +154,29 @@ const createInsertOutboundLineInput = (
   };
 };
 
+const createDeleteOutboundLineInput = (
+  line: OutboundShipmentRow
+): DeleteOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    invoiceId: line.invoiceId,
+  };
+};
+
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
-    const insertLines = patch.lines.filter(({ isCreated }) => isCreated);
+    const deleteLines = patch.lines.filter(({ isDeleted }) => isDeleted);
+    const insertLines = patch.lines.filter(
+      ({ isCreated, isDeleted }) => !isDeleted && isCreated
+    );
 
     const result = await api.upsertOutboundShipment({
-      insertOutboundShipmentLines: insertLines.map(line =>
-        createInsertOutboundLineInput(line)
+      insertOutboundShipmentLines: insertLines.map(
+        createInsertOutboundLineInput
+      ),
+      deleteOutboundShipmentLines: deleteLines.map(
+        createDeleteOutboundLineInput
       ),
       updateOutboundShipments: [invoiceToInput(patch)],
     });
