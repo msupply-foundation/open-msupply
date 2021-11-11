@@ -272,12 +272,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_integrate_central_records() {
-        let settings: Settings =
-            configuration::get_configuration().expect("Failed to parse configuration settings");
-
+        let settings = get_test_settings("omsupply-database-integrate_central_records");
         let sync_connection = SyncConnection::new(&settings.sync);
 
-        let settings = get_test_settings("omsupply-database-integrate_central_records");
         test_db::setup(&settings.database).await;
         let connection_manager = get_storage_connection_manager(&settings.database);
 
