@@ -42,6 +42,7 @@ export const useItems = (): UseQueryResult<{
 
     const nodes: Item[] = items.nodes.map(item => ({
       ...item,
+      unitName: item.unitName ?? '',
       availableBatches: availableBatchesGuard(item.availableBatches),
     }));
 
