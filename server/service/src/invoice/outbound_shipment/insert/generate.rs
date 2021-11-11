@@ -30,6 +30,7 @@ pub fn generate(
         status: input.status.into(),
         on_hold: input.on_hold.unwrap_or(false),
         entry_datetime: current_datetime,
+        color: input.color,
     };
 
     Ok(result)

@@ -7,6 +7,7 @@ pub struct InsertOutboundShipment {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 
 pub struct UpdateOutboundShipment {
@@ -16,6 +17,7 @@ pub struct UpdateOutboundShipment {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 
 pub struct InsertOutboundShipmentLine {
