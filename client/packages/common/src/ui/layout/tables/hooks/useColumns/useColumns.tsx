@@ -1,5 +1,5 @@
 import { DependencyList, useMemo } from 'react';
-import { DomainObject } from '../../../../../types/index';
+import { DomainObject } from '../../../../../types';
 import {
   ColumnDefinition,
   ColumnFormat,
@@ -8,7 +8,8 @@ import {
 } from '../../columns/types';
 import { useFormatDate, useFormatNumber } from '../../../../../intl';
 import { BasicCell, BasicHeader } from '../../components';
-import { SortBy } from '../../../../..';
+import { getDateOrNull } from '../../../../../utils';
+import { SortBy } from '../../../../../hooks';
 import {
   ColumnDefinitionSetBuilder,
   ColumnKey,
@@ -64,7 +65,8 @@ const getDefaultFormatter = <T extends DomainObject>(
     case ColumnFormat.Date: {
       return (date: unknown) => {
         const formatDate = useFormatDate();
-        return formatDate(new Date(date as string));
+        const maybeDate = getDateOrNull(date as string);
+        return maybeDate ? formatDate(maybeDate) : '';
       };
     }
     case ColumnFormat.Currency: {

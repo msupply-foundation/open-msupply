@@ -1382,6 +1382,7 @@ export type ItemsWithStockLinesQuery = {
                   storeId: string;
                   totalNumberOfPacks: number;
                   onHold: boolean;
+                  note?: string | null | undefined;
                 }>;
               };
         }>;
@@ -1972,6 +1973,7 @@ export const ItemsWithStockLinesDocument = gql`
                 storeId
                 totalNumberOfPacks
                 onHold
+                note
               }
               totalCount
             }

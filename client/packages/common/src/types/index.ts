@@ -1,4 +1,5 @@
 import { ObjectWithStringKeys } from './utility';
+import { StockLineNode } from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -25,18 +26,7 @@ export interface Item extends DomainObject {
   unitName: string;
 }
 
-export interface StockLine extends DomainObject {
-  id: string;
-  availableNumberOfPacks: number;
-  costPricePerPack: number;
-  expiryDate?: string | null;
-  batch?: string | null;
-  packSize: number;
-  sellPricePerPack: number;
-  totalNumberOfPacks: number;
-  locationDescription?: string | null;
-  onHold: boolean;
-}
+export interface StockLine extends DomainObject, StockLineNode {}
 
 export type Test = {
   id: string;
