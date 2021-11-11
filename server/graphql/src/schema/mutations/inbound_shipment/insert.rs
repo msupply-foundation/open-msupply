@@ -21,6 +21,7 @@ pub struct InsertInboundShipmentInput {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 
 #[derive(Union)]
@@ -59,6 +60,7 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
             on_hold,
             comment,
             their_reference,
+            color,
         }: InsertInboundShipmentInput,
     ) -> Self {
         InsertInboundShipment {
@@ -68,6 +70,7 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
             on_hold,
             comment,
             their_reference,
+            color,
         }
     }
 }
