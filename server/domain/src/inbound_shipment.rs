@@ -9,6 +9,7 @@ pub struct InsertInboundShipment {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 
 pub struct UpdateInboundShipment {
@@ -18,6 +19,7 @@ pub struct UpdateInboundShipment {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 pub struct DeleteInboundShipment {
     pub id: String,

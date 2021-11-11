@@ -19,6 +19,7 @@ pub fn generate(
         on_hold,
         comment,
         their_reference,
+        color,
     }: InsertInboundShipment,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, InsertInboundShipmentError> {
@@ -37,6 +38,7 @@ pub fn generate(
         status: status.into(),
         on_hold: on_hold.unwrap_or(false),
         entry_datetime: current_datetime,
+        color,
     };
 
     Ok(result)
