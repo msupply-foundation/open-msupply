@@ -1,4 +1,4 @@
-use crate::util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_NAME};
+use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_NAME};
 use repository::schema::{CentralSyncBufferRow, NameRow};
 
 use serde::Deserialize;
@@ -43,7 +43,7 @@ impl LegacyNameRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::sync::translation::{
+    use crate::sync::translation::{
         name::LegacyNameRow,
         test_data::{name::get_test_name_records, TestSyncDataRecord},
     };

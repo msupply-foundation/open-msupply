@@ -1,4 +1,4 @@
-use crate::util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
+use crate::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
 use repository::schema::{CentralSyncBufferRow, NameRow};
 
 const NAME_1: (&'static str, &'static str) = (

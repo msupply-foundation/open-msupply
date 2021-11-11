@@ -1,4 +1,4 @@
-use crate::util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE};
+use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE};
 use repository::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 use serde::Deserialize;
@@ -38,7 +38,7 @@ impl LegacyListMasterLineRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::sync::translation::{
+    use crate::sync::translation::{
         list_master_line::LegacyListMasterLineRow,
         test_data::{master_list_line::get_test_master_list_line_records, TestSyncDataRecord},
     };

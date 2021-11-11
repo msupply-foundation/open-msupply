@@ -14,7 +14,7 @@ mod graphql {
         repository::ItemRepository,
         schema::{InvoiceLineRow, StockLineRow},
     };
-    use server::util::test_utils::setup_all;
+    use server::test_utils::setup_all;
 
     use update::UpdateOutboundShipmentLineErrorInterface::*;
 

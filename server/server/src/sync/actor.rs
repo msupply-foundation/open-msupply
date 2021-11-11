@@ -1,4 +1,4 @@
-use crate::util::sync::{SyncError, Synchroniser};
+use crate::sync::{SyncError, Synchroniser};
 
 use log::info;
 use repository::repository::StorageConnectionManager;

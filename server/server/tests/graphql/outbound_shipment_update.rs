@@ -9,7 +9,7 @@ mod graphql {
         schema::InvoiceLineRow,
     };
     use serde_json::json;
-    use server::util::test_utils::setup_all;
+    use server::test_utils::setup_all;
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_update() {

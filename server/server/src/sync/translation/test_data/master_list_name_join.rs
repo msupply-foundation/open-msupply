@@ -1,4 +1,4 @@
-use crate::util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
+use crate::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
 use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
