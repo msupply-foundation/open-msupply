@@ -2,9 +2,9 @@ import React from 'react';
 import { TestingProvider, useColumns } from '@openmsupply-client/common';
 import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
-import { InvoiceLineRow } from '../types';
+import { OutboundShipmentRow } from '../types';
 
-const lines: InvoiceLineRow[] = [
+const lines: OutboundShipmentRow[] = [
   {
     id: '1',
     itemId: '1',
@@ -39,7 +39,7 @@ const lines: InvoiceLineRow[] = [
 
 describe('GeneralTab', () => {
   const Example = () => {
-    const columns = useColumns<InvoiceLineRow>(
+    const columns = useColumns<OutboundShipmentRow>(
       ['itemCode', 'itemName', 'numberOfPacks'],
       {
         onChangeSortBy: () => {},

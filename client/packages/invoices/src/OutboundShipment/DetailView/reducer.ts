@@ -1,4 +1,3 @@
-import { InvoiceLine } from './../../../../common/src/types';
 import { Dispatch } from 'react';
 import { produce } from 'immer';
 import {
@@ -7,13 +6,14 @@ import {
   DocumentActionType,
   SortBy,
   Invoice,
+  InvoiceLine,
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import {
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
-  InvoiceLineRow,
+  OutboundShipmentRow,
 } from './types';
 
 const parseValue = (object: any, key: string) => {
@@ -42,13 +42,13 @@ const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
 };
 
 export const OutboundAction = {
-  upsertLine: (invoiceLine: InvoiceLine): OutboundShipmentAction => ({
+  upsertLine: (line: OutboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.UpsertLine,
-    payload: { invoiceLine },
+    payload: { line },
   }),
-  deleteLine: (invoiceLine: InvoiceLine): OutboundShipmentAction => ({
+  deleteLine: (line: OutboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.DeleteLine,
-    payload: { invoiceLine },
+    payload: { line },
   }),
   updateInvoice: <K extends keyof Invoice>(
     key: K,
@@ -64,7 +64,7 @@ export const OutboundAction = {
     type: ActionType.UpdateNumberOfPacks,
     payload: { rowKey, numberOfPacks },
   }),
-  onSortBy: (column: Column<InvoiceLineRow>): OutboundShipmentAction => ({
+  onSortBy: (column: Column<OutboundShipmentRow>): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
   }),
@@ -72,8 +72,8 @@ export const OutboundAction = {
 
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
-  sortBy: SortBy<InvoiceLineRow>;
-  deletedLines: InvoiceLine[];
+  sortBy: SortBy<OutboundShipmentRow>;
+  deletedLines: OutboundShipmentRow[];
 }
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
@@ -104,20 +104,31 @@ export const reducer = (
 
           Object.keys(draft).forEach(key => {
             // TODO: Sometimes we want to keep the user entered values?
+            if (key === 'lines') return;
             draft[key] = data[key];
           });
 
-          draft.lines = draft.lines?.map(item => createLine(item, dispatch));
+          draft.lines = data.lines?.map(serverLine => {
+            const draftLine = draft.lines.find(
+              line => line.id === serverLine.id
+            );
+
+            if (draftLine) {
+              return mergeLines(serverLine, draftLine);
+            }
+
+            return createLine(serverLine, draft, dispatch);
+          });
 
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
 
-          draft.upsertLine = invoiceLine =>
-            dispatch?.(OutboundAction.upsertLine(invoiceLine));
+          draft.upsertLine = line =>
+            dispatch?.(OutboundAction.upsertLine(line));
 
-          draft.deleteLine = invoiceLine =>
-            dispatch?.(OutboundAction.deleteLine(invoiceLine));
+          draft.deleteLine = line =>
+            dispatch?.(OutboundAction.deleteLine(line));
 
           break;
         }
@@ -170,9 +181,25 @@ export const reducer = (
         case ActionType.UpsertLine: {
           const { draft } = state;
           const { payload } = action;
-          const { invoiceLine } = payload;
+          const { line } = payload;
 
-          draft.lines.push(createLine(invoiceLine, dispatch));
+          const { lines } = draft;
+
+          const existingLineIdx = lines.findIndex(({ id }) => id === line.id);
+
+          if (existingLineIdx >= 0) {
+            lines[existingLineIdx] = {
+              ...lines[existingLineIdx],
+              ...line,
+              isUpdated: true,
+              isDeleted: false,
+            };
+          } else {
+            line.isCreated = true;
+            line.isUpdated = true;
+            line.isDeleted = false;
+            draft.lines.push(createLine(line, draft, dispatch));
+          }
 
           draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
@@ -184,11 +211,11 @@ export const reducer = (
         case ActionType.DeleteLine: {
           const { draft, deletedLines } = state;
           const { payload } = action;
-          const { invoiceLine } = payload;
+          const { line } = payload;
 
-          const idx = draft.lines.findIndex(({ id }) => id === invoiceLine.id);
+          const idx = draft.lines.findIndex(({ id }) => id === line.id);
           draft.lines.splice(idx, 1);
-          deletedLines.push(invoiceLine);
+          deletedLines.push(line);
 
           break;
         }
@@ -197,12 +224,29 @@ export const reducer = (
     }
   );
 
+const mergeLines = (
+  serverLine: InvoiceLine,
+  clientLine: OutboundShipmentRow
+) => {
+  const newLine = {
+    ...clientLine,
+    ...serverLine,
+    isUpdated: true,
+    isCreated: false,
+    isDeleted: false,
+  };
+
+  return newLine;
+};
+
 const createLine = (
   line: InvoiceLine,
+  draft: OutboundShipment,
   dispatch: Dispatch<DocumentActionSet<OutboundShipmentAction>> | null
-) => {
+): OutboundShipmentRow => {
   return {
     ...line,
+    invoiceId: draft.id,
     updateNumberOfPacks: (numberOfPacks: number) =>
       dispatch?.(OutboundAction.updateNumberOfPacks(line.id, numberOfPacks)),
   };

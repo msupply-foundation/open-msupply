@@ -3,7 +3,6 @@ import React from 'react';
 import {
   DialogButton,
   Grid,
-  InvoiceLine,
   Item,
   useForm,
   useDialog,
@@ -12,13 +11,13 @@ import {
 
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
-import { BatchRow } from '../types';
+import { BatchRow, OutboundShipmentRow } from '../types';
 
 interface ItemDetailsModalProps {
-  invoiceLine?: InvoiceLine;
+  invoiceLine?: OutboundShipmentRow;
   isOpen: boolean;
   onClose: () => void;
-  upsertInvoiceLine: (invoiceLine: InvoiceLine) => void;
+  upsertInvoiceLine: (invoiceLine: OutboundShipmentRow) => void;
 }
 
 export const getInvoiceLine = (
@@ -26,14 +25,14 @@ export const getInvoiceLine = (
   item: Item,
   line: { id: string; expiryDate?: string | null },
   quantity: number
-): InvoiceLine => ({
+): OutboundShipmentRow => ({
   id,
-  itemId: '',
+  itemId: item.id,
   itemName: item.name,
   itemCode: '',
   itemUnit: '',
   packSize: 0,
-  numberOfPacks: 0,
+  numberOfPacks: quantity,
   costPricePerPack: 0,
   sellPricePerPack: 0,
   stockLineId: line.id,
@@ -114,6 +113,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     const invoiceLines = batchRows.map(batch =>
       getInvoiceLine('', selectedItem, batch, Number(values[batch.id] || 0))
     );
+
     invoiceLines
       .filter(line => line.numberOfPacks > 0)
       .forEach(upsertInvoiceLine);

@@ -14,9 +14,13 @@ import {
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
   OmSupplyApi,
+  InsertOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { OutboundShipment } from './OutboundShipment/DetailView/types';
+import {
+  OutboundShipment,
+  OutboundShipmentRow,
+} from './OutboundShipment/DetailView/types';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
@@ -114,7 +118,10 @@ export const onRead =
 
     return {
       ...invoice,
-      lines: linesGuard(invoice.lines),
+      lines: linesGuard(invoice.lines).map(line => ({
+        ...line,
+        stockLineId: '',
+      })),
       pricing: pricingGuard(invoice.pricing),
       otherParty: otherPartyGuard(invoice.otherParty),
     };
@@ -134,20 +141,43 @@ const invoiceToInput = (
   };
 };
 
+const createInsertOutboundLineInput = (
+  line: OutboundShipmentRow
+): InsertOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    itemId: line.itemId,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+    invoiceId: line.invoiceId,
+  };
+};
+
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
-    const result = await api.updateOutboundShipment({
-      input: invoiceToInput(patch),
+    const insertLines = patch.lines.filter(({ isCreated }) => isCreated);
+
+    const result = await api.upsertOutboundShipment({
+      insertOutboundShipmentLines: insertLines.map(line =>
+        createInsertOutboundLineInput(line)
+      ),
+      updateOutboundShipments: [invoiceToInput(patch)],
     });
 
-    const { updateOutboundShipment } = result;
+    const { batchOutboundShipment } = result;
 
-    if (updateOutboundShipment.__typename === 'InvoiceNode') {
-      return patch;
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      const { updateOutboundShipments } = batchOutboundShipment;
+      if (
+        updateOutboundShipments?.[0]?.__typename ===
+        'UpdateOutboundShipmentResponseWithId'
+      ) {
+        return patch;
+      }
     }
 
-    throw new Error(updateOutboundShipment.error.description);
+    throw new Error(':shrug');
   };
 
 interface Api<ReadType, UpdateType> {

@@ -1,3 +1,4 @@
+import { MutationService } from './../api/mutations';
 import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
 import {
   InvoiceSortFieldInput,
@@ -51,13 +52,31 @@ const MutationResolvers = {
     const response = {
       __typename: 'BatchOutboundShipmentResponse',
       deleteOutboundShipments: [] as { id: string }[],
+      insertOutboundShipmentLines: [] as { id: string }[],
+      updateOutboundShipments: [] as { id: string }[],
     };
+
     if (vars.deleteOutboundShipments) {
       response.deleteOutboundShipments = vars.deleteOutboundShipments.map(
         id => ({
           id: MutationResolvers.deleteOutboundShipment(null, id),
         })
       );
+    }
+
+    if (vars.updateOutboundShipments) {
+      response.updateOutboundShipments = [
+        Api.MutationService.update.invoice(
+          vars.updateOutboundShipments[0] as UpdateOutboundShipmentInput
+        ),
+      ];
+    }
+
+    if (vars.insertOutboundShipmentLines) {
+      response.insertOutboundShipmentLines =
+        vars.insertOutboundShipmentLines.map(line => {
+          return MutationService.insert.invoiceLine(line);
+        });
     }
 
     return response;

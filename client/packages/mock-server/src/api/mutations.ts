@@ -1,3 +1,4 @@
+import { InsertOutboundShipmentLineInput } from './../../../common/src/types/schema';
 import { ResolverService } from './resolvers';
 import { createInvoice } from './../data/data';
 import { Api } from './index';
@@ -48,7 +49,9 @@ export const insert = {
 
     return { ...createdInvoice, __typename: 'InvoiceNode' };
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
+  invoiceLine: (
+    invoiceLine: InsertOutboundShipmentLineInput
+  ): InsertOutboundShipmentLineInput => {
     const existing = db.get.byId.invoiceLine(invoiceLine.id);
 
     if (existing.id) {
@@ -57,7 +60,10 @@ export const insert = {
       );
     }
 
-    adjustStockLineQuantity(invoiceLine.stockLineId, -invoiceLine.quantity);
+    adjustStockLineQuantity(
+      invoiceLine.stockLineId,
+      -invoiceLine.numberOfPacks
+    );
 
     return db.insert.invoiceLine(invoiceLine);
   },

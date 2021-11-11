@@ -1601,6 +1601,36 @@ export type StockCountsQuery = {
       };
 };
 
+export type UpsertOutboundShipmentMutationVariables = Exact<{
+  insertOutboundShipmentLines?: Maybe<
+    Array<InsertOutboundShipmentLineInput> | InsertOutboundShipmentLineInput
+  >;
+  updateOutboundShipments?: Maybe<
+    Array<UpdateOutboundShipmentInput> | UpdateOutboundShipmentInput
+  >;
+}>;
+
+export type UpsertOutboundShipmentMutation = {
+  __typename?: 'Mutations';
+  batchOutboundShipment: {
+    __typename: 'BatchOutboundShipmentResponse';
+    insertOutboundShipmentLines?:
+      | Array<{
+          __typename: 'InsertOutboundShipmentLineResponseWithId';
+          id: string;
+        }>
+      | null
+      | undefined;
+    updateOutboundShipments?:
+      | Array<{
+          __typename: 'UpdateOutboundShipmentResponseWithId';
+          id: string;
+        }>
+      | null
+      | undefined;
+  };
+};
+
 export const InvoiceDocument = gql`
   query invoice($id: String!) {
     invoice(id: $id) {
@@ -2134,6 +2164,27 @@ export const StockCountsDocument = gql`
     }
   }
 `;
+export const UpsertOutboundShipmentDocument = gql`
+  mutation upsertOutboundShipment(
+    $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
+    $updateOutboundShipments: [UpdateOutboundShipmentInput!]
+  ) {
+    batchOutboundShipment(
+      insertOutboundShipmentLines: $insertOutboundShipmentLines
+      updateOutboundShipments: $updateOutboundShipments
+    ) {
+      __typename
+      insertOutboundShipmentLines {
+        __typename
+        id
+      }
+      updateOutboundShipments {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2279,6 +2330,20 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'stockCounts'
+      );
+    },
+    upsertOutboundShipment(
+      variables?: UpsertOutboundShipmentMutationVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<UpsertOutboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertOutboundShipmentMutation>(
+            UpsertOutboundShipmentDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'upsertOutboundShipment'
       );
     },
   };
