@@ -6,10 +6,17 @@ import {
   OutboundShipmentStatus,
 } from '@openmsupply-client/common';
 
-export interface InvoiceLineRow extends InvoiceLine {
-  updateNumberOfPacks: (quantity: number) => void;
-}
+export interface OutboundShipmentRow extends InvoiceLine {
+  updateNumberOfPacks?: (quantity: number) => void;
 
+  stockLineId: string;
+  invoiceId: string;
+  itemId: string;
+
+  isUpdated?: boolean;
+  isDeleted?: boolean;
+  isCreated?: boolean;
+}
 export interface BatchRow extends StockLine {
   quantity: number;
 }
@@ -23,11 +30,11 @@ export interface InvoiceStatusLog {
 }
 
 export interface OutboundShipment extends Invoice {
-  lines: InvoiceLineRow[];
+  lines: OutboundShipmentRow[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
-  upsertLine?: (line: InvoiceLine) => void;
-  deleteLine?: (line: InvoiceLine) => void;
+  upsertLine?: (line: OutboundShipmentRow) => void;
+  deleteLine?: (line: OutboundShipmentRow) => void;
 }
 
 export enum ActionType {
@@ -50,14 +57,14 @@ export type OutboundShipmentAction =
     }
   | {
       type: ActionType.SortBy;
-      payload: { column: Column<InvoiceLineRow> };
+      payload: { column: Column<OutboundShipmentRow> };
     }
   | OutboundShipmentUpdateInvoice
   | {
       type: ActionType.UpsertLine;
-      payload: { invoiceLine: InvoiceLine };
+      payload: { line: OutboundShipmentRow };
     }
   | {
       type: ActionType.DeleteLine;
-      payload: { invoiceLine: InvoiceLine };
+      payload: { line: OutboundShipmentRow };
     };

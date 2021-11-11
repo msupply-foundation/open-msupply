@@ -7,7 +7,7 @@ import {
   DomainObject,
   Box,
 } from '@openmsupply-client/common';
-import { InvoiceLineRow } from '../types';
+import { OutboundShipmentRow } from '../types';
 
 interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
@@ -28,7 +28,7 @@ const Expand: FC = () => {
   );
 };
 
-export const GeneralTabComponent: FC<GeneralTabProps<InvoiceLineRow>> = ({
+export const GeneralTabComponent: FC<GeneralTabProps<OutboundShipmentRow>> = ({
   data,
   columns,
 }) => {
