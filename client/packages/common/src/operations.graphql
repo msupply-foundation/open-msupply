@@ -531,10 +531,12 @@ query stockCounts {
 }
 
 mutation upsertOutboundShipment(
+  $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
   $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
   $updateOutboundShipments: [UpdateOutboundShipmentInput!]
 ) {
   batchOutboundShipment(
+    deleteOutboundShipmentLines: $deleteOutboundShipmentLines
     insertOutboundShipmentLines: $insertOutboundShipmentLines
     updateOutboundShipments: $updateOutboundShipments
   ) {
@@ -544,6 +546,10 @@ mutation upsertOutboundShipment(
       id
     }
     updateOutboundShipments {
+      __typename
+      id
+    }
+    deleteOutboundShipmentLines {
       __typename
       id
     }
