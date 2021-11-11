@@ -1,56 +1,10 @@
-[package]
-name = "remote_server"
-version = "0.1.0"
-authors = ["will"]
-edition = "2018"
-default-run = "remote_server"
+ 
+[workspace]
 
-[lib]
-path = "src/lib.rs"
-
-[[bin]]
-path = "graphql_schema/export.rs"
-name = "export_graphql"
-test = false
-bench = false
-
-[[bin]]
-path = "src/main.rs"
-name = "remote_server"
-
-[dependencies]
-actix-cors = "0.5.4"
-actix-rt = "1.1.0"
-actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
-anyhow = "1.0.44"
-anymap = "0.12"
-assert-json-diff = "2.0.1"
-async-graphql = { version = "2.9.8", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "2.9.8"
-async-trait = "0.1.16"
-bcrypt = "0.10.1"
-diesel = { version = "1.4.7", default-features = false, features = ["sqlite", "postgres", "r2d2", "numeric", "chrono"] }
-diesel-derive-enum = { version = "1.1.1", features = ["sqlite", "postgres"] }
-diesel_migrations = "1.4.0"
-libsqlite3-sys = { version = "0.22.2", features = ["bundled"] }
-chrono = { version = "0.4", features = ["serde"] }
-config = "0.11.0"
-env_logger = "0.8.3"
-futures-util = "0.3.15"
-jsonwebtoken = "7.2.0"
-log = "0.4.14"
-reqwest = { version = "0.10", features = ["json"] } # Versions >=0.11 depend on Tokio v1.
-serde = "1.0.126"
-serde_json = "1.0.66"
-sha2 = "0.9.5"
-tokio = { version = "0.2", features = ["macros" ] } # Bumping to v1 requires actix-web >=v4 and reqwest >=0.11.
-thiserror = "1"
-uuid = { version = "0.8", features = ["v4"] }
-graphql_client="0.10.0"
-
-[dev-dependencies]
-httpmock = "0.6"
-
-[features]
-postgres = []
-sqlite = []
+members = [
+    "domain",
+    "repository",
+    "graphql",
+    "server",
+    "service",
+]
