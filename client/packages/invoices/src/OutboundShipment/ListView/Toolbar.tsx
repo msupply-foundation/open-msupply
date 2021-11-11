@@ -9,6 +9,7 @@ import {
   DeleteIcon,
   useTableStore,
   AppBarContentPortal,
+  InputWithLabelRow,
   BasicTextInput,
 } from '@openmsupply-client/common';
 import { FilterController } from '@openmsupply-client/common/src/hooks/useFilterBy';
@@ -56,14 +57,21 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <BasicTextInput
-        value={filterString}
-        onChange={e =>
-          filter.onChangeStringFilterRule(
-            'otherPartyName',
-            'like',
-            e.target.value
-          )
+      <InputWithLabelRow
+        label={'label.search'}
+        labelWidth={null}
+        Input={
+          <BasicTextInput
+            value={filterString}
+            placeholder={t('placeholder.enter-a-customers-name')}
+            onChange={e =>
+              filter.onChangeStringFilterRule(
+                'otherPartyName',
+                'like',
+                e.target.value
+              )
+            }
+          />
         }
       />
       <DropdownMenu label="Select">
