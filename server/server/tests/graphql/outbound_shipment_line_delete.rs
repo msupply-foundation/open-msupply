@@ -7,10 +7,10 @@ mod graphql {
     use crate::graphql::{
         delete_outbound_shipment_line_full as delete, DeleteOutboundShipmentLineFull as Delete,
     };
+    use server::test_utils::setup_all;
 
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use server::util::test_utils::setup_all;
     use repository::{
         mock::MockDataInserts,
         repository::{InvoiceLineRepository, RepositoryError, StockLineRepository},

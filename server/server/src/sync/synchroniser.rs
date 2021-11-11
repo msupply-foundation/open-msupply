@@ -1,4 +1,4 @@
-use crate::util::sync::{
+use crate::sync::{
     translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
     CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
 };
@@ -250,7 +250,7 @@ impl Synchroniser {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::{
+    use crate::{
         sync::{
             translation::test_data::{
                 check_records_against_database, extract_sync_buffer_rows,

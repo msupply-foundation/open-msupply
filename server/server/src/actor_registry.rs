@@ -1,4 +1,4 @@
-use crate::util::sync::SyncSenderActor;
+use crate::sync::SyncSenderActor;
 use std::sync::{Arc, Mutex};
 
 // Arc and Mutex are both unfortunate requirements here because we need to mutate the

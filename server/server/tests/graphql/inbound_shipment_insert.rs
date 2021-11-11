@@ -11,7 +11,7 @@ mod graphql {
         repository::InvoiceRepository,
         schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     };
-    use server::util::test_utils::setup_all;
+    use server::test_utils::setup_all;
     use service::util::uuid::uuid;
 
     use crate::graphql::{

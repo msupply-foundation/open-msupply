@@ -8,13 +8,13 @@ mod graphql {
         delete_inbound_shipment_line_full as delete, DeleteInboundShipmentLineFull as Delete,
     };
 
+    use server::test_utils::setup_all;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
         repository::{InvoiceLineRepository, RepositoryError, StockLineRepository},
     };
-    use server::util::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentLineErrorInterface::*;
 

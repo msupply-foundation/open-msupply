@@ -1,4 +1,4 @@
-use crate::util::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_UNIT};
+use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_UNIT};
 use repository::schema::{CentralSyncBufferRow, UnitRow};
 
 use serde::Deserialize;
@@ -47,7 +47,7 @@ impl LegacyUnitRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::sync::translation::{
+    use crate::sync::translation::{
         test_data::{unit::get_test_unit_records, TestSyncDataRecord},
         unit::LegacyUnitRow,
     };
