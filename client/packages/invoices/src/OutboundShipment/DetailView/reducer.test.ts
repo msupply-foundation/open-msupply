@@ -273,6 +273,39 @@ describe('DetailView reducer: updating lines', () => {
       })
     );
   });
+
+  it('adds only an updated flag to an already persisted, but deleted and reused line', () => {
+    // The use case: User adds a line. Saves. Deletes the line. Then, adds a line for the same
+    // item. We reuse the client-side-deleted line and update it. However, we want to ensure that
+    // we only tag the line as an update, NOT as a create as the insert will cause an error.
+
+    // Pseudo-line which is deleted on the client-side but persisted on the server.
+    const lineToDelete = createLine('1', {
+      itemId: '1',
+      isDeleted: true,
+      isCreated: false,
+      isUpdated: false,
+    });
+    const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
+    // find the line we just inserted, ensuring it is set up correctly.
+    const line1 = state1.draft.lines.find(
+      ({ id, isUpdated, isDeleted, isCreated }) =>
+        lineToDelete.id === id && isUpdated && !isDeleted && !isCreated
+    );
+    expect(line1).toBeTruthy();
+
+    const lineToUpdate = createLine('2', { itemId: '1' });
+    const state2 = callReducer(OutboundAction.upsertLine(lineToUpdate));
+    const line2 = state2.draft.lines.find(({ id }) => lineToUpdate.id === id);
+
+    expect(line2).toEqual(
+      expect.objectContaining({
+        isCreated: false,
+        isUpdated: true,
+        isDeleted: false,
+      })
+    );
+  });
 });
 
 describe('DetailView reducer: merging', () => {
@@ -393,8 +426,7 @@ describe('DetailView reducer: deleting lines', () => {
     const lineCreated2 = state.draft.lines.find(
       // The line should exist in the draft with the same ID and have the isDeleted tag set to false AND the isCreated tag.
       // Note that we are matching on the original line id, not the new line id.
-      ({ id, isDeleted, isCreated }) =>
-        existingLine?.id === id && !isDeleted && isCreated
+      ({ id }) => existingLine?.id === id
     );
 
     expect(lineCreated2).toBeTruthy();
