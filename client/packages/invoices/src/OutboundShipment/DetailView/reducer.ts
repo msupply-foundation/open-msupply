@@ -203,7 +203,7 @@ export const reducer = (
                 ...lines[existingDeletedLineIdx],
                 ...line,
                 id: lines[existingDeletedLineIdx]?.id || line.id,
-                isCreated: true,
+                isCreated: false,
                 isDeleted: false,
                 isUpdated: true,
               };
