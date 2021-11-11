@@ -171,7 +171,7 @@ export const insert = {
       ...invoiceLine,
       itemName: item.name,
       itemCode: item.code,
-      itemUnit: item.unitName,
+      itemUnit: item.unitName ?? '',
       itemId: item.id,
       expiryDate: stockLine.expiryDate,
       stockLineId: stockLine.id,
