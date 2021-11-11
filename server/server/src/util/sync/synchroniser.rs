@@ -251,8 +251,6 @@ impl Synchroniser {
 #[cfg(test)]
 mod tests {
     use crate::util::{
-        configuration,
-        settings::Settings,
         sync::{
             translation::test_data::{
                 check_records_against_database, extract_sync_buffer_rows,
