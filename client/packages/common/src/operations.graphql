@@ -334,6 +334,7 @@ query itemsWithStockLines(
               storeId
               totalNumberOfPacks
               onHold
+              note
             }
             totalCount
           }

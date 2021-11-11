@@ -7,6 +7,7 @@ import {
   useForm,
   useDialog,
   FormProvider,
+  generateUUID,
 } from '@openmsupply-client/common';
 
 import { BatchesTable } from './BatchesTable';
@@ -23,22 +24,25 @@ interface ItemDetailsModalProps {
 export const getInvoiceLine = (
   id: string,
   item: Item,
-  line: { id: string; expiryDate?: string | null },
+  stockLineOrPlaceholder: Partial<BatchRow> & { id: string },
   quantity: number
 ): OutboundShipmentRow => ({
   id,
-  itemId: item.id,
-  itemName: item.name,
-  itemCode: '',
-  itemUnit: '',
-  packSize: 0,
   numberOfPacks: quantity,
-  costPricePerPack: 0,
-  sellPricePerPack: 0,
-  stockLineId: line.id,
   quantity,
   invoiceId: '',
-  expiry: line.expiryDate,
+  itemId: item.id,
+  itemName: item.name,
+  itemCode: item.code,
+  itemUnit: item.unitName,
+  batch: stockLineOrPlaceholder.batch ?? '',
+  locationDescription: stockLineOrPlaceholder.locationDescription ?? '',
+  costPricePerPack: stockLineOrPlaceholder.costPricePerPack ?? 0,
+  sellPricePerPack: stockLineOrPlaceholder.sellPricePerPack ?? 0,
+  stockLineId: stockLineOrPlaceholder.id,
+  packSize: stockLineOrPlaceholder.packSize ?? 1,
+  expiryDate: stockLineOrPlaceholder.expiryDate ?? null,
+  note: stockLineOrPlaceholder?.note ?? '',
 });
 
 const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
@@ -111,7 +115,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
     const values = getValues();
     const invoiceLines = batchRows.map(batch =>
-      getInvoiceLine('', selectedItem, batch, Number(values[batch.id] || 0))
+      getInvoiceLine(
+        generateUUID(),
+        selectedItem,
+        batch,
+        Number(values[batch.id] || 0)
+      )
     );
 
     invoiceLines
