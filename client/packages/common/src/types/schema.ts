@@ -22,6 +22,22 @@ export type Scalars = {
   NaiveDate: any;
 };
 
+export type AuthToken = {
+  __typename?: 'AuthToken';
+  token: Scalars['String'];
+};
+
+export type AuthTokenError = {
+  __typename?: 'AuthTokenError';
+  error: AuthTokenErrorInterface;
+};
+
+export type AuthTokenErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type AuthTokenResponse = AuthToken | AuthTokenError;
+
 export type BatchInboundShipmentResponse = {
   __typename?: 'BatchInboundShipmentResponse';
   deleteInboundShipmentLines?: Maybe<
@@ -128,7 +144,8 @@ export type CountError = {
   description: Scalars['String'];
 };
 
-export type DatabaseError = ConnectorErrorInterface &
+export type DatabaseError = AuthTokenErrorInterface &
+  ConnectorErrorInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteOutboundShipmentErrorInterface &
@@ -138,10 +155,12 @@ export type DatabaseError = ConnectorErrorInterface &
   InsertOutboundShipmentErrorInterface &
   InsertOutboundShipmentLineErrorInterface &
   NodeErrorInterface &
+  RefreshTokenErrorInterface &
   UpdateInboundShipmentErrorInterface &
   UpdateInboundShipmentLineErrorInterface &
   UpdateOutboundShipmentErrorInterface &
-  UpdateOutboundShipmentLineErrorInterface & {
+  UpdateOutboundShipmentLineErrorInterface &
+  UserRegisterErrorInterface & {
     __typename?: 'DatabaseError';
     description: Scalars['String'];
     fullError: Scalars['String'];
@@ -248,7 +267,7 @@ export type DeleteResponse = {
   id: Scalars['String'];
 };
 
-export type EqualFilterBoolInput = {
+export type EqualFilterBooleanInput = {
   equalTo?: Maybe<Scalars['Boolean']>;
 };
 
@@ -260,8 +279,17 @@ export type EqualFilterInvoiceTypeInput = {
   equalTo?: Maybe<InvoiceNodeType>;
 };
 
+export type EqualFilterNumberInput = {
+  equalTo?: Maybe<Scalars['Int']>;
+};
+
 export type EqualFilterStringInput = {
   equalTo?: Maybe<Scalars['String']>;
+};
+
+export type ExpiredSignature = LogoutErrorInterface & {
+  __typename?: 'ExpiredSignature';
+  description: Scalars['String'];
 };
 
 export type FinalisedInvoiceIsNotEditableError =
@@ -271,10 +299,10 @@ export type FinalisedInvoiceIsNotEditableError =
   };
 
 export enum ForeignKey {
-  InvoiceId = 'INVOICE_ID',
-  ItemId = 'ITEM_ID',
-  OtherPartyId = 'OTHER_PARTY_ID',
-  StockLineId = 'STOCK_LINE_ID',
+  InvoiceId = 'invoiceId',
+  ItemId = 'itemId',
+  OtherPartyId = 'otherPartyId',
+  StockLineId = 'stockLineId',
 }
 
 export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
@@ -410,6 +438,26 @@ export type InsertOutboundShipmentResponseWithId = {
   response: InsertOutboundShipmentResponse;
 };
 
+export type InternalError = AuthTokenErrorInterface &
+  LogoutErrorInterface &
+  RefreshTokenErrorInterface &
+  UserRegisterErrorInterface & {
+    __typename?: 'InternalError';
+    description: Scalars['String'];
+    fullError: Scalars['String'];
+  };
+
+export type InvalidCredentials = AuthTokenErrorInterface & {
+  __typename?: 'InvalidCredentials';
+  description: Scalars['String'];
+};
+
+export type InvalidToken = LogoutErrorInterface &
+  RefreshTokenErrorInterface & {
+    __typename?: 'InvalidToken';
+    description: Scalars['String'];
+  };
+
 export type InvoiceConnector = {
   __typename?: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
@@ -449,12 +497,13 @@ export type InvoiceFilterInput = {
   confirmDatetime?: Maybe<DatetimeFilterInput>;
   entryDatetime?: Maybe<DatetimeFilterInput>;
   finalisedDatetime?: Maybe<DatetimeFilterInput>;
-  nameId?: Maybe<SimpleStringFilterInput>;
+  invoiceNumber?: Maybe<EqualFilterNumberInput>;
+  nameId?: Maybe<EqualFilterStringInput>;
   otherPartyName?: Maybe<SimpleStringFilterInput>;
-  status?: Maybe<SimpleStringFilterInput>;
-  storeId?: Maybe<SimpleStringFilterInput>;
-  theirReference?: Maybe<SimpleStringFilterInput>;
-  type?: Maybe<SimpleStringFilterInput>;
+  status?: Maybe<EqualFilterInvoiceStatusInput>;
+  storeId?: Maybe<EqualFilterStringInput>;
+  theirReference?: Maybe<EqualFilterStringInput>;
+  type?: Maybe<EqualFilterInvoiceTypeInput>;
 };
 
 export type InvoiceLineBelongsToAnotherInvoice =
@@ -563,15 +612,15 @@ export type InvoicePricingNode = {
 export type InvoiceResponse = InvoiceNode | NodeError;
 
 export enum InvoiceSortFieldInput {
-  Comment = 'COMMENT',
-  ConfirmDatetime = 'CONFIRM_DATETIME',
-  EntryDatetime = 'ENTRY_DATETIME',
-  FinalisedDateTime = 'FINALISED_DATE_TIME',
-  InvoiceNumber = 'INVOICE_NUMBER',
-  OtherPartyName = 'OTHER_PARTY_NAME',
-  Status = 'STATUS',
-  TotalAfterTax = 'TOTAL_AFTER_TAX',
-  Type = 'TYPE',
+  Comment = 'comment',
+  ConfirmDatetime = 'confirmDatetime',
+  EntryDatetime = 'entryDatetime',
+  FinalisedDateTime = 'finalisedDateTime',
+  InvoiceNumber = 'invoiceNumber',
+  OtherPartyName = 'otherPartyName',
+  Status = 'status',
+  TotalAfterTax = 'totalAfterTax',
+  Type = 'type',
 }
 
 export type InvoiceSortInput = {
@@ -596,7 +645,7 @@ export type ItemDoesNotMatchStockLine =
 
 export type ItemFilterInput = {
   code?: Maybe<SimpleStringFilterInput>;
-  isVisible?: Maybe<EqualFilterBoolInput>;
+  isVisible?: Maybe<EqualFilterBooleanInput>;
   name?: Maybe<SimpleStringFilterInput>;
 };
 
@@ -608,12 +657,12 @@ export type ItemNode = {
   id: Scalars['String'];
   isVisible: Scalars['Boolean'];
   name: Scalars['String'];
-  unitName: Scalars['String'];
+  unitName?: Maybe<Scalars['String']>;
 };
 
 export enum ItemSortFieldInput {
-  Code = 'CODE',
-  Name = 'NAME',
+  Code = 'code',
+  Name = 'name',
 }
 
 export type ItemSortInput = {
@@ -637,6 +686,27 @@ export type LocationNode = {
 
 export type LocationResponse = LocationNode | NodeError;
 
+export type Logout = {
+  __typename?: 'Logout';
+  userId: Scalars['String'];
+};
+
+export type LogoutError = {
+  __typename?: 'LogoutError';
+  error: LogoutErrorInterface;
+};
+
+export type LogoutErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type LogoutResponse = Logout | LogoutError;
+
+export type MissingAuthToken = LogoutErrorInterface & {
+  __typename?: 'MissingAuthToken';
+  description: Scalars['String'];
+};
+
 export type Mutations = {
   __typename?: 'Mutations';
   batchInboundShipment: BatchInboundShipmentResponse;
@@ -649,6 +719,7 @@ export type Mutations = {
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
+  registerUser: UserRegisterResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
@@ -705,6 +776,10 @@ export type MutationsInsertOutboundShipmentLineArgs = {
   input: InsertOutboundShipmentLineInput;
 };
 
+export type MutationsRegisterUserArgs = {
+  input: UserRegisterInput;
+};
+
 export type MutationsUpdateInboundShipmentArgs = {
   input: UpdateInboundShipmentInput;
 };
@@ -746,8 +821,8 @@ export type NameNode = {
 export type NameResponse = NameNode | NodeError;
 
 export enum NameSortFieldInput {
-  Code = 'CODE',
-  Name = 'NAME',
+  Code = 'code',
+  Name = 'name',
 }
 
 export type NameSortInput = {
@@ -757,12 +832,27 @@ export type NameSortInput = {
 
 export type NamesResponse = ConnectorError | NameConnector;
 
+export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
+  __typename?: 'NoRefreshTokenProvided';
+  description: Scalars['String'];
+};
+
 export type NodeError = {
   __typename?: 'NodeError';
   error: NodeErrorInterface;
 };
 
 export type NodeErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type NotARefreshToken = RefreshTokenErrorInterface & {
+  __typename?: 'NotARefreshToken';
+  description: Scalars['String'];
+};
+
+export type NotAnApiToken = LogoutErrorInterface & {
+  __typename?: 'NotAnApiToken';
   description: Scalars['String'];
 };
 
@@ -833,12 +923,20 @@ export type PaginationInput = {
 export type Queries = {
   __typename?: 'Queries';
   apiVersion: Scalars['String'];
+  authToken: AuthTokenResponse;
   invoice: InvoiceResponse;
   invoiceCounts: InvoiceCountsResponse;
   invoices: InvoicesResponse;
   items: ItemsResponse;
+  logout: LogoutResponse;
   names: NamesResponse;
+  refreshToken: RefreshTokenResponse;
   stockCounts: StockCountsResponse;
+};
+
+export type QueriesAuthTokenArgs = {
+  password: Scalars['String'];
+  username: Scalars['String'];
 };
 
 export type QueriesInvoiceArgs = {
@@ -879,15 +977,16 @@ export type RangeError = InsertInboundShipmentLineErrorInterface &
   };
 
 export enum RangeField {
-  First = 'FIRST',
-  NumberOfPacks = 'NUMBER_OF_PACKS',
-  PackSize = 'PACK_SIZE',
+  First = 'first',
+  NumberOfPacks = 'numberOfPacks',
+  PackSize = 'packSize',
 }
 
 export type RecordAlreadyExist = InsertInboundShipmentErrorInterface &
   InsertInboundShipmentLineErrorInterface &
   InsertOutboundShipmentErrorInterface &
-  InsertOutboundShipmentLineErrorInterface & {
+  InsertOutboundShipmentLineErrorInterface &
+  UserRegisterErrorInterface & {
     __typename?: 'RecordAlreadyExist';
     description: Scalars['String'];
   };
@@ -904,6 +1003,29 @@ export type RecordNotFound = DeleteInboundShipmentErrorInterface &
     __typename?: 'RecordNotFound';
     description: Scalars['String'];
   };
+
+export type RefreshToken = {
+  __typename?: 'RefreshToken';
+  token: Scalars['String'];
+};
+
+export type RefreshTokenError = {
+  __typename?: 'RefreshTokenError';
+  error: RefreshTokenErrorInterface;
+};
+
+export type RefreshTokenErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
+
+export type RegisteredUser = {
+  __typename?: 'RegisteredUser';
+  email?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  username: Scalars['String'];
+};
 
 export type SimpleStringFilterInput = {
   equalTo?: Maybe<Scalars['String']>;
@@ -939,6 +1061,12 @@ export type StockLineDoesNotBelongToCurrentStore =
       description: Scalars['String'];
     };
 
+export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &
+  UpdateOutboundShipmentLineErrorInterface & {
+    __typename?: 'StockLineIsOnHold';
+    description: Scalars['String'];
+  };
+
 export type StockLineNode = {
   __typename?: 'StockLineNode';
   availableNumberOfPacks: Scalars['Int'];
@@ -960,6 +1088,16 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
+
+export type TokenExpired = RefreshTokenErrorInterface & {
+  __typename?: 'TokenExpired';
+  description: Scalars['String'];
+};
+
+export type TokenInvalided = LogoutErrorInterface & {
+  __typename?: 'TokenInvalided';
+  description: Scalars['String'];
+};
 
 export type UpdateInboundShipmentError = {
   __typename?: 'UpdateInboundShipmentError';
@@ -1079,6 +1217,28 @@ export type UpdateOutboundShipmentResponseWithId = {
   id: Scalars['String'];
   response: UpdateOutboundShipmentResponse;
 };
+
+export type UserNameDoesNotExist = AuthTokenErrorInterface & {
+  __typename?: 'UserNameDoesNotExist';
+  description: Scalars['String'];
+};
+
+export type UserRegisterError = {
+  __typename?: 'UserRegisterError';
+  error: UserRegisterErrorInterface;
+};
+
+export type UserRegisterErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UserRegisterInput = {
+  email?: Maybe<Scalars['String']>;
+  password: Scalars['String'];
+  username: Scalars['String'];
+};
+
+export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
 export type InvoiceQueryVariables = Exact<{
   id: Scalars['String'];
@@ -1344,7 +1504,7 @@ export type ItemsWithStockLinesQuery = {
           id: string;
           isVisible: boolean;
           name: string;
-          unitName: string;
+          unitName?: string | null | undefined;
           availableBatches:
             | {
                 __typename: 'ConnectorError';
@@ -1429,7 +1589,7 @@ export type ItemsListViewQuery = {
           id: string;
           isVisible: boolean;
           name: string;
-          unitName: string;
+          unitName?: string | null | undefined;
         }>;
       };
 };

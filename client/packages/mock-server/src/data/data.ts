@@ -155,7 +155,7 @@ export const createInvoiceLines = (
             itemId: item.id,
             itemName: item.name,
             itemCode: item.code,
-            itemUnit: item.unitName,
+            itemUnit: item.unitName ?? '',
 
             stockLineId: stockLine.id,
             locationDescription: stockLine.locationDescription,
