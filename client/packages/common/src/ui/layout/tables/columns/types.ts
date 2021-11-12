@@ -51,7 +51,7 @@ export enum GenericColumnKey {
 }
 
 export interface Column<T extends DomainObject> {
-  key: keyof T | GenericColumnKey;
+  key: keyof T | GenericColumnKey | string;
   accessor: ColumnDataAccessor<T>;
 
   label: LocaleKey | '';
