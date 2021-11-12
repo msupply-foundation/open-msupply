@@ -1,9 +1,8 @@
 import { ObjectWithStringKeys } from './../../types/utility';
 import { useCallback, useState } from 'react';
-import { GenericColumnKey } from '../..';
 
 export interface SortRule<T extends ObjectWithStringKeys> {
-  key: keyof T | GenericColumnKey;
+  key: keyof T | string;
   isDesc?: boolean;
 }
 
