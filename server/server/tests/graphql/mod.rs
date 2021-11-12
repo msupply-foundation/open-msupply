@@ -1,4 +1,4 @@
-use server::util::settings::Settings;
+use server::settings::Settings;
 
 use graphql::{
     config as graphql_config,

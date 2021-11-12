@@ -1,4 +1,4 @@
-use crate::util::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
+use crate::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
 use repository::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 const MASTER_LIST_LINE_1: &'static str = r#"{

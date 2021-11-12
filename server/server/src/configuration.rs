@@ -1,8 +1,10 @@
-use crate::util::environment::{AppEnvironment, EnvironmentVariable};
-use crate::util::settings::{Settings, SettingsError};
-
 use config::{Config, Environment, File, FileSourceFile};
 use std::{env, path::PathBuf};
+
+use crate::{
+    environment::{AppEnvironment, EnvironmentVariable},
+    settings::{Settings, SettingsError},
+};
 
 const CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
 const CONFIGURATION_BASE_FILE_PATH: &str = "base";

@@ -6,6 +6,7 @@ mod graphql {
         get_gql_result, insert_inbound_shipment_line_full as insert,
         InsertInboundShipmentLineFull as Insert,
     };
+    use server::test_utils::setup_all;
     use chrono::NaiveDate;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
@@ -15,7 +16,6 @@ mod graphql {
         repository::{InvoiceLineRepository, StockLineRepository},
         schema::{InvoiceLineRow, StockLineRow},
     };
-    use server::util::test_utils::setup_all;
     use service::util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {

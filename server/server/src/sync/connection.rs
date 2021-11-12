@@ -1,4 +1,4 @@
-use crate::util::{
+use crate::{
     settings::SyncSettings,
     sync::{
         CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,
@@ -204,7 +204,7 @@ mod tests {
     use reqwest::header::AUTHORIZATION;
     use serde_json;
 
-    use crate::util::{
+    use crate::{
         settings::SyncSettings,
         sync::{
             CentralSyncBatch, RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord,

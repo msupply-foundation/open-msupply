@@ -7,7 +7,7 @@ mod store;
 pub mod test_data;
 mod unit;
 
-use crate::util::sync::translation::unit::LegacyUnitRow;
+use crate::sync::translation::unit::LegacyUnitRow;
 use repository::{
     repository::{
         ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
@@ -230,7 +230,7 @@ async fn store_integration_records(
 
 #[cfg(test)]
 mod tests {
-    use crate::util::{
+    use crate::{
         sync::translation::{import_sync_records, test_data::store::get_test_store_records},
         test_utils::get_test_settings,
     };
