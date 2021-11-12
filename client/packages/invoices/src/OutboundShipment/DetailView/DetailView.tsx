@@ -17,7 +17,7 @@ import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
-import { OutboundShipmentRow } from './types';
+import { OutboundShipmentSummaryItem } from './types';
 import { Toolbar } from './Toolbar';
 import { isInvoiceEditable } from '../utils';
 import { Footer } from './Footer';
@@ -34,7 +34,7 @@ const useDraftOutbound = () => {
     getOutboundShipmentDetailViewApi(api)
   );
 
-  const onChangeSortBy = (column: Column<OutboundShipmentRow>) => {
+  const onChangeSortBy = (column: Column<OutboundShipmentSummaryItem>) => {
     dispatch(OutboundAction.onSortBy(column));
   };
 
@@ -48,7 +48,7 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
-      getNotePopoverColumn<OutboundShipmentRow>(),
+      getNotePopoverColumn<OutboundShipmentSummaryItem>(),
       'itemCode',
       'itemName',
       'batch',
@@ -59,7 +59,7 @@ export const DetailView: FC = () => {
       'itemUnit',
       'unitQuantity',
       'numberOfPacks',
-      getRowExpandColumn<OutboundShipmentRow>(),
+      getRowExpandColumn<OutboundShipmentSummaryItem>(),
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
@@ -81,7 +81,7 @@ export const DetailView: FC = () => {
 
       <Toolbar draft={draft} />
 
-      <GeneralTab columns={columns} data={draft.lines} />
+      <GeneralTab columns={columns} data={draft.items} />
 
       <Footer draft={draft} save={save} />
       <SidePanel draft={draft} />
