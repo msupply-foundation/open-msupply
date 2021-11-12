@@ -71,7 +71,6 @@ export interface InvoiceRow extends DomainObject {
   status: string;
   type: string;
   entryDatetime: string;
-  confirmedDatetime?: string | null;
   invoiceNumber: number;
   otherPartyName: string;
   pricing: {
@@ -89,13 +88,11 @@ export interface Invoice extends DomainObject {
   status: string;
   type: string;
   entryDatetime: string;
-  confirmedDatetime?: string | null;
   invoiceNumber: number;
   otherParty?: Name;
   otherPartyName: string;
   onHold: boolean;
   lines: InvoiceLine[];
-  draftDatetime?: string;
   allocatedDatetime?: string;
   shippedDatetime?: string;
   pickedDatetime?: string;
