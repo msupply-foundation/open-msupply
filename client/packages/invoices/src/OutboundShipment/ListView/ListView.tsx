@@ -60,7 +60,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       ],
       'invoiceNumber',
       'entryDatetime',
-      'confirmedDatetime',
+      'allocatedDatetime',
       'comment',
       ['totalAfterTax', { accessor: invoice => invoice.pricing.totalAfterTax }],
       'selection',

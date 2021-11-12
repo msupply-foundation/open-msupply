@@ -429,14 +429,11 @@ type InvoiceNode {
   comment: String
   onHold: Boolean!
   entryDatetime: DateTime!
-  confirmedDatetime: DateTime
-  finalisedDatetime: DateTime
   lines: InvoiceLinesResponse!
   pricing: InvoicePriceResponse!
   otherParty: NameResponse!
 
   ## Additions
-  draftDatetime: DateTime
   allocatedDatetime: DateTime
   pickedDatetime: DateTime
   shippedDatetime: DateTime

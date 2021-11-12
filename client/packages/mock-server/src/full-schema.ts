@@ -324,12 +324,9 @@ export default gql`
     theirReference: String
     comment: String
     entryDatetime: DateTime!
-    confirmedDatetime: DateTime
-    finalisedDatetime: DateTime
     lines: InvoiceLinesResponse!
     pricing: InvoicePriceResponse!
 
-    draftDatetime: DateTime
     allocatedDatetime: DateTime
     pickedDatetime: DateTime
     shippedDatetime: DateTime

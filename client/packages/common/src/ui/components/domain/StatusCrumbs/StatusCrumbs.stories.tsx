@@ -33,7 +33,7 @@ const outboundStatuses: OutboundShipmentStatus[] = [
 ];
 
 const draft = {
-  draftDatetime: '2021-08-02T21:54:09.531Z',
+  entryDatetime: '2021-08-02T21:54:09.531Z',
   allocatedDatetime: '2021-08-19T01:51:51.022Z',
   pickedDatetime: '2021-09-06T17:41:49.548Z',
   shippedDatetime: '2021-09-08T19:31:54.245Z',
@@ -41,7 +41,7 @@ const draft = {
 };
 
 const defaultStatusLog: Record<OutboundShipmentStatus, string | null> = {
-  DRAFT: draft.draftDatetime,
+  DRAFT: draft.entryDatetime,
   ALLOCATED: draft.allocatedDatetime,
   SHIPPED: draft.shippedDatetime,
   PICKED: draft.pickedDatetime,
