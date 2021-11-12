@@ -32,7 +32,7 @@ describe('OutboundShipmentListView', () => {
         getByRole('columnheader', { name: /entryDatetime/i })
       ).toBeInTheDocument();
       expect(
-        getByRole('columnheader', { name: /confirmedDatetime/i })
+        getByRole('columnheader', { name: /allocatedDatetime/i })
       ).toBeInTheDocument();
       expect(
         getByRole('columnheader', { name: /invoicenumber/i })
