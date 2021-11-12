@@ -81,6 +81,7 @@ export const NavLink: FC<NavLinkProps> = props => {
             to={to}
             role="link"
             aria-label={text}
+            title={text}
           />
         )
       ),
@@ -132,6 +133,10 @@ export const NavLink: FC<NavLinkProps> = props => {
             '&.MuiListItemButton-root:hover': {
               backgroundColor: 'transparent',
             },
+            '& .MuiTypography-root': {
+              textOverflow: 'ellipsis',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',},
           }}
           disableGutters
           component={CustomLink}

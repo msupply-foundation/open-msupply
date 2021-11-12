@@ -114,7 +114,7 @@ const getSortKey = (
   sortBy: SortBy<OutboundShipment>
 ): InvoiceSortFieldInput => {
   switch (sortBy.key) {
-    case 'confirmedDatetime': {
+    case 'allocatedDatetime': {
       return InvoiceSortFieldInput.ConfirmDatetime;
     }
     case 'entryDatetime': {

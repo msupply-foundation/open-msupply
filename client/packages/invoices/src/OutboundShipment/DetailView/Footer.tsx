@@ -28,7 +28,7 @@ interface OutboundDetailFooterProps {
 
 const createStatusLog = (draft: OutboundShipment) => {
   const {
-    draftDatetime,
+    entryDatetime,
     allocatedDatetime,
     shippedDatetime,
     pickedDatetime,
@@ -36,7 +36,7 @@ const createStatusLog = (draft: OutboundShipment) => {
   } = draft;
 
   return {
-    DRAFT: draftDatetime,
+    DRAFT: entryDatetime,
     ALLOCATED: allocatedDatetime,
     SHIPPED: shippedDatetime,
     PICKED: pickedDatetime,

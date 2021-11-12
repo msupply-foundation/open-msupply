@@ -11,13 +11,13 @@ describe('useFilterBy', () => {
     const { result } = renderHook(() =>
       useFilterBy({
         comment: { equalTo: 'a' },
-        confirmedDatetime: { equalTo: '1/1/2020' },
+        allocatedDatetime: { equalTo: '1/1/2020' },
       })
     );
 
     expect(result.current.filterBy).toEqual({
       comment: { equalTo: 'a' },
-      confirmedDatetime: { equalTo: '1/1/2020' },
+      allocatedDatetime: { equalTo: '1/1/2020' },
     });
   });
 
@@ -25,7 +25,7 @@ describe('useFilterBy', () => {
     const { result } = renderHook(() =>
       useFilterBy({
         comment: { equalTo: 'a' },
-        confirmedDatetime: { equalTo: '1/1/2020' },
+        allocatedDatetime: { equalTo: '1/1/2020' },
       })
     );
 
@@ -33,13 +33,13 @@ describe('useFilterBy', () => {
 
     act(() => {
       result.current.onChangeDateFilterRule(
-        'confirmedDatetime',
+        'allocatedDatetime',
         'beforeOrEqualTo',
         now
       );
     });
 
-    expect(result.current.filterBy?.confirmedDatetime?.beforeOrEqualTo).toEqual(
+    expect(result.current.filterBy?.allocatedDatetime?.beforeOrEqualTo).toEqual(
       now
     );
   });
@@ -48,7 +48,7 @@ describe('useFilterBy', () => {
     const { result } = renderHook(() =>
       useFilterBy({
         comment: { equalTo: 'a' },
-        confirmedDatetime: { equalTo: '1/1/2020' },
+        allocatedDatetime: { equalTo: '1/1/2020' },
       })
     );
 
@@ -56,7 +56,7 @@ describe('useFilterBy', () => {
 
     act(() => {
       result.current.onChangeDateFilterRule(
-        'confirmedDatetime',
+        'allocatedDatetime',
         'beforeOrEqualTo',
         now
       );
@@ -64,7 +64,7 @@ describe('useFilterBy', () => {
 
     expect(result.current.filterBy).toEqual({
       comment: { equalTo: 'a' },
-      confirmedDatetime: { beforeOrEqualTo: now },
+      allocatedDatetime: { beforeOrEqualTo: now },
     });
   });
 
@@ -84,7 +84,7 @@ describe('useFilterBy', () => {
     const { result } = renderHook(() =>
       useFilterBy({
         comment: { equalTo: 'a' },
-        confirmedDatetime: { equalTo: '1/1/2020' },
+        allocatedDatetime: { equalTo: '1/1/2020' },
       })
     );
 
@@ -94,7 +94,7 @@ describe('useFilterBy', () => {
 
     expect(result.current.filterBy).toEqual({
       comment: { like: 'josh' },
-      confirmedDatetime: { equalTo: '1/1/2020' },
+      allocatedDatetime: { equalTo: '1/1/2020' },
     });
   });
 
@@ -102,7 +102,7 @@ describe('useFilterBy', () => {
     const { result } = renderHook(() =>
       useFilterBy({
         comment: { equalTo: 'a' },
-        confirmedDatetime: { equalTo: '1/1/2020' },
+        allocatedDatetime: { equalTo: '1/1/2020' },
       })
     );
 
@@ -112,7 +112,7 @@ describe('useFilterBy', () => {
 
     expect(result.current.filterBy).toEqual({
       comment: null,
-      confirmedDatetime: { equalTo: '1/1/2020' },
+      allocatedDatetime: { equalTo: '1/1/2020' },
     });
   });
 });
