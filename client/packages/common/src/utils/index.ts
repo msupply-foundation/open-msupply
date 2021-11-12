@@ -4,6 +4,7 @@ export * from './formatters';
 export * from './testing';
 export * from './debounce';
 export * from './dateFunctions';
+export * from './arrays';
 
 export type UUID = string;
 

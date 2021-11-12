@@ -2,7 +2,7 @@ import { ObjectWithStringKeys } from './../../types/utility';
 import { useCallback, useState } from 'react';
 
 export interface SortRule<T extends ObjectWithStringKeys> {
-  key: keyof T;
+  key: keyof T | string;
   isDesc?: boolean;
 }
 

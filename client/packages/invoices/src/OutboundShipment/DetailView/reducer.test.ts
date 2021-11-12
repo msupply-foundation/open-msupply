@@ -6,7 +6,11 @@ import {
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
-import { OutboundShipmentRow, OutboundShipmentAction } from './types';
+import {
+  OutboundShipmentRow,
+  OutboundShipmentAction,
+  OutboundShipmentSummaryItem,
+} from './types';
 
 const lines: OutboundShipmentRow[] = [
   {
@@ -146,7 +150,7 @@ describe('DetailView reducer: sorting', () => {
   it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
     const state: OutboundShipmentStateShape = getState();
 
-    const [numberOfPacksColumn] = createColumns<OutboundShipmentRow>([
+    const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
       'numberOfPacks',
     ]);
     if (!numberOfPacksColumn) throw new Error('This test is broken!');
@@ -169,7 +173,7 @@ describe('DetailView reducer: sorting', () => {
   it('sorts the lines by the provided key in descending order when already in ascending order for the same key.', () => {
     const state: OutboundShipmentStateShape = getState({ isDesc: false });
 
-    const [numberOfPacksColumn] = createColumns<OutboundShipmentRow>([
+    const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
       'numberOfPacks',
     ]);
     if (!numberOfPacksColumn) throw new Error('This test is broken!');
@@ -194,7 +198,9 @@ describe('DetailView reducer: sorting', () => {
   it('sorts the lines by the provided key in ascending order when sorted by some other key.', () => {
     const state: OutboundShipmentStateShape = getState();
 
-    const [itemNameColumn] = createColumns<OutboundShipmentRow>(['itemName']);
+    const [itemNameColumn] = createColumns<OutboundShipmentSummaryItem>([
+      'itemName',
+    ]);
     if (!itemNameColumn) throw new Error('This test is broken!');
 
     const reducerResult = reducer(undefined, null)(

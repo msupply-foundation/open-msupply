@@ -33,4 +33,6 @@ export const placeholderInvoice: OutboundShipment = {
   otherParty: undefined,
 
   enteredByName: '',
+
+  items: [],
 };

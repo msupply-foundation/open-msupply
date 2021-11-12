@@ -31,6 +31,7 @@ export interface InvoiceStatusLog {
 
 export interface OutboundShipment extends Invoice {
   lines: OutboundShipmentRow[];
+  items: OutboundShipmentSummaryItem[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: OutboundShipmentRow) => void;
@@ -57,7 +58,7 @@ export type OutboundShipmentAction =
     }
   | {
       type: ActionType.SortBy;
-      payload: { column: Column<OutboundShipmentRow> };
+      payload: { column: Column<OutboundShipmentSummaryItem> };
     }
   | OutboundShipmentUpdateInvoice
   | {
@@ -68,3 +69,19 @@ export type OutboundShipmentAction =
       type: ActionType.DeleteLine;
       payload: { line: OutboundShipmentRow };
     };
+
+export type OutboundShipmentSummaryItem = {
+  id: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  unitQuantity: number;
+  numberOfPacks: number;
+  locationDescription?: string | null;
+  itemUnit?: string;
+  batch?: string | null;
+  batches: OutboundShipmentRow[];
+  sellPrice?: number | undefined;
+  packSize?: number | undefined;
+  note?: string | null;
+};

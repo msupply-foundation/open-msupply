@@ -2,23 +2,19 @@ import React from 'react';
 import { TestingProvider, useColumns } from '@openmsupply-client/common';
 import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
-import { OutboundShipmentRow } from '../types';
+import { OutboundShipmentSummaryItem } from '../types';
 
-const lines: OutboundShipmentRow[] = [
+const lines: OutboundShipmentSummaryItem[] = [
   {
     id: '1',
     itemId: '1',
     itemUnit: 'bottle',
     packSize: 1,
     numberOfPacks: 100,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
     itemCode: 'abc123',
     itemName: 'ibuprofen',
-    expiry: '1/1/2020',
-    invoiceId: '',
-    stockLineId: '',
-    updateNumberOfPacks: () => {},
+    unitQuantity: 0,
+    batches: [],
   },
   {
     id: '2',
@@ -26,20 +22,16 @@ const lines: OutboundShipmentRow[] = [
     itemUnit: 'bottle',
     packSize: 1,
     numberOfPacks: 100,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
     itemCode: 'def123',
+    unitQuantity: 0,
     itemName: 'amox',
-    expiry: '1/1/2020',
-    invoiceId: '',
-    stockLineId: '',
-    updateNumberOfPacks: () => {},
+    batches: [],
   },
 ];
 
 describe('GeneralTab', () => {
   const Example = () => {
-    const columns = useColumns<OutboundShipmentRow>(
+    const columns = useColumns<OutboundShipmentSummaryItem>(
       ['itemCode', 'itemName', 'numberOfPacks'],
       {
         onChangeSortBy: () => {},
