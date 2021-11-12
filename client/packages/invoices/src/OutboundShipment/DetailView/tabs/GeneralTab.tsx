@@ -7,7 +7,7 @@ import {
   DomainObject,
   Box,
 } from '@openmsupply-client/common';
-import { OutboundShipmentRow } from '../types';
+import { OutboundShipmentSummaryItem } from '../types';
 
 interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
@@ -28,22 +28,18 @@ const Expand: FC = () => {
   );
 };
 
-export const GeneralTabComponent: FC<GeneralTabProps<OutboundShipmentRow>> = ({
-  data,
-  columns,
-}) => {
+export const GeneralTabComponent: FC<
+  GeneralTabProps<OutboundShipmentSummaryItem>
+> = ({ data, columns }) => {
   const { pagination } = usePagination();
-  const activeRows = data.filter(({ isDeleted }) => !isDeleted);
+  // const activeRows = data.filter(({ isDeleted }) => !isDeleted);
 
   return (
     <DataTable
       ExpandContent={Expand}
-      pagination={{ ...pagination, total: activeRows.length }}
+      pagination={{ ...pagination, total: data.length }}
       columns={columns}
-      data={activeRows.slice(
-        pagination.offset,
-        pagination.offset + pagination.first
-      )}
+      data={data.slice(pagination.offset, pagination.offset + pagination.first)}
       onChangePage={pagination.onChangePage}
       noDataMessageKey="error.no-items"
     />

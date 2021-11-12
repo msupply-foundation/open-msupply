@@ -1,3 +1,7 @@
+import {
+  getUnitQuantity,
+  getSumOfKeyReducer,
+} from '@openmsupply-client/common/src/utils/arrays/reducers';
 import { Dispatch } from 'react';
 import { produce } from 'immer';
 import {
@@ -7,12 +11,14 @@ import {
   SortBy,
   Invoice,
   InvoiceLine,
+  ifTheSameElseDefault,
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import {
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
+  OutboundShipmentSummaryItem,
   OutboundShipmentRow,
 } from './types';
 
@@ -64,7 +70,9 @@ export const OutboundAction = {
     type: ActionType.UpdateNumberOfPacks,
     payload: { rowKey, numberOfPacks },
   }),
-  onSortBy: (column: Column<OutboundShipmentRow>): OutboundShipmentAction => ({
+  onSortBy: (
+    column: Column<OutboundShipmentSummaryItem>
+  ): OutboundShipmentAction => ({
     type: ActionType.SortBy,
     payload: { column },
   }),
@@ -72,8 +80,54 @@ export const OutboundAction = {
 
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
-  sortBy: SortBy<OutboundShipmentRow>;
+  sortBy: SortBy<OutboundShipmentSummaryItem>;
 }
+
+type InvoiceLinesByItemId = Record<string, OutboundShipmentRow[]>;
+
+const createItem = (
+  itemId: string,
+  batches: OutboundShipmentRow[]
+): OutboundShipmentSummaryItem => {
+  const item: OutboundShipmentSummaryItem = {
+    id: itemId,
+    itemId: itemId,
+    itemName: ifTheSameElseDefault(batches, 'itemName', ''),
+    itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
+    itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
+    batches,
+    unitQuantity: batches.reduce(getUnitQuantity, 0),
+    numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
+    locationDescription: ifTheSameElseDefault(
+      batches,
+      'locationDescription',
+      undefined
+    ),
+
+    batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+    // TODO: Likely should just be a string.
+    sellPrice: ifTheSameElseDefault(batches, 'sellPricePerPack', undefined),
+    // TODO: Likely should just be a string.
+    packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
+  };
+
+  return item;
+};
+
+const createItems = (lines: OutboundShipmentRow[]) => {
+  const byItem: InvoiceLinesByItemId = lines.reduce((acc, line) => {
+    const itemId = line.itemId;
+    const lines = acc[itemId]
+      ? [...(acc[itemId] as OutboundShipmentRow[]), line]
+      : [line];
+    acc[itemId] = lines;
+    return acc;
+  }, {} as InvoiceLinesByItemId);
+
+  return Object.keys(byItem).map(itemId =>
+    createItem(itemId, byItem[itemId] as OutboundShipmentRow[])
+  );
+};
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderInvoice,
@@ -127,6 +181,8 @@ export const reducer = (
 
           draft.deleteLine = line =>
             dispatch?.(OutboundAction.deleteLine(line));
+
+          draft.items = createItems(draft.lines);
 
           break;
         }
