@@ -216,7 +216,7 @@ const createStatusLog = (status: string, entered: Date) => {
   const statusIdx = statuses.findIndex(s => status === s);
 
   const statusTimes: {
-    draftDatetime?: Date;
+    entryDatetime?: Date;
     allocatedDatetime?: Date;
     pickedDatetime?: Date;
     shippedDatetime?: Date;
@@ -224,12 +224,12 @@ const createStatusLog = (status: string, entered: Date) => {
   } = {};
 
   if (statusIdx >= 0) {
-    statusTimes.draftDatetime = faker.date.future(0.1, entered);
+    statusTimes.entryDatetime = faker.date.future(0.1, entered);
   }
   if (statusIdx >= 1) {
     statusTimes.allocatedDatetime = faker.date.future(
       0.1,
-      statusTimes.draftDatetime
+      statusTimes.entryDatetime
     );
   }
   if (statusIdx >= 2) {
@@ -279,8 +279,6 @@ export const createInvoice = (
     invoiceNumber,
     status,
     entryDatetime: entered.toISOString(),
-    confirmedDatetime: confirmed.toISOString(),
-    finalisedDatetime: null,
     totalAfterTax,
     pricing: {
       __typename: 'InvoicePricingNode',
@@ -292,7 +290,6 @@ export const createInvoice = (
     type: InvoiceNodeType.OutboundShipment,
     comment: takeRandomElementFrom(comments),
     onHold: false,
-    draftDatetime: statusTimes.draftDatetime?.toISOString(),
     allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
     pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
     shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
