@@ -2,7 +2,6 @@ import React, { ChangeEventHandler } from 'react';
 import {
   FieldValues,
   Grid,
-  InvoiceLine,
   Item,
   ModalInput,
   ModalLabel,
@@ -21,12 +20,11 @@ import { OutboundShipmentSummaryItem } from '../types';
 
 interface ItemDetailsFormProps {
   allocatedQuantity: number;
-  invoiceLine?: InvoiceLine;
   quantity?: number;
   register: UseFormRegister<FieldValues>;
   summaryItem?: OutboundShipmentSummaryItem;
   packSize: number;
-  onChangeItem: (newItem: Item) => void;
+  onChangeItem: (newItem: Item | null) => void;
   onChangeQuantity: (quantity: number) => void;
   setPackSize: (packSize: number) => void;
 }
@@ -80,7 +78,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <ModalLabel labelKey="label.item" />
         <Grid item flex={1}>
           <ItemSearchInput
-            currentItemId={summaryItem?.itemId}
+            currentItemCode={summaryItem?.itemCode}
             onChange={onChangeItem}
           />
         </Grid>
