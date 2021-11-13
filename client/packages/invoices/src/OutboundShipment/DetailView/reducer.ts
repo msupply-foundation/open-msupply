@@ -265,7 +265,8 @@ export const reducer = (
             };
           } else {
             const existingDeletedLineIdx = lines.findIndex(
-              ({ isDeleted, itemId }) => itemId === line.itemId && isDeleted
+              ({ isDeleted, stockLineId }) =>
+                stockLineId === line.stockLineId && isDeleted
             );
 
             if (existingDeletedLineIdx >= 0) {
