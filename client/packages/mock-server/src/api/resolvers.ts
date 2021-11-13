@@ -182,7 +182,7 @@ export const ResolverService = {
           }
 
           if (filter.code?.like) {
-            return name.includes(filter.code.like ?? '');
+            return code.includes(filter.code.like ?? '');
           }
 
           if (filter.name?.equalTo) {
