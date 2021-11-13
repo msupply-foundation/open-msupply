@@ -83,7 +83,6 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
       }}
       options={defaultOptionMapper(data?.nodes ?? [], 'name')}
       renderOption={renderOption}
-      // defaultValue={value ? { ...value, label: value.code } : undefined}
       width="100%"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
     />
