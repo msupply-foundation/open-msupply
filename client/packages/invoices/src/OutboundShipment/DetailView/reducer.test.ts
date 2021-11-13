@@ -24,7 +24,7 @@ const lines: OutboundShipmentRow[] = [
     costPricePerPack: 0,
     sellPricePerPack: 0,
     itemName: 'a',
-    stockLineId: '',
+    stockLineId: '1',
     invoiceId: '',
     isCreated: false,
     isUpdated: false,
@@ -41,7 +41,7 @@ const lines: OutboundShipmentRow[] = [
     costPricePerPack: 0,
     sellPricePerPack: 0,
     itemName: 'c',
-    stockLineId: '',
+    stockLineId: '1',
     invoiceId: '',
     isCreated: false,
     isUpdated: false,
@@ -58,7 +58,7 @@ const lines: OutboundShipmentRow[] = [
     costPricePerPack: 0,
     sellPricePerPack: 0,
     itemName: 'b',
-    stockLineId: '',
+    stockLineId: '1',
     invoiceId: '',
     isCreated: false,
     isUpdated: false,
@@ -75,7 +75,7 @@ const lines: OutboundShipmentRow[] = [
     costPricePerPack: 0,
     sellPricePerPack: 0,
     itemName: 'e',
-    stockLineId: '',
+    stockLineId: '1',
     invoiceId: '',
     isCreated: false,
     isUpdated: false,
@@ -92,7 +92,7 @@ const lines: OutboundShipmentRow[] = [
     costPricePerPack: 0,
     sellPricePerPack: 0,
     itemName: 'f',
-    stockLineId: '',
+    stockLineId: '1',
     invoiceId: '',
     isCreated: false,
     isUpdated: false,
@@ -109,7 +109,7 @@ const lines: OutboundShipmentRow[] = [
     costPricePerPack: 0,
     sellPricePerPack: 0,
     itemName: 'd',
-    stockLineId: '',
+    stockLineId: '1',
     invoiceId: '',
     isCreated: false,
     isUpdated: false,
@@ -287,7 +287,7 @@ describe('DetailView reducer: updating lines', () => {
 
     // Pseudo-line which is deleted on the client-side but persisted on the server.
     const lineToDelete = createLine('1', {
-      itemId: '1',
+      stockLineId: '1',
       isDeleted: true,
       isCreated: false,
       isUpdated: false,
@@ -300,7 +300,7 @@ describe('DetailView reducer: updating lines', () => {
     );
     expect(line1).toBeTruthy();
 
-    const lineToUpdate = createLine('2', { itemId: '1' });
+    const lineToUpdate = createLine('2', { stockLineId: '1' });
     const state2 = callReducer(OutboundAction.upsertLine(lineToUpdate));
     const line2 = state2.draft.lines.find(({ id }) => lineToUpdate.id === id);
 
@@ -372,7 +372,7 @@ describe('DetailView reducer: merging', () => {
     Object.entries(reducerResult.draft).forEach(([key, value]) => {
       if (key === 'comment') {
         expect(value).toEqual('josh');
-      } else if (key === 'lines') {
+      } else if (key === 'lines' || key === 'items') {
         // Lines to be handled in their own tests as they're more complex.
         return;
       } else {
@@ -410,29 +410,41 @@ describe('DetailView reducer: deleting lines', () => {
     expect(lineDeleted).toBeFalsy();
   });
 
-  it('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
+  it('inserting a line for a stock line which has an existing, persisted, but deleted, line, reuses that existing line', () => {
     // Mock an already existing and persisted line, which has been deleted client side.
-    const existingLine = createLine('999', {
-      itemId: 'item1',
+    const existingLine = createLine('996', {
+      stockLineId: 'item2',
       numberOfPacks: 999,
       isCreated: false,
       isDeleted: true,
     });
 
-    // Simulate the user adding a new line for the same item.
-    const lineToCreate2 = createLine('998', {
-      itemId: 'item1',
+    const existingLine2 = createLine('998', {
+      stockLineId: 'item1',
       numberOfPacks: 999,
+      isCreated: false,
+      isDeleted: true,
+    });
+
+    // Simulate the user adding a new line for the same stock line.
+    const lineToCreate2 = createLine('993', {
+      stockLineId: 'item1',
+      numberOfPacks: 1,
     });
     const state = callReducer(
       OutboundAction.upsertLine(lineToCreate2),
       // Note the use of the existing line in state.
-      getState({ defaultLines: [existingLine] })
+      getState({ defaultLines: [existingLine, existingLine2] })
     );
     const lineCreated2 = state.draft.lines.find(
-      // The line should exist in the draft with the same ID and have the isDeleted tag set to false AND the isCreated tag.
-      // Note that we are matching on the original line id, not the new line id.
-      ({ id }) => existingLine?.id === id
+      // The line should exist in the draft with the same ID with the updated number of packs,
+      // the deleted flag set to false, the updated flag set to true and the created flag set to false.
+      ({ id, numberOfPacks, isDeleted, isCreated, isUpdated }) =>
+        existingLine2.id === id &&
+        isUpdated &&
+        !isDeleted &&
+        !isCreated &&
+        numberOfPacks === 1
     );
 
     expect(lineCreated2).toBeTruthy();
