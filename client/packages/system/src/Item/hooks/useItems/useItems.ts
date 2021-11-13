@@ -32,15 +32,14 @@ const availableBatchesGuard = (
 
 export const useItems = (
   initialFilter?: FilterBy<Item> | null
-): UseQueryResult<{
+): { onFilterByCode: (code: string) => void } & UseQueryResult<{
   nodes: Item[];
   totalCount: number;
-  onFilterByCode: (code: string) => void;
 }> => {
   const { api } = useOmSupplyApi();
   const filter = useFilterBy<Item>(initialFilter);
 
-  return useQuery(['items', 'list', filter.filterBy], async () => {
+  const queryState = useQuery(['items', 'list', filter.filterBy], async () => {
     const result = await api.itemsWithStockLines({
       key: ItemSortFieldInput.Name,
       filter: filter.filterBy,
@@ -54,10 +53,12 @@ export const useItems = (
       availableBatches: availableBatchesGuard(item.availableBatches),
     }));
 
-    const onFilterByCode = (code: string) => {
-      filter.onChangeStringFilterRule('code', 'equalTo', code);
-    };
-
-    return { totalCount: items.totalCount, nodes, onFilterByCode };
+    return { totalCount: items.totalCount, nodes };
   });
+
+  const onFilterByCode = (code: string) => {
+    filter.onChangeStringFilterRule('code', 'equalTo', code);
+  };
+
+  return { ...queryState, onFilterByCode };
 };

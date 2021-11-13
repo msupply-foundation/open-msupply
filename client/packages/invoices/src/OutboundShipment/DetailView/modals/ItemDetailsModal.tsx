@@ -77,13 +77,13 @@ const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
 
 const useStockLines = (itemCode: string | undefined) => {
   const [batchRows, setBatchRows] = useState<BatchRow[]>([]);
-  const { data, isLoading } = useItems({
+  const { data, isLoading, onFilterByCode } = useItems({
     code: { equalTo: itemCode },
   });
 
   useEffect(() => {
     if (!itemCode) return;
-    data?.onFilterByCode(itemCode);
+    onFilterByCode(itemCode);
   }, [itemCode]);
 
   useEffect(() => {
