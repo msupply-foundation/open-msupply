@@ -127,7 +127,11 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         {quantityDescription}
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.unit" justifyContent="flex-end" />
-          <ModalInput disabled width={150} />
+          <ModalInput
+            disabled
+            width={150}
+            defaultValue={summaryItem?.itemUnit ?? ''}
+          />
         </Grid>
       </ModalRow>
     </Grid>
