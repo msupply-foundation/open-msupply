@@ -6,17 +6,19 @@ import { BasicTextInput } from '../../components/inputs/TextInput/BasicTextInput
 
 export interface ModalInputProps {
   defaultValue?: unknown;
-  inputProps: UseFormRegisterReturn;
+  inputProps?: UseFormRegisterReturn;
   width?: number;
+  disabled?: boolean;
 }
 
 export const ModalInput: React.FC<ModalInputProps> = ({
   defaultValue,
   inputProps,
+  disabled = false,
   width = 240,
 }) => {
   const { errors } = useFormState();
-  const error = get(errors, inputProps.name);
+  const error = get(errors, inputProps?.name ?? '');
   const errorProps = error ? { error: true, helperText: error.message } : {};
 
   return (
@@ -32,6 +34,7 @@ export const ModalInput: React.FC<ModalInputProps> = ({
       }}
     >
       <BasicTextInput
+        disabled={disabled}
         defaultValue={defaultValue}
         sx={{ width: `${width}px` }}
         {...errorProps}

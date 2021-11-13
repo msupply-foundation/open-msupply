@@ -7,7 +7,6 @@ import {
   InfoIcon,
   isAlmostExpired,
   ModalNumericInput,
-  Item,
   Table,
   TableBody,
   TableCell,
@@ -26,7 +25,6 @@ import {
 import { BatchRow } from '../types';
 
 export interface BatchesTableProps {
-  item: Item | null;
   onChange: (key: string, value: number, packSize: number) => void;
   register: UseFormRegister<FieldValues>;
   rows: BatchRow[];
@@ -155,13 +153,10 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
 );
 
 export const BatchesTable: React.FC<BatchesTableProps> = ({
-  item,
   onChange,
   register,
   rows,
 }) => {
-  if (!item) return null;
-
   const t = useTranslation();
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange('placeholder', Number(event.target.value), 1);

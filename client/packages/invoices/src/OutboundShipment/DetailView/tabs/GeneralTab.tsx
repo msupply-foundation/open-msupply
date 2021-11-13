@@ -12,6 +12,7 @@ import { OutboundShipmentSummaryItem } from '../types';
 interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
   columns: Column<T>[];
+  onRowClick?: (rowData: T) => void;
 }
 
 const Expand: FC = () => {
@@ -30,12 +31,13 @@ const Expand: FC = () => {
 
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
-> = ({ data, columns }) => {
+> = ({ data, columns, onRowClick }) => {
   const { pagination } = usePagination();
   // const activeRows = data.filter(({ isDeleted }) => !isDeleted);
 
   return (
     <DataTable
+      onRowClick={onRowClick}
       ExpandContent={Expand}
       pagination={{ ...pagination, total: data.length }}
       columns={columns}

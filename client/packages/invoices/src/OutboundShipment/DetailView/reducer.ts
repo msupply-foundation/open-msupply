@@ -12,6 +12,7 @@ import {
   Invoice,
   InvoiceLine,
   ifTheSameElseDefault,
+  Item,
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import {
@@ -85,9 +86,22 @@ export interface OutboundShipmentStateShape {
 
 type InvoiceLinesByItemId = Record<string, OutboundShipmentRow[]>;
 
-const createItem = (
+export const itemToSummaryItem = (item: Item): OutboundShipmentSummaryItem => {
+  return {
+    id: item.id,
+    itemId: item.id,
+    itemName: item.name,
+    itemCode: item.code,
+    itemUnit: item.unitName,
+    batches: [],
+    unitQuantity: 0,
+    numberOfPacks: 0,
+  };
+};
+
+export const createSummaryItem = (
   itemId: string,
-  batches: OutboundShipmentRow[]
+  batches: OutboundShipmentRow[] = []
 ): OutboundShipmentSummaryItem => {
   const item: OutboundShipmentSummaryItem = {
     id: itemId,
@@ -114,7 +128,7 @@ const createItem = (
   return item;
 };
 
-const createItems = (lines: OutboundShipmentRow[]) => {
+const createSummaryItems = (lines: OutboundShipmentRow[]) => {
   const byItem: InvoiceLinesByItemId = lines.reduce((acc, line) => {
     const itemId = line.itemId;
     const lines = acc[itemId]
@@ -125,7 +139,7 @@ const createItems = (lines: OutboundShipmentRow[]) => {
   }, {} as InvoiceLinesByItemId);
 
   return Object.keys(byItem).map(itemId =>
-    createItem(itemId, byItem[itemId] as OutboundShipmentRow[])
+    createSummaryItem(itemId, byItem[itemId] as OutboundShipmentRow[])
   );
 };
 
@@ -182,7 +196,7 @@ export const reducer = (
           draft.deleteLine = line =>
             dispatch?.(OutboundAction.deleteLine(line));
 
-          draft.items = createItems(draft.lines);
+          draft.items = createSummaryItems(draft.lines);
 
           break;
         }

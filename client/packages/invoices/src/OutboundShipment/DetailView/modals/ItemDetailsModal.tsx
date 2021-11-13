@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   DialogButton,
@@ -12,18 +12,25 @@ import {
 
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
-import { BatchRow, OutboundShipmentRow } from '../types';
+import {
+  BatchRow,
+  OutboundShipmentRow,
+  OutboundShipmentSummaryItem,
+} from '../types';
+import { useItems } from '@openmsupply-client/system/src/Item';
 
 interface ItemDetailsModalProps {
+  summaryItem: OutboundShipmentSummaryItem | null;
   invoiceLine?: OutboundShipmentRow;
   isOpen: boolean;
   onClose: () => void;
   upsertInvoiceLine: (invoiceLine: OutboundShipmentRow) => void;
+  onChangeItem: (item: Item) => void;
 }
 
 export const getInvoiceLine = (
   id: string,
-  item: Item,
+  summaryItem: OutboundShipmentSummaryItem,
   stockLineOrPlaceholder: Partial<BatchRow> & { id: string },
   quantity: number
 ): OutboundShipmentRow => ({
@@ -31,10 +38,10 @@ export const getInvoiceLine = (
   numberOfPacks: quantity,
   quantity,
   invoiceId: '',
-  itemId: item.id,
-  itemName: item.name,
-  itemCode: item.code,
-  itemUnit: item.unitName,
+  itemId: summaryItem.itemId,
+  itemName: summaryItem.itemName,
+  itemCode: summaryItem.itemCode,
+  itemUnit: summaryItem.itemUnit ?? '',
   batch: stockLineOrPlaceholder.batch ?? '',
   locationDescription: stockLineOrPlaceholder.locationDescription ?? '',
   costPricePerPack: stockLineOrPlaceholder.costPricePerPack ?? 0,
@@ -68,42 +75,74 @@ const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
   return 0;
 };
 
+const useStockLines = (itemCode: string | undefined) => {
+  const [batchRows, setBatchRows] = useState<BatchRow[]>([]);
+  const { data, isLoading } = useItems({
+    code: { equalTo: itemCode },
+  });
+
+  useEffect(() => {
+    if (!itemCode) return;
+    data?.onFilterByCode(itemCode);
+  }, [itemCode]);
+
+  useEffect(() => {
+    if (!data) return;
+
+    const { nodes } = data;
+    const { availableBatches } = nodes[0] ?? { availableBatches: [] };
+
+    setBatchRows(() => {
+      return availableBatches
+        .map(batch => ({
+          ...batch,
+          quantity: 0,
+        }))
+        .sort(sortByDisabledThenExpiryDate);
+    });
+  }, [data]);
+
+  const onIssue = (stockLineId: string, quantity: number) => {
+    const batchRowIdx = batchRows.findIndex(batch => batch.id === stockLineId);
+    const batchRow = batchRows[batchRowIdx];
+    if (!batchRow) return;
+
+    batchRows[batchRowIdx] = { ...batchRow, quantity };
+    setBatchRows([...batchRows]);
+  };
+
+  return { batchRows, onIssue, isLoading };
+};
+
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   invoiceLine,
   isOpen,
   onClose,
   upsertInvoiceLine,
+  onChangeItem,
+  summaryItem,
 }) => {
-  const [batchRows, setBatchRows] = React.useState<BatchRow[]>([]);
-  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
-  const [quantity, setQuantity] = React.useState(0);
-  const [allocated, setAllocated] = React.useState(0);
-  const [packSize, setPackSize] = React.useState(1);
+  const [batchRows, setBatchRows] = useState<BatchRow[]>([]);
+
+  const [quantity, setQuantity] = useState(0);
+  const [allocated, setAllocated] = useState(0);
+  const [packSize, setPackSize] = useState(1);
+
+  const methods = useForm({ mode: 'onBlur' });
+  const { reset, register, setValue, getValues } = methods;
+
+  const { batchRows: bRows, isLoading } = useStockLines(summaryItem?.itemCode);
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
     onClose,
   });
-  const methods = useForm({ mode: 'onBlur' });
-  const { reset, register, setValue, getValues } = methods;
-
-  const onChangeItem = (value: Item | null) => {
-    setSelectedItem(value);
-    setBatchRows(
-      (value?.availableBatches || [])
-        .map(batch => ({ ...batch, quantity: 0 }))
-        .sort(sortByDisabledThenExpiryDate)
-    );
-    setValue('code', value?.code || '');
-    setValue('unitName', value?.unitName || '');
-    setValue('availableQuantity', value?.availableQuantity || 0);
-  };
 
   const onReset = () => {
     reset();
     setBatchRows([]);
     setQuantity(0);
-    setSelectedItem(null);
+
     setValue('quantity', '');
   };
   const onCancel = () => {
@@ -111,13 +150,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     onReset();
   };
   const upsert = () => {
-    if (!selectedItem) return;
+    if (!summaryItem) return;
 
     const values = getValues();
     const invoiceLines = batchRows.map(batch =>
       getInvoiceLine(
         generateUUID(),
-        selectedItem,
+        summaryItem,
         batch,
         Number(values[batch.id] || 0)
       )
@@ -131,7 +170,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       invoiceLines.push(
         getInvoiceLine(
           'placeholder',
-          selectedItem,
+          summaryItem,
           { id: 'placeholder', expiryDate: '' },
           placeholderValue
         )
@@ -152,12 +191,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         (total += Number(values[batch.id] || 0) * batch.packSize),
       Number(values['placeholder'] || 0)
     );
+
     setAllocated(Math.floor(allocatedUnits / packSize));
   };
 
   const allocateQuantities = () => {
     // if invalid quantity entered, don't allocate
-    if (quantity < 1 || Number.isNaN(quantity) || !selectedItem) {
+    if (quantity < 1 || Number.isNaN(quantity) || !summaryItem) {
       return;
     }
     // if the selected item has no batch rows, allocate all to the placeholder
@@ -215,7 +255,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   React.useEffect(checkAllocatedQuantities, [batchRows]);
 
-  React.useEffect(allocateQuantities, [quantity, selectedItem, packSize]);
+  React.useEffect(allocateQuantities, [quantity, summaryItem, packSize]);
 
   return (
     <Modal
@@ -243,16 +283,17 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               register={register}
               allocatedQuantity={allocated}
               quantity={quantity}
-              selectedItem={selectedItem || undefined}
+              summaryItem={summaryItem || undefined}
               packSize={packSize}
               setPackSize={setPackSize}
             />
-            <BatchesTable
-              item={selectedItem}
-              onChange={onChangeRowQuantity}
-              register={register}
-              rows={batchRows}
-            />
+            {!isLoading && (
+              <BatchesTable
+                onChange={onChangeRowQuantity}
+                register={register}
+                rows={bRows}
+              />
+            )}
           </Grid>
         </form>
       </FormProvider>

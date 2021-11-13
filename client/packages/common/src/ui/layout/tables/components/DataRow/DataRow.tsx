@@ -8,7 +8,7 @@ import { Collapse } from '@mui/material';
 
 interface DataRowProps<T extends DomainObject> {
   columns: Column<T>[];
-  onClick?: (rowValues: T) => void;
+  onClick?: (rowData: T) => void;
   rowData: T;
   rowKey: string;
   ExpandContent?: FC;
