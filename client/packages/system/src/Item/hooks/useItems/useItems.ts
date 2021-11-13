@@ -5,6 +5,8 @@ import {
   Item,
   StockLineConnector,
   ConnectorError,
+  FilterBy,
+  useFilterBy,
 } from '@openmsupply-client/common';
 import { useQuery, UseQueryResult } from 'react-query';
 
@@ -28,14 +30,20 @@ const availableBatchesGuard = (
   throw new Error('Unknown');
 };
 
-export const useItems = (): UseQueryResult<{
+export const useItems = (
+  initialFilter?: FilterBy<Item> | null
+): UseQueryResult<{
   nodes: Item[];
   totalCount: number;
+  onFilterByCode: (code: string) => void;
 }> => {
   const { api } = useOmSupplyApi();
-  return useQuery(['items', 'list'], async () => {
+  const filter = useFilterBy<Item>(initialFilter);
+
+  return useQuery(['items', 'list', filter.filterBy], async () => {
     const result = await api.itemsWithStockLines({
       key: ItemSortFieldInput.Name,
+      filter: filter.filterBy,
     });
 
     const items = itemsGuard(result);
@@ -46,6 +54,10 @@ export const useItems = (): UseQueryResult<{
       availableBatches: availableBatchesGuard(item.availableBatches),
     }));
 
-    return { totalCount: items.totalCount, nodes };
+    const onFilterByCode = (code: string) => {
+      filter.onChangeStringFilterRule('code', 'equalTo', code);
+    };
+
+    return { totalCount: items.totalCount, nodes, onFilterByCode };
   });
 };

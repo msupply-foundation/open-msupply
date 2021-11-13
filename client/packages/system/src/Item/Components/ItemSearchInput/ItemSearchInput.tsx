@@ -29,15 +29,23 @@ const renderOption = (
 
 interface ItemSearchInputProps {
   onChange: (item: Item) => void;
-  value?: Item;
+  currentItem?: Item;
+  currentItemId?: string;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
-  value,
+  currentItem,
+  currentItemId,
 }) => {
   const { data, isLoading } = useItems();
   const t = useTranslation();
+
+  const value =
+    currentItem ??
+    (currentItemId
+      ? data?.nodes?.find(i => i.id === currentItemId)
+      : undefined);
 
   return (
     <Autocomplete

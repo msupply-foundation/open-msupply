@@ -1,4 +1,7 @@
-import { ItemSortFieldInput } from '@openmsupply-client/common/src/types/schema';
+import {
+  ItemSortFieldInput,
+  ItemFilterInput,
+} from '@openmsupply-client/common/src/types/schema';
 import { Api } from '../api';
 import { ListResponse, Item as ItemType } from '../data/types';
 
@@ -8,6 +11,7 @@ const QueryResolvers = {
     vars: {
       page?: { first?: number; offset?: number };
       sort: [{ key: ItemSortFieldInput; desc: boolean }];
+      filter: ItemFilterInput;
     }
   ): ListResponse<ItemType> => {
     return Api.ResolverService.list.item({
@@ -15,6 +19,7 @@ const QueryResolvers = {
       offset: vars?.page?.offset ?? 0,
       desc: vars.sort[0]?.desc ?? false,
       key: vars.sort[0]?.key ?? ItemSortFieldInput.Name,
+      filter: vars.filter,
     });
   },
 };
