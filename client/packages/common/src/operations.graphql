@@ -261,10 +261,12 @@ query itemsWithStockLines(
   $offset: Int
   $key: ItemSortFieldInput!
   $desc: Boolean
+  $filter: ItemFilterInput
 ) {
   items(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
+    filter: $filter
   ) {
     ... on ConnectorError {
       __typename
@@ -351,10 +353,12 @@ query itemsListView(
   $offset: Int
   $key: ItemSortFieldInput!
   $desc: Boolean
+  $filter: ItemFilterInput
 ) {
   items(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
+    filter: $filter
   ) {
     ... on ConnectorError {
       __typename

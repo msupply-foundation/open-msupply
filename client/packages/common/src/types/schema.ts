@@ -1145,6 +1145,7 @@ export type ItemsWithStockLinesQueryVariables = Exact<{
   offset?: Maybe<Scalars['Int']>;
   key: ItemSortFieldInput;
   desc?: Maybe<Scalars['Boolean']>;
+  filter?: Maybe<ItemFilterInput>;
 }>;
 
 
@@ -1155,6 +1156,7 @@ export type ItemsListViewQueryVariables = Exact<{
   offset?: Maybe<Scalars['Int']>;
   key: ItemSortFieldInput;
   desc?: Maybe<Scalars['Boolean']>;
+  filter?: Maybe<ItemFilterInput>;
 }>;
 
 
@@ -1446,8 +1448,12 @@ export const NamesDocument = gql`
 }
     `;
 export const ItemsWithStockLinesDocument = gql`
-    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean) {
-  items(page: {first: $first, offset: $offset}, sort: {key: $key, desc: $desc}) {
+    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
+  items(
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
     ... on ConnectorError {
       __typename
       error {
@@ -1529,8 +1535,12 @@ export const ItemsWithStockLinesDocument = gql`
 }
     `;
 export const ItemsListViewDocument = gql`
-    query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean) {
-  items(page: {first: $first, offset: $offset}, sort: {key: $key, desc: $desc}) {
+    query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
+  items(
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
     ... on ConnectorError {
       __typename
       error {

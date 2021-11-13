@@ -158,28 +158,53 @@ export const ResolverService = {
         paged.sort(sortData);
       }
 
-      return createListResponse(filtered.length, filtered, 'InvoiceConnector');
+      return createListResponse(filtered.length, paged, 'InvoiceConnector');
     },
     item: ({
       first = 50,
       offset = 0,
       key,
       desc,
+      filter,
     }: ItemsListViewQueryVariables): ListResponse<ResolvedItem> => {
       const items = db.get.all.item();
 
-      if (key) {
-        const sortData = getDataSorter(getItemsSortKey(key), !!desc);
-        items.sort(sortData);
-      }
-
-      const paged = items.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
-
-      const data = paged.map(item => {
+      const resolved = items.map(item => {
         return ResolverService.byId.item(item.id);
       });
 
-      return createListResponse(items.length, data, 'ItemConnector');
+      let filtered = resolved;
+
+      if (filter) {
+        filtered = filtered.filter(({ code, name }) => {
+          if (filter.code?.equalTo) {
+            return code === filter.code.equalTo;
+          }
+
+          if (filter.code?.like) {
+            return name.includes(filter.code.like ?? '');
+          }
+
+          if (filter.name?.equalTo) {
+            return name === filter.name.equalTo;
+          }
+
+          if (filter.name?.like) {
+            return name.includes(filter.name.like ?? '');
+          }
+
+          return true;
+        });
+      }
+
+      const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
+
+      if (key) {
+        const sortData = getDataSorter(getItemsSortKey(key), !!desc);
+        paged.sort(sortData);
+      }
+
+      return createListResponse(filtered.length, paged, 'ItemConnector');
     },
 
     name: ({
