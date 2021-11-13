@@ -102,16 +102,7 @@ const useStockLines = (itemCode: string | undefined) => {
     });
   }, [data]);
 
-  const onIssue = (stockLineId: string, quantity: number) => {
-    const batchRowIdx = batchRows.findIndex(batch => batch.id === stockLineId);
-    const batchRow = batchRows[batchRowIdx];
-    if (!batchRow) return;
-
-    batchRows[batchRowIdx] = { ...batchRow, quantity };
-    setBatchRows([...batchRows]);
-  };
-
-  return { batchRows, onIssue, isLoading };
+  return { batchRows, isLoading };
 };
 
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
