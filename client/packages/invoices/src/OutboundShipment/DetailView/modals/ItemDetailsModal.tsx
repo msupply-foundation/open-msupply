@@ -113,8 +113,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   onChangeItem,
   summaryItem,
 }) => {
-  const [batchRows, setBatchRows] = useState<BatchRow[]>([]);
-
   const [quantity, setQuantity] = useState(0);
   const [allocated, setAllocated] = useState(0);
   const [packSize, setPackSize] = useState(1);
@@ -122,7 +120,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register, setValue, getValues } = methods;
 
-  const { batchRows: bRows, isLoading } = useStockLines(summaryItem?.itemCode);
+  const { batchRows, isLoading } = useStockLines(summaryItem?.itemCode);
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
@@ -131,7 +129,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const onReset = () => {
     reset();
-    setBatchRows([]);
     setQuantity(0);
 
     setValue('quantity', '');
@@ -282,7 +279,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               <BatchesTable
                 onChange={onChangeRowQuantity}
                 register={register}
-                rows={bRows}
+                rows={batchRows}
               />
             )}
           </Grid>
