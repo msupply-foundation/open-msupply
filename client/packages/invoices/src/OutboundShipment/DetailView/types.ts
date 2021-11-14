@@ -30,7 +30,6 @@ export interface InvoiceStatusLog {
 }
 
 export interface OutboundShipment extends Invoice {
-  lines: OutboundShipmentRow[];
   items: OutboundShipmentSummaryItem[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;

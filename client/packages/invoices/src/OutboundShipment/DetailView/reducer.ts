@@ -23,6 +23,7 @@ import {
   OutboundShipmentSummaryItem,
   OutboundShipmentRow,
 } from './types';
+import { getDataSorter } from '../utils';
 
 const getExistingLine = (
   items: OutboundShipmentSummaryItem[],
@@ -59,48 +60,6 @@ const recalculateSummary = (summaryItem: OutboundShipmentSummaryItem) => {
   return { unitQuantity, numberOfPacks };
 };
 
-// const updateQuantity = (
-//   summaryItem: OutboundShipmentSummaryItem,
-//   row: OutboundShipmentRow,
-//   value: number
-// ) => {
-//   const newRow = { ...row, numberOfPacks: value };
-//   const newSummaryItem = {
-//     ...summaryItem,
-//     batches: {
-//       ...summaryItem.batches,
-//       [newRow.id]: newRow,
-//     },
-//   };
-
-//   return { ...newSummaryItem, ...recalculateSummary(newSummaryItem) };
-// };
-
-const parseValue = (object: any, key: string) => {
-  const value = object[key];
-  if (typeof value === 'string') {
-    const valueAsNumber = Number.parseFloat(value);
-
-    if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
-    return value.toUpperCase(); // ignore case
-  }
-  return value;
-};
-
-const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
-  const valueA = parseValue(a, sortKey);
-  const valueB = parseValue(b, sortKey);
-
-  if (valueA < valueB) {
-    return desc ? 1 : -1;
-  }
-  if (valueA > valueB) {
-    return desc ? -1 : 1;
-  }
-
-  return 0;
-};
-
 export const OutboundAction = {
   upsertLine: (line: OutboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.UpsertLine,
@@ -118,13 +77,7 @@ export const OutboundAction = {
     type: ActionType.UpdateInvoice,
     payload: { key, value },
   }),
-  updateNumberOfPacks: (
-    rowKey: string,
-    numberOfPacks: number
-  ): OutboundShipmentAction => ({
-    type: ActionType.UpdateNumberOfPacks,
-    payload: { rowKey, numberOfPacks },
-  }),
+
   onSortBy: (
     column: Column<OutboundShipmentSummaryItem>
   ): OutboundShipmentAction => ({
@@ -137,8 +90,6 @@ export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
   sortBy: SortBy<OutboundShipmentSummaryItem>;
 }
-
-type InvoiceLinesByItemId = Record<string, OutboundShipmentRow[]>;
 
 export const itemToSummaryItem = (item: Item): OutboundShipmentSummaryItem => {
   return {
@@ -182,21 +133,6 @@ export const createSummaryItem = (
   return item;
 };
 
-const createSummaryItems = (lines: OutboundShipmentRow[]) => {
-  const byItem: InvoiceLinesByItemId = lines.reduce((acc, line) => {
-    const itemId = line.itemId;
-    const lines = acc[itemId]
-      ? [...(acc[itemId] as OutboundShipmentRow[]), line]
-      : [line];
-    acc[itemId] = lines;
-    return acc;
-  }, {} as InvoiceLinesByItemId);
-
-  return Object.keys(byItem).map(itemId =>
-    createSummaryItem(itemId, byItem[itemId] as OutboundShipmentRow[])
-  );
-};
-
 export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderInvoice,
   sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'asc' },
@@ -228,29 +164,32 @@ export const reducer = (
             draft[key] = data[key];
           });
 
-          draft.lines = data.lines?.map(serverLine => {
-            const draftLine = draft.lines.find(
-              line => line.id === serverLine.id
-            );
-
-            if (draftLine) {
-              return mergeLines(serverLine, draftLine);
-            }
-
-            return createLine(serverLine, draft, dispatch);
-          });
-
-          draft.update = (key, value) => {
-            dispatch?.(OutboundAction.updateInvoice(key, value));
-          };
-
           draft.upsertLine = line =>
             dispatch?.(OutboundAction.upsertLine(line));
 
           draft.deleteLine = line =>
             dispatch?.(OutboundAction.deleteLine(line));
 
-          draft.items = createSummaryItems(draft.lines);
+          draft.items = data.lines?.map(serverLine => {
+            const outboundShipmentRow = createLine(serverLine, draft);
+            const { existingRow, existingSummaryItem } = getExistingLine(
+              draft.items,
+              outboundShipmentRow
+            );
+
+            const summaryItem =
+              existingSummaryItem ??
+              createSummaryItem(serverLine.itemId, [outboundShipmentRow]);
+
+            if (existingRow) {
+              summaryItem.batches[existingRow.id] = mergeLines(
+                serverLine,
+                existingRow
+              );
+            }
+
+            return summaryItem;
+          });
 
           break;
         }
@@ -274,19 +213,6 @@ export const reducer = (
 
           draft.lines = newLines;
           state.sortBy = newSortBy;
-
-          break;
-        }
-
-        case ActionType.UpdateNumberOfPacks: {
-          const { payload } = action;
-          const { rowKey, numberOfPacks } = payload;
-
-          const row = state.draft.lines?.find(({ id }) => id === rowKey);
-
-          if (row) {
-            row.numberOfPacks = numberOfPacks;
-          }
 
           break;
         }
@@ -335,53 +261,6 @@ export const reducer = (
 
           break;
         }
-
-        // case ActionType.UpsertLine: {
-        //   const { draft } = state;
-        //   const { payload } = action;
-        //   const { line } = payload;
-
-        //   const { lines } = draft;
-
-        //   const existingLineIdx = lines.findIndex(({ id }) => id === line.id);
-
-        //   if (existingLineIdx >= 0) {
-        //     lines[existingLineIdx] = {
-        //       ...lines[existingLineIdx],
-        //       ...line,
-        //       id: lines[existingLineIdx]?.id || line.id,
-        //       isUpdated: true,
-        //       isDeleted: false,
-        //     };
-        //   } else {
-        //     const existingDeletedLineIdx = lines.findIndex(
-        //       ({ isDeleted, stockLineId }) =>
-        //         stockLineId === line.stockLineId && isDeleted
-        //     );
-
-        //     if (existingDeletedLineIdx >= 0) {
-        //       lines[existingDeletedLineIdx] = {
-        //         ...lines[existingDeletedLineIdx],
-        //         ...line,
-        //         id: lines[existingDeletedLineIdx]?.id || line.id,
-        //         isCreated: false,
-        //         isDeleted: false,
-        //         isUpdated: true,
-        //       };
-        //     } else {
-        //       line.isCreated = true;
-        //       line.isUpdated = true;
-        //       line.isDeleted = false;
-        //       draft.lines.push(createLine(line, draft, dispatch));
-        //     }
-        //   }
-
-        //   draft.update = (key, value) => {
-        //     dispatch?.(OutboundAction.updateInvoice(key, value));
-        //   };
-
-        //   break;
-        // }
 
         case ActionType.DeleteLine: {
           const { draft } = state;
@@ -433,13 +312,10 @@ const mergeLines = (
 
 const createLine = (
   line: InvoiceLine,
-  draft: OutboundShipment,
-  dispatch: Dispatch<DocumentActionSet<OutboundShipmentAction>> | null
+  draft: OutboundShipment
 ): OutboundShipmentRow => {
   return {
     ...line,
     invoiceId: draft.id,
-    updateNumberOfPacks: (numberOfPacks: number) =>
-      dispatch?.(OutboundAction.updateNumberOfPacks(line.id, numberOfPacks)),
   };
 };
