@@ -207,7 +207,7 @@ describe('DetailView reducer: updating lines', () => {
 });
 
 describe('DetailView reducer: merging', () => {
-  it.only('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
+  it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = getState();
 
     // Create some server data which is the same except every line has 99 numberOfPacks.
