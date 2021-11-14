@@ -13,6 +13,7 @@ import {
   InvoiceLine,
   ifTheSameElseDefault,
   Item,
+  arrayToRecord,
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import {
@@ -22,6 +23,58 @@ import {
   OutboundShipmentSummaryItem,
   OutboundShipmentRow,
 } from './types';
+
+const getExistingLine = (
+  items: OutboundShipmentSummaryItem[],
+  line: OutboundShipmentRow
+): {
+  existingSummaryItem?: OutboundShipmentSummaryItem;
+  existingRow?: OutboundShipmentRow;
+} => {
+  const existingSummaryItem = items.find(
+    item => !!item.batches[line.id] || item.itemId === line.itemId
+  );
+
+  if (!existingSummaryItem) return {};
+
+  let existingRow = existingSummaryItem.batches[line.id];
+  if (existingRow) return { existingRow, existingSummaryItem };
+
+  existingRow = Object.values(existingSummaryItem.batches).find(
+    ({ stockLineId }) => stockLineId === line.stockLineId
+  );
+
+  return { existingRow, existingSummaryItem };
+};
+
+const recalculateSummary = (summaryItem: OutboundShipmentSummaryItem) => {
+  const unitQuantity = Object.values<OutboundShipmentRow>(
+    summaryItem.batches
+  ).reduce(getUnitQuantity, 0);
+
+  const numberOfPacks = Object.values<OutboundShipmentRow>(
+    summaryItem.batches
+  ).reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+
+  return { unitQuantity, numberOfPacks };
+};
+
+// const updateQuantity = (
+//   summaryItem: OutboundShipmentSummaryItem,
+//   row: OutboundShipmentRow,
+//   value: number
+// ) => {
+//   const newRow = { ...row, numberOfPacks: value };
+//   const newSummaryItem = {
+//     ...summaryItem,
+//     batches: {
+//       ...summaryItem.batches,
+//       [newRow.id]: newRow,
+//     },
+//   };
+
+//   return { ...newSummaryItem, ...recalculateSummary(newSummaryItem) };
+// };
 
 const parseValue = (object: any, key: string) => {
   const value = object[key];
@@ -53,6 +106,7 @@ export const OutboundAction = {
     type: ActionType.UpsertLine,
     payload: { line },
   }),
+
   deleteLine: (line: OutboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.DeleteLine,
     payload: { line },
@@ -93,7 +147,7 @@ export const itemToSummaryItem = (item: Item): OutboundShipmentSummaryItem => {
     itemName: item.name,
     itemCode: item.code,
     itemUnit: item.unitName,
-    batches: [],
+    batches: {},
     unitQuantity: 0,
     numberOfPacks: 0,
   };
@@ -109,7 +163,7 @@ export const createSummaryItem = (
     itemName: ifTheSameElseDefault(batches, 'itemName', ''),
     itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
     itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
-    batches,
+    batches: arrayToRecord(batches),
     unitQuantity: batches.reduce(getUnitQuantity, 0),
     numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
     locationDescription: ifTheSameElseDefault(
@@ -249,62 +303,109 @@ export const reducer = (
         case ActionType.UpsertLine: {
           const { draft } = state;
           const { payload } = action;
+          const { items } = draft;
+
           const { line } = payload;
 
-          const { lines } = draft;
+          const { existingSummaryItem, existingRow } = getExistingLine(
+            items,
+            line
+          );
 
-          const existingLineIdx = lines.findIndex(({ id }) => id === line.id);
+          if (existingSummaryItem && existingRow) {
+            existingRow.isUpdated = existingRow.isCreated ? false : true;
+            existingRow.isDeleted = false;
+            existingRow.numberOfPacks = line.numberOfPacks;
 
-          if (existingLineIdx >= 0) {
-            lines[existingLineIdx] = {
-              ...lines[existingLineIdx],
+            const { unitQuantity, numberOfPacks } =
+              recalculateSummary(existingSummaryItem);
+            existingSummaryItem.unitQuantity = unitQuantity;
+            existingSummaryItem.numberOfPacks = numberOfPacks;
+            existingSummaryItem.batches[existingRow.id] = existingRow;
+          } else {
+            const newLine = {
               ...line,
-              id: lines[existingLineIdx]?.id || line.id,
-              isUpdated: true,
+              isCreated: true,
+              isUpdated: false,
               isDeleted: false,
             };
-          } else {
-            const existingDeletedLineIdx = lines.findIndex(
-              ({ isDeleted, stockLineId }) =>
-                stockLineId === line.stockLineId && isDeleted
-            );
-
-            if (existingDeletedLineIdx >= 0) {
-              lines[existingDeletedLineIdx] = {
-                ...lines[existingDeletedLineIdx],
-                ...line,
-                id: lines[existingDeletedLineIdx]?.id || line.id,
-                isCreated: false,
-                isDeleted: false,
-                isUpdated: true,
-              };
-            } else {
-              line.isCreated = true;
-              line.isUpdated = true;
-              line.isDeleted = false;
-              draft.lines.push(createLine(line, draft, dispatch));
-            }
+            const summaryItem = createSummaryItem(line.itemId, [newLine]);
+            items.push(summaryItem);
           }
-
-          draft.update = (key, value) => {
-            dispatch?.(OutboundAction.updateInvoice(key, value));
-          };
 
           break;
         }
 
+        // case ActionType.UpsertLine: {
+        //   const { draft } = state;
+        //   const { payload } = action;
+        //   const { line } = payload;
+
+        //   const { lines } = draft;
+
+        //   const existingLineIdx = lines.findIndex(({ id }) => id === line.id);
+
+        //   if (existingLineIdx >= 0) {
+        //     lines[existingLineIdx] = {
+        //       ...lines[existingLineIdx],
+        //       ...line,
+        //       id: lines[existingLineIdx]?.id || line.id,
+        //       isUpdated: true,
+        //       isDeleted: false,
+        //     };
+        //   } else {
+        //     const existingDeletedLineIdx = lines.findIndex(
+        //       ({ isDeleted, stockLineId }) =>
+        //         stockLineId === line.stockLineId && isDeleted
+        //     );
+
+        //     if (existingDeletedLineIdx >= 0) {
+        //       lines[existingDeletedLineIdx] = {
+        //         ...lines[existingDeletedLineIdx],
+        //         ...line,
+        //         id: lines[existingDeletedLineIdx]?.id || line.id,
+        //         isCreated: false,
+        //         isDeleted: false,
+        //         isUpdated: true,
+        //       };
+        //     } else {
+        //       line.isCreated = true;
+        //       line.isUpdated = true;
+        //       line.isDeleted = false;
+        //       draft.lines.push(createLine(line, draft, dispatch));
+        //     }
+        //   }
+
+        //   draft.update = (key, value) => {
+        //     dispatch?.(OutboundAction.updateInvoice(key, value));
+        //   };
+
+        //   break;
+        // }
+
         case ActionType.DeleteLine: {
           const { draft } = state;
+          const { items } = draft;
           const { payload } = action;
+
           const { line } = payload;
 
-          const lineToDelete = draft.lines.find(({ id }) => id === line.id);
+          const { existingRow, existingSummaryItem } = getExistingLine(
+            items,
+            line
+          );
 
-          if (lineToDelete) {
-            if (lineToDelete.isCreated) {
-              draft.lines = draft.lines.filter(({ id }) => id !== line.id);
+          if (existingRow && existingSummaryItem) {
+            if (existingRow.isCreated) {
+              delete existingSummaryItem.batches[line.id];
             } else {
-              lineToDelete.isDeleted = true;
+              if (existingSummaryItem.batches[line.id]) {
+                // The if condition above doesn't help TS know that this is guaranteed
+                // to be defined.
+                (
+                  existingSummaryItem.batches[line.id] as OutboundShipmentRow
+                ).isDeleted = true;
+              }
             }
           }
 
