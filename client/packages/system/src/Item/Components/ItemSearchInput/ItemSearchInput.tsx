@@ -51,6 +51,13 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   });
   const t = useTranslation();
 
+  useEffect(() => {
+    setFilter({
+      searchTerm: currentItem?.code ?? currentItemCode ?? '',
+      field: 'code',
+    });
+  }, [currentItem, currentItemCode]);
+
   // Whenever the filter state changes, trigger a filter on the request which
   // will trigger a refetch if needed.
   useEffect(() => {
