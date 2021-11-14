@@ -188,7 +188,10 @@ export const reducer = (
               );
             }
 
-            return summaryItem;
+            const { unitQuantity, numberOfPacks } =
+              recalculateSummary(summaryItem);
+
+            return { ...summaryItem, unitQuantity, numberOfPacks };
           });
 
           break;
@@ -277,6 +280,12 @@ export const reducer = (
           if (existingRow && existingSummaryItem) {
             if (existingRow.isCreated) {
               delete existingSummaryItem.batches[line.id];
+              if (Object.keys(existingSummaryItem.batches).length === 0) {
+                const idx = items.findIndex(
+                  ({ id }) => id === existingSummaryItem.id
+                );
+                items.splice(idx, 1);
+              }
             } else {
               if (existingSummaryItem.batches[line.id]) {
                 // The if condition above doesn't help TS know that this is guaranteed
@@ -284,6 +293,11 @@ export const reducer = (
                 (
                   existingSummaryItem.batches[line.id] as OutboundShipmentRow
                 ).isDeleted = true;
+
+                const allDeleted = Object.values(
+                  existingSummaryItem.batches
+                ).every(({ isDeleted }) => isDeleted);
+                if (allDeleted) existingSummaryItem.isDeleted = true;
               }
             }
           }

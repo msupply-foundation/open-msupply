@@ -1,7 +1,10 @@
+import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
+import { flattenSummaryItems } from './../utils';
 import { DocumentActionSet } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import {
+  OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentAction,
   OutboundShipmentSummaryItem,
@@ -95,9 +98,10 @@ const createLine = (
 
 const callReducer = (
   action: DocumentActionSet<OutboundShipmentAction>,
-  state = getState()
+  state = getState(),
+  data?: OutboundShipment
 ) => {
-  return reducer(state.draft, null)(state, action);
+  return reducer(data ?? state.draft, null)(state, action);
 };
 
 // describe('DetailView reducer: sorting', () => {
@@ -184,22 +188,6 @@ const findRow = (
 };
 
 describe('DetailView reducer: updating lines', () => {
-  // it('updates the correct line with the correct numberOfPacks', () => {
-  //   const state: OutboundShipmentStateShape = getState();
-  //   state.draft.items = getSummaryItems().reverse();
-
-  //   const reducerResult = reducer(undefined, null)(
-  //     state,
-  //     OutboundAction.updateNumberOfPacks?.('1', 10)
-  //   );
-
-  //   const line = reducerResult.draft.lines.find(({ id }) => id === '1');
-
-  //   if (!line) throw new Error('This test is broken!');
-
-  //   expect(line.numberOfPacks).toBe(10);
-  // });
-
   it('updates an existing line when upserting', () => {
     const lineToUpdate = createLine('11', { numberOfPacks: 999 });
     const state = callReducer(OutboundAction.upsertLine(lineToUpdate));
@@ -287,73 +275,83 @@ describe('DetailView reducer: updating lines', () => {
   });
 });
 
-// describe('DetailView reducer: merging', () => {
-// it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
-//   const state: OutboundShipmentStateShape = getState();
+describe('DetailView reducer: merging', () => {
+  it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
+    const state: OutboundShipmentStateShape = getState();
 
-//   // Create some server data which is the same except every line has 99 numberOfPacks.
-//   // Then after merging, every line should have 99 numberOfPacks.
-//   const dataLines = lines.map(line => ({ ...line, numberOfPacks: 99 }));
-//   const data: Invoice = { ...placeholderInvoice, lines: dataLines };
+    // Create some server data which is the same except every line has 99 numberOfPacks.
+    // Then after merging, every line should have 99 numberOfPacks.
+    const dataLines = [...flattenSummaryItems(state.draft.items)];
+    const data = {
+      ...placeholderInvoice,
+      lines: dataLines.map(line => ({ ...line, numberOfPacks: 99 })),
+    };
 
-//   const reducerResult = reducer(data, null)(state, DocumentAction.merge());
+    const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
-//   // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
-//   expect(
-//     reducerResult.draft.lines.filter(
-//       ({ numberOfPacks }) => numberOfPacks !== 99
-//     ).length
-//   ).toBe(0);
-// });
+    // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+    expect(
+      reducerResult.draft.items.filter(
+        ({ numberOfPacks }) => numberOfPacks !== 99
+      ).length
+    ).toBe(0);
+  });
 
-// it('sets the correct flags for each line when merging new server state', () => {
-//   // The shipment has three lines. Two of them are new and one is updated.
-//   // When the server state is merged, the created lines should have the isCreated flag set to false
-//   // to indicate they have been persisted.
-//   const defaultLines = [
-//     createLine('1', { isCreated: true }),
-//     createLine('2', { isCreated: false }),
-//     createLine('3', { isCreated: true }),
-//   ];
+  it('sets the correct flags for each line when merging new server state', () => {
+    // The shipment has three lines. Two of them are new and one is updated.
+    // When the server state is merged, the created lines should have the isCreated flag set to false
+    // to indicate they have been persisted.
 
-//   const state: OutboundShipmentStateShape = getState({ defaultLines });
+    const state = getState();
+    const dataLines = state.draft.items
+      .map(({ batches }) => {
+        return Object.values(batches).map((batch, i) => {
+          if (i % 2) return batch;
+          return { ...batch, isCreated: false };
+        });
+      })
+      .flat();
 
-//   const dataLines = [...defaultLines];
-//   const data: Invoice = { ...placeholderInvoice, lines: dataLines };
+    const data = { ...placeholderInvoice, lines: dataLines };
 
-//   const reducerResult = reducer(data, null)(state, DocumentAction.merge());
+    // Ensure there is at least one line which has is created set to false
+    expect(data.lines.some(({ isCreated }) => !isCreated));
+    // Ensure there is at least one line which has is created set to true
+    expect(data.lines.some(({ isCreated }) => isCreated));
 
-//   // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
-//   expect(
-//     reducerResult.draft.lines.every(
-//       ({ isCreated, isDeleted, isUpdated }) =>
-//         !isCreated && !isDeleted && isUpdated
-//     )
-//   ).toBe(true);
-// });
+    const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
-//   it('updates the client side draft state by merging the server invoice into the client data invoice draft, where the server data always wins', () => {
-//     const state: OutboundShipmentStateShape = getState();
+    // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+    expect(
+      reducerResult.draft.lines.every(
+        ({ isCreated, isDeleted, isUpdated }) =>
+          !isCreated && !isDeleted && isUpdated
+      )
+    ).toBe(true);
+  });
 
-//     // Create a server invoice which has a different comment and merge. The resulting invoice should be the same, except
-//     // for having the updated comment.
-//     const data: Invoice = { ...state.draft, comment: 'josh' };
-//     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
+  it('updates the client side draft state by merging the server invoice into the client data invoice draft, where the server data always wins', () => {
+    const state = getState();
 
-//     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+    // Create a server invoice which has a different comment and merge. The resulting invoice should be the same, except
+    // for having the updated comment.
+    const data = { ...state.draft, comment: 'josh' };
+    const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
-//     Object.entries(reducerResult.draft).forEach(([key, value]) => {
-//       if (key === 'comment') {
-//         expect(value).toEqual('josh');
-//       } else if (key === 'lines' || key === 'items') {
-//         // Lines to be handled in their own tests as they're more complex.
-//         return;
-//       } else {
-//         expect(JSON.stringify(value)).toEqual(JSON.stringify(state.draft[key]));
-//       }
-//     });
-//   });
-// });
+    // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+
+    Object.entries(reducerResult.draft).forEach(([key, value]) => {
+      if (key === 'comment') {
+        expect(value).toEqual('josh');
+      } else if (key === 'items') {
+        // Lines to be handled in their own tests as they're more complex.
+        return;
+      } else {
+        expect(JSON.stringify(value)).toEqual(JSON.stringify(state.draft[key]));
+      }
+    });
+  });
+});
 
 describe('DetailView reducer: deleting lines', () => {
   it('deleted lines are tagged as such', () => {
@@ -374,39 +372,89 @@ describe('DetailView reducer: deleting lines', () => {
     expect(findRow(state2, lineToDelete.id)).toBeFalsy();
   });
 
-  // TODO: Implement this properly when merge is implemented.
-  // it('inserting a line for a stock line which has an existing, persisted, but deleted, line, reuses that existing line', () => {
-  //   // Mock an already existing and persisted line, which has been deleted client side.
-  //   const existingLine = createLine('996', {
-  //     itemId: 'item2',
-  //     stockLineId: 'item2',
-  //     numberOfPacks: 999,
-  //   });
+  it('deleting the last line of a summary item flags the summary item as deleted also', () => {
+    const state1 = getState();
+    const batches = state1.draft.items[0]?.batches;
 
-  //   const existingLine2 = createLine('998', {
-  //     itemId: 'item2',
-  //     stockLineId: 'item3',
-  //     numberOfPacks: 999,
-  //   });
+    // Ensure the test is testing some lines.
+    expect(batches).toBeTruthy();
+    if (!batches) return;
+    expect(Object.values(batches).length).toBeTruthy();
 
-  //   // Simulate the user adding a new line for the same stock line.
-  //   const lineToCreate = createLine('993', {
-  //     itemId: 'item2',
-  //     stockLineId: 'item2',
-  //     numberOfPacks: 1,
-  //   });
-  //   const state1 = callReducer(OutboundAction.upsertLine(existingLine));
+    const state2 = Object.values(batches).reduce((acc, value) => {
+      return callReducer(OutboundAction.deleteLine(value), acc);
+    }, state1);
 
-  //   const state2 = callReducer(
-  //     OutboundAction.upsertLine(existingLine2),
-  //     state1
-  //   );
-  //   const state3 = callReducer(OutboundAction.deleteLine(existingLine), state2);
+    expect(state2.draft.items[0]?.isDeleted).toBe(true);
+  });
 
-  //   const state4 = callReducer(OutboundAction.upsertLine(lineToCreate), state3);
+  it('deleting the last line of a summary item where the line has not been persisted, removes the summary item from state', () => {
+    const line = createLine('99', { itemId: '99' });
 
-  //   expect(findRow(state4, existingLine.id)).toBeTruthy();
-  // });
+    const state1 = callReducer(OutboundAction.upsertLine(line));
+
+    expect(findRow(state1, line.id)).toBeTruthy();
+    expect(state1.draft.items.find(({ id }) => id === '99')).toBeTruthy();
+
+    const state2 = callReducer(OutboundAction.deleteLine(line), state1);
+
+    expect(findRow(state2, line.id)).toBeUndefined();
+    expect(state2.draft.items.find(({ id }) => id === '99')).toBeUndefined();
+  });
+
+  it('inserting a line for a stock line which has an existing, persisted, but deleted, line, reuses that existing line', () => {
+    // Mock an already existing and persisted line, which has been deleted client side.
+    const existingLine = createLine('996', {
+      itemId: 'item2',
+      stockLineId: 'item2',
+      numberOfPacks: 999,
+    });
+
+    const existingLine2 = createLine('998', {
+      itemId: 'item2',
+      stockLineId: 'item3',
+      numberOfPacks: 999,
+    });
+
+    // Simulate the user adding a new line for the same stock line.
+    const lineToCreate = createLine('993', {
+      itemId: 'item2',
+      stockLineId: 'item2',
+      numberOfPacks: 1,
+    });
+
+    const data = { ...placeholderInvoice, lines: [existingLine] };
+
+    const state1 = callReducer(OutboundAction.upsertLine(existingLine));
+    expect(findRow(state1, existingLine.id)).toBeTruthy();
+
+    // Mimic a 'save'
+    const state2 = callReducer(DocumentAction.merge(), state1, data);
+    expect(state2.draft.items.length).toBeTruthy();
+    expect(
+      state2.draft.items.every(({ batches }) =>
+        Object.values(batches).every(({ isCreated }) => !isCreated)
+      )
+    );
+
+    // Adding an additional line to mix it up a little
+    const state3 = callReducer(
+      OutboundAction.upsertLine(existingLine2),
+      state2
+    );
+
+    expect(findRow(state3, existingLine.id)?.isCreated).toBe(false);
+    expect(findRow(state3, existingLine2.id)?.isCreated).toBe(true);
+
+    // Now deleting the line which has been persisted
+    const state4 = callReducer(OutboundAction.deleteLine(existingLine), state3);
+    // The line should still exist, but be flagged as deleted
+    expect(findRow(state4, existingLine.id)).toBeTruthy();
+
+    // Then upserting a line for the same stock line.
+    const state5 = callReducer(OutboundAction.upsertLine(lineToCreate), state4);
+    expect(findRow(state5, existingLine.id)).toBeTruthy();
+  });
 });
 
 describe('DetailView reducer: inserting', () => {
