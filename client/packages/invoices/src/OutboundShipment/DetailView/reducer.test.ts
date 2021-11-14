@@ -1,6 +1,6 @@
 import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
 import { flattenSummaryItems } from './../utils';
-import { DocumentActionSet } from '@openmsupply-client/common';
+import { createColumns, DocumentActionSet } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import {
@@ -104,74 +104,29 @@ const callReducer = (
   return reducer(data ?? state.draft, null)(state, action);
 };
 
-// describe('DetailView reducer: sorting', () => {
-//   it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
-//     const state: OutboundShipmentStateShape = getState();
+describe('DetailView reducer: sorting', () => {
+  it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
+    const state = getState();
 
-//     const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
-//       'numberOfPacks',
-//     ]);
-//     if (!numberOfPacksColumn) throw new Error('This test is broken!');
+    const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
+      'numberOfPacks',
+    ]);
+    if (!numberOfPacksColumn) throw new Error('This test is broken!');
 
-//     const reducerResult = reducer(undefined, null)(
-//       state,
-//       OutboundAction.onSortBy(numberOfPacksColumn)
-//     );
+    const reducerResult = reducer(undefined, null)(
+      state,
+      OutboundAction.onSortBy(numberOfPacksColumn)
+    );
 
-//     expect(reducerResult.draft.items).toEqual([
-//       expect.objectContaining({ id: '4' }),
-//       expect.objectContaining({ id: '3' }),
-//       expect.objectContaining({ id: '2' }),
-//       expect.objectContaining({ id: '1' }),
-//       expect.objectContaining({ id: '0' }),
-//     ]);
-//   });
-
-//   it('sorts the lines by the provided key in descending order when already in ascending order for the same key.', () => {
-//     const state: OutboundShipmentStateShape = getState({ isDesc: false });
-//     state.draft.items = getSummaryItems().reverse();
-
-//     const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
-//       'numberOfPacks',
-//     ]);
-//     if (!numberOfPacksColumn) throw new Error('This test is broken!');
-
-//     const reducerResult = reducer(undefined, null)(
-//       state,
-//       OutboundAction.onSortBy(numberOfPacksColumn)
-//     );
-
-//     expect(reducerResult.draft.items).toEqual([
-//       expect.objectContaining({ id: '0' }),
-//       expect.objectContaining({ id: '1' }),
-//       expect.objectContaining({ id: '2' }),
-//       expect.objectContaining({ id: '3' }),
-//       expect.objectContaining({ id: '4' }),
-//     ]);
-//   });
-
-//   it('sorts the lines by the provided key in ascending order when sorted by some other key.', () => {
-//     const state: OutboundShipmentStateShape = getState();
-
-//     const [itemNameColumn] = createColumns<OutboundShipmentSummaryItem>([
-//       'itemName',
-//     ]);
-//     if (!itemNameColumn) throw new Error('This test is broken!');
-
-//     const reducerResult = reducer(undefined, null)(
-//       state,
-//       OutboundAction.onSortBy(itemNameColumn)
-//     );
-
-//     expect(reducerResult.draft.items).toEqual([
-//       expect.objectContaining({ id: '4' }),
-//       expect.objectContaining({ id: '3' }),
-//       expect.objectContaining({ id: '2' }),
-//       expect.objectContaining({ id: '1' }),
-//       expect.objectContaining({ id: '0' }),
-//     ]);
-//   });
-// });
+    expect(reducerResult.draft.items).toEqual([
+      expect.objectContaining({ id: '4' }),
+      expect.objectContaining({ id: '3' }),
+      expect.objectContaining({ id: '2' }),
+      expect.objectContaining({ id: '1' }),
+      expect.objectContaining({ id: '0' }),
+    ]);
+  });
+});
 
 const findRow = (
   state: OutboundShipmentStateShape,
