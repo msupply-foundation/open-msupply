@@ -207,7 +207,7 @@ describe('DetailView reducer: updating lines', () => {
 });
 
 describe('DetailView reducer: merging', () => {
-  it('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
+  it.only('updates the client side line state by merging the server data into the client data lines, where the server data always wins', () => {
     const state: OutboundShipmentStateShape = getState();
 
     // Create some server data which is the same except every line has 99 numberOfPacks.
@@ -221,8 +221,9 @@ describe('DetailView reducer: merging', () => {
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+
     expect(
-      reducerResult.draft.items.filter(
+      flattenSummaryItems(reducerResult.draft.items).filter(
         ({ numberOfPacks }) => numberOfPacks !== 99
       ).length
     ).toBe(0);
@@ -237,8 +238,8 @@ describe('DetailView reducer: merging', () => {
     const dataLines = state.draft.items
       .map(({ batches }) => {
         return Object.values(batches).map((batch, i) => {
-          if (i % 2) return batch;
-          return { ...batch, isCreated: false };
+          if (i === 0) return batch;
+          return { ...batch, isCreated: true };
         });
       })
       .flat();
@@ -253,8 +254,9 @@ describe('DetailView reducer: merging', () => {
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+
     expect(
-      reducerResult.draft.lines.every(
+      flattenSummaryItems(reducerResult.draft.items).every(
         ({ isCreated, isDeleted, isUpdated }) =>
           !isCreated && !isDeleted && isUpdated
       )

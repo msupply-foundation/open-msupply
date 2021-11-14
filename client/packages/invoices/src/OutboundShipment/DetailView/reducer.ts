@@ -203,7 +203,7 @@ export const reducer = (
             }
 
             return itemsArray;
-          }, [] as OutboundShipmentSummaryItem[]);
+          }, draft.items);
 
           break;
         }
