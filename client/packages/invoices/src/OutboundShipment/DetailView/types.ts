@@ -84,4 +84,5 @@ export type OutboundShipmentSummaryItem = {
   sellPrice?: number | undefined;
   packSize?: number | undefined;
   note?: string | null;
+  isDeleted?: boolean;
 };
