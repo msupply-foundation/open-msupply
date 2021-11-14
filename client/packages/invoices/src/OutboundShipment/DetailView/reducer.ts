@@ -39,6 +39,7 @@ const getExistingLine = (
   if (!existingSummaryItem) return {};
 
   let existingRow = existingSummaryItem.batches[line.id];
+
   if (existingRow) return { existingRow, existingSummaryItem };
 
   existingRow = Object.values(existingSummaryItem.batches).find(
@@ -160,7 +161,7 @@ export const reducer = (
 
           Object.keys(draft).forEach(key => {
             // TODO: Sometimes we want to keep the user entered values?
-            if (key === 'lines') return;
+            if (key === 'items') return;
             draft[key] = data[key];
           });
 
@@ -170,10 +171,11 @@ export const reducer = (
           draft.deleteLine = line =>
             dispatch?.(OutboundAction.deleteLine(line));
 
-          draft.items = data.lines?.map(serverLine => {
+          draft.items = data.lines?.reduce((itemsArray, serverLine) => {
             const outboundShipmentRow = createLine(serverLine, draft);
+
             const { existingRow, existingSummaryItem } = getExistingLine(
-              draft.items,
+              itemsArray,
               outboundShipmentRow
             );
 
@@ -182,17 +184,26 @@ export const reducer = (
               createSummaryItem(serverLine.itemId, [outboundShipmentRow]);
 
             if (existingRow) {
-              summaryItem.batches[existingRow.id] = mergeLines(
-                serverLine,
-                existingRow
-              );
+              delete summaryItem.batches[existingRow.id];
+              const newLine = mergeLines(serverLine, existingRow);
+              summaryItem.batches[newLine.id] = newLine;
+            } else {
+              summaryItem.batches[outboundShipmentRow.id] = outboundShipmentRow;
             }
 
             const { unitQuantity, numberOfPacks } =
               recalculateSummary(summaryItem);
 
-            return { ...summaryItem, unitQuantity, numberOfPacks };
-          });
+            if (!existingSummaryItem) {
+              itemsArray.push({
+                ...summaryItem,
+                unitQuantity,
+                numberOfPacks,
+              });
+            }
+
+            return itemsArray;
+          }, [] as OutboundShipmentSummaryItem[]);
 
           break;
         }
@@ -291,7 +302,9 @@ export const reducer = (
                 // The if condition above doesn't help TS know that this is guaranteed
                 // to be defined.
                 (
-                  existingSummaryItem.batches[line.id] as OutboundShipmentRow
+                  existingSummaryItem.batches[
+                    existingRow.id
+                  ] as OutboundShipmentRow
                 ).isDeleted = true;
 
                 const allDeleted = Object.values(
