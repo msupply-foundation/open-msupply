@@ -1,6 +1,6 @@
 import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
 import { flattenSummaryItems } from './../utils';
-import { createColumns, DocumentActionSet } from '@openmsupply-client/common';
+import { DocumentActionSet } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import {
@@ -103,30 +103,6 @@ const callReducer = (
 ) => {
   return reducer(data ?? state.draft, null)(state, action);
 };
-
-describe('DetailView reducer: sorting', () => {
-  it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
-    const state = getState();
-
-    const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
-      'numberOfPacks',
-    ]);
-    if (!numberOfPacksColumn) throw new Error('This test is broken!');
-
-    const reducerResult = reducer(undefined, null)(
-      state,
-      OutboundAction.onSortBy(numberOfPacksColumn)
-    );
-
-    expect(reducerResult.draft.items).toEqual([
-      expect.objectContaining({ id: '4' }),
-      expect.objectContaining({ id: '3' }),
-      expect.objectContaining({ id: '2' }),
-      expect.objectContaining({ id: '1' }),
-      expect.objectContaining({ id: '0' }),
-    ]);
-  });
-});
 
 const findRow = (
   state: OutboundShipmentStateShape,
