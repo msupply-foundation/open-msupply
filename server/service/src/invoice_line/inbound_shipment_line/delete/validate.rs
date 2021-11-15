@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use domain::{inbound_shipment::DeleteInboundShipmentLine, invoice::InvoiceType};
-use repository::{repository::StorageConnection, schema::InvoiceLineRow};
+use repository::{schema::InvoiceLineRow, StorageConnection};
 
 use super::DeleteInboundShipmentLineError;
 

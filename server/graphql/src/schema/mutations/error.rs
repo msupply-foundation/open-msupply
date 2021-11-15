@@ -1,5 +1,5 @@
 use async_graphql::Object;
-use repository::repository::RepositoryError;
+use repository::RepositoryError;
 
 pub struct DatabaseError(pub RepositoryError);
 

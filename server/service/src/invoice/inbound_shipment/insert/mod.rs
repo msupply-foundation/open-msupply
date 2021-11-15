@@ -1,8 +1,6 @@
 use crate::WithDBError;
 use domain::{inbound_shipment::InsertInboundShipment, name::Name};
-use repository::repository::{
-    InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError};
 
 mod generate;
 mod validate;

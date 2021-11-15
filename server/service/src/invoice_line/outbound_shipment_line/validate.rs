@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use repository::{
-    repository::{InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnection},
     schema::{InvoiceLineRow, ItemRow, StockLineRow},
+    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnection,
 };
 
 pub struct StockLineNotFound;

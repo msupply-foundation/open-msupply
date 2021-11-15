@@ -1,7 +1,7 @@
 use crate::util::uuid::uuid;
 use repository::{
-    repository::{RepositoryError, StorageConnection, TransactionError, UserAccountRepository},
-    schema::UserAccountRow,
+    schema::UserAccountRow, RepositoryError, StorageConnection, TransactionError,
+    UserAccountRepository,
 };
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};

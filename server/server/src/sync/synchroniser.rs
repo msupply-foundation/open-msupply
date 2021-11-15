@@ -3,11 +3,8 @@ use crate::sync::{
     CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
 };
 use repository::{
-    repository::{
-        CentralSyncBufferRepository, CentralSyncCursorRepository, NameStoreJoinRepository,
-        RepositoryError, StorageConnectionManager,
-    },
-    schema::CentralSyncBufferRow,
+    schema::CentralSyncBufferRow, CentralSyncBufferRepository, CentralSyncCursorRepository,
+    NameStoreJoinRepository, RepositoryError, StorageConnectionManager,
 };
 
 use log::info;
@@ -264,8 +261,8 @@ mod tests {
         test_utils::get_test_settings,
     };
     use repository::{
-        get_storage_connection_manager, repository::CentralSyncBufferRepository,
-        schema::CentralSyncBufferRow, test_db,
+        get_storage_connection_manager, schema::CentralSyncBufferRow, test_db,
+        CentralSyncBufferRepository,
     };
 
     #[actix_rt::test]

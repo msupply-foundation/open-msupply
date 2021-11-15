@@ -6,16 +6,16 @@ mod graphql {
         get_gql_result, insert_inbound_shipment_line_full as insert,
         InsertInboundShipmentLineFull as Insert,
     };
-    use server::test_utils::setup_all;
     use chrono::NaiveDate;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use insert::InsertInboundShipmentLineErrorInterface::*;
     use repository::{
         mock::MockDataInserts,
-        repository::{InvoiceLineRepository, StockLineRepository},
         schema::{InvoiceLineRow, StockLineRow},
+        InvoiceLineRepository, StockLineRepository,
     };
+    use server::test_utils::setup_all;
     use service::util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {

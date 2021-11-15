@@ -1,6 +1,5 @@
 use repository::{
-    repository::{InvoiceRepository, RepositoryError, StorageConnectionManager},
-    schema::InvoiceRow,
+    schema::InvoiceRow, InvoiceRepository, RepositoryError, StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;

@@ -3,7 +3,7 @@ use crate::schema::{
     queries::{AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface},
 };
 use domain::PaginationOption;
-use repository::repository::RepositoryError;
+use repository::RepositoryError;
 use service::{usize_to_u32, ListError, ListResult, SingleRecordError};
 
 use async_graphql::*;

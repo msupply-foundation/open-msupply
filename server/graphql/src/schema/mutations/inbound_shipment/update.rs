@@ -12,7 +12,7 @@ use crate::schema::{
     },
 };
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError};
 
 use super::OtherPartyNotASupplier;

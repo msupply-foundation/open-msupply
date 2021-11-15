@@ -9,15 +9,15 @@ mod graphql {
     use crate::graphql::{
         update_inbound_shipment_full as update, UpdateInboundShipmentFull as Update,
     };
-    use server::test_utils::setup_all;
     use chrono::{Duration, Utc};
     use domain::{invoice::InvoiceFilter, name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
-        repository::{InvoiceRepository, StockLineRepository},
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
+        InvoiceRepository, StockLineRepository,
     };
+    use server::test_utils::setup_all;
 
     use update::UpdateInboundShipmentErrorInterface::*;
 

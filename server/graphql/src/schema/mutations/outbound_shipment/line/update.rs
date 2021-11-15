@@ -12,7 +12,7 @@ use crate::schema::{
     },
 };
 use domain::outbound_shipment::UpdateOutboundShipmentLine;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError};
 
 use super::{
