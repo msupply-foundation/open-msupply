@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository::RepositoryError, schema::MasterListLineRow};
+use crate::{repository_error::RepositoryError, schema::MasterListLineRow};
 
 use diesel::prelude::*;
 
@@ -13,7 +13,7 @@ impl<'a> MasterListLineRepository<'a> {
         MasterListLineRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::master_list_line::dsl::*;
         diesel::insert_into(master_list_line)

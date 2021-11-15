@@ -17,6 +17,7 @@ domain = { path = "../domain" }
 graphql = { path = "../graphql" }
 repository = { path = "../repository" }
 service = { path = "../service" }
+util = { path = "../util" }
 
 actix-cors = "0.5.4"
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
@@ -38,5 +39,6 @@ graphql_client = "0.10.0"
 httpmock = "0.6"
 
 [features]
+default = ["sqlite"]
 postgres = ["repository/postgres"]
 sqlite = ["repository/sqlite"]

@@ -1,6 +1,6 @@
 use super::{get_connection, DBBackendConnection, DBConnection};
 
-use crate::repository::RepositoryError;
+use crate::repository_error::RepositoryError;
 
 use diesel::{
     connection::TransactionManager,

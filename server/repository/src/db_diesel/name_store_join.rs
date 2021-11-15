@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::diesel_schema::name_store_join::dsl as name_store_join_dsl,
     schema::{NameRow, NameStoreJoinRow, StoreRow},
 };
@@ -58,7 +58,7 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join_dsl::name_store_join)
             .values(row)

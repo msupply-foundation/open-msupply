@@ -15,8 +15,8 @@ use crate::{
 };
 use domain::{invoice::InvoiceType, outbound_shipment::UpdateOutboundShipmentLine};
 use repository::{
-    repository::StorageConnection,
     schema::{InvoiceLineRow, InvoiceRow, ItemRow},
+    StorageConnection,
 };
 
 use super::{BatchPair, UpdateOutboundShipmentLineError};

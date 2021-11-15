@@ -5,7 +5,7 @@ use crate::loader::{
     StoreLoader, UserAccountLoader,
 };
 
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 
 use async_graphql::dataloader::DataLoader;
 

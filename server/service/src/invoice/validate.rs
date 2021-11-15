@@ -1,8 +1,8 @@
 use crate::WithDBError;
 use domain::invoice::{InvoiceStatus, InvoiceType};
 use repository::{
-    repository::{InvoiceRepository, RepositoryError, StorageConnection},
     schema::{InvoiceRow, InvoiceRowStatus},
+    InvoiceRepository, RepositoryError, StorageConnection,
 };
 
 pub struct WrongInvoiceType;

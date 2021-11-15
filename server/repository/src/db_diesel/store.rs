@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository::RepositoryError, schema::StoreRow};
+use crate::{repository_error::RepositoryError, schema::StoreRow};
 
 use diesel::prelude::*;
 
@@ -13,7 +13,7 @@ impl<'a> StoreRepository<'a> {
         StoreRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::store::dsl::*;
         diesel::insert_into(store)

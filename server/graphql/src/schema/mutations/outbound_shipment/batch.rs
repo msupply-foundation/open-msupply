@@ -6,7 +6,7 @@ use crate::schema::mutations::{
     },
     MutationWithId,
 };
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 
 use super::{
     delete::DeleteOutboundShipmentResponse,

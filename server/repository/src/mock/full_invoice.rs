@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 
 use crate::{
-    repository::{
-        InvoiceLineRepository, InvoiceRepository, StockLineRepository, StorageConnection,
-    },
+    db_diesel::{InvoiceLineRepository, InvoiceRepository, StockLineRepository, StorageConnection},
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
 };
 

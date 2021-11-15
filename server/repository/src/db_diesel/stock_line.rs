@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
 
 use crate::{
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{
         diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
         StockLineRow,
@@ -30,7 +30,7 @@ impl<'a> StockLineRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)

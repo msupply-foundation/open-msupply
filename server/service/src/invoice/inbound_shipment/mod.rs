@@ -2,7 +2,7 @@ use domain::{
     name::{Name, NameFilter},
     Pagination,
 };
-use repository::repository::{
+use repository::{
     NameQueryRepository, RepositoryError, StorageConnection, StoreRepository,
 };
 

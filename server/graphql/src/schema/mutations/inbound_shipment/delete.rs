@@ -8,7 +8,7 @@ use crate::schema::{
     types::{DatabaseError, ErrorWrapper, RecordNotFound},
 };
 use domain::inbound_shipment::DeleteInboundShipment;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice::{delete_inbound_shipment, DeleteInboundShipmentError};
 
 #[derive(InputObject)]

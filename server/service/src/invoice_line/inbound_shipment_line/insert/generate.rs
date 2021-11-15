@@ -1,8 +1,8 @@
 use crate::{invoice_line::generate_batch, u32_to_i32};
 use domain::inbound_shipment::InsertInboundShipmentLine;
 use repository::{
-    repository::StorageConnection,
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
+    StorageConnection,
 };
 
 use super::InsertInboundShipmentLineError;
