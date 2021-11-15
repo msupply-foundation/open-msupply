@@ -9,7 +9,7 @@ use diesel_migrations::{mark_migrations_in_directory, search_for_migrations_dire
 
 use std::path::Path;
 
-#[cfg(feature = "postgres")]
+#[cfg(all(feature = "postgres", not(feature = "sqlite")))]
 pub async fn setup(db_settings: &DatabaseSettings) {
     use diesel::{PgConnection, RunQueryDsl};
 
@@ -80,7 +80,7 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     }
 }
 
-#[cfg(feature = "postgres")]
+#[cfg(all(feature = "postgres", not(feature = "sqlite")))]
 fn make_test_db_name(base_name: String) -> String {
     base_name
 }

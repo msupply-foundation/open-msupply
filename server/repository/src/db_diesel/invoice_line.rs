@@ -13,7 +13,7 @@ impl<'a> InvoiceLineRepository<'a> {
         InvoiceLineRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::invoice_line::dsl::*;
 

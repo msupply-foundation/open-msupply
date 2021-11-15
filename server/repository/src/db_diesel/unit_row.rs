@@ -12,7 +12,7 @@ impl<'a> UnitRowRepository<'a> {
         UnitRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::insert_into(unit)
             .values(row)

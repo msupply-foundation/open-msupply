@@ -58,7 +58,7 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join_dsl::name_store_join)
             .values(row)
