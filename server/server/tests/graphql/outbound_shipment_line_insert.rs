@@ -17,7 +17,7 @@ mod graphql {
     use server::test_utils::setup_all;
 
     use insert::InsertOutboundShipmentLineErrorInterface::*;
-    use service::util::uuid::uuid;
+    use util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {

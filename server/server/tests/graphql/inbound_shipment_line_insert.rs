@@ -16,7 +16,7 @@ mod graphql {
         InvoiceLineRepository, StockLineRepository,
     };
     use server::test_utils::setup_all;
-    use service::util::uuid::uuid;
+    use util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {

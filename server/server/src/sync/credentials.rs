@@ -1,5 +1,5 @@
-use service::util::hash;
 use std::fmt::{self, Debug, Display};
+use util::hash;
 
 #[derive(Debug)]
 pub struct SyncCredentials {

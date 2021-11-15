@@ -1,11 +1,12 @@
 use chrono::Utc;
 
-use crate::{invoice::current_store_id, util::uuid::uuid};
+use crate::invoice::current_store_id;
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
     InvoiceLineRepository, StorageConnection,
 };
+use util::uuid::uuid;
 
 use super::UpdateInboundShipmentError;
 

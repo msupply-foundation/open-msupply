@@ -12,7 +12,7 @@ mod graphql {
         InvoiceRepository,
     };
     use server::test_utils::setup_all;
-    use service::util::uuid::uuid;
+    use util::uuid::uuid;
 
     use crate::graphql::{
         insert_inbound_shipment_full as insert, InsertInboundShipmentFull as Insert,

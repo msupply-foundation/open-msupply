@@ -17,6 +17,7 @@ domain = { path = "../domain" }
 graphql = { path = "../graphql" }
 repository = { path = "../repository" }
 service = { path = "../service" }
+util = { path = "../util" }
 
 actix-cors = "0.5.4"
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
