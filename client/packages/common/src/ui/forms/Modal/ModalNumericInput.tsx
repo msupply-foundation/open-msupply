@@ -10,6 +10,7 @@ export interface ModalNumericInputProps {
   height?: number;
   inputProps: UseFormRegisterReturn;
   width?: number;
+  value?: number;
 }
 
 export const ModalNumericInput: React.FC<ModalNumericInputProps> = ({
@@ -18,6 +19,7 @@ export const ModalNumericInput: React.FC<ModalNumericInputProps> = ({
   height = 32,
   inputProps,
   width = 85,
+  value,
 }) => {
   const { errors } = useFormState();
   const error = get(errors, inputProps.name);
@@ -38,6 +40,7 @@ export const ModalNumericInput: React.FC<ModalNumericInputProps> = ({
       <NumericTextInput
         defaultValue={defaultValue}
         disabled={disabled}
+        value={value}
         sx={{ width: `${width}px`, height: `${height}px` }}
         {...errorProps}
         {...inputProps}

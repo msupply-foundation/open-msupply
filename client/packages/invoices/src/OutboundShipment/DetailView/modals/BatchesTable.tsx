@@ -66,6 +66,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
         <ModalNumericInput
+          value={batch.quantity}
           inputProps={stockLineInputProps}
           disabled={isDisabled}
         />
@@ -160,11 +161,14 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   const t = useTranslation();
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange('placeholder', Number(event.target.value), 1);
+
   const placeholderInputProps = register('placeholder', {
     min: { value: 0, message: t('error.invalid-value') },
     pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
     onChange: onChangeValue,
   });
+
+  const placeholderRow = rows.find(({ id }) => id === 'placeholder');
 
   return (
     <>
@@ -188,20 +192,25 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((batch, index) => (
-              <BatchesRow
-                batch={batch}
-                key={batch.id}
-                label={t('label.line', { number: index + 1 })}
-                onChange={onChange}
-              />
-            ))}
+            {rows
+              .filter(({ id }) => id !== 'placeholder')
+              .map((batch, index) => (
+                <BatchesRow
+                  batch={batch}
+                  key={batch.id}
+                  label={t('label.line', { number: index + 1 })}
+                  onChange={onChange}
+                />
+              ))}
             <TableRow>
               <BasicCell align="right" sx={{ paddingTop: '3px' }}>
                 {t('label.placeholder')}
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
-                <ModalNumericInput inputProps={placeholderInputProps} />
+                <ModalNumericInput
+                  value={placeholderRow?.quantity}
+                  inputProps={placeholderInputProps}
+                />
               </BasicCell>
             </TableRow>
           </TableBody>
