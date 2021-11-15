@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Item, useTranslation, styled } from '@openmsupply-client/common';
-import { useItems } from '../../hooks/useItems/useItems';
+import { useItemsList } from '../../hooks/useItemsList';
 import {
   Autocomplete,
   defaultOptionMapper,
@@ -28,41 +28,63 @@ const renderOption = (
 );
 
 interface ItemSearchInputProps {
-  onChange: (item: Item) => void;
+  onChange: (item: Item | null) => void;
   currentItem?: Item;
-  currentItemId?: string;
+  currentItemCode?: string;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
   currentItem,
-  currentItemId,
+  currentItemCode,
 }) => {
-  const { data, isLoading } = useItems();
+  const [filter, setFilter] = useState({
+    searchTerm: currentItem?.code ?? currentItemCode ?? '',
+    field: 'code',
+  });
+
+  const { data, isLoading, onFilterByName, onFilterByCode } = useItemsList({
+    initialSortBy: { key: 'name' },
+    initialFilterBy: currentItem?.code
+      ? { code: { equalTo: currentItem?.code } }
+      : undefined,
+  });
   const t = useTranslation();
+
+  useEffect(() => {
+    setFilter({
+      searchTerm: currentItem?.code ?? currentItemCode ?? '',
+      field: 'code',
+    });
+  }, [currentItem, currentItemCode]);
+
+  // Whenever the filter state changes, trigger a filter on the request which
+  // will trigger a refetch if needed.
+  useEffect(() => {
+    if (filter.field === 'name') return onFilterByName(filter.searchTerm);
+    if (filter.field === 'code') return onFilterByCode(filter.searchTerm);
+  }, [filter]);
 
   const value =
     currentItem ??
-    (currentItemId
-      ? data?.nodes?.find(i => i.id === currentItemId)
-      : undefined);
+    (currentItemCode
+      ? data?.nodes?.find(i => i.code === currentItemCode) || null
+      : null);
 
   return (
     <Autocomplete
       filterOptionConfig={filterOptions}
       loading={isLoading}
+      value={value ? { ...value, label: value.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
+      onInputChange={(_, value) => {
+        setFilter({ searchTerm: value, field: 'name' });
+      }}
       onChange={(_, item) => {
-        item && onChange(item);
+        onChange(item);
       }}
       options={defaultOptionMapper(data?.nodes ?? [], 'name')}
       renderOption={renderOption}
-      value={
-        value && {
-          ...value,
-          label: value.name,
-        }
-      }
       width="100%"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
     />

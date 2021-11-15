@@ -9,7 +9,7 @@ import {
   FormProvider,
   generateUUID,
 } from '@openmsupply-client/common';
-
+import { useStockLines } from '@openmsupply-client/system';
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import {
@@ -17,7 +17,6 @@ import {
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
 } from '../types';
-import { useItems } from '@openmsupply-client/system/src/Item';
 
 interface ItemDetailsModalProps {
   summaryItem: OutboundShipmentSummaryItem | null;
@@ -25,7 +24,7 @@ interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   upsertInvoiceLine: (invoiceLine: OutboundShipmentRow) => void;
-  onChangeItem: (item: Item) => void;
+  onChangeItem: (item: Item | null) => void;
 }
 
 export const getInvoiceLine = (
@@ -75,29 +74,25 @@ const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
   return 0;
 };
 
-const useStockLines = (itemCode: string | undefined) => {
+const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
   const [batchRows, setBatchRows] = useState<BatchRow[]>([]);
-  const { data, isLoading, onFilterByCode } = useItems({
-    code: { equalTo: itemCode },
-  });
+  const { data, isLoading } = useStockLines(summaryItem?.itemCode ?? '');
 
   useEffect(() => {
-    if (!itemCode) return;
-    onFilterByCode(itemCode);
-  }, [itemCode]);
+    if (!summaryItem) {
+      return setBatchRows([]);
+    }
 
-  useEffect(() => {
     if (!data) return;
 
-    const { nodes } = data;
-    const { availableBatches } = nodes[0] ?? { availableBatches: [] };
-
     setBatchRows(() => {
-      return availableBatches
-        .map(batch => ({
-          ...batch,
-          quantity: 0,
-        }))
+      return data
+        .map(batch => {
+          const matchingInvoiceRow = summaryItem.batches.find(
+            ({ stockLineId }) => stockLineId === batch.id
+          );
+          return { ...batch, quantity: matchingInvoiceRow?.numberOfPacks ?? 0 };
+        })
         .sort(sortByDisabledThenExpiryDate);
     });
   }, [data]);
@@ -106,7 +101,6 @@ const useStockLines = (itemCode: string | undefined) => {
 };
 
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
-  invoiceLine,
   isOpen,
   onClose,
   upsertInvoiceLine,
@@ -120,7 +114,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register, setValue, getValues } = methods;
 
-  const { batchRows, isLoading } = useStockLines(summaryItem?.itemCode);
+  const { batchRows, isLoading } = useBatchRows(summaryItem);
 
   const { hideDialog, showDialog, Modal } = useDialog({
     title: 'heading.add-item',
@@ -265,7 +259,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <form>
           <Grid container gap={0.5}>
             <ItemDetailsForm
-              invoiceLine={invoiceLine}
               onChangeItem={onChangeItem}
               onChangeQuantity={setQuantity}
               register={register}

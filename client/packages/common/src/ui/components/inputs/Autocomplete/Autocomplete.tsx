@@ -12,7 +12,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 export interface AutocompleteProps<T> {
-  defaultValue?: T;
+  defaultValue?: AutocompleteOption<T> | null;
   getOptionDisabled?: (option: T) => boolean;
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
@@ -27,6 +27,8 @@ export interface AutocompleteProps<T> {
   clearable?: boolean;
   isOptionEqualToValue?: (option: T, value: T) => boolean;
   disabled?: boolean;
+  onInputChange?: (event: React.SyntheticEvent, value: string) => void;
+  inputValue?: string;
 }
 
 export function Autocomplete<T>({
@@ -45,6 +47,8 @@ export function Autocomplete<T>({
   isOptionEqualToValue,
   clearable = true,
   disabled,
+  onInputChange,
+  inputValue,
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -58,6 +62,8 @@ export function Autocomplete<T>({
 
   return (
     <MuiAutocomplete
+      inputValue={inputValue}
+      onInputChange={onInputChange}
       disabled={disabled}
       isOptionEqualToValue={isOptionEqualToValue}
       defaultValue={defaultValue}

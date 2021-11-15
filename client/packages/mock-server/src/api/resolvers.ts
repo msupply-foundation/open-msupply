@@ -178,19 +178,21 @@ export const ResolverService = {
       if (filter) {
         filtered = filtered.filter(({ code, name }) => {
           if (filter.code?.equalTo) {
-            return code === filter.code.equalTo;
+            return code.toLowerCase() === filter.code.equalTo.toLowerCase();
           }
 
           if (filter.code?.like) {
-            return name.includes(filter.code.like ?? '');
+            return code
+              .toLowerCase()
+              .includes(filter.code.like.toLowerCase() ?? '');
           }
 
           if (filter.name?.equalTo) {
-            return name === filter.name.equalTo;
+            return name.toLowerCase() === filter.name.equalTo.toLowerCase();
           }
 
           if (filter.name?.like) {
-            return name.includes(filter.name.like ?? '');
+            return name.toLowerCase().includes(filter.name.like.toLowerCase());
           }
 
           return true;
