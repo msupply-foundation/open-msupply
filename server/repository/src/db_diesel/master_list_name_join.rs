@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository::RepositoryError, schema::MasterListNameJoinRow};
+use crate::{repository_error::RepositoryError, schema::MasterListNameJoinRow};
 
 use diesel::prelude::*;
 

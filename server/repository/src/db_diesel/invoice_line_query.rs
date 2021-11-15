@@ -1,5 +1,5 @@
 use crate::{
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{
         diesel_schema::{invoice_line, invoice_line::dsl as invoice_line_dsl},
         InvoiceLineRow,

@@ -1,4 +1,4 @@
-use crate::repository::RepositoryError;
+use crate::repository_error::RepositoryError;
 
 mod central_sync_buffer;
 mod central_sync_cursor;

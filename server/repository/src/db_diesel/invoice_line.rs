@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository::RepositoryError, schema::InvoiceLineRow};
+use crate::{repository_error::RepositoryError, schema::InvoiceLineRow};
 
 use diesel::prelude::*;
 

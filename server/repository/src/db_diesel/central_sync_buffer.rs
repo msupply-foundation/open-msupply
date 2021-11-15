@@ -3,7 +3,7 @@ use std::ops::Deref;
 use super::{StorageConnection, TransactionError};
 
 use crate::{
-    repository::{CentralSyncCursorRepository, RepositoryError},
+    db_diesel::CentralSyncCursorRepository, repository_error::RepositoryError,
     schema::CentralSyncBufferRow,
 };
 
