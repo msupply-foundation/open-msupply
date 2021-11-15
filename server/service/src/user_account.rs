@@ -1,8 +1,8 @@
-use crate::util::uuid::uuid;
 use repository::{
     schema::UserAccountRow, RepositoryError, StorageConnection, TransactionError,
     UserAccountRepository,
 };
+use util::uuid::uuid;
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
 use log::error;
