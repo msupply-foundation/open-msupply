@@ -292,8 +292,14 @@ export const reducer = (
             existingSummaryItem.numberOfPacks = numberOfPacks;
             existingSummaryItem.batches[existingRow.id] = existingRow;
           } else {
+            // Ignore lines which have a number of packs of zero.
+            if (line.numberOfPacks === 0) {
+              break;
+            }
+
             const newLine = {
               ...line,
+              invoiceId: draft.id,
               isCreated: true,
               isUpdated: false,
               isDeleted: false,
