@@ -240,7 +240,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     onReset();
   };
 
-  const allocateQuantities = (newValue: number, issuePackSize: number) => {
+  const allocateQuantities = (
+    newValue: number,
+    issuePackSize: number | null
+  ) => {
     setValue('quantity', String(newValue));
     // if invalid quantity entered, don't allocate
     if (newValue < 1 || Number.isNaN(newValue)) {
@@ -250,17 +253,19 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     // Assign all of the new value and short circuit.
     if (batchRows.length === 1) {
       setBatchRows(
-        issueStock(batchRows, 'placeholder', newValue * issuePackSize)
+        issueStock(batchRows, 'placeholder', newValue * (issuePackSize || 1))
       );
     }
 
     // calculations are normalised to units
-    let toAllocate = newValue * issuePackSize;
+    let toAllocate = newValue * (issuePackSize || 1);
 
     const newBatchRows = [...batchRows];
     const validBatches = newBatchRows.filter(
       ({ packSize, onHold, availableNumberOfPacks }) =>
-        packSize === issuePackSize && availableNumberOfPacks > 0 && !onHold
+        (issuePackSize ? packSize === issuePackSize : true) &&
+        availableNumberOfPacks > 0 &&
+        !onHold
     );
 
     validBatches.forEach(batch => {

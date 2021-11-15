@@ -16,6 +16,9 @@ import {
   ModalNumericInput,
   FlatButton,
   CheckIcon,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
 import { OutboundShipmentSummaryItem } from '../types';
@@ -26,7 +29,7 @@ interface ItemDetailsFormProps {
   register: UseFormRegister<FieldValues>;
   summaryItem?: OutboundShipmentSummaryItem;
   onChangeItem: (newItem: Item | null) => void;
-  onChangeQuantity: (quantity: number, packSize: number) => void;
+  onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
   availableQuantity: number;
 }
@@ -59,6 +62,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   ) : undefined;
 
   const [quantity, setQuantity] = useState('');
+  const [issueType, setIssueType] = useState('packs');
 
   return (
     <Grid container gap={0.5}>
@@ -131,8 +135,8 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               {t('label.pack-size')}
             </InputLabel>
           </Grid>
-
           <Select
+            disabled={issueType === 'units'}
             sx={{ width: 110 }}
             inputProps={register('packSize')}
             options={packSizeController.options}
@@ -141,6 +145,24 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               packSizeController.setPackSize(Number(e.target.value))
             }
           />
+          <RadioGroup
+            value={issueType}
+            onChange={() => {
+              setIssueType(state => (state === 'packs' ? 'units' : 'packs'));
+            }}
+          >
+            <FormControlLabel
+              control={<Radio size="small" />}
+              label="Packs"
+              value="packs"
+            />
+            <FormControlLabel
+              control={<Radio size="small" />}
+              label="Units"
+              value="units"
+            />
+          </RadioGroup>
+
           {quantityDescription}
           <FlatButton
             color="secondary"
@@ -149,7 +171,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             onClick={() => {
               onChangeQuantity(
                 Number(quantity),
-                packSizeController.selected.value
+                issueType === 'packs' ? packSizeController.selected.value : null
               );
               setQuantity('');
             }}
