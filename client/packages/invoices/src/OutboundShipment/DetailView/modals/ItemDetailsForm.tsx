@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler } from 'react';
+import React, { useState } from 'react';
 import {
   FieldValues,
   Grid,
@@ -14,19 +14,21 @@ import {
   Typography,
   InputLabel,
   ModalNumericInput,
+  FlatButton,
+  CheckIcon,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
 import { OutboundShipmentSummaryItem } from '../types';
+import { PackSizeController } from './ItemDetailsModal';
 
 interface ItemDetailsFormProps {
   allocatedQuantity: number;
-  quantity?: number;
   register: UseFormRegister<FieldValues>;
   summaryItem?: OutboundShipmentSummaryItem;
-  packSize: number;
   onChangeItem: (newItem: Item | null) => void;
-  onChangeQuantity: (quantity: number) => void;
-  setPackSize: (packSize: number) => void;
+  onChangeQuantity: (quantity: number, packSize: number) => void;
+  packSizeController: PackSizeController;
+  availableQuantity: number;
 }
 
 const SimpleText = styled(Typography)({
@@ -40,37 +42,23 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   allocatedQuantity,
   onChangeItem,
   onChangeQuantity,
-  quantity,
+  // quantity,
   register,
   summaryItem,
-  setPackSize,
-  packSize,
+  packSizeController,
+  availableQuantity,
 }) => {
   const t = useTranslation();
 
-  const quantityDescription = quantity ? (
+  const quantityDescription = allocatedQuantity ? (
     <SimpleText
       sx={{
-        color: allocatedQuantity < (quantity || 0) ? 'error.main' : undefined,
+        color: allocatedQuantity ? 'error.main' : undefined,
       }}
     >{`${allocatedQuantity} ${t('label.allocated')}`}</SimpleText>
   ) : undefined;
 
-  const packSizes = [1];
-
-  const onChangePackSize: ChangeEventHandler<HTMLInputElement> = event => {
-    const newPackSize = Number(event.target.value);
-    setPackSize(newPackSize);
-  };
-
-  const packSizeOptions = packSizes.sort().map(pack => ({
-    label: String(pack),
-    value: pack,
-  }));
-
-  if (packSizes.indexOf(packSize) === -1) {
-    setPackSize(1);
-  }
+  const [quantity, setQuantity] = useState('');
 
   return (
     <Grid container gap={0.5}>
@@ -83,9 +71,15 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           />
         </Grid>
       </ModalRow>
+
       <ModalRow>
         <ModalLabel labelKey="label.available" />
-        <NumericTextInput value={0} disabled sx={{ width: 85 }} />
+        <NumericTextInput
+          value={availableQuantity}
+          disabled
+          style={{ width: 85 }}
+        />
+
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.code" justifyContent="flex-end" />
           <ModalInput
@@ -94,41 +88,71 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             width={150}
           />
         </Grid>
-      </ModalRow>
-      <ModalRow>
-        <ModalLabel labelKey="label.pack-quantity" />
-        <ModalNumericInput
-          inputProps={register('quantity', {
-            required: true,
-            min: { value: 1, message: t('error.invalid-value') },
-            pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
-            onChange: event => onChangeQuantity(Number(event.target.value)),
-          })}
-          defaultValue={summaryItem?.numberOfPacks || 0}
-        />
-        <Grid
-          item
-          alignItems="center"
-          display="flex"
-          sx={{ marginLeft: '20px', marginRight: '20px' }}
-        >
-          <InputLabel sx={{ fontSize: '12px' }}>
-            {t('label.pack-size')}
-          </InputLabel>
-        </Grid>
-        <Select
-          inputProps={register('packSize')}
-          options={packSizeOptions}
-          value={packSize}
-          onChange={onChangePackSize}
-        />
-        {quantityDescription}
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.unit" justifyContent="flex-end" />
           <ModalInput
             disabled
             width={150}
             defaultValue={summaryItem?.itemUnit ?? ''}
+          />
+        </Grid>
+      </ModalRow>
+
+      <ModalRow>
+        <Grid
+          sx={{
+            marginTop: '20px',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}
+          container
+        >
+          <ModalLabel labelKey="label.pack-quantity" />
+          <ModalNumericInput
+            value={Number(quantity)}
+            inputProps={register('quantity', {
+              required: true,
+              min: { value: 1, message: t('error.invalid-value') },
+              pattern: {
+                value: /^[0-9]+$/,
+                message: t('error.invalid-value'),
+              },
+              onChange: event => {
+                setQuantity(event.target.value);
+              },
+            })}
+            defaultValue={0}
+          />
+
+          <Grid item alignItems="center" display="flex">
+            <InputLabel sx={{ fontSize: '12px' }}>
+              {t('label.pack-size')}
+            </InputLabel>
+          </Grid>
+
+          <Select
+            sx={{ width: 110 }}
+            inputProps={register('packSize')}
+            options={packSizeController.options}
+            value={packSizeController.selected.value}
+            onChange={e =>
+              packSizeController.setPackSize(Number(e.target.value))
+            }
+          />
+          {quantityDescription}
+          <FlatButton
+            color="secondary"
+            icon={<CheckIcon />}
+            labelKey="label.issue"
+            onClick={() => {
+              onChangeQuantity(
+                Number(quantity),
+                packSizeController.selected.value
+              );
+              setQuantity('');
+            }}
           />
         </Grid>
       </ModalRow>
