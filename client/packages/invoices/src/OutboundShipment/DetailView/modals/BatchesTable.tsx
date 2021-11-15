@@ -73,7 +73,11 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       </BasicCell>
       <BasicCell align="right">{batch.packSize}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
-        <ReadOnlyInput number {...register(`${batch.id}_total`)} />
+        <ReadOnlyInput
+          number
+          value={String(batch.quantity * batch.packSize)}
+          {...register(`${batch.id}_total`)}
+        />
       </BasicCell>
       <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>
       <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
