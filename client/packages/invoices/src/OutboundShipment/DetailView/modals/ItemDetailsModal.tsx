@@ -102,7 +102,7 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
     setBatchRows(() => {
       const rows = data
         .map(batch => {
-          const matchingInvoiceRow = summaryItem.batches.find(
+          const matchingInvoiceRow = Object.values(summaryItem.batches).find(
             ({ stockLineId }) => stockLineId === batch.id
           );
           return { ...batch, quantity: matchingInvoiceRow?.numberOfPacks ?? 0 };
