@@ -17,13 +17,14 @@ import {
   ModalNumericInput,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
+import { OutboundShipmentSummaryItem } from '../types';
 
 interface ItemDetailsFormProps {
   allocatedQuantity: number;
   invoiceLine?: InvoiceLine;
   quantity?: number;
   register: UseFormRegister<FieldValues>;
-  selectedItem?: Item;
+  summaryItem?: OutboundShipmentSummaryItem;
   packSize: number;
   onChangeItem: (newItem: Item) => void;
   onChangeQuantity: (quantity: number) => void;
@@ -39,12 +40,11 @@ const SimpleText = styled(Typography)({
 
 export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   allocatedQuantity,
-  invoiceLine,
   onChangeItem,
   onChangeQuantity,
   quantity,
   register,
-  selectedItem,
+  summaryItem,
   setPackSize,
   packSize,
 }) => {
@@ -65,12 +65,6 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
     setPackSize(newPackSize);
   };
 
-  selectedItem?.availableBatches.forEach(batch => {
-    if (packSizes.every(pack => pack !== batch.packSize)) {
-      packSizes.push(batch.packSize);
-    }
-  });
-
   const packSizeOptions = packSizes.sort().map(pack => ({
     label: String(pack),
     value: pack,
@@ -85,22 +79,20 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       <ModalRow>
         <ModalLabel labelKey="label.item" />
         <Grid item flex={1}>
-          <ItemSearchInput value={selectedItem} onChange={onChangeItem} />
+          <ItemSearchInput
+            currentItemId={summaryItem?.itemId}
+            onChange={onChangeItem}
+          />
         </Grid>
       </ModalRow>
       <ModalRow>
         <ModalLabel labelKey="label.available" />
-        <NumericTextInput
-          defaultValue={invoiceLine?.itemCode}
-          inputProps={register('availableQuantity')}
-          disabled
-          sx={{ width: 85 }}
-        />
+        <NumericTextInput value={0} disabled sx={{ width: 85 }} />
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.code" justifyContent="flex-end" />
           <ModalInput
-            defaultValue={invoiceLine?.itemCode}
-            inputProps={register('code', { disabled: true })}
+            defaultValue={summaryItem?.itemCode ?? ''}
+            disabled
             width={150}
           />
         </Grid>
@@ -114,7 +106,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
             onChange: event => onChangeQuantity(Number(event.target.value)),
           })}
-          defaultValue={invoiceLine?.numberOfPacks}
+          defaultValue={summaryItem?.numberOfPacks || 0}
         />
         <Grid
           item
@@ -136,10 +128,9 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.unit" justifyContent="flex-end" />
           <ModalInput
-            inputProps={register('unitName', {
-              disabled: true,
-            })}
+            disabled
             width={150}
+            defaultValue={summaryItem?.itemUnit ?? ''}
           />
         </Grid>
       </ModalRow>
