@@ -1,129 +1,69 @@
-import {
-  DocumentAction,
-  Invoice,
-  createColumns,
-  DocumentActionSet,
-} from '@openmsupply-client/common';
+import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
+import { flattenSummaryItems } from './../utils';
+import { DocumentActionSet } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import {
+  OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentAction,
   OutboundShipmentSummaryItem,
 } from './types';
 
-const lines: OutboundShipmentRow[] = [
+const summaryItems: OutboundShipmentSummaryItem[] = [
   {
     id: '1',
-    updateNumberOfPacks: () => {},
     itemId: '1',
-    itemUnit: 'bottle',
-    itemCode: 'a',
+    itemName: '1',
+    itemCode: '1',
+    itemUnit: '1',
+    unitQuantity: 10,
+    numberOfPacks: 10,
     packSize: 1,
-    numberOfPacks: 1,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
-    itemName: 'a',
-    stockLineId: '',
-    invoiceId: '',
-    isCreated: false,
-    isUpdated: false,
-    isDeleted: false,
-  },
-  {
-    id: '3',
-    updateNumberOfPacks: () => {},
-    numberOfPacks: 3,
-    itemId: '1',
-    itemUnit: 'bottle',
-    itemCode: 'a',
-    packSize: 1,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
-    itemName: 'c',
-    stockLineId: '',
-    invoiceId: '',
-    isCreated: false,
-    isUpdated: false,
-    isDeleted: false,
-  },
-  {
-    id: '5',
-    updateNumberOfPacks: () => {},
-    numberOfPacks: 5,
-    itemId: '1',
-    itemUnit: 'bottle',
-    itemCode: 'a',
-    packSize: 1,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
-    itemName: 'b',
-    stockLineId: '',
-    invoiceId: '',
-    isCreated: false,
-    isUpdated: false,
-    isDeleted: false,
-  },
-  {
-    id: '2',
-    updateNumberOfPacks: () => {},
-    itemId: '1',
-    itemUnit: 'bottle',
-    itemCode: 'a',
-    packSize: 1,
-    numberOfPacks: 2,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
-    itemName: 'e',
-    stockLineId: '',
-    invoiceId: '',
-    isCreated: false,
-    isUpdated: false,
-    isDeleted: false,
-  },
-  {
-    id: '4',
-    updateNumberOfPacks: () => {},
-    numberOfPacks: 4,
-    itemId: '1',
-    itemUnit: 'bottle',
-    itemCode: 'a',
-    packSize: 1,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
-    itemName: 'f',
-    stockLineId: '',
-    invoiceId: '',
-    isCreated: false,
-    isUpdated: false,
-    isDeleted: false,
-  },
-  {
-    id: '2',
-    updateNumberOfPacks: () => {},
-    numberOfPacks: 1,
-    itemId: '1',
-    itemUnit: 'bottle',
-    itemCode: 'a',
-    packSize: 1,
-    costPricePerPack: 0,
-    sellPricePerPack: 0,
-    itemName: 'd',
-    stockLineId: '',
-    invoiceId: '',
-    isCreated: false,
-    isUpdated: false,
-    isDeleted: false,
+    batches: {
+      '11': {
+        id: '11',
+        itemId: '1',
+        itemName: '1',
+        itemCode: '1',
+        itemUnit: '1',
+        stockLineId: '1',
+        unitQuantity: 10,
+        numberOfPacks: 10,
+        packSize: 1,
+        costPricePerPack: 0,
+        sellPricePerPack: 0,
+        isCreated: false,
+        isUpdated: false,
+        isDeleted: false,
+        invoiceId: '',
+      },
+      '12': {
+        id: '12',
+        itemId: '1',
+        itemName: '1',
+        itemCode: '1',
+        itemUnit: '1',
+        stockLineId: '2',
+        unitQuantity: 10,
+        numberOfPacks: 10,
+        packSize: 1,
+        costPricePerPack: 0,
+        sellPricePerPack: 0,
+        isCreated: false,
+        isUpdated: false,
+        isDeleted: false,
+        invoiceId: '',
+      },
+    },
   },
 ];
 
-const getState = ({
-  isDesc = true,
-  defaultLines = [] as OutboundShipmentRow[],
-} = {}): OutboundShipmentStateShape => ({
+const getState = ({ isDesc = true } = {}): OutboundShipmentStateShape => ({
   draft: {
     ...placeholderInvoice,
-    lines: defaultLines.length ? defaultLines : lines,
+    lines: [],
+    items: summaryItems,
   },
   sortBy: {
     key: 'numberOfPacks',
@@ -136,120 +76,64 @@ const createLine = (
   id: string,
   values: Partial<OutboundShipmentRow> = {}
 ): OutboundShipmentRow => {
-  return { ...(lines[0] as OutboundShipmentRow), id, ...values };
+  return {
+    itemId: '1',
+    itemName: '1',
+    itemCode: '1',
+    itemUnit: '1',
+    stockLineId: '1',
+    unitQuantity: 10,
+    numberOfPacks: 10,
+    packSize: 1,
+    costPricePerPack: 0,
+    sellPricePerPack: 0,
+    isCreated: false,
+    isUpdated: false,
+    isDeleted: false,
+    invoiceId: '',
+    id,
+    ...values,
+  };
 };
 
 const callReducer = (
   action: DocumentActionSet<OutboundShipmentAction>,
-  state = getState()
+  state = getState(),
+  data?: OutboundShipment
 ) => {
-  return reducer(state.draft, null)(state, action);
+  return reducer(data ?? state.draft, null)(state, action);
 };
 
-describe('DetailView reducer: sorting', () => {
-  it('sorts the lines by the provided key in ascending order when already in descending order for the same key.', () => {
-    const state: OutboundShipmentStateShape = getState();
+const findRow = (
+  state: OutboundShipmentStateShape,
+  rowId: string,
+  otherCondition?: (
+    row?: OutboundShipmentRow | OutboundShipmentRow
+  ) => OutboundShipmentRow | undefined
+): OutboundShipmentRow | undefined => {
+  const row = state.draft.items.find(item => {
+    return !!item.batches[rowId];
+  })?.batches?.[rowId];
 
-    const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
-      'numberOfPacks',
-    ]);
-    if (!numberOfPacksColumn) throw new Error('This test is broken!');
-
-    const reducerResult = reducer(undefined, null)(
-      state,
-      OutboundAction.onSortBy(numberOfPacksColumn)
-    );
-
-    expect(reducerResult.draft.lines).toEqual([
-      expect.objectContaining({ id: '1' }),
-      expect.objectContaining({ id: '2' }),
-      expect.objectContaining({ id: '2' }),
-      expect.objectContaining({ id: '3' }),
-      expect.objectContaining({ id: '4' }),
-      expect.objectContaining({ id: '5' }),
-    ]);
-  });
-
-  it('sorts the lines by the provided key in descending order when already in ascending order for the same key.', () => {
-    const state: OutboundShipmentStateShape = getState({ isDesc: false });
-
-    const [numberOfPacksColumn] = createColumns<OutboundShipmentSummaryItem>([
-      'numberOfPacks',
-    ]);
-    if (!numberOfPacksColumn) throw new Error('This test is broken!');
-
-    const reducerResult = reducer(undefined, null)(
-      state,
-      OutboundAction.onSortBy(numberOfPacksColumn)
-    );
-
-    expect(reducerResult.draft.lines).toEqual(
-      [
-        expect.objectContaining({ id: '2' }),
-        expect.objectContaining({ id: '1' }),
-        expect.objectContaining({ id: '2' }),
-        expect.objectContaining({ id: '3' }),
-        expect.objectContaining({ id: '4' }),
-        expect.objectContaining({ id: '5' }),
-      ].reverse()
-    );
-  });
-
-  it('sorts the lines by the provided key in ascending order when sorted by some other key.', () => {
-    const state: OutboundShipmentStateShape = getState();
-
-    const [itemNameColumn] = createColumns<OutboundShipmentSummaryItem>([
-      'itemName',
-    ]);
-    if (!itemNameColumn) throw new Error('This test is broken!');
-
-    const reducerResult = reducer(undefined, null)(
-      state,
-      OutboundAction.onSortBy(itemNameColumn)
-    );
-
-    expect(reducerResult.draft.lines).toEqual([
-      expect.objectContaining({ id: '1' }),
-      expect.objectContaining({ id: '5' }),
-      expect.objectContaining({ id: '3' }),
-      expect.objectContaining({ id: '2' }),
-      expect.objectContaining({ id: '2' }),
-      expect.objectContaining({ id: '4' }),
-    ]);
-  });
-});
+  return otherCondition ? otherCondition(row) : row;
+};
 
 describe('DetailView reducer: updating lines', () => {
-  it('updates the correct line with the correct numberOfPacks', () => {
-    const state: OutboundShipmentStateShape = getState();
-
-    const reducerResult = reducer(undefined, null)(
-      state,
-      OutboundAction.updateNumberOfPacks?.('1', 10)
-    );
-
-    const line = reducerResult.draft.lines.find(({ id }) => id === '1');
-
-    if (!line) throw new Error('This test is broken!');
-
-    expect(line.numberOfPacks).toBe(10);
-  });
-
   it('updates an existing line when upserting', () => {
-    const lineToUpdate = createLine('1', { numberOfPacks: 999 });
+    const lineToUpdate = createLine('11', { numberOfPacks: 999 });
     const state = callReducer(OutboundAction.upsertLine(lineToUpdate));
 
-    // Try find the lines we just deleted
-    const line = state.draft.lines.find(({ id }) => lineToUpdate.id === id);
+    // Try find the lines we just updated.
+    const line = findRow(state, lineToUpdate.id);
     expect(line?.numberOfPacks).toBe(999);
   });
 
   it('adds flags to an already existing line to be updated, but not created or deleted', () => {
-    const lineToUpdate = createLine('1');
+    const lineToUpdate = createLine('11');
     const state = callReducer(OutboundAction.upsertLine(lineToUpdate));
 
     // Try find the line we just updated
-    const line = state.draft.lines.find(({ id }) => lineToUpdate.id === id);
+    const line = findRow(state, lineToUpdate.id);
 
     expect(line).toEqual(
       expect.objectContaining({
@@ -260,22 +144,37 @@ describe('DetailView reducer: updating lines', () => {
     );
   });
 
-  it('adds an update flag to a line which has not been persisted, while keeping the created flag', () => {
+  it('does not add an update flag to a line which has not been persisted, while keeping the created flag', () => {
     // This test ensures that if we edit a line which has not been persisted, we still keep the created flag.
     // This is important because we want to make sure we know if the line is being created, so we can
     // insert the line rather than update it.
 
-    const lineToUpdate = createLine('999', { isCreated: true });
-    const state = callReducer(OutboundAction.upsertLine(lineToUpdate));
+    const lineToUpdate = createLine('999', {
+      stockLineId: '999',
+      itemId: '999',
+    });
+    const state1 = callReducer(OutboundAction.upsertLine(lineToUpdate));
+    expect(findRow(state1, lineToUpdate?.id)).toBeTruthy();
+
+    const lineToUpdate2 = createLine('999', {
+      stockLineId: '999',
+      itemId: '999',
+      numberOfPacks: 10,
+    });
+    const state2 = callReducer(
+      OutboundAction.upsertLine(lineToUpdate2),
+      state1
+    );
 
     // Try find the line we just updated
-    const line = state.draft.lines.find(({ id }) => lineToUpdate.id === id);
+    const line = findRow(state2, lineToUpdate2.id);
 
     expect(line).toEqual(
       expect.objectContaining({
         isCreated: true,
-        isUpdated: true,
+        isUpdated: false,
         isDeleted: false,
+        numberOfPacks: 10,
       })
     );
   });
@@ -286,23 +185,16 @@ describe('DetailView reducer: updating lines', () => {
     // we only tag the line as an update, NOT as a create as the insert will cause an error.
 
     // Pseudo-line which is deleted on the client-side but persisted on the server.
-    const lineToDelete = createLine('1', {
-      itemId: '1',
-      isDeleted: true,
-      isCreated: false,
-      isUpdated: false,
-    });
-    const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
+    const lineToDelete = createLine('11');
+    const state1 = callReducer(OutboundAction.deleteLine(lineToDelete));
     // find the line we just inserted, ensuring it is set up correctly.
-    const line1 = state1.draft.lines.find(
-      ({ id, isUpdated, isDeleted, isCreated }) =>
-        lineToDelete.id === id && isUpdated && !isDeleted && !isCreated
-    );
-    expect(line1).toBeTruthy();
+    const line1 = findRow(state1, lineToDelete.id);
 
-    const lineToUpdate = createLine('2', { itemId: '1' });
+    expect(line1?.isDeleted).toBeTruthy();
+
+    const lineToUpdate = createLine('02', { stockLineId: '1' });
     const state2 = callReducer(OutboundAction.upsertLine(lineToUpdate));
-    const line2 = state2.draft.lines.find(({ id }) => lineToUpdate.id === id);
+    const line2 = findRow(state2, lineToDelete.id);
 
     expect(line2).toEqual(
       expect.objectContaining({
@@ -320,14 +212,18 @@ describe('DetailView reducer: merging', () => {
 
     // Create some server data which is the same except every line has 99 numberOfPacks.
     // Then after merging, every line should have 99 numberOfPacks.
-    const dataLines = lines.map(line => ({ ...line, numberOfPacks: 99 }));
-    const data: Invoice = { ...placeholderInvoice, lines: dataLines };
+    const dataLines = [...flattenSummaryItems(state.draft.items)];
+    const data = {
+      ...placeholderInvoice,
+      lines: dataLines.map(line => ({ ...line, numberOfPacks: 99 })),
+    };
 
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+
     expect(
-      reducerResult.draft.lines.filter(
+      flattenSummaryItems(reducerResult.draft.items).filter(
         ({ numberOfPacks }) => numberOfPacks !== 99
       ).length
     ).toBe(0);
@@ -337,22 +233,30 @@ describe('DetailView reducer: merging', () => {
     // The shipment has three lines. Two of them are new and one is updated.
     // When the server state is merged, the created lines should have the isCreated flag set to false
     // to indicate they have been persisted.
-    const defaultLines = [
-      createLine('1', { isCreated: true }),
-      createLine('2', { isCreated: false }),
-      createLine('3', { isCreated: true }),
-    ];
 
-    const state: OutboundShipmentStateShape = getState({ defaultLines });
+    const state = getState();
+    const dataLines = state.draft.items
+      .map(({ batches }) => {
+        return Object.values(batches).map((batch, i) => {
+          if (i === 0) return batch;
+          return { ...batch, isCreated: true };
+        });
+      })
+      .flat();
 
-    const dataLines = [...defaultLines];
-    const data: Invoice = { ...placeholderInvoice, lines: dataLines };
+    const data = { ...placeholderInvoice, lines: dataLines };
+
+    // Ensure there is at least one line which has is created set to false
+    expect(data.lines.some(({ isCreated }) => !isCreated));
+    // Ensure there is at least one line which has is created set to true
+    expect(data.lines.some(({ isCreated }) => isCreated));
 
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
+
     expect(
-      reducerResult.draft.lines.every(
+      flattenSummaryItems(reducerResult.draft.items).every(
         ({ isCreated, isDeleted, isUpdated }) =>
           !isCreated && !isDeleted && isUpdated
       )
@@ -360,11 +264,11 @@ describe('DetailView reducer: merging', () => {
   });
 
   it('updates the client side draft state by merging the server invoice into the client data invoice draft, where the server data always wins', () => {
-    const state: OutboundShipmentStateShape = getState();
+    const state = getState();
 
     // Create a server invoice which has a different comment and merge. The resulting invoice should be the same, except
     // for having the updated comment.
-    const data: Invoice = { ...state.draft, comment: 'josh' };
+    const data = { ...state.draft, comment: 'josh' };
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
@@ -372,7 +276,7 @@ describe('DetailView reducer: merging', () => {
     Object.entries(reducerResult.draft).forEach(([key, value]) => {
       if (key === 'comment') {
         expect(value).toEqual('josh');
-      } else if (key === 'lines') {
+      } else if (key === 'items') {
         // Lines to be handled in their own tests as they're more complex.
         return;
       } else {
@@ -384,83 +288,132 @@ describe('DetailView reducer: merging', () => {
 
 describe('DetailView reducer: deleting lines', () => {
   it('deleted lines are tagged as such', () => {
-    const lineToDelete = createLine('1');
+    const lineToDelete = createLine('11');
     const state = callReducer(OutboundAction.deleteLine(lineToDelete));
 
-    const line = state.draft.lines.find(({ id }) => lineToDelete.id === id);
+    const line = findRow(state, lineToDelete.id);
 
     expect(line).toEqual(expect.objectContaining({ isDeleted: true }));
   });
 
   it('a line which is created, then deleted, is removed from state completely', () => {
-    const lineToDelete = createLine('99');
+    const lineToDelete = createLine('99', { itemId: '99', stockLine: '99' });
     const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
     const state2 = callReducer(OutboundAction.deleteLine(lineToDelete), state1);
 
-    // Find the line in the first state, ensuring we did create it
-    const lineCreated = state1.draft.lines.find(
-      ({ id }) => lineToDelete.id === id
-    );
-    // Should not find the line in the second state
-    const lineDeleted = state2.draft.lines.find(
-      ({ id }) => lineToDelete.id === id
-    );
-
-    expect(lineCreated).toBeTruthy();
-    expect(lineDeleted).toBeFalsy();
+    expect(findRow(state1, lineToDelete.id)).toBeTruthy();
+    expect(findRow(state2, lineToDelete.id)).toBeFalsy();
   });
 
-  it('inserting a line for an item which has an existing, persisted, but deleted, line, reuses that existing line', () => {
+  it('deleting the last line of a summary item flags the summary item as deleted also', () => {
+    const state1 = getState();
+    const batches = state1.draft.items[0]?.batches;
+
+    // Ensure the test is testing some lines.
+    expect(batches).toBeTruthy();
+    if (!batches) return;
+    expect(Object.values(batches).length).toBeTruthy();
+
+    const state2 = Object.values(batches).reduce((acc, value) => {
+      return callReducer(OutboundAction.deleteLine(value), acc);
+    }, state1);
+
+    expect(state2.draft.items[0]?.isDeleted).toBe(true);
+  });
+
+  it('deleting the last line of a summary item where the line has not been persisted, removes the summary item from state', () => {
+    const line = createLine('99', { itemId: '99' });
+
+    const state1 = callReducer(OutboundAction.upsertLine(line));
+
+    expect(findRow(state1, line.id)).toBeTruthy();
+    expect(state1.draft.items.find(({ id }) => id === '99')).toBeTruthy();
+
+    const state2 = callReducer(OutboundAction.deleteLine(line), state1);
+
+    expect(findRow(state2, line.id)).toBeUndefined();
+    expect(state2.draft.items.find(({ id }) => id === '99')).toBeUndefined();
+  });
+
+  it('inserting a line for a stock line which has an existing, persisted, but deleted, line, reuses that existing line', () => {
     // Mock an already existing and persisted line, which has been deleted client side.
-    const existingLine = createLine('999', {
-      itemId: 'item1',
-      numberOfPacks: 999,
-      isCreated: false,
-      isDeleted: true,
-    });
-
-    // Simulate the user adding a new line for the same item.
-    const lineToCreate2 = createLine('998', {
-      itemId: 'item1',
+    const existingLine = createLine('996', {
+      itemId: 'item2',
+      stockLineId: 'item2',
       numberOfPacks: 999,
     });
-    const state = callReducer(
-      OutboundAction.upsertLine(lineToCreate2),
-      // Note the use of the existing line in state.
-      getState({ defaultLines: [existingLine] })
-    );
-    const lineCreated2 = state.draft.lines.find(
-      // The line should exist in the draft with the same ID and have the isDeleted tag set to false AND the isCreated tag.
-      // Note that we are matching on the original line id, not the new line id.
-      ({ id }) => existingLine?.id === id
+
+    const existingLine2 = createLine('998', {
+      itemId: 'item2',
+      stockLineId: 'item3',
+      numberOfPacks: 999,
+    });
+
+    // Simulate the user adding a new line for the same stock line.
+    const lineToCreate = createLine('993', {
+      itemId: 'item2',
+      stockLineId: 'item2',
+      numberOfPacks: 1,
+    });
+
+    const data = { ...placeholderInvoice, lines: [existingLine] };
+
+    const state1 = callReducer(OutboundAction.upsertLine(existingLine));
+    expect(findRow(state1, existingLine.id)).toBeTruthy();
+
+    // Mimic a 'save'
+    const state2 = callReducer(DocumentAction.merge(), state1, data);
+    expect(state2.draft.items.length).toBeTruthy();
+    expect(
+      state2.draft.items.every(({ batches }) =>
+        Object.values(batches).every(({ isCreated }) => !isCreated)
+      )
     );
 
-    expect(lineCreated2).toBeTruthy();
+    // Adding an additional line to mix it up a little
+    const state3 = callReducer(
+      OutboundAction.upsertLine(existingLine2),
+      state2
+    );
+
+    expect(findRow(state3, existingLine.id)?.isCreated).toBe(false);
+    expect(findRow(state3, existingLine2.id)?.isCreated).toBe(true);
+
+    // Now deleting the line which has been persisted
+    const state4 = callReducer(OutboundAction.deleteLine(existingLine), state3);
+    // The line should still exist, but be flagged as deleted
+    expect(findRow(state4, existingLine.id)).toBeTruthy();
+
+    // Then upserting a line for the same stock line.
+    const state5 = callReducer(OutboundAction.upsertLine(lineToCreate), state4);
+    expect(findRow(state5, existingLine.id)).toBeTruthy();
   });
 });
 
 describe('DetailView reducer: inserting', () => {
   it('adds flags to a line when inserted for being created', () => {
-    const lineToInsert = createLine('999');
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '999',
+    });
     const state = callReducer(OutboundAction.upsertLine(lineToInsert));
 
-    // Try find the lines we just deleted
-    const line = state.draft.lines.find(({ id }) => lineToInsert.id === id);
-
-    expect(line).toEqual(
+    expect(findRow(state, lineToInsert.id)).toEqual(
       expect.objectContaining({
         isCreated: true,
-        isUpdated: true,
+        isUpdated: false,
         isDeleted: false,
       })
     );
   });
 
   it('inserts an invoice line when it does not exist', () => {
-    const lineToInsert = createLine('999');
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '999',
+    });
     const state = callReducer(OutboundAction.upsertLine(lineToInsert));
-    // Try find the line we just added in state
-    const line = state.draft.lines.find(({ id }) => lineToInsert.id === id);
-    expect(line).toBeTruthy();
+
+    expect(findRow(state, lineToInsert.id)).toBeTruthy();
   });
 });

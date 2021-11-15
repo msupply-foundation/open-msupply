@@ -11,3 +11,12 @@ export const ifTheSameElseDefault = <
   const allTheSame = someEntities.every(entity => entity[key] === value);
   return allTheSame && value ? value : defaultValue;
 };
+
+export const arrayToRecord = <T extends { id: string }>(
+  array: T[]
+): Record<string, T> => {
+  return array.reduce((acc, value) => {
+    acc[value.id] = value;
+    return acc;
+  }, {} as Record<string, T>);
+};
