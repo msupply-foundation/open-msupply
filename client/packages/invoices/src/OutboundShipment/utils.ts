@@ -1,6 +1,10 @@
 import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { OutboundShipmentStatus } from '@openmsupply-client/common';
-import { OutboundShipment } from './DetailView/types';
+import {
+  OutboundShipment,
+  OutboundShipmentRow,
+  OutboundShipmentSummaryItem,
+} from './DetailView/types';
 
 export const outboundStatuses: OutboundShipmentStatus[] = [
   'DRAFT',
@@ -54,4 +58,36 @@ export const getStatusTranslation = (
 
 export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
   return outbound.status !== 'SHIPPED' && outbound.status !== 'DELIVERED';
+};
+
+const parseValue = (object: any, key: string) => {
+  const value = object[key];
+  if (typeof value === 'string') {
+    const valueAsNumber = Number.parseFloat(value);
+
+    if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
+    return value.toUpperCase(); // ignore case
+  }
+  return value;
+};
+
+export const getDataSorter =
+  (sortKey: any, desc: boolean) => (a: any, b: any) => {
+    const valueA = parseValue(a, sortKey);
+    const valueB = parseValue(b, sortKey);
+
+    if (valueA < valueB) {
+      return desc ? 1 : -1;
+    }
+    if (valueA > valueB) {
+      return desc ? -1 : 1;
+    }
+
+    return 0;
+  };
+
+export const flattenSummaryItems = (
+  summaryItems: OutboundShipmentSummaryItem[]
+): OutboundShipmentRow[] => {
+  return summaryItems.map(({ batches }) => Object.values(batches)).flat();
 };

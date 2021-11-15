@@ -30,7 +30,6 @@ export interface InvoiceStatusLog {
 }
 
 export interface OutboundShipment extends Invoice {
-  lines: OutboundShipmentRow[];
   items: OutboundShipmentSummaryItem[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
@@ -43,6 +42,7 @@ export enum ActionType {
   UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
   UpsertLine = 'OutboundShipment/upsertLine',
+
   DeleteLine = 'OutboundShipment/deleteLine',
 }
 
@@ -80,8 +80,9 @@ export type OutboundShipmentSummaryItem = {
   locationDescription?: string | null;
   itemUnit?: string;
   batch?: string | null;
-  batches: OutboundShipmentRow[];
+  batches: Record<string, OutboundShipmentRow>;
   sellPrice?: number | undefined;
   packSize?: number | undefined;
   note?: string | null;
+  isDeleted?: boolean;
 };
