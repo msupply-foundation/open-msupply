@@ -224,7 +224,7 @@ describe('DetailView reducer: updating lines', () => {
     const lineToUpdate = createLine('991', {
       itemId: '999',
       stockLineId: '999',
-      numberOfPacks: 0,
+      numberOfPacks: 99,
     });
 
     // Insert each of the lines
@@ -469,5 +469,16 @@ describe('DetailView reducer: inserting', () => {
     const state = callReducer(OutboundAction.upsertLine(lineToInsert));
 
     expect(findRow(state, lineToInsert.id)).toBeTruthy();
+  });
+
+  it('ignores lines which are being inserted with zero number of packs', () => {
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '999',
+      numberOfPacks: 0,
+    });
+    const state = callReducer(OutboundAction.upsertLine(lineToInsert));
+
+    expect(findRow(state, lineToInsert.id)).toBeUndefined();
   });
 });
