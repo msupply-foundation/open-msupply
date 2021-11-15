@@ -22,6 +22,7 @@ import {
   OutboundShipment,
   OutboundShipmentRow,
 } from './OutboundShipment/DetailView/types';
+import { flattenSummaryItems } from './OutboundShipment/utils';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
@@ -166,8 +167,9 @@ const createDeleteOutboundLineInput = (
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
-    const deleteLines = patch.lines.filter(({ isDeleted }) => isDeleted);
-    const insertLines = patch.lines.filter(
+    const rows = flattenSummaryItems(patch.items);
+    const deleteLines = rows.filter(({ isDeleted }) => isDeleted);
+    const insertLines = rows.filter(
       ({ isCreated, isDeleted }) => !isDeleted && isCreated
     );
 

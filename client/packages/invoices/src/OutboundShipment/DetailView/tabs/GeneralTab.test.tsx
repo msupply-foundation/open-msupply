@@ -14,7 +14,7 @@ const lines: OutboundShipmentSummaryItem[] = [
     itemCode: 'abc123',
     itemName: 'ibuprofen',
     unitQuantity: 0,
-    batches: [],
+    batches: {},
   },
   {
     id: '2',
@@ -25,7 +25,7 @@ const lines: OutboundShipmentSummaryItem[] = [
     itemCode: 'def123',
     unitQuantity: 0,
     itemName: 'amox',
-    batches: [],
+    batches: {},
   },
 ];
 
