@@ -1,6 +1,6 @@
 use crate::WithDBError;
 use domain::outbound_shipment::InsertOutboundShipmentLine;
-use repository::repository::{
+use repository::{
     InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
     TransactionError,
 };

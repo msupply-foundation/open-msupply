@@ -4,9 +4,7 @@ mod graphql {
     use crate::graphql::assert_gql_query;
     use domain::stock_line::StockLine;
     use repository::{
-        mock::MockDataInserts,
-        repository::{InvoiceLineRepository, StockLineRepository},
-        schema::InvoiceLineRow,
+        mock::MockDataInserts, schema::InvoiceLineRow, InvoiceLineRepository, StockLineRepository,
     };
     use serde_json::json;
     use server::test_utils::setup_all;

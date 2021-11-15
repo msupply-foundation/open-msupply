@@ -1,7 +1,5 @@
 use domain::{inbound_shipment::DeleteInboundShipment, invoice_line::InvoiceLine};
-use repository::repository::{
-    InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError};
 
 mod validate;
 

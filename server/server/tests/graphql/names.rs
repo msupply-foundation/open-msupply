@@ -4,8 +4,8 @@ mod graphql {
         get_storage_connection_manager, test_db,
         {
             mock::{mock_name_store_joins, mock_names, mock_stores},
-            repository::{NameRepository, NameStoreJoinRepository, StoreRepository},
             schema::{NameRow, NameStoreJoinRow, StoreRow},
+            NameRepository, NameStoreJoinRepository, StoreRepository,
         },
     };
     use serde_json::json;

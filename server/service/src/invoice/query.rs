@@ -3,7 +3,7 @@ use domain::{
     invoice::{Invoice, InvoiceFilter, InvoiceSort},
     Pagination, PaginationOption,
 };
-use repository::repository::{InvoiceQueryRepository, StorageConnectionManager};
+use repository::{InvoiceQueryRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

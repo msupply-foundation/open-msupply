@@ -1,6 +1,6 @@
 use crate::WithDBError;
 use domain::inbound_shipment::UpdateInboundShipmentLine;
-use repository::repository::{
+use repository::{
     InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
     TransactionError,
 };

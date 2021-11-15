@@ -11,8 +11,8 @@ mod graphql {
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
-        repository::ItemRepository,
         schema::{InvoiceLineRow, StockLineRow},
+        ItemRepository,
     };
     use server::test_utils::setup_all;
 

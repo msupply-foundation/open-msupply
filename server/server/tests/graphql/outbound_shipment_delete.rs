@@ -2,10 +2,7 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use repository::{
-        mock::MockDataInserts,
-        repository::{InvoiceRepository, RepositoryError},
-    };
+    use repository::{mock::MockDataInserts, InvoiceRepository, RepositoryError};
     use serde_json::json;
     use server::test_utils::setup_all;
 

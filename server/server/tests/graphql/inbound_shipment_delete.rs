@@ -10,7 +10,7 @@ mod graphql {
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::mock::MockDataInserts;
-    use repository::repository::{InvoiceLineRepository, RepositoryError};
+    use repository::{InvoiceLineRepository, RepositoryError};
     use server::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentErrorInterface::*;

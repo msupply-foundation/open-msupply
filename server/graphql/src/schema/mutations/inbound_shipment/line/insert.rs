@@ -12,7 +12,7 @@ use crate::schema::{
     },
 };
 use domain::inbound_shipment::InsertInboundShipmentLine;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError};
 
 #[derive(InputObject)]

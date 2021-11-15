@@ -3,7 +3,7 @@ use domain::{
     stock_line::{StockLine, StockLineFilter},
     Pagination,
 };
-use repository::repository::{StockLineRepository, StorageConnectionManager};
+use repository::{StockLineRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

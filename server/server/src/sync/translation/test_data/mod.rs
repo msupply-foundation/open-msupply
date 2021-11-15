@@ -7,17 +7,12 @@ pub mod store;
 pub mod unit;
 
 use repository::{
-    repository::{
-        repository::{
-            MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
-        },
-        ItemRepository, NameRepository, RepositoryError, StorageConnectionManager, StoreRepository,
-        UnitRowRepository,
-    },
     schema::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         NameRow, StoreRow, UnitRow,
     },
+    ItemRepository, MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
+    NameRepository, RepositoryError, StorageConnectionManager, StoreRepository, UnitRowRepository,
 };
 
 #[allow(dead_code)]

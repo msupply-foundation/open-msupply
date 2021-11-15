@@ -4,10 +4,7 @@ use domain::{
     invoice::{InvoiceStatus, InvoiceType},
     outbound_shipment::InsertOutboundShipment,
 };
-use repository::{
-    repository::{RepositoryError, StorageConnection, StoreRepository},
-    schema::InvoiceRow,
-};
+use repository::{schema::InvoiceRow, RepositoryError, StorageConnection, StoreRepository};
 
 use super::InsertOutboundShipmentError;
 

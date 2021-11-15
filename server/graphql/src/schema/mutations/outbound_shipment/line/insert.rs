@@ -12,7 +12,7 @@ use crate::schema::{
     },
 };
 use domain::outbound_shipment::InsertOutboundShipmentLine;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError};
 
 use super::{

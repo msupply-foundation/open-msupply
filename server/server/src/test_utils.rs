@@ -1,7 +1,7 @@
 use repository::{
     mock::{MockData, MockDataInserts},
-    repository::StorageConnection,
     test_db::{self, get_test_db_settings},
+    StorageConnection,
 };
 
 use super::settings::{AuthSettings, ServerSettings, Settings, SyncSettings};

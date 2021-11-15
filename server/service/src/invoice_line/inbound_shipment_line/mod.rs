@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::{invoice::current_store_id, WithDBError};
 use repository::{
-    repository::{RepositoryError, StockLineRepository, StorageConnection},
     schema::{InvoiceLineRow, StockLineRow},
+    RepositoryError, StockLineRepository, StorageConnection,
 };
 
 pub use self::delete::*;

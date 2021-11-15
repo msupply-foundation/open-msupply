@@ -4,7 +4,7 @@ use crate::invoice::{
     InvoiceStatusError, OtherPartyError, WrongInvoiceType,
 };
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceType};
-use repository::{repository::StorageConnection, schema::InvoiceRow};
+use repository::{schema::InvoiceRow, StorageConnection};
 
 use super::UpdateInboundShipmentError;
 

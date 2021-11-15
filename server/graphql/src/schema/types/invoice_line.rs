@@ -4,7 +4,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use domain::invoice_line::InvoiceLine;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice_line::get_invoice_line;
 
 pub struct InvoiceLineNode {

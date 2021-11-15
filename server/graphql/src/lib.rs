@@ -7,7 +7,7 @@ use actix_web::{guard::fn_guard, web::Data, HttpResponse, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{Context, EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
 

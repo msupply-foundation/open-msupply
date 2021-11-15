@@ -1,5 +1,5 @@
 use domain::invoice_line::InvoiceLine;
-use repository::repository::{
+use repository::{
     InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
 };
 

@@ -9,15 +9,13 @@ mod unit;
 
 use crate::sync::translation::unit::LegacyUnitRow;
 use repository::{
-    repository::{
-        ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-        MasterListRepository, NameRepository, RepositoryError, StorageConnection,
-        StorageConnectionManager, StoreRepository, TransactionError, UnitRowRepository,
-    },
     schema::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         NameRow, StoreRow, UnitRow,
     },
+    ItemRepository, MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
+    NameRepository, RepositoryError, StorageConnection, StorageConnectionManager, StoreRepository,
+    TransactionError, UnitRowRepository,
 };
 
 use self::{

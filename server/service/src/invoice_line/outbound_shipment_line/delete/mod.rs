@@ -1,11 +1,8 @@
 use crate::WithDBError;
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
 use repository::{
-    repository::{
-        InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
-        StorageConnectionManager, TransactionError,
-    },
-    schema::InvoiceRowStatus,
+    schema::InvoiceRowStatus, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    StockLineRepository, StorageConnectionManager, TransactionError,
 };
 
 mod validate;

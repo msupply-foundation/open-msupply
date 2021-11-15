@@ -8,8 +8,8 @@ mod graphql {
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
-        repository::InvoiceRepository,
         schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+        InvoiceRepository,
     };
     use server::test_utils::setup_all;
     use service::util::uuid::uuid;

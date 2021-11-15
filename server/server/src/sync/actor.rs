@@ -1,7 +1,7 @@
 use crate::sync::{SyncError, Synchroniser};
 
 use log::info;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use tokio::{
     sync::mpsc::{self, error as mpsc_error, Receiver as MpscReceiver, Sender as MpscSender},
     time::{self, Duration, Interval},

@@ -12,7 +12,7 @@ use crate::schema::{
     },
 };
 use domain::inbound_shipment::UpdateInboundShipmentLine;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError};
 
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
