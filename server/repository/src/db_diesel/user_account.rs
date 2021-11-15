@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{diesel_schema::user_account::dsl as user_account_dsl, UserAccountRow},
 };
 

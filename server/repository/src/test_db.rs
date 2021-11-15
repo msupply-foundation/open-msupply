@@ -1,7 +1,7 @@
 use crate::{
     database_settings::DatabaseSettings,
+    db_diesel::{DBBackendConnection, StorageConnection, StorageConnectionManager},
     mock::{insert_mock_data, MockData, MockDataInserts},
-    repository::{DBBackendConnection, StorageConnection, StorageConnectionManager},
 };
 
 use diesel::r2d2::{ConnectionManager, Pool};

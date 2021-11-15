@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{InvoiceRow, InvoiceRowType},
 };
 

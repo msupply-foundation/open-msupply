@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    repository::{
+    db_diesel::{
         MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
         StorageConnection,
     },

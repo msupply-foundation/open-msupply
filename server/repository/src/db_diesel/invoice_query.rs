@@ -1,7 +1,6 @@
 use super::{DBType, StorageConnection};
 use crate::{
     diesel_extensions::OrderByExtensions,
-    repository::RepositoryError,
     schema::{
         diesel_schema::{
             invoice, invoice::dsl as invoice_dsl, name_table, name_table::dsl as name_dsl, store,
@@ -9,6 +8,7 @@ use crate::{
         },
         InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, StoreRow,
     },
+    RepositoryError,
 };
 use domain::{
     invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus, InvoiceType},

@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
 
 use crate::{
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{
         diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
         StockLineRow,

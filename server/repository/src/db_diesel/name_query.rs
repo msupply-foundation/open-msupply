@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     diesel_extensions::OrderByExtensions,
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{
         diesel_schema::{
             name_store_join, name_store_join::dsl as name_store_join_dsl, name_table,
@@ -144,8 +144,8 @@ mod tests {
     use crate::{
         test_db,
         {
+            db_diesel::{NameQueryRepository, NameRepository},
             mock::MockDataInserts,
-            repository::{NameQueryRepository, NameRepository},
             schema::NameRow,
         },
     };

@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     diesel_extensions::OrderByExtensions,
-    repository::RepositoryError,
+    repository_error::RepositoryError,
     schema::{
         diesel_schema::{
             item, item::dsl as item_dsl, item_is_visible,
@@ -127,14 +127,12 @@ mod tests {
     use crate::{
         test_db,
         {
-            mock::MockDataInserts,
-            repository::{
-                repository::{
-                    MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
-                },
-                ItemQueryRepository, ItemRepository, NameRepository,
+            db_diesel::{
+                MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
             },
+            mock::MockDataInserts,
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
+            ItemQueryRepository, ItemRepository, NameRepository,
         },
     };
     use domain::{

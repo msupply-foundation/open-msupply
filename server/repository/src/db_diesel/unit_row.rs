@@ -1,6 +1,6 @@
 use super::StorageConnection;
 use crate::schema::diesel_schema::unit::dsl::*;
-use crate::{repository::RepositoryError, schema::UnitRow};
+use crate::{repository_error::RepositoryError, schema::UnitRow};
 use diesel::prelude::*;
 
 pub struct UnitRowRepository<'a> {
