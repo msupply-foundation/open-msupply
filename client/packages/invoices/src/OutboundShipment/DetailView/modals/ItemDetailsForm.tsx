@@ -45,7 +45,6 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   allocatedQuantity,
   onChangeItem,
   onChangeQuantity,
-  // quantity,
   register,
   summaryItem,
   packSizeController,
