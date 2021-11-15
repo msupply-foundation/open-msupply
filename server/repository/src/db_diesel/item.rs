@@ -13,7 +13,7 @@ impl<'a> ItemRepository<'a> {
         ItemRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
+    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
     pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::item::dsl::*;
 
