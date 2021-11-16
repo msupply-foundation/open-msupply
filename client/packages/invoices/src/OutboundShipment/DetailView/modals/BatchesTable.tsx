@@ -137,6 +137,10 @@ const HeaderCell: React.FC<TableCellProps> = ({ children }) => (
       color: theme => theme.typography.body1.color,
       fontWeight: 'bold',
       padding: '8px',
+      position: 'sticky',
+      top: 0,
+      zIndex: 10,
+      backgroundColor: 'white',
     }}
   >
     {children}
@@ -176,8 +180,8 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
 
   return (
     <>
-      <TableContainer>
-        <Divider margin={10} />
+      <Divider margin={10} />
+      <TableContainer sx={{ height: 400 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -195,7 +199,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <HeaderCell></HeaderCell>
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody sx={{ overflow: 'scroll' }}>
             {rows
               .filter(({ id }) => id !== 'placeholder')
               .map((batch, index) => (

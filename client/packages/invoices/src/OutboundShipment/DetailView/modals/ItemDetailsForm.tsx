@@ -48,7 +48,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   const [issueType, setIssueType] = useState('packs');
 
   return (
-    <Grid container gap={0.5}>
+    <Grid container gap={0.5} height={200}>
       <ModalRow>
         <ModalLabel labelKey="label.item" />
         <Grid item flex={1}>
@@ -94,7 +94,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         </Grid>
       </ModalRow>
 
-      {summaryItem && (
+      {summaryItem ? (
         <>
           <Divider margin={10} />
 
@@ -172,6 +172,8 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             </Grid>
           </Box>
         </>
+      ) : (
+        <Box height={100} />
       )}
     </Grid>
   );
