@@ -30,6 +30,20 @@ export interface BatchesTableProps {
   rows: BatchRow[];
 }
 
+const sortByExpiry = (a: BatchRow, b: BatchRow) => {
+  const expiryA = new Date(a.expiryDate ?? '');
+  const expiryB = new Date(b.expiryDate ?? '');
+
+  if (expiryA < expiryB) {
+    return -1;
+  }
+  if (expiryA > expiryB) {
+    return 1;
+  }
+
+  return 0;
+};
+
 type BatchesRowProps = {
   batch: BatchRow;
   label: string;
@@ -178,6 +192,29 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
 
   const placeholderRow = rows.find(({ id }) => id === 'placeholder');
 
+  const rowsWithoutPlaceholder = rows.filter(({ id }) => id !== 'placeholder');
+
+  const allocatableRows = rowsWithoutPlaceholder
+    .filter(
+      ({ onHold, availableNumberOfPacks }) =>
+        !onHold && availableNumberOfPacks > 0
+    )
+    .sort(sortByExpiry);
+
+  const onHoldRows = rowsWithoutPlaceholder
+    .filter(
+      ({ onHold, availableNumberOfPacks }) =>
+        onHold && availableNumberOfPacks > 0
+    )
+    .sort(sortByExpiry);
+
+  const noStockRows = rowsWithoutPlaceholder
+    .filter(
+      ({ availableNumberOfPacks, onHold }) =>
+        availableNumberOfPacks === 0 && !onHold
+    )
+    .sort(sortByExpiry);
+
   return (
     <>
       <Divider margin={10} />
@@ -200,16 +237,39 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody sx={{ overflow: 'scroll' }}>
-            {rows
-              .filter(({ id }) => id !== 'placeholder')
-              .map((batch, index) => (
-                <BatchesRow
-                  batch={batch}
-                  key={batch.id}
-                  label={t('label.line', { number: index + 1 })}
-                  onChange={onChange}
-                />
-              ))}
+            {allocatableRows.map((batch, index) => (
+              <BatchesRow
+                batch={batch}
+                key={batch.id}
+                label={t('label.line', { number: index + 1 })}
+                onChange={onChange}
+              />
+            ))}
+            <TableRow
+              sx={{ height: 1, border: '2px solid', borderColor: 'divider' }}
+            />
+            {onHoldRows.map((batch, index) => (
+              <BatchesRow
+                batch={batch}
+                key={batch.id}
+                label={t('label.line', {
+                  number: allocatableRows.length + index + 1,
+                })}
+                onChange={onChange}
+              />
+            ))}
+            {noStockRows.map((batch, index) => (
+              <BatchesRow
+                batch={batch}
+                key={batch.id}
+                label={t('label.line', {
+                  number:
+                    allocatableRows.length + onHoldRows.length + index + 1,
+                })}
+                onChange={onChange}
+              />
+            ))}
+
             <TableRow>
               <BasicCell align="right" sx={{ paddingTop: '3px' }}>
                 {t('label.placeholder')}
