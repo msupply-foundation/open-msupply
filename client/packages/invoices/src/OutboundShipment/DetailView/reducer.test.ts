@@ -481,4 +481,33 @@ describe('DetailView reducer: inserting', () => {
 
     expect(findRow(state, lineToInsert.id)).toBeUndefined();
   });
+
+  it('inserts new lines under already existing summary items', () => {
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '1',
+      numberOfPacks: 99,
+    });
+    const state = callReducer(OutboundAction.upsertLine(lineToInsert));
+
+    const summaryItem = state.draft.items.find(({ id }) => id === '1');
+
+    expect(summaryItem?.batches[lineToInsert.id]).toEqual({
+      ...lineToInsert,
+      isCreated: true,
+    });
+  });
+
+  it('ignores lines which are being inserted under an already existing summary item with zero number of packs', () => {
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '1',
+      numberOfPacks: 0,
+    });
+    const state = callReducer(OutboundAction.upsertLine(lineToInsert));
+
+    const summaryItem = state.draft.items.find(({ id }) => id === '1');
+
+    expect(summaryItem?.batches[lineToInsert.id]).toBeUndefined();
+  });
 });
