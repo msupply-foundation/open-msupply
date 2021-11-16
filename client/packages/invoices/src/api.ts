@@ -19,6 +19,7 @@ import {
   StockLineNode,
   DeleteOutboundShipmentLineInput,
   InvoiceLine,
+  UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import {
@@ -184,6 +185,17 @@ const createDeleteOutboundLineInput = (
   };
 };
 
+const createUpdateOutboundLineInput = (
+  line: OutboundShipmentRow
+): UpdateOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    invoiceId: line.invoiceId,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+  };
+};
+
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
@@ -191,6 +203,10 @@ export const onUpdate =
     const deleteLines = rows.filter(({ isDeleted }) => isDeleted);
     const insertLines = rows.filter(
       ({ isCreated, isDeleted }) => !isDeleted && isCreated
+    );
+    const updateLines = rows.filter(
+      ({ isUpdated, isCreated, isDeleted }) =>
+        isUpdated && !isCreated && !isDeleted
     );
 
     const result = await api.upsertOutboundShipment({
@@ -201,6 +217,10 @@ export const onUpdate =
         createDeleteOutboundLineInput
       ),
       updateOutboundShipments: [invoiceToInput(patch)],
+
+      updateOutboundShipmentLines: updateLines.map(
+        createUpdateOutboundLineInput
+      ),
     });
 
     const { batchOutboundShipment } = result;

@@ -105,7 +105,13 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
           const matchingInvoiceRow = Object.values(summaryItem.batches).find(
             ({ stockLineId }) => stockLineId === batch.id
           );
-          return { ...batch, quantity: matchingInvoiceRow?.numberOfPacks ?? 0 };
+          return {
+            ...batch,
+            quantity: matchingInvoiceRow?.numberOfPacks ?? 0,
+            availableNumberOfPacks:
+              batch.availableNumberOfPacks +
+              (matchingInvoiceRow?.numberOfPacks ?? 0),
+          };
         })
         .sort(sortByDisabledThenExpiryDate);
       rows.push(createPlaceholderRow());

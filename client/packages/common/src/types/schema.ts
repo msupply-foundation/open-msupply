@@ -1199,6 +1199,7 @@ export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typena
 export type UpsertOutboundShipmentMutationVariables = Exact<{
   deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineInput> | DeleteOutboundShipmentLineInput>;
   insertOutboundShipmentLines?: Maybe<Array<InsertOutboundShipmentLineInput> | InsertOutboundShipmentLineInput>;
+  updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput> | UpdateOutboundShipmentLineInput>;
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput> | UpdateOutboundShipmentInput>;
 }>;
 
@@ -1751,10 +1752,11 @@ export const StockCountsDocument = gql`
 }
     `;
 export const UpsertOutboundShipmentDocument = gql`
-    mutation upsertOutboundShipment($deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!], $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!], $updateOutboundShipments: [UpdateOutboundShipmentInput!]) {
+    mutation upsertOutboundShipment($deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!], $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!], $updateOutboundShipmentLines: [UpdateOutboundShipmentLineInput!], $updateOutboundShipments: [UpdateOutboundShipmentInput!]) {
   batchOutboundShipment(
     deleteOutboundShipmentLines: $deleteOutboundShipmentLines
     insertOutboundShipmentLines: $insertOutboundShipmentLines
+    updateOutboundShipmentLines: $updateOutboundShipmentLines
     updateOutboundShipments: $updateOutboundShipments
   ) {
     __typename
