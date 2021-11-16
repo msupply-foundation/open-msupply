@@ -140,7 +140,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 
               <Box marginLeft={1} />
 
-              {issueType === 'packs' && (
+              {issueType === 'packs' && packSizeController.selected.value && (
                 <Select
                   sx={{ width: 110 }}
                   inputProps={register('packSize')}
@@ -163,7 +163,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
                   onChangeQuantity(
                     Number(quantity),
                     issueType === 'packs'
-                      ? packSizeController.selected.value
+                      ? Number(packSizeController.selected.value)
                       : null
                   );
                   setQuantity('');
