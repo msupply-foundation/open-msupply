@@ -7,6 +7,8 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod name;
+pub mod permission_validation;
+pub mod permissions;
 pub mod stock_line;
 pub mod token;
 pub mod token_bucket;
