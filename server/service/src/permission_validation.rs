@@ -69,11 +69,29 @@ pub struct ValidatedUserAuth {
     pub claims: OmSupplyClaim,
 }
 
+fn dummy_user_auth() -> ValidatedUserAuth {
+    let user_id = "dummy_user";
+    ValidatedUserAuth {
+        user_id: user_id.to_string(),
+        claims: OmSupplyClaim {
+            exp: 0,
+            aud: crate::token::Audience::Api,
+            iat: 0,
+            iss: "omSupply-debug".to_string(),
+            sub: user_id.to_string(),
+        },
+    }
+}
+
 /// Validates user is auth (no permissions checked)
 pub fn validate_auth(
     auth_data: &AuthData,
     auth_token: &Option<String>,
 ) -> Result<ValidatedUserAuth, ValidationError> {
+    if auth_data.debug_no_access_control {
+        return Ok(dummy_user_auth());
+    }
+
     let auth_token = match auth_token {
         Some(token) => token,
         None => {
@@ -180,6 +198,7 @@ mod permission_validation_test {
             auth_token_secret: "some secret".to_string(),
             token_bucket: RwLock::new(TokenBucket::new()),
             debug_no_ssl: true,
+            debug_no_access_control: false,
         };
         let user_id = "test_user_id";
         let mut service = TokenService::new(
