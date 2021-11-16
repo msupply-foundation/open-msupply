@@ -1117,7 +1117,7 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, allocatedDatetime?: any | null | undefined, pickedDatetime?: any | null | undefined, shippedDatetime?: any | null | undefined, deliveredDatetime?: any | null | undefined, enteredByName: string, requisitionNumber?: number | null | undefined, purchaseOrderNumber?: number | null | undefined, inboundShipmentNumber?: number | null | undefined, goodsReceiptNumber?: number | null | undefined, onHold: boolean, color: string, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemUnit: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationDescription?: string | null | undefined, sellPricePerPack: number }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, subtotal: number, taxPercentage: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, allocatedDatetime?: any | null | undefined, pickedDatetime?: any | null | undefined, shippedDatetime?: any | null | undefined, deliveredDatetime?: any | null | undefined, enteredByName: string, requisitionNumber?: number | null | undefined, purchaseOrderNumber?: number | null | undefined, inboundShipmentNumber?: number | null | undefined, goodsReceiptNumber?: number | null | undefined, onHold: boolean, color: string, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemUnit: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationDescription?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, subtotal: number, taxPercentage: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
@@ -1297,6 +1297,39 @@ export const InvoiceDocument = gql`
             note
             locationDescription
             sellPricePerPack
+            stockLine {
+              __typename
+              ... on NodeError {
+                __typename
+                error {
+                  description
+                  ... on DatabaseError {
+                    __typename
+                    description
+                    fullError
+                  }
+                  ... on RecordNotFound {
+                    __typename
+                    description
+                  }
+                }
+              }
+              ... on StockLineNode {
+                __typename
+                availableNumberOfPacks
+                batch
+                costPricePerPack
+                expiryDate
+                id
+                itemId
+                packSize
+                sellPricePerPack
+                storeId
+                totalNumberOfPacks
+                onHold
+                note
+              }
+            }
           }
           totalCount
         }
