@@ -12,7 +12,7 @@ import {
   Box,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
-import { BatchesTable } from './BatchesTable';
+import { BatchesTable, sortByExpiry } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import {
   BatchRow,
@@ -78,18 +78,20 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
     if (!data) return;
 
     setBatchRows(() => {
-      const rows = data.map(batch => {
-        const matchingInvoiceRow = Object.values(summaryItem.batches).find(
-          ({ stockLineId }) => stockLineId === batch.id
-        );
-        return {
-          ...batch,
-          numberOfPacks: matchingInvoiceRow?.numberOfPacks ?? 0,
-          availableNumberOfPacks:
-            batch.availableNumberOfPacks +
-            (matchingInvoiceRow?.numberOfPacks ?? 0),
-        };
-      });
+      const rows = data
+        .map(batch => {
+          const matchingInvoiceRow = Object.values(summaryItem.batches).find(
+            ({ stockLineId }) => stockLineId === batch.id
+          );
+          return {
+            ...batch,
+            numberOfPacks: matchingInvoiceRow?.numberOfPacks ?? 0,
+            availableNumberOfPacks:
+              batch.availableNumberOfPacks +
+              (matchingInvoiceRow?.numberOfPacks ?? 0),
+          };
+        })
+        .sort(sortByExpiry);
 
       rows.push(createPlaceholderRow());
 
@@ -244,31 +246,33 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     let toAllocate = newValue * (issuePackSize || 1);
 
     const newBatchRows = [...batchRows];
-    const validBatches = newBatchRows.filter(
-      ({ packSize, onHold, availableNumberOfPacks }) =>
-        (issuePackSize ? packSize === issuePackSize : true) &&
-        availableNumberOfPacks > 0 &&
-        !onHold
-    );
+    const validBatches = newBatchRows
+      .filter(
+        ({ packSize, onHold, availableNumberOfPacks }) =>
+          (issuePackSize ? packSize === issuePackSize : true) &&
+          availableNumberOfPacks > 0 &&
+          !onHold
+      )
+      .sort(sortByExpiry);
 
     validBatches.forEach(batch => {
       const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
       const batchRow = newBatchRows[batchRowIdx];
       if (!batchRow) return null;
-
-      const currentAllocatedUnits = batch.numberOfPacks - batch.packSize;
-      const totalAvailableUnits = batch.availableNumberOfPacks * batch.packSize;
+      const currentAllocatedUnits = batchRow.numberOfPacks * batchRow.packSize;
+      const totalAvailableUnits =
+        batchRow.availableNumberOfPacks * batchRow.packSize;
       const availableUnits = totalAvailableUnits - currentAllocatedUnits;
       const allocatedUnits = Math.min(toAllocate, availableUnits);
       const allocatedNumberOfPacks = Math.floor(
-        allocatedUnits / batch.packSize
+        allocatedUnits / batchRow.packSize
       );
 
       toAllocate -= allocatedUnits;
 
       newBatchRows[batchRowIdx] = {
         ...batchRow,
-        numberOfPacks: batch.numberOfPacks + allocatedNumberOfPacks,
+        numberOfPacks: batchRow.numberOfPacks + allocatedNumberOfPacks,
       };
     });
 

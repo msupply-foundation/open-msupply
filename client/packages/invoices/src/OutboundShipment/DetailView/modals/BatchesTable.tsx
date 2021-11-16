@@ -30,7 +30,7 @@ export interface BatchesTableProps {
   rows: BatchRow[];
 }
 
-const sortByExpiry = (a: BatchRow, b: BatchRow) => {
+export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
   const expiryA = new Date(a.expiryDate ?? '');
   const expiryB = new Date(b.expiryDate ?? '');
 
@@ -201,14 +201,16 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
     )
     .sort(sortByExpiry);
 
-  const onHoldRows = rowsWithoutPlaceholder
-    .filter(
-      ({ onHold, availableNumberOfPacks }) =>
-        onHold && availableNumberOfPacks > 0
-    )
+  const nonAllocatableRows = rowsWithoutPlaceholder.filter(
+    ({ onHold, availableNumberOfPacks }) =>
+      onHold || availableNumberOfPacks === 0
+  );
+
+  const onHoldRows = nonAllocatableRows
+    .filter(({ onHold }) => onHold)
     .sort(sortByExpiry);
 
-  const noStockRows = rowsWithoutPlaceholder
+  const noStockRows = nonAllocatableRows
     .filter(
       ({ availableNumberOfPacks, onHold }) =>
         availableNumberOfPacks === 0 && !onHold
