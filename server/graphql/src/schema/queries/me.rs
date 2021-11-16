@@ -15,11 +15,12 @@ pub struct Me {
 
 #[Object]
 impl Me {
-    /// User id of the logged out user
+    /// Internal user id
     pub async fn user_id(&self) -> &str {
         &self.user.id
     }
 
+    /// The user's email address
     pub async fn email(&self) -> &Option<String> {
         &self.user.email
     }
