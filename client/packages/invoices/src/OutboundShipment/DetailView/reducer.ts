@@ -257,40 +257,52 @@ export const reducer = (
           );
 
           // If the row is being updated
-          if (existingSummaryItem && existingRow) {
-            // Then, if the new number of packs is zero, delete the row
-            if (line.numberOfPacks === 0) {
-              // Deleting: If the line is created, remove it from state completely.
-              if (line.isCreated) {
-                delete existingSummaryItem.batches[line.id];
+          if (existingSummaryItem) {
+            if (existingRow) {
+              if (line.numberOfPacks === 0) {
+                // Then, if the new number of packs is zero, delete the row
+                // Deleting: If the line is created, remove it from state completely.
+                if (line.isCreated) {
+                  delete existingSummaryItem.batches[line.id];
 
-                // If this was the last line being removed, also remove the summary item.
-                if (!Object.values(existingSummaryItem.batches).length) {
-                  draft.items = draft.items.filter(
-                    ({ id }) => existingSummaryItem.id !== id
-                  );
+                  // If this was the last line being removed, also remove the summary item.
+                  if (!Object.values(existingSummaryItem.batches).length) {
+                    draft.items = draft.items.filter(
+                      ({ id }) => existingSummaryItem.id !== id
+                    );
+                  }
+                  break;
+                  // Otherwise, mark for deletion,
+                } else {
+                  existingRow.isUpdated = false;
+                  existingRow.isDeleted = true;
+                  existingRow.isCreated = false;
+                  existingRow.numberOfPacks = line.numberOfPacks;
                 }
-                break;
-                // Otherwise, mark for deletion,
+
+                // Otherwise, update as per normal.
               } else {
-                existingRow.isUpdated = false;
-                existingRow.isDeleted = true;
-                existingRow.isCreated = false;
+                existingRow.isUpdated = existingRow.isCreated ? false : true;
+                existingRow.isDeleted = false;
                 existingRow.numberOfPacks = line.numberOfPacks;
               }
 
-              // Otherwise, update as per normal.
+              const { unitQuantity, numberOfPacks } =
+                recalculateSummary(existingSummaryItem);
+              existingSummaryItem.unitQuantity = unitQuantity;
+              existingSummaryItem.numberOfPacks = numberOfPacks;
+              existingSummaryItem.batches[existingRow.id] = existingRow;
             } else {
-              existingRow.isUpdated = existingRow.isCreated ? false : true;
-              existingRow.isDeleted = false;
-              existingRow.numberOfPacks = line.numberOfPacks;
+              if (line.numberOfPacks === 0) break;
+              const newLine = {
+                ...line,
+                invoiceId: draft.id,
+                isCreated: true,
+                isUpdated: false,
+                isDeleted: false,
+              };
+              existingSummaryItem.batches[newLine.id] = newLine;
             }
-
-            const { unitQuantity, numberOfPacks } =
-              recalculateSummary(existingSummaryItem);
-            existingSummaryItem.unitQuantity = unitQuantity;
-            existingSummaryItem.numberOfPacks = numberOfPacks;
-            existingSummaryItem.batches[existingRow.id] = existingRow;
           } else {
             // Ignore lines which have a number of packs of zero.
             if (line.numberOfPacks === 0) {
