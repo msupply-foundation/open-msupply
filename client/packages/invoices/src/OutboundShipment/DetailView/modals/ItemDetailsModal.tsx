@@ -127,11 +127,21 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
 
 export type PackSizeController = ReturnType<typeof usePackSizeController>;
 
-const usePackSizeController = (batches: { packSize: number }[]) => {
+const usePackSizeController = (
+  batches: {
+    packSize: number;
+    onHold: boolean;
+    availableNumberOfPacks: number;
+  }[]
+) => {
   // Creating a sorted array of distinct pack sizes
   const packSizes = Array.from(
     new Set(
       batches
+        .filter(
+          ({ onHold, availableNumberOfPacks }) =>
+            availableNumberOfPacks > 0 && !onHold
+        )
         .reduce((sizes, { packSize }) => [...sizes, packSize], [] as number[])
         .sort()
     )
