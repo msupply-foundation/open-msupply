@@ -23,6 +23,15 @@ table! {
 }
 
 table! {
+    location (id) {
+        id -> Text,
+        name -> Text,
+        code -> Text,
+        on_hold -> Bool,
+    }
+}
+
+table! {
     item (id) {
         id -> Text,
         name -> Text,
@@ -36,6 +45,7 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
+        location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
         pack_size -> Integer,
         cost_price_per_pack -> Double,
@@ -123,6 +133,7 @@ table! {
         item_name -> Text,
         item_code -> Text,
         stock_line_id -> Nullable<Text>,
+        location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
         pack_size -> Integer,
@@ -188,6 +199,7 @@ table! {
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
+joinable!(stock_line -> location (location_id));
 joinable!(requisition -> name_table (name_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition_line -> item (item_id));
@@ -199,6 +211,7 @@ joinable!(invoice -> store (store_id));
 joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
+joinable!(invoice_line -> location (location_id));
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name_table (name_id));
 joinable!(master_list_line -> master_list (master_list_id));
@@ -209,6 +222,7 @@ joinable!(item_is_visible -> item(id));
 
 allow_tables_to_appear_in_same_query!(
     unit,
+    location,
     central_sync_buffer,
     central_sync_cursor,
     item,
