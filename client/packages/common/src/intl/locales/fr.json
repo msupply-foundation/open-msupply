@@ -58,6 +58,7 @@
   "heading.expiring-stock": "Expiring Stock",
   "heading.related-documents": "Related documents",
   "heading.shipments-to-be-picked": "Shipments to be picked",
+  "label.allocate": "Allocate",
   "label.allocated": "Allocated",
   "label.allocation": "Allocation",
   "label.available": "Available",
@@ -124,5 +125,7 @@
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
   "dev.log-draft": "Log draft",
+  "label.packs-to-batches-with": "packs to batches with a pack size of",
+  "label.units": "Units",
   "placeholder.enter-a-customers-name": "Enter a customers name"
 }

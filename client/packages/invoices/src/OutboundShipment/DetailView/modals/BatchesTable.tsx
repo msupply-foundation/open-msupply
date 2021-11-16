@@ -177,7 +177,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   return (
     <>
       <TableContainer>
-        <Divider margin={40} />
+        <Divider margin={10} />
         <Table>
           <TableHead>
             <TableRow>
