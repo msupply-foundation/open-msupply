@@ -15,6 +15,7 @@ const adjustStockLineQuantity = (
   quantity: number
 ): StockLine => {
   const stockLine = db.get.byId.stockLine(stockLineId);
+
   const newQuantity = stockLine.availableNumberOfPacks + quantity;
 
   if (newQuantity < 0) {
@@ -102,7 +103,6 @@ export const update = {
     const currentInvoiceLine = db.get.byId.invoiceLine(invoiceLine.id);
     const { quantity } = currentInvoiceLine;
 
-    // const shouldSubtract = quantity > invoiceLine?.numberOfPacks ?
     const difference = quantity - (invoiceLine?.numberOfPacks ?? 0);
 
     adjustStockLineQuantity(invoiceLine?.stockLineId ?? '', difference);
