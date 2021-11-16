@@ -114,11 +114,28 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   return (
     <DetailPanelPortal
       Actions={
-        <DetailPanelAction
-          icon={<CopyIcon />}
-          titleKey="link.copy-to-clipboard"
-          onClick={copyToClipboard}
-        />
+        <>
+          {!process.env['NODE_ENV'] ||
+            (process.env['NODE_ENV'] === 'development' && (
+              <DetailPanelAction
+                icon={<CopyIcon />}
+                titleKey="dev.log-draft"
+                onClick={() =>
+                  draft.items.forEach(item => {
+                    console.table(item);
+                    Object.values(item.batches).forEach(batch => {
+                      console.table(batch);
+                    });
+                  })
+                }
+              />
+            ))}
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            titleKey="link.copy-to-clipboard"
+            onClick={copyToClipboard}
+          />
+        </>
       }
     >
       <AdditionalInfoSection draft={draft} />
