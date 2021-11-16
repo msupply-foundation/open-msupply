@@ -52,29 +52,6 @@ export const getInvoiceLine = (
   note: stockLineOrPlaceholder?.note ?? '',
 });
 
-const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
-  const disabledA = a.onHold || a.availableNumberOfPacks === 0;
-  const disabledB = b.onHold || b.availableNumberOfPacks === 0;
-  if (!disabledA && disabledB) {
-    return -1;
-  }
-  if (disabledA && !disabledB) {
-    return 1;
-  }
-
-  const expiryA = new Date(a.expiryDate ?? '');
-  const expiryB = new Date(b.expiryDate ?? '');
-
-  if (expiryA < expiryB) {
-    return -1;
-  }
-  if (expiryA > expiryB) {
-    return 1;
-  }
-
-  return 0;
-};
-
 const createPlaceholderRow = (): BatchRow => ({
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
@@ -101,20 +78,19 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
     if (!data) return;
 
     setBatchRows(() => {
-      const rows = data
-        .map(batch => {
-          const matchingInvoiceRow = Object.values(summaryItem.batches).find(
-            ({ stockLineId }) => stockLineId === batch.id
-          );
-          return {
-            ...batch,
-            numberOfPacks: matchingInvoiceRow?.numberOfPacks ?? 0,
-            availableNumberOfPacks:
-              batch.availableNumberOfPacks +
-              (matchingInvoiceRow?.numberOfPacks ?? 0),
-          };
-        })
-        .sort(sortByDisabledThenExpiryDate);
+      const rows = data.map(batch => {
+        const matchingInvoiceRow = Object.values(summaryItem.batches).find(
+          ({ stockLineId }) => stockLineId === batch.id
+        );
+        return {
+          ...batch,
+          numberOfPacks: matchingInvoiceRow?.numberOfPacks ?? 0,
+          availableNumberOfPacks:
+            batch.availableNumberOfPacks +
+            (matchingInvoiceRow?.numberOfPacks ?? 0),
+        };
+      });
+
       rows.push(createPlaceholderRow());
 
       return rows;
@@ -245,6 +221,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     upsert();
     onClose();
     onReset();
+    onChangeItem(null);
   };
 
   const allocateQuantities = (
@@ -317,7 +294,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen) showDialog();
-    else hideDialog();
+    else {
+      onChangeItem(null);
+      hideDialog();
+    }
   }, [isOpen]);
 
   return (
