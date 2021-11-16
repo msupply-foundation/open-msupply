@@ -109,6 +109,7 @@
   "label.select-rows-to-delete-them": "Select rows to delete them",
   "label.select": "Select",
   "label.selected": "Selected",
+  "label.packs-to-batches-with": "packs to batches with a pack size of",
   "label.sell": "Sell",
   "label.shipped": "Shipped",
   "label.status": "Status",
@@ -120,9 +121,11 @@
   "label.type": "Type",
   "label.unit-quantity": "Unit Quantity",
   "label.unit": "Unit",
+  "label.units": "Units",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
   "dev.log-draft": "Log draft",
+  "label.allocate": "Allocate",
   "placeholder.enter-a-customers-name": "Enter a customers name"
 }

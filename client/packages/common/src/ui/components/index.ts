@@ -16,6 +16,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 export * from './portals';
 export * from './inputs';
@@ -49,4 +50,5 @@ export {
   Radio,
   RadioGroup,
   FormControlLabel,
+  Switch,
 };
