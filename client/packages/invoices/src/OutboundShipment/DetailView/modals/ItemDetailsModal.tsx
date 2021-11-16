@@ -279,7 +279,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       const batchRow = newBatchRows[batchRowIdx];
       if (!batchRow) return null;
 
-      const availableUnits = batch.availableNumberOfPacks * batch.packSize;
+      const currentAllocatedUnits = batch.numberOfPacks - batch.packSize;
+      const totalAvailableUnits = batch.availableNumberOfPacks * batch.packSize;
+      const availableUnits = totalAvailableUnits - currentAllocatedUnits;
       const allocatedUnits = Math.min(toAllocate, availableUnits);
       const allocatedNumberOfPacks = Math.floor(
         allocatedUnits / batch.packSize
@@ -289,7 +291,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
       newBatchRows[batchRowIdx] = {
         ...batchRow,
-        numberOfPacks: allocatedNumberOfPacks,
+        numberOfPacks: batch.numberOfPacks + allocatedNumberOfPacks,
       };
     });
 
@@ -302,7 +304,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
     newBatchRows[placeholderIdx] = {
       ...placeholder,
-      numberOfPacks: toAllocate * (issuePackSize || 1),
+      numberOfPacks:
+        placeholder.numberOfPacks + toAllocate * (issuePackSize || 1),
     };
 
     setBatchRows(newBatchRows);
