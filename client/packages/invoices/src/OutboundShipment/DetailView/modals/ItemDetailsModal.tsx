@@ -33,11 +33,10 @@ export const getInvoiceLine = (
   id: string,
   summaryItem: OutboundShipmentSummaryItem,
   stockLineOrPlaceholder: Partial<BatchRow> & { id: string },
-  quantity: number
+  numberOfPacks: number
 ): OutboundShipmentRow => ({
   id,
-  numberOfPacks: quantity,
-  quantity,
+  numberOfPacks,
   invoiceId: '',
   itemId: summaryItem.itemId,
   itemName: summaryItem.itemName,
@@ -87,7 +86,7 @@ const createPlaceholderRow = (): BatchRow => ({
   sellPricePerPack: 0,
   storeId: '',
   totalNumberOfPacks: 0,
-  quantity: 0,
+  numberOfPacks: 0,
 });
 
 const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
@@ -109,7 +108,7 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
           );
           return {
             ...batch,
-            quantity: matchingInvoiceRow?.numberOfPacks ?? 0,
+            numberOfPacks: matchingInvoiceRow?.numberOfPacks ?? 0,
             availableNumberOfPacks:
               batch.availableNumberOfPacks +
               (matchingInvoiceRow?.numberOfPacks ?? 0),
@@ -176,7 +175,10 @@ const sumAvailableQuantity = (batchRows: BatchRow[]) => {
 };
 
 const getAllocatedQuantity = (batchRows: BatchRow[]) => {
-  return batchRows.reduce((acc, { quantity }) => acc + quantity, 0);
+  return batchRows.reduce(
+    (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+    0
+  );
 };
 
 const issueStock = (
@@ -191,7 +193,7 @@ const issueStock = (
   const newBatchRows = [...batchRows];
   newBatchRows[foundRowIdx] = {
     ...foundRow,
-    quantity: value,
+    numberOfPacks: value,
   };
 
   return newBatchRows;
@@ -205,7 +207,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   summaryItem,
 }) => {
   const methods = useForm({ mode: 'onBlur' });
-  const { reset, register, setValue } = methods;
+  const { reset, register } = methods;
 
   const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
   const packSizeController = usePackSizeController(batchRows);
@@ -217,7 +219,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const onReset = () => {
     reset();
-    setValue('quantity', '');
   };
   const onCancel = () => {
     onClose();
@@ -230,7 +231,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     const invoiceLines = batchRows
       .filter(({ id }) => id !== 'placeholder')
       .map(batch =>
-        getInvoiceLine(generateUUID(), summaryItem, batch, batch.quantity)
+        getInvoiceLine(generateUUID(), summaryItem, batch, batch.numberOfPacks)
       );
 
     // Upsert each line. Any lines which do no already exist and have no had any
@@ -250,7 +251,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     newValue: number,
     issuePackSize: number | null
   ) => {
-    setValue('quantity', String(newValue));
     // if invalid quantity entered, don't allocate
     if (newValue < 1 || Number.isNaN(newValue)) {
       return;
@@ -289,7 +289,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
       newBatchRows[batchRowIdx] = {
         ...batchRow,
-        quantity: allocatedNumberOfPacks,
+        numberOfPacks: allocatedNumberOfPacks,
       };
     });
 
@@ -302,7 +302,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
     newBatchRows[placeholderIdx] = {
       ...placeholder,
-      quantity: toAllocate,
+      numberOfPacks: toAllocate * (issuePackSize || 1),
     };
 
     setBatchRows(newBatchRows);
