@@ -90,7 +90,9 @@ pub fn validate_auth(
         Ok(claims) => claims,
         Err(err) => {
             let e = match err {
-                JWTValidationError::ExpiredSignature => todo!(),
+                JWTValidationError::ExpiredSignature => ValidationError::Denied(
+                    ValidationDeniedKind::NotAuthenticated("Expired signature".to_string()),
+                ),
                 JWTValidationError::NotAnApiToken => ValidationError::Denied(
                     ValidationDeniedKind::NotAuthenticated("Not an api token".to_string()),
                 ),
