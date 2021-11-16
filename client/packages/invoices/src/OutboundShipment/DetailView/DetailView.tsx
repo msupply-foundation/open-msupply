@@ -13,12 +13,7 @@ import {
   useOmSupplyApi,
   Item,
 } from '@openmsupply-client/common';
-import {
-  reducer,
-  OutboundAction,
-  itemToSummaryItem,
-  recalculateSummary,
-} from './reducer';
+import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
 import { getOutboundShipmentDetailViewApi } from '../../api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
@@ -70,15 +65,7 @@ export const DetailView: FC = () => {
       'sellPricePerPack',
       'packSize',
       'itemUnit',
-      [
-        'unitQuantity',
-        {
-          accessor: rowData => {
-            const { unitQuantity } = recalculateSummary(rowData);
-            return unitQuantity;
-          },
-        },
-      ],
+      'unitQuantity',
       'numberOfPacks',
       getRowExpandColumn<OutboundShipmentSummaryItem>(),
       GenericColumnKey.Selection,

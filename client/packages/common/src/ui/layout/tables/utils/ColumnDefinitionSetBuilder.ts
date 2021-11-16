@@ -158,8 +158,6 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     label: 'label.unit-quantity',
     key: 'unitQuantity',
     width: 100,
-    accessor: row =>
-      String(Number(row['quantity'] ?? 0) * Number(row['packSize'] ?? 0)),
     align: ColumnAlign.Right,
   },
   itemUnit: {
