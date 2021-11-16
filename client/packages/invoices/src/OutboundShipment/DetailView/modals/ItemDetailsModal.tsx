@@ -129,7 +129,7 @@ const usePackSizeController = (
     value: packSize,
   }));
 
-  const defaultPackSize = options[0] ?? { label: '1', value: 1 };
+  const defaultPackSize = options[0] ?? { label: '', value: '' };
 
   const [selected, setSelected] = useState(defaultPackSize);
 
@@ -138,6 +138,15 @@ const usePackSizeController = (
     if (!packSizeOption) return;
     setSelected(packSizeOption);
   };
+
+  useEffect(() => {
+    if (defaultPackSize.value && typeof defaultPackSize.value == 'number') {
+      setPackSize(defaultPackSize.value);
+    }
+    if (packSizes.length === 0) {
+      setSelected({ label: '', value: '' });
+    }
+  }, [defaultPackSize.value]);
 
   return { selected, setPackSize, options };
 };
