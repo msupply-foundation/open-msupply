@@ -5,6 +5,7 @@ CREATE TABLE invoice_line (
     item_name TEXT NOT NULL,
     item_code TEXT NOT NULL,
     stock_line_id TEXT REFERENCES stock_line(id),
+    location_id TEXT REFERENCES location(id),
     batch TEXT,
     expiry_date TEXT,
     cost_price_per_pack REAL NOT NULL,
