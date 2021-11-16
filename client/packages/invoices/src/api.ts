@@ -15,7 +15,10 @@ import {
   InvoiceNodeStatus,
   OmSupplyApi,
   InsertOutboundShipmentLineInput,
+  StockLineResponse,
+  StockLineNode,
   DeleteOutboundShipmentLineInput,
+  InvoiceLine,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import {
@@ -62,6 +65,14 @@ const linesGuard = (invoiceLines: InvoiceLineConnector | ConnectorError) => {
 
   if (invoiceLines.__typename === 'ConnectorError') {
     throw new Error(invoiceLines.error.description);
+  }
+
+  throw new Error('Unknown');
+};
+
+const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
+  if (stockLine.__typename === 'StockLineNode') {
+    return stockLine;
   }
 
   throw new Error('Unknown');
@@ -117,13 +128,22 @@ export const onRead =
     const result = await api.invoice({ id });
 
     const invoice = invoiceGuard(result);
+    const lineNodes = linesGuard(invoice.lines);
+    const lines: InvoiceLine[] = lineNodes.map(line => {
+      const stockLine = line.stockLine
+        ? stockLineGuard(line.stockLine)
+        : undefined;
+      return {
+        ...line,
+        stockLine,
+        stockLineId: stockLine?.id ?? '',
+        invoiceId: invoice.id,
+      };
+    });
 
     return {
       ...invoice,
-      lines: linesGuard(invoice.lines).map(line => ({
-        ...line,
-        stockLineId: '',
-      })),
+      lines,
       pricing: pricingGuard(invoice.pricing),
       otherParty: otherPartyGuard(invoice.otherParty),
     };

@@ -351,7 +351,7 @@ describe('DetailView reducer: deleting lines', () => {
   });
 
   it('a line which is created, then deleted, is removed from state completely', () => {
-    const lineToDelete = createLine('99', { itemId: '99', stockLine: '99' });
+    const lineToDelete = createLine('99', { itemId: '99', stockLineId: '99' });
     const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
     const state2 = callReducer(OutboundAction.deleteLine(lineToDelete), state1);
 

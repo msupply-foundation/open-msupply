@@ -92,6 +92,39 @@ query invoice($id: String!) {
             note
             locationDescription
             sellPricePerPack
+            stockLine {
+              __typename
+              ... on NodeError {
+                __typename
+                error {
+                  description
+                  ... on DatabaseError {
+                    __typename
+                    description
+                    fullError
+                  }
+                  ... on RecordNotFound {
+                    __typename
+                    description
+                  }
+                }
+              }
+              ... on StockLineNode {
+                __typename
+                availableNumberOfPacks
+                batch
+                costPricePerPack
+                expiryDate
+                id
+                itemId
+                packSize
+                sellPricePerPack
+                storeId
+                totalNumberOfPacks
+                onHold
+                note
+              }
+            }
           }
           totalCount
         }
