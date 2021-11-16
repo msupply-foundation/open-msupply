@@ -9,6 +9,7 @@ import {
   InvoicesQueryVariables,
   ItemsListViewQueryVariables,
   NamesQueryVariables,
+  UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 
 const updateInvoice = graphql.mutation<
@@ -169,6 +170,7 @@ export const upsertOutboundShipment = graphql.mutation(
       insertOutboundShipmentLines,
       updateOutboundShipments,
       deleteOutboundShipmentLines,
+      updateOutboundShipmentLines,
     } = variables;
 
     const queryResponse = {
@@ -176,6 +178,7 @@ export const upsertOutboundShipment = graphql.mutation(
       insertOutboundShipmentLines: [] as { id: string }[],
       updateOutboundShipments: [] as { id: string; __typename: string }[],
       deleteOutboundShipmentLines: [] as { id: string; __typename: string }[],
+      updateOutboundShipmentLines: [] as { id: string; __typename: string }[],
     };
 
     if (updateOutboundShipments.length > 0) {
@@ -201,6 +204,14 @@ export const upsertOutboundShipment = graphql.mutation(
         });
     }
 
+    if (updateOutboundShipmentLines.length > 0) {
+      queryResponse.deleteOutboundShipmentLines =
+        updateOutboundShipmentLines.map(
+          (line: UpdateOutboundShipmentLineInput) => {
+            MutationService.update.invoiceLine(line);
+          }
+        );
+    }
     return response(context.data({ batchOutboundShipment: queryResponse }));
   }
 );
