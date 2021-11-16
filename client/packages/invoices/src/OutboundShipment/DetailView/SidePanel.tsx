@@ -120,14 +120,15 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
               <DetailPanelAction
                 icon={<CopyIcon />}
                 titleKey="dev.log-draft"
-                onClick={() =>
+                onClick={() => {
+                  console.table(draft);
                   draft.items.forEach(item => {
                     console.table(item);
                     Object.values(item.batches).forEach(batch => {
                       console.table(batch);
                     });
-                  })
-                }
+                  });
+                }}
               />
             ))}
           <DetailPanelAction
