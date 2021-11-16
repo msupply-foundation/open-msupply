@@ -1,4 +1,7 @@
-import { InsertOutboundShipmentLineInput } from './../../../common/src/types/schema';
+import {
+  InsertOutboundShipmentLineInput,
+  UpdateOutboundShipmentLineInput,
+} from './../../../common/src/types/schema';
 import { ResolverService } from './resolvers';
 import { createInvoice } from './../data/data';
 import { Api } from './index';
@@ -95,12 +98,14 @@ export const update = {
 
     return resolvedInvoice;
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
+  invoiceLine: (invoiceLine: UpdateOutboundShipmentLineInput): InvoiceLine => {
     const currentInvoiceLine = db.get.byId.invoiceLine(invoiceLine.id);
     const { quantity } = currentInvoiceLine;
-    const difference = quantity - invoiceLine.quantity;
 
-    adjustStockLineQuantity(invoiceLine.stockLineId, difference);
+    // const shouldSubtract = quantity > invoiceLine?.numberOfPacks ?
+    const difference = quantity - (invoiceLine?.numberOfPacks ?? 0);
+
+    adjustStockLineQuantity(invoiceLine?.stockLineId ?? '', difference);
 
     return db.update.invoiceLine(invoiceLine);
   },

@@ -10,6 +10,7 @@ import {
 import {
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
+  UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import {
   isAlmostExpired,
@@ -141,10 +142,10 @@ export const update = {
     InvoiceData[idx] = newInvoice;
     return newInvoice;
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
+  invoiceLine: (invoiceLine: UpdateOutboundShipmentLineInput): InvoiceLine => {
     const idx = InvoiceLineData.findIndex(getFilter(invoiceLine.id, 'id'));
     if (idx < 0) throw new Error('Invalid invoice line id');
-    const newLine: InvoiceLine = { ...InvoiceLineData[idx], ...invoiceLine };
+    const newLine = { ...InvoiceLineData[idx], ...invoiceLine } as InvoiceLine;
     InvoiceLineData[idx] = newLine;
     return newLine;
   },
