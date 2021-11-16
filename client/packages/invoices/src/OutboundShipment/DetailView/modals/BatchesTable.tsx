@@ -66,7 +66,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
         <ModalNumericInput
-          value={batch.quantity}
+          value={batch.numberOfPacks}
           inputProps={stockLineInputProps}
           disabled={isDisabled}
         />
@@ -75,7 +75,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell sx={{ width: '88px' }}>
         <ReadOnlyInput
           number
-          value={String(batch.quantity * batch.packSize)}
+          value={String(batch.numberOfPacks * batch.packSize)}
           {...register(`${batch.id}_total`)}
         />
       </BasicCell>
@@ -216,7 +216,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
                 <ModalNumericInput
-                  value={placeholderRow?.quantity}
+                  value={placeholderRow?.numberOfPacks ?? 0}
                   inputProps={placeholderInputProps}
                 />
               </BasicCell>
