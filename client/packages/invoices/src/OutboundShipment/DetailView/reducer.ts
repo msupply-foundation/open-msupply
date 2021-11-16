@@ -390,6 +390,7 @@ const createLine = (
 ): OutboundShipmentRow => {
   return {
     ...line,
+    stockLineId: line.stockLine?.id ?? '',
     invoiceId: draft.id,
   };
 };

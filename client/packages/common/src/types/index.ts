@@ -1,5 +1,6 @@
 import { ObjectWithStringKeys } from './utility';
 import { StockLineNode } from './schema';
+import { InvoiceLineNode } from '..';
 
 export * from './utility';
 export * from './schema';
@@ -52,25 +53,10 @@ export type Store = {
   name: string;
 };
 
-export interface InvoiceLine extends DomainObject {
-  id: string;
-
-  itemId: string;
-  itemName: string;
-  itemCode: string;
-  itemUnit: string;
-  packSize: number;
-  numberOfPacks: number;
-  costPricePerPack: number;
-  sellPricePerPack: number;
+export interface InvoiceLine extends InvoiceLineNode, DomainObject {
+  stockLine?: StockLine;
   stockLineId: string;
-
-  expiryDate?: string | null;
-
-  batch?: string | null;
-
-  locationDescription?: string | null;
-  note?: string | null;
+  invoiceId: string;
 }
 
 export interface InvoiceRow extends DomainObject {
