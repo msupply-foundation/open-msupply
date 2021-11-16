@@ -4,12 +4,13 @@ export interface ReadOnlyInputProps {
   number?: boolean;
   style?: React.CSSProperties;
   width?: string;
+  value?: string;
 }
 
 export const ReadOnlyInput: React.FC<ReadOnlyInputProps> = React.forwardRef<
   HTMLInputElement,
   ReadOnlyInputProps
->(({ number, style, width = '100%', ...props }, ref) => (
+>(({ number, style, width = '100%', value, ...props }, ref) => (
   <input
     disabled
     style={{
@@ -20,6 +21,7 @@ export const ReadOnlyInput: React.FC<ReadOnlyInputProps> = React.forwardRef<
       ...style,
     }}
     ref={ref}
+    value={value}
     {...props}
   />
 ));
