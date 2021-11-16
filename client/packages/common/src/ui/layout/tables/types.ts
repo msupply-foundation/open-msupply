@@ -25,5 +25,5 @@ export interface TableProps<T extends DomainObject> {
   onRowClick?: (row: T) => void;
   children?: ReactNode;
   noDataMessageKey?: LocaleKey;
-  ExpandContent?: FC;
+  ExpandContent?: FC<{ rowData: T }>;
 }

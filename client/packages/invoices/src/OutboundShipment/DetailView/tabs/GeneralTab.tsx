@@ -15,16 +15,20 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   onRowClick?: (rowData: T) => void;
 }
 
-const Expand: FC = () => {
+const Expand: FC<{ rowData: OutboundShipmentSummaryItem }> = ({ rowData }) => {
   return (
-    <Box p={1} height={300}>
+    <Box p={1} height={300} style={{ overflow: 'scroll' }}>
       <Box
         flex={1}
         display="flex"
         height="100%"
         borderRadius={4}
         bgcolor="#c7c9d933"
-      />
+      >
+        <span style={{ whiteSpace: 'pre-wrap' }}>
+          {JSON.stringify(rowData, null, 2)}
+        </span>
+      </Box>
     </Box>
   );
 };
