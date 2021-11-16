@@ -37,6 +37,7 @@ async fn main() -> std::io::Result<()> {
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
+        debug_no_access_control: false,
     });
     let connection_manager = get_storage_connection_manager(&settings.database);
     let loaders: LoaderMap = get_loaders(&connection_manager).await;
