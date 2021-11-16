@@ -66,6 +66,14 @@ const Nav: FC = () => {
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.InboundShipment)
+              .build()}
+            text={t('app.inbound-shipments')}
+          />
+          <NavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.Customer)
               .build()}
             text={t('app.customers')}
