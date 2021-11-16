@@ -49,7 +49,9 @@ const getExistingLine = (
   return { existingRow, existingSummaryItem };
 };
 
-const recalculateSummary = (summaryItem: OutboundShipmentSummaryItem) => {
+export const recalculateSummary = (
+  summaryItem: OutboundShipmentSummaryItem
+): { unitQuantity: number; numberOfPacks: number } => {
   const unitQuantity = Object.values<OutboundShipmentRow>(
     summaryItem.batches
   ).reduce(getUnitQuantity, 0);
@@ -165,6 +167,10 @@ export const reducer = (
             draft[key] = data[key];
           });
 
+          draft.update = (key, value) => {
+            dispatch?.(OutboundAction.updateInvoice(key, value));
+          };
+
           draft.upsertLine = line =>
             dispatch?.(OutboundAction.upsertLine(line));
 
@@ -200,6 +206,9 @@ export const reducer = (
                 unitQuantity,
                 numberOfPacks,
               });
+            } else {
+              existingSummaryItem.unitQuantity = unitQuantity;
+              existingSummaryItem.numberOfPacks = numberOfPacks;
             }
 
             return itemsArray;
@@ -252,19 +261,62 @@ export const reducer = (
             line
           );
 
-          if (existingSummaryItem && existingRow) {
-            existingRow.isUpdated = existingRow.isCreated ? false : true;
-            existingRow.isDeleted = false;
-            existingRow.numberOfPacks = line.numberOfPacks;
+          // If the row is being updated
+          if (existingSummaryItem) {
+            if (existingRow) {
+              if (line.numberOfPacks === 0) {
+                // Then, if the new number of packs is zero, delete the row
+                // Deleting: If the line is created, remove it from state completely.
+                if (line.isCreated) {
+                  delete existingSummaryItem.batches[line.id];
 
-            const { unitQuantity, numberOfPacks } =
-              recalculateSummary(existingSummaryItem);
-            existingSummaryItem.unitQuantity = unitQuantity;
-            existingSummaryItem.numberOfPacks = numberOfPacks;
-            existingSummaryItem.batches[existingRow.id] = existingRow;
+                  // If this was the last line being removed, also remove the summary item.
+                  if (!Object.values(existingSummaryItem.batches).length) {
+                    draft.items = draft.items.filter(
+                      ({ id }) => existingSummaryItem.id !== id
+                    );
+                  }
+                  break;
+                  // Otherwise, mark for deletion,
+                } else {
+                  existingRow.isUpdated = false;
+                  existingRow.isDeleted = true;
+                  existingRow.isCreated = false;
+                  existingRow.numberOfPacks = line.numberOfPacks;
+                }
+
+                // Otherwise, update as per normal.
+              } else {
+                existingRow.isUpdated = existingRow.isCreated ? false : true;
+                existingRow.isDeleted = false;
+                existingRow.numberOfPacks = line.numberOfPacks;
+              }
+
+              const { unitQuantity, numberOfPacks } =
+                recalculateSummary(existingSummaryItem);
+              existingSummaryItem.unitQuantity = unitQuantity;
+              existingSummaryItem.numberOfPacks = numberOfPacks;
+              existingSummaryItem.batches[existingRow.id] = existingRow;
+            } else {
+              if (line.numberOfPacks === 0) break;
+              const newLine = {
+                ...line,
+                invoiceId: draft.id,
+                isCreated: true,
+                isUpdated: false,
+                isDeleted: false,
+              };
+              existingSummaryItem.batches[newLine.id] = newLine;
+            }
           } else {
+            // Ignore lines which have a number of packs of zero.
+            if (line.numberOfPacks === 0) {
+              break;
+            }
+
             const newLine = {
               ...line,
+              invoiceId: draft.id,
               isCreated: true,
               isUpdated: false,
               isDeleted: false,
@@ -343,6 +395,7 @@ const createLine = (
 ): OutboundShipmentRow => {
   return {
     ...line,
+    stockLineId: line.stockLine?.id ?? '',
     invoiceId: draft.id,
   };
 };

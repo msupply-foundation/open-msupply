@@ -105,7 +105,13 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
           const matchingInvoiceRow = Object.values(summaryItem.batches).find(
             ({ stockLineId }) => stockLineId === batch.id
           );
-          return { ...batch, quantity: matchingInvoiceRow?.numberOfPacks ?? 0 };
+          return {
+            ...batch,
+            quantity: matchingInvoiceRow?.numberOfPacks ?? 0,
+            availableNumberOfPacks:
+              batch.availableNumberOfPacks +
+              (matchingInvoiceRow?.numberOfPacks ?? 0),
+          };
         })
         .sort(sortByDisabledThenExpiryDate);
       rows.push(createPlaceholderRow());
@@ -187,7 +193,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   summaryItem,
 }) => {
   const methods = useForm({ mode: 'onBlur' });
-  const { reset, register, setValue, getValues } = methods;
+  const { reset, register, setValue } = methods;
 
   const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
   const packSizeController = usePackSizeController(batchRows);
@@ -206,32 +212,20 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     onReset();
   };
   const upsert = () => {
-    if (!summaryItem) return;
+    if (!summaryItem) return null;
 
-    const values = getValues();
-    const invoiceLines = batchRows.map(batch =>
-      getInvoiceLine(
-        generateUUID(),
-        summaryItem,
-        batch,
-        Number(values[batch.id] || 0)
-      )
-    );
-
-    invoiceLines
-      .filter(line => line.numberOfPacks > 0)
-      .forEach(upsertInvoiceLine);
-    const placeholderValue = Number(values['placeholder'] || 0);
-    if (placeholderValue > 0) {
-      invoiceLines.push(
-        getInvoiceLine(
-          'placeholder',
-          summaryItem,
-          { id: 'placeholder', expiryDate: '' },
-          placeholderValue
-        )
+    // TODO: Handle placeholder upserting.
+    const invoiceLines = batchRows
+      .filter(({ id }) => id !== 'placeholder')
+      .map(batch =>
+        getInvoiceLine(generateUUID(), summaryItem, batch, batch.quantity)
       );
-    }
+
+    // Upsert each line. Any lines which do no already exist and have no had any
+    // packs allocated, will not be created, but those which already exist and have
+    // their quantity reduced to 0 will be marked for deletion.
+    invoiceLines.forEach(upsertInvoiceLine);
+
     onReset();
   };
   const upsertAndClose = () => {

@@ -204,6 +204,60 @@ describe('DetailView reducer: updating lines', () => {
       })
     );
   });
+
+  it('marks any line that exists as being updated with a number of packs of zero as a delete', () => {
+    const lineToUpdate = createLine('11', { numberOfPacks: 0 });
+    const state1 = callReducer(OutboundAction.upsertLine(lineToUpdate));
+
+    expect(findRow(state1, lineToUpdate.id)).toEqual(
+      expect.objectContaining({
+        isDeleted: true,
+        isUpdated: false,
+        isCreated: false,
+      })
+    );
+  });
+
+  it('deletes from state lines which are created and deleted through setting the packs to zero, as well as removing the summary item.', () => {
+    // The two lines for a summary item.
+    const lineToDelete = createLine('99', { itemId: '999', stockLineId: '99' });
+    const lineToUpdate = createLine('991', {
+      itemId: '999',
+      stockLineId: '999',
+      numberOfPacks: 99,
+    });
+
+    // Insert each of the lines
+    const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
+    expect(findRow(state1, lineToDelete.id)?.isCreated).toBe(true);
+
+    const state2 = callReducer(OutboundAction.upsertLine(lineToUpdate), state1);
+    expect(findRow(state2, lineToUpdate.id)?.isCreated).toBe(true);
+
+    // One is deleted normally and is removed from state completely as it is not persisted to the
+    // server.
+    const state3 = callReducer(OutboundAction.deleteLine(lineToDelete), state2);
+    expect(findRow(state3, lineToDelete.id)).toEqual(undefined);
+
+    // Delete one by setting the number of packs to zero.
+    const state4 = callReducer(
+      OutboundAction.upsertLine({
+        ...lineToUpdate,
+        numberOfPacks: 0,
+        isCreated: true,
+      }),
+      state3
+    );
+    expect(findRow(state4, lineToUpdate.id)).toEqual(undefined);
+
+    const anySummaryItemsWithNoBatches = state4.draft.items.filter(
+      summaryItem => {
+        return Object.values(summaryItem.batches).length === 0;
+      }
+    );
+
+    expect(anySummaryItemsWithNoBatches.length).toBe(0);
+  });
 });
 
 describe('DetailView reducer: merging', () => {
@@ -297,7 +351,7 @@ describe('DetailView reducer: deleting lines', () => {
   });
 
   it('a line which is created, then deleted, is removed from state completely', () => {
-    const lineToDelete = createLine('99', { itemId: '99', stockLine: '99' });
+    const lineToDelete = createLine('99', { itemId: '99', stockLineId: '99' });
     const state1 = callReducer(OutboundAction.upsertLine(lineToDelete));
     const state2 = callReducer(OutboundAction.deleteLine(lineToDelete), state1);
 
@@ -415,5 +469,45 @@ describe('DetailView reducer: inserting', () => {
     const state = callReducer(OutboundAction.upsertLine(lineToInsert));
 
     expect(findRow(state, lineToInsert.id)).toBeTruthy();
+  });
+
+  it('ignores lines which are being inserted with zero number of packs', () => {
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '999',
+      numberOfPacks: 0,
+    });
+    const state = callReducer(OutboundAction.upsertLine(lineToInsert));
+
+    expect(findRow(state, lineToInsert.id)).toBeUndefined();
+  });
+
+  it('inserts new lines under already existing summary items', () => {
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '1',
+      numberOfPacks: 99,
+    });
+    const state = callReducer(OutboundAction.upsertLine(lineToInsert));
+
+    const summaryItem = state.draft.items.find(({ id }) => id === '1');
+
+    expect(summaryItem?.batches[lineToInsert.id]).toEqual({
+      ...lineToInsert,
+      isCreated: true,
+    });
+  });
+
+  it('ignores lines which are being inserted under an already existing summary item with zero number of packs', () => {
+    const lineToInsert = createLine('999', {
+      stockLineId: '999',
+      itemId: '1',
+      numberOfPacks: 0,
+    });
+    const state = callReducer(OutboundAction.upsertLine(lineToInsert));
+
+    const summaryItem = state.draft.items.find(({ id }) => id === '1');
+
+    expect(summaryItem?.batches[lineToInsert.id]).toBeUndefined();
   });
 });

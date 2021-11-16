@@ -1,4 +1,7 @@
-import { InsertOutboundShipmentLineInput } from './../../../common/src/types/schema';
+import {
+  InsertOutboundShipmentLineInput,
+  UpdateOutboundShipmentLineInput,
+} from './../../../common/src/types/schema';
 import { ResolverService } from './resolvers';
 import { createInvoice } from './../data/data';
 import { Api } from './index';
@@ -12,6 +15,7 @@ const adjustStockLineQuantity = (
   quantity: number
 ): StockLine => {
   const stockLine = db.get.byId.stockLine(stockLineId);
+
   const newQuantity = stockLine.availableNumberOfPacks + quantity;
 
   if (newQuantity < 0) {
@@ -95,12 +99,13 @@ export const update = {
 
     return resolvedInvoice;
   },
-  invoiceLine: (invoiceLine: InvoiceLine): InvoiceLine => {
+  invoiceLine: (invoiceLine: UpdateOutboundShipmentLineInput): InvoiceLine => {
     const currentInvoiceLine = db.get.byId.invoiceLine(invoiceLine.id);
     const { quantity } = currentInvoiceLine;
-    const difference = quantity - invoiceLine.quantity;
 
-    adjustStockLineQuantity(invoiceLine.stockLineId, difference);
+    const difference = quantity - (invoiceLine?.numberOfPacks ?? 0);
+
+    adjustStockLineQuantity(invoiceLine?.stockLineId ?? '', difference);
 
     return db.update.invoiceLine(invoiceLine);
   },

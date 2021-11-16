@@ -123,5 +123,6 @@
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
+  "dev.log-draft": "Log draft",
   "placeholder.enter-a-customers-name": "Enter a customers name"
 }

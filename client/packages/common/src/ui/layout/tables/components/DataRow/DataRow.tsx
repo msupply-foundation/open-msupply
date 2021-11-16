@@ -11,7 +11,7 @@ interface DataRowProps<T extends DomainObject> {
   onClick?: (rowData: T) => void;
   rowData: T;
   rowKey: string;
-  ExpandContent?: FC;
+  ExpandContent?: FC<{ rowData: T }>;
 }
 
 export const DataRow = <T extends DomainObject>({
@@ -74,7 +74,7 @@ export const DataRow = <T extends DomainObject>({
       <tr>
         <td style={{ display: 'flex' }}>
           <Collapse sx={{ flex: 1 }} in={isExpanded}>
-            {ExpandContent ? <ExpandContent /> : null}
+            {ExpandContent ? <ExpandContent rowData={rowData} /> : null}
           </Collapse>
         </td>
       </tr>

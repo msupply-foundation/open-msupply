@@ -15,7 +15,11 @@ import {
   InvoiceNodeStatus,
   OmSupplyApi,
   InsertOutboundShipmentLineInput,
+  StockLineResponse,
+  StockLineNode,
   DeleteOutboundShipmentLineInput,
+  InvoiceLine,
+  UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import {
@@ -62,6 +66,14 @@ const linesGuard = (invoiceLines: InvoiceLineConnector | ConnectorError) => {
 
   if (invoiceLines.__typename === 'ConnectorError') {
     throw new Error(invoiceLines.error.description);
+  }
+
+  throw new Error('Unknown');
+};
+
+const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
+  if (stockLine.__typename === 'StockLineNode') {
+    return stockLine;
   }
 
   throw new Error('Unknown');
@@ -117,13 +129,22 @@ export const onRead =
     const result = await api.invoice({ id });
 
     const invoice = invoiceGuard(result);
+    const lineNodes = linesGuard(invoice.lines);
+    const lines: InvoiceLine[] = lineNodes.map(line => {
+      const stockLine = line.stockLine
+        ? stockLineGuard(line.stockLine)
+        : undefined;
+      return {
+        ...line,
+        stockLine,
+        stockLineId: stockLine?.id ?? '',
+        invoiceId: invoice.id,
+      };
+    });
 
     return {
       ...invoice,
-      lines: linesGuard(invoice.lines).map(line => ({
-        ...line,
-        stockLineId: '',
-      })),
+      lines,
       pricing: pricingGuard(invoice.pricing),
       otherParty: otherPartyGuard(invoice.otherParty),
     };
@@ -164,6 +185,17 @@ const createDeleteOutboundLineInput = (
   };
 };
 
+const createUpdateOutboundLineInput = (
+  line: OutboundShipmentRow
+): UpdateOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    invoiceId: line.invoiceId,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+  };
+};
+
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
@@ -171,6 +203,10 @@ export const onUpdate =
     const deleteLines = rows.filter(({ isDeleted }) => isDeleted);
     const insertLines = rows.filter(
       ({ isCreated, isDeleted }) => !isDeleted && isCreated
+    );
+    const updateLines = rows.filter(
+      ({ isUpdated, isCreated, isDeleted }) =>
+        isUpdated && !isCreated && !isDeleted
     );
 
     const result = await api.upsertOutboundShipment({
@@ -181,6 +217,10 @@ export const onUpdate =
         createDeleteOutboundLineInput
       ),
       updateOutboundShipments: [invoiceToInput(patch)],
+
+      updateOutboundShipmentLines: updateLines.map(
+        createUpdateOutboundLineInput
+      ),
     });
 
     const { batchOutboundShipment } = result;
