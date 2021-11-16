@@ -8,6 +8,8 @@ import {
   useDialog,
   FormProvider,
   generateUUID,
+  InlineSpinner,
+  Box,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { BatchesTable } from './BatchesTable';
@@ -335,13 +337,25 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               allocatedQuantity={getAllocatedQuantity(batchRows)}
               summaryItem={summaryItem || undefined}
             />
-            {!isLoading && (
-              <BatchesTable
-                onChange={onChangeRowQuantity}
-                register={register}
-                rows={batchRows}
-              />
-            )}
+            {!!summaryItem ? (
+              !isLoading ? (
+                <BatchesTable
+                  onChange={onChangeRowQuantity}
+                  register={register}
+                  rows={batchRows}
+                />
+              ) : (
+                <Box
+                  display="flex"
+                  flex={1}
+                  height={300}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <InlineSpinner />
+                </Box>
+              )
+            ) : null}
           </Grid>
         </form>
       </FormProvider>
