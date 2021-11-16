@@ -71,7 +71,7 @@ const getDefaultFormatter = <T extends DomainObject>(
     }
     case ColumnFormat.Currency: {
       return (value: unknown) => {
-        if (Number.isNaN(value)) return '';
+        if (Number.isNaN(Number(value))) return '';
 
         const formatNumber = useFormatNumber();
 
@@ -80,7 +80,7 @@ const getDefaultFormatter = <T extends DomainObject>(
       };
     }
     default: {
-      return (value: unknown) => String(value);
+      return (value: unknown) => String(value ?? '');
     }
   }
 };

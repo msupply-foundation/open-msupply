@@ -49,7 +49,9 @@ const getExistingLine = (
   return { existingRow, existingSummaryItem };
 };
 
-const recalculateSummary = (summaryItem: OutboundShipmentSummaryItem) => {
+export const recalculateSummary = (
+  summaryItem: OutboundShipmentSummaryItem
+): { unitQuantity: number; numberOfPacks: number } => {
   const unitQuantity = Object.values<OutboundShipmentRow>(
     summaryItem.batches
   ).reduce(getUnitQuantity, 0);
@@ -204,6 +206,9 @@ export const reducer = (
                 unitQuantity,
                 numberOfPacks,
               });
+            } else {
+              existingSummaryItem.unitQuantity = unitQuantity;
+              existingSummaryItem.numberOfPacks = numberOfPacks;
             }
 
             return itemsArray;
