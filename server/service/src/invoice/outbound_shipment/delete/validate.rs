@@ -1,6 +1,9 @@
-use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineQueryRepository, InvoiceRepository, RepositoryError, StorageConnection,
+use domain::invoice::InvoiceType;
+use repository::{schema::InvoiceRow, StorageConnection};
+
+use crate::invoice::{
+    check_invoice_exists, check_invoice_finalised, check_invoice_type, check_lines_exist,
+    InvoiceDoesNotExist, InvoiceIsFinalised, InvoiceLinesExist, WrongInvoiceType,
 };
 
 use super::DeleteOutboundShipmentError;
@@ -9,29 +12,36 @@ pub fn validate(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, DeleteOutboundShipmentError> {
-    //  check invoice exists
-    let result = InvoiceRepository::new(connection).find_one_by_id(id);
-    if let Err(RepositoryError::NotFound) = &result {
-        return Err(DeleteOutboundShipmentError::InvoiceDoesNotExist);
-    }
-    let invoice = result?;
+    let invoice = check_invoice_exists(&id, connection)?;
 
-    // check invoice is not finalised
-    if invoice.status == InvoiceRowStatus::Finalised {
-        return Err(DeleteOutboundShipmentError::CannotEditFinalised);
-    }
-
-    // check no lines exist for the invoice;
-    let lines =
-        InvoiceLineQueryRepository::new(connection).find_many_by_invoice_ids(&[id.to_string()])?;
-    if lines.len() > 0 {
-        return Err(DeleteOutboundShipmentError::InvoiceLinesExists(lines));
-    }
-
-    // check its a outbound shipment
-    if invoice.r#type != InvoiceRowType::OutboundShipment {
-        return Err(DeleteOutboundShipmentError::NotAnOutboundShipment);
-    }
+    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
+    check_invoice_finalised(&invoice)?;
+    check_lines_exist(&id, connection)?;
 
     Ok(invoice)
+}
+
+impl From<WrongInvoiceType> for DeleteOutboundShipmentError {
+    fn from(_: WrongInvoiceType) -> Self {
+        DeleteOutboundShipmentError::NotAnOutboundShipment
+    }
+}
+
+impl From<InvoiceIsFinalised> for DeleteOutboundShipmentError {
+    fn from(_: InvoiceIsFinalised) -> Self {
+        DeleteOutboundShipmentError::CannotEditFinalised
+    }
+}
+
+impl From<InvoiceDoesNotExist> for DeleteOutboundShipmentError {
+    fn from(_: InvoiceDoesNotExist) -> Self {
+        DeleteOutboundShipmentError::InvoiceDoesNotExist
+    }
+}
+
+impl From<InvoiceLinesExist> for DeleteOutboundShipmentError {
+    fn from(error: InvoiceLinesExist) -> Self {
+        DeleteOutboundShipmentError::InvoiceLinesExists(error.0)
+    }
 }

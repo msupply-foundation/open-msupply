@@ -4,7 +4,7 @@ use crate::invoice::current_store_id;
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
-    InvoiceLineRepository, StorageConnection,
+    InvoiceLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -79,7 +79,7 @@ pub fn generate_lines_and_stock_lines(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
-    let lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
+    let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
     for invoice_lines in lines.into_iter() {
@@ -94,6 +94,7 @@ pub fn generate_lines_and_stock_lines(
             item_name: _,
             item_code: _,
             stock_line_id: _,
+            location_id,
             batch,
             expiry_date,
             pack_size,
@@ -108,6 +109,7 @@ pub fn generate_lines_and_stock_lines(
             id: stock_line_id,
             item_id,
             store_id: current_store_id(connection)?,
+            location_id,
             batch,
             pack_size,
             cost_price_per_pack,

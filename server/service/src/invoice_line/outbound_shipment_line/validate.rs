@@ -1,7 +1,8 @@
 use crate::WithDBError;
 use repository::{
     schema::{InvoiceLineRow, ItemRow, StockLineRow},
-    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnection,
+    InvoiceLineRowRepository, LocationRowRepository, RepositoryError, StockLineRowRepository,
+    StorageConnection,
 };
 
 pub struct StockLineNotFound;
@@ -10,7 +11,7 @@ pub fn check_batch_exists(
     batch_id: &str,
     connection: &StorageConnection,
 ) -> Result<StockLineRow, WithDBError<StockLineNotFound>> {
-    let batch_result = StockLineRepository::new(connection).find_one_by_id(batch_id);
+    let batch_result = StockLineRowRepository::new(connection).find_one_by_id(batch_id);
 
     match batch_result {
         Ok(batch) => Ok(batch),
@@ -31,7 +32,7 @@ pub fn check_unique_stock_line(
         |invoice_line: &&InvoiceLineRow| -> bool { invoice_line.id != invoice_line_id };
 
     if let Some(batch_id) = batch_id_option {
-        match InvoiceLineRepository::new(connection)
+        match InvoiceLineRowRepository::new(connection)
             .find_many_by_invoice_and_batch_id(&batch_id, &invoice_id)
         {
             Ok(lines) => {
@@ -69,5 +70,27 @@ pub fn check_batch_on_hold(batch: &StockLineRow) -> Result<(), BatchIsOnHold> {
         Err(BatchIsOnHold {})
     } else {
         Ok(())
+    }
+}
+
+pub struct LocationIsOnHold;
+
+pub fn check_location_on_hold(
+    batch: &StockLineRow,
+    connection: &StorageConnection,
+) -> Result<(), WithDBError<LocationIsOnHold>> {
+    match &batch.location_id {
+        Some(location_id) => {
+            let location = LocationRowRepository::new(connection)
+                .find_one_by_id(&location_id)
+                .map_err(WithDBError::db)?;
+
+            if location.on_hold {
+                Err(WithDBError::err(LocationIsOnHold))
+            } else {
+                Ok(())
+            }
+        }
+        None => Ok(()),
     }
 }

@@ -37,6 +37,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
+        location_id,
     }: InsertInboundShipmentLine,
     ItemRow {
         name: item_name,
@@ -50,6 +51,7 @@ fn generate_line(
         id,
         invoice_id,
         item_id,
+        location_id,
         pack_size: u32_to_i32(pack_size),
         batch,
         expiry_date,

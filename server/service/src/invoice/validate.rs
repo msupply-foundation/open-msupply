@@ -1,8 +1,12 @@
 use crate::WithDBError;
-use domain::invoice::{InvoiceStatus, InvoiceType};
+use domain::{
+    invoice::{InvoiceStatus, InvoiceType},
+    invoice_line::{InvoiceLine, InvoiceLineFilter},
+    Pagination,
+};
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus},
-    InvoiceRepository, RepositoryError, StorageConnection,
+    InvoiceLineRepository, InvoiceRepository, RepositoryError, StorageConnection,
 };
 
 pub struct WrongInvoiceType;
@@ -66,5 +70,26 @@ pub fn check_invoice_exists(
         Ok(invoice_row) => Ok(invoice_row),
         Err(RepositoryError::NotFound) => Err(WithDBError::err(InvoiceDoesNotExist)),
         Err(error) => Err(WithDBError::db(error)),
+    }
+}
+
+pub struct InvoiceLinesExist(pub Vec<InvoiceLine>);
+
+pub fn check_lines_exist(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<(), WithDBError<InvoiceLinesExist>> {
+    let lines = InvoiceLineRepository::new(connection)
+        .query(
+            Pagination::new(),
+            Some(InvoiceLineFilter::new().match_invoice_id(id)),
+            None,
+        )
+        .map_err(WithDBError::db)?;
+
+    if lines.len() > 0 {
+        Err(WithDBError::err(InvoiceLinesExist(lines)))
+    } else {
+        Ok(())
     }
 }
