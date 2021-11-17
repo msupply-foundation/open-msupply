@@ -294,7 +294,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {
-        let (_, connection, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
         let repo = InvoiceQueryRepository::new(&connection);
 
