@@ -30,6 +30,20 @@ export interface BatchesTableProps {
   rows: BatchRow[];
 }
 
+export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
+  const expiryA = new Date(a.expiryDate ?? '');
+  const expiryB = new Date(b.expiryDate ?? '');
+
+  if (expiryA < expiryB) {
+    return -1;
+  }
+  if (expiryA > expiryB) {
+    return 1;
+  }
+
+  return 0;
+};
+
 type BatchesRowProps = {
   batch: BatchRow;
   label: string;
@@ -62,11 +76,11 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
 
   // TODO format currency correctly
   return (
-    <TableRow>
+    <TableRow sx={{ color: isDisabled ? 'gray.main' : 'black' }}>
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
         <ModalNumericInput
-          value={batch.quantity}
+          value={batch.numberOfPacks}
           inputProps={stockLineInputProps}
           disabled={isDisabled}
         />
@@ -75,7 +89,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell sx={{ width: '88px' }}>
         <ReadOnlyInput
           number
-          value={String(batch.quantity * batch.packSize)}
+          value={String(batch.numberOfPacks * batch.packSize)}
           {...register(`${batch.id}_total`)}
         />
       </BasicCell>
@@ -83,7 +97,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
       <BasicCell
-        sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : undefined }}
+        sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : 'inherit' }}
       >
         {d(expiryDate)}
       </BasicCell>
@@ -137,6 +151,10 @@ const HeaderCell: React.FC<TableCellProps> = ({ children }) => (
       color: theme => theme.typography.body1.color,
       fontWeight: 'bold',
       padding: '8px',
+      position: 'sticky',
+      top: 0,
+      zIndex: 10,
+      backgroundColor: 'white',
     }}
   >
     {children}
@@ -148,7 +166,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
     {...props}
     sx={{
       borderBottomWidth: 0,
-      color: 'gray.dark',
+      color: 'inherit',
       fontSize: '12px',
       padding: '0 8px',
       whiteSpace: 'nowrap',
@@ -174,10 +192,35 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
 
   const placeholderRow = rows.find(({ id }) => id === 'placeholder');
 
+  const rowsWithoutPlaceholder = rows.filter(({ id }) => id !== 'placeholder');
+
+  const allocatableRows = rowsWithoutPlaceholder
+    .filter(
+      ({ onHold, availableNumberOfPacks }) =>
+        !onHold && availableNumberOfPacks > 0
+    )
+    .sort(sortByExpiry);
+
+  const nonAllocatableRows = rowsWithoutPlaceholder.filter(
+    ({ onHold, availableNumberOfPacks }) =>
+      onHold || availableNumberOfPacks === 0
+  );
+
+  const onHoldRows = nonAllocatableRows
+    .filter(({ onHold }) => onHold)
+    .sort(sortByExpiry);
+
+  const noStockRows = nonAllocatableRows
+    .filter(
+      ({ availableNumberOfPacks, onHold }) =>
+        availableNumberOfPacks === 0 && !onHold
+    )
+    .sort(sortByExpiry);
+
   return (
     <>
-      <TableContainer>
-        <Divider margin={40} />
+      <Divider margin={10} />
+      <TableContainer sx={{ height: 400, overflowX: 'hidden' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -195,24 +238,47 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <HeaderCell></HeaderCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {rows
-              .filter(({ id }) => id !== 'placeholder')
-              .map((batch, index) => (
-                <BatchesRow
-                  batch={batch}
-                  key={batch.id}
-                  label={t('label.line', { number: index + 1 })}
-                  onChange={onChange}
-                />
-              ))}
+          <TableBody sx={{ overflowY: 'scroll' }}>
+            {allocatableRows.map((batch, index) => (
+              <BatchesRow
+                batch={batch}
+                key={batch.id}
+                label={t('label.line', { number: index + 1 })}
+                onChange={onChange}
+              />
+            ))}
+            <TableRow
+              sx={{ height: 1, border: '2px solid', borderColor: 'divider' }}
+            />
+            {onHoldRows.map((batch, index) => (
+              <BatchesRow
+                batch={batch}
+                key={batch.id}
+                label={t('label.line', {
+                  number: allocatableRows.length + index + 1,
+                })}
+                onChange={onChange}
+              />
+            ))}
+            {noStockRows.map((batch, index) => (
+              <BatchesRow
+                batch={batch}
+                key={batch.id}
+                label={t('label.line', {
+                  number:
+                    allocatableRows.length + onHoldRows.length + index + 1,
+                })}
+                onChange={onChange}
+              />
+            ))}
+
             <TableRow>
               <BasicCell align="right" sx={{ paddingTop: '3px' }}>
                 {t('label.placeholder')}
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
                 <ModalNumericInput
-                  value={placeholderRow?.quantity}
+                  value={placeholderRow?.numberOfPacks ?? 0}
                   inputProps={placeholderInputProps}
                 />
               </BasicCell>

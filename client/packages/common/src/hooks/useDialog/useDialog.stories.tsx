@@ -23,13 +23,12 @@ const Template: Story = () => {
     hideDialog();
   };
 
-  const { Modal, hideDialog, showDialog } = useDialog({
-    title: 'heading.add-item',
-  });
+  const { Modal, hideDialog, showDialog } = useDialog();
 
   return (
     <div>
       <Modal
+        title="heading.add-item"
         cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
         nextButton={<DialogButton variant="next" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onOk} />}

@@ -8,6 +8,7 @@ interface ButtonProps {
   icon: React.ReactNode;
   labelKey: LocaleKey;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
 }
 
 const StyledButton = styled(MuiButton)({
@@ -17,12 +18,18 @@ const StyledButton = styled(MuiButton)({
   textTransform: 'none' as Property.TextTransform,
 });
 
-export const FlatButton: React.FC<ButtonProps> = props => {
+export const FlatButton: React.FC<ButtonProps> = ({
+  color,
+  labelKey,
+  icon,
+  onClick,
+  disabled = false,
+}) => {
   const t = useTranslation();
 
-  const { color, labelKey, icon, onClick } = props;
   return (
     <StyledButton
+      disabled={disabled}
       onClick={onClick}
       startIcon={icon}
       variant="text"
