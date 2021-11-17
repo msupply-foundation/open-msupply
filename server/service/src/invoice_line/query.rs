@@ -3,7 +3,7 @@ use domain::{
     invoice_line::{InvoiceLine, InvoiceLineFilter},
     Pagination,
 };
-use repository::{InvoiceLineQueryRepository, StorageConnectionManager};
+use repository::{InvoiceLineRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -14,7 +14,7 @@ pub fn get_invoice_line(
 ) -> Result<InvoiceLine, SingleRecordError> {
     let connection = connection_manager.connection()?;
 
-    let mut result = InvoiceLineQueryRepository::new(&connection).query(
+    let mut result = InvoiceLineRepository::new(&connection).query(
         Pagination::one(),
         Some(InvoiceLineFilter::new().match_id(&id)),
         None,

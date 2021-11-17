@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use domain::inbound_shipment::UpdateInboundShipmentLine;
 use repository::{
-    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
 };
 
@@ -23,13 +23,13 @@ pub fn update_inbound_shipment_line(
             let (updated_line, upsert_batch_option, delete_batch_id_option) =
                 generate(input, line, item, invoice, &connection)?;
 
-            let stock_line_respository = StockLineRepository::new(&connection);
+            let stock_line_respository = StockLineRowRepository::new(&connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_respository.upsert_one(&upsert_batch)?;
             }
 
-            InvoiceLineRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
             if let Some(id) = delete_batch_id_option {
                 stock_line_respository.delete(&id)?;

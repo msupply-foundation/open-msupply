@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use domain::inbound_shipment::DeleteInboundShipmentLine;
 use repository::{
-    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
 };
 
@@ -20,10 +20,10 @@ pub fn delete_inbound_shipment_line(
 
             let delete_batch_id_option = line.stock_line_id.clone();
 
-            InvoiceLineRepository::new(&connection).delete(&line.id)?;
+            InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
 
             if let Some(id) = delete_batch_id_option {
-                StockLineRepository::new(&connection).delete(&id)?;
+                StockLineRowRepository::new(&connection).delete(&id)?;
             }
             Ok(line)
         })

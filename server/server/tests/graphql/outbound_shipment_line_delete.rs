@@ -7,13 +7,12 @@ mod graphql {
     use crate::graphql::{
         delete_outbound_shipment_line_full as delete, DeleteOutboundShipmentLineFull as Delete,
     };
+    use repository::{InvoiceLineRowRepository, StockLineRowRepository};
     use server::test_utils::setup_all;
 
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use repository::{
-        mock::MockDataInserts, InvoiceLineRepository, RepositoryError, StockLineRepository,
-    };
+    use repository::{mock::MockDataInserts, RepositoryError};
 
     use delete::DeleteOutboundShipmentLineErrorInterface::*;
 
@@ -184,7 +183,7 @@ mod graphql {
         let variables = base_variables.clone();
 
         let stock_line_id = draft_invoice_line.stock_line_id.as_ref().unwrap();
-        let stock_line_before_deletion = StockLineRepository::new(&connection)
+        let stock_line_before_deletion = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
             .unwrap();
 
@@ -194,9 +193,9 @@ mod graphql {
 
         let delete_response = assert_unwrap_delete!(response);
 
-        let deleted_line = InvoiceLineRepository::new(&connection).find_one_by_id(&variables.id);
+        let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
 
-        let stock_line_after_deletion = StockLineRepository::new(&connection)
+        let stock_line_after_deletion = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
             .unwrap();
 
@@ -229,7 +228,7 @@ mod graphql {
         variables.invoice_id = confirmed_outbound_shipment.id.clone();
 
         let stock_line_id = confirmed_invoice_line.stock_line_id.as_ref().unwrap();
-        let stock_line_before_deletion = StockLineRepository::new(&connection)
+        let stock_line_before_deletion = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
             .unwrap();
 
@@ -237,9 +236,9 @@ mod graphql {
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
         let delete_response = assert_unwrap_delete!(response);
 
-        let deleted_line = InvoiceLineRepository::new(&connection).find_one_by_id(&variables.id);
+        let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
 
-        let stock_line_after_deletion = StockLineRepository::new(&connection)
+        let stock_line_after_deletion = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
             .unwrap();
 

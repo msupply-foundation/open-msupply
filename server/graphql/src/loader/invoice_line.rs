@@ -1,8 +1,6 @@
 use domain::invoice::InvoicePricing;
-use repository::{
-    schema::InvoiceLineRow, InvoiceLineQueryRepository, InvoiceLineRepository, RepositoryError,
-    StorageConnectionManager,
-};
+use domain::invoice_line::{InvoiceLine, InvoiceLineFilter};
+use repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -14,21 +12,23 @@ pub struct InvoiceLineLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for InvoiceLineLoader {
-    type Value = InvoiceLineRow;
+    type Value = InvoiceLine;
     type Error = RepositoryError;
 
-    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(
+        &self,
+        invoice_line_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let repo = InvoiceLineRepository::new(&connection);
-        Ok(repo
-            .find_many_by_id(keys)?
-            .iter()
-            .map(|invoice_line: &InvoiceLineRow| {
-                let invoice_line_id = invoice_line.id.clone();
-                let invoice_line = invoice_line.clone();
-                (invoice_line_id, invoice_line)
-            })
-            .collect())
+
+        let result = repo
+            .query_filter_only(InvoiceLineFilter::new().match_ids(invoice_line_ids.to_owned()))?
+            .into_iter()
+            .map(|invoice_line| (invoice_line.id.clone(), invoice_line))
+            .collect();
+
+        Ok(result)
     }
 }
 
@@ -46,7 +46,7 @@ impl Loader<String> for InvoiceLineStatsLoader {
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = InvoiceLineQueryRepository::new(&connection);
+        let repo = InvoiceLineRepository::new(&connection);
         Ok(repo
             .stats(invoice_ids)?
             .into_iter()

@@ -2,9 +2,10 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use domain::stock_line::StockLine;
     use repository::{
-        mock::MockDataInserts, schema::InvoiceLineRow, InvoiceLineRepository, StockLineRepository,
+        mock::MockDataInserts,
+        schema::{InvoiceLineRow, StockLineRow},
+        InvoiceLineRowRepository, StockLineRowRepository,
     };
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -155,14 +156,14 @@ mod graphql {
                 .iter()
                 .filter_map(|invoice| invoice.stock_line_id.to_owned())
                 .collect();
-            StockLineRepository::new(&connection)
+            StockLineRowRepository::new(&connection)
                 .find_many_by_ids(&stock_line_ids)
                 .unwrap()
         };
         // calculates the expected stock line total for every invoice line row
         let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
             let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-            let expected_stock_line_totals: Vec<(StockLine, i32)> = stock_lines
+            let expected_stock_line_totals: Vec<(StockLineRow, i32)> = stock_lines
                 .into_iter()
                 .map(|line| {
                     let invoice_line = invoice_lines
@@ -176,7 +177,7 @@ mod graphql {
             expected_stock_line_totals
         };
         let assert_stock_line_totals =
-            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLine, i32)>| {
+            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, i32)>| {
                 let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
                 for line in stock_lines {
                     let expected = expected.iter().find(|l| l.0.id == line.id).unwrap();
@@ -185,7 +186,7 @@ mod graphql {
             };
 
         // test DRAFT to CONFIRMED
-        let invoice_lines = InvoiceLineRepository::new(&connection)
+        let invoice_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id("outbound_shipment_c")
             .unwrap();
         let expected_totals = expected_stock_line_totals(&invoice_lines);

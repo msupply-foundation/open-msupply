@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use domain::{inbound_shipment::UpdateInboundShipment, name::Name};
 use repository::{
-    InvoiceLineRepository, InvoiceRepository, RepositoryError, StockLineRepository,
+    InvoiceLineRowRepository, InvoiceRepository, RepositoryError, StockLineRowRepository,
     StorageConnectionManager, TransactionError,
 };
 
@@ -27,8 +27,8 @@ pub fn update_inbound_shipment(
             InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
 
             if let Some(lines_and_invoice_lines) = lines_and_invoice_lines_option {
-                let stock_line_repository = StockLineRepository::new(&connection);
-                let invoice_line_respository = InvoiceLineRepository::new(&connection);
+                let stock_line_repository = StockLineRowRepository::new(&connection);
+                let invoice_line_respository = InvoiceLineRowRepository::new(&connection);
 
                 for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
                     stock_line_repository.upsert_one(&stock_line)?;

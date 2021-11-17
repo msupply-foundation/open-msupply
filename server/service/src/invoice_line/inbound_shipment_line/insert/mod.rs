@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use domain::inbound_shipment::InsertInboundShipmentLine;
 use repository::{
-    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
 };
 
@@ -22,9 +22,9 @@ pub fn insert_inbound_shipment_line(
             let (new_line, new_batch_option) = generate(input, item, invoice, &connection)?;
 
             if let Some(new_batch) = new_batch_option {
-                StockLineRepository::new(&connection).upsert_one(&new_batch)?;
+                StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
             }
-            InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             Ok(new_line)
         })
         .map_err(
