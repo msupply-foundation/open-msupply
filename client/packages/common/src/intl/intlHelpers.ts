@@ -1,11 +1,10 @@
-import type { PrimitiveType } from 'intl-messageformat';
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
-import { TOptions } from 'i18next';
+import { i18n, TOptions } from 'i18next';
 import { useHostContext } from '../hooks';
 import { LocaleKey } from './locales';
 
 export type SupportedLocales = 'en' | 'fr' | 'ar';
-export type LocaleProps = Record<string, PrimitiveType>;
+export type LocaleProps = Record<string, unknown>;
 export interface TypedTFunction<Keys> {
   // basic usage
   (
@@ -46,6 +45,11 @@ export const useRtl = (): boolean => {
   const { language } = i18n;
   const isRtl = language === 'ar';
   return isRtl;
+};
+
+export const useI18N = (): i18n => {
+  const { i18n } = useTranslationNext();
+  return i18n;
 };
 
 /* removing this unused method breaks things */

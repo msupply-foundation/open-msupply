@@ -84,7 +84,21 @@ module.exports = env => {
         template: './public/index.html',
       }),
       new CopyPlugin({
-        patterns: [{ from: './public/config.js', to: 'config.js' }],
+        patterns: [
+          { from: './public/config.js', to: 'config.js' },
+          {
+            context: path.resolve(
+              __dirname,
+              '..',
+              'common',
+              'src',
+              'intl',
+              'locales'
+            ),
+            from: '**/*.json',
+            to: 'locales/',
+          },
+        ],
       }),
       // new ModuleFederationPlugin({
       //   name: 'host',
