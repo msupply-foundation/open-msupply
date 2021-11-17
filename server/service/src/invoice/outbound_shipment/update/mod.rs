@@ -1,6 +1,6 @@
 use domain::{name::Name, outbound_shipment::UpdateOutboundShipment};
 use repository::{
-    InvoiceRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
 };
 
@@ -22,7 +22,7 @@ pub fn update_outbound_shipment(
 
         InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
         if let Some(stock_lines) = stock_lines_option {
-            let repository = StockLineRepository::new(&connection);
+            let repository = StockLineRowRepository::new(&connection);
             for stock_line in stock_lines {
                 repository.upsert_one(&stock_line)?;
             }

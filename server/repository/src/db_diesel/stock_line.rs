@@ -3,8 +3,10 @@ use super::{DBType, StorageConnection};
 use crate::{
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
-        StockLineRow,
+        diesel_schema::{
+            location, location::dsl as location_dsl, stock_line, stock_line::dsl as stock_line_dsl,
+        },
+        LocationRow, StockLineRow,
     },
 };
 use domain::{
@@ -12,8 +14,12 @@ use domain::{
     Pagination,
 };
 
-use diesel::prelude::*;
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
+};
 
+type StockLineJoin = (StockLineRow, Option<LocationRow>);
 pub struct StockLineRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -23,64 +29,11 @@ impl<'a> StockLineRepository<'a> {
         StockLineRepository { connection }
     }
 
-    pub async fn insert_one(&self, stock_line_row: &StockLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(stock_line_dsl::stock_line)
-            .values(stock_line_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(stock_line_dsl::stock_line)
-            .values(row)
-            .on_conflict(stock_line_dsl::id)
-            .do_update()
-            .set(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    #[cfg(feature = "sqlite")]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(stock_line_dsl::stock_line)
-            .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    pub fn find_many_by_item_ids(
+    pub fn query_filter_only(
         &self,
-        item_ids: &[String],
+        filter: StockLineFilter,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        Ok(stock_line_dsl::stock_line
-            .filter(stock_line_dsl::item_id.eq_any(item_ids))
-            .load::<StockLineRow>(&self.connection.connection)?
-            .into_iter()
-            .map(StockLine::from)
-            .collect())
-    }
-
-    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLine>, RepositoryError> {
-        Ok(stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq_any(ids))
-            .load::<StockLineRow>(&self.connection.connection)?
-            .into_iter()
-            .map(StockLine::from)
-            .collect())
-    }
-
-    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
-        let result = stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq(stock_line_id))
-            .first(&self.connection.connection)?;
-        Ok(result)
+        self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
@@ -95,21 +48,33 @@ impl<'a> StockLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StockLineRow>(&self.connection.connection)?;
+            .load::<StockLineJoin>(&self.connection.connection)?;
 
-        Ok(result.into_iter().map(StockLine::from).collect())
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedInvoiceLineQuery = stock_line::BoxedQuery<'static, DBType>;
+type BoxedStockLineQuery = IntoBoxed<'static, LeftJoin<stock_line::table, location::table>, DBType>;
 
-fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedInvoiceLineQuery {
-    let mut query = stock_line::table.into_boxed();
+fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
+    let mut query = stock_line_dsl::stock_line
+        .left_join(location_dsl::location)
+        .into_boxed();
 
     if let Some(f) = filter {
         if let Some(value) = f.id {
             if let Some(eq) = value.equal_to {
                 query = query.filter(stock_line_dsl::id.eq(eq));
+            }
+
+            if let Some(eq) = value.equal_any {
+                query = query.filter(stock_line_dsl::id.eq_any(eq));
+            }
+        }
+
+        if let Some(value) = f.item_ids {
+            if let Some(eq) = value.equal_any {
+                query = query.filter(stock_line_dsl::item_id.eq_any(eq));
             }
         }
     }
@@ -117,8 +82,8 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedInvoiceLineQue
     query
 }
 
-impl From<StockLineRow> for StockLine {
-    fn from(
+fn to_domain(
+    (
         StockLineRow {
             id,
             item_id,
@@ -133,22 +98,24 @@ impl From<StockLineRow> for StockLine {
             expiry_date,
             on_hold,
             note,
-        }: StockLineRow,
-    ) -> Self {
-        StockLine {
-            id,
-            item_id,
-            store_id,
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-            on_hold,
-            note,
-        }
+        },
+        location_row_option,
+    ): StockLineJoin,
+) -> StockLine {
+    StockLine {
+        id,
+        item_id,
+        store_id,
+        location_id,
+        batch,
+        pack_size,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        available_number_of_packs,
+        total_number_of_packs,
+        expiry_date,
+        on_hold,
+        note,
+        location_name: location_row_option.map(|location_row| location_row.name),
     }
 }

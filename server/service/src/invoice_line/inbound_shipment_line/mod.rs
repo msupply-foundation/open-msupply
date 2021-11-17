@@ -5,7 +5,7 @@ pub mod update;
 use crate::{invoice::current_store_id, WithDBError};
 use repository::{
     schema::{InvoiceLineRow, StockLineRow},
-    RepositoryError, StockLineRepository, StorageConnection,
+    RepositoryError, StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -30,7 +30,7 @@ fn check_batch(
     connection: &StorageConnection,
 ) -> Result<(), WithDBError<BatchIsReserved>> {
     if let Some(batch_id) = &line.stock_line_id {
-        match StockLineRepository::new(connection).find_one_by_id(batch_id) {
+        match StockLineRowRepository::new(connection).find_one_by_id(batch_id) {
             Ok(batch) => return check_batch_stock_reserved(line, batch),
             Err(error) => return Err(WithDBError::db(error)),
         };
@@ -60,6 +60,7 @@ pub fn generate_batch(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
+        location_id,
         note,
         ..
     }: InvoiceLineRow,
@@ -76,6 +77,7 @@ pub fn generate_batch(
         id: stock_line_id,
         item_id,
         store_id: current_store_id(connection)?,
+        location_id,
         batch,
         pack_size,
         cost_price_per_pack,
