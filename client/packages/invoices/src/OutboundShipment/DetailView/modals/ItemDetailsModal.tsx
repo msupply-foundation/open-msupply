@@ -10,6 +10,7 @@ import {
   generateUUID,
   InlineSpinner,
   Box,
+  Slide,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { BatchesTable, sortByExpiry } from './BatchesTable';
@@ -27,6 +28,7 @@ interface ItemDetailsModalProps {
   onClose: () => void;
   upsertInvoiceLine: (invoiceLine: OutboundShipmentRow) => void;
   onChangeItem: (item: Item | null) => void;
+  onNext: () => void;
 }
 
 export const getInvoiceLine = (
@@ -186,15 +188,33 @@ const issueStock = (
   return newBatchRows;
 };
 
+enum Direction {
+  Left = 'left',
+  Right = 'right',
+  Up = 'up',
+  Down = 'down',
+}
+
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
   upsertInvoiceLine,
   onChangeItem,
   summaryItem,
+  onNext,
 }) => {
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register } = methods;
+
+  const [slide, setSlide] = useState({ in: true, direction: Direction.Right });
+
+  const onNextHandler = () => {
+    setSlide({ in: false, direction: Direction.Left });
+    setTimeout(() => {
+      setSlide({ in: true, direction: Direction.Right });
+    }, 500);
+    onNext();
+  };
 
   const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
   const packSizeController = usePackSizeController(batchRows);
@@ -316,9 +336,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   return (
     <Modal
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
-      nextButton={
-        <DialogButton variant="next" onClick={upsert} disabled={true} />
-      }
+      nextButton={<DialogButton variant="next" onClick={onNextHandler} />}
       okButton={
         <DialogButton
           variant="ok"
@@ -330,40 +348,42 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       width={900}
     >
       <FormProvider {...methods}>
-        <form>
-          <Grid container gap={0.5}>
-            <ItemDetailsForm
-              availableQuantity={sumAvailableQuantity(batchRows)}
-              packSizeController={packSizeController}
-              onChangeItem={onChangeItem}
-              onChangeQuantity={(newQuantity, newPackSize) =>
-                allocateQuantities(newQuantity, newPackSize)
-              }
-              register={register}
-              allocatedQuantity={getAllocatedQuantity(batchRows)}
-              summaryItem={summaryItem || undefined}
-            />
-            {!!summaryItem ? (
-              !isLoading ? (
-                <BatchesTable
-                  onChange={onChangeRowQuantity}
-                  register={register}
-                  rows={batchRows}
-                />
-              ) : (
-                <Box
-                  display="flex"
-                  flex={1}
-                  height={300}
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <InlineSpinner />
-                </Box>
-              )
-            ) : null}
-          </Grid>
-        </form>
+        <Slide in={slide.in} direction={slide.direction}>
+          <form>
+            <Grid container gap={0.5}>
+              <ItemDetailsForm
+                availableQuantity={sumAvailableQuantity(batchRows)}
+                packSizeController={packSizeController}
+                onChangeItem={onChangeItem}
+                onChangeQuantity={(newQuantity, newPackSize) =>
+                  allocateQuantities(newQuantity, newPackSize)
+                }
+                register={register}
+                allocatedQuantity={getAllocatedQuantity(batchRows)}
+                summaryItem={summaryItem || undefined}
+              />
+              {!!summaryItem ? (
+                !isLoading ? (
+                  <BatchesTable
+                    onChange={onChangeRowQuantity}
+                    register={register}
+                    rows={batchRows}
+                  />
+                ) : (
+                  <Box
+                    display="flex"
+                    flex={1}
+                    height={300}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <InlineSpinner />
+                  </Box>
+                )
+              ) : null}
+            </Grid>
+          </form>
+        </Slide>
       </FormProvider>
     </Modal>
   );

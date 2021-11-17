@@ -127,5 +127,6 @@
   "link.history": "History",
   "dev.log-draft": "Log draft",
   "label.allocate": "Allocate",
+  "label.allocate-to-packs": "Allocate to packs?",
   "placeholder.enter-a-customers-name": "Enter a customers name"
 }
