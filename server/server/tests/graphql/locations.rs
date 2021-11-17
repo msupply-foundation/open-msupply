@@ -58,6 +58,13 @@ mod graphql {
                   name
                   code
                   onHold
+                  stock {
+                      ... on StockLineConnector {
+                          nodes {
+                              id
+                          }
+                      }
+                  }
                 }
                 totalCount
               }
@@ -70,10 +77,17 @@ mod graphql {
               "locations": {
                   "nodes": [
                       {
-                          "id": "test_id",
+                          "id": "location_on_hold",
                           "name": "test_name",
                           "code": "test_code",
                           "onHold": true,
+                          "stock": {
+                              "nodes": [
+                                  {
+                                      "id": "stock_line_location_is_on_hold"
+                                  }
+                              ]
+                          }
                       },
                   ],
                   "totalCount": 1
@@ -85,7 +99,7 @@ mod graphql {
             Some(Box::new(TestService(|_, _, _| {
                 Ok(ListResult {
                     rows: vec![Location {
-                        id: "test_id".to_owned(),
+                        id: "location_on_hold".to_owned(),
                         name: "test_name".to_owned(),
                         code: "test_code".to_owned(),
                         on_hold: true,

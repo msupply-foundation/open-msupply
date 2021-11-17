@@ -1,10 +1,15 @@
 use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, Context};
 use domain::{
     location::{Location, LocationFilter},
     EqualFilter,
 };
 
-use super::{Connector, ConnectorError, EqualFilterStringInput, SortInput};
+use crate::{loader::StockLineByLocationIdLoader, ContextExt};
+
+use super::{
+    Connector, ConnectorError, EqualFilterStringInput, NodeError, SortInput, StockLinesResponse,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "domain::location::LocationSortField")]
@@ -54,12 +59,28 @@ impl LocationNode {
     pub async fn on_hold(&self) -> bool {
         self.location.on_hold
     }
+
+    pub async fn stock(&self, ctx: &Context<'_>) -> StockLinesResponse {
+        let loader = ctx.get_loader::<DataLoader<StockLineByLocationIdLoader>>();
+        match loader.load_one(self.location.id.clone()).await {
+            Ok(result_option) => {
+                StockLinesResponse::Response(result_option.unwrap_or(Vec::new()).into())
+            }
+            Err(error) => StockLinesResponse::Error(error.into()),
+        }
+    }
 }
 
 #[derive(Union)]
 pub enum LocationsResponse {
     Error(ConnectorError),
     Response(Connector<LocationNode>),
+}
+
+#[derive(Union)]
+pub enum LocationResponse {
+    Error(NodeError),
+    Response(LocationNode),
 }
 
 impl From<Location> for LocationNode {
