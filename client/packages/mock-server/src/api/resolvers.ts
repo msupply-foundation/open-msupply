@@ -138,17 +138,24 @@ export const ResolverService = {
 
       let filtered = resolved;
       if (filter) {
-        filtered = resolved.filter(({ otherPartyName }) => {
-          if (filter.otherPartyName?.equalTo) {
-            return otherPartyName === filter.otherPartyName.equalTo;
-          }
+        if (filter.type) {
+          filtered = filtered.filter(invoice => {
+            return invoice.type === filter.type?.equalTo;
+          });
+        }
+        if (filter.otherPartyName) {
+          filtered = resolved.filter(({ otherPartyName }) => {
+            if (filter.otherPartyName?.equalTo) {
+              return otherPartyName === filter.otherPartyName.equalTo;
+            }
 
-          if (filter.otherPartyName?.like) {
-            return otherPartyName.includes(filter.otherPartyName.like ?? '');
-          }
+            if (filter.otherPartyName?.like) {
+              return otherPartyName.includes(filter.otherPartyName.like ?? '');
+            }
 
-          return true;
-        });
+            return true;
+          });
+        }
       }
 
       const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
