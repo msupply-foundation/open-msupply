@@ -18,6 +18,7 @@ export const ReadOnlyInput: React.FC<ReadOnlyInputProps> = React.forwardRef<
       backgroundColor: 'transparent',
       width,
       textAlign: number ? 'right' : undefined,
+      color: 'inherit',
       ...style,
     }}
     ref={ref}

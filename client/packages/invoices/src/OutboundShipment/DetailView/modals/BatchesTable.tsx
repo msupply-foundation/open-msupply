@@ -76,7 +76,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
 
   // TODO format currency correctly
   return (
-    <TableRow>
+    <TableRow sx={{ color: isDisabled ? 'gray.main' : 'black' }}>
       <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
         <ModalNumericInput
@@ -97,7 +97,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
       <BasicCell
-        sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : undefined }}
+        sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : 'inherit' }}
       >
         {d(expiryDate)}
       </BasicCell>
@@ -166,7 +166,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
     {...props}
     sx={{
       borderBottomWidth: 0,
-      color: 'gray.dark',
+      color: 'inherit',
       fontSize: '12px',
       padding: '0 8px',
       whiteSpace: 'nowrap',
@@ -220,7 +220,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   return (
     <>
       <Divider margin={10} />
-      <TableContainer sx={{ height: 400 }}>
+      <TableContainer sx={{ height: 400, overflowX: 'hidden' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -238,7 +238,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <HeaderCell></HeaderCell>
             </TableRow>
           </TableHead>
-          <TableBody sx={{ overflow: 'scroll' }}>
+          <TableBody sx={{ overflowY: 'scroll' }}>
             {allocatableRows.map((batch, index) => (
               <BatchesRow
                 batch={batch}

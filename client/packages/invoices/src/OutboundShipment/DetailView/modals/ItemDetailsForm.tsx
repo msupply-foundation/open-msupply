@@ -53,7 +53,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <ModalLabel labelKey="label.item" />
         <Grid item flex={1}>
           <ItemSearchInput
-            currentItemCode={summaryItem?.itemCode}
+            currentItemName={summaryItem?.itemName}
             onChange={onChangeItem}
           />
         </Grid>
@@ -72,7 +72,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           <ModalInput
             disabled
             width={150}
-            defaultValue={summaryItem?.itemUnit ?? ''}
+            value={summaryItem?.itemUnit ?? ''}
           />
         </Grid>
       </ModalRow>
@@ -87,7 +87,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel labelKey="label.code" justifyContent="flex-end" />
           <ModalInput
-            defaultValue={summaryItem?.itemCode ?? ''}
+            value={summaryItem?.itemCode ?? ''}
             disabled
             width={150}
           />
@@ -107,7 +107,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
                 control={
                   <Switch defaultChecked color="secondary" size="small" />
                 }
-                label={<Box fontSize={10}>Allocate to Packs?</Box>}
+                label={<Box fontSize={10}>{t('label.allocate-to-packs')}</Box>}
                 value="packs"
               />
             </ModalRow>

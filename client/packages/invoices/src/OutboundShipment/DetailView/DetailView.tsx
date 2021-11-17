@@ -24,6 +24,7 @@ import { isInvoiceEditable } from '../utils';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
+import { useItemsList } from '@openmsupply-client/system';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -44,6 +45,9 @@ const useDraftOutbound = () => {
 
 export const DetailView: FC = () => {
   const { draft, onChangeSortBy, save, sortBy } = useDraftOutbound();
+  const { prefetchListByName } = useItemsList({
+    initialSortBy: { key: 'name' },
+  });
 
   const [selectedItem, setSelectedItem] =
     React.useState<OutboundShipmentSummaryItem | null>(null);
@@ -52,6 +56,26 @@ export const DetailView: FC = () => {
   const onRowClick = (item: OutboundShipmentSummaryItem) => {
     setSelectedItem(item);
     itemModalControl.toggle();
+  };
+
+  const findNextItem = (currentItem: OutboundShipmentSummaryItem | null) => {
+    if (!currentItem) return null;
+    const currentItemIdx = draft.items.findIndex(
+      item => item.id === currentItem?.id
+    );
+
+    return draft.items[(currentItemIdx + 1) % draft.items.length];
+  };
+
+  const onNext = () => {
+    const nextItem = findNextItem(selectedItem);
+
+    if (nextItem) {
+      setSelectedItem(nextItem);
+
+      const toPrefetch = findNextItem(nextItem);
+      if (toPrefetch) prefetchListByName(toPrefetch.itemName);
+    }
   };
 
   const columns = useColumns(
@@ -99,6 +123,7 @@ export const DetailView: FC = () => {
       />
 
       <ItemDetailsModal
+        onNext={onNext}
         summaryItem={selectedItem}
         isOpen={itemModalControl.isOn}
         onClose={itemModalControl.toggleOff}
