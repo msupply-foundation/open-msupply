@@ -1,6 +1,6 @@
 use super::{EqualFilter, Sort};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Location {
     pub id: String,
     pub name: String,

@@ -80,6 +80,13 @@ impl<'a> LocationRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
+    pub fn query_filter_only(
+        &self,
+        filter: LocationFilter,
+    ) -> Result<Vec<Location>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
+    }
+
     pub fn query(
         &self,
         pagination: Pagination,
