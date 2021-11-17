@@ -4,7 +4,7 @@ import {
   Menu,
   MenuItem,
   TranslateIcon,
-  useHostContext,
+  useI18N,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { useNavigate } from 'react-router';
@@ -26,16 +26,16 @@ export const LanguageMenu: React.FC = () => {
     navigate(0);
   };
 
-  const { locale, setLocale } = useHostContext();
+  const i18n = useI18N();
   const setLanguage = (language: SupportedLocales) => {
-    setLocale(language);
+    i18n.changeLanguage(language);
     handleClose();
   };
 
   const LanguageMenuItem = React.forwardRef(
     (props: LanguageMenuItemProps, ref: React.ForwardedRef<HTMLLIElement>) => {
       const { children, language } = props;
-      const selected = language === locale;
+      const selected = language === i18n.language;
       return (
         <MenuItem
           selected={selected}
@@ -64,7 +64,6 @@ export const LanguageMenu: React.FC = () => {
       >
         <LanguageMenuItem language="en">English</LanguageMenuItem>
         <LanguageMenuItem language="fr">French</LanguageMenuItem>
-        <LanguageMenuItem language="pt">Portuguese</LanguageMenuItem>
         <LanguageMenuItem language="ar">Arabic</LanguageMenuItem>
       </Menu>
     </div>

@@ -1,10 +1,6 @@
 import React, { FC, useEffect } from 'react';
-import {
-  I18nextProvider,
-  initReactI18next,
-  useTranslation,
-} from 'react-i18next';
-import { SupportedLocales } from './intlHelpers';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { SupportedLocales, useI18N } from './intlHelpers';
 import { resources } from './locales';
 
 interface IntlTestProviderProps {
@@ -15,7 +11,7 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
   children,
   locale,
 }) => {
-  const { i18n } = useTranslation();
+  const i18n = useI18N();
 
   useEffect(() => {
     i18n.changeLanguage(locale);
