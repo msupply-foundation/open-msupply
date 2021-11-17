@@ -1,5 +1,7 @@
 import { FormatNumberOptions, useIntl } from 'react-intl';
 import type { PrimitiveType } from 'intl-messageformat';
+import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
+import { TFunctionResult, TOptions } from 'i18next';
 
 // "import type" ensures en messages aren't bundled by default
 import * as sourceOfTruth from './locales/en/common.json';
@@ -10,7 +12,28 @@ export type LocaleMessages = typeof sourceOfTruth;
 export type LocaleKey = keyof LocaleMessages;
 export type LocaleProps = Record<string, PrimitiveType>;
 
-export const useTranslation = (): ((
+// export type LocaleProps = TOptions<Record<string, unknown>> | string;
+// export { LocaleKey };
+export interface TypedTFunction<Keys> {
+  // basic usage
+  <TKeys extends Keys, TResult extends TFunctionResult = string>(
+    key: TKeys | TKeys[],
+    options?: TOptions<Record<string, unknown>> | string
+  ): TResult;
+  // overloaded usage
+  <TKeys extends Keys, TResult extends TFunctionResult = string>(
+    key: TKeys | TKeys[],
+    defaultValue?: string,
+    options?: TOptions<Record<string, unknown>> | string
+  ): TResult;
+}
+
+export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
+  const { t } = useTranslationNext(ns);
+  return (key, options) => (key ? t(key, options) : '');
+};
+
+export const useTranslationPrevious = (): ((
   id?: LocaleKey, // only accepts valid keys, not any string
   values?: LocaleProps
 ) => string) => {
