@@ -19,6 +19,9 @@ pub use self::item::*;
 pub mod stock_line;
 pub use self::stock_line::*;
 
+pub mod location;
+pub use self::location::*;
+
 pub mod invoice_query;
 pub use self::invoice_query::*;
 
@@ -37,6 +40,7 @@ use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 #[graphql(concrete(name = "InvoiceConnector", params(InvoiceNode)))]
 #[graphql(concrete(name = "InvoiceLineConnector", params(InvoiceLineNode)))]
 #[graphql(concrete(name = "StockLineConnector", params(StockLineNode)))]
+#[graphql(concrete(name = "LocationConnector", params(LocationNode)))]
 pub struct Connector<T: OutputType> {
     total_count: u32,
     nodes: Vec<T>,
