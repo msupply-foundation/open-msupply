@@ -30,9 +30,12 @@ pub fn validate(
     let item = check_item(&input.item_id, connection)?;
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
+
+    // InvoiceDoesNotBelongToCurrentStore
+    // StockLineDoesNotBelongToCurrentStore
+    // LocationDoesNotBelongToCurrentStore
 
     Ok((item, invoice))
 }
