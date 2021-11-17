@@ -197,6 +197,20 @@ mod graphql {
             })
         );
 
+        // Test LocationIsOnHold
+
+        let mut variables = base_variables.clone();
+        variables.stock_line_id = "stock_line_location_is_on_hold".to_string();
+
+        let query = Insert::build_query(variables);
+        let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+        assert_error!(
+            response,
+            LocationIsOnHold(insert::LocationIsOnHold {
+                description: "Cannot issue from on hold location".to_string(),
+            })
+        );
+
         // Test RangeError NumberOfPacks
 
         let mut variables = base_variables.clone();
@@ -351,6 +365,7 @@ mod graphql {
                 total_number_of_packs: _,
                 on_hold: _,
                 note,
+                location_id,
             } = self;
 
             let line = &other.0;
@@ -362,6 +377,7 @@ mod graphql {
                 && *cost_price_per_pack == line.cost_price_per_pack
                 && *sell_price_per_pack == line.sell_price_per_pack
                 && *note == line.note
+                && *location_id == line.location_id
             //    && *expiry_date == line.expiry_date
             // TODO test fails if expiry_date in stock_line is None
             // for some reason expiry_date is not set to None (NULL) in postgres
