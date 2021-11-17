@@ -42,19 +42,6 @@ export const useTranslationPrevious = (): ((
     id ? intl.formatMessage({ id: id as string }, values) : '';
 };
 
-export const useTranslationWithFallback = (): ((
-  id: LocaleKey, // only accepts valid keys, not any string
-  fallback: string,
-  values?: Record<string, PrimitiveType>
-) => string) => {
-  const intl = useIntl();
-  return (id, fallback, values) => {
-    if (!id) return '';
-    if (Object.keys(intl.messages).every(key => id !== key)) return fallback;
-    return intl.formatMessage({ id: id as string }, values);
-  };
-};
-
 export const useFormatDate = (): ((
   value: number | Date,
   options?: Intl.DateTimeFormatOptions & { format?: string }
