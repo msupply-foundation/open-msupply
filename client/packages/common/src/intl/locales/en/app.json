@@ -1,0 +1,23 @@
+{
+  "intl.currency": "{{val, currency(NZD}}",
+  "intl.datetime": "{{val, datetime}}",
+  "intl.number": "{{val, number}}",
+  "app.admin": "Admin",
+  "app.catalogue": "Catalogue",
+  "app.customer-requisition": "Requisitions",
+  "app.customers": "Customers",
+  "app.dashboard": "Dashboard",
+  "app.distribution": "Distribution",
+  "app.inbound-shipments": "Inbound Shipments",
+  "app.items": "Items",
+  "app.loading": "Loading...",
+  "app.logout": "Logout",
+  "app.messages": "Messages",
+  "app.outbound-shipment": "Outbound Shipment",
+  "app.outbound-shipments": "Outbound Shipments",
+  "app.reports": "Reports",
+  "app.stock": "Stock",
+  "app.suppliers": "Suppliers",
+  "app.sync": "Sync",
+  "app.tools": "Tools"
+}
