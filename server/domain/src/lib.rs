@@ -2,6 +2,7 @@ pub mod inbound_shipment;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
+pub mod location;
 pub mod name;
 pub mod outbound_shipment;
 pub mod stock_line;
@@ -13,7 +14,7 @@ pub struct SimpleStringFilter {
     pub equal_to: Option<String>,
     pub like: Option<String>,
 }
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
@@ -34,6 +35,7 @@ impl DatetimeFilter {
         }
     }
 }
+#[derive(PartialEq, Debug)]
 pub struct Sort<T> {
     pub key: T,
     pub desc: Option<bool>,
@@ -41,6 +43,7 @@ pub struct Sort<T> {
 
 pub const DEFAULT_LIMIT: u32 = 100;
 
+#[derive(Debug, PartialEq)]
 pub struct PaginationOption {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
