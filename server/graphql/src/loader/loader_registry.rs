@@ -10,8 +10,8 @@ use repository::StorageConnectionManager;
 use async_graphql::dataloader::DataLoader;
 
 use super::{
-    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceLineStatsLoader, StockLineByIdLoader,
-    StockLineByItemIdLoader,
+    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceLineStatsLoader, LocationByIdLoader,
+    StockLineByIdLoader, StockLineByItemIdLoader, StockLineByLocationIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -69,6 +69,10 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
         connection_manager: connection_manager.clone(),
     });
 
+    let stock_line_by_location_id_loader = DataLoader::new(StockLineByLocationIdLoader {
+        connection_manager: connection_manager.clone(),
+    });
+
     let stock_line_by_id_loader = DataLoader::new(StockLineByIdLoader {
         connection_manager: connection_manager.clone(),
     });
@@ -78,6 +82,10 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     });
 
     let name_by_id_loader = DataLoader::new(NameByIdLoader {
+        connection_manager: connection_manager.clone(),
+    });
+
+    let location_by_id_loader = DataLoader::new(LocationByIdLoader {
         connection_manager: connection_manager.clone(),
     });
 
@@ -91,8 +99,10 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
     loaders.insert(stock_line_by_item_id_loader);
+    loaders.insert(stock_line_by_location_id_loader);
     loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);
+    loaders.insert(location_by_id_loader);
 
     loaders
 }
