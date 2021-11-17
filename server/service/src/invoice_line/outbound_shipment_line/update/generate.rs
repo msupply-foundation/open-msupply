@@ -93,6 +93,7 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        location_id,
         note,
         ..
     }: StockLineRow,
@@ -101,6 +102,7 @@ fn generate_line(
         id,
         invoice_id,
         item_id,
+        location_id,
         pack_size,
         batch,
         expiry_date,
