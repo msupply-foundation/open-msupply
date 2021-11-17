@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import DialogTitle from '@mui/material/DialogTitle';
-import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../intl';
 
 interface ModalTitleProps {
   title: LocaleKey;

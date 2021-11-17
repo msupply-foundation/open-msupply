@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, CircularProgress, Paper, Typography } from '@mui/material';
-import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../../intl';
 
 const Loading = () => (
   <Box display="flex" flex={1} justifyContent="center" alignItems="center">
