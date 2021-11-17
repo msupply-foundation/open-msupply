@@ -42,48 +42,48 @@ export const useTranslationPrevious = (): ((
     id ? intl.formatMessage({ id: id as string }, values) : '';
 };
 
-export const useFormatDate = (): ((
+export const useFormatDatePrevious = (): ((
   value: number | Date,
   options?: Intl.DateTimeFormatOptions & { format?: string }
 ) => string) => {
   const intl = useIntl();
   return (value, options) => intl.formatDate(value, options);
 };
-export const useFormatNumber = (): ((
+export const useFormatNumberPrevious = (): ((
   value: number | bigint,
   options?: FormatNumberOptions
 ) => string) => {
   const intl = useIntl();
   return (value, options) => intl.formatNumber(value, options);
 };
-export const useRtl = (): boolean => {
+export const useRtlPrevious = (): boolean => {
   const { locale } = useHostContext();
   const isRtl = locale === 'ar';
   return isRtl;
 };
 
-// return type on this signature enforces that all languages have the same translations defined
-export const importMessages = (
-  locale: SupportedLocales
-): Promise<LocaleMessages> => {
-  switch (locale) {
-    case 'en':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "en_json" */
-        './locales/en/common.json'
-      );
-    case 'fr':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "fr_json" */
-        './locales/en/common.json'
-      );
-    case 'ar':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "ab_json" */
-        './locales/en/common.json'
-      );
-  }
-};
+// // return type on this signature enforces that all languages have the same translations defined
+// export const importMessages = (
+//   locale: SupportedLocales
+// ): Promise<LocaleMessages> => {
+//   switch (locale) {
+//     case 'en':
+//       return import(
+//         /* webpackMode: "lazy", webpackChunkName: "en_json" */
+//         './locales/en/common.json'
+//       );
+//     case 'fr':
+//       return import(
+//         /* webpackMode: "lazy", webpackChunkName: "fr_json" */
+//         './locales/en/common.json'
+//       );
+//     case 'ar':
+//       return import(
+//         /* webpackMode: "lazy", webpackChunkName: "ab_json" */
+//         './locales/en/common.json'
+//       );
+//   }
+// };
 
 // import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
 // import { i18n, TFunctionResult, TOptions } from 'i18next';
@@ -130,25 +130,25 @@ export const importMessages = (
 // //   };
 // // };
 
-// export const useFormatDate = (): ((
-//   value: number | Date,
-//   options?: Intl.DateTimeFormatOptions & { format?: string }
-// ) => string) => {
-//   const { t } = useTranslationNext();
-//   return (val, formatParams) => t('intl.datetime', { val, formatParams });
-// };
+export const useFormatDate = (): ((
+  value: number | Date,
+  options?: Intl.DateTimeFormatOptions & { format?: string }
+) => string) => {
+  const { t } = useTranslationNext();
+  return (val, formatParams) => t('intl.datetime', { val, formatParams });
+};
 
-// export const useFormatNumber = (): ((
-//   value: number | bigint,
-//   options?: Intl.NumberFormatOptions
-// ) => string) => {
-//   const { t } = useTranslationNext();
-//   return (val, formatParams) => t('intl.number', { val, formatParams });
-// };
+export const useFormatNumber = (): ((
+  value: number | bigint,
+  options?: Intl.NumberFormatOptions
+) => string) => {
+  const { t } = useTranslationNext();
+  return (val, formatParams) => t('intl.number', { val, formatParams });
+};
 
-// export const useRtl = (): boolean => {
-//   const { i18n } = useTranslationNext();
-//   const { language } = i18n;
-//   const isRtl = language === 'ar';
-//   return isRtl;
-// };
+export const useRtl = (): boolean => {
+  const { i18n } = useTranslationNext();
+  const { language } = i18n;
+  const isRtl = language === 'ar';
+  return isRtl;
+};

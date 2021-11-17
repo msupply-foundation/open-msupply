@@ -5,34 +5,35 @@ import LocalStorageBackend from 'i18next-localstorage-backend';
 import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import { IntlProvider as ReactIntlProvider } from 'react-intl';
-import {
-  LocaleMessages,
-  SupportedLocales,
-  importMessages,
-} from './intlHelpers';
-export const IntlProvider: React.FC<
-  Omit<React.ComponentProps<typeof ReactIntlProvider>, 'messages'> & {
-    messages?: LocaleMessages;
-  }
-> = props => {
-  const { locale } = props;
-  const [messages, setMessages] = React.useState<Record<string, string> | null>(
-    null
-  );
-  React.useEffect(() => {
-    importMessages(locale as SupportedLocales).then(setMessages);
-  }, [locale]);
+// import { IntlProvider as ReactIntlProvider } from 'react-intl';
+// import {
+//   LocaleMessages,
+//   SupportedLocales,
+//   importMessages,
+// } from './intlHelpers';
 
-  // to ensure local date formatting, use the full locale otherwise 'en' === 'en-US'
-  const re = new RegExp(`^${locale}-[A-Z]+$`);
-  const intlLocale = re.test(navigator.language) ? navigator.language : locale;
-  return messages ? (
-    <ReactIntlProvider locale={intlLocale} messages={messages} key={locale}>
-      {props.children}
-    </ReactIntlProvider>
-  ) : null;
-};
+// export const IntlProvider: React.FC<
+//   Omit<React.ComponentProps<typeof ReactIntlProvider>, 'messages'> & {
+//     messages?: LocaleMessages;
+//   }
+// > = props => {
+//   const { locale } = props;
+//   const [messages, setMessages] = React.useState<Record<string, string> | null>(
+//     null
+//   );
+//   React.useEffect(() => {
+//     importMessages(locale as SupportedLocales).then(setMessages);
+//   }, [locale]);
+
+//   // to ensure local date formatting, use the full locale otherwise 'en' === 'en-US'
+//   const re = new RegExp(`^${locale}-[A-Z]+$`);
+//   const intlLocale = re.test(navigator.language) ? navigator.language : locale;
+//   return messages ? (
+//     <ReactIntlProvider locale={intlLocale} messages={messages} key={locale}>
+//       {props.children}
+//     </ReactIntlProvider>
+//   ) : null;
+// };
 
 const defaultNS = 'app';
 export const IntlProviderNext: React.FC = ({ children }) => {
