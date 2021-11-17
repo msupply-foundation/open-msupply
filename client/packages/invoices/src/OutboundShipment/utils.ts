@@ -1,4 +1,4 @@
-import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
+import { LocaleKey } from '@openmsupply-client/common/src/intl';
 import { OutboundShipmentStatus } from '@openmsupply-client/common';
 import {
   OutboundShipment,
