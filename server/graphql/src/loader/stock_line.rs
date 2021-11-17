@@ -5,6 +5,39 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
+pub struct StockLineByLocationIdLoader {
+    pub connection_manager: StorageConnectionManager,
+}
+
+#[async_trait::async_trait]
+impl Loader<String> for StockLineByLocationIdLoader {
+    type Value = Vec<StockLine>;
+    type Error = RepositoryError;
+
+    async fn load(
+        &self,
+        location_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let connection = self.connection_manager.connection()?;
+        let repo = StockLineRepository::new(&connection);
+
+        let result = repo.query_filter_only(
+            StockLineFilter::new().match_location_ids(location_ids.to_owned()),
+        )?;
+
+        let mut result_map = HashMap::new();
+        for stock_line in result {
+            if let Some(location_id) = &stock_line.location_id {
+                result_map
+                    .entry(location_id.clone())
+                    .or_insert(Vec::new())
+                    .push(stock_line);
+            }
+        }
+        Ok(result_map)
+    }
+}
+
 pub struct StockLineByItemIdLoader {
     pub connection_manager: StorageConnectionManager,
 }

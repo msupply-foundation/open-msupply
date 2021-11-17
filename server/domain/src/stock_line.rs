@@ -19,10 +19,11 @@ pub struct StockLine {
     pub on_hold: bool,
     pub note: Option<String>,
 }
-
+#[derive(Debug)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_ids: Option<EqualFilter<String>>,
+    pub location_id: Option<EqualFilter<String>>,
 }
 
 impl StockLineFilter {
@@ -30,6 +31,7 @@ impl StockLineFilter {
         StockLineFilter {
             id: None,
             item_ids: None,
+            location_id: None,
         }
     }
 
@@ -53,6 +55,15 @@ impl StockLineFilter {
 
     pub fn match_item_ids(mut self, ids: Vec<String>) -> Self {
         self.item_ids = Some(EqualFilter {
+            equal_to: None,
+            equal_any: Some(ids),
+        });
+
+        self
+    }
+
+    pub fn match_location_ids(mut self, ids: Vec<String>) -> Self {
+        self.location_id = Some(EqualFilter {
             equal_to: None,
             equal_any: Some(ids),
         });
