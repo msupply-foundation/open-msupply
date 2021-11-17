@@ -49,12 +49,14 @@ export const DetailView: FC = () => {
     initialSortBy: { key: 'name' },
   });
 
-  const [selectedItem, setSelectedItem] =
-    React.useState<OutboundShipmentSummaryItem | null>(null);
+  const [selectedItem, setSelectedItem] = React.useState<{
+    item: OutboundShipmentSummaryItem | null;
+    editing: boolean;
+  }>({ item: null, editing: false });
   const itemModalControl = useToggle();
 
   const onRowClick = (item: OutboundShipmentSummaryItem) => {
-    setSelectedItem(item);
+    setSelectedItem({ item, editing: true });
     itemModalControl.toggle();
   };
 
@@ -68,13 +70,17 @@ export const DetailView: FC = () => {
   };
 
   const onNext = () => {
-    const nextItem = findNextItem(selectedItem);
+    if (selectedItem.editing) {
+      const nextItem = findNextItem(selectedItem?.item);
 
-    if (nextItem) {
-      setSelectedItem(nextItem);
+      if (nextItem) {
+        setSelectedItem({ item: nextItem, editing: true });
 
-      const toPrefetch = findNextItem(nextItem);
-      if (toPrefetch) prefetchListByName(toPrefetch.itemName);
+        const toPrefetch = findNextItem(nextItem);
+        if (toPrefetch) prefetchListByName(toPrefetch.itemName);
+      }
+    } else {
+      setSelectedItem({ item: null, editing: false });
     }
   };
 
@@ -99,7 +105,7 @@ export const DetailView: FC = () => {
   );
 
   const onChangeSelectedItem = (newItem: Item | null) => {
-    if (!newItem) return setSelectedItem(newItem);
+    if (!newItem) return setSelectedItem({ item: newItem, editing: false });
 
     // Try and find the outbound summary row that matches the new item
     const item = draft.items.find(
@@ -108,10 +114,10 @@ export const DetailView: FC = () => {
 
     // If we found it, set the selected item.
     if (item) {
-      setSelectedItem(item);
+      setSelectedItem({ item, editing: true });
     } else {
       // otherwise, set the selected item to a newly created summary row.
-      setSelectedItem(itemToSummaryItem(newItem));
+      setSelectedItem({ item: itemToSummaryItem(newItem), editing: false });
     }
   };
 
@@ -123,8 +129,9 @@ export const DetailView: FC = () => {
       />
 
       <ItemDetailsModal
+        isEditMode={selectedItem.editing}
         onNext={onNext}
-        summaryItem={selectedItem}
+        summaryItem={selectedItem?.item}
         isOpen={itemModalControl.isOn}
         onClose={itemModalControl.toggleOff}
         onChangeItem={onChangeSelectedItem}

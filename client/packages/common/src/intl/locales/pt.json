@@ -128,5 +128,6 @@
   "label.allocate": "Allocate",
   "label.units": "Units",
   "label.allocate-to-packs": "Allocate to packs?",
+  "heading.edit-item": "Edit Item",
   "placeholder.enter-a-customers-name": "Enter a customers name"
 }

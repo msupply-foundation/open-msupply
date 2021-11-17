@@ -18,10 +18,10 @@ export interface ModalProps {
   nextButton?: JSX.Element;
   okButton?: JSX.Element;
   width?: number;
+  title: LocaleKey;
 }
 export interface DialogProps {
   onClose?: () => void;
-  title: LocaleKey;
 }
 
 interface DialogState {
@@ -31,8 +31,8 @@ interface DialogState {
   showDialog: () => void;
 }
 
-export const useDialog = (dialogProps: DialogProps): DialogState => {
-  const { onClose, title } = dialogProps;
+export const useDialog = (dialogProps?: DialogProps): DialogState => {
+  const { onClose } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
@@ -49,6 +49,7 @@ export const useDialog = (dialogProps: DialogProps): DialogState => {
     nextButton,
     okButton,
     width,
+    title,
   }) => (
     <BasicModal open={open} onClose={handleClose} width={width} height={height}>
       <ModalTitle title={title} />
