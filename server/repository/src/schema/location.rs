@@ -4,7 +4,8 @@ use super::diesel_schema::location;
 #[table_name = "location"]
 pub struct LocationRow {
     pub id: String,
-    pub code: String,
     pub name: String,
+    pub code: String,
     pub on_hold: bool,
+    pub store_id: String,
 }
