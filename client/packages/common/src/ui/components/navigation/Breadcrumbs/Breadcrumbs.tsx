@@ -3,11 +3,7 @@ import { styled } from '@mui/system';
 import { Typography } from '@mui/material';
 import { useLocation, Link } from 'react-router-dom';
 
-import {
-  LocaleKey,
-  useTranslation,
-  useTranslationWithFallback,
-} from '../../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
 
 interface UrlPart {
   path: string;
@@ -23,7 +19,6 @@ const Breadcrumb = styled(Link)({
 
 export const Breadcrumbs: React.FC = () => {
   const t = useTranslation();
-  const tf = useTranslationWithFallback();
   const location = useLocation();
   const [urlParts, setUrlParts] = useState<UrlPart[]>([]);
 
@@ -34,7 +29,11 @@ export const Breadcrumbs: React.FC = () => {
     parts.reduce((fullPath, part) => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
-      urlParts.push({ path, key: `app.${part}` as LocaleKey, value: part });
+      urlParts.push({
+        path,
+        key: `app.${part}` as unknown as LocaleKey,
+        value: part,
+      });
       return path;
     }, '');
     setUrlParts(urlParts);
@@ -44,7 +43,7 @@ export const Breadcrumbs: React.FC = () => {
     if (index === urlParts.length - 1) {
       const title = /^\d+$/.test(part.value)
         ? t('breadcrumb.item', { id: part.value })
-        : tf(part.key, '');
+        : t(part.key, '');
 
       return <span key={part.key}>{title}</span>;
     }
