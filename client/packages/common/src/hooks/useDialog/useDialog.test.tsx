@@ -7,13 +7,12 @@ import { DialogButton } from '../../ui/components/buttons';
 
 describe('useDialog', () => {
   const DialogExample: React.FC = () => {
-    const { hideDialog, Modal, showDialog } = useDialog({
-      title: 'heading.add-item',
-    });
+    const { hideDialog, Modal, showDialog } = useDialog();
 
     return (
       <div>
         <Modal
+          title="heading.add-item"
           cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         >
           <div>dialog body context</div>

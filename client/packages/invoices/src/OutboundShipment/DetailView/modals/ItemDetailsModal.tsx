@@ -29,6 +29,7 @@ interface ItemDetailsModalProps {
   upsertInvoiceLine: (invoiceLine: OutboundShipmentRow) => void;
   onChangeItem: (item: Item | null) => void;
   onNext: () => void;
+  isEditMode: boolean;
 }
 
 export const getInvoiceLine = (
@@ -202,6 +203,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   onChangeItem,
   summaryItem,
   onNext,
+  isEditMode,
 }) => {
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register } = methods;
@@ -220,7 +222,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const packSizeController = usePackSizeController(batchRows);
 
   const { hideDialog, showDialog, Modal } = useDialog({
-    title: 'heading.add-item',
     onClose,
   });
 
@@ -335,8 +336,15 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   return (
     <Modal
+      title={isEditMode ? 'heading.edit-item' : 'heading.add-item'}
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
-      nextButton={<DialogButton variant="next" onClick={onNextHandler} />}
+      nextButton={
+        <DialogButton
+          disabled={isEditMode ? false : getAllocatedQuantity(batchRows) <= 0}
+          variant="next"
+          onClick={onNextHandler}
+        />
+      }
       okButton={
         <DialogButton
           variant="ok"

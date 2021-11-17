@@ -128,5 +128,6 @@
   "label.allocate": "Allocate",
   "label.units": "Units",
   "label.allocate-to-packs": "Allocate to packs?",
+  "heading.edit-item": "Edit Item",
   "dev.log-draft": "Log draft"
 }
