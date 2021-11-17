@@ -24,6 +24,7 @@ import { isInvoiceEditable } from '../utils';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
+import { useItemsList } from '@openmsupply-client/system';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -44,14 +45,43 @@ const useDraftOutbound = () => {
 
 export const DetailView: FC = () => {
   const { draft, onChangeSortBy, save, sortBy } = useDraftOutbound();
+  const { prefetchListByName } = useItemsList({
+    initialSortBy: { key: 'name' },
+  });
 
-  const [selectedItem, setSelectedItem] =
-    React.useState<OutboundShipmentSummaryItem | null>(null);
+  const [selectedItem, setSelectedItem] = React.useState<{
+    item: OutboundShipmentSummaryItem | null;
+    editing: boolean;
+  }>({ item: null, editing: false });
   const itemModalControl = useToggle();
 
   const onRowClick = (item: OutboundShipmentSummaryItem) => {
-    setSelectedItem(item);
+    setSelectedItem({ item, editing: true });
     itemModalControl.toggle();
+  };
+
+  const findNextItem = (currentItem: OutboundShipmentSummaryItem | null) => {
+    if (!currentItem) return null;
+    const currentItemIdx = draft.items.findIndex(
+      item => item.id === currentItem?.id
+    );
+
+    return draft.items[(currentItemIdx + 1) % draft.items.length];
+  };
+
+  const onNext = () => {
+    if (selectedItem.editing) {
+      const nextItem = findNextItem(selectedItem?.item);
+
+      if (nextItem) {
+        setSelectedItem({ item: nextItem, editing: true });
+
+        const toPrefetch = findNextItem(nextItem);
+        if (toPrefetch) prefetchListByName(toPrefetch.itemName);
+      }
+    } else {
+      setSelectedItem({ item: null, editing: false });
+    }
   };
 
   const columns = useColumns(
@@ -75,7 +105,7 @@ export const DetailView: FC = () => {
   );
 
   const onChangeSelectedItem = (newItem: Item | null) => {
-    if (!newItem) return setSelectedItem(newItem);
+    if (!newItem) return setSelectedItem({ item: newItem, editing: false });
 
     // Try and find the outbound summary row that matches the new item
     const item = draft.items.find(
@@ -84,10 +114,10 @@ export const DetailView: FC = () => {
 
     // If we found it, set the selected item.
     if (item) {
-      setSelectedItem(item);
+      setSelectedItem({ item, editing: true });
     } else {
       // otherwise, set the selected item to a newly created summary row.
-      setSelectedItem(itemToSummaryItem(newItem));
+      setSelectedItem({ item: itemToSummaryItem(newItem), editing: false });
     }
   };
 
@@ -99,7 +129,9 @@ export const DetailView: FC = () => {
       />
 
       <ItemDetailsModal
-        summaryItem={selectedItem}
+        isEditMode={selectedItem.editing}
+        onNext={onNext}
+        summaryItem={selectedItem?.item}
         isOpen={itemModalControl.isOn}
         onClose={itemModalControl.toggleOff}
         onChangeItem={onChangeSelectedItem}

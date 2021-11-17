@@ -18,7 +18,7 @@ export interface OutboundShipmentRow extends InvoiceLine {
   isCreated?: boolean;
 }
 export interface BatchRow extends StockLine {
-  quantity: number;
+  numberOfPacks: number;
 }
 
 export interface InvoiceStatusLog {
