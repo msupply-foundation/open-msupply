@@ -1,10 +1,6 @@
 import React from 'react';
 import { ButtonProps, Tooltip } from '@mui/material';
-import {
-  LocaleKey,
-  LocaleProps,
-  useTranslation,
-} from '../../../../intl/intlHelpers';
+import { LocaleKey, LocaleProps, useTranslation } from '../../../../intl';
 import { ShrinkableBaseButton } from './ShrinkableBaseButton';
 import { useIsScreen } from '../../../../hooks/useIsScreen';
 

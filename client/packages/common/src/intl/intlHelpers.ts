@@ -1,28 +1,23 @@
 import type { PrimitiveType } from 'intl-messageformat';
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
-import { TFunctionResult, TOptions } from 'i18next';
-
-// "import type" ensures en messages aren't bundled by default
-// import * as sourceOfTruth from './locales/en/common.json';
+import { TOptions } from 'i18next';
 import { useHostContext } from '../hooks';
 import { LocaleKey } from './locales';
+
 export type SupportedLocales = 'en' | 'fr' | 'ar';
-// export type LocaleMessages = typeof sourceOfTruth;
-// export type LocaleKey = keyof LocaleMessages;
 export type LocaleProps = Record<string, PrimitiveType>;
-// export { LocaleKey };
 export interface TypedTFunction<Keys> {
   // basic usage
-  <TKeys extends Keys, TResult extends TFunctionResult = string>(
-    key: TKeys | TKeys[],
+  (
+    key?: Keys | Keys[],
     options?: TOptions<Record<string, unknown>> | string
-  ): TResult;
+  ): string;
   // overloaded usage
-  <TKeys extends Keys, TResult extends TFunctionResult = string>(
-    key: TKeys | TKeys[],
+  (
+    key?: Keys | Keys[],
     defaultValue?: string,
     options?: TOptions<Record<string, unknown>> | string
-  ): TResult;
+  ): string;
 }
 
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
