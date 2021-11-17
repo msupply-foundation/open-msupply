@@ -39,7 +39,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
     filter,
     invalidate,
   } = useListData(
-    { initialSortBy: { key: 'otherPartyName' } },
+    {
+      initialSortBy: { key: 'otherPartyName' },
+      initialFilterBy: { type: { equalTo: 'OUTBOUND_SHIPMENT' } },
+    },
     'invoice',
     getOutboundShipmentListViewApi(api)
   );

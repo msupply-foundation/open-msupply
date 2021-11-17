@@ -44,7 +44,13 @@ export const takeRandomPercentageFrom = (
 
 export const takeRandomElementFrom = <T>(array: T[]): T => {
   const randomIdx = Math.floor(Math.random() * array.length);
-  return array[randomIdx] as T;
+  const thing = array[randomIdx];
+
+  if (!thing) {
+    throw new Error(`could not take a random element`);
+  }
+
+  return thing;
 };
 
 export const takeRandomSubsetFrom = <T>(array: T[], max?: number): T[] => {
