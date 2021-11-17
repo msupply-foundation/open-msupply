@@ -46,6 +46,12 @@ impl InvoiceLineNode {
     pub async fn note(&self) -> &Option<String> {
         &self.invoice_line.note
     }
+    pub async fn location_name(&self) -> &Option<String> {
+        &self.invoice_line.location_name
+    }
+    pub async fn location_id(&self) -> &Option<String> {
+        &self.invoice_line.location_id
+    }
     async fn stock_line(&self, ctx: &Context<'_>) -> Option<StockLineResponse> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 

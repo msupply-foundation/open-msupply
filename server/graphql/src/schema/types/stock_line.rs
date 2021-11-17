@@ -49,6 +49,12 @@ impl StockLineNode {
     pub async fn note(&self) -> &Option<String> {
         &self.stock_line.note
     }
+    pub async fn location_id(&self) -> &Option<String> {
+        &self.stock_line.location_id
+    }
+    pub async fn location_name(&self) -> &Option<String> {
+        &self.stock_line.location_name
+    }
 }
 
 type CurrentConnector = Connector<StockLineNode>;
