@@ -55,7 +55,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // ForeignKeyError (OtherPartyIdNotFoundError)
         let foreign_key_query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
@@ -85,7 +85,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, foreign_key_query, &variables, &expected).await;
+        assert_gql_query(&settings, foreign_key_query, &variables, &expected, None).await;
 
         // Test succeeding insert
         let variables = Some(json!({
@@ -106,7 +106,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
         // make sure item has been inserted
         InvoiceRepository::new(&connection)
             .find_one_by_id("ci_insert_1")
@@ -132,7 +132,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // RecordAlreadyExist,
         let variables = Some(json!({
@@ -150,6 +150,6 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
     }
 }
