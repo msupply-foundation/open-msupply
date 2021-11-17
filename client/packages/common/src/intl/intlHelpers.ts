@@ -53,8 +53,7 @@ export const useI18N = (): i18n => {
 };
 
 /* removing this unused method breaks things */
-export const useRtlPrevious = (): boolean => {
-  const { locale } = useHostContext();
-  const isRtl = locale === 'ar';
-  return isRtl;
+export const useUserName = (): string => {
+  const { user } = useHostContext();
+  return user?.name;
 };
