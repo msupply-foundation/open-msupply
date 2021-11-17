@@ -319,20 +319,6 @@ mod tests {
         });
 
         for (count, invoice) in invoices.iter().enumerate() {
-            println!(
-                "{:?} {:?}",
-                invoice
-                    .comment
-                    .clone()
-                    .map(|comment| comment.to_lowercase()),
-                sorted[count]
-                    .comment
-                    .clone()
-                    .map(|comment| comment.to_lowercase()),
-            );
-        }
-
-        for (count, invoice) in invoices.iter().enumerate() {
             assert_eq!(
                 invoice
                     .comment
