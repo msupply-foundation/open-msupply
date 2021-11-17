@@ -6,24 +6,27 @@ pub mod auth_data;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
+pub mod location;
 pub mod name;
+pub mod service_registry;
 pub mod stock_line;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
 
+#[derive(PartialEq, Debug)]
 pub struct ListResult<T> {
     pub rows: Vec<T>,
     pub count: u32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum ListError {
     DatabaseError(RepositoryError),
     LimitBelowMin(u32),
     LimitAboveMax(u32),
 }
-
+#[derive(PartialEq, Debug)]
 pub enum SingleRecordError {
     DatabaseError(RepositoryError),
     NotFound(String),
