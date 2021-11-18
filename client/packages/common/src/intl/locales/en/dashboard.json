@@ -1,6 +1,9 @@
 {
+  "button.new-outbound-shipment": "New Outbound Shipment",
   "heading.expiring-stock": "Expiring Stock",
   "heading.shipments-to-be-picked": "Shipments to be picked",
+  "label.expired": "Expired",
   "label.expiring-soon": "Expiring Soon",
-  "button.new-outbound-shipment": "New Outbound Shipment"
+  "label.this-week": "This Week",
+  "label.today": "Today"
 }

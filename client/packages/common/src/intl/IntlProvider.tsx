@@ -6,7 +6,7 @@ import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-const defaultNS = 'app';
+const defaultNS = 'common';
 export const IntlProviderNext: React.FC = ({ children }) => {
   React.useEffect(() => {
     i18next
