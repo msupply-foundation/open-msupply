@@ -20,7 +20,7 @@ import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
 import { OutboundShipmentSummaryItem } from './types';
 import { Toolbar } from './Toolbar';
-import { isInvoiceEditable } from '../utils';
+import { isInvoiceEditable } from '../../utils';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';

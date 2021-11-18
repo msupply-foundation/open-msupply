@@ -14,6 +14,7 @@ import {
   ifTheSameElseDefault,
   Item,
   arrayToRecord,
+  getDataSorter,
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from './index';
 import {
@@ -23,7 +24,6 @@ import {
   OutboundShipmentSummaryItem,
   OutboundShipmentRow,
 } from './types';
-import { getDataSorter } from '../utils';
 
 const getExistingLine = (
   items: OutboundShipmentSummaryItem[],
@@ -231,8 +231,9 @@ export const reducer = (
           const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
           const newSortBy = { key, isDesc: newIsDesc, direction: newDirection };
 
-          const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
-          const newLines = lines.sort(sorter);
+          const newLines = lines.sort(
+            getDataSorter(newSortBy.key, newSortBy.isDesc)
+          );
 
           draft.lines = newLines;
           state.sortBy = newSortBy;

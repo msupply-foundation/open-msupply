@@ -16,7 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { getOutboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getStatusTranslation } from '../utils';
+import { getStatusTranslation } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 

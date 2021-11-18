@@ -26,7 +26,7 @@ import {
   OutboundShipment,
   OutboundShipmentRow,
 } from './OutboundShipment/DetailView/types';
-import { flattenSummaryItems } from './OutboundShipment/utils';
+import { flattenSummaryItems } from './utils';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
