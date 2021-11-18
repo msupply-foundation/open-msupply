@@ -9,12 +9,12 @@ use crate::ContextExt;
 
 use super::ErrorWrapper;
 
-pub struct Me {
+pub struct User {
     pub user: UserAccount,
 }
 
 #[Object]
-impl Me {
+impl User {
     /// Internal user id
     pub async fn user_id(&self) -> &str {
         &self.user.id
@@ -28,21 +28,21 @@ impl Me {
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum MeErrorInterface {
+pub enum UserErrorInterface {
     AccessDenied(AccessDenied),
     DatabaseError(DatabaseError),
     InternalError(InternalError),
 }
 
-pub type MeError = ErrorWrapper<MeErrorInterface>;
+pub type UserError = ErrorWrapper<UserErrorInterface>;
 
 #[derive(Union)]
-pub enum MeResponse {
-    Error(MeError),
-    Response(Me),
+pub enum UserResponse {
+    Error(UserError),
+    Response(User),
 }
 
-pub fn me(ctx: &Context<'_>) -> MeResponse {
+pub fn me(ctx: &Context<'_>) -> UserResponse {
     let user = match validate(
         ctx.get_connection_manager(),
         ctx.get_auth_data(),
@@ -52,14 +52,14 @@ pub fn me(ctx: &Context<'_>) -> MeResponse {
         Ok(value) => value,
         Err(err) => {
             let error = match err {
-                ValidationError::Denied(denied) => MeErrorInterface::AccessDenied(AccessDenied(
+                ValidationError::Denied(denied) => UserErrorInterface::AccessDenied(AccessDenied(
                     validation_denied_kind_to_string(denied),
                 )),
                 ValidationError::InternalError(err) => {
-                    MeErrorInterface::InternalError(InternalError(err))
+                    UserErrorInterface::InternalError(InternalError(err))
                 }
             };
-            return MeResponse::Error(ErrorWrapper { error });
+            return UserResponse::Error(ErrorWrapper { error });
         }
     };
 
@@ -67,18 +67,18 @@ pub fn me(ctx: &Context<'_>) -> MeResponse {
     let user = match user_service.find_user(&user.user_id) {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return MeResponse::Error(ErrorWrapper {
-                error: MeErrorInterface::InternalError(InternalError(
+            return UserResponse::Error(ErrorWrapper {
+                error: UserErrorInterface::InternalError(InternalError(
                     "Can't find user account data".to_string(),
                 )),
             })
         }
         Err(err) => {
-            return MeResponse::Error(ErrorWrapper {
-                error: MeErrorInterface::DatabaseError(DatabaseError(err)),
+            return UserResponse::Error(ErrorWrapper {
+                error: UserErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
     };
 
-    MeResponse::Response(Me { user })
+    UserResponse::Response(User { user })
 }

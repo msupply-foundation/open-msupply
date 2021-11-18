@@ -1,7 +1,8 @@
 use crate::schema::{
     mutations::UserRegisterErrorInterface,
     queries::{
-        AuthTokenErrorInterface, LogoutErrorInterface, MeErrorInterface, RefreshTokenErrorInterface,
+        AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface,
+        UserErrorInterface,
     },
 };
 use domain::PaginationOption;
@@ -148,7 +149,7 @@ impl From<PaginationInput> for PaginationOption {
 #[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
 #[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
 #[graphql(concrete(name = "LogoutError", params(LogoutErrorInterface)))]
-#[graphql(concrete(name = "MeError", params(MeErrorInterface)))]
+#[graphql(concrete(name = "UserError", params(UserErrorInterface)))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }

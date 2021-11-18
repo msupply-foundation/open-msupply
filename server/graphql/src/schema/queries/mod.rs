@@ -44,7 +44,7 @@ impl Queries {
         refresh_token(ctx)
     }
 
-    pub async fn me(&self, ctx: &Context<'_>) -> MeResponse {
+    pub async fn me(&self, ctx: &Context<'_>) -> UserResponse {
         me(ctx)
     }
 
