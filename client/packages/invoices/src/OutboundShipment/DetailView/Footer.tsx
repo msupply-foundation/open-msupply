@@ -18,7 +18,7 @@ import {
   getStatusTranslation,
   isInvoiceEditable,
   outboundStatuses,
-} from '../utils';
+} from '../../utils';
 import { OutboundShipment } from './types';
 
 interface OutboundDetailFooterProps {
