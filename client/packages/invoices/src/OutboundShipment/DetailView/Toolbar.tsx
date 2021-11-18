@@ -21,7 +21,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
-  const t = useTranslation();
+  const t = useTranslation(['common', 'outbound-shipment']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({

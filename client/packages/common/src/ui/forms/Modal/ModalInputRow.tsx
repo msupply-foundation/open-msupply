@@ -1,6 +1,5 @@
 import React from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
-import { LocaleKey } from '../../../intl';
 import { ModalInput } from './ModalInput';
 import { ModalLabel } from './ModalLabel';
 import { ModalRow } from './ModalRow';
@@ -8,16 +7,16 @@ import { ModalRow } from './ModalRow';
 interface InputRowProps {
   defaultValue?: unknown;
   inputProps: UseFormRegisterReturn;
-  labelKey: LocaleKey;
+  label: string;
 }
 
 export const ModalInputRow: React.FC<InputRowProps> = ({
   defaultValue,
   inputProps,
-  labelKey,
+  label,
 }) => (
   <ModalRow>
-    <ModalLabel labelKey={labelKey} />
+    <ModalLabel label={label} />
     <ModalInput defaultValue={defaultValue} inputProps={inputProps} />
   </ModalRow>
 );

@@ -1,5 +1,18 @@
 {
+  "button.delete-lines": "Delete selected lines",
   "button.new-outbound-shipment": "New Outbound Shipment",
+  "button.new-shipment": "New Shipment",
   "button.select-a-color": "Select a color",
-  "dev.log-draft": "Log draft"
+  "dev.log-draft": "Log draft",
+  "heading.related-documents": "Related documents",
+  "label.allocate": "Allocate",
+  "label.allocated": "Allocated",
+  "label.allocation": "Allocation",
+  "label.available": "Available",
+  "label.in-store": "In store",
+  "label.num-packs": "# Packs",
+  "label.packs-to-batches-with": "packs to batches with a pack size of",
+  "label.placeholder": "Placeholder",
+  "label.sell": "Sell",
+  "label.unit-quantity": "Unit Quantity"
 }

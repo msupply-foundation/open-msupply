@@ -1,6 +1,6 @@
 import { JSXElementConstructor } from 'react';
 import { SortBy } from '../../../../hooks';
-import { LocaleKey, useTranslation, useFormatDate } from './../../../../intl';
+import { useTranslation, useFormatDate } from './../../../../intl';
 import { DomainObject } from './../../../../types';
 
 export interface CellProps<T extends DomainObject> {
@@ -50,7 +50,7 @@ export interface Column<T extends DomainObject> {
   key: keyof T | GenericColumnKey | string;
   accessor: ColumnDataAccessor<T>;
 
-  label: LocaleKey | '';
+  label: string;
 
   format: ColumnFormat;
   align: ColumnAlign;

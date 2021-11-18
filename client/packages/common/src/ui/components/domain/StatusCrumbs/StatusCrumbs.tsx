@@ -3,7 +3,7 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { ChevronDownIcon } from '../../../icons';
-import { LocaleKey, useTranslation, useFormatDate } from '../../../../intl';
+import { useTranslation, useFormatDate } from '../../../../intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperPopover, PaperPopoverSection } from '../../popover';
 import { useIsSmallScreen } from '../../../../hooks';
@@ -12,7 +12,7 @@ import { styled } from '@mui/system';
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
   statusLog: Record<StatusType, string | null | undefined>;
-  statusFormatter: (status: StatusType) => LocaleKey;
+  statusFormatter: (status: StatusType) => string;
 }
 
 const StyledText = styled(Typography)({
@@ -36,7 +36,7 @@ export const StatusCrumbs = <StatusType extends string>(
   props: StatusCrumbsProps<StatusType>
 ): JSX.Element | null => {
   const { statuses, statusLog, statusFormatter } = props;
-  const t = useTranslation();
+  const t = useTranslation('common');
   const isSmallScreen = useIsSmallScreen();
 
   const steps = useSteps(props);
@@ -53,9 +53,7 @@ export const StatusCrumbs = <StatusType extends string>(
     Crumbs = (
       <Box flexDirection="row" display="flex" gap={1} justifyContent="center">
         <StyledText>{t('label.status')}</StyledText>
-        <StyledText color={'secondary'}>
-          {t(statusFormatter(stepKey))}
-        </StyledText>
+        <StyledText color={'secondary'}>{statusFormatter(stepKey)}</StyledText>
       </Box>
     );
   } else {
@@ -64,7 +62,7 @@ export const StatusCrumbs = <StatusType extends string>(
 
       return (
         <StyledText color={date ? 'secondary' : 'gray.main'} key={status}>
-          {t(statusFormatter(status))}
+          {statusFormatter(status)}
         </StyledText>
       );
     });
@@ -75,7 +73,7 @@ export const StatusCrumbs = <StatusType extends string>(
       placement="top"
       height={200}
       Content={
-        <PaperPopoverSection labelKey={'label.order-history'}>
+        <PaperPopoverSection label={t('label.order-history')}>
           <VerticalStepper activeStep={currentStep} steps={steps} />
         </PaperPopoverSection>
       }

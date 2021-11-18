@@ -26,10 +26,10 @@ export const DataTable = <T extends DomainObject>({
   onRowClick,
   pagination,
   onChangePage,
-  noDataMessageKey,
+  noDataMessage,
   ExpandContent,
 }: TableProps<T>): JSX.Element => {
-  const t = useTranslation();
+  const t = useTranslation('common');
   const { setActiveRows } = useTableStore();
   useEffect(() => {
     if (data.length) setActiveRows(data.map(({ id }) => id as string));
@@ -53,7 +53,7 @@ export const DataTable = <T extends DomainObject>({
     return (
       <Box sx={{ padding: 2 }}>
         <Typography variant="h6">
-          {t(noDataMessageKey || 'error.no-results')}
+          {noDataMessage || t('error.no-results')}
         </Typography>
       </Box>
     );
