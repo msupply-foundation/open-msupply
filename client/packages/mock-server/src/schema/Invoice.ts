@@ -1,5 +1,8 @@
 import { MutationService } from './../api/mutations';
-import { UpdateOutboundShipmentInput } from './../../../common/src/types/schema';
+import {
+  UpdateOutboundShipmentInput,
+  UpdateInboundShipmentInput,
+} from './../../../common/src/types/schema';
 import {
   InvoiceSortFieldInput,
   InvoiceFilterInput,
@@ -39,6 +42,12 @@ const MutationResolvers = {
   ): InvoiceType => {
     return Api.MutationService.update.invoice(input);
   },
+  updateInboundShipment: (
+    _: any,
+    { input }: { input: UpdateInboundShipmentInput }
+  ): InvoiceType => {
+    return Api.MutationService.update.invoice(input);
+  },
   insertOutboundShipment: (
     _: any,
     { input }: { input: InvoiceType }
@@ -47,6 +56,9 @@ const MutationResolvers = {
   },
   deleteOutboundShipment: (_: any, id: string): string => {
     return Api.MutationService.remove.invoice(id);
+  },
+  deleteInboundShipment: (_: any, input: { id: string }): string => {
+    return MutationService.remove.invoice(input.id);
   },
   batchOutboundShipment: (_: any, vars: BatchOutboundShipmentInput) => {
     const response = {
