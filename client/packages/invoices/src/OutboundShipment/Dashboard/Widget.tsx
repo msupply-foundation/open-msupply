@@ -35,6 +35,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   return (
     <>
       <NameSearchModal
+        type="customer"
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {

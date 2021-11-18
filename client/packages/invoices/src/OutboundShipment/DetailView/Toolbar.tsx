@@ -60,6 +60,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 label="label.customer-name"
                 Input={
                   <NameSearchInput
+                    type="customer"
                     disabled={!isInvoiceEditable(draft)}
                     value={draft.otherParty}
                     onChange={name => {

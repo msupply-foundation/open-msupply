@@ -17,6 +17,7 @@ interface NameSearchInputProps {
   width?: number;
   value: Name | null;
   disabled?: boolean;
+  type: 'customer' | 'supplier';
 }
 
 export const NameSearchInput: FC<NameSearchInputProps> = ({
@@ -24,8 +25,11 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
   width = 250,
   value,
   disabled = false,
+  type,
 }) => {
-  const { data, isLoading } = useNames();
+  const isCustomerLookup = type === 'customer';
+  const filter = isCustomerLookup ? { isCustomer: true } : { isSupplier: true };
+  const { data, isLoading } = useNames(filter);
 
   return (
     <Autocomplete
