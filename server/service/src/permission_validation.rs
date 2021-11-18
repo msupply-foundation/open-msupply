@@ -49,15 +49,6 @@ pub enum ValidationDeniedKind {
     InsufficientPermission((String, UserPermissions)),
 }
 
-pub fn validation_denied_kind_to_string(kind: ValidationDeniedKind) -> String {
-    match kind {
-        ValidationDeniedKind::NotAuthenticated(msg) => format!("Not authenticated: {}", msg),
-        ValidationDeniedKind::InsufficientPermission((msg, _)) => {
-            format!("Insufficient permission: {}", msg)
-        }
-    }
-}
-
 #[derive(Debug)]
 pub enum ValidationError {
     Denied(ValidationDeniedKind),

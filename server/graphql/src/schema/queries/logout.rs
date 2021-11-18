@@ -1,9 +1,8 @@
 use async_graphql::*;
-use service::permission_validation::{
-    validate_auth, validation_denied_kind_to_string, ValidationError,
-};
+use service::permission_validation::{validate_auth, ValidationError};
 
 use crate::schema::types::{AccessDenied, InternalError};
+use crate::schema::validation_denied_kind_to_string;
 use crate::ContextExt;
 use service::token::TokenService;
 
