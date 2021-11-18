@@ -1,18 +1,7 @@
 import React, { FC, useEffect } from 'react';
-import { IntlProvider as ReactIntlProvider } from 'react-intl';
-import { LocaleMessages, SupportedLocales } from './intlHelpers';
-import en from './locales/en.json';
-import fr from './locales/fr.json';
-import pt from './locales/pt.json';
-import ar from './locales/ar.json';
-import { useHostContext } from '../hooks';
-
-const locales: Record<SupportedLocales, LocaleMessages> = {
-  en,
-  fr,
-  pt,
-  ar,
-};
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { SupportedLocales, useI18N } from './intlHelpers';
+import { resources } from './locales';
 
 interface IntlTestProviderProps {
   locale: SupportedLocales;
@@ -22,15 +11,20 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
   children,
   locale,
 }) => {
-  const { locale: currentLocale, setLocale } = useHostContext();
+  const i18n = useI18N();
 
   useEffect(() => {
-    if (currentLocale !== locale) setLocale(locale);
+    i18n.changeLanguage(locale);
   }, [locale]);
 
-  return (
-    <ReactIntlProvider locale="en" messages={locales[locale]}>
-      {children}
-    </ReactIntlProvider>
-  );
+  i18n.use(initReactI18next).init({
+    resources,
+    lng: locale,
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false,
+    },
+  });
+
+  return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 };

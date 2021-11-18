@@ -1,6 +1,6 @@
 import React from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
-import { LocaleKey } from '../../../intl/intlHelpers';
+import { LocaleKey } from '../../../intl';
 import { ModalInput } from './ModalInput';
 import { ModalLabel } from './ModalLabel';
 import { ModalRow } from './ModalRow';

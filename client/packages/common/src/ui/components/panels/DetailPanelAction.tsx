@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Box } from '@mui/material';
-import { LocaleKey } from '../../../intl/intlHelpers';
+import { LocaleKey } from '../../../intl';
 import { FlatButton } from '../buttons/FlatButton';
 
 export interface DetailPanelActionProps {

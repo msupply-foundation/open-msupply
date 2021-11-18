@@ -3,11 +3,7 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { ChevronDownIcon } from '../../../icons';
-import {
-  LocaleKey,
-  useTranslation,
-  useFormatDate,
-} from '../../../../intl/intlHelpers';
+import { LocaleKey, useTranslation, useFormatDate } from '../../../../intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperPopover, PaperPopoverSection } from '../../popover';
 import { useIsSmallScreen } from '../../../..';
