@@ -7,7 +7,7 @@ import {
   DomainObject,
   Box,
 } from '@openmsupply-client/common';
-import { OutboundShipmentSummaryItem } from '../types';
+import { OutboundShipmentSummaryItem } from '../../../types';
 
 interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];

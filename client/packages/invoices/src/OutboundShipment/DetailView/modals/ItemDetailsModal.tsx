@@ -19,7 +19,7 @@ import {
   BatchRow,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
-} from '../types';
+} from '../../../types';
 
 interface ItemDetailsModalProps {
   summaryItem: OutboundShipmentSummaryItem | null;

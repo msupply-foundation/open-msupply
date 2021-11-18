@@ -13,7 +13,7 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { OutboundShipment, OutboundShipmentSummaryItem } from './types';
+import { OutboundShipment, OutboundShipmentSummaryItem } from '../../types';
 import { isInvoiceEditable } from '../../utils';
 
 interface ToolbarProps {
