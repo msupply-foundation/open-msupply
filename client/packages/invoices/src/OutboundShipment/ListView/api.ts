@@ -1,4 +1,4 @@
-import { OutboundShipment } from './../DetailView/types';
+import { OutboundShipment } from '../../types';
 import {
   InvoiceNodeStatus,
   UpdateOutboundShipmentInput,

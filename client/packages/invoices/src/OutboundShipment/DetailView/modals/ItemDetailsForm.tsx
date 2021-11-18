@@ -20,7 +20,7 @@ import {
   Box,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
-import { OutboundShipmentSummaryItem } from '../types';
+import { OutboundShipmentSummaryItem } from '../../../types';
 import { PackSizeController } from './ItemDetailsModal';
 
 interface ItemDetailsFormProps {

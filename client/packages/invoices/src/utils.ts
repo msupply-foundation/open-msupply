@@ -4,7 +4,7 @@ import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
-} from './OutboundShipment/DetailView/types';
+} from './types';
 
 export const outboundStatuses: OutboundShipmentStatus[] = [
   'DRAFT',

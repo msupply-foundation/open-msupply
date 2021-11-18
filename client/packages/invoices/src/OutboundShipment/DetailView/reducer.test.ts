@@ -8,7 +8,7 @@ import {
   OutboundShipmentRow,
   OutboundShipmentAction,
   OutboundShipmentSummaryItem,
-} from './types';
+} from '../../types';
 
 const summaryItems: OutboundShipmentSummaryItem[] = [
   {

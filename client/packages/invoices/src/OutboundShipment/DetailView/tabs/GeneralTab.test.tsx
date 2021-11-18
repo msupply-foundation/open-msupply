@@ -2,7 +2,7 @@ import React from 'react';
 import { TestingProvider, useColumns } from '@openmsupply-client/common';
 import { render, waitFor, within } from '@testing-library/react';
 import { GeneralTab } from './GeneralTab';
-import { OutboundShipmentSummaryItem } from '../types';
+import { OutboundShipmentSummaryItem } from '../../../types';
 
 const lines: OutboundShipmentSummaryItem[] = [
   {

@@ -23,7 +23,7 @@ import {
   OutboundShipmentAction,
   OutboundShipmentSummaryItem,
   OutboundShipmentRow,
-} from './types';
+} from '../../types';
 
 const getExistingLine = (
   items: OutboundShipmentSummaryItem[],

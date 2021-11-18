@@ -19,7 +19,7 @@ import {
   isInvoiceEditable,
   outboundStatuses,
 } from '../../utils';
-import { OutboundShipment } from './types';
+import { OutboundShipment } from '../../types';
 
 interface OutboundDetailFooterProps {
   draft: OutboundShipment;
