@@ -8,8 +8,10 @@ import {
   ItemSortFieldInput,
   useQueryParams,
   SortRule,
+  useQuery,
+  UseQueryResult,
+  useQueryClient,
 } from '@openmsupply-client/common';
-import { useQuery, UseQueryResult } from 'react-query';
 
 const itemsGuard = (itemsQuery: ItemsWithStockLinesQuery) => {
   if (itemsQuery.items.__typename === 'ItemConnector') {
@@ -42,10 +44,12 @@ export const useItemsList = (initialListParameters: {
 }): {
   onFilterByCode: (code: string) => void;
   onFilterByName: (name: string) => void;
+  prefetchListByName: (name: string) => void;
 } & UseQueryResult<{
   nodes: Item[];
   totalCount: number;
 }> => {
+  const queryClient = useQueryClient();
   const { api } = useOmSupplyApi();
   const { filterBy, filter, queryParams, first, offset, sortBy } =
     useQueryParams(initialListParameters);
@@ -75,15 +79,30 @@ export const useItemsList = (initialListParameters: {
     }
   );
 
+  const prefetchListByName = async (name: string) => {
+    const prefetchQueryParams = {
+      ...queryParams,
+      filterBy: { name: { like: name } },
+    };
+    await queryClient.prefetchQuery(
+      ['items', 'list', prefetchQueryParams],
+      () =>
+        api.itemsWithStockLines({
+          key: getItemSortField(queryParams.sortBy.key),
+          filter: prefetchQueryParams.filterBy,
+          first: prefetchQueryParams.pagination.first,
+          offset: prefetchQueryParams.pagination.offset,
+        })
+    );
+  };
+
   const onFilterByCode = (code: string) => {
-    filter.onClearFilterRule('name');
     filter.onChangeStringFilterRule('code', 'like', code);
   };
 
   const onFilterByName = (name: string) => {
-    filter.onClearFilterRule('code');
     filter.onChangeStringFilterRule('name', 'like', name);
   };
 
-  return { ...queryState, onFilterByCode, onFilterByName };
+  return { ...queryState, onFilterByCode, onFilterByName, prefetchListByName };
 };
