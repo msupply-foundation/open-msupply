@@ -6,7 +6,7 @@ import { ChevronDownIcon } from '../../../icons';
 import { LocaleKey, useTranslation, useFormatDate } from '../../../../intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperPopover, PaperPopoverSection } from '../../popover';
-import { useIsSmallScreen } from '../../../..';
+import { useIsSmallScreen } from '../../../../hooks';
 import { styled } from '@mui/system';
 
 interface StatusCrumbsProps<StatusType extends string> {

@@ -7,7 +7,7 @@ import {
   styled,
   Typography,
 } from '@mui/material';
-import { Divider } from '../..';
+import { Divider } from '../../components/divider/Divider';
 import { LocaleKey, useTranslation } from '../../../intl';
 import { ChevronDownIcon } from '../../icons';
 

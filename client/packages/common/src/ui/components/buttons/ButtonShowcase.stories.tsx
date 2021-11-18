@@ -2,10 +2,10 @@ import React, { FC, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 import { FlatButton } from './FlatButton';
-import { BookIcon } from '../../icons';
+import { BookIcon, TruckIcon } from '../../icons';
 import { BaseButton, ButtonWithIcon } from '.';
-import { TruckIcon } from '../../icons';
-import { Color, DialogButton, IconButton } from '..';
+import { DialogButton, IconButton } from '../buttons';
+import { Color } from '../menus';
 import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
 

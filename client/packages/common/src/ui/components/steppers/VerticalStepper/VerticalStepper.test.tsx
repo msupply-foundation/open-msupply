@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { VerticalStepper } from './VerticalStepper';
-import { TestingProvider } from '../../../..';
+import { TestingProvider } from '../../../../utils';
 
 describe('VerticalStepper', () => {
   it('renders the description of each step', () => {

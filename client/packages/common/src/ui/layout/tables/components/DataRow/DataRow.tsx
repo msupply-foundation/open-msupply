@@ -3,7 +3,7 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
 import { DomainObject } from '../../../../../types';
-import { useExpanded } from '../..';
+import { useExpanded } from '../../context';
 import { Collapse } from '@mui/material';
 
 interface DataRowProps<T extends DomainObject> {

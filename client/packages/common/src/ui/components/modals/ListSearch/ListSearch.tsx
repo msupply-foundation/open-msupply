@@ -1,6 +1,6 @@
 import React from 'react';
 import { AutocompleteList, BaseAutocompleteListProps } from '../../inputs';
-import { useWindowDimensions } from '../../../..';
+import { useWindowDimensions } from '../../../../hooks';
 import { LocaleKey } from '../../../../intl';
 import { BasicModal } from '../BasicModal';
 import { ModalTitle } from '../ModalTitle';

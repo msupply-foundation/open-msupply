@@ -1,4 +1,5 @@
-import { useAppBarRectStore, useWindowDimensions } from '..';
+import { useAppBarRectStore } from '../useAppBarRect';
+import { useWindowDimensions } from '../useWindowDimensions';
 import { useAppTheme } from '../../styles';
 
 export const useContentAreaHeight = (): number => {

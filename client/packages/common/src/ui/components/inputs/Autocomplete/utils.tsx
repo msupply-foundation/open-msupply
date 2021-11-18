@@ -1,6 +1,6 @@
 import React from 'react';
 import { styled } from '@mui/material';
-import { AutocompleteOptionRenderer } from '../../../..';
+import { AutocompleteOptionRenderer } from './types';
 
 export const DefaultAutocompleteItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,

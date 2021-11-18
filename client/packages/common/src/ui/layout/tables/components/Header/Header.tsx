@@ -4,7 +4,7 @@ import { ObjectWithStringKeys } from '../../../../../types/utility';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
-import { useDebounceCallback } from '../../../../..';
+import { useDebounceCallback } from '../../../../../hooks';
 
 export const HeaderRow: FC = props => (
   <TableRow

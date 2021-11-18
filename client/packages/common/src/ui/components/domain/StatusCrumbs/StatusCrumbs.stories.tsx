@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { StatusCrumbs } from './StatusCrumbs';
-import { OutboundShipmentStatus } from '../../../..';
+import { OutboundShipmentStatus } from '../../../../types';
 import { LocaleKey, useTranslation } from '../../../../intl';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
