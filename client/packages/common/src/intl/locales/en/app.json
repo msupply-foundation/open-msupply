@@ -8,6 +8,7 @@
   "app.customers": "Customers",
   "app.dashboard": "Dashboard",
   "app.distribution": "Distribution",
+  "app.inbound-shipment": "Inbound Shipment",
   "app.inbound-shipments": "Inbound Shipments",
   "app.items": "Items",
   "app.loading": "Loading...",
