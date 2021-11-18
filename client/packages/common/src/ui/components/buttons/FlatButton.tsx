@@ -1,12 +1,11 @@
 import React from 'react';
 import { Button as MuiButton, styled } from '@mui/material';
 import { Property } from 'csstype';
-import { LocaleKey, useTranslation } from '../../../intl';
 
 interface ButtonProps {
   color?: 'inherit' | 'primary' | 'secondary';
   icon: React.ReactNode;
-  labelKey: LocaleKey;
+  label: string;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
 }
@@ -20,22 +19,18 @@ const StyledButton = styled(MuiButton)({
 
 export const FlatButton: React.FC<ButtonProps> = ({
   color,
-  labelKey,
+  label,
   icon,
   onClick,
   disabled = false,
-}) => {
-  const t = useTranslation();
-
-  return (
-    <StyledButton
-      disabled={disabled}
-      onClick={onClick}
-      startIcon={icon}
-      variant="text"
-      color={color}
-    >
-      {t(labelKey)}
-    </StyledButton>
-  );
-};
+}) => (
+  <StyledButton
+    disabled={disabled}
+    onClick={onClick}
+    startIcon={icon}
+    variant="text"
+    color={color}
+  >
+    {label}
+  </StyledButton>
+);

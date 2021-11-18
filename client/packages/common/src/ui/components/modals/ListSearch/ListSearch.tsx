@@ -1,12 +1,11 @@
 import React from 'react';
 import { AutocompleteList, BaseAutocompleteListProps } from '../../inputs';
 import { useWindowDimensions } from '../../../../hooks';
-import { LocaleKey } from '../../../../intl';
 import { BasicModal } from '../BasicModal';
 import { ModalTitle } from '../ModalTitle';
 
 interface ListSearchProps<T> extends BaseAutocompleteListProps<T> {
-  title: LocaleKey;
+  title: string;
   open: boolean;
   onClose: () => void;
   optionKey: keyof T;

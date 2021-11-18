@@ -1,13 +1,12 @@
 import React from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import { LocaleKey } from '../../intl';
 import { BasicModal } from '../../ui/components/modals/BasicModal';
 import { ModalTitle } from '../../ui/components/modals/ModalTitle';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
-  labelKey?: LocaleKey;
+  label?: string;
   onClick?: () => void;
   visible?: boolean;
 }
@@ -21,7 +20,7 @@ export interface ModalProps {
 }
 export interface DialogProps {
   onClose?: () => void;
-  title: LocaleKey;
+  title: string;
 }
 
 interface DialogState {
