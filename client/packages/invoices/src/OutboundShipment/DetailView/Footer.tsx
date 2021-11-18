@@ -79,7 +79,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
             <ButtonWithIcon
               shrinkThreshold="lg"
               Icon={<XCircleIcon />}
-              labelKey="button.cancel"
+              label={t('button.cancel')}
               color="secondary"
               sx={{ fontSize: '12px' }}
               onClick={() => navigate(-1)}
@@ -89,7 +89,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                 <ButtonWithIcon
                   shrinkThreshold="lg"
                   Icon={<SaveIcon />}
-                  labelKey="button.save"
+                  label={t('button.save')}
                   variant="contained"
                   color="secondary"
                   sx={{ fontSize: '12px' }}
@@ -102,13 +102,12 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                   shrinkThreshold="lg"
                   disabled={draft.onHold}
                   Icon={<ArrowRightIcon />}
-                  labelKey="button.save-and-confirm-status"
-                  sx={{ fontSize: '12px' }}
-                  labelProps={{
+                  label={t('button.save-and-confirm-status', {
                     status: t(
                       getNextOutboundStatusButtonTranslation(draft.status)
                     ),
-                  }}
+                  })}
+                  sx={{ fontSize: '12px' }}
                   variant="contained"
                   color="secondary"
                   onClick={async () => {

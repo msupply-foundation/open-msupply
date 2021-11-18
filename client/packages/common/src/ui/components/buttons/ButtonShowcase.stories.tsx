@@ -8,6 +8,7 @@ import { DialogButton, IconButton } from '../buttons';
 import { Color } from '../menus';
 import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
+import { useTranslation } from '../../../intl';
 
 const getOnClick = (someText: string) => () => {
   alert(someText);
@@ -36,6 +37,7 @@ const Wrapper: FC<{ text: string }> = ({ children, text }) => {
 };
 
 const Template: Story = () => {
+  const t = useTranslation();
   const [selected, setSelected] = useState(false);
   const [color, setColor] = useState<Color>({
     hex: '#8f90a6',
@@ -89,7 +91,7 @@ const Template: Story = () => {
           variant="contained"
           color="primary"
           Icon={<TruckIcon />}
-          labelKey="distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -99,7 +101,7 @@ const Template: Story = () => {
           variant="contained"
           color="secondary"
           Icon={<TruckIcon />}
-          labelKey="distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -109,7 +111,7 @@ const Template: Story = () => {
           variant="outlined"
           color="primary"
           Icon={<TruckIcon />}
-          labelKey="distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -119,7 +121,7 @@ const Template: Story = () => {
           variant="outlined"
           color="secondary"
           Icon={<TruckIcon />}
-          labelKey="distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
