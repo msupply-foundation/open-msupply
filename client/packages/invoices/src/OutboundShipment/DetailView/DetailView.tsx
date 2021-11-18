@@ -14,7 +14,7 @@ import {
   Item,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
-import { getOutboundShipmentDetailViewApi } from '../../api';
+import { getOutboundShipmentDetailViewApi } from './api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 

@@ -22,11 +22,8 @@ import {
   UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import {
-  OutboundShipment,
-  OutboundShipmentRow,
-} from './OutboundShipment/DetailView/types';
-import { flattenSummaryItems } from './utils';
+import { OutboundShipment, OutboundShipmentRow } from './types';
+import { flattenSummaryItems } from '../../utils';
 
 const client = new GraphQLClient(Environment.API_URL);
 const api = getSdk(client);
