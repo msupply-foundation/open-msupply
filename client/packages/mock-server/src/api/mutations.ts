@@ -1,36 +1,22 @@
+import { InvoiceNodeType } from '@openmsupply-client/common/src/types/schema';
 import {
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
 } from './../../../common/src/types/schema';
 import { ResolverService } from './resolvers';
-import { createInvoice } from './../data/data';
+import {
+  createInvoice,
+  adjustStockLineAvailableNumberOfPacks,
+  adjustStockLineTotalNumberOfPacks,
+} from './../data/data';
 import { Api } from './index';
-import { StockLine, ResolvedInvoice } from './../data/types';
+import { ResolvedInvoice } from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
-import { UpdateOutboundShipmentInput } from '@openmsupply-client/common';
-
-const adjustStockLineQuantity = (
-  stockLineId: string,
-  quantity: number
-): StockLine => {
-  const stockLine = db.get.byId.stockLine(stockLineId);
-
-  const newQuantity = stockLine.availableNumberOfPacks + quantity;
-
-  if (newQuantity < 0) {
-    throw new Error(
-      `Quantity invalid - reducing ${stockLine.availableNumberOfPacks} by ${quantity}`
-    );
-  }
-
-  const newStockLine = db.update.stockLine({
-    ...stockLine,
-    availableNumberOfPacks: newQuantity,
-  });
-
-  return newStockLine;
-};
+import {
+  UpdateOutboundShipmentInput,
+  InvoiceNodeStatus,
+} from '@openmsupply-client/common/src/types';
 
 export const insert = {
   invoice: (invoice: Invoice): Invoice & { __typename: string } => {
@@ -48,7 +34,12 @@ export const insert = {
 
     const otherPartyName = db.get.byId.name(invoice.otherPartyId);
     const createdInvoice = db.insert.invoice(
-      createInvoice(invoice.id, invoiceNumber, otherPartyName)
+      createInvoice(
+        invoice.id,
+        invoiceNumber,
+        otherPartyName,
+        InvoiceNodeType.OutboundShipment
+      )
     );
 
     return { ...createdInvoice, __typename: 'InvoiceNode' };
@@ -56,6 +47,7 @@ export const insert = {
   invoiceLine: (
     invoiceLine: InsertOutboundShipmentLineInput
   ): InsertOutboundShipmentLineInput => {
+    const invoice = db.get.byId.invoice(invoiceLine.invoiceId);
     const existing = db.get.byId.invoiceLine(invoiceLine.id);
 
     if (existing.id) {
@@ -64,10 +56,33 @@ export const insert = {
       );
     }
 
-    adjustStockLineQuantity(
-      invoiceLine.stockLineId,
-      -invoiceLine.numberOfPacks
-    );
+    if (
+      invoice.type === InvoiceNodeType.InboundShipment &&
+      invoice.status !== InvoiceNodeStatus.Draft
+    ) {
+      adjustStockLineAvailableNumberOfPacks(
+        invoiceLine.stockLineId,
+        invoiceLine.numberOfPacks
+      );
+      adjustStockLineTotalNumberOfPacks(
+        invoiceLine.stockLineId,
+        invoiceLine.numberOfPacks
+      );
+    }
+
+    if (invoice.type === InvoiceNodeType.OutboundShipment) {
+      adjustStockLineAvailableNumberOfPacks(
+        invoiceLine.stockLineId,
+        -invoiceLine.numberOfPacks
+      );
+
+      if (invoice.status === InvoiceNodeStatus.Picked) {
+        adjustStockLineTotalNumberOfPacks(
+          invoiceLine.stockLineId,
+          -invoiceLine.numberOfPacks
+        );
+      }
+    }
 
     return db.insert.invoiceLine(invoiceLine);
   },
@@ -100,12 +115,39 @@ export const update = {
     return resolvedInvoice;
   },
   invoiceLine: (invoiceLine: UpdateOutboundShipmentLineInput): InvoiceLine => {
+    const invoice = db.get.byId.invoice(invoiceLine.invoiceId);
     const currentInvoiceLine = db.get.byId.invoiceLine(invoiceLine.id);
-    const { quantity } = currentInvoiceLine;
+    const { numberOfPacks } = currentInvoiceLine;
 
-    const difference = quantity - (invoiceLine?.numberOfPacks ?? 0);
+    const difference = numberOfPacks - (invoiceLine?.numberOfPacks ?? 0);
 
-    adjustStockLineQuantity(invoiceLine?.stockLineId ?? '', difference);
+    if (
+      invoice.type === InvoiceNodeType.InboundShipment &&
+      invoice.status !== InvoiceNodeStatus.Draft
+    ) {
+      adjustStockLineAvailableNumberOfPacks(
+        currentInvoiceLine.stockLineId,
+        -difference
+      );
+      adjustStockLineTotalNumberOfPacks(
+        currentInvoiceLine.stockLineId,
+        -difference
+      );
+    }
+
+    if (invoice.type === InvoiceNodeType.OutboundShipment) {
+      adjustStockLineAvailableNumberOfPacks(
+        currentInvoiceLine.stockLineId,
+        difference
+      );
+
+      if (invoice.status === InvoiceNodeStatus.Picked) {
+        adjustStockLineTotalNumberOfPacks(
+          currentInvoiceLine.stockLineId,
+          difference
+        );
+      }
+    }
 
     return db.update.invoiceLine(invoiceLine);
   },
@@ -123,8 +165,36 @@ export const remove = {
   },
   invoiceLine: (invoiceLineId: string): string => {
     const invoiceLine = ResolverService.byId.invoiceLine(invoiceLineId);
+    const invoice = db.get.byId.invoice(invoiceLine.invoiceId);
+    const { numberOfPacks } = invoiceLine;
 
-    adjustStockLineQuantity(invoiceLine.stockLineId, invoiceLine.quantity);
+    if (
+      invoice.type === InvoiceNodeType.InboundShipment &&
+      invoice.status !== InvoiceNodeStatus.Draft
+    ) {
+      adjustStockLineAvailableNumberOfPacks(
+        invoiceLine.stockLineId,
+        -numberOfPacks
+      );
+      adjustStockLineTotalNumberOfPacks(
+        invoiceLine.stockLineId,
+        -numberOfPacks
+      );
+    }
+
+    if (invoice.type === InvoiceNodeType.OutboundShipment) {
+      adjustStockLineAvailableNumberOfPacks(
+        invoiceLine.stockLineId,
+        numberOfPacks
+      );
+
+      if (invoice.status === InvoiceNodeStatus.Picked) {
+        adjustStockLineTotalNumberOfPacks(
+          invoiceLine.stockLineId,
+          numberOfPacks
+        );
+      }
+    }
 
     return db.remove.invoiceLine(invoiceLineId);
   },

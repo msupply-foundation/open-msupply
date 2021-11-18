@@ -30,20 +30,20 @@ const renderOption = (
 interface ItemSearchInputProps {
   onChange: (item: Item | null) => void;
   currentItem?: Item;
-  currentItemCode?: string;
+  currentItemName?: string;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
   currentItem,
-  currentItemCode,
+  currentItemName,
 }) => {
   const [filter, setFilter] = useState({
-    searchTerm: currentItem?.code ?? currentItemCode ?? '',
-    field: 'code',
+    searchTerm: currentItem?.name ?? currentItemName,
+    field: 'name',
   });
 
-  const { data, isLoading, onFilterByName, onFilterByCode } = useItemsList({
+  const { data, isLoading, onFilterByName } = useItemsList({
     initialSortBy: { key: 'name' },
     initialFilterBy: currentItem?.code
       ? { code: { equalTo: currentItem?.code } }
@@ -53,22 +53,26 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
 
   useEffect(() => {
     setFilter({
-      searchTerm: currentItem?.code ?? currentItemCode ?? '',
-      field: 'code',
+      searchTerm: currentItem?.name ?? currentItemName ?? '',
+      field: 'name',
     });
-  }, [currentItem, currentItemCode]);
+  }, [currentItem, currentItemName]);
 
   // Whenever the filter state changes, trigger a filter on the request which
   // will trigger a refetch if needed.
   useEffect(() => {
-    if (filter.field === 'name') return onFilterByName(filter.searchTerm);
-    if (filter.field === 'code') return onFilterByCode(filter.searchTerm);
+    onFilterByName(filter.searchTerm ?? '');
+
+    if (filter.field === 'name') {
+      const foundItem = data?.nodes?.find(i => i.name === currentItemName);
+      if (foundItem?.name === filter.searchTerm) return;
+    }
   }, [filter]);
 
   const value =
     currentItem ??
-    (currentItemCode
-      ? data?.nodes?.find(i => i.code === currentItemCode) || null
+    (currentItemName
+      ? data?.nodes?.find(i => i.name === currentItemName) || null
       : null);
 
   return (
@@ -78,6 +82,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
       value={value ? { ...value, label: value.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
       onInputChange={(_, value) => {
+        if (!value) return;
         setFilter({ searchTerm: value, field: 'name' });
       }}
       onChange={(_, item) => {
