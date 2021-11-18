@@ -13,7 +13,7 @@ import { useDetailPanelStore, useHostContext } from '../../../../hooks';
 import { useTranslation } from '../../../../intl/intlHelpers';
 import { FlatButton } from '../../buttons';
 import { CloseIcon } from '../../../icons';
-import { Divider } from '../..';
+import { Divider } from '../../divider/Divider';
 
 export interface DetailPanelPortalProps {
   Actions?: ReactNode;

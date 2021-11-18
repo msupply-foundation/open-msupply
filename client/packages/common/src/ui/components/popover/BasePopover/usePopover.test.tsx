@@ -5,7 +5,8 @@ import {
   waitFor,
   waitForElementToBeRemoved,
 } from '@testing-library/react';
-import { BaseButton, usePopover } from '../..';
+import { BaseButton } from '../../buttons';
+import { usePopover } from './usePopover';
 import userEvent from '@testing-library/user-event';
 
 describe('usePopover', () => {
