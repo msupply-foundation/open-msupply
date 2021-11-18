@@ -91,7 +91,7 @@ export const OutboundShipmentWidget: React.FC = () => {
               variant="contained"
               color="secondary"
               Icon={<PlusCircleIcon />}
-              labelKey="button.new-outbound-shipment"
+              label={t('button.new-outbound-shipment')}
               onClick={() => setOpen(true)}
             />
           </Grid>

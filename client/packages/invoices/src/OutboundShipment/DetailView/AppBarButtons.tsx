@@ -6,6 +6,7 @@ import {
   PlusCircleIcon,
   Grid,
   useDetailPanel,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ExternalURL } from '@openmsupply-client/config';
 
@@ -19,19 +20,20 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   const { OpenButton } = useDetailPanel();
+  const t = useTranslation();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           disabled={isDisabled}
-          labelKey="button.add-item"
+          label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
         />
         <ButtonWithIcon
           Icon={<BookIcon />}
-          labelKey="button.docs"
+          label={t('button.docs')}
           onClick={() => (location.href = ExternalURL.PublicDocs)}
         />
         {OpenButton}

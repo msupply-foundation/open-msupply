@@ -50,7 +50,7 @@ export const InboundShipmentWidget: React.FC = () => {
             variant="contained"
             color="secondary"
             Icon={<PlusCircleIcon />}
-            labelKey="button.new-inbound-shipment"
+            label={t('button.new-inbound-shipment')}
             onClick={() => alert('create')}
           />
         </Grid>

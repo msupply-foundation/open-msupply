@@ -1,14 +1,12 @@
 import React from 'react';
 import { ButtonProps, Tooltip } from '@mui/material';
-import { LocaleKey, LocaleProps, useTranslation } from '../../../../intl';
 import { ShrinkableBaseButton } from './ShrinkableBaseButton';
 import { useIsScreen } from '../../../../hooks/useIsScreen';
 
 interface ButtonWithIconProps extends ButtonProps {
   Icon: React.ReactNode;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  labelKey: LocaleKey;
-  labelProps?: LocaleProps;
+  label: string;
   shouldShrink?: boolean;
   variant?: 'outlined' | 'contained';
   color?: 'primary' | 'secondary';
@@ -17,18 +15,16 @@ interface ButtonWithIconProps extends ButtonProps {
 }
 
 export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
-  labelKey,
+  label,
   onClick,
   Icon,
   shouldShrink = true,
   variant = 'outlined',
   color = 'primary',
   disabled,
-  labelProps,
   shrinkThreshold = 'md',
   ...buttonProps
 }) => {
-  const t = useTranslation();
   const isShrinkThreshold = useIsScreen(shrinkThreshold);
 
   // On small screens, if the button shouldShrink, then
@@ -36,10 +32,10 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   const shrink = isShrinkThreshold && shouldShrink;
   const startIcon = shrink ? null : Icon;
   const centeredIcon = shrink ? Icon : null;
-  const text = shrink ? null : t(labelKey, labelProps);
+  const text = shrink ? null : label;
 
   return (
-    <Tooltip disableHoverListener={!shrink} title={t(labelKey, labelProps)}>
+    <Tooltip disableHoverListener={!shrink} title={label}>
       <span>
         <ShrinkableBaseButton
           disabled={disabled}
@@ -49,7 +45,7 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
           color={color}
           size="small"
           startIcon={startIcon}
-          aria-label={t(labelKey, labelProps)}
+          aria-label={label}
           {...buttonProps}
         >
           {centeredIcon}
