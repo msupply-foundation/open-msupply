@@ -3,6 +3,8 @@
   "app.customer-requisition": "طلبات الشراء",
   "app.dashboard": "لوحة القيادة",
   "app.distribution": "توزيع",
+  "app.inbound-shipment": "Inbound Shipment",
+  "app.inbound-shipments": "Inbound Shipments",
   "app.logout": "تسجيل خروج",
   "app.messages": "رسائل",
   "app.outbound-shipment": "شحنة صادرة",
