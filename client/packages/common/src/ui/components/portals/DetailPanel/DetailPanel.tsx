@@ -63,7 +63,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
   Actions,
   children,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation('common');
   const { detailPanelRef } = useHostContext();
   const { close, isOpen, open } = useDetailPanelStore();
   const theme = useTheme();
@@ -92,7 +92,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
           >
             <FlatButton
               color="inherit"
-              labelKey="button.close"
+              label={t('button.close')}
               onClick={close}
               icon={<CloseIcon color="inherit" />}
             />

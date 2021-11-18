@@ -11,7 +11,6 @@ import {
   useNotification,
   useTranslation,
   ColorSelectButton,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
@@ -23,7 +22,7 @@ interface SidePanelProps {
 }
 
 const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -56,15 +55,14 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 };
 
 const RelatedDocumentsRow: FC<{
-  label: LocaleKey;
+  label: string;
   to: string;
   value?: number | null;
 }> = ({ label, to, value }) => {
-  const t = useTranslation();
   const { success } = useNotification();
   return (
     <PanelRow>
-      <PanelLabel>{t(label)}</PanelLabel>
+      <PanelLabel>{label}</PanelLabel>
       <PanelField>
         <Link to={to} onClick={success('Not implemented yet!')}>
           {value}
@@ -75,27 +73,27 @@ const RelatedDocumentsRow: FC<{
 };
 
 const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
-  const t = useTranslation();
+  const t = useTranslation('outbound-shipment');
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid container gap={0.5} key="additional-info">
         <RelatedDocumentsRow
-          label="label.requisition"
+          label={t('label.requisition')}
           to=""
           value={draft.requisitionNumber}
         />
         <RelatedDocumentsRow
-          label="label.inbound-shipment"
+          label={t('label.inbound-shipment')}
           to=""
           value={draft.inboundShipmentNumber}
         />
         <RelatedDocumentsRow
-          label="label.goods-receipt"
+          label={t('label.goods-receipt')}
           to=""
           value={draft.goodsReceiptNumber}
         />
         <RelatedDocumentsRow
-          label="label.purchase-order"
+          label={t('label.purchase-order')}
           to=""
           value={draft.purchaseOrderNumber}
         />

@@ -20,7 +20,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
     <AppBarButtonsPortal>

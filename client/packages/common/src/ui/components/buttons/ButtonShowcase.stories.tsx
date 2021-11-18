@@ -37,7 +37,7 @@ const Wrapper: FC<{ text: string }> = ({ children, text }) => {
 };
 
 const Template: Story = () => {
-  const t = useTranslation();
+  const t = useTranslation('common');
   const [selected, setSelected] = useState(false);
   const [color, setColor] = useState<Color>({
     hex: '#8f90a6',
@@ -141,7 +141,7 @@ const Template: Story = () => {
       <Wrapper text="Flat button">
         <FlatButton
           icon={<BookIcon />}
-          labelKey="button.docs"
+          label="Docs"
           onClick={() => console.info('clicked')}
         />
       </Wrapper>
@@ -149,7 +149,7 @@ const Template: Story = () => {
       <Wrapper text="Icon button">
         <IconButton
           icon={<BookIcon />}
-          labelKey="button.docs"
+          label="Docs"
           onClick={() => console.info('clicked')}
         />
       </Wrapper>
@@ -159,7 +159,7 @@ const Template: Story = () => {
           value={selected}
           selected={selected}
           onClick={() => setSelected(state => !state)}
-          labelKey="admin"
+          label="Admin"
         />
       </Wrapper>
 

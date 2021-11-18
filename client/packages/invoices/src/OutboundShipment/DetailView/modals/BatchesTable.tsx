@@ -51,7 +51,7 @@ type BatchesRowProps = {
 };
 const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const { register } = useFormContext();
-  const t = useTranslation();
+  const t = useTranslation('common');
   const d = useFormatDate();
 
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event => {
@@ -109,7 +109,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell>
         <PaperPopover
           Content={
-            <PaperPopoverSection labelKey="label.details">
+            <PaperPopoverSection label={t('label.details')}>
               <Grid container fontSize="12px">
                 <Grid container justifyContent="space-between">
                   <Grid item>Invoice #xxxx</Grid>
@@ -180,7 +180,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   register,
   rows,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation(['common', 'outbound-shipment']);
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange('placeholder', Number(event.target.value), 1);
 

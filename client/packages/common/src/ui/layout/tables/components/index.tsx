@@ -17,9 +17,6 @@ export const BasicCell = <T extends DomainObject>({
 
 export const BasicHeader = <T extends DomainObject>({
   column,
-}: HeaderProps<T>): ReactElement => {
-  const t = useTranslation();
-  const header = column.label === '' ? column.label : t(column.label);
-
-  return <>{header}</>;
-};
+}: HeaderProps<T>): ReactElement => (
+  <>{column.label === '' ? column.label : column.label}</>
+);

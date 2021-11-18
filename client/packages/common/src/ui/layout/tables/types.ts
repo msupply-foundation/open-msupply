@@ -1,5 +1,4 @@
 import { ReactNode, FC } from 'react';
-import { LocaleKey } from '@openmsupply-client/common/src/intl';
 import { ObjectWithStringKeys, DomainObject } from './../../../types';
 import { Pagination } from '../../../hooks/usePagination';
 import { SortRule } from '../../../hooks/useSortBy';
@@ -24,6 +23,6 @@ export interface TableProps<T extends DomainObject> {
   onChangePage: (page: number) => void;
   onRowClick?: (row: T) => void;
   children?: ReactNode;
-  noDataMessageKey?: LocaleKey;
+  noDataMessage?: string;
   ExpandContent?: FC<{ rowData: T }>;
 }

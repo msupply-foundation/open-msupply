@@ -46,7 +46,7 @@ const createStatusLog = (draft: OutboundShipment) => {
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
-  const t = useTranslation();
+  const t = useTranslation('common');
   const { success } = useNotification();
 
   return (
@@ -66,7 +66,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
             onClick={(_, value) => {
               draft.update?.('hold', !value);
             }}
-            labelKey="label.hold"
+            label={t('label.hold')}
           />
 
           <StatusCrumbs

@@ -2,6 +2,7 @@
   "intl.currency": "{{val, currency(NZD}}",
   "intl.datetime": "{{val, datetime}}",
   "intl.number": "{{val, number}}",
+  "button.go-back": "Go back",
   "admin": "Admin",
   "catalogue": "Catalogue",
   "customer-requisition": "Requisitions",

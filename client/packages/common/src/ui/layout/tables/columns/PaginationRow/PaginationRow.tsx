@@ -35,7 +35,7 @@ export const PaginationRow: FC<PaginationRowProps> = ({
     }
   };
 
-  const t = useTranslation();
+  const t = useTranslation('common');
   const getNumberSelectedLabel = () =>
     !!numberSelected && `(${numberSelected} ${t('label.selected')})`;
 

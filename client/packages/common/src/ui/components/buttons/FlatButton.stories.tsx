@@ -9,7 +9,7 @@ const Template: ComponentStory<typeof FlatButton> = args => (
     <FlatButton
       {...args}
       icon={<BookIcon color={args.color} />}
-      labelKey="button.docs"
+      label="Docs"
       onClick={() => console.info('clicked')}
     />
   </Box>
