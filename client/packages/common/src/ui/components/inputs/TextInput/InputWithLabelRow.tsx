@@ -1,7 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import { FormLabel, Box, FormLabelProps } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
-import { useTranslation, LocaleKey } from '../../../../intl/intlHelpers';
+import { useTranslation, LocaleKey } from '../../../../intl';
 
 interface InputWithLabelRowProps {
   Input: ReactNode;

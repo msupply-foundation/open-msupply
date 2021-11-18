@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button as MuiButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../intl';
 import { DefaultButtonStyles } from './styles';
 
 interface NavigationButtonProps {

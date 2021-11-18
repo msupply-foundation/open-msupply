@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Divider } from '../..';
-import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../intl';
 import { ChevronDownIcon } from '../../icons';
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({

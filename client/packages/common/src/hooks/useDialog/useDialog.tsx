@@ -1,7 +1,7 @@
 import React from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import { LocaleKey } from '../../intl/intlHelpers';
+import { LocaleKey } from '../../intl';
 import { BasicModal } from '../../ui/components/modals/BasicModal';
 import { ModalTitle } from '../../ui/components/modals/ModalTitle';
 

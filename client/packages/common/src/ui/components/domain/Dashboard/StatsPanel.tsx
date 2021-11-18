@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { BarChartIcon, InlineSpinner, StockIcon } from '../../../';
-import { LocaleKey, useTranslation } from '../../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../../intl';
 
 export type Stat = {
   labelKey: LocaleKey;

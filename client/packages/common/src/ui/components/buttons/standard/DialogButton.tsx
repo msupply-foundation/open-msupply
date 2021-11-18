@@ -1,5 +1,5 @@
 import React from 'react';
-import { LocaleKey } from '../../../../intl/intlHelpers';
+import { LocaleKey } from '../../../../intl';
 import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 

@@ -1,84 +1,59 @@
-import { FormatNumberOptions, useIntl } from 'react-intl';
-import type { PrimitiveType } from 'intl-messageformat';
-
-// "import type" ensures en messages aren't bundled by default
-import * as sourceOfTruth from './locales/en.json';
+import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
+import { i18n, TOptions } from 'i18next';
 import { useHostContext } from '../hooks';
+import { LocaleKey } from './locales';
 
-export type SupportedLocales = 'en' | 'fr' | 'pt' | 'ar';
-export type LocaleMessages = typeof sourceOfTruth;
-export type LocaleKey = keyof LocaleMessages;
-export type LocaleProps = Record<string, PrimitiveType>;
+export type SupportedLocales = 'en' | 'fr' | 'ar';
+export type LocaleProps = Record<string, unknown>;
+export interface TypedTFunction<Keys> {
+  // basic usage
+  (
+    key?: Keys | Keys[],
+    options?: TOptions<Record<string, unknown>> | string
+  ): string;
+  // overloaded usage
+  (
+    key?: Keys | Keys[],
+    defaultValue?: string,
+    options?: TOptions<Record<string, unknown>> | string
+  ): string;
+}
 
-export const useTranslation = (): ((
-  id?: LocaleKey, // only accepts valid keys, not any string
-  values?: LocaleProps
-) => string) => {
-  const intl = useIntl();
-  return (id, values) =>
-    id ? intl.formatMessage({ id: id as string }, values) : '';
-};
-
-export const useTranslationWithFallback = (): ((
-  id: LocaleKey, // only accepts valid keys, not any string
-  fallback: string,
-  values?: Record<string, PrimitiveType>
-) => string) => {
-  const intl = useIntl();
-  return (id, fallback, values) => {
-    if (!id) return '';
-    if (Object.keys(intl.messages).every(key => id !== key)) return fallback;
-
-    return intl.formatMessage({ id: id as string }, values);
-  };
+export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
+  const { t } = useTranslationNext(ns);
+  return (key, options) => (key ? t(key, options) : '');
 };
 
 export const useFormatDate = (): ((
   value: number | Date,
   options?: Intl.DateTimeFormatOptions & { format?: string }
 ) => string) => {
-  const intl = useIntl();
-  return (value, options) => intl.formatDate(value, options);
+  const { t } = useTranslationNext();
+  return (val, formatParams) => t('intl.datetime', { val, formatParams });
 };
 
 export const useFormatNumber = (): ((
   value: number | bigint,
-  options?: FormatNumberOptions
+  options?: Intl.NumberFormatOptions
 ) => string) => {
-  const intl = useIntl();
-  return (value, options) => intl.formatNumber(value, options);
+  const { t } = useTranslationNext();
+  return (val, formatParams) => t('intl.number', { val, formatParams });
 };
 
 export const useRtl = (): boolean => {
-  const { locale } = useHostContext();
-  const isRtl = locale === 'ar';
+  const { i18n } = useTranslationNext();
+  const { language } = i18n;
+  const isRtl = language === 'ar';
   return isRtl;
 };
 
-// return type on this signature enforces that all languages have the same translations defined
-export const importMessages = (
-  locale: SupportedLocales
-): Promise<LocaleMessages> => {
-  switch (locale) {
-    case 'en':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "en_json" */
-        './locales/en.json'
-      );
-    case 'fr':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "fr_json" */
-        './locales/fr.json'
-      );
-    case 'pt':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "pt_json" */
-        './locales/pt.json'
-      );
-    case 'ar':
-      return import(
-        /* webpackMode: "lazy", webpackChunkName: "ab_json" */
-        './locales/ar.json'
-      );
-  }
+export const useI18N = (): i18n => {
+  const { i18n } = useTranslationNext();
+  return i18n;
+};
+
+/* removing this unused method breaks things */
+export const useUserName = (): string => {
+  const { user } = useHostContext();
+  return user?.name;
 };

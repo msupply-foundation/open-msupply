@@ -1,7 +1,4 @@
 import create from 'zustand';
-import { LocalStorage } from '../localStorage';
-
-import { SupportedLocales } from '../intl/intlHelpers';
 import { Store, User } from '../types';
 
 type HostContext = {
@@ -19,9 +16,6 @@ type HostContext = {
 
   setDetailPanelRef: (ref: React.MutableRefObject<null> | null) => void;
   detailPanelRef: React.MutableRefObject<null> | null;
-
-  setLocale: (locale: SupportedLocales) => void;
-  locale: SupportedLocales;
 
   setStore: (store: Store) => void;
   store: Store;
@@ -51,22 +45,9 @@ export const useHostContext = create<HostContext>(set => ({
     set(state => ({ ...state, detailPanelRef: refOrNull })),
   detailPanelRef: null,
 
-  setLocale: locale => set(state => ({ ...state, locale })),
-  locale: LocalStorage.getItem('/localisation/locale') ?? 'en',
-
   setStore: store => set(state => ({ ...state, store })),
   store: { id: '4321dcba', name: 'Central Warehouse' },
 
   setUser: user => set(state => ({ ...state, user })),
   user: { id: 'abcd1234', name: 'Administrator' },
 }));
-
-useHostContext.subscribe(({ locale }) => {
-  LocalStorage.setItem('/localisation/locale', locale);
-});
-
-LocalStorage.addListener<SupportedLocales>((key, value) => {
-  if (key === '/localisation/locale') {
-    useHostContext.setState(state => ({ ...state, locale: value }));
-  }
-});

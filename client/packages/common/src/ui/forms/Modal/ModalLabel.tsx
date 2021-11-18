@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, InputLabel } from '@mui/material';
-import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../intl';
 import { Property } from 'csstype';
 
 export interface ModalLabelProps {

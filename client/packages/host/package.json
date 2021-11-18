@@ -13,6 +13,7 @@
     "lint-staged": "^11.1.1",
     "prettier": "^2.3.2",
     "react-refresh": "^0.10.0",
+    "rimraf": "^3.0.2",
     "serve": "11.3.2",
     "typescript": "^4.3.5",
     "webpack": "5.40.0",
@@ -21,7 +22,7 @@
   },
   "scripts": {
     "start": "webpack-cli serve",
-    "build": "webpack --env production",
+    "build": "rimraf dist && webpack --env production",
     "serve": "serve dist -p 3003",
     "clean": "rm -rf dist",
     "tsc": "tsc --build"
