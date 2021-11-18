@@ -1,26 +1,23 @@
 import React, { FC } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { BarChartIcon, InlineSpinner, StockIcon } from '../../../';
-import { LocaleKey, useTranslation } from '../../../../intl';
 
 export type Stat = {
-  labelKey: LocaleKey;
+  label: string;
   value: number;
 };
 export interface StatsPanelProps {
   isLoading: boolean;
   stats: Stat[];
-  titleKey: LocaleKey;
+  title: string;
 }
 
 export const StatsPanel: FC<StatsPanelProps> = ({
   isLoading,
   stats,
-  titleKey,
+  title,
 }) => {
-  const t = useTranslation();
-
-  const Statistic: FC<Stat> = ({ labelKey, value }) => (
+  const Statistic: FC<Stat> = ({ label, value }) => (
     <Grid container alignItems="center" style={{ height: 30 }}>
       <Grid item>
         <Typography style={{ fontSize: 24, fontWeight: 'bold' }}>
@@ -36,7 +33,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           marginLeft: '8px',
         }}
       >
-        {t(labelKey)}
+        {label}
       </Grid>
     </Grid>
   );
@@ -69,7 +66,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
               color="secondary"
               style={{ fontSize: 12, fontWeight: 500 }}
             >
-              {t(titleKey)}
+              {title}
             </Typography>
           </Grid>
         </Grid>
@@ -79,7 +76,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           ) : (
             <Grid item>
               {stats.map(stat => (
-                <Statistic key={stat.labelKey} {...stat} />
+                <Statistic key={stat.label} {...stat} />
               ))}
             </Grid>
           )}

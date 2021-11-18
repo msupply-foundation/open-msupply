@@ -4,12 +4,14 @@ import {
   StatsPanel,
   useOmSupplyApi,
   useQuery,
+  useTranslation,
   Widget,
 } from '@openmsupply-client/common';
 import { getStockCountQueryFn } from '../api';
 
 export const StockWidget: React.FC = () => {
   const { api } = useOmSupplyApi();
+  const t = useTranslation(['app', 'dashboard']);
   const { data, isLoading } = useQuery(
     ['stock', 'count'],
     getStockCountQueryFn(api),
@@ -17,7 +19,7 @@ export const StockWidget: React.FC = () => {
   );
 
   return (
-    <Widget titleKey="app.stock">
+    <Widget title={t('stock')}>
       <Grid
         container
         justifyContent="flex-start"
@@ -27,11 +29,11 @@ export const StockWidget: React.FC = () => {
         <Grid item>
           <StatsPanel
             isLoading={isLoading}
-            titleKey="heading.expiring-stock"
+            title={t('heading.expiring-stock')}
             stats={[
-              { labelKey: 'label.expired', value: data?.expired || 0 },
+              { label: t('label.expired'), value: data?.expired || 0 },
               {
-                labelKey: 'label.expiring-soon',
+                label: t('label.expiring-soon'),
                 value: data?.expiringSoon || 0,
               },
             ]}

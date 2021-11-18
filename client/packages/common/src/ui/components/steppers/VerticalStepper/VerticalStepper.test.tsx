@@ -13,9 +13,9 @@ describe('VerticalStepper', () => {
         <VerticalStepper
           activeStep={0}
           steps={[
-            { label: 'app.admin', description: 'admin' },
-            { label: 'app.catalogue', description: 'catalogue' },
-            { label: 'app.customers', description: 'customers' },
+            { label: 'admin', description: 'admin' },
+            { label: 'catalogue', description: 'catalogue' },
+            { label: 'customers', description: 'customers' },
           ]}
         />
       </TestingProvider>
@@ -36,9 +36,9 @@ describe('VerticalStepper', () => {
         <VerticalStepper
           activeStep={1}
           steps={[
-            { label: 'app.admin', description: 'admin' },
-            { label: 'app.catalogue', description: 'catalogue' },
-            { label: 'app.customers', description: 'customers' },
+            { label: 'admin', description: 'admin' },
+            { label: 'catalogue', description: 'catalogue' },
+            { label: 'customers', description: 'customers' },
           ]}
         />
       </TestingProvider>

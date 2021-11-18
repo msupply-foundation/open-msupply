@@ -89,7 +89,7 @@ const Template: Story = () => {
           variant="contained"
           color="primary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          labelKey="distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -99,7 +99,7 @@ const Template: Story = () => {
           variant="contained"
           color="secondary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          labelKey="distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -109,7 +109,7 @@ const Template: Story = () => {
           variant="outlined"
           color="primary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          labelKey="distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -119,7 +119,7 @@ const Template: Story = () => {
           variant="outlined"
           color="secondary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          labelKey="distribution"
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -157,7 +157,7 @@ const Template: Story = () => {
           value={selected}
           selected={selected}
           onClick={() => setSelected(state => !state)}
-          labelKey="app.admin"
+          labelKey="admin"
         />
       </Wrapper>
 
