@@ -8,9 +8,11 @@ import {
   useDialog,
   FormProvider,
   generateUUID,
+  InlineSpinner,
+  Box,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
-import { BatchesTable } from './BatchesTable';
+import { BatchesTable, sortByExpiry } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import {
   BatchRow,
@@ -31,11 +33,10 @@ export const getInvoiceLine = (
   id: string,
   summaryItem: OutboundShipmentSummaryItem,
   stockLineOrPlaceholder: Partial<BatchRow> & { id: string },
-  quantity: number
+  numberOfPacks: number
 ): OutboundShipmentRow => ({
   id,
-  numberOfPacks: quantity,
-  quantity,
+  numberOfPacks,
   invoiceId: '',
   itemId: summaryItem.itemId,
   itemName: summaryItem.itemName,
@@ -51,29 +52,6 @@ export const getInvoiceLine = (
   note: stockLineOrPlaceholder?.note ?? '',
 });
 
-const sortByDisabledThenExpiryDate = (a: BatchRow, b: BatchRow) => {
-  const disabledA = a.onHold || a.availableNumberOfPacks === 0;
-  const disabledB = b.onHold || b.availableNumberOfPacks === 0;
-  if (!disabledA && disabledB) {
-    return -1;
-  }
-  if (disabledA && !disabledB) {
-    return 1;
-  }
-
-  const expiryA = new Date(a.expiryDate ?? '');
-  const expiryB = new Date(b.expiryDate ?? '');
-
-  if (expiryA < expiryB) {
-    return -1;
-  }
-  if (expiryA > expiryB) {
-    return 1;
-  }
-
-  return 0;
-};
-
 const createPlaceholderRow = (): BatchRow => ({
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
@@ -85,7 +63,7 @@ const createPlaceholderRow = (): BatchRow => ({
   sellPricePerPack: 0,
   storeId: '',
   totalNumberOfPacks: 0,
-  quantity: 0,
+  numberOfPacks: 0,
 });
 
 const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
@@ -107,13 +85,14 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
           );
           return {
             ...batch,
-            quantity: matchingInvoiceRow?.numberOfPacks ?? 0,
+            numberOfPacks: matchingInvoiceRow?.numberOfPacks ?? 0,
             availableNumberOfPacks:
               batch.availableNumberOfPacks +
               (matchingInvoiceRow?.numberOfPacks ?? 0),
           };
         })
-        .sort(sortByDisabledThenExpiryDate);
+        .sort(sortByExpiry);
+
       rows.push(createPlaceholderRow());
 
       return rows;
@@ -125,11 +104,21 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
 
 export type PackSizeController = ReturnType<typeof usePackSizeController>;
 
-const usePackSizeController = (batches: { packSize: number }[]) => {
+const usePackSizeController = (
+  batches: {
+    packSize: number;
+    onHold: boolean;
+    availableNumberOfPacks: number;
+  }[]
+) => {
   // Creating a sorted array of distinct pack sizes
   const packSizes = Array.from(
     new Set(
       batches
+        .filter(
+          ({ onHold, availableNumberOfPacks }) =>
+            availableNumberOfPacks > 0 && !onHold
+        )
         .reduce((sizes, { packSize }) => [...sizes, packSize], [] as number[])
         .sort()
     )
@@ -140,7 +129,7 @@ const usePackSizeController = (batches: { packSize: number }[]) => {
     value: packSize,
   }));
 
-  const defaultPackSize = options[0] ?? { label: '1', value: 1 };
+  const defaultPackSize = options[0] ?? { label: '', value: '' };
 
   const [selected, setSelected] = useState(defaultPackSize);
 
@@ -149,6 +138,15 @@ const usePackSizeController = (batches: { packSize: number }[]) => {
     if (!packSizeOption) return;
     setSelected(packSizeOption);
   };
+
+  useEffect(() => {
+    if (defaultPackSize.value && typeof defaultPackSize.value == 'number') {
+      setPackSize(defaultPackSize.value);
+    }
+    if (packSizes.length === 0) {
+      setSelected({ label: '', value: '' });
+    }
+  }, [defaultPackSize.value]);
 
   return { selected, setPackSize, options };
 };
@@ -164,7 +162,10 @@ const sumAvailableQuantity = (batchRows: BatchRow[]) => {
 };
 
 const getAllocatedQuantity = (batchRows: BatchRow[]) => {
-  return batchRows.reduce((acc, { quantity }) => acc + quantity, 0);
+  return batchRows.reduce(
+    (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+    0
+  );
 };
 
 const issueStock = (
@@ -179,7 +180,7 @@ const issueStock = (
   const newBatchRows = [...batchRows];
   newBatchRows[foundRowIdx] = {
     ...foundRow,
-    quantity: value,
+    numberOfPacks: value,
   };
 
   return newBatchRows;
@@ -193,7 +194,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   summaryItem,
 }) => {
   const methods = useForm({ mode: 'onBlur' });
-  const { reset, register, setValue } = methods;
+  const { reset, register } = methods;
 
   const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
   const packSizeController = usePackSizeController(batchRows);
@@ -205,7 +206,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   const onReset = () => {
     reset();
-    setValue('quantity', '');
   };
   const onCancel = () => {
     onClose();
@@ -218,7 +218,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     const invoiceLines = batchRows
       .filter(({ id }) => id !== 'placeholder')
       .map(batch =>
-        getInvoiceLine(generateUUID(), summaryItem, batch, batch.quantity)
+        getInvoiceLine(generateUUID(), summaryItem, batch, batch.numberOfPacks)
       );
 
     // Upsert each line. Any lines which do no already exist and have no had any
@@ -232,13 +232,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     upsert();
     onClose();
     onReset();
+    onChangeItem(null);
   };
 
   const allocateQuantities = (
     newValue: number,
     issuePackSize: number | null
   ) => {
-    setValue('quantity', String(newValue));
     // if invalid quantity entered, don't allocate
     if (newValue < 1 || Number.isNaN(newValue)) {
       return;
@@ -255,29 +255,33 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     let toAllocate = newValue * (issuePackSize || 1);
 
     const newBatchRows = [...batchRows];
-    const validBatches = newBatchRows.filter(
-      ({ packSize, onHold, availableNumberOfPacks }) =>
-        (issuePackSize ? packSize === issuePackSize : true) &&
-        availableNumberOfPacks > 0 &&
-        !onHold
-    );
+    const validBatches = newBatchRows
+      .filter(
+        ({ packSize, onHold, availableNumberOfPacks }) =>
+          (issuePackSize ? packSize === issuePackSize : true) &&
+          availableNumberOfPacks > 0 &&
+          !onHold
+      )
+      .sort(sortByExpiry);
 
     validBatches.forEach(batch => {
       const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
       const batchRow = newBatchRows[batchRowIdx];
       if (!batchRow) return null;
-
-      const availableUnits = batch.availableNumberOfPacks * batch.packSize;
+      const currentAllocatedUnits = batchRow.numberOfPacks * batchRow.packSize;
+      const totalAvailableUnits =
+        batchRow.availableNumberOfPacks * batchRow.packSize;
+      const availableUnits = totalAvailableUnits - currentAllocatedUnits;
       const allocatedUnits = Math.min(toAllocate, availableUnits);
       const allocatedNumberOfPacks = Math.floor(
-        allocatedUnits / batch.packSize
+        allocatedUnits / batchRow.packSize
       );
 
       toAllocate -= allocatedUnits;
 
       newBatchRows[batchRowIdx] = {
         ...batchRow,
-        quantity: allocatedNumberOfPacks,
+        numberOfPacks: batchRow.numberOfPacks + allocatedNumberOfPacks,
       };
     });
 
@@ -290,7 +294,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
     newBatchRows[placeholderIdx] = {
       ...placeholder,
-      quantity: toAllocate,
+      numberOfPacks:
+        placeholder.numberOfPacks + toAllocate * (issuePackSize || 1),
     };
 
     setBatchRows(newBatchRows);
@@ -302,7 +307,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen) showDialog();
-    else hideDialog();
+    else {
+      onChangeItem(null);
+      hideDialog();
+    }
   }, [isOpen]);
 
   return (
@@ -335,13 +343,25 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               allocatedQuantity={getAllocatedQuantity(batchRows)}
               summaryItem={summaryItem || undefined}
             />
-            {!isLoading && (
-              <BatchesTable
-                onChange={onChangeRowQuantity}
-                register={register}
-                rows={batchRows}
-              />
-            )}
+            {!!summaryItem ? (
+              !isLoading ? (
+                <BatchesTable
+                  onChange={onChangeRowQuantity}
+                  register={register}
+                  rows={batchRows}
+                />
+              ) : (
+                <Box
+                  display="flex"
+                  flex={1}
+                  height={300}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <InlineSpinner />
+                </Box>
+              )
+            ) : null}
           </Grid>
         </form>
       </FormProvider>
