@@ -26,7 +26,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   const t = useTranslation();
 
   return (
-    <DetailPanelSection titleKey="heading.additional-info">
+    <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
@@ -75,8 +75,9 @@ const RelatedDocumentsRow: FC<{
 };
 
 const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
+  const t = useTranslation();
   return (
-    <DetailPanelSection titleKey="heading.related-documents">
+    <DetailPanelSection title={t('heading.related-documents')}>
       <Grid container gap={0.5} key="additional-info">
         <RelatedDocumentsRow
           label="label.requisition"
@@ -105,6 +106,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
 
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
+  const t = useTranslation(['common', 'outbound-shipment']);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
@@ -119,7 +121,7 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
             (process.env['NODE_ENV'] === 'development' && (
               <DetailPanelAction
                 icon={<CopyIcon />}
-                titleKey="dev.log-draft"
+                title={t('dev.log-draft')}
                 onClick={() => {
                   console.table(draft);
                   draft.items.forEach(item => {
@@ -133,7 +135,7 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
             ))}
           <DetailPanelAction
             icon={<CopyIcon />}
-            titleKey="link.copy-to-clipboard"
+            title={t('link.copy-to-clipboard')}
             onClick={copyToClipboard}
           />
         </>

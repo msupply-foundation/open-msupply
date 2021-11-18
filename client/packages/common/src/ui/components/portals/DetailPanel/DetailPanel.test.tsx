@@ -25,10 +25,10 @@ describe('DetailPanel', () => {
   const DetailPanelWithTwoSections: FC = () => (
     <DetailPanelPortal>
       <>
-        <DetailPanelSection titleKey="heading.comment">
+        <DetailPanelSection title="Comment">
           <div>comments</div>
         </DetailPanelSection>
-        <DetailPanelSection titleKey="heading.additional-info">
+        <DetailPanelSection title="Additional info">
           <div data-testid="child2">comments</div>
         </DetailPanelSection>
       </>
