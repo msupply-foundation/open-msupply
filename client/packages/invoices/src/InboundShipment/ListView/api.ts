@@ -108,9 +108,7 @@ export const getInboundShipmentListViewApi = (
     });
 
     const { batchInboundShipment } = result;
-    console.log('-------------------------------------------');
-    console.log('batchInboundShipment', result);
-    console.log('-------------------------------------------');
+
     if (batchInboundShipment.deleteInboundShipments) {
       return batchInboundShipment.deleteInboundShipments.map(({ id }) => id);
     }
