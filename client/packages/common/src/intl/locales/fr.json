@@ -127,5 +127,7 @@
   "dev.log-draft": "Log draft",
   "label.packs-to-batches-with": "packs to batches with a pack size of",
   "label.units": "Units",
+  "label.allocate-to-packs": "Allocate to packs?",
+  "heading.edit-item": "Edit Item",
   "placeholder.enter-a-customers-name": "Enter a customers name"
 }
