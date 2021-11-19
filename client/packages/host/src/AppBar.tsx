@@ -9,6 +9,7 @@ import {
   IconButton,
   Breadcrumbs,
   useAppBarRect,
+  useTranslation,
   AppBarButtons,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -23,6 +24,7 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 }));
 
 const AppBar: React.FC = () => {
+  const t = useTranslation('app');
   const navigate = useNavigate();
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
@@ -39,7 +41,7 @@ const AppBar: React.FC = () => {
       <Toolbar disableGutters>
         <IconButton
           icon={<ArrowLeftIcon color="primary" />}
-          labelKey="button.go-back"
+          label={t('button.go-back')}
           onClick={() => navigate(-1)}
         />
 

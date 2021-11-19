@@ -112,7 +112,7 @@ const StyledDrawer = styled(Box, {
 }));
 
 const AppDrawer: React.FC = () => {
-  const t = useTranslation();
+  const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
 
   const drawer = useDrawer();
@@ -143,7 +143,7 @@ const AppDrawer: React.FC = () => {
           <NavLink
             to={AppRoute.Dashboard}
             icon={<DashboardIcon fontSize="small" color="primary" />}
-            text={t('app.dashboard')}
+            text={t('dashboard')}
           />
           <React.Suspense fallback={null}>
             <DistributionNav />
@@ -156,27 +156,27 @@ const AppDrawer: React.FC = () => {
           {/* <NavLink
             to={AppRoute.Suppliers}
             icon={<SuppliersIcon fontSize="small" color="primary" />}
-            text={t('app.suppliers')}
+            text={t('suppliers')}
           /> */}
           <NavLink
             to={AppRoute.Stock}
             icon={<StockIcon fontSize="small" color="primary" />}
-            text={t('app.stock')}
+            text={t('stock')}
           />
           {/* <NavLink
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
-            text={t('app.tools')}
+            text={t('tools')}
           /> */}
           <NavLink
             to={AppRoute.Reports}
             icon={<ReportsIcon fontSize="small" color="primary" />}
-            text={t('app.reports')}
+            text={t('reports')}
           />
           {/* <NavLink
             to={AppRoute.Messages}
             icon={<MessagesIcon fontSize="small" color="primary" />}
-            text={t('app.messages')}
+            text={t('messages')}
           /> */}
         </List>
       </UpperListContainer>
@@ -186,17 +186,17 @@ const AppDrawer: React.FC = () => {
           <NavLink
             to={AppRoute.Sync}
             icon={<RadioIcon fontSize="small" color="primary" />}
-            text={t('app.sync')}
+            text={t('sync')}
           />
           <NavLink
             to={AppRoute.Admin}
             icon={<SettingsIcon fontSize="small" color="primary" />}
-            text={t('app.admin')}
+            text={t('admin')}
           />
           <NavLink
             to={AppRoute.Logout}
             icon={<PowerIcon fontSize="small" color="primary" />}
-            text={t('app.logout')}
+            text={t('logout')}
           />
         </List>
       </LowerListContainer>

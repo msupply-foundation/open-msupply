@@ -5,6 +5,7 @@ import {
   MenuItem,
   TranslateIcon,
   useI18N,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
 import { useNavigate } from 'react-router';
@@ -27,6 +28,7 @@ export const LanguageMenu: React.FC = () => {
   };
 
   const i18n = useI18N();
+  const t = useTranslation('common');
   const setLanguage = (language: SupportedLocales) => {
     i18n.changeLanguage(language);
     handleClose();
@@ -53,7 +55,7 @@ export const LanguageMenu: React.FC = () => {
       <ButtonWithIcon
         onClick={handleClick}
         Icon={<TranslateIcon />}
-        labelKey="button.language"
+        label={t('button.language')}
       />
 
       <Menu

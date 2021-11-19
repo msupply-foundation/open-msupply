@@ -22,11 +22,11 @@ const StyledText = styled(Typography)(({ theme }) => ({
 }));
 
 export const BasicSpinner: FC = () => {
-  const t = useTranslation();
+  const t = useTranslation('app');
   return (
     <Container>
       <CircularProgress />
-      <StyledText>{t('app.loading')}</StyledText>
+      <StyledText>{t('loading')}</StyledText>
     </Container>
   );
 };

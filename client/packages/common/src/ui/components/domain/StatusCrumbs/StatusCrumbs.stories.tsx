@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { StatusCrumbs } from './StatusCrumbs';
-import { OutboundShipmentStatus } from '../../../..';
+import { OutboundShipmentStatus } from '../../../../types';
 import { LocaleKey, useTranslation } from '../../../../intl';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
@@ -52,7 +52,7 @@ const Template: ComponentStory<typeof StatusCrumbs> = () => {
   const [currentStatus, setCurrentStatus] = useState(outboundStatuses[4]);
   const [statusLog, setStatusLog] = useState(defaultStatusLog);
 
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
     <Stack gap={2}>

@@ -6,9 +6,11 @@ import { TestingProvider } from '../../../../utils';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { CircleIcon } from '../../../icons';
+import { useTranslation } from '../../../../intl/intlHelpers';
 
 describe('ColorMenu', () => {
   const TestColorMenu = ({ onClick }: { onClick: (color: Color) => void }) => {
+    const t = useTranslation('app');
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -27,7 +29,7 @@ describe('ColorMenu', () => {
           onClick={onClick}
         />
         <IconButton
-          labelKey="app.admin"
+          label={t('admin')}
           icon={
             <CircleIcon
               htmlColor="red"

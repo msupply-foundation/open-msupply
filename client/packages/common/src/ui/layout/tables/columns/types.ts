@@ -1,7 +1,8 @@
 import { JSXElementConstructor } from 'react';
 import { SortBy } from '../../../../hooks';
-import { LocaleKey, useTranslation, useFormatDate } from './../../../../intl';
+import { useTranslation, useFormatDate } from './../../../../intl';
 import { DomainObject } from './../../../../types';
+import { LocaleKey } from '../../../../intl';
 
 export interface CellProps<T extends DomainObject> {
   rowData: T;

@@ -8,7 +8,7 @@ import { BaseButton } from '../buttons';
 export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
   onClearError,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
     <Box

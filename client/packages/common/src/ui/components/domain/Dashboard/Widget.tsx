@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, CircularProgress, Paper, Typography } from '@mui/material';
-import { LocaleKey, useTranslation } from '../../../../intl';
 
 const Loading = () => (
   <Box display="flex" flex={1} justifyContent="center" alignItems="center">
@@ -10,33 +9,30 @@ const Loading = () => (
 
 interface WidgetProps {
   height?: number | string;
-  titleKey: LocaleKey;
+  title: string;
 }
 
 export const Widget: React.FC<WidgetProps> = ({
   children,
   height = '100%',
-  titleKey,
-}) => {
-  const t = useTranslation();
-  return (
-    <Paper
-      sx={{
-        borderRadius: '16px',
-        height,
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        margin: '11px',
-        flex: 1,
-        boxShadow: theme => theme.shadows[2],
-      }}
-    >
-      <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
-        {t(titleKey)}
-      </Typography>
+  title,
+}) => (
+  <Paper
+    sx={{
+      borderRadius: '16px',
+      height,
+      padding: '24px',
+      display: 'flex',
+      flexDirection: 'column',
+      margin: '11px',
+      flex: 1,
+      boxShadow: theme => theme.shadows[2],
+    }}
+  >
+    <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+      {title}
+    </Typography>
 
-      <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
-    </Paper>
-  );
-};
+    <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
+  </Paper>
+);
