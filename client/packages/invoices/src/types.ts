@@ -9,6 +9,16 @@ import {
   InvoiceLineNode,
 } from '@openmsupply-client/common';
 
+/**
+ * Invoice, InvoiceRow and InvoiceLine extend the GQL types, mostly. GQL types for related entities
+ * are not included as they are unions of errors or other types which make them difficult to use
+ * in the UI. Additionally, to ensure types can be required when needed (i.e. different queries for different fields)
+ * we use the GQL types as the base for our types and transform them in the API layer to easier to use types.
+ * In the UI we transform these generic Invoice types to the more
+ * specialised types such as OutboundShipment or InboundShipment.
+ * TODO: Maybe we can get away with just using `Shipment` for both.
+ */
+
 export type OutboundShipmentStatus =
   | InvoiceNodeStatus.Draft
   | InvoiceNodeStatus.Allocated
