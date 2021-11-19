@@ -49,7 +49,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
       ? { code: { equalTo: currentItem?.code } }
       : undefined,
   });
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   useEffect(() => {
     setFilter({

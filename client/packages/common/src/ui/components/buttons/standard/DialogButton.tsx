@@ -1,5 +1,5 @@
 import React from 'react';
-import { LocaleKey } from '../../../../intl';
+import { LocaleKey, useTranslation } from '../../../../intl';
 import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
@@ -45,6 +45,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   variant,
   disabled = false,
 }) => {
+  const t = useTranslation('common');
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
 
   return (
@@ -54,7 +55,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       onClick={onClick}
       Icon={icon}
       variant={buttonVariant}
-      labelKey={labelKey}
+      label={t(labelKey)}
       sx={
         disabled
           ? {

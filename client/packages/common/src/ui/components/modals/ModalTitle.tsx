@@ -1,23 +1,18 @@
 import React, { FC } from 'react';
 import DialogTitle from '@mui/material/DialogTitle';
-import { LocaleKey, useTranslation } from '../../../intl';
 
 interface ModalTitleProps {
-  title: LocaleKey;
+  title: string;
 }
 
-export const ModalTitle: FC<ModalTitleProps> = ({ title }) => {
-  const t = useTranslation();
-
-  return (
-    <DialogTitle
-      sx={{
-        color: theme => theme.typography.body1.color,
-        fontSize: theme => theme.typography.body1.fontSize,
-        fontWeight: 'bold',
-      }}
-    >
-      {t(title)}
-    </DialogTitle>
-  );
-};
+export const ModalTitle: FC<ModalTitleProps> = ({ title }) => (
+  <DialogTitle
+    sx={{
+      color: theme => theme.typography.body1.color,
+      fontSize: theme => theme.typography.body1.fontSize,
+      fontWeight: 'bold',
+    }}
+  >
+    {title}
+  </DialogTitle>
+);

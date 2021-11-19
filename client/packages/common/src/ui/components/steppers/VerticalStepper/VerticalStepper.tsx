@@ -9,10 +9,8 @@ import StepConnector, {
 } from '@mui/material/StepConnector';
 import { styled } from '@mui/material';
 
-import { LocaleKey, useTranslation } from '../../../../intl';
-
 interface StepDefinition {
-  label: LocaleKey;
+  label: string;
   description: string;
 }
 
@@ -89,79 +87,75 @@ const Circle = styled('div', {
   };
 });
 
-export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => {
-  const t = useTranslation();
+export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => (
+  <Box flex={1}>
+    <Stepper
+      connector={<StyledConnector />}
+      activeStep={activeStep}
+      orientation="vertical"
+    >
+      {steps.map((step, index) => {
+        const isActive = index === activeStep;
+        const isCompleted = index <= activeStep;
 
-  return (
-    <Box flex={1}>
-      <Stepper
-        connector={<StyledConnector />}
-        activeStep={activeStep}
-        orientation="vertical"
-      >
-        {steps.map((step, index) => {
-          const isActive = index === activeStep;
-          const isCompleted = index <= activeStep;
+        // There is no accessability role that I can find to accurately describe
+        // a stepper, so turning to testids to mark the active/completed steps
+        // for tests
+        let testId = '';
+        if (isActive) testId += 'active';
+        if (isCompleted) testId += 'completed';
 
-          // There is no accessability role that I can find to accurately describe
-          // a stepper, so turning to testids to mark the active/completed steps
-          // for tests
-          let testId = '';
-          if (isActive) testId += 'active';
-          if (isCompleted) testId += 'completed';
-
-          return (
-            <Step
-              data-testid={testId}
-              key={step.label}
-              active={isActive}
-              completed={isCompleted}
+        return (
+          <Step
+            data-testid={testId}
+            key={step.label}
+            active={isActive}
+            completed={isCompleted}
+          >
+            <StepLabel
+              sx={{
+                '&.MuiStepLabel-root': {
+                  padding: 0,
+                  position: 'relative',
+                  height: '8px',
+                },
+                '& .MuiStepLabel-iconContainer': {
+                  paddingLeft: 0,
+                },
+                '& .MuiStepLabel-labelContainer': {
+                  paddingLeft: '8px',
+                },
+              }}
+              StepIconComponent={Circle}
             >
-              <StepLabel
-                sx={{
-                  '&.MuiStepLabel-root': {
-                    padding: 0,
-                    position: 'relative',
-                    height: '8px',
-                  },
-                  '& .MuiStepLabel-iconContainer': {
-                    paddingLeft: 0,
-                  },
-                  '& .MuiStepLabel-labelContainer': {
-                    paddingLeft: '8px',
-                  },
-                }}
-                StepIconComponent={Circle}
+              <Box
+                flexDirection="row"
+                display="flex"
+                flex={1}
+                alignItems="center"
+                justifyContent="space-between"
               >
-                <Box
-                  flexDirection="row"
-                  display="flex"
-                  flex={1}
-                  alignItems="center"
-                  justifyContent="space-between"
+                <Typography
+                  variant="body2"
+                  lineHeight={0}
+                  fontSize="12px"
+                  fontWeight="bold"
                 >
-                  <Typography
-                    variant="body2"
-                    lineHeight={0}
-                    fontSize="12px"
-                    fontWeight="bold"
-                  >
-                    {t(step.label)}
-                  </Typography>
-                  <Typography
-                    color="gray.main"
-                    variant="body2"
-                    lineHeight={0}
-                    fontSize="12px"
-                  >
-                    {step.description}
-                  </Typography>
-                </Box>
-              </StepLabel>
-            </Step>
-          );
-        })}
-      </Stepper>
-    </Box>
-  );
-};
+                  {step.label}
+                </Typography>
+                <Typography
+                  color="gray.main"
+                  variant="body2"
+                  lineHeight={0}
+                  fontSize="12px"
+                >
+                  {step.description}
+                </Typography>
+              </Box>
+            </StepLabel>
+          </Step>
+        );
+      })}
+    </Stepper>
+  </Box>
+);

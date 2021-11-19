@@ -1,5 +1,8 @@
 import { LocaleKey } from '@openmsupply-client/common/src/intl';
-import { OutboundShipmentStatus } from '@openmsupply-client/common';
+import {
+  OutboundShipmentStatus,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   OutboundShipment,
   OutboundShipmentRow,
@@ -50,11 +53,11 @@ export const getNextOutboundStatusButtonTranslation = (
   return undefined;
 };
 
-export const getStatusTranslation = (
-  currentStatus: OutboundShipmentStatus
-): LocaleKey => {
-  return StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT;
-};
+export const getStatusTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: OutboundShipmentStatus): string => {
+    return t(StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT);
+  };
 
 export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
   return outbound.status !== 'SHIPPED' && outbound.status !== 'DELIVERED';

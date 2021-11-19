@@ -13,7 +13,7 @@ import { useDetailPanelStore, useHostContext } from '../../../../hooks';
 import { useTranslation } from '../../../../intl/intlHelpers';
 import { FlatButton } from '../../buttons';
 import { CloseIcon } from '../../../icons';
-import { Divider } from '../..';
+import { Divider } from '../../divider/Divider';
 
 export interface DetailPanelPortalProps {
   Actions?: ReactNode;
@@ -63,7 +63,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
   Actions,
   children,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation('common');
   const { detailPanelRef } = useHostContext();
   const { close, isOpen, open } = useDetailPanelStore();
   const theme = useTheme();
@@ -92,7 +92,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
           >
             <FlatButton
               color="inherit"
-              labelKey="button.close"
+              label={t('button.close')}
               onClick={close}
               icon={<CloseIcon color="inherit" />}
             />

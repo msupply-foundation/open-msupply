@@ -4,6 +4,7 @@ import { PaperPopover } from './PaperPopover';
 import { PaperPopoverSection } from '../../../components/popover';
 import { Box } from '@mui/system';
 import { Typography } from '@mui/material';
+import { useTranslation } from '../../../../intl/intlHelpers';
 
 export default {
   title: 'Popover/PaperPopover',
@@ -11,11 +12,13 @@ export default {
 };
 
 const Example: Story = () => {
+  const t = useTranslation('app');
+
   return (
     <>
       <PaperPopover
         Content={
-          <PaperPopoverSection labelKey="app.admin">
+          <PaperPopoverSection label={t('admin')}>
             Some content here!
           </PaperPopoverSection>
         }

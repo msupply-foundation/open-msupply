@@ -9,6 +9,7 @@ import {
   useNotification,
   useOmSupplyApi,
   useQuery,
+  useTranslation,
   StatsPanel,
   Widget,
 } from '@openmsupply-client/common';
@@ -19,6 +20,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   const { error } = useNotification();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const t = useTranslation(['app', 'dashboard']);
 
   const { api } = useOmSupplyApi();
   const { onCreate, invalidate } = useListData(
@@ -62,7 +64,7 @@ export const OutboundShipmentWidget: React.FC = () => {
         }}
       />
 
-      <Widget titleKey="app.outbound-shipments">
+      <Widget title={t('outbound-shipments')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -72,9 +74,12 @@ export const OutboundShipmentWidget: React.FC = () => {
           <Grid item>
             <StatsPanel
               isLoading={isLoading}
-              titleKey="heading.shipments-to-be-picked"
+              title={t('heading.shipments-to-be-picked')}
               stats={[
-                { labelKey: 'label.today', value: data?.toBePicked || 0 },
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: data?.toBePicked || 0,
+                },
               ]}
             />
           </Grid>
@@ -89,7 +94,7 @@ export const OutboundShipmentWidget: React.FC = () => {
               variant="contained"
               color="secondary"
               Icon={<PlusCircleIcon />}
-              labelKey="button.new-outbound-shipment"
+              label={t('button.new-outbound-shipment')}
               onClick={() => setOpen(true)}
             />
           </Grid>

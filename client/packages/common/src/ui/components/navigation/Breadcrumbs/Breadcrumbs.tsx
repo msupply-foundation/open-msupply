@@ -18,7 +18,7 @@ const Breadcrumb = styled(Link)({
 });
 
 export const Breadcrumbs: React.FC = () => {
-  const t = useTranslation();
+  const t = useTranslation(['app', 'common']);
   const location = useLocation();
   const [urlParts, setUrlParts] = useState<UrlPart[]>([]);
 
@@ -31,7 +31,7 @@ export const Breadcrumbs: React.FC = () => {
       const path = `${fullPath}/${part}`;
       urlParts.push({
         path,
-        key: `app.${part}` as unknown as LocaleKey,
+        key: `${part}` as unknown as LocaleKey,
         value: part,
       });
       return path;

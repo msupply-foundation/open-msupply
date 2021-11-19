@@ -49,7 +49,7 @@ export const AcionsOnly = Template.bind({});
 Demo.args = {
   Actions: (
     <DetailPanelAction
-      titleKey="link.backorders"
+      title="Backorders"
       onClick={() => {
         alert('back orders');
       }}
@@ -58,10 +58,10 @@ Demo.args = {
   ),
   Sections: (
     <>
-      <DetailPanelSection titleKey="heading.comment">
+      <DetailPanelSection title="Comment">
         <Typography key="0">comments to be shown in here...</Typography>
       </DetailPanelSection>
-      <DetailPanelSection titleKey="heading.additional-info">
+      <DetailPanelSection title="Additional Info">
         <Typography key="0">additional info...</Typography>
       </DetailPanelSection>
     </>
@@ -72,14 +72,14 @@ AcionsOnly.args = {
   Actions: (
     <>
       <DetailPanelAction
-        titleKey="link.history"
+        title="History"
         onClick={() => {
           alert('history');
         }}
         icon={<ClockIcon />}
       />{' '}
       <DetailPanelAction
-        titleKey="link.copy-to-clipboard"
+        title="Copy to clipboard"
         onClick={() => {
           alert('copy to clipboard');
         }}
@@ -92,10 +92,10 @@ AcionsOnly.args = {
 SectionsOnly.args = {
   Sections: (
     <>
-      <DetailPanelSection titleKey="heading.comment">
+      <DetailPanelSection title="Comment">
         <Typography key="0">comments to be shown in here...</Typography>
       </DetailPanelSection>
-      <DetailPanelSection titleKey="heading.additional-info">
+      <DetailPanelSection title="Additional info">
         <Typography key="0">additional info...</Typography>
       </DetailPanelSection>
     </>

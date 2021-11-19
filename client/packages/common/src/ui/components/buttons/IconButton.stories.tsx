@@ -8,7 +8,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => (
   <Box>
     <IconButton
       icon={<BookIcon {...args} />}
-      labelKey="button.docs"
+      label="Docs"
       onClick={() => console.info('clicked')}
     />
   </Box>

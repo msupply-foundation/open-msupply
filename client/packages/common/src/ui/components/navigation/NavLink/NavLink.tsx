@@ -11,7 +11,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '../../../../hooks/useDrawer';
-import { useDebounceCallback } from '../../../..';
+import { useDebounceCallback } from '../../../../hooks';
 
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
@@ -136,7 +136,8 @@ export const NavLink: FC<NavLinkProps> = props => {
             '& .MuiTypography-root': {
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              whiteSpace: 'nowrap',},
+              whiteSpace: 'nowrap',
+            },
           }}
           disableGutters
           component={CustomLink}

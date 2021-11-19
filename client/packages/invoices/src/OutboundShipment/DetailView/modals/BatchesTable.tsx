@@ -51,7 +51,7 @@ type BatchesRowProps = {
 };
 const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   const { register } = useFormContext();
-  const t = useTranslation();
+  const t = useTranslation('common');
   const d = useFormatDate();
 
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event => {
@@ -109,7 +109,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell>
         <PaperPopover
           Content={
-            <PaperPopoverSection labelKey="label.details">
+            <PaperPopoverSection label={t('label.details')}>
               <Grid container fontSize="12px">
                 <Grid container justifyContent="space-between">
                   <Grid item>Invoice #xxxx</Grid>
@@ -180,7 +180,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   register,
   rows,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation(['outbound-shipment', 'common']);
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange('placeholder', Number(event.target.value), 1);
 
@@ -243,7 +243,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <BatchesRow
                 batch={batch}
                 key={batch.id}
-                label={t('label.line', { number: index + 1 })}
+                label={t('label.line', { line: index + 1 })}
                 onChange={onChange}
               />
             ))}
@@ -255,7 +255,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                 batch={batch}
                 key={batch.id}
                 label={t('label.line', {
-                  number: allocatableRows.length + index + 1,
+                  line: allocatableRows.length + index + 1,
                 })}
                 onChange={onChange}
               />
@@ -265,8 +265,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                 batch={batch}
                 key={batch.id}
                 label={t('label.line', {
-                  number:
-                    allocatableRows.length + onHoldRows.length + index + 1,
+                  line: allocatableRows.length + onHoldRows.length + index + 1,
                 })}
                 onChange={onChange}
               />

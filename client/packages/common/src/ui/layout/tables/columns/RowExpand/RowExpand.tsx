@@ -1,18 +1,19 @@
 import { Box } from '@mui/material';
 import React from 'react';
-import { ColumnAlign, ColumnDefinition } from '..';
-import { useExpanded } from '../..';
-import { IconButton } from '../../../..';
-import {
-  ChevronDownIcon,
-  ChevronsDownIcon,
-  DomainObject,
-  useTableStore,
-} from '../../../../..';
+import { ColumnAlign, ColumnDefinition } from '../types';
+import { useExpanded, useTableStore } from '../../context';
+import { IconButton } from '../../../../components/buttons';
+import { DomainObject } from '../../../../../types';
+import { ChevronDownIcon, ChevronsDownIcon } from '../../../../icons';
 
-export const getRowExpandColumn = <
-  T extends DomainObject
->(): ColumnDefinition<T> => ({
+type RowExpandLabels = {
+  header: string;
+  cell: string;
+};
+
+export const getRowExpandColumn = <T extends DomainObject>(
+  labels: RowExpandLabels
+): ColumnDefinition<T> => ({
   key: 'expand',
   sortable: false,
   align: ColumnAlign.Right,
@@ -22,7 +23,7 @@ export const getRowExpandColumn = <
 
     return (
       <IconButton
-        labelKey="label.expand-all"
+        label={labels.header}
         onClick={toggleAllExpanded}
         icon={
           <Box
@@ -45,7 +46,7 @@ export const getRowExpandColumn = <
 
     return (
       <IconButton
-        labelKey="label.expand"
+        label={labels.cell}
         onClick={event => {
           event.stopPropagation();
           toggleExpanded();

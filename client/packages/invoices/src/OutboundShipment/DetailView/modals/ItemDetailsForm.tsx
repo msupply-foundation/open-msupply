@@ -42,7 +42,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   packSizeController,
   availableQuantity,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation(['outbound-shipment', 'common']);
 
   const [quantity, setQuantity] = useState('');
   const [issueType, setIssueType] = useState('packs');
@@ -50,7 +50,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   return (
     <Grid container gap={0.5} height={200}>
       <ModalRow>
-        <ModalLabel labelKey="label.item" />
+        <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
             currentItemName={summaryItem?.itemName}
@@ -60,7 +60,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       </ModalRow>
 
       <ModalRow>
-        <ModalLabel labelKey="label.available" />
+        <ModalLabel label={t('label.available')} />
         <NumericTextInput
           value={availableQuantity}
           disabled
@@ -68,7 +68,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         />
 
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
-          <ModalLabel labelKey="label.unit" justifyContent="flex-end" />
+          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <ModalInput
             disabled
             width={150}
@@ -78,14 +78,14 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       </ModalRow>
 
       <ModalRow>
-        <ModalLabel labelKey="label.allocated" />
+        <ModalLabel label={t('label.allocated')} />
         <NumericTextInput
           value={allocatedQuantity}
           disabled
           style={{ width: 85 }}
         />
         <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
-          <ModalLabel labelKey="label.code" justifyContent="flex-end" />
+          <ModalLabel label={t('label.code')} justifyContent="flex-end" />
           <ModalInput
             value={summaryItem?.itemCode ?? ''}
             disabled
@@ -113,7 +113,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             </ModalRow>
 
             <Grid container>
-              <ModalLabel labelKey="label.allocate" />
+              <ModalLabel label={t('label.allocate')} />
               <ModalNumericInput
                 value={Number(quantity)}
                 inputProps={register('quantity', {
@@ -158,7 +158,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
                 disabled={Number(quantity) <= 0}
                 color="secondary"
                 icon={<CheckIcon />}
-                labelKey="label.allocate"
+                label={t('label.allocate')}
                 onClick={() => {
                   onChangeQuantity(
                     Number(quantity),

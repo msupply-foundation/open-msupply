@@ -33,7 +33,7 @@ const Nav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
   );
-  const t = useTranslation();
+  const t = useTranslation('app');
 
   return (
     <>
@@ -42,7 +42,7 @@ const Nav: FC = () => {
         to={AppRoute.Catalogue}
         icon={<ListIcon color="primary" />}
         expandOnHover
-        text={t('app.catalogue')}
+        text={t('catalogue')}
       />
       <Collapse in={isActive}>
         <List>
@@ -52,7 +52,7 @@ const Nav: FC = () => {
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Items)
               .build()}
-            text={t('app.items')}
+            text={t('items')}
           />
         </List>
       </Collapse>

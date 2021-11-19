@@ -11,6 +11,7 @@ import {
   InlineSpinner,
   Box,
   Slide,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { BatchesTable, sortByExpiry } from './BatchesTable';
@@ -205,6 +206,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   onNext,
   isEditMode,
 }) => {
+  const t = useTranslation(['outbound-shipment']);
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register } = methods;
 
@@ -336,7 +338,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   return (
     <Modal
-      title={isEditMode ? 'heading.edit-item' : 'heading.add-item'}
+      title={t(isEditMode ? 'heading.edit-item' : 'heading.add-item')}
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton

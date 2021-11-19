@@ -2,8 +2,9 @@ import React, { FC } from 'react';
 import { waitFor, render } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
-import { useColumns } from '../..';
-import { Item, TestingProvider } from '../../../../..';
+import { useColumns } from '../../hooks';
+import { Item } from '../../../../../types';
+import { TestingProvider } from '../../../../../utils';
 
 describe('HeaderRow', () => {
   const Example: FC<{
