@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   getNextOutboundStatus,
   getNextOutboundStatusButtonTranslation,
-  getStatusTranslation,
+  getStatusTranslator,
   isInvoiceEditable,
   outboundStatuses,
 } from '../utils';
@@ -72,7 +72,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
           <StatusCrumbs
             statuses={outboundStatuses}
             statusLog={createStatusLog(draft)}
-            statusFormatter={getStatusTranslation}
+            statusFormatter={getStatusTranslator(t)}
           />
 
           <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
