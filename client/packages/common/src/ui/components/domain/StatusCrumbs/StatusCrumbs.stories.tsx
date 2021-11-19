@@ -46,7 +46,7 @@ const Template: ComponentStory<typeof StatusCrumbs> = () => {
   const [currentStatus, setCurrentStatus] = useState(statuses[4]);
   const [statusLog, setStatusLog] = useState(defaultStatusLog);
 
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
     <Stack gap={2}>

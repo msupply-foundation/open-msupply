@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { ColorMenu, Color } from '../menus';
 import { IconButton } from './IconButton';
 import { CircleIcon } from '../../icons';
+import { useTranslation } from '../../../intl/intlHelpers';
 
 interface ColorSelectButtonProps {
   color: string;
@@ -17,7 +18,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
   disabled = false,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-
+  const t = useTranslation('common');
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -38,7 +39,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
         }}
       />
       <IconButton
-        labelKey="button.select-a-color"
+        label={t('button.select-a-color')}
         height="16px"
         disabled={disabled}
         icon={

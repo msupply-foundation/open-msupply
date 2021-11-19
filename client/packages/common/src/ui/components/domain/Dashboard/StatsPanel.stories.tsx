@@ -2,13 +2,15 @@ import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { StatsPanel, Stat } from './StatsPanel';
 import { Box } from '@mui/material';
+import { useTranslation } from '../../../../intl/intlHelpers';
 
 const Template: ComponentStory<typeof StatsPanel> = () => {
   const [isLoading, setIsLoading] = React.useState(true);
+  const t = useTranslation('common');
   const stats: Stat[] = [
-    { labelKey: 'label.expired', value: 8 },
+    { label: t('label.expired'), value: 8 },
     {
-      labelKey: 'label.expiring-soon',
+      label: t('label.expiring-soon'),
       value: 88,
     },
   ];
@@ -36,7 +38,7 @@ const Template: ComponentStory<typeof StatsPanel> = () => {
         <StatsPanel
           isLoading={isLoading}
           stats={stats}
-          titleKey="heading.expiring-stock"
+          title={t('heading.expiring-stock')}
         />
       </Box>
     </Box>

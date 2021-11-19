@@ -7,8 +7,7 @@ import {
   styled,
   Typography,
 } from '@mui/material';
-import { Divider } from '../..';
-import { LocaleKey, useTranslation } from '../../../intl';
+import { Divider } from '../../components/divider/Divider';
 import { ChevronDownIcon } from '../../icons';
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({
@@ -20,25 +19,22 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
 }));
 
 export interface DetailPanelSectionProps {
-  titleKey: LocaleKey;
+  title: string;
   defaultExpanded?: boolean;
 }
 
 export const DetailPanelSection: React.FC<DetailPanelSectionProps> = ({
   children,
-  titleKey,
+  title,
   defaultExpanded = true,
-}) => {
-  const t = useTranslation();
-  return (
-    <Box>
-      <StyledAccordion defaultExpanded={defaultExpanded}>
-        <AccordionSummary expandIcon={<ChevronDownIcon />}>
-          <Typography sx={{ fontWeight: 'bold' }}>{t(titleKey)}</Typography>
-        </AccordionSummary>
-        <AccordionDetails>{children}</AccordionDetails>
-      </StyledAccordion>
-      <Divider />
-    </Box>
-  );
-};
+}) => (
+  <Box>
+    <StyledAccordion defaultExpanded={defaultExpanded}>
+      <AccordionSummary expandIcon={<ChevronDownIcon />}>
+        <Typography sx={{ fontWeight: 'bold' }}>{title}</Typography>
+      </AccordionSummary>
+      <AccordionDetails>{children}</AccordionDetails>
+    </StyledAccordion>
+    <Divider />
+  </Box>
+);

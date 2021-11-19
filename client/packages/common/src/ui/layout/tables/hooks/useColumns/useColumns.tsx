@@ -1,6 +1,7 @@
 import { DependencyList, useMemo } from 'react';
 import { DomainObject } from '../../../../../types';
 import {
+  ColumnDataAccessor,
   ColumnDefinition,
   ColumnFormat,
   ColumnAlign,
@@ -10,11 +11,7 @@ import { useFormatDate, useFormatNumber } from '../../../../../intl';
 import { BasicCell, BasicHeader } from '../../components';
 import { getDateOrNull } from '../../../../../utils';
 import { SortBy } from '../../../../../hooks';
-import {
-  ColumnDefinitionSetBuilder,
-  ColumnKey,
-  ColumnDataAccessor,
-} from '../..';
+import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
 const getColumnWidths = <T extends DomainObject>(
   column: ColumnDefinition<T>

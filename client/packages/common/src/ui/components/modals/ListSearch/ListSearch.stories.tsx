@@ -3,6 +3,7 @@ import { Grid } from '@mui/material';
 import { Story } from '@storybook/react';
 import { ListSearch } from './ListSearch';
 import { BaseButton } from '../../buttons';
+import { useTranslation } from '../../../../intl/intlHelpers';
 
 export default {
   title: 'Modals/ListSearch',
@@ -15,12 +16,13 @@ const options = Array.from({ length: 100 }).map((_, i) => ({
 
 const Template: Story = () => {
   const [open, setOpen] = React.useState(false);
+  const t = useTranslation('app');
 
   return (
     <Grid>
       <BaseButton onClick={() => setOpen(true)}> Open Modal </BaseButton>
       <ListSearch
-        title="app.admin"
+        title={t('admin')}
         open={open}
         onClose={() => setOpen(false)}
         options={options}
