@@ -9,7 +9,6 @@ import {
   DocumentActionSet,
   DocumentActionType,
   SortBy,
-  InvoiceLine,
   ifTheSameElseDefault,
   Item,
   arrayToRecord,
@@ -18,6 +17,7 @@ import {
 import { placeholderInvoice } from '../../utils';
 import {
   Invoice,
+  InvoiceLine,
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
