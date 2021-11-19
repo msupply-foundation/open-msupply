@@ -162,7 +162,7 @@ export type InboundShipmentItem = {
   locationDescription?: string | null;
   itemUnit?: string;
   batch?: string | null;
-  batches: Record<string, OutboundShipmentRow>;
+  batches: Record<string, InboundShipmentRow>;
   sellPrice?: number | undefined;
   packSize?: number | undefined;
   note?: string | null;
