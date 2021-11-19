@@ -10,6 +10,8 @@ export {
   useRegisterActions,
 } from 'kbar';
 
+export { produce } from 'immer';
+
 export * from 'graphql-request';
 export * from 'react-query';
 export * from 'react-query/devtools';
