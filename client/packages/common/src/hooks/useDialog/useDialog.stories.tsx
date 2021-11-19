@@ -28,7 +28,7 @@ const Template: Story = () => {
   return (
     <div>
       <Modal
-        title="heading.add-item"
+        title="Add Item"
         cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
         nextButton={<DialogButton variant="next" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onOk} />}
