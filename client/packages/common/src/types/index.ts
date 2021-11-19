@@ -1,10 +1,5 @@
 import { ObjectWithStringKeys } from './utility';
-import {
-  InvoiceLineNode,
-  InvoiceNode,
-  StockLineNode,
-  InvoicePricingNode,
-} from './schema';
+import { InvoiceLineNode, StockLineNode } from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -61,22 +56,4 @@ export interface InvoiceLine extends InvoiceLineNode, DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
   invoiceId: string;
-}
-
-export interface InvoiceRow
-  extends Pick<
-      InvoiceNode,
-      | 'comment'
-      | 'entryDatetime'
-      | 'id'
-      | 'invoiceNumber'
-      | 'otherPartyId'
-      | 'otherPartyName'
-      | 'status'
-      | 'color'
-      | 'theirReference'
-      | 'type'
-    >,
-    DomainObject {
-  pricing: InvoicePricingNode;
 }

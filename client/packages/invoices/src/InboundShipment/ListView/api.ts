@@ -6,11 +6,10 @@ import {
   ListApi,
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
-  InvoiceRow,
   InvoicePriceResponse,
   OmSupplyApi,
 } from '@openmsupply-client/common';
-import { Invoice } from '../../types';
+import { Invoice, InvoiceRow } from '../../types';
 
 const invoiceToInput = (
   patch: Partial<Invoice> & { id: string }

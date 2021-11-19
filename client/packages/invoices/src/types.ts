@@ -23,6 +23,24 @@ export type InboundShipmentStatus =
   | InvoiceNodeStatus.Delivered
   | 'VERIFIED';
 
+export interface InvoiceRow
+  extends Pick<
+      InvoiceNode,
+      | 'comment'
+      | 'entryDatetime'
+      | 'id'
+      | 'invoiceNumber'
+      | 'otherPartyId'
+      | 'otherPartyName'
+      | 'status'
+      | 'color'
+      | 'theirReference'
+      | 'type'
+    >,
+    DomainObject {
+  pricing: InvoicePricingNode;
+}
+
 export interface Invoice
   extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty'>,
     DomainObject {

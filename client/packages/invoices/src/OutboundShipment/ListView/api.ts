@@ -6,11 +6,10 @@ import {
   ListApi,
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
-  InvoiceRow,
   InvoicePriceResponse,
   OmSupplyApi,
 } from '@openmsupply-client/common';
-import { OutboundShipment, Invoice } from '../../types';
+import { OutboundShipment, Invoice, InvoiceRow } from '../../types';
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {

@@ -10,14 +10,13 @@ import {
   Color,
   useOmSupplyApi,
   useNotification,
-  InvoiceRow,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getOutboundShipmentListViewApi } from './api';
 import { getStatusTranslation } from '../../utils';
-import { OutboundShipmentStatus } from '../../types';
+import { OutboundShipmentStatus, InvoiceRow } from '../../types';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
