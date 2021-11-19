@@ -1,13 +1,13 @@
 import {
+  LocaleKey,
   InvoiceNodeStatus,
   InvoiceNodeType,
-} from './../../common/src/types/schema';
-import { LocaleKey } from '@openmsupply-client/common/src/intl';
-import { OutboundShipmentStatus } from '@openmsupply-client/common';
+} from '@openmsupply-client/common';
 import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
+  OutboundShipmentStatus,
 } from './types';
 
 export const placeholderInvoice: OutboundShipment = {

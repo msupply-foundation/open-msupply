@@ -3,7 +3,6 @@ import {
   InvoiceLineNode,
   InvoiceNode,
   StockLineNode,
-  InvoiceNodeStatus,
   InvoicePricingNode,
 } from './schema';
 
@@ -81,34 +80,3 @@ export interface InvoiceRow
     DomainObject {
   pricing: InvoicePricingNode;
 }
-
-export interface Invoice
-  extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty'>,
-    DomainObject {
-  status: InvoiceNodeStatus | 'NEW' | 'VERIFIED';
-  otherParty?: Name;
-  lines: InvoiceLine[];
-  pricing: InvoicePricingNode;
-}
-
-export type OutboundShipmentStatus =
-  | InvoiceNodeStatus.Draft
-  | InvoiceNodeStatus.Allocated
-  | InvoiceNodeStatus.Picked
-  | InvoiceNodeStatus.Shipped
-  | InvoiceNodeStatus.Delivered;
-
-export type InboundShipmentStatus =
-  | InvoiceNodeStatus.Picked
-  | 'NEW'
-  | InvoiceNodeStatus.Shipped
-  | InvoiceNodeStatus.Delivered
-  | 'VERIFIED';
-
-export type SupplierRequisitionStatus =
-  | 'draft'
-  | 'sent'
-  | 'in_progress'
-  | 'finalised';
-
-export type CustomerRequisitionStatus = 'new' | 'in_progress' | 'finalised';

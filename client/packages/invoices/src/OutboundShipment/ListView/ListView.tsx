@@ -1,24 +1,23 @@
 import React, { FC, useState } from 'react';
 import { useNavigate } from 'react-router';
-
 import {
   DataTable,
   useColumns,
-  InvoiceRow,
   useListData,
   getNameAndColorColumn,
   TableProvider,
   createTableStore,
   Color,
-  OutboundShipmentStatus,
   useOmSupplyApi,
   useNotification,
+  InvoiceRow,
 } from '@openmsupply-client/common';
-import { getOutboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getStatusTranslation } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { getOutboundShipmentListViewApi } from './api';
+import { getStatusTranslation } from '../../utils';
+import { OutboundShipmentStatus } from '../../types';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
