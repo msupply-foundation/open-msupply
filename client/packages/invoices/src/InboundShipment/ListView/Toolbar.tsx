@@ -62,7 +62,7 @@ export const Toolbar: FC<{
         Input={
           <BasicTextInput
             value={filterString}
-            placeholder={t('placeholder.enter-a-customers-name')}
+            placeholder={t('placeholder.enter-a-suppliers-name')}
             onChange={e =>
               filter.onChangeStringFilterRule(
                 'otherPartyName',

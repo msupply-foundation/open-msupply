@@ -6,13 +6,14 @@ import {
   PaperPopover,
   PaperPopoverSection,
 } from '../../../../components/popover';
+import { useTranslation } from '../../../../../intl';
 
 interface DomainObjectWithComment extends DomainObject {
   note?: string | null;
 }
 
 export const getNotePopoverColumn = <T extends DomainObjectWithComment>(
-  label: string
+  label?: string
 ): ColumnDefinition<T> => ({
   key: 'comment',
   sortable: false,
@@ -24,6 +25,7 @@ export const getNotePopoverColumn = <T extends DomainObjectWithComment>(
   },
 
   Cell: props => {
+    const t = useTranslation('common');
     const value = props.column.accessor(props.rowData);
 
     return value ? (
@@ -31,7 +33,7 @@ export const getNotePopoverColumn = <T extends DomainObjectWithComment>(
         width={400}
         height={180}
         Content={
-          <PaperPopoverSection label={label}>
+          <PaperPopoverSection label={label ?? t('label.notes')}>
             {String(value)}
           </PaperPopoverSection>
         }
