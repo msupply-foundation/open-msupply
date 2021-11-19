@@ -1,10 +1,4 @@
 import {
-  gql,
-  Name,
-  SortBy,
-  GraphQLClient,
-  getSdk,
-  NameSortFieldInput,
   InvoiceQuery,
   InvoiceLineConnector,
   InvoicePriceResponse,
@@ -19,17 +13,14 @@ import {
   DeleteOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
+
 import {
   OutboundShipment,
   OutboundShipmentRow,
   Invoice,
   InvoiceLine,
 } from '../../types';
-import { flattenSummaryItems } from '../../utils';
-
-const client = new GraphQLClient(Environment.API_URL);
-const api = getSdk(client);
+import { flattenOutboundItems } from '../../utils';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -77,50 +68,6 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
   }
 
   throw new Error('Unknown');
-};
-
-export const getMutation = (): string => gql`
-  mutation updateInvoice($invoicePatch: InvoicePatch) {
-    updateInvoice(invoice: $invoicePatch) {
-      id
-      comment
-      status
-      type
-      entered
-      confirmed
-      invoiceNumber
-      total
-    }
-  }
-`;
-
-export const nameListQueryFn = async ({
-  first,
-  offset,
-  sortBy,
-}: {
-  first?: number;
-  offset?: number;
-  sortBy?: SortBy<Name>;
-} = {}): Promise<{
-  nodes: Name[];
-  totalCount: number;
-}> => {
-  const key =
-    sortBy?.key === 'name' ? NameSortFieldInput.Name : NameSortFieldInput.Code;
-
-  const { names } = await api.names({
-    first,
-    offset,
-    key,
-    desc: sortBy?.isDesc,
-  });
-
-  if (names.__typename === 'NameConnector') {
-    return names;
-  }
-
-  throw new Error(names.error.description);
 };
 
 export const onRead =
@@ -199,7 +146,7 @@ const createUpdateOutboundLineInput = (
 export const onUpdate =
   (api: OmSupplyApi) =>
   async (patch: OutboundShipment): Promise<OutboundShipment> => {
-    const rows = flattenSummaryItems(patch.items);
+    const rows = flattenOutboundItems(patch.items);
     const deleteLines = rows.filter(({ isDeleted }) => isDeleted);
     const insertLines = rows.filter(
       ({ isCreated, isDeleted }) => !isDeleted && isCreated
