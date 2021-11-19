@@ -33,8 +33,14 @@ export const InboundShipmentWidget: React.FC = () => {
             isLoading={isLoading}
             title={t('inbound-shipments')}
             stats={[
-              { label: t('label.today'), value: data?.today ?? 0 },
-              { label: t('label.this-week'), value: data?.thisWeek ?? 0 },
+              {
+                label: t('label.today', { ns: 'dashboard' }),
+                value: data?.today ?? 0,
+              },
+              {
+                label: t('label.this-week', { ns: 'dashboard' }),
+                value: data?.thisWeek ?? 0,
+              },
             ]}
           />
         </Grid>
