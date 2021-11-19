@@ -36,7 +36,7 @@
   "button.open-the-menu": "Open the menu",
   "button.print": "Print",
   "button.save": "Save",
-  "button.save-and-confirm-status": "Save & Confirm {status}",
+  "button.save-and-confirm-status": "Save & Confirm {{status}}",
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",
   "error.404": "Click the back arrow or use the menu to find your way again.",
@@ -64,6 +64,8 @@
   "label.customer": "Customer",
   "label.customer-name": "Customer Name",
   "label.customer-ref": "Customer Ref",
+  "label.supplier-name": "Supplier Name",
+  "label.supplier-ref": "Supplier Ref",
   "label.date": "Date",
   "label.delivered": "Delivered",
   "label.details": "Details",
@@ -113,5 +115,6 @@
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
-  "placeholder.enter-a-customers-name": "Enter a customers name"
+  "placeholder.enter-a-customers-name": "Enter a customers name",
+  "placeholder.enter-a-suppliers-name": "Enter a suppliers name"
 }
