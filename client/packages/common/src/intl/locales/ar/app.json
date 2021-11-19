@@ -1,15 +1,15 @@
 {
-  "app.admin": "مشرف",
-  "app.customer-requisition": "طلبات الشراء",
-  "app.dashboard": "لوحة القيادة",
-  "app.distribution": "توزيع",
-  "app.logout": "تسجيل خروج",
-  "app.messages": "رسائل",
-  "app.outbound-shipment": "شحنة صادرة",
-  "app.reports": "التقارير",
-  "app.stock": "الأوراق المالية",
-  "app.suppliers": "الموردين",
-  "app.sync": "تزامن",
-  "app.tools": "أدوات",
-  "app.welcome": "أهلا،"
+  "admin": "مشرف",
+  "customer-requisition": "طلبات الشراء",
+  "dashboard": "لوحة القيادة",
+  "distribution": "توزيع",
+  "logout": "تسجيل خروج",
+  "messages": "رسائل",
+  "outbound-shipment": "شحنة صادرة",
+  "reports": "التقارير",
+  "stock": "الأوراق المالية",
+  "suppliers": "الموردين",
+  "sync": "تزامن",
+  "tools": "أدوات",
+  "welcome": "أهلا،"
 }

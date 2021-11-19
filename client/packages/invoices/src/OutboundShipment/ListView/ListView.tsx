@@ -13,14 +13,16 @@ import {
   OutboundShipmentStatus,
   useOmSupplyApi,
   useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getStatusTranslation } from '../utils';
+import { getStatusTranslator } from '../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 
 export const OutboundShipmentListViewComponent: FC = () => {
+  const t = useTranslation('common');
   const navigate = useNavigate();
   const { error } = useNotification();
   const { api } = useOmSupplyApi();
@@ -57,8 +59,8 @@ export const OutboundShipmentListViewComponent: FC = () => {
       [
         'status',
         {
-          formatter: (status, { t }) =>
-            t(getStatusTranslation(status as OutboundShipmentStatus)),
+          formatter: status =>
+            getStatusTranslator(t)(status as OutboundShipmentStatus),
         },
       ],
       'invoiceNumber',
