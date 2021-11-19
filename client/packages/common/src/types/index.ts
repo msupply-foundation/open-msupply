@@ -1,6 +1,11 @@
 import { ObjectWithStringKeys } from './utility';
-import { StockLineNode } from './schema';
-import { InvoiceLineNode } from '..';
+import {
+  InvoiceLineNode,
+  InvoiceNode,
+  StockLineNode,
+  InvoiceNodeStatus,
+  InvoicePricingNode,
+} from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -59,66 +64,46 @@ export interface InvoiceLine extends InvoiceLineNode, DomainObject {
   invoiceId: string;
 }
 
-export interface InvoiceRow extends DomainObject {
-  id: string;
-  color: string;
-  comment?: string | null;
-  status: string;
-  type: string;
-  entryDatetime: string;
-  invoiceNumber: number;
-  otherPartyName: string;
-  pricing: {
-    totalAfterTax: number;
-    subtotal: number;
-    taxPercentage: number;
-  };
+export interface InvoiceRow
+  extends Pick<
+      InvoiceNode,
+      | 'comment'
+      | 'entryDatetime'
+      | 'id'
+      | 'invoiceNumber'
+      | 'otherPartyId'
+      | 'otherPartyName'
+      | 'status'
+      | 'color'
+      | 'theirReference'
+      | 'type'
+    >,
+    DomainObject {
+  pricing: InvoicePricingNode;
 }
 
-export interface Invoice extends DomainObject {
-  id: string;
-  color: string;
-  comment?: string | null;
-  theirReference?: string | null;
-  status: string;
-  type: string;
-  entryDatetime: string;
-  invoiceNumber: number;
+export interface Invoice
+  extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty'>,
+    DomainObject {
+  status: InvoiceNodeStatus | 'NEW' | 'VERIFIED';
   otherParty?: Name;
-  otherPartyName: string;
-  onHold: boolean;
   lines: InvoiceLine[];
-  allocatedDatetime?: string;
-  shippedDatetime?: string;
-  pickedDatetime?: string;
-  deliveredDatetime?: string;
-  enteredByName?: string;
-
-  purchaseOrderNumber?: number | null;
-  requisitionNumber?: number | null;
-  goodsReceiptNumber?: number | null;
-  inboundShipmentNumber?: number | null;
-
-  pricing: {
-    totalAfterTax: number;
-    subtotal: number;
-    taxPercentage: number;
-  };
+  pricing: InvoicePricingNode;
 }
 
 export type OutboundShipmentStatus =
-  | 'DRAFT'
-  | 'ALLOCATED'
-  | 'PICKED'
-  | 'SHIPPED'
-  | 'DELIVERED';
+  | InvoiceNodeStatus.Draft
+  | InvoiceNodeStatus.Allocated
+  | InvoiceNodeStatus.Picked
+  | InvoiceNodeStatus.Shipped
+  | InvoiceNodeStatus.Delivered;
 
 export type InboundShipmentStatus =
-  | 'new'
-  | 'allocated'
-  | 'picked'
-  | 'shipped'
-  | 'delivered';
+  | InvoiceNodeStatus.Picked
+  | 'NEW'
+  | InvoiceNodeStatus.Shipped
+  | InvoiceNodeStatus.Delivered
+  | 'VERIFIED';
 
 export type SupplierRequisitionStatus =
   | 'draft'

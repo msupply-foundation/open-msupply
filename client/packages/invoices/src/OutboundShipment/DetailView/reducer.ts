@@ -16,7 +16,7 @@ import {
   arrayToRecord,
   getDataSorter,
 } from '@openmsupply-client/common';
-import { placeholderInvoice } from './index';
+import { placeholderInvoice } from '../../utils';
 import {
   ActionType,
   OutboundShipment,
