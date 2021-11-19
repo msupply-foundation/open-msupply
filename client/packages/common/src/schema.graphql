@@ -925,6 +925,9 @@ input UpdateInboundShipmentInput {
   onHold: Boolean
   comment: String
   theirReference: String
+
+  ## Additions
+  color: String
 }
 
 # Generic Error Wrapper

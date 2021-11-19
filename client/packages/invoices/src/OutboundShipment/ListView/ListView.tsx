@@ -1,25 +1,23 @@
 import React, { FC, useState } from 'react';
 import { useNavigate } from 'react-router';
-
 import {
   DataTable,
   useColumns,
-  InvoiceRow,
   useListData,
   getNameAndColorColumn,
   TableProvider,
   createTableStore,
   Color,
-  OutboundShipmentStatus,
   useOmSupplyApi,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { getOutboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getStatusTranslator } from '../utils';
+import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { getOutboundShipmentListViewApi } from './api';
+import { OutboundShipmentStatus, InvoiceRow } from '../../types';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const t = useTranslation('common');
@@ -79,6 +77,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   return (
     <>
       <NameSearchModal
+        type="customer"
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {

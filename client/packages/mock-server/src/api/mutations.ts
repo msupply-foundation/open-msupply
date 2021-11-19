@@ -2,6 +2,8 @@ import { InvoiceNodeType } from '@openmsupply-client/common/src/types/schema';
 import {
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
+  UpdateInboundShipmentInput,
+  // InsertOutboundShipmentLineInput,
 } from './../../../common/src/types/schema';
 import { ResolverService } from './resolvers';
 import {
@@ -105,7 +107,9 @@ const getStatusTime = (status: string | undefined | null) => {
 };
 
 export const update = {
-  invoice: (invoice: UpdateOutboundShipmentInput): ResolvedInvoice => {
+  invoice: (
+    invoice: UpdateOutboundShipmentInput | UpdateInboundShipmentInput
+  ): ResolvedInvoice => {
     const updated = db.update.invoice({
       ...invoice,
       ...getStatusTime(invoice.status),
@@ -156,6 +160,15 @@ export const update = {
 export const remove = {
   invoice: (invoiceId: string): string => {
     const resolvedInvoice = Api.ResolverService.byId.invoice(String(invoiceId));
+
+    if (resolvedInvoice.type === InvoiceNodeType.InboundShipment) {
+      if (
+        resolvedInvoice.status === InvoiceNodeStatus.Delivered ||
+        resolvedInvoice.status === InvoiceNodeStatus.Finalised
+      ) {
+        throw new Error("Can't delete delivered or finalised invoice");
+      }
+    }
 
     resolvedInvoice.lines.nodes.forEach(line => {
       remove.invoiceLine(line.id);

@@ -13,8 +13,8 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { OutboundShipment, OutboundShipmentSummaryItem } from './types';
-import { isInvoiceEditable } from '../utils';
+import { OutboundShipment, OutboundShipmentSummaryItem } from '../../types';
+import { isInvoiceEditable } from '../../utils';
 
 interface ToolbarProps {
   draft: OutboundShipment;
@@ -60,6 +60,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 label={t('label.customer-name')}
                 Input={
                   <NameSearchInput
+                    type="customer"
                     disabled={!isInvoiceEditable(draft)}
                     value={draft.otherParty}
                     onChange={name => {

@@ -15,13 +15,13 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
-import { getOutboundShipmentDetailViewApi } from '../../api';
+import { getOutboundShipmentDetailViewApi } from './api';
 import { GeneralTab } from './tabs/GeneralTab';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
-import { OutboundShipmentSummaryItem } from './types';
+import { OutboundShipmentSummaryItem } from '../../types';
 import { Toolbar } from './Toolbar';
-import { isInvoiceEditable } from '../utils';
+import { isInvoiceEditable } from '../../utils';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
