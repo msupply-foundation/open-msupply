@@ -179,7 +179,6 @@ export const insert = {
       costPricePerPack: stockLine.costPricePerPack,
       sellPricePerPack: stockLine.sellPricePerPack,
       location: stockLine.location,
-      quantity: invoiceLine.numberOfPacks,
       packSize: stockLine.packSize,
     };
 

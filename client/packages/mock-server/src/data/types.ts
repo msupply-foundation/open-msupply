@@ -57,7 +57,6 @@ export interface InvoiceLine extends InvoiceLineNode {
   };
   itemCode: string;
   itemUnit: string;
-  quantity: number;
   batch?: string;
   expiryDate: string;
   stockLineId: string;
@@ -78,6 +77,7 @@ export interface ResolvedInvoiceLine extends InvoiceLine {
 
 export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
   totalAfterTax: number;
+  verifiedDatetime?: string;
   pricing: {
     __typename: 'InvoicePricingNode';
     totalAfterTax: number;
