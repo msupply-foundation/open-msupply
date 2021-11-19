@@ -1,6 +1,6 @@
 import React from 'react';
 import { IconButton as MuiIconButton, Tooltip } from '@mui/material';
-import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../intl';
 
 interface ButtonProps {
   disabled?: boolean;

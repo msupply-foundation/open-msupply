@@ -1,5 +1,5 @@
 import { ReactNode, FC } from 'react';
-import { LocaleKey } from '@openmsupply-client/common/src/intl/intlHelpers';
+import { LocaleKey } from '@openmsupply-client/common/src/intl';
 import { ObjectWithStringKeys, DomainObject } from './../../../types';
 import { Pagination } from '../../../hooks/usePagination';
 import { SortRule } from '../../../hooks/useSortBy';

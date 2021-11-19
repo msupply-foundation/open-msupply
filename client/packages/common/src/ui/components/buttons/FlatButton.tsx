@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button as MuiButton, styled } from '@mui/material';
 import { Property } from 'csstype';
-import { LocaleKey, useTranslation } from '../../../intl/intlHelpers';
+import { LocaleKey, useTranslation } from '../../../intl';
 
 interface ButtonProps {
   color?: 'inherit' | 'primary' | 'secondary';
