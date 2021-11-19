@@ -13,15 +13,15 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { OutboundShipment, OutboundShipmentSummaryItem } from './types';
-import { isInvoiceEditable } from '../utils';
+import { OutboundShipment, OutboundShipmentSummaryItem } from '../../types';
+import { isInvoiceEditable } from '../../utils';
 
 interface ToolbarProps {
   draft: OutboundShipment;
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
-  const t = useTranslation();
+  const t = useTranslation(['outbound-shipment', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
@@ -57,7 +57,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {draft.otherParty && (
               <InputWithLabelRow
-                label="label.customer-name"
+                label={t('label.customer-name')}
                 Input={
                   <NameSearchInput
                     type="customer"
@@ -71,7 +71,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               />
             )}
             <InputWithLabelRow
-              label="label.customer-ref"
+              label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
                   disabled={!isInvoiceEditable(draft)}

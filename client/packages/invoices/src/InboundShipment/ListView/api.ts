@@ -4,13 +4,12 @@ import {
   InvoicesQuery,
   SortBy,
   ListApi,
-  Invoice,
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
-  InvoiceRow,
   InvoicePriceResponse,
   OmSupplyApi,
 } from '@openmsupply-client/common';
+import { Invoice, InvoiceRow } from '../../types';
 
 const invoiceToInput = (
   patch: Partial<Invoice> & { id: string }
@@ -26,7 +25,7 @@ const invoiceToInput = (
   };
 };
 
-const getSortKey = (sortBy: SortBy<Invoice>): InvoiceSortFieldInput => {
+const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
   switch (sortBy.key) {
     case 'allocatedDatetime': {
       return InvoiceSortFieldInput.ConfirmDatetime;
@@ -56,7 +55,7 @@ const getSortKey = (sortBy: SortBy<Invoice>): InvoiceSortFieldInput => {
   }
 };
 
-const getSortDesc = (sortBy: SortBy<Invoice>): boolean => {
+const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
   return !!sortBy.isDesc;
 };
 

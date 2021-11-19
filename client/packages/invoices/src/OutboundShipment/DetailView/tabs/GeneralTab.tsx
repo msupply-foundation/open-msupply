@@ -6,8 +6,9 @@ import {
   Column,
   DomainObject,
   Box,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { OutboundShipmentSummaryItem } from '../types';
+import { OutboundShipmentSummaryItem } from '../../../types';
 
 interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
@@ -37,6 +38,7 @@ export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
   const { pagination } = usePagination();
+  const t = useTranslation('common');
   const activeRows = data.filter(({ isDeleted }) => !isDeleted);
 
   return (
@@ -50,7 +52,7 @@ export const GeneralTabComponent: FC<
         pagination.offset + pagination.first
       )}
       onChangePage={pagination.onChangePage}
-      noDataMessageKey="error.no-items"
+      noDataMessage={t('error.no-items')}
     />
   );
 };

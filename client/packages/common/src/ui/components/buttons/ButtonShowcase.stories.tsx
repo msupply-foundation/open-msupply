@@ -2,12 +2,13 @@ import React, { FC, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 import { FlatButton } from './FlatButton';
-import { BookIcon } from '../../icons';
+import { BookIcon, TruckIcon } from '../../icons';
 import { BaseButton, ButtonWithIcon } from '.';
-import { TruckIcon } from '../../icons';
-import { Color, DialogButton, IconButton } from '..';
+import { DialogButton, IconButton } from '../buttons';
+import { Color } from '../menus';
 import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
+import { useTranslation } from '../../../intl';
 
 const getOnClick = (someText: string) => () => {
   alert(someText);
@@ -36,6 +37,7 @@ const Wrapper: FC<{ text: string }> = ({ children, text }) => {
 };
 
 const Template: Story = () => {
+  const t = useTranslation('common');
   const [selected, setSelected] = useState(false);
   const [color, setColor] = useState<Color>({
     hex: '#8f90a6',
@@ -89,7 +91,7 @@ const Template: Story = () => {
           variant="contained"
           color="primary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -99,7 +101,7 @@ const Template: Story = () => {
           variant="contained"
           color="secondary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -109,7 +111,7 @@ const Template: Story = () => {
           variant="outlined"
           color="primary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -119,7 +121,7 @@ const Template: Story = () => {
           variant="outlined"
           color="secondary"
           Icon={<TruckIcon />}
-          labelKey="app.distribution"
+          label={t('distribution')}
           onClick={getOnClick('With Icon!')}
         />
       </Wrapper>
@@ -139,7 +141,7 @@ const Template: Story = () => {
       <Wrapper text="Flat button">
         <FlatButton
           icon={<BookIcon />}
-          labelKey="button.docs"
+          label="Docs"
           onClick={() => console.info('clicked')}
         />
       </Wrapper>
@@ -147,7 +149,7 @@ const Template: Story = () => {
       <Wrapper text="Icon button">
         <IconButton
           icon={<BookIcon />}
-          labelKey="button.docs"
+          label="Docs"
           onClick={() => console.info('clicked')}
         />
       </Wrapper>
@@ -157,7 +159,7 @@ const Template: Story = () => {
           value={selected}
           selected={selected}
           onClick={() => setSelected(state => !state)}
-          labelKey="app.admin"
+          label="Admin"
         />
       </Wrapper>
 

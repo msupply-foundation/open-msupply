@@ -1,12 +1,10 @@
 {
-  "app.customer-requisition": "Réquisitions clients",
-  "app.customers": "Clients",
-  "app.dashboard": "Tableau de bord",
-  "app.inbound-shipment": "Inbound Shipment",
-  "app.inbound-shipments": "Inbound Shipments",
-  "app.items": "Article",
-  "app.logout": "Déconnexion",
-  "app.reports": "Rapports",
-  "app.suppliers": "Fournisseurs",
-  "app.tools": "Outils"
+  "customer-requisition": "Réquisitions clients",
+  "customers": "Clients",
+  "dashboard": "Tableau de bord",
+  "items": "Article",
+  "logout": "Déconnexion",
+  "reports": "Rapports",
+  "suppliers": "Fournisseurs",
+  "tools": "Outils"
 }

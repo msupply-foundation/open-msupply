@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 import { useContentAreaHeight } from '.';
-import { useAppTheme } from '../..';
+import { useAppTheme } from '../../styles';
 
 describe('useContentAreaHeight', () => {
   beforeEach(() => {

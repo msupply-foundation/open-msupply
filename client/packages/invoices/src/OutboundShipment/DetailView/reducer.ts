@@ -9,21 +9,21 @@ import {
   DocumentActionSet,
   DocumentActionType,
   SortBy,
-  Invoice,
-  InvoiceLine,
   ifTheSameElseDefault,
   Item,
   arrayToRecord,
+  getDataSorter,
 } from '@openmsupply-client/common';
-import { placeholderInvoice } from './index';
+import { placeholderInvoice } from '../../utils';
 import {
+  Invoice,
+  InvoiceLine,
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
   OutboundShipmentSummaryItem,
   OutboundShipmentRow,
-} from './types';
-import { getDataSorter } from '../utils';
+} from '../../types';
 
 const getExistingLine = (
   items: OutboundShipmentSummaryItem[],
@@ -73,9 +73,9 @@ export const OutboundAction = {
     type: ActionType.DeleteLine,
     payload: { line },
   }),
-  updateInvoice: <K extends keyof Invoice>(
+  updateInvoice: <K extends keyof OutboundShipment>(
     key: K,
-    value: Invoice[K]
+    value: OutboundShipment[K]
   ): OutboundShipmentAction => ({
     type: ActionType.UpdateInvoice,
     payload: { key, value },
@@ -231,8 +231,9 @@ export const reducer = (
           const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
           const newSortBy = { key, isDesc: newIsDesc, direction: newDirection };
 
-          const sorter = getDataSorter(newSortBy.key, newSortBy.isDesc);
-          const newLines = lines.sort(sorter);
+          const newLines = lines.sort(
+            getDataSorter(newSortBy.key, newSortBy.isDesc)
+          );
 
           draft.lines = newLines;
           state.sortBy = newSortBy;
