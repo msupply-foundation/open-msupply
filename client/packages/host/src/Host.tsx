@@ -22,7 +22,7 @@ import {
   DetailPanel,
   AppFooter,
   OmSupplyApiProvider,
-  IntlProviderNext,
+  IntlProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
@@ -177,7 +177,7 @@ const CommandK: FC = ({ children }) => {
 
 const Host: FC = () => (
   <React.Suspense fallback={'Loading'}>
-    <IntlProviderNext>
+    <IntlProvider>
       <ErrorBoundary Fallback={GenericErrorFallback}>
         <QueryClientProvider client={queryClient}>
           <OmSupplyApiProvider url={Environment.API_URL}>
@@ -272,7 +272,7 @@ const Host: FC = () => (
           </OmSupplyApiProvider>
         </QueryClientProvider>
       </ErrorBoundary>
-    </IntlProviderNext>
+    </IntlProvider>
   </React.Suspense>
 );
 
