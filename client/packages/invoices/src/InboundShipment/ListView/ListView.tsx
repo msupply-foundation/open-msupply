@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 import {
   DataTable,
   useColumns,
-  InvoiceRow,
   useListData,
   getNameAndColorColumn,
   TableProvider,
@@ -16,6 +15,7 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
+import { InvoiceRow } from '../../types';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -48,13 +48,11 @@ export const InboundListView: FC = () => {
     getInboundShipmentListViewApi(api)
   );
 
-  const onColorUpdate = (row: InvoiceRow, color: Color) => {
-    onUpdate({ ...row, color: color.hex });
-  };
-
-  const columns = useColumns<InvoiceRow>(
+  const columns = useColumns(
     [
-      getNameAndColorColumn(onColorUpdate),
+      getNameAndColorColumn((row: InvoiceRow, color: Color) => {
+        onUpdate({ ...row, color: color.hex });
+      }),
       [
         'status',
         {

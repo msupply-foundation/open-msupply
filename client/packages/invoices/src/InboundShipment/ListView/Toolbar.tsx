@@ -1,7 +1,6 @@
 import React, { FC, useEffect, useRef } from 'react';
 import {
   useNotification,
-  InvoiceRow,
   DropdownMenu,
   DropdownMenuItem,
   useTranslation,
@@ -12,6 +11,7 @@ import {
   BasicTextInput,
   FilterController,
 } from '@openmsupply-client/common';
+import { InvoiceRow } from '../../types';
 
 export const Toolbar: FC<{
   onDelete: (toDelete: InvoiceRow[]) => void;
