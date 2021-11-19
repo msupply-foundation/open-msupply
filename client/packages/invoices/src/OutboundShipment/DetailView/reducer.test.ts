@@ -1,5 +1,5 @@
 import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
-import { flattenSummaryItems } from '../../utils';
+import { flattenOutboundItems } from '../../utils';
 import { DocumentActionSet } from '@openmsupply-client/common';
 import { placeholderInvoice } from '../../utils';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
@@ -266,7 +266,7 @@ describe('DetailView reducer: merging', () => {
 
     // Create some server data which is the same except every line has 99 numberOfPacks.
     // Then after merging, every line should have 99 numberOfPacks.
-    const dataLines = [...flattenSummaryItems(state.draft.items)];
+    const dataLines = [...flattenOutboundItems(state.draft.items)];
     const data = {
       ...placeholderInvoice,
       lines: dataLines.map(line => ({ ...line, numberOfPacks: 99 })),
@@ -277,7 +277,7 @@ describe('DetailView reducer: merging', () => {
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
 
     expect(
-      flattenSummaryItems(reducerResult.draft.items).filter(
+      flattenOutboundItems(reducerResult.draft.items).filter(
         ({ numberOfPacks }) => numberOfPacks !== 99
       ).length
     ).toBe(0);
@@ -310,7 +310,7 @@ describe('DetailView reducer: merging', () => {
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
 
     expect(
-      flattenSummaryItems(reducerResult.draft.items).every(
+      flattenOutboundItems(reducerResult.draft.items).every(
         ({ isCreated, isDeleted, isUpdated }) =>
           !isCreated && !isDeleted && isUpdated
       )
