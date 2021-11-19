@@ -9,6 +9,12 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const defaultNS = 'common';
 export const IntlProviderNext: React.FC = ({ children }) => {
   React.useEffect(() => {
+    const minuteInMilliseconds = 60 * 1000;
+    const expirationTime =
+      process.env['NODE_ENV'] === 'development'
+        ? 5 * minuteInMilliseconds
+        : 7 * 24 * 60 * minuteInMilliseconds;
+
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next
       .use(Backend)
@@ -22,6 +28,7 @@ export const IntlProviderNext: React.FC = ({ children }) => {
           backendOptions: [
             {
               /* options for primary backend */
+              expirationTime,
             },
             {
               /* options for secondary backend */

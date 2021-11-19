@@ -21,7 +21,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
-  const t = useTranslation(['common', 'outbound-shipment']);
+  const t = useTranslation(['outbound-shipment', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
@@ -57,7 +57,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {draft.otherParty && (
               <InputWithLabelRow
-                label="label.customer-name"
+                label={t('label.customer-name')}
                 Input={
                   <NameSearchInput
                     disabled={!isInvoiceEditable(draft)}
@@ -70,7 +70,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               />
             )}
             <InputWithLabelRow
-              label="label.customer-ref"
+              label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
                   disabled={!isInvoiceEditable(draft)}

@@ -2,6 +2,7 @@ import { JSXElementConstructor } from 'react';
 import { SortBy } from '../../../../hooks';
 import { useTranslation, useFormatDate } from './../../../../intl';
 import { DomainObject } from './../../../../types';
+import { LocaleKey } from '../../../../intl';
 
 export interface CellProps<T extends DomainObject> {
   rowData: T;
@@ -50,7 +51,7 @@ export interface Column<T extends DomainObject> {
   key: keyof T | GenericColumnKey | string;
   accessor: ColumnDataAccessor<T>;
 
-  label: string;
+  label: LocaleKey | '';
 
   format: ColumnFormat;
   align: ColumnAlign;
