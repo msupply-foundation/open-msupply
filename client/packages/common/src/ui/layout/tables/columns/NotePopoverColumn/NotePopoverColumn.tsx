@@ -11,9 +11,9 @@ interface DomainObjectWithComment extends DomainObject {
   note?: string | null;
 }
 
-export const getNotePopoverColumn = <
-  T extends DomainObjectWithComment
->(): ColumnDefinition<T> => ({
+export const getNotePopoverColumn = <T extends DomainObjectWithComment>(
+  label: string
+): ColumnDefinition<T> => ({
   key: 'comment',
   sortable: false,
   align: ColumnAlign.Center,
@@ -31,7 +31,7 @@ export const getNotePopoverColumn = <
         width={400}
         height={180}
         Content={
-          <PaperPopoverSection labelKey="label.notes">
+          <PaperPopoverSection label={label}>
             {String(value)}
           </PaperPopoverSection>
         }

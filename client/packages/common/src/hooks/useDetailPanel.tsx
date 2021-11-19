@@ -1,5 +1,6 @@
 import React from 'react';
 import create from 'zustand';
+import { useTranslation } from '../intl/intlHelpers';
 import { SidebarIcon, ButtonWithIcon } from '../ui';
 
 type DetailPanelController = {
@@ -20,11 +21,12 @@ interface DetailPanel {
   close: () => void;
 }
 export const useDetailPanel = (): DetailPanel => {
+  const t = useTranslation('common');
   const { isOpen, open, close } = useDetailPanelStore();
   const OpenButton = isOpen ? null : (
     <ButtonWithIcon
       Icon={<SidebarIcon />}
-      labelKey="button.more"
+      label={t('button.more')}
       onClick={open}
     />
   );

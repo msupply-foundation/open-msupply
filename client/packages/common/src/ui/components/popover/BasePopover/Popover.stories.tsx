@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Story } from '@storybook/react';
 import Box from '@mui/material/Box';
-import { BasePopover } from '..';
-import { BaseButton } from '../..';
-import { UnhappyMan } from '../../..';
+import { BasePopover } from '../BasePopover';
+import { BaseButton } from '../../buttons';
+import { UnhappyMan } from '../../../icons';
 
 type VirtualElement = { getBoundingClientRect: () => DOMRect };
 

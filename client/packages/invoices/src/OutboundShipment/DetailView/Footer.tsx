@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   getNextOutboundStatus,
   getNextOutboundStatusButtonTranslation,
-  getStatusTranslation,
+  getStatusTranslator,
   isInvoiceEditable,
   outboundStatuses,
 } from '../../utils';
@@ -46,7 +46,7 @@ const createStatusLog = (draft: OutboundShipment) => {
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
-  const t = useTranslation();
+  const t = useTranslation('common');
   const { success } = useNotification();
 
   return (
@@ -67,20 +67,20 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
               onClick={(_, value) => {
                 draft.update?.('hold', !value);
               }}
-              labelKey="label.hold"
+              label={t('label.hold')}
             />
 
             <StatusCrumbs
               statuses={outboundStatuses}
               statusLog={createStatusLog(draft)}
-              statusFormatter={getStatusTranslation}
+              statusFormatter={getStatusTranslator(t)}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
               <ButtonWithIcon
                 shrinkThreshold="lg"
                 Icon={<XCircleIcon />}
-                labelKey="button.cancel"
+                label="button.cancel"
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigate(-1)}
@@ -90,7 +90,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                   <ButtonWithIcon
                     shrinkThreshold="lg"
                     Icon={<SaveIcon />}
-                    labelKey="button.save"
+                    label={t('button.save')}
                     variant="contained"
                     color="secondary"
                     sx={{ fontSize: '12px' }}
@@ -103,13 +103,12 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                     shrinkThreshold="lg"
                     disabled={draft.onHold}
                     Icon={<ArrowRightIcon />}
-                    labelKey="button.save-and-confirm-status"
-                    sx={{ fontSize: '12px' }}
-                    labelProps={{
+                    label={t('button.save-and-confirm-status', {
                       status: t(
                         getNextOutboundStatusButtonTranslation(draft.status)
                       ),
-                    }}
+                    })}
+                    sx={{ fontSize: '12px' }}
                     variant="contained"
                     color="secondary"
                     onClick={async () => {

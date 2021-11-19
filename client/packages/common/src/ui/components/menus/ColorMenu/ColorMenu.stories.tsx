@@ -6,6 +6,7 @@ import { ColorMenu } from './ColorMenu';
 import { TestingProvider } from '../../../../utils';
 import { IconButton } from '../../buttons';
 import { CircleIcon } from '../../../icons';
+import { useTranslation } from '../../../../intl/intlHelpers';
 
 export default {
   title: 'Menus/ColorMenu',
@@ -16,6 +17,8 @@ export default {
 } as ComponentMeta<typeof ColorMenu>;
 
 const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
+  const t = useTranslation('app');
+
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -31,7 +34,7 @@ const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
       <ColorMenu onClose={handleClose} anchorEl={anchorEl} onClick={onClick} />
       <Box>
         <IconButton
-          labelKey="app.admin"
+          label={t('admin')}
           icon={
             <CircleIcon
               htmlColor="red"

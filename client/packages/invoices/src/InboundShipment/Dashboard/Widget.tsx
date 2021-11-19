@@ -6,12 +6,14 @@ import {
   StatsPanel,
   useOmSupplyApi,
   useQuery,
+  useTranslation,
   Widget,
 } from '@openmsupply-client/common';
 import { getInboundShipmentCountQueryFn } from './api';
 
 export const InboundShipmentWidget: React.FC = () => {
   const { api } = useOmSupplyApi();
+  const t = useTranslation(['app', 'dashboard']);
   const { data, isLoading } = useQuery(
     ['inbound-shipment', 'count'],
     getInboundShipmentCountQueryFn(api),
@@ -19,7 +21,7 @@ export const InboundShipmentWidget: React.FC = () => {
   );
 
   return (
-    <Widget titleKey="app.inbound-shipments">
+    <Widget title={t('inbound-shipments')}>
       <Grid
         container
         justifyContent="flex-start"
@@ -29,10 +31,16 @@ export const InboundShipmentWidget: React.FC = () => {
         <Grid item>
           <StatsPanel
             isLoading={isLoading}
-            titleKey="app.inbound-shipments"
+            title={t('inbound-shipments')}
             stats={[
-              { labelKey: 'label.today', value: data?.today ?? 0 },
-              { labelKey: 'label.this-week', value: data?.thisWeek ?? 0 },
+              {
+                label: t('label.today', { ns: 'dashboard' }),
+                value: data?.today ?? 0,
+              },
+              {
+                label: t('label.this-week', { ns: 'dashboard' }),
+                value: data?.thisWeek ?? 0,
+              },
             ]}
           />
         </Grid>
@@ -48,7 +56,7 @@ export const InboundShipmentWidget: React.FC = () => {
             variant="contained"
             color="secondary"
             Icon={<PlusCircleIcon />}
-            labelKey="button.new-inbound-shipment"
+            label={t('button.new-inbound-shipment')}
             onClick={() => alert('create')}
           />
         </Grid>

@@ -18,7 +18,7 @@ export const Toolbar: FC<{
   filter: FilterController<InvoiceRow>;
   data?: InvoiceRow[];
 }> = ({ onDelete, data, filter }) => {
-  const t = useTranslation();
+  const t = useTranslation('outbound-shipment');
 
   const { success, info } = useNotification();
 
@@ -57,7 +57,7 @@ export const Toolbar: FC<{
       }}
     >
       <InputWithLabelRow
-        label={'label.search'}
+        label={t('label.search')}
         labelWidth={null}
         Input={
           <BasicTextInput

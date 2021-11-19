@@ -3,18 +3,22 @@ import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { ButtonWithIcon } from './ButtonWithIcon';
 import { BookIcon } from '../../../icons';
+import { useTranslation } from '../../../../intl/intlHelpers';
 
-const Template: ComponentStory<typeof ButtonWithIcon> = () => (
-  <Box>
-    <ButtonWithIcon
-      Icon={<BookIcon />}
-      labelKey="button.docs"
-      onClick={() => {
-        alert('clicked');
-      }}
-    />
-  </Box>
-);
+const Template: ComponentStory<typeof ButtonWithIcon> = () => {
+  const t = useTranslation('common');
+  return (
+    <Box>
+      <ButtonWithIcon
+        Icon={<BookIcon />}
+        label={t('button.docs')}
+        onClick={() => {
+          alert('clicked');
+        }}
+      />
+    </Box>
+  );
+};
 
 export const Primary = Template.bind({});
 

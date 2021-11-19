@@ -1,22 +1,21 @@
 import React, { FC } from 'react';
 import { Box } from '@mui/material';
-import { LocaleKey } from '../../../intl';
 import { FlatButton } from '../buttons/FlatButton';
 
 export interface DetailPanelActionProps {
   icon?: JSX.Element;
   onClick: () => void;
-  titleKey: LocaleKey;
+  title: string;
 }
 
 export const DetailPanelAction: FC<DetailPanelActionProps> = ({
   icon,
   onClick,
-  titleKey,
+  title,
 }) => {
   return (
     <Box sx={{ marginLeft: '11px' }}>
-      <FlatButton onClick={onClick} icon={icon} labelKey={titleKey} />
+      <FlatButton onClick={onClick} icon={icon} label={title} />
     </Box>
   );
 };

@@ -19,7 +19,6 @@ export const BasicHeader = <T extends DomainObject>({
   column,
 }: HeaderProps<T>): ReactElement => {
   const t = useTranslation();
-  const header = column.label === '' ? column.label : t(column.label);
-
+  const header = column.label === '' ? '' : t(column.label);
   return <>{header}</>;
 };
