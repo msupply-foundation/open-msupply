@@ -9,10 +9,12 @@ export interface ModalInputProps {
   inputProps?: UseFormRegisterReturn;
   width?: number;
   disabled?: boolean;
+  value?: unknown;
 }
 
 export const ModalInput: React.FC<ModalInputProps> = ({
   defaultValue,
+  value,
   inputProps,
   disabled = false,
   width = 240,
@@ -35,6 +37,7 @@ export const ModalInput: React.FC<ModalInputProps> = ({
     >
       <BasicTextInput
         disabled={disabled}
+        value={value}
         defaultValue={defaultValue}
         sx={{ width: `${width}px` }}
         {...errorProps}

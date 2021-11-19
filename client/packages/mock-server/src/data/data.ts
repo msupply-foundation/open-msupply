@@ -1,6 +1,6 @@
 import { randomFloat, randomName } from './../utils';
 /* eslint-disable prefer-const */
-import { Store, StockLine, Invoice, Item, InvoiceLine, Name } from './types';
+import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import {
   addRandomPercentageTo,
   alphaString,
@@ -11,7 +11,6 @@ import {
 import faker from 'faker';
 import {
   takeRandomElementFrom,
-  takeRandomNumberFrom,
   takeRandomPercentageFrom,
   takeRandomSubsetFrom,
 } from '../utils';
@@ -38,6 +37,71 @@ const units = [
 
 const packSizes = [1, 1, 1, 1, 10, 100];
 
+const getItem = (itemId: string) => {
+  const item = ItemData.find(({ id }) => itemId === id);
+
+  if (!item) {
+    throw new Error(`Item ${itemId} not found`);
+  }
+
+  return item;
+};
+
+const getStockLine = (stockLineId: string) => {
+  const stockLineIdx = StockLineData.findIndex(({ id }) => stockLineId === id);
+  const stockLine = StockLineData[stockLineIdx];
+  if (!stockLine) throw new Error(`StockLine ${stockLineId} not found`);
+
+  return { index: stockLineIdx, stockLine: stockLine };
+};
+
+export const adjustStockLineTotalNumberOfPacks = (
+  stockLineId: string,
+  quantity: number
+): StockLine => {
+  const { index, stockLine } = getStockLine(stockLineId);
+
+  const newQuantity = stockLine.totalNumberOfPacks + quantity;
+
+  if (newQuantity < 0) {
+    throw new Error(
+      `Quantity invalid - reducing ${stockLine.totalNumberOfPacks} by ${quantity}`
+    );
+  }
+
+  const newStockLine: StockLine = {
+    ...stockLine,
+    totalNumberOfPacks: newQuantity,
+  };
+
+  StockLineData[index] = newStockLine;
+
+  return newStockLine;
+};
+
+export const adjustStockLineAvailableNumberOfPacks = (
+  stockLineId: string,
+  quantity: number
+): StockLine => {
+  const { index, stockLine } = getStockLine(stockLineId);
+
+  const newQuantity = stockLine.availableNumberOfPacks + quantity;
+
+  if (newQuantity < 0 || newQuantity > stockLine.totalNumberOfPacks) {
+    throw new Error(
+      `Quantity invalid - reducing ${stockLine.availableNumberOfPacks} by ${quantity} with a total packs of ${stockLine.totalNumberOfPacks}`
+    );
+  }
+
+  const newStockLine = {
+    ...stockLine,
+    availableNumberOfPacks: newQuantity,
+  };
+  StockLineData[index] = newStockLine;
+
+  return newStockLine;
+};
+
 const locations = Array.from({ length: 50 }).map(() => ({
   id: faker.datatype.uuid(),
   description: `${alphaString(1)}${faker.datatype.number(9)}`,
@@ -51,143 +115,9 @@ export const getStockLinesForItem = (
   return stockLines.filter(getFilter(item.id, 'itemId'));
 };
 
-export const createStockLines = (
-  items: Item[],
-  stores: Store[]
-): StockLine[] => {
-  const stockLines: StockLine[] = [];
-
-  stores.forEach(store => {
-    items.forEach(item => {
-      const { id: itemId } = item;
-
-      // Take a random quantity we're going to use of this items total available.
-      // to distribute over all the stock lines we will create.
-      let quantityToUse = takeRandomNumberFrom(100, 500);
-      let i = 0;
-
-      while (quantityToUse > 0) {
-        // Take another random amount from the total quantity for this stock line. We create a random number of
-        // stock lines by taking a random quantity (min of 10%) from the pool of available quantity.
-        const quantityForThisBatch = takeRandomPercentageFrom(quantityToUse, {
-          minPercentage: 10,
-        });
-
-        // Use the remaining available if we generated a quantity for this stock line greater than the available
-        // quantity.
-        const availableNumberOfPacks =
-          quantityForThisBatch > quantityToUse
-            ? quantityToUse
-            : quantityForThisBatch;
-
-        const costPricePerPack = randomInteger({ min: 10, max: 1000 }) / 100;
-        const sellPricePerPack = roundDecimalPlaces(
-          addRandomPercentageTo({ value: costPricePerPack, min: 10, max: 40 }),
-          2
-        );
-
-        const stockLine: StockLine = {
-          id: `${itemId}-${store.id}-${i++}`,
-          packSize: takeRandomElementFrom(packSizes),
-          expiryDate: faker.date.future(1.5).toISOString(),
-          batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
-          locationDescription: `${alphaString(1)}${faker.datatype.number(9)}`,
-          location: takeRandomElementFrom(locations),
-          storeId: store.id,
-          availableNumberOfPacks,
-          totalNumberOfPacks:
-            availableNumberOfPacks + randomInteger({ min: 0, max: 5 }),
-          itemId,
-          costPricePerPack,
-          sellPricePerPack,
-          onHold: faker.datatype.number(10) < 2,
-          note:
-            faker.datatype.number(10) < 4
-              ? faker.commerce.productDescription()
-              : null,
-        };
-
-        quantityToUse = quantityToUse - availableNumberOfPacks;
-
-        stockLines.push(stockLine);
-      }
-    });
-  });
-
-  return stockLines.flat();
-};
-
-export const createInvoiceLines = (
-  items: Item[],
-  stockLines: StockLine[],
-  invoices: Invoice[]
-): InvoiceLine[] => {
-  const invoiceLines: InvoiceLine[][] = [];
-
-  invoices.forEach(invoice => {
-    takeRandomSubsetFrom(items, 50).forEach(item => {
-      const stockLinesToUse = takeRandomSubsetFrom(
-        getStockLinesForItem(item, stockLines),
-        2
-      );
-
-      const invoiceLinesForStockLines = stockLinesToUse.map(
-        (stockLine: Omit<StockLine, 'item'>) => {
-          const { availableNumberOfPacks } = stockLine;
-
-          const numberOfPacks = takeRandomPercentageFrom(
-            availableNumberOfPacks as number
-          );
-
-          const costPricePerPack = randomInteger({ min: 10, max: 1000 }) / 100;
-          const sellPricePerPack = roundDecimalPlaces(
-            addRandomPercentageTo({
-              value: costPricePerPack,
-              min: 10,
-              max: 40,
-            }),
-            2
-          );
-
-          const invoiceLine: InvoiceLine = {
-            id: `${faker.datatype.uuid()}`,
-            invoiceId: invoice.id,
-            itemId: item.id,
-            itemName: item.name,
-            itemCode: item.code,
-            itemUnit: item.unitName ?? '',
-
-            stockLineId: stockLine.id,
-            locationDescription: stockLine.locationDescription,
-            location: stockLine.location,
-
-            batch: stockLine.batch ?? '',
-            expiryDate: stockLine.expiryDate,
-
-            costPricePerPack,
-            sellPricePerPack,
-            quantity: numberOfPacks,
-            numberOfPacks,
-            packSize: takeRandomElementFrom(packSizes),
-            note: stockLine.note ?? '',
-          };
-
-          stockLine.availableNumberOfPacks =
-            (stockLine.availableNumberOfPacks as number) - numberOfPacks;
-
-          return invoiceLine;
-        }
-      );
-
-      invoiceLines.push(invoiceLinesForStockLines);
-    });
-  });
-
-  return invoiceLines.flat();
-};
-
 export const createItems = (
-  numberToCreate = randomInteger({ min: 50, max: 100 })
+  // Update this to change the number of items there are.
+  numberToCreate = randomInteger({ min: 90, max: 100 })
 ): Item[] => {
   return items.slice(0, numberToCreate).map(({ code, name }, j) => {
     const itemId = `item-${j}`;
@@ -204,16 +134,54 @@ export const createItems = (
   });
 };
 
-const statuses: InvoiceNodeStatus[] = [
+const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Draft,
   InvoiceNodeStatus.Allocated,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Finalised,
 ];
 
-const createStatusLog = (status: string, entered: Date) => {
-  const statusIdx = statuses.findIndex(s => status === s);
+const inboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.Draft,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Finalised,
+];
+
+const createInboundStatusLog = (status: string, entered: Date) => {
+  const statusIdx = inboundStatuses.findIndex(s => status === s);
+
+  const statusTimes: {
+    entryDatetime?: Date;
+    deliveredDatetime?: Date;
+    verifiedDatetime?: Date;
+    allocatedDatetime?: Date;
+    pickedDatetime?: Date;
+    shippedDatetime?: Date;
+  } = {};
+
+  if (statusIdx >= 0) {
+    statusTimes.entryDatetime = faker.date.future(0.1, entered);
+  }
+  if (statusIdx >= 1) {
+    statusTimes.deliveredDatetime = faker.date.future(
+      0.1,
+      statusTimes.entryDatetime
+    );
+  }
+  if (statusIdx >= 2) {
+    statusTimes.verifiedDatetime = faker.date.future(
+      0.1,
+      statusTimes.deliveredDatetime
+    );
+  }
+
+  return statusTimes;
+};
+
+const createOutboundStatusLog = (status: string, entered: Date) => {
+  const statusIdx = outboundStatuses.findIndex(s => status === s);
 
   const statusTimes: {
     entryDatetime?: Date;
@@ -221,6 +189,7 @@ const createStatusLog = (status: string, entered: Date) => {
     pickedDatetime?: Date;
     shippedDatetime?: Date;
     deliveredDatetime?: Date;
+    verifiedDatetime?: Date;
   } = {};
 
   if (statusIdx >= 0) {
@@ -261,13 +230,17 @@ export const createInvoice = (
   id: string,
   invoiceNumber: number,
   otherParty: Name,
+  type: InvoiceNodeType.OutboundShipment | InvoiceNodeType.InboundShipment,
   seeded?: Partial<Invoice>
 ): Invoice => {
   const confirmed = faker.date.past(1);
   const entered = faker.date.past(0.25, confirmed);
 
-  const status = takeRandomElementFrom(statuses);
-  const statusTimes = createStatusLog(status, entered);
+  const status = takeRandomElementFrom(outboundStatuses);
+  const statusTimes =
+    type === InvoiceNodeType.InboundShipment
+      ? createInboundStatusLog(status, entered)
+      : createOutboundStatusLog(status, entered);
 
   const taxPercentage = randomFloat(10, 40);
   const subtotal = randomFloat(100, 1000);
@@ -278,22 +251,28 @@ export const createInvoice = (
     otherPartyId: otherParty.id,
     invoiceNumber,
     status,
-    entryDatetime: entered.toISOString(),
-    totalAfterTax,
+    type,
+
+    totalAfterTax, // This is here for easy sorting
+
     pricing: {
       __typename: 'InvoicePricingNode',
       totalAfterTax,
       subtotal,
       taxPercentage,
     },
+
     color: 'grey',
-    type: InvoiceNodeType.OutboundShipment,
     comment: takeRandomElementFrom(comments),
     onHold: false,
+
+    entryDatetime: entered.toISOString(),
     allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
     pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
     shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
     deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
+    verifiedDatetime: statusTimes?.verifiedDatetime?.toISOString(),
+
     enteredByName: randomName(),
     donorName: randomName(),
     otherPartyName: otherParty.name,
@@ -308,22 +287,37 @@ export const createInvoice = (
 };
 
 export const createInvoices = (
-  customers = NameData,
-  stores: Store[],
+  names = NameData,
   numberToCreate = randomInteger({ min: 1, max: 100 })
 ): Invoice[] => {
-  const invoices = stores
-    .map(() => {
-      return Array.from({ length: numberToCreate }).map((_, i) => {
-        const name = takeRandomElementFrom(customers);
-        const invoice = createInvoice(faker.datatype.uuid(), i, name);
+  const customers = names.filter(({ isCustomer }) => isCustomer);
+  const suppliers = names.filter(({ isSupplier }) => isSupplier);
 
-        return invoice;
-      });
-    })
-    .flat();
+  const outbounds = Array.from({ length: numberToCreate }).map((_, i) => {
+    const name = takeRandomElementFrom(customers);
+    const invoice = createInvoice(
+      faker.datatype.uuid(),
+      i,
+      name,
+      InvoiceNodeType.OutboundShipment
+    );
 
-  return invoices;
+    return invoice;
+  });
+
+  const inbounds = Array.from({ length: numberToCreate }).map((_, i) => {
+    const name = takeRandomElementFrom(suppliers);
+    const invoice = createInvoice(
+      faker.datatype.uuid(),
+      i,
+      name,
+      InvoiceNodeType.InboundShipment
+    );
+
+    return invoice;
+  });
+
+  return [...outbounds, ...inbounds];
 };
 
 export const createCustomers = (
@@ -370,29 +364,179 @@ export const createSuppliers = (
   });
 };
 
+const createStockLines = (items: Item[]) => {
+  return items
+    .map(item => {
+      // Update this to change the number of stock lines per item, per store.
+      const numberOfStockLines = randomInteger({ min: 0, max: 3 });
+
+      return Array.from({ length: numberOfStockLines }).map(
+        (_, stockLineIdx) => {
+          const { id: itemId } = item;
+
+          const costPricePerPack = randomInteger({ min: 10, max: 1000 }) / 100;
+          const sellPricePerPack = roundDecimalPlaces(
+            addRandomPercentageTo({
+              value: costPricePerPack,
+              min: 10,
+              max: 40,
+            }),
+            2
+          );
+
+          const stockLine: StockLine = {
+            id: `${itemId}-${stockLineIdx}`,
+            packSize: takeRandomElementFrom(packSizes),
+            expiryDate: faker.date.future(1.5).toISOString(),
+            batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
+            locationDescription: `${alphaString(1)}${faker.datatype.number(9)}`,
+            location: takeRandomElementFrom(locations),
+
+            availableNumberOfPacks: 0,
+            totalNumberOfPacks: 0,
+
+            storeId: '', // We just use the same data for every store, rather than storing multiple copies of mock data for different stores.
+            itemId,
+            costPricePerPack,
+            sellPricePerPack,
+            onHold: faker.datatype.number(10) < 2,
+            note:
+              faker.datatype.number(10) < 4
+                ? faker.commerce.productDescription()
+                : null,
+          };
+
+          return stockLine;
+        }
+      );
+    })
+    .flat();
+};
+
+const createInvoicesLines = (
+  invoices: Invoice[],
+  stockLines: StockLine[]
+): InvoiceLine[] => {
+  const outbounds = invoices.filter(
+    ({ type }) => type === InvoiceNodeType.OutboundShipment
+  );
+  const inbounds = invoices.filter(
+    ({ type }) => type === InvoiceNodeType.InboundShipment
+  );
+
+  const inboundLines = inbounds
+    .map(invoice => {
+      // +/- this subset size to change the number of lines per
+      // inbound shipment.
+      const validStockLines = stockLines.filter(({ onHold }) => !onHold);
+      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 10);
+
+      return stockLineSubset.map(stockLine => {
+        const item = getItem(stockLine.itemId);
+
+        // +/- this number of packs to change the number of packs
+        // each stock line has.
+        const numberOfPacks = randomInteger({ min: 10, max: 100 });
+
+        const invoiceLine: InvoiceLine = {
+          id: `${faker.datatype.uuid()}`,
+          invoiceId: invoice.id,
+          itemId: item.id,
+          itemName: item.name,
+          itemCode: item.code,
+          itemUnit: item.unitName ?? '',
+
+          stockLineId: stockLine.id,
+          locationDescription: stockLine.locationDescription,
+          location: stockLine.location,
+
+          batch: stockLine.batch ?? '',
+          expiryDate: stockLine.expiryDate,
+
+          costPricePerPack: stockLine.costPricePerPack,
+          sellPricePerPack: stockLine.sellPricePerPack,
+
+          numberOfPacks,
+          packSize: takeRandomElementFrom(packSizes),
+          note: stockLine.note ?? '',
+        };
+
+        if (
+          invoice.status === InvoiceNodeStatus.Delivered ||
+          invoice.status === InvoiceNodeStatus.Finalised
+        ) {
+          adjustStockLineTotalNumberOfPacks(stockLine.id, numberOfPacks);
+          adjustStockLineAvailableNumberOfPacks(stockLine.id, numberOfPacks);
+        }
+
+        return invoiceLine;
+      });
+    })
+    .flat();
+
+  const outboundLines = outbounds
+    .map(invoice => {
+      // +/- this subset size to change the number of lines per
+      // outbound shipment.
+      const validStockLines = stockLines.filter(({ onHold }) => !onHold);
+      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 10);
+
+      return stockLineSubset.map(({ id: stockLineId }) => {
+        const { stockLine } = getStockLine(stockLineId);
+        const item = getItem(stockLine.itemId);
+
+        // +/- this number of packs to change the number of packs
+        // each stock line has.
+        const numberOfPacks = takeRandomPercentageFrom(
+          stockLine.availableNumberOfPacks
+        );
+
+        const invoiceLine: InvoiceLine = {
+          id: `${faker.datatype.uuid()}`,
+          invoiceId: invoice.id,
+          itemId: item.id,
+          itemName: item.name,
+          itemCode: item.code,
+          itemUnit: item.unitName ?? '',
+
+          stockLineId: stockLine.id,
+          locationDescription: stockLine.locationDescription,
+          location: stockLine.location,
+
+          batch: stockLine.batch ?? '',
+          expiryDate: stockLine.expiryDate,
+
+          costPricePerPack: stockLine.costPricePerPack,
+          sellPricePerPack: stockLine.sellPricePerPack,
+
+          numberOfPacks,
+          packSize: takeRandomElementFrom(packSizes),
+          note: stockLine.note ?? '',
+        };
+
+        adjustStockLineAvailableNumberOfPacks(stockLine.id, -numberOfPacks);
+
+        if (
+          invoice.status === InvoiceNodeStatus.Delivered ||
+          invoice.status === InvoiceNodeStatus.Finalised
+        ) {
+          adjustStockLineTotalNumberOfPacks(stockLine.id, numberOfPacks);
+        }
+
+        return invoiceLine;
+      });
+    })
+    .flat();
+
+  return [...inboundLines, ...outboundLines];
+};
+
 export const removeElement = (source: any[], idx: number): void => {
   source = source.splice(idx, 1);
 };
 
-const createStores = (names: Name[]): Store[] => {
-  const suppliers = names.filter(({ isSupplier }) => isSupplier);
-
-  const stores: Store[] = suppliers.map(({ id, code }) => ({
-    id,
-    nameId: id,
-    code,
-  }));
-
-  return stores;
-};
-
 export let NameData = [...createCustomers(), ...createSuppliers()];
 export let ItemData = createItems();
-export let StoreData = createStores(NameData);
-export let StockLineData = createStockLines(ItemData, StoreData);
-export let InvoiceData = createInvoices(NameData, StoreData);
-export let InvoiceLineData = createInvoiceLines(
-  ItemData,
-  StockLineData,
-  InvoiceData
-);
+export let InvoiceData = createInvoices(NameData);
+export let StockLineData = createStockLines(ItemData);
+export let InvoiceLineData = createInvoicesLines(InvoiceData, StockLineData);
