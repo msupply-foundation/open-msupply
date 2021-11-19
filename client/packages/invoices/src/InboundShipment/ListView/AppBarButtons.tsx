@@ -8,6 +8,7 @@ import {
   BookIcon,
   ButtonWithIcon,
   Grid,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ExternalURL } from '@openmsupply-client/config';
 
@@ -17,28 +18,29 @@ interface AppBarButtonsProps {
 
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
   const { info, success } = useNotification();
+  const t = useTranslation(['outboundShipment', 'common']);
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          labelKey="button.new-shipment"
+          label={t('button.new-shipment')}
           onClick={() => onCreate(true)}
         />
         <ButtonWithIcon
           Icon={<DownloadIcon />}
-          labelKey="button.export"
+          label={t('button.export', { ns: 'common' })}
           onClick={success('Downloaded successfully')}
         />
         <ButtonWithIcon
           Icon={<PrinterIcon />}
-          labelKey="button.print"
+          label={t('button.print', { ns: 'common' })}
           onClick={info('No printer detected')}
         />
         <ButtonWithIcon
           Icon={<BookIcon />}
-          labelKey="button.docs"
+          label={t('button.docs', { ns: 'common' })}
           onClick={() => (location.href = ExternalURL.PublicDocs)}
         />
       </Grid>
