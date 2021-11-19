@@ -58,7 +58,7 @@ export const Toolbar: FC<{
       }}
     >
       <InputWithLabelRow
-        label={'label.search'}
+        label={t('label.search')}
         labelWidth={null}
         Input={
           <BasicTextInput

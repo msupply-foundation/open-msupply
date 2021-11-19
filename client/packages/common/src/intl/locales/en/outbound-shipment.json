@@ -14,7 +14,5 @@
   "label.in-store": "In store",
   "label.num-packs": "# Packs",
   "label.packs-to-batches-with": "packs to batches with a pack size of",
-  "label.placeholder": "Placeholder",
-  "label.sell": "Sell",
-  "label.unit-quantity": "Unit Quantity"
+  "label.placeholder": "Placeholder"
 }

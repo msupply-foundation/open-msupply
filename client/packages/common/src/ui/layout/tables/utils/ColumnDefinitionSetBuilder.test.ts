@@ -75,7 +75,7 @@ describe('ColumnDefinitionSetBuilder', () => {
   it('overrides the default values of a column with the passed options', () => {
     const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('type', { width: 300 })
-      .addColumn('status', { width: 300, label: 'Admin' })
+      .addColumn('status', { width: 300, label: 'admin' })
       .build();
 
     expect(columns).toEqual([

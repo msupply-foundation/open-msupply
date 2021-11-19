@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Name } from '@openmsupply-client/common';
+import { Name, useTranslation } from '@openmsupply-client/common';
 import { ListSearch } from '@openmsupply-client/common/src/ui/components/modals/ListSearch';
 import { useNames } from '../../hooks';
 
@@ -18,14 +18,14 @@ export const NameSearchModal: FC<NameSearchProps> = ({
   onChange,
 }) => {
   const { data, isLoading } = useNames();
-
+  const t = useTranslation('common');
   return (
     <ListSearch
       loading={isLoading}
       open={open}
       options={data?.nodes ?? []}
       onClose={onClose}
-      title="label.customer"
+      title={t('label.customer')}
       optionKey="name"
       onChange={(_, name: Name | null) => {
         if (name) onChange(name);

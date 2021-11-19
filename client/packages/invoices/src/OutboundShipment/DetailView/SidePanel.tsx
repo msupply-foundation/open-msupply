@@ -104,7 +104,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
 
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
-  const t = useTranslation(['common', 'outbound-shipment']);
+  const t = useTranslation(['outbound-shipment', 'common']);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');

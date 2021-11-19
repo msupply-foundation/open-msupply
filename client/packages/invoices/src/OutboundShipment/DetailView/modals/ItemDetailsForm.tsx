@@ -42,7 +42,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   packSizeController,
   availableQuantity,
 }) => {
-  const t = useTranslation(['common', 'outbound-shipment']);
+  const t = useTranslation(['outbound-shipment', 'common']);
 
   const [quantity, setQuantity] = useState('');
   const [issueType, setIssueType] = useState('packs');
