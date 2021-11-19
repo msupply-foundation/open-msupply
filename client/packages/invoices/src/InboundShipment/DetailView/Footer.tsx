@@ -49,14 +49,6 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
   const t = useTranslation('common');
   const { success } = useNotification();
 
-  const x = t('button.save-and-confirm-status', {
-    status: t(getNextInboundStatusButtonTranslation(draft.status)),
-  });
-
-  console.log('-------------------------------------------');
-  console.log('x', x);
-  console.log('-------------------------------------------');
-
   return (
     <AppFooterPortal
       Content={
