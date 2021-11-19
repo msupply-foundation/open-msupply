@@ -28,7 +28,7 @@ export const useFormatDate = (): ((
   value: number | Date,
   options?: Intl.DateTimeFormatOptions & { format?: string }
 ) => string) => {
-  const { t } = useTranslationNext();
+  const { t } = useTranslationNext('app');
   return (val, formatParams) => t('intl.datetime', { val, formatParams });
 };
 
@@ -36,7 +36,7 @@ export const useFormatNumber = (): ((
   value: number | bigint,
   options?: Intl.NumberFormatOptions
 ) => string) => {
-  const { t } = useTranslationNext();
+  const { t } = useTranslationNext('app');
   return (val, formatParams) => t('intl.number', { val, formatParams });
 };
 

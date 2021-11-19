@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { StatusCrumbs } from './StatusCrumbs';
-import { OutboundShipmentStatus } from '../../../..';
-import { LocaleKey, useTranslation } from '../../../../intl';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
+import { StatusCrumbs } from './StatusCrumbs';
+import { LocaleKey, useTranslation } from '../../../../intl';
 
-const StatusTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
+const statusTranslation: Record<string, LocaleKey> = {
   DRAFT: 'label.draft',
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -18,19 +17,14 @@ const StatusTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
   DELIVERED: 'label.delivered',
 };
 
-const getStatusTranslation = (
-  currentStatus: OutboundShipmentStatus
-): LocaleKey => {
-  return StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT;
+const getStatusTranslation = (currentStatus: string): LocaleKey => {
+  return (
+    statusTranslation[currentStatus] ??
+    (statusTranslation['DRAFT'] as LocaleKey)
+  );
 };
 
-const outboundStatuses: OutboundShipmentStatus[] = [
-  'DRAFT',
-  'ALLOCATED',
-  'PICKED',
-  'SHIPPED',
-  'DELIVERED',
-];
+const statuses = ['DRAFT', 'ALLOCATED', 'PICKED', 'SHIPPED', 'DELIVERED'];
 
 const draft = {
   entryDatetime: '2021-08-02T21:54:09.531Z',
@@ -40,7 +34,7 @@ const draft = {
   deliveredDatetime: '2021-09-16T17:41:49.548Z',
 };
 
-const defaultStatusLog: Record<OutboundShipmentStatus, string | null> = {
+const defaultStatusLog: Record<string, string | null> = {
   DRAFT: draft.entryDatetime,
   ALLOCATED: draft.allocatedDatetime,
   SHIPPED: draft.shippedDatetime,
@@ -49,24 +43,24 @@ const defaultStatusLog: Record<OutboundShipmentStatus, string | null> = {
 };
 
 const Template: ComponentStory<typeof StatusCrumbs> = () => {
-  const [currentStatus, setCurrentStatus] = useState(outboundStatuses[4]);
+  const [currentStatus, setCurrentStatus] = useState(statuses[4]);
   const [statusLog, setStatusLog] = useState(defaultStatusLog);
 
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
     <Stack gap={2}>
       <FormControl>
         <FormLabel>Status</FormLabel>
         <RadioGroup
-          defaultValue={outboundStatuses[0]}
+          defaultValue={statuses[0]}
           value={currentStatus}
           onChange={event => {
-            const statusIdx = outboundStatuses.findIndex(
+            const statusIdx = statuses.findIndex(
               status => status === event.target.value
             );
 
-            const newStatusLog = outboundStatuses.reduce(
+            const newStatusLog = statuses.reduce(
               (acc, status, idx) => {
                 if (idx > statusIdx) {
                   acc[status] = null;
@@ -77,10 +71,10 @@ const Template: ComponentStory<typeof StatusCrumbs> = () => {
             );
 
             setStatusLog(newStatusLog);
-            setCurrentStatus(event.target.value as OutboundShipmentStatus);
+            setCurrentStatus(event.target.value);
           }}
         >
-          {outboundStatuses.map(status => {
+          {statuses.map(status => {
             return (
               <FormControlLabel
                 key={status}
@@ -94,7 +88,7 @@ const Template: ComponentStory<typeof StatusCrumbs> = () => {
       </FormControl>
 
       <StatusCrumbs
-        statuses={outboundStatuses}
+        statuses={statuses}
         statusLog={statusLog}
         statusFormatter={getStatusTranslation}
       />

@@ -11,7 +11,6 @@ import {
   useNotification,
   useTranslation,
   ColorSelectButton,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
@@ -23,10 +22,10 @@ interface SidePanelProps {
 }
 
 const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   return (
-    <DetailPanelSection titleKey="heading.additional-info">
+    <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
@@ -56,15 +55,14 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 };
 
 const RelatedDocumentsRow: FC<{
-  label: LocaleKey;
+  label: string;
   to: string;
   value?: number | null;
 }> = ({ label, to, value }) => {
-  const t = useTranslation();
   const { success } = useNotification();
   return (
     <PanelRow>
-      <PanelLabel>{t(label)}</PanelLabel>
+      <PanelLabel>{label}</PanelLabel>
       <PanelField>
         <Link to={to} onClick={success('Not implemented yet!')}>
           {value}
@@ -75,26 +73,27 @@ const RelatedDocumentsRow: FC<{
 };
 
 const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
+  const t = useTranslation('outbound-shipment');
   return (
-    <DetailPanelSection titleKey="heading.related-documents">
+    <DetailPanelSection title={t('heading.related-documents')}>
       <Grid container gap={0.5} key="additional-info">
         <RelatedDocumentsRow
-          label="label.requisition"
+          label={t('label.requisition')}
           to=""
           value={draft.requisitionNumber}
         />
         <RelatedDocumentsRow
-          label="label.inbound-shipment"
+          label={t('label.inbound-shipment')}
           to=""
           value={draft.inboundShipmentNumber}
         />
         <RelatedDocumentsRow
-          label="label.goods-receipt"
+          label={t('label.goods-receipt')}
           to=""
           value={draft.goodsReceiptNumber}
         />
         <RelatedDocumentsRow
-          label="label.purchase-order"
+          label={t('label.purchase-order')}
           to=""
           value={draft.purchaseOrderNumber}
         />
@@ -105,6 +104,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
 
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
+  const t = useTranslation(['outbound-shipment', 'common']);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
@@ -119,7 +119,7 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
             (process.env['NODE_ENV'] === 'development' && (
               <DetailPanelAction
                 icon={<CopyIcon />}
-                titleKey="dev.log-draft"
+                title={t('dev.log-draft')}
                 onClick={() => {
                   console.table(draft);
                   draft.items.forEach(item => {
@@ -133,7 +133,7 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
             ))}
           <DetailPanelAction
             icon={<CopyIcon />}
-            titleKey="link.copy-to-clipboard"
+            title={t('link.copy-to-clipboard')}
             onClick={copyToClipboard}
           />
         </>

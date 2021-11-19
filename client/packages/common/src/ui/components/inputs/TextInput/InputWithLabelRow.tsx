@@ -1,11 +1,10 @@
 import React, { FC, ReactNode } from 'react';
 import { FormLabel, Box, FormLabelProps } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
-import { useTranslation, LocaleKey } from '../../../../intl';
 
 interface InputWithLabelRowProps {
   Input: ReactNode;
-  label: LocaleKey;
+  label: string;
   labelProps?: FormLabelProps;
   labelWidth?: string | null;
 }
@@ -16,7 +15,6 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   labelProps,
   labelWidth = '120px',
 }) => {
-  const t = useTranslation();
   const { sx, ...labelPropsRest } = labelProps || {};
 
   return (
@@ -25,7 +23,7 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
         sx={{ width: labelWidth, fontWeight: 'bold', ...sx }}
         {...labelPropsRest}
       >
-        {t(label)}:
+        {label}:
       </FormLabel>
       {Input}
     </Box>

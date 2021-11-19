@@ -1,8 +1,6 @@
 import React, { FC, useEffect, useRef } from 'react';
-
 import {
   useNotification,
-  InvoiceRow,
   DropdownMenu,
   DropdownMenuItem,
   useTranslation,
@@ -11,15 +9,16 @@ import {
   AppBarContentPortal,
   InputWithLabelRow,
   BasicTextInput,
+  FilterController,
 } from '@openmsupply-client/common';
-import { FilterController } from '@openmsupply-client/common/src/hooks/useFilterBy';
+import { InvoiceRow } from '../../types';
 
 export const Toolbar: FC<{
   onDelete: (toDelete: InvoiceRow[]) => void;
   filter: FilterController<InvoiceRow>;
   data?: InvoiceRow[];
 }> = ({ onDelete, data, filter }) => {
-  const t = useTranslation();
+  const t = useTranslation('outbound-shipment');
 
   const { success, info } = useNotification();
 
@@ -58,7 +57,7 @@ export const Toolbar: FC<{
       }}
     >
       <InputWithLabelRow
-        label={'label.search'}
+        label={t('label.search')}
         labelWidth={null}
         Input={
           <BasicTextInput

@@ -2,7 +2,6 @@ import {
   gql,
   Name,
   SortBy,
-  Invoice,
   GraphQLClient,
   getSdk,
   NameSortFieldInput,
@@ -18,11 +17,15 @@ import {
   StockLineResponse,
   StockLineNode,
   DeleteOutboundShipmentLineInput,
-  InvoiceLine,
   UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { OutboundShipment, OutboundShipmentRow } from '../../types';
+import {
+  OutboundShipment,
+  OutboundShipmentRow,
+  Invoice,
+  InvoiceLine,
+} from '../../types';
 import { flattenSummaryItems } from '../../utils';
 
 const client = new GraphQLClient(Environment.API_URL);

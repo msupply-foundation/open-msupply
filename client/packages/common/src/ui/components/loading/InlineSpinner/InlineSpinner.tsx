@@ -12,7 +12,7 @@ export const InlineSpinner: FC<InlineSpinnerProps> = ({
   color = 'primary',
   showText = false,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation('app');
 
   return (
     <Box
@@ -25,7 +25,7 @@ export const InlineSpinner: FC<InlineSpinnerProps> = ({
     >
       <CircularProgress size={20} color={color} />
       <Typography sx={{ margin: theme => theme.spacing(1), fontSize: '12px' }}>
-        {showText && t('app.loading')}
+        {showText && t('loading')}
       </Typography>
     </Box>
   );

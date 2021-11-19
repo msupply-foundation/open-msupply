@@ -1,5 +1,11 @@
 import { ColumnDefinitionSetBuilder } from './ColumnDefinitionSetBuilder';
-import { Invoice } from '../../../../types';
+import { DomainObject } from '../../../../types';
+
+interface Invoice extends DomainObject {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+}
 
 describe('ColumnDefinitionSetBuilder', () => {
   it('Creates an array of columns for the column keys passed', () => {
@@ -75,12 +81,12 @@ describe('ColumnDefinitionSetBuilder', () => {
   it('overrides the default values of a column with the passed options', () => {
     const columns = new ColumnDefinitionSetBuilder<Invoice>()
       .addColumn('type', { width: 300 })
-      .addColumn('status', { width: 300, label: 'app.admin' })
+      .addColumn('status', { width: 300, label: 'admin' })
       .build();
 
     expect(columns).toEqual([
-      { key: 'type', width: 300, label: 'label.type', order: 100 },
-      { key: 'status', width: 300, label: 'app.admin', order: 101 },
+      { key: 'type', width: 300, label: 'Type', order: 100 },
+      { key: 'status', width: 300, label: 'Admin', order: 101 },
     ]);
   });
 });

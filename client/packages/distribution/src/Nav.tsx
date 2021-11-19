@@ -33,7 +33,7 @@ const Nav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
   );
-  const t = useTranslation();
+  const t = useTranslation('app');
 
   return (
     <>
@@ -42,7 +42,7 @@ const Nav: FC = () => {
         to={AppRoute.Distribution}
         icon={<TruckIcon color="primary" fontSize="small" />}
         expandOnHover
-        text={t('app.distribution')}
+        text={t('distribution')}
       />
       <Collapse in={isActive}>
         <List>
@@ -52,7 +52,7 @@ const Nav: FC = () => {
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.OutboundShipment)
               .build()}
-            text={t('app.outbound-shipment')}
+            text={t('outbound-shipment')}
           />
           <NavLink
             end
@@ -60,7 +60,7 @@ const Nav: FC = () => {
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.CustomerRequisition)
               .build()}
-            text={t('app.customer-requisition')}
+            text={t('customer-requisition')}
           />
           <NavLink
             end
@@ -76,7 +76,7 @@ const Nav: FC = () => {
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.Customer)
               .build()}
-            text={t('app.customers')}
+            text={t('customers')}
           />
         </List>
       </Collapse>

@@ -1,17 +1,60 @@
-import { LocaleKey } from '@openmsupply-client/common/src/intl';
-import { OutboundShipmentStatus } from '@openmsupply-client/common';
+import {
+  LocaleKey,
+  InvoiceNodeStatus,
+  InvoiceNodeType,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
+  OutboundShipmentStatus,
 } from './types';
 
+export const placeholderInvoice: OutboundShipment = {
+  id: '',
+  otherPartyName: '',
+  total: '',
+  comment: '',
+  theirReference: '',
+  color: 'grey',
+  status: InvoiceNodeStatus.Draft,
+  type: InvoiceNodeType.OutboundShipment,
+  entryDatetime: '',
+  invoiceNumber: 0,
+  lines: [],
+  pricing: { totalAfterTax: 0, subtotal: 0, taxPercentage: 0 },
+  dispatch: null,
+  onHold: false,
+
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
+
+  purchaseOrderNumber: undefined,
+  goodsReceiptNumber: undefined,
+  requisitionNumber: undefined,
+  inboundShipmentNumber: undefined,
+
+  transportReference: undefined,
+  shippingMethod: undefined,
+
+  otherParty: undefined,
+
+  enteredByName: '',
+
+  donorName: '',
+  otherPartyId: '',
+  items: [],
+};
+
 export const outboundStatuses: OutboundShipmentStatus[] = [
-  'DRAFT',
-  'ALLOCATED',
-  'PICKED',
-  'SHIPPED',
-  'DELIVERED',
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Draft,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
 ];
 
 const NextStatusButtonTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
@@ -32,12 +75,16 @@ const StatusTranslation: Record<OutboundShipmentStatus, LocaleKey> = {
 
 export const getNextOutboundStatus = (
   currentStatus: OutboundShipmentStatus
-): OutboundShipmentStatus | undefined => {
+): OutboundShipmentStatus => {
   const currentStatusIdx = outboundStatuses.findIndex(
     status => currentStatus === status
   );
 
-  return outboundStatuses[currentStatusIdx + 1];
+  const nextStatus = outboundStatuses[currentStatusIdx + 1];
+
+  if (!nextStatus) throw new Error('Could not find the next status');
+
+  return nextStatus;
 };
 
 export const getNextOutboundStatusButtonTranslation = (
@@ -50,11 +97,11 @@ export const getNextOutboundStatusButtonTranslation = (
   return undefined;
 };
 
-export const getStatusTranslation = (
-  currentStatus: OutboundShipmentStatus
-): LocaleKey => {
-  return StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT;
-};
+export const getStatusTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: OutboundShipmentStatus): string => {
+    return t(StatusTranslation[currentStatus] ?? StatusTranslation.DRAFT);
+  };
 
 export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
   return outbound.status !== 'SHIPPED' && outbound.status !== 'DELIVERED';

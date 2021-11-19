@@ -1,6 +1,5 @@
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
-import { ColumnAlign } from '@openmsupply-client/common/src/ui/layout/tables/columns/types';
-import { ColumnFormat } from '../columns/types';
+import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { DomainObject } from '../../../../types';
 import { ColumnDefinition } from '../columns/types';
 
