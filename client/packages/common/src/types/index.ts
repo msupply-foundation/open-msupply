@@ -1,5 +1,5 @@
 import { ObjectWithStringKeys } from './utility';
-import { InvoiceLineNode, StockLineNode } from './schema';
+import { StockLineNode } from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -51,9 +51,3 @@ export type Store = {
   id: string;
   name: string;
 };
-
-export interface InvoiceLine extends InvoiceLineNode, DomainObject {
-  stockLine?: StockLine;
-  stockLineId: string;
-  invoiceId: string;
-}

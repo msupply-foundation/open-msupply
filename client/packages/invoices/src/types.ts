@@ -1,12 +1,12 @@
 import {
   Column,
-  InvoiceLine,
   StockLine,
   InvoiceNode,
   InvoiceNodeStatus,
   DomainObject,
   InvoicePricingNode,
   Name,
+  InvoiceLineNode,
 } from '@openmsupply-client/common';
 
 export type OutboundShipmentStatus =
@@ -22,6 +22,12 @@ export type InboundShipmentStatus =
   | InvoiceNodeStatus.Shipped
   | InvoiceNodeStatus.Delivered
   | 'VERIFIED';
+
+export interface InvoiceLine extends InvoiceLineNode, DomainObject {
+  stockLine?: StockLine;
+  stockLineId: string;
+  invoiceId: string;
+}
 
 export interface InvoiceRow
   extends Pick<
