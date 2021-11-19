@@ -9,7 +9,6 @@ import {
   DocumentActionSet,
   DocumentActionType,
   SortBy,
-  Invoice,
   InvoiceLine,
   ifTheSameElseDefault,
   Item,
@@ -18,6 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { placeholderInvoice } from '../../utils';
 import {
+  Invoice,
   ActionType,
   OutboundShipment,
   OutboundShipmentAction,
@@ -73,9 +73,9 @@ export const OutboundAction = {
     type: ActionType.DeleteLine,
     payload: { line },
   }),
-  updateInvoice: <K extends keyof Invoice>(
+  updateInvoice: <K extends keyof OutboundShipment>(
     key: K,
-    value: Invoice[K]
+    value: OutboundShipment[K]
   ): OutboundShipmentAction => ({
     type: ActionType.UpdateInvoice,
     payload: { key, value },

@@ -1,17 +1,16 @@
-import { OutboundShipment } from '../../types';
 import {
   InvoiceNodeStatus,
   UpdateOutboundShipmentInput,
   InvoicesQuery,
   SortBy,
   ListApi,
-  Invoice,
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
   InvoiceRow,
   InvoicePriceResponse,
   OmSupplyApi,
 } from '@openmsupply-client/common';
+import { OutboundShipment, Invoice } from '../../types';
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
