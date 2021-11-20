@@ -1,19 +1,19 @@
-import { randomFloat, randomName } from './../utils';
+import faker from 'faker';
+// randomName
 /* eslint-disable prefer-const */
 import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
 import {
+  randomFloat,
   addRandomPercentageTo,
   alphaString,
   getFilter,
   randomInteger,
   roundDecimalPlaces,
-} from './../utils';
-import faker from 'faker';
-import {
   takeRandomElementFrom,
   takeRandomPercentageFrom,
   takeRandomSubsetFrom,
-} from '../utils';
+} from './../utils';
+
 import { items } from './items';
 import { comments } from './comments';
 import { names } from './names';
@@ -136,95 +136,97 @@ export const createItems = (
 
 const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Allocated,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
+  // InvoiceNodeStatus.Allocated,
+  // InvoiceNodeStatus.Picked,
+  // InvoiceNodeStatus.Shipped,
+  // InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Confirmed,
   InvoiceNodeStatus.Finalised,
 ];
 
 const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Confirmed,
+  // InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Finalised,
 ];
 
-const createInboundStatusLog = (status: string, entered: Date) => {
-  const statusIdx = inboundStatuses.findIndex(s => status === s);
+// const createInboundStatusLog = (status: string, entered: Date) => {
+//   const statusIdx = inboundStatuses.findIndex(s => status === s);
 
-  const statusTimes: {
-    entryDatetime?: Date;
-    deliveredDatetime?: Date;
-    verifiedDatetime?: Date;
-    allocatedDatetime?: Date;
-    pickedDatetime?: Date;
-    shippedDatetime?: Date;
-  } = {};
+//   const statusTimes: {
+//     entryDatetime?: Date;
+//     deliveredDatetime?: Date;
+//     verifiedDatetime?: Date;
+//     allocatedDatetime?: Date;
+//     pickedDatetime?: Date;
+//     shippedDatetime?: Date;
+//   } = {};
 
-  if (statusIdx >= 0) {
-    statusTimes.entryDatetime = faker.date.future(0.1, entered);
-  }
-  if (statusIdx >= 1) {
-    statusTimes.deliveredDatetime = faker.date.future(
-      0.1,
-      statusTimes.entryDatetime
-    );
-  }
-  if (statusIdx >= 2) {
-    statusTimes.verifiedDatetime = faker.date.future(
-      0.1,
-      statusTimes.deliveredDatetime
-    );
-  }
+//   if (statusIdx >= 0) {
+//     statusTimes.entryDatetime = faker.date.future(0.1, entered);
+//   }
+//   if (statusIdx >= 1) {
+//     statusTimes.deliveredDatetime = faker.date.future(
+//       0.1,
+//       statusTimes.entryDatetime
+//     );
+//   }
+//   if (statusIdx >= 2) {
+//     statusTimes.verifiedDatetime = faker.date.future(
+//       0.1,
+//       statusTimes.deliveredDatetime
+//     );
+//   }
 
-  return statusTimes;
-};
+//   return statusTimes;
+// };
 
-const createOutboundStatusLog = (status: string, entered: Date) => {
-  const statusIdx = outboundStatuses.findIndex(s => status === s);
+// const createOutboundStatusLog = (status: string, entered: Date) => {
+//   const statusIdx = outboundStatuses.findIndex(s => status === s);
 
-  const statusTimes: {
-    entryDatetime?: Date;
-    allocatedDatetime?: Date;
-    pickedDatetime?: Date;
-    shippedDatetime?: Date;
-    deliveredDatetime?: Date;
-    verifiedDatetime?: Date;
-  } = {};
+//   const statusTimes: {
+//     entryDatetime?: Date;
+//     allocatedDatetime?: Date;
+//     pickedDatetime?: Date;
+//     shippedDatetime?: Date;
+//     deliveredDatetime?: Date;
+//     verifiedDatetime?: Date;
+//   } = {};
 
-  if (statusIdx >= 0) {
-    statusTimes.entryDatetime = faker.date.future(0.1, entered);
-  }
-  if (statusIdx >= 1) {
-    statusTimes.allocatedDatetime = faker.date.future(
-      0.1,
-      statusTimes.entryDatetime
-    );
-  }
-  if (statusIdx >= 2) {
-    statusTimes.pickedDatetime = faker.date.future(
-      0.1,
-      statusTimes.allocatedDatetime
-    );
-  }
-  if (statusIdx >= 3) {
-    statusTimes.shippedDatetime = faker.date.future(
-      0.1,
-      statusTimes.pickedDatetime
-    );
-  }
+//   if (statusIdx >= 0) {
+//     statusTimes.entryDatetime = faker.date.future(0.1, entered);
+//   }
+//   if (statusIdx >= 1) {
+//     statusTimes.allocatedDatetime = faker.date.future(
+//       0.1,
+//       statusTimes.entryDatetime
+//     );
+//   }
+//   if (statusIdx >= 2) {
+//     statusTimes.pickedDatetime = faker.date.future(
+//       0.1,
+//       statusTimes.allocatedDatetime
+//     );
+//   }
+//   if (statusIdx >= 3) {
+//     statusTimes.shippedDatetime = faker.date.future(
+//       0.1,
+//       statusTimes.pickedDatetime
+//     );
+//   }
 
-  if (statusIdx >= 4) {
-    statusTimes.deliveredDatetime = faker.date.future(
-      0.1,
-      statusTimes.shippedDatetime
-    );
-  }
+//   if (statusIdx >= 4) {
+//     statusTimes.deliveredDatetime = faker.date.future(
+//       0.1,
+//       statusTimes.shippedDatetime
+//     );
+//   }
 
-  return statusTimes;
-};
+//   return statusTimes;
+// };
 
-const shippingMethods = ['Air', 'Sea', 'Road', 'Rail'];
+// const shippingMethods = ['Air', 'Sea', 'Road', 'Rail'];
 
 export const createInvoice = (
   id: string,
@@ -236,11 +238,15 @@ export const createInvoice = (
   const confirmed = faker.date.past(1);
   const entered = faker.date.past(0.25, confirmed);
 
-  const status = takeRandomElementFrom(outboundStatuses);
-  const statusTimes =
+  const status = takeRandomElementFrom(
     type === InvoiceNodeType.InboundShipment
-      ? createInboundStatusLog(status, entered)
-      : createOutboundStatusLog(status, entered);
+      ? inboundStatuses
+      : outboundStatuses
+  );
+  // const statusTimes =
+  //   type === InvoiceNodeType.InboundShipment
+  //     ? createInboundStatusLog(status, entered)
+  //     : createOutboundStatusLog(status, entered);
 
   const taxPercentage = randomFloat(10, 40);
   const subtotal = randomFloat(100, 1000);
@@ -249,6 +255,7 @@ export const createInvoice = (
   return {
     id,
     otherPartyId: otherParty.id,
+    otherPartyName: otherParty.name,
     invoiceNumber,
     status,
     type,
@@ -258,30 +265,30 @@ export const createInvoice = (
     pricing: {
       __typename: 'InvoicePricingNode',
       totalAfterTax,
-      subtotal,
-      taxPercentage,
+      // subtotal,
+      // taxPercentage,
     },
 
-    color: 'grey',
+    // color: 'grey',
     comment: takeRandomElementFrom(comments),
     onHold: false,
 
     entryDatetime: entered.toISOString(),
-    allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
-    pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
-    shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
-    deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
-    verifiedDatetime: statusTimes?.verifiedDatetime?.toISOString(),
+    // allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
+    // pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
+    // shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
+    // deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
+    // verifiedDatetime: statusTimes?.verifiedDatetime?.toISOString(),
+    // enteredByName: randomName(),
+    // donorName: randomName(),
+    // otherPartyName: otherParty.name,
+    // purchaseOrderNumber: randomInteger({ min: 100, max: 999 }),
+    // requisitionNumber: randomInteger({ min: 100, max: 999 }),
+    // goodsReceiptNumber: randomInteger({ min: 100, max: 999 }),
+    // inboundShipmentNumber: randomInteger({ min: 100, max: 999 }),
 
-    enteredByName: randomName(),
-    donorName: randomName(),
-    otherPartyName: otherParty.name,
-    purchaseOrderNumber: randomInteger({ min: 100, max: 999 }),
-    requisitionNumber: randomInteger({ min: 100, max: 999 }),
-    goodsReceiptNumber: randomInteger({ min: 100, max: 999 }),
-    inboundShipmentNumber: randomInteger({ min: 100, max: 999 }),
-    shippingMethod: takeRandomElementFrom(shippingMethods),
-    transportReference: 'Whats a transport reference?',
+    // shippingMethod: takeRandomElementFrom(shippingMethods),
+    // transportReference: 'Whats a transport reference?',
     ...seeded,
   };
 };
@@ -447,7 +454,7 @@ const createInvoicesLines = (
           itemUnit: item.unitName ?? '',
 
           stockLineId: stockLine.id,
-          locationDescription: stockLine.locationDescription,
+          // locationDescription: stockLine.locationDescription,
           location: stockLine.location,
 
           batch: stockLine.batch ?? '',
@@ -462,7 +469,7 @@ const createInvoicesLines = (
         };
 
         if (
-          invoice.status === InvoiceNodeStatus.Delivered ||
+          invoice.status === InvoiceNodeStatus.Confirmed ||
           invoice.status === InvoiceNodeStatus.Finalised
         ) {
           adjustStockLineTotalNumberOfPacks(stockLine.id, numberOfPacks);
@@ -500,7 +507,7 @@ const createInvoicesLines = (
           itemUnit: item.unitName ?? '',
 
           stockLineId: stockLine.id,
-          locationDescription: stockLine.locationDescription,
+          // locationDescription: stockLine.locationDescription,
           location: stockLine.location,
 
           batch: stockLine.batch ?? '',
@@ -517,7 +524,7 @@ const createInvoicesLines = (
         adjustStockLineAvailableNumberOfPacks(stockLine.id, -numberOfPacks);
 
         if (
-          invoice.status === InvoiceNodeStatus.Delivered ||
+          invoice.status === InvoiceNodeStatus.Confirmed ||
           invoice.status === InvoiceNodeStatus.Finalised
         ) {
           adjustStockLineTotalNumberOfPacks(stockLine.id, numberOfPacks);

@@ -16,7 +16,7 @@ const invoiceToInput = (
 ): UpdateOutboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    // color: patch.color,
     comment: patch.comment,
     status: patch.status as InvoiceNodeStatus,
     onHold: patch.onHold,
@@ -27,9 +27,9 @@ const invoiceToInput = (
 
 const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
   switch (sortBy.key) {
-    case 'allocatedDatetime': {
-      return InvoiceSortFieldInput.ConfirmDatetime;
-    }
+    // case 'allocatedDatetime': {
+    //   return InvoiceSortFieldInput.ConfirmDatetime;
+    // }
     case 'entryDatetime': {
       return InvoiceSortFieldInput.EntryDatetime;
     }
@@ -42,12 +42,12 @@ const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
     case 'invoiceNumber': {
       return InvoiceSortFieldInput.InvoiceNumber;
     }
-    case 'otherPartyName': {
-      return InvoiceSortFieldInput.OtherPartyName;
-    }
-    case 'totalAfterTax': {
-      return InvoiceSortFieldInput.TotalAfterTax;
-    }
+    // case 'otherPartyName': {
+    //   return InvoiceSortFieldInput.OtherPartyName;
+    // }
+    // case 'totalAfterTax': {
+    //   return InvoiceSortFieldInput.TotalAfterTax;
+    // }
     case 'status':
     default: {
       return InvoiceSortFieldInput.Status;

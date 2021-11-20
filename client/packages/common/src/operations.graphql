@@ -22,20 +22,21 @@ query invoice($id: String!) {
       comment
       entryDatetime
       invoiceNumber
-      allocatedDatetime
-      pickedDatetime
-      shippedDatetime
-      deliveredDatetime
-      enteredByName
-      donorName
 
-      requisitionNumber
-      purchaseOrderNumber
-      inboundShipmentNumber
-      goodsReceiptNumber
+      # allocatedDatetime
+      # pickedDatetime
+      # shippedDatetime
+      # deliveredDatetime
+      # enteredByName
+      # donorName
+      # requisitionNumber
+      # purchaseOrderNumber
+      # inboundShipmentNumber
+      # goodsReceiptNumber
+      # color
 
       onHold
-      color
+
       otherParty {
         __typename
         ... on NameNode {
@@ -85,13 +86,14 @@ query invoice($id: String!) {
             expiryDate
             id
             itemCode
-            itemUnit
             itemId
             itemName
             numberOfPacks
             packSize
             note
-            locationDescription
+
+            # itemUnit
+            # locationDescription
             sellPricePerPack
             stockLine {
               __typename
@@ -152,8 +154,8 @@ query invoice($id: String!) {
         ... on InvoicePricingNode {
           __typename
           totalAfterTax
-          subtotal
-          taxPercentage
+          # subtotal
+          # taxPercentage
         }
       }
       status
@@ -200,19 +202,16 @@ query invoices(
       __typename
       nodes {
         comment
-
         entryDatetime
-
         id
         invoiceNumber
-
         otherPartyId
         otherPartyName
-
-        status
-        color
         theirReference
         type
+        status
+
+        # color
 
         pricing {
           __typename
@@ -234,8 +233,8 @@ query invoices(
           ... on InvoicePricingNode {
             __typename
             totalAfterTax
-            subtotal
-            taxPercentage
+            # subtotal
+            # taxPercentage
           }
         }
       }
@@ -328,7 +327,8 @@ query itemsWithStockLines(
       __typename
       nodes {
         __typename
-        availableQuantity
+        # availableQuantity
+
         availableBatches {
           __typename
           ... on ConnectorError {
@@ -420,7 +420,7 @@ query itemsListView(
       __typename
       nodes {
         __typename
-        availableQuantity
+        # availableQuantity
         code
         id
         isVisible

@@ -76,7 +76,7 @@ const invoiceToInput = (
 ): UpdateInboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    // color: patch.color,
     comment: patch.comment,
 
     // TODO: Don't cast status

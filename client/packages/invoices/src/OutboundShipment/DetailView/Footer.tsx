@@ -26,22 +26,43 @@ interface OutboundDetailFooterProps {
   save: () => Promise<void>;
 }
 
-const createStatusLog = (draft: OutboundShipment) => {
-  const {
-    entryDatetime,
-    allocatedDatetime,
-    shippedDatetime,
-    pickedDatetime,
-    deliveredDatetime,
-  } = draft;
+const createStatusLog = (status: 'DRAFT' | 'CONFIRMED' | 'FINALISED') => {
+  // const {
+  //   entryDatetime,
+  //   allocatedDatetime,
+  //   shippedDatetime,
+  //   pickedDatetime,
+  //   deliveredDatetime,
+  // } = draft;
+
+  if (status === 'DRAFT') {
+    return {
+      DRAFT: new Date().toISOString(),
+      CONFIRMED: null,
+      FINALISED: null,
+    };
+  }
+  if (status === 'CONFIRMED') {
+    return {
+      DRAFT: new Date().toISOString(),
+      CONFIRMED: new Date().toISOString(),
+      FINALISED: null,
+    };
+  }
 
   return {
-    DRAFT: entryDatetime,
-    ALLOCATED: allocatedDatetime,
-    SHIPPED: shippedDatetime,
-    PICKED: pickedDatetime,
-    DELIVERED: deliveredDatetime,
+    DRAFT: new Date().toISOString(),
+    CONFIRMED: new Date().toISOString(),
+    FINALISED: new Date().toISOString(),
   };
+
+  // return {
+  //   DRAFT: entryDatetime,
+  //   ALLOCATED: allocatedDatetime,
+  //   SHIPPED: shippedDatetime,
+  //   PICKED: pickedDatetime,
+  //   DELIVERED: deliveredDatetime,
+  // };
 };
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
@@ -72,7 +93,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
 
             <StatusCrumbs
               statuses={outboundStatuses}
-              statusLog={createStatusLog(draft)}
+              statusLog={createStatusLog(draft.status)}
               statusFormatter={getStatusTranslator(t)}
             />
 

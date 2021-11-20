@@ -111,7 +111,7 @@ export type CountError = {
   description: Scalars['String'];
 };
 
-export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UserRegisterErrorInterface & {
+export type DatabaseError = ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename?: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -407,7 +407,6 @@ export type InvoiceFilterInput = {
   finalisedDatetime?: Maybe<DatetimeFilterInput>;
   invoiceNumber?: Maybe<EqualFilterNumberInput>;
   nameId?: Maybe<EqualFilterStringInput>;
-  otherPartyName?: Maybe<SimpleStringFilterInput>;
   status?: Maybe<EqualFilterInvoiceStatusInput>;
   storeId?: Maybe<EqualFilterStringInput>;
   theirReference?: Maybe<EqualFilterStringInput>;
@@ -441,9 +440,6 @@ export type InvoiceLineNode = {
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
   itemName: Scalars['String'];
-  itemUnit: Scalars['String'];
-  location?: Maybe<LocationResponse>;
-  locationDescription?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
@@ -457,42 +453,25 @@ export type InvoiceLinesResponse = ConnectorError | InvoiceLineConnector;
 
 export type InvoiceNode = {
   __typename?: 'InvoiceNode';
-  allocatedDatetime?: Maybe<Scalars['DateTime']>;
-  color: Scalars['String'];
   comment?: Maybe<Scalars['String']>;
-  deliveredDatetime?: Maybe<Scalars['DateTime']>;
-  donorName: Scalars['String'];
-  enteredByName: Scalars['String'];
   entryDatetime: Scalars['DateTime'];
-  goodsReceiptNumber?: Maybe<Scalars['Int']>;
   id: Scalars['String'];
-  inboundShipmentNumber?: Maybe<Scalars['Int']>;
   invoiceNumber: Scalars['Int'];
   lines: InvoiceLinesResponse;
   onHold: Scalars['Boolean'];
   otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
-  pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: InvoicePriceResponse;
-  purchaseOrderNumber?: Maybe<Scalars['Int']>;
-  requisitionNumber?: Maybe<Scalars['Int']>;
-  shippedDatetime?: Maybe<Scalars['DateTime']>;
-  shippingMethod?: Maybe<Scalars['String']>;
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
-  transportReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
 };
 
 export enum InvoiceNodeStatus {
-  Allocated = 'ALLOCATED',
   Confirmed = 'CONFIRMED',
-  Delivered = 'DELIVERED',
   Draft = 'DRAFT',
-  Finalised = 'FINALISED',
-  Picked = 'PICKED',
-  Shipped = 'SHIPPED'
+  Finalised = 'FINALISED'
 }
 
 export enum InvoiceNodeType {
@@ -504,8 +483,6 @@ export type InvoicePriceResponse = InvoicePricingNode | NodeError;
 
 export type InvoicePricingNode = {
   __typename?: 'InvoicePricingNode';
-  subtotal: Scalars['Float'];
-  taxPercentage: Scalars['Float'];
   totalAfterTax: Scalars['Float'];
 };
 
@@ -519,7 +496,6 @@ export enum InvoiceSortFieldInput {
   InvoiceNumber = 'invoiceNumber',
   OtherPartyName = 'otherPartyName',
   Status = 'status',
-  TotalAfterTax = 'totalAfterTax',
   Type = 'type'
 }
 
@@ -550,7 +526,6 @@ export type ItemFilterInput = {
 export type ItemNode = {
   __typename?: 'ItemNode';
   availableBatches: StockLinesResponse;
-  availableQuantity: Scalars['Float'];
   code: Scalars['String'];
   id: Scalars['String'];
   isVisible: Scalars['Boolean'];
@@ -883,7 +858,7 @@ export enum RangeField {
   PackSize = 'packSize'
 }
 
-export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & UserRegisterErrorInterface & {
+export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & {
   __typename?: 'RecordAlreadyExist';
   description: Scalars['String'];
 };
@@ -993,7 +968,6 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
-  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -1049,7 +1023,6 @@ export type UpdateOutboundShipmentErrorInterface = {
 };
 
 export type UpdateOutboundShipmentInput = {
-  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -1118,7 +1091,7 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, allocatedDatetime?: any | null | undefined, pickedDatetime?: any | null | undefined, shippedDatetime?: any | null | undefined, deliveredDatetime?: any | null | undefined, enteredByName: string, donorName: string, requisitionNumber?: number | null | undefined, purchaseOrderNumber?: number | null | undefined, inboundShipmentNumber?: number | null | undefined, goodsReceiptNumber?: number | null | undefined, onHold: boolean, color: string, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemUnit: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationDescription?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, subtotal: number, taxPercentage: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
@@ -1129,7 +1102,7 @@ export type InvoicesQueryVariables = Exact<{
 }>;
 
 
-export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename?: 'InvoiceNode', comment?: string | null | undefined, entryDatetime: any, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, color: string, theirReference?: string | null | undefined, type: InvoiceNodeType, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, subtotal: number, taxPercentage: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
+export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename?: 'InvoiceNode', comment?: string | null | undefined, entryDatetime: any, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null | undefined, type: InvoiceNodeType, status: InvoiceNodeStatus, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
 
 export type NamesQueryVariables = Exact<{
   key: NameSortFieldInput;
@@ -1151,7 +1124,7 @@ export type ItemsWithStockLinesQueryVariables = Exact<{
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', availableQuantity: number, code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined }> } }> } };
+export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined }> } }> } };
 
 export type ItemsListViewQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
@@ -1162,7 +1135,7 @@ export type ItemsListViewQueryVariables = Exact<{
 }>;
 
 
-export type ItemsListViewQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', availableQuantity: number, code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined }> } };
+export type ItemsListViewQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined }> } };
 
 export type InsertOutboundShipmentMutationVariables = Exact<{
   id: Scalars['String'];
@@ -1266,18 +1239,7 @@ export const InvoiceDocument = gql`
       comment
       entryDatetime
       invoiceNumber
-      allocatedDatetime
-      pickedDatetime
-      shippedDatetime
-      deliveredDatetime
-      enteredByName
-      donorName
-      requisitionNumber
-      purchaseOrderNumber
-      inboundShipmentNumber
-      goodsReceiptNumber
       onHold
-      color
       otherParty {
         __typename
         ... on NameNode {
@@ -1325,13 +1287,11 @@ export const InvoiceDocument = gql`
             expiryDate
             id
             itemCode
-            itemUnit
             itemId
             itemName
             numberOfPacks
             packSize
             note
-            locationDescription
             sellPricePerPack
             stockLine {
               __typename
@@ -1392,8 +1352,6 @@ export const InvoiceDocument = gql`
         ... on InvoicePricingNode {
           __typename
           totalAfterTax
-          subtotal
-          taxPercentage
         }
       }
       status
@@ -1440,10 +1398,9 @@ export const InvoicesDocument = gql`
         invoiceNumber
         otherPartyId
         otherPartyName
-        status
-        color
         theirReference
         type
+        status
         pricing {
           __typename
           ... on NodeError {
@@ -1464,8 +1421,6 @@ export const InvoicesDocument = gql`
           ... on InvoicePricingNode {
             __typename
             totalAfterTax
-            subtotal
-            taxPercentage
           }
         }
       }
@@ -1548,7 +1503,6 @@ export const ItemsWithStockLinesDocument = gql`
       __typename
       nodes {
         __typename
-        availableQuantity
         availableBatches {
           __typename
           ... on ConnectorError {
@@ -1635,7 +1589,6 @@ export const ItemsListViewDocument = gql`
       __typename
       nodes {
         __typename
-        availableQuantity
         code
         id
         isVisible
