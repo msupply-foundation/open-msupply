@@ -12,7 +12,6 @@ import {
   getRowExpandColumn,
   useOmSupplyApi,
   Item,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
 import { getOutboundShipmentDetailViewApi } from './api';
@@ -46,7 +45,6 @@ const useDraftOutbound = () => {
 
 export const DetailView: FC = () => {
   const { draft, onChangeSortBy, save, sortBy } = useDraftOutbound();
-  const t = useTranslation('common');
 
   const { prefetchListByName } = useItemsList({
     initialSortBy: { key: 'name' },
@@ -64,10 +62,6 @@ export const DetailView: FC = () => {
     itemModalControl.toggle();
   };
 
-  const rowExpandLabels = {
-    header: t('label.expand-all'),
-    cell: t('label.expand'),
-  };
   const findNextItem = (currentItem: OutboundShipmentSummaryItem | null) => {
     if (!currentItem) return null;
     const currentItemIdx = draft.items.findIndex(
@@ -94,7 +88,7 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
-      getNotePopoverColumn<OutboundShipmentSummaryItem>(t('label.notes')),
+      getNotePopoverColumn<OutboundShipmentSummaryItem>(),
       'itemCode',
       'itemName',
       'batch',
@@ -105,7 +99,7 @@ export const DetailView: FC = () => {
       'itemUnit',
       'unitQuantity',
       'numberOfPacks',
-      getRowExpandColumn<OutboundShipmentSummaryItem>(rowExpandLabels),
+      getRowExpandColumn<OutboundShipmentSummaryItem>(),
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },

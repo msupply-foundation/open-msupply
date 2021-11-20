@@ -4,7 +4,10 @@ import { Routes, Route } from 'react-router-dom';
 import { RouteBuilder } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailView, OutboundShipmentListView } from './OutboundShipment';
-import { ListView as InboundShipmentListView } from './InboundShipment';
+import {
+  ListView as InboundShipmentListView,
+  DetailView as InboundShipmentDetailView,
+} from './InboundShipment';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -19,9 +22,9 @@ const InvoiceService: FC = () => {
     AppRoute.InboundShipment
   ).build();
 
-  // const inboundShipmentRoute = RouteBuilder.create(AppRoute.InboundShipment)
-  //   .addPart(':id')
-  //   .build();
+  const inboundShipmentRoute = RouteBuilder.create(AppRoute.InboundShipment)
+    .addPart(':id')
+    .build();
 
   return (
     <Routes>
@@ -33,6 +36,10 @@ const InvoiceService: FC = () => {
       <Route
         path={inboundShipmentsRoute}
         element={<InboundShipmentListView />}
+      />
+      <Route
+        path={inboundShipmentRoute}
+        element={<InboundShipmentDetailView />}
       />
     </Routes>
   );
