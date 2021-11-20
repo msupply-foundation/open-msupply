@@ -2,7 +2,8 @@ import React, { FC } from 'react';
 import i18next from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { SupportedLocales } from './intlHelpers';
-import { resources as defaultResources } from './locales';
+import app from './locales/en/app.json';
+import common from './locales/en/common.json';
 import appFr from './locales/fr/app.json';
 import commonFr from './locales/fr/common.json';
 import appAr from './locales/ar/app.json';
@@ -16,14 +17,14 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
   locale,
 }) => {
   const resources = {
-    ...defaultResources,
     ar: {
-      app: { ...defaultResources.en.common, ...appAr },
-      common: { ...defaultResources.en.common, ...commonAr },
+      app: { ...app, ...appAr },
+      common: { ...common, ...commonAr },
     },
+    en: { app, common },
     fr: {
-      app: { ...defaultResources.en.app, ...appFr },
-      common: { ...defaultResources.en.common, ...commonFr },
+      app: { ...app, ...appFr },
+      common: { ...common, ...commonFr },
     },
   };
 
