@@ -70,6 +70,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     key: 'otherPartyName',
     label: 'label.name',
     width: 75,
+    sortable: false,
   },
   invoiceNumber: {
     key: 'invoiceNumber',
@@ -97,6 +98,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     key: 'allocatedDatetime',
     format: ColumnFormat.Date,
     width: 100,
+    sortable: false,
   },
 
   totalAfterTax: {
@@ -105,6 +107,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 100,
     format: ColumnFormat.Currency,
     align: ColumnAlign.Right,
+    sortable: false,
   },
   comment: {
     label: 'label.comment',

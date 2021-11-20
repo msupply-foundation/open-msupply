@@ -19,7 +19,7 @@ import {
   NameSortFieldInput,
   InvoiceNodeType,
 } from '@openmsupply-client/common/src/types/schema';
-import { getDataSorter } from '@openmsupply-client/common/src/utils';
+import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
 
 const getAvailableQuantity = (itemId: string): number => {
   const stockLines = db.get.stockLines.byItemId(itemId);
@@ -35,21 +35,21 @@ const getAvailableQuantity = (itemId: string): number => {
 
 const getInvoiceSortKey = (key: string) => {
   switch (key) {
-    case InvoiceSortFieldInput.ConfirmDatetime: {
-      return 'allocatedDatetime';
-    }
+    // case InvoiceSortFieldInput.ConfirmDatetime: {
+    //   return 'allocatedDatetime';
+    // }
     case InvoiceSortFieldInput.EntryDatetime: {
       return 'entryDatetime';
     }
     case InvoiceSortFieldInput.Comment: {
       return 'comment';
     }
-    case InvoiceSortFieldInput.TotalAfterTax: {
-      return 'totalAfterTax';
-    }
-    case InvoiceSortFieldInput.OtherPartyName: {
-      return 'otherPartyName';
-    }
+    // case InvoiceSortFieldInput.TotalAfterTax: {
+    //   return 'totalAfterTax';
+    // }
+    // case InvoiceSortFieldInput.OtherPartyName: {
+    //   return 'otherPartyName';
+    // }
     case InvoiceSortFieldInput.InvoiceNumber: {
       return 'invoiceNumber';
     }
@@ -143,19 +143,19 @@ export const ResolverService = {
             return invoice.type === filter.type?.equalTo;
           });
         }
-        if (filter.otherPartyName) {
-          filtered = resolved.filter(({ otherPartyName }) => {
-            if (filter.otherPartyName?.equalTo) {
-              return otherPartyName === filter.otherPartyName.equalTo;
-            }
+        // if (filter.otherPartyName) {
+        //   filtered = resolved.filter(({ otherPartyName }) => {
+        //     if (filter.otherPartyName?.equalTo) {
+        //       return otherPartyName === filter.otherPartyName.equalTo;
+        //     }
 
-            if (filter.otherPartyName?.like) {
-              return otherPartyName.includes(filter.otherPartyName.like ?? '');
-            }
+        //     if (filter.otherPartyName?.like) {
+        //       return otherPartyName.includes(filter.otherPartyName.like ?? '');
+        //     }
 
-            return true;
-          });
-        }
+        //     return true;
+        //   });
+        // }
       }
 
       const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));

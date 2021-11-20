@@ -1,10 +1,12 @@
-import { InvoiceNodeType } from '@openmsupply-client/common/src/types/schema';
 import {
+  InvoiceNodeType,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
   UpdateInboundShipmentInput,
-  // InsertOutboundShipmentLineInput,
-} from './../../../common/src/types/schema';
+  UpdateOutboundShipmentInput,
+  InvoiceNodeStatus,
+} from '@openmsupply-client/common/src/types';
+
 import { ResolverService } from './resolvers';
 import {
   createInvoice,
@@ -15,10 +17,6 @@ import { Api } from './index';
 import { ResolvedInvoice } from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
-import {
-  UpdateOutboundShipmentInput,
-  InvoiceNodeStatus,
-} from '@openmsupply-client/common/src/types';
 
 export const insert = {
   invoice: (invoice: Invoice): Invoice & { __typename: string } => {
@@ -78,7 +76,7 @@ export const insert = {
         -invoiceLine.numberOfPacks
       );
 
-      if (invoice.status === InvoiceNodeStatus.Picked) {
+      if (invoice.status === InvoiceNodeStatus.Confirmed) {
         adjustStockLineTotalNumberOfPacks(
           invoiceLine.stockLineId,
           -invoiceLine.numberOfPacks
@@ -145,7 +143,7 @@ export const update = {
         difference
       );
 
-      if (invoice.status === InvoiceNodeStatus.Picked) {
+      if (invoice.status === InvoiceNodeStatus.Confirmed) {
         adjustStockLineTotalNumberOfPacks(
           currentInvoiceLine.stockLineId,
           difference
@@ -163,7 +161,7 @@ export const remove = {
 
     if (resolvedInvoice.type === InvoiceNodeType.InboundShipment) {
       if (
-        resolvedInvoice.status === InvoiceNodeStatus.Delivered ||
+        resolvedInvoice.status === InvoiceNodeStatus.Confirmed ||
         resolvedInvoice.status === InvoiceNodeStatus.Finalised
       ) {
         throw new Error("Can't delete delivered or finalised invoice");
@@ -201,7 +199,7 @@ export const remove = {
         numberOfPacks
       );
 
-      if (invoice.status === InvoiceNodeStatus.Picked) {
+      if (invoice.status === InvoiceNodeStatus.Confirmed) {
         adjustStockLineTotalNumberOfPacks(
           invoiceLine.stockLineId,
           numberOfPacks

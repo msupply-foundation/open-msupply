@@ -23,7 +23,7 @@ const renderOption = (
   <ItemOption {...props} key={item.code}>
     <span style={{ width: 100 }}>{item.code}</span>
     <span style={{ width: 500 }}>{item.name}</span>
-    <span>{item.availableQuantity}</span>
+    {/* <span>{item.availableQuantity}</span> */}
   </ItemOption>
 );
 

@@ -21,17 +21,22 @@ import {
 
 export type OutboundShipmentStatus =
   | InvoiceNodeStatus.Draft
-  | InvoiceNodeStatus.Allocated
-  | InvoiceNodeStatus.Picked
-  | InvoiceNodeStatus.Shipped
-  | InvoiceNodeStatus.Delivered;
+  | InvoiceNodeStatus.Confirmed
+  | InvoiceNodeStatus.Finalised;
+// | InvoiceNodeStatus.Allocated
+// | InvoiceNodeStatus.Picked
+// | InvoiceNodeStatus.Shipped
+// | InvoiceNodeStatus.Delivered;
 
 export type InboundShipmentStatus =
-  | InvoiceNodeStatus.Picked
-  | 'NEW'
-  | InvoiceNodeStatus.Shipped
-  | InvoiceNodeStatus.Delivered
-  | 'VERIFIED';
+  | InvoiceNodeStatus.Draft
+  | InvoiceNodeStatus.Confirmed
+  | InvoiceNodeStatus.Finalised;
+// | InvoiceNodeStatus.Picked
+// | 'NEW'
+// | InvoiceNodeStatus.Shipped
+// | InvoiceNodeStatus.Delivered
+// | 'VERIFIED';
 
 export interface InvoiceLine extends InvoiceLineNode, DomainObject {
   stockLine?: StockLine;
@@ -49,7 +54,7 @@ export interface InvoiceRow
       | 'otherPartyId'
       | 'otherPartyName'
       | 'status'
-      | 'color'
+      // | 'color'
       | 'theirReference'
       | 'type'
     >,
