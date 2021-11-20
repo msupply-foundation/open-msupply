@@ -5,17 +5,17 @@ import {
   DataTable,
   useColumns,
   useListData,
-  getNameAndColorColumn,
+  // getNameAndColorColumn,
   TableProvider,
   createTableStore,
-  Color,
+  // Color,
   useOmSupplyApi,
   useNotification,
   generateUUID,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
-import { InvoiceRow } from '../../types';
+// import { InvoiceRow } from '../../types';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -31,7 +31,7 @@ export const InboundListView: FC = () => {
     data,
     isLoading,
     onDelete,
-    onUpdate,
+    // onUpdate,
     sortBy,
     onChangeSortBy,
     onCreate,
@@ -50,9 +50,10 @@ export const InboundListView: FC = () => {
 
   const columns = useColumns(
     [
-      getNameAndColorColumn((row: InvoiceRow, color: Color) => {
-        onUpdate({ ...row, color: color.hex });
-      }),
+      // getNameAndColorColumn((row: InvoiceRow, color: Color) => {
+      //   onUpdate({ ...row, color: color.hex });
+      // }),
+      'otherPartyName',
       [
         'status',
         {

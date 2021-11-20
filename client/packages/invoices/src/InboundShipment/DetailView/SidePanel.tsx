@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import {
   Grid,
   CopyIcon,
@@ -12,7 +12,7 @@ import {
   TextArea,
   useNotification,
   useTranslation,
-  ColorSelectButton,
+  // ColorSelectButton,
 } from '@openmsupply-client/common';
 import { isInboundEditable } from '../../utils';
 import { InboundShipment } from '../../types';
@@ -29,17 +29,17 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField>{draft.enteredByName}</PanelField>
+          {/* <PanelField>{draft.enteredByName}</PanelField> */}
         </PanelRow>
 
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
-            <ColorSelectButton
+            {/* <ColorSelectButton
               disabled={!isInboundEditable(draft)}
               onChange={color => draft.update?.('color', color.hex)}
               color={draft.color}
-            />
+            /> */}
           </PanelField>
         </PanelRow>
 
@@ -54,32 +54,32 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   );
 };
 
-const RelatedDocumentsRow: FC<{
-  label: string;
-  to: string;
-  value?: number | null;
-}> = ({ label, to, value }) => {
-  const { success } = useNotification();
-  return (
-    <PanelRow>
-      <PanelLabel>{label}</PanelLabel>
-      <PanelField>
-        <Link to={to} onClick={success('Not implemented yet!')}>
-          {value}
-        </Link>
-      </PanelField>
-    </PanelRow>
-  );
-};
+// const RelatedDocumentsRow: FC<{
+//   label: string;
+//   to: string;
+//   value?: number | null;
+// }> = ({ label, to, value }) => {
+//   const { success } = useNotification();
+//   return (
+//     <PanelRow>
+//       <PanelLabel>{label}</PanelLabel>
+//       <PanelField>
+//         <Link to={to} onClick={success('Not implemented yet!')}>
+//           {value}
+//         </Link>
+//       </PanelField>
+//     </PanelRow>
+//   );
+// };
 
-const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
+const RelatedDocumentsSection: FC<SidePanelProps> = () => {
   const t = useTranslation(['common', 'outbound-shipment']);
   return (
     <DetailPanelSection
       title={t('heading.related-documents', { ns: 'outbound-shipment' })}
     >
       <Grid container gap={0.5} key="additional-info">
-        <RelatedDocumentsRow
+        {/* <RelatedDocumentsRow
           label={t('label.requisition')}
           to=""
           value={draft.requisitionNumber}
@@ -98,7 +98,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = ({ draft }) => {
           label={t('label.purchase-order')}
           to=""
           value={draft.purchaseOrderNumber}
-        />
+        /> */}
       </Grid>
     </DetailPanelSection>
   );
