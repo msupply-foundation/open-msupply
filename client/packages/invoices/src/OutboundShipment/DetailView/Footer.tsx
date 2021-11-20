@@ -86,7 +86,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
               value={!!draft.onHold}
               selected={!!draft.onHold}
               onClick={(_, value) => {
-                draft.update?.('hold', !value);
+                draft.update?.('onHold', !value);
               }}
               label={t('label.hold')}
             />
@@ -101,7 +101,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
               <ButtonWithIcon
                 shrinkThreshold="lg"
                 Icon={<XCircleIcon />}
-                label="button.cancel"
+                label={t('button.cancel')}
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigate(-1)}
