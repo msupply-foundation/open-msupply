@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+import { Slide } from '../../ui/animations';
 import { BasicModal } from '../../ui/components/modals/BasicModal';
 import { ModalTitle } from '../../ui/components/modals/ModalTitle';
 
@@ -12,9 +13,15 @@ export interface ButtonProps {
 }
 
 export interface ModalProps {
+  children: React.ReactElement<any, any>;
   cancelButton?: JSX.Element;
   height?: number;
-  nextButton?: JSX.Element;
+  nextButton?: React.ReactElement<{
+    onClick: () => void;
+    variant: 'next';
+    disabled: boolean;
+  }>;
+
   okButton?: JSX.Element;
   width?: number;
   title: string;
@@ -29,6 +36,29 @@ interface DialogState {
   open: boolean;
   showDialog: () => void;
 }
+
+enum Direction {
+  Left = 'left',
+  Right = 'right',
+  Up = 'up',
+  Down = 'down',
+}
+
+const useSlideAnimation = () => {
+  const [slideConfig, setSlide] = useState({
+    in: true,
+    direction: Direction.Right,
+  });
+
+  const onTriggerSlide = () => {
+    setSlide({ in: false, direction: Direction.Left });
+    setTimeout(() => {
+      setSlide({ in: true, direction: Direction.Right });
+    }, 500);
+  };
+
+  return { slideConfig, onTriggerSlide };
+};
 
 export const useDialog = (dialogProps?: DialogProps): DialogState => {
   const { onClose } = dialogProps ?? {};
@@ -49,23 +79,48 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     okButton,
     width,
     title,
-  }) => (
-    <BasicModal open={open} onClose={handleClose} width={width} height={height}>
-      <ModalTitle title={title} />
-      <DialogContent>{children}</DialogContent>
-      <DialogActions
-        sx={{
-          justifyContent: 'center',
-          marginBottom: '30px',
-          marginTop: '30px',
-        }}
+  }) => {
+    const { slideConfig, onTriggerSlide } = useSlideAnimation();
+    let WrappedNextButton: ModalProps['nextButton'] = undefined;
+    if (nextButton) {
+      const { onClick, ...restOfNextButtonProps } = nextButton.props;
+
+      WrappedNextButton = React.cloneElement(nextButton, {
+        onClick: () => {
+          onTriggerSlide();
+          onClick();
+        },
+        ...restOfNextButtonProps,
+      });
+    }
+
+    return (
+      <BasicModal
+        open={open}
+        onClose={handleClose}
+        width={width}
+        height={height}
       >
-        {cancelButton}
-        {okButton}
-        {nextButton}
-      </DialogActions>
-    </BasicModal>
-  );
+        <ModalTitle title={title} />
+        <DialogContent>
+          <Slide in={slideConfig.in} direction={slideConfig.direction}>
+            <div> {children}</div>
+          </Slide>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            justifyContent: 'center',
+            marginBottom: '30px',
+            marginTop: '30px',
+          }}
+        >
+          {cancelButton}
+          {okButton}
+          {WrappedNextButton}
+        </DialogActions>
+      </BasicModal>
+    );
+  };
 
   const Modal = React.useMemo(() => ModalComponent, [open]);
 

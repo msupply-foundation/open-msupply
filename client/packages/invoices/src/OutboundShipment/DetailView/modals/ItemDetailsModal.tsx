@@ -10,7 +10,6 @@ import {
   generateUUID,
   InlineSpinner,
   Box,
-  Slide,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
@@ -190,13 +189,6 @@ const issueStock = (
   return newBatchRows;
 };
 
-enum Direction {
-  Left = 'left',
-  Right = 'right',
-  Up = 'up',
-  Down = 'down',
-}
-
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
@@ -209,16 +201,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const t = useTranslation(['outbound-shipment']);
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register } = methods;
-
-  const [slide, setSlide] = useState({ in: true, direction: Direction.Right });
-
-  const onNextHandler = () => {
-    setSlide({ in: false, direction: Direction.Left });
-    setTimeout(() => {
-      setSlide({ in: true, direction: Direction.Right });
-    }, 500);
-    onNext();
-  };
 
   const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
   const packSizeController = usePackSizeController(batchRows);
@@ -344,7 +326,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           disabled={isEditMode ? false : getAllocatedQuantity(batchRows) <= 0}
           variant="next"
-          onClick={onNextHandler}
+          onClick={onNext}
         />
       }
       okButton={
@@ -358,42 +340,40 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       width={900}
     >
       <FormProvider {...methods}>
-        <Slide in={slide.in} direction={slide.direction}>
-          <form>
-            <Grid container gap={0.5}>
-              <ItemDetailsForm
-                availableQuantity={sumAvailableQuantity(batchRows)}
-                packSizeController={packSizeController}
-                onChangeItem={onChangeItem}
-                onChangeQuantity={(newQuantity, newPackSize) =>
-                  allocateQuantities(newQuantity, newPackSize)
-                }
-                register={register}
-                allocatedQuantity={getAllocatedQuantity(batchRows)}
-                summaryItem={summaryItem || undefined}
-              />
-              {!!summaryItem ? (
-                !isLoading ? (
-                  <BatchesTable
-                    onChange={onChangeRowQuantity}
-                    register={register}
-                    rows={batchRows}
-                  />
-                ) : (
-                  <Box
-                    display="flex"
-                    flex={1}
-                    height={300}
-                    justifyContent="center"
-                    alignItems="center"
-                  >
-                    <InlineSpinner />
-                  </Box>
-                )
-              ) : null}
-            </Grid>
-          </form>
-        </Slide>
+        <form>
+          <Grid container gap={0.5}>
+            <ItemDetailsForm
+              availableQuantity={sumAvailableQuantity(batchRows)}
+              packSizeController={packSizeController}
+              onChangeItem={onChangeItem}
+              onChangeQuantity={(newQuantity, newPackSize) =>
+                allocateQuantities(newQuantity, newPackSize)
+              }
+              register={register}
+              allocatedQuantity={getAllocatedQuantity(batchRows)}
+              summaryItem={summaryItem || undefined}
+            />
+            {!!summaryItem ? (
+              !isLoading ? (
+                <BatchesTable
+                  onChange={onChangeRowQuantity}
+                  register={register}
+                  rows={batchRows}
+                />
+              ) : (
+                <Box
+                  display="flex"
+                  flex={1}
+                  height={300}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <InlineSpinner />
+                </Box>
+              )
+            ) : null}
+          </Grid>
+        </form>
       </FormProvider>
     </Modal>
   );
