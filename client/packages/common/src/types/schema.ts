@@ -993,6 +993,7 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -1117,7 +1118,7 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, allocatedDatetime?: any | null | undefined, pickedDatetime?: any | null | undefined, shippedDatetime?: any | null | undefined, deliveredDatetime?: any | null | undefined, enteredByName: string, requisitionNumber?: number | null | undefined, purchaseOrderNumber?: number | null | undefined, inboundShipmentNumber?: number | null | undefined, goodsReceiptNumber?: number | null | undefined, onHold: boolean, color: string, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemUnit: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationDescription?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, subtotal: number, taxPercentage: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, allocatedDatetime?: any | null | undefined, pickedDatetime?: any | null | undefined, shippedDatetime?: any | null | undefined, deliveredDatetime?: any | null | undefined, enteredByName: string, donorName: string, requisitionNumber?: number | null | undefined, purchaseOrderNumber?: number | null | undefined, inboundShipmentNumber?: number | null | undefined, goodsReceiptNumber?: number | null | undefined, onHold: boolean, color: string, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemUnit: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationDescription?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, subtotal: number, taxPercentage: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
@@ -1135,6 +1136,7 @@ export type NamesQueryVariables = Exact<{
   desc?: Maybe<Scalars['Boolean']>;
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
+  filter?: Maybe<NameFilterInput>;
 }>;
 
 
@@ -1206,6 +1208,38 @@ export type UpsertOutboundShipmentMutationVariables = Exact<{
 
 export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null | undefined } };
 
+export type UpsertInboundShipmentMutationVariables = Exact<{
+  deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
+  insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput> | InsertInboundShipmentLineInput>;
+  updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput> | UpdateInboundShipmentLineInput>;
+  updateInboundShipments?: Maybe<Array<UpdateInboundShipmentInput> | UpdateInboundShipmentInput>;
+}>;
+
+
+export type UpsertInboundShipmentMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string }> | null | undefined, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string }> | null | undefined, deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string }> | null | undefined, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string }> | null | undefined } };
+
+export type UpdateInboundShipmentMutationVariables = Exact<{
+  input: UpdateInboundShipmentInput;
+}>;
+
+
+export type UpdateInboundShipmentMutation = { __typename?: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename?: 'CannotChangeInvoiceBackToDraft', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotEditFinalisedInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'OtherPartyNotASupplier', description: string } | { __typename?: 'RecordNotFound', description: string } } };
+
+export type DeleteInboundShipmentsMutationVariables = Exact<{
+  ids?: Maybe<Array<DeleteInboundShipmentInput> | DeleteInboundShipmentInput>;
+}>;
+
+
+export type DeleteInboundShipmentsMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string }> | null | undefined } };
+
+export type InsertInboundShipmentMutationVariables = Exact<{
+  id: Scalars['String'];
+  otherPartyId: Scalars['String'];
+}>;
+
+
+export type InsertInboundShipmentMutation = { __typename?: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+
 
 export const InvoiceDocument = gql`
     query invoice($id: String!) {
@@ -1237,6 +1271,7 @@ export const InvoiceDocument = gql`
       shippedDatetime
       deliveredDatetime
       enteredByName
+      donorName
       requisitionNumber
       purchaseOrderNumber
       inboundShipmentNumber
@@ -1440,11 +1475,11 @@ export const InvoicesDocument = gql`
 }
     `;
 export const NamesDocument = gql`
-    query names($key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int) {
+    query names($key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
   names(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
-    filter: {isCustomer: true}
+    filter: $filter
   ) {
     ... on ConnectorError {
       __typename
@@ -1775,6 +1810,134 @@ export const UpsertOutboundShipmentDocument = gql`
   }
 }
     `;
+export const UpsertInboundShipmentDocument = gql`
+    mutation upsertInboundShipment($deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!], $insertInboundShipmentLines: [InsertInboundShipmentLineInput!], $updateInboundShipmentLines: [UpdateInboundShipmentLineInput!], $updateInboundShipments: [UpdateInboundShipmentInput!]) {
+  batchInboundShipment(
+    deleteInboundShipmentLines: $deleteInboundShipmentLines
+    insertInboundShipmentLines: $insertInboundShipmentLines
+    updateInboundShipmentLines: $updateInboundShipmentLines
+    updateInboundShipments: $updateInboundShipments
+  ) {
+    __typename
+    updateInboundShipments {
+      __typename
+      id
+    }
+    insertInboundShipmentLines {
+      __typename
+      id
+    }
+    deleteInboundShipmentLines {
+      __typename
+      id
+    }
+    updateInboundShipmentLines {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const UpdateInboundShipmentDocument = gql`
+    mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
+  updateInboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateInboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    `;
+export const DeleteInboundShipmentsDocument = gql`
+    mutation deleteInboundShipments($ids: [DeleteInboundShipmentInput!]) {
+  batchInboundShipment(deleteInboundShipments: $ids) {
+    __typename
+    deleteInboundShipments {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const InsertInboundShipmentDocument = gql`
+    mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
+  insertInboundShipment(
+    input: {id: $id, status: DRAFT, otherPartyId: $otherPartyId}
+  ) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -1815,6 +1978,18 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     upsertOutboundShipment(variables?: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment');
+    },
+    upsertInboundShipment(variables?: UpsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertInboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment');
+    },
+    updateInboundShipment(variables: UpdateInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateInboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundShipmentMutation>(UpdateInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundShipment');
+    },
+    deleteInboundShipments(variables?: DeleteInboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentsMutation>(DeleteInboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipments');
+    },
+    insertInboundShipment(variables: InsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertInboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundShipmentMutation>(InsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundShipment');
     }
   };
 }

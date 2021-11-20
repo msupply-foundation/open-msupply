@@ -14,8 +14,8 @@ import {
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
-import { isInvoiceEditable } from '../utils';
-import { OutboundShipment } from './types';
+import { isInvoiceEditable } from '../../utils';
+import { OutboundShipment } from '../../types';
 
 interface SidePanelProps {
   draft: OutboundShipment;

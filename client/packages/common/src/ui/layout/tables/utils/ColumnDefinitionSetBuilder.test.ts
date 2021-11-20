@@ -1,5 +1,11 @@
 import { ColumnDefinitionSetBuilder } from './ColumnDefinitionSetBuilder';
-import { Invoice } from '../../../../types';
+import { DomainObject } from '../../../../types';
+
+interface Invoice extends DomainObject {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+}
 
 describe('ColumnDefinitionSetBuilder', () => {
   it('Creates an array of columns for the column keys passed', () => {

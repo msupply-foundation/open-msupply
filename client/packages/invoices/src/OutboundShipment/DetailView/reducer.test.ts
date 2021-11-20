@@ -1,14 +1,14 @@
 import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
-import { flattenSummaryItems } from './../utils';
+import { flattenSummaryItems } from '../../utils';
 import { DocumentActionSet } from '@openmsupply-client/common';
-import { placeholderInvoice } from './index';
+import { placeholderInvoice } from '../../utils';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentAction,
   OutboundShipmentSummaryItem,
-} from './types';
+} from '../../types';
 
 const summaryItems: OutboundShipmentSummaryItem[] = [
   {

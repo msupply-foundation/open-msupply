@@ -1,6 +1,5 @@
 import { ObjectWithStringKeys } from './utility';
 import { StockLineNode } from './schema';
-import { InvoiceLineNode } from '..';
 
 export * from './utility';
 export * from './schema';
@@ -52,78 +51,3 @@ export type Store = {
   id: string;
   name: string;
 };
-
-export interface InvoiceLine extends InvoiceLineNode, DomainObject {
-  stockLine?: StockLine;
-  stockLineId: string;
-  invoiceId: string;
-}
-
-export interface InvoiceRow extends DomainObject {
-  id: string;
-  color: string;
-  comment?: string | null;
-  status: string;
-  type: string;
-  entryDatetime: string;
-  invoiceNumber: number;
-  otherPartyName: string;
-  pricing: {
-    totalAfterTax: number;
-    subtotal: number;
-    taxPercentage: number;
-  };
-}
-
-export interface Invoice extends DomainObject {
-  id: string;
-  color: string;
-  comment?: string | null;
-  theirReference?: string | null;
-  status: string;
-  type: string;
-  entryDatetime: string;
-  invoiceNumber: number;
-  otherParty?: Name;
-  otherPartyName: string;
-  onHold: boolean;
-  lines: InvoiceLine[];
-  allocatedDatetime?: string;
-  shippedDatetime?: string;
-  pickedDatetime?: string;
-  deliveredDatetime?: string;
-  enteredByName?: string;
-
-  purchaseOrderNumber?: number | null;
-  requisitionNumber?: number | null;
-  goodsReceiptNumber?: number | null;
-  inboundShipmentNumber?: number | null;
-
-  pricing: {
-    totalAfterTax: number;
-    subtotal: number;
-    taxPercentage: number;
-  };
-}
-
-export type OutboundShipmentStatus =
-  | 'DRAFT'
-  | 'ALLOCATED'
-  | 'PICKED'
-  | 'SHIPPED'
-  | 'DELIVERED';
-
-export type InboundShipmentStatus =
-  | 'new'
-  | 'allocated'
-  | 'picked'
-  | 'shipped'
-  | 'delivered';
-
-export type SupplierRequisitionStatus =
-  | 'draft'
-  | 'sent'
-  | 'in_progress'
-  | 'finalised';
-
-export type CustomerRequisitionStatus = 'new' | 'in_progress' | 'finalised';

@@ -31,7 +31,10 @@ export const StockWidget: React.FC = () => {
             isLoading={isLoading}
             title={t('heading.expiring-stock')}
             stats={[
-              { label: t('label.expired'), value: data?.expired || 0 },
+              {
+                label: t('label.expired', { ns: 'dashboard' }),
+                value: data?.expired || 0,
+              },
               {
                 label: t('label.expiring-soon'),
                 value: data?.expiringSoon || 0,

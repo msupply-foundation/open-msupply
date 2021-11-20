@@ -20,6 +20,11 @@ const fullOutboundShipmentPath = RouteBuilder.create(AppRoute.Distribution)
   .addWildCard()
   .build();
 
+const fullInboundShipmentPath = RouteBuilder.create(AppRoute.Distribution)
+  .addPart(AppRoute.InboundShipment)
+  .addWildCard()
+  .build();
+
 const fullCustomerRequisitionPath = RouteBuilder.create(AppRoute.Distribution)
   .addPart(AppRoute.CustomerRequisition)
   .addWildCard()
@@ -42,6 +47,9 @@ const DistributionContainer: FC = () => {
     return <CustomerService />;
   }
 
+  if (useMatch(fullInboundShipmentPath)) {
+    return <InvoiceService />;
+  }
   if (!useMatch(AppRoute.Distribution)) {
     const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
     return <Navigate to={notFoundRoute} />;

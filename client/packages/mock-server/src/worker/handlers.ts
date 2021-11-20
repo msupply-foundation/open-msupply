@@ -12,7 +12,7 @@ import {
   UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 
-const updateInvoice = graphql.mutation<
+const updateOutboundInvoice = graphql.mutation<
   Record<string, unknown>,
   { input: UpdateOutboundShipmentInput }
 >('updateOutboundShipment', (request, response, context) => {
@@ -22,7 +22,17 @@ const updateInvoice = graphql.mutation<
   return response(context.data({ updateOutboundShipment: result }));
 });
 
-const insertInvoice = graphql.mutation(
+const updateInboundInvoice = graphql.mutation<
+  Record<string, unknown>,
+  { input: UpdateOutboundShipmentInput }
+>('updateInboundShipment', (request, response, context) => {
+  const { variables } = request;
+
+  const result = MutationService.update.invoice(variables.input);
+  return response(context.data({ updateInboundShipment: result }));
+});
+
+const insertOutboundInvoice = graphql.mutation(
   'insertOutboundShipment',
   (request, response, context) => {
     const { variables } = request;
@@ -36,6 +46,40 @@ const insertInvoice = graphql.mutation(
     return response(context.data({ insertOutboundShipment: result }));
   }
 );
+
+const insertInboundInvoice = graphql.mutation(
+  'insertInboundShipment',
+  (request, response, context) => {
+    const { variables } = request;
+    const { id, otherPartyId } = variables;
+
+    const result = MutationService.insert.invoice({
+      id,
+      otherPartyId,
+    } as unknown as Invoice);
+
+    return response(context.data({ insertInboundShipment: result }));
+  }
+);
+
+const deleteInboundShipments = graphql.mutation<
+  Record<string, any>,
+  { ids: { id: string }[] }
+>('deleteInboundShipments', (request, response, context) => {
+  const { variables } = request;
+  const { ids } = variables;
+
+  const queryResponse = {
+    __typename: 'BatchInboundShipmentResponse',
+    deleteInboundShipments: [] as { id: string }[],
+  };
+
+  queryResponse.deleteInboundShipments = ids.map(id => ({
+    id: InvoiceSchema.MutationResolvers.deleteInboundShipment(null, id),
+  }));
+
+  return response(context.data({ batchInboundShipment: queryResponse }));
+});
 
 const deleteOutboundShipments = graphql.mutation<
   Record<string, any>,
@@ -220,11 +264,14 @@ export const handlers = [
   invoiceList,
   invoiceDetail,
   invoiceDetailByInvoiceNumber,
-  updateInvoice,
+  updateOutboundInvoice,
+  updateInboundInvoice,
   deleteOutboundShipments,
   permissionError,
   serverError,
-  insertInvoice,
+  insertOutboundInvoice,
+  insertInboundInvoice,
+  deleteInboundShipments,
   namesList,
   itemsListView,
   itemsWithStockLines,

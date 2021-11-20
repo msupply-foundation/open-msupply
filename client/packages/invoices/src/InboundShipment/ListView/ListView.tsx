@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react';
 import { useNavigate } from 'react-router';
+
 import {
   DataTable,
   useColumns,
@@ -10,17 +11,17 @@ import {
   Color,
   useOmSupplyApi,
   useNotification,
-  useTranslation,
+  generateUUID,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { getInboundShipmentListViewApi } from './api';
+import { InvoiceRow } from '../../types';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getOutboundShipmentListViewApi } from './api';
-import { OutboundShipmentStatus, InvoiceRow } from '../../types';
+import { AppRoute } from '@openmsupply-client/config';
 
-export const OutboundShipmentListViewComponent: FC = () => {
-  const t = useTranslation('common');
+export const InboundListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const { api } = useOmSupplyApi();
@@ -41,24 +42,22 @@ export const OutboundShipmentListViewComponent: FC = () => {
   } = useListData(
     {
       initialSortBy: { key: 'otherPartyName' },
-      initialFilterBy: { type: { equalTo: 'OUTBOUND_SHIPMENT' } },
+      initialFilterBy: { type: { equalTo: 'INBOUND_SHIPMENT' } },
     },
     'invoice',
-    getOutboundShipmentListViewApi(api)
+    getInboundShipmentListViewApi(api)
   );
 
-  const onColorUpdate = (row: InvoiceRow, color: Color) => {
-    onUpdate({ ...row, color: color.hex });
-  };
-
-  const columns = useColumns<InvoiceRow>(
+  const columns = useColumns(
     [
-      getNameAndColorColumn(onColorUpdate),
+      getNameAndColorColumn((row: InvoiceRow, color: Color) => {
+        onUpdate({ ...row, color: color.hex });
+      }),
       [
         'status',
         {
-          formatter: status =>
-            getStatusTranslator(t)(status as OutboundShipmentStatus),
+          // TODO: use translated status string
+          formatter: status => String(status),
         },
       ],
       'invoiceNumber',
@@ -74,10 +73,16 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   const [open, setOpen] = useState(false);
 
+  const createDetailUrl = (id: string) =>
+    RouteBuilder.create(AppRoute.Distribution)
+      .addPart(AppRoute.InboundShipment)
+      .addPart(id)
+      .build();
+
   return (
     <>
       <NameSearchModal
-        type="customer"
+        type="supplier"
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {
@@ -85,14 +90,14 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
           const createInvoice = async () => {
             const invoice = {
-              id: String(Math.ceil(Math.random() * 1000000)),
+              id: generateUUID(),
               nameId: name?.id,
             };
 
             try {
               const result = await onCreate(invoice);
               invalidate();
-              navigate(`/distribution/outbound-shipment/${result}`);
+              navigate(createDetailUrl(result));
             } catch (e) {
               const errorSnack = error(
                 'Failed to create invoice! ' + (e as Error).message
@@ -115,17 +120,17 @@ export const OutboundShipmentListViewComponent: FC = () => {
         data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/distribution/outbound-shipment/${row.id}`);
+          navigate(createDetailUrl(row.id));
         }}
       />
     </>
   );
 };
 
-export const OutboundShipmentListView: FC = () => {
+export const ListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
-      <OutboundShipmentListViewComponent />
+      <InboundListView />
     </TableProvider>
   );
 };

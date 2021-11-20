@@ -9,7 +9,6 @@ import {
   ResolvedStockCounts,
 } from './../data/types';
 
-import { getDataSorter } from '../utils';
 import { db } from '../data/database';
 import {
   InvoiceSortFieldInput,
@@ -20,6 +19,7 @@ import {
   NameSortFieldInput,
   InvoiceNodeType,
 } from '@openmsupply-client/common/src/types/schema';
+import { getDataSorter } from '@openmsupply-client/common/src/utils';
 
 const getAvailableQuantity = (itemId: string): number => {
   const stockLines = db.get.stockLines.byItemId(itemId);
@@ -161,8 +161,7 @@ export const ResolverService = {
       const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
 
       if (key) {
-        const sortData = getDataSorter(getInvoiceSortKey(key), !!desc);
-        paged.sort(sortData);
+        paged.sort(getDataSorter(getInvoiceSortKey(key), !!desc));
       }
 
       return createListResponse(filtered.length, paged, 'InvoiceConnector');
@@ -209,8 +208,7 @@ export const ResolverService = {
       const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
 
       if (key) {
-        const sortData = getDataSorter(getItemsSortKey(key), !!desc);
-        paged.sort(sortData);
+        paged.sort(getDataSorter(getItemsSortKey(key), !!desc));
       }
 
       return createListResponse(filtered.length, paged, 'ItemConnector');
@@ -226,8 +224,7 @@ export const ResolverService = {
       const names = db.get.all.name().filter(({ isCustomer }) => isCustomer);
 
       if (key) {
-        const sortData = getDataSorter(getNamesSortKey(key), !!desc);
-        names.sort(sortData);
+        names.sort(getDataSorter(getNamesSortKey(key), !!desc));
       }
 
       const paged = names.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));

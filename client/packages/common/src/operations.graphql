@@ -27,6 +27,7 @@ query invoice($id: String!) {
       shippedDatetime
       deliveredDatetime
       enteredByName
+      donorName
 
       requisitionNumber
       purchaseOrderNumber
@@ -248,11 +249,12 @@ query names(
   $desc: Boolean
   $first: Int
   $offset: Int
+  $filter: NameFilterInput
 ) {
   names(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
-    filter: { isCustomer: true }
+    filter: $filter
   ) {
     ... on ConnectorError {
       __typename
@@ -588,6 +590,139 @@ mutation upsertOutboundShipment(
     deleteOutboundShipmentLines {
       __typename
       id
+    }
+  }
+}
+
+mutation upsertInboundShipment(
+  $deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
+  $insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
+  $updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
+  $updateInboundShipments: [UpdateInboundShipmentInput!]
+) {
+  batchInboundShipment(
+    deleteInboundShipmentLines: $deleteInboundShipmentLines
+    insertInboundShipmentLines: $insertInboundShipmentLines
+    updateInboundShipmentLines: $updateInboundShipmentLines
+    updateInboundShipments: $updateInboundShipments
+  ) {
+    __typename
+    updateInboundShipments {
+      __typename
+      id
+    }
+
+    insertInboundShipmentLines {
+      __typename
+      id
+    }
+
+    deleteInboundShipmentLines {
+      __typename
+      id
+    }
+
+    updateInboundShipmentLines {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
+  updateInboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateInboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation deleteInboundShipments($ids: [DeleteInboundShipmentInput!]) {
+  batchInboundShipment(deleteInboundShipments: $ids) {
+    __typename
+    deleteInboundShipments {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
+  insertInboundShipment(
+    input: { id: $id, status: DRAFT, otherPartyId: $otherPartyId }
+  ) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
     }
   }
 }

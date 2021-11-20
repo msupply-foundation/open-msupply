@@ -37,6 +37,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   return (
     <>
       <NameSearchModal
+        type="customer"
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {
@@ -76,7 +77,10 @@ export const OutboundShipmentWidget: React.FC = () => {
               isLoading={isLoading}
               title={t('heading.shipments-to-be-picked')}
               stats={[
-                { label: t('label.today'), value: data?.toBePicked || 0 },
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: data?.toBePicked || 0,
+                },
               ]}
             />
           </Grid>

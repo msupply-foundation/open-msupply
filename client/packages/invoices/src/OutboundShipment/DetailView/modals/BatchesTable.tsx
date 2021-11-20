@@ -22,7 +22,7 @@ import {
   PaperPopover,
   PaperPopoverSection,
 } from '@openmsupply-client/common';
-import { BatchRow } from '../types';
+import { BatchRow } from '../../../types';
 
 export interface BatchesTableProps {
   onChange: (key: string, value: number, packSize: number) => void;

@@ -1,32 +1,7 @@
-import { SortRule, SortBy } from '@openmsupply-client/common';
+import { SortRule, SortBy, getDataSorter } from '@openmsupply-client/common';
 import { ObjectWithStringKeys } from './../../types/utility';
 import { useEffect, useState } from 'react';
 import { useSortBy } from '../useSortBy';
-
-const parseValue = (object: any, key: string) => {
-  const value = object[key];
-  if (typeof value === 'string') {
-    const valueAsNumber = Number.parseFloat(value);
-
-    if (!Number.isNaN(valueAsNumber)) return valueAsNumber;
-    return value.toUpperCase(); // ignore case
-  }
-  return value;
-};
-
-const getDataSorter = (sortKey: any, desc: boolean) => (a: any, b: any) => {
-  const valueA = parseValue(a, sortKey);
-  const valueB = parseValue(b, sortKey);
-
-  if (valueA < valueB) {
-    return desc ? 1 : -1;
-  }
-  if (valueA > valueB) {
-    return desc ? -1 : 1;
-  }
-
-  return 0;
-};
 
 interface SortedDataState<T extends ObjectWithStringKeys> {
   sortedData: T[];
@@ -42,8 +17,7 @@ export const useSortedData = <T extends Record<string, unknown>>(
   const [sortedData, setSortedData] = useState(data);
 
   useEffect(() => {
-    const sorter = getDataSorter(sortBy.key, !!sortBy.isDesc);
-    setSortedData(data.sort(sorter));
+    setSortedData(data.sort(getDataSorter(sortBy.key, !!sortBy.isDesc)));
   }, [sortBy]);
 
   useEffect(() => {
