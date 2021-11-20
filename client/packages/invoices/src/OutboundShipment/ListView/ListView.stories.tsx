@@ -2,7 +2,7 @@ import React from 'react';
 import { Route } from 'react-router';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { handlers } from '@openmsupply-client/mock-server/src/worker/handlers';
-import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
+import { StoryProvider, TestingRouter } from '@openmsupply-client/common';
 
 import { OutboundShipmentListView } from './ListView';
 
@@ -15,11 +15,11 @@ export default {
 } as ComponentMeta<typeof OutboundShipmentListView>;
 
 const Template: ComponentStory<typeof OutboundShipmentListView> = args => (
-  <TestingProvider>
+  <StoryProvider>
     <TestingRouter initialEntries={['/distribution/outbound-shipment']}>
       <Route path="*" element={<OutboundShipmentListView {...args} />} />
     </TestingRouter>
-  </TestingProvider>
+  </StoryProvider>
 );
 
 export const Primary = Template.bind({});

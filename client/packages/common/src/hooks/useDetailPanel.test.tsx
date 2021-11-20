@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import { render } from '@testing-library/react';
-import { IntlTestProvider } from '../intl';
 import { act } from 'react-dom/test-utils';
 import { useDetailPanel } from './useDetailPanel';
 import userEvent from '@testing-library/user-event';
@@ -10,11 +9,7 @@ describe('useDetailPanel', () => {
   const DetailPanelExample: FC = () => {
     const { OpenButton } = useDetailPanel();
 
-    return (
-      <IntlTestProvider locale="en">
-        <div>{OpenButton}</div>
-      </IntlTestProvider>
-    );
+    return <div>{OpenButton}</div>;
   };
 
   it('Does render an open button by default', () => {

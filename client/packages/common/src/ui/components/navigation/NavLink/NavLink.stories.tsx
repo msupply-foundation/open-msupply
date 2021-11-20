@@ -3,7 +3,7 @@ import { ComponentMeta, Story } from '@storybook/react';
 import { Route } from 'react-router-dom';
 
 import { NavLink, NavLinkProps } from './NavLink';
-import { TestingProvider, TestingRouter } from '../../../../utils/testing';
+import { StoryProvider, TestingRouter } from '../../../../utils/testing';
 import { TruckIcon } from '../../../icons';
 import { useDrawer } from '../../../../hooks';
 import { Box } from '@mui/system';
@@ -26,7 +26,7 @@ const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
 
 const Template: Story<NavLinkProps & { collapsed: boolean }> = args => {
   return (
-    <TestingProvider>
+    <StoryProvider>
       <TestingRouter initialEntries={['/distribution']}>
         <Route
           path="*"
@@ -38,7 +38,7 @@ const Template: Story<NavLinkProps & { collapsed: boolean }> = args => {
           }
         ></Route>
       </TestingRouter>
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 

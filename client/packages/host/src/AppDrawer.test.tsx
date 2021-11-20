@@ -20,7 +20,7 @@ describe('AppDrawer', () => {
       </TestingProvider>
     );
 
-    const button = getByRole('button', { name: /Close the menu/i });
+    const button = getByRole('button', { name: /button.close-the-menu/i });
     const drawer = getByTestId('drawer');
 
     act(() => {
@@ -41,7 +41,7 @@ describe('AppDrawer', () => {
       </TestingProvider>
     );
 
-    const button = getByRole('button', { name: /Open the menu/i });
+    const button = getByRole('button', { name: /button.open-the-menu/i });
     const drawer = getByTestId('drawer');
 
     act(() => {
@@ -82,7 +82,9 @@ describe('AppDrawer', () => {
       </TestingProvider>
     );
 
-    const button = screen.getByRole('button', { name: /Close the menu/i });
+    const button = screen.getByRole('button', {
+      name: /button.close-the-menu/i,
+    });
 
     act(() => {
       userEvent.click(button);

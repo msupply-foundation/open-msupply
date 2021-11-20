@@ -3,7 +3,7 @@ import { ComponentMeta, Story } from '@storybook/react';
 import { Route } from 'react-router-dom';
 
 import { Breadcrumbs } from './Breadcrumbs';
-import { TestingProvider, TestingRouter } from '../../../../utils/testing';
+import { StoryProvider, TestingRouter } from '../../../../utils/testing';
 import { Box } from '@mui/system';
 import { RouteBuilder } from '../../../../utils';
 import { AppRoute } from '@openmsupply-client/config';
@@ -15,7 +15,7 @@ export default {
 
 const Template: Story<{ initialEntries: string[] }> = ({ initialEntries }) => {
   return (
-    <TestingProvider>
+    <StoryProvider>
       <TestingRouter initialEntries={initialEntries}>
         <Route
           path="*"
@@ -26,7 +26,7 @@ const Template: Story<{ initialEntries: string[] }> = ({ initialEntries }) => {
           }
         ></Route>
       </TestingRouter>
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 
