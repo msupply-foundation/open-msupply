@@ -8,7 +8,7 @@ import {
   DetailPanelAction,
   DetailPanelSection,
   RewindIcon,
-  TestingProvider,
+  StoryProvider,
   useDetailPanel,
 } from '@openmsupply-client/common';
 
@@ -27,7 +27,7 @@ const Template: Story<DetailPanelArgs> = args => {
   const { Actions, Sections } = args;
 
   return (
-    <TestingProvider locale="en">
+    <StoryProvider locale="en">
       <Grid container>
         <Grid item flex={1}>
           {OpenButton}
@@ -37,7 +37,7 @@ const Template: Story<DetailPanelArgs> = args => {
           <DetailPanelPortal Actions={Actions}>{Sections}</DetailPanelPortal>
         </Grid>
       </Grid>
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 

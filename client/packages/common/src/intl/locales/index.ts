@@ -9,12 +9,3 @@ export type LocaleKey =
   | keyof typeof dashboard
   | keyof typeof common
   | keyof typeof outboundShipment;
-
-export const resources = {
-  en: {
-    app,
-    dashboard,
-    common,
-    'outbound-shipment': outboundShipment,
-  },
-} as const;

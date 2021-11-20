@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 import { act } from 'react-dom/test-utils';
 import {
   DetailPanelSection,
-  IntlTestProvider,
   setScreenSize_ONLY_FOR_TESTING,
   useDetailPanel,
 } from '@openmsupply-client/common';
@@ -14,11 +13,11 @@ describe('DetailPanel', () => {
     const { OpenButton } = useDetailPanel();
 
     return (
-      <IntlTestProvider locale="en">
+      <>
         <div>{OpenButton}</div>
         <DetailPanel />
         {children}
-      </IntlTestProvider>
+      </>
     );
   };
 

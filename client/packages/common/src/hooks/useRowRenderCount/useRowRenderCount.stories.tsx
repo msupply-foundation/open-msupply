@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { TestingProvider } from '../../utils';
+import { StoryProvider } from '../../utils';
 import { useRowRenderCount } from './useRowRenderCount';
 import { useTheme } from '../../styles';
 import { Box } from '@mui/system';
@@ -50,9 +50,9 @@ const Example = () => {
 
 const Template: Story = () => {
   return (
-    <TestingProvider>
+    <StoryProvider>
       <Example />
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 
