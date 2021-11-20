@@ -1,5 +1,5 @@
 import { ObjectWithStringKeys } from './utility';
-import { StockLineNode } from './schema';
+import { StockLineNode, ItemNode } from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -25,12 +25,12 @@ export interface ItemRow extends DomainObject {
   unitName?: string;
 }
 
-export interface Item extends DomainObject {
+export interface Item extends Omit<ItemNode, 'availableBatches'>, DomainObject {
   id: string;
   isVisible: boolean;
   code: string;
   name: string;
-  availableQuantity: number;
+  // availableQuantity: number;
   availableBatches: StockLine[];
   unitName: string;
 }

@@ -81,8 +81,8 @@ export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
   pricing: {
     __typename: 'InvoicePricingNode';
     totalAfterTax: number;
-    taxPercentage: number;
-    subtotal: number;
+    // taxPercentage: number;
+    // subtotal: number;
   };
 }
 

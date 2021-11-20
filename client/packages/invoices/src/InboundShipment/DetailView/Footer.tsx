@@ -26,22 +26,28 @@ interface InboundDetailFooterProps {
   save: () => Promise<void>;
 }
 
-const createStatusLog = (draft: InboundShipment) => {
-  const {
-    entryDatetime,
-    allocatedDatetime,
-    shippedDatetime,
-    pickedDatetime,
-    deliveredDatetime,
-  } = draft;
+const createStatusLog = () => {
+  // const {
+  //   entryDatetime,
+  //   allocatedDatetime,
+  //   shippedDatetime,
+  //   pickedDatetime,
+  //   deliveredDatetime,
+  // } = draft;
 
   return {
-    DRAFT: entryDatetime,
-    ALLOCATED: allocatedDatetime,
-    SHIPPED: shippedDatetime,
-    PICKED: pickedDatetime,
-    DELIVERED: deliveredDatetime,
+    DRAFT: new Date().toISOString(),
+    CONFIRMED: new Date().toISOString(),
+    FINALISED: new Date().toISOString(),
   };
+
+  // return {
+  //   DRAFT: entryDatetime,
+  //   ALLOCATED: allocatedDatetime,
+  //   SHIPPED: shippedDatetime,
+  //   PICKED: pickedDatetime,
+  //   DELIVERED: deliveredDatetime,
+  // };
 };
 
 export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
@@ -71,7 +77,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
 
           <StatusCrumbs
             statuses={outboundStatuses}
-            statusLog={createStatusLog(draft)}
+            statusLog={createStatusLog()}
             statusFormatter={getStatusTranslator(t)}
           />
 

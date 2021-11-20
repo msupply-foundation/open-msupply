@@ -100,7 +100,7 @@ export const get = {
       },
     },
     outboundShipment: {
-      toBePicked: InvoiceData.filter(invoice => invoice.status === 'ALLOCATED')
+      toBePicked: InvoiceData.filter(invoice => invoice.status === 'CONFIRMED')
         .length,
     },
     stock: {
@@ -127,17 +127,17 @@ export const update = {
     const existingInvoice: Invoice = InvoiceData[idx] as Invoice;
     const newInvoice: Invoice = {
       ...existingInvoice,
-      color: invoice?.color ?? existingInvoice.color,
+      // color: invoice?.color ?? existingInvoice.color,
       comment: invoice?.comment ?? existingInvoice.comment,
       theirReference: invoice?.theirReference ?? existingInvoice.theirReference,
       onHold: invoice?.onHold ?? existingInvoice.onHold,
       status: invoice?.status ?? existingInvoice.status,
       otherPartyId: invoice?.otherPartyId ?? existingInvoice.otherPartyId,
-      allocatedDatetime:
-        invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
-      shippedDatetime:
-        invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
-      pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
+      // allocatedDatetime:
+      //   invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
+      // shippedDatetime:
+      //   invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
+      // pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
     };
     InvoiceData[idx] = newInvoice;
     return newInvoice;
