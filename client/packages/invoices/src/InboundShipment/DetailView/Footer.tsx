@@ -73,7 +73,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
   return (
     <AppFooterPortal
       Content={
-        !!draft?.update && (
+        !!draft && (
           <Box
             gap={2}
             display="flex"
@@ -86,7 +86,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
               value={!!draft.onHold}
               selected={!!draft.onHold}
               onClick={(_, value) => {
-                draft.update && draft.update('q', !value);
+                draft.update?.('q', !value);
               }}
               label={t('label.hold')}
             />
