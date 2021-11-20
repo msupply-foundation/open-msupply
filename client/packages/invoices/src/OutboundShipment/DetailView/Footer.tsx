@@ -26,7 +26,7 @@ interface OutboundDetailFooterProps {
   save: () => Promise<void>;
 }
 
-const createStatusLog = () => {
+const createStatusLog = (status: 'DRAFT' | 'CONFIRMED' | 'FINALISED') => {
   // const {
   //   entryDatetime,
   //   allocatedDatetime,
@@ -34,6 +34,21 @@ const createStatusLog = () => {
   //   pickedDatetime,
   //   deliveredDatetime,
   // } = draft;
+
+  if (status === 'DRAFT') {
+    return {
+      DRAFT: new Date().toISOString(),
+      CONFIRMED: null,
+      FINALISED: null,
+    };
+  }
+  if (status === 'CONFIRMED') {
+    return {
+      DRAFT: new Date().toISOString(),
+      CONFIRMED: new Date().toISOString(),
+      FINALISED: null,
+    };
+  }
 
   return {
     DRAFT: new Date().toISOString(),
@@ -78,7 +93,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
 
             <StatusCrumbs
               statuses={outboundStatuses}
-              statusLog={createStatusLog()}
+              statusLog={createStatusLog(draft.status)}
               statusFormatter={getStatusTranslator(t)}
             />
 
