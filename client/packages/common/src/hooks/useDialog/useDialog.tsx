@@ -102,7 +102,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         height={height}
       >
         <ModalTitle title={title} />
-        <DialogContent>
+        <DialogContent sx={{ overflowX: 'hidden' }}>
           <Slide in={slideConfig.in} direction={slideConfig.direction}>
             <div> {children}</div>
           </Slide>
