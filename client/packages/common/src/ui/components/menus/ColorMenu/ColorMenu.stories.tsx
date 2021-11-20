@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { ColorMenu } from './ColorMenu';
-import { TestingProvider } from '../../../../utils';
+import { StoryProvider } from '../../../../utils';
 import { IconButton } from '../../buttons';
 import { CircleIcon } from '../../../icons';
 import { useTranslation } from '../../../../intl/intlHelpers';
@@ -30,7 +30,7 @@ const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
   };
 
   return (
-    <TestingProvider>
+    <StoryProvider>
       <ColorMenu onClose={handleClose} anchorEl={anchorEl} onClick={onClick} />
       <Box>
         <IconButton
@@ -49,7 +49,7 @@ const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
           onClick={handleClick}
         />
       </Box>
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 

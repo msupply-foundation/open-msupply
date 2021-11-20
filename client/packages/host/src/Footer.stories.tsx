@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Story, ComponentMeta } from '@storybook/react';
 
 import { Footer } from './Footer';
-import { TestingProvider } from '@openmsupply-client/common/src/utils/testing';
+import { StoryProvider } from '@openmsupply-client/common/src/utils/testing';
 import { useHostContext } from '@openmsupply-client/common/src/hooks/useHostContext';
 
 export default {
@@ -20,9 +20,9 @@ const Template: Story<{ user: string; store: string }> = args => {
   }, []);
 
   return (
-    <TestingProvider locale="en">
+    <StoryProvider locale="en">
       <Footer />
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 

@@ -131,8 +131,10 @@ const AppDrawer: React.FC = () => {
     >
       <ToolbarIconContainer>
         <IconButton
-          labelKey={
-            drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
+          label={
+            drawer.isOpen
+              ? t('button.close-the-menu')
+              : t('button.open-the-menu')
           }
           onClick={drawer.toggle}
           icon={<MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />}

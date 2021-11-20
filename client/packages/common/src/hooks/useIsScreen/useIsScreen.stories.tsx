@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { TestingProvider } from '../../utils';
+import { StoryProvider } from '../../utils';
 import { useIsSmallScreen } from './useIsSmallScreen';
 import { useIsMediumScreen } from './useIsMediumScreen';
 import { useIsLargeScreen } from './useIsLargeScreen';
@@ -13,12 +13,12 @@ const Template: Story<{
   const isScreen = args.hook();
 
   return (
-    <TestingProvider>
+    <StoryProvider>
       <div>
         <p>Adjust your viewport to see when the hook is triggered</p>
         <p>{`Is a ${args.type} screen: ${String(isScreen)}`}</p>
       </div>
-    </TestingProvider>
+    </StoryProvider>
   );
 };
 

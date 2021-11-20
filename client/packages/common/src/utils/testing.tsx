@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import AppThemeProvider from '../styles/ThemeProvider';
-import { IntlTestProvider } from '../intl/IntlTestProvider';
 import { SupportedLocales } from '../intl/intlHelpers';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
@@ -19,7 +18,7 @@ const queryClient = new QueryClient({
   },
 });
 
-interface TestingProviderProps {
+interface StoryProviderProps {
   locale?: SupportedLocales;
 }
 
@@ -36,18 +35,25 @@ export const TestingRouter: FC<TestingRouterProps> = ({
   </MemoryRouter>
 );
 
-export const TestingProvider: FC<TestingProviderProps> = ({
-  children,
-  locale = 'en',
-}) => (
+export const TestingProvider: FC = ({ children }) => (
   <QueryClientProvider client={queryClient}>
     <OmSupplyApiProvider url={Environment.API_URL}>
       <SnackbarProvider maxSnack={3}>
-        <IntlTestProvider locale={locale}>
-          <TableProvider createStore={createTableStore}>
-            <AppThemeProvider>{children}</AppThemeProvider>
-          </TableProvider>
-        </IntlTestProvider>
+        <TableProvider createStore={createTableStore}>
+          <AppThemeProvider>{children}</AppThemeProvider>
+        </TableProvider>
+      </SnackbarProvider>
+    </OmSupplyApiProvider>
+  </QueryClientProvider>
+);
+
+export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
+  <QueryClientProvider client={queryClient}>
+    <OmSupplyApiProvider url={Environment.API_URL}>
+      <SnackbarProvider maxSnack={3}>
+        <TableProvider createStore={createTableStore}>
+          <AppThemeProvider>{children}</AppThemeProvider>
+        </TableProvider>
       </SnackbarProvider>
     </OmSupplyApiProvider>
   </QueryClientProvider>

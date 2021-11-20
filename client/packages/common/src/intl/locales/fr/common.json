@@ -1,10 +1,8 @@
 {
-  "button.close-the-menu": "Fermer le menu",
   "button.close": "Fermer",
   "button.export": "Exporter",
   "button.language": "Langue",
   "button.more": "Plus",
-  "button.open-the-menu": "Ouvrir le menu",
   "button.print": "Imprimer",
   "label.customer": "Client",
   "label.line": "Ligne {number}",

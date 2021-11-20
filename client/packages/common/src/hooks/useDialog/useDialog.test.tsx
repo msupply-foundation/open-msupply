@@ -41,7 +41,7 @@ describe('useDialog', () => {
 
     act(() => getByRole('button', { name: 'show dialog' }).click());
 
-    const node = getByRole(/dialog/, { name: /add item/i });
+    const node = getByRole(/dialog/, { name: /heading.add-item/i });
     expect(node).toBeInTheDocument();
   });
 
@@ -54,7 +54,7 @@ describe('useDialog', () => {
 
     act(() => getByRole('button', { name: 'show dialog' }).click());
 
-    expect(getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(getByRole('button', { name: 'button.cancel' })).toBeInTheDocument();
   });
 
   it('Dialog is hidden when cancelled', async () => {
@@ -66,7 +66,7 @@ describe('useDialog', () => {
 
     act(() => getByRole('button', { name: 'show dialog' }).click());
 
-    act(() => getByRole('button', { name: 'Cancel' }).click());
+    act(() => getByRole('button', { name: 'button.cancel' }).click());
 
     await waitFor(() => {
       expect(queryByText(/dialog body context/i)).not.toBeInTheDocument();

@@ -4,17 +4,17 @@ import { CssBaseline } from '@mui/material';
 import { addDecorator } from '@storybook/react';
 import { initializeWorker, mswDecorator } from 'msw-storybook-addon';
 
-import { TestingProvider } from '../packages/common/src/utils/testing';
+import { StoryProvider } from '../packages/common/src/utils/testing';
 
 initializeWorker();
 addDecorator(mswDecorator);
 
 export const decorators = [
   Story => (
-    <TestingProvider>
+    <StoryProvider>
       <CssBaseline />
       <Story />
-    </TestingProvider>
+    </StoryProvider>
   ),
 ];
 
