@@ -20,6 +20,7 @@ import {
   InboundShipmentItem,
   InboundShipmentRow,
 } from '../../../types';
+import { Dispatch } from 'react';
 
 const getExistingLine = (
   items: InboundShipmentItem[],
@@ -136,7 +137,8 @@ export const getInitialState = (): InboundShipmentStateShape => ({
 });
 
 export const reducer = (
-  data: Invoice = placeholderInbound
+  data: Invoice = placeholderInbound,
+  dispatch: Dispatch<DocumentActionSet<OutboundShipmentAction>> | null
 ): ((
   state: InboundShipmentStateShape | undefined,
   action: DocumentActionSet<OutboundShipmentAction>
@@ -159,6 +161,10 @@ export const reducer = (
             if (key === 'items' || key === 'lines') return;
             draft[key] = data[key];
           });
+
+          draft.update = (key, value) => {
+            dispatch?.(InboundAction.updateInvoice(key, value));
+          };
 
           draft.items = data.lines?.reduce((itemsArray, serverLine) => {
             const InboundShipmentRow = createLine(serverLine, draft);
@@ -199,7 +205,16 @@ export const reducer = (
 
           break;
         }
+        case ActionType.UpdateInvoice: {
+          const { payload } = action;
+          const { key, value } = payload;
+
+          state.draft[key] = value;
+
+          break;
+        }
       }
+
       return state;
     }
   );

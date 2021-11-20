@@ -12,7 +12,7 @@ export const IntlProvider: React.FC = ({ children }) => {
     const minuteInMilliseconds = 60 * 1000;
     const expirationTime =
       process.env['NODE_ENV'] === 'development'
-        ? 5 * minuteInMilliseconds
+        ? 0
         : 7 * 24 * 60 * minuteInMilliseconds;
 
     i18next

@@ -19,7 +19,7 @@
   "app.sync": "Sync",
   "app.tools": "Tools",
   "app.welcome": "Hello, {name}!",
-  "breadcrumb.item": "#{id}",
+  "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
   "button.cancel": "Cancel",
   "button.close": "Close",
