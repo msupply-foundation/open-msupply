@@ -86,7 +86,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
               value={!!draft.onHold}
               selected={!!draft.onHold}
               onClick={(_, value) => {
-                draft.update?.('q', !value);
+                draft.update?.('onHold', !value);
               }}
               label={t('label.hold')}
             />
