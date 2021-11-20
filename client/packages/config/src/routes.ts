@@ -1,6 +1,7 @@
 export enum AppRoute {
   Distribution = 'distribution',
   OutboundShipment = 'outbound-shipment',
+  InboundShipment = 'inbound-shipment',
   CustomerRequisition = 'customer-requisition',
   Customer = 'customers',
 

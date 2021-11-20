@@ -15,11 +15,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   getNextOutboundStatus,
   getNextOutboundStatusButtonTranslation,
-  getStatusTranslation,
+  getStatusTranslator,
   isInvoiceEditable,
   outboundStatuses,
-} from '../utils';
-import { OutboundShipment } from './types';
+} from '../../utils';
+import { OutboundShipment } from '../../types';
 
 interface OutboundDetailFooterProps {
   draft: OutboundShipment;
@@ -52,78 +52,80 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   return (
     <AppFooterPortal
       Content={
-        <Box
-          gap={2}
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          height={64}
-        >
-          <ToggleButton
-            disabled={!isInvoiceEditable(draft)}
-            value={!!draft.onHold}
-            selected={!!draft.onHold}
-            onClick={(_, value) => {
-              draft.update?.('hold', !value);
-            }}
-            label={t('label.hold')}
-          />
-
-          <StatusCrumbs
-            statuses={outboundStatuses}
-            statusLog={createStatusLog(draft)}
-            statusFormatter={getStatusTranslation}
-          />
-
-          <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-            <ButtonWithIcon
-              shrinkThreshold="lg"
-              Icon={<XCircleIcon />}
-              label={t('button.cancel')}
-              color="secondary"
-              sx={{ fontSize: '12px' }}
-              onClick={() => navigate(-1)}
+        draft && (
+          <Box
+            gap={2}
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            height={64}
+          >
+            <ToggleButton
+              disabled={!isInvoiceEditable(draft)}
+              value={!!draft.onHold}
+              selected={!!draft.onHold}
+              onClick={(_, value) => {
+                draft.update?.('hold', !value);
+              }}
+              label={t('label.hold')}
             />
-            {isInvoiceEditable(draft) && (
-              <>
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<SaveIcon />}
-                  label={t('button.save')}
-                  variant="contained"
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => {
-                    success('Saved invoice! 🥳 ')();
-                    save();
-                  }}
-                />
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  disabled={draft.onHold}
-                  Icon={<ArrowRightIcon />}
-                  label={t('button.save-and-confirm-status', {
-                    status: t(
-                      getNextOutboundStatusButtonTranslation(draft.status)
-                    ),
-                  })}
-                  sx={{ fontSize: '12px' }}
-                  variant="contained"
-                  color="secondary"
-                  onClick={async () => {
-                    success('Saved invoice! 🥳 ')();
-                    await draft.update?.(
-                      'status',
-                      getNextOutboundStatus(draft?.status ?? '') ?? ''
-                    );
 
-                    save();
-                  }}
-                />
-              </>
-            )}
+            <StatusCrumbs
+              statuses={outboundStatuses}
+              statusLog={createStatusLog(draft)}
+              statusFormatter={getStatusTranslator(t)}
+            />
+
+            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+              <ButtonWithIcon
+                shrinkThreshold="lg"
+                Icon={<XCircleIcon />}
+                label="button.cancel"
+                color="secondary"
+                sx={{ fontSize: '12px' }}
+                onClick={() => navigate(-1)}
+              />
+              {isInvoiceEditable(draft) && (
+                <>
+                  <ButtonWithIcon
+                    shrinkThreshold="lg"
+                    Icon={<SaveIcon />}
+                    label={t('button.save')}
+                    variant="contained"
+                    color="secondary"
+                    sx={{ fontSize: '12px' }}
+                    onClick={() => {
+                      success('Saved invoice! 🥳 ')();
+                      save();
+                    }}
+                  />
+                  <ButtonWithIcon
+                    shrinkThreshold="lg"
+                    disabled={draft.onHold}
+                    Icon={<ArrowRightIcon />}
+                    label={t('button.save-and-confirm-status', {
+                      status: t(
+                        getNextOutboundStatusButtonTranslation(draft.status)
+                      ),
+                    })}
+                    sx={{ fontSize: '12px' }}
+                    variant="contained"
+                    color="secondary"
+                    onClick={async () => {
+                      success('Saved invoice! 🥳 ')();
+                      await draft.update?.(
+                        'status',
+                        getNextOutboundStatus(draft.status)
+                      );
+
+                      save();
+                    }}
+                  />
+                </>
+              )}
+            </Box>
           </Box>
-        </Box>
+        )
       }
     />
   );

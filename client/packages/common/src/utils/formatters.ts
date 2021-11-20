@@ -8,7 +8,7 @@ export class RouteBuilder {
     this.parts = [part];
   }
 
-  static create(part: string) {
+  static create(part: string): RouteBuilder {
     return new RouteBuilder(part);
   }
 
