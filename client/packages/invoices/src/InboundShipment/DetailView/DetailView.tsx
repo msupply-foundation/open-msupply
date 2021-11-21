@@ -61,13 +61,16 @@ export const itemToSummaryItem = (item: Item): InboundShipmentItem => {
 
 export const DetailView: FC = () => {
   const t = useTranslation('outbound-shipment');
-  const { hideDialog, showDialog, Modal } = useDialog();
+
   const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
 
   const [selectedItem, setSelectedItem] = React.useState<{
     item: InboundShipmentItem | null;
     editing: boolean;
   }>({ item: null, editing: false });
+  const { hideDialog, showDialog, Modal } = useDialog({
+    onClose: () => setSelectedItem({ item: null, editing: false }),
+  });
 
   console.log('-------------------------------------------');
   console.log('selectedItem', selectedItem);
