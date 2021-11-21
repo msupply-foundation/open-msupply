@@ -15,18 +15,19 @@ import {
   useTranslation,
   Item,
 } from '@openmsupply-client/common';
+
 import { reducer } from './reducer';
 import { getInboundShipmentDetailViewApi } from './api';
-
 import { Toolbar } from './Toolbar';
-import { isInboundEditable } from '../../utils';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
+import { GeneralTab } from './GeneralTab';
+import { InboundLineEdit } from './modals/InboundLineEdit';
+
+import { isInboundEditable } from '../../utils';
 import { InboundShipmentItem } from '../../types';
 import { OutboundAction } from '../../OutboundShipment/DetailView/reducer';
-import { GeneralTab } from '../../OutboundShipment/DetailView/tabs/GeneralTab';
-import { InboundLineEdit } from './modals/InboundLineEdit';
 
 const useDraftInbound = () => {
   const { id } = useParams();
@@ -67,6 +68,10 @@ export const DetailView: FC = () => {
     item: InboundShipmentItem | null;
     editing: boolean;
   }>({ item: null, editing: false });
+
+  console.log('-------------------------------------------');
+  console.log('selectedItem', selectedItem);
+  console.log('-------------------------------------------');
 
   const onChangeSelectedItem = (newItem: Item | null) => {
     if (!newItem) return setSelectedItem({ item: newItem, editing: false });
