@@ -10,6 +10,9 @@ import {
   GenericColumnKey,
   getNotePopoverColumn,
   getRowExpandColumn,
+  useDialog,
+  DialogButton,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { reducer } from './reducer';
 import { getInboundShipmentDetailViewApi } from './api';
@@ -22,6 +25,7 @@ import { SidePanel } from './SidePanel';
 import { InboundShipmentItem } from '../../types';
 import { OutboundAction } from '../../OutboundShipment/DetailView/reducer';
 import { GeneralTab } from '../../OutboundShipment/DetailView/tabs/GeneralTab';
+import { InboundLineEdit } from './modals/InboundLineEdit';
 
 const useDraftInbound = () => {
   const { id } = useParams();
@@ -41,6 +45,8 @@ const useDraftInbound = () => {
 };
 
 export const DetailView: FC = () => {
+  const t = useTranslation('common');
+  const { hideDialog, showDialog, Modal } = useDialog();
   const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
 
   const onRowClick = () => {};
@@ -69,7 +75,7 @@ export const DetailView: FC = () => {
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
         isDisabled={!isInboundEditable(draft)}
-        onAddItem={() => {}}
+        onAddItem={showDialog}
       />
 
       <Toolbar draft={draft} />
@@ -82,6 +88,17 @@ export const DetailView: FC = () => {
 
       <Footer draft={draft} save={save} />
       <SidePanel draft={draft} />
+
+      <Modal
+        title={t('heading.add-item')}
+        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        nextButton={<DialogButton variant="next" onClick={() => {}} />}
+        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+        height={600}
+        width={900}
+      >
+        <InboundLineEdit />
+      </Modal>
     </TableProvider>
   );
 };
