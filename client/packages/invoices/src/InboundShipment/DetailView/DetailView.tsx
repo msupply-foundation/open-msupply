@@ -45,7 +45,7 @@ const useDraftInbound = () => {
 };
 
 export const DetailView: FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation('outbound-shipment');
   const { hideDialog, showDialog, Modal } = useDialog();
   const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
 
@@ -66,6 +66,8 @@ export const DetailView: FC = () => {
     setSelectedItem({ item: null, editing: false });
     showDialog();
   };
+
+  const isEditMode = selectedItem.editing;
 
   const columns = useColumns(
     [
@@ -106,7 +108,7 @@ export const DetailView: FC = () => {
       <SidePanel draft={draft} />
 
       <Modal
-        title={t('heading.add-item')}
+        title={!isEditMode ? t('heading.add-item') : t('heading.edit-item')}
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={<DialogButton variant="next" onClick={() => {}} />}
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
