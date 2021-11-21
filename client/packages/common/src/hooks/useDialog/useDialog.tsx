@@ -80,6 +80,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     width,
     title,
   }) => {
+    // The slide animation is triggered by cloning the next button and wrapping the passed
+    // on click with a trigger to slide.
     const { slideConfig, onTriggerSlide } = useSlideAnimation();
 
     // TODO: If you want to disable the slide, add a prop `slidesOnNext` or something,
@@ -89,7 +91,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       const { onClick, ...restOfNextButtonProps } = nextButton.props;
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
-      // slideAnimationConfig
+      // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
       WrappedNextButton = React.cloneElement(nextButton, {
         onClick: () => {
           onTriggerSlide();
