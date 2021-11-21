@@ -49,7 +49,18 @@ export const DetailView: FC = () => {
   const { hideDialog, showDialog, Modal } = useDialog();
   const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
 
-  const onRowClick = () => {};
+  const [selectedItem, setSelectedItem] = React.useState<{
+    item: InboundShipmentItem | null;
+    editing: boolean;
+  }>({ item: null, editing: false });
+  console.log('-------------------------------------------');
+  console.log('selectedItem', selectedItem);
+  console.log('-------------------------------------------');
+
+  const onRowClick = (item: InboundShipmentItem) => {
+    setSelectedItem({ item, editing: true });
+    showDialog();
+  };
 
   const columns = useColumns(
     [
