@@ -13,6 +13,7 @@ import {
   useDialog,
   DialogButton,
   useTranslation,
+  Item,
 } from '@openmsupply-client/common';
 import { reducer } from './reducer';
 import { getInboundShipmentDetailViewApi } from './api';
@@ -44,6 +45,19 @@ const useDraftInbound = () => {
   return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
 };
 
+export const itemToSummaryItem = (item: Item): InboundShipmentItem => {
+  return {
+    id: item.id,
+    itemId: item.id,
+    itemName: item.name,
+    itemCode: item.code,
+    itemUnit: item.unitName,
+    batches: {},
+    unitQuantity: 0,
+    numberOfPacks: 0,
+  };
+};
+
 export const DetailView: FC = () => {
   const t = useTranslation('outbound-shipment');
   const { hideDialog, showDialog, Modal } = useDialog();
@@ -53,9 +67,23 @@ export const DetailView: FC = () => {
     item: InboundShipmentItem | null;
     editing: boolean;
   }>({ item: null, editing: false });
-  console.log('-------------------------------------------');
-  console.log('selectedItem', selectedItem);
-  console.log('-------------------------------------------');
+
+  const onChangeSelectedItem = (newItem: Item | null) => {
+    if (!newItem) return setSelectedItem({ item: newItem, editing: false });
+
+    // Try and find the outbound summary row that matches the new item
+    const item = draft.items.find(
+      summaryItem => summaryItem.itemId === newItem.id
+    );
+
+    // If we found it, set the selected item.
+    if (item) {
+      setSelectedItem({ item, editing: true });
+    } else {
+      // otherwise, set the selected item to a newly created summary row.
+      setSelectedItem({ item: itemToSummaryItem(newItem), editing: false });
+    }
+  };
 
   const onRowClick = (item: InboundShipmentItem) => {
     setSelectedItem({ item, editing: true });
@@ -115,7 +143,11 @@ export const DetailView: FC = () => {
         height={600}
         width={900}
       >
-        <InboundLineEdit />
+        <InboundLineEdit
+          item={selectedItem.item}
+          onUpsert={() => {}}
+          onChangeItem={onChangeSelectedItem}
+        />
       </Modal>
     </TableProvider>
   );
