@@ -17,6 +17,7 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import Fab from '@mui/material/Fab';
 
 export * from './portals';
 export * from './inputs';
@@ -37,6 +38,7 @@ export {
   AccordionSummary,
   CircularProgress,
   Collapse,
+  Fab,
   Input,
   InputAdornment,
   InputLabel,

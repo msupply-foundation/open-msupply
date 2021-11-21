@@ -16,7 +16,7 @@ import {
   Item,
 } from '@openmsupply-client/common';
 
-import { reducer } from './reducer';
+import { InboundAction, reducer } from './reducer';
 import { getInboundShipmentDetailViewApi } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -27,7 +27,6 @@ import { InboundLineEdit } from './modals/InboundLineEdit';
 
 import { isInboundEditable } from '../../utils';
 import { InboundShipmentItem } from '../../types';
-import { OutboundAction } from '../../OutboundShipment/DetailView/reducer';
 
 const useDraftInbound = () => {
   const { id } = useParams();
@@ -40,7 +39,7 @@ const useDraftInbound = () => {
   );
 
   const onChangeSortBy = (column: Column<InboundShipmentItem>) => {
-    dispatch(OutboundAction.onSortBy(column));
+    dispatch(InboundAction.onSortBy(column));
   };
 
   return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
@@ -149,7 +148,7 @@ export const DetailView: FC = () => {
         nextButton={<DialogButton variant="next" onClick={() => {}} />}
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         height={600}
-        width={900}
+        width={1024}
       >
         <InboundLineEdit
           item={selectedItem.item}
