@@ -62,6 +62,11 @@ export const DetailView: FC = () => {
     showDialog();
   };
 
+  const onAddItem = () => {
+    setSelectedItem({ item: null, editing: false });
+    showDialog();
+  };
+
   const columns = useColumns(
     [
       getNotePopoverColumn<InboundShipmentItem>(),
@@ -86,7 +91,7 @@ export const DetailView: FC = () => {
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
         isDisabled={!isInboundEditable(draft)}
-        onAddItem={showDialog}
+        onAddItem={onAddItem}
       />
 
       <Toolbar draft={draft} />
