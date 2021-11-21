@@ -18,8 +18,6 @@ export interface ModalProps {
   height?: number;
   nextButton?: React.ReactElement<{
     onClick: () => void;
-    variant: 'next';
-    disabled: boolean;
   }>;
 
   okButton?: JSX.Element;
