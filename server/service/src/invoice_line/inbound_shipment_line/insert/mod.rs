@@ -45,6 +45,7 @@ pub enum InsertInboundShipmentLineError {
     NotAnInboundShipment,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    LocationDoesNotExists,
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowOne,

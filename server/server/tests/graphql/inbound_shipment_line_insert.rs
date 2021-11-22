@@ -121,6 +121,22 @@ mod graphql {
                 key: insert::ForeignKey::ItemId,
             })
         );
+
+        // Test ForeingKeyError LocationId
+
+        let mut variables = base_variables.clone();
+        variables.location_id_option = Some("invalid".to_owned());
+
+        let query = Insert::build_query(variables);
+        let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+        assert_error!(
+            response,
+            ForeignKeyError(insert::ForeignKeyError {
+                description: "FK record doesn't exist".to_string(),
+                key: insert::ForeignKey::LocationId,
+            })
+        );
+
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
