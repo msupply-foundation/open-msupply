@@ -9,6 +9,7 @@ import {
   ifTheSameElseDefault,
   Item,
   arrayToRecord,
+  getDataSorter,
 } from '@openmsupply-client/common';
 import { placeholderInbound } from '../../../utils';
 import {
@@ -205,6 +206,47 @@ export const reducer = (
 
           break;
         }
+
+        case ActionType.SortBy: {
+          const { payload } = action;
+          const { column } = payload;
+
+          const { key } = column;
+
+          const { draft, sortBy } = state;
+          const { items } = draft;
+          const { key: currentSortKey, isDesc: currentIsDesc } = sortBy;
+
+          const newIsDesc = currentSortKey === key ? !currentIsDesc : false;
+          const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
+          const newSortBy: SortBy<InboundShipmentItem> = {
+            key,
+            isDesc: newIsDesc,
+            direction: newDirection,
+          };
+
+          const newItems = items.sort(
+            getDataSorter(
+              newSortBy.key as keyof InboundShipmentItem,
+              !!newSortBy.isDesc
+            )
+          );
+
+          draft.items = newItems;
+          state.sortBy = newSortBy;
+
+          break;
+        }
+
+        case ActionType.UpdateInvoice: {
+          const { payload } = action;
+          const { key, value } = payload;
+
+          state.draft[key] = value;
+
+          break;
+        }
+
         case ActionType.UpdateInvoice: {
           const { payload } = action;
           const { key, value } = payload;
