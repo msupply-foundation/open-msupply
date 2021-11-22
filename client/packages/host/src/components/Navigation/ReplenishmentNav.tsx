@@ -29,9 +29,9 @@ const useNestedNav = (path: string) => {
   return { isActive: isOpen && (expanded || hovered) };
 };
 
-export const DistributionNav: FC = () => {
+export const ReplenishmentNav: FC = () => {
   const { isActive } = useNestedNav(
-    RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
+    RouteBuilder.create(AppRoute.Replenishment).addWildCard().build()
   );
   const t = useTranslation('app');
 
@@ -39,36 +39,37 @@ export const DistributionNav: FC = () => {
     <>
       <NavLink
         end={false}
-        to={AppRoute.Distribution}
+        to={AppRoute.Replenishment}
         icon={<TruckIcon color="primary" fontSize="small" />}
         expandOnHover
-        text={t('distribution')}
+        text={t('replenishment')}
       />
       <Collapse in={isActive}>
         <List>
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.OutboundShipment)
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
               .build()}
-            text={t('outbound-shipment')}
+            text={t('inbound-shipment')}
           />
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.CustomerRequisition)
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.SupplierRequisition)
               .build()}
-            text={t('customer-requisition')}
+            text={t('supplier-requisition')}
           />
+
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.Customer)
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.Suppliers)
               .build()}
-            text={t('customers')}
+            text={t('suppliers')}
           />
         </List>
       </Collapse>
