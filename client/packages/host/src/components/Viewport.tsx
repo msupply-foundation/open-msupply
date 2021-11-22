@@ -19,7 +19,7 @@ const globalStyles = {
   },
 } as const;
 
-const Viewport: React.FC = props => {
+export const Viewport: React.FC = props => {
   return (
     <React.Fragment>
       <GlobalStyles styles={globalStyles} {...props} />

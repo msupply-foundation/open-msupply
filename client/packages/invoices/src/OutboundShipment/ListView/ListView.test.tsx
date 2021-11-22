@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Route } from 'react-router';
 
 import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
-import AppBar from '@openmsupply-client/host/src/AppBar';
+import { AppBar } from '@openmsupply-client/host/src/components';
 
 import { OutboundShipmentListView } from './ListView';
 

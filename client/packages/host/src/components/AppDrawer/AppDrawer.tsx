@@ -111,7 +111,7 @@ const StyledDrawer = styled(Box, {
   }),
 }));
 
-const AppDrawer: React.FC = () => {
+export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
 
