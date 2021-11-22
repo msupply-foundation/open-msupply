@@ -44,6 +44,7 @@ import {
   DashboardRouter,
   DistributionRouter,
   CatalogueRouter,
+  ReplenishmentRouter,
 } from './routers';
 
 const queryClient = new QueryClient({
@@ -216,6 +217,14 @@ const Host: FC = () => (
                                   .addWildCard()
                                   .build()}
                                 element={<DistributionRouter />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Replenishment
+                                )
+                                  .addWildCard()
+                                  .build()}
+                                element={<ReplenishmentRouter />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Suppliers)
