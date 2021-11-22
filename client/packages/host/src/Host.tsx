@@ -31,7 +31,6 @@ import {
   OmSupplyApiProvider,
   IntlProvider,
   Biker,
-  BasicSpinner,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import {
