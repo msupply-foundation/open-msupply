@@ -42,7 +42,8 @@ export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
 
   const onSort = useDebounceCallback(
     () => onChangeSortBy && sortable && onChangeSortBy(column),
-    [column]
+    [column],
+    150
   );
 
   return (
