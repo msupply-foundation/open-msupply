@@ -33,9 +33,9 @@ pub fn validate(
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
 
-    // InvoiceDoesNotBelongToCurrentStore
-    // StockLineDoesNotBelongToCurrentStore
-    // LocationDoesNotBelongToCurrentStore
+    // TODO: InvoiceDoesNotBelongToCurrentStore
+    // TODO: StockLineDoesNotBelongToCurrentStore
+    // TODO: LocationDoesNotBelongToCurrentStore
 
     Ok((item, invoice))
 }
