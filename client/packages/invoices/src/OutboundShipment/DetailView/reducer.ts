@@ -224,18 +224,25 @@ export const reducer = (
           const { key } = column;
 
           const { draft, sortBy } = state;
-          const { lines } = draft;
+          const { items } = draft;
           const { key: currentSortKey, isDesc: currentIsDesc } = sortBy;
 
           const newIsDesc = currentSortKey === key ? !currentIsDesc : false;
           const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
-          const newSortBy = { key, isDesc: newIsDesc, direction: newDirection };
+          const newSortBy: SortBy<OutboundShipmentSummaryItem> = {
+            key,
+            isDesc: newIsDesc,
+            direction: newDirection,
+          };
 
-          const newLines = lines.sort(
-            getDataSorter(newSortBy.key, newSortBy.isDesc)
+          const newItems = items.sort(
+            getDataSorter(
+              newSortBy.key as keyof OutboundShipmentSummaryItem,
+              !!newSortBy.isDesc
+            )
           );
 
-          draft.lines = newLines;
+          draft.items = newItems;
           state.sortBy = newSortBy;
 
           break;
