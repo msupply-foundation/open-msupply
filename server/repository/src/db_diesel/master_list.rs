@@ -13,7 +13,7 @@ impl<'a> MasterListRepository<'a> {
         MasterListRepository { connection }
     }
 
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::master_list::dsl::*;
 
@@ -26,7 +26,7 @@ impl<'a> MasterListRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "sqlite")]
+    #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::master_list::dsl::*;
         diesel::replace_into(master_list)

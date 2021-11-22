@@ -19,7 +19,7 @@ fn find_test_migration_directory() -> PathBuf {
     }
 }
 
-#[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+#[cfg(feature = "postgres")]
 pub async fn setup(db_settings: &DatabaseSettings) {
     use diesel::{PgConnection, RunQueryDsl};
 
@@ -60,7 +60,7 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     }
 }
 
-#[cfg(feature = "sqlite")]
+#[cfg(not(feature = "postgres"))]
 pub async fn setup(db_settings: &DatabaseSettings) {
     use diesel::{Connection, SqliteConnection};
     use std::fs;
@@ -89,12 +89,12 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     }
 }
 
-#[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+#[cfg(feature = "postgres")]
 fn make_test_db_name(base_name: String) -> String {
     base_name
 }
 
-#[cfg(feature = "sqlite")]
+#[cfg(not(feature = "postgres"))]
 fn make_test_db_name(base_name: String) -> String {
     // store all test db files in a test directory
     format!("test_output/{}", base_name)

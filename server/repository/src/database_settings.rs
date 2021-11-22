@@ -12,7 +12,7 @@ pub struct DatabaseSettings {
     pub database_name: String,
 }
 
-#[cfg(not(feature = "sqlite"))]
+#[cfg(feature = "postgres")]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
@@ -29,7 +29,7 @@ impl DatabaseSettings {
     }
 }
 
-#[cfg(feature = "sqlite")]
+#[cfg(not(feature = "postgres"))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!("{}.sqlite", self.database_name)

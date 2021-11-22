@@ -13,7 +13,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
         MasterListNameJoinRepository { connection }
     }
 
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::master_list_name_join::dsl::*;
         diesel::insert_into(master_list_name_join)
@@ -25,7 +25,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "sqlite")]
+    #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::master_list_name_join::dsl::*;
         diesel::replace_into(master_list_name_join)

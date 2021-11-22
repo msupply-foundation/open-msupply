@@ -13,7 +13,7 @@ impl<'a> NameRepository<'a> {
         NameRepository { connection }
     }
 
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::name_table::dsl::*;
         diesel::insert_into(name_table)
@@ -25,7 +25,7 @@ impl<'a> NameRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "sqlite")]
+    #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::name_table::dsl::*;
         diesel::replace_into(name_table)
