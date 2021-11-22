@@ -128,7 +128,7 @@ const BatchRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
   );
 };
 
-const GeneralTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
+const BatchTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
   const t = useTranslation(['outbound-shipment', 'common']);
   return (
     <Table>
@@ -359,7 +359,7 @@ const PricingTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
 };
 
 enum Tabs {
-  General = 'General',
+  Batch = 'Batch',
   Pricing = 'Pricing',
   Weights = 'Weights',
   Discrepancies = 'Discrepancies',
@@ -415,7 +415,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     else setInboundItem(item);
   }, [item]);
 
-  const [currentTab, setCurrentTab] = React.useState<Tabs>(Tabs.General);
+  const [currentTab, setCurrentTab] = React.useState<Tabs>(Tabs.Batch);
 
   return (
     <>
@@ -460,7 +460,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             centered
             onChange={(_, v) => setCurrentTab(v)}
           >
-            <Tab value={Tabs.General} label={Tabs.General} />
+            <Tab value={Tabs.Batch} label={Tabs.Batch} />
             <Tab value={Tabs.Pricing} label={Tabs.Pricing} />
             <Tab value={Tabs.Weights} label={Tabs.Weights} />
             <Tab value={Tabs.Discrepancies} label={Tabs.Discrepancies} />
@@ -468,8 +468,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
           </TabList>
 
           <TableContainer sx={{ height: 400 }}>
-            <TabPanel value={Tabs.General}>
-              <GeneralTable batches={flattenInboundItems([inboundItem])} />
+            <TabPanel value={Tabs.Batch}>
+              <BatchTable batches={flattenInboundItems([inboundItem])} />
             </TabPanel>
             <TabPanel value={Tabs.Pricing}>
               <PricingTable batches={flattenInboundItems([inboundItem])} />
