@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import {
   AppFooterPortal,
   Box,
@@ -25,13 +26,14 @@ import {
   IntlProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import AppDrawer from './AppDrawer';
-import AppBar from './AppBar';
-import { LanguageMenu } from './LanguageMenu';
-import Viewport from './Viewport';
-import NotFound from './NotFound';
-import { Footer } from './Footer';
+import {
+  AppDrawer,
+  AppBar,
+  Viewport,
+  NotFound,
+  LanguageMenu,
+  Footer,
+} from './components';
 
 const queryClient = new QueryClient({
   defaultOptions: {

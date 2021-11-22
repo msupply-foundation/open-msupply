@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { render } from '@testing-library/react';
 
 import { TestingProvider, useHostContext } from '@openmsupply-client/common';
-import { Footer } from './Footer';
+import { Footer } from '.';
 
 describe('Footer', () => {
   const FooterExample: React.FC<{ username: string; storename: string }> = ({
