@@ -45,6 +45,7 @@ import {
   DashboardRouter,
   DistributionRouter,
   CatalogueRouter,
+  InventoryRouter,
   ReplenishmentRouter,
 } from './routers';
 
@@ -234,10 +235,10 @@ const Host: FC = () => (
                                 element={<Heading>suppliers</Heading>}
                               />
                               <Route
-                                path={RouteBuilder.create(AppRoute.Stock)
+                                path={RouteBuilder.create(AppRoute.Inventory)
                                   .addWildCard()
                                   .build()}
-                                element={<Heading>stock</Heading>}
+                                element={<InventoryRouter />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Tools)
