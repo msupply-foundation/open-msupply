@@ -37,9 +37,9 @@ pub fn validate(
 
     check_batch(&line, connection)?;
 
-    // InvoiceDoesNotBelongToCurrentStore
-    // StockLineDoesNotBelongToCurrentStore
-    // LocationDoesNotBelongToCurrentStore
+    // TODO: InvoiceDoesNotBelongToCurrentStore
+    // TODO: StockLineDoesNotBelongToCurrentStore
+    // TODO: LocationDoesNotBelongToCurrentStore
 
     Ok((line, item, invoice))
 }
