@@ -23,7 +23,7 @@ const StyledContainer = styled(Box)(({ theme }) => ({
   ...theme.mixins.header,
 }));
 
-const AppBar: React.FC = () => {
+export const AppBar: React.FC = () => {
   const t = useTranslation('app');
   const navigate = useNavigate();
   const { ref } = useAppBarRect();

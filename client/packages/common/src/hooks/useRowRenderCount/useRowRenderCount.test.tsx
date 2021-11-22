@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { act } from 'react-dom/test-utils';
 import { waitFor } from '@testing-library/dom';
 import { renderHook } from '@testing-library/react-hooks';
-import AppBar from '@openmsupply-client/host/src/AppBar';
+import { AppBar } from '@openmsupply-client/host/src/components';
 import { useTheme } from '../../styles';
 import { TestingProvider, TestingRouter } from '../../utils';
 import { useRowRenderCount } from './useRowRenderCount';
