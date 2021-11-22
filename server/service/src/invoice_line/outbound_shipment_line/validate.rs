@@ -73,22 +73,26 @@ pub fn check_batch_on_hold(batch: &StockLineRow) -> Result<(), BatchIsOnHold> {
     }
 }
 
-pub struct LocationIsOnHold;
+pub enum LocationIsOnHoldError {
+    LocationIsOnHold,
+    LocationNotFound,
+}
 
 pub fn check_location_on_hold(
     batch: &StockLineRow,
     connection: &StorageConnection,
-) -> Result<(), WithDBError<LocationIsOnHold>> {
+) -> Result<(), WithDBError<LocationIsOnHoldError>> {
+    use LocationIsOnHoldError::*;
     match &batch.location_id {
         Some(location_id) => {
             let location = LocationRowRepository::new(connection)
                 .find_one_by_id(&location_id)
                 .map_err(WithDBError::db)?;
 
-            if location.on_hold {
-                Err(WithDBError::err(LocationIsOnHold))
-            } else {
-                Ok(())
+            match location {
+                Some(location) if location.on_hold => Err(WithDBError::err(LocationIsOnHold)),
+                Some(_) => Ok(()),
+                None => Err(WithDBError::err(LocationNotFound)),
             }
         }
         None => Ok(()),

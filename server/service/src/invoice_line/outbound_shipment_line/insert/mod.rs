@@ -46,9 +46,11 @@ pub enum InsertOutboundShipmentLineError {
     StockLineNotFound,
     NumberOfPacksBelowOne,
     LocationIsOnHold,
+    LocationNotFound,
     StockLineAlreadyExistsInInvoice(String),
     ItemDoesNotMatchStockLine,
     BatchIsOnHold,
+    
     ReductionBelowZero { stock_line_id: String },
 }
 
