@@ -35,7 +35,7 @@ const fullCustomersPath = RouteBuilder.create(AppRoute.Distribution)
   .addWildCard()
   .build();
 
-const DistributionContainer: FC = () => {
+export const DistributionRouter: FC = () => {
   if (useMatch(fullOutboundShipmentPath)) {
     return <InvoiceService />;
   }
@@ -57,5 +57,3 @@ const DistributionContainer: FC = () => {
 
   return <></>;
 };
-
-export default DistributionContainer;
