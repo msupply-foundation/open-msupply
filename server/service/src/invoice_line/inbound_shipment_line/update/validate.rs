@@ -4,12 +4,12 @@ use crate::{
         validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
     },
     invoice_line::{
-        inbound_shipment_line::{check_batch, check_pack_size},
+        check_batch, check_location_exists, check_pack_size,
         validate::{
             check_item, check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
             ItemNotFound, LineDoesNotExist, NotInvoiceLine, NumberOfPacksBelowOne,
         },
-        BatchIsReserved, PackSizeBelowOne,
+        BatchIsReserved, LocationDoesNotExists, PackSizeBelowOne,
     },
 };
 use domain::{inbound_shipment::UpdateInboundShipmentLine, invoice::InvoiceType};
@@ -37,6 +37,8 @@ pub fn validate(
 
     check_batch(&line, connection)?;
 
+    check_location_exists(&input.location_id, connection)?;
+
     // TODO: InvoiceDoesNotBelongToCurrentStore
     // TODO: StockLineDoesNotBelongToCurrentStore
     // TODO: LocationDoesNotBelongToCurrentStore
@@ -58,6 +60,12 @@ fn check_item_option(
 impl From<ItemNotFound> for UpdateInboundShipmentLineError {
     fn from(_: ItemNotFound) -> Self {
         UpdateInboundShipmentLineError::ItemNotFound
+    }
+}
+
+impl From<LocationDoesNotExists> for UpdateInboundShipmentLineError {
+    fn from(_: LocationDoesNotExists) -> Self {
+        UpdateInboundShipmentLineError::LocationDoesNotExists
     }
 }
 

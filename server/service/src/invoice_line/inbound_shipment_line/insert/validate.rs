@@ -4,12 +4,13 @@ use crate::{
         validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
     },
     invoice_line::{
+        check_location_exists,
         inbound_shipment_line::check_pack_size,
         validate::{
             check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
             LineAlreadyExists, NumberOfPacksBelowOne,
         },
-        PackSizeBelowOne,
+        LocationDoesNotExists, PackSizeBelowOne,
     },
 };
 use domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType};
@@ -29,6 +30,8 @@ pub fn validate(
     check_number_of_packs(Some(input.number_of_packs))?;
     let item = check_item(&input.item_id, connection)?;
 
+    check_location_exists(&input.location_id, connection)?;
+
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
@@ -43,6 +46,12 @@ pub fn validate(
 impl From<ItemNotFound> for InsertInboundShipmentLineError {
     fn from(_: ItemNotFound) -> Self {
         InsertInboundShipmentLineError::ItemNotFound
+    }
+}
+
+impl From<LocationDoesNotExists> for InsertInboundShipmentLineError {
+    fn from(_: LocationDoesNotExists) -> Self {
+        InsertInboundShipmentLineError::LocationDoesNotExists
     }
 }
 
