@@ -1,4 +1,5 @@
 import React from 'react';
+import { Property } from 'csstype';
 import {
   Box,
   DashboardIcon,
@@ -19,15 +20,7 @@ import {
   useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { Property } from 'csstype';
-
-const DistributionNav = React.lazy(
-  () => import('@openmsupply-client/distribution/src/Nav')
-);
-
-const CatalogueNav = React.lazy(
-  () => import('@openmsupply-client/catalogue/src/Nav')
-);
+import { CatalogueNav, DistributionNav } from '../Navigation';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -145,13 +138,8 @@ export const AppDrawer: React.FC = () => {
             icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('dashboard')}
           />
-          <React.Suspense fallback={null}>
-            <DistributionNav />
-          </React.Suspense>
-
-          <React.Suspense fallback={null}>
-            <CatalogueNav />
-          </React.Suspense>
+          <DistributionNav />
+          <CatalogueNav />
 
           {/* <NavLink
             to={AppRoute.Suppliers}
