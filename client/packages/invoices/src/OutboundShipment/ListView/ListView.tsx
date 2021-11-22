@@ -93,7 +93,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
             try {
               const result = await onCreate(invoice);
               invalidate();
-              navigate(`/distribution/outbound-shipment/${result}`);
+              navigate(result);
             } catch (e) {
               const errorSnack = error(
                 'Failed to create invoice! ' + (e as Error).message
@@ -116,7 +116,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/distribution/outbound-shipment/${row.id}`);
+          navigate(row.id);
         }}
       />
     </>
