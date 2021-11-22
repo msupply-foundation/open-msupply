@@ -30,6 +30,7 @@ import {
   AppFooter,
   OmSupplyApiProvider,
   IntlProvider,
+  Biker,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import {
@@ -179,7 +180,7 @@ const CommandK: FC = ({ children }) => {
 };
 
 const Host: FC = () => (
-  <React.Suspense fallback={'Loading'}>
+  <React.Suspense fallback={<Biker />}>
     <IntlProvider>
       <ErrorBoundary Fallback={GenericErrorFallback}>
         <QueryClientProvider client={queryClient}>
