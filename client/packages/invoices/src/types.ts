@@ -115,6 +115,7 @@ export type OutboundShipmentAction =
 
 export interface OutboundShipmentRow extends InvoiceLine {
   updateNumberOfPacks?: (quantity: number) => void;
+
   stockLineId: string;
   invoiceId: string;
   itemId: string;
@@ -149,6 +150,10 @@ export interface OutboundShipment extends Invoice {
 }
 export interface InboundShipmentRow extends InvoiceLine {
   updateNumberOfPacks?: (quantity: number) => void;
+  update?: <K extends keyof InboundShipmentRow>(
+    key: K,
+    value: InboundShipmentRow[K]
+  ) => void;
   stockLineId: string;
   invoiceId: string;
   itemId: string;
