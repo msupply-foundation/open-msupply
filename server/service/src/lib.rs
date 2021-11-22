@@ -20,6 +20,15 @@ pub struct ListResult<T> {
     pub count: u32,
 }
 
+impl<T> ListResult<T> {
+    pub fn empty() -> ListResult<T> {
+        ListResult {
+            rows: vec![],
+            count: 0,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum ListError {
     DatabaseError(RepositoryError),

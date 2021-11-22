@@ -133,89 +133,6 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_locations_errors() {
-        let (_, _, settings) =
-            setup_all("test_graphql_location_errors", MockDataInserts::all()).await;
-
-        let query = r#"
-        query {
-            locations {
-              ... on ConnectorError {
-                error {
-                    ...on PaginationError {
-                       rangeError {
-                          description
-                          field
-                          max
-                          min
-                       }   
-                    }
-                }
-              }
-            }
-        }
-        "#;
-
-        // Test pagination, first over limit
-        let expected = json!({
-              "locations": {
-                "error": {
-                  "rangeError": {
-                    "description": "Value is above maximum",
-                    "field": "first",
-                    "max": 1000,
-                    "min": null
-                  }
-                }
-              }
-          }
-        );
-
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Err(ListError::LimitAboveMax(1000))
-            })));
-
-        assert_gql_query(
-            &settings,
-            query,
-            &None,
-            &expected,
-            Some(ServicesOverride::new().location_service(service)),
-        )
-        .await;
-
-        // Test pagination, first too small
-        let expected = json!({
-              "locations": {
-                "error": {
-                  "rangeError": {
-                    "description": "Value is below minimum",
-                    "field": "first",
-                    "max": null,
-                    "min": 1
-                  }
-                }
-              }
-          }
-        );
-
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Err(ListError::LimitBelowMin(1))
-            })));
-
-        assert_gql_query(
-            &settings,
-            query,
-            &None,
-            &expected,
-            Some(ServicesOverride::new().location_service(service)),
-        )
-        .await;
-    }
-
-    #[actix_rt::test]
     async fn test_graphql_locations_inputs() {
         let (_, _, settings) =
             setup_all("test_graphql_location_inputs", MockDataInserts::all()).await;
@@ -223,10 +140,9 @@ mod graphql {
         let query = r#"
         query(
             $sort: [LocationSortInput]
-            $page: PaginationInput
             $filter: LocationFilterInput
           ) {
-            locations(sort: $sort, page: $page, filter: $filter) {
+            locations(sort: $sort, filter: $filter) {
               __typename
             }
           }
@@ -235,7 +151,7 @@ mod graphql {
 
         let expected = json!({
               "locations": {
-                  "__typename": "ConnectorError"
+                  "__typename": "LocationConnector"
               }
           }
         );
@@ -256,7 +172,7 @@ mod graphql {
                         desc: None
                     })
                 );
-                Err(ListError::LimitAboveMax(1000))
+                Ok(ListResult::empty())
             })));
 
         assert_gql_query(
@@ -285,36 +201,7 @@ mod graphql {
                         desc: Some(true)
                     })
                 );
-                Err(ListError::LimitAboveMax(1000))
-            })));
-
-        assert_gql_query(
-            &settings,
-            query,
-            &Some(variables),
-            &expected,
-            Some(ServicesOverride::new().location_service(service)),
-        )
-        .await;
-
-        // Test pagination
-        let variables = json!({
-          "page": {
-            "first": 2,
-            "offset": 1
-          }
-        });
-
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|page, _, _| {
-                assert_eq!(
-                    page,
-                    Some(PaginationOption {
-                        limit: Some(2),
-                        offset: Some(1)
-                    })
-                );
-                Err(ListError::LimitAboveMax(1000))
+                Ok(ListResult::empty())
             })));
 
         assert_gql_query(
@@ -336,7 +223,7 @@ mod graphql {
         let service: Option<Box<dyn LocationServiceQuery>> =
             Some(Box::new(TestService(|_, filter, _| {
                 assert_eq!(filter, Some(LocationFilter::new().match_name("match_name")));
-                Err(ListError::LimitAboveMax(1000))
+                Ok(ListResult::empty())
             })));
 
         assert_gql_query(
