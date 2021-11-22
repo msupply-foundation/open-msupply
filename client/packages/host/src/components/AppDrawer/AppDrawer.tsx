@@ -20,7 +20,7 @@ import {
   useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { CatalogueNav, DistributionNav } from '../Navigation';
+import { CatalogueNav, DistributionNav, ReplenishmentNav } from '../Navigation';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -139,6 +139,7 @@ export const AppDrawer: React.FC = () => {
             text={t('dashboard')}
           />
           <DistributionNav />
+          <ReplenishmentNav />
           <CatalogueNav />
 
           {/* <NavLink

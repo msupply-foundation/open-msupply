@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
+
 import {
-  TruckIcon,
+  SuppliersIcon,
   Collapse,
   List,
   useTranslation,
@@ -10,9 +11,9 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
-export const DistributionNav: FC = () => {
+export const ReplenishmentNav: FC = () => {
   const { isActive } = useNestedNav(
-    RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
+    RouteBuilder.create(AppRoute.Replenishment).addWildCard().build()
   );
   const t = useTranslation('app');
 
@@ -20,36 +21,37 @@ export const DistributionNav: FC = () => {
     <>
       <NavLink
         end={false}
-        to={AppRoute.Distribution}
-        icon={<TruckIcon color="primary" fontSize="small" />}
+        to={AppRoute.Replenishment}
+        icon={<SuppliersIcon color="primary" fontSize="small" />}
         expandOnHover
-        text={t('distribution')}
+        text={t('replenishment')}
       />
       <Collapse in={isActive}>
         <List>
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.OutboundShipment)
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
               .build()}
-            text={t('outbound-shipment')}
+            text={t('inbound-shipment')}
           />
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.CustomerRequisition)
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.SupplierRequisition)
               .build()}
-            text={t('customer-requisition')}
+            text={t('supplier-requisition')}
           />
+
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.Customer)
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.Suppliers)
               .build()}
-            text={t('customers')}
+            text={t('suppliers')}
           />
         </List>
       </Collapse>

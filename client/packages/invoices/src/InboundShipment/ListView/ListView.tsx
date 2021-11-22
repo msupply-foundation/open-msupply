@@ -12,14 +12,12 @@ import {
   useOmSupplyApi,
   useNotification,
   generateUUID,
-  RouteBuilder,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
 // import { InvoiceRow } from '../../types';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { AppRoute } from '@openmsupply-client/config';
 
 export const InboundListView: FC = () => {
   const navigate = useNavigate();
@@ -74,12 +72,6 @@ export const InboundListView: FC = () => {
 
   const [open, setOpen] = useState(false);
 
-  const createDetailUrl = (id: string) =>
-    RouteBuilder.create(AppRoute.Distribution)
-      .addPart(AppRoute.InboundShipment)
-      .addPart(id)
-      .build();
-
   return (
     <>
       <NameSearchModal
@@ -98,7 +90,7 @@ export const InboundListView: FC = () => {
             try {
               const result = await onCreate(invoice);
               invalidate();
-              navigate(createDetailUrl(result));
+              navigate(result);
             } catch (e) {
               const errorSnack = error(
                 'Failed to create invoice! ' + (e as Error).message
@@ -121,7 +113,7 @@ export const InboundListView: FC = () => {
         data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(createDetailUrl(row.id));
+          navigate(row.id);
         }}
       />
     </>
