@@ -486,16 +486,12 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
           <Fab
             sx={{
               alignSelf: 'flex-end',
-              maxHeight: 24,
-              maxWidth: 24,
-              minHeight: 24,
-              minWidth: 24,
+              margin: '10px',
               alignItems: 'center',
               justifyContent: 'center',
             }}
             color="secondary"
             aria-label="add"
-            size="small"
             onClick={onAddBatch}
           >
             <PlusCircleIcon />
