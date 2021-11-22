@@ -1,5 +1,11 @@
 import React, { FC } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+} from 'react-router-dom';
 import {
   AppFooterPortal,
   Box,
@@ -34,6 +40,11 @@ import {
   LanguageMenu,
   Footer,
 } from './components';
+import {
+  DashboardRouter,
+  DistributionRouter,
+  CatalogueRouter,
+} from './routers';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,17 +53,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const DistributionContainer = React.lazy(
-  () => import('@openmsupply-client/distribution/src/DistributionContainer')
-);
-const DashboardService = React.lazy(
-  () => import('@openmsupply-client/dashboard/src/DashboardService')
-);
-
-const CatalogueContainer = React.lazy(
-  () => import('@openmsupply-client/catalogue/src/Container')
-);
 
 const Heading: FC = ({ children }) => (
   <div style={{ margin: 50 }}>
@@ -203,19 +203,19 @@ const Host: FC = () => (
                                 path={RouteBuilder.create(AppRoute.Dashboard)
                                   .addWildCard()
                                   .build()}
-                                element={<DashboardService />}
+                                element={<DashboardRouter />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Catalogue)
                                   .addWildCard()
                                   .build()}
-                                element={<CatalogueContainer />}
+                                element={<CatalogueRouter />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Distribution)
                                   .addWildCard()
                                   .build()}
-                                element={<DistributionContainer />}
+                                element={<DistributionRouter />}
                               />
                               <Route
                                 path={RouteBuilder.create(AppRoute.Suppliers)
@@ -255,7 +255,17 @@ const Host: FC = () => (
                                 element={<LanguageMenu />}
                               />
 
-                              <Route path="/" element={<DashboardService />} />
+                              <Route
+                                path="/"
+                                element={
+                                  <Navigate
+                                    replace
+                                    to={RouteBuilder.create(
+                                      AppRoute.Dashboard
+                                    ).build()}
+                                  />
+                                }
+                              />
 
                               <Route path="*" element={<NotFound />} />
                             </Routes>

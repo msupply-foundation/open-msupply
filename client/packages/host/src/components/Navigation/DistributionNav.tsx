@@ -1,13 +1,13 @@
 import React, { FC, useEffect } from 'react';
 import { useMatch } from 'react-router-dom';
 import {
+  TruckIcon,
   Collapse,
   List,
   useDrawer,
   useTranslation,
   RouteBuilder,
   NavLink,
-  ListIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -29,9 +29,9 @@ const useNestedNav = (path: string) => {
   return { isActive: isOpen && (expanded || hovered) };
 };
 
-const Nav: FC = () => {
+export const DistributionNav: FC = () => {
   const { isActive } = useNestedNav(
-    RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
+    RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
   );
   const t = useTranslation('app');
 
@@ -39,25 +39,47 @@ const Nav: FC = () => {
     <>
       <NavLink
         end={false}
-        to={AppRoute.Catalogue}
-        icon={<ListIcon color="primary" />}
+        to={AppRoute.Distribution}
+        icon={<TruckIcon color="primary" fontSize="small" />}
         expandOnHover
-        text={t('catalogue')}
+        text={t('distribution')}
       />
       <Collapse in={isActive}>
         <List>
           <NavLink
             end
             expandOnHover
-            to={RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.Items)
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.OutboundShipment)
               .build()}
-            text={t('items')}
+            text={t('outbound-shipment')}
+          />
+          <NavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.CustomerRequisition)
+              .build()}
+            text={t('customer-requisition')}
+          />
+          <NavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.InboundShipment)
+              .build()}
+            text={t('app.inbound-shipments')}
+          />
+          <NavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.Customer)
+              .build()}
+            text={t('customers')}
           />
         </List>
       </Collapse>
     </>
   );
 };
-
-export default Nav;
