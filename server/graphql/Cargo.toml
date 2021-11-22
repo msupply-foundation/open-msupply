@@ -28,5 +28,5 @@ serde = "1.0.126"
 serde_json = "1.0.66"
 
 [features]
+default = ["repository/sqlite"]
 postgres = ["repository/postgres"]
-sqlite = ["repository/sqlite"]
