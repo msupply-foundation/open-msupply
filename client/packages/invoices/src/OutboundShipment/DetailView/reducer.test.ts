@@ -1,7 +1,12 @@
-import { DocumentAction } from './../../../../common/src/hooks/useDocument/useDocument';
-import { flattenOutboundItems } from '../../utils';
-import { DocumentActionSet } from '@openmsupply-client/common';
-import { placeholderInvoice } from '../../utils';
+import { InboundAction } from './../../InboundShipment/DetailView/reducer/reducer';
+import { InboundShipmentItem } from './../../types';
+import {
+  Column,
+  createColumns,
+  DocumentActionSet,
+  DocumentAction,
+} from '@openmsupply-client/common';
+import { placeholderInvoice, flattenOutboundItems } from '../../utils';
 import { reducer, OutboundShipmentStateShape, OutboundAction } from './reducer';
 import {
   OutboundShipment,
@@ -117,6 +122,34 @@ const findRow = (
 
   return otherCondition ? otherCondition(row) : row;
 };
+
+describe('DetailView reducer: sorting', () => {
+  it('sorts ascending when not sorted by the key passed, then sorts descending when sorted by the column same column', () => {
+    const state = getState();
+    const column = createColumns<InboundShipmentItem>([
+      'numberOfPacks',
+    ])[0] as Column<InboundShipmentItem>;
+    const action = InboundAction.onSortBy(column);
+    const items = [
+      { id: '1', numberOfPacks: 2 },
+      { id: '2', numberOfPacks: 1 },
+    ] as InboundShipmentItem[];
+    state.draft.items = items;
+
+    const newState = callReducer(action, state);
+
+    expect(newState.draft.items).toEqual([
+      expect.objectContaining({ id: '2' }),
+      expect.objectContaining({ id: '1' }),
+    ]);
+
+    const newState2 = callReducer(action, newState);
+    expect(newState2.draft.items).toEqual([
+      expect.objectContaining({ id: '1' }),
+      expect.objectContaining({ id: '2' }),
+    ]);
+  });
+});
 
 describe('DetailView reducer: updating lines', () => {
   it('updates an existing line when upserting', () => {
