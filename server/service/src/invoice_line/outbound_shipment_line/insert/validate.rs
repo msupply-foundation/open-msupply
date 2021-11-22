@@ -10,7 +10,7 @@ use crate::{
             check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
             LineAlreadyExists, NumberOfPacksBelowOne,
         },
-        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHold,
+        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
     u32_to_i32,
@@ -69,9 +69,13 @@ impl From<BatchIsOnHold> for InsertOutboundShipmentLineError {
     }
 }
 
-impl From<LocationIsOnHold> for InsertOutboundShipmentLineError {
-    fn from(_: LocationIsOnHold) -> Self {
-        InsertOutboundShipmentLineError::LocationIsOnHold
+impl From<LocationIsOnHoldError> for InsertOutboundShipmentLineError {
+    fn from(error: LocationIsOnHoldError) -> Self {
+        use InsertOutboundShipmentLineError::*;
+        match error {
+            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+            LocationIsOnHoldError::LocationNotFound => LocationNotFound,
+        }
     }
 }
 
