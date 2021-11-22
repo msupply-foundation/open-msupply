@@ -1,33 +1,14 @@
-import React, { FC, useEffect } from 'react';
-import { useMatch } from 'react-router-dom';
+import React, { FC } from 'react';
 import {
   TruckIcon,
   Collapse,
   List,
-  useDrawer,
   useTranslation,
   RouteBuilder,
   NavLink,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-
-const matchPath = (key: string, path: string) =>
-  `/${key.replace(/^\//, '')}/`.startsWith(path.replace(/\*$/, ''));
-
-const useNestedNav = (path: string) => {
-  const { hoverActive, isOpen } = useDrawer();
-  const match = useMatch(path);
-  const [expanded, setExpanded] = React.useState(false);
-  const hovered = Object.keys(hoverActive).some(
-    key => matchPath(key, path) && hoverActive[key]
-  );
-
-  useEffect(() => {
-    setExpanded(!!match);
-  }, [match]);
-
-  return { isActive: isOpen && (expanded || hovered) };
-};
+import { useNestedNav } from './useNestedNav';
 
 export const DistributionNav: FC = () => {
   const { isActive } = useNestedNav(
