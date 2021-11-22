@@ -24,5 +24,6 @@ thiserror = "1"
 actix-rt = "1.1.1" # for Tokio 0.2
 
 [features]
-postgres = ["diesel/postgres" , "diesel-derive-enum/postgres"]
 sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
+postgres = ["diesel/postgres" , "diesel-derive-enum/postgres"]
+
