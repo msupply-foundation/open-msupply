@@ -246,8 +246,8 @@ impl AccessDenied {
         "Access Denied"
     }
 
-    pub async fn full_error(&self) -> String {
-        format!("{:#}", self.0)
+    pub async fn full_error(&self) -> &str {
+        &self.0
     }
 }
 
