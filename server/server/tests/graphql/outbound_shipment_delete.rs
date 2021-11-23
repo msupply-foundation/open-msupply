@@ -2,12 +2,9 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use server::util::test_utils::setup_all;
-    use repository::{
-        mock::MockDataInserts,
-        repository::{InvoiceRepository, RepositoryError},
-    };
+    use repository::{mock::MockDataInserts, InvoiceRepository, RepositoryError};
     use serde_json::json;
+    use server::test_utils::setup_all;
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_delete() {

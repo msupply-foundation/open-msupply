@@ -7,4 +7,5 @@ members = [
     "graphql",
     "server",
     "service",
+    "util",
 ]

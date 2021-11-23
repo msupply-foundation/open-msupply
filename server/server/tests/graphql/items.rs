@@ -1,8 +1,8 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use server::util::test_utils::setup_all;
     use repository::mock::MockDataInserts;
     use serde_json::json;
+    use server::test_utils::setup_all;
 
     #[actix_rt::test]
     async fn test_graphql_items_query() {

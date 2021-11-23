@@ -1,4 +1,4 @@
-use server::util::settings::Settings;
+use server::settings::Settings;
 
 use graphql::{
     config as graphql_config,
@@ -49,6 +49,7 @@ where
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
+        debug_no_access_control: true,
     });
 
     let mut app = actix_web::test::init_service(
@@ -96,6 +97,7 @@ async fn run_gql_query(
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
+        debug_no_access_control: true,
     });
 
     let mut app = actix_web::test::init_service(

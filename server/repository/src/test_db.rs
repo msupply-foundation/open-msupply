@@ -1,15 +1,25 @@
 use crate::{
     database_settings::DatabaseSettings,
+    db_diesel::{DBBackendConnection, StorageConnection, StorageConnectionManager},
     mock::{insert_mock_data, MockData, MockDataInserts},
-    repository::{DBBackendConnection, StorageConnection, StorageConnectionManager},
 };
 
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel_migrations::{mark_migrations_in_directory, search_for_migrations_directory};
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-#[cfg(feature = "postgres")]
+fn find_test_migration_directory() -> PathBuf {
+    // Assume the base path is the base path of one of the project crates:
+    match search_for_migrations_directory(Path::new("../repository/migrations")) {
+        Ok(path) => path,
+        // When running from the IDE tests are run from the root dir:
+        Err(_) => search_for_migrations_directory(Path::new("./repository/migrations"))
+            .expect("Failed to locate migrations directory"),
+    }
+}
+
+#[cfg(all(feature = "postgres", not(feature = "sqlite")))]
 pub async fn setup(db_settings: &DatabaseSettings) {
     use diesel::{PgConnection, RunQueryDsl};
 
@@ -39,8 +49,7 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     let pool = Pool::new(connection_manager).expect("Failed to connect to database");
     let connection = pool.get().expect("Failed to open connection");
 
-    let mut migrations_dir = search_for_migrations_directory(Path::new("../repository/migrations"))
-        .expect("Failed to locate migrations directory");
+    let mut migrations_dir = find_test_migration_directory();
     migrations_dir.push(MIGRATION_PATH);
 
     let mut migrations = mark_migrations_in_directory(&connection, &migrations_dir).unwrap();
@@ -62,14 +71,14 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     fs::remove_file(&db_path).ok();
 
     // create parent dirs
-    let path = std::path::Path::new(&db_path);
+    let path = Path::new(&db_path);
     let prefix = path.parent().unwrap();
     fs::create_dir_all(prefix).unwrap();
 
     let connection = SqliteConnection::establish(&db_path).unwrap();
 
-    let mut migrations_dir = search_for_migrations_directory(Path::new("../repository/migrations"))
-        .expect("Failed to locate migrations directory");
+    let mut migrations_dir = find_test_migration_directory();
+
     migrations_dir.push(MIGRATION_PATH);
 
     let mut migrations = mark_migrations_in_directory(&connection, &migrations_dir).unwrap();
@@ -80,7 +89,7 @@ pub async fn setup(db_settings: &DatabaseSettings) {
     }
 }
 
-#[cfg(feature = "postgres")]
+#[cfg(all(feature = "postgres", not(feature = "sqlite")))]
 fn make_test_db_name(base_name: String) -> String {
     base_name
 }

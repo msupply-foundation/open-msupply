@@ -2,7 +2,7 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use chrono::Utc;
 
-use crate::util::hash::sha256;
+use util::hash::sha256;
 
 struct TokenInfo {
     token_hash: String,

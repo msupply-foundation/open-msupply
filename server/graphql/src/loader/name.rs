@@ -5,7 +5,7 @@ use domain::{
     name::{Name, NameFilter},
     Pagination,
 };
-use repository::repository::{NameQueryRepository, RepositoryError, StorageConnectionManager};
+use repository::{NameQueryRepository, RepositoryError, StorageConnectionManager};
 
 pub struct NameByIdLoader {
     pub connection_manager: StorageConnectionManager,

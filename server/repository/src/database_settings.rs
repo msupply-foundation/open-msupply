@@ -1,7 +1,7 @@
 use diesel::r2d2::{ConnectionManager, Pool};
 use serde;
 
-use crate::repository::{DBBackendConnection, StorageConnectionManager};
+use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 
 #[derive(serde::Deserialize)]
 pub struct DatabaseSettings {

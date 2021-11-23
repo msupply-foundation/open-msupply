@@ -77,10 +77,10 @@ diesel migration run --database-url ./omsupply-database.sqlite --migration-dir .
 - Build and start the remote server:
 
 ```bash
+# Use sqlite (sqlite is default feature)
+cargo run
 # Use postgres:
 cargo run --features postgres
-# Use sqlite:
-cargo run --features sqlite
 # optionally specify APP_ENVIRONMENT=production, defaults to local if not specified
 APP_ENVIRONMENT=production cargo run --features sqlite
 ```
@@ -92,11 +92,10 @@ APP_ENVIRONMENT=production cargo run --features sqlite
 - To run all tests:
 
 ```bash
-# postgres
+# Use sqlite (sqlite is default feature)
+cargo test
+# Use postgres
 cargo test --features postgres
-
-# sqlite
-cargo test --features sqlite
 ```
 
 ## Building docs

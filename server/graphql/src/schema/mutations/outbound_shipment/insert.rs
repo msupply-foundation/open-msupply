@@ -6,7 +6,7 @@ use crate::schema::{
     },
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError};
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};

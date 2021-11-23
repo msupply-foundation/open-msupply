@@ -11,10 +11,9 @@ mod graphql {
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
-        mock::MockDataInserts,
-        repository::{InvoiceLineRepository, RepositoryError, StockLineRepository},
+        mock::MockDataInserts, InvoiceLineRepository, RepositoryError, StockLineRepository,
     };
-    use server::util::test_utils::setup_all;
+    use server::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentLineErrorInterface::*;
 

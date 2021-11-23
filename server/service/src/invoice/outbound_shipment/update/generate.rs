@@ -2,8 +2,8 @@ use chrono::Utc;
 
 use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
 use repository::{
-    repository::{InvoiceLineRepository, StockLineRepository, StorageConnection},
     schema::{InvoiceRow, InvoiceRowStatus, StockLineRow},
+    InvoiceLineRepository, StockLineRepository, StorageConnection,
 };
 
 use super::UpdateOutboundShipmentError;

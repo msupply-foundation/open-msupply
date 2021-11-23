@@ -7,7 +7,7 @@ use actix_web::{guard::fn_guard, web::Data, HttpResponse, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{Context, EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
 
@@ -21,6 +21,7 @@ pub trait ContextExt {
     fn get_connection_manager(&self) -> &StorageConnectionManager;
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn get_auth_data(&self) -> &AuthData;
+    fn get_auth_token(&self) -> Option<String>;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -34,6 +35,11 @@ impl<'a> ContextExt for Context<'a> {
 
     fn get_auth_data(&self) -> &AuthData {
         self.data_unchecked::<Data<AuthData>>()
+    }
+
+    fn get_auth_token(&self) -> Option<String> {
+        self.data_opt::<RequestUserData>()
+            .and_then(|d| d.auth_token.to_owned())
     }
 }
 

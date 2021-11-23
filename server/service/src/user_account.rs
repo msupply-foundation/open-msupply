@@ -1,8 +1,8 @@
-use crate::util::uuid::uuid;
 use repository::{
-    repository::{RepositoryError, StorageConnection, TransactionError, UserAccountRepository},
-    schema::UserAccountRow,
+    schema::UserAccountRow, RepositoryError, StorageConnection, TransactionError,
+    UserAccountRepository,
 };
+use util::uuid::uuid;
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
 use log::error;
@@ -83,6 +83,11 @@ impl<'a> UserAccountService<'a> {
                     TransactionError::Inner(error) => error,
                 },
             )
+    }
+
+    pub fn find_user(&self, user_id: &str) -> Result<Option<UserAccount>, RepositoryError> {
+        let repo = UserAccountRepository::new(self.connection);
+        repo.find_one_by_id(user_id)
     }
 
     /// Finds a user account and verifies that the password is ok

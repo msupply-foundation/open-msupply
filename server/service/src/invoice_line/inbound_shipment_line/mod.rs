@@ -1,13 +1,13 @@
 pub mod delete;
 pub mod insert;
 pub mod update;
-use uuid::Uuid;
 
 use crate::{invoice::current_store_id, WithDBError};
 use repository::{
-    repository::{RepositoryError, StockLineRepository, StorageConnection},
     schema::{InvoiceLineRow, StockLineRow},
+    RepositoryError, StockLineRepository, StorageConnection,
 };
+use util::uuid::uuid;
 
 pub use self::delete::*;
 pub use self::insert::*;
@@ -69,7 +69,7 @@ pub fn generate_batch(
     // Generate new id if requested via parameter or if stock_line_id is not already set on line
     let stock_line_id = match (stock_line_id, keep_existing_batch) {
         (Some(stock_line_id), true) => stock_line_id,
-        _ => Uuid::new_v4().to_string(),
+        _ => uuid(),
     };
 
     let batch = StockLineRow {

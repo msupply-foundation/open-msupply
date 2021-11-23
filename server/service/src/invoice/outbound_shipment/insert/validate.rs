@@ -1,5 +1,5 @@
 use domain::{name::NameFilter, outbound_shipment::InsertOutboundShipment, Pagination};
-use repository::repository::{
+use repository::{
     InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
 };
 

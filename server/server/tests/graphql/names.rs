@@ -1,15 +1,15 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use server::util::test_utils::get_test_settings;
     use repository::{
         get_storage_connection_manager, test_db,
         {
             mock::{mock_name_store_joins, mock_names, mock_stores},
-            repository::{NameRepository, NameStoreJoinRepository, StoreRepository},
             schema::{NameRow, NameStoreJoinRow, StoreRow},
+            NameRepository, NameStoreJoinRepository, StoreRepository,
         },
     };
     use serde_json::json;
+    use server::test_utils::get_test_settings;
 
     #[actix_rt::test]
     async fn test_graphql_names_query() {

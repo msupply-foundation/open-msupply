@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use domain::{invoice::InvoiceType, outbound_shipment::DeleteOutboundShipmentLine};
-use repository::{repository::StorageConnection, schema::InvoiceLineRow};
+use repository::{schema::InvoiceLineRow, StorageConnection};
 
 use super::DeleteOutboundShipmentLineError;
 

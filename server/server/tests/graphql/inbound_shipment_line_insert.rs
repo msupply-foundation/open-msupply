@@ -12,11 +12,11 @@ mod graphql {
     use insert::InsertInboundShipmentLineErrorInterface::*;
     use repository::{
         mock::MockDataInserts,
-        repository::{InvoiceLineRepository, StockLineRepository},
         schema::{InvoiceLineRow, StockLineRow},
+        InvoiceLineRepository, StockLineRepository,
     };
-    use server::util::test_utils::setup_all;
-    use service::util::uuid::uuid;
+    use server::test_utils::setup_all;
+    use util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {
