@@ -31,59 +31,62 @@ interface ItemSearchInputProps {
   onChange: (item: Item | null) => void;
   currentItem?: Item;
   currentItemName?: string;
+  disabled?: boolean;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
   currentItem,
-  currentItemName,
+  disabled = false,
 }) => {
-  const [filter, setFilter] = useState({
-    searchTerm: currentItem?.name ?? currentItemName,
-    field: 'name',
-  });
+  const [filter, setFilter] = useState<{
+    searchTerm: string;
+    field: string;
+  } | null>(null);
 
   const { data, isLoading, onFilterByName } = useItemsList({
     initialSortBy: { key: 'name' },
-    initialFilterBy: currentItem?.code
-      ? { code: { equalTo: currentItem?.code } }
-      : undefined,
   });
   const t = useTranslation('common');
 
   useEffect(() => {
-    setFilter({
-      searchTerm: currentItem?.name ?? currentItemName ?? '',
-      field: 'name',
-    });
-  }, [currentItem, currentItemName]);
-
-  // Whenever the filter state changes, trigger a filter on the request which
-  // will trigger a refetch if needed.
-  useEffect(() => {
+    if (!filter) return;
     onFilterByName(filter.searchTerm ?? '');
-
-    if (filter.field === 'name') {
-      const foundItem = data?.nodes?.find(i => i.name === currentItemName);
-      if (foundItem?.name === filter.searchTerm) return;
-    }
   }, [filter]);
 
-  const value =
-    currentItem ??
-    (currentItemName
-      ? data?.nodes?.find(i => i.name === currentItemName) || null
-      : null);
+  const value = currentItem ?? null;
+  const [open, setOpen] = useState(false);
+  const [buffer, setBuffer] = React.useState(value);
+
+  useEffect(() => {
+    if (value && buffer && open) {
+      setBuffer(null);
+      setFilter({
+        searchTerm: '',
+        field: 'name',
+      });
+    } else if (!open) {
+      setBuffer(value);
+    }
+  }, [open, value, buffer]);
 
   return (
     <Autocomplete
+      disabled={disabled}
+      onOpen={() => {
+        setOpen(true);
+      }}
+      onClose={() => {
+        setOpen(false);
+      }}
       filterOptionConfig={filterOptions}
       loading={isLoading}
-      value={value ? { ...value, label: value.name ?? '' } : null}
+      value={buffer ? { ...buffer, label: buffer.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
-      onInputChange={(_, value) => {
-        if (!value) return;
-        setFilter({ searchTerm: value, field: 'name' });
+      onInputChange={(_, value, reason) => {
+        if (reason === 'input') {
+          setFilter({ searchTerm: value, field: 'name' });
+        }
       }}
       onChange={(_, item) => {
         onChange(item);
