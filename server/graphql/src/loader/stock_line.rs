@@ -21,9 +21,8 @@ impl Loader<String> for StockLineByLocationIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        let result = repo.query_filter_only(
-            StockLineFilter::new().match_location_ids(location_ids.to_owned()),
-        )?;
+        let result = repo
+            .query_by_filter(StockLineFilter::new().match_location_ids(location_ids.to_owned()))?;
 
         let mut result_map = HashMap::new();
         for stock_line in result {
