@@ -1,6 +1,6 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type,
+        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
         validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
     },
     invoice_line::{
@@ -32,7 +32,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
-    check_invoice_finalised(&invoice)?;
+    check_invoice_is_not_finalised(&invoice)?;
 
     Ok((item, invoice))
 }

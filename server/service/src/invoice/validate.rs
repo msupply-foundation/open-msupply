@@ -24,7 +24,7 @@ pub fn check_invoice_type(
 
 pub struct InvoiceIsFinalised;
 
-pub fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), InvoiceIsFinalised> {
+pub fn check_invoice_is_not_finalised(invoice: &InvoiceRow) -> Result<(), InvoiceIsFinalised> {
     if invoice.status == InvoiceRowStatus::Finalised {
         Err(InvoiceIsFinalised {})
     } else {
