@@ -11,6 +11,7 @@ export enum AppRoute {
   SupplierRequisition = 'supplier-requisition',
   Suppliers = 'suppliers',
 
+  Inventory = 'inventory',
   Stock = 'stock',
 
   Tools = 'tools',
