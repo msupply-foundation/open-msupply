@@ -58,6 +58,13 @@ mod graphql {
                   name
                   code
                   onHold
+                  stock {
+                      ... on StockLineConnector {
+                          nodes {
+                              id
+                          }
+                      }
+                  }
                 }
                 totalCount
               }
@@ -66,11 +73,33 @@ mod graphql {
         "#;
 
         // Test single record
+        let expected = json!({
+              "locations": {
+                  "nodes": [
+                      {
+                          "id": "location_on_hold",
+                          "name": "test_name",
+                          "code": "test_code",
+                          "onHold": true,
+                          "stock": {
+                              "nodes": [
+                                  {
+                                      "id": "stock_line_location_is_on_hold"
+                                  }
+                              ]
+                          }
+                      },
+                  ],
+                  "totalCount": 1
+              }
+          }
+        );
+
         let service: Option<Box<dyn LocationServiceQuery>> =
             Some(Box::new(TestService(|_, _, _| {
                 Ok(ListResult {
                     rows: vec![Location {
-                        id: "test_id".to_owned(),
+                        id: "location_on_hold".to_owned(),
                         name: "test_name".to_owned(),
                         code: "test_code".to_owned(),
                         on_hold: true,
@@ -78,21 +107,6 @@ mod graphql {
                     count: 1,
                 })
             })));
-
-        let expected = json!({
-              "locations": {
-                  "nodes": [
-                      {
-                          "id": "test_id",
-                          "name": "test_name",
-                          "code": "test_code",
-                          "onHold": true,
-                      },
-                  ],
-                  "totalCount": 1
-              }
-          }
-        );
 
         assert_gql_query(
             &settings,

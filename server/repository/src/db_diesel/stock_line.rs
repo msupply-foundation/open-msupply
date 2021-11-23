@@ -77,6 +77,12 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
                 query = query.filter(stock_line_dsl::item_id.eq_any(eq));
             }
         }
+
+        if let Some(value) = f.location_id {
+            if let Some(eq) = value.equal_any {
+                query = query.filter(stock_line_dsl::location_id.eq_any(eq));
+            }
+        }
     }
 
     query
