@@ -66,7 +66,7 @@ mod graphql {
                 "status": InvoiceNodeStatus::from(InvoiceStatus::from(full_invoice.invoice.status.clone())),
             },
         });
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
 
         // Test not found error
         assert_gql_not_found(
@@ -84,6 +84,7 @@ mod graphql {
             &Some(json!({
                 "id": "invalid"
             })),
+            None,
         )
         .await;
     }

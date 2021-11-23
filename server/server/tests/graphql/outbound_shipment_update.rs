@@ -47,7 +47,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // FinalisedInvoiceIsNotEditableError
         let variables = Some(json!({
@@ -64,7 +64,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // RecordNotFound
         let variables = Some(json!({
@@ -80,7 +80,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // ForeignKeyError (Other party does not exist)
         let variables = Some(json!({
@@ -97,7 +97,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // OtherPartyNotACustomerError
         let other_party_supplier = &mock_data.names[2];
@@ -115,7 +115,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // NotAnOutboundShipmentError
         let variables = Some(json!({
@@ -131,7 +131,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // InvoiceLineHasNoStockLineError
         let variables = Some(json!({
@@ -148,7 +148,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // helpers to compare totals
         let stock_lines_for_invoice_lines = |invoice_lines: &Vec<InvoiceLineRow>| {
@@ -204,7 +204,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
         assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test DRAFT to FINALISED (while setting onHold to true)
@@ -227,7 +227,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
         assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test Status Change on Hold
@@ -252,7 +252,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // test Status Change and on hold change
         let full_invoice = mock_data
@@ -275,6 +275,6 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
     }
 }

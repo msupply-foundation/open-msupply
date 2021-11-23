@@ -186,6 +186,7 @@ pub enum ForeignKey {
     ItemId,
     InvoiceId,
     StockLineId,
+    LocationId,
 }
 
 pub struct ForeignKeyError(ForeignKey);

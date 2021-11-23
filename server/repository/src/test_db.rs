@@ -119,7 +119,12 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
 pub async fn setup_all(
     db_name: &str,
     inserts: MockDataInserts,
-) -> (MockData, StorageConnection, DatabaseSettings) {
+) -> (
+    MockData,
+    StorageConnection,
+    StorageConnectionManager,
+    DatabaseSettings,
+) {
     let settings = get_test_db_settings(db_name);
 
     setup(&settings).await;
@@ -135,6 +140,7 @@ pub async fn setup_all(
     (
         insert_mock_data(&connection, inserts).await,
         connection,
+        storage_connection_manager,
         settings,
     )
 }

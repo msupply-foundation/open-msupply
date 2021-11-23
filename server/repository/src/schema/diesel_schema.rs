@@ -28,6 +28,7 @@ table! {
         name -> Text,
         code -> Text,
         on_hold -> Bool,
+        store_id -> Text,
     }
 }
 
@@ -220,6 +221,7 @@ joinable!(master_list_line -> item (item_id));
 joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name_table (name_id));
 joinable!(item_is_visible -> item(id));
+joinable!(location -> store(store_id));
 
 allow_tables_to_appear_in_same_query!(
     unit,

@@ -151,6 +151,21 @@ mod graphql {
             })
         );
 
+        // Test ForeingKeyError Location
+
+        let mut variables = base_variables.clone();
+        variables.location_id_option = Some("invalid".to_string());
+
+        let query = Update::build_query(variables);
+        let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
+        assert_error!(
+            response,
+            ForeignKeyError(update::ForeignKeyError {
+                description: "FK record doesn't exist".to_string(),
+                key: update::ForeignKey::LocationId,
+            })
+        );
+
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();

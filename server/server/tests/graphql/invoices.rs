@@ -56,7 +56,7 @@ mod graphql {
            }
          }
         );
-        assert_gql_query(&settings, query, &None, &expected).await;
+        assert_gql_query(&settings, query, &None, &expected, None).await;
     }
 
     #[actix_rt::test]
@@ -100,7 +100,7 @@ mod graphql {
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
 
         // test invoice number filter
         let variables = Some(json!({
@@ -119,7 +119,7 @@ mod graphql {
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
     }
 
     macro_rules! sort_test {
@@ -179,7 +179,7 @@ mod graphql {
             invoices,
             true
         );
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
         let (query, variables, expected) = sort_test!(
             "invoiceNumber",
             invoice_number,
@@ -187,7 +187,7 @@ mod graphql {
             invoices,
             false
         );
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
         // other party name
         let (query, variables, expected) = sort_test!(
             "otherPartyName",
@@ -196,7 +196,7 @@ mod graphql {
             invoices,
             true
         );
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
         let (query, variables, expected) = sort_test!(
             "otherPartyName",
             other_party_name,
@@ -204,6 +204,6 @@ mod graphql {
             invoices,
             false
         );
-        assert_gql_query(&settings, &query, &variables, &expected).await;
+        assert_gql_query(&settings, &query, &variables, &expected, None).await;
     }
 }

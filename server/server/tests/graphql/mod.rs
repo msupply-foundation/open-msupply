@@ -4,8 +4,13 @@ use graphql::{
     config as graphql_config,
     loader::{get_loaders, LoaderRegistry},
 };
-use repository::get_storage_connection_manager;
-use service::{auth_data::AuthData, token_bucket::TokenBucket};
+use repository::{get_storage_connection_manager, StorageConnectionManager};
+use service::{
+    auth_data::AuthData,
+    location::LocationServiceQuery,
+    service_registry::{get_services, ServiceMap, ServiceRegistry},
+    token_bucket::TokenBucket,
+};
 
 use std::sync::RwLock;
 
@@ -24,6 +29,7 @@ mod inbound_shipment_update;
 mod invoice_query;
 mod invoices;
 mod items;
+mod locations;
 mod names;
 mod outbound_shipment_delete;
 mod outbound_shipment_insert;
@@ -31,6 +37,7 @@ mod outbound_shipment_line_delete;
 mod outbound_shipment_line_insert;
 mod outbound_shipment_line_update;
 mod outbound_shipment_update;
+mod pagination;
 mod requisition;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
@@ -40,9 +47,11 @@ where
 {
     let connection_manager = get_storage_connection_manager(&settings.database);
     let loaders = get_loaders(&connection_manager).await;
+    let services = get_services(&connection_manager).await;
 
     let connection_manager_data = actix_web::web::Data::new(connection_manager);
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
+    let service_registry = actix_web::web::Data::new(ServiceRegistry { services });
 
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
@@ -59,6 +68,7 @@ where
             .configure(graphql_config(
                 connection_manager_data,
                 loader_registry,
+                service_registry,
                 auth_data,
             )),
     )
@@ -85,12 +95,15 @@ async fn run_gql_query(
     settings: &Settings,
     query: &str,
     variables: &Option<serde_json::Value>,
+    service_override: Option<ServicesOverride>,
 ) -> serde_json::Value {
     let connection_manager = get_storage_connection_manager(&settings.database);
     let loaders = get_loaders(&connection_manager).await;
+    let services = get_test_services(&connection_manager, service_override).await;
 
     let connection_manager_data = actix_web::web::Data::new(connection_manager);
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
+    let service_registry = actix_web::web::Data::new(ServiceRegistry { services });
 
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
@@ -107,6 +120,7 @@ async fn run_gql_query(
             .configure(graphql_config(
                 connection_manager_data,
                 loader_registry,
+                service_registry,
                 auth_data,
             )),
     )
@@ -139,8 +153,9 @@ async fn assert_gql_not_found(
     settings: &Settings,
     query: &str,
     variables: &Option<serde_json::Value>,
+    service_override: Option<ServicesOverride>,
 ) -> serde_json::Value {
-    let actual = run_gql_query(settings, query, variables).await;
+    let actual = run_gql_query(settings, query, variables, service_override).await;
     let error_message = actual["data"].to_string();
     assert!(error_message.contains("RecordNotFound"));
     actual
@@ -157,8 +172,9 @@ async fn assert_gql_query(
     query: &str,
     variables: &Option<serde_json::Value>,
     expected: &serde_json::Value,
+    service_override: Option<ServicesOverride>,
 ) -> serde_json::Value {
-    let actual = run_gql_query(settings, query, variables).await;
+    let actual = run_gql_query(settings, query, variables, service_override).await;
     // println!("{}", serde_json::to_string_pretty(&actual).unwrap());
     assert_gql_no_response_error(&actual);
     let expected_with_data = json!({
@@ -166,6 +182,40 @@ async fn assert_gql_query(
     });
     assert_json_eq!(&actual, expected_with_data);
     actual
+}
+
+async fn get_test_services(
+    connection_manager: &StorageConnectionManager,
+    service_override: Option<ServicesOverride>,
+) -> ServiceMap {
+    let mut services = get_services(connection_manager).await;
+
+    if let Some(service_override) = service_override {
+        if let Some(location_service) = service_override.location_service {
+            services.insert(location_service);
+        }
+    }
+
+    services
+}
+pub struct ServicesOverride {
+    pub location_service: Option<Box<dyn LocationServiceQuery>>,
+}
+
+impl ServicesOverride {
+    pub fn new() -> ServicesOverride {
+        ServicesOverride {
+            location_service: None,
+        }
+    }
+
+    pub fn location_service(
+        mut self,
+        location_service: Option<Box<dyn LocationServiceQuery>>,
+    ) -> Self {
+        self.location_service = location_service;
+        self
+    }
 }
 
 use chrono::{DateTime as ChronoDateTime, NaiveDate, Utc};

@@ -1,5 +1,7 @@
 use crate::ContextExt;
+use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, item::ItemFilter, name::NameFilter, PaginationOption};
+use service::location::LocationServiceQuery;
 use service::{invoice::get_invoices, item::get_items, name::get_names};
 
 use async_graphql::{Context, Object};
@@ -66,6 +68,27 @@ impl Queries {
         ) {
             Ok(names) => NamesResponse::Response(names.into()),
             Err(error) => NamesResponse::Error(error.into()),
+        }
+    }
+
+    /// Query omSupply "item" entries
+    pub async fn locations(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<LocationSortInput>>,
+    ) -> LocationsResponse {
+        let location_service = ctx.get_service::<Box<dyn LocationServiceQuery>>();
+
+        match location_service.get_locations(
+            page.map(PaginationOption::from),
+            filter.map(LocationFilter::from),
+            convert_sort(sort),
+        ) {
+            Ok(locations) => LocationsResponse::Response(locations.into()),
+            Err(error) => LocationsResponse::Error(error.into()),
         }
     }
 
