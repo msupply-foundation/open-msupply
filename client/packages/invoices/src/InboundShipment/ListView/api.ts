@@ -132,7 +132,7 @@ export const getInboundShipmentListViewApi = (
   onCreate: async (invoice: Partial<Invoice>): Promise<string> => {
     const result = await api.insertInboundShipment({
       id: invoice.id ?? '',
-      otherPartyId: String(invoice['nameId']) ?? '',
+      otherPartyId: invoice?.otherPartyId ?? '',
     });
 
     const { insertInboundShipment } = result;

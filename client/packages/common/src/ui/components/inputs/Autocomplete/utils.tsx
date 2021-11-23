@@ -9,12 +9,12 @@ export const DefaultAutocompleteItemOption = styled('li')(({ theme }) => ({
 
 type Option<T> = { label: string } & T;
 
-export type OptionMapper<T extends Record<keyof T, unknown>> = (
+export type OptionMapper<T extends { [K in keyof T]: T[K] }> = (
   options: T[],
   key: keyof T
 ) => Option<T>[];
 
-export const defaultOptionMapper = <T extends Record<keyof T, unknown>>(
+export const defaultOptionMapper = <T extends { [K in keyof T]: T[K] }>(
   options: T[],
   key: keyof T
 ): Option<T>[] => {

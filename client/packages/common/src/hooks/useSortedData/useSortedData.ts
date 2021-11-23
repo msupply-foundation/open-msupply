@@ -1,9 +1,9 @@
 import { SortRule, SortBy, getDataSorter } from '@openmsupply-client/common';
-import { ObjectWithStringKeys } from './../../types/utility';
+
 import { useEffect, useState } from 'react';
 import { useSortBy } from '../useSortBy';
 
-interface SortedDataState<T extends ObjectWithStringKeys> {
+interface SortedDataState<T> {
   sortedData: T[];
   sortBy: SortBy<T>;
   onChangeSortBy: (newSortRule: SortRule<T>) => void;

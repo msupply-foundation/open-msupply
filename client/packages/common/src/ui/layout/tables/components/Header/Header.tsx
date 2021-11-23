@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
-import { ObjectWithStringKeys } from '../../../../../types/utility';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
@@ -22,7 +21,7 @@ interface HeaderCellProps<T extends DomainObject> {
   column: Column<T>;
 }
 
-export const HeaderCell = <T extends ObjectWithStringKeys & DomainObject>({
+export const HeaderCell = <T extends DomainObject>({
   column,
 }: HeaderCellProps<T>): JSX.Element => {
   const {

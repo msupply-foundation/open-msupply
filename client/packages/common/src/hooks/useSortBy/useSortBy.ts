@@ -1,28 +1,26 @@
-import { ObjectWithStringKeys } from './../../types/utility';
 import { useCallback, useState } from 'react';
 
-export interface SortRule<T extends ObjectWithStringKeys> {
+export interface SortRule<T> {
   key: keyof T | string;
   isDesc?: boolean;
 }
 
-export interface SortBy<T extends ObjectWithStringKeys> extends SortRule<T> {
+export interface SortBy<T> extends SortRule<T> {
   direction: 'asc' | 'desc';
 }
-export interface SortController<T extends ObjectWithStringKeys> {
+export interface SortController<T> {
   sortBy: SortBy<T>;
   onChangeSortBy: (newSortRule: SortRule<T>) => SortBy<T>;
 }
 
-export interface SortState<T extends ObjectWithStringKeys>
-  extends SortController<T> {
+export interface SortState<T> extends SortController<T> {
   sort: SortController<T>;
 }
 
 const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
   isDesc ? 'desc' : 'asc';
 
-export const useSortBy = <T extends ObjectWithStringKeys>({
+export const useSortBy = <T>({
   key: initialSortKey,
   isDesc: initialIsDesc = false,
 }: SortRule<T>): SortState<T> => {

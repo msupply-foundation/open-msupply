@@ -34,7 +34,7 @@ export const onCreate =
   async (invoice: Partial<Invoice>): Promise<string> => {
     const result = await api.insertOutboundShipment({
       id: invoice.id ?? '',
-      otherPartyId: String(invoice['nameId']) ?? '',
+      otherPartyId: invoice?.otherPartyId ?? '',
     });
 
     const { insertOutboundShipment } = result;

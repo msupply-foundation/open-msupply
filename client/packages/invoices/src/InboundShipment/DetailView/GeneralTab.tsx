@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import {
   DataTable,
-  ObjectWithStringKeys,
   usePagination,
   Column,
   DomainObject,
@@ -10,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { InboundShipmentItem } from '../../types';
 
-interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
+interface GeneralTabProps<T extends DomainObject> {
   data: T[];
   columns: Column<T>[];
   onRowClick?: (rowData: T) => void;

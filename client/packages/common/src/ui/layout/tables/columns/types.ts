@@ -76,5 +76,5 @@ export interface Column<T extends DomainObject> {
 
 export interface ColumnDefinition<T extends DomainObject>
   extends Partial<Omit<Column<T>, 'key'>> {
-  key: keyof T | GenericColumnKey;
+  key: keyof T | GenericColumnKey | string;
 }

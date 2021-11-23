@@ -31,9 +31,7 @@ const summaryItems: OutboundShipmentSummaryItem[] = [
         itemId: '1',
         itemName: '1',
         itemCode: '1',
-        itemUnit: '1',
         stockLineId: '1',
-        unitQuantity: 10,
         numberOfPacks: 10,
         packSize: 1,
         costPricePerPack: 0,
@@ -48,9 +46,7 @@ const summaryItems: OutboundShipmentSummaryItem[] = [
         itemId: '1',
         itemName: '1',
         itemCode: '1',
-        itemUnit: '1',
         stockLineId: '2',
-        unitQuantity: 10,
         numberOfPacks: 10,
         packSize: 1,
         costPricePerPack: 0,
@@ -85,9 +81,7 @@ const createLine = (
     itemId: '1',
     itemName: '1',
     itemCode: '1',
-    itemUnit: '1',
     stockLineId: '1',
-    unitQuantity: 10,
     numberOfPacks: 10,
     packSize: 1,
     costPricePerPack: 0,
@@ -316,7 +310,7 @@ describe('DetailView reducer: merging', () => {
     ).toBe(0);
   });
 
-  it('sets the correct flags for each line when merging new server state', () => {
+  it.only('sets the correct flags for each line when merging new server state', () => {
     // The shipment has three lines. Two of them are new and one is updated.
     // When the server state is merged, the created lines should have the isCreated flag set to false
     // to indicate they have been persisted.
@@ -367,7 +361,9 @@ describe('DetailView reducer: merging', () => {
         // Lines to be handled in their own tests as they're more complex.
         return;
       } else {
-        expect(JSON.stringify(value)).toEqual(JSON.stringify(state.draft[key]));
+        expect(JSON.stringify(value)).toEqual(
+          JSON.stringify(state.draft[key as keyof OutboundShipment])
+        );
       }
     });
   });

@@ -1,9 +1,8 @@
-import { ObjectWithStringKeys } from './../../types/utility';
 import { useSortBy } from './useSortBy';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
 
-interface TestSortBy extends ObjectWithStringKeys {
+interface TestSortBy {
   id: string;
   quantity: number;
 }

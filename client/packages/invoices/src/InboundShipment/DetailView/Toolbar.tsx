@@ -64,7 +64,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                     disabled={!isInboundEditable(draft)}
                     value={draft.otherParty}
                     onChange={name => {
-                      draft.update?.('name', name);
+                      draft.update?.('otherParty', name);
                     }}
                   />
                 }

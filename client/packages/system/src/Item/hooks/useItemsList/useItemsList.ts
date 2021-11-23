@@ -33,13 +33,13 @@ const availableBatchesGuard = (
   throw new Error('Unknown');
 };
 
-const getItemSortField = (sortField: keyof Item): ItemSortFieldInput => {
+const getItemSortField = (sortField: string): ItemSortFieldInput => {
   if (sortField === 'name') return ItemSortFieldInput.Name;
   return ItemSortFieldInput.Code;
 };
 
 export const useItemsList = (initialListParameters: {
-  initialFilterBy?: FilterBy<Item>;
+  initialFilterBy?: FilterBy;
   initialSortBy: SortRule<Item>;
 }): {
   onFilterByCode: (code: string) => void;

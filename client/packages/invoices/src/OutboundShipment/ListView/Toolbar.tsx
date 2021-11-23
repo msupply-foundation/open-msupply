@@ -15,7 +15,7 @@ import { InvoiceRow } from '../../types';
 
 export const Toolbar: FC<{
   onDelete: (toDelete: InvoiceRow[]) => void;
-  filter: FilterController<InvoiceRow>;
+  filter: FilterController;
   data?: InvoiceRow[];
 }> = ({ onDelete, data, filter }) => {
   const t = useTranslation('outbound-shipment');
