@@ -1,5 +1,5 @@
 use domain::{name::Name, outbound_shipment::InsertOutboundShipment};
-use repository::repository::{
+use repository::{
     InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
 };
 

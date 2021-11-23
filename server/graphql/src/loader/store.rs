@@ -1,7 +1,4 @@
-use repository::{
-    repository::{RepositoryError, StorageConnectionManager, StoreRepository},
-    schema::StoreRow,
-};
+use repository::{schema::StoreRow, RepositoryError, StorageConnectionManager, StoreRepository};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

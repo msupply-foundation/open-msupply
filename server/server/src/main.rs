@@ -1,16 +1,11 @@
 #![allow(where_clauses_object_safety)]
 
 use server::{
-    server::{
-        data::ActorRegistry,
-        middleware::{compress as compress_middleware, logger as logger_middleware},
-        service::rest::config as rest_config,
-    },
-    util::{
-        configuration,
-        settings::Settings,
-        sync::{self, SyncConnection, SyncReceiverActor, SyncSenderActor, Synchroniser},
-    },
+    actor_registry::ActorRegistry,
+    configuration,
+    middleware::{compress as compress_middleware, logger as logger_middleware},
+    settings::Settings,
+    sync::{self, SyncConnection, SyncReceiverActor, SyncSenderActor, Synchroniser},
 };
 
 use graphql::{
@@ -42,6 +37,7 @@ async fn main() -> std::io::Result<()> {
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
+        debug_no_access_control: false,
     });
     let connection_manager = get_storage_connection_manager(&settings.database);
     let loaders: LoaderMap = get_loaders(&connection_manager).await;
@@ -72,7 +68,6 @@ async fn main() -> std::io::Result<()> {
                 loader_registry_data.clone(),
                 auth_data.clone(),
             ))
-            .configure(rest_config)
     })
     .listen(listener)?
     .run();

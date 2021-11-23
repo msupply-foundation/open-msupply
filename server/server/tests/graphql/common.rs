@@ -1,6 +1,6 @@
 macro_rules! get_invoice_inline {
     ($filter:expr, $connection:expr) => {{
-        repository::repository::InvoiceQueryRepository::new($connection)
+        repository::InvoiceQueryRepository::new($connection)
             .query(Pagination::one(), Some($filter), None)
             .unwrap()
             .pop()
@@ -10,7 +10,7 @@ macro_rules! get_invoice_inline {
 
 macro_rules! get_invoice_lines_inline {
     ($invoice_id:expr, $connection:expr) => {{
-        repository::repository::InvoiceLineRepository::new($connection)
+        repository::InvoiceLineRepository::new($connection)
             .find_many_by_invoice_id($invoice_id)
             .unwrap()
     }};
@@ -18,7 +18,7 @@ macro_rules! get_invoice_lines_inline {
 
 macro_rules! get_stock_line_inline {
     ($stock_line_id:expr, $connection:expr) => {{
-        repository::repository::StockLineRepository::new($connection)
+        repository::StockLineRepository::new($connection)
             .find_one_by_id($stock_line_id)
             .unwrap()
     }};
@@ -26,7 +26,7 @@ macro_rules! get_stock_line_inline {
 
 macro_rules! get_invoice_line_inline {
     ($invoice_line_id:expr, $connection:expr) => {{
-        repository::repository::InvoiceLineRepository::new($connection)
+        repository::InvoiceLineRepository::new($connection)
             .find_one_by_id($invoice_line_id)
             .unwrap()
     }};
@@ -34,7 +34,7 @@ macro_rules! get_invoice_line_inline {
 
 macro_rules! get_name_inline {
     ($filter:expr, $connection:expr) => {{
-        repository::repository::NameQueryRepository::new($connection)
+        repository::NameQueryRepository::new($connection)
             .query(Pagination::one(), Some($filter), None)
             .unwrap()
             .pop()

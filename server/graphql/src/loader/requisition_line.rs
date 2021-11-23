@@ -1,6 +1,6 @@
 use repository::{
-    repository::{RepositoryError, RequisitionLineRepository, StorageConnectionManager},
-    schema::RequisitionLineRow,
+    schema::RequisitionLineRow, RepositoryError, RequisitionLineRepository,
+    StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;

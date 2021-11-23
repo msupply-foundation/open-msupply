@@ -1,5 +1,5 @@
 use domain::{Pagination, PaginationOption, DEFAULT_LIMIT};
-use repository::repository::RepositoryError;
+use repository::RepositoryError;
 use std::convert::TryInto;
 
 pub mod auth_data;
@@ -7,11 +7,12 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod name;
+pub mod permission_validation;
+pub mod permissions;
 pub mod stock_line;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
-pub mod util;
 
 pub struct ListResult<T> {
     pub rows: Vec<T>,

@@ -14,8 +14,8 @@ use crate::{
 };
 use domain::{inbound_shipment::UpdateInboundShipmentLine, invoice::InvoiceType};
 use repository::{
-    repository::StorageConnection,
     schema::{InvoiceLineRow, InvoiceRow, ItemRow},
+    StorageConnection,
 };
 
 use super::UpdateInboundShipmentLineError;

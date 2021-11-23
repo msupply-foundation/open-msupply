@@ -11,10 +11,10 @@ mod graphql {
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
-        repository::ItemRepository,
         schema::{InvoiceLineRow, StockLineRow},
+        ItemRepository,
     };
-    use server::util::test_utils::setup_all;
+    use server::test_utils::setup_all;
 
     use update::UpdateOutboundShipmentLineErrorInterface::*;
 

@@ -3250,6 +3250,7 @@ dependencies = [
  "service",
  "thiserror",
  "tokio 0.2.25",
+ "util",
 ]
 
 [[package]]
@@ -3266,8 +3267,7 @@ dependencies = [
  "repository",
  "serde 1.0.130",
  "serde_json",
- "sha2",
- "uuid",
+ "util",
 ]
 
 [[package]]
@@ -3925,6 +3925,14 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+]
+
+[[package]]
+name = "util"
+version = "0.1.0"
+dependencies = [
+ "sha2",
+ "uuid",
 ]
 
 [[package]]

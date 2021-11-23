@@ -1,10 +1,7 @@
 use domain::invoice::InvoicePricing;
 use repository::{
-    repository::{
-        InvoiceLineQueryRepository, InvoiceLineRepository, RepositoryError,
-        StorageConnectionManager,
-    },
-    schema::InvoiceLineRow,
+    schema::InvoiceLineRow, InvoiceLineQueryRepository, InvoiceLineRepository, RepositoryError,
+    StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;

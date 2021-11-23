@@ -1,11 +1,9 @@
 use crate::{u32_to_i32, WithDBError};
 use domain::outbound_shipment::UpdateOutboundShipmentLine;
 use repository::{
-    repository::{
-        InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
-        TransactionError,
-    },
     schema::{InvoiceLineRow, StockLineRow},
+    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    TransactionError,
 };
 
 mod generate;

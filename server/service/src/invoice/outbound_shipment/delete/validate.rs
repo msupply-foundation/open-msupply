@@ -1,8 +1,6 @@
 use repository::{
-    repository::{
-        InvoiceLineQueryRepository, InvoiceRepository, RepositoryError, StorageConnection,
-    },
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    InvoiceLineQueryRepository, InvoiceRepository, RepositoryError, StorageConnection,
 };
 
 use super::DeleteOutboundShipmentError;

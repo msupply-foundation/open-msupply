@@ -33,7 +33,7 @@ use self::{
 };
 
 use super::{
-    repository::{
+    db_diesel::{
         InvoiceLineRepository, InvoiceRepository, ItemRepository, NameRepository,
         NameStoreJoinRepository, StockLineRepository, StorageConnection, StoreRepository,
         UnitRowRepository,

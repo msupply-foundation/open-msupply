@@ -1,8 +1,8 @@
 use crate::invoice::{check_invoice_status, InvoiceStatusError};
 use domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment, Pagination};
 use repository::{
-    repository::{InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection},
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
 };
 
 use super::UpdateOutboundShipmentError;

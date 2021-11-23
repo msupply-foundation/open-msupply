@@ -9,7 +9,7 @@ use domain::{
     invoice::{Invoice, InvoiceFilter, InvoicePricing},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use serde::Serialize;
 use service::invoice::get_invoice;
 

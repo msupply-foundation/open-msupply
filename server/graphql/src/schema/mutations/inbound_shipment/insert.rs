@@ -8,7 +8,7 @@ use crate::schema::{
     },
 };
 use domain::inbound_shipment::InsertInboundShipment;
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice::{insert_inbound_shipment, InsertInboundShipmentError};
 
 use super::OtherPartyNotASupplier;

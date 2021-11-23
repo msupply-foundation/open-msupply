@@ -5,7 +5,7 @@ use crate::schema::{
     },
     types::{DatabaseError, ErrorWrapper, RecordNotFound},
 };
-use repository::repository::StorageConnectionManager;
+use repository::StorageConnectionManager;
 use service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError};
 
 use async_graphql::{Interface, Union};

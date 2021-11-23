@@ -9,15 +9,15 @@ mod graphql {
     };
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use server::util::test_utils::setup_all;
     use repository::{
         mock::MockDataInserts,
-        repository::ItemRepository,
         schema::{InvoiceLineRow, StockLineRow},
+        ItemRepository,
     };
+    use server::test_utils::setup_all;
 
     use insert::InsertOutboundShipmentLineErrorInterface::*;
-    use service::util::uuid::uuid;
+    use util::uuid::uuid;
 
     macro_rules! assert_unwrap_response_variant {
         ($response:ident) => {

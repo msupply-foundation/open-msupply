@@ -2,9 +2,9 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use repository::{mock::MockDataInserts, repository::InvoiceRepository};
+    use repository::{mock::MockDataInserts, InvoiceRepository};
     use serde_json::json;
-    use server::util::test_utils::setup_all;
+    use server::test_utils::setup_all;
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_insert() {

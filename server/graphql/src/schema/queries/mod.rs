@@ -11,6 +11,8 @@ pub mod login;
 pub use self::login::*;
 pub mod logout;
 pub use self::logout::*;
+pub mod me;
+pub use self::me::*;
 pub mod refresh_token;
 pub use self::refresh_token::*;
 
@@ -40,6 +42,10 @@ impl Queries {
     /// The refresh token is returned as a cookie
     pub async fn refresh_token(&self, ctx: &Context<'_>) -> RefreshTokenResponse {
         refresh_token(ctx)
+    }
+
+    pub async fn me(&self, ctx: &Context<'_>) -> UserResponse {
+        me(ctx)
     }
 
     /// Query omSupply "name" entries
