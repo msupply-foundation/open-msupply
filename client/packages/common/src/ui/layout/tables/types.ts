@@ -19,10 +19,11 @@ export interface TableProps<T extends DomainObject> {
   columns: Column<T>[];
   data?: T[];
   isLoading?: boolean;
-  pagination: Pagination & { total?: number };
-  onChangePage: (page: number) => void;
+  pagination?: Pagination & { total?: number };
+  onChangePage?: (page: number) => void;
   onRowClick?: (row: T) => void;
   children?: ReactNode;
   noDataMessage?: string;
   ExpandContent?: FC<{ rowData: T }>;
+  dense?: boolean;
 }

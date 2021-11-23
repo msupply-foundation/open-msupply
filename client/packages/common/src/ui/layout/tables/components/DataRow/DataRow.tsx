@@ -3,7 +3,7 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
 import { DomainObject } from '../../../../../types';
-import { useExpanded } from '../../context';
+import { useExpanded, useDisabled } from '../../context';
 import { Collapse } from '@mui/material';
 
 interface DataRowProps<T extends DomainObject> {
@@ -12,6 +12,7 @@ interface DataRowProps<T extends DomainObject> {
   rowData: T;
   rowKey: string;
   ExpandContent?: FC<{ rowData: T }>;
+  dense?: boolean;
 }
 
 export const DataRow = <T extends DomainObject>({
@@ -20,9 +21,11 @@ export const DataRow = <T extends DomainObject>({
   rowData,
   rowKey,
   ExpandContent,
+  dense = false,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
+  const { isDisabled } = useDisabled(rowData.id);
 
   const onRowClick = () => onClick && onClick(rowData);
   const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
@@ -31,11 +34,14 @@ export const DataRow = <T extends DomainObject>({
     <>
       <TableRow
         sx={{
+          color: isDisabled ? 'gray.main' : 'black',
           minWidth,
           alignItems: 'center',
           height: '40px',
           maxHeight: '45px',
-          boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
+          boxShadow: dense
+            ? 'none'
+            : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
           display: 'flex',
           flex: '1 0 auto',
         }}
@@ -59,6 +65,7 @@ export const DataRow = <T extends DomainObject>({
                 flex: `${column.width} 0 auto`,
                 minWidth: column.minWidth,
                 width: column.width,
+                color: 'inherit',
               }}
             >
               <column.Cell

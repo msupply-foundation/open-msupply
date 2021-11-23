@@ -4,6 +4,7 @@ import { DomainObject } from '../../../../types';
 import { useTranslation, useFormatDate } from '../../../../intl';
 
 export * from './DataRow';
+export * from './Cells';
 
 export const BasicCell = <T extends DomainObject>({
   column,
