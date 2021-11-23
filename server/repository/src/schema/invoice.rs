@@ -33,4 +33,5 @@ pub struct InvoiceRow {
     pub entry_datetime: NaiveDateTime,
     pub confirm_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    pub color: Option<String>,
 }

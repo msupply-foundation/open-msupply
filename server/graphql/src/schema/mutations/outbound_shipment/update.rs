@@ -38,6 +38,7 @@ pub struct UpdateOutboundShipmentInput {
     comment: Option<String>,
     /// External invoice reference, e.g. purchase or shipment number
     their_reference: Option<String>,
+    color: Option<String>,
 }
 
 impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
@@ -49,6 +50,7 @@ impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
             on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,
+            color: input.color,
         }
     }
 }

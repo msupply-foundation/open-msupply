@@ -47,6 +47,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
             entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
             confirm_datetime: None,
             finalised_datetime: None,
+            color: None,
         },
         lines: vec![
             FullMockInvoiceLine {
@@ -134,6 +135,7 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
             entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
             confirm_datetime: None,
             finalised_datetime: None,
+            color: None,
         },
         lines: Vec::new(),
     }
@@ -156,6 +158,7 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
             entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
             confirm_datetime: None,
             finalised_datetime: None,
+            color: None,
         },
         lines: Vec::new(),
     }
