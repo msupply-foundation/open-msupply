@@ -361,9 +361,6 @@ describe('DetailView reducer: merging', () => {
         // Lines to be handled in their own tests as they're more complex.
         return;
       } else {
-        console.log('-------------------------------------------');
-        console.log('value', value, state.draft[key as keyof OutboundShipment]);
-        console.log('-------------------------------------------');
         expect(JSON.stringify(value)).toEqual(
           JSON.stringify(state.draft[key as keyof OutboundShipment])
         );
