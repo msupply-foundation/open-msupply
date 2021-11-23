@@ -45,11 +45,11 @@ type CannotChangeStatusBackToDraftError implements UpdateOutboundShipmentErrorIn
 type CannotChangeStatusOfInvoiceOnHold implements UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface {
 	description: String!
 }
-type CannotDeleteInvoiceWithLines implements DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentErrorInterface {
+type CannotDeleteInvoiceWithLines implements DeleteOutboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface {
 	description: String!
 	lines: InvoiceLineConnector!
 }
-type CannotEditFinalisedInvoice implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface {
+type CannotEditFinalisedInvoice implements InsertOutboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface {
 	description: String!
 }
 """
@@ -61,7 +61,7 @@ type ConnectorError {
 interface ConnectorErrorInterface {
 	description: String!
 }
-type DatabaseError implements InsertOutboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & AuthTokenErrorInterface & RefreshTokenErrorInterface & UpdateOutboundShipmentLineErrorInterface & NodeErrorInterface & DeleteOutboundShipmentLineErrorInterface & ConnectorErrorInterface & DeleteOutboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & UserRegisterErrorInterface {
+type DatabaseError implements DeleteInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & ConnectorErrorInterface & UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & NodeErrorInterface & InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & RefreshTokenErrorInterface & DeleteOutboundShipmentLineErrorInterface & UserRegisterErrorInterface & AuthTokenErrorInterface & DeleteInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface {
 	description: String!
 	fullError: String!
 }
@@ -173,7 +173,7 @@ enum ForeignKey {
 	invoiceId
 	stockLineId
 }
-type ForeignKeyError implements UpdateInboundShipmentErrorInterface & InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface {
+type ForeignKeyError implements UpdateInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface {
 	description: String!
 	key: ForeignKey!
 }
@@ -193,6 +193,7 @@ input InsertInboundShipmentInput {
 	onHold: Boolean
 	comment: String
 	theirReference: String
+	color: String
 }
 """
 Generic Error Wrapper
@@ -209,7 +210,6 @@ input InsertInboundShipmentLineInput {
 	itemId: String!
 	packSize: Int!
 	batch: String
-	locationId: String
 	costPricePerPack: Float!
 	sellPricePerPack: Float!
 	expiryDate: NaiveDate
@@ -247,6 +247,7 @@ input InsertOutboundShipmentInput {
 	onHold: Boolean
 	comment: String
 	theirReference: String
+	color: String
 }
 """
 Generic Error Wrapper
@@ -274,7 +275,7 @@ type InsertOutboundShipmentResponseWithId {
 	id: String!
 	response: InsertOutboundShipmentResponse!
 }
-type InternalError implements LogoutErrorInterface & UserRegisterErrorInterface & AuthTokenErrorInterface & RefreshTokenErrorInterface {
+type InternalError implements AuthTokenErrorInterface & UserRegisterErrorInterface & RefreshTokenErrorInterface & LogoutErrorInterface {
 	description: String!
 	fullError: String!
 }
@@ -291,7 +292,7 @@ type InvoiceConnector {
 	totalCount: Int!
 	nodes: [InvoiceNode!]!
 }
-type InvoiceDoesNotBelongToCurrentStore implements DeleteOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface {
+type InvoiceDoesNotBelongToCurrentStore implements UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface {
 	description: String!
 }
 input InvoiceFilterInput {
@@ -306,7 +307,7 @@ input InvoiceFilterInput {
 	confirmDatetime: DatetimeFilterInput
 	finalisedDatetime: DatetimeFilterInput
 }
-type InvoiceLineBelongsToAnotherInvoice implements DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface {
+type InvoiceLineBelongsToAnotherInvoice implements DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface {
 	description: String!
 	invoice: InvoiceResponse!
 }
@@ -333,8 +334,6 @@ type InvoiceLineNode {
 	batch: String
 	expiryDate: NaiveDate
 	note: String
-	locationName: String
-	locationId: String
 	stockLine: StockLineResponse
 }
 union InvoiceLineResponse = | NodeError | InvoiceLineNode
@@ -352,6 +351,7 @@ type InvoiceNode {
 	entryDatetime: DateTime!
 	confirmedDatetime: DateTime
 	finalisedDatetime: DateTime
+	color: String
 	lines: InvoiceLinesResponse!
 	pricing: InvoicePriceResponse!
 	otherParty: NameResponse!
@@ -399,7 +399,7 @@ type ItemConnector {
 	totalCount: Int!
 	nodes: [ItemNode!]!
 }
-type ItemDoesNotMatchStockLine implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+type ItemDoesNotMatchStockLine implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 }
 input ItemFilterInput {
@@ -432,9 +432,6 @@ ascending)
 }
 union ItemsResponse = | ConnectorError | ItemConnector
 type LineDoesNotReferenceStockLine implements UpdateOutboundShipmentLineErrorInterface {
-	description: String!
-}
-type LocationIsOnHold implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
 	description: String!
 }
 type Logout {
@@ -550,10 +547,10 @@ type NotARefreshToken implements RefreshTokenErrorInterface {
 type NotAnApiToken implements LogoutErrorInterface {
 	description: String!
 }
-type NotAnInboundShipment implements DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface {
+type NotAnInboundShipment implements UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface {
 	description: String!
 }
-type NotAnOutboundShipment implements UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+type NotAnOutboundShipment implements DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface {
 	description: String!
 }
 type NotAnOutboundShipmentError implements UpdateOutboundShipmentErrorInterface {
@@ -618,7 +615,7 @@ type Queries {
 	invoice(id: String!): InvoiceResponse!
 	invoices(page: PaginationInput, filter: InvoiceFilterInput, sort: [InvoiceSortInput!]): InvoicesResponse!
 }
-type RangeError implements UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
+type RangeError implements InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 	field: RangeField!
 	max: Int
@@ -629,10 +626,10 @@ enum RangeField {
 	numberOfPacks
 	packSize
 }
-type RecordAlreadyExist implements InsertOutboundShipmentLineErrorInterface & UserRegisterErrorInterface & InsertOutboundShipmentErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface {
+type RecordAlreadyExist implements InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & UserRegisterErrorInterface {
 	description: String!
 }
-type RecordNotFound implements NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface {
+type RecordNotFound implements NodeErrorInterface & DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface {
 	description: String!
 }
 type RefreshToken {
@@ -666,7 +663,7 @@ input SimpleStringFilterInput {
 	"""
 	like: String
 }
-type StockLineAlreadyExistsInInvoice implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+type StockLineAlreadyExistsInInvoice implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 	line: InvoiceLineResponse!
 }
@@ -677,10 +674,10 @@ type StockLineConnector {
 	totalCount: Int!
 	nodes: [StockLineNode!]!
 }
-type StockLineDoesNotBelongToCurrentStore implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+type StockLineDoesNotBelongToCurrentStore implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 }
-type StockLineIsOnHold implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 }
 type StockLineNode {
@@ -696,8 +693,6 @@ type StockLineNode {
 	expiryDate: NaiveDate
 	onHold: Boolean!
 	note: String
-	locationId: String
-	locationName: String
 }
 union StockLineResponse = | NodeError | StockLineNode
 union StockLinesResponse = | ConnectorError | StockLineConnector
@@ -723,6 +718,7 @@ input UpdateInboundShipmentInput {
 	onHold: Boolean
 	comment: String
 	theirReference: String
+	color: String
 }
 """
 Generic Error Wrapper
@@ -737,7 +733,6 @@ input UpdateInboundShipmentLineInput {
 	id: String!
 	invoiceId: String!
 	itemId: String
-	locationId: String
 	packSize: Int
 	batch: String
 	costPricePerPack: Float
@@ -785,6 +780,7 @@ existing invoice items gets updated.
 	External invoice reference, e.g. purchase or shipment number
 	"""
 	theirReference: String
+	color: String
 }
 """
 Generic Error Wrapper

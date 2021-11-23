@@ -39,6 +39,17 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
 - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-mac/install/) for Mac.
 
+#### M1 Arm 
+
+`brew install libpq` and add the following to `~/.cargo/config.toml`
+```
+[env]
+MACOSX_DEPLOYMENT_TARGET = "10.7"
+
+[target.aarch64-apple-darwin]
+rustflags = "-L /opt/homebrew/opt/libpq/lib"
+```
+
 ### Ubuntu
 
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).

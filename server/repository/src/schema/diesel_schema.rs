@@ -122,6 +122,7 @@ table! {
         entry_datetime -> Timestamp,
         confirm_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        color -> Nullable<Text>,
     }
 }
 
