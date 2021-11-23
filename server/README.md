@@ -43,13 +43,11 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 `brew install libpq` and add the following to `~/.cargo/config.toml`
 ```
-[target.aarch64-apple-darwin]
-rustflags = '-L /opt/homebrew/opt/libpq/lib`
-```
+[env]
+MACOSX_DEPLOYMENT_TARGET = "10.7"
 
-may also need to set [deployment target](https://github.com/rust-lang/rust/issues/90342) before running or testing
-```
-export MACOSX_DEPLOYMENT_TARGET=10.7
+[target.aarch64-apple-darwin]
+rustflags = "-L /opt/homebrew/opt/libpq/lib"
 ```
 
 ### Ubuntu
