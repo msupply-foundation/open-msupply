@@ -1,8 +1,8 @@
 use crate::WithDBError;
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRepository, InvoiceRepository, RepositoryError,
-    StockLineRepository, StorageConnectionManager, TransactionError,
+    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
+    StockLineRowRepository, StorageConnectionManager, TransactionError,
 };
 
 mod validate;
@@ -20,11 +20,11 @@ pub fn delete_outbound_shipment_line(
             let line = validate(&input, &connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
 
-            InvoiceLineRepository::new(&connection).delete(&line.id)?;
+            InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
 
             if let Some(stock_line_id) = stock_line_id_option {
                 let invoice_repository = InvoiceRepository::new(&connection);
-                let stock_line_repository = StockLineRepository::new(&connection);
+                let stock_line_repository = StockLineRowRepository::new(&connection);
 
                 let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
                 stock_line.available_number_of_packs += line.number_of_packs;

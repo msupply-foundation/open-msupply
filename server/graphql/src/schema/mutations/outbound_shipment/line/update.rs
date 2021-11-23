@@ -16,8 +16,9 @@ use repository::StorageConnectionManager;
 use service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError};
 
 use super::{
-    ItemDoesNotMatchStockLine, LineDoesNotReferenceStockLine, NotEnoughStockForReduction,
-    StockLineAlreadyExistsInInvoice, StockLineDoesNotBelongToCurrentStore, StockLineIsOnHold,
+    ItemDoesNotMatchStockLine, LineDoesNotReferenceStockLine, LocationIsOnHold, LocationNotFound,
+    NotEnoughStockForReduction, StockLineAlreadyExistsInInvoice,
+    StockLineDoesNotBelongToCurrentStore, StockLineIsOnHold,
 };
 
 #[derive(InputObject)]
@@ -61,6 +62,8 @@ pub enum UpdateOutboundShipmentLineErrorInterface {
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     NotAnOutboundShipment(NotAnOutboundShipment),
+    LocationIsOnHold(LocationIsOnHold),
+    LocationNotFound(LocationNotFound),
     RangeError(RangeError),
     StockLineIsOnHold(StockLineIsOnHold),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
@@ -143,6 +146,12 @@ impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineRespons
             }
             UpdateOutboundShipmentLineError::BatchIsOnHold => {
                 OutError::StockLineIsOnHold(StockLineIsOnHold {})
+            }
+            UpdateOutboundShipmentLineError::LocationIsOnHold => {
+                OutError::LocationIsOnHold(LocationIsOnHold {})
+            }
+            UpdateOutboundShipmentLineError::LocationNotFound => {
+                OutError::LocationNotFound(LocationNotFound {})
             }
         };
 

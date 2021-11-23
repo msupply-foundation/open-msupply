@@ -15,7 +15,7 @@ mod graphql {
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
-        InvoiceRepository, StockLineRepository,
+        InvoiceRepository, StockLineRowRepository,
     };
     use server::test_utils::setup_all;
 
@@ -114,6 +114,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: Some("some comment".to_string()),
             their_reference_option: Some("some reference".to_string()),
+            color_option: None,
         };
 
         // Test RecordNotFound
@@ -204,7 +205,7 @@ mod graphql {
         for line in get_invoice_lines_inline!(&draft_inbound_shipment.id, &connection) {
             let cloned_line = line.clone();
             let stock_line_id = assert_unwrap_optional_key!(cloned_line, stock_line_id);
-            let stock_line = StockLineRepository::new(&connection)
+            let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
                 .unwrap();
             assert_eq!(line, UpdatedStockLine(stock_line));
@@ -239,6 +240,7 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
         variables.on_hold_option = Some(true);
+        variables.color_option = Some("#FFFFFF".to_owned());
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -352,6 +354,7 @@ mod graphql {
                 sell_price_per_pack,
                 total_after_tax: _,
                 number_of_packs,
+                location_id,
                 note,
             } = self;
 
@@ -367,6 +370,7 @@ mod graphql {
                 && *number_of_packs == stock_line.available_number_of_packs
                 && *number_of_packs == stock_line.total_number_of_packs
                 && *note == stock_line.note
+                && *location_id == stock_line.location_id
         }
     }
 
@@ -377,6 +381,7 @@ mod graphql {
                 other_party_id_option,
                 status_option,
                 on_hold_option,
+                color_option: _,           // Nullable option ?
                 comment_option: _,         // Nullable option ?
                 their_reference_option: _, // Nullable option ?
             } = other;

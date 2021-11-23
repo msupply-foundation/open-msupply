@@ -5,6 +5,8 @@ pub struct AuthData {
     /// Secret to sign and verify auth (JWT) tokens.
     pub auth_token_secret: String,
     pub token_bucket: RwLock<TokenBucket>,
-    /// Indicates if we ran in debug mode without ssl certificate
+    /// Indicates if we run in debug mode without ssl certificate
     pub debug_no_ssl: bool,
+    /// Disable access control (e.g. for testing)
+    pub debug_no_access_control: bool,
 }

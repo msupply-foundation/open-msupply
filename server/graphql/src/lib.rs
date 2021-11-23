@@ -10,6 +10,7 @@ use async_graphql_actix_web::{Request, Response};
 use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
+use service::service_registry::ServiceRegistry;
 
 use self::{
     loader::LoaderRegistry,
@@ -20,7 +21,9 @@ use self::{
 pub trait ContextExt {
     fn get_connection_manager(&self) -> &StorageConnectionManager;
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
+    fn get_service<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn get_auth_data(&self) -> &AuthData;
+    fn get_auth_token(&self) -> Option<String>;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -32,8 +35,17 @@ impl<'a> ContextExt for Context<'a> {
         self.data_unchecked::<Data<LoaderRegistry>>().get::<T>()
     }
 
+    fn get_service<T: anymap::any::Any + Send + Sync>(&self) -> &T {
+        self.data_unchecked::<Data<ServiceRegistry>>().get::<T>()
+    }
+
     fn get_auth_data(&self) -> &AuthData {
         self.data_unchecked::<Data<AuthData>>()
+    }
+
+    fn get_auth_token(&self) -> Option<String> {
+        self.data_opt::<RequestUserData>()
+            .and_then(|d| d.auth_token.to_owned())
     }
 }
 
@@ -46,12 +58,14 @@ pub fn build_schema() -> Builder {
 pub fn config(
     connection_manager: Data<StorageConnectionManager>,
     loader_registry: Data<LoaderRegistry>,
+    service_registry: Data<ServiceRegistry>,
     auth_data: Data<AuthData>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let schema = build_schema()
             .data(connection_manager)
             .data(loader_registry)
+            .data(service_registry)
             .data(auth_data)
             .finish();
         cfg.service(

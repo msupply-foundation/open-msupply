@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, ItemRow},
-    InvoiceLineRepository, ItemRepository, RepositoryError, StorageConnection,
+    InvoiceLineRowRepository, ItemRepository, RepositoryError, StorageConnection,
 };
 
 pub struct LineAlreadyExists;
@@ -10,7 +10,7 @@ pub fn check_line_does_not_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), WithDBError<LineAlreadyExists>> {
-    let result = InvoiceLineRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
 
     match result {
         Ok(_) => Err(WithDBError::err(LineAlreadyExists {})),
@@ -56,7 +56,7 @@ pub fn check_line_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<InvoiceLineRow, WithDBError<LineDoesNotExist>> {
-    let result = InvoiceLineRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
 
     match result {
         Ok(line) => Ok(line),

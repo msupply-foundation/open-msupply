@@ -1,9 +1,41 @@
-use domain::stock_line::StockLine;
+use domain::stock_line::{StockLine, StockLineFilter};
 use repository::{RepositoryError, StockLineRepository, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
+
+pub struct StockLineByLocationIdLoader {
+    pub connection_manager: StorageConnectionManager,
+}
+
+#[async_trait::async_trait]
+impl Loader<String> for StockLineByLocationIdLoader {
+    type Value = Vec<StockLine>;
+    type Error = RepositoryError;
+
+    async fn load(
+        &self,
+        location_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let connection = self.connection_manager.connection()?;
+        let repo = StockLineRepository::new(&connection);
+
+        let result = repo
+            .query_by_filter(StockLineFilter::new().match_location_ids(location_ids.to_owned()))?;
+
+        let mut result_map = HashMap::new();
+        for stock_line in result {
+            if let Some(location_id) = &stock_line.location_id {
+                result_map
+                    .entry(location_id.clone())
+                    .or_insert(Vec::new())
+                    .push(stock_line);
+            }
+        }
+        Ok(result_map)
+    }
+}
 
 pub struct StockLineByItemIdLoader {
     pub connection_manager: StorageConnectionManager,
@@ -18,7 +50,8 @@ impl Loader<String> for StockLineByItemIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        let result = repo.find_many_by_item_ids(item_ids)?;
+        let result =
+            repo.query_by_filter(StockLineFilter::new().match_item_ids(item_ids.to_owned()))?;
 
         let mut result_map = HashMap::new();
         for stock_line in result {
@@ -44,10 +77,11 @@ impl Loader<String> for StockLineByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        Ok(repo
-            .find_many_by_ids(ids)?
+        let result = repo.query_by_filter(StockLineFilter::new().match_ids(ids.to_owned()))?;
+
+        Ok(result
             .into_iter()
-            .map(|record| (record.id.clone(), record))
+            .map(|stock_line| (stock_line.id.clone(), stock_line))
             .collect())
     }
 }

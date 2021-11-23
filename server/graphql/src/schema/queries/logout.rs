@@ -1,7 +1,9 @@
 use async_graphql::*;
+use service::permission_validation::{validate_auth, ValidationError};
 
-use crate::schema::types::InternalError;
-use crate::{ContextExt, RequestUserData};
+use crate::schema::types::{AccessDenied, InternalError};
+use crate::schema::validation_denied_kind_to_string;
+use crate::ContextExt;
 use service::token::TokenService;
 
 use super::{set_refresh_token_cookie, ErrorWrapper};
@@ -61,11 +63,7 @@ impl NotAnApiToken {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum LogoutErrorInterface {
-    MissingAuthToken(MissingAuthToken),
-    ExpiredSignature(ExpiredSignature),
-    InvalidToken(InvalidToken),
-    TokenInvalided(TokenInvalided),
-    NotAnApiToken(NotAnApiToken),
+    AccessDenied(AccessDenied),
     InternalError(InternalError),
 }
 
@@ -79,51 +77,30 @@ pub enum LogoutResponse {
 
 pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
     let auth_data = ctx.get_auth_data();
-    let mut service = TokenService::new(
-        &auth_data.token_bucket,
-        auth_data.auth_token_secret.as_bytes(),
-    );
-
     // invalid the refresh token cookie first (just in case an error happens before we do so)
     set_refresh_token_cookie(ctx, "logged out", 0, auth_data.debug_no_ssl);
 
-    let auth_token = match ctx
-        .data_opt::<RequestUserData>()
-        .and_then(|d| d.auth_token.to_owned())
-    {
-        Some(data) => data,
-        None => {
-            return LogoutResponse::Error(ErrorWrapper {
-                error: LogoutErrorInterface::MissingAuthToken(MissingAuthToken),
-            })
-        }
-    };
-
-    // verify that the provided token is valid
-    let claims = match service.verify_token(&auth_token) {
-        Ok(claims) => claims,
+    let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
+        Ok(value) => value,
         Err(err) => {
-            let e = match err {
-                service::token::JWTValidationError::ExpiredSignature => todo!(),
-                service::token::JWTValidationError::NotAnApiToken => {
-                    LogoutErrorInterface::NotAnApiToken(NotAnApiToken)
-                }
-                service::token::JWTValidationError::InvalidToken(_) => {
-                    LogoutErrorInterface::InvalidToken(InvalidToken)
-                }
-                service::token::JWTValidationError::TokenInvalided => {
-                    LogoutErrorInterface::TokenInvalided(TokenInvalided)
-                }
-                service::token::JWTValidationError::ConcurrencyLockError(_) => {
-                    LogoutErrorInterface::InternalError(InternalError("Lock error".to_string()))
+            let error = match err {
+                ValidationError::Denied(denied) => LogoutErrorInterface::AccessDenied(
+                    AccessDenied(validation_denied_kind_to_string(denied)),
+                ),
+                ValidationError::InternalError(err) => {
+                    LogoutErrorInterface::InternalError(InternalError(err))
                 }
             };
-            return LogoutResponse::Error(ErrorWrapper { error: e });
+            return LogoutResponse::Error(ErrorWrapper { error });
         }
     };
 
     // invalided all tokens of the user on the server
-    let user_id = claims.sub;
+    let user_id = user_auth.claims.sub;
+    let mut service = TokenService::new(
+        &auth_data.token_bucket,
+        auth_data.auth_token_secret.as_bytes(),
+    );
     match service.logout(&user_id) {
         Ok(_) => {}
         Err(e) => match e {

@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use domain::outbound_shipment::InsertOutboundShipmentLine;
 use repository::{
-    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
 };
 
@@ -20,8 +20,8 @@ pub fn insert_outbound_shipment_line(
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&input, &connection)?;
             let (new_line, update_batch) = generate(input, item, batch, invoice)?;
-            InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
-            StockLineRepository::new(&connection).upsert_one(&update_batch)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
             Ok(new_line)
         })
         .map_err(
@@ -45,9 +45,12 @@ pub enum InsertOutboundShipmentLineError {
     ItemNotFound,
     StockLineNotFound,
     NumberOfPacksBelowOne,
+    LocationIsOnHold,
+    LocationNotFound,
     StockLineAlreadyExistsInInvoice(String),
     ItemDoesNotMatchStockLine,
     BatchIsOnHold,
+    
     ReductionBelowZero { stock_line_id: String },
 }
 

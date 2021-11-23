@@ -13,8 +13,8 @@ mod graphql {
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, StockLineRow},
-        InvoiceLineRepository, StockLineRepository,
     };
+    use repository::{InvoiceLineRowRepository, StockLineRowRepository};
     use server::test_utils::setup_all;
     use util::uuid::uuid;
 
@@ -104,6 +104,7 @@ mod graphql {
             number_of_packs: 9,
             expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
             batch_option: Some("some batch name".to_string()),
+            location_id_option: None,
         };
 
         // Test ForeingKeyError Item
@@ -120,6 +121,22 @@ mod graphql {
                 key: insert::ForeignKey::ItemId,
             })
         );
+
+        // Test ForeingKeyError LocationId
+
+        let mut variables = base_variables.clone();
+        variables.location_id_option = Some("invalid".to_owned());
+
+        let query = Insert::build_query(variables);
+        let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+        assert_error!(
+            response,
+            ForeignKeyError(insert::ForeignKeyError {
+                description: "FK record doesn't exist".to_string(),
+                key: insert::ForeignKey::LocationId,
+            })
+        );
+
         // Test ForeingKeyError Invoice
 
         let mut variables = base_variables.clone();
@@ -217,7 +234,7 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&variables.id)
             .unwrap();
 
@@ -237,10 +254,10 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&line.id)
             .unwrap();
-        let new_stock_line = StockLineRepository::new(&connection)
+        let new_stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&batch.id)
             .unwrap();
 
@@ -263,10 +280,10 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&line.id)
             .unwrap();
-        let new_stock_line = StockLineRepository::new(&connection)
+        let new_stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&batch.id)
             .unwrap();
 
@@ -286,7 +303,7 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&line.id)
             .unwrap();
 
@@ -312,6 +329,7 @@ mod graphql {
                 number_of_packs,
                 sell_price_per_pack,
                 pack_size,
+                location_id_option,
             } = other;
 
             *cost_price_per_pack == self.cost_price_per_pack
@@ -323,6 +341,7 @@ mod graphql {
                 && *sell_price_per_pack == self.sell_price_per_pack
                 && *batch_option == self.batch
                 && *pack_size == self.pack_size as i64
+                && *location_id_option == self.location_id
         }
     }
 
@@ -338,6 +357,7 @@ mod graphql {
                 number_of_packs,
                 sell_price_per_pack,
                 pack_size,
+                location_id_option,
             } = other;
 
             *cost_price_per_pack == self.cost_price_per_pack
@@ -348,6 +368,7 @@ mod graphql {
                 && *sell_price_per_pack == self.sell_price_per_pack
                 && *batch_option == self.batch
                 && *pack_size == self.pack_size as i64
+                && *location_id_option == self.location_id
         }
     }
 }

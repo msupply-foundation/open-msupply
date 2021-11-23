@@ -10,7 +10,7 @@ macro_rules! get_invoice_inline {
 
 macro_rules! get_invoice_lines_inline {
     ($invoice_id:expr, $connection:expr) => {{
-        repository::InvoiceLineRepository::new($connection)
+        repository::InvoiceLineRowRepository::new($connection)
             .find_many_by_invoice_id($invoice_id)
             .unwrap()
     }};
@@ -18,7 +18,7 @@ macro_rules! get_invoice_lines_inline {
 
 macro_rules! get_stock_line_inline {
     ($stock_line_id:expr, $connection:expr) => {{
-        repository::StockLineRepository::new($connection)
+        repository::StockLineRowRepository::new($connection)
             .find_one_by_id($stock_line_id)
             .unwrap()
     }};
@@ -26,7 +26,7 @@ macro_rules! get_stock_line_inline {
 
 macro_rules! get_invoice_line_inline {
     ($invoice_line_id:expr, $connection:expr) => {{
-        repository::InvoiceLineRepository::new($connection)
+        repository::InvoiceLineRowRepository::new($connection)
             .find_one_by_id($invoice_line_id)
             .unwrap()
     }};

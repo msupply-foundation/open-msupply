@@ -1,6 +1,6 @@
 use super::{
     InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, ItemSortFieldInput,
-    NameSortFieldInput,
+    LocationSortFieldInput, NameSortFieldInput,
 };
 
 use domain::{
@@ -15,6 +15,7 @@ use chrono::{DateTime, Utc};
 #[graphql(concrete(name = "InvoiceSortInput", params(InvoiceSortFieldInput)))]
 #[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
 #[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
+#[graphql(concrete(name = "LocationSortInput", params(LocationSortFieldInput)))]
 pub struct SortInput<T: InputType> {
     /// Sort query result by `key`
     pub key: T,

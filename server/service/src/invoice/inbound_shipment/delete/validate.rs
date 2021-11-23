@@ -1,9 +1,10 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
-    InvoiceIsFinalised, WrongInvoiceType,
+    check_invoice_exists, check_invoice_is_empty, check_invoice_is_not_finalised,
+    check_invoice_type, InvoiceDoesNotExist, InvoiceIsFinalised, InvoiceLinesExist,
+    WrongInvoiceType,
 };
 use domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType};
-use repository::{schema::InvoiceRow, InvoiceLineQueryRepository, StorageConnection};
+use repository::{schema::InvoiceRow, StorageConnection};
 
 use super::DeleteInboundShipmentError;
 
@@ -15,24 +16,10 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
-    check_invoice_finalised(&invoice)?;
-    check_lines_exist(&input.id, connection)?;
+    check_invoice_is_not_finalised(&invoice)?;
+    check_invoice_is_empty(&input.id, connection)?;
 
     Ok(invoice)
-}
-
-fn check_lines_exist(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<(), DeleteInboundShipmentError> {
-    let lines =
-        InvoiceLineQueryRepository::new(connection).find_many_by_invoice_ids(&[id.to_string()])?;
-
-    if lines.len() > 0 {
-        Err(DeleteInboundShipmentError::InvoiceLinesExists(lines))
-    } else {
-        Ok(())
-    }
 }
 
 impl From<WrongInvoiceType> for DeleteInboundShipmentError {
@@ -50,5 +37,11 @@ impl From<InvoiceIsFinalised> for DeleteInboundShipmentError {
 impl From<InvoiceDoesNotExist> for DeleteInboundShipmentError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         DeleteInboundShipmentError::InvoiceDoesNotExist
+    }
+}
+
+impl From<InvoiceLinesExist> for DeleteInboundShipmentError {
+    fn from(error: InvoiceLinesExist) -> Self {
+        DeleteInboundShipmentError::InvoiceLinesExists(error.0)
     }
 }
