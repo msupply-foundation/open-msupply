@@ -1,5 +1,5 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_finalised, check_invoice_type, check_lines_exist,
+    check_invoice_exists, check_invoice_finalised, check_invoice_is_empty, check_invoice_type,
     InvoiceDoesNotExist, InvoiceIsFinalised, InvoiceLinesExist, WrongInvoiceType,
 };
 use domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType};
@@ -16,7 +16,7 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
     check_invoice_finalised(&invoice)?;
-    check_lines_exist(&input.id, connection)?;
+    check_invoice_is_empty(&input.id, connection)?;
 
     Ok(invoice)
 }

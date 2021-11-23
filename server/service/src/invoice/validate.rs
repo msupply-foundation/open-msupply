@@ -75,7 +75,7 @@ pub fn check_invoice_exists(
 
 pub struct InvoiceLinesExist(pub Vec<InvoiceLine>);
 
-pub fn check_lines_exist(
+pub fn check_invoice_is_empty(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), WithDBError<InvoiceLinesExist>> {
