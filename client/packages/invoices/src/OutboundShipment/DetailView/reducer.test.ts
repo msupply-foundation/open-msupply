@@ -64,7 +64,7 @@ const getState = ({ isDesc = true } = {}): OutboundShipmentStateShape => ({
   draft: {
     ...placeholderInvoice,
     lines: [],
-    items: summaryItems,
+    items: [...summaryItems],
   },
   sortBy: {
     key: 'numberOfPacks',
@@ -310,7 +310,7 @@ describe('DetailView reducer: merging', () => {
     ).toBe(0);
   });
 
-  it.only('sets the correct flags for each line when merging new server state', () => {
+  it('sets the correct flags for each line when merging new server state', () => {
     // The shipment has three lines. Two of them are new and one is updated.
     // When the server state is merged, the created lines should have the isCreated flag set to false
     // to indicate they have been persisted.

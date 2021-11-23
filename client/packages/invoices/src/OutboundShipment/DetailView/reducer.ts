@@ -163,12 +163,6 @@ export const reducer = (
         }
 
         case DocumentActionType.Merge: {
-          state.draft = {
-            ...state.draft,
-            ...data,
-            status: state.draft.status,
-          };
-
           state.draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
@@ -192,6 +186,9 @@ export const reducer = (
               createSummaryItem(serverLine.itemId, [outboundShipmentRow]);
 
             if (existingRow) {
+              console.log('-------------------------------------------');
+              console.log('existingRow', summaryItem, existingRow);
+              console.log('-------------------------------------------');
               delete summaryItem.batches[existingRow.id];
               const newLine = mergeLines(serverLine, existingRow);
               console.log(newLine?.id, newLine);
@@ -216,6 +213,13 @@ export const reducer = (
 
             return itemsArray;
           }, state.draft.items);
+
+          state.draft = {
+            ...state.draft,
+            ...data,
+            status: state.draft.status,
+            items: state.draft.items,
+          };
 
           break;
         }
