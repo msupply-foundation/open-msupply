@@ -28,6 +28,7 @@ export const DataTable = <T extends DomainObject>({
   onChangePage,
   noDataMessage,
   ExpandContent,
+  dense = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
   const { setActiveRows } = useTableStore();
@@ -61,11 +62,15 @@ export const DataTable = <T extends DomainObject>({
 
   return (
     <TableContainer sx={{ display: 'flex', flexDirection: 'column' }}>
-      <MuiTable sx={{ overflow: 'auto', display: 'block' }}>
+      <MuiTable sx={{ overflow: 'hidden', display: 'block' }}>
         <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <HeaderRow>
+          <HeaderRow dense={dense}>
             {columns.map(column => (
-              <HeaderCell column={column} key={String(column.key)} />
+              <HeaderCell
+                dense={dense}
+                column={column}
+                key={String(column.key)}
+              />
             ))}
           </HeaderRow>
         </TableHead>
@@ -79,18 +84,21 @@ export const DataTable = <T extends DomainObject>({
                 onClick={onRowClick}
                 rowData={row}
                 rowKey={String(idx)}
+                dense={dense}
               />
             );
           })}
         </TableBody>
       </MuiTable>
-      <PaginationRow
-        page={pagination.page}
-        offset={pagination.offset}
-        first={pagination.first}
-        total={pagination.total ?? 0}
-        onChange={onChangePage}
-      />
+      {pagination && onChangePage && (
+        <PaginationRow
+          page={pagination.page}
+          offset={pagination.offset}
+          first={pagination.first}
+          total={pagination.total ?? 0}
+          onChange={onChangePage}
+        />
+      )}
     </TableContainer>
   );
 };

@@ -12,6 +12,7 @@ interface DataRowProps<T extends DomainObject> {
   rowData: T;
   rowKey: string;
   ExpandContent?: FC<{ rowData: T }>;
+  dense?: boolean;
 }
 
 export const DataRow = <T extends DomainObject>({
@@ -20,6 +21,7 @@ export const DataRow = <T extends DomainObject>({
   rowData,
   rowKey,
   ExpandContent,
+  dense = false,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
@@ -35,7 +37,9 @@ export const DataRow = <T extends DomainObject>({
           alignItems: 'center',
           height: '40px',
           maxHeight: '45px',
-          boxShadow: 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
+          boxShadow: dense
+            ? 'none'
+            : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
           display: 'flex',
           flex: '1 0 auto',
         }}
