@@ -186,9 +186,6 @@ export const reducer = (
               createSummaryItem(serverLine.itemId, [outboundShipmentRow]);
 
             if (existingRow) {
-              console.log('-------------------------------------------');
-              console.log('existingRow', summaryItem, existingRow);
-              console.log('-------------------------------------------');
               delete summaryItem.batches[existingRow.id];
               const newLine = mergeLines(serverLine, existingRow);
               console.log(newLine?.id, newLine);
