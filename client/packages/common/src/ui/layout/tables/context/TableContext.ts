@@ -5,6 +5,7 @@ import createContext from 'zustand/context';
 export interface RowState {
   isSelected: boolean;
   isExpanded: boolean;
+  isDisabled: boolean;
 }
 
 export interface TableStore {
@@ -17,6 +18,7 @@ export interface TableStore {
   toggleSelected: (id: string) => void;
   toggleAll: () => void;
   setActiveRows: (id: string[]) => void;
+  setDisabledRows: (id: string[]) => void;
 }
 
 export const { Provider: TableProvider, useStore: useTableStore } =
@@ -45,11 +47,40 @@ export const createTableStore = (): UseStore<TableStore> =>
                 ...state.rowState[id],
                 isSelected,
                 isExpanded: state.rowState[id]?.isExpanded ?? false,
+                isDisabled: state.rowState[id]?.isExpanded ?? false,
               },
             }),
             state.rowState
           ),
         };
+      });
+    },
+
+    setDisabledRows: (ids: string[]) => {
+      set(state => {
+        const { rowState } = state;
+
+        // Reset the disabled row states.
+        Object.keys(rowState).forEach(id => {
+          rowState[id] = {
+            isSelected: rowState[id]?.isSelected ?? false,
+            isExpanded: rowState[id]?.isExpanded ?? false,
+            isDisabled: false,
+          };
+        });
+
+        // then set the disabled row state for all of the rows passed in.
+        ids.forEach(id => {
+          const maybeRowState = rowState[id];
+          if (maybeRowState) {
+            rowState[id] = {
+              ...maybeRowState,
+              isDisabled: true,
+            };
+          }
+        });
+
+        return { ...state, rowState: { ...rowState } };
       });
     },
 
@@ -67,6 +98,7 @@ export const createTableStore = (): UseStore<TableStore> =>
                 ...rowState[id],
                 isSelected: rowState[id]?.isSelected ?? false,
                 isExpanded: false,
+                isDisabled: state.rowState[id]?.isExpanded ?? false,
               },
             };
           },
@@ -107,6 +139,7 @@ export const createTableStore = (): UseStore<TableStore> =>
               ...state.rowState[id],
               isSelected,
               isExpanded: state.rowState[id]?.isExpanded ?? false,
+              isDisabled: state.rowState[id]?.isExpanded ?? false,
             },
           },
         };
@@ -129,6 +162,7 @@ export const createTableStore = (): UseStore<TableStore> =>
               ...rowState[id],
               isSelected: rowState[id]?.isSelected ?? false,
               isExpanded: newExpanded,
+              isDisabled: state.rowState[id]?.isExpanded ?? false,
             },
           },
         };
@@ -152,6 +186,7 @@ export const createTableStore = (): UseStore<TableStore> =>
                 ...state.rowState[id],
                 isExpanded,
                 isSelected: state.rowState[id]?.isSelected ?? false,
+                isDisabled: state.rowState[id]?.isExpanded ?? false,
               },
             }),
             state.rowState
@@ -183,6 +218,33 @@ export const useExpanded = (rowId: string): UseExpandedControl => {
     newState: ReturnType<typeof selector>
   ) =>
     oldState?.isExpanded === newState?.isExpanded &&
+    oldState.rowId === newState.rowId;
+
+  return useTableStore(selector, equalityFn);
+};
+
+interface UseDisabledControl {
+  isDisabled: boolean;
+  // toggleDisabled: () => void; // TODO: Is this needed?
+}
+
+export const useDisabled = (rowId: string): UseDisabledControl => {
+  const selector = useCallback(
+    (state: TableStore) => {
+      return {
+        rowId,
+        isDisabled: state.rowState[rowId]?.isDisabled ?? false,
+        // toggleExpanded: () => state.toggleExpanded(rowId),
+      };
+    },
+    [rowId]
+  );
+
+  const equalityFn = (
+    oldState: ReturnType<typeof selector>,
+    newState: ReturnType<typeof selector>
+  ) =>
+    oldState?.isDisabled === newState?.isDisabled &&
     oldState.rowId === newState.rowId;
 
   return useTableStore(selector, equalityFn);
