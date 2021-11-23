@@ -29,10 +29,12 @@ import {
 import { InboundShipmentItem, InboundShipmentRow } from '../../../types';
 import { ItemSearchInput } from '@openmsupply-client/system';
 import { flattenInboundItems } from '../../../utils';
+import { ModalMode } from '..';
 interface InboundLineEditProps {
   item: InboundShipmentItem | null;
   onUpsert: (item: InboundShipmentItem) => void;
   onChangeItem: (item: Item | null) => void;
+  mode: ModalMode;
 }
 
 const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
@@ -324,6 +326,7 @@ enum Tabs {
 export const InboundLineEdit: FC<InboundLineEditProps> = ({
   item,
   onChangeItem,
+  mode,
 }) => {
   const t = useTranslation(['outbound-shipment', 'common']);
 
@@ -378,7 +381,15 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
-            currentItemName={item?.itemName}
+            disabled={mode === ModalMode.Update}
+            currentItem={{
+              name: item?.itemName ?? '',
+              id: item?.itemId ?? '',
+              code: item?.itemCode ?? '',
+              isVisible: true,
+              availableBatches: [],
+              unitName: '',
+            }}
             onChange={onChangeItem}
           />
         </Grid>

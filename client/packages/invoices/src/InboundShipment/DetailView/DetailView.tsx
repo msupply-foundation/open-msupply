@@ -58,21 +58,27 @@ export const itemToSummaryItem = (item: Item): InboundShipmentItem => {
   };
 };
 
+export enum ModalMode {
+  Create,
+  Update,
+}
+
 export const DetailView: FC = () => {
   const t = useTranslation('outbound-shipment');
 
   const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
 
-  const [selectedItem, setSelectedItem] = React.useState<{
+  const [modalState, setModalState] = React.useState<{
     item: InboundShipmentItem | null;
-    editing: boolean;
-  }>({ item: null, editing: false });
+    mode: ModalMode;
+  }>({ item: null, mode: ModalMode.Create });
   const { hideDialog, showDialog, Modal } = useDialog({
-    onClose: () => setSelectedItem({ item: null, editing: false }),
+    onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
   });
 
   const onChangeSelectedItem = (newItem: Item | null) => {
-    if (!newItem) return setSelectedItem({ item: newItem, editing: false });
+    if (!newItem)
+      return setModalState({ item: newItem, mode: ModalMode.Create });
 
     // Try and find the summary row that matches the new item
     const item = draft.items.find(
@@ -81,24 +87,25 @@ export const DetailView: FC = () => {
 
     // If we found it, set the selected item.
     if (item) {
-      setSelectedItem({ item, editing: true });
+      setModalState({ item, mode: ModalMode.Update });
     } else {
       // otherwise, set the selected item to a newly created summary row.
-      setSelectedItem({ item: itemToSummaryItem(newItem), editing: false });
+      setModalState({
+        item: itemToSummaryItem(newItem),
+        mode: ModalMode.Create,
+      });
     }
   };
 
   const onRowClick = (item: InboundShipmentItem) => {
-    setSelectedItem({ item, editing: true });
+    setModalState({ item, mode: ModalMode.Update });
     showDialog();
   };
 
   const onAddItem = () => {
-    setSelectedItem({ item: null, editing: false });
+    setModalState({ item: null, mode: ModalMode.Create });
     showDialog();
   };
-
-  const isEditMode = selectedItem.editing;
 
   const columns = useColumns(
     [
@@ -139,7 +146,11 @@ export const DetailView: FC = () => {
       <SidePanel draft={draft} />
 
       <Modal
-        title={!isEditMode ? t('heading.add-item') : t('heading.edit-item')}
+        title={
+          modalState.mode === ModalMode.Create
+            ? t('heading.add-item')
+            : t('heading.edit-item')
+        }
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         nextButton={<DialogButton variant="next" onClick={() => {}} />}
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
@@ -147,7 +158,8 @@ export const DetailView: FC = () => {
         width={1024}
       >
         <InboundLineEdit
-          item={selectedItem.item}
+          mode={modalState.mode}
+          item={modalState.item}
           onUpsert={() => {}}
           onChangeItem={onChangeSelectedItem}
         />
