@@ -10,7 +10,6 @@ import {
   RadioIcon,
   ReportsIcon,
   SettingsIcon,
-  StockIcon,
   Theme,
   IconButton,
   styled,
@@ -20,7 +19,12 @@ import {
   useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { CatalogueNav, DistributionNav, ReplenishmentNav } from '../Navigation';
+import {
+  CatalogueNav,
+  DistributionNav,
+  InventoryNav,
+  ReplenishmentNav,
+} from '../Navigation';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -141,17 +145,14 @@ export const AppDrawer: React.FC = () => {
           <DistributionNav />
           <ReplenishmentNav />
           <CatalogueNav />
+          <InventoryNav />
 
           {/* <NavLink
             to={AppRoute.Suppliers}
             icon={<SuppliersIcon fontSize="small" color="primary" />}
             text={t('suppliers')}
           /> */}
-          <NavLink
-            to={AppRoute.Stock}
-            icon={<StockIcon fontSize="small" color="primary" />}
-            text={t('stock')}
-          />
+
           {/* <NavLink
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
