@@ -23,6 +23,7 @@ pub trait ContextExt {
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn get_service<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn get_auth_data(&self) -> &AuthData;
+    fn get_auth_token(&self) -> Option<String>;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -40,6 +41,11 @@ impl<'a> ContextExt for Context<'a> {
 
     fn get_auth_data(&self) -> &AuthData {
         self.data_unchecked::<Data<AuthData>>()
+    }
+
+    fn get_auth_token(&self) -> Option<String> {
+        self.data_opt::<RequestUserData>()
+            .and_then(|d| d.auth_token.to_owned())
     }
 }
 

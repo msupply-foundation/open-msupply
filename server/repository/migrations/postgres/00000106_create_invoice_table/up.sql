@@ -25,4 +25,5 @@ CREATE TABLE invoice (
     their_reference text,
     entry_datetime timestamp NOT NULL,
     confirm_datetime timestamp,
-    finalised_datetime timestamp)
+    finalised_datetime timestamp,
+    color text)
