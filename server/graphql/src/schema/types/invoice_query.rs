@@ -147,6 +147,10 @@ impl InvoiceNode {
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
+    pub async fn color(&self) -> &Option<String> {
+        &self.invoice.color
+    }
+
     pub async fn lines(&self, ctx: &Context<'_>) -> InvoiceLinesResponse {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
         match loader.load_one(self.invoice.id.to_string()).await {

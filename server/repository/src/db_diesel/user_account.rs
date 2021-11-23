@@ -23,11 +23,20 @@ impl<'a> UserAccountRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, account_id: &str) -> Result<UserAccountRow, RepositoryError> {
-        let result = user_account_dsl::user_account
+    pub fn find_one_by_id(
+        &self,
+        account_id: &str,
+    ) -> Result<Option<UserAccountRow>, RepositoryError> {
+        let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq(account_id))
-            .first(&self.connection.connection)?;
-        Ok(result)
+            .first(&self.connection.connection);
+        match result {
+            Ok(row) => Ok(Some(row)),
+            Err(err) => match err {
+                diesel::result::Error::NotFound => Ok(None),
+                _ => Err(RepositoryError::from(err)),
+            },
+        }
     }
 
     pub fn find_one_by_user_name(

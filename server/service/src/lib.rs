@@ -8,6 +8,8 @@ pub mod invoice_line;
 pub mod item;
 pub mod location;
 pub mod name;
+pub mod permission_validation;
+pub mod permissions;
 pub mod service_registry;
 pub mod stock_line;
 pub mod token;
@@ -18,6 +20,15 @@ pub mod user_account;
 pub struct ListResult<T> {
     pub rows: Vec<T>,
     pub count: u32,
+}
+
+impl<T> ListResult<T> {
+    pub fn empty() -> ListResult<T> {
+        ListResult {
+            rows: vec![],
+            count: 0,
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Debug)]

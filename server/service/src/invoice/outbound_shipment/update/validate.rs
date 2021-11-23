@@ -15,7 +15,7 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice)?;
-    check_invoice_finalised(&invoice)?;
+    check_invoice_is_not_finalised(&invoice)?;
     check_invoice_status(&invoice, &patch.status, &patch.on_hold)?;
     check_other_party(&patch.other_party_id, connection)?;
 
@@ -42,7 +42,7 @@ fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipment
     }
 }
 
-fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
+fn check_invoice_is_not_finalised(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
     if invoice.status == InvoiceRowStatus::Finalised {
         Err(UpdateOutboundShipmentError::InvoiceIsFinalised)
     } else {

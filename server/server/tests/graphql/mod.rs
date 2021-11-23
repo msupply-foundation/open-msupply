@@ -37,6 +37,7 @@ mod outbound_shipment_line_delete;
 mod outbound_shipment_line_insert;
 mod outbound_shipment_line_update;
 mod outbound_shipment_update;
+mod pagination;
 mod requisition;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
@@ -57,6 +58,7 @@ where
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
+        debug_no_access_control: true,
     });
 
     let mut app = actix_web::test::init_service(
@@ -108,6 +110,7 @@ async fn run_gql_query(
         token_bucket: RwLock::new(TokenBucket::new()),
         // TODO: configure ssl
         debug_no_ssl: true,
+        debug_no_access_control: true,
     });
 
     let mut app = actix_web::test::init_service(

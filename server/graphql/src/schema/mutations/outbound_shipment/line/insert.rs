@@ -16,7 +16,7 @@ use repository::StorageConnectionManager;
 use service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError};
 
 use super::{
-    ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
+    ItemDoesNotMatchStockLine, LocationNotFound, StockLineAlreadyExistsInInvoice,
     StockLineDoesNotBelongToCurrentStore,
 };
 
@@ -62,6 +62,7 @@ pub enum InsertOutboundShipmentLineErrorInterface {
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
     LocationIsOnHold(LocationIsOnHold),
+    LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
 }
 
@@ -136,6 +137,9 @@ impl From<InsertOutboundShipmentLineError> for InsertOutboundShipmentLineRespons
             }
             InsertOutboundShipmentLineError::LocationIsOnHold => {
                 OutError::LocationIsOnHold(LocationIsOnHold {})
+            }
+            InsertOutboundShipmentLineError::LocationNotFound => {
+                OutError::LocationNotFound(LocationNotFound {})
             }
         };
         InsertOutboundShipmentLineResponse::Error(ErrorWrapper { error })

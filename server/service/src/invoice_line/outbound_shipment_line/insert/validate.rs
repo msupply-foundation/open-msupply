@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsFinalised, WrongInvoiceType,
+        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
+        InvoiceDoesNotExist, InvoiceIsFinalised, WrongInvoiceType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -10,7 +10,7 @@ use crate::{
             check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
             LineAlreadyExists, NumberOfPacksBelowOne,
         },
-        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHold,
+        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
     u32_to_i32,
@@ -41,7 +41,7 @@ pub fn validate(
     )?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_finalised(&invoice)?;
+    check_invoice_is_not_finalised(&invoice)?;
 
     check_batch_on_hold(&batch)?;
     check_location_on_hold(&batch, connection)?;
@@ -69,9 +69,13 @@ impl From<BatchIsOnHold> for InsertOutboundShipmentLineError {
     }
 }
 
-impl From<LocationIsOnHold> for InsertOutboundShipmentLineError {
-    fn from(_: LocationIsOnHold) -> Self {
-        InsertOutboundShipmentLineError::LocationIsOnHold
+impl From<LocationIsOnHoldError> for InsertOutboundShipmentLineError {
+    fn from(error: LocationIsOnHoldError) -> Self {
+        use InsertOutboundShipmentLineError::*;
+        match error {
+            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+            LocationIsOnHoldError::LocationNotFound => LocationNotFound,
+        }
     }
 }
 

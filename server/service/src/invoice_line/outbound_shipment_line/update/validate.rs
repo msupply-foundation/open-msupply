@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsFinalised, WrongInvoiceType,
+        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
+        InvoiceDoesNotExist, InvoiceIsFinalised, WrongInvoiceType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -10,7 +10,7 @@ use crate::{
             check_item, check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
             ItemNotFound, LineDoesNotExist, NotInvoiceLine, NumberOfPacksBelowOne,
         },
-        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHold,
+        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
 };
@@ -40,7 +40,7 @@ pub fn validate(
 
     check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_finalised(&invoice)?;
+    check_invoice_is_not_finalised(&invoice)?;
 
     check_number_of_packs(input.number_of_packs.clone())?;
     let batch_pair = check_batch_exists_option(&input, &line, connection)?;
@@ -124,9 +124,13 @@ impl From<ItemDoesNotMatchStockLine> for UpdateOutboundShipmentLineError {
     }
 }
 
-impl From<LocationIsOnHold> for UpdateOutboundShipmentLineError {
-    fn from(_: LocationIsOnHold) -> Self {
-        UpdateOutboundShipmentLineError::LocationIsOnHold
+impl From<LocationIsOnHoldError> for UpdateOutboundShipmentLineError {
+    fn from(error: LocationIsOnHoldError) -> Self {
+        use UpdateOutboundShipmentLineError::*;
+        match error {
+            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+            LocationIsOnHoldError::LocationNotFound => LocationNotFound,
+        }
     }
 }
 
