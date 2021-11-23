@@ -136,6 +136,9 @@ impl From<UpdateInboundShipmentLineError> for UpdateInboundShipmentLineResponse 
                     invoice_id,
                 ))
             }
+            UpdateInboundShipmentLineError::LocationDoesNotExists => {
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::LocationId))
+            }
         };
 
         UpdateInboundShipmentLineResponse::Error(ErrorWrapper { error })

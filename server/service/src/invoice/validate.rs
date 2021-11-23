@@ -24,7 +24,7 @@ pub fn check_invoice_type(
 
 pub struct InvoiceIsFinalised;
 
-pub fn check_invoice_finalised(invoice: &InvoiceRow) -> Result<(), InvoiceIsFinalised> {
+pub fn check_invoice_is_not_finalised(invoice: &InvoiceRow) -> Result<(), InvoiceIsFinalised> {
     if invoice.status == InvoiceRowStatus::Finalised {
         Err(InvoiceIsFinalised {})
     } else {
@@ -75,7 +75,7 @@ pub fn check_invoice_exists(
 
 pub struct InvoiceLinesExist(pub Vec<InvoiceLine>);
 
-pub fn check_lines_exist(
+pub fn check_invoice_is_empty(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), WithDBError<InvoiceLinesExist>> {

@@ -13,7 +13,7 @@ use domain::Pagination;
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_equal_filter!(query, filter, location_dsl, id)
+/// apply_equal_filter!(query, filter.id, location_dsl::id)
 /// ```
 ///
 /// ```
@@ -28,14 +28,14 @@ use domain::Pagination;
 /// }
 /// ```
 macro_rules! apply_equal_filter {
-    ($query:ident, $filter:ident, $dsl:ident, $filter_field:ident) => {{
-        if let Some(equal_filter) = $filter.$filter_field {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(equal_filter) = $filter_field {
             if let Some(value) = equal_filter.equal_to {
-                $query = $query.filter($dsl::$filter_field.eq(value));
+                $query = $query.filter($dsl_field.eq(value));
             }
 
             if let Some(value) = equal_filter.equal_any {
-                $query = $query.filter($dsl::$filter_field.eq_any(value));
+                $query = $query.filter($dsl_field.eq_any(value));
             }
         }
     }};
@@ -55,11 +55,11 @@ macro_rules! apply_equal_filter {
 /// }
 /// ```
 macro_rules! apply_sort_no_case {
-    ($query:ident, $sort:ident, $dsl:ident, $field:ident) => {{
+    ($query:ident, $sort:ident, $dsl_field:expr) => {{
         if $sort.desc.unwrap_or(false) {
-            $query = $query.order($dsl::$field.desc_no_case());
+            $query = $query.order($dsl_field.desc_no_case());
         } else {
-            $query = $query.order($dsl::$field.asc_no_case());
+            $query = $query.order($dsl_field.asc_no_case());
         }
     }};
 }
@@ -99,10 +99,10 @@ impl<'a> LocationRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 LocationSortField::Name => {
-                    apply_sort_no_case!(query, sort, location_dsl, name)
+                    apply_sort_no_case!(query, sort, location_dsl::name)
                 }
                 LocationSortField::Code => {
-                    apply_sort_no_case!(query, sort, location_dsl, code)
+                    apply_sort_no_case!(query, sort, location_dsl::code)
                 }
             }
         } else {
@@ -124,9 +124,9 @@ fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
     let mut query = location::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter, location_dsl, id);
-        apply_equal_filter!(query, filter, location_dsl, name);
-        apply_equal_filter!(query, filter, location_dsl, code);
+        apply_equal_filter!(query, filter.id, location_dsl::id);
+        apply_equal_filter!(query, filter.name, location_dsl::name);
+        apply_equal_filter!(query, filter.code, location_dsl::code);
     }
 
     query

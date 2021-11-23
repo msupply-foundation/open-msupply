@@ -45,7 +45,7 @@ impl<'a> InvoiceLineRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_filter_only(
+    pub fn query_by_filter(
         &self,
         filter: InvoiceLineFilter,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {

@@ -29,7 +29,7 @@ impl<'a> StockLineRepository<'a> {
         StockLineRepository { connection }
     }
 
-    pub fn query_filter_only(
+    pub fn query_by_filter(
         &self,
         filter: StockLineFilter,
     ) -> Result<Vec<StockLine>, RepositoryError> {

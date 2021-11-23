@@ -34,10 +34,14 @@ impl<'a> LocationRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<LocationRow, RepositoryError> {
-        location_dsl::location
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
+        match location_dsl::location
             .filter(location_dsl::id.eq(id))
             .first(&self.connection.connection)
-            .map_err(RepositoryError::from)
+        {
+            Ok(row) => Ok(Some(row)),
+            Err(diesel::result::Error::NotFound) => Ok(None),
+            Err(error) => Err(RepositoryError::from(error)),
+        }
     }
 }

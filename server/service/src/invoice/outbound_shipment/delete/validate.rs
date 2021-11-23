@@ -2,8 +2,9 @@ use domain::invoice::InvoiceType;
 use repository::{schema::InvoiceRow, StorageConnection};
 
 use crate::invoice::{
-    check_invoice_exists, check_invoice_finalised, check_invoice_type, check_lines_exist,
-    InvoiceDoesNotExist, InvoiceIsFinalised, InvoiceLinesExist, WrongInvoiceType,
+    check_invoice_exists, check_invoice_is_empty, check_invoice_is_not_finalised,
+    check_invoice_type, InvoiceDoesNotExist, InvoiceIsFinalised, InvoiceLinesExist,
+    WrongInvoiceType,
 };
 
 use super::DeleteOutboundShipmentError;
@@ -16,8 +17,8 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_finalised(&invoice)?;
-    check_lines_exist(&id, connection)?;
+    check_invoice_is_not_finalised(&invoice)?;
+    check_invoice_is_empty(&id, connection)?;
 
     Ok(invoice)
 }
