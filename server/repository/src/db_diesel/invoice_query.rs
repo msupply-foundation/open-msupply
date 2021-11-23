@@ -183,6 +183,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         entry_datetime: invoice_row.entry_datetime,
         confirm_datetime: invoice_row.confirm_datetime,
         finalised_datetime: invoice_row.finalised_datetime,
+        color: invoice_row.color,
     }
 }
 
@@ -294,7 +295,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {
-        let (_, connection, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
         let repo = InvoiceQueryRepository::new(&connection);
 
@@ -317,20 +318,6 @@ mod tests {
             (None, Some(_)) => Ordering::Less,
             (Some(a), Some(b)) => a.to_lowercase().cmp(&b.to_lowercase()),
         });
-
-        for (count, invoice) in invoices.iter().enumerate() {
-            println!(
-                "{:?} {:?}",
-                invoice
-                    .comment
-                    .clone()
-                    .map(|comment| comment.to_lowercase()),
-                sorted[count]
-                    .comment
-                    .clone()
-                    .map(|comment| comment.to_lowercase()),
-            );
-        }
 
         for (count, invoice) in invoices.iter().enumerate() {
             assert_eq!(

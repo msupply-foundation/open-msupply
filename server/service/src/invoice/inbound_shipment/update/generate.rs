@@ -4,7 +4,7 @@ use crate::invoice::current_store_id;
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
-    InvoiceLineRepository, StorageConnection,
+    InvoiceLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -29,6 +29,7 @@ pub fn generate(
     update_invoice.comment = patch.comment.or(update_invoice.comment);
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
+    update_invoice.color = patch.color.or(update_invoice.color);
 
     if let Some(status) = patch.status {
         update_invoice.status = status.into()
@@ -79,7 +80,7 @@ pub fn generate_lines_and_stock_lines(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
-    let lines = InvoiceLineRepository::new(connection).find_many_by_invoice_id(id)?;
+    let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
     for invoice_lines in lines.into_iter() {
@@ -94,6 +95,7 @@ pub fn generate_lines_and_stock_lines(
             item_name: _,
             item_code: _,
             stock_line_id: _,
+            location_id,
             batch,
             expiry_date,
             pack_size,
@@ -108,6 +110,7 @@ pub fn generate_lines_and_stock_lines(
             id: stock_line_id,
             item_id,
             store_id: current_store_id(connection)?,
+            location_id,
             batch,
             pack_size,
             cost_price_per_pack,

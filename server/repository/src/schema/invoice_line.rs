@@ -11,6 +11,7 @@ pub struct InvoiceLineRow {
     pub item_name: String,
     pub item_code: String,
     pub stock_line_id: Option<String>,
+    pub location_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: i32,

@@ -36,6 +36,7 @@ mod graphql {
                     comment
                     theirReference
                     onHold
+                    color
                 }
             }
         }"#;
@@ -55,7 +56,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // ForeignKeyError (OtherPartyIdNotFoundError)
         let foreign_key_query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
@@ -85,7 +86,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, foreign_key_query, &variables, &expected).await;
+        assert_gql_query(&settings, foreign_key_query, &variables, &expected, None).await;
 
         // Test succeeding insert
         let variables = Some(json!({
@@ -103,10 +104,11 @@ mod graphql {
               "comment": "ci comment",
               "theirReference": null,
               "onHold": false,
+              "color": null,
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
         // make sure item has been inserted
         InvoiceRepository::new(&connection)
             .find_one_by_id("ci_insert_1")
@@ -119,6 +121,7 @@ mod graphql {
             "otherPartyId": other_party_customer.id,
             "theirReference": "reference",
             "onHold": true,
+            "color": "#FFFFFF"
           }
         }));
         let expected = json!({
@@ -129,10 +132,11 @@ mod graphql {
               "comment": null,
               "theirReference":"reference",
               "onHold": true,
+              "color": "#FFFFFF"
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // RecordAlreadyExist,
         let variables = Some(json!({
@@ -150,6 +154,6 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
     }
 }

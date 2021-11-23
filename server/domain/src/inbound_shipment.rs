@@ -9,6 +9,7 @@ pub struct InsertInboundShipment {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 
 pub struct UpdateInboundShipment {
@@ -18,6 +19,7 @@ pub struct UpdateInboundShipment {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
+    pub color: Option<String>,
 }
 pub struct DeleteInboundShipment {
     pub id: String,
@@ -27,6 +29,7 @@ pub struct InsertInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
+    pub location_id: Option<String>,
     pub pack_size: u32,
     pub batch: Option<String>,
     pub cost_price_per_pack: f64,
@@ -39,6 +42,7 @@ pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: Option<String>,
+    pub location_id: Option<String>,
     pub pack_size: Option<u32>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,

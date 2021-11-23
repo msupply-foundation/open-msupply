@@ -22,6 +22,7 @@ pub struct InsertInboundShipmentLineInput {
     pub item_id: String,
     pub pack_size: u32,
     pub batch: Option<String>,
+    pub location_id: Option<String>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
@@ -64,6 +65,7 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
             id,
             invoice_id,
             item_id,
+            location_id,
             pack_size,
             batch,
             expiry_date,
@@ -76,6 +78,7 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
             id,
             invoice_id,
             item_id,
+            location_id,
             pack_size,
             batch,
             expiry_date,
@@ -121,6 +124,9 @@ impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse 
                 field: RangeField::PackSize,
                 range: Range::Min(1),
             }),
+            InsertInboundShipmentLineError::LocationDoesNotExists => {
+                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::LocationId))
+            }
         };
 
         InsertInboundShipmentLineResponse::Error(ErrorWrapper { error })

@@ -2,7 +2,7 @@ use crate::{u32_to_i32, WithDBError};
 use domain::outbound_shipment::UpdateOutboundShipmentLine;
 use repository::{
     schema::{InvoiceLineRow, StockLineRow},
-    InvoiceLineRepository, RepositoryError, StockLineRepository, StorageConnectionManager,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
 };
 
@@ -22,9 +22,9 @@ pub fn update_outbound_shipment_line(
             let (line, item, batch_pair, invoice) = validate(&input, &connection)?;
 
             let (new_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
-            InvoiceLineRepository::new(&connection).upsert_one(&new_line)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
 
-            let stock_line_repo = StockLineRepository::new(&connection);
+            let stock_line_repo = StockLineRowRepository::new(&connection);
             stock_line_repo.upsert_one(&batch_pair.main_batch)?;
             if let Some(previous_batch) = batch_pair.previous_batch_option {
                 stock_line_repo.upsert_one(&previous_batch)?;
@@ -88,6 +88,8 @@ pub enum UpdateOutboundShipmentLineError {
     StockLineNotFound,
     NumberOfPacksBelowOne,
     ItemDoesNotMatchStockLine,
+    LocationIsOnHold,
+    LocationNotFound,
     LineDoesNotReferenceStockLine,
     BatchIsOnHold,
     StockLineAlreadyExistsInInvoice(String),

@@ -1,6 +1,9 @@
 use crate::schema::{
     mutations::UserRegisterErrorInterface,
-    queries::{AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface},
+    queries::{
+        AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface,
+        UserErrorInterface,
+    },
 };
 use domain::PaginationOption;
 use repository::RepositoryError;
@@ -18,6 +21,9 @@ pub use self::item::*;
 
 pub mod stock_line;
 pub use self::stock_line::*;
+
+pub mod location;
+pub use self::location::*;
 
 pub mod invoice_query;
 pub use self::invoice_query::*;
@@ -37,6 +43,7 @@ use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 #[graphql(concrete(name = "InvoiceConnector", params(InvoiceNode)))]
 #[graphql(concrete(name = "InvoiceLineConnector", params(InvoiceLineNode)))]
 #[graphql(concrete(name = "StockLineConnector", params(StockLineNode)))]
+#[graphql(concrete(name = "LocationConnector", params(LocationNode)))]
 pub struct Connector<T: OutputType> {
     total_count: u32,
     nodes: Vec<T>,
@@ -146,6 +153,7 @@ impl From<PaginationInput> for PaginationOption {
 #[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
 #[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
 #[graphql(concrete(name = "LogoutError", params(LogoutErrorInterface)))]
+#[graphql(concrete(name = "UserError", params(UserErrorInterface)))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
@@ -233,6 +241,20 @@ impl From<RepositoryError> for NodeError {
 }
 
 // Generic Errors
+
+pub struct AccessDenied(pub String);
+
+#[Object]
+impl AccessDenied {
+    pub async fn description(&self) -> &'static str {
+        "Access Denied"
+    }
+
+    pub async fn full_error(&self) -> &str {
+        &self.0
+    }
+}
+
 pub struct DatabaseError(pub RepositoryError);
 
 #[Object]

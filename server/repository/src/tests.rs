@@ -183,6 +183,7 @@ mod repository_test {
                 entry_datetime: NaiveDateTime::from_timestamp(1000, 0),
                 confirm_datetime: Some(NaiveDateTime::from_timestamp(1001, 0)),
                 finalised_datetime: Some(NaiveDateTime::from_timestamp(1002, 0)),
+                color: None,
             }
         }
 
@@ -200,6 +201,7 @@ mod repository_test {
                 entry_datetime: NaiveDateTime::from_timestamp(2000, 0),
                 confirm_datetime: Some(NaiveDateTime::from_timestamp(2001, 0)),
                 finalised_datetime: Some(NaiveDateTime::from_timestamp(2002, 0)),
+                color: None,
             }
         }
 
@@ -299,11 +301,11 @@ mod repository_test {
     use crate::{
         database_settings::get_storage_connection_manager,
         repository::{
-            repository::MasterListRepository, CentralSyncBufferRepository,
-            InvoiceLineQueryRepository, InvoiceLineRepository, InvoiceRepository, ItemRepository,
-            MasterListLineRepository, MasterListNameJoinRepository, NameQueryRepository,
-            NameRepository, OutboundShipmentRepository, RequisitionLineRepository,
-            RequisitionRepository, StockLineRepository, StoreRepository, UserAccountRepository,
+            repository::MasterListRepository, CentralSyncBufferRepository, InvoiceLineRepository,
+            InvoiceLineRepository, InvoiceRepository, ItemRepository, MasterListLineRepository,
+            MasterListNameJoinRepository, NameQueryRepository, NameRepository,
+            OutboundShipmentRepository, RequisitionLineRepository, RequisitionRepository,
+            StockLineRepository, StoreRepository, UserAccountRepository,
         },
         test_db,
     };
@@ -479,7 +481,7 @@ mod repository_test {
 
         // test insert
         let stock_line = data::stock_line_1();
-        let stock_line_repo = StockLineRepository::new(&connection);
+        let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.insert_one(&stock_line).await.unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
@@ -690,7 +692,7 @@ mod repository_test {
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
-        let stock_line_repo = StockLineRepository::new(&connection);
+        let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo
             .insert_one(&data::stock_line_1())
             .await
@@ -699,7 +701,7 @@ mod repository_test {
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
 
-        let repo = InvoiceLineRepository::new(&connection);
+        let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
@@ -735,7 +737,7 @@ mod repository_test {
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
-        let stock_line_repo = StockLineRepository::new(&connection);
+        let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo
             .insert_one(&data::stock_line_1())
             .await
@@ -743,7 +745,7 @@ mod repository_test {
         let invoice_repo = InvoiceRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
-        let repo = InvoiceLineRepository::new(&connection);
+        let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
         let item2 = data::invoice_line_2();
@@ -752,7 +754,7 @@ mod repository_test {
         repo.upsert_one(&item3).unwrap();
 
         // line stats
-        let repo = InvoiceLineQueryRepository::new(&connection);
+        let repo = InvoiceLineRepository::new(&connection);
         let result = repo.stats(&vec![data::invoice_1().id]).unwrap();
         let stats_invoice_1 = result.get(0).unwrap();
         assert_eq!(stats_invoice_1.invoice_id, data::invoice_1().id);

@@ -54,7 +54,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &None, &expected).await;
+        assert_gql_query(&settings, query, &None, &expected, None).await;
 
         // test sorting
         let query = r#"query Names($sort: [NameSortInput]) {
@@ -82,7 +82,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // test filtering
         let query = r#"query Names($filter: [NameFilterInput]) {
@@ -121,6 +121,6 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected).await;
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
     }
 }

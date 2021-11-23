@@ -1,5 +1,8 @@
-use super::{Connector, ConnectorError, NodeError, StockLineResponse};
-use crate::{loader::StockLineByIdLoader, ContextExt};
+use super::{Connector, ConnectorError, LocationResponse, NodeError, StockLineResponse};
+use crate::{
+    loader::{LocationByIdLoader, StockLineByIdLoader},
+    ContextExt,
+};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
@@ -45,6 +48,25 @@ impl InvoiceLineNode {
     }
     pub async fn note(&self) -> &Option<String> {
         &self.invoice_line.note
+    }
+    pub async fn location_name(&self) -> &Option<String> {
+        &self.invoice_line.location_name
+    }
+    pub async fn location_id(&self) -> &Option<String> {
+        &self.invoice_line.location_id
+    }
+    async fn location(&self, ctx: &Context<'_>) -> Option<LocationResponse> {
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        match &self.invoice_line.location_id {
+            Some(location_id) => match loader.load_one(location_id.clone()).await {
+                Ok(response) => {
+                    response.map(|location| LocationResponse::Response(location.into()))
+                }
+                Err(error) => Some(LocationResponse::Error(error.into())),
+            },
+            None => None,
+        }
     }
     async fn stock_line(&self, ctx: &Context<'_>) -> Option<StockLineResponse> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();

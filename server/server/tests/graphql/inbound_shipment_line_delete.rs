@@ -10,9 +10,8 @@ mod graphql {
 
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
-    use repository::{
-        mock::MockDataInserts, InvoiceLineRepository, RepositoryError, StockLineRepository,
-    };
+    use repository::{mock::MockDataInserts, RepositoryError};
+    use repository::{InvoiceLineRowRepository, StockLineRowRepository};
     use server::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentLineErrorInterface::*;
@@ -177,11 +176,11 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[1].id.clone();
         variables.invoice_id = confirmed_inbound_shipment.id.clone();
-        let mut stock_line = StockLineRepository::new(&connection)
+        let mut stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
         stock_line.available_number_of_packs -= 1;
-        StockLineRepository::new(&connection)
+        StockLineRowRepository::new(&connection)
             .upsert_one(&stock_line)
             .unwrap();
 
@@ -203,7 +202,7 @@ mod graphql {
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
         let delete_response = assert_unwrap_delete!(response);
 
-        let deleted_line = InvoiceLineRepository::new(&connection).find_one_by_id(&variables.id);
+        let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
 
         assert_eq!(
             delete_response,
@@ -224,8 +223,8 @@ mod graphql {
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
         let delete_response = assert_unwrap_delete!(response);
 
-        let deleted_line = InvoiceLineRepository::new(&connection).find_one_by_id(&variables.id);
-        let deleted_stock_line = StockLineRepository::new(&connection)
+        let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
+        let deleted_stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&confirmed_invoice_lines[0].stock_line_id.clone().unwrap());
 
         assert_eq!(

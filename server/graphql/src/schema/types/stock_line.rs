@@ -1,3 +1,4 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 
@@ -5,7 +6,9 @@ use domain::stock_line::StockLine;
 use repository::StorageConnectionManager;
 use service::stock_line::get_stock_line;
 
-use super::{Connector, ConnectorError, NodeError};
+use crate::{loader::LocationByIdLoader, ContextExt};
+
+use super::{Connector, ConnectorError, LocationResponse, NodeError};
 
 pub struct StockLineNode {
     pub stock_line: StockLine,
@@ -48,6 +51,25 @@ impl StockLineNode {
     }
     pub async fn note(&self) -> &Option<String> {
         &self.stock_line.note
+    }
+    pub async fn location_id(&self) -> &Option<String> {
+        &self.stock_line.location_id
+    }
+    pub async fn location_name(&self) -> &Option<String> {
+        &self.stock_line.location_name
+    }
+    async fn location(&self, ctx: &Context<'_>) -> Option<LocationResponse> {
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        match &self.stock_line.location_id {
+            Some(location_id) => match loader.load_one(location_id.clone()).await {
+                Ok(response) => {
+                    response.map(|location| LocationResponse::Response(location.into()))
+                }
+                Err(error) => Some(LocationResponse::Error(error.into())),
+            },
+            None => None,
+        }
     }
 }
 

@@ -1,11 +1,11 @@
 use domain::invoice_line::InvoiceLine;
-use repository::{
-    InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError};
 
 pub mod validate;
 
 use validate::validate;
+
+use crate::WithDBError;
 
 pub fn delete_outbound_shipment(
     connection_manager: &StorageConnectionManager,
@@ -45,6 +45,18 @@ impl From<TransactionError<DeleteOutboundShipmentError>> for DeleteOutboundShipm
                 })
             }
             TransactionError::Inner(e) => e,
+        }
+    }
+}
+
+impl<ERR> From<WithDBError<ERR>> for DeleteOutboundShipmentError
+where
+    ERR: Into<DeleteOutboundShipmentError>,
+{
+    fn from(result: WithDBError<ERR>) -> Self {
+        match result {
+            WithDBError::DatabaseError(error) => error.into(),
+            WithDBError::Error(error) => error.into(),
         }
     }
 }
