@@ -1,5 +1,5 @@
 import { DomainObject } from './../../types/index';
-import { SortRule, SortBy } from './../useSortBy/useSortBy';
+import { SortRule, SortBy } from './../useSortBy';
 import { UseMutateAsyncFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
@@ -17,7 +17,7 @@ export interface ListApi<T extends DomainObject> {
     first: number;
     offset: number;
     sortBy: SortBy<T>;
-    filterBy: FilterBy<T> | null;
+    filterBy: FilterBy | null;
   }) => () => Promise<{ nodes: T[]; totalCount: number }>;
   onDelete: (toDelete: T[]) => Promise<string[]>;
   onUpdate: (toUpdate: Partial<T> & { id: string }) => Promise<string>;
@@ -47,7 +47,7 @@ interface ListDataState<T extends DomainObject> extends QueryParams<T> {
 
 export const useListData = <T extends DomainObject>(
   initialListParameters: {
-    initialFilterBy?: FilterBy<T>;
+    initialFilterBy?: FilterBy;
     initialSortBy: SortRule<T>;
   },
   queryKey: string | readonly unknown[],

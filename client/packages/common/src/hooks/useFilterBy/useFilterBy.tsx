@@ -11,39 +11,37 @@ type FilterRule = {
     | FilterByConditionByType['date']]?: unknown;
 };
 
-export type FilterBy<T> = Partial<Record<Partial<keyof T>, FilterRule>>;
+export type FilterBy = Record<string, FilterRule | null>;
 
-export interface FilterController<T> {
-  filterBy: FilterBy<T> | null;
+export interface FilterController {
+  filterBy: FilterBy | null;
 
   onChangeDateFilterRule: (
-    key: keyof T,
+    key: string,
     condition: FilterByConditionByType['date'],
     value: Date
   ) => void;
 
   onChangeStringFilterRule: (
-    key: keyof T,
+    key: string,
     condition: FilterByConditionByType['string'],
     value: string
   ) => void;
 
-  onClearFilterRule: (key: keyof T) => void;
+  onClearFilterRule: (key: string) => void;
 }
 
-export interface FilterState<T> extends FilterController<T> {
-  filter: FilterController<T>;
+export interface FilterState extends FilterController {
+  filter: FilterController;
 }
 
-export const useFilterBy = <T extends unknown>(
-  initialFilterBy?: FilterBy<T> | null
-): FilterState<T> => {
-  const [filterBy, setFilterBy] = useState<FilterBy<T> | null>(
+export const useFilterBy = (initialFilterBy?: FilterBy | null): FilterState => {
+  const [filterBy, setFilterBy] = useState<FilterBy | null>(
     initialFilterBy ?? null
   );
 
   const onChangeStringFilterRule = (
-    key: keyof T,
+    key: string,
     condition: FilterByConditionByType['string'],
     value: string
   ) => {
@@ -52,7 +50,7 @@ export const useFilterBy = <T extends unknown>(
   };
 
   const onChangeDateFilterRule = (
-    key: keyof T,
+    key: string,
     condition: FilterByConditionByType['date'],
     value: Date
   ) => {
@@ -60,7 +58,7 @@ export const useFilterBy = <T extends unknown>(
     setFilterBy({ ...filterBy, ...newFilter });
   };
 
-  const onClearFilterRule = (key: keyof T) => {
+  const onClearFilterRule = (key: string) => {
     setFilterBy({ ...filterBy, [key]: null });
   };
 

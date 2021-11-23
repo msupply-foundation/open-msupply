@@ -1,29 +1,28 @@
-import { ObjectWithStringKeys } from './../../types/utility';
 import { usePagination, PaginationState } from '../usePagination';
 import { useSortBy, SortState, SortRule } from '../useSortBy';
 import { useFilterBy, FilterState, FilterBy } from '../useFilterBy';
 
-export interface QueryParams<T extends ObjectWithStringKeys>
+export interface QueryParams<T>
   extends SortState<T>,
-    FilterState<T>,
+    FilterState,
     PaginationState {}
 
-export interface QueryParamsState<T extends ObjectWithStringKeys>
+export interface QueryParamsState<T>
   extends SortState<T>,
-    FilterState<T>,
+    FilterState,
     PaginationState {
   pagination: PaginationState;
   sort: SortState<T>;
-  filter: FilterState<T>;
+  filter: FilterState;
   queryParams: QueryParams<T>;
 }
 
-export const useQueryParams = <T extends ObjectWithStringKeys>({
+export const useQueryParams = <T>({
   initialSortBy,
   initialFilterBy,
 }: {
   initialSortBy: SortRule<T>;
-  initialFilterBy?: FilterBy<T>;
+  initialFilterBy?: FilterBy;
 }): QueryParamsState<T> => {
   const filter = useFilterBy(initialFilterBy);
   const sort = useSortBy(initialSortBy);

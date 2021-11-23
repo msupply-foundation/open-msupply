@@ -13,7 +13,11 @@ export default {
 } as ComponentMeta<typeof DataRow>;
 
 const Template: Story = ({ onClick }) => {
-  const columns = useColumns(['type', 'status', 'comment']);
+  const columns = useColumns<{ id: string; status: string; comment: string }>([
+    'type',
+    'status',
+    'comment',
+  ]);
 
   return (
     <Table>
@@ -23,9 +27,8 @@ const Template: Story = ({ onClick }) => {
           rowKey="rowKey"
           rowData={{
             id: '',
-            comment: 'Restock from surge of patients',
             status: 'Finalised',
-            type: 'Supplier invoice',
+            comment: 'Supplier invoice',
           }}
           onClick={onClick}
         />

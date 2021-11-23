@@ -112,15 +112,15 @@ export const createSummaryItem = (
     itemId: itemId,
     itemName: ifTheSameElseDefault(batches, 'itemName', ''),
     itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
-    itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
+    // itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
     batches: arrayToRecord(batches),
     unitQuantity: batches.reduce(getUnitQuantity, 0),
     numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
-    locationDescription: ifTheSameElseDefault(
-      batches,
-      'locationDescription',
-      undefined
-    ),
+    // locationDescription: ifTheSameElseDefault(
+    //   batches,
+    //   'locationDescription',
+    //   undefined
+    // ),
 
     batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
     // TODO: Likely should just be a string.
@@ -155,20 +155,18 @@ export const reducer = (
         }
 
         case DocumentActionType.Merge: {
-          const { draft } = state;
+          state.draft = {
+            ...state.draft,
+            ...data,
+            status: state.draft.status,
+          };
 
-          Object.keys(draft).forEach(key => {
-            // TODO: Sometimes we want to keep the user entered values?
-            if (key === 'items' || key === 'lines') return;
-            draft[key] = data[key];
-          });
-
-          draft.update = (key, value) => {
+          state.draft.update = (key, value) => {
             dispatch?.(InboundAction.updateInvoice(key, value));
           };
 
-          draft.items = data.lines?.reduce((itemsArray, serverLine) => {
-            const InboundShipmentRow = createLine(serverLine, draft);
+          state.draft.items = data.lines?.reduce((itemsArray, serverLine) => {
+            const InboundShipmentRow = createLine(serverLine, state.draft);
 
             const { existingRow, existingSummaryItem } = getExistingLine(
               itemsArray,
@@ -202,7 +200,7 @@ export const reducer = (
             }
 
             return itemsArray;
-          }, draft.items);
+          }, state.draft.items);
 
           break;
         }
@@ -242,15 +240,8 @@ export const reducer = (
           const { payload } = action;
           const { key, value } = payload;
 
-          state.draft[key] = value;
-
-          break;
-        }
-
-        case ActionType.UpdateInvoice: {
-          const { payload } = action;
-          const { key, value } = payload;
-
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           state.draft[key] = value;
 
           break;
