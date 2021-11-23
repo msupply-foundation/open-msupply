@@ -7,8 +7,8 @@ use crate::schema::{
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
-        RangeError, RangeField, RecordNotFound,
+        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
+        InvoiceLineResponse, NodeError, Range, RangeError, RangeField, RecordNotFound,
     },
 };
 use domain::inbound_shipment::UpdateInboundShipmentLine;
@@ -34,8 +34,8 @@ pub struct UpdateInboundShipmentLineInput {
 #[derive(Union)]
 pub enum UpdateInboundShipmentLineResponse {
     Error(ErrorWrapper<UpdateInboundShipmentLineErrorInterface>),
-    #[graphql(flatten)]
-    Response(InvoiceLineResponse),
+    NodeError(NodeError),
+    Response(InvoiceLineNode),
 }
 
 pub fn get_update_inbound_shipment_line_response(
@@ -44,7 +44,10 @@ pub fn get_update_inbound_shipment_line_response(
 ) -> UpdateInboundShipmentLineResponse {
     use UpdateInboundShipmentLineResponse::*;
     match update_inbound_shipment_line(connection_manager, input.into()) {
-        Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
+        Ok(id) => match get_invoice_line_response(connection_manager, id) {
+            InvoiceLineResponse::Response(node) => Response(node),
+            InvoiceLineResponse::Error(err) => NodeError(err),
+        },
         Err(error) => error.into(),
     }
 }
