@@ -66,6 +66,19 @@ mod graphql {
         "#;
 
         // Test single record
+        let service: Option<Box<dyn LocationServiceQuery>> =
+            Some(Box::new(TestService(|_, _, _| {
+                Ok(ListResult {
+                    rows: vec![Location {
+                        id: "test_id".to_owned(),
+                        name: "test_name".to_owned(),
+                        code: "test_code".to_owned(),
+                        on_hold: true,
+                    }],
+                    count: 1,
+                })
+            })));
+
         let expected = json!({
               "locations": {
                   "nodes": [
@@ -81,19 +94,6 @@ mod graphql {
           }
         );
 
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Ok(ListResult {
-                    rows: vec![Location {
-                        id: "test_id".to_owned(),
-                        name: "test_name".to_owned(),
-                        code: "test_code".to_owned(),
-                        on_hold: true,
-                    }],
-                    count: 1,
-                })
-            })));
-
         assert_gql_query(
             &settings,
             query,
@@ -104,6 +104,14 @@ mod graphql {
         .await;
 
         // Test no records
+        let service: Option<Box<dyn LocationServiceQuery>> =
+            Some(Box::new(TestService(|_, _, _| {
+                Ok(ListResult {
+                    rows: Vec::new(),
+                    count: 0,
+                })
+            })));
+
         let expected = json!({
               "locations": {
                   "nodes": [
@@ -113,14 +121,6 @@ mod graphql {
               }
           }
         );
-
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Ok(ListResult {
-                    rows: Vec::new(),
-                    count: 0,
-                })
-            })));
 
         assert_gql_query(
             &settings,
@@ -157,12 +157,6 @@ mod graphql {
         );
 
         // Test sort by name no desc
-        let variables = json!({
-          "sort": [{
-            "key": "name",
-          }]
-        });
-
         let service: Option<Box<dyn LocationServiceQuery>> =
             Some(Box::new(TestService(|_, _, sort| {
                 assert_eq!(
@@ -175,6 +169,12 @@ mod graphql {
                 Ok(ListResult::empty())
             })));
 
+        let variables = json!({
+          "sort": [{
+            "key": "name",
+          }]
+        });
+
         assert_gql_query(
             &settings,
             query,
@@ -185,13 +185,6 @@ mod graphql {
         .await;
 
         // Test sort by code with desc
-        let variables = json!({
-          "sort": [{
-            "key": "code",
-            "desc": true
-          }]
-        });
-
         let service: Option<Box<dyn LocationServiceQuery>> =
             Some(Box::new(TestService(|_, _, sort| {
                 assert_eq!(
@@ -204,6 +197,13 @@ mod graphql {
                 Ok(ListResult::empty())
             })));
 
+        let variables = json!({
+          "sort": [{
+            "key": "code",
+            "desc": true
+          }]
+        });
+
         assert_gql_query(
             &settings,
             query,
@@ -214,17 +214,17 @@ mod graphql {
         .await;
 
         // Test filter
-        let variables = json!({
-          "filter": {
-            "name": { "equalTo": "match_name"},
-          }
-        });
-
         let service: Option<Box<dyn LocationServiceQuery>> =
             Some(Box::new(TestService(|_, filter, _| {
                 assert_eq!(filter, Some(LocationFilter::new().match_name("match_name")));
                 Ok(ListResult::empty())
             })));
+
+        let variables = json!({
+          "filter": {
+            "name": { "equalTo": "match_name"},
+          }
+        });
 
         assert_gql_query(
             &settings,

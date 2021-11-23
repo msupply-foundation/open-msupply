@@ -70,6 +70,11 @@ mod graphql {
         "#;
 
         // Test pagination, first over limit
+        let service: Option<Box<dyn LocationServiceQuery>> =
+            Some(Box::new(TestService(|_, _, _| {
+                Err(ListError::LimitAboveMax(1000))
+            })));
+
         let expected = json!({
               "locations": {
                 "error": {
@@ -84,11 +89,6 @@ mod graphql {
           }
         );
 
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Err(ListError::LimitAboveMax(1000))
-            })));
-
         assert_gql_query(
             &settings,
             query,
@@ -99,6 +99,11 @@ mod graphql {
         .await;
 
         // Test pagination, first too small
+        let service: Option<Box<dyn LocationServiceQuery>> =
+            Some(Box::new(TestService(|_, _, _| {
+                Err(ListError::LimitBelowMin(1))
+            })));
+
         let expected = json!({
               "locations": {
                 "error": {
@@ -112,11 +117,6 @@ mod graphql {
               }
           }
         );
-
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Err(ListError::LimitBelowMin(1))
-            })));
 
         assert_gql_query(
             &settings,
@@ -147,13 +147,6 @@ mod graphql {
         );
 
         // Test pagination
-        let variables = json!({
-          "page": {
-            "first": 2,
-            "offset": 1
-          }
-        });
-
         let service: Option<Box<dyn LocationServiceQuery>> =
             Some(Box::new(TestService(|page, _, _| {
                 assert_eq!(
@@ -165,6 +158,13 @@ mod graphql {
                 );
                 Ok(ListResult::empty())
             })));
+
+        let variables = json!({
+          "page": {
+            "first": 2,
+            "offset": 1
+          }
+        });
 
         assert_gql_query(
             &settings,
