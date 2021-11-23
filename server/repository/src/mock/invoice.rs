@@ -16,6 +16,7 @@ pub fn mock_outbound_shipment_a() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: None,
+        color: None,
     }
 }
 
@@ -33,6 +34,7 @@ pub fn mock_outbound_shipment_b() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+        color: None,
     }
 }
 
@@ -50,6 +52,7 @@ pub fn mock_outbound_shipment_c() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: None,
         finalised_datetime: None,
+        color: None,
     }
 }
 
@@ -67,6 +70,7 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0)),
         finalised_datetime: None,
+        color: None,
     }
 }
 
@@ -85,6 +89,7 @@ pub fn mock_outbound_shipment_confirmed() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+        color: None,
     }
 }
 
@@ -102,6 +107,7 @@ pub fn mock_outbound_shipment_finalised() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+        color: None,
     }
 }
 
@@ -120,6 +126,7 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+        color: None,
     }
 }
 
@@ -137,6 +144,7 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: None,
+        color: None,
     }
 }
 
@@ -154,6 +162,7 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+        color: None,
     }
 }
 
@@ -171,6 +180,7 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
         confirm_datetime: None,
         finalised_datetime: None,
+        color: None,
     }
 }
 
@@ -188,6 +198,7 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
         confirm_datetime: Some(NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0)),
         finalised_datetime: None,
+        color: None,
     }
 }
 
@@ -207,6 +218,7 @@ pub fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
         confirm_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: Some(Utc::now().naive_utc()),
+        color: None,
     }
 }
 
@@ -224,6 +236,7 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
         entry_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
         confirm_datetime: None,
         finalised_datetime: None,
+        color: None,
     }
 }
 

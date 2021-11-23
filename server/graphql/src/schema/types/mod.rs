@@ -1,6 +1,9 @@
 use crate::schema::{
     mutations::UserRegisterErrorInterface,
-    queries::{AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface},
+    queries::{
+        AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface,
+        UserErrorInterface,
+    },
 };
 use domain::PaginationOption;
 use repository::RepositoryError;
@@ -146,6 +149,7 @@ impl From<PaginationInput> for PaginationOption {
 #[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
 #[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
 #[graphql(concrete(name = "LogoutError", params(LogoutErrorInterface)))]
+#[graphql(concrete(name = "UserError", params(UserErrorInterface)))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
@@ -233,6 +237,20 @@ impl From<RepositoryError> for NodeError {
 }
 
 // Generic Errors
+
+pub struct AccessDenied(pub String);
+
+#[Object]
+impl AccessDenied {
+    pub async fn description(&self) -> &'static str {
+        "Access Denied"
+    }
+
+    pub async fn full_error(&self) -> &str {
+        &self.0
+    }
+}
+
 pub struct DatabaseError(pub RepositoryError);
 
 #[Object]

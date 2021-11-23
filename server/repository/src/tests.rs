@@ -183,6 +183,7 @@ mod repository_test {
                 entry_datetime: NaiveDateTime::from_timestamp(1000, 0),
                 confirm_datetime: Some(NaiveDateTime::from_timestamp(1001, 0)),
                 finalised_datetime: Some(NaiveDateTime::from_timestamp(1002, 0)),
+                color: None,
             }
         }
 
@@ -200,6 +201,7 @@ mod repository_test {
                 entry_datetime: NaiveDateTime::from_timestamp(2000, 0),
                 confirm_datetime: Some(NaiveDateTime::from_timestamp(2001, 0)),
                 finalised_datetime: Some(NaiveDateTime::from_timestamp(2002, 0)),
+                color: None,
             }
         }
 

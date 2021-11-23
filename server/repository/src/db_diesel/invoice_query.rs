@@ -183,6 +183,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         entry_datetime: invoice_row.entry_datetime,
         confirm_datetime: invoice_row.confirm_datetime,
         finalised_datetime: invoice_row.finalised_datetime,
+        color: invoice_row.color,
     }
 }
 
