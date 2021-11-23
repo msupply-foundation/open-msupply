@@ -85,6 +85,11 @@ impl<'a> UserAccountService<'a> {
             )
     }
 
+    pub fn find_user(&self, user_id: &str) -> Result<Option<UserAccount>, RepositoryError> {
+        let repo = UserAccountRepository::new(self.connection);
+        repo.find_one_by_id(user_id)
+    }
+
     /// Finds a user account and verifies that the password is ok
     pub fn verify_password(
         &self,

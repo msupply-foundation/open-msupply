@@ -114,6 +114,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: Some("some comment".to_string()),
             their_reference_option: Some("some reference".to_string()),
+            color_option: None,
         };
 
         // Test RecordNotFound
@@ -239,6 +240,7 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
         variables.on_hold_option = Some(true);
+        variables.color_option = Some("#FFFFFF".to_owned());
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -379,6 +381,7 @@ mod graphql {
                 other_party_id_option,
                 status_option,
                 on_hold_option,
+                color_option: _,           // Nullable option ?
                 comment_option: _,         // Nullable option ?
                 their_reference_option: _, // Nullable option ?
             } = other;

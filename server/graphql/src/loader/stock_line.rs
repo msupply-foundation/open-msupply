@@ -19,7 +19,7 @@ impl Loader<String> for StockLineByItemIdLoader {
         let repo = StockLineRepository::new(&connection);
 
         let result =
-            repo.query_filter_only(StockLineFilter::new().match_item_ids(item_ids.to_owned()))?;
+            repo.query_by_filter(StockLineFilter::new().match_item_ids(item_ids.to_owned()))?;
 
         let mut result_map = HashMap::new();
         for stock_line in result {
@@ -45,7 +45,7 @@ impl Loader<String> for StockLineByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        let result = repo.query_filter_only(StockLineFilter::new().match_ids(ids.to_owned()))?;
+        let result = repo.query_by_filter(StockLineFilter::new().match_ids(ids.to_owned()))?;
 
         Ok(result
             .into_iter()
