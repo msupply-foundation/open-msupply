@@ -13,6 +13,7 @@ import {
   InboundShipmentStatus,
   InboundShipmentItem,
   InboundShipmentRow,
+  Invoice,
 } from './types';
 
 export const placeholderInbound: InboundShipment = {
@@ -51,7 +52,7 @@ export const placeholderInbound: InboundShipment = {
   // donorName: '',
 };
 
-export const placeholderInvoice: OutboundShipment = {
+export const placeholderInvoice: Invoice = {
   id: '',
   otherPartyName: '',
   comment: '',
@@ -60,7 +61,26 @@ export const placeholderInvoice: OutboundShipment = {
   type: InvoiceNodeType.OutboundShipment,
   entryDatetime: '',
   invoiceNumber: 0,
+  onHold: false,
+  otherParty: undefined,
+  otherPartyId: '',
   lines: [],
+  pricing: {
+    totalAfterTax: 0,
+    //  subtotal: 0,
+    //   taxPercentage: 0
+  },
+};
+
+export const placeholderOutboundShipment: OutboundShipment = {
+  id: '',
+  otherPartyName: '',
+  comment: '',
+  theirReference: '',
+  status: InvoiceNodeStatus.Draft,
+  type: InvoiceNodeType.OutboundShipment,
+  entryDatetime: '',
+  invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
   otherPartyId: '',

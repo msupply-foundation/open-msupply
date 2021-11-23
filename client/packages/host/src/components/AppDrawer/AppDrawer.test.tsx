@@ -66,7 +66,7 @@ describe('AppDrawer', () => {
       expect(getByText(/distribution/i)).toBeVisible();
       expect(getByText(/dashboard/i)).toBeVisible();
       // expect(getByText(/suppliers/i)).toBeVisible();
-      expect(getByText(/stock/i)).toBeVisible();
+      expect(getByText(/inventory/i)).toBeVisible();
       // expect(getByText(/tools/i)).toBeVisible();
       expect(getByText(/reports/i)).toBeVisible();
       // expect(getByText(/messages/i)).toBeVisible();

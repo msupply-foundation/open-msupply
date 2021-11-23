@@ -141,7 +141,7 @@ export type OutboundShipmentSummaryItem = {
   isDeleted?: boolean;
 };
 
-export interface OutboundShipment extends Invoice {
+export interface OutboundShipment extends Omit<Invoice, 'lines'> {
   items: OutboundShipmentSummaryItem[];
   status: OutboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;

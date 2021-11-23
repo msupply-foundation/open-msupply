@@ -2,7 +2,7 @@ import { Dispatch } from 'react';
 
 export interface Api<ServerData, Document> {
   onRead: (id: string) => Promise<ServerData>;
-  onUpdate: (val: Document) => Promise<ServerData>;
+  onUpdate: (val: Document) => Promise<Document>;
 }
 
 export type ReducerCreator<ServerData, State, ActionSet> = (
