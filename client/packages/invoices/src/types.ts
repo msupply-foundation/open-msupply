@@ -150,10 +150,7 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
 }
 export interface InboundShipmentRow extends InvoiceLine {
   updateNumberOfPacks?: (quantity: number) => void;
-  update?: <K extends keyof InboundShipmentRow>(
-    key: K,
-    value: InboundShipmentRow[K]
-  ) => void;
+  update?: (key: string, value: string) => void;
   stockLineId: string;
   invoiceId: string;
   itemId: string;

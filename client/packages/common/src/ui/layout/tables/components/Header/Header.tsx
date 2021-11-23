@@ -5,13 +5,13 @@ import { SortDescIcon } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
 import { useDebounceCallback } from '../../../../../hooks';
 
-export const HeaderRow: FC = props => (
+export const HeaderRow: FC<{ dense?: boolean }> = props => (
   <TableRow
     {...props}
     sx={{
       display: 'flex',
       flex: '1 0 auto',
-      height: '60px',
+      height: !!props.dense ? '40px' : '60px',
       alignItems: 'center',
     }}
   />
@@ -19,10 +19,12 @@ export const HeaderRow: FC = props => (
 
 interface HeaderCellProps<T extends DomainObject> {
   column: Column<T>;
+  dense?: boolean;
 }
 
 export const HeaderCell = <T extends DomainObject>({
   column,
+  dense = false,
 }: HeaderCellProps<T>): JSX.Element => {
   const {
     minWidth,
@@ -60,6 +62,7 @@ export const HeaderCell = <T extends DomainObject>({
         minWidth,
         flex: `${width} 0 auto`,
         fontWeight: 'bold',
+        fontSize: dense ? '12px' : '14px',
       }}
       aria-label={String(key)}
       sortDirection={isSorted ? direction : false}

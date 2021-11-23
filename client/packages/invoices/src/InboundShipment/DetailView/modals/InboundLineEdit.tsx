@@ -22,6 +22,9 @@ import {
   TabList,
   Tab,
   TabPanel,
+  DataTable,
+  useColumns,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem, InboundShipmentRow } from '../../../types';
 import { ItemSearchInput } from '@openmsupply-client/system';
@@ -84,76 +87,23 @@ const EditableCell: FC<{
   );
 };
 
-const BatchRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
-  batch,
-  label,
-}) => {
-  return (
-    <TableRow sx={{ height: 40 }}>
-      <BasicCell>{label}</BasicCell>
-
-      <EditableCell
-        onChange={newValue => batch.update?.('batch', newValue)}
-        value={batch.batch}
-      />
-
-      <BasicCell>
-        <NumericTextInput
-          onChange={e =>
-            batch.update?.('numberOfPacks', Number(e.target.value))
-          }
-          value={batch.numberOfPacks}
-        />
-      </BasicCell>
-      <BasicCell>
-        <NumericTextInput
-          value={batch.packSize}
-          onChange={e => batch.update?.('packSize', Number(e.target.value))}
-        />
-      </BasicCell>
-      <BasicCell align="right">
-        {batch.numberOfPacks * batch.packSize * batch.costPricePerPack}
-      </BasicCell>
-
-      <EditableCell
-        value={batch.expiryDate}
-        onChange={newValue => batch.update?.('expiryDate', newValue)}
-      />
-      <BasicCell>
-        <NumericTextInput value={null} onChange={() => {}} />
-      </BasicCell>
-
-      <td style={{ marginBottom: 10 }} />
-    </TableRow>
-  );
-};
-
 const BatchTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
-  return (
-    <Table>
-      <TableHead>
-        <TableRow>
-          <HeaderCell />
-          <HeaderCell>{t('label.batch')}</HeaderCell>
-          <HeaderCell align="right">{t('label.num-packs')}</HeaderCell>
-          <HeaderCell align="right">{t('label.pack-size')}</HeaderCell>
-          <HeaderCell align="right">Unit Quantity</HeaderCell>
-          <HeaderCell>{t('label.expiry')}</HeaderCell>
-          <HeaderCell>Location</HeaderCell>
-        </TableRow>
-      </TableHead>
+  const columns = useColumns<InboundShipmentRow>([
+    ['batch', { Cell: TextInputCell }],
+    'numberOfPacks',
+    'packSize',
+    'unitQuantity',
+    'expiryDate',
+    'locationDescription',
+  ]);
 
-      {batches.map((batch, index) => (
-        <BatchRow
-          label={t('label.line', {
-            line: index + 1,
-          })}
-          key={batch.id}
-          batch={batch}
-        />
-      ))}
-    </Table>
+  return (
+    <DataTable
+      columns={columns}
+      data={batches}
+      noDataMessage="Add a new line"
+      dense
+    />
   );
 };
 
@@ -231,13 +181,7 @@ const WeightsBatchRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
       />
 
       <BasicCell>
-        <NumericTextInput
-          width={125}
-          value={batch.numberOfPacks}
-          onChange={e =>
-            batch.update?.('numberOfPacks', Number(e.target.value))
-          }
-        />
+        <NumericTextInput width={125} value={batch.numberOfPacks} />
       </BasicCell>
 
       <BasicCell>
@@ -300,23 +244,11 @@ const PricingBatchRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
       />
 
       <BasicCell>
-        <NumericTextInput
-          width={125}
-          value={batch.sellPricePerPack}
-          onChange={e =>
-            batch.update?.('sellPricePerPack', Number(e.target.value))
-          }
-        />
+        <NumericTextInput width={125} value={batch.sellPricePerPack} />
       </BasicCell>
 
       <BasicCell>
-        <NumericTextInput
-          width={125}
-          value={batch.costPricePerPack}
-          onChange={e =>
-            batch.update?.('costPricePerPack', Number(e.target.value))
-          }
-        />
+        <NumericTextInput width={125} value={batch.costPricePerPack} />
       </BasicCell>
       <BasicCell>
         <NumericTextInput width={125} value={null} onChange={() => {}} />
@@ -358,6 +290,29 @@ const PricingTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
   );
 };
 
+const CustomTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
+  const onRowClick = () => {};
+
+  const columns = useColumns<InboundShipmentRow>([
+    'expiryDate',
+    'batch',
+    'itemCode',
+    'numberOfPacks',
+    'packSize',
+    'sellPricePerPack',
+  ]);
+
+  return (
+    <DataTable
+      onRowClick={onRowClick}
+      columns={columns}
+      data={batches}
+      noDataMessage={''}
+      dense
+    />
+  );
+};
+
 enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
@@ -391,13 +346,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         itemName: '',
         packSize: 1,
         sellPricePerPack: 0,
-        update: <K extends keyof InboundShipmentRow>(
-          key: K,
-          value: InboundShipmentRow[K]
-        ) => {
+        update: (key: string, value: string) => {
           const batch = inboundItem.batches[id];
           if (inboundItem && batch) {
-            batch[key] = value;
+            if (key === 'batch') {
+              batch.batch = value;
+            }
+
             setInboundItem({
               ...inboundItem,
               batches: { ...inboundItem.batches, [id]: batch },
@@ -481,6 +436,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               <DiscrepanciesTable
                 batches={flattenInboundItems([inboundItem])}
               />
+            </TabPanel>
+            <TabPanel value={Tabs.Custom}>
+              <CustomTable batches={flattenInboundItems([inboundItem])} />
             </TabPanel>
           </TableContainer>
           <Fab
