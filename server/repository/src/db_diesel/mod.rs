@@ -56,16 +56,16 @@ use diesel::{
     result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
 };
 
-#[cfg(feature = "sqlite")]
+#[cfg(not(feature = "postgres"))]
 pub type DBBackendConnection = SqliteConnection;
 
-#[cfg(not(feature = "sqlite"))]
+#[cfg(feature = "postgres")]
 pub type DBBackendConnection = PgConnection;
 
-#[cfg(feature = "sqlite")]
+#[cfg(not(feature = "postgres"))]
 pub type DBType = diesel::sqlite::Sqlite;
 
-#[cfg(not(feature = "sqlite"))]
+#[cfg(feature = "postgres")]
 pub type DBType = diesel::pg::Pg;
 
 pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>;

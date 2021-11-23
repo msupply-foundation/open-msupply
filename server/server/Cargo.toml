@@ -39,6 +39,5 @@ graphql_client = "0.10.0"
 httpmock = "0.6"
 
 [features]
-default = ["sqlite"]
+default = ["repository/sqlite"]
 postgres = ["repository/postgres"]
-sqlite = ["repository/sqlite"]

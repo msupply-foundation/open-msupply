@@ -13,7 +13,7 @@ impl<'a> StoreRepository<'a> {
         StoreRepository { connection }
     }
 
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::store::dsl::*;
         diesel::insert_into(store)
@@ -25,7 +25,7 @@ impl<'a> StoreRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "sqlite")]
+    #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::store::dsl::*;
         diesel::replace_into(store)

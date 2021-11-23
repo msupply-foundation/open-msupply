@@ -23,6 +23,5 @@ serde_json = "1.0.66"
 actix-rt = "1.1.1" # for Tokio 0.2
 
 [features]
-default = ["sqlite"]
+default = ["repository/sqlite"]
 postgres = ["repository/postgres"]
-sqlite = ["repository/sqlite"]
