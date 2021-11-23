@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        outbound_shipment::{NotEnoughStockForReduction, StockLineIsOnHold},
+        outbound_shipment::{LocationIsOnHold, NotEnoughStockForReduction, StockLineIsOnHold},
         CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordAlreadyExist,
     },
@@ -61,6 +61,7 @@ pub enum InsertOutboundShipmentLineErrorInterface {
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
+    LocationIsOnHold(LocationIsOnHold),
     StockLineIsOnHold(StockLineIsOnHold),
 }
 
@@ -133,8 +134,10 @@ impl From<InsertOutboundShipmentLineError> for InsertOutboundShipmentLineRespons
             InsertOutboundShipmentLineError::BatchIsOnHold => {
                 OutError::StockLineIsOnHold(StockLineIsOnHold {})
             }
+            InsertOutboundShipmentLineError::LocationIsOnHold => {
+                OutError::LocationIsOnHold(LocationIsOnHold {})
+            }
         };
-
         InsertOutboundShipmentLineResponse::Error(ErrorWrapper { error })
     }
 }

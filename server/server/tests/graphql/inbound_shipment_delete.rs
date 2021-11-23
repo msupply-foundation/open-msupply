@@ -10,7 +10,7 @@ mod graphql {
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::mock::MockDataInserts;
-    use repository::{InvoiceLineRepository, RepositoryError};
+    use repository::{InvoiceLineRowRepository, RepositoryError};
     use server::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentErrorInterface::*;
@@ -149,7 +149,8 @@ mod graphql {
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
         let delete_response = assert_unwrap_delete!(response);
 
-        let deleted_invoice = InvoiceLineRepository::new(&connection).find_one_by_id(&variables.id);
+        let deleted_invoice =
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
 
         assert_eq!(
             delete_response,

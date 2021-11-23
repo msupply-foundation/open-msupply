@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 
 use crate::{
-    db_diesel::{InvoiceLineRepository, InvoiceRepository, StockLineRepository, StorageConnection},
+    db_diesel::{InvoiceRepository, StorageConnection},
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
+    InvoiceLineRowRepository, StockLineRowRepository,
 };
 
 pub struct FullMockInvoiceLine {
@@ -55,6 +56,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     id: invoice_line_a_id,
                     stock_line_id: Some(stock_line_a_id.clone()),
                     invoice_id: invoice_id.clone(),
+                    location_id: None,
                     item_id: String::from("item_a"),
                     item_name: String::from("Item A"),
                     item_code: String::from("item_a_code"),
@@ -71,6 +73,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     id: stock_line_a_id,
                     item_id: String::from("item_a"),
                     store_id: String::from("store_a"),
+                    location_id: None,
                     batch: None,
                     available_number_of_packs: 20,
                     pack_size: 4,
@@ -87,6 +90,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     id: invoice_line_b_id,
                     stock_line_id: Some(stock_line_b_id.clone()),
                     invoice_id: invoice_id.clone(),
+                    location_id: None,
                     item_id: String::from("item_a"),
                     item_name: String::from("Item A"),
                     item_code: String::from("item_a_code"),
@@ -103,6 +107,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     id: stock_line_b_id,
                     item_id: String::from("item_a"),
                     store_id: String::from("store_a"),
+                    location_id: None,
                     batch: None,
                     available_number_of_packs: 10,
                     pack_size: 2,
@@ -169,10 +174,10 @@ pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageC
         .upsert_one(&invoice.invoice)
         .unwrap();
     for line in invoice.lines.iter() {
-        StockLineRepository::new(&connection)
+        StockLineRowRepository::new(&connection)
             .upsert_one(&line.stock_line)
             .unwrap();
-        InvoiceLineRepository::new(&connection)
+        InvoiceLineRowRepository::new(&connection)
             .upsert_one(&line.line)
             .unwrap();
     }

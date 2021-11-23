@@ -13,8 +13,9 @@ mod graphql {
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, StockLineRow},
-        InvoiceLineRepository, ItemRepository, RepositoryError, StockLineRepository,
+        ItemRepository, RepositoryError,
     };
+    use repository::{InvoiceLineRowRepository, StockLineRowRepository};
     use server::test_utils::setup_all;
 
     use update::UpdateInboundShipmentLineErrorInterface::*;
@@ -117,6 +118,7 @@ mod graphql {
             number_of_packs_option: Some(9),
             expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
             batch_option: Some("some batch name".to_string()),
+            location_id_option: None,
         };
 
         // Test RecordNotFound Item
@@ -247,11 +249,11 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.id = confirmed_invoice_lines[1].id.clone();
         variables.invoice_id = confirmed_inbound_shipment.id.clone();
-        let mut stock_line = StockLineRepository::new(&connection)
+        let mut stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
         stock_line.available_number_of_packs -= 1;
-        StockLineRepository::new(&connection)
+        StockLineRowRepository::new(&connection)
             .upsert_one(&stock_line)
             .unwrap();
 
@@ -273,7 +275,7 @@ mod graphql {
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
         let line = assert_unwrap_line!(response);
         assert_eq!(line.id, variables.id);
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&variables.id)
             .unwrap();
         assert_eq!(new_line, variables);
@@ -296,10 +298,10 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&variables.id)
             .unwrap();
-        let new_stock_line = StockLineRepository::new(&connection)
+        let new_stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&batch.id)
             .unwrap();
 
@@ -331,14 +333,14 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let new_line = InvoiceLineRepository::new(&connection)
+        let new_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&variables.id)
             .unwrap();
-        let new_stock_line = StockLineRepository::new(&connection)
+        let new_stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&batch.id)
             .unwrap();
         let deleted_stock_line =
-            StockLineRepository::new(&connection).find_one_by_id(deleted_stock_line_id);
+            StockLineRowRepository::new(&connection).find_one_by_id(deleted_stock_line_id);
 
         assert_eq!(new_line, variables);
         assert_eq!(new_stock_line, variables);
@@ -365,11 +367,12 @@ mod graphql {
             number_of_packs_option: None,
             expiry_date_option: None,
             batch_option: None,
+            location_id_option: None,
         };
-        let start_line = InvoiceLineRepository::new(&connection)
+        let start_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&variables.id)
             .unwrap();
-        let start_batch = StockLineRepository::new(&connection)
+        let start_batch = StockLineRowRepository::new(&connection)
             .find_one_by_id(&batch.id)
             .unwrap();
 
@@ -380,10 +383,10 @@ mod graphql {
 
         assert_eq!(line.id, variables.id);
 
-        let end_line = InvoiceLineRepository::new(&connection)
+        let end_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&variables.id)
             .unwrap();
-        let end_batch = StockLineRepository::new(&connection)
+        let end_batch = StockLineRowRepository::new(&connection)
             .find_one_by_id(&batch.id)
             .unwrap();
 
@@ -403,6 +406,7 @@ mod graphql {
                 number_of_packs_option,
                 sell_price_per_pack_option,
                 pack_size_option,
+                location_id_option: _,
             } = other;
 
             compare_option(cost_price_per_pack_option, &self.cost_price_per_pack)
@@ -429,6 +433,7 @@ mod graphql {
                 number_of_packs_option,
                 sell_price_per_pack_option,
                 pack_size_option,
+                location_id_option,
             } = other;
 
             compare_option(cost_price_per_pack_option, &self.cost_price_per_pack)
@@ -441,6 +446,7 @@ mod graphql {
                 && compare_option(number_of_packs_option, &(self.total_number_of_packs as i64))
                 && compare_option(sell_price_per_pack_option, &self.sell_price_per_pack)
                 && *batch_option == self.batch
+                && *location_id_option == self.location_id
                 && compare_option(pack_size_option, &(self.pack_size as i64))
         }
     }

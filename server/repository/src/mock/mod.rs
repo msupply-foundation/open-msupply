@@ -3,6 +3,7 @@ mod full_master_list;
 mod invoice;
 mod invoice_line;
 mod item;
+mod location;
 mod name;
 mod name_store_join;
 mod requisition;
@@ -18,6 +19,7 @@ pub use full_invoice::mock_full_invoices;
 pub use invoice::{mock_invoices, mock_outbound_shipments};
 pub use invoice_line::mock_invoice_lines;
 pub use item::mock_items;
+pub use location::mock_locations;
 pub use name::mock_names;
 pub use name_store_join::mock_name_store_joins;
 pub use requisition::mock_requisitions;
@@ -25,6 +27,8 @@ pub use requisition_line::mock_requisition_lines;
 pub use stock_line::mock_stock_lines;
 pub use store::mock_stores;
 pub use user_account::mock_user_accounts;
+
+use crate::{InvoiceLineRowRepository, LocationRowRepository, StockLineRowRepository};
 
 use self::{
     full_invoice::{insert_full_mock_invoice, FullMockInvoice},
@@ -34,9 +38,8 @@ use self::{
 
 use super::{
     db_diesel::{
-        InvoiceLineRepository, InvoiceRepository, ItemRepository, NameRepository,
-        NameStoreJoinRepository, StockLineRepository, StorageConnection, StoreRepository,
-        UnitRowRepository,
+        InvoiceRepository, ItemRepository, NameRepository, NameStoreJoinRepository,
+        StorageConnection, StoreRepository, UnitRowRepository,
     },
     schema::*,
 };
@@ -46,6 +49,7 @@ pub struct MockData {
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
+    pub locations: Vec<LocationRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
     pub invoices: Vec<InvoiceRow>,
     pub stock_lines: Vec<StockLineRow>,
@@ -58,6 +62,7 @@ pub struct MockDataInserts {
     pub stores: bool,
     pub units: bool,
     pub items: bool,
+    pub locations: bool,
     pub name_store_joins: bool,
     pub invoices: bool,
     pub stock_lines: bool,
@@ -73,6 +78,7 @@ impl MockDataInserts {
             stores: true,
             units: true,
             items: true,
+            locations: true,
             name_store_joins: true,
             invoices: true,
             stock_lines: true,
@@ -88,6 +94,7 @@ impl MockDataInserts {
             stores: false,
             units: false,
             items: false,
+            locations: false,
             name_store_joins: false,
             invoices: false,
             stock_lines: false,
@@ -114,6 +121,11 @@ impl MockDataInserts {
 
     pub fn items(mut self) -> Self {
         self.items = true;
+        self
+    }
+
+    pub fn locations(mut self) -> Self {
+        self.locations = true;
         self
     }
 
@@ -157,6 +169,7 @@ pub async fn insert_mock_data(
         stores: mock_stores(),
         units: mock_units(),
         items: mock_items(),
+        locations: mock_locations(),
         name_store_joins: mock_name_store_joins(),
         invoices: mock_invoices(),
         stock_lines: mock_stock_lines(),
@@ -193,6 +206,13 @@ pub async fn insert_mock_data(
         }
     }
 
+    if inserts.locations {
+        let repo = LocationRowRepository::new(connection);
+        for row in &result.locations {
+            repo.upsert_one(&row).unwrap();
+        }
+    }
+
     if inserts.name_store_joins {
         let repo = NameStoreJoinRepository::new(connection);
         for row in &result.name_store_joins {
@@ -208,14 +228,14 @@ pub async fn insert_mock_data(
     }
 
     if inserts.stock_lines {
-        let repo = StockLineRepository::new(connection);
+        let repo = StockLineRowRepository::new(connection);
         for row in &result.stock_lines {
             repo.upsert_one(&row).unwrap();
         }
     }
 
     if inserts.invoice_lines {
-        let repo = InvoiceLineRepository::new(connection);
+        let repo = InvoiceLineRowRepository::new(connection);
         for row in &result.invoice_lines {
             repo.upsert_one(&row).unwrap();
         }

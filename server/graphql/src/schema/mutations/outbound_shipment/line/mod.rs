@@ -43,6 +43,14 @@ impl StockLineIsOnHold {
     }
 }
 
+pub struct LocationIsOnHold;
+#[Object]
+impl LocationIsOnHold {
+    pub async fn description(&self) -> &'static str {
+        "Cannot issue from on hold location"
+    }
+}
+
 pub struct NotEnoughStockForReduction {
     pub stock_line_id: String,
     pub line_id: Option<String>,

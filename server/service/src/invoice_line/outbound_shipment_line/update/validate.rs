@@ -1,16 +1,17 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_finalised, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsFinalised, WrongInvoiceType,
+        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
+        InvoiceDoesNotExist, InvoiceIsFinalised, WrongInvoiceType,
     },
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_unique_stock_line,
+        check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
+        check_unique_stock_line,
         validate::{
             check_item, check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
             ItemNotFound, LineDoesNotExist, NotInvoiceLine, NumberOfPacksBelowOne,
         },
-        BatchIsOnHold, ItemDoesNotMatchStockLine, StockLineAlreadyExistsInInvoice,
-        StockLineNotFound,
+        BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHold,
+        StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
 };
 use domain::{invoice::InvoiceType, outbound_shipment::UpdateOutboundShipmentLine};
@@ -39,7 +40,7 @@ pub fn validate(
 
     check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_finalised(&invoice)?;
+    check_invoice_is_not_finalised(&invoice)?;
 
     check_number_of_packs(input.number_of_packs.clone())?;
     let batch_pair = check_batch_exists_option(&input, &line, connection)?;
@@ -47,6 +48,7 @@ pub fn validate(
     check_item_matches_batch(&batch_pair.main_batch, &item)?;
 
     check_batch_on_hold(&batch_pair.main_batch)?;
+    check_location_on_hold(&batch_pair.main_batch, connection)?;
     check_reduction_below_zero(&input, &line, &batch_pair)?;
 
     Ok((line, item, batch_pair, invoice))
@@ -119,6 +121,12 @@ fn check_batch_exists_option(
 impl From<ItemDoesNotMatchStockLine> for UpdateOutboundShipmentLineError {
     fn from(_: ItemDoesNotMatchStockLine) -> Self {
         UpdateOutboundShipmentLineError::ItemDoesNotMatchStockLine
+    }
+}
+
+impl From<LocationIsOnHold> for UpdateOutboundShipmentLineError {
+    fn from(_: LocationIsOnHold) -> Self {
+        UpdateOutboundShipmentLineError::LocationIsOnHold
     }
 }
 

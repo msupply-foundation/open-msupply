@@ -133,6 +133,7 @@ fragment DeleteInboundShipmentErrorInterface on DeleteInboundShipmentErrorInterf
 
 mutation insertInboundShipmentLineFull(
   $batch_option: String
+  $locationIdOption: String
   $costPricePerPack: Float!
   $expiryDate_option: NaiveDate
   $id: String!
@@ -147,6 +148,7 @@ mutation insertInboundShipmentLineFull(
       id: $id
       invoiceId: $invoiceId
       itemId: $itemId
+      locationId: $locationIdOption
       packSize: $packSize
       costPricePerPack: $costPricePerPack
       sellPricePerPack: $sellPricePerPack
@@ -188,6 +190,7 @@ fragment InsertInboundShipmentLineErrorInterface on InsertInboundShipmentLineErr
 
 mutation updateInboundShipmentLineFull(
   $batch_option: String
+  $locationIdOption: String
   $costPricePerPack_option: Float
   $expiryDate_option: NaiveDate
   $id: String!
@@ -201,6 +204,7 @@ mutation updateInboundShipmentLineFull(
     input: {
       id: $id
       invoiceId: $invoiceId
+      locationId: $locationIdOption
       itemId: $itemId_option
       packSize: $packSize_option
       costPricePerPack: $costPricePerPack_option
@@ -289,6 +293,7 @@ fragment UpdateOutboundShipmentLineErrorInterface on UpdateOutboundShipmentLineE
   ...RangeError
   ...RecordNotFound
   ...StockLineIsOnHold
+  ...LocationIsOnHold
   ...StockLineAlreadyExistsInInvoice
   ...StockLineDoesNotBelongToCurrentStore
   ...ItemDoesNotMatchStockLine
@@ -341,6 +346,7 @@ fragment InsertOutboundShipmentLineErrorInterface on InsertOutboundShipmentLineE
   ...RangeError
   ...RecordAlreadyExist
   ...StockLineIsOnHold
+  ...LocationIsOnHold
   ...StockLineAlreadyExistsInInvoice
   ...StockLineDoesNotBelongToCurrentStore
 }
@@ -473,6 +479,7 @@ fragment InvoiceLineNode on InvoiceLineNode {
   id
   itemCode
   itemId
+  locationId
   itemName
   numberOfPacks
   packSize
@@ -505,6 +512,7 @@ fragment StockLineNode on StockLineNode {
   costPricePerPack
   expiryDate
   itemId
+  locationId
   packSize
   sellPricePerPack
   storeId
@@ -634,6 +642,10 @@ fragment StockLineDoesNotBelongToCurrentStore on StockLineDoesNotBelongToCurrent
 }
 
 fragment StockLineIsOnHold on StockLineIsOnHold {
+  description
+}
+
+fragment LocationIsOnHold on LocationIsOnHold {
   description
 }
 
