@@ -2,7 +2,6 @@ import {
   ConnectorError,
   StockLineConnector,
   ItemSortFieldInput,
-  Item,
   ItemsWithStockLinesQuery,
   StockLineNode,
   ItemNode,
@@ -30,7 +29,7 @@ export const availableBatchesGuard = (
   throw new Error('Unknown');
 };
 
-export const getItemSortField = (sortField: keyof Item): ItemSortFieldInput => {
+export const getItemSortField = (sortField: string): ItemSortFieldInput => {
   if (sortField === 'name') return ItemSortFieldInput.Name;
   return ItemSortFieldInput.Code;
 };

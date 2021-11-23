@@ -1,10 +1,10 @@
 import { ReactNode, FC } from 'react';
-import { ObjectWithStringKeys, DomainObject } from './../../../types';
+import { DomainObject } from './../../../types';
 import { Pagination } from '../../../hooks/usePagination';
 import { SortRule } from '../../../hooks/useSortBy';
 import { Column } from './columns/types';
 
-export interface QueryProps<D extends ObjectWithStringKeys> {
+export interface QueryProps<D> {
   first: number;
   offset: number;
   sortBy?: SortRule<D>[];

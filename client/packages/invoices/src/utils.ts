@@ -13,15 +13,17 @@ import {
   InboundShipmentStatus,
   InboundShipmentItem,
   InboundShipmentRow,
+  Invoice,
 } from './types';
 
 export const placeholderInbound: InboundShipment = {
   id: '',
   otherPartyName: '',
-  total: '',
   comment: '',
   theirReference: '',
-  color: 'grey',
+  otherParty: undefined,
+  otherPartyId: '',
+  items: [],
   status: InvoiceNodeStatus.Draft,
   type: InvoiceNodeType.InboundShipment,
   entryDatetime: '',
@@ -29,74 +31,79 @@ export const placeholderInbound: InboundShipment = {
   lines: [],
   pricing: {
     totalAfterTax: 0,
-    // subtotal: 0,
-    // taxPercentage: 0
   },
-  dispatch: null,
   onHold: false,
 
-  allocatedDatetime: '',
-  shippedDatetime: '',
-  pickedDatetime: '',
-  deliveredDatetime: '',
-
-  purchaseOrderNumber: undefined,
-  goodsReceiptNumber: undefined,
-  requisitionNumber: undefined,
-  inboundShipmentNumber: undefined,
-
-  transportReference: undefined,
-  shippingMethod: undefined,
-
-  otherParty: undefined,
-
-  enteredByName: '',
-
-  donorName: '',
-  otherPartyId: '',
-  items: [],
+  // color: 'grey',
+  // subtotal: 0,
+  // taxPercentage: 0
+  // dispatch: null,
+  // allocatedDatetime: '',
+  // shippedDatetime: '',
+  // pickedDatetime: '',
+  // deliveredDatetime: '',
+  // purchaseOrderNumber: undefined,
+  // goodsReceiptNumber: undefined,
+  // requisitionNumber: undefined,
+  // inboundShipmentNumber: undefined,
+  // transportReference: undefined,
+  // shippingMethod: undefined,
+  // enteredByName: '',
+  // donorName: '',
 };
 
-export const placeholderInvoice: OutboundShipment = {
+export const placeholderInvoice: Invoice = {
   id: '',
   otherPartyName: '',
-  total: '',
   comment: '',
   theirReference: '',
-  color: 'grey',
   status: InvoiceNodeStatus.Draft,
   type: InvoiceNodeType.OutboundShipment,
   entryDatetime: '',
   invoiceNumber: 0,
+  onHold: false,
+  otherParty: undefined,
+  otherPartyId: '',
   lines: [],
   pricing: {
     totalAfterTax: 0,
     //  subtotal: 0,
     //   taxPercentage: 0
   },
-  dispatch: null,
+};
+
+export const placeholderOutboundShipment: OutboundShipment = {
+  id: '',
+  otherPartyName: '',
+  comment: '',
+  theirReference: '',
+  status: InvoiceNodeStatus.Draft,
+  type: InvoiceNodeType.OutboundShipment,
+  entryDatetime: '',
+  invoiceNumber: 0,
   onHold: false,
-
-  allocatedDatetime: '',
-  shippedDatetime: '',
-  pickedDatetime: '',
-  deliveredDatetime: '',
-
-  purchaseOrderNumber: undefined,
-  goodsReceiptNumber: undefined,
-  requisitionNumber: undefined,
-  inboundShipmentNumber: undefined,
-
-  transportReference: undefined,
-  shippingMethod: undefined,
-
   otherParty: undefined,
-
-  enteredByName: '',
-
-  donorName: '',
   otherPartyId: '',
   items: [],
+  pricing: {
+    totalAfterTax: 0,
+    //  subtotal: 0,
+    //   taxPercentage: 0
+  },
+
+  // color: 'grey',
+  // allocatedDatetime: '',
+  // shippedDatetime: '',
+  // pickedDatetime: '',
+  // deliveredDatetime: '',
+  // purchaseOrderNumber: undefined,
+  // goodsReceiptNumber: undefined,
+  // requisitionNumber: undefined,
+  // inboundShipmentNumber: undefined,
+  // transportReference: undefined,
+  // shippingMethod: undefined,
+  // enteredByName: '',
+  // donorName: '',
 };
 
 export const outboundStatuses: OutboundShipmentStatus[] = [

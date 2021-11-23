@@ -47,12 +47,17 @@ const getSortType = (column: { format?: ColumnFormat }) => {
   }
 };
 
+/*
+ * The default accessor will try to use the key of the column to access the value of the column.
+ * If the key is not a value of the domain object, then you should provide your own data accessor.
+ */
 const getDefaultAccessor =
   <T extends DomainObject>(
     column: ColumnDefinition<T>
   ): ColumnDataAccessor<T> =>
   (row: T) => {
-    return row[column.key] as string;
+    const key = column.key as keyof T;
+    return row[key];
   };
 
 const getDefaultFormatter = <T extends DomainObject>(

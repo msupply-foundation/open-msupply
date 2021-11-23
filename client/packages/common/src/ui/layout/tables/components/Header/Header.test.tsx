@@ -9,9 +9,9 @@ import { TestingProvider } from '../../../../../utils';
 describe('HeaderRow', () => {
   const Example: FC<{
     onChangeSortBy: () => void;
-    sortBy: { key: keyof Item; direction: 'asc' | 'desc' };
+    sortBy: { key: string; direction: 'asc' | 'desc' };
   }> = ({ onChangeSortBy, sortBy }) => {
-    const [column1, column2] = useColumns(
+    const [column1, column2] = useColumns<Item>(
       ['status', ['packSize', { sortable: false }]],
       { onChangeSortBy, sortBy },
       [sortBy]

@@ -14,7 +14,7 @@ import {
   arrayToRecord,
   getDataSorter,
 } from '@openmsupply-client/common';
-import { placeholderInvoice } from '../../utils';
+import { placeholderInvoice, placeholderOutboundShipment } from '../../utils';
 import {
   Invoice,
   InvoiceLine,
@@ -73,9 +73,13 @@ export const OutboundAction = {
     type: ActionType.DeleteLine,
     payload: { line },
   }),
-  updateInvoice: <K extends keyof OutboundShipment>(
+
+  // TODO: This type is not correct and should be the keyof OutboundShipment
+  // or possibly a smaller sub set of 'allowable' updatable keys. For example
+  // the date of a status change should not be editable.
+  updateInvoice: <K extends keyof Invoice>(
     key: K,
-    value: OutboundShipment[K]
+    value: Invoice[K]
   ): OutboundShipmentAction => ({
     type: ActionType.UpdateInvoice,
     payload: { key, value },
@@ -116,15 +120,15 @@ export const createSummaryItem = (
     itemId: itemId,
     itemName: ifTheSameElseDefault(batches, 'itemName', ''),
     itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
-    itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
+    // itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
     batches: arrayToRecord(batches),
     unitQuantity: batches.reduce(getUnitQuantity, 0),
     numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
-    locationDescription: ifTheSameElseDefault(
-      batches,
-      'locationDescription',
-      undefined
-    ),
+    // locationDescription: ifTheSameElseDefault(
+    //   batches,
+    //   'locationDescription',
+    //   undefined
+    // ),
 
     batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
     // TODO: Likely should just be a string.
@@ -137,7 +141,7 @@ export const createSummaryItem = (
 };
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
-  draft: placeholderInvoice,
+  draft: placeholderOutboundShipment,
   sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'asc' },
 });
 
@@ -159,26 +163,18 @@ export const reducer = (
         }
 
         case DocumentActionType.Merge: {
-          const { draft } = state;
-
-          Object.keys(draft).forEach(key => {
-            // TODO: Sometimes we want to keep the user entered values?
-            if (key === 'items') return;
-            draft[key] = data[key];
-          });
-
-          draft.update = (key, value) => {
+          state.draft.update = (key, value) => {
             dispatch?.(OutboundAction.updateInvoice(key, value));
           };
 
-          draft.upsertLine = line =>
+          state.draft.upsertLine = line =>
             dispatch?.(OutboundAction.upsertLine(line));
 
-          draft.deleteLine = line =>
+          state.draft.deleteLine = line =>
             dispatch?.(OutboundAction.deleteLine(line));
 
-          draft.items = data.lines?.reduce((itemsArray, serverLine) => {
-            const outboundShipmentRow = createLine(serverLine, draft);
+          state.draft.items = data.lines?.reduce((itemsArray, serverLine) => {
+            const outboundShipmentRow = createLine(serverLine, state.draft);
 
             const { existingRow, existingSummaryItem } = getExistingLine(
               itemsArray,
@@ -192,6 +188,7 @@ export const reducer = (
             if (existingRow) {
               delete summaryItem.batches[existingRow.id];
               const newLine = mergeLines(serverLine, existingRow);
+              console.log(newLine?.id, newLine);
               summaryItem.batches[newLine.id] = newLine;
             } else {
               summaryItem.batches[outboundShipmentRow.id] = outboundShipmentRow;
@@ -212,7 +209,14 @@ export const reducer = (
             }
 
             return itemsArray;
-          }, draft.items);
+          }, state.draft.items);
+
+          state.draft = {
+            ...state.draft,
+            ...data,
+            status: state.draft.status,
+            items: state.draft.items,
+          };
 
           break;
         }
@@ -252,6 +256,11 @@ export const reducer = (
           const { payload } = action;
           const { key, value } = payload;
 
+          // TODO: The type of value is typed in the action creator,
+          // but not in the action. Should be safe for now but should
+          // be fixed
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           state.draft[key] = value;
 
           break;

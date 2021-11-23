@@ -1,4 +1,3 @@
-import { ObjectWithStringKeys } from './utility';
 import { StockLineNode, ItemNode } from './schema';
 
 export * from './utility';
@@ -6,7 +5,7 @@ export * from './schema';
 
 type RecordWithId = { id: string };
 
-export interface DomainObject extends RecordWithId, ObjectWithStringKeys {}
+export type DomainObject = RecordWithId;
 
 export interface Name extends DomainObject {
   id: string;

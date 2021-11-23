@@ -1,6 +1,4 @@
-import { ObjectWithStringKeys } from '@openmsupply-client/common';
-
-export interface ItemRow extends ObjectWithStringKeys {
+export interface ItemRow {
   id: string;
   code: string;
   name: string;

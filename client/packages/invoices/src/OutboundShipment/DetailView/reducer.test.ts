@@ -1,5 +1,6 @@
+import { placeholderOutboundShipment } from './../../utils';
 import { InboundAction } from './../../InboundShipment/DetailView/reducer/reducer';
-import { InboundShipmentItem } from './../../types';
+import { InboundShipmentItem, Invoice } from './../../types';
 import {
   Column,
   createColumns,
@@ -31,9 +32,7 @@ const summaryItems: OutboundShipmentSummaryItem[] = [
         itemId: '1',
         itemName: '1',
         itemCode: '1',
-        itemUnit: '1',
         stockLineId: '1',
-        unitQuantity: 10,
         numberOfPacks: 10,
         packSize: 1,
         costPricePerPack: 0,
@@ -48,9 +47,7 @@ const summaryItems: OutboundShipmentSummaryItem[] = [
         itemId: '1',
         itemName: '1',
         itemCode: '1',
-        itemUnit: '1',
         stockLineId: '2',
-        unitQuantity: 10,
         numberOfPacks: 10,
         packSize: 1,
         costPricePerPack: 0,
@@ -66,9 +63,8 @@ const summaryItems: OutboundShipmentSummaryItem[] = [
 
 const getState = ({ isDesc = true } = {}): OutboundShipmentStateShape => ({
   draft: {
-    ...placeholderInvoice,
-    lines: [],
-    items: summaryItems,
+    ...placeholderOutboundShipment,
+    items: [...summaryItems],
   },
   sortBy: {
     key: 'numberOfPacks',
@@ -85,9 +81,7 @@ const createLine = (
     itemId: '1',
     itemName: '1',
     itemCode: '1',
-    itemUnit: '1',
     stockLineId: '1',
-    unitQuantity: 10,
     numberOfPacks: 10,
     packSize: 1,
     costPricePerPack: 0,
@@ -104,9 +98,9 @@ const createLine = (
 const callReducer = (
   action: DocumentActionSet<OutboundShipmentAction>,
   state = getState(),
-  data?: OutboundShipment
+  data?: Invoice
 ) => {
-  return reducer(data ?? state.draft, null)(state, action);
+  return reducer(data, null)(state, action);
 };
 
 const findRow = (
@@ -355,7 +349,7 @@ describe('DetailView reducer: merging', () => {
 
     // Create a server invoice which has a different comment and merge. The resulting invoice should be the same, except
     // for having the updated comment.
-    const data = { ...state.draft, comment: 'josh' };
+    const data = { ...state.draft, lines: [], comment: 'josh' };
     const reducerResult = reducer(data, null)(state, DocumentAction.merge());
 
     // Check for any lines that don't have a numberOfPacks of 99. If there are any, the merge was wrong.
@@ -363,11 +357,13 @@ describe('DetailView reducer: merging', () => {
     Object.entries(reducerResult.draft).forEach(([key, value]) => {
       if (key === 'comment') {
         expect(value).toEqual('josh');
-      } else if (key === 'items') {
+      } else if (key === 'items' || key === 'lines') {
         // Lines to be handled in their own tests as they're more complex.
         return;
       } else {
-        expect(JSON.stringify(value)).toEqual(JSON.stringify(state.draft[key]));
+        expect(JSON.stringify(value)).toEqual(
+          JSON.stringify(state.draft[key as keyof OutboundShipment])
+        );
       }
     });
   });
