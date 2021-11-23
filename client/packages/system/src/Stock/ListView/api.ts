@@ -16,7 +16,7 @@ const onRead =
     first: number;
     offset: number;
     sortBy: SortBy<StockRow>;
-    filterBy: FilterBy<StockRow> | null;
+    filterBy: FilterBy | null;
   }): Promise<{
     nodes: StockRow[];
     totalCount: number;
