@@ -1,5 +1,5 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_finalised, check_invoice_status, check_invoice_type,
+    check_invoice_exists, check_invoice_is_not_finalised, check_invoice_status, check_invoice_type,
     inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
     InvoiceStatusError, OtherPartyError, WrongInvoiceType,
 };
@@ -16,7 +16,7 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
-    check_invoice_finalised(&invoice)?;
+    check_invoice_is_not_finalised(&invoice)?;
     check_invoice_status(&invoice, &patch.status, &patch.on_hold)?;
     check_other_party(patch.other_party_id.clone(), connection)?;
 
