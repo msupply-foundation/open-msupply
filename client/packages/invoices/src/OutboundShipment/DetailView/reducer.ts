@@ -14,7 +14,7 @@ import {
   arrayToRecord,
   getDataSorter,
 } from '@openmsupply-client/common';
-import { placeholderInvoice } from '../../utils';
+import { placeholderInvoice, placeholderOutboundShipment } from '../../utils';
 import {
   Invoice,
   InvoiceLine,
@@ -141,7 +141,7 @@ export const createSummaryItem = (
 };
 
 export const getInitialState = (): OutboundShipmentStateShape => ({
-  draft: placeholderInvoice,
+  draft: placeholderOutboundShipment,
   sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'asc' },
 });
 

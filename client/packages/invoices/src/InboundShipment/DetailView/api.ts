@@ -130,7 +130,7 @@ const createUpdateInboundLineInput = (
 
 interface Api<ReadType, UpdateType> {
   onRead: (id: string) => Promise<ReadType>;
-  onUpdate: (val: UpdateType) => Promise<ReadType>;
+  onUpdate: (val: UpdateType) => Promise<UpdateType>;
 }
 
 export const getInboundShipmentDetailViewApi = (
