@@ -7,8 +7,8 @@ use crate::schema::{
         NotAnOutboundShipment,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineResponse, Range,
-        RangeError, RangeField, RecordNotFound,
+        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
+        InvoiceLineResponse, NodeError, Range, RangeError, RangeField, RecordNotFound,
     },
 };
 use domain::outbound_shipment::UpdateOutboundShipmentLine;
@@ -36,7 +36,10 @@ pub fn get_update_outbound_shipment_line_response(
 ) -> UpdateOutboundShipmentLineResponse {
     use UpdateOutboundShipmentLineResponse::*;
     match update_outbound_shipment_line(connection_manager, input.into()) {
-        Ok(id) => Response(get_invoice_line_response(connection_manager, id)),
+        Ok(id) => match get_invoice_line_response(connection_manager, id) {
+            InvoiceLineResponse::Response(node) => Response(node),
+            InvoiceLineResponse::Error(err) => NodeError(err),
+        },
         Err(error) => error.into(),
     }
 }
@@ -44,8 +47,8 @@ pub fn get_update_outbound_shipment_line_response(
 #[derive(Union)]
 pub enum UpdateOutboundShipmentLineResponse {
     Error(ErrorWrapper<UpdateOutboundShipmentLineErrorInterface>),
-    #[graphql(flatten)]
-    Response(InvoiceLineResponse),
+    NodeError(NodeError),
+    Response(InvoiceLineNode),
 }
 
 #[derive(Interface)]

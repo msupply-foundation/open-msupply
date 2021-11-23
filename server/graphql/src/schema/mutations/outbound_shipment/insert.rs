@@ -1,8 +1,8 @@
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
     types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
-        NameNode,
+        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus,
+        InvoiceResponse, NameNode, NodeError,
     },
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
@@ -46,8 +46,8 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
 #[derive(Union)]
 pub enum InsertOutboundShipmentResponse {
     Error(ErrorWrapper<InsertOutboundShipmentErrorInterface>),
-    #[graphql(flatten)]
-    Response(InvoiceResponse),
+    NodeError(NodeError),
+    Response(InvoiceNode),
 }
 
 pub fn get_insert_outbound_shipment_response(
@@ -56,7 +56,10 @@ pub fn get_insert_outbound_shipment_response(
 ) -> InsertOutboundShipmentResponse {
     use InsertOutboundShipmentResponse::*;
     match insert_outbound_shipment(connection_manager, input.into()) {
-        Ok(id) => Response(get_invoice_response(connection_manager, id)),
+        Ok(id) => match get_invoice_response(connection_manager, id) {
+            InvoiceResponse::Response(node) => Response(node),
+            InvoiceResponse::Error(err) => NodeError(err),
+        },
         Err(error) => error.into(),
     }
 }

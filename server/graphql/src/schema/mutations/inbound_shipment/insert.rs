@@ -3,8 +3,8 @@ use async_graphql::*;
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
     types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse,
-        NameNode,
+        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus,
+        InvoiceResponse, NameNode, NodeError,
     },
 };
 use domain::inbound_shipment::InsertInboundShipment;
@@ -27,8 +27,8 @@ pub struct InsertInboundShipmentInput {
 #[derive(Union)]
 pub enum InsertInboundShipmentResponse {
     Error(ErrorWrapper<InsertInboundShipmentErrorInterface>),
-    #[graphql(flatten)]
-    Response(InvoiceResponse),
+    NodeError(NodeError),
+    Response(InvoiceNode),
 }
 
 pub fn get_insert_inbound_shipment_response(
@@ -37,7 +37,10 @@ pub fn get_insert_inbound_shipment_response(
 ) -> InsertInboundShipmentResponse {
     use InsertInboundShipmentResponse::*;
     match insert_inbound_shipment(connection_manager, input.into()) {
-        Ok(id) => Response(get_invoice_response(connection_manager, id)),
+        Ok(id) => match get_invoice_response(connection_manager, id) {
+            InvoiceResponse::Response(node) => Response(node),
+            InvoiceResponse::Error(err) => NodeError(err),
+        },
         Err(error) => error.into(),
     }
 }

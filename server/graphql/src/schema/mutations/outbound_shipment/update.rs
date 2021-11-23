@@ -8,8 +8,8 @@ use crate::schema::{
         ForeignKey, ForeignKeyError,
     },
     types::{
-        get_invoice_response, ErrorWrapper, InvoiceNodeStatus, InvoiceResponse, NameNode,
-        RecordNotFound,
+        get_invoice_response, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, InvoiceResponse,
+        NameNode, NodeError, RecordNotFound,
     },
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
@@ -58,8 +58,8 @@ impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
 #[derive(Union)]
 pub enum UpdateOutboundShipmentResponse {
     Error(ErrorWrapper<UpdateOutboundShipmentErrorInterface>),
-    #[graphql(flatten)]
-    Response(InvoiceResponse),
+    NodeError(NodeError),
+    Response(InvoiceNode),
 }
 
 pub fn get_update_outbound_shipment_response(
@@ -68,7 +68,10 @@ pub fn get_update_outbound_shipment_response(
 ) -> UpdateOutboundShipmentResponse {
     use UpdateOutboundShipmentResponse::*;
     match update_outbound_shipment(connection_manager, input.into()) {
-        Ok(id) => Response(get_invoice_response(connection_manager, id)),
+        Ok(id) => match get_invoice_response(connection_manager, id) {
+            InvoiceResponse::Response(node) => Response(node),
+            InvoiceResponse::Error(err) => NodeError(err),
+        },
         Err(error) => error.into(),
     }
 }
