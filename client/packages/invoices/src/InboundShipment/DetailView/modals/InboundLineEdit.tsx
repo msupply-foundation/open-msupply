@@ -29,7 +29,7 @@ import {
 import { InboundShipmentItem, InboundShipmentRow } from '../../../types';
 import { ItemSearchInput } from '@openmsupply-client/system';
 import { flattenInboundItems } from '../../../utils';
-import { ModalMode } from '..';
+import { ModalMode } from '../DetailView';
 interface InboundLineEditProps {
   item: InboundShipmentItem | null;
   onUpsert: (item: InboundShipmentItem) => void;
