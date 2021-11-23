@@ -15,18 +15,18 @@ impl<'a> LocationRowRepository<'a> {
         LocationRowRepository { connection }
     }
 
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::insert_into(location_dsl::location)
             .values(row)
-            .on_conflict(id)
+            .on_conflict(location_dsl::id)
             .do_update()
             .set(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    #[cfg(feature = "sqlite")]
+    #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::replace_into(location_dsl::location)
             .values(row)

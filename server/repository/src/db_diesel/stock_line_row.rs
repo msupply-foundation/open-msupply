@@ -16,7 +16,7 @@ impl<'a> StockLineRowRepository<'a> {
         StockLineRowRepository { connection }
     }
 
-    #[cfg(all(feature = "postgres", not(feature = "sqlite")))]
+    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)
@@ -27,7 +27,7 @@ impl<'a> StockLineRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "sqlite")]
+    #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stock_line_dsl::stock_line)
             .values(row)
