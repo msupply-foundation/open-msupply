@@ -71,14 +71,10 @@ export const DetailView: FC = () => {
     onClose: () => setSelectedItem({ item: null, editing: false }),
   });
 
-  console.log('-------------------------------------------');
-  console.log('selectedItem', selectedItem);
-  console.log('-------------------------------------------');
-
   const onChangeSelectedItem = (newItem: Item | null) => {
     if (!newItem) return setSelectedItem({ item: newItem, editing: false });
 
-    // Try and find the outbound summary row that matches the new item
+    // Try and find the summary row that matches the new item
     const item = draft.items.find(
       summaryItem => summaryItem.itemId === newItem.id
     );

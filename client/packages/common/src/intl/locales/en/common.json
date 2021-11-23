@@ -114,5 +114,6 @@
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
   "placeholder.enter-a-customers-name": "Enter a customers name",
-  "placeholder.enter-a-suppliers-name": "Enter a suppliers name"
+  "placeholder.enter-a-suppliers-name": "Enter a suppliers name",
+  "placeholder.enter-an-item-code-or-name": "Enter item code or name"
 }
