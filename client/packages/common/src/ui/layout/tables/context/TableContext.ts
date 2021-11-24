@@ -161,8 +161,8 @@ export const createTableStore = (): UseStore<TableStore> =>
             [id]: {
               ...rowState[id],
               isSelected: rowState[id]?.isSelected ?? false,
+              isDisabled: state.rowState[id]?.isDisabled ?? false,
               isExpanded: newExpanded,
-              isDisabled: state.rowState[id]?.isExpanded ?? false,
             },
           },
         };
@@ -186,7 +186,7 @@ export const createTableStore = (): UseStore<TableStore> =>
                 ...state.rowState[id],
                 isExpanded,
                 isSelected: state.rowState[id]?.isSelected ?? false,
-                isDisabled: state.rowState[id]?.isExpanded ?? false,
+                isDisabled: state.rowState[id]?.isDisabled ?? false,
               },
             }),
             state.rowState
