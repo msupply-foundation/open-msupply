@@ -138,6 +138,7 @@ export const DetailView: FC = () => {
         onClose={itemModalControl.toggleOff}
         onChangeItem={onChangeSelectedItem}
         upsertInvoiceLine={line => draft.upsertLine?.(line)}
+        isOnlyItem={draft.items.length === 1}
       />
 
       <Toolbar draft={draft} />
