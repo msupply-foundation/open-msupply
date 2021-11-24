@@ -13,7 +13,11 @@ export const BasicCell = <T extends DomainObject>({
   const t = useTranslation();
   const d = useFormatDate();
 
-  return <>{column.formatter(column.accessor(rowData), { t, d })}</>;
+  return (
+    <span style={{ textOverflow: 'ellipsis' }}>
+      {column.formatter(column.accessor(rowData), { t, d })}
+    </span>
+  );
 };
 
 export const BasicHeader = <T extends DomainObject>({

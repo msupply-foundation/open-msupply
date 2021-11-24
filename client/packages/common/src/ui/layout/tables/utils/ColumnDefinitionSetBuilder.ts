@@ -165,7 +165,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   itemUnit: {
     label: 'label.unit',
     key: 'unit',
-    width: 75,
+    width: 50,
   },
 });
 
