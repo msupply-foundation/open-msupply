@@ -44,7 +44,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   availableQuantity,
   draft,
 }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
 
   const [quantity, setQuantity] = useState('');
   const [issueType, setIssueType] = useState('packs');

@@ -73,7 +73,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 // };
 
 const RelatedDocumentsSection: FC<SidePanelProps> = () => {
-  const t = useTranslation('outbound-shipment');
+  const t = useTranslation('distribution');
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid container gap={0.5} key="additional-info">
@@ -104,7 +104,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
 
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
