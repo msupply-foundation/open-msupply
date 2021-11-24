@@ -203,7 +203,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   isOnlyItem,
   draft,
 }) => {
-  const t = useTranslation(['outbound-shipment']);
+  const t = useTranslation(['distribution']);
   const methods = useForm({ mode: 'onBlur' });
   const { reset, register } = methods;
 

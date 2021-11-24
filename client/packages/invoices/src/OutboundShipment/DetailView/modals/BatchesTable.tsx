@@ -180,7 +180,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   register,
   rows,
 }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
   const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
     onChange('placeholder', Number(event.target.value), 1);
 

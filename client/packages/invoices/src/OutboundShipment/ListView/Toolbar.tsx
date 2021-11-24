@@ -18,7 +18,7 @@ export const Toolbar: FC<{
   data?: InvoiceRow[];
   isLoading: boolean;
 }> = ({ onDelete, data, filter, isLoading }) => {
-  const t = useTranslation('outbound-shipment');
+  const t = useTranslation('distribution');
 
   const { success, info } = useNotification();
 
