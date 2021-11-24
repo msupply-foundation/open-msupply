@@ -106,7 +106,12 @@ export const OutboundShipmentListViewComponent: FC = () => {
         }}
       />
 
-      <Toolbar onDelete={onDelete} data={data} filter={filter} />
+      <Toolbar
+        isLoading={isLoading}
+        onDelete={onDelete}
+        data={data}
+        filter={filter}
+      />
       <AppBarButtons onCreate={setOpen} />
 
       <DataTable

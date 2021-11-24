@@ -103,7 +103,12 @@ export const InboundListView: FC = () => {
         }}
       />
 
-      <Toolbar onDelete={onDelete} data={data} filter={filter} />
+      <Toolbar
+        onDelete={onDelete}
+        data={data}
+        filter={filter}
+        isLoading={isLoading}
+      />
       <AppBarButtons onCreate={setOpen} />
 
       <DataTable
