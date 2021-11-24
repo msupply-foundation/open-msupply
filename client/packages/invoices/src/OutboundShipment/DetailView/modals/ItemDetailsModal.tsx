@@ -17,6 +17,7 @@ import { BatchesTable, sortByExpiry } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import {
   BatchRow,
+  OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
 } from '../../../types';
@@ -30,6 +31,7 @@ interface ItemDetailsModalProps {
   onChangeItem: (item: Item | null) => void;
   onNext: () => void;
   isEditMode: boolean;
+  draft: OutboundShipment;
 }
 
 export const getInvoiceLine = (
@@ -197,6 +199,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   summaryItem,
   onNext,
   isEditMode,
+  draft,
 }) => {
   const t = useTranslation(['outbound-shipment']);
   const methods = useForm({ mode: 'onBlur' });
@@ -343,6 +346,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <form>
           <Grid container gap={0.5}>
             <ItemDetailsForm
+              draft={draft}
               availableQuantity={sumAvailableQuantity(batchRows)}
               packSizeController={packSizeController}
               onChangeItem={onChangeItem}
