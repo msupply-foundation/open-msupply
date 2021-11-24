@@ -5,13 +5,13 @@ import { SortDescIcon } from '../../../../icons';
 import { DomainObject } from '../../../../../types';
 import { useDebounceCallback } from '../../../../../hooks';
 
-export const HeaderRow: FC<{ dense?: boolean }> = props => (
+export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
   <TableRow
     {...props}
     sx={{
       display: 'flex',
       flex: '1 0 auto',
-      height: !!props.dense ? '40px' : '60px',
+      height: !!dense ? '40px' : '60px',
       alignItems: 'center',
     }}
   />
