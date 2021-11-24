@@ -123,7 +123,7 @@ const usePackSizeController = (
             availableNumberOfPacks > 0 && !onHold
         )
         .reduce((sizes, { packSize }) => [...sizes, packSize], [] as number[])
-        .sort()
+        .sort((a, b) => a - b)
     )
   );
 
