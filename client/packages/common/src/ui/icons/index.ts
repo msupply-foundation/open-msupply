@@ -46,6 +46,7 @@ export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
 export { MedicineIcon } from './MedicineIcon';
 export { SidebarIcon } from './Sidebar';
+export { SearchIcon } from './Search';
 
 type Color =
   | 'inherit'

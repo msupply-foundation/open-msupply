@@ -7,9 +7,8 @@ import {
   DeleteIcon,
   useTableStore,
   AppBarContentPortal,
-  InputWithLabelRow,
-  BasicTextInput,
   FilterController,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { InvoiceRow } from '../../types';
 
@@ -44,8 +43,8 @@ export const Toolbar: FC<{
     ref.current = deleteAction;
   }, [selectedRows]);
 
-  const key = 'otherPartyName' as keyof InvoiceRow;
-  const filterString = filter.filterBy?.[key]?.like;
+  const key = 'comment' as keyof InvoiceRow;
+  const filterString = filter.filterBy?.[key]?.like as string;
 
   return (
     <AppBarContentPortal
@@ -56,23 +55,14 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <InputWithLabelRow
-        label={t('label.search')}
-        labelWidth={null}
-        Input={
-          <BasicTextInput
-            value={filterString}
-            placeholder={t('placeholder.enter-a-suppliers-name')}
-            onChange={e =>
-              filter.onChangeStringFilterRule(
-                'otherPartyName',
-                'like',
-                e.target.value
-              )
-            }
-          />
+      <SearchBar
+        placeholder="Search by comment..."
+        value={filterString}
+        onChange={newValue =>
+          filter.onChangeStringFilterRule('comment', 'like', newValue)
         }
       />
+
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
           {t('button.delete-lines')}

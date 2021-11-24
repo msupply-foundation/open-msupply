@@ -143,19 +143,19 @@ export const ResolverService = {
             return invoice.type === filter.type?.equalTo;
           });
         }
-        // if (filter.otherPartyName) {
-        //   filtered = resolved.filter(({ otherPartyName }) => {
-        //     if (filter.otherPartyName?.equalTo) {
-        //       return otherPartyName === filter.otherPartyName.equalTo;
-        //     }
-
-        //     if (filter.otherPartyName?.like) {
-        //       return otherPartyName.includes(filter.otherPartyName.like ?? '');
-        //     }
-
-        //     return true;
-        //   });
-        // }
+        if (filter.comment) {
+          filtered = filtered.filter(invoice => {
+            if (filter.comment?.equalTo) {
+              return invoice.type === filter.comment?.equalTo;
+            } else if (filter.comment?.like) {
+              return invoice?.comment
+                ?.toLowerCase()
+                .includes(filter.comment?.like?.toLowerCase());
+            } else {
+              return true;
+            }
+          });
+        }
       }
 
       const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
