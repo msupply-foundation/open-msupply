@@ -31,6 +31,7 @@ interface ItemDetailsModalProps {
   onChangeItem: (item: Item | null) => void;
   onNext: () => void;
   isEditMode: boolean;
+  isOnlyItem: boolean;
   draft: OutboundShipment;
 }
 
@@ -199,6 +200,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   summaryItem,
   onNext,
   isEditMode,
+  isOnlyItem,
   draft,
 }) => {
   const t = useTranslation(['outbound-shipment']);
@@ -327,7 +329,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          disabled={isEditMode ? false : getAllocatedQuantity(batchRows) <= 0}
+          disabled={
+            isEditMode ? isOnlyItem : getAllocatedQuantity(batchRows) <= 0
+          }
           variant="next"
           onClick={onNext}
         />

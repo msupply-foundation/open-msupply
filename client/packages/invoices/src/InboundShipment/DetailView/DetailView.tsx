@@ -152,7 +152,15 @@ export const DetailView: FC = () => {
             : t('heading.edit-item')
         }
         cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        nextButton={<DialogButton variant="next" onClick={() => {}} />}
+        nextButton={
+          <DialogButton
+            variant="next"
+            onClick={() => {}}
+            disabled={
+              modalState.mode === ModalMode.Update && draft.items.length === 3
+            }
+          />
+        }
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         height={600}
         width={1024}
