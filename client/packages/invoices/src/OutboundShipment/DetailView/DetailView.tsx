@@ -131,6 +131,7 @@ export const DetailView: FC = () => {
       />
 
       <ItemDetailsModal
+        draft={draft}
         isEditMode={selectedItem.editing}
         onNext={onNext}
         summaryItem={selectedItem?.item}

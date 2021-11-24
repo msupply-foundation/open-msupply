@@ -20,7 +20,7 @@ import {
   Box,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
-import { OutboundShipmentSummaryItem } from '../../../types';
+import { OutboundShipment, OutboundShipmentSummaryItem } from '../../../types';
 import { PackSizeController } from './ItemDetailsModal';
 
 interface ItemDetailsFormProps {
@@ -31,6 +31,7 @@ interface ItemDetailsFormProps {
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
   availableQuantity: number;
+  draft: OutboundShipment;
 }
 
 export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
@@ -41,6 +42,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   summaryItem,
   packSizeController,
   availableQuantity,
+  draft,
 }) => {
   const t = useTranslation(['outbound-shipment', 'common']);
 
@@ -62,6 +64,12 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               unitName: '',
             }}
             onChange={onChangeItem}
+            extraFilter={item => {
+              const itemAlreadyInShipment = draft.items.some(
+                ({ id }) => id === item.id
+              );
+              return !itemAlreadyInShipment;
+            }}
           />
         </Grid>
       </ModalRow>

@@ -26,7 +26,11 @@ import {
   useColumns,
   TextInputCell,
 } from '@openmsupply-client/common';
-import { InboundShipmentItem, InboundShipmentRow } from '../../../types';
+import {
+  InboundShipment,
+  InboundShipmentItem,
+  InboundShipmentRow,
+} from '../../../types';
 import { ItemSearchInput } from '@openmsupply-client/system';
 import { flattenInboundItems } from '../../../utils';
 import { ModalMode } from '../DetailView';
@@ -35,6 +39,7 @@ interface InboundLineEditProps {
   onUpsert: (item: InboundShipmentItem) => void;
   onChangeItem: (item: Item | null) => void;
   mode: ModalMode;
+  draft: InboundShipment;
 }
 
 const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
@@ -327,6 +332,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   item,
   onChangeItem,
   mode,
+  draft,
 }) => {
   const t = useTranslation(['outbound-shipment', 'common']);
 
@@ -391,6 +397,12 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               unitName: '',
             }}
             onChange={onChangeItem}
+            extraFilter={item => {
+              const itemAlreadyInShipment = draft.items.some(
+                ({ id }) => id === item.id
+              );
+              return !itemAlreadyInShipment;
+            }}
           />
         </Grid>
       </ModalRow>
