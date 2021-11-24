@@ -4,6 +4,8 @@ import {
   AutocompleteRenderInputParams,
   createFilterOptions,
   CreateFilterOptionsConfig,
+  AutocompleteInputChangeReason,
+  AutocompleteProps as MuiAutocompleteProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -11,7 +13,11 @@ import {
   AutocompleteOptionRenderer,
 } from './types';
 import { BasicTextInput } from '../TextInput';
-export interface AutocompleteProps<T> {
+export interface AutocompleteProps<T>
+  extends Omit<
+    MuiAutocompleteProps<T, undefined, undefined, undefined>,
+    'renderInput'
+  > {
   defaultValue?: AutocompleteOption<T> | null;
   getOptionDisabled?: (option: T) => boolean;
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
@@ -27,7 +33,11 @@ export interface AutocompleteProps<T> {
   clearable?: boolean;
   isOptionEqualToValue?: (option: T, value: T) => boolean;
   disabled?: boolean;
-  onInputChange?: (event: React.SyntheticEvent, value: string) => void;
+  onInputChange?: (
+    event: React.SyntheticEvent,
+    value: string,
+    reason: AutocompleteInputChangeReason
+  ) => void;
   inputValue?: string;
 }
 
@@ -49,6 +59,7 @@ export function Autocomplete<T>({
   disabled,
   onInputChange,
   inputValue,
+  ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -62,6 +73,7 @@ export function Autocomplete<T>({
 
   return (
     <MuiAutocomplete
+      {...restOfAutocompleteProps}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}
