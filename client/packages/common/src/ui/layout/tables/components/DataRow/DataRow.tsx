@@ -39,6 +39,7 @@ export const DataRow = <T extends DomainObject>({
           alignItems: 'center',
           height: '40px',
           maxHeight: '45px',
+
           boxShadow: dense
             ? 'none'
             : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
@@ -57,7 +58,7 @@ export const DataRow = <T extends DomainObject>({
                 borderBottom: 'none',
                 justifyContent: 'flex-end',
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                textOverflow: 'none',
                 whiteSpace: 'nowrap',
                 paddingLeft: '16px',
                 paddingRight: '16px',
