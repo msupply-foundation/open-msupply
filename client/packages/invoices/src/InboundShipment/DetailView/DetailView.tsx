@@ -166,6 +166,7 @@ export const DetailView: FC = () => {
         width={1024}
       >
         <InboundLineEdit
+          draft={draft}
           mode={modalState.mode}
           item={modalState.item}
           onUpsert={() => {}}
