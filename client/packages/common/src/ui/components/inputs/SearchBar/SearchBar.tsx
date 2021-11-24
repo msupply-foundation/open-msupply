@@ -45,7 +45,9 @@ export const SearchBar: FC<SearchBarProps> = ({
     <>
       <BasicTextInput
         InputProps={{
-          startAdornment: <SearchIcon color="primary" />,
+          startAdornment: (
+            <SearchIcon sx={{ color: 'gray.main' }} fontSize="small" />
+          ),
           endAdornment: <Spin isLoading={isLoading || loading} />,
           sx: {
             paddingLeft: '6px',
