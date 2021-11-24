@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
 import {
   AppBarContentPortal,
-  InputWithLabelRow,
-  BasicTextInput,
   useTranslation,
+  SearchBar,
 } from '@openmsupply-client/common';
 
 interface ToolbarProps {
@@ -23,16 +22,10 @@ export const Toolbar: FC<ToolbarProps> = ({ filterString, onChangeFilter }) => {
         display: 'flex',
       }}
     >
-      <InputWithLabelRow
-        label={t('label.search')}
-        labelWidth={null}
-        Input={
-          <BasicTextInput
-            value={filterString}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-            onChange={e => onChangeFilter(e.target.value)}
-          />
-        }
+      <SearchBar
+        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        value={filterString ?? ''}
+        onChange={newValue => onChangeFilter(newValue)}
       />
     </AppBarContentPortal>
   );
