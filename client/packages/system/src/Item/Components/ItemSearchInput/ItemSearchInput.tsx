@@ -32,12 +32,14 @@ interface ItemSearchInputProps {
   currentItem?: Item;
   currentItemName?: string;
   disabled?: boolean;
+  extraFilter?: (item: Item) => boolean;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
   currentItem,
   disabled = false,
+  extraFilter,
 }) => {
   const [filter, setFilter] = useState<{
     searchTerm: string;
@@ -70,6 +72,10 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
     }
   }, [open, value, buffer]);
 
+  const options = extraFilter
+    ? data?.nodes?.filter(extraFilter) ?? []
+    : data?.nodes ?? [];
+
   return (
     <Autocomplete
       disabled={disabled}
@@ -91,7 +97,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
       onChange={(_, item) => {
         onChange(item);
       }}
-      options={defaultOptionMapper(data?.nodes ?? [], 'name')}
+      options={defaultOptionMapper(options, 'name')}
       renderOption={renderOption}
       width="100%"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}

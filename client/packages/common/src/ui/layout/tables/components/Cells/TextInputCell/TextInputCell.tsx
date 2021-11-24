@@ -1,8 +1,8 @@
 import React from 'react';
-import { CellProps } from '../../..';
+import { CellProps } from '../../../columns';
 import { BasicTextInput } from '../../../../../components/inputs/TextInput';
 import { DomainObject } from '../../../../../../types';
-import { useDebounceCallback } from '../../../../../..';
+import { useDebounceCallback } from '../../../../../../hooks';
 
 type R<T> = T &
   DomainObject & { update?: (key: string, value: string) => void };
