@@ -53,7 +53,14 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
-            currentItemName={summaryItem?.itemName}
+            currentItem={{
+              name: summaryItem?.itemName ?? '',
+              id: summaryItem?.itemId ?? '',
+              code: summaryItem?.itemCode ?? '',
+              isVisible: true,
+              availableBatches: [],
+              unitName: '',
+            }}
             onChange={onChangeItem}
           />
         </Grid>
