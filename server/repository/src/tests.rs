@@ -803,4 +803,28 @@ mod repository_test {
         let result = repo.pop_one().await;
         assert!(result.is_err());
     }
+
+    #[actix_rt::test]
+    async fn test_number() {
+        let settings = test_db::get_test_db_settings("omsupply-database-number");
+        test_db::setup(&settings).await;
+        let connection_manager = get_storage_connection_manager(&settings);
+        let connection = connection_manager.connection().unwrap();
+
+        let test_counter = "test_counter_name";
+        let repo = NumberRowRepository::new(&connection);
+        matches!(
+            repo.find_one_by_id(test_counter),
+            Err(RepositoryError::NotFound)
+        );
+
+        let row = repo.increment(test_counter).unwrap();
+        assert_eq!(1, row.value);
+        let row = repo.find_one_by_id(test_counter).unwrap();
+        assert_eq!(1, row.value);
+        let row = repo.increment(test_counter).unwrap();
+        assert_eq!(2, row.value);
+        let row = repo.find_one_by_id(test_counter).unwrap();
+        assert_eq!(2, row.value);
+    }
 }
