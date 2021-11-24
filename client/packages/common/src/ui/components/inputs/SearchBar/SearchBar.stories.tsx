@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { SearchBar } from './SearchBar';
@@ -14,13 +14,23 @@ export default {
 
 const Template: ComponentStory<typeof SearchBar> = () => {
   const [value, setValue] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+      alert('Response received!');
+    }, 2000);
+  }, [value]);
 
   return (
     <Box>
       <SearchBar
+        isLoading={isLoading}
         onChange={newValue => {
-          alert(newValue);
+          setIsLoading(true);
           setValue(newValue);
+          alert('Sending request now...');
         }}
         value={value}
         placeholder="Search..."
