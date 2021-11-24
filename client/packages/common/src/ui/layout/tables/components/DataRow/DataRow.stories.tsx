@@ -25,6 +25,7 @@ const Template: Story = ({ onClick }) => {
         <DataRow
           columns={columns}
           rowKey="rowKey"
+          rowIndex={0}
           rowData={{
             id: '',
             status: 'Finalised',

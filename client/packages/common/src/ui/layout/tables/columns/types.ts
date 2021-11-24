@@ -9,6 +9,8 @@ export interface CellProps<T extends DomainObject> {
   columns: Column<T>[];
   column: Column<T>;
   rowKey: string;
+  columnIndex: number;
+  rowIndex: number;
 }
 
 export interface HeaderProps<T extends DomainObject> {

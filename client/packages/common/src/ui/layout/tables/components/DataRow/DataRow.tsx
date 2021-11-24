@@ -13,6 +13,7 @@ interface DataRowProps<T extends DomainObject> {
   rowKey: string;
   ExpandContent?: FC<{ rowData: T }>;
   dense?: boolean;
+  rowIndex: number;
 }
 
 export const DataRow = <T extends DomainObject>({
@@ -20,6 +21,7 @@ export const DataRow = <T extends DomainObject>({
   onClick,
   rowData,
   rowKey,
+  rowIndex,
   ExpandContent,
   dense = false,
 }: DataRowProps<T>): JSX.Element => {
@@ -49,7 +51,7 @@ export const DataRow = <T extends DomainObject>({
         onClick={onRowClick}
         hover={hasOnClick}
       >
-        {columns.map(column => {
+        {columns.map((column, columnIndex) => {
           return (
             <TableCell
               key={`${rowKey}${column.key}`}
@@ -74,6 +76,8 @@ export const DataRow = <T extends DomainObject>({
                 columns={columns}
                 column={column}
                 rowKey={rowKey}
+                columnIndex={columnIndex}
+                rowIndex={rowIndex}
               />
             </TableCell>
           );
