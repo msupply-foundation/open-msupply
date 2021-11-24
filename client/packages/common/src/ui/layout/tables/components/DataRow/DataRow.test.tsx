@@ -20,7 +20,12 @@ describe('DataRow', () => {
     return (
       <Table>
         <TableBody>
-          <DataRow columns={columns} rowKey="rowKey" rowData={{ id: 'josh' }} />
+          <DataRow
+            columns={columns}
+            rowKey="rowKey"
+            rowIndex={0}
+            rowData={{ id: 'josh' }}
+          />
         </TableBody>
       </Table>
     );
