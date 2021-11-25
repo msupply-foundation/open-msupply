@@ -23,7 +23,7 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
-import { InboundLineEdit } from './modals/InboundLineEdit';
+import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 
 import { isInboundEditable } from '../../utils';
 import { InboundShipmentItem } from '../../types';
@@ -76,25 +76,8 @@ export const DetailView: FC = () => {
     onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
   });
 
-  const onChangeSelectedItem = (newItem: Item | null) => {
-    if (!newItem)
-      return setModalState({ item: newItem, mode: ModalMode.Create });
-
-    // Try and find the summary row that matches the new item
-    const item = draft.items.find(
-      summaryItem => summaryItem.itemId === newItem.id
-    );
-
-    // If we found it, set the selected item.
-    if (item) {
-      setModalState({ item, mode: ModalMode.Update });
-    } else {
-      // otherwise, set the selected item to a newly created summary row.
-      setModalState({
-        item: itemToSummaryItem(newItem),
-        mode: ModalMode.Create,
-      });
-    }
+  const onChangeItem = (item: InboundShipmentItem | null) => {
+    setModalState(state => ({ ...state, item }));
   };
 
   const onRowClick = (item: InboundShipmentItem) => {
@@ -105,6 +88,11 @@ export const DetailView: FC = () => {
   const onAddItem = () => {
     setModalState({ item: null, mode: ModalMode.Create });
     showDialog();
+  };
+
+  const onOK = () => {
+    modalState.item && draft.upsertItem?.(modalState.item);
+    hideDialog();
   };
 
   const columns = useColumns(
@@ -161,7 +149,7 @@ export const DetailView: FC = () => {
             }
           />
         }
-        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+        okButton={<DialogButton variant="ok" onClick={onOK} />}
         height={600}
         width={1024}
       >
@@ -169,8 +157,7 @@ export const DetailView: FC = () => {
           draft={draft}
           mode={modalState.mode}
           item={modalState.item}
-          onUpsert={() => {}}
-          onChangeItem={onChangeSelectedItem}
+          onChangeItem={onChangeItem}
         />
       </Modal>
     </TableProvider>

@@ -88,6 +88,7 @@ export enum ActionType {
   UpdateInvoice = 'OutboundShipment/updateInvoice',
   SortBy = 'OutboundShipment/sortBy',
   UpsertLine = 'OutboundShipment/upsertLine',
+  UpsertItem = 'OutboundShipment/upsertItem',
   DeleteLine = 'OutboundShipment/deleteLine',
 }
 
@@ -107,6 +108,10 @@ export type OutboundShipmentAction =
   | {
       type: ActionType.UpsertLine;
       payload: { line: OutboundShipmentRow };
+    }
+  | {
+      type: ActionType.UpsertItem;
+      payload: { item: OutboundShipmentSummaryItem };
     }
   | {
       type: ActionType.DeleteLine;
@@ -174,6 +179,7 @@ export type InboundShipmentItem = {
   packSize?: number | undefined;
   note?: string | null;
   isDeleted?: boolean;
+  upsertLine?: (line: InboundShipmentRow) => void;
 };
 
 export interface InboundShipment extends Invoice {
@@ -181,5 +187,6 @@ export interface InboundShipment extends Invoice {
   status: InboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: InboundShipmentRow) => void;
+  upsertItem?: (line: InboundShipmentItem) => void;
   deleteLine?: (line: InboundShipmentRow) => void;
 }
