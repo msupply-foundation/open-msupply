@@ -10,6 +10,8 @@ import {
   ItemsListViewQueryVariables,
   NamesQueryVariables,
   UpdateOutboundShipmentLineInput,
+  UpdateInboundShipmentLineInput,
+  InsertOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 
 const updateOutboundInvoice = graphql.mutation<
@@ -236,9 +238,11 @@ export const upsertOutboundShipment = graphql.mutation(
 
     if (insertOutboundShipmentLines.length > 0) {
       queryResponse.insertOutboundShipmentLines =
-        insertOutboundShipmentLines.map((line: InvoiceLine) => {
-          MutationService.insert.invoiceLine(line);
-        });
+        insertOutboundShipmentLines.map(
+          (line: InsertOutboundShipmentLineInput) => {
+            MutationService.insert.invoiceLine(line);
+          }
+        );
     }
 
     if (deleteOutboundShipmentLines.length > 0) {
@@ -260,6 +264,61 @@ export const upsertOutboundShipment = graphql.mutation(
   }
 );
 
+export const upsertInboundShipment = graphql.mutation(
+  'upsertInboundShipment',
+  (request, response, context) => {
+    const { variables } = request;
+    const {
+      insertInboundShipmentLines,
+      updateInboundShipments,
+      deleteInboundShipmentLines,
+      updateInboundShipmentLines,
+    } = variables;
+
+    const queryResponse = {
+      __typename: 'BatchInboundShipmentResponse',
+      insertInboundShipmentLines: [] as { id: string }[],
+      updateInboundShipments: [] as { id: string; __typename: string }[],
+      deleteInboundShipmentLines: [] as { id: string; __typename: string }[],
+      updateInboundShipmentLines: [] as { id: string; __typename: string }[],
+    };
+
+    if (updateInboundShipments.length > 0) {
+      queryResponse.updateInboundShipments = [
+        {
+          ...MutationService.update.invoice(updateInboundShipments[0]),
+          __typename: 'UpdateInboundShipmentResponseWithId',
+        },
+      ];
+    }
+
+    if (insertInboundShipmentLines.length > 0) {
+      queryResponse.insertInboundShipmentLines = insertInboundShipmentLines.map(
+        (line: InvoiceLine) => {
+          MutationService.insert.inboundInvoiceLine(line);
+        }
+      );
+    }
+
+    if (deleteInboundShipmentLines.length > 0) {
+      queryResponse.deleteInboundShipmentLines = deleteInboundShipmentLines.map(
+        (line: InvoiceLine) => {
+          MutationService.remove.invoiceLine(line.id);
+        }
+      );
+    }
+
+    if (updateInboundShipmentLines.length > 0) {
+      queryResponse.updateInboundShipmentLines = updateInboundShipmentLines.map(
+        (line: UpdateInboundShipmentLineInput) => {
+          MutationService.update.invoiceLine(line);
+        }
+      );
+    }
+    return response(context.data({ batchInboundShipment: queryResponse }));
+  }
+);
+
 export const handlers = [
   invoiceList,
   invoiceDetail,
@@ -276,6 +335,7 @@ export const handlers = [
   itemsListView,
   itemsWithStockLines,
   upsertOutboundShipment,
+  upsertInboundShipment,
   invoiceCounts,
   stockCounts,
 ];

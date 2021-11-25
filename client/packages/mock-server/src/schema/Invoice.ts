@@ -2,6 +2,7 @@ import { MutationService } from './../api/mutations';
 import {
   UpdateOutboundShipmentInput,
   UpdateInboundShipmentInput,
+  BatchInboundShipmentInput,
 } from './../../../common/src/types/schema';
 import {
   InvoiceSortFieldInput,
@@ -105,6 +106,56 @@ const MutationResolvers = {
         vars.updateOutboundShipmentLines.map(line => ({
           id: MutationService.update.invoiceLine(line).id,
         }));
+    }
+
+    return response;
+  },
+  batchInboundShipment: (_: any, vars: BatchInboundShipmentInput) => {
+    const response = {
+      __typename: 'BatchInboundShipmentResponse',
+      deleteInboundShipments: [] as { id: string }[],
+      insertInboundShipmentLines: [] as { id: string }[],
+      updateInboundShipments: [] as { id: string }[],
+      deleteInboundShipmentLines: [] as { id: string }[],
+      updateInboundShipmentLines: [] as { id: string }[],
+    };
+
+    if (vars.deleteInboundShipments) {
+      response.deleteInboundShipments = vars.deleteInboundShipments.map(id => ({
+        id: MutationResolvers.deleteInboundShipment(null, { id }),
+      }));
+    }
+
+    if (vars.updateInboundShipments) {
+      response.updateInboundShipments = [
+        Api.MutationService.update.invoice(
+          vars.updateInboundShipments[0] as UpdateInboundShipmentInput
+        ),
+      ];
+    }
+
+    if (vars.insertInboundShipmentLines) {
+      response.insertInboundShipmentLines = vars.insertInboundShipmentLines.map(
+        line => {
+          return MutationService.insert.inboundInvoiceLine(line);
+        }
+      );
+    }
+
+    if (vars.deleteInboundShipmentLines) {
+      response.deleteInboundShipmentLines = vars.deleteInboundShipmentLines.map(
+        line => ({
+          id: MutationService.remove.invoiceLine(line.id),
+        })
+      );
+    }
+
+    if (vars.updateInboundShipmentLines) {
+      response.updateInboundShipmentLines = vars.updateInboundShipmentLines.map(
+        line => ({
+          id: MutationService.update.invoiceLine(line).id,
+        })
+      );
     }
 
     return response;

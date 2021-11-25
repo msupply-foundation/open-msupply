@@ -50,7 +50,7 @@ export interface ResolvedStockLine extends StockLine {
 export interface InvoiceLine extends InvoiceLineNode {
   id: string;
   itemName: string;
-  location: {
+  location?: {
     id: string;
     code: string;
     description: string;
@@ -59,7 +59,7 @@ export interface InvoiceLine extends InvoiceLineNode {
   itemUnit: string;
   batch?: string;
   expiryDate: string;
-  stockLineId: string;
+  stockLineId?: string;
   itemId: string;
   invoiceId: string;
   costPricePerPack: number;
@@ -71,7 +71,7 @@ export interface InvoiceLine extends InvoiceLineNode {
 
 export interface ResolvedInvoiceLine extends InvoiceLine {
   __typename: 'InvoiceLineNode';
-  stockLine: StockLine;
+  stockLine?: StockLine;
   item: Item;
 }
 
