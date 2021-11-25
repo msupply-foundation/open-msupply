@@ -54,7 +54,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   }, [value]);
 
   // Call the onChangeNumber prop when the buffer changes to a valid number, which
-  // is essentially in ever case except when the number ends in a decimal. If the user
+  // is essentially in every case except when the number ends in a decimal. If the user
   // loses focus when the buffer is in this invalid state, the currency input will
   // append two zeros so will always result in a valid number.
   useEffect(() => {
