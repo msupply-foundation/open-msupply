@@ -37,6 +37,7 @@ import { RadioIcon } from './Radio';
 import { ReportsIcon } from './Reports';
 import { RewindIcon } from './Rewind';
 import { SaveIcon } from './Save';
+import { SearchIcon } from './Search';
 import { SettingsIcon } from './Settings';
 import { SidebarIcon } from './Sidebar';
 import { SortAscIcon } from './SortAsc';
@@ -109,6 +110,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ReportsIcon {...args} />, name: 'Reports' },
     { icon: <RewindIcon {...args} />, name: 'Rewind' },
     { icon: <SaveIcon {...args} />, name: 'Save' },
+    { icon: <SearchIcon {...args} />, name: 'Search' },
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
