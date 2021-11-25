@@ -39,7 +39,7 @@ impl<'a> NumberService for NumberServiceImpl<'a> {
     }
 
     fn next_store(&self, counter_name: &str, store_id: &str) -> Result<i64, RepositoryError> {
-        self.next(&format!("{}_{}", counter_name, store_id))
+        self.next(&format!("{}/{}", counter_name, store_id))
     }
 
     fn next_store_table(
@@ -48,6 +48,6 @@ impl<'a> NumberService for NumberServiceImpl<'a> {
         store_id: &str,
         table: &str,
     ) -> Result<i64, RepositoryError> {
-        self.next(&format!("{}_{}_{}", counter_name, store_id, table))
+        self.next(&format!("{}/{}/{}", counter_name, store_id, table))
     }
 }
