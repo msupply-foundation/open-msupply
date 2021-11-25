@@ -63,11 +63,7 @@ export const StockListView: FC = () => {
 
   return (
     <TableProvider createStore={createTableStore}>
-      <Toolbar
-        onChangeFilter={setFilterString}
-        filterString={filterString}
-        isLoading={isLoading}
-      />
+      <Toolbar onChangeFilter={setFilterString} filterString={filterString} />
       <DataTable
         pagination={{ ...pagination, total: filteredSortedData.length }}
         columns={columns}
