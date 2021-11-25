@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   Item,
   ModalRow,
@@ -33,6 +33,7 @@ import {
 import { ItemSearchInput } from '@openmsupply-client/system';
 import { flattenInboundItems } from '../../../utils';
 import { ModalMode } from '../DetailView';
+import { recalculateSummary } from '../../../OutboundShipment/DetailView/reducer';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',
@@ -41,7 +42,7 @@ const StyledTabPanel = styled(TabPanel)({
 interface InboundLineEditProps {
   item: InboundShipmentItem | null;
   onUpsert: (item: InboundShipmentItem) => void;
-  onChangeItem: (item: Item | null) => void;
+  onChangeItem: (item: InboundShipmentItem | null) => void;
   mode: ModalMode;
   draft: InboundShipment;
 }
@@ -155,16 +156,16 @@ const createInboundShipmentBatch = (
 
 const wrapInboundShipmentItem = (
   seed: InboundShipmentItem,
-  updater: React.Dispatch<React.SetStateAction<InboundShipmentItem | null>>
+  updater: (item: InboundShipmentItem | null) => void
 ): InboundShipmentItem => {
   const wrapped = {
     ...seed,
     upsertLine: (row: InboundShipmentRow) => {
-      updater(state => {
-        if (!state) return state;
-        const batches = { ...state.batches, [row.id]: row };
-        return { ...state, batches };
-      });
+      const updatedBatches = { ...seed.batches, [row.id]: row };
+      const updatedSeed = { ...seed, batches: updatedBatches };
+      const { unitQuantity, numberOfPacks } = recalculateSummary(updatedSeed);
+
+      updater({ ...updatedSeed, unitQuantity, numberOfPacks });
     },
   };
 
@@ -180,16 +181,14 @@ const wrapInboundShipmentItem = (
 export const InboundLineEdit: FC<InboundLineEditProps> = ({
   item,
   onChangeItem,
+
   mode,
   draft,
 }) => {
   const t = useTranslation(['distribution', 'common']);
 
-  const [inboundItem, setInboundItem] =
-    React.useState<InboundShipmentItem | null>(item);
-
-  const wrappedInbound = inboundItem
-    ? wrapInboundShipmentItem(inboundItem, setInboundItem)
+  const wrappedInbound = item
+    ? wrapInboundShipmentItem(item, onChangeItem)
     : null;
 
   const onAddBatch = () => {
@@ -198,12 +197,20 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (item) setInboundItem({ ...item });
-    else setInboundItem(item);
-  }, [item]);
-
   const [currentTab, setCurrentTab] = React.useState<Tabs>(Tabs.Batch);
+
+  const itemToSummaryItem = (item: Item): InboundShipmentItem => {
+    return {
+      id: item.id,
+      itemId: item.id,
+      itemName: item.name,
+      itemCode: item.code,
+      itemUnit: item.unitName,
+      batches: {},
+      unitQuantity: 0,
+      numberOfPacks: 0,
+    };
+  };
 
   return (
     <>
@@ -220,7 +227,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               availableBatches: [],
               unitName: '',
             }}
-            onChange={onChangeItem}
+            onChange={(newItem: Item | null) =>
+              newItem && onChangeItem(itemToSummaryItem(newItem))
+            }
             extraFilter={item => {
               const itemAlreadyInShipment = draft.items.some(
                 ({ id }) => id === item.id
