@@ -64,7 +64,7 @@ export enum ModalMode {
 }
 
 export const DetailView: FC = () => {
-  const t = useTranslation('outbound-shipment');
+  const t = useTranslation('distribution');
 
   const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
 

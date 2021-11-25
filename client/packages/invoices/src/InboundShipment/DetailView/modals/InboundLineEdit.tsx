@@ -147,7 +147,7 @@ const DiscrepanciesRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
 const DiscrepanciesTable: FC<{ batches: InboundShipmentRow[] }> = ({
   batches,
 }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
   return (
     <Table>
       <TableHead>
@@ -210,7 +210,7 @@ const WeightsBatchRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
 };
 
 const WeightsTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
   return (
     <Table>
       <TableHead>
@@ -270,7 +270,7 @@ const PricingBatchRow: FC<{ batch: InboundShipmentRow; label: string }> = ({
 };
 
 const PricingTable: FC<{ batches: InboundShipmentRow[] }> = ({ batches }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
   return (
     <Table>
       <TableHead>
@@ -334,7 +334,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   mode,
   draft,
 }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
 
   const [inboundItem, setInboundItem] =
     React.useState<InboundShipmentItem | null>(item);

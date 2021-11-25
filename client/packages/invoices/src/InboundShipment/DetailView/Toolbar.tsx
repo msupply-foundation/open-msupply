@@ -21,7 +21,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
@@ -91,7 +91,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
           label={t('label.select')}
         >
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
-            {t('button.delete-lines', { ns: 'outbound-shipment' })}
+            {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
         </DropdownMenu>
       </Grid>

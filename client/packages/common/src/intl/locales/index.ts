@@ -2,10 +2,10 @@
 import * as app from './en/app.json';
 import * as common from './en/common.json';
 import * as dashboard from './en/dashboard.json';
-import * as outboundShipment from './en/outbound-shipment.json';
+import * as distribution from './en/distribution.json';
 
 export type LocaleKey =
   | keyof typeof app
   | keyof typeof dashboard
   | keyof typeof common
-  | keyof typeof outboundShipment;
+  | keyof typeof distribution;

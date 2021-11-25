@@ -17,7 +17,7 @@ export const Toolbar: FC<{
   filter: FilterController;
   data?: InvoiceRow[];
 }> = ({ onDelete, data, filter }) => {
-  const t = useTranslation('outbound-shipment');
+  const t = useTranslation('distribution');
 
   const { success, info } = useNotification();
 
