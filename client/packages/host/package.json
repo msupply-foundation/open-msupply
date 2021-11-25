@@ -29,11 +29,9 @@
   },
   "dependencies": {
     "@fontsource/inter": "^4.5.0",
-    "@openmsupply-client/catalogue": "^0.0.0",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/dashboard": "^0.0.0",
-    "@openmsupply-client/distribution": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
     "history": "^5.1.0",
     "react": "^17.0.2",

@@ -110,6 +110,8 @@
   "label.unit-quantity": "Unit Quantity",
   "label.unit": "Unit",
   "label.units": "Units",
+  "label.line-total": "Line total",
+  "label.num-packs": "# Packs",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",

@@ -9,7 +9,7 @@ type DomainObjectWithUpdater<T> = T &
 
 type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
-export const TextInputCell = <T extends DomainObject>({
+export const NumberInputCell = <T extends DomainObject>({
   rowData,
   column,
 }: CellPropsWithUpdaterObject<T>): React.ReactElement<
@@ -18,10 +18,12 @@ export const TextInputCell = <T extends DomainObject>({
   const [buffer, setBuffer] = React.useState(column.accessor(rowData));
 
   const noop = () => {};
-  const updater = useDebounceCallback(rowData.update ?? noop, [rowData], 500);
+  const updater = useDebounceCallback(rowData.update ?? noop, [rowData], 250);
 
   return (
     <BasicTextInput
+      InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
+      type="number"
       value={buffer}
       onChange={e => {
         const newValue = e.target.value;

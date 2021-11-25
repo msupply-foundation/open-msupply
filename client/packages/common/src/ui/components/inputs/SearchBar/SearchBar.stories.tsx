@@ -17,10 +17,12 @@ const Template: ComponentStory<typeof SearchBar> = () => {
   const [isLoading, setIsLoading] = React.useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-      alert('Response received!');
-    }, 2000);
+    if (value) {
+      setTimeout(() => {
+        setIsLoading(false);
+        alert('Response received!');
+      }, 2000);
+    }
   }, [value]);
 
   return (
