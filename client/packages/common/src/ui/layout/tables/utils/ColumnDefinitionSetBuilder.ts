@@ -32,7 +32,8 @@ export type ColumnKey =
   | 'locationDescription'
   | 'unitQuantity'
   | 'numberOfPacks'
-  | 'otherPartyName';
+  | 'otherPartyName'
+  | 'lineTotal';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
@@ -166,6 +167,13 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     label: 'label.unit',
     key: 'unit',
     width: 50,
+  },
+  lineTotal: {
+    label: 'label.line-total',
+    key: 'lineTotal',
+    width: 100,
+    align: ColumnAlign.Right,
+    format: ColumnFormat.Currency,
   },
 });
 
