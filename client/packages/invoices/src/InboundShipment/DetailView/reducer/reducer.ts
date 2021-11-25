@@ -261,7 +261,7 @@ export const reducer = (
           const { item } = payload;
 
           const itemIdx = state.draft.items.findIndex(i => i.id === item.id);
-          if (itemIdx > 0) state.draft.items[itemIdx] = item;
+          if (itemIdx >= 0) state.draft.items[itemIdx] = item;
           else state.draft.items.push(item);
 
           break;
