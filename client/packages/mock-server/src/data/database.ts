@@ -11,6 +11,7 @@ import {
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
+  InsertInboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import {
   isAlmostExpired,
@@ -164,9 +165,8 @@ export const insert = {
 
     return invoice;
   },
-  invoiceLine: (invoiceLine: InsertOutboundShipmentLineInput): InvoiceLine => {
+  inboundLine: (invoiceLine: InsertInboundShipmentLineInput): InvoiceLine => {
     const item = db.get.byId.item(invoiceLine.itemId);
-    const stockLine = db.get.byId.stockLine(invoiceLine.stockLineId);
 
     const newInvoiceLine: InvoiceLine = {
       ...invoiceLine,
@@ -174,15 +174,40 @@ export const insert = {
       itemCode: item.code,
       itemUnit: item.unitName ?? '',
       itemId: item.id,
-      expiryDate: stockLine.expiryDate,
-      stockLineId: stockLine.id,
-      costPricePerPack: stockLine.costPricePerPack,
-      sellPricePerPack: stockLine.sellPricePerPack,
-      location: stockLine.location,
-      packSize: stockLine.packSize,
+      expiryDate: invoiceLine?.expiryDate ?? null,
+      batch: '',
+      stockLineId: '',
+      packSize: invoiceLine.packSize ?? 1,
+      costPricePerPack: invoiceLine?.costPricePerPack ?? 0,
+      sellPricePerPack: invoiceLine?.sellPricePerPack ?? 0,
     };
 
     InvoiceLineData.push(newInvoiceLine);
+
+    return newInvoiceLine;
+  },
+  invoiceLine: (invoiceLine: InsertOutboundShipmentLineInput): InvoiceLine => {
+    const item = db.get.byId.item(invoiceLine.itemId);
+    const stockLine = invoiceLine?.stockLineId
+      ? db.get.byId.stockLine(invoiceLine?.stockLineId)
+      : null;
+
+    const newInvoiceLine: InvoiceLine = {
+      ...invoiceLine,
+      itemName: item.name,
+      itemCode: item.code,
+      itemUnit: item.unitName ?? '',
+      itemId: item.id,
+      expiryDate: 'stockLine?.expiryDate',
+      batch: '',
+      stockLineId: stockLine?.id ?? '',
+      packSize: stockLine?.packSize ?? 1,
+      costPricePerPack: stockLine?.costPricePerPack ?? 0,
+      sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
+    };
+
+    InvoiceLineData.push(newInvoiceLine);
+
     return newInvoiceLine;
   },
 };
