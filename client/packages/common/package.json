@@ -28,6 +28,7 @@
     "immer": "^9.0.6",
     "kbar": "0.1.0-beta.12",
     "notistack": "^2.0.3",
+    "react-currency-input-field": "^3.6.0",
     "react-hook-form": "^7.17.0",
     "react-i18next": "^11.14.2",
     "react-query": "^3.24.3",
