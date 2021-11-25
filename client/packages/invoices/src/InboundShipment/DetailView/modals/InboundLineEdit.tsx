@@ -23,6 +23,7 @@ import {
   styled,
   NumberInputCell,
   CurrencyInputCell,
+  arrayToRecord,
 } from '@openmsupply-client/common';
 import {
   InboundShipment,
@@ -109,6 +110,73 @@ enum Tabs {
   Pricing = 'Pricing',
 }
 
+const createInboundShipmentBatch = (
+  inboundItem: InboundShipmentItem,
+  seed?: InboundShipmentRow
+) => {
+  const id = generateUUID();
+  const row = {
+    id,
+    numberOfPacks: 0,
+    stockLineId: '',
+    invoiceId: '',
+    itemId: '',
+    note: '',
+    costPricePerPack: 0,
+    expiryDate: formatDate(new Date()),
+    itemCode: '',
+    itemName: '',
+    packSize: 1,
+    sellPricePerPack: 0,
+    ...seed,
+    update: (key: string, value: string) => {
+      if (key === 'batch') {
+        row.batch = value;
+      }
+      if (key === 'numberOfPacks') {
+        row.numberOfPacks = Number(value);
+      }
+      if (key === 'packSize') {
+        row.packSize = Number(value);
+      }
+      if (key === 'costPricePerPack') {
+        row.costPricePerPack = Number(value);
+      }
+      if (key === 'sellPricePerPack') {
+        row.sellPricePerPack = Number(value);
+      }
+
+      inboundItem.upsertLine?.(row);
+    },
+  };
+
+  return row;
+};
+
+const wrapInboundShipmentItem = (
+  seed: InboundShipmentItem,
+  updater: React.Dispatch<React.SetStateAction<InboundShipmentItem | null>>
+): InboundShipmentItem => {
+  const wrapped = {
+    ...seed,
+    upsertLine: (row: InboundShipmentRow) => {
+      updater(state => {
+        if (!state) return state;
+        const batches = { ...state.batches, [row.id]: row };
+        return { ...state, batches };
+      });
+    },
+  };
+
+  const batches = arrayToRecord(
+    Object.values(seed.batches).map(batch =>
+      createInboundShipmentBatch(wrapped, batch)
+    )
+  );
+
+  return { ...wrapped, batches };
+};
+
 export const InboundLineEdit: FC<InboundLineEditProps> = ({
   item,
   onChangeItem,
@@ -120,50 +188,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const [inboundItem, setInboundItem] =
     React.useState<InboundShipmentItem | null>(item);
 
+  const wrappedInbound = inboundItem
+    ? wrapInboundShipmentItem(inboundItem, setInboundItem)
+    : null;
+
   const onAddBatch = () => {
-    if (inboundItem) {
-      const id = generateUUID();
-      inboundItem.batches[id] = {
-        id,
-        numberOfPacks: 0,
-        stockLineId: '',
-        invoiceId: '',
-        itemId: '',
-        note: '',
-        costPricePerPack: 0,
-        expiryDate: formatDate(new Date()),
-        itemCode: '',
-        itemName: '',
-        packSize: 1,
-        sellPricePerPack: 0,
-        update: (key: string, value: string) => {
-          const batch = inboundItem.batches[id];
-          if (inboundItem && batch) {
-            if (key === 'batch') {
-              batch.batch = value;
-            }
-            if (key === 'numberOfPacks') {
-              batch.numberOfPacks = Number(value);
-            }
-            if (key === 'packSize') {
-              batch.packSize = Number(value);
-            }
-            if (key === 'costPricePerPack') {
-              batch.costPricePerPack = Number(value);
-            }
-            if (key === 'sellPricePerPack') {
-              batch.sellPricePerPack = Number(value);
-            }
-
-            setInboundItem({
-              ...inboundItem,
-              batches: { ...inboundItem.batches, [id]: batch },
-            });
-          }
-        },
-      };
-
-      setInboundItem({ ...inboundItem });
+    if (wrappedInbound) {
+      wrappedInbound.upsertLine?.(createInboundShipmentBatch(wrappedInbound));
     }
   };
 
@@ -199,6 +230,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
           />
         </Grid>
       </ModalRow>
+
       {item && (
         <ModalRow>
           <Grid style={{ display: 'flex', marginTop: 10 }} flex={1}>
@@ -224,7 +256,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         </ModalRow>
       )}
       <Divider margin={5} />
-      {inboundItem && (
+      {wrappedInbound && (
         <TabContext value={currentTab}>
           <TabList
             value={currentTab}
@@ -239,11 +271,11 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
 
           <TableContainer sx={{ height: 400 }}>
             <StyledTabPanel value={Tabs.Batch}>
-              <BatchTable batches={flattenInboundItems([inboundItem])} />
+              <BatchTable batches={flattenInboundItems([wrappedInbound])} />
             </StyledTabPanel>
 
             <StyledTabPanel value={Tabs.Pricing}>
-              <PricingTable batches={flattenInboundItems([inboundItem])} />
+              <PricingTable batches={flattenInboundItems([wrappedInbound])} />
             </StyledTabPanel>
           </TableContainer>
           <Fab
