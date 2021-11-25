@@ -246,6 +246,20 @@ export const reducer = (
 
           break;
         }
+
+        case ActionType.UpsertItem: {
+          const { payload } = action;
+          const { item } = payload;
+
+          const itemIdx = state.draft.items.findIndex(i => i.id === item.id);
+          state.draft.items[itemIdx] = item;
+
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          state.draft[key] = value;
+
+          break;
+        }
       }
 
       return state;
