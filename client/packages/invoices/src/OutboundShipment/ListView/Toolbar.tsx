@@ -16,7 +16,6 @@ export const Toolbar: FC<{
   onDelete: (toDelete: InvoiceRow[]) => void;
   filter: FilterController;
   data?: InvoiceRow[];
-  isLoading: boolean;
 }> = ({ onDelete, data, filter }) => {
   const t = useTranslation('distribution');
 
