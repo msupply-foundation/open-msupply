@@ -187,5 +187,6 @@ export interface InboundShipment extends Invoice {
   status: InboundShipmentStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: InboundShipmentRow) => void;
+  upsertItem?: (line: InboundShipmentItem) => void;
   deleteLine?: (line: InboundShipmentRow) => void;
 }
