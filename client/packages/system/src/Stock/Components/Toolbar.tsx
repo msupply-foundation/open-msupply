@@ -8,14 +8,9 @@ import {
 interface ToolbarProps {
   filterString: string | null;
   onChangeFilter: (filterString: string) => void;
-  isLoading: boolean;
 }
 
-export const Toolbar: FC<ToolbarProps> = ({
-  filterString,
-  onChangeFilter,
-  isLoading,
-}) => {
+export const Toolbar: FC<ToolbarProps> = ({ filterString, onChangeFilter }) => {
   const t = useTranslation(['common']);
 
   return (
@@ -28,7 +23,6 @@ export const Toolbar: FC<ToolbarProps> = ({
       }}
     >
       <SearchBar
-        isLoading={isLoading}
         placeholder={t('placeholder.enter-an-item-code-or-name')}
         value={filterString ?? ''}
         onChange={newValue => onChangeFilter(newValue)}

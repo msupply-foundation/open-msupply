@@ -84,7 +84,7 @@ export const InboundListView: FC = () => {
           const createInvoice = async () => {
             const invoice = {
               id: generateUUID(),
-              nameId: name?.id,
+              otherPartyId: name?.id,
             };
 
             try {
@@ -103,12 +103,7 @@ export const InboundListView: FC = () => {
         }}
       />
 
-      <Toolbar
-        onDelete={onDelete}
-        data={data}
-        filter={filter}
-        isLoading={isLoading}
-      />
+      <Toolbar onDelete={onDelete} data={data} filter={filter} />
       <AppBarButtons onCreate={setOpen} />
 
       <DataTable
