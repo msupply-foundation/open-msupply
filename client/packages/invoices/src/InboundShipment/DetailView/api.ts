@@ -12,6 +12,7 @@ import {
   InsertInboundShipmentLineInput,
   DeleteInboundShipmentLineInput,
   UpdateInboundShipmentInput,
+  formatNaiveDate,
 } from '@openmsupply-client/common';
 
 import {
@@ -87,21 +88,24 @@ const invoiceToInput = (
   };
 };
 
-const createInsertInboundLineInput = (
-  line: OutboundShipmentRow
-): InsertInboundShipmentLineInput => {
-  return {
-    id: line.id,
-    itemId: line.itemId,
-    batch: line.batch,
-    costPricePerPack: line.costPricePerPack,
-    expiryDate: line.expiryDate,
-    sellPricePerPack: line.sellPricePerPack,
-    packSize: line.packSize,
-    numberOfPacks: line.numberOfPacks,
-    invoiceId: line.invoiceId,
+const createInsertInboundLineInput =
+  (invoiceId: string) =>
+  (line: OutboundShipmentRow): InsertInboundShipmentLineInput => {
+    return {
+      id: line.id,
+      itemId: line.itemId,
+      batch: line.batch,
+      costPricePerPack: line.costPricePerPack,
+      expiryDate: line.expiryDate
+        ? formatNaiveDate(new Date(line.expiryDate))
+        : null,
+
+      sellPricePerPack: line.sellPricePerPack,
+      packSize: line.packSize,
+      numberOfPacks: line.numberOfPacks,
+      invoiceId,
+    };
   };
-};
 
 const createDeleteInboundLineInput = (
   line: InboundShipmentRow
@@ -120,7 +124,9 @@ const createUpdateInboundLineInput = (
     itemId: line.itemId,
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
-    expiryDate: line.expiryDate,
+    expiryDate: line.expiryDate
+      ? formatNaiveDate(new Date(line.expiryDate))
+      : null,
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
@@ -140,11 +146,14 @@ export const getInboundShipmentDetailViewApi = (
     const result = await api.invoice({ id });
 
     const invoice = invoiceGuard(result);
+
     const lineNodes = linesGuard(invoice.lines);
+
     const lines: InvoiceLine[] = lineNodes.map(line => {
       const stockLine = line.stockLine
         ? stockLineGuard(line.stockLine)
         : undefined;
+
       return {
         ...line,
         stockLine,
@@ -173,7 +182,9 @@ export const getInboundShipmentDetailViewApi = (
 
     const result = await api.upsertInboundShipment({
       updateInboundShipments: [invoiceToInput(patch)],
-      insertInboundShipmentLines: insertLines.map(createInsertInboundLineInput),
+      insertInboundShipmentLines: insertLines.map(
+        createInsertInboundLineInput(patch.id)
+      ),
       deleteInboundShipmentLines: deleteLines.map(createDeleteInboundLineInput),
       updateInboundShipmentLines: updateLines.map(createUpdateInboundLineInput),
     });
