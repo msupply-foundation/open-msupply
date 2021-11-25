@@ -9,6 +9,9 @@ interface CurrencyInputProps extends RCInputProps {
   maxWidth?: number;
 }
 
+// TODO: It would be nice if we were to just use the BasicTextInput or
+// another MUI text input rather than trying to recreate the style so that
+// it could stay in sync with style updated.
 const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
   fontFamily: theme.typography.fontFamily,
   height: 34.125,
@@ -22,6 +25,10 @@ const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
   },
 }));
 
+// TODO: I think the implementation of this could be swapped out by making a
+// headless component that uses something like currency.js in a custom hook
+// to manage the currency value. Then you could use whatever input component
+// you liked. That would just take a little more time than I have right now!
 export const CurrencyInput: FC<CurrencyInputProps> = ({
   allowNegativeValue = false,
   prefix = '$',
