@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   Divider,
   Fab,
@@ -36,7 +36,6 @@ enum Tabs {
 export const InboundLineEdit: FC<InboundLineEditProps> = ({
   item,
   onChangeItem,
-
   mode,
   draft,
 }) => {
@@ -52,6 +51,15 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
       wrappedInbound.upsertLine?.(createInboundShipmentBatch(wrappedInbound));
     }
   };
+
+  useEffect(() => {
+    if (
+      wrappedInbound?.batches &&
+      Object.values(wrappedInbound?.batches).length === 0
+    ) {
+      onAddBatch();
+    }
+  });
 
   return (
     <>
