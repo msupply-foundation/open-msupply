@@ -67,6 +67,11 @@ export const InboundAction = {
     payload: { line },
   }),
 
+  upsertItem: (item: InboundShipmentItem): OutboundShipmentAction => ({
+    type: ActionType.UpsertItem,
+    payload: { item },
+  }),
+
   deleteLine: (line: InboundShipmentRow): OutboundShipmentAction => ({
     type: ActionType.DeleteLine,
     payload: { line },
@@ -165,6 +170,10 @@ export const reducer = (
             dispatch?.(InboundAction.updateInvoice(key, value));
           };
 
+          state.draft.upsertItem = (item: InboundShipmentItem) => {
+            dispatch?.(InboundAction.upsertItem(item));
+          };
+
           state.draft.items = data.lines?.reduce((itemsArray, serverLine) => {
             const InboundShipmentRow = createLine(serverLine, state.draft);
 
@@ -243,6 +252,17 @@ export const reducer = (
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           state.draft[key] = value;
+
+          break;
+        }
+
+        case ActionType.UpsertItem: {
+          const { payload } = action;
+          const { item } = payload;
+
+          const itemIdx = state.draft.items.findIndex(i => i.id === item.id);
+          if (itemIdx >= 0) state.draft.items[itemIdx] = item;
+          else state.draft.items.push(item);
 
           break;
         }
