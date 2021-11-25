@@ -84,7 +84,7 @@ export const InboundListView: FC = () => {
           const createInvoice = async () => {
             const invoice = {
               id: generateUUID(),
-              nameId: name?.id,
+              otherPartyId: name?.id,
             };
 
             try {
