@@ -32,6 +32,15 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type BatchInboundShipmentInput = {
+  deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
+  deleteInboundShipments?: Maybe<Array<Scalars['String']>>;
+  insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput>>;
+  insertOutboundShipments?: Maybe<Array<InsertInboundShipmentInput>>;
+  updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput>>;
+  updateInboundShipments?: Maybe<Array<UpdateInboundShipmentInput>>;
+};
+
 export type BatchInboundShipmentResponse = {
   __typename?: 'BatchInboundShipmentResponse';
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineResponseWithId>>;
