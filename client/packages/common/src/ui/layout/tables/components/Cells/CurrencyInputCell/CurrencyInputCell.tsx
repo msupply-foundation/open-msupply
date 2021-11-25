@@ -4,15 +4,17 @@ import { CurrencyInput } from '../../../../../components/inputs';
 import { DomainObject } from '../../../../../../types';
 import { useDebounceCallback } from '../../../../../../hooks';
 
-type R<T> = T &
+type DomainObjectWithUpdater<T> = T &
   DomainObject & { update?: (key: string, value: string) => void };
 
-type CP<T> = CellProps<R<T>>;
+type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
 export const CurrencyInputCell = <T extends DomainObject>({
   rowData,
   column,
-}: CP<T>): React.ReactElement<CP<T>> => {
+}: CellPropsWithUpdaterObject<T>): React.ReactElement<
+  CellPropsWithUpdaterObject<T>
+> => {
   const [buffer, setBuffer] = React.useState(Number(column.accessor(rowData)));
 
   const noop = () => {};
