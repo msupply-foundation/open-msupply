@@ -23,7 +23,7 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
-import { InboundLineEdit } from './modals/InboundLineEdit';
+import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 
 import { isInboundEditable } from '../../utils';
 import { InboundShipmentItem } from '../../types';
@@ -157,7 +157,6 @@ export const DetailView: FC = () => {
           draft={draft}
           mode={modalState.mode}
           item={modalState.item}
-          onUpsert={() => {}}
           onChangeItem={onChangeItem}
         />
       </Modal>
