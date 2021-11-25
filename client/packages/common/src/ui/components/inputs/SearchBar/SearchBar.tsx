@@ -8,7 +8,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 const Spin: FC<{ isLoading: boolean }> = ({ isLoading }) =>
@@ -18,7 +18,7 @@ export const SearchBar: FC<SearchBarProps> = ({
   value,
   onChange,
   placeholder,
-  isLoading,
+  isLoading = false,
 }) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
