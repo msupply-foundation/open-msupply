@@ -17,7 +17,7 @@ export const Toolbar: FC<{
   filter: FilterController;
   data?: InvoiceRow[];
   isLoading: boolean;
-}> = ({ onDelete, data, filter, isLoading }) => {
+}> = ({ onDelete, data, filter }) => {
   const t = useTranslation('distribution');
 
   const { success, info } = useNotification();
@@ -57,7 +57,6 @@ export const Toolbar: FC<{
       }}
     >
       <SearchBar
-        isLoading={isLoading}
         placeholder="Search by comment..."
         value={filterString}
         onChange={newValue => {
