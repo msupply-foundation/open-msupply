@@ -6,6 +6,20 @@ mSupply remote server is a component of the Open mSupply system:
 - Synchronises with central servers which implement `v5` of the mSupply sync API.
 - Exposes a dynamic plugin system for customising and extending functionality.
 
+## SSL/https
+
+- To enable ssl place the `key.pem` and `cert.pem` files into the `certs` directory.
+- Update the server.host variable in the configuration if needed
+
+### Use a self signed cert, e.g. for testing
+
+```bash
+# Ensure certs directory exits
+mkdir -p certs
+# Testing cert for CN=localhost
+openssl req -x509 -newkey rsa:4096 -nodes -keyout certs/key.pem -out certs/cert.pem -days 365 -subj '/CN=localhost'
+```
+
 ## Dependencies
 
 ### Windows
@@ -39,9 +53,10 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
 - Follow the [Docker Desktop installation guide](https://docs.docker.com/docker-for-mac/install/) for Mac.
 
-#### M1 Arm 
+#### M1 Arm
 
 `brew install libpq` and add the following to `~/.cargo/config.toml`
+
 ```
 [env]
 MACOSX_DEPLOYMENT_TARGET = "10.7"
