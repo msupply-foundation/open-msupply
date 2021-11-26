@@ -76,6 +76,12 @@ export const InboundAction = {
     type: ActionType.DeleteLine,
     payload: { line },
   }),
+
+  deleteItem: (item: InboundShipmentItem): OutboundShipmentAction => ({
+    type: ActionType.DeleteItem,
+    payload: { item },
+  }),
+
   updateInvoice: <K extends keyof Invoice>(
     key: K,
     value: Invoice[K]
@@ -174,6 +180,10 @@ export const reducer = (
             dispatch?.(InboundAction.upsertItem(item));
           };
 
+          state.draft.deleteItem = (item: InboundShipmentItem) => {
+            dispatch?.(InboundAction.deleteItem(item));
+          };
+
           state.draft.items = data.lines?.reduce((itemsArray, serverLine) => {
             const InboundShipmentRow = createLine(serverLine, state.draft);
 
@@ -263,6 +273,41 @@ export const reducer = (
           const itemIdx = state.draft.items.findIndex(i => i.id === item.id);
           if (itemIdx >= 0) state.draft.items[itemIdx] = item;
           else state.draft.items.push(item);
+
+          break;
+        }
+
+        case ActionType.DeleteItem: {
+          const { draft } = state;
+          const { items } = draft;
+          const { payload } = action;
+
+          const { item } = payload;
+
+          const itemIdx = items.findIndex(i => i.id === item.id);
+          if (itemIdx >= 0) {
+            const shipmentItem = items[itemIdx];
+            if (shipmentItem) {
+              // For each of the batches in the shipment item, if the item isCreated, meaning it is not-persisted,
+              // then delete it from the draft. Otherwise, mark it for deletion.
+              Object.values(shipmentItem.batches).forEach(batch => {
+                if (batch.isCreated) {
+                  delete shipmentItem.batches[batch.id];
+                } else {
+                  batch.isDeleted = true;
+                  batch.isCreated = false;
+                }
+              });
+
+              // If the shipment item has had all batches deleted, then delete the shipment item from the draft completely.
+              // otherwise, we just mark it for deletion.
+              if (Object.keys(shipmentItem.batches).length === 0) {
+                items.splice(itemIdx, 1);
+              } else {
+                shipmentItem.isDeleted = true;
+              }
+            }
+          }
 
           break;
         }
