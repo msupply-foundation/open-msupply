@@ -1,8 +1,4 @@
-import {
-  generateUUID,
-  formatDate,
-  arrayToRecord,
-} from '@openmsupply-client/common';
+import { generateUUID, arrayToRecord } from '@openmsupply-client/common';
 import { InboundShipmentItem, InboundShipmentRow } from '../../../../types';
 import { recalculateSummary } from '../../../../OutboundShipment/DetailView/reducer';
 import { Item } from '@openmsupply-client/mock-server/src/data';
@@ -20,7 +16,7 @@ export const createInboundShipmentBatch = (
     itemId: inboundItem.itemId,
     note: '',
     costPricePerPack: 0,
-    expiryDate: formatDate(new Date()),
+    expiryDate: undefined,
     itemCode: inboundItem.itemCode,
     itemName: inboundItem.itemName,
     packSize: 1,
