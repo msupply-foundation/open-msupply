@@ -17,14 +17,17 @@ export const createInboundShipmentBatch = (
     numberOfPacks: 0,
     stockLineId: '',
     invoiceId: '',
-    itemId: '',
+    itemId: inboundItem.itemId,
     note: '',
     costPricePerPack: 0,
     expiryDate: formatDate(new Date()),
-    itemCode: '',
-    itemName: '',
+    itemCode: inboundItem.itemCode,
+    itemName: inboundItem.itemName,
     packSize: 1,
     sellPricePerPack: 0,
+    isCreated: !seed,
+    isUpdated: false,
+    isDeleted: false,
     ...seed,
     update: (key: string, value: string) => {
       if (key === 'batch') {
@@ -42,6 +45,8 @@ export const createInboundShipmentBatch = (
       if (key === 'sellPricePerPack') {
         row.sellPricePerPack = Number(value);
       }
+
+      row.isUpdated = true;
 
       inboundItem.upsertLine?.(row);
     },

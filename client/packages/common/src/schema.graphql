@@ -1082,6 +1082,15 @@ input BatchOutboundShipmentInput {
   deleteOutboundShipments: [String!]
 }
 
+input BatchInboundShipmentInput {
+  insertOutboundShipments: [InsertInboundShipmentInput!]
+  insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
+  updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
+  deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
+  updateInboundShipments: [UpdateInboundShipmentInput!]
+  deleteInboundShipments: [String!]
+}
+
 type CountError {
   description: String!
 }

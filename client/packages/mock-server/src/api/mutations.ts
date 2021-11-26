@@ -1,3 +1,4 @@
+import { InsertInboundShipmentLineInput } from './../../../common/src/types/schema';
 import {
   InvoiceNodeType,
   InsertOutboundShipmentLineInput,
@@ -44,9 +45,20 @@ export const insert = {
 
     return { ...createdInvoice, __typename: 'InvoiceNode' };
   },
-  invoiceLine: (
-    invoiceLine: InsertOutboundShipmentLineInput
-  ): InsertOutboundShipmentLineInput => {
+
+  inboundInvoiceLine: (inboundLine: InsertInboundShipmentLineInput) => {
+    const existing = db.get.byId.invoiceLine(inboundLine.id);
+
+    if (existing.id) {
+      throw new Error(
+        `InvoiceLine with the ID ${inboundLine.id} already exists!`
+      );
+    }
+
+    return db.insert.inboundLine(inboundLine);
+  },
+
+  invoiceLine: (invoiceLine: InsertOutboundShipmentLineInput): InvoiceLine => {
     const invoice = db.get.byId.invoice(invoiceLine.invoiceId);
     const existing = db.get.byId.invoiceLine(invoiceLine.id);
 
@@ -123,31 +135,33 @@ export const update = {
 
     const difference = numberOfPacks - (invoiceLine?.numberOfPacks ?? 0);
 
-    if (
-      invoice.type === InvoiceNodeType.InboundShipment &&
-      invoice.status !== InvoiceNodeStatus.Draft
-    ) {
-      adjustStockLineAvailableNumberOfPacks(
-        currentInvoiceLine.stockLineId,
-        -difference
-      );
-      adjustStockLineTotalNumberOfPacks(
-        currentInvoiceLine.stockLineId,
-        -difference
-      );
-    }
-
-    if (invoice.type === InvoiceNodeType.OutboundShipment) {
-      adjustStockLineAvailableNumberOfPacks(
-        currentInvoiceLine.stockLineId,
-        difference
-      );
-
-      if (invoice.status === InvoiceNodeStatus.Confirmed) {
+    if (currentInvoiceLine.stockLineId) {
+      if (
+        invoice.type === InvoiceNodeType.InboundShipment &&
+        invoice.status !== InvoiceNodeStatus.Draft
+      ) {
+        adjustStockLineAvailableNumberOfPacks(
+          currentInvoiceLine.stockLineId,
+          -difference
+        );
         adjustStockLineTotalNumberOfPacks(
+          currentInvoiceLine.stockLineId,
+          -difference
+        );
+      }
+
+      if (invoice.type === InvoiceNodeType.OutboundShipment) {
+        adjustStockLineAvailableNumberOfPacks(
           currentInvoiceLine.stockLineId,
           difference
         );
+
+        if (invoice.status === InvoiceNodeStatus.Confirmed) {
+          adjustStockLineTotalNumberOfPacks(
+            currentInvoiceLine.stockLineId,
+            difference
+          );
+        }
       }
     }
 
@@ -179,31 +193,33 @@ export const remove = {
     const invoice = db.get.byId.invoice(invoiceLine.invoiceId);
     const { numberOfPacks } = invoiceLine;
 
-    if (
-      invoice.type === InvoiceNodeType.InboundShipment &&
-      invoice.status !== InvoiceNodeStatus.Draft
-    ) {
-      adjustStockLineAvailableNumberOfPacks(
-        invoiceLine.stockLineId,
-        -numberOfPacks
-      );
-      adjustStockLineTotalNumberOfPacks(
-        invoiceLine.stockLineId,
-        -numberOfPacks
-      );
-    }
-
-    if (invoice.type === InvoiceNodeType.OutboundShipment) {
-      adjustStockLineAvailableNumberOfPacks(
-        invoiceLine.stockLineId,
-        numberOfPacks
-      );
-
-      if (invoice.status === InvoiceNodeStatus.Confirmed) {
+    if (invoiceLine.stockLineId) {
+      if (
+        invoice.type === InvoiceNodeType.InboundShipment &&
+        invoice.status !== InvoiceNodeStatus.Draft
+      ) {
+        adjustStockLineAvailableNumberOfPacks(
+          invoiceLine.stockLineId,
+          -numberOfPacks
+        );
         adjustStockLineTotalNumberOfPacks(
+          invoiceLine.stockLineId,
+          -numberOfPacks
+        );
+      }
+
+      if (invoice.type === InvoiceNodeType.OutboundShipment) {
+        adjustStockLineAvailableNumberOfPacks(
           invoiceLine.stockLineId,
           numberOfPacks
         );
+
+        if (invoice.status === InvoiceNodeStatus.Confirmed) {
+          adjustStockLineTotalNumberOfPacks(
+            invoiceLine.stockLineId,
+            numberOfPacks
+          );
+        }
       }
     }
 
