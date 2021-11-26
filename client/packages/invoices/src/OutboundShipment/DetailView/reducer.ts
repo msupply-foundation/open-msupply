@@ -124,11 +124,7 @@ export const createSummaryItem = (
     batches: arrayToRecord(batches),
     unitQuantity: batches.reduce(getUnitQuantity, 0),
     numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
-    // locationDescription: ifTheSameElseDefault(
-    //   batches,
-    //   'locationDescription',
-    //   undefined
-    // ),
+    locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
 
     batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
     // TODO: Likely should just be a string.

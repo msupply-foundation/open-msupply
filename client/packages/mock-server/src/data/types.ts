@@ -3,6 +3,7 @@ import {
   InvoiceNode,
   ItemNode,
   StockLineNode,
+  LocationNode,
 } from '@openmsupply-client/common/src/types/schema';
 
 export interface ListResponse<T> {
@@ -19,6 +20,8 @@ export interface Store {
 
 export type Item = Omit<ItemNode, 'availableBatches' | 'availableQuantity'>;
 
+export type Location = LocationNode;
+
 export interface ResolvedItem extends Item {
   __typename: 'ItemNode';
   availableBatches: { nodes: StockLine[] };
@@ -34,12 +37,8 @@ export interface Name {
   isSupplier: boolean;
 }
 
-export interface StockLine extends StockLineNode {
-  location: {
-    id: string;
-    code: string;
-    description: string;
-  };
+export interface StockLine extends Omit<StockLineNode, 'location'> {
+  location: Location;
 }
 
 export interface ResolvedStockLine extends StockLine {
@@ -47,14 +46,10 @@ export interface ResolvedStockLine extends StockLine {
   item: Item;
 }
 
-export interface InvoiceLine extends InvoiceLineNode {
+export interface InvoiceLine extends Omit<InvoiceLineNode, 'location'> {
   id: string;
   itemName: string;
-  location?: {
-    id: string;
-    code: string;
-    description: string;
-  };
+  location?: Location;
   itemCode: string;
   itemUnit: string;
   batch?: string;
