@@ -1,46 +1,32 @@
-use log::error;
-use repository::{StorageConnection, StorageConnectionManager};
+use std::collections::HashMap;
+
+use repository::StorageConnection;
 
 use crate::{
     auth_data::AuthData,
-    permissions::{ApiRole, PermissionService, UserPermissions},
+    permissions::{ApiRole, PermissionService, StoreRole, UserPermissions},
     token::{JWTValidationError, OmSupplyClaim, TokenService},
 };
 
-pub struct ValidationUserData {
-    pub user_id: String,
-    pub permissions: UserPermissions,
+#[derive(Debug)]
+pub enum PermissionDSL {
+    HasApiRole(ApiRole),
+    HasStoreAccess(StoreRole),
+    And(Vec<PermissionDSL>),
+    Any(Vec<PermissionDSL>),
 }
 
-/// Returns the permission name and an error if validation failed
-pub type PermissionChecker = Box<dyn FnOnce(&ValidationUserData) -> (String, Option<String>)>;
-
-pub fn any(checkers: Vec<PermissionChecker>) -> PermissionChecker {
-    let checker: PermissionChecker = Box::new(|data: &ValidationUserData| {
-        let mut checked_msg = "any of:".to_string();
-        for c in checkers {
-            let (name, error) = c(data);
-            if let None = error {
-                return (name, None);
-            }
-            checked_msg.push_str(&name);
-        }
-        (checked_msg.to_owned(), Some(format!("Not {}", checked_msg)))
-    });
-    checker
+/// Resources for permission checks
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum Resource {
+    RouteMe,
 }
 
-pub fn has_api_role(role: ApiRole) -> PermissionChecker {
-    Box::new(move |data: &ValidationUserData| {
-        let name = "api role".to_string();
-        if let Some(_) = data.permissions.api.iter().find(|r| r == &&ApiRole::Admin) {
-            return (name, None);
-        }
-        if let Some(_) = data.permissions.api.iter().find(|r| r == &&role) {
-            return (name, None);
-        }
-        (name, Some("Missing api role".to_string()))
-    })
+/// TODO use lasy_static! ?
+fn all_permissions() -> HashMap<Resource, PermissionDSL> {
+    let mut map = HashMap::new();
+    map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+    map
 }
 
 #[derive(Debug)]
@@ -128,51 +114,118 @@ pub struct ValidatedUser {
     pub user_id: String,
     pub claims: OmSupplyClaim,
     pub permissions: UserPermissions,
-    /// For convenience the connection that is used to validate the user is passed on for further
-    /// use.
-    pub connection: StorageConnection,
 }
 
-/// Validates user is authenticated and authorized
-pub fn validate(
-    connection_manager: &StorageConnectionManager,
-    auth_data: &AuthData,
-    auth_token: &Option<String>,
-    checkers: Vec<PermissionChecker>,
-) -> Result<ValidatedUser, ValidationError> {
-    let validated_auth = validate_auth(auth_data, auth_token)?;
+/// Information about the resource a user wants to access
+pub struct ResourceAccessRequest {
+    pub resource: Resource,
+    /// The store id if specified
+    pub store_id: Option<String>,
+}
 
-    // TODO not used yet here but will be needed later for the PermissionService
-    let connection = match connection_manager.connection() {
-        Ok(con) => con,
-        Err(err) => {
-            error!("validate: Failed to get connection: {}", err);
-            return Err(ValidationError::InternalError(
-                "Failed to connect to database".to_string(),
-            ));
+fn validate_resource_permissions(
+    user_id: &str,
+    user_permissions: &UserPermissions,
+    resource_request: &ResourceAccessRequest,
+    resource_permission: &PermissionDSL,
+) -> Result<(), String> {
+    Ok(match resource_permission {
+        PermissionDSL::HasApiRole(role) => {
+            if !user_permissions.api.contains(role) {
+                return Err(format!("Missing api role: {:?}", role));
+            }
         }
-    };
-    let permission_service = PermissionService::new();
-    let permissions = permission_service.permissions(&validated_auth.user_id);
-    let validation_data = ValidationUserData {
-        user_id: validated_auth.user_id,
-        permissions,
-    };
-    for c in checkers {
-        let (_, error) = c(&validation_data);
-        if let Some(msg) = error {
-            return Err(ValidationError::Denied(
-                ValidationDeniedKind::InsufficientPermission((msg, validation_data.permissions)),
-            ));
+        PermissionDSL::HasStoreAccess(store_role) => {
+            let store_id = match &resource_request.store_id {
+                Some(id) => id,
+                None => return Err("Store id not specified in request".to_string()),
+            };
+            let store_roles = match user_permissions.stores.get(store_id) {
+                Some(roles) => roles,
+                None => return Err(format!("Missing store role: {:?}", store_role)),
+            };
+            if !store_roles.contains(store_role) {
+                return Err(format!("Missing store role: {:?}", store_role));
+            }
+        }
+        PermissionDSL::And(children) => {
+            for child in children {
+                if let Err(err) = validate_resource_permissions(
+                    user_id,
+                    user_permissions,
+                    resource_request,
+                    child,
+                ) {
+                    return Err(err);
+                }
+            }
+        }
+        PermissionDSL::Any(children) => {
+            for child in children {
+                if let Ok(_) = validate_resource_permissions(
+                    user_id,
+                    user_permissions,
+                    resource_request,
+                    child,
+                ) {
+                    ()
+                }
+            }
+            return Err(format!("No permissions for any of: {:?}", children));
+        }
+    })
+}
+
+pub struct ValidationService<'a> {
+    _connection: &'a StorageConnection,
+    pub permissions: HashMap<Resource, PermissionDSL>,
+}
+
+impl<'a> ValidationService<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        ValidationService {
+            _connection: connection,
+            permissions: all_permissions(),
         }
     }
 
-    Ok(ValidatedUser {
-        user_id: validation_data.user_id,
-        claims: validated_auth.claims,
-        permissions: validation_data.permissions,
-        connection,
-    })
+    pub fn validate(
+        &self,
+        auth_data: &AuthData,
+        auth_token: &Option<String>,
+        resource_request: &ResourceAccessRequest,
+    ) -> Result<ValidatedUser, ValidationError> {
+        let validated_auth = validate_auth(auth_data, auth_token)?;
+        let permission_service = PermissionService::new();
+        let permissions = permission_service.permissions(&validated_auth.user_id);
+
+        let resource_permissions = self.permissions.get(&resource_request.resource).ok_or(
+            ValidationError::InternalError(format!(
+                "Internal error: Resource {:?} has no permissions set!",
+                resource_request.resource
+            )),
+        )?;
+
+        match validate_resource_permissions(
+            &validated_auth.user_id,
+            &permissions,
+            &resource_request,
+            resource_permissions,
+        ) {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(ValidationError::Denied(
+                    ValidationDeniedKind::InsufficientPermission((err, permissions)),
+                ));
+            }
+        };
+
+        Ok(ValidatedUser {
+            user_id: validated_auth.user_id,
+            claims: validated_auth.claims,
+            permissions,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -202,23 +255,35 @@ mod permission_validation_test {
             test_db::get_test_db_settings("omsupply-database-basic_permission_validation");
         test_db::setup(&settings).await;
         let connection_manager = get_storage_connection_manager(&settings);
-
+        let con = connection_manager.connection().unwrap();
+        let mut service = ValidationService::new(&con);
+        service.permissions.clear();
+        service
+            .permissions
+            .insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::Admin));
+        let resource_access_request = ResourceAccessRequest {
+            resource: Resource::RouteMe,
+            store_id: None,
+        };
         // validate user doesn't has Admin access
-        assert!(validate(
-            &connection_manager,
-            &auth_data,
-            &Some(token_pair.token.to_owned()),
-            vec![has_api_role(ApiRole::Admin)],
-        )
-        .is_err());
+        assert!(service
+            .validate(
+                &auth_data,
+                &Some(token_pair.token.to_owned()),
+                &resource_access_request
+            )
+            .is_err());
 
         // validate user has User access
-        validate(
-            &connection_manager,
-            &auth_data,
-            &Some(token_pair.token.to_owned()),
-            vec![has_api_role(ApiRole::User)],
-        )
-        .unwrap();
+        service
+            .permissions
+            .insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+        service
+            .validate(
+                &auth_data,
+                &Some(token_pair.token.to_owned()),
+                &resource_access_request,
+            )
+            .unwrap();
     }
 }
