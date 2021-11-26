@@ -38,6 +38,7 @@ table! {
         name -> Text,
         code -> Text,
         unit_id -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> crate::schema::item::ItemTypeMapping,
     }
 }
 
