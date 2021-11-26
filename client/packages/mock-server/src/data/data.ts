@@ -104,8 +104,10 @@ export const adjustStockLineAvailableNumberOfPacks = (
 
 const locations = Array.from({ length: 50 }).map(() => ({
   id: faker.datatype.uuid(),
-  description: `${alphaString(1)}${faker.datatype.number(9)}`,
+  name: `${alphaString(1)}${faker.datatype.number(9)}`,
   code: `${alphaString(3)}${faker.datatype.number({ min: 100, max: 999 })}`,
+  onHold: false,
+  stock: { nodes: [], totalCount: 0 },
 }));
 
 export const getStockLinesForItem = (
@@ -396,7 +398,7 @@ const createStockLines = (items: Item[]) => {
             packSize: takeRandomElementFrom(packSizes),
             expiryDate: faker.date.future(1.5).toISOString(),
             batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
-            locationDescription: `${alphaString(1)}${faker.datatype.number(9)}`,
+            locationName: `${alphaString(1)}${faker.datatype.number(9)}`,
             location: takeRandomElementFrom(locations),
 
             availableNumberOfPacks: 0,
@@ -454,7 +456,7 @@ const createInvoicesLines = (
           itemUnit: item.unitName ?? '',
 
           stockLineId: stockLine.id,
-          // locationDescription: stockLine.locationDescription,
+          locationName: stockLine.locationName,
           location: stockLine.location,
 
           batch: stockLine.batch ?? '',
@@ -507,7 +509,7 @@ const createInvoicesLines = (
           itemUnit: item.unitName ?? '',
 
           stockLineId: stockLine.id,
-          // locationDescription: stockLine.locationDescription,
+          locationName: stockLine.locationName,
           location: stockLine.location,
 
           batch: stockLine.batch ?? '',
