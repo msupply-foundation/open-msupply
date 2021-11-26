@@ -646,6 +646,10 @@ type Mutations {
     updateOutboundShipments: [UpdateOutboundShipmentInput!]
     deleteOutboundShipments: [String!]
   ): BatchOutboundShipmentResponse!
+
+  updateRequisition(input: UpdateRequisitionInput!): UpdateRequisitionResponse!
+  insertRequisition(input: InsertRequisitionInput!): InsertRequisitionResponse!
+  deleteRequisition(input: DeleteRequisitionInput!): DeleteRequisitionResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -840,6 +844,13 @@ type Queries {
   ## Additions
   invoiceCounts(type: InvoiceNodeType!): InvoiceCountsResponse!
   stockCounts: StockCountsResponse!
+
+  requisition(
+    # id of the invoice
+    id: String!
+  ): RequisitionResponse!
+
+  requisitions: RequisitionsResponse!
 }
 
 type RangeError implements UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
@@ -1147,3 +1158,54 @@ type UpdateOutboundShipmentResponseWithId {
   id: String!
   response: UpdateOutboundShipmentResponse!
 }
+
+type RequisitionNode {
+  id: String!
+  orderDate: String
+  storeId: String
+  nameId: String
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+  requisitionNumber: Int
+}
+
+union RequisitionResponse = RequisitionNode | NodeError
+
+enum RequisitionNodeType {
+  CUSTOMER_REQUISITION
+  SUPPLIER_REQUISITION
+}
+
+union RequisitionsResponse = ConnectorError | RequisitionConnector
+
+type RequisitionConnector {
+  totalCount: Int!
+  nodes: [RequisitionNode]!
+}
+
+input UpdateRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input InsertRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input DeleteRequisitionInput {
+  id: String!
+}
+
+union UpdateRequisitionResponse = NodeError | RequisitionNode
+union InsertRequisitionResponse = NodeError | RequisitionNode
+union DeleteRequisitionResponse = NodeError | DeleteResponse
