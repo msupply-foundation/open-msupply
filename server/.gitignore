@@ -12,3 +12,7 @@
 
 # test databases
 *.sqlite
+
+# directories used by the server at runtime
+plugins
+certs

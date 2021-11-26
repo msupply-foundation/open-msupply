@@ -1,5 +1,6 @@
 #![allow(where_clauses_object_safety)]
 
+use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 use server::{
     actor_registry::ActorRegistry,
     configuration,
@@ -12,6 +13,7 @@ use graphql::{
     config as graphql_config,
     loader::{get_loaders, LoaderMap, LoaderRegistry},
 };
+use log::{error, warn};
 use repository::get_storage_connection_manager;
 use service::{
     auth_data::AuthData,
@@ -27,6 +29,13 @@ use std::{
     sync::{Arc, Mutex, RwLock},
     time::Duration,
 };
+
+fn load_certs() -> Result<SslAcceptorBuilder, anyhow::Error> {
+    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    builder.set_private_key_file("certs/key.pem", SslFiletype::PEM)?;
+    builder.set_certificate_chain_file("certs/cert.pem")?;
+    Ok(builder)
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -59,10 +68,7 @@ async fn main() -> std::io::Result<()> {
     let service_registry_data = Data::new(ServiceRegistry { services });
     let actor_registry_data = Data::new(actor_registry);
 
-    let listener =
-        TcpListener::bind(settings.server.address()).expect("Failed to bind server to address");
-
-    let http_server = HttpServer::new(move || {
+    let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(connection_manager_data_app.clone())
             .app_data(actor_registry_data.clone())
@@ -75,9 +81,24 @@ async fn main() -> std::io::Result<()> {
                 service_registry_data.clone(),
                 auth_data.clone(),
             ))
-    })
-    .listen(listener)?
-    .run();
+    });
+    match load_certs() {
+        Ok(ssl_builder) => {
+            http_server = http_server.bind_openssl(
+                format!("{}:{}", settings.server.host, settings.server.port),
+                ssl_builder,
+            )?;
+        }
+        Err(err) => {
+            error!("Failed to load certificates: {}", err);
+            warn!("Run in HTTP mode");
+
+            let listener = TcpListener::bind(settings.server.address())
+                .expect("Failed to bind server to address");
+            http_server = http_server.listen(listener)?;
+        }
+    }
+    let running_sever = http_server.run();
 
     let connection = SyncConnection::new(&settings.sync);
     let mut synchroniser = Synchroniser { connection };
@@ -85,7 +106,7 @@ async fn main() -> std::io::Result<()> {
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
     tokio::select! {
-        result = http_server => result,
+        result = running_sever => result,
         () = async {
           sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
         } => unreachable!("Sync receiver unexpectedly died!?"),
