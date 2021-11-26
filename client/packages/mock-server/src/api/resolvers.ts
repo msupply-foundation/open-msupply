@@ -267,7 +267,9 @@ export const ResolverService = {
       return {
         __typename: 'InvoiceLineNode',
         ...invoiceLine,
-        stockLine: ResolverService.byId.stockLine(invoiceLine.stockLineId),
+        stockLine: invoiceLine.stockLineId
+          ? ResolverService.byId.stockLine(invoiceLine.stockLineId)
+          : undefined,
         item: ResolverService.byId.item(invoiceLine.itemId),
       };
     },
