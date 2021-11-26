@@ -1,3 +1,4 @@
+import { RequisitionNode } from './../../../common/src/types/schema';
 import {
   InvoiceLineNode,
   InvoiceNode,
@@ -113,3 +114,5 @@ export interface ResolvedInvoiceCounts extends InvoiceCounts {
 export interface ResolvedStockCounts extends StockCounts {
   __typename: string;
 }
+
+export type Requisition = RequisitionNode;

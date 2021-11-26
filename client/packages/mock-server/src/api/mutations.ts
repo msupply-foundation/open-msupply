@@ -1,5 +1,8 @@
-import { InsertInboundShipmentLineInput } from './../../../common/src/types/schema';
 import {
+  InsertInboundShipmentLineInput,
+  UpdateRequisitionInput,
+  InsertRequisitionInput,
+  DeleteRequisitionInput,
   InvoiceNodeType,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
@@ -15,9 +18,21 @@ import {
   adjustStockLineTotalNumberOfPacks,
 } from './../data/data';
 import { Api } from './index';
-import { ResolvedInvoice } from './../data/types';
+import { ResolvedInvoice, Requisition } from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
+
+export const requisition = {
+  update: (input: UpdateRequisitionInput): Requisition => {
+    return db.requisition.update(input);
+  },
+  insert: (input: InsertRequisitionInput): Requisition => {
+    return db.requisition.insert(input);
+  },
+  delete: (input: DeleteRequisitionInput): Requisition => {
+    return db.requisition.delete(input);
+  },
+};
 
 export const insert = {
   invoice: (invoice: Invoice): Invoice & { __typename: string } => {
@@ -228,6 +243,7 @@ export const remove = {
 };
 
 export const MutationService = {
+  requisition,
   update,
   remove,
   insert,

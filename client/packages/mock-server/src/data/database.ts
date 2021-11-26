@@ -1,4 +1,20 @@
-import { Item, StockLine, Invoice, InvoiceLine, Name } from './types';
+import {
+  InsertRequisitionInput,
+  UpdateRequisitionInput,
+  UpdateOutboundShipmentInput,
+  InsertOutboundShipmentLineInput,
+  UpdateOutboundShipmentLineInput,
+  InsertInboundShipmentLineInput,
+  DeleteRequisitionInput,
+} from './../../../common/src/types/schema';
+import {
+  Item,
+  StockLine,
+  Invoice,
+  InvoiceLine,
+  Name,
+  Requisition,
+} from './types';
 import {
   InvoiceData,
   InvoiceLineData,
@@ -6,13 +22,9 @@ import {
   StockLineData,
   NameData,
   removeElement,
+  RequisitionData,
 } from './data';
-import {
-  UpdateOutboundShipmentInput,
-  InsertOutboundShipmentLineInput,
-  UpdateOutboundShipmentLineInput,
-  InsertInboundShipmentLineInput,
-} from '@openmsupply-client/common';
+
 import {
   isAlmostExpired,
   isExpired,
@@ -32,6 +44,45 @@ export const invoice = {
       ({
         ...InvoiceData.find(getFilter(invoiceNumber, 'invoiceNumber')),
       } as Invoice),
+  },
+};
+
+export const requisition = {
+  get: {
+    byId: (id: string): Requisition => {
+      const req = RequisitionData.find(getFilter(id, 'id'));
+      if (!req) throw new Error(`Could not find requisition with id: ${id}`);
+      return {
+        ...req,
+      };
+    },
+    list: (): Requisition[] => {
+      return [...RequisitionData];
+    },
+  },
+  insert: (input: InsertRequisitionInput): Requisition => {
+    RequisitionData.push({ ...input });
+    return input;
+  },
+  update: (input: UpdateRequisitionInput): Requisition => {
+    const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+
+    RequisitionData[index] = { ...RequisitionData[index], ...input };
+    const req = RequisitionData[index];
+    if (!req) {
+      throw new Error(`Could not find requisition with id: ${input.id}`);
+    }
+
+    return req;
+  },
+  delete: (input: DeleteRequisitionInput): Requisition => {
+    const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+    if (!(index >= 0))
+      throw new Error(
+        `Could not find requisition to delete with id: ${input.id}`
+      );
+    removeElement(RequisitionData, index);
+    return input;
   },
 };
 
@@ -241,6 +292,7 @@ export const remove = {
 
 export const db = {
   invoice,
+  requisition,
   get,
   update,
   insert,

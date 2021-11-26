@@ -1,4 +1,9 @@
 import {
+  UpdateRequisitionInput,
+  InsertRequisitionInput,
+  DeleteRequisitionInput,
+} from './../../../common/src/types/schema';
+import {
   ResolvedItem,
   ResolvedInvoice,
   ResolvedStockLine,
@@ -7,6 +12,7 @@ import {
   ListResponse,
   ResolvedInvoiceCounts,
   ResolvedStockCounts,
+  Requisition,
 } from './../data/types';
 
 import { db } from '../data/database';
@@ -95,6 +101,29 @@ const createListResponse = <T>(
 });
 
 export const ResolverService = {
+  requisition: {
+    get: {
+      byId: (id: string) => db.requisition.get.byId(id),
+      list: () => {
+        const requisitions = db.requisition.get.list();
+        return createListResponse(
+          requisitions.length,
+          requisitions,
+          'RequisitionConnector'
+        );
+      },
+    },
+    update: (input: UpdateRequisitionInput): Requisition => {
+      return db.requisition.update(input);
+    },
+    insert: (input: InsertRequisitionInput): Requisition => {
+      return db.requisition.insert(input);
+    },
+    delete: (input: DeleteRequisitionInput): Requisition => {
+      return db.requisition.delete(input);
+    },
+  },
+
   invoice: {
     get: {
       byInvoiceNumber: (invoiceNumber: number): ResolvedInvoice => {
