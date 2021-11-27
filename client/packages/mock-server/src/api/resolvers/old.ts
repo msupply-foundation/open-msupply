@@ -1,9 +1,5 @@
+import { StockLineConnector } from './../../../../common/src/types/schema';
 import {
-  ItemsResponse,
-  StockLineConnector,
-} from './../../../common/src/types/schema';
-import {
-  ResolvedItem,
   ResolvedInvoice,
   ResolvedStockLine,
   ResolvedInvoiceLine,
@@ -13,22 +9,21 @@ import {
   ResolvedStockCounts,
   ResolvedRequisition,
   ResolvedRequisitionLine,
-  ItemListParameters,
-} from './../data/types';
+} from './../../data/types';
 
-import { db } from '../data/database';
+import { db } from '../../data/database';
 import {
   InvoiceSortFieldInput,
   InvoicesQueryVariables,
   NamesQueryVariables,
-  ItemSortFieldInput,
   NameSortFieldInput,
   InvoiceNodeType,
   RequisitionListParameters,
 } from '@openmsupply-client/common/src/types/schema';
 import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
+import { item } from './item';
 
-const getAvailableQuantity = (itemId: string): number => {
+export const getAvailableQuantity = (itemId: string): number => {
   const stockLines = db.get.stockLines.byItemId(itemId);
   const availableQuantity = stockLines.reduce(
     (sum, { availableNumberOfPacks, packSize }) => {
@@ -67,18 +62,6 @@ const getInvoiceSortKey = (key: string) => {
   }
 };
 
-const getItemsSortKey = (key: string) => {
-  switch (key) {
-    case ItemSortFieldInput.Code: {
-      return 'code';
-    }
-    case ItemSortFieldInput.Name:
-    default: {
-      return 'name';
-    }
-  }
-};
-
 const getNamesSortKey = (key: string) => {
   switch (key) {
     case NameSortFieldInput.Code: {
@@ -90,16 +73,6 @@ const getNamesSortKey = (key: string) => {
     }
   }
 };
-
-const createTypedListResponse = <T, K>(
-  totalCount: number,
-  nodes: T[],
-  typeName: K
-) => ({
-  totalCount,
-  nodes,
-  __typename: typeName,
-});
 
 const createListResponse = <T>(
   totalCount: number,
@@ -124,69 +97,6 @@ const stockLine = {
       ResolverService.stockLine.byId(stockLine.id)
     );
     return { totalCount, nodes, __typename: 'StockLineConnector' };
-  },
-};
-
-const item = {
-  byId: (id: string): ResolvedItem => {
-    const item = db.item.get.byId(id);
-    if (!item) {
-      throw new Error(`Item with id ${id} not found`);
-    }
-
-    const stockLines = db.stockLine.get.byItemId(id);
-    const availableBatches = ResolverService.stockLine.list(stockLines);
-
-    const availableQuantity = getAvailableQuantity(id);
-
-    return {
-      __typename: 'ItemNode',
-      ...item,
-      availableQuantity,
-      availableBatches,
-    };
-  },
-  list: (params: ItemListParameters): ItemsResponse => {
-    const items = db.get.all.item();
-    const resolvedItems = items.map(item => ResolverService.item.byId(item.id));
-
-    const { filter, page = {}, sort = [] } = params ?? {};
-    const { offset = 0, first = 20 } = page ?? {};
-    const { key = 'name', desc = false } = sort && sort[0] ? sort[0] : {};
-
-    let filtered = resolvedItems;
-
-    if (filter) {
-      filtered = filtered.filter(({ code, name }) => {
-        if (filter.code?.equalTo) {
-          return code.toLowerCase() === filter.code.equalTo.toLowerCase();
-        }
-
-        if (filter.code?.like) {
-          return code
-            .toLowerCase()
-            .includes(filter.code.like.toLowerCase() ?? '');
-        }
-
-        if (filter.name?.equalTo) {
-          return name.toLowerCase() === filter.name.equalTo.toLowerCase();
-        }
-
-        if (filter.name?.like) {
-          return name.toLowerCase().includes(filter.name.like.toLowerCase());
-        }
-
-        return true;
-      });
-    }
-
-    const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
-
-    if (key) {
-      paged.sort(getDataSorter(getItemsSortKey(key), !!desc));
-    }
-
-    return createTypedListResponse(filtered.length, paged, 'ItemConnector');
   },
 };
 
@@ -267,7 +177,7 @@ const requisition = {
 
 export const ResolverService = {
   stockLine,
-  item,
+
   requisitionLine,
   requisition,
 
@@ -368,7 +278,7 @@ export const ResolverService = {
       return {
         ...stockLine,
         __typename: 'StockLineNode',
-        item: ResolverService.item.byId(stockLine.itemId),
+        item: item.byId(stockLine.itemId),
       };
     },
     invoiceLine: (id: string): ResolvedInvoiceLine => {
@@ -380,7 +290,7 @@ export const ResolverService = {
         stockLine: invoiceLine.stockLineId
           ? ResolverService.byId.stockLine(invoiceLine.stockLineId)
           : undefined,
-        item: ResolverService.item.byId(invoiceLine.itemId),
+        item: item.byId(invoiceLine.itemId),
       };
     },
     name: (id: string): Name => {
