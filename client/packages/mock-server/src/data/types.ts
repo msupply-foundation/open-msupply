@@ -116,3 +116,8 @@ export interface ResolvedStockCounts extends StockCounts {
 }
 
 export type Requisition = RequisitionNode;
+
+export interface ResolvedRequisition extends RequisitionNode {
+  __typename: 'RequisitionNode';
+  otherPartyName: string;
+}

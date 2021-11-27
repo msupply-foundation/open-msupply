@@ -850,7 +850,26 @@ type Queries {
     id: String!
   ): RequisitionResponse!
 
-  requisitions: RequisitionsResponse!
+  requisitions(params: RequisitionListParameters): RequisitionsResponse!
+}
+
+input RequisitionListParameters {
+  page: PaginationInput
+  filter: RequisitionFilterInput
+  sort: [RequisitionSortInput!]
+}
+
+input RequisitionFilterInput {
+  type: SimpleStringFilterInput
+}
+
+enum RequisitionSortFieldInput {
+  otherPartyName
+}
+
+input RequisitionSortInput {
+  key: RequisitionSortFieldInput!
+  desc: Boolean
 }
 
 type RangeError implements UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
@@ -1162,12 +1181,28 @@ type UpdateOutboundShipmentResponseWithId {
 type RequisitionNode {
   id: String!
   orderDate: String
-  storeId: String
-  nameId: String
+  storeId: String!
+  nameId: String!
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType
-  requisitionNumber: Int
+  requisitionNumber: Int!
+  thresholdMOS: Int
+  maxMOS: Int
+  status: SupplierRequisitionNodeStatus!
+}
+
+enum SupplierRequisitionNodeStatus {
+  DRAFT
+  SENT
+  IN_PROGRESS
+  FINALISED
+}
+
+enum CustomerRequisitionNodeStatus {
+  NEW
+  IN_PROGRESS
+  FINALISED
 }
 
 union RequisitionResponse = RequisitionNode | NodeError
@@ -1196,7 +1231,7 @@ input UpdateRequisitionInput {
 input InsertRequisitionInput {
   id: String!
   orderDate: String
-  nameId: String
+  nameId: String!
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType

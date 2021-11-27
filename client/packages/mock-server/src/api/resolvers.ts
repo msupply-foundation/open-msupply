@@ -2,6 +2,8 @@ import {
   UpdateRequisitionInput,
   InsertRequisitionInput,
   DeleteRequisitionInput,
+  RequisitionListParameters,
+  DeleteResponse,
 } from './../../../common/src/types/schema';
 import {
   ResolvedItem,
@@ -13,6 +15,7 @@ import {
   ResolvedInvoiceCounts,
   ResolvedStockCounts,
   Requisition,
+  ResolvedRequisition,
 } from './../data/types';
 
 import { db } from '../data/database';
@@ -103,12 +106,51 @@ const createListResponse = <T>(
 export const ResolverService = {
   requisition: {
     get: {
-      byId: (id: string) => db.requisition.get.byId(id),
-      list: () => {
+      byId: (id: string): ResolvedRequisition => {
+        const requisition = db.requisition.get.byId(id);
+        const name = db.get.byId.name(requisition.nameId);
+        return {
+          ...requisition,
+          otherPartyName: name.name,
+          __typename: 'RequisitionNode',
+        };
+      },
+      list: (
+        params: RequisitionListParameters
+      ): ListResponse<ResolvedRequisition> => {
         const requisitions = db.requisition.get.list();
+
+        const { filter, page = {}, sort = [] } = params ?? {};
+
+        const { offset = 0, first = 20 } = page ?? {};
+        const { key = 'otherPartyName', desc = false } =
+          sort && sort[0] ? sort[0] : {};
+
+        const resolved = requisitions.map(requisition => {
+          return ResolverService.requisition.get.byId(requisition.id);
+        });
+
+        let filtered = resolved;
+        if (filter) {
+          if (filter.type) {
+            filtered = filtered.filter(requisition => {
+              return requisition.type === filter.type?.equalTo;
+            });
+          }
+        }
+
+        const paged = filtered.slice(
+          offset ?? 0,
+          (offset ?? 0) + (first ?? 20)
+        );
+
+        if (key) {
+          paged.sort(getDataSorter(key, !!desc));
+        }
+
         return createListResponse(
-          requisitions.length,
-          requisitions,
+          filtered.length,
+          paged,
           'RequisitionConnector'
         );
       },
@@ -119,7 +161,7 @@ export const ResolverService = {
     insert: (input: InsertRequisitionInput): Requisition => {
       return db.requisition.insert(input);
     },
-    delete: (input: DeleteRequisitionInput): Requisition => {
+    delete: (input: DeleteRequisitionInput): DeleteResponse => {
       return db.requisition.delete(input);
     },
   },
