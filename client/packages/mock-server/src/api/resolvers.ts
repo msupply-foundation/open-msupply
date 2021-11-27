@@ -111,170 +111,165 @@ const createListResponse = <T>(
   __typename: typeName,
 });
 
-export const ResolverService = {
-  stockLine: {
-    byId: (id: string): ResolvedStockLine => {
-      const stockLine = db.stockLine.get.byId(id);
-      const item = db.item.get.byId(stockLine.itemId);
-      return { ...stockLine, item, __typename: 'StockLineNode' };
-    },
-    list: (lines = db.stockLine.get.all()): StockLineConnector => {
-      const resolved = lines.map(line =>
-        ResolverService.stockLine.byId(line.id)
-      );
-      const totalCount = resolved.length;
-      const nodes = resolved.map(stockLine =>
-        ResolverService.stockLine.byId(stockLine.id)
-      );
-      return { totalCount, nodes, __typename: 'StockLineConnector' };
-    },
+const stockLine = {
+  byId: (id: string): ResolvedStockLine => {
+    const stockLine = db.stockLine.get.byId(id);
+    const item = db.item.get.byId(stockLine.itemId);
+    return { ...stockLine, item, __typename: 'StockLineNode' };
   },
-  item: {
-    byId: (id: string): ResolvedItem => {
-      const item = db.item.get.byId(id);
-      if (!item) {
-        throw new Error(`Item with id ${id} not found`);
-      }
+  list: (lines = db.stockLine.get.all()): StockLineConnector => {
+    const resolved = lines.map(line => ResolverService.stockLine.byId(line.id));
+    const totalCount = resolved.length;
+    const nodes = resolved.map(stockLine =>
+      ResolverService.stockLine.byId(stockLine.id)
+    );
+    return { totalCount, nodes, __typename: 'StockLineConnector' };
+  },
+};
 
-      const stockLines = db.stockLine.get.byItemId(id);
-      const availableBatches = ResolverService.stockLine.list(stockLines);
+const item = {
+  byId: (id: string): ResolvedItem => {
+    const item = db.item.get.byId(id);
+    if (!item) {
+      throw new Error(`Item with id ${id} not found`);
+    }
 
-      const availableQuantity = getAvailableQuantity(id);
+    const stockLines = db.stockLine.get.byItemId(id);
+    const availableBatches = ResolverService.stockLine.list(stockLines);
 
+    const availableQuantity = getAvailableQuantity(id);
+
+    return {
+      __typename: 'ItemNode',
+      ...item,
+      availableQuantity,
+      availableBatches,
+    };
+  },
+  list: (params: ItemListParameters): ItemsResponse => {
+    const items = db.get.all.item();
+    const resolvedItems = items.map(item => ResolverService.item.byId(item.id));
+
+    const { filter, page = {}, sort = [] } = params ?? {};
+    const { offset = 0, first = 20 } = page ?? {};
+    const { key = 'name', desc = false } = sort && sort[0] ? sort[0] : {};
+
+    let filtered = resolvedItems;
+
+    if (filter) {
+      filtered = filtered.filter(({ code, name }) => {
+        if (filter.code?.equalTo) {
+          return code.toLowerCase() === filter.code.equalTo.toLowerCase();
+        }
+
+        if (filter.code?.like) {
+          return code
+            .toLowerCase()
+            .includes(filter.code.like.toLowerCase() ?? '');
+        }
+
+        if (filter.name?.equalTo) {
+          return name.toLowerCase() === filter.name.equalTo.toLowerCase();
+        }
+
+        if (filter.name?.like) {
+          return name.toLowerCase().includes(filter.name.like.toLowerCase());
+        }
+
+        return true;
+      });
+    }
+
+    const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
+
+    if (key) {
+      paged.sort(getDataSorter(getItemsSortKey(key), !!desc));
+    }
+
+    return createTypedListResponse(filtered.length, paged, 'ItemConnector');
+  },
+};
+
+const requisitionLine = {
+  byId: (id: string): ResolvedRequisitionLine => {
+    const requisitionLine = db.requisitionLine.get.byId(id);
+    if (!requisitionLine) {
+      throw new Error(`RequisitionLine with id ${id} not found`);
+    }
+
+    return {
+      ...requisitionLine,
+      __typename: 'RequisitionLineNode',
+    };
+  },
+  byRequisitionId: (requisitionId: string): ResolvedRequisitionLine[] => {
+    const requisitionLines =
+      db.requisitionLine.get.byRequisitionId(requisitionId);
+
+    return requisitionLines.map(requisitionLine =>
+      ResolverService.requisitionLine.byId(requisitionLine.id)
+    );
+  },
+};
+
+const requisition = {
+  get: {
+    byId: (id: string): ResolvedRequisition => {
+      const requisition = db.requisition.get.byId(id);
+      const otherParty = db.get.byId.name(requisition.otherPartyId);
+      const nodes = ResolverService.requisitionLine.byRequisitionId(id);
       return {
-        __typename: 'ItemNode',
-        ...item,
-        availableQuantity,
-        availableBatches,
+        ...requisition,
+        lines: {
+          __typename: 'RequisitionLineConnector',
+          totalCount: nodes.length,
+          nodes,
+        },
+        otherParty,
+        otherPartyName: otherParty.name,
+        __typename: 'RequisitionNode',
       };
     },
-    list: (params: ItemListParameters): ItemsResponse => {
-      const items = db.get.all.item();
-      const resolvedItems = items.map(item =>
-        ResolverService.item.byId(item.id)
-      );
+    list: (
+      params: RequisitionListParameters
+    ): ListResponse<ResolvedRequisition> => {
+      const requisitions = db.requisition.get.list();
 
       const { filter, page = {}, sort = [] } = params ?? {};
+
       const { offset = 0, first = 20 } = page ?? {};
-      const { key = 'name', desc = false } = sort && sort[0] ? sort[0] : {};
+      const { key = 'otherPartyName', desc = false } =
+        sort && sort[0] ? sort[0] : {};
 
-      let filtered = resolvedItems;
+      const resolved = requisitions.map(requisition => {
+        return ResolverService.requisition.get.byId(requisition.id);
+      });
 
+      let filtered = resolved;
       if (filter) {
-        filtered = filtered.filter(({ code, name }) => {
-          if (filter.code?.equalTo) {
-            return code.toLowerCase() === filter.code.equalTo.toLowerCase();
-          }
-
-          if (filter.code?.like) {
-            return code
-              .toLowerCase()
-              .includes(filter.code.like.toLowerCase() ?? '');
-          }
-
-          if (filter.name?.equalTo) {
-            return name.toLowerCase() === filter.name.equalTo.toLowerCase();
-          }
-
-          if (filter.name?.like) {
-            return name.toLowerCase().includes(filter.name.like.toLowerCase());
-          }
-
-          return true;
-        });
+        if (filter.type) {
+          filtered = filtered.filter(requisition => {
+            return requisition.type === filter.type?.equalTo;
+          });
+        }
       }
 
       const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
 
       if (key) {
-        paged.sort(getDataSorter(getItemsSortKey(key), !!desc));
+        paged.sort(getDataSorter(key, !!desc));
       }
 
-      return createTypedListResponse(filtered.length, paged, 'ItemConnector');
+      return createListResponse(filtered.length, paged, 'RequisitionConnector');
     },
   },
+};
 
-  requisitionLine: {
-    byId: (id: string): ResolvedRequisitionLine => {
-      const requisitionLine = db.requisitionLine.get.byId(id);
-      if (!requisitionLine) {
-        throw new Error(`RequisitionLine with id ${id} not found`);
-      }
-
-      return {
-        ...requisitionLine,
-        __typename: 'RequisitionLineNode',
-      };
-    },
-    byRequisitionId: (requisitionId: string): ResolvedRequisitionLine[] => {
-      const requisitionLines =
-        db.requisitionLine.get.byRequisitionId(requisitionId);
-
-      return requisitionLines.map(requisitionLine =>
-        ResolverService.requisitionLine.byId(requisitionLine.id)
-      );
-    },
-  },
-
-  requisition: {
-    get: {
-      byId: (id: string): ResolvedRequisition => {
-        const requisition = db.requisition.get.byId(id);
-        const otherParty = db.get.byId.name(requisition.otherPartyId);
-        const nodes = ResolverService.requisitionLine.byRequisitionId(id);
-        return {
-          ...requisition,
-          lines: {
-            __typename: 'RequisitionLineConnector',
-            totalCount: nodes.length,
-            nodes,
-          },
-          otherParty,
-          otherPartyName: otherParty.name,
-          __typename: 'RequisitionNode',
-        };
-      },
-      list: (
-        params: RequisitionListParameters
-      ): ListResponse<ResolvedRequisition> => {
-        const requisitions = db.requisition.get.list();
-
-        const { filter, page = {}, sort = [] } = params ?? {};
-
-        const { offset = 0, first = 20 } = page ?? {};
-        const { key = 'otherPartyName', desc = false } =
-          sort && sort[0] ? sort[0] : {};
-
-        const resolved = requisitions.map(requisition => {
-          return ResolverService.requisition.get.byId(requisition.id);
-        });
-
-        let filtered = resolved;
-        if (filter) {
-          if (filter.type) {
-            filtered = filtered.filter(requisition => {
-              return requisition.type === filter.type?.equalTo;
-            });
-          }
-        }
-
-        const paged = filtered.slice(
-          offset ?? 0,
-          (offset ?? 0) + (first ?? 20)
-        );
-
-        if (key) {
-          paged.sort(getDataSorter(key, !!desc));
-        }
-
-        return createListResponse(
-          filtered.length,
-          paged,
-          'RequisitionConnector'
-        );
-      },
-    },
-  },
+export const ResolverService = {
+  stockLine,
+  item,
+  requisitionLine,
+  requisition,
 
   invoice: {
     get: {
@@ -347,51 +342,6 @@ export const ResolverService = {
 
       return createListResponse(filtered.length, paged, 'InvoiceConnector');
     },
-    // item: (params: ItemListParameters): ItemsResponse => {
-    //   const items = db.get.all.item();
-
-    //   const { filter, page = {}, sort = [] } = params ?? {};
-    //   const { offset = 0, first = 20 } = page ?? {};
-    //   const { key = 'name', desc = false } = sort && sort[0] ? sort[0] : {};
-
-    //   const resolved = items.map(item => {
-    //     return ResolverService.byId.item(item.id);
-    //   });
-
-    //   let filtered = resolved;
-
-    //   if (filter) {
-    //     filtered = filtered.filter(({ code, name }) => {
-    //       if (filter.code?.equalTo) {
-    //         return code.toLowerCase() === filter.code.equalTo.toLowerCase();
-    //       }
-
-    //       if (filter.code?.like) {
-    //         return code
-    //           .toLowerCase()
-    //           .includes(filter.code.like.toLowerCase() ?? '');
-    //       }
-
-    //       if (filter.name?.equalTo) {
-    //         return name.toLowerCase() === filter.name.equalTo.toLowerCase();
-    //       }
-
-    //       if (filter.name?.like) {
-    //         return name.toLowerCase().includes(filter.name.like.toLowerCase());
-    //       }
-
-    //       return true;
-    //     });
-    //   }
-
-    //   const paged = filtered.slice(offset ?? 0, (offset ?? 0) + (first ?? 20));
-
-    //   if (key) {
-    //     paged.sort(getDataSorter(getItemsSortKey(key), !!desc));
-    //   }
-
-    //   return createTypedListResponse(filtered.length, paged, 'ItemConnector');
-    // },
 
     name: ({
       first = 50,
@@ -413,25 +363,6 @@ export const ResolverService = {
   },
 
   byId: {
-    // item: (id: string): ResolvedItem => {
-    //   const item = db.get.byId.item(id);
-    //   const stockLines = db.get.stockLines.byItemId(id);
-    //   const resolvedStockLines = stockLines.map(stockLine =>
-    //     db.get.byId.stockLine(stockLine.id)
-    //   );
-    //   const availableBatches = createListResponse(
-    //     resolvedStockLines.length,
-    //     resolvedStockLines,
-    //     'StockLineConnector'
-    //   );
-
-    //   return {
-    //     __typename: 'ItemNode',
-    //     ...item,
-    //     availableQuantity: getAvailableQuantity(id),
-    //     availableBatches,
-    //   };
-    // },
     stockLine: (id: string): ResolvedStockLine => {
       const stockLine = db.get.byId.stockLine(id);
       return {
