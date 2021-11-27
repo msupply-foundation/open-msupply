@@ -62,19 +62,13 @@ const MutationResolvers = {
     _: unknown,
     { input }: { input: UpdateSupplierRequisitionInput }
   ): UpdateSupplierRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.supplier.update(input),
-    };
+    return MutationService.requisition.supplier.update(input);
   },
   insertSupplierRequisition: (
     _: unknown,
     { input }: { input: InsertSupplierRequisitionInput }
   ): InsertSupplierRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.supplier.insert(input),
-    };
+    return MutationService.requisition.supplier.insert(input);
   },
   deleteSupplierRequisition: (
     _: unknown,
@@ -89,19 +83,13 @@ const MutationResolvers = {
     _: unknown,
     { input }: { input: UpdateCustomerRequisitionInput }
   ): UpdateCustomerRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.customer.update(input),
-    };
+    return MutationService.requisition.customer.update(input);
   },
   insertCustomerRequisition: (
     _: unknown,
     { input }: { input: InsertCustomerRequisitionInput }
   ): InsertCustomerRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.customer.insert(input),
-    };
+    return MutationService.requisition.customer.insert(input);
   },
   deleteCustomerRequisition: (
     _: unknown,
@@ -117,19 +105,13 @@ const MutationResolvers = {
     _: unknown,
     { input }: { input: UpdateCustomerRequisitionLineInput }
   ): UpdateCustomerRequisitionLineResponse => {
-    return {
-      __typename: 'RequisitionLineNode',
-      ...MutationService.requisitionLine.customer.update(input),
-    };
+    return MutationService.requisitionLine.customer.update(input);
   },
   insertCustomerRequisitionLine: (
     _: unknown,
     { input }: { input: InsertCustomerRequisitionLineInput }
   ): InsertCustomerRequisitionLineResponse => {
-    return {
-      __typename: 'RequisitionLineNode',
-      ...MutationService.requisitionLine.customer.insert(input),
-    };
+    return MutationService.requisitionLine.customer.insert(input);
   },
   deleteCustomerRequisitionLine: (
     _: unknown,
@@ -145,19 +127,13 @@ const MutationResolvers = {
     _: unknown,
     { input }: { input: UpdateSupplierRequisitionLineInput }
   ): UpdateSupplierRequisitionLineResponse => {
-    return {
-      __typename: 'RequisitionLineNode',
-      ...MutationService.requisitionLine.supplier.update(input),
-    };
+    return MutationService.requisitionLine.supplier.update(input);
   },
   insertSupplierRequisitionLine: (
     _: unknown,
     { input }: { input: InsertSupplierRequisitionLineInput }
   ): InsertSupplierRequisitionLineResponse => {
-    return {
-      __typename: 'RequisitionLineNode',
-      ...MutationService.requisitionLine.supplier.insert(input),
-    };
+    return MutationService.requisitionLine.supplier.insert(input);
   },
   deleteSupplierRequisitionLine: (
     _: unknown,

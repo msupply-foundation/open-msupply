@@ -359,8 +359,8 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOu
 export type InsertCustomerRequisitionInput = {
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  nameId: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
+  otherPartyId: Scalars['String'];
   otherPartyReference?: Maybe<Scalars['String']>;
   type?: Maybe<RequisitionNodeType>;
 };
@@ -519,8 +519,8 @@ export type InsertOutboundShipmentResponseWithId = {
 export type InsertSupplierRequisitionInput = {
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  nameId: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
+  otherPartyId: Scalars['String'];
   otherPartyReference?: Maybe<Scalars['String']>;
   type?: Maybe<RequisitionNodeType>;
 };
@@ -1290,6 +1290,8 @@ export type RequisitionLineNode = {
 
 export type RequisitionLineResponse = NodeError | RequisitionNode;
 
+export type RequisitionLinesResponse = ConnectorError | RequisitionLineConnector;
+
 export type RequisitionListParameters = {
   filter?: Maybe<RequisitionFilterInput>;
   page?: Maybe<PaginationInput>;
@@ -1300,9 +1302,12 @@ export type RequisitionNode = {
   __typename?: 'RequisitionNode';
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
+  lines: RequisitionLinesResponse;
   maxMOS?: Maybe<Scalars['Int']>;
-  nameId: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
+  otherParty: NameResponse;
+  otherPartyId: Scalars['String'];
+  otherPartyName: Scalars['String'];
   otherPartyReference?: Maybe<Scalars['String']>;
   requisitionNumber: Scalars['Int'];
   status: SupplierRequisitionNodeStatus;

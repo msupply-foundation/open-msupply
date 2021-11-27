@@ -9,6 +9,7 @@ import {
   ResolvedInvoiceCounts,
   ResolvedStockCounts,
   ResolvedRequisition,
+  ResolvedRequisitionLine,
 } from './../data/types';
 
 import { db } from '../data/database';
@@ -97,14 +98,43 @@ const createListResponse = <T>(
 });
 
 export const ResolverService = {
+  requisitionLine: {
+    byId: (id: string): ResolvedRequisitionLine => {
+      const requisitionLine = db.requisitionLine.get.byId(id);
+      if (!requisitionLine) {
+        throw new Error(`RequisitionLine with id ${id} not found`);
+      }
+
+      return {
+        ...requisitionLine,
+        __typename: 'RequisitionLineNode',
+      };
+    },
+    byRequisitionId: (requisitionId: string): ResolvedRequisitionLine[] => {
+      const requisitionLines =
+        db.requisitionLine.get.byRequisitionId(requisitionId);
+
+      return requisitionLines.map(requisitionLine =>
+        ResolverService.requisitionLine.byId(requisitionLine.id)
+      );
+    },
+  },
+
   requisition: {
     get: {
       byId: (id: string): ResolvedRequisition => {
         const requisition = db.requisition.get.byId(id);
-        const name = db.get.byId.name(requisition.nameId);
+        const otherParty = db.get.byId.name(requisition.otherPartyId);
+        const nodes = ResolverService.requisitionLine.byRequisitionId(id);
         return {
           ...requisition,
-          otherPartyName: name.name,
+          lines: {
+            __typename: 'RequisitionLineConnector',
+            totalCount: nodes.length,
+            nodes,
+          },
+          otherParty,
+          otherPartyName: otherParty.name,
           __typename: 'RequisitionNode',
         };
       },
