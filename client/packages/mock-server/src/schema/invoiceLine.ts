@@ -5,13 +5,13 @@ const QueryResolvers = {};
 
 const MutationResolvers = {
   updateOutboundShipmentLine: (
-    _: any,
+    _: unknown,
     { invoiceLine }: { invoiceLine: InvoiceLineType }
   ): InvoiceLineType => {
     return Api.MutationService.update.invoiceLine(invoiceLine);
   },
   deleteOutboundShipmentLine: (
-    _: any,
+    _: unknown,
     { invoiceLineId }: { invoiceLineId: string }
   ): string => {
     return Api.MutationService.remove.invoiceLine(invoiceLineId);

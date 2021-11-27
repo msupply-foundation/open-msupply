@@ -1,12 +1,22 @@
-import {
-  ItemSortFieldInput,
-  ItemsResponse,
-} from '@openmsupply-client/common/src/types/schema';
+import { ListResponse } from './../../data/types';
+import { ItemSortFieldInput } from '@openmsupply-client/common/src/types/schema';
 import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
 import { ResolverService } from './index';
-import { getAvailableQuantity } from './old';
+import { createListResponse } from './utils';
 
 import { db, ResolvedItem, ItemListParameters } from '../../data';
+
+const getAvailableQuantity = (itemId: string): number => {
+  const stockLines = db.get.stockLines.byItemId(itemId);
+  const availableQuantity = stockLines.reduce(
+    (sum, { availableNumberOfPacks, packSize }) => {
+      return sum + availableNumberOfPacks * packSize;
+    },
+    0
+  );
+
+  return availableQuantity;
+};
 
 const getItemsSortKey = (key: string) => {
   switch (key) {
@@ -20,17 +30,7 @@ const getItemsSortKey = (key: string) => {
   }
 };
 
-const createTypedListResponse = <T, K>(
-  totalCount: number,
-  nodes: T[],
-  typeName: K
-) => ({
-  totalCount,
-  nodes,
-  __typename: typeName,
-});
-
-export const item = {
+export const itemResolver = {
   byId: (id: string): ResolvedItem => {
     const item = db.item.get.byId(id);
     if (!item) {
@@ -49,7 +49,9 @@ export const item = {
       availableBatches,
     };
   },
-  list: (params: ItemListParameters): ItemsResponse => {
+  list: (
+    params: ItemListParameters
+  ): ListResponse<ResolvedItem, 'ItemConnector'> => {
     const items = db.get.all.item();
     const resolvedItems = items.map(item => ResolverService.item.byId(item.id));
 
@@ -89,6 +91,6 @@ export const item = {
       paged.sort(getDataSorter(getItemsSortKey(key), !!desc));
     }
 
-    return createTypedListResponse(filtered.length, paged, 'ItemConnector');
+    return createListResponse(filtered.length, paged, 'ItemConnector');
   },
 };

@@ -1,67 +1,53 @@
+import { InvoiceListParameters } from './../data/types';
 import { MutationService } from './../api/mutations';
 import {
   UpdateOutboundShipmentInput,
   UpdateInboundShipmentInput,
   BatchInboundShipmentInput,
+  InvoiceResponse,
+  InvoicesResponse,
 } from './../../../common/src/types/schema';
-import {
-  InvoiceSortFieldInput,
-  InvoiceFilterInput,
-  BatchOutboundShipmentInput,
-} from '@openmsupply-client/common/src/types/schema';
+import { BatchOutboundShipmentInput } from '@openmsupply-client/common/src/types/schema';
 import { Api } from '../api';
 
-import { ListResponse, Invoice as InvoiceType } from '../data/types';
+import { Invoice as InvoiceType } from '../data/types';
 
 const QueryResolvers = {
-  invoices: (
-    _: any,
-    vars: {
-      page?: { first?: number; offset?: number };
-      sort: [{ key: InvoiceSortFieldInput; desc: boolean }];
-      filter?: InvoiceFilterInput;
-    }
-  ): ListResponse<InvoiceType> => {
-    return Api.ResolverService.list.invoice({
-      first: vars.page?.first ?? 20,
-      offset: vars.page?.offset ?? 0,
-      desc: vars.sort[0].desc ?? false,
-      key: vars.sort[0].key ?? InvoiceSortFieldInput.Status,
-      filter: vars.filter,
-    });
+  invoices: (_: unknown, vars: InvoiceListParameters): InvoicesResponse => {
+    return Api.ResolverService.invoice.list(vars);
   },
 
-  invoice: (_: any, { id }: { id: string }): InvoiceType => {
-    return Api.ResolverService.byId.invoice(id);
+  invoice: (_: unknown, { id }: { id: string }): InvoiceResponse => {
+    return Api.ResolverService.invoice.byId(id);
   },
 };
 
 const MutationResolvers = {
   updateOutboundShipment: (
-    _: any,
+    _: unknown,
     { input }: { input: UpdateOutboundShipmentInput }
   ): InvoiceType => {
     return Api.MutationService.update.invoice(input);
   },
   updateInboundShipment: (
-    _: any,
+    _: unknown,
     { input }: { input: UpdateInboundShipmentInput }
   ): InvoiceType => {
     return Api.MutationService.update.invoice(input);
   },
   insertOutboundShipment: (
-    _: any,
+    _: unknown,
     { input }: { input: InvoiceType }
   ): InvoiceType => {
     return Api.MutationService.insert.invoice(input);
   },
-  deleteOutboundShipment: (_: any, id: string): string => {
+  deleteOutboundShipment: (_: unknown, id: string): string => {
     return Api.MutationService.remove.invoice(id);
   },
-  deleteInboundShipment: (_: any, input: { id: string }): string => {
+  deleteInboundShipment: (_: unknown, input: { id: string }): string => {
     return MutationService.remove.invoice(input.id);
   },
-  batchOutboundShipment: (_: any, vars: BatchOutboundShipmentInput) => {
+  batchOutboundShipment: (_: unknown, vars: BatchOutboundShipmentInput) => {
     const response = {
       __typename: 'BatchOutboundShipmentResponse',
       deleteOutboundShipments: [] as { id: string }[],
@@ -110,7 +96,7 @@ const MutationResolvers = {
 
     return response;
   },
-  batchInboundShipment: (_: any, vars: BatchInboundShipmentInput) => {
+  batchInboundShipment: (_: unknown, vars: BatchInboundShipmentInput) => {
     const response = {
       __typename: 'BatchInboundShipmentResponse',
       deleteInboundShipments: [] as { id: string }[],

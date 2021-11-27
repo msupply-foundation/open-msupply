@@ -108,7 +108,7 @@ export const namesList = graphql.query<
 >('names', (request, response, context) => {
   const { variables } = request;
 
-  const result = ResolverService.list.name(variables);
+  const result = ResolverService.name.list(variables);
 
   return response(context.data({ names: result }));
 });
@@ -119,7 +119,7 @@ export const invoiceList = graphql.query<
 >('invoices', (request, response, context) => {
   const { variables } = request;
 
-  const result = ResolverService.list.invoice(variables);
+  const result = ResolverService.invoice.list(variables);
 
   return response(context.data({ invoices: result }));
 });
@@ -130,7 +130,7 @@ export const invoiceDetail = graphql.query(
     const { variables } = request;
     const { id } = variables;
 
-    const invoice = ResolverService.byId.invoice(id as string);
+    const invoice = ResolverService.invoice.byId(id as string);
 
     return response(context.data({ invoice }));
   }
@@ -142,7 +142,7 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
     const { variables } = request;
     const { invoiceNumber } = variables;
 
-    const invoice = ResolverService.invoice.get.byInvoiceNumber(
+    const invoice = ResolverService.invoice.byInvoiceNumber(
       invoiceNumber as number
     );
 

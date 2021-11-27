@@ -1,13 +1,19 @@
-import { ResolverService as OldResolverService } from './old';
-// import { invoice } from './invoice';
-import { item } from './item';
-// import { name } from './name';
-// import { requisition } from './requisition';
+import { invoiceResolver } from './invoice';
+import { itemResolver } from './item';
+import { stockLineResolver } from './stockLine';
+import { nameResolver } from './name';
+import { requisitionResolver } from './requisition';
+import { requisitionLineResolver } from './requisitionLine';
+import { invoiceLineResolver } from './invoiceLine';
+import { statisticsResolver } from './statistics';
 
 export const ResolverService = {
-  //   invoice,
-  item,
-  //   name,
-  //   requisition,
-  ...OldResolverService,
+  invoice: invoiceResolver,
+  item: itemResolver,
+  stockLine: stockLineResolver,
+  requisitionLine: requisitionLineResolver,
+  invoiceLine: invoiceLineResolver,
+  requisition: requisitionResolver,
+  name: nameResolver,
+  statistics: statisticsResolver,
 };
