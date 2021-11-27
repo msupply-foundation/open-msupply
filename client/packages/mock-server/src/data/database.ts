@@ -144,6 +144,16 @@ export const requisition = {
 
 const requisitionLine = {
   get: {
+    byId: (id: string): RequisitionLine => {
+      const reqLine = RequisitionLineData.find(getFilter(id, 'id'));
+      if (!reqLine) {
+        throw new Error(`Could not find reqLine line with id: ${id}`);
+      }
+
+      return {
+        ...reqLine,
+      };
+    },
     byRequisitionId: (requisitionId: string): RequisitionLine[] => {
       const lines = RequisitionLineData.filter(
         getFilter(requisitionId, 'requisitionId')

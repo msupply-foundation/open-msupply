@@ -1230,9 +1230,10 @@ type UpdateOutboundShipmentResponseWithId {
 
 type RequisitionNode {
   id: String!
-  orderDate: String
+
   storeId: String!
-  nameId: String!
+
+  orderDate: String
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType
@@ -1240,6 +1241,12 @@ type RequisitionNode {
   thresholdMOS: Int
   maxMOS: Int
   status: SupplierRequisitionNodeStatus!
+
+  lines: RequisitionLinesResponse!
+
+  otherParty: NameResponse!
+  otherPartyId: String!
+  otherPartyName: String!
 }
 
 type RequisitionLineNode {
@@ -1271,6 +1278,8 @@ type RequisitionLineNode {
 
   otherPartyClosingQuantity: Int
 }
+
+union RequisitionLinesResponse = ConnectorError | RequisitionLineConnector
 
 type RequisitionLineConnector {
   totalCount: Int!
@@ -1378,7 +1387,7 @@ input UpdateCustomerRequisitionLineInput {
 input InsertSupplierRequisitionInput {
   id: String!
   orderDate: String
-  nameId: String!
+  otherPartyId: String!
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType
@@ -1526,7 +1535,7 @@ input UpdateCustomerRequisitionInput {
 input InsertCustomerRequisitionInput {
   id: String!
   orderDate: String
-  nameId: String!
+  otherPartyId: String!
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType

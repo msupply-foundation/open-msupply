@@ -569,6 +569,23 @@ const createInvoicesLines = (
   return [...inboundLines, ...outboundLines];
 };
 
+const createRequisition = (
+  otherParty: Name,
+  type: RequisitionNodeType
+): Requisition => {
+  return {
+    id: `${faker.datatype.uuid()}`,
+    requisitionNumber: faker.datatype.number({ max: 1000 }),
+    storeId: '',
+    otherPartyId: otherParty.id,
+    orderDate: faker.date.past(1.5).toISOString(),
+    type,
+    maxMOS: 3,
+    thresholdMOS: 3,
+    status: SupplierRequisitionNodeStatus.Draft,
+  };
+};
+
 const createSupplierRequisitions = (): Requisition[] => {
   const suppliers = getSuppliers();
 
@@ -577,18 +594,10 @@ const createSupplierRequisitions = (): Requisition[] => {
       const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
 
       return Array.from({ length: numberOfRequisitions }).map(() => {
-        const requisition: Requisition = {
-          id: `${faker.datatype.uuid()}`,
-          requisitionNumber: faker.datatype.number({ max: 1000 }),
-          storeId: '',
-          nameId: supplier.id,
-          orderDate: faker.date.past(1.5).toISOString(),
-          type: RequisitionNodeType.SupplierRequisition,
-          maxMOS: 3,
-          thresholdMOS: 3,
-          status: SupplierRequisitionNodeStatus.Draft,
-        };
-
+        const requisition: Requisition = createRequisition(
+          supplier,
+          RequisitionNodeType.SupplierRequisition
+        );
         return requisition;
       });
     })
@@ -603,17 +612,10 @@ const createCustomerRequisitions = (): Requisition[] => {
       const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
 
       return Array.from({ length: numberOfRequisitions }).map(() => {
-        const requisition: Requisition = {
-          id: `${faker.datatype.uuid()}`,
-          requisitionNumber: faker.datatype.number({ max: 1000 }),
-          nameId: customer.id,
-          storeId: '',
-          orderDate: faker.date.past(1.5).toISOString(),
-          type: RequisitionNodeType.CustomerRequisition,
-          maxMOS: 3,
-          thresholdMOS: 3,
-          status: SupplierRequisitionNodeStatus.Draft,
-        };
+        const requisition: Requisition = createRequisition(
+          customer,
+          RequisitionNodeType.CustomerRequisition
+        );
 
         return requisition;
       });
