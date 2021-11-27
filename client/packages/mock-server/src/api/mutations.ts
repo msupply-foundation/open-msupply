@@ -215,7 +215,7 @@ export const update = {
       ...invoice,
       ...getStatusTime(invoice.status),
     });
-    const resolvedInvoice = ResolverService.byId.invoice(updated.id);
+    const resolvedInvoice = ResolverService.invoice.byId(updated.id);
 
     return resolvedInvoice;
   },
@@ -262,7 +262,7 @@ export const update = {
 
 export const remove = {
   invoice: (invoiceId: string): string => {
-    const resolvedInvoice = Api.ResolverService.byId.invoice(String(invoiceId));
+    const resolvedInvoice = Api.ResolverService.invoice.byId(String(invoiceId));
 
     if (resolvedInvoice.type === InvoiceNodeType.InboundShipment) {
       if (
@@ -273,14 +273,16 @@ export const remove = {
       }
     }
 
-    resolvedInvoice.lines.nodes.forEach(line => {
-      remove.invoiceLine(line.id);
-    });
+    if (resolvedInvoice.lines.__typename === 'InvoiceLineConnector') {
+      resolvedInvoice.lines.nodes.forEach(line => {
+        remove.invoiceLine(line.id);
+      });
+    }
 
     return db.remove.invoice(invoiceId);
   },
   invoiceLine: (invoiceLineId: string): string => {
-    const invoiceLine = ResolverService.byId.invoiceLine(invoiceLineId);
+    const invoiceLine = ResolverService.invoiceLine.byId(invoiceLineId);
     const invoice = db.get.byId.invoice(invoiceLine.invoiceId);
     const { numberOfPacks } = invoiceLine;
 

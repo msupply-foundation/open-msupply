@@ -1,21 +1,10 @@
-import { NameSortFieldInput } from '@openmsupply-client/common/src/types/schema';
+import { NamesResponse } from './../../../common/src/types/schema';
+import { NameListParameters } from './../data/types';
 import { Api } from '../api';
-import { ListResponse, Name as NameType } from '../data/types';
 
 const QueryResolvers = {
-  names: (
-    _: any,
-    vars: {
-      page?: { first?: number; offset?: number };
-      sort: [{ key: NameSortFieldInput; desc: boolean }];
-    }
-  ): ListResponse<NameType> => {
-    return Api.ResolverService.list.name({
-      first: vars?.page?.first,
-      offset: vars?.page?.offset,
-      desc: vars?.sort[0]?.desc ?? false,
-      key: vars?.sort[0]?.key ?? NameSortFieldInput.Name,
-    });
+  names: (_: unknown, vars: NameListParameters): NamesResponse => {
+    return Api.ResolverService.name.list(vars);
   },
 };
 

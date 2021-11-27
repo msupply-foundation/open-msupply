@@ -1,4 +1,3 @@
-import { ResolvedRequisition, ListResponse } from './../data/types';
 import {
   RequisitionListParameters,
   BatchSupplierRequisitionInput,
@@ -41,18 +40,20 @@ import {
   UpdateCustomerRequisitionLineResponseWithId,
   DeleteCustomerRequisitionLineResponse,
   DeleteCustomerRequisitionLineResponseWithId,
+  RequisitionsResponse,
+  RequisitionResponse,
 } from './../../../common/src/types/schema';
 import { MutationService } from '../api/mutations';
 import { ResolverService } from './../api/resolvers';
 
 const QueryResolvers = {
-  requisition: (id: string): ResolvedRequisition => {
+  requisition: (id: string): RequisitionResponse => {
     return ResolverService.requisition.get.byId(id);
   },
   requisitions: (
     _: unknown,
     vars: { params: RequisitionListParameters }
-  ): ListResponse<ResolvedRequisition> => {
+  ): RequisitionsResponse => {
     return ResolverService.requisition.get.list(vars.params);
   },
 };
