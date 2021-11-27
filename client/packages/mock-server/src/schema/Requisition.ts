@@ -2,6 +2,9 @@ import {
   UpdateSupplierRequisitionInput,
   InsertSupplierRequisitionInput,
   DeleteSupplierRequisitionInput,
+  UpdateCustomerRequisitionInput,
+  InsertCustomerRequisitionInput,
+  DeleteCustomerRequisitionInput,
   RequisitionListParameters,
 } from './../../../common/src/types/schema';
 import { MutationService } from '../api/mutations';
@@ -42,6 +45,33 @@ const MutationResolvers = {
     return {
       __typename: 'DeleteResponse',
       ...MutationService.requisition.supplier.delete(input),
+    };
+  },
+  updateCustomerRequisition: (
+    _: any,
+    { input }: { input: UpdateCustomerRequisitionInput }
+  ) => {
+    return {
+      __typename: 'RequisitionNode',
+      ...MutationService.requisition.customer.update(input),
+    };
+  },
+  insertCustomerRequisition: (
+    _: any,
+    { input }: { input: InsertCustomerRequisitionInput }
+  ) => {
+    return {
+      __typename: 'RequisitionNode',
+      ...MutationService.requisition.customer.insert(input),
+    };
+  },
+  deleteCustomerRequisition: (
+    _: any,
+    { input }: { input: DeleteCustomerRequisitionInput }
+  ) => {
+    return {
+      __typename: 'DeleteResponse',
+      ...MutationService.requisition.customer.delete(input),
     };
   },
 };
