@@ -1,4 +1,7 @@
-import { RequisitionNode } from './../../../common/src/types/schema';
+import {
+  RequisitionNode,
+  RequisitionLineNode,
+} from './../../../common/src/types/schema';
 import {
   InvoiceLineNode,
   InvoiceNode,
@@ -120,4 +123,13 @@ export type Requisition = RequisitionNode;
 export interface ResolvedRequisition extends RequisitionNode {
   __typename: 'RequisitionNode';
   otherPartyName: string;
+}
+
+export interface RequisitionLine
+  extends Omit<RequisitionLineNode, '__typename'> {
+  requisitionId: string;
+}
+
+export interface ResolvedRequisitionLine extends RequisitionLine {
+  __typename: 'RequisitionLineNode';
 }

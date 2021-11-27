@@ -656,10 +656,22 @@ type Mutations {
   deleteSupplierRequisition(
     input: DeleteSupplierRequisitionInput!
   ): DeleteSupplierRequisitionResponse!
+  updateSupplierRequisitionLine(
+    input: UpdateSupplierRequisitionLineInput!
+  ): UpdateSupplierRequisitionLineResponse!
+  insertSupplierRequisitionLine(
+    input: InsertSupplierRequisitionLineInput!
+  ): InsertSupplierRequisitionLineResponse!
+  deleteSupplierRequisitionLine(
+    input: DeleteSupplierRequisitionLineInput!
+  ): DeleteSupplierRequisitionLineResponse!
   batchSupplierRequisition(
     insertSupplierRequisitions: [InsertSupplierRequisitionInput!]
     updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
     deleteSupplierRequisitions: [DeleteSupplierRequisitionInput!]
+    insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!]
+    updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!]
+    deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!]
   ): BatchSupplierRequisitionResponse!
 
   updateCustomerRequisition(
@@ -671,10 +683,22 @@ type Mutations {
   deleteCustomerRequisition(
     input: DeleteCustomerRequisitionInput!
   ): DeleteCustomerRequisitionResponse!
+  updateCustomerRequisitionLine(
+    input: UpdateCustomerRequisitionLineInput!
+  ): UpdateCustomerRequisitionLineResponse!
+  insertCustomerRequisitionLine(
+    input: InsertCustomerRequisitionLineInput!
+  ): InsertCustomerRequisitionLineResponse!
+  deleteCustomerRequisitionLine(
+    input: DeleteCustomerRequisitionLineInput!
+  ): DeleteCustomerRequisitionLineResponse!
   batchCustomerRequisition(
     insertCustomerRequisitions: [InsertCustomerRequisitionInput!]
     updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]
     deleteCustomerRequisitions: [DeleteCustomerRequisitionInput!]
+    insertCustomerRequisitionLines: [InsertCustomerRequisitionLineInput!]
+    updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!]
+    deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
   ): BatchCustomerRequisitionResponse!
 }
 
@@ -1218,6 +1242,41 @@ type RequisitionNode {
   status: SupplierRequisitionNodeStatus!
 }
 
+type RequisitionLineNode {
+  id: String!
+  itemName: String
+  itemCode: String
+  itemUnit: String
+
+  comment: String
+
+  monthlyConsumption: Float
+  monthsOfSupply: Float
+
+  supplyQuantity: Float
+  openingQuantity: Float
+  issuedQuantity: Float
+  requestedQuantity: Float
+  receivedQuantity: Float
+  imprestQuantity: Float
+  previousQuantity: Float
+  calculatedQuantity: Float
+
+  previousStockOnHand: Float
+  closingQuantity: Int
+
+  stockAdditions: Float
+  stockLosses: Float
+  expiredQuantity: Float
+
+  otherPartyClosingQuantity: Int
+}
+
+type RequisitionLineConnector {
+  totalCount: Int!
+  nodes: [RequisitionLineNode!]!
+}
+
 enum SupplierRequisitionNodeStatus {
   DRAFT
   SENT
@@ -1232,6 +1291,8 @@ enum CustomerRequisitionNodeStatus {
 }
 
 union RequisitionResponse = RequisitionNode | NodeError
+
+union RequisitionLineResponse = RequisitionNode | NodeError
 
 enum RequisitionNodeType {
   CUSTOMER_REQUISITION
@@ -1254,6 +1315,66 @@ input UpdateSupplierRequisitionInput {
   type: RequisitionNodeType
 }
 
+input UpdateSupplierRequisitionLineInput {
+  id: String!
+  itemName: String
+  itemCode: String
+  itemUnit: String
+
+  comment: String
+
+  monthlyConsumption: Float
+  monthsOfSupply: Float
+
+  supplyQuantity: Float
+  openingQuantity: Float
+  issuedQuantity: Float
+  requestedQuantity: Float
+  receivedQuantity: Float
+  imprestQuantity: Float
+  previousQuantity: Float
+  calculatedQuantity: Float
+
+  previousStockOnHand: Float
+  closingQuantity: Int
+
+  stockAdditions: Float
+  stockLosses: Float
+  expiredQuantity: Float
+
+  otherPartyClosingQuantity: Int
+}
+
+input UpdateCustomerRequisitionLineInput {
+  id: String!
+  itemName: String
+  itemCode: String
+  itemUnit: String
+
+  comment: String
+
+  monthlyConsumption: Float
+  monthsOfSupply: Float
+
+  supplyQuantity: Float
+  openingQuantity: Float
+  issuedQuantity: Float
+  requestedQuantity: Float
+  receivedQuantity: Float
+  imprestQuantity: Float
+  previousQuantity: Float
+  calculatedQuantity: Float
+
+  previousStockOnHand: Float
+  closingQuantity: Int
+
+  stockAdditions: Float
+  stockLosses: Float
+  expiredQuantity: Float
+
+  otherPartyClosingQuantity: Int
+}
+
 input InsertSupplierRequisitionInput {
   id: String!
   orderDate: String
@@ -1263,7 +1384,79 @@ input InsertSupplierRequisitionInput {
   type: RequisitionNodeType
 }
 
+input InsertSupplierRequisitionLineInput {
+  id: String!
+  itemId: String!
+  requisitionId: String!
+  itemName: String
+  itemCode: String
+  itemUnit: String
+
+  comment: String
+
+  monthlyConsumption: Float
+  monthsOfSupply: Float
+
+  supplyQuantity: Float
+  openingQuantity: Float
+  issuedQuantity: Float
+  requestedQuantity: Float
+  receivedQuantity: Float
+  imprestQuantity: Float
+  previousQuantity: Float
+  calculatedQuantity: Float
+
+  previousStockOnHand: Float
+  closingQuantity: Int
+
+  stockAdditions: Float
+  stockLosses: Float
+  expiredQuantity: Float
+
+  otherPartyClosingQuantity: Int
+}
+
+input InsertCustomerRequisitionLineInput {
+  id: String!
+  itemId: String!
+  requisitionId: String!
+  itemName: String
+  itemCode: String
+  itemUnit: String
+
+  comment: String
+
+  monthlyConsumption: Float
+  monthsOfSupply: Float
+
+  supplyQuantity: Float
+  openingQuantity: Float
+  issuedQuantity: Float
+  requestedQuantity: Float
+  receivedQuantity: Float
+  imprestQuantity: Float
+  previousQuantity: Float
+  calculatedQuantity: Float
+
+  previousStockOnHand: Float
+  closingQuantity: Int
+
+  stockAdditions: Float
+  stockLosses: Float
+  expiredQuantity: Float
+
+  otherPartyClosingQuantity: Int
+}
+
 input DeleteSupplierRequisitionInput {
+  id: String!
+}
+
+input DeleteSupplierRequisitionLineInput {
+  id: String!
+}
+
+input DeleteCustomerRequisitionLineInput {
   id: String!
 }
 
@@ -1273,16 +1466,52 @@ type UpdateSupplierRequisitionResponseWithId {
   response: UpdateSupplierRequisitionResponse
 }
 
+union UpdateSupplierRequisitionLineResponse = NodeError | RequisitionLineNode
+type UpdateSupplierRequisitionLineResponseWithId {
+  id: String!
+  response: UpdateSupplierRequisitionLineResponse
+}
+
+union UpdateCustomerRequisitionLineResponse = NodeError | RequisitionLineNode
+type UpdateCustomerRequisitionLineResponseWithId {
+  id: String!
+  response: UpdateCustomerRequisitionLineResponse
+}
+
 union InsertSupplierRequisitionResponse = NodeError | RequisitionNode
 type InsertSupplierRequisitionResponseWithId {
   id: String!
   response: InsertSupplierRequisitionResponse
 }
 
+union InsertSupplierRequisitionLineResponse = NodeError | RequisitionLineNode
+type InsertSupplierRequisitionLineResponseWithId {
+  id: String!
+  response: InsertSupplierRequisitionLineResponse
+}
+
+union InsertCustomerRequisitionLineResponse = NodeError | RequisitionLineNode
+type InsertCustomerRequisitionLineResponseWithId {
+  id: String!
+  response: InsertSupplierRequisitionLineResponse
+}
+
 union DeleteSupplierRequisitionResponse = NodeError | DeleteResponse
 type DeleteSupplierRequisitionResponseWithId {
   id: String!
   response: DeleteSupplierRequisitionResponse
+}
+
+union DeleteSupplierRequisitionLineResponse = NodeError | DeleteResponse
+type DeleteSupplierRequisitionLineResponseWithId {
+  id: String!
+  response: DeleteSupplierRequisitionLineResponse
+}
+
+union DeleteCustomerRequisitionLineResponse = NodeError | DeleteResponse
+type DeleteCustomerRequisitionLineResponseWithId {
+  id: String!
+  response: DeleteCustomerRequisitionLineResponse
 }
 
 input UpdateCustomerRequisitionInput {
@@ -1329,27 +1558,33 @@ input BatchSupplierRequisitionInput {
   insertSupplierRequisitions: [InsertSupplierRequisitionInput!]
   updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
   deleteSupplierRequisitions: [DeleteSupplierRequisitionInput!]
+  insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!]
+  updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!]
+  deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!]
 }
 
 input BatchCustomerRequisitionInput {
   insertCustomerRequisitions: [InsertCustomerRequisitionInput!]
   updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]
   deleteCustomerRequisitions: [DeleteCustomerRequisitionInput!]
+  insertCustomerRequisitionLines: [InsertCustomerRequisitionLineInput!]
+  updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!]
+  deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
 }
 
 type BatchCustomerRequisitionResponse {
-  # insertCustomerRequisitionLines: [InsertCustomerRequisitionLineResponseWithId!]
-  # updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineResponseWithId!]
-  # deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineResponseWithId!]
+  insertCustomerRequisitionLines: [InsertCustomerRequisitionLineResponseWithId!]
+  updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineResponseWithId!]
+  deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineResponseWithId!]
   insertCustomerRequisitions: [InsertCustomerRequisitionResponseWithId!]
   updateCustomerRequisitions: [UpdateCustomerRequisitionResponseWithId!]
   deleteCustomerRequisitions: [DeleteCustomerRequisitionResponseWithId!]
 }
 
 type BatchSupplierRequisitionResponse {
-  # insertSupplierRequisitionLines: [InsertSupplierRequisitionLineResponseWithId!]
-  # updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineResponseWithId!]
-  # deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineResponseWithId!]
+  insertSupplierRequisitionLines: [InsertSupplierRequisitionLineResponseWithId!]
+  updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineResponseWithId!]
+  deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineResponseWithId!]
   insertSupplierRequisitions: [InsertSupplierRequisitionResponseWithId!]
   updateSupplierRequisitions: [UpdateSupplierRequisitionResponseWithId!]
   deleteSupplierRequisitions: [DeleteSupplierRequisitionResponseWithId!]

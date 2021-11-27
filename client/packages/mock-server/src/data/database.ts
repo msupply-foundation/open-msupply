@@ -7,6 +7,12 @@ import {
   InsertCustomerRequisitionInput,
   UpdateCustomerRequisitionInput,
   DeleteCustomerRequisitionInput,
+  InsertSupplierRequisitionLineInput,
+  UpdateSupplierRequisitionLineInput,
+  DeleteSupplierRequisitionLineInput,
+  InsertCustomerRequisitionLineInput,
+  UpdateCustomerRequisitionLineInput,
+  DeleteCustomerRequisitionLineInput,
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
@@ -21,6 +27,7 @@ import {
   InvoiceLine,
   Name,
   Requisition,
+  RequisitionLine,
 } from './types';
 import {
   InvoiceData,
@@ -30,6 +37,8 @@ import {
   NameData,
   removeElement,
   RequisitionData,
+  RequisitionLineData,
+  createRequisitionLine,
 } from './data';
 
 import {
@@ -128,6 +137,92 @@ export const requisition = {
           `Could not find requisition to delete with id: ${input.id}`
         );
       removeElement(RequisitionData, index);
+      return input;
+    },
+  },
+};
+
+const requisitionLine = {
+  get: {
+    byRequisitionId: (requisitionId: string): RequisitionLine[] => {
+      const lines = RequisitionLineData.filter(
+        getFilter(requisitionId, 'requisitionId')
+      );
+
+      return [...lines];
+    },
+  },
+  supplier: {
+    insert: (input: InsertSupplierRequisitionLineInput): RequisitionLine => {
+      const item = ItemData.find(getFilter(input.itemId, 'id'));
+      if (!item) {
+        throw new Error(`Could not find item with id: ${input.itemId}`);
+      }
+      const req = RequisitionData.find(getFilter(input.requisitionId, 'id'));
+      if (!req) {
+        throw new Error(
+          `Could not find requisition with id: ${input.requisitionId}`
+        );
+      }
+
+      const line = { ...createRequisitionLine(req, item), ...input };
+      RequisitionLineData.push(line);
+      return line;
+    },
+    update: (input: UpdateSupplierRequisitionLineInput): RequisitionLine => {
+      const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
+      const line = RequisitionLineData[index] as RequisitionLine;
+      if (!line) {
+        throw new Error(`Could not find line with id: ${input.id}`);
+      }
+
+      const updatedLine = { ...line, ...input } as RequisitionLine;
+      RequisitionLineData[index] = updatedLine;
+
+      return updatedLine;
+    },
+    delete: (input: DeleteSupplierRequisitionLineInput): DeleteResponse => {
+      const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
+      if (!(index >= 0))
+        throw new Error(`Could not find line to delete with id: ${input.id}`);
+      removeElement(RequisitionLineData, index);
+      return input;
+    },
+  },
+  customer: {
+    insert: (input: InsertCustomerRequisitionLineInput): RequisitionLine => {
+      const item = ItemData.find(getFilter(input.itemId, 'id'));
+      if (!item) {
+        throw new Error(`Could not find item with id: ${input.itemId}`);
+      }
+      const req = RequisitionData.find(getFilter(input.requisitionId, 'id'));
+      if (!req) {
+        throw new Error(
+          `Could not find requisition with id: ${input.requisitionId}`
+        );
+      }
+
+      const line = createRequisitionLine(req, item);
+      RequisitionLineData.push(line);
+      return line;
+    },
+    update: (input: UpdateCustomerRequisitionLineInput): RequisitionLine => {
+      const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
+      const line = RequisitionLineData[index] as RequisitionLine;
+      if (!line) {
+        throw new Error(`Could not find line with id: ${input.id}`);
+      }
+
+      const updatedLine = { ...line, ...input } as RequisitionLine;
+      RequisitionLineData[index] = updatedLine;
+
+      return updatedLine;
+    },
+    delete: (input: DeleteCustomerRequisitionLineInput): DeleteResponse => {
+      const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
+      if (!(index >= 0))
+        throw new Error(`Could not find line to delete with id: ${input.id}`);
+      removeElement(RequisitionLineData, index);
       return input;
     },
   },
@@ -340,6 +435,7 @@ export const remove = {
 export const db = {
   invoice,
   requisition,
+  requisitionLine,
   get,
   update,
   insert,

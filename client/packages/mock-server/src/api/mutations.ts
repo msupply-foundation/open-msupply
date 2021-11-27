@@ -6,6 +6,12 @@ import {
   UpdateCustomerRequisitionInput,
   InsertCustomerRequisitionInput,
   DeleteCustomerRequisitionInput,
+  UpdateSupplierRequisitionLineInput,
+  InsertSupplierRequisitionLineInput,
+  DeleteSupplierRequisitionLineInput,
+  UpdateCustomerRequisitionLineInput,
+  InsertCustomerRequisitionLineInput,
+  DeleteCustomerRequisitionLineInput,
   InvoiceNodeType,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
@@ -22,7 +28,7 @@ import {
   adjustStockLineTotalNumberOfPacks,
 } from './../data/data';
 import { Api } from './index';
-import { ResolvedInvoice, Requisition } from './../data/types';
+import { ResolvedInvoice, Requisition, RequisitionLine } from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
 
@@ -47,6 +53,31 @@ export const requisition = {
     },
     delete: (input: DeleteCustomerRequisitionInput): DeleteResponse => {
       return db.requisition.customer.delete(input);
+    },
+  },
+};
+
+export const requisitionLine = {
+  supplier: {
+    update: (input: UpdateSupplierRequisitionLineInput): RequisitionLine => {
+      return db.requisitionLine.supplier.update(input);
+    },
+    insert: (input: InsertSupplierRequisitionLineInput): RequisitionLine => {
+      return db.requisitionLine.supplier.insert(input);
+    },
+    delete: (input: DeleteSupplierRequisitionLineInput): DeleteResponse => {
+      return db.requisitionLine.supplier.delete(input);
+    },
+  },
+  customer: {
+    update: (input: UpdateCustomerRequisitionLineInput): RequisitionLine => {
+      return db.requisitionLine.customer.update(input);
+    },
+    insert: (input: InsertCustomerRequisitionLineInput): RequisitionLine => {
+      return db.requisitionLine.customer.insert(input);
+    },
+    delete: (input: DeleteCustomerRequisitionLineInput): DeleteResponse => {
+      return db.requisitionLine.customer.delete(input);
     },
   },
 };
@@ -261,6 +292,7 @@ export const remove = {
 
 export const MutationService = {
   requisition,
+  requisitionLine,
   update,
   remove,
   insert,
