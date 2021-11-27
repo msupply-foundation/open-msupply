@@ -3,11 +3,14 @@ import {
   DeleteResponse,
   InsertSupplierRequisitionInput,
   UpdateSupplierRequisitionInput,
+  DeleteSupplierRequisitionInput,
+  InsertCustomerRequisitionInput,
+  UpdateCustomerRequisitionInput,
+  DeleteCustomerRequisitionInput,
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
   InsertInboundShipmentLineInput,
-  DeleteSupplierRequisitionInput,
   SupplierRequisitionNodeStatus,
   RequisitionNodeType,
 } from './../../../common/src/types/schema';
@@ -87,6 +90,38 @@ export const requisition = {
       return updatedReq;
     },
     delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      if (!(index >= 0))
+        throw new Error(
+          `Could not find requisition to delete with id: ${input.id}`
+        );
+      removeElement(RequisitionData, index);
+      return input;
+    },
+  },
+  customer: {
+    insert: (input: InsertCustomerRequisitionInput): Requisition => {
+      const requisitionNumber = faker.datatype.number({ max: 1000 });
+      const storeId = '';
+      const status = SupplierRequisitionNodeStatus.Draft;
+      const type = input.type || RequisitionNodeType.CustomerRequisition;
+      const req = { ...input, requisitionNumber, storeId, status, type };
+      RequisitionData.push(req);
+      return req;
+    },
+    update: (input: UpdateCustomerRequisitionInput): Requisition => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      const req = RequisitionData[index] as Requisition;
+      if (!req) {
+        throw new Error(`Could not find requisition with id: ${input.id}`);
+      }
+
+      const updatedReq = { ...req, ...input } as Requisition;
+      RequisitionData[index] = updatedReq;
+
+      return updatedReq;
+    },
+    delete: (input: DeleteCustomerRequisitionInput): DeleteResponse => {
       const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
       if (!(index >= 0))
         throw new Error(

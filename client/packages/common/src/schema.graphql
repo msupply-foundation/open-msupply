@@ -656,6 +656,16 @@ type Mutations {
   deleteSupplierRequisition(
     input: DeleteSupplierRequisitionInput!
   ): DeleteSupplierRequisitionResponse!
+
+  updateCustomerRequisition(
+    input: UpdateCustomerRequisitionInput!
+  ): UpdateCustomerRequisitionResponse!
+  insertCustomerRequisition(
+    input: InsertCustomerRequisitionInput!
+  ): InsertCustomerRequisitionResponse!
+  deleteCustomerRequisition(
+    input: DeleteCustomerRequisitionInput!
+  ): DeleteCustomerRequisitionResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -1250,3 +1260,29 @@ input DeleteSupplierRequisitionInput {
 union UpdateSupplierRequisitionResponse = NodeError | RequisitionNode
 union InsertSupplierRequisitionResponse = NodeError | RequisitionNode
 union DeleteSupplierRequisitionResponse = NodeError | DeleteResponse
+
+input UpdateCustomerRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input InsertCustomerRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String!
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input DeleteCustomerRequisitionInput {
+  id: String!
+}
+
+union UpdateCustomerRequisitionResponse = NodeError | RequisitionNode
+union InsertCustomerRequisitionResponse = NodeError | RequisitionNode
+union DeleteCustomerRequisitionResponse = NodeError | DeleteResponse
