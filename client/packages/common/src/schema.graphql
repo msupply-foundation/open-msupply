@@ -647,9 +647,15 @@ type Mutations {
     deleteOutboundShipments: [String!]
   ): BatchOutboundShipmentResponse!
 
-  updateRequisition(input: UpdateRequisitionInput!): UpdateRequisitionResponse!
-  insertRequisition(input: InsertRequisitionInput!): InsertRequisitionResponse!
-  deleteRequisition(input: DeleteRequisitionInput!): DeleteRequisitionResponse!
+  updateSupplierRequisition(
+    input: UpdateSupplierRequisitionInput!
+  ): UpdateSupplierRequisitionResponse!
+  insertSupplierRequisition(
+    input: InsertSupplierRequisitionInput!
+  ): InsertSupplierRequisitionResponse!
+  deleteSupplierRequisition(
+    input: DeleteSupplierRequisitionInput!
+  ): DeleteSupplierRequisitionResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -1219,7 +1225,7 @@ type RequisitionConnector {
   nodes: [RequisitionNode]!
 }
 
-input UpdateRequisitionInput {
+input UpdateSupplierRequisitionInput {
   id: String!
   orderDate: String
   nameId: String
@@ -1228,7 +1234,7 @@ input UpdateRequisitionInput {
   type: RequisitionNodeType
 }
 
-input InsertRequisitionInput {
+input InsertSupplierRequisitionInput {
   id: String!
   orderDate: String
   nameId: String!
@@ -1237,10 +1243,10 @@ input InsertRequisitionInput {
   type: RequisitionNodeType
 }
 
-input DeleteRequisitionInput {
+input DeleteSupplierRequisitionInput {
   id: String!
 }
 
-union UpdateRequisitionResponse = NodeError | RequisitionNode
-union InsertRequisitionResponse = NodeError | RequisitionNode
-union DeleteRequisitionResponse = NodeError | DeleteResponse
+union UpdateSupplierRequisitionResponse = NodeError | RequisitionNode
+union InsertSupplierRequisitionResponse = NodeError | RequisitionNode
+union DeleteSupplierRequisitionResponse = NodeError | DeleteResponse

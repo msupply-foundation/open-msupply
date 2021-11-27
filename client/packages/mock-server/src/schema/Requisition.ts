@@ -1,7 +1,7 @@
 import {
-  UpdateRequisitionInput,
-  InsertRequisitionInput,
-  DeleteRequisitionInput,
+  UpdateSupplierRequisitionInput,
+  InsertSupplierRequisitionInput,
+  DeleteSupplierRequisitionInput,
   RequisitionListParameters,
 } from './../../../common/src/types/schema';
 import { MutationService } from '../api/mutations';
@@ -12,30 +12,36 @@ const QueryResolvers = {
     return ResolverService.requisition.get.byId(id);
   },
   requisitions: (_: any, vars: { params: RequisitionListParameters }) => {
-    console.log('-------------------------------------------');
-    console.log('vars', vars);
-    console.log('-------------------------------------------');
     return ResolverService.requisition.get.list(vars.params);
   },
 };
 
 const MutationResolvers = {
-  updateRequisition: (_: any, { input }: { input: UpdateRequisitionInput }) => {
+  updateSupplierRequisition: (
+    _: any,
+    { input }: { input: UpdateSupplierRequisitionInput }
+  ) => {
     return {
       __typename: 'RequisitionNode',
-      ...MutationService.requisition.update(input),
+      ...MutationService.requisition.supplier.update(input),
     };
   },
-  insertRequisition: (_: any, { input }: { input: InsertRequisitionInput }) => {
+  insertSupplierRequisition: (
+    _: any,
+    { input }: { input: InsertSupplierRequisitionInput }
+  ) => {
     return {
       __typename: 'RequisitionNode',
-      ...MutationService.requisition.insert(input),
+      ...MutationService.requisition.supplier.insert(input),
     };
   },
-  deleteRequisition: (_: any, { input }: { input: DeleteRequisitionInput }) => {
+  deleteSupplierRequisition: (
+    _: any,
+    { input }: { input: DeleteSupplierRequisitionInput }
+  ) => {
     return {
       __typename: 'DeleteResponse',
-      ...MutationService.requisition.delete(input),
+      ...MutationService.requisition.supplier.delete(input),
     };
   },
 };

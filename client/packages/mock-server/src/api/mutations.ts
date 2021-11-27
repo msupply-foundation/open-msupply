@@ -1,8 +1,8 @@
 import {
   InsertInboundShipmentLineInput,
-  UpdateRequisitionInput,
-  InsertRequisitionInput,
-  DeleteRequisitionInput,
+  UpdateSupplierRequisitionInput,
+  InsertSupplierRequisitionInput,
+  DeleteSupplierRequisitionInput,
   InvoiceNodeType,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
@@ -24,14 +24,27 @@ import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
 
 export const requisition = {
-  update: (input: UpdateRequisitionInput): Requisition => {
-    return db.requisition.update(input);
+  supplier: {
+    update: (input: UpdateSupplierRequisitionInput): Requisition => {
+      return db.requisition.supplier.update(input);
+    },
+    insert: (input: InsertSupplierRequisitionInput): Requisition => {
+      return db.requisition.supplier.insert(input);
+    },
+    delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+      return db.requisition.supplier.delete(input);
+    },
   },
-  insert: (input: InsertRequisitionInput): Requisition => {
-    return db.requisition.insert(input);
-  },
-  delete: (input: DeleteRequisitionInput): DeleteResponse => {
-    return db.requisition.delete(input);
+  customer: {
+    update: (input: UpdateSupplierRequisitionInput): Requisition => {
+      return db.requisition.supplier.update(input);
+    },
+    insert: (input: InsertSupplierRequisitionInput): Requisition => {
+      return db.requisition.supplier.insert(input);
+    },
+    delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+      return db.requisition.supplier.delete(input);
+    },
   },
 };
 
