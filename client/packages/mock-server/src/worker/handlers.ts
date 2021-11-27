@@ -155,7 +155,7 @@ export const itemsWithStockLines = graphql.query<
   ItemsListViewQueryVariables
 >('itemsWithStockLines', (request, response, context) => {
   const { variables } = request;
-  const result = ResolverService.list.item(variables);
+  const result = ResolverService.item.list(variables);
 
   return response(context.data({ items: result }));
 });
@@ -165,7 +165,7 @@ export const itemsListView = graphql.query<
   ItemsListViewQueryVariables
 >('itemsListView', (request, response, context) => {
   const { variables } = request;
-  const result = ResolverService.list.item(variables);
+  const result = ResolverService.item.list(variables);
 
   return response(context.data({ items: result }));
 });
