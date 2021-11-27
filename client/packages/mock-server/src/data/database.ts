@@ -1,14 +1,15 @@
 import faker from 'faker';
 import {
   DeleteResponse,
-  InsertRequisitionInput,
-  UpdateRequisitionInput,
+  InsertSupplierRequisitionInput,
+  UpdateSupplierRequisitionInput,
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
   InsertInboundShipmentLineInput,
-  DeleteRequisitionInput,
+  DeleteSupplierRequisitionInput,
   SupplierRequisitionNodeStatus,
+  RequisitionNodeType,
 } from './../../../common/src/types/schema';
 import {
   Item,
@@ -63,34 +64,37 @@ export const requisition = {
       return [...RequisitionData];
     },
   },
-  insert: (input: InsertRequisitionInput): Requisition => {
-    const requisitionNumber = faker.datatype.number({ max: 1000 });
-    const storeId = '';
-    const status = SupplierRequisitionNodeStatus.Draft;
-    const req = { ...input, requisitionNumber, storeId, status };
-    RequisitionData.push(req);
-    return req;
-  },
-  update: (input: UpdateRequisitionInput): Requisition => {
-    const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
-    const req = RequisitionData[index] as Requisition;
-    if (!req) {
-      throw new Error(`Could not find requisition with id: ${input.id}`);
-    }
+  supplier: {
+    insert: (input: InsertSupplierRequisitionInput): Requisition => {
+      const requisitionNumber = faker.datatype.number({ max: 1000 });
+      const storeId = '';
+      const status = SupplierRequisitionNodeStatus.Draft;
+      const type = input.type || RequisitionNodeType.SupplierRequisition;
+      const req = { ...input, requisitionNumber, storeId, status, type };
+      RequisitionData.push(req);
+      return req;
+    },
+    update: (input: UpdateSupplierRequisitionInput): Requisition => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      const req = RequisitionData[index] as Requisition;
+      if (!req) {
+        throw new Error(`Could not find requisition with id: ${input.id}`);
+      }
 
-    const updatedReq = { ...req, ...input } as Requisition;
-    RequisitionData[index] = updatedReq;
+      const updatedReq = { ...req, ...input } as Requisition;
+      RequisitionData[index] = updatedReq;
 
-    return updatedReq;
-  },
-  delete: (input: DeleteRequisitionInput): DeleteResponse => {
-    const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
-    if (!(index >= 0))
-      throw new Error(
-        `Could not find requisition to delete with id: ${input.id}`
-      );
-    removeElement(RequisitionData, index);
-    return input;
+      return updatedReq;
+    },
+    delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      if (!(index >= 0))
+        throw new Error(
+          `Could not find requisition to delete with id: ${input.id}`
+        );
+      removeElement(RequisitionData, index);
+      return input;
+    },
   },
 };
 

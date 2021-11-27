@@ -1,10 +1,4 @@
-import {
-  UpdateRequisitionInput,
-  InsertRequisitionInput,
-  DeleteRequisitionInput,
-  RequisitionListParameters,
-  DeleteResponse,
-} from './../../../common/src/types/schema';
+import { RequisitionListParameters } from './../../../common/src/types/schema';
 import {
   ResolvedItem,
   ResolvedInvoice,
@@ -14,7 +8,6 @@ import {
   ListResponse,
   ResolvedInvoiceCounts,
   ResolvedStockCounts,
-  Requisition,
   ResolvedRequisition,
 } from './../data/types';
 
@@ -154,15 +147,6 @@ export const ResolverService = {
           'RequisitionConnector'
         );
       },
-    },
-    update: (input: UpdateRequisitionInput): Requisition => {
-      return db.requisition.update(input);
-    },
-    insert: (input: InsertRequisitionInput): Requisition => {
-      return db.requisition.insert(input);
-    },
-    delete: (input: DeleteRequisitionInput): DeleteResponse => {
-      return db.requisition.delete(input);
     },
   },
 
