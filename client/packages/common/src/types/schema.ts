@@ -38,6 +38,19 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type BatchCustomerRequisitionInput = {
+  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionInput>>;
+  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionInput>>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput>>;
+};
+
+export type BatchCustomerRequisitionResponse = {
+  __typename?: 'BatchCustomerRequisitionResponse';
+  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionResponseWithId>>;
+  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionResponseWithId>>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionResponseWithId>>;
+};
+
 export type BatchInboundShipmentInput = {
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
   deleteInboundShipments?: Maybe<Array<Scalars['String']>>;
@@ -79,6 +92,19 @@ export type BatchOutboundShipmentResponse = {
   insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentResponseWithId>>;
   updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineResponseWithId>>;
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentResponseWithId>>;
+};
+
+export type BatchSupplierRequisitionInput = {
+  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
+  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionInput>>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput>>;
+};
+
+export type BatchSupplierRequisitionResponse = {
+  __typename?: 'BatchSupplierRequisitionResponse';
+  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionResponseWithId>>;
+  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionResponseWithId>>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionResponseWithId>>;
 };
 
 export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateOutboundShipmentErrorInterface & {
@@ -149,6 +175,12 @@ export type DeleteCustomerRequisitionInput = {
 };
 
 export type DeleteCustomerRequisitionResponse = DeleteResponse | NodeError;
+
+export type DeleteCustomerRequisitionResponseWithId = {
+  __typename?: 'DeleteCustomerRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<DeleteCustomerRequisitionResponse>;
+};
 
 export type DeleteInboundShipmentError = {
   __typename?: 'DeleteInboundShipmentError';
@@ -243,6 +275,12 @@ export type DeleteSupplierRequisitionInput = {
 
 export type DeleteSupplierRequisitionResponse = DeleteResponse | NodeError;
 
+export type DeleteSupplierRequisitionResponseWithId = {
+  __typename?: 'DeleteSupplierRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<DeleteSupplierRequisitionResponse>;
+};
+
 export type EqualFilterBooleanInput = {
   equalTo?: Maybe<Scalars['Boolean']>;
 };
@@ -292,6 +330,12 @@ export type InsertCustomerRequisitionInput = {
 };
 
 export type InsertCustomerRequisitionResponse = NodeError | RequisitionNode;
+
+export type InsertCustomerRequisitionResponseWithId = {
+  __typename?: 'InsertCustomerRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertCustomerRequisitionResponse>;
+};
 
 export type InsertInboundShipmentError = {
   __typename?: 'InsertInboundShipmentError';
@@ -412,6 +456,12 @@ export type InsertSupplierRequisitionInput = {
 };
 
 export type InsertSupplierRequisitionResponse = NodeError | RequisitionNode;
+
+export type InsertSupplierRequisitionResponseWithId = {
+  __typename?: 'InsertSupplierRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertSupplierRequisitionResponse>;
+};
 
 export type InternalError = AuthTokenErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'InternalError';
@@ -673,8 +723,10 @@ export type LogoutResponse = Logout | LogoutError;
 
 export type Mutations = {
   __typename?: 'Mutations';
+  batchCustomerRequisition: BatchCustomerRequisitionResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
+  batchSupplierRequisition: BatchSupplierRequisitionResponse;
   deleteCustomerRequisition: DeleteCustomerRequisitionResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
@@ -697,6 +749,13 @@ export type Mutations = {
 };
 
 
+export type MutationsBatchCustomerRequisitionArgs = {
+  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionInput>>;
+  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionInput>>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput>>;
+};
+
+
 export type MutationsBatchInboundShipmentArgs = {
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
   deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentInput>>;
@@ -714,6 +773,13 @@ export type MutationsBatchOutboundShipmentArgs = {
   insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
   updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
+};
+
+
+export type MutationsBatchSupplierRequisitionArgs = {
+  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
+  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionInput>>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput>>;
 };
 
 
@@ -1165,6 +1231,12 @@ export type UpdateCustomerRequisitionInput = {
 
 export type UpdateCustomerRequisitionResponse = NodeError | RequisitionNode;
 
+export type UpdateCustomerRequisitionResponseWithId = {
+  __typename?: 'UpdateCustomerRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateCustomerRequisitionResponse>;
+};
+
 export type UpdateInboundShipmentError = {
   __typename?: 'UpdateInboundShipmentError';
   error: UpdateInboundShipmentErrorInterface;
@@ -1284,6 +1356,12 @@ export type UpdateSupplierRequisitionInput = {
 };
 
 export type UpdateSupplierRequisitionResponse = NodeError | RequisitionNode;
+
+export type UpdateSupplierRequisitionResponseWithId = {
+  __typename?: 'UpdateSupplierRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateSupplierRequisitionResponse>;
+};
 
 export type User = {
   __typename?: 'User';
