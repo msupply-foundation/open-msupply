@@ -1,4 +1,7 @@
-import { RequisitionNodeType } from './../../../common/src/types/schema';
+import {
+  RequisitionNodeType,
+  SupplierRequisitionNodeStatus,
+} from './../../../common/src/types/schema';
 import faker from 'faker';
 // randomName
 /* eslint-disable prefer-const */
@@ -563,9 +566,40 @@ const createSupplierRequisitions = (): Requisition[] => {
       return Array.from({ length: numberOfRequisitions }).map(() => {
         const requisition: Requisition = {
           id: `${faker.datatype.uuid()}`,
+          requisitionNumber: faker.datatype.number({ max: 1000 }),
+          storeId: '',
           nameId: supplier.id,
           orderDate: faker.date.past(1.5).toISOString(),
           type: RequisitionNodeType.SupplierRequisition,
+          maxMOS: 3,
+          thresholdMOS: 3,
+          status: SupplierRequisitionNodeStatus.Draft,
+        };
+
+        return requisition;
+      });
+    })
+    .flat();
+};
+
+const createCustomerRequisitions = (): Requisition[] => {
+  const customers = getCustomers();
+
+  return customers
+    .map(customer => {
+      const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
+
+      return Array.from({ length: numberOfRequisitions }).map(() => {
+        const requisition: Requisition = {
+          id: `${faker.datatype.uuid()}`,
+          requisitionNumber: faker.datatype.number({ max: 1000 }),
+          nameId: customer.id,
+          storeId: '',
+          orderDate: faker.date.past(1.5).toISOString(),
+          type: RequisitionNodeType.CustomerRequisition,
+          maxMOS: 3,
+          thresholdMOS: 3,
+          status: SupplierRequisitionNodeStatus.Draft,
         };
 
         return requisition;
@@ -583,4 +617,7 @@ export let ItemData = createItems();
 export let InvoiceData = createInvoices(NameData);
 export let StockLineData = createStockLines(ItemData);
 export let InvoiceLineData = createInvoicesLines(InvoiceData, StockLineData);
-export let RequisitionData = createSupplierRequisitions();
+export let RequisitionData = [
+  ...createSupplierRequisitions(),
+  ...createCustomerRequisitions(),
+];

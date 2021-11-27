@@ -126,6 +126,12 @@ export type CountError = {
   description: Scalars['String'];
 };
 
+export enum CustomerRequisitionNodeStatus {
+  Finalised = 'FINALISED',
+  InProgress = 'IN_PROGRESS',
+  New = 'NEW'
+}
+
 export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'DatabaseError';
   description: Scalars['String'];
@@ -382,7 +388,7 @@ export type InsertOutboundShipmentResponseWithId = {
 export type InsertRequisitionInput = {
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  nameId?: Maybe<Scalars['String']>;
+  nameId: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
   otherPartyReference?: Maybe<Scalars['String']>;
   type?: Maybe<RequisitionNodeType>;
@@ -942,6 +948,11 @@ export type QueriesRequisitionArgs = {
   id: Scalars['String'];
 };
 
+
+export type QueriesRequisitionsArgs = {
+  params?: Maybe<RequisitionListParameters>;
+};
+
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename?: 'RangeError';
   description: Scalars['String'];
@@ -995,15 +1006,28 @@ export type RequisitionConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type RequisitionFilterInput = {
+  type?: Maybe<SimpleStringFilterInput>;
+};
+
+export type RequisitionListParameters = {
+  filter?: Maybe<RequisitionFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<RequisitionSortInput>>;
+};
+
 export type RequisitionNode = {
   __typename?: 'RequisitionNode';
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  nameId?: Maybe<Scalars['String']>;
+  maxMOS?: Maybe<Scalars['Int']>;
+  nameId: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
   otherPartyReference?: Maybe<Scalars['String']>;
-  requisitionNumber?: Maybe<Scalars['Int']>;
-  storeId?: Maybe<Scalars['String']>;
+  requisitionNumber: Scalars['Int'];
+  status: SupplierRequisitionNodeStatus;
+  storeId: Scalars['String'];
+  thresholdMOS?: Maybe<Scalars['Int']>;
   type?: Maybe<RequisitionNodeType>;
 };
 
@@ -1013,6 +1037,15 @@ export enum RequisitionNodeType {
 }
 
 export type RequisitionResponse = NodeError | RequisitionNode;
+
+export enum RequisitionSortFieldInput {
+  OtherPartyName = 'otherPartyName'
+}
+
+export type RequisitionSortInput = {
+  desc?: Maybe<Scalars['Boolean']>;
+  key: RequisitionSortFieldInput;
+};
 
 export type RequisitionsResponse = ConnectorError | RequisitionConnector;
 
@@ -1073,6 +1106,13 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
+
+export enum SupplierRequisitionNodeStatus {
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED',
+  InProgress = 'IN_PROGRESS',
+  Sent = 'SENT'
+}
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename?: 'TokenExpired';

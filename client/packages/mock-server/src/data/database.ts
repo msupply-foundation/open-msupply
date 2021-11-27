@@ -1,4 +1,6 @@
+import faker from 'faker';
 import {
+  DeleteResponse,
   InsertRequisitionInput,
   UpdateRequisitionInput,
   UpdateOutboundShipmentInput,
@@ -6,6 +8,7 @@ import {
   UpdateOutboundShipmentLineInput,
   InsertInboundShipmentLineInput,
   DeleteRequisitionInput,
+  SupplierRequisitionNodeStatus,
 } from './../../../common/src/types/schema';
 import {
   Item,
@@ -61,21 +64,26 @@ export const requisition = {
     },
   },
   insert: (input: InsertRequisitionInput): Requisition => {
-    RequisitionData.push({ ...input });
-    return input;
+    const requisitionNumber = faker.datatype.number({ max: 1000 });
+    const storeId = '';
+    const status = SupplierRequisitionNodeStatus.Draft;
+    const req = { ...input, requisitionNumber, storeId, status };
+    RequisitionData.push(req);
+    return req;
   },
   update: (input: UpdateRequisitionInput): Requisition => {
     const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
-
-    RequisitionData[index] = { ...RequisitionData[index], ...input };
-    const req = RequisitionData[index];
+    const req = RequisitionData[index] as Requisition;
     if (!req) {
       throw new Error(`Could not find requisition with id: ${input.id}`);
     }
 
-    return req;
+    const updatedReq = { ...req, ...input } as Requisition;
+    RequisitionData[index] = updatedReq;
+
+    return updatedReq;
   },
-  delete: (input: DeleteRequisitionInput): Requisition => {
+  delete: (input: DeleteRequisitionInput): DeleteResponse => {
     const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
     if (!(index >= 0))
       throw new Error(

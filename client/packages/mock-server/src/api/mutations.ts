@@ -9,6 +9,7 @@ import {
   UpdateInboundShipmentInput,
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
+  DeleteResponse,
 } from '@openmsupply-client/common/src/types';
 
 import { ResolverService } from './resolvers';
@@ -29,7 +30,7 @@ export const requisition = {
   insert: (input: InsertRequisitionInput): Requisition => {
     return db.requisition.insert(input);
   },
-  delete: (input: DeleteRequisitionInput): Requisition => {
+  delete: (input: DeleteRequisitionInput): DeleteResponse => {
     return db.requisition.delete(input);
   },
 };
