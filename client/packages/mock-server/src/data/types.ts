@@ -1,16 +1,22 @@
-import {
-  RequisitionNode,
-  RequisitionLineNode,
-  RequisitionLinesResponse,
-} from './../../../common/src/types/schema';
+import { StockLineConnector } from './../../../common/src/types/schema';
 import {
   InvoiceLineNode,
   InvoiceNode,
   ItemNode,
   StockLineNode,
   LocationNode,
+  ItemFilterInput,
+  PaginationInput,
+  RequisitionNode,
+  RequisitionLineNode,
+  RequisitionLinesResponse,
+  ItemSortFieldInput,
+  ItemSortInput,
+  RequisitionListParameters,
+  ItemsResponse,
 } from '@openmsupply-client/common/src/types/schema';
 
+export { ItemSortFieldInput, RequisitionListParameters, ItemsResponse };
 export interface ListResponse<T> {
   __typename: string;
   totalCount: number;
@@ -29,7 +35,7 @@ export type Location = LocationNode;
 
 export interface ResolvedItem extends Item {
   __typename: 'ItemNode';
-  availableBatches: { nodes: StockLine[] };
+  availableBatches: StockLineConnector;
   availableQuantity: number;
 }
 
@@ -143,3 +149,9 @@ export interface RequisitionLine
 export interface ResolvedRequisitionLine extends RequisitionLine {
   __typename: 'RequisitionLineNode';
 }
+
+export type ItemListParameters = {
+  filter?: ItemFilterInput | null;
+  page?: PaginationInput | null;
+  sort?: Array<ItemSortInput> | null;
+};
