@@ -710,8 +710,8 @@ const createStocktake = (): Stocktake => {
     id: faker.datatype.uuid(),
     stocktakeNumber: faker.datatype.number({ max: 1000 }),
     stocktakeDate: faker.date.past(1.5).toISOString(),
-    comment: '',
-    description: '',
+    comment: takeRandomElementFrom(comments),
+    description: takeRandomElementFrom(comments),
     status: StocktakeNodeStatus.Draft,
   };
 };

@@ -1,5 +1,1 @@
-import { FC } from 'react';
-
-export const ListView: FC = () => {
-  return null;
-};
+export { ListView } from './ListView';

@@ -1,6 +1,7 @@
 import { graphql } from 'msw';
 import { Invoice as InvoiceSchema } from './../schema/Invoice';
 import { Requisition as RequisitionSchema } from './../schema/Requisition';
+import { Stocktake as StocktakeSchema } from './../schema/Stocktake';
 
 import { Invoice } from './../data/types';
 import { MutationService } from './../api/mutations';
@@ -14,12 +15,16 @@ import {
   NamesQueryVariables,
   DeleteInboundShipmentInput,
   RequisitionListParameters,
+  StocktakeListParameters,
   InsertSupplierRequisitionInput,
   DeleteSupplierRequisitionInput,
   UpdateSupplierRequisitionInput,
   InsertCustomerRequisitionInput,
   DeleteCustomerRequisitionInput,
   UpdateCustomerRequisitionInput,
+  InsertStocktakeInput,
+  DeleteStocktakeInput,
+  UpdateStocktakeInput,
 } from '@openmsupply-client/common/src/types/schema';
 
 const updateOutboundInvoice = graphql.mutation<
@@ -124,6 +129,56 @@ export const invoiceList = graphql.query<
 
   return response(context.data({ invoices: result }));
 });
+export const stocktakeList = graphql.query<
+  Record<string, any>,
+  StocktakeListParameters
+>('stocktakes', (request, response, context) => {
+  const { variables } = request;
+
+  const result = ResolverService.stocktake.list(variables);
+
+  return response(context.data({ stocktakes: result }));
+});
+
+const insertStocktake = graphql.mutation<
+  Record<string, unknown>,
+  { input: InsertStocktakeInput }
+>('insertStocktake', (request, response, context) => {
+  const { variables } = request;
+
+  const result = MutationService.stocktake.insert(variables.input);
+
+  return response(context.data({ insertStocktake: result }));
+});
+
+const deleteStocktakes = graphql.mutation<
+  Record<string, any>,
+  { ids: DeleteStocktakeInput[] }
+>('deleteStocktakes', (request, response, context) => {
+  const { variables } = request;
+  const { ids } = variables;
+
+  const queryResponse = StocktakeSchema.MutationResolvers.batchStocktake(null, {
+    deleteStocktakes: ids,
+  });
+
+  return response(context.data({ batchStocktake: queryResponse }));
+});
+
+const updateStocktake = graphql.mutation<
+  Record<string, unknown>,
+  { input: UpdateStocktakeInput }
+>(
+  'updateStocktake',
+
+  (request, response, context) => {
+    const { variables } = request;
+
+    const result = MutationService.requisition.supplier.update(variables.input);
+
+    return response(context.data({ updateStocktake: result }));
+  }
+);
 
 export const requisitionList = graphql.query<
   Record<string, any>,
@@ -159,7 +214,7 @@ const deleteSupplierRequisitions = graphql.mutation<
       deleteSupplierRequisitions: ids,
     });
 
-  return response(context.data({ batchInboundShipment: queryResponse }));
+  return response(context.data({ batchSupplierRequisition: queryResponse }));
 });
 
 const updateSupplierRequisition = graphql.mutation<
@@ -354,4 +409,7 @@ export const handlers = [
   insertCustomerRequisition,
   updateCustomerRequisition,
   deleteCustomerRequisitions,
+  insertStocktake,
+  updateStocktake,
+  deleteStocktakes,
 ];
