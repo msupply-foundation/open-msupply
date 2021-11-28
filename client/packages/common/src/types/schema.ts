@@ -59,7 +59,7 @@ export type BatchCustomerRequisitionResponse = {
 
 export type BatchInboundShipmentInput = {
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
-  deleteInboundShipments?: Maybe<Array<Scalars['String']>>;
+  deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentInput>>;
   insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput>>;
   insertOutboundShipments?: Maybe<Array<InsertInboundShipmentInput>>;
   updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput>>;
