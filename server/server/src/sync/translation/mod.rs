@@ -220,9 +220,10 @@ async fn store_integration_records(
     })
     .await
     .map_err(|error| match error {
-        TransactionError::Transaction { msg } => {
-            SyncImportError::as_integration_error(RepositoryError::as_db_error(&msg, ""), "")
-        }
+        TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
+            RepositoryError::TransactionError { msg, level },
+            "",
+        ),
         TransactionError::Inner(e) => e,
     })
 }
