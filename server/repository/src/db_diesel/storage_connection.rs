@@ -10,6 +10,7 @@ use diesel::{
     Connection,
 };
 use futures_util::Future;
+use log::error;
 
 pub struct StorageConnection {
     pub connection: DBConnection,
@@ -135,12 +136,13 @@ impl StorageConnection {
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
 
-        transaction_manager
-            .begin_transaction(con)
-            .map_err(|_| TransactionError::Transaction {
+        transaction_manager.begin_transaction(con).map_err(|err| {
+            error!("Failed to rollback tx: {:?}", err);
+            TransactionError::Transaction {
                 msg: "Failed to start tx".to_string(),
                 level: current_level + 1,
-            })?;
+            }
+        })?;
 
         self.transaction_level.set(current_level + 1);
         let result = f(self);
@@ -148,7 +150,8 @@ impl StorageConnection {
 
         match result {
             Ok(value) => {
-                transaction_manager.commit_transaction(con).map_err(|_| {
+                transaction_manager.commit_transaction(con).map_err(|err| {
+                    error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
                         msg: "Failed to end tx".to_string(),
                         level: current_level + 1,
@@ -157,12 +160,15 @@ impl StorageConnection {
                 Ok(value)
             }
             Err(e) => {
-                transaction_manager.rollback_transaction(con).map_err(|_| {
-                    TransactionError::Transaction {
-                        msg: "Failed to rollback tx".to_string(),
-                        level: current_level + 1,
-                    }
-                })?;
+                transaction_manager
+                    .rollback_transaction(con)
+                    .map_err(|err| {
+                        error!("Failed to rollback tx: {:?}", err);
+                        TransactionError::Transaction {
+                            msg: "Failed to rollback tx".to_string(),
+                            level: current_level + 1,
+                        }
+                    })?;
                 Err(TransactionError::Inner(e))
             }
         }
