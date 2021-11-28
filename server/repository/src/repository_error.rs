@@ -14,7 +14,7 @@ pub enum RepositoryError {
     /// Actix thred pool canceled
     #[error("actix thread pool canceled")]
     ThreadPoolCanceled,
-    /// Other DB related errors
+    /// Transaction error
     #[error("Transaction failed: {msg:?}")]
     TransactionError { msg: String },
     /// Other DB related errors
