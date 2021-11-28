@@ -293,6 +293,18 @@ export type DeleteResponse = {
   id: Scalars['String'];
 };
 
+export type DeleteStocktakeInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteStocktakeResponse = DeleteResponse | NodeError;
+
+export type DeleteStocktakeResponseWithId = {
+  __typename?: 'DeleteStocktakeResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateStocktakeResponse>;
+};
+
 export type DeleteSupplierRequisitionInput = {
   id: Scalars['String'];
 };
@@ -514,6 +526,21 @@ export type InsertOutboundShipmentResponseWithId = {
   __typename?: 'InsertOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentResponse;
+};
+
+export type InsertStocktakeInput = {
+  comment?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  stocktakeDate?: Maybe<Scalars['String']>;
+};
+
+export type InsertStocktakeResponse = NodeError | StocktakeNode;
+
+export type InsertStocktakeResponseWithId = {
+  __typename?: 'InsertStocktakeResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertStocktakeResponse>;
 };
 
 export type InsertSupplierRequisitionInput = {
@@ -837,6 +864,7 @@ export type Mutations = {
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
+  deleteStocktake: DeleteStocktakeResponse;
   deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
   deleteSupplierRequisitionLine: DeleteSupplierRequisitionLineResponse;
   insertCustomerRequisition: InsertCustomerRequisitionResponse;
@@ -845,6 +873,7 @@ export type Mutations = {
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
+  insertStocktake: InsertStocktakeResponse;
   insertSupplierRequisition: InsertSupplierRequisitionResponse;
   insertSupplierRequisitionLine: InsertSupplierRequisitionLineResponse;
   registerUser: UserRegisterResponse;
@@ -854,6 +883,7 @@ export type Mutations = {
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
+  updateStocktake: UpdateStocktakeResponse;
   updateSupplierRequisition: UpdateSupplierRequisitionResponse;
   updateSupplierRequisitionLine: UpdateSupplierRequisitionLineResponse;
 };
@@ -929,6 +959,11 @@ export type MutationsDeleteOutboundShipmentLineArgs = {
 };
 
 
+export type MutationsDeleteStocktakeArgs = {
+  input: DeleteStocktakeInput;
+};
+
+
 export type MutationsDeleteSupplierRequisitionArgs = {
   input: DeleteSupplierRequisitionInput;
 };
@@ -966,6 +1001,11 @@ export type MutationsInsertOutboundShipmentArgs = {
 
 export type MutationsInsertOutboundShipmentLineArgs = {
   input: InsertOutboundShipmentLineInput;
+};
+
+
+export type MutationsInsertStocktakeArgs = {
+  input: InsertStocktakeInput;
 };
 
 
@@ -1011,6 +1051,11 @@ export type MutationsUpdateOutboundShipmentArgs = {
 
 export type MutationsUpdateOutboundShipmentLineArgs = {
   input: UpdateOutboundShipmentLineInput;
+};
+
+
+export type MutationsUpdateStocktakeArgs = {
+  input: UpdateStocktakeInput;
 };
 
 
@@ -1617,6 +1662,22 @@ export type UpdateOutboundShipmentResponseWithId = {
   __typename?: 'UpdateOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentResponse;
+};
+
+export type UpdateStocktakeInput = {
+  comment?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  status?: Maybe<StocktakeNodeStatus>;
+  stocktakeDate?: Maybe<Scalars['String']>;
+};
+
+export type UpdateStocktakeResponse = NodeError | StocktakeNode;
+
+export type UpdateStocktakeResponseWithId = {
+  __typename?: 'UpdateStocktakeResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateStocktakeResponse>;
 };
 
 export type UpdateSupplierRequisitionInput = {

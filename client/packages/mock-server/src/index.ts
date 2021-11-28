@@ -19,6 +19,7 @@ const resolvers = {
   Mutations: {
     ...Schema.Invoice.MutationResolvers,
     ...Schema.Requisition.MutationResolvers,
+    ...Schema.Stocktake.MutationResolvers,
   },
 };
 

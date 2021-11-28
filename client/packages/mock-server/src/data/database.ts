@@ -19,6 +19,10 @@ import {
   InsertInboundShipmentLineInput,
   SupplierRequisitionNodeStatus,
   RequisitionNodeType,
+  InsertStocktakeInput,
+  UpdateStocktakeInput,
+  DeleteStocktakeInput,
+  StocktakeNodeStatus,
 } from './../../../common/src/types/schema';
 import {
   Item,
@@ -76,6 +80,35 @@ export const stocktake = {
     },
 
     list: (): Stocktake[] => [...StocktakeData],
+  },
+  insert: (input: InsertStocktakeInput): Stocktake => {
+    const stocktakeNumber = faker.datatype.number({ max: 1000 });
+    const status = StocktakeNodeStatus.Draft;
+
+    const stocktake = { ...input, stocktakeNumber, status };
+    StocktakeData.push(stocktake);
+    return stocktake;
+  },
+  update: (input: UpdateStocktakeInput): Stocktake => {
+    const index = StocktakeData.findIndex(getFilter(input.id, 'id'));
+    const req = StocktakeData[index] as Stocktake;
+    if (!req) {
+      throw new Error(`Could not find stocktake with id: ${input.id}`);
+    }
+
+    const updatedStocktake = { ...req, ...input } as Stocktake;
+    StocktakeData[index] = updatedStocktake;
+
+    return updatedStocktake;
+  },
+  delete: (input: DeleteStocktakeInput): DeleteResponse => {
+    const index = StocktakeData.findIndex(getFilter(input.id, 'id'));
+    if (!(index >= 0))
+      throw new Error(
+        `Could not find stocktake to delete with id: ${input.id}`
+      );
+    removeElement(StocktakeData, index);
+    return input;
   },
 };
 

@@ -700,6 +700,10 @@ type Mutations {
     updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!]
     deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
   ): BatchCustomerRequisitionResponse!
+
+  updateStocktake(input: UpdateStocktakeInput!): UpdateStocktakeResponse!
+  insertStocktake(input: InsertStocktakeInput!): InsertStocktakeResponse!
+  deleteStocktake(input: DeleteStocktakeInput!): DeleteStocktakeResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -1443,6 +1447,42 @@ input InsertSupplierRequisitionInput {
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType
+}
+
+input UpdateStocktakeInput {
+  id: String!
+  stocktakeDate: String
+  comment: String
+  description: String
+  status: StocktakeNodeStatus
+}
+union UpdateStocktakeResponse = NodeError | StocktakeNode
+type UpdateStocktakeResponseWithId {
+  id: String!
+  response: UpdateStocktakeResponse
+}
+
+union InsertStocktakeResponse = NodeError | StocktakeNode
+type InsertStocktakeResponseWithId {
+  id: String!
+  response: InsertStocktakeResponse
+}
+
+union DeleteStocktakeResponse = NodeError | DeleteResponse
+type DeleteStocktakeResponseWithId {
+  id: String!
+  response: UpdateStocktakeResponse
+}
+
+input InsertStocktakeInput {
+  id: String!
+  stocktakeDate: String
+  comment: String
+  description: String
+}
+
+input DeleteStocktakeInput {
+  id: String!
 }
 
 input InsertSupplierRequisitionLineInput {
