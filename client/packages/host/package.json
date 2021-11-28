@@ -32,6 +32,7 @@
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/dashboard": "^0.0.0",
+    "@openmsupply-client/inventory": "^0.0.0",
     "@openmsupply-client/requisitions": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
     "history": "^5.1.0",

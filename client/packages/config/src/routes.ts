@@ -13,6 +13,7 @@ export enum AppRoute {
 
   Inventory = 'inventory',
   Stock = 'stock',
+  Stocktake = 'stocktake',
 
   Tools = 'tools',
 
