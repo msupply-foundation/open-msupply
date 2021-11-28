@@ -65,10 +65,8 @@ impl StorageConnection {
     {
         let current_level = self.transaction_level.get();
         if current_level > 0 && reuse_tx {
-            return match f(self).await {
-                Ok(ok) => Ok(ok),
-                Err(err) => Err(TransactionError::Inner(err)),
-            };
+            let result = f(self).await.map_err(|err| TransactionError::Inner(err))?;
+            return Ok(result);
         }
 
         let con = &self.connection;
