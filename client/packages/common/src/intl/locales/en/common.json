@@ -56,7 +56,7 @@
   "heading.shipments-to-be-picked": "Shipments to be picked",
   "label.average-monthly-consumption": "Av Monthly Consumption",
   "label.stock-on-hand": "Stock on Hand (Est. remaining)",
-  "label.forecast-quantity": "Forecast Quantity\n to Reach Target",
+  "label.forecast-quantity": "Forecast Quantity to Reach Target",
   "label.forecast-method": "Forecast Method",
   "label.requested-quantity": "Requested Quantity",
   "label.allocated": "Allocated",

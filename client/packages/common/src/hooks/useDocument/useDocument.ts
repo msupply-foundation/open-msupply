@@ -57,13 +57,9 @@ export const useDocument = <
   // Data is the current data on the server and our most up to date snapshot of the server state.
   // We're keeping it around, separate from our client state as to reference when needed and period
   // background re-fetches to keep an upto date reference to the server state.
-  const { data, error } = useQuery(queryKey, () => api.onRead(String(id)), {
+  const { data } = useQuery(queryKey, () => api.onRead(String(id)), {
     enabled: !isNew,
   });
-
-  console.log('-------------------------------------------');
-  console.log('error', error);
-  console.log('-------------------------------------------');
 
   // Mutation to sync our client state with the server state. The onUpdate function should take the full
   // document state and manage the communication with the server from that.

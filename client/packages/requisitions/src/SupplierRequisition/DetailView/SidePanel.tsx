@@ -1,14 +1,12 @@
 import React, { FC } from 'react';
-// import { Link } from 'react-router-dom';
+
 import {
   Grid,
   CopyIcon,
   DetailPanelAction,
   DetailPanelPortal,
   DetailPanelSection,
-  PanelField,
   PanelLabel,
-  PanelRow,
   TextArea,
   useNotification,
   useTranslation,
@@ -26,22 +24,6 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
-        <PanelRow>
-          <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          {/* <PanelField>{draft.enteredByName}</PanelField> */}
-        </PanelRow>
-
-        <PanelRow>
-          <PanelLabel>{t('label.color')}</PanelLabel>
-          <PanelField>
-            {/* <ColorSelectButton
-              disabled={!isInboundEditable(draft)}
-              onChange={color => draft.update?.('color', color.hex)}
-              color={draft.color}
-            /> */}
-          </PanelField>
-        </PanelRow>
-
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <TextArea
           disabled={!isRequisitionEditable(draft)}

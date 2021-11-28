@@ -33,7 +33,6 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
 
   const deleteAction = () => {
     if (selectedRows && selectedRows?.length > 0) {
-      //   selectedRows.forEach(item => draft.deleteItem?.(item));
       const successSnack = success(`Deleted ${selectedRows?.length} lines`);
       successSnack();
     } else {
@@ -75,12 +74,8 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                   disabled={!isRequisitionEditable(draft)}
                   size="small"
                   sx={{ width: 250 }}
-                  //   value={draft?.theirReference ?? ''}
                   value={''}
                   onChange={() => {}}
-                  //   onChange={event => {
-                  //     draft.update?.('theirReference', event.target.value);
-                  //   }}
                 />
               }
             />

@@ -4,7 +4,6 @@ import {
   ButtonWithIcon,
   SaveIcon,
   StatusCrumbs,
-  //   ToggleButton,
   XCircleIcon,
   useTranslation,
   useNotification,
@@ -84,16 +83,6 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
             alignItems="center"
             height={64}
           >
-            {/* <ToggleButton
-              disabled={!isRequisitionEditable(draft)}
-              value={!!draft.onHold}
-              selected={!!draft.onHold}
-              onClick={(_, value) => {
-                draft.update?.('onHold', !value);
-              }}
-              label={t('label.hold')}
-            /> */}
-
             <StatusCrumbs
               statuses={getSupplierRequisitionStatuses()}
               statusLog={createStatusLog(draft.status)}
