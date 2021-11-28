@@ -1,3 +1,4 @@
+import { nameResolver } from './name';
 import { ListResponse, ResolvedRequisition } from './../../data/types';
 import { db } from '../../data/database';
 import { RequisitionListParameters } from '@openmsupply-client/common/src/types/schema';
@@ -9,7 +10,7 @@ export const requisitionResolver = {
   get: {
     byId: (id: string): ResolvedRequisition => {
       const requisition = db.requisition.get.byId(id);
-      const otherParty = db.get.byId.name(requisition.otherPartyId);
+      const otherParty = nameResolver.byId(requisition.otherPartyId);
       const lines = requisitionLineResolver.byRequisitionId(id);
 
       return {

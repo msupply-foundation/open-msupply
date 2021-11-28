@@ -37,12 +37,47 @@ export type ColumnKey =
   | 'requisitionNumber'
   | 'stocktakeNumber'
   | 'description'
-  | 'stocktakeDate';
+  | 'stocktakeDate'
+  | 'monthlyConsumption'
+  | 'previousStockOnHand'
+  | 'calculatedQuantity'
+  | 'requestedQuantity'
+  | 'forecastMethod';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
+  requestedQuantity: {
+    key: 'requestedQuantity',
+    label: 'label.requested-quantity',
+    align: ColumnAlign.Right,
+    width: 100,
+  },
+  monthlyConsumption: {
+    key: 'monthlyConsumption',
+    label: 'label.average-monthly-consumption',
+    align: ColumnAlign.Left,
+    width: 100,
+  },
+  previousStockOnHand: {
+    key: 'previousStockOnHand',
+    label: 'label.stock-on-hand',
+    align: ColumnAlign.Left,
+    width: 125,
+  },
+  calculatedQuantity: {
+    key: 'calculatedQuantity',
+    label: 'label.forecast-quantity',
+    align: ColumnAlign.Left,
+    width: 125,
+  },
+  forecastMethod: {
+    key: 'forecastMethod',
+    label: 'label.forecast-method',
+    align: ColumnAlign.Left,
+    width: 55,
+  },
   numberOfPacks: {
     key: 'numberOfPacks',
     format: ColumnFormat.Integer,

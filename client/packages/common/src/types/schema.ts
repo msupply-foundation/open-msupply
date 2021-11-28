@@ -1385,7 +1385,7 @@ export type RequisitionLineConnector = {
 export type RequisitionLineNode = {
   __typename?: 'RequisitionLineNode';
   calculatedQuantity?: Maybe<Scalars['Float']>;
-  closingQuantity?: Maybe<Scalars['Int']>;
+  closingQuantity?: Maybe<Scalars['Float']>;
   comment?: Maybe<Scalars['String']>;
   expiredQuantity?: Maybe<Scalars['Float']>;
   id: Scalars['String'];
@@ -1397,7 +1397,7 @@ export type RequisitionLineNode = {
   monthlyConsumption?: Maybe<Scalars['Float']>;
   monthsOfSupply?: Maybe<Scalars['Float']>;
   openingQuantity?: Maybe<Scalars['Float']>;
-  otherPartyClosingQuantity?: Maybe<Scalars['Int']>;
+  otherPartyClosingQuantity?: Maybe<Scalars['Float']>;
   previousQuantity?: Maybe<Scalars['Float']>;
   previousStockOnHand?: Maybe<Scalars['Float']>;
   receivedQuantity?: Maybe<Scalars['Float']>;
@@ -1954,6 +1954,23 @@ export type InsertCustomerRequisitionMutationVariables = Exact<{
 
 export type InsertCustomerRequisitionMutation = { __typename?: 'Mutations', insertCustomerRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
 
+export type RequisitionQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'NodeError' } | { __typename: 'RequisitionNode', id: string, orderDate?: string | null | undefined, comment?: string | null | undefined, otherPartyReference?: string | null | undefined, type?: RequisitionNodeType | null | undefined, requisitionNumber: number, thresholdMOS?: number | null | undefined, maxMOS?: number | null | undefined, status: SupplierRequisitionNodeStatus, otherPartyId: string, otherPartyName: string, storeId: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemName?: string | null | undefined, itemCode?: string | null | undefined, itemUnit?: string | null | undefined, comment?: string | null | undefined, monthlyConsumption?: number | null | undefined, monthsOfSupply?: number | null | undefined, supplyQuantity?: number | null | undefined, openingQuantity?: number | null | undefined, issuedQuantity?: number | null | undefined, requestedQuantity?: number | null | undefined, receivedQuantity?: number | null | undefined, imprestQuantity?: number | null | undefined, previousQuantity?: number | null | undefined, calculatedQuantity?: number | null | undefined, previousStockOnHand?: number | null | undefined, closingQuantity?: number | null | undefined, stockAdditions?: number | null | undefined, stockLosses?: number | null | undefined, expiredQuantity?: number | null | undefined, otherPartyClosingQuantity?: number | null | undefined }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'RecordNotFound', description: string } } } };
+
+export type UpsertSupplierRequisitionMutationVariables = Exact<{
+  deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput> | DeleteSupplierRequisitionLineInput>;
+  insertSupplierRequisitionLines?: Maybe<Array<InsertSupplierRequisitionLineInput> | InsertSupplierRequisitionLineInput>;
+  updateSupplierRequisitionLines?: Maybe<Array<UpdateSupplierRequisitionLineInput> | UpdateSupplierRequisitionLineInput>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput> | UpdateSupplierRequisitionInput>;
+}>;
+
+
+export type UpsertSupplierRequisitionMutation = { __typename?: 'Mutations', batchSupplierRequisition: { __typename: 'BatchSupplierRequisitionResponse', updateSupplierRequisitions?: Array<{ __typename: 'UpdateSupplierRequisitionResponseWithId', id: string }> | null | undefined, insertSupplierRequisitionLines?: Array<{ __typename: 'InsertSupplierRequisitionLineResponseWithId', id: string }> | null | undefined, deleteSupplierRequisitionLines?: Array<{ __typename: 'DeleteSupplierRequisitionLineResponseWithId', id: string }> | null | undefined, updateSupplierRequisitionLines?: Array<{ __typename: 'UpdateSupplierRequisitionLineResponseWithId', id: string }> | null | undefined } };
+
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
@@ -2347,6 +2364,105 @@ export const InsertCustomerRequisitionDocument = gql`
     mutation insertCustomerRequisition($input: InsertCustomerRequisitionInput!) {
   insertCustomerRequisition(input: $input) {
     ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const RequisitionDocument = gql`
+    query requisition($id: String!) {
+  requisition(id: $id) {
+    __typename
+    ... on RequisitionNode {
+      __typename
+      id
+      orderDate
+      comment
+      otherPartyReference
+      type
+      requisitionNumber
+      thresholdMOS
+      maxMOS
+      status
+      otherPartyId
+      otherPartyName
+      storeId
+      lines {
+        __typename
+        ... on ConnectorError {
+          error {
+            description
+          }
+        }
+        ... on RequisitionLineConnector {
+          totalCount
+          nodes {
+            id
+            itemName
+            itemCode
+            itemUnit
+            comment
+            monthlyConsumption
+            monthsOfSupply
+            supplyQuantity
+            openingQuantity
+            issuedQuantity
+            requestedQuantity
+            receivedQuantity
+            imprestQuantity
+            previousQuantity
+            calculatedQuantity
+            previousStockOnHand
+            closingQuantity
+            stockAdditions
+            stockLosses
+            expiredQuantity
+            otherPartyClosingQuantity
+          }
+        }
+      }
+      otherParty {
+        __typename
+        ... on NodeError {
+          error {
+            description
+          }
+        }
+        ... on NameNode {
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+      }
+    }
+  }
+}
+    `;
+export const UpsertSupplierRequisitionDocument = gql`
+    mutation upsertSupplierRequisition($deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!], $insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!], $updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!], $updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]) {
+  batchSupplierRequisition(
+    deleteSupplierRequisitionLines: $deleteSupplierRequisitionLines
+    insertSupplierRequisitionLines: $insertSupplierRequisitionLines
+    updateSupplierRequisitionLines: $updateSupplierRequisitionLines
+    updateSupplierRequisitions: $updateSupplierRequisitions
+  ) {
+    __typename
+    updateSupplierRequisitions {
+      __typename
+      id
+    }
+    insertSupplierRequisitionLines {
+      __typename
+      id
+    }
+    deleteSupplierRequisitionLines {
+      __typename
+      id
+    }
+    updateSupplierRequisitionLines {
       __typename
       id
     }
@@ -2926,6 +3042,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertCustomerRequisition(variables: InsertCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertCustomerRequisitionMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerRequisitionMutation>(InsertCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertCustomerRequisition');
+    },
+    requisition(variables: RequisitionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionQuery>(RequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisition');
+    },
+    upsertSupplierRequisition(variables?: UpsertSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertSupplierRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertSupplierRequisitionMutation>(UpsertSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertSupplierRequisition');
     },
     invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices');

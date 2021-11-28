@@ -629,33 +629,9 @@ const createSupplierRequisitionLines = (): RequisitionLine[] => {
     .map(req => {
       const itemsSubset = takeRandomSubsetFrom(items, 10);
 
-      const getRandomFloat = () => faker.datatype.float({ min: 0, max: 100 });
-
       return itemsSubset
         .map(item => {
-          return {
-            id: faker.datatype.uuid(),
-            requisitionId: req.id,
-            closingQuantity: getRandomFloat(),
-            comment: '',
-            expiredQuantity: getRandomFloat(),
-            imprestQuantity: getRandomFloat(),
-            issuedQuantity: getRandomFloat(),
-            itemCode: item.code,
-            itemName: item.name,
-            itemUnit: item.unitName ?? '',
-            monthlyConsumption: getRandomFloat(),
-            monthsOfSupply: getRandomFloat(),
-            openingQuantity: getRandomFloat(),
-            otherPartyClosingQuantity: getRandomFloat(),
-            previousQuantity: getRandomFloat(),
-            previousStockOnHand: getRandomFloat(),
-            receivedQuantity: getRandomFloat(),
-            requestedQuantity: getRandomFloat(),
-            stockAdditions: getRandomFloat(),
-            stockLosses: getRandomFloat(),
-            supplyQuantity: getRandomFloat(),
-          };
+          return createRequisitionLine(req, item);
         })
         .flat();
     })
@@ -682,6 +658,7 @@ export const createRequisitionLine = (req: Requisition, item: Item) => ({
   previousQuantity: getRandomFloat(),
   previousStockOnHand: getRandomFloat(),
   receivedQuantity: getRandomFloat(),
+  calculatedQuantity: getRandomFloat(),
   requestedQuantity: getRandomFloat(),
   stockAdditions: getRandomFloat(),
   stockLosses: getRandomFloat(),
