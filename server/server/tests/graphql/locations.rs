@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, ServicesOverride};
+    use crate::graphql::{assert_gql_query, ServiceOverride};
     use domain::{
         location::{Location, LocationFilter, LocationSort, LocationSortField},
         PaginationOption, Sort,
@@ -7,26 +7,19 @@ mod graphql {
     use repository::mock::MockDataInserts;
     use serde_json::json;
     use server::test_utils::setup_all;
-    use service::{location::LocationServiceQuery, ListError, ListResult};
+    use service::{location::LocationQueryServiceTrait, ListError, ListResult};
 
-    struct TestService<F>(pub F)
-    where
-        F: Fn(
+    type GetLocations = dyn Fn(
             Option<PaginationOption>,
             Option<LocationFilter>,
             Option<LocationSort>,
-        ) -> Result<ListResult<Location>, ListError>;
+        ) -> Result<ListResult<Location>, ListError>
+        + Sync
+        + Send;
 
-    impl<F> LocationServiceQuery for TestService<F>
-    where
-        F: Fn(
-                Option<PaginationOption>,
-                Option<LocationFilter>,
-                Option<LocationSort>,
-            ) -> Result<ListResult<Location>, ListError>
-            + Send
-            + Sync,
-    {
+    struct TestService(pub Box<GetLocations>);
+
+    impl LocationQueryServiceTrait for TestService {
         fn get_locations(
             &self,
             pagination: Option<PaginationOption>,
@@ -42,6 +35,13 @@ mod graphql {
         ) -> Result<domain::location::Location, service::SingleRecordError> {
             todo!()
         }
+    }
+
+    macro_rules! service_override {
+        ($closure:expr) => {{
+            ServiceOverride::new()
+                .set_location_query_service(Box::new(|| Box::new(TestService(Box::new($closure)))))
+        }};
     }
 
     #[actix_rt::test]
@@ -73,6 +73,19 @@ mod graphql {
         "#;
 
         // Test single record
+
+        let service_override = service_override!(|_, _, _| {
+            Ok(ListResult {
+                rows: vec![Location {
+                    id: "location_on_hold".to_owned(),
+                    name: "test_name".to_owned(),
+                    code: "test_code".to_owned(),
+                    on_hold: true,
+                }],
+                count: 1,
+            })
+        });
+
         let expected = json!({
               "locations": {
                   "nodes": [
@@ -95,36 +108,16 @@ mod graphql {
           }
         );
 
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Ok(ListResult {
-                    rows: vec![Location {
-                        id: "location_on_hold".to_owned(),
-                        name: "test_name".to_owned(),
-                        code: "test_code".to_owned(),
-                        on_hold: true,
-                    }],
-                    count: 1,
-                })
-            })));
-
-        assert_gql_query(
-            &settings,
-            query,
-            &None,
-            &expected,
-            Some(ServicesOverride::new().location_service(service)),
-        )
-        .await;
+        assert_gql_query(&settings, query, &None, &expected, Some(service_override)).await;
 
         // Test no records
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Ok(ListResult {
-                    rows: Vec::new(),
-                    count: 0,
-                })
-            })));
+
+        let service_override = service_override!(|_, _, _| {
+            Ok(ListResult {
+                rows: Vec::new(),
+                count: 0,
+            })
+        });
 
         let expected = json!({
               "locations": {
@@ -136,14 +129,7 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
-            &settings,
-            query,
-            &None,
-            &expected,
-            Some(ServicesOverride::new().location_service(service)),
-        )
-        .await;
+        assert_gql_query(&settings, query, &None, &expected, Some(service_override)).await;
     }
 
     #[actix_rt::test]
@@ -160,7 +146,7 @@ mod graphql {
               __typename
             }
           }
-          
+
         "#;
 
         let expected = json!({
@@ -171,17 +157,16 @@ mod graphql {
         );
 
         // Test sort by name no desc
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, sort| {
-                assert_eq!(
-                    sort,
-                    Some(Sort {
-                        key: LocationSortField::Name,
-                        desc: None
-                    })
-                );
-                Ok(ListResult::empty())
-            })));
+        let service_override = service_override!(|_, _, sort| {
+            assert_eq!(
+                sort,
+                Some(Sort {
+                    key: LocationSortField::Name,
+                    desc: None
+                })
+            );
+            Ok(ListResult::empty())
+        });
 
         let variables = json!({
           "sort": [{
@@ -194,22 +179,21 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(ServicesOverride::new().location_service(service)),
+            Some(service_override),
         )
         .await;
 
         // Test sort by code with desc
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, sort| {
-                assert_eq!(
-                    sort,
-                    Some(Sort {
-                        key: LocationSortField::Code,
-                        desc: Some(true)
-                    })
-                );
-                Ok(ListResult::empty())
-            })));
+        let service_override = service_override!(|_, _, sort| {
+            assert_eq!(
+                sort,
+                Some(Sort {
+                    key: LocationSortField::Code,
+                    desc: Some(true)
+                })
+            );
+            Ok(ListResult::empty())
+        });
 
         let variables = json!({
           "sort": [{
@@ -223,16 +207,15 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(ServicesOverride::new().location_service(service)),
+            Some(service_override),
         )
         .await;
 
         // Test filter
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, filter, _| {
-                assert_eq!(filter, Some(LocationFilter::new().match_name("match_name")));
-                Ok(ListResult::empty())
-            })));
+        let service_override = service_override!(|_, filter, _| {
+            assert_eq!(filter, Some(LocationFilter::new().match_name("match_name")));
+            Ok(ListResult::empty())
+        });
 
         let variables = json!({
           "filter": {
@@ -245,7 +228,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(ServicesOverride::new().location_service(service)),
+            Some(service_override),
         )
         .await;
     }
