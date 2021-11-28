@@ -49,6 +49,7 @@ mod repository_test {
                 name: "name1".to_string(),
                 code: "code1".to_string(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             }
         }
 
@@ -58,6 +59,7 @@ mod repository_test {
                 name: "item-2".to_string(),
                 code: "code2".to_string(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             }
         }
 
@@ -75,6 +77,7 @@ mod repository_test {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
+                location_id: None,
             }
         }
 
@@ -221,6 +224,7 @@ mod repository_test {
                 total_after_tax: 1.0,
                 number_of_packs: 1,
                 note: None,
+                location_id: None,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
@@ -239,6 +243,7 @@ mod repository_test {
                 total_after_tax: 2.0,
                 number_of_packs: 1,
                 note: None,
+                location_id: None,
             }
         }
 
@@ -258,6 +263,7 @@ mod repository_test {
                 total_after_tax: 3.0,
                 number_of_packs: 1,
                 note: None,
+                location_id: None,
             }
         }
 
@@ -299,15 +305,12 @@ mod repository_test {
     }
 
     use crate::{
-        database_settings::get_storage_connection_manager,
-        repository::{
-            repository::MasterListRepository, CentralSyncBufferRepository, InvoiceLineRepository,
-            InvoiceLineRepository, InvoiceRepository, ItemRepository, MasterListLineRepository,
-            MasterListNameJoinRepository, NameQueryRepository, NameRepository,
-            OutboundShipmentRepository, RequisitionLineRepository, RequisitionRepository,
-            StockLineRepository, StoreRepository, UserAccountRepository,
-        },
-        test_db,
+        database_settings::get_storage_connection_manager, test_db, CentralSyncBufferRepository,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, ItemRepository,
+        MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
+        NameQueryRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
+        RepositoryError, RequisitionLineRepository, RequisitionRepository, StockLineRowRepository,
+        StoreRepository, UserAccountRepository,
     };
     use domain::{
         name::{NameFilter, NameSort, NameSortField},
@@ -482,7 +485,7 @@ mod repository_test {
         // test insert
         let stock_line = data::stock_line_1();
         let stock_line_repo = StockLineRowRepository::new(&connection);
-        stock_line_repo.insert_one(&stock_line).await.unwrap();
+        stock_line_repo.upsert_one(&stock_line).unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
             .unwrap();
@@ -693,10 +696,7 @@ mod repository_test {
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
-        stock_line_repo
-            .insert_one(&data::stock_line_1())
-            .await
-            .unwrap();
+        stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
@@ -738,10 +738,7 @@ mod repository_test {
         let store_repo = StoreRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
-        stock_line_repo
-            .insert_one(&data::stock_line_1())
-            .await
-            .unwrap();
+        stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
@@ -772,13 +769,13 @@ mod repository_test {
         let item1 = data::user_account_1();
         repo.insert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
-        assert_eq!(item1, loaded_item);
+        assert_eq!(item1, loaded_item.unwrap());
 
         // optional email
         let item2 = data::user_account_2();
         repo.insert_one(&item2).unwrap();
         let loaded_item = repo.find_one_by_id(item2.id.as_str()).unwrap();
-        assert_eq!(item2, loaded_item);
+        assert_eq!(item2, loaded_item.unwrap());
     }
 
     #[actix_rt::test]
@@ -807,5 +804,29 @@ mod repository_test {
         repo.remove_all().await.unwrap();
         let result = repo.pop_one().await;
         assert!(result.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn test_number() {
+        let settings = test_db::get_test_db_settings("omsupply-database-number");
+        test_db::setup(&settings).await;
+        let connection_manager = get_storage_connection_manager(&settings);
+        let connection = connection_manager.connection().unwrap();
+
+        let test_counter = "test_counter_name";
+        let repo = NumberRowRepository::new(&connection);
+        matches!(
+            repo.find_one_by_id(test_counter),
+            Err(RepositoryError::NotFound)
+        );
+
+        let row = repo.increment(test_counter).unwrap();
+        assert_eq!(1, row.value);
+        let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
+        assert_eq!(1, row.value);
+        let row = repo.increment(test_counter).unwrap();
+        assert_eq!(2, row.value);
+        let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
+        assert_eq!(2, row.value);
     }
 }

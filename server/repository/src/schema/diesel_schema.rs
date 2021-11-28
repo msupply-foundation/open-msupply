@@ -199,6 +199,13 @@ table! {
     }
 }
 
+table! {
+    number (id) {
+        id -> Text,
+        value -> BigInt,
+    }
+}
+
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));

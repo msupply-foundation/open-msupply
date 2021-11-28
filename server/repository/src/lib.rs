@@ -12,3 +12,5 @@ pub mod test_db;
 pub use self::db_diesel::*;
 pub use self::repository_error::RepositoryError;
 pub use database_settings::get_storage_connection_manager;
+
+mod tests;
