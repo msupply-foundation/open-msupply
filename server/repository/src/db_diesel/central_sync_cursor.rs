@@ -24,7 +24,6 @@ impl<'a> CentralSyncCursorRepository<'a> {
     pub async fn update_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
         use crate::schema::diesel_schema::central_sync_cursor::dsl::*;
         let row = CentralSyncCursorRow { id: cursor as i32 };
-        // note: if already in a transaction this creates a safepoint:
         self.connection.connection.transaction(|| {
             diesel::delete(central_sync_cursor).execute(&self.connection.connection)?;
             diesel::insert_into(central_sync_cursor)
