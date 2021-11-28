@@ -40,7 +40,7 @@ pub use central_sync_buffer::CentralSyncBufferRow;
 pub use central_sync_cursor::CentralSyncCursorRow;
 pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 pub use invoice_line::InvoiceLineRow;
-pub use item::ItemRow;
+pub use item::{ItemRow, ItemType};
 pub use item_is_visible::ItemIsVisibleRow;
 pub use location::LocationRow;
 pub use master_list::MasterListRow;

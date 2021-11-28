@@ -131,7 +131,9 @@ mod tests {
                 MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
             },
             mock::MockDataInserts,
-            schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
+            schema::{
+                ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow,
+            },
             ItemQueryRepository, ItemRepository, NameRepository,
         },
     };
@@ -155,6 +157,7 @@ mod tests {
                 name: format!("name{}", index),
                 code: format!("code{}", index),
                 unit_id: None,
+                r#type: ItemType::Stock,
             });
         }
         rows
@@ -260,30 +263,35 @@ mod tests {
                 name: "name1".to_owned(),
                 code: "name1".to_owned(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             },
             ItemRow {
                 id: "item2".to_owned(),
                 name: "name2".to_owned(),
                 code: "name2".to_owned(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             },
             ItemRow {
                 id: "item3".to_owned(),
                 name: "name3".to_owned(),
                 code: "name3".to_owned(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             },
             ItemRow {
                 id: "item4".to_owned(),
                 name: "name4".to_owned(),
                 code: "name4".to_owned(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             },
             ItemRow {
                 id: "item5".to_owned(),
                 name: "name5".to_owned(),
                 code: "name5".to_owned(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             },
         ];
 
