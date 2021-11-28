@@ -26,6 +26,8 @@ pub struct StorageConnection {
 pub enum TransactionError<E> {
     Transaction {
         msg: String,
+        /// Transaction level of the failing transaction
+        level: i32,
     },
     /// Error from the transaction
     Inner(E),
@@ -34,10 +36,9 @@ pub enum TransactionError<E> {
 impl From<TransactionError<RepositoryError>> for RepositoryError {
     fn from(error: TransactionError<RepositoryError>) -> Self {
         match error {
-            TransactionError::Transaction { msg } => RepositoryError::DBError {
-                msg,
-                extra: "".to_string(),
-            },
+            TransactionError::Transaction { msg, level } => {
+                RepositoryError::TransactionError { msg, level }
+            }
             TransactionError::Inner(e) => e,
         }
     }
@@ -75,6 +76,7 @@ impl StorageConnection {
             .begin_transaction(con)
             .map_err(|_| TransactionError::Transaction {
                 msg: "Failed to start tx".to_string(),
+                level: current_level + 1,
             })?;
 
         self.transaction_level.set(current_level + 1);
@@ -86,6 +88,7 @@ impl StorageConnection {
                 transaction_manager.commit_transaction(con).map_err(|_| {
                     TransactionError::Transaction {
                         msg: "Failed to end tx".to_string(),
+                        level: current_level + 1,
                     }
                 })?;
                 Ok(value)
@@ -94,6 +97,7 @@ impl StorageConnection {
                 transaction_manager.rollback_transaction(con).map_err(|_| {
                     TransactionError::Transaction {
                         msg: "Failed to rollback tx".to_string(),
+                        level: current_level + 1,
                     }
                 })?;
                 Err(TransactionError::Inner(e))
@@ -135,6 +139,7 @@ impl StorageConnection {
             .begin_transaction(con)
             .map_err(|_| TransactionError::Transaction {
                 msg: "Failed to start tx".to_string(),
+                level: current_level + 1,
             })?;
 
         self.transaction_level.set(current_level + 1);
@@ -146,6 +151,7 @@ impl StorageConnection {
                 transaction_manager.commit_transaction(con).map_err(|_| {
                     TransactionError::Transaction {
                         msg: "Failed to end tx".to_string(),
+                        level: current_level + 1,
                     }
                 })?;
                 Ok(value)
@@ -154,6 +160,7 @@ impl StorageConnection {
                 transaction_manager.rollback_transaction(con).map_err(|_| {
                     TransactionError::Transaction {
                         msg: "Failed to rollback tx".to_string(),
+                        level: current_level + 1,
                     }
                 })?;
                 Err(TransactionError::Inner(e))
