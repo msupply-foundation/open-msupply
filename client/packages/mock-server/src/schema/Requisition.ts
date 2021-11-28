@@ -261,6 +261,10 @@ const MutationResolvers = {
       __typename: 'BatchCustomerRequisitionResponse',
     };
 
+    console.log('-------------------------------------------');
+    console.log('vars', vars);
+    console.log('-------------------------------------------');
+
     if (vars.insertCustomerRequisitions) {
       response.insertCustomerRequisitions = vars.insertCustomerRequisitions.map(
         input => {
