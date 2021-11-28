@@ -26,8 +26,8 @@ pub fn insert_outbound_shipment_line(
         })
         .map_err(
             |error: TransactionError<InsertOutboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg } => {
-                    RepositoryError::as_db_error(&msg, "").into()
+                TransactionError::Transaction { msg, level } => {
+                    RepositoryError::TransactionError { msg, level }.into()
                 }
                 TransactionError::Inner(error) => error,
             },
@@ -50,7 +50,7 @@ pub enum InsertOutboundShipmentLineError {
     StockLineAlreadyExistsInInvoice(String),
     ItemDoesNotMatchStockLine,
     BatchIsOnHold,
-    
+
     ReductionBelowZero { stock_line_id: String },
 }
 

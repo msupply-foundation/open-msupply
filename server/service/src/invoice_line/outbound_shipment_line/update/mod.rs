@@ -33,8 +33,8 @@ pub fn update_outbound_shipment_line(
         })
         .map_err(
             |error: TransactionError<UpdateOutboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg } => {
-                    RepositoryError::as_db_error(&msg, "").into()
+                TransactionError::Transaction { msg, level } => {
+                    RepositoryError::TransactionError { msg, level }.into()
                 }
                 TransactionError::Inner(error) => error,
             },

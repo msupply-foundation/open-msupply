@@ -56,10 +56,10 @@ impl From<RepositoryError> for UpdateOutboundShipmentError {
 impl From<TransactionError<UpdateOutboundShipmentError>> for UpdateOutboundShipmentError {
     fn from(error: TransactionError<UpdateOutboundShipmentError>) -> Self {
         match error {
-            TransactionError::Transaction { msg } => {
-                UpdateOutboundShipmentError::DatabaseError(RepositoryError::DBError {
+            TransactionError::Transaction { msg, level } => {
+                UpdateOutboundShipmentError::DatabaseError(RepositoryError::TransactionError {
                     msg,
-                    extra: "".to_string(),
+                    level,
                 })
             }
             TransactionError::Inner(e) => e,
