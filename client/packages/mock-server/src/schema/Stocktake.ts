@@ -15,6 +15,9 @@ import {
   InsertStocktakeResponseWithId,
   UpdateStocktakeResponseWithId,
   DeleteStocktakeResponseWithId,
+  InsertStocktakeLineResponseWithId,
+  UpdateStocktakeLineResponseWithId,
+  DeleteStocktakeLineResponseWithId,
   BatchStocktakeInput,
   BatchStocktakeResponse,
 } from '@openmsupply-client/common/src/types/schema';
@@ -106,53 +109,48 @@ const MutationResolvers = {
       });
     }
 
-    // if (vars.insertStocktakeLines) {
-    //   response.insertStocktakeLines =
-    //     vars.insertStocktakeLines.map(input => {
-    //       const regularInsertResponse =
-    //         MutationResolvers.insertStocktakeLine(_, { input });
-    //       const batchInsertResponse: InsertStocktakeLineResponseWithId =
-    //         {
-    //           __typename: 'InsertStocktakeLineResponseWithId',
-    //           id: input.id,
-    //           response: regularInsertResponse,
-    //         };
+    if (vars.insertStocktakeLines) {
+      response.insertStocktakeLines = vars.insertStocktakeLines.map(input => {
+        const regularInsertResponse =
+          MutationService.stocktakeLine.insert(input);
+        const batchInsertResponse: InsertStocktakeLineResponseWithId = {
+          __typename: 'InsertStocktakeLineResponseWithId',
+          id: input.id,
+          response: regularInsertResponse,
+        };
 
-    //       return batchInsertResponse;
-    //     });
-    // }
+        return batchInsertResponse;
+      });
+    }
 
-    // if (vars.updateStocktakeLines) {
-    //   response.updateStocktakeLines =
-    //     vars.updateStocktakeLines.map(input => {
-    //       const regularUpdateResponse =
-    //         MutationResolvers.updateStocktakeLine(_, { input });
-    //       const batchInsertResponse: UpdateStocktakeLineResponseWithId =
-    //         {
-    //           __typename: 'UpdateStocktakeLineResponseWithId',
-    //           id: input.id,
-    //           response: regularUpdateResponse,
-    //         };
+    if (vars.updateStocktakeLines) {
+      response.updateStocktakeLines = vars.updateStocktakeLines.map(input => {
+        const regularUpdateResponse =
+          MutationService.stocktakeLine.update(input);
+        const batchInsertResponse: UpdateStocktakeLineResponseWithId = {
+          __typename: 'UpdateStocktakeLineResponseWithId',
+          id: input.id,
+          response: regularUpdateResponse,
+        };
 
-    //       return batchInsertResponse;
-    //     });
-    // }
+        return batchInsertResponse;
+      });
+    }
 
-    // if (vars.deleteStocktakeLines) {
-    //   response.deleteStocktakeLines =
-    //     vars.deleteStocktakeLines.map(input => {
-    //       const regularDeleteResponse =
-    //         MutationResolvers.deleteStocktakeLine(_, { input });
-    //       const batchInsertResponse: DeleteStocktakeLineResponseWithId =
-    //         {
-    //           __typename: 'DeleteStocktakeLineResponseWithId',
-    //           id: input.id,
-    //           response: regularDeleteResponse,
-    //         };
+    if (vars.deleteStocktakeLines) {
+      response.deleteStocktakeLines = vars.deleteStocktakeLines.map(input => {
+        const regularDeleteResponse =
+          MutationService.stocktakeLine.delete(input);
 
-    //       return batchInsertResponse;
-    //     });
-    // }
+        const batchInsertResponse: DeleteStocktakeLineResponseWithId = {
+          __typename: 'DeleteStocktakeLineResponseWithId',
+          id: input.id,
+          response: regularDeleteResponse,
+        };
+
+        return batchInsertResponse;
+      });
+    }
 
     return response;
   },
