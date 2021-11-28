@@ -216,10 +216,12 @@ mod connection_manager_tests {
                                 assert_eq!(con.transaction_level.get(), 2);
                                 Ok(())
                             })?;
+                            assert_eq!(con.transaction_level.get(), 2);
                             Ok(())
                         },
                         false,
                     )?;
+                    assert_eq!(con.transaction_level.get(), 1);
                     Ok(())
                 },
                 false,
