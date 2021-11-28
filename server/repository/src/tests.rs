@@ -49,6 +49,7 @@ mod repository_test {
                 name: "name1".to_string(),
                 code: "code1".to_string(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             }
         }
 
@@ -58,6 +59,7 @@ mod repository_test {
                 name: "item-2".to_string(),
                 code: "code2".to_string(),
                 unit_id: None,
+                r#type: ItemType::Stock,
             }
         }
 
