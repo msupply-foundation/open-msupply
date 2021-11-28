@@ -6,12 +6,12 @@ use repository::LocationRepository;
 
 use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
 
-use super::{LocationService, LocationServiceQuery};
+use super::{LocationQueryService, LocationQueryServiceTrait};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-impl LocationServiceQuery for LocationService {
+impl<'a> LocationQueryServiceTrait for LocationQueryService<'a> {
     fn get_locations(
         &self,
         pagination: Option<PaginationOption>,
@@ -19,8 +19,7 @@ impl LocationServiceQuery for LocationService {
         sort: Option<LocationSort>,
     ) -> Result<ListResult<Location>, ListError> {
         let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-        let connection = &self.connection_manager.connection()?;
-        let repository = LocationRepository::new(connection);
+        let repository = LocationRepository::new(&self.0);
 
         Ok(ListResult {
             rows: repository.query(pagination, filter.clone(), sort)?,
@@ -29,8 +28,7 @@ impl LocationServiceQuery for LocationService {
     }
 
     fn get_location(&self, id: String) -> Result<Location, SingleRecordError> {
-        let connection = &self.connection_manager.connection()?;
-        let repository = LocationRepository::new(connection);
+        let repository = LocationRepository::new(&self.0);
 
         let mut result = repository.query(
             Pagination::one(),
