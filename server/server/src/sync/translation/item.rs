@@ -1,7 +1,15 @@
 use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_ITEM};
-use repository::schema::{CentralSyncBufferRow, ItemRow};
+use repository::schema::{CentralSyncBufferRow, ItemRow, ItemType};
 
 use serde::Deserialize;
+
+#[allow(non_camel_case_types)]
+#[derive(Deserialize)]
+pub enum LegacyItemType {
+    non_stock,
+    service,
+    general,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -10,6 +18,15 @@ pub struct LegacyItemRow {
     item_name: String,
     code: String,
     unit_ID: String,
+    type_of: LegacyItemType,
+}
+
+fn to_item_type(type_of: LegacyItemType) -> ItemType {
+    match type_of {
+        LegacyItemType::non_stock => ItemType::NonStock,
+        LegacyItemType::service => ItemType::Service,
+        LegacyItemType::general => ItemType::Stock,
+    }
 }
 
 impl LegacyItemRow {
@@ -34,6 +51,7 @@ impl LegacyItemRow {
             name: data.item_name,
             code: data.code,
             unit_id: None,
+            r#type: to_item_type(data.type_of),
         };
 
         if data.unit_ID != "" {

@@ -1,5 +1,7 @@
 use async_graphql::*;
-use service::permission_validation::{has_api_role, validate, ValidationError};
+use service::permission_validation::{
+    Resource, ResourceAccessRequest, ValidationError, ValidationService,
+};
 use service::user_account::{UserAccount, UserAccountService};
 
 use crate::schema::types::{AccessDenied, DatabaseError, InternalError};
@@ -42,12 +44,21 @@ pub enum UserResponse {
 }
 
 pub fn me(ctx: &Context<'_>) -> UserResponse {
-    let user = match validate(
-        ctx.get_connection_manager(),
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
-        vec![has_api_role(service::permissions::ApiRole::User)],
-    ) {
+    let connection_manager = ctx.get_connection_manager();
+    let con = match connection_manager.connection() {
+        Ok(con) => con,
+        Err(err) => {
+            return UserResponse::Error(ErrorWrapper {
+                error: UserErrorInterface::DatabaseError(DatabaseError(err)),
+            })
+        }
+    };
+    let service = ValidationService::new(&con);
+    let resource_req = ResourceAccessRequest {
+        resource: Resource::RouteMe,
+        store_id: None,
+    };
+    let user = match service.validate(ctx.get_auth_data(), &ctx.get_auth_token(), &resource_req) {
         Ok(value) => value,
         Err(err) => {
             let error = match err {
@@ -62,7 +73,7 @@ pub fn me(ctx: &Context<'_>) -> UserResponse {
         }
     };
 
-    let user_service = UserAccountService::new(&user.connection);
+    let user_service = UserAccountService::new(&con);
     let user = match user_service.find_user(&user.user_id) {
         Ok(Some(user)) => user,
         Ok(None) => {

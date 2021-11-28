@@ -238,7 +238,7 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
             if let Some(eq) = value.equal_to {
                 query = query.filter(invoice_dsl::comment.eq(eq));
             } else if let Some(like) = value.like {
-                query = query.filter(invoice_dsl::comment.like(like));
+                query = query.filter(invoice_dsl::comment.like(format!("%{}%", like)));
             }
         }
         if let Some(value) = f.their_reference {

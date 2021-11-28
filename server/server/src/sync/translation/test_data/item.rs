@@ -1,5 +1,5 @@
 use crate::sync::translation::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::schema::{CentralSyncBufferRow, ItemRow};
+use repository::schema::{CentralSyncBufferRow, ItemRow, ItemType};
 
 const ITEM_1: (&'static str, &'static str) = (
     "8F252B5884B74888AAB73A0D42C09E7F",
@@ -169,6 +169,7 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
             name: "Non stock items".to_owned(),
             code: "NSI".to_owned(),
             unit_id: None,
+            r#type: ItemType::NonStock,
         })),
         identifier: "Non stock items",
         central_sync_buffer_row: CentralSyncBufferRow {
@@ -187,6 +188,7 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
             name: "Non stock items 2".to_owned(),
             code: "NSI".to_owned(),
             unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
+            r#type: ItemType::Stock,
         })),
         identifier: "Non stock items 2",
         central_sync_buffer_row: CentralSyncBufferRow {
