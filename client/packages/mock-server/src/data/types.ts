@@ -2,7 +2,6 @@ import {
   StockLineConnector,
   InvoiceSortInput,
   InvoiceFilterInput,
-  InvoiceLinesResponse,
 } from './../../../common/src/types/schema';
 import {
   InvoiceLineNode,
@@ -99,7 +98,7 @@ export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
 
 export interface ResolvedInvoice extends Invoice {
   __typename: 'InvoiceNode';
-  lines: InvoiceLinesResponse;
+  lines: ListResponse<ResolvedInvoiceLine, 'InvoiceLineConnector'>;
   otherParty: Name;
   otherPartyName: string;
 }

@@ -1,2 +1,4 @@
-export { db } from './database';
+export * from './database';
+
+export { createInvoice } from './data';
 export * from './types';
