@@ -820,11 +820,11 @@ mod repository_test {
 
         let row = repo.increment(test_counter).unwrap();
         assert_eq!(1, row.value);
-        let row = repo.find_one_by_id(test_counter).unwrap();
+        let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(1, row.value);
         let row = repo.increment(test_counter).unwrap();
         assert_eq!(2, row.value);
-        let row = repo.find_one_by_id(test_counter).unwrap();
+        let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(2, row.value);
     }
 }
