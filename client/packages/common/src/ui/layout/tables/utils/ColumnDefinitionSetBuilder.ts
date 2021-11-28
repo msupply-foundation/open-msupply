@@ -137,7 +137,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     width: 250,
   },
   description: {
-    label: 'label.comment',
+    label: 'heading.description',
     key: 'description',
     width: 250,
   },
