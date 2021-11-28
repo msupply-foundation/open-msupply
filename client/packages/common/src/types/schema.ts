@@ -101,8 +101,11 @@ export type BatchOutboundShipmentResponse = {
 };
 
 export type BatchStocktakeInput = {
+  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineInput>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
+  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineInput>>;
   insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
+  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineInput>>;
   updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
 };
 
@@ -569,7 +572,9 @@ export type InsertStocktakeLineInput = {
   countedNumPacks?: Maybe<Scalars['Int']>;
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
+  itemId: Scalars['String'];
   sellPricePerPack?: Maybe<Scalars['Float']>;
+  stocktakeId: Scalars['String'];
 };
 
 export type InsertStocktakeLineResponse = NodeError | StocktakeLineNode;

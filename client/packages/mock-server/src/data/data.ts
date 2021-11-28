@@ -723,23 +723,22 @@ const createStocktakes = (): Stocktake[] => {
   );
 };
 
-const createStocktakeLine = (
+export const createStocktakeLine = (
   stocktakeId: string,
-  stockLine: StockLine
+  item: Item,
+  stockLine?: StockLine
 ): StocktakeLine => {
-  const item = getItem(stockLine.itemId);
-
   return {
     id: faker.datatype.uuid(),
-    batch: stockLine.batch,
-    costPricePerPack: stockLine.costPricePerPack,
-    sellPricePerPack: stockLine.sellPricePerPack,
-    countedNumPacks: stockLine.totalNumberOfPacks,
-    expiryDate: stockLine.expiryDate,
+    batch: stockLine?.batch,
+    costPricePerPack: stockLine?.costPricePerPack,
+    sellPricePerPack: stockLine?.sellPricePerPack,
+    countedNumPacks: stockLine?.totalNumberOfPacks,
+    expiryDate: stockLine?.expiryDate,
     itemCode: item.code,
     itemName: item.name,
-    snapshotNumPacks: stockLine.totalNumberOfPacks,
-    snapshotPackSize: stockLine.packSize,
+    snapshotNumPacks: stockLine?.totalNumberOfPacks,
+    snapshotPackSize: stockLine?.packSize,
     stocktakeId,
   };
 };
@@ -752,7 +751,8 @@ const createStocktakeLines = (): StocktakeLine[] => {
     .map(stocktake => {
       const stockLineSubset = takeRandomSubsetFrom(stockLines, 10);
       return stockLineSubset.map(seed => {
-        return createStocktakeLine(stocktake.id, seed);
+        const item = getItem(seed.itemId);
+        return createStocktakeLine(stocktake.id, item, seed);
       });
     })
     .flat();

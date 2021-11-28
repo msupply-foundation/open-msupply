@@ -1336,6 +1336,8 @@ input InsertStocktakeLineInput {
   countedNumPacks: Int
   sellPricePerPack: Float
   costPricePerPack: Float
+  stocktakeId: String!
+  itemId: String!
 }
 union InsertStocktakeLineResponse = NodeError | StocktakeLineNode
 type InsertStocktakeLineResponseWithId {
@@ -1744,9 +1746,9 @@ input BatchStocktakeInput {
   insertStocktakes: [InsertStocktakeInput!]
   updateStocktakes: [UpdateStocktakeInput!]
   deleteStocktakes: [DeleteStocktakeInput!]
-  # insertStocktakeLines: [InsertStocktakeLineInput!]
-  # updateStocktakeLines: [UpdateStocktakeLineInput!]
-  # deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  insertStocktakeLines: [InsertStocktakeLineInput!]
+  updateStocktakeLines: [UpdateStocktakeLineInput!]
+  deleteStocktakeLines: [DeleteStocktakeLineInput!]
 }
 
 type BatchCustomerRequisitionResponse {
