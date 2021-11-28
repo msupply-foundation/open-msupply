@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -10,6 +11,7 @@ import {
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
+
 import { ExternalURL } from '@openmsupply-client/config';
 
 interface AppBarButtonsProps {
@@ -25,7 +27,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('button.new-shipment')}
+          label={t('label.new-requisition')}
           onClick={() => onCreate(true)}
         />
         <ButtonWithIcon
