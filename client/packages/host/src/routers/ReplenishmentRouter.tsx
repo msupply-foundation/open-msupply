@@ -11,8 +11,8 @@ const SupplierService: React.FC = () => (
   <Typography style={{ margin: 25 }}>coming soon..</Typography>
 );
 
-const RequisitionService: React.FC = () => (
-  <Typography style={{ margin: 25 }}>coming soon..</Typography>
+const RequisitionService = React.lazy(
+  () => import('@openmsupply-client/requisitions/src/RequisitionService')
 );
 
 const fullOutboundShipmentPath = RouteBuilder.create(AppRoute.Replenishment)
