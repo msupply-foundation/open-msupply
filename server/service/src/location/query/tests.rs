@@ -7,7 +7,8 @@ mod query {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     use crate::{
-        location::{LocationService, LocationServiceQuery},
+        location::{LocationQueryService, LocationQueryServiceTrait},
+        service_provider::ServiceConnection,
         ListError, SingleRecordError,
     };
 
@@ -16,7 +17,9 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_location_service_pagination", MockDataInserts::all()).await;
 
-        let service = LocationService::new(connection_manager);
+        let service = LocationQueryService(ServiceConnection::Connection(
+            connection_manager.connection().unwrap(),
+        ));
 
         assert_eq!(
             service.get_locations(
@@ -48,7 +51,9 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_location_single_record", MockDataInserts::all()).await;
 
-        let service = LocationService::new(connection_manager);
+        let service = LocationQueryService(ServiceConnection::Connection(
+            connection_manager.connection().unwrap(),
+        ));
 
         assert_eq!(
             service.get_location("invalid_id".to_owned()),
@@ -66,7 +71,9 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_location_filter", MockDataInserts::all()).await;
 
-        let service = LocationService::new(connection_manager);
+        let service = LocationQueryService(ServiceConnection::Connection(
+            connection_manager.connection().unwrap(),
+        ));
 
         let result = service
             .get_locations(
@@ -100,7 +107,9 @@ mod query {
         let (mock_data, _, connection_manager, _) =
             setup_all("test_location_sort", MockDataInserts::all()).await;
 
-        let service = LocationService::new(connection_manager);
+        let service = LocationQueryService(ServiceConnection::Connection(
+            connection_manager.connection().unwrap(),
+        ));
         // Test Name sort with default sort order
         let result = service
             .get_locations(
