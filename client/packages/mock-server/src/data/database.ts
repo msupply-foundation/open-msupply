@@ -33,6 +33,7 @@ import {
   Requisition,
   RequisitionLine,
   Stocktake,
+  StocktakeLine,
 } from './types';
 import {
   InvoiceData,
@@ -45,6 +46,7 @@ import {
   RequisitionLineData,
   createRequisitionLine,
   StocktakeData,
+  StocktakeLineData,
 } from './data';
 
 import {
@@ -66,6 +68,28 @@ export const invoice = {
       ({
         ...InvoiceData.find(getFilter(invoiceNumber, 'invoiceNumber')),
       } as Invoice),
+  },
+};
+
+export const stocktakeLine = {
+  get: {
+    byId: (id: string): StocktakeLine => {
+      const stocktakeLine = StocktakeLineData.find(getFilter(id, 'id'));
+      if (!stocktakeLine) {
+        throw new Error(`Could not find stocktakeLine line with id: ${id}`);
+      }
+
+      return {
+        ...stocktakeLine,
+      };
+    },
+    byStocktakeId: (stocktakeId: string): StocktakeLine[] => {
+      const lines = StocktakeLineData.filter(
+        getFilter(stocktakeId, 'stocktakeId')
+      );
+
+      return [...lines];
+    },
   },
 };
 
@@ -534,4 +558,5 @@ export const db = {
   insert,
   remove,
   stocktake,
+  stocktakeLine,
 };

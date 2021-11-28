@@ -707,7 +707,10 @@ type Mutations {
   batchStocktake(
     insertStocktakes: [InsertStocktakeInput!]
     updateStocktakes: [UpdateStocktakeInput!]
-    deleteStocktakes: [DeleteStocktakeInput!] # insertStocktakeLines: [InsertStocktakeLineInput!] # updateStocktakeLines: [UpdateStocktakeLineInput!] # deleteStocktakeLines: [DeleteStocktakeLineInput!]
+    deleteStocktakes: [DeleteStocktakeInput!]
+    insertStocktakeLines: [InsertStocktakeLineInput!]
+    updateStocktakeLines: [UpdateStocktakeLineInput!]
+    deleteStocktakeLines: [DeleteStocktakeLineInput!]
   ): BatchStocktakeResponse!
 }
 
@@ -1295,6 +1298,58 @@ type StocktakeNode {
   comment: String
   description: String
   status: StocktakeNodeStatus!
+  lines: StocktakeLinesResponse!
+}
+
+type StocktakeLineNode {
+  id: String!
+  itemName: String!
+  itemCode: String!
+  batch: String
+  expiryDate: NaiveDate
+  snapshotNumPacks: Int
+  snapshotPackSize: Int
+  countedNumPacks: Int
+  sellPricePerPack: Float
+  costPricePerPack: Float
+}
+
+input UpdateStocktakeLineInput {
+  id: String!
+  batch: String
+  expiryDate: NaiveDate
+  countedNumPacks: Int
+  sellPricePerPack: Float
+  costPricePerPack: Float
+}
+
+union UpdateStocktakeLineResponse = NodeError | StocktakeLineNode
+type UpdateStocktakeLineResponseWithId {
+  id: String!
+  response: UpdateStocktakeLineResponse
+}
+
+input InsertStocktakeLineInput {
+  id: String!
+  batch: String
+  expiryDate: NaiveDate
+  countedNumPacks: Int
+  sellPricePerPack: Float
+  costPricePerPack: Float
+}
+union InsertStocktakeLineResponse = NodeError | StocktakeLineNode
+type InsertStocktakeLineResponseWithId {
+  id: String!
+  response: InsertStocktakeLineResponse
+}
+
+input DeleteStocktakeLineInput {
+  id: String!
+}
+union DeleteStocktakeLineResponse = NodeError | DeleteResponse
+type DeleteStocktakeLineResponseWithId {
+  id: String!
+  response: DeleteResponse
 }
 
 enum StocktakeNodeStatus {
@@ -1334,6 +1389,13 @@ type RequisitionLineNode {
 }
 
 union RequisitionLinesResponse = ConnectorError | RequisitionLineConnector
+
+union StocktakeLinesResponse = ConnectorError | StocktakeLineConnector
+
+type StocktakeLineConnector {
+  totalCount: Int!
+  nodes: [StocktakeLineNode!]
+}
 
 type RequisitionLineConnector {
   totalCount: Int!
@@ -1706,9 +1768,9 @@ type BatchSupplierRequisitionResponse {
 }
 
 type BatchStocktakeResponse {
-  # insertStocktakeLines: [InsertStocktakeLineResponseWithId!]
-  # updateStocktakeLines: [UpdateStocktakeLineResponseWithId!]
-  # deleteStocktakeLines: [DeleteStocktakeLineResponseWithId!]
+  insertStocktakeLines: [InsertStocktakeLineResponseWithId!]
+  updateStocktakeLines: [UpdateStocktakeLineResponseWithId!]
+  deleteStocktakeLines: [DeleteStocktakeLineResponseWithId!]
   insertStocktakes: [InsertStocktakeResponseWithId!]
   updateStocktakes: [UpdateStocktakeResponseWithId!]
   deleteStocktakes: [DeleteStocktakeResponseWithId!]
