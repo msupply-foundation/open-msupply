@@ -47,7 +47,7 @@ import { MutationService } from '../api/mutations';
 import { ResolverService } from './../api/resolvers';
 
 const QueryResolvers = {
-  requisition: (id: string): RequisitionResponse => {
+  requisition: (_: unknown, { id }: { id: string }): RequisitionResponse => {
     return ResolverService.requisition.get.byId(id);
   },
   requisitions: (

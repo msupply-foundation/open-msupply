@@ -11,13 +11,13 @@ import {
 export const StocktakeMutation = {
   update: (input: UpdateStocktakeInput): ResolvedStocktake => {
     db.stocktake.update(input);
-    const resolvedReq = ResolverService.stocktake.byId(input.id);
-    return resolvedReq;
+    const resolvedStocktake = ResolverService.stocktake.byId(input.id);
+    return resolvedStocktake;
   },
   insert: (input: InsertStocktakeInput): ResolvedStocktake => {
     db.stocktake.insert(input);
-    const resolvedReq = ResolverService.stocktake.byId(input.id);
-    return resolvedReq;
+    const resolvedStocktake = ResolverService.stocktake.byId(input.id);
+    return resolvedStocktake;
   },
   delete: (input: DeleteStocktakeInput): DeleteResponse => {
     return db.stocktake.delete(input);
