@@ -1144,6 +1144,8 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCountsResponse;
+  stocktake: StocktakeResponse;
+  stocktakes: StocktakesResponse;
 };
 
 
@@ -1198,6 +1200,16 @@ export type QueriesRequisitionArgs = {
 
 export type QueriesRequisitionsArgs = {
   params?: Maybe<RequisitionListParameters>;
+};
+
+
+export type QueriesStocktakeArgs = {
+  id: Scalars['String'];
+};
+
+
+export type QueriesStocktakesArgs = {
+  params?: Maybe<StocktakeListParameters>;
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -1391,6 +1403,51 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
+
+export type StocktakeConnector = {
+  __typename?: 'StocktakeConnector';
+  nodes: Array<StocktakeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StocktakeFilterInput = {
+  description?: Maybe<SimpleStringFilterInput>;
+};
+
+export type StocktakeListParameters = {
+  filter?: Maybe<StocktakeFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<StocktakeSortInput>>;
+};
+
+export type StocktakeNode = {
+  __typename?: 'StocktakeNode';
+  comment?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  status: StocktakeNodeStatus;
+  stocktakeDate?: Maybe<Scalars['String']>;
+  stocktakeNumber: Scalars['Int'];
+};
+
+export enum StocktakeNodeStatus {
+  Confirmed = 'CONFIRMED',
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED'
+}
+
+export type StocktakeResponse = NodeError | StocktakeNode;
+
+export enum StocktakeSortFieldInput {
+  Description = 'description'
+}
+
+export type StocktakeSortInput = {
+  desc?: Maybe<Scalars['Boolean']>;
+  key: StocktakeSortFieldInput;
+};
+
+export type StocktakesResponse = NodeError | StocktakeConnector;
 
 export enum SupplierRequisitionNodeStatus {
   Draft = 'DRAFT',

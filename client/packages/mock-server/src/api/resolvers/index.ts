@@ -6,6 +6,7 @@ import { requisitionResolver } from './requisition';
 import { requisitionLineResolver } from './requisitionLine';
 import { invoiceLineResolver } from './invoiceLine';
 import { statisticsResolver } from './statistics';
+import { StocktakeResolver } from './stocktake';
 
 export const ResolverService = {
   invoice: invoiceResolver,
@@ -16,4 +17,5 @@ export const ResolverService = {
   requisition: requisitionResolver,
   name: nameResolver,
   statistics: statisticsResolver,
+  stocktake: StocktakeResolver,
 };

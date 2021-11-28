@@ -20,6 +20,7 @@ import {
   RequisitionListParameters,
   ItemsResponse,
   NameNode,
+  StocktakeNode,
 } from '@openmsupply-client/common/src/types/schema';
 
 export { ItemSortFieldInput, RequisitionListParameters, ItemsResponse };
@@ -171,3 +172,8 @@ export type NameListParameters = {
   page?: PaginationInput | null;
   sort?: Array<NameSortInput> | null;
 };
+
+export type Stocktake = Omit<StocktakeNode, '__typename'>;
+export interface ResolvedStocktake extends Stocktake {
+  __typename: 'StocktakeNode';
+}

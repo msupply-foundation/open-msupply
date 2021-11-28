@@ -901,6 +901,36 @@ type Queries {
   ): RequisitionResponse!
 
   requisitions(params: RequisitionListParameters): RequisitionsResponse!
+
+  stocktake(
+    # id of the invoice
+    id: String!
+  ): StocktakeResponse!
+
+  stocktakes(params: StocktakeListParameters): StocktakesResponse!
+}
+
+input StocktakeListParameters {
+  page: PaginationInput
+  filter: StocktakeFilterInput
+  sort: [StocktakeSortInput!]
+}
+
+input StocktakeFilterInput {
+  description: SimpleStringFilterInput
+}
+
+enum StocktakeSortFieldInput {
+  description
+}
+
+input StocktakeSortInput {
+  # Sort query result by `key`
+  key: StocktakeSortFieldInput!
+
+  # Sort query result is sorted descending or ascending (if not provided the default is
+  # ascending)
+  desc: Boolean
 }
 
 input RequisitionListParameters {
@@ -1249,6 +1279,21 @@ type RequisitionNode {
   otherPartyName: String!
 }
 
+type StocktakeNode {
+  id: String!
+  stocktakeNumber: Int!
+  stocktakeDate: String
+  comment: String
+  description: String
+  status: StocktakeNodeStatus!
+}
+
+enum StocktakeNodeStatus {
+  DRAFT
+  CONFIRMED
+  FINALISED
+}
+
 type RequisitionLineNode {
   id: String!
   itemName: String
@@ -1297,6 +1342,13 @@ enum CustomerRequisitionNodeStatus {
   NEW
   IN_PROGRESS
   FINALISED
+}
+
+union StocktakeResponse = StocktakeNode | NodeError
+union StocktakesResponse = StocktakeConnector | NodeError
+type StocktakeConnector {
+  totalCount: Int!
+  nodes: [StocktakeNode!]!
 }
 
 union RequisitionResponse = RequisitionNode | NodeError
