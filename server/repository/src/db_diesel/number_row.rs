@@ -11,6 +11,20 @@ pub struct NumberRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+fn find_one_by_id_tx(
+    con: &StorageConnection,
+    counter_id: &str,
+) -> Result<Option<NumberRow>, RepositoryError> {
+    match number_dsl::number
+        .filter(number_dsl::id.eq(counter_id))
+        .first(&con.connection)
+    {
+        Ok(row) => Ok(Some(row)),
+        Err(diesel::result::Error::NotFound) => Ok(None),
+        Err(error) => Err(RepositoryError::from(error)),
+    }
+}
+
 impl<'a> NumberRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         NumberRowRepository { connection }
@@ -19,34 +33,32 @@ impl<'a> NumberRowRepository<'a> {
     /// Increments the counter and returns the updated row
     /// Note: its assumed that this call done in a transaction
     pub fn increment(&self, counter_id: &str) -> Result<NumberRow, RepositoryError> {
-        match self.find_one_by_id(counter_id) {
-            Ok(mut row) => {
-                // update existing counter
-                row.value = row.value + 1;
-                diesel::update(number_dsl::number)
-                    .set(&row)
-                    .execute(&self.connection.connection)?;
-                Ok(row)
+        Ok(self.connection.transaction_sync(|con| {
+            match find_one_by_id_tx(con, counter_id)? {
+                Some(mut row) => {
+                    // update existing counter
+                    row.value = row.value + 1;
+                    diesel::update(number_dsl::number)
+                        .set(&row)
+                        .execute(&con.connection)?;
+                    Ok(row)
+                }
+                None => {
+                    // insert new counter
+                    let row = NumberRow {
+                        id: counter_id.to_string(),
+                        value: 1,
+                    };
+                    diesel::insert_into(number_dsl::number)
+                        .values(&row)
+                        .execute(&con.connection)?;
+                    Ok(row)
+                }
             }
-            Err(RepositoryError::NotFound) => {
-                // insert new counter
-                let row = NumberRow {
-                    id: counter_id.to_string(),
-                    value: 1,
-                };
-                diesel::insert_into(number_dsl::number)
-                    .values(&row)
-                    .execute(&self.connection.connection)?;
-                Ok(row)
-            }
-            Err(err) => Err(err),
-        }
+        })?)
     }
 
-    pub fn find_one_by_id(&self, counter_id: &str) -> Result<NumberRow, RepositoryError> {
-        let result = number_dsl::number
-            .filter(number_dsl::id.eq(counter_id))
-            .first(&self.connection.connection)?;
-        Ok(result)
+    pub fn find_one_by_id(&self, counter_id: &str) -> Result<Option<NumberRow>, RepositoryError> {
+        find_one_by_id_tx(&self.connection, counter_id)
     }
 }
