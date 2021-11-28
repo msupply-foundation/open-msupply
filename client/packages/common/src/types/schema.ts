@@ -108,8 +108,11 @@ export type BatchStocktakeInput = {
 
 export type BatchStocktakeResponse = {
   __typename?: 'BatchStocktakeResponse';
+  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
+  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
   insertStocktakes?: Maybe<Array<InsertStocktakeResponseWithId>>;
+  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineResponseWithId>>;
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
@@ -308,6 +311,18 @@ export type DeleteResponse = {
 
 export type DeleteStocktakeInput = {
   id: Scalars['String'];
+};
+
+export type DeleteStocktakeLineInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteStocktakeLineResponse = DeleteResponse | NodeError;
+
+export type DeleteStocktakeLineResponseWithId = {
+  __typename?: 'DeleteStocktakeLineResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<DeleteResponse>;
 };
 
 export type DeleteStocktakeResponse = DeleteResponse | NodeError;
@@ -546,6 +561,23 @@ export type InsertStocktakeInput = {
   description?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   stocktakeDate?: Maybe<Scalars['String']>;
+};
+
+export type InsertStocktakeLineInput = {
+  batch?: Maybe<Scalars['String']>;
+  costPricePerPack?: Maybe<Scalars['Float']>;
+  countedNumPacks?: Maybe<Scalars['Int']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  sellPricePerPack?: Maybe<Scalars['Float']>;
+};
+
+export type InsertStocktakeLineResponse = NodeError | StocktakeLineNode;
+
+export type InsertStocktakeLineResponseWithId = {
+  __typename?: 'InsertStocktakeLineResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertStocktakeLineResponse>;
 };
 
 export type InsertStocktakeResponse = NodeError | StocktakeNode;
@@ -934,8 +966,11 @@ export type MutationsBatchOutboundShipmentArgs = {
 
 
 export type MutationsBatchStocktakeArgs = {
+  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineInput>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
+  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineInput>>;
   insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
+  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineInput>>;
   updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
 };
 
@@ -1480,6 +1515,28 @@ export type StocktakeFilterInput = {
   description?: Maybe<SimpleStringFilterInput>;
 };
 
+export type StocktakeLineConnector = {
+  __typename?: 'StocktakeLineConnector';
+  nodes?: Maybe<Array<StocktakeLineNode>>;
+  totalCount: Scalars['Int'];
+};
+
+export type StocktakeLineNode = {
+  __typename?: 'StocktakeLineNode';
+  batch?: Maybe<Scalars['String']>;
+  costPricePerPack?: Maybe<Scalars['Float']>;
+  countedNumPacks?: Maybe<Scalars['Int']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  itemCode: Scalars['String'];
+  itemName: Scalars['String'];
+  sellPricePerPack?: Maybe<Scalars['Float']>;
+  snapshotNumPacks?: Maybe<Scalars['Int']>;
+  snapshotPackSize?: Maybe<Scalars['Int']>;
+};
+
+export type StocktakeLinesResponse = ConnectorError | StocktakeLineConnector;
+
 export type StocktakeListParameters = {
   filter?: Maybe<StocktakeFilterInput>;
   page?: Maybe<PaginationInput>;
@@ -1491,6 +1548,7 @@ export type StocktakeNode = {
   comment?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
   id: Scalars['String'];
+  lines: StocktakeLinesResponse;
   status: StocktakeNodeStatus;
   stocktakeDate?: Maybe<Scalars['String']>;
   stocktakeNumber: Scalars['Int'];
@@ -1691,6 +1749,23 @@ export type UpdateStocktakeInput = {
   id: Scalars['String'];
   status?: Maybe<StocktakeNodeStatus>;
   stocktakeDate?: Maybe<Scalars['String']>;
+};
+
+export type UpdateStocktakeLineInput = {
+  batch?: Maybe<Scalars['String']>;
+  costPricePerPack?: Maybe<Scalars['Float']>;
+  countedNumPacks?: Maybe<Scalars['Int']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  sellPricePerPack?: Maybe<Scalars['Float']>;
+};
+
+export type UpdateStocktakeLineResponse = NodeError | StocktakeLineNode;
+
+export type UpdateStocktakeLineResponseWithId = {
+  __typename?: 'UpdateStocktakeLineResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateStocktakeLineResponse>;
 };
 
 export type UpdateStocktakeResponse = NodeError | StocktakeNode;

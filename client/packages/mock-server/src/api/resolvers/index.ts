@@ -1,3 +1,4 @@
+import { StocktakeLineResolver } from './stocktakeLine';
 import { invoiceResolver } from './invoice';
 import { itemResolver } from './item';
 import { stockLineResolver } from './stockLine';
@@ -18,4 +19,5 @@ export const ResolverService = {
   name: nameResolver,
   statistics: statisticsResolver,
   stocktake: StocktakeResolver,
+  stocktakeLine: StocktakeLineResolver,
 };
