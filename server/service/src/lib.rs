@@ -10,7 +10,7 @@ pub mod location;
 pub mod name;
 pub mod permission_validation;
 pub mod permissions;
-pub mod service_registry;
+pub mod service_provider;
 pub mod stock_line;
 pub mod token;
 pub mod token_bucket;
