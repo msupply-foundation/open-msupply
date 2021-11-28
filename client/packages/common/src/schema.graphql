@@ -704,6 +704,11 @@ type Mutations {
   updateStocktake(input: UpdateStocktakeInput!): UpdateStocktakeResponse!
   insertStocktake(input: InsertStocktakeInput!): InsertStocktakeResponse!
   deleteStocktake(input: DeleteStocktakeInput!): DeleteStocktakeResponse!
+  batchStocktake(
+    insertStocktakes: [InsertStocktakeInput!]
+    updateStocktakes: [UpdateStocktakeInput!]
+    deleteStocktakes: [DeleteStocktakeInput!] # insertStocktakeLines: [InsertStocktakeLineInput!] # updateStocktakeLines: [UpdateStocktakeLineInput!] # deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  ): BatchStocktakeResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -1471,7 +1476,7 @@ type InsertStocktakeResponseWithId {
 union DeleteStocktakeResponse = NodeError | DeleteResponse
 type DeleteStocktakeResponseWithId {
   id: String!
-  response: UpdateStocktakeResponse
+  response: DeleteResponse
 }
 
 input InsertStocktakeInput {
@@ -1673,6 +1678,15 @@ input BatchCustomerRequisitionInput {
   deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
 }
 
+input BatchStocktakeInput {
+  insertStocktakes: [InsertStocktakeInput!]
+  updateStocktakes: [UpdateStocktakeInput!]
+  deleteStocktakes: [DeleteStocktakeInput!]
+  # insertStocktakeLines: [InsertStocktakeLineInput!]
+  # updateStocktakeLines: [UpdateStocktakeLineInput!]
+  # deleteStocktakeLines: [DeleteStocktakeLineInput!]
+}
+
 type BatchCustomerRequisitionResponse {
   insertCustomerRequisitionLines: [InsertCustomerRequisitionLineResponseWithId!]
   updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineResponseWithId!]
@@ -1689,4 +1703,13 @@ type BatchSupplierRequisitionResponse {
   insertSupplierRequisitions: [InsertSupplierRequisitionResponseWithId!]
   updateSupplierRequisitions: [UpdateSupplierRequisitionResponseWithId!]
   deleteSupplierRequisitions: [DeleteSupplierRequisitionResponseWithId!]
+}
+
+type BatchStocktakeResponse {
+  # insertStocktakeLines: [InsertStocktakeLineResponseWithId!]
+  # updateStocktakeLines: [UpdateStocktakeLineResponseWithId!]
+  # deleteStocktakeLines: [DeleteStocktakeLineResponseWithId!]
+  insertStocktakes: [InsertStocktakeResponseWithId!]
+  updateStocktakes: [UpdateStocktakeResponseWithId!]
+  deleteStocktakes: [DeleteStocktakeResponseWithId!]
 }

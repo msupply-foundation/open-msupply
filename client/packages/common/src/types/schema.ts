@@ -100,6 +100,19 @@ export type BatchOutboundShipmentResponse = {
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentResponseWithId>>;
 };
 
+export type BatchStocktakeInput = {
+  deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
+  insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
+  updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
+};
+
+export type BatchStocktakeResponse = {
+  __typename?: 'BatchStocktakeResponse';
+  deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
+  insertStocktakes?: Maybe<Array<InsertStocktakeResponseWithId>>;
+  updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
+};
+
 export type BatchSupplierRequisitionInput = {
   deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput>>;
   deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
@@ -302,7 +315,7 @@ export type DeleteStocktakeResponse = DeleteResponse | NodeError;
 export type DeleteStocktakeResponseWithId = {
   __typename?: 'DeleteStocktakeResponseWithId';
   id: Scalars['String'];
-  response?: Maybe<UpdateStocktakeResponse>;
+  response?: Maybe<DeleteResponse>;
 };
 
 export type DeleteSupplierRequisitionInput = {
@@ -857,6 +870,7 @@ export type Mutations = {
   batchCustomerRequisition: BatchCustomerRequisitionResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
+  batchStocktake: BatchStocktakeResponse;
   batchSupplierRequisition: BatchSupplierRequisitionResponse;
   deleteCustomerRequisition: DeleteCustomerRequisitionResponse;
   deleteCustomerRequisitionLine: DeleteCustomerRequisitionLineResponse;
@@ -916,6 +930,13 @@ export type MutationsBatchOutboundShipmentArgs = {
   insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
   updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
+};
+
+
+export type MutationsBatchStocktakeArgs = {
+  deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
+  insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
+  updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
 };
 
 
