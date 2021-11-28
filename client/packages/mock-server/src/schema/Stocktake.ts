@@ -11,7 +11,12 @@ import {
   DeleteStocktakeInput,
   InsertStocktakeResponse,
   UpdateStocktakeResponse,
-  DeleteStocktakeResponse,
+  DeleteResponse,
+  InsertStocktakeResponseWithId,
+  UpdateStocktakeResponseWithId,
+  DeleteStocktakeResponseWithId,
+  BatchStocktakeInput,
+  BatchStocktakeResponse,
 } from '@openmsupply-client/common/src/types/schema';
 
 const QueryResolvers = {
@@ -42,11 +47,114 @@ const MutationResolvers = {
   deleteStocktake: (
     _: unknown,
     { input }: { input: DeleteStocktakeInput }
-  ): DeleteStocktakeResponse => {
+  ): DeleteResponse => {
     return {
       __typename: 'DeleteResponse',
       ...MutationService.stocktake.delete(input),
     };
+  },
+  batchStocktake: (
+    _: unknown,
+    vars: BatchStocktakeInput
+  ): BatchStocktakeResponse => {
+    const response: BatchStocktakeResponse = {
+      __typename: 'BatchStocktakeResponse',
+    };
+
+    if (vars.insertStocktakes) {
+      response.insertStocktakes = vars.insertStocktakes.map(input => {
+        const regularInsertResponse = MutationResolvers.insertStocktake(_, {
+          input,
+        });
+        const batchInsertResponse: InsertStocktakeResponseWithId = {
+          __typename: 'InsertStocktakeResponseWithId',
+          id: input.id,
+          response: regularInsertResponse,
+        };
+
+        return batchInsertResponse;
+      });
+    }
+
+    if (vars.updateStocktakes) {
+      response.updateStocktakes = vars.updateStocktakes.map(input => {
+        const regularUpdateResponse = MutationResolvers.updateStocktake(_, {
+          input,
+        });
+        const batchUpdateResponse: UpdateStocktakeResponseWithId = {
+          __typename: 'UpdateStocktakeResponseWithId',
+          id: input.id,
+          response: regularUpdateResponse,
+        };
+
+        return batchUpdateResponse;
+      });
+    }
+
+    if (vars.deleteStocktakes) {
+      response.deleteStocktakes = vars.deleteStocktakes.map(input => {
+        const regularDeleteResponse = MutationResolvers.deleteStocktake(_, {
+          input,
+        });
+        const batchDeleteResponse: DeleteStocktakeResponseWithId = {
+          __typename: 'DeleteStocktakeResponseWithId',
+          id: input.id,
+          response: regularDeleteResponse,
+        };
+
+        return batchDeleteResponse;
+      });
+    }
+
+    // if (vars.insertStocktakeLines) {
+    //   response.insertStocktakeLines =
+    //     vars.insertStocktakeLines.map(input => {
+    //       const regularInsertResponse =
+    //         MutationResolvers.insertStocktakeLine(_, { input });
+    //       const batchInsertResponse: InsertStocktakeLineResponseWithId =
+    //         {
+    //           __typename: 'InsertStocktakeLineResponseWithId',
+    //           id: input.id,
+    //           response: regularInsertResponse,
+    //         };
+
+    //       return batchInsertResponse;
+    //     });
+    // }
+
+    // if (vars.updateStocktakeLines) {
+    //   response.updateStocktakeLines =
+    //     vars.updateStocktakeLines.map(input => {
+    //       const regularUpdateResponse =
+    //         MutationResolvers.updateStocktakeLine(_, { input });
+    //       const batchInsertResponse: UpdateStocktakeLineResponseWithId =
+    //         {
+    //           __typename: 'UpdateStocktakeLineResponseWithId',
+    //           id: input.id,
+    //           response: regularUpdateResponse,
+    //         };
+
+    //       return batchInsertResponse;
+    //     });
+    // }
+
+    // if (vars.deleteStocktakeLines) {
+    //   response.deleteStocktakeLines =
+    //     vars.deleteStocktakeLines.map(input => {
+    //       const regularDeleteResponse =
+    //         MutationResolvers.deleteStocktakeLine(_, { input });
+    //       const batchInsertResponse: DeleteStocktakeLineResponseWithId =
+    //         {
+    //           __typename: 'DeleteStocktakeLineResponseWithId',
+    //           id: input.id,
+    //           response: regularDeleteResponse,
+    //         };
+
+    //       return batchInsertResponse;
+    //     });
+    // }
+
+    return response;
   },
 };
 
