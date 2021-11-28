@@ -165,6 +165,52 @@ query invoice($id: String!) {
   }
 }
 
+query requisitions($params: RequisitionListParameters) {
+  requisitions(params: $params) {
+    __typename
+    ... on RequisitionConnector {
+      nodes {
+        id
+        comment
+        orderDate
+        otherPartyReference
+        requisitionNumber
+        status
+        otherPartyName
+      }
+      totalCount
+    }
+  }
+}
+
+mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
+  batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
+    __typename
+    deleteSupplierRequisitions {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateSupplierRequisition($input: UpdateSupplierRequisitionInput!) {
+  updateSupplierRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertSupplierRequisition($input: InsertSupplierRequisitionInput!) {
+  insertSupplierRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
 query invoices(
   $first: Int
   $offset: Int

@@ -953,6 +953,7 @@ input RequisitionListParameters {
 
 input RequisitionFilterInput {
   type: SimpleStringFilterInput
+  comment: SimpleStringFilterInput
 }
 
 enum RequisitionSortFieldInput {

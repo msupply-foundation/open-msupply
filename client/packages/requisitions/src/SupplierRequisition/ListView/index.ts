@@ -1,3 +1,1 @@
-import { FC } from 'react';
-
-export const ListView: FC = () => null;
+export { ListView } from './ListView';
