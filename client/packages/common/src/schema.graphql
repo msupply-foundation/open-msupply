@@ -1274,17 +1274,15 @@ type UpdateOutboundShipmentResponseWithId {
 type RequisitionNode {
   id: String!
 
-  storeId: String!
-
+  color: String
   orderDate: String
   comment: String
-  otherPartyReference: String
+  theirReference: String
   type: RequisitionNodeType
   requisitionNumber: Int!
   thresholdMOS: Int
   maxMOS: Int
   status: SupplierRequisitionNodeStatus!
-
   lines: RequisitionLinesResponse!
 
   otherParty: NameResponse!
@@ -1363,6 +1361,7 @@ enum StocktakeNodeStatus {
 
 type RequisitionLineNode {
   id: String!
+  itemId: String!
   itemName: String
   itemCode: String
   itemUnit: String
@@ -1446,8 +1445,8 @@ input UpdateSupplierRequisitionInput {
   orderDate: String
   nameId: String
   comment: String
-  otherPartyReference: String
-  type: RequisitionNodeType
+  theirReference: String
+  color: String
 }
 
 input UpdateSupplierRequisitionLineInput {
@@ -1455,12 +1454,9 @@ input UpdateSupplierRequisitionLineInput {
   itemName: String
   itemCode: String
   itemUnit: String
-
   comment: String
-
   monthlyConsumption: Float
   monthsOfSupply: Float
-
   supplyQuantity: Float
   openingQuantity: Float
   issuedQuantity: Float
@@ -1515,7 +1511,7 @@ input InsertSupplierRequisitionInput {
   orderDate: String
   otherPartyId: String!
   comment: String
-  otherPartyReference: String
+  theirReference: String
   type: RequisitionNodeType
 }
 
@@ -1690,8 +1686,8 @@ input UpdateCustomerRequisitionInput {
   orderDate: String
   nameId: String
   comment: String
-  otherPartyReference: String
-  type: RequisitionNodeType
+  theirReference: String
+  color: String
 }
 
 input InsertCustomerRequisitionInput {
@@ -1699,7 +1695,7 @@ input InsertCustomerRequisitionInput {
   orderDate: String
   otherPartyId: String!
   comment: String
-  otherPartyReference: String
+  theirReference: String
   type: RequisitionNodeType
 }
 

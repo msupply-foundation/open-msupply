@@ -10,6 +10,9 @@ import {
   TextArea,
   useNotification,
   useTranslation,
+  PanelRow,
+  PanelField,
+  ColorSelectButton,
 } from '@openmsupply-client/common';
 import { isRequisitionEditable } from '../../utils';
 import { SupplierRequisition } from '../../types';
@@ -24,10 +27,20 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        <PanelRow>
+          <PanelLabel>{t('label.color')}</PanelLabel>
+          <PanelField>
+            <ColorSelectButton
+              disabled={!isRequisitionEditable(draft)}
+              onChange={color => draft.update('color', color.hex)}
+              color={draft?.color}
+            />
+          </PanelField>
+        </PanelRow>
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <TextArea
           disabled={!isRequisitionEditable(draft)}
-          onChange={e => draft.update?.('comment', e.target.value)}
+          onChange={e => draft.update('comment', e.target.value)}
           value={draft.comment}
         />
       </Grid>
