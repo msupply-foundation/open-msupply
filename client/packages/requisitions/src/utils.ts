@@ -1,5 +1,9 @@
-import { SupplierRequisitionNodeStatus } from '@openmsupply-client/common';
-import { SupplierRequisition } from './types';
+import {
+  SupplierRequisitionNodeStatus,
+  SupplierRequisitionNodeStatus,
+} from '@openmsupply-client/common';
+
+import { Requisition, SupplierRequisition, CustomerRequisition } from './types';
 
 export const placeholderSupplierRequisition: SupplierRequisition = {
   id: '',
@@ -29,9 +33,35 @@ export const placeholderSupplierRequisition: SupplierRequisition = {
   },
 };
 
-export const isRequisitionEditable = (
-  requisition: SupplierRequisition
-): boolean => {
+export const placeholderCustomerRequisition: CustomerRequisition = {
+  id: '',
+  requisitionNumber: 0,
+  isDeleted: false,
+  lines: [],
+  color: '#cdcdcd',
+  otherParty: {
+    id: '',
+    name: '',
+    code: '',
+    isCustomer: false,
+    isSupplier: true,
+  },
+  otherPartyId: '',
+  otherPartyName: '',
+  status: SupplierRequisitionNodeStatus.Draft,
+  update: () => {
+    throw new Error(
+      'Placeholder callback update has been triggered. This should never happen!'
+    );
+  },
+  updateOtherParty: () => {
+    throw new Error(
+      'Placeholder callback updateOtherParty has been triggered. This should never happen!'
+    );
+  },
+};
+
+export const isRequisitionEditable = (requisition: Requisition): boolean => {
   return (
     requisition.status === SupplierRequisitionNodeStatus.Draft ||
     requisition.status === SupplierRequisitionNodeStatus.InProgress
