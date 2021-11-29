@@ -5,7 +5,9 @@ use domain::{
     PaginationOption,
 };
 
+pub mod insert;
 pub mod query;
+mod validate;
 
 pub trait LocationQueryServiceTrait {
     fn get_locations(
