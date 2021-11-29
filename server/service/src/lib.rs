@@ -15,6 +15,7 @@ pub mod stock_line;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod validate;
 
 #[derive(PartialEq, Debug)]
 pub struct ListResult<T> {
