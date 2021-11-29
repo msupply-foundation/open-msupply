@@ -100,6 +100,19 @@ export type BatchOutboundShipmentResponse = {
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentResponseWithId>>;
 };
 
+export type BatchStocktakeInput = {
+  deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
+  insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
+  updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
+};
+
+export type BatchStocktakeResponse = {
+  __typename?: 'BatchStocktakeResponse';
+  deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
+  insertStocktakes?: Maybe<Array<InsertStocktakeResponseWithId>>;
+  updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
+};
+
 export type BatchSupplierRequisitionInput = {
   deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput>>;
   deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
@@ -291,6 +304,18 @@ export type DeleteOutboundShipmentResponseWithId = {
 export type DeleteResponse = {
   __typename?: 'DeleteResponse';
   id: Scalars['String'];
+};
+
+export type DeleteStocktakeInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteStocktakeResponse = DeleteResponse | NodeError;
+
+export type DeleteStocktakeResponseWithId = {
+  __typename?: 'DeleteStocktakeResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<DeleteResponse>;
 };
 
 export type DeleteSupplierRequisitionInput = {
@@ -514,6 +539,21 @@ export type InsertOutboundShipmentResponseWithId = {
   __typename?: 'InsertOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentResponse;
+};
+
+export type InsertStocktakeInput = {
+  comment?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  stocktakeDate?: Maybe<Scalars['String']>;
+};
+
+export type InsertStocktakeResponse = NodeError | StocktakeNode;
+
+export type InsertStocktakeResponseWithId = {
+  __typename?: 'InsertStocktakeResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertStocktakeResponse>;
 };
 
 export type InsertSupplierRequisitionInput = {
@@ -830,6 +870,7 @@ export type Mutations = {
   batchCustomerRequisition: BatchCustomerRequisitionResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
+  batchStocktake: BatchStocktakeResponse;
   batchSupplierRequisition: BatchSupplierRequisitionResponse;
   deleteCustomerRequisition: DeleteCustomerRequisitionResponse;
   deleteCustomerRequisitionLine: DeleteCustomerRequisitionLineResponse;
@@ -837,6 +878,7 @@ export type Mutations = {
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
+  deleteStocktake: DeleteStocktakeResponse;
   deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
   deleteSupplierRequisitionLine: DeleteSupplierRequisitionLineResponse;
   insertCustomerRequisition: InsertCustomerRequisitionResponse;
@@ -845,6 +887,7 @@ export type Mutations = {
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
+  insertStocktake: InsertStocktakeResponse;
   insertSupplierRequisition: InsertSupplierRequisitionResponse;
   insertSupplierRequisitionLine: InsertSupplierRequisitionLineResponse;
   registerUser: UserRegisterResponse;
@@ -854,6 +897,7 @@ export type Mutations = {
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
+  updateStocktake: UpdateStocktakeResponse;
   updateSupplierRequisition: UpdateSupplierRequisitionResponse;
   updateSupplierRequisitionLine: UpdateSupplierRequisitionLineResponse;
 };
@@ -886,6 +930,13 @@ export type MutationsBatchOutboundShipmentArgs = {
   insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
   updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
+};
+
+
+export type MutationsBatchStocktakeArgs = {
+  deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
+  insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
+  updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
 };
 
 
@@ -929,6 +980,11 @@ export type MutationsDeleteOutboundShipmentLineArgs = {
 };
 
 
+export type MutationsDeleteStocktakeArgs = {
+  input: DeleteStocktakeInput;
+};
+
+
 export type MutationsDeleteSupplierRequisitionArgs = {
   input: DeleteSupplierRequisitionInput;
 };
@@ -966,6 +1022,11 @@ export type MutationsInsertOutboundShipmentArgs = {
 
 export type MutationsInsertOutboundShipmentLineArgs = {
   input: InsertOutboundShipmentLineInput;
+};
+
+
+export type MutationsInsertStocktakeArgs = {
+  input: InsertStocktakeInput;
 };
 
 
@@ -1011,6 +1072,11 @@ export type MutationsUpdateOutboundShipmentArgs = {
 
 export type MutationsUpdateOutboundShipmentLineArgs = {
   input: UpdateOutboundShipmentLineInput;
+};
+
+
+export type MutationsUpdateStocktakeArgs = {
+  input: UpdateStocktakeInput;
 };
 
 
@@ -1144,6 +1210,8 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCountsResponse;
+  stocktake: StocktakeResponse;
+  stocktakes: StocktakesResponse;
 };
 
 
@@ -1198,6 +1266,16 @@ export type QueriesRequisitionArgs = {
 
 export type QueriesRequisitionsArgs = {
   params?: Maybe<RequisitionListParameters>;
+};
+
+
+export type QueriesStocktakeArgs = {
+  id: Scalars['String'];
+};
+
+
+export type QueriesStocktakesArgs = {
+  params?: Maybe<StocktakeListParameters>;
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -1392,6 +1470,51 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
 
+export type StocktakeConnector = {
+  __typename?: 'StocktakeConnector';
+  nodes: Array<StocktakeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StocktakeFilterInput = {
+  description?: Maybe<SimpleStringFilterInput>;
+};
+
+export type StocktakeListParameters = {
+  filter?: Maybe<StocktakeFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<StocktakeSortInput>>;
+};
+
+export type StocktakeNode = {
+  __typename?: 'StocktakeNode';
+  comment?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  status: StocktakeNodeStatus;
+  stocktakeDate?: Maybe<Scalars['String']>;
+  stocktakeNumber: Scalars['Int'];
+};
+
+export enum StocktakeNodeStatus {
+  Confirmed = 'CONFIRMED',
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED'
+}
+
+export type StocktakeResponse = NodeError | StocktakeNode;
+
+export enum StocktakeSortFieldInput {
+  Description = 'description'
+}
+
+export type StocktakeSortInput = {
+  desc?: Maybe<Scalars['Boolean']>;
+  key: StocktakeSortFieldInput;
+};
+
+export type StocktakesResponse = NodeError | StocktakeConnector;
+
 export enum SupplierRequisitionNodeStatus {
   Draft = 'DRAFT',
   Finalised = 'FINALISED',
@@ -1560,6 +1683,22 @@ export type UpdateOutboundShipmentResponseWithId = {
   __typename?: 'UpdateOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentResponse;
+};
+
+export type UpdateStocktakeInput = {
+  comment?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  status?: Maybe<StocktakeNodeStatus>;
+  stocktakeDate?: Maybe<Scalars['String']>;
+};
+
+export type UpdateStocktakeResponse = NodeError | StocktakeNode;
+
+export type UpdateStocktakeResponseWithId = {
+  __typename?: 'UpdateStocktakeResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateStocktakeResponse>;
 };
 
 export type UpdateSupplierRequisitionInput = {

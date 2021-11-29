@@ -14,10 +14,12 @@ const resolvers = {
     ...Schema.StockLine.QueryResolvers,
     ...Schema.Statistics.QueryResolvers,
     ...Schema.Requisition.QueryResolvers,
+    ...Schema.Stocktake.QueryResolvers,
   },
   Mutations: {
     ...Schema.Invoice.MutationResolvers,
     ...Schema.Requisition.MutationResolvers,
+    ...Schema.Stocktake.MutationResolvers,
   },
 };
 
