@@ -13,6 +13,7 @@ import {
   Name,
   Requisition,
   RequisitionLine,
+  Stocktake,
 } from './types';
 import {
   randomFloat,
@@ -32,6 +33,7 @@ import { names } from './names';
 import {
   InvoiceNodeStatus,
   InvoiceNodeType,
+  StocktakeNodeStatus,
 } from '@openmsupply-client/common/src/types/schema';
 
 const units = [
@@ -699,6 +701,25 @@ const createCustomerRequisitionLines = (): RequisitionLine[] => {
     .flat();
 };
 
+const createStocktake = (): Stocktake => {
+  return {
+    id: faker.datatype.uuid(),
+    stocktakeNumber: faker.datatype.number({ max: 1000 }),
+    stocktakeDate: faker.date.past(1.5).toISOString(),
+    comment: '',
+    description: '',
+    status: StocktakeNodeStatus.Draft,
+  };
+};
+
+const createStocktakes = (): Stocktake[] => {
+  return Array.from({ length: faker.datatype.number({ min: 0, max: 20 }) }).map(
+    () => {
+      return createStocktake();
+    }
+  );
+};
+
 export const removeElement = (source: any[], idx: number): void => {
   source = source.splice(idx, 1);
 };
@@ -717,3 +738,5 @@ export let RequisitionLineData = [
   ...createSupplierRequisitionLines(),
   ...createCustomerRequisitionLines(),
 ];
+
+export let StocktakeData = createStocktakes();

@@ -700,6 +700,15 @@ type Mutations {
     updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!]
     deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
   ): BatchCustomerRequisitionResponse!
+
+  updateStocktake(input: UpdateStocktakeInput!): UpdateStocktakeResponse!
+  insertStocktake(input: InsertStocktakeInput!): InsertStocktakeResponse!
+  deleteStocktake(input: DeleteStocktakeInput!): DeleteStocktakeResponse!
+  batchStocktake(
+    insertStocktakes: [InsertStocktakeInput!]
+    updateStocktakes: [UpdateStocktakeInput!]
+    deleteStocktakes: [DeleteStocktakeInput!] # insertStocktakeLines: [InsertStocktakeLineInput!] # updateStocktakeLines: [UpdateStocktakeLineInput!] # deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  ): BatchStocktakeResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -901,6 +910,36 @@ type Queries {
   ): RequisitionResponse!
 
   requisitions(params: RequisitionListParameters): RequisitionsResponse!
+
+  stocktake(
+    # id of the invoice
+    id: String!
+  ): StocktakeResponse!
+
+  stocktakes(params: StocktakeListParameters): StocktakesResponse!
+}
+
+input StocktakeListParameters {
+  page: PaginationInput
+  filter: StocktakeFilterInput
+  sort: [StocktakeSortInput!]
+}
+
+input StocktakeFilterInput {
+  description: SimpleStringFilterInput
+}
+
+enum StocktakeSortFieldInput {
+  description
+}
+
+input StocktakeSortInput {
+  # Sort query result by `key`
+  key: StocktakeSortFieldInput!
+
+  # Sort query result is sorted descending or ascending (if not provided the default is
+  # ascending)
+  desc: Boolean
 }
 
 input RequisitionListParameters {
@@ -1249,6 +1288,21 @@ type RequisitionNode {
   otherPartyName: String!
 }
 
+type StocktakeNode {
+  id: String!
+  stocktakeNumber: Int!
+  stocktakeDate: String
+  comment: String
+  description: String
+  status: StocktakeNodeStatus!
+}
+
+enum StocktakeNodeStatus {
+  DRAFT
+  CONFIRMED
+  FINALISED
+}
+
 type RequisitionLineNode {
   id: String!
   itemName: String
@@ -1297,6 +1351,13 @@ enum CustomerRequisitionNodeStatus {
   NEW
   IN_PROGRESS
   FINALISED
+}
+
+union StocktakeResponse = StocktakeNode | NodeError
+union StocktakesResponse = StocktakeConnector | NodeError
+type StocktakeConnector {
+  totalCount: Int!
+  nodes: [StocktakeNode!]!
 }
 
 union RequisitionResponse = RequisitionNode | NodeError
@@ -1391,6 +1452,42 @@ input InsertSupplierRequisitionInput {
   comment: String
   otherPartyReference: String
   type: RequisitionNodeType
+}
+
+input UpdateStocktakeInput {
+  id: String!
+  stocktakeDate: String
+  comment: String
+  description: String
+  status: StocktakeNodeStatus
+}
+union UpdateStocktakeResponse = NodeError | StocktakeNode
+type UpdateStocktakeResponseWithId {
+  id: String!
+  response: UpdateStocktakeResponse
+}
+
+union InsertStocktakeResponse = NodeError | StocktakeNode
+type InsertStocktakeResponseWithId {
+  id: String!
+  response: InsertStocktakeResponse
+}
+
+union DeleteStocktakeResponse = NodeError | DeleteResponse
+type DeleteStocktakeResponseWithId {
+  id: String!
+  response: DeleteResponse
+}
+
+input InsertStocktakeInput {
+  id: String!
+  stocktakeDate: String
+  comment: String
+  description: String
+}
+
+input DeleteStocktakeInput {
+  id: String!
 }
 
 input InsertSupplierRequisitionLineInput {
@@ -1581,6 +1678,15 @@ input BatchCustomerRequisitionInput {
   deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
 }
 
+input BatchStocktakeInput {
+  insertStocktakes: [InsertStocktakeInput!]
+  updateStocktakes: [UpdateStocktakeInput!]
+  deleteStocktakes: [DeleteStocktakeInput!]
+  # insertStocktakeLines: [InsertStocktakeLineInput!]
+  # updateStocktakeLines: [UpdateStocktakeLineInput!]
+  # deleteStocktakeLines: [DeleteStocktakeLineInput!]
+}
+
 type BatchCustomerRequisitionResponse {
   insertCustomerRequisitionLines: [InsertCustomerRequisitionLineResponseWithId!]
   updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineResponseWithId!]
@@ -1597,4 +1703,13 @@ type BatchSupplierRequisitionResponse {
   insertSupplierRequisitions: [InsertSupplierRequisitionResponseWithId!]
   updateSupplierRequisitions: [UpdateSupplierRequisitionResponseWithId!]
   deleteSupplierRequisitions: [DeleteSupplierRequisitionResponseWithId!]
+}
+
+type BatchStocktakeResponse {
+  # insertStocktakeLines: [InsertStocktakeLineResponseWithId!]
+  # updateStocktakeLines: [UpdateStocktakeLineResponseWithId!]
+  # deleteStocktakeLines: [DeleteStocktakeLineResponseWithId!]
+  insertStocktakes: [InsertStocktakeResponseWithId!]
+  updateStocktakes: [UpdateStocktakeResponseWithId!]
+  deleteStocktakes: [DeleteStocktakeResponseWithId!]
 }
