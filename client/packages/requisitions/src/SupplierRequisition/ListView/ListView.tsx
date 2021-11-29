@@ -33,7 +33,6 @@ export const SupplierRequisitionListView: FC = () => {
     onChangePage,
     pagination,
     filter,
-    invalidate,
   } = useListData(
     {
       initialSortBy: { key: 'otherPartyName' },
@@ -49,41 +48,10 @@ export const SupplierRequisitionListView: FC = () => {
     [sortBy]
   );
 
-  const [open, setOpen] = useState(false);
-
   return (
     <>
-      <NameSearchModal
-        type="customer"
-        open={open}
-        onClose={() => setOpen(false)}
-        onChange={async name => {
-          setOpen(false);
-
-          const createRequisition = async () => {
-            const requisition = {
-              id: generateUUID(),
-              otherPartyId: name?.id,
-            };
-
-            try {
-              const result = await onCreate(requisition);
-              invalidate();
-              navigate(result);
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create requisition! ' + (e as Error).message
-              );
-              errorSnack();
-            }
-          };
-
-          createRequisition();
-        }}
-      />
-
       <Toolbar onDelete={onDelete} data={data} filter={filter} />
-      <AppBarButtons onCreate={setOpen} />
+      <AppBarButtons onCreate={() => {}} />
 
       <DataTable
         pagination={{ ...pagination, total: totalCount }}
