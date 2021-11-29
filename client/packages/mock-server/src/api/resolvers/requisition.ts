@@ -11,6 +11,7 @@ export const requisitionResolver = {
       const requisition = db.requisition.get.byId(id);
       const otherParty = db.get.byId.name(requisition.otherPartyId);
       const lines = requisitionLineResolver.byRequisitionId(id);
+
       return {
         ...requisition,
         lines,
@@ -39,6 +40,16 @@ export const requisitionResolver = {
         if (filter.type) {
           filtered = filtered.filter(requisition => {
             return requisition.type === filter.type?.equalTo;
+          });
+        }
+        if (filter.comment) {
+          filtered = filtered.filter(requisition => {
+            return (
+              requisition.comment &&
+              requisition.comment
+                .toLowerCase()
+                .includes(filter.comment?.like?.toLowerCase() ?? '')
+            );
           });
         }
       }

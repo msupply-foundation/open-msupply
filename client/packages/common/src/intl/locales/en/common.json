@@ -75,6 +75,8 @@
   "label.expiry": "Expiry",
   "label.general": "General",
   "label.goods-receipt": "Goods receipt",
+  "label.requisition-number": "Reqnum",
+  "label.new-requisition": "New Requisition",
   "label.hold": "Hold",
   "label.id": "ID",
   "label.inbound-shipment": "Inbound shipment",

@@ -1372,6 +1372,7 @@ export type RequisitionConnector = {
 };
 
 export type RequisitionFilterInput = {
+  comment?: Maybe<SimpleStringFilterInput>;
   type?: Maybe<SimpleStringFilterInput>;
 };
 
@@ -1876,6 +1877,34 @@ export type InvoiceQueryVariables = Exact<{
 
 export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationName?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
+export type RequisitionsQueryVariables = Exact<{
+  params?: Maybe<RequisitionListParameters>;
+}>;
+
+
+export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError' } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, otherPartyReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string } | null | undefined> } };
+
+export type DeleteSupplierRequisitionsMutationVariables = Exact<{
+  ids?: Maybe<Array<DeleteSupplierRequisitionInput> | DeleteSupplierRequisitionInput>;
+}>;
+
+
+export type DeleteSupplierRequisitionsMutation = { __typename?: 'Mutations', batchSupplierRequisition: { __typename: 'BatchSupplierRequisitionResponse', deleteSupplierRequisitions?: Array<{ __typename: 'DeleteSupplierRequisitionResponseWithId', id: string }> | null | undefined } };
+
+export type UpdateSupplierRequisitionMutationVariables = Exact<{
+  input: UpdateSupplierRequisitionInput;
+}>;
+
+
+export type UpdateSupplierRequisitionMutation = { __typename?: 'Mutations', updateSupplierRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
+
+export type InsertSupplierRequisitionMutationVariables = Exact<{
+  input: InsertSupplierRequisitionInput;
+}>;
+
+
+export type InsertSupplierRequisitionMutation = { __typename?: 'Mutations', insertSupplierRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
+
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
@@ -2141,6 +2170,56 @@ export const InvoiceDocument = gql`
       status
       theirReference
       type
+    }
+  }
+}
+    `;
+export const RequisitionsDocument = gql`
+    query requisitions($params: RequisitionListParameters) {
+  requisitions(params: $params) {
+    __typename
+    ... on RequisitionConnector {
+      nodes {
+        id
+        comment
+        orderDate
+        otherPartyReference
+        requisitionNumber
+        status
+        otherPartyName
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const DeleteSupplierRequisitionsDocument = gql`
+    mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
+  batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
+    __typename
+    deleteSupplierRequisitions {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const UpdateSupplierRequisitionDocument = gql`
+    mutation updateSupplierRequisition($input: UpdateSupplierRequisitionInput!) {
+  updateSupplierRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const InsertSupplierRequisitionDocument = gql`
+    mutation insertSupplierRequisition($input: InsertSupplierRequisitionInput!) {
+  insertSupplierRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
     }
   }
 }
@@ -2685,6 +2764,18 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     invoice(variables: InvoiceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceQuery>(InvoiceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoice');
+    },
+    requisitions(variables?: RequisitionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionsQuery>(RequisitionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitions');
+    },
+    deleteSupplierRequisitions(variables?: DeleteSupplierRequisitionsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteSupplierRequisitionsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteSupplierRequisitionsMutation>(DeleteSupplierRequisitionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteSupplierRequisitions');
+    },
+    updateSupplierRequisition(variables: UpdateSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateSupplierRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierRequisitionMutation>(UpdateSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierRequisition');
+    },
+    insertSupplierRequisition(variables: InsertSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertSupplierRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierRequisitionMutation>(InsertSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierRequisition');
     },
     invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices');
