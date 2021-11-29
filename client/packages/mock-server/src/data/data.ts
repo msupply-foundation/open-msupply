@@ -307,22 +307,22 @@ export const createInvoice = (
   };
 };
 
-export const getCustomers = (names = NameData) =>
+const getCustomers = (names = NameData) =>
   names.filter(({ isSupplier }) => isSupplier);
-export const getSuppliers = (names = NameData) =>
+const getSuppliers = (names = NameData) =>
   names.filter(({ isCustomer }) => isCustomer);
 
-export const getCustomerRequisitions = () =>
+const getCustomerRequisitions = () =>
   RequisitionData.filter(
     ({ type }) => type === RequisitionNodeType.CustomerRequisition
   );
 
-export const getSupplierRequisitions = () =>
+const getSupplierRequisitions = () =>
   RequisitionData.filter(
     ({ type }) => type === RequisitionNodeType.SupplierRequisition
   );
 
-export const getItems = () => [...ItemData];
+const getItems = () => [...ItemData];
 
 export const createInvoices = (
   names = NameData,
@@ -451,6 +451,39 @@ const createStockLines = (items: Item[]) => {
     .flat();
 };
 
+const createInvoiceLine = (
+  invoice: Invoice,
+  item: Item,
+  stockLine: StockLine,
+  numberOfPacks = randomInteger({ min: 10, max: 100 })
+): InvoiceLine => {
+  // +/- this number of packs to change the number of packs
+  // each stock line has.
+
+  return {
+    id: `${faker.datatype.uuid()}`,
+    invoiceId: invoice.id,
+    itemId: item.id,
+    itemName: item.name,
+    itemCode: item.code,
+    itemUnit: item.unitName ?? '',
+
+    stockLineId: stockLine.id,
+    locationName: stockLine.locationName,
+    location: stockLine.location,
+
+    batch: stockLine.batch ?? '',
+    expiryDate: stockLine.expiryDate,
+
+    costPricePerPack: stockLine.costPricePerPack,
+    sellPricePerPack: stockLine.sellPricePerPack,
+
+    numberOfPacks,
+    packSize: takeRandomElementFrom(packSizes),
+    note: stockLine.note ?? '',
+  };
+};
+
 const createInvoicesLines = (
   invoices: Invoice[],
   stockLines: StockLine[]
@@ -472,32 +505,8 @@ const createInvoicesLines = (
       return stockLineSubset.map(stockLine => {
         const item = getItem(stockLine.itemId);
 
-        // +/- this number of packs to change the number of packs
-        // each stock line has.
-        const numberOfPacks = randomInteger({ min: 10, max: 100 });
-
-        const invoiceLine: InvoiceLine = {
-          id: `${faker.datatype.uuid()}`,
-          invoiceId: invoice.id,
-          itemId: item.id,
-          itemName: item.name,
-          itemCode: item.code,
-          itemUnit: item.unitName ?? '',
-
-          stockLineId: stockLine.id,
-          locationName: stockLine.locationName,
-          location: stockLine.location,
-
-          batch: stockLine.batch ?? '',
-          expiryDate: stockLine.expiryDate,
-
-          costPricePerPack: stockLine.costPricePerPack,
-          sellPricePerPack: stockLine.sellPricePerPack,
-
-          numberOfPacks,
-          packSize: takeRandomElementFrom(packSizes),
-          note: stockLine.note ?? '',
-        };
+        const invoiceLine = createInvoiceLine(invoice, item, stockLine);
+        const numberOfPacks = invoiceLine.numberOfPacks;
 
         if (
           invoice.status === InvoiceNodeStatus.Confirmed ||
@@ -529,29 +538,12 @@ const createInvoicesLines = (
           stockLine.availableNumberOfPacks
         );
 
-        const invoiceLine: InvoiceLine = {
-          id: `${faker.datatype.uuid()}`,
-          invoiceId: invoice.id,
-          itemId: item.id,
-          itemName: item.name,
-          itemCode: item.code,
-          itemUnit: item.unitName ?? '',
-
-          stockLineId: stockLine.id,
-          locationName: stockLine.locationName,
-          location: stockLine.location,
-
-          batch: stockLine.batch ?? '',
-          expiryDate: stockLine.expiryDate,
-
-          costPricePerPack: stockLine.costPricePerPack,
-          sellPricePerPack: stockLine.sellPricePerPack,
-
-          numberOfPacks,
-          packSize: takeRandomElementFrom(packSizes),
-          note: stockLine.note ?? '',
-        };
-
+        const invoiceLine = createInvoiceLine(
+          invoice,
+          item,
+          stockLine,
+          numberOfPacks
+        );
         adjustStockLineAvailableNumberOfPacks(stockLine.id, -numberOfPacks);
 
         if (
@@ -691,7 +683,7 @@ export const createRequisitionLine = (req: Requisition, item: Item) => ({
 });
 
 const createCustomerRequisitionLines = (): RequisitionLine[] => {
-  const customerRequisitions = getSupplierRequisitions();
+  const customerRequisitions = getCustomerRequisitions();
   const items = getItems();
 
   return customerRequisitions

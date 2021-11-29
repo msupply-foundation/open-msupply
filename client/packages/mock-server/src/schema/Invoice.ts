@@ -1,164 +1,224 @@
+import { InvoiceListParameters } from './../data/types';
 import { MutationService } from './../api/mutations';
 import {
-  UpdateOutboundShipmentInput,
   UpdateInboundShipmentInput,
+  DeleteInboundShipmentInput,
+  InsertOutboundShipmentInput,
+  UpdateOutboundShipmentInput,
   BatchInboundShipmentInput,
-} from './../../../common/src/types/schema';
-import {
-  InvoiceSortFieldInput,
-  InvoiceFilterInput,
   BatchOutboundShipmentInput,
-} from '@openmsupply-client/common/src/types/schema';
+  InvoiceResponse,
+  InvoicesResponse,
+  DeleteOutboundShipmentResponse,
+  DeleteInboundShipmentResponse,
+  BatchOutboundShipmentResponse,
+  BatchInboundShipmentResponse,
+  InsertInboundShipmentInput,
+} from './../../../common/src/types/schema';
 import { Api } from '../api';
 
-import { ListResponse, Invoice as InvoiceType } from '../data/types';
+import { Invoice as InvoiceType } from '../data/types';
 
 const QueryResolvers = {
-  invoices: (
-    _: any,
-    vars: {
-      page?: { first?: number; offset?: number };
-      sort: [{ key: InvoiceSortFieldInput; desc: boolean }];
-      filter?: InvoiceFilterInput;
-    }
-  ): ListResponse<InvoiceType> => {
-    return Api.ResolverService.list.invoice({
-      first: vars.page?.first ?? 20,
-      offset: vars.page?.offset ?? 0,
-      desc: vars.sort[0].desc ?? false,
-      key: vars.sort[0].key ?? InvoiceSortFieldInput.Status,
-      filter: vars.filter,
-    });
+  invoices: (_: unknown, vars: InvoiceListParameters): InvoicesResponse => {
+    return Api.ResolverService.invoice.list(vars);
   },
 
-  invoice: (_: any, { id }: { id: string }): InvoiceType => {
-    return Api.ResolverService.byId.invoice(id);
+  invoice: (_: unknown, { id }: { id: string }): InvoiceResponse => {
+    return Api.ResolverService.invoice.byId(id);
   },
 };
 
 const MutationResolvers = {
   updateOutboundShipment: (
-    _: any,
+    _: unknown,
     { input }: { input: UpdateOutboundShipmentInput }
   ): InvoiceType => {
-    return Api.MutationService.update.invoice(input);
+    return Api.MutationService.invoice.outbound.update(input);
   },
   updateInboundShipment: (
-    _: any,
+    _: unknown,
     { input }: { input: UpdateInboundShipmentInput }
   ): InvoiceType => {
-    return Api.MutationService.update.invoice(input);
+    return Api.MutationService.invoice.inbound.update(input);
   },
   insertOutboundShipment: (
-    _: any,
-    { input }: { input: InvoiceType }
-  ): InvoiceType => {
-    return Api.MutationService.insert.invoice(input);
+    _: unknown,
+    { input }: { input: InsertOutboundShipmentInput }
+  ): InsertOutboundShipmentInput => {
+    return Api.MutationService.invoice.outbound.insert(input);
   },
-  deleteOutboundShipment: (_: any, id: string): string => {
-    return Api.MutationService.remove.invoice(id);
+  insertInboundShipment: (
+    _: unknown,
+    { input }: { input: InsertInboundShipmentInput }
+  ): InsertOutboundShipmentInput => {
+    return Api.MutationService.invoice.inbound.insert(input);
   },
-  deleteInboundShipment: (_: any, input: { id: string }): string => {
-    return MutationService.remove.invoice(input.id);
+  deleteOutboundShipment: (
+    _: unknown,
+    id: string
+  ): DeleteOutboundShipmentResponse => {
+    return Api.MutationService.invoice.outbound.remove(id);
   },
-  batchOutboundShipment: (_: any, vars: BatchOutboundShipmentInput) => {
-    const response = {
+  deleteInboundShipment: (
+    _: unknown,
+    { input }: { input: DeleteInboundShipmentInput }
+  ): DeleteInboundShipmentResponse => {
+    return MutationService.invoice.inbound.remove(input);
+  },
+  batchOutboundShipment: (
+    _: unknown,
+    vars: BatchOutboundShipmentInput
+  ): BatchOutboundShipmentResponse => {
+    const batchResponse: BatchOutboundShipmentResponse = {
       __typename: 'BatchOutboundShipmentResponse',
-      deleteOutboundShipments: [] as { id: string }[],
-      insertOutboundShipmentLines: [] as { id: string }[],
-      updateOutboundShipments: [] as { id: string }[],
-      deleteOutboundShipmentLines: [] as { id: string }[],
-      updateOutboundShipmentLines: [] as { id: string }[],
+      deleteOutboundShipments: [],
+      insertOutboundShipmentLines: [],
+      updateOutboundShipments: [],
+      deleteOutboundShipmentLines: [],
+      updateOutboundShipmentLines: [],
     };
-
-    if (vars.deleteOutboundShipments) {
-      response.deleteOutboundShipments = vars.deleteOutboundShipments.map(
-        id => ({
-          id: MutationResolvers.deleteOutboundShipment(null, id),
-        })
-      );
-    }
 
     if (vars.updateOutboundShipments) {
-      response.updateOutboundShipments = [
-        Api.MutationService.update.invoice(
-          vars.updateOutboundShipments[0] as UpdateOutboundShipmentInput
-        ),
-      ];
-    }
-
-    if (vars.insertOutboundShipmentLines) {
-      response.insertOutboundShipmentLines =
-        vars.insertOutboundShipmentLines.map(line => {
-          return MutationService.insert.invoiceLine(line);
-        });
-    }
-
-    if (vars.deleteOutboundShipmentLines) {
-      response.deleteOutboundShipmentLines =
-        vars.deleteOutboundShipmentLines.map(line => ({
-          id: MutationService.remove.invoiceLine(line.id),
-        }));
-    }
-
-    if (vars.updateOutboundShipmentLines) {
-      response.updateOutboundShipmentLines =
-        vars.updateOutboundShipmentLines.map(line => ({
-          id: MutationService.update.invoiceLine(line).id,
-        }));
-    }
-
-    return response;
-  },
-  batchInboundShipment: (_: any, vars: BatchInboundShipmentInput) => {
-    const response = {
-      __typename: 'BatchInboundShipmentResponse',
-      deleteInboundShipments: [] as { id: string }[],
-      insertInboundShipmentLines: [] as { id: string }[],
-      updateInboundShipments: [] as { id: string }[],
-      deleteInboundShipmentLines: [] as { id: string }[],
-      updateInboundShipmentLines: [] as { id: string }[],
-    };
-
-    if (vars.deleteInboundShipments) {
-      response.deleteInboundShipments = vars.deleteInboundShipments.map(id => ({
-        id: MutationResolvers.deleteInboundShipment(null, { id }),
-      }));
-    }
-
-    if (vars.updateInboundShipments) {
-      response.updateInboundShipments = [
-        Api.MutationService.update.invoice(
-          vars.updateInboundShipments[0] as UpdateInboundShipmentInput
-        ),
-      ];
-    }
-
-    if (vars.insertInboundShipmentLines) {
-      response.insertInboundShipmentLines = vars.insertInboundShipmentLines.map(
-        line => {
-          return MutationService.insert.inboundInvoiceLine(line);
+      batchResponse.updateOutboundShipments = vars.updateOutboundShipments.map(
+        vars => {
+          const response = MutationService.invoice.outbound.update(vars);
+          return {
+            __typename: 'UpdateOutboundShipmentResponseWithId',
+            id: response.id,
+            response,
+          };
         }
       );
     }
 
-    if (vars.deleteInboundShipmentLines) {
-      response.deleteInboundShipmentLines = vars.deleteInboundShipmentLines.map(
-        line => ({
-          id: MutationService.remove.invoiceLine(line.id),
-        })
+    if (vars.deleteOutboundShipments) {
+      batchResponse.deleteOutboundShipments = vars.deleteOutboundShipments.map(
+        vars => {
+          const response = MutationService.invoice.outbound.remove(vars);
+          return {
+            __typename: 'DeleteOutboundShipmentResponseWithId',
+            id: response.id,
+            response,
+          };
+        }
       );
+    }
+
+    if (vars.insertOutboundShipmentLines) {
+      batchResponse.insertOutboundShipmentLines =
+        vars.insertOutboundShipmentLines.map(vars => {
+          const response = MutationService.invoiceLine.outbound.insert(vars);
+          return {
+            __typename: 'InsertOutboundShipmentLineResponseWithId',
+            id: response.id,
+            response,
+          };
+        });
+    }
+
+    if (vars.deleteOutboundShipmentLines) {
+      batchResponse.deleteOutboundShipmentLines =
+        vars.deleteOutboundShipmentLines.map(vars => {
+          const response = MutationService.invoiceLine.outbound.remove(vars);
+          return {
+            __typename: 'DeleteOutboundShipmentLineResponseWithId',
+            id: response.id,
+            response,
+          };
+        });
+    }
+
+    if (vars.updateOutboundShipmentLines) {
+      batchResponse.updateOutboundShipmentLines =
+        vars.updateOutboundShipmentLines.map(vars => {
+          const response = MutationService.invoiceLine.outbound.update(vars);
+          return {
+            __typename: 'UpdateOutboundShipmentLineResponseWithId',
+            id: response.id,
+            response,
+          };
+        });
+    }
+
+    return batchResponse;
+  },
+  batchInboundShipment: (
+    _: unknown,
+    vars: BatchInboundShipmentInput
+  ): BatchInboundShipmentResponse => {
+    const batchResponse: BatchInboundShipmentResponse = {
+      __typename: 'BatchInboundShipmentResponse',
+      deleteInboundShipments: [],
+      insertInboundShipmentLines: [],
+      updateInboundShipments: [],
+      deleteInboundShipmentLines: [],
+      updateInboundShipmentLines: [],
+    };
+
+    if (vars.deleteInboundShipments) {
+      batchResponse.deleteInboundShipments = vars.deleteInboundShipments.map(
+        vars => {
+          const response = MutationService.invoice.inbound.remove(vars);
+          return {
+            __typename: 'DeleteInboundShipmentResponseWithId',
+            id: response.id,
+            response,
+          };
+        }
+      );
+    }
+
+    if (vars.updateInboundShipments) {
+      batchResponse.updateInboundShipments = vars.updateInboundShipments.map(
+        vars => {
+          const response = MutationService.invoice.inbound.update(vars);
+          return {
+            __typename: 'UpdateInboundShipmentResponseWithId',
+            id: response.id,
+            response,
+          };
+        }
+      );
+    }
+
+    if (vars.insertInboundShipmentLines) {
+      batchResponse.insertInboundShipmentLines =
+        vars.insertInboundShipmentLines.map(vars => {
+          const response = MutationService.invoiceLine.inbound.insert(vars);
+          return {
+            __typename: 'InsertInboundShipmentLineResponseWithId',
+            id: response.id,
+            response,
+          };
+        });
+    }
+
+    if (vars.deleteInboundShipmentLines) {
+      batchResponse.deleteInboundShipmentLines =
+        vars.deleteInboundShipmentLines.map(vars => {
+          const response = MutationService.invoiceLine.inbound.remove(vars);
+          return {
+            __typename: 'DeleteInboundShipmentLineResponseWithId',
+            id: response.id,
+            response,
+          };
+        });
     }
 
     if (vars.updateInboundShipmentLines) {
-      response.updateInboundShipmentLines = vars.updateInboundShipmentLines.map(
-        line => ({
-          id: MutationService.update.invoiceLine(line).id,
-        })
-      );
+      batchResponse.updateInboundShipmentLines =
+        vars.updateInboundShipmentLines.map(vars => {
+          const response = MutationService.invoiceLine.inbound.update(vars);
+          return {
+            __typename: 'UpdateInboundShipmentLineResponseWithId',
+            id: response.id,
+            response,
+          };
+        });
     }
 
-    return response;
+    return batchResponse;
   },
 };
 

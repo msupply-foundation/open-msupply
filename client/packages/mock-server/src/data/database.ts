@@ -63,6 +63,38 @@ export const invoice = {
   },
 };
 
+export const stockLine = {
+  get: {
+    byId: (id: string): StockLine => {
+      const stockLine = StockLineData.find(getFilter(id, 'id'));
+      if (!stockLine) {
+        throw new Error('Stock line not found');
+      }
+      return stockLine;
+    },
+    all: (): StockLine[] => [...StockLineData],
+    byItemId: (itemId: string): StockLine[] => {
+      const stockLines = StockLineData.filter(getFilter(itemId, 'itemId'));
+      return stockLines;
+    },
+  },
+};
+
+export const item = {
+  get: {
+    byId: (id: string): Item => {
+      const item = ItemData.find(getFilter(id, 'id'));
+      if (!item) {
+        throw new Error(`Item with id ${id} not found`);
+      }
+      return item;
+    },
+    all: (): Item[] => {
+      return [...ItemData];
+    },
+  },
+};
+
 export const requisition = {
   get: {
     byId: (id: string): Requisition => {
@@ -446,6 +478,8 @@ export const db = {
   invoice,
   requisition,
   requisitionLine,
+  item,
+  stockLine,
   get,
   update,
   insert,

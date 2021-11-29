@@ -3,8 +3,10 @@ import { Api } from '../api';
 import { InvoiceCounts, StockCounts } from '../data/types';
 
 const QueryResolvers = {
-  invoiceCounts: (_: any, { type }: { type: InvoiceNodeType }): InvoiceCounts =>
-    Api.ResolverService.statistics.invoice(type),
+  invoiceCounts: (
+    _: unknown,
+    { type }: { type: InvoiceNodeType }
+  ): InvoiceCounts => Api.ResolverService.statistics.invoice(type),
 
   stockCounts: (): StockCounts => Api.ResolverService.statistics.stock(),
 };

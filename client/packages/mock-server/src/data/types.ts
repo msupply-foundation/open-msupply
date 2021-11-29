@@ -1,7 +1,7 @@
 import {
-  RequisitionNode,
-  RequisitionLineNode,
-  RequisitionLinesResponse,
+  StockLineConnector,
+  InvoiceSortInput,
+  InvoiceFilterInput,
 } from './../../../common/src/types/schema';
 import {
   InvoiceLineNode,
@@ -9,13 +9,20 @@ import {
   ItemNode,
   StockLineNode,
   LocationNode,
+  ItemFilterInput,
+  PaginationInput,
+  RequisitionNode,
+  RequisitionLineNode,
+  ItemSortFieldInput,
+  ItemSortInput,
+  NameSortInput,
+  NameFilterInput,
+  RequisitionListParameters,
+  ItemsResponse,
+  NameNode,
 } from '@openmsupply-client/common/src/types/schema';
 
-export interface ListResponse<T> {
-  __typename: string;
-  totalCount: number;
-  nodes: T[];
-}
+export { ItemSortFieldInput, RequisitionListParameters, ItemsResponse };
 
 export interface Store {
   id: string;
@@ -29,17 +36,20 @@ export type Location = LocationNode;
 
 export interface ResolvedItem extends Item {
   __typename: 'ItemNode';
-  availableBatches: { nodes: StockLine[] };
+  availableBatches: StockLineConnector;
   availableQuantity: number;
 }
 
-export interface Name {
-  __typename?: 'NameNode';
+export interface Name extends Omit<NameNode, '__typename'> {
   id: string;
   code: string;
   name: string;
   isCustomer: boolean;
   isSupplier: boolean;
+}
+
+export interface ResolvedName extends Name {
+  __typename: 'NameNode';
 }
 
 export interface StockLine extends Omit<StockLineNode, 'location'> {
@@ -72,7 +82,7 @@ export interface InvoiceLine extends Omit<InvoiceLineNode, 'location'> {
 export interface ResolvedInvoiceLine extends InvoiceLine {
   __typename: 'InvoiceLineNode';
   stockLine?: StockLine;
-  item: Item;
+  // item: Item;
 }
 
 export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
@@ -88,14 +98,15 @@ export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
 
 export interface ResolvedInvoice extends Invoice {
   __typename: 'InvoiceNode';
-  lines: ListResponse<InvoiceLine>;
+  lines: ListResponse<ResolvedInvoiceLine, 'InvoiceLineConnector'>;
   otherParty: Name;
   otherPartyName: string;
 }
 
-export interface ListResponse<T> {
+export interface ListResponse<T, TypeName> {
   totalCount: number;
   nodes: T[];
+  __typename: TypeName;
 }
 interface InvoiceCountsCreated {
   today: number;
@@ -129,8 +140,7 @@ export interface Requisition
 
 export interface ResolvedRequisition extends Requisition {
   __typename: 'RequisitionNode';
-  // lines: ListResponse<ResolvedRequisitionLine>;
-  lines: RequisitionLinesResponse;
+  lines: ListResponse<ResolvedRequisitionLine, 'RequisitionLineConnector'>;
   otherParty: Name;
   otherPartyName: string;
 }
@@ -143,3 +153,21 @@ export interface RequisitionLine
 export interface ResolvedRequisitionLine extends RequisitionLine {
   __typename: 'RequisitionLineNode';
 }
+
+export type ItemListParameters = {
+  filter?: ItemFilterInput | null;
+  page?: PaginationInput | null;
+  sort?: Array<ItemSortInput> | null;
+};
+
+export type InvoiceListParameters = {
+  filter?: InvoiceFilterInput | null;
+  page?: PaginationInput | null;
+  sort?: Array<InvoiceSortInput> | null;
+};
+
+export type NameListParameters = {
+  filter?: NameFilterInput | null;
+  page?: PaginationInput | null;
+  sort?: Array<NameSortInput> | null;
+};

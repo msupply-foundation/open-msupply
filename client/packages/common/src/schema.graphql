@@ -1199,7 +1199,7 @@ input BatchInboundShipmentInput {
   updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
   deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
   updateInboundShipments: [UpdateInboundShipmentInput!]
-  deleteInboundShipments: [String!]
+  deleteInboundShipments: [DeleteInboundShipmentInput!]
 }
 
 type CountError {
