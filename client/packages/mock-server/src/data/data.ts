@@ -317,10 +317,10 @@ const getCustomers = (names = NameData) =>
 const getSuppliers = (names = NameData) =>
   names.filter(({ isCustomer }) => isCustomer);
 
-// const getCustomerRequisitions = () =>
-//   RequisitionData.filter(
-//     ({ type }) => type === RequisitionNodeType.CustomerRequisition
-//   );
+const getCustomerRequisitions = () =>
+  RequisitionData.filter(
+    ({ type }) => type === RequisitionNodeType.CustomerRequisition
+  );
 
 const getSupplierRequisitions = () =>
   RequisitionData.filter(
@@ -689,7 +689,7 @@ export const createRequisitionLine = (req: Requisition, item: Item) => ({
 });
 
 const createCustomerRequisitionLines = (): RequisitionLine[] => {
-  const customerRequisitions = getSupplierRequisitions();
+  const customerRequisitions = getCustomerRequisitions();
   const items = getItems();
 
   return customerRequisitions
