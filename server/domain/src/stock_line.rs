@@ -1,5 +1,7 @@
 use chrono::NaiveDate;
 
+use crate::AddToFilter;
+
 use super::{EqualFilter, Sort};
 
 #[derive(Clone)]
@@ -22,7 +24,7 @@ pub struct StockLine {
 #[derive(Debug)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
-    pub item_ids: Option<EqualFilter<String>>,
+    pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
 }
 
@@ -30,44 +32,26 @@ impl StockLineFilter {
     pub fn new() -> StockLineFilter {
         StockLineFilter {
             id: None,
-            item_ids: None,
+            item_id: None,
             location_id: None,
         }
     }
 
-    pub fn match_id(mut self, id: &str) -> Self {
-        self.id = Some(EqualFilter {
-            equal_to: Some(id.to_owned()),
-            equal_any: None,
-        });
-
+    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
+        self.id = self.id.add(f);
         self
     }
 
-    pub fn match_ids(mut self, ids: Vec<String>) -> Self {
-        self.id = Some(EqualFilter {
-            equal_to: None,
-            equal_any: Some(ids),
-        });
-
+    pub fn item_id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
+        self.item_id = self.item_id.add(f);
         self
     }
 
-    pub fn match_item_ids(mut self, ids: Vec<String>) -> Self {
-        self.item_ids = Some(EqualFilter {
-            equal_to: None,
-            equal_any: Some(ids),
-        });
-
-        self
-    }
-
-    pub fn match_location_ids(mut self, ids: Vec<String>) -> Self {
-        self.location_id = Some(EqualFilter {
-            equal_to: None,
-            equal_any: Some(ids),
-        });
-
+    pub fn location_id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(
+        mut self,
+        f: F,
+    ) -> Self {
+        self.location_id = self.location_id.add(f);
         self
     }
 }
