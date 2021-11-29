@@ -83,7 +83,7 @@
   "label.id": "ID",
   "label.inbound-shipment": "Inbound shipment",
   "label.invoice-number": "Invnum",
-  "label.stocktake-number": "Stocktake num",
+  "label.number": "Number",
   "label.issue": "Issue",
   "label.item": "Item",
   "label.line": "Line {{line, number}}",
