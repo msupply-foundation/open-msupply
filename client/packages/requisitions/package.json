@@ -1,6 +1,5 @@
 {
-  "//": "${UPDATE} - This package name should be updated",
-  "name": "@openmsupply-client/template",
+  "name": "@openmsupply-client/requisitions",
   "version": "0.0.0",
   "main": "./src/index.ts",
   "private": true,
@@ -17,8 +16,9 @@
   "dependencies": {
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
-    "@openmsupply-client/requisitions": "^0.0.0",
+    "@openmsupply-client/system": "^0.0.0",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^6.0.2"
   }
 }
