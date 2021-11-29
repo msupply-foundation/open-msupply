@@ -10,7 +10,7 @@ use crate::invoice::{
 use super::DeleteOutboundShipmentError;
 
 pub fn validate(
-    id: &str,
+    id: &String,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, DeleteOutboundShipmentError> {
     let invoice = check_invoice_exists(&id, connection)?;

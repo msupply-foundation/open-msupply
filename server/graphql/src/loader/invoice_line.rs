@@ -23,7 +23,9 @@ impl Loader<String> for InvoiceLineLoader {
         let repo = InvoiceLineRepository::new(&connection);
 
         let result = repo
-            .query_by_filter(InvoiceLineFilter::new().match_ids(invoice_line_ids.to_owned()))?
+            .query_by_filter(
+                InvoiceLineFilter::new().id(|f| f.equal_any(invoice_line_ids.to_owned())),
+            )?
             .into_iter()
             .map(|invoice_line| (invoice_line.id.clone(), invoice_line))
             .collect();
