@@ -1,4 +1,27 @@
-import { Item, StockLine, Invoice, InvoiceLine, Name } from './types';
+import faker from 'faker';
+import {
+  DeleteResponse,
+  InsertSupplierRequisitionInput,
+  UpdateSupplierRequisitionInput,
+  DeleteSupplierRequisitionInput,
+  InsertCustomerRequisitionInput,
+  UpdateCustomerRequisitionInput,
+  DeleteCustomerRequisitionInput,
+  UpdateOutboundShipmentInput,
+  InsertOutboundShipmentLineInput,
+  UpdateOutboundShipmentLineInput,
+  InsertInboundShipmentLineInput,
+  SupplierRequisitionNodeStatus,
+  RequisitionNodeType,
+} from './../../../common/src/types/schema';
+import {
+  Item,
+  StockLine,
+  Invoice,
+  InvoiceLine,
+  Name,
+  Requisition,
+} from './types';
 import {
   InvoiceData,
   InvoiceLineData,
@@ -6,13 +29,9 @@ import {
   StockLineData,
   NameData,
   removeElement,
+  RequisitionData,
 } from './data';
-import {
-  UpdateOutboundShipmentInput,
-  InsertOutboundShipmentLineInput,
-  UpdateOutboundShipmentLineInput,
-  InsertInboundShipmentLineInput,
-} from '@openmsupply-client/common';
+
 import {
   isAlmostExpired,
   isExpired,
@@ -32,6 +51,85 @@ export const invoice = {
       ({
         ...InvoiceData.find(getFilter(invoiceNumber, 'invoiceNumber')),
       } as Invoice),
+  },
+};
+
+export const requisition = {
+  get: {
+    byId: (id: string): Requisition => {
+      const req = RequisitionData.find(getFilter(id, 'id'));
+      if (!req) throw new Error(`Could not find requisition with id: ${id}`);
+      return {
+        ...req,
+      };
+    },
+    list: (): Requisition[] => {
+      return [...RequisitionData];
+    },
+  },
+  supplier: {
+    insert: (input: InsertSupplierRequisitionInput): Requisition => {
+      const requisitionNumber = faker.datatype.number({ max: 1000 });
+      const storeId = '';
+      const status = SupplierRequisitionNodeStatus.Draft;
+      const type = input.type || RequisitionNodeType.SupplierRequisition;
+      const req = { ...input, requisitionNumber, storeId, status, type };
+      RequisitionData.push(req);
+      return req;
+    },
+    update: (input: UpdateSupplierRequisitionInput): Requisition => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      const req = RequisitionData[index] as Requisition;
+      if (!req) {
+        throw new Error(`Could not find requisition with id: ${input.id}`);
+      }
+
+      const updatedReq = { ...req, ...input } as Requisition;
+      RequisitionData[index] = updatedReq;
+
+      return updatedReq;
+    },
+    delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      if (!(index >= 0))
+        throw new Error(
+          `Could not find requisition to delete with id: ${input.id}`
+        );
+      removeElement(RequisitionData, index);
+      return input;
+    },
+  },
+  customer: {
+    insert: (input: InsertCustomerRequisitionInput): Requisition => {
+      const requisitionNumber = faker.datatype.number({ max: 1000 });
+      const storeId = '';
+      const status = SupplierRequisitionNodeStatus.Draft;
+      const type = input.type || RequisitionNodeType.CustomerRequisition;
+      const req = { ...input, requisitionNumber, storeId, status, type };
+      RequisitionData.push(req);
+      return req;
+    },
+    update: (input: UpdateCustomerRequisitionInput): Requisition => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      const req = RequisitionData[index] as Requisition;
+      if (!req) {
+        throw new Error(`Could not find requisition with id: ${input.id}`);
+      }
+
+      const updatedReq = { ...req, ...input } as Requisition;
+      RequisitionData[index] = updatedReq;
+
+      return updatedReq;
+    },
+    delete: (input: DeleteCustomerRequisitionInput): DeleteResponse => {
+      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
+      if (!(index >= 0))
+        throw new Error(
+          `Could not find requisition to delete with id: ${input.id}`
+        );
+      removeElement(RequisitionData, index);
+      return input;
+    },
   },
 };
 
@@ -241,6 +339,7 @@ export const remove = {
 
 export const db = {
   invoice,
+  requisition,
   get,
   update,
   insert,

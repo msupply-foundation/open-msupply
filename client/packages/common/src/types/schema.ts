@@ -38,6 +38,19 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type BatchCustomerRequisitionInput = {
+  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionInput>>;
+  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionInput>>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput>>;
+};
+
+export type BatchCustomerRequisitionResponse = {
+  __typename?: 'BatchCustomerRequisitionResponse';
+  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionResponseWithId>>;
+  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionResponseWithId>>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionResponseWithId>>;
+};
+
 export type BatchInboundShipmentInput = {
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
   deleteInboundShipments?: Maybe<Array<Scalars['String']>>;
@@ -79,6 +92,19 @@ export type BatchOutboundShipmentResponse = {
   insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentResponseWithId>>;
   updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineResponseWithId>>;
   updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentResponseWithId>>;
+};
+
+export type BatchSupplierRequisitionInput = {
+  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
+  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionInput>>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput>>;
+};
+
+export type BatchSupplierRequisitionResponse = {
+  __typename?: 'BatchSupplierRequisitionResponse';
+  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionResponseWithId>>;
+  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionResponseWithId>>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionResponseWithId>>;
 };
 
 export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateOutboundShipmentErrorInterface & {
@@ -126,6 +152,12 @@ export type CountError = {
   description: Scalars['String'];
 };
 
+export enum CustomerRequisitionNodeStatus {
+  Finalised = 'FINALISED',
+  InProgress = 'IN_PROGRESS',
+  New = 'NEW'
+}
+
 export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'DatabaseError';
   description: Scalars['String'];
@@ -136,6 +168,18 @@ export type DatetimeFilterInput = {
   afterOrEqualTo?: Maybe<Scalars['DateTime']>;
   beforeOrEqualTo?: Maybe<Scalars['DateTime']>;
   equalTo?: Maybe<Scalars['DateTime']>;
+};
+
+export type DeleteCustomerRequisitionInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteCustomerRequisitionResponse = DeleteResponse | NodeError;
+
+export type DeleteCustomerRequisitionResponseWithId = {
+  __typename?: 'DeleteCustomerRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<DeleteCustomerRequisitionResponse>;
 };
 
 export type DeleteInboundShipmentError = {
@@ -225,6 +269,18 @@ export type DeleteResponse = {
   id: Scalars['String'];
 };
 
+export type DeleteSupplierRequisitionInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteSupplierRequisitionResponse = DeleteResponse | NodeError;
+
+export type DeleteSupplierRequisitionResponseWithId = {
+  __typename?: 'DeleteSupplierRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<DeleteSupplierRequisitionResponse>;
+};
+
 export type EqualFilterBooleanInput = {
   equalTo?: Maybe<Scalars['Boolean']>;
 };
@@ -262,6 +318,23 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOu
   __typename?: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
+};
+
+export type InsertCustomerRequisitionInput = {
+  comment?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  nameId: Scalars['String'];
+  orderDate?: Maybe<Scalars['String']>;
+  otherPartyReference?: Maybe<Scalars['String']>;
+  type?: Maybe<RequisitionNodeType>;
+};
+
+export type InsertCustomerRequisitionResponse = NodeError | RequisitionNode;
+
+export type InsertCustomerRequisitionResponseWithId = {
+  __typename?: 'InsertCustomerRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertCustomerRequisitionResponse>;
 };
 
 export type InsertInboundShipmentError = {
@@ -371,6 +444,23 @@ export type InsertOutboundShipmentResponseWithId = {
   __typename?: 'InsertOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentResponse;
+};
+
+export type InsertSupplierRequisitionInput = {
+  comment?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  nameId: Scalars['String'];
+  orderDate?: Maybe<Scalars['String']>;
+  otherPartyReference?: Maybe<Scalars['String']>;
+  type?: Maybe<RequisitionNodeType>;
+};
+
+export type InsertSupplierRequisitionResponse = NodeError | RequisitionNode;
+
+export type InsertSupplierRequisitionResponseWithId = {
+  __typename?: 'InsertSupplierRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<InsertSupplierRequisitionResponse>;
 };
 
 export type InternalError = AuthTokenErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
@@ -633,21 +723,36 @@ export type LogoutResponse = Logout | LogoutError;
 
 export type Mutations = {
   __typename?: 'Mutations';
+  batchCustomerRequisition: BatchCustomerRequisitionResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
+  batchSupplierRequisition: BatchSupplierRequisitionResponse;
+  deleteCustomerRequisition: DeleteCustomerRequisitionResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
+  deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
+  insertCustomerRequisition: InsertCustomerRequisitionResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
+  insertSupplierRequisition: InsertSupplierRequisitionResponse;
   registerUser: UserRegisterResponse;
+  updateCustomerRequisition: UpdateCustomerRequisitionResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
+  updateSupplierRequisition: UpdateSupplierRequisitionResponse;
+};
+
+
+export type MutationsBatchCustomerRequisitionArgs = {
+  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionInput>>;
+  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionInput>>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput>>;
 };
 
 
@@ -671,6 +776,18 @@ export type MutationsBatchOutboundShipmentArgs = {
 };
 
 
+export type MutationsBatchSupplierRequisitionArgs = {
+  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
+  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionInput>>;
+  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput>>;
+};
+
+
+export type MutationsDeleteCustomerRequisitionArgs = {
+  input: DeleteCustomerRequisitionInput;
+};
+
+
 export type MutationsDeleteInboundShipmentArgs = {
   input: DeleteInboundShipmentInput;
 };
@@ -688,6 +805,16 @@ export type MutationsDeleteOutboundShipmentArgs = {
 
 export type MutationsDeleteOutboundShipmentLineArgs = {
   input: DeleteOutboundShipmentLineInput;
+};
+
+
+export type MutationsDeleteSupplierRequisitionArgs = {
+  input: DeleteSupplierRequisitionInput;
+};
+
+
+export type MutationsInsertCustomerRequisitionArgs = {
+  input: InsertCustomerRequisitionInput;
 };
 
 
@@ -711,8 +838,18 @@ export type MutationsInsertOutboundShipmentLineArgs = {
 };
 
 
+export type MutationsInsertSupplierRequisitionArgs = {
+  input: InsertSupplierRequisitionInput;
+};
+
+
 export type MutationsRegisterUserArgs = {
   input: UserRegisterInput;
+};
+
+
+export type MutationsUpdateCustomerRequisitionArgs = {
+  input: UpdateCustomerRequisitionInput;
 };
 
 
@@ -733,6 +870,11 @@ export type MutationsUpdateOutboundShipmentArgs = {
 
 export type MutationsUpdateOutboundShipmentLineArgs = {
   input: UpdateOutboundShipmentLineInput;
+};
+
+
+export type MutationsUpdateSupplierRequisitionArgs = {
+  input: UpdateSupplierRequisitionInput;
 };
 
 export type NameConnector = {
@@ -853,6 +995,8 @@ export type Queries = {
   me: UserResponse;
   names: NamesResponse;
   refreshToken: RefreshTokenResponse;
+  requisition: RequisitionResponse;
+  requisitions: RequisitionsResponse;
   stockCounts: StockCountsResponse;
 };
 
@@ -898,6 +1042,16 @@ export type QueriesNamesArgs = {
   filter?: Maybe<NameFilterInput>;
   page?: Maybe<PaginationInput>;
   sort?: Maybe<Array<NameSortInput>>;
+};
+
+
+export type QueriesRequisitionArgs = {
+  id: Scalars['String'];
+};
+
+
+export type QueriesRequisitionsArgs = {
+  params?: Maybe<RequisitionListParameters>;
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -946,6 +1100,55 @@ export type RegisteredUser = {
   id: Scalars['String'];
   username: Scalars['String'];
 };
+
+export type RequisitionConnector = {
+  __typename?: 'RequisitionConnector';
+  nodes: Array<Maybe<RequisitionNode>>;
+  totalCount: Scalars['Int'];
+};
+
+export type RequisitionFilterInput = {
+  type?: Maybe<SimpleStringFilterInput>;
+};
+
+export type RequisitionListParameters = {
+  filter?: Maybe<RequisitionFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<RequisitionSortInput>>;
+};
+
+export type RequisitionNode = {
+  __typename?: 'RequisitionNode';
+  comment?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  maxMOS?: Maybe<Scalars['Int']>;
+  nameId: Scalars['String'];
+  orderDate?: Maybe<Scalars['String']>;
+  otherPartyReference?: Maybe<Scalars['String']>;
+  requisitionNumber: Scalars['Int'];
+  status: SupplierRequisitionNodeStatus;
+  storeId: Scalars['String'];
+  thresholdMOS?: Maybe<Scalars['Int']>;
+  type?: Maybe<RequisitionNodeType>;
+};
+
+export enum RequisitionNodeType {
+  CustomerRequisition = 'CUSTOMER_REQUISITION',
+  SupplierRequisition = 'SUPPLIER_REQUISITION'
+}
+
+export type RequisitionResponse = NodeError | RequisitionNode;
+
+export enum RequisitionSortFieldInput {
+  OtherPartyName = 'otherPartyName'
+}
+
+export type RequisitionSortInput = {
+  desc?: Maybe<Scalars['Boolean']>;
+  key: RequisitionSortFieldInput;
+};
+
+export type RequisitionsResponse = ConnectorError | RequisitionConnector;
 
 export type SimpleStringFilterInput = {
   equalTo?: Maybe<Scalars['String']>;
@@ -1005,9 +1208,33 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
 
+export enum SupplierRequisitionNodeStatus {
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED',
+  InProgress = 'IN_PROGRESS',
+  Sent = 'SENT'
+}
+
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename?: 'TokenExpired';
   description: Scalars['String'];
+};
+
+export type UpdateCustomerRequisitionInput = {
+  comment?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  nameId?: Maybe<Scalars['String']>;
+  orderDate?: Maybe<Scalars['String']>;
+  otherPartyReference?: Maybe<Scalars['String']>;
+  type?: Maybe<RequisitionNodeType>;
+};
+
+export type UpdateCustomerRequisitionResponse = NodeError | RequisitionNode;
+
+export type UpdateCustomerRequisitionResponseWithId = {
+  __typename?: 'UpdateCustomerRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateCustomerRequisitionResponse>;
 };
 
 export type UpdateInboundShipmentError = {
@@ -1117,6 +1344,23 @@ export type UpdateOutboundShipmentResponseWithId = {
   __typename?: 'UpdateOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentResponse;
+};
+
+export type UpdateSupplierRequisitionInput = {
+  comment?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  nameId?: Maybe<Scalars['String']>;
+  orderDate?: Maybe<Scalars['String']>;
+  otherPartyReference?: Maybe<Scalars['String']>;
+  type?: Maybe<RequisitionNodeType>;
+};
+
+export type UpdateSupplierRequisitionResponse = NodeError | RequisitionNode;
+
+export type UpdateSupplierRequisitionResponseWithId = {
+  __typename?: 'UpdateSupplierRequisitionResponseWithId';
+  id: Scalars['String'];
+  response?: Maybe<UpdateSupplierRequisitionResponse>;
 };
 
 export type User = {
