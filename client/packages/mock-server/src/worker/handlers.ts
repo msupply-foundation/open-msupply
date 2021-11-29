@@ -6,7 +6,6 @@ import { Invoice } from './../data/types';
 import { MutationService } from './../api/mutations';
 import { ResolverService } from './../api/resolvers';
 import {
-  InsertSupplierRequisitionInput,
   InvoiceNodeStatus,
   UpdateOutboundShipmentInput,
   InvoiceNodeType,
@@ -15,8 +14,12 @@ import {
   NamesQueryVariables,
   DeleteInboundShipmentInput,
   RequisitionListParameters,
+  InsertSupplierRequisitionInput,
   DeleteSupplierRequisitionInput,
   UpdateSupplierRequisitionInput,
+  InsertCustomerRequisitionInput,
+  DeleteCustomerRequisitionInput,
+  UpdateCustomerRequisitionInput,
 } from '@openmsupply-client/common/src/types/schema';
 
 const updateOutboundInvoice = graphql.mutation<
@@ -174,6 +177,47 @@ const updateSupplierRequisition = graphql.mutation<
   }
 );
 
+const insertCustomerRequisition = graphql.mutation<
+  Record<string, unknown>,
+  { input: InsertCustomerRequisitionInput }
+>('insertCustomerRequisition', (request, response, context) => {
+  const { variables } = request;
+
+  const result = MutationService.requisition.customer.insert(variables.input);
+
+  return response(context.data({ insertCustomerRequisition: result }));
+});
+
+const deleteCustomerRequisitions = graphql.mutation<
+  Record<string, any>,
+  { ids: DeleteCustomerRequisitionInput[] }
+>('deleteCustomerRequisitions', (request, response, context) => {
+  const { variables } = request;
+  const { ids } = variables;
+
+  const queryResponse =
+    RequisitionSchema.MutationResolvers.batchCustomerRequisition(null, {
+      deleteCustomerRequisitions: ids,
+    });
+
+  return response(context.data({ batchCustomerRequisition: queryResponse }));
+});
+
+const updateCustomerRequisition = graphql.mutation<
+  Record<string, unknown>,
+  { input: UpdateCustomerRequisitionInput }
+>(
+  'updateCustomerRequisition',
+
+  (request, response, context) => {
+    const { variables } = request;
+
+    const result = MutationService.requisition.customer.update(variables.input);
+
+    return response(context.data({ updateCustomerRequisition: result }));
+  }
+);
+
 export const invoiceDetail = graphql.query(
   'invoice',
   (request, response, context) => {
@@ -307,4 +351,7 @@ export const handlers = [
   insertSupplierRequisition,
   updateSupplierRequisition,
   deleteSupplierRequisitions,
+  insertCustomerRequisition,
+  updateCustomerRequisition,
+  deleteCustomerRequisitions,
 ];
