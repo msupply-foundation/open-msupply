@@ -14,6 +14,7 @@ import {
   Requisition,
   RequisitionLine,
   Stocktake,
+  StocktakeLine,
 } from './types';
 import {
   randomFloat,
@@ -308,6 +309,8 @@ export const createInvoice = (
     ...seeded,
   };
 };
+const getStocktakes = (stocktakes = StocktakeData) => stocktakes;
+const getStockLines = (stockLines = StockLineData) => stockLines;
 
 const getCustomers = (names = NameData) =>
   names.filter(({ isSupplier }) => isSupplier);
@@ -720,6 +723,41 @@ const createStocktakes = (): Stocktake[] => {
   );
 };
 
+export const createStocktakeLine = (
+  stocktakeId: string,
+  item: Item,
+  stockLine?: StockLine
+): StocktakeLine => {
+  return {
+    id: faker.datatype.uuid(),
+    batch: stockLine?.batch,
+    costPricePerPack: stockLine?.costPricePerPack,
+    sellPricePerPack: stockLine?.sellPricePerPack,
+    countedNumPacks: stockLine?.totalNumberOfPacks,
+    expiryDate: stockLine?.expiryDate,
+    itemCode: item.code,
+    itemName: item.name,
+    snapshotNumPacks: stockLine?.totalNumberOfPacks,
+    snapshotPackSize: stockLine?.packSize,
+    stocktakeId,
+  };
+};
+
+const createStocktakeLines = (): StocktakeLine[] => {
+  const stocktake = getStocktakes();
+  const stockLines = getStockLines();
+
+  return stocktake
+    .map(stocktake => {
+      const stockLineSubset = takeRandomSubsetFrom(stockLines, 10);
+      return stockLineSubset.map(seed => {
+        const item = getItem(seed.itemId);
+        return createStocktakeLine(stocktake.id, item, seed);
+      });
+    })
+    .flat();
+};
+
 export const removeElement = (source: any[], idx: number): void => {
   source = source.splice(idx, 1);
 };
@@ -740,3 +778,4 @@ export let RequisitionLineData = [
 ];
 
 export let StocktakeData = createStocktakes();
+export let StocktakeLineData = createStocktakeLines();

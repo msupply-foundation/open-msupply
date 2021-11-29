@@ -1,3 +1,4 @@
+import { StocktakeLineMutation } from './stocktakeLine';
 import { InvoiceMutation } from './invoice';
 import { InvoiceLineMutation } from './invoiceLine';
 import { RequisitionMutation } from './requisition';
@@ -10,4 +11,5 @@ export const MutationService = {
   invoice: InvoiceMutation,
   invoiceLine: InvoiceLineMutation,
   stocktake: StocktakeMutation,
+  stocktakeLine: StocktakeLineMutation,
 };

@@ -13,6 +13,9 @@ import {
   InsertCustomerRequisitionLineInput,
   UpdateCustomerRequisitionLineInput,
   DeleteCustomerRequisitionLineInput,
+  InsertStocktakeLineInput,
+  UpdateStocktakeLineInput,
+  DeleteStocktakeLineInput,
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
@@ -33,6 +36,7 @@ import {
   Requisition,
   RequisitionLine,
   Stocktake,
+  StocktakeLine,
 } from './types';
 import {
   InvoiceData,
@@ -45,6 +49,8 @@ import {
   RequisitionLineData,
   createRequisitionLine,
   StocktakeData,
+  StocktakeLineData,
+  createStocktakeLine,
 } from './data';
 
 import {
@@ -66,6 +72,57 @@ export const invoice = {
       ({
         ...InvoiceData.find(getFilter(invoiceNumber, 'invoiceNumber')),
       } as Invoice),
+  },
+};
+
+export const stocktakeLine = {
+  get: {
+    byId: (id: string): StocktakeLine => {
+      const stocktakeLine = StocktakeLineData.find(getFilter(id, 'id'));
+      if (!stocktakeLine) {
+        throw new Error(`Could not find stocktakeLine line with id: ${id}`);
+      }
+
+      return {
+        ...stocktakeLine,
+      };
+    },
+    byStocktakeId: (stocktakeId: string): StocktakeLine[] => {
+      const lines = StocktakeLineData.filter(
+        getFilter(stocktakeId, 'stocktakeId')
+      );
+
+      return [...lines];
+    },
+  },
+  insert: (input: InsertStocktakeLineInput): StocktakeLine => {
+    const item = ItemData.find(getFilter(input.itemId, 'id'));
+    if (!item) {
+      throw new Error(`Could not find item with id: ${input.itemId}`);
+    }
+
+    const line = { ...createStocktakeLine(input.stocktakeId, item), ...input };
+    StocktakeLineData.push(line);
+    return line;
+  },
+  update: (input: UpdateStocktakeLineInput): StocktakeLine => {
+    const index = StocktakeLineData.findIndex(getFilter(input.id, 'id'));
+    const line = StocktakeLineData[index] as StocktakeLine;
+    if (!line) {
+      throw new Error(`Could not find line with id: ${input.id}`);
+    }
+
+    const updatedLine = { ...line, ...input } as StocktakeLine;
+    StocktakeLineData[index] = updatedLine;
+
+    return updatedLine;
+  },
+  delete: (input: DeleteStocktakeLineInput): DeleteResponse => {
+    const index = StocktakeLineData.findIndex(getFilter(input.id, 'id'));
+    if (!(index >= 0))
+      throw new Error(`Could not find line to delete with id: ${input.id}`);
+    removeElement(StocktakeLineData, index);
+    return input;
   },
 };
 
@@ -534,4 +591,5 @@ export const db = {
   insert,
   remove,
   stocktake,
+  stocktakeLine,
 };
