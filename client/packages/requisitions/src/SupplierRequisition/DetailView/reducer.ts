@@ -1,5 +1,3 @@
-import { SupplierRequisitionLine, RequisitionActionType } from './../../types';
-import { Dispatch } from 'react';
 import {
   produce,
   DocumentActionSet,
@@ -8,11 +6,10 @@ import {
 } from '@openmsupply-client/common';
 import { placeholderSupplierRequisition } from '../../utils';
 import {
-  RequisitionAction,
   SupplierRequisition,
+  SupplierRequisitionLine,
   Requisition,
 } from '../../types';
-import { Name } from '../../../../mock-server/src/data/types';
 
 export interface SupplierRequisitionStateShape {
   draft: SupplierRequisition;

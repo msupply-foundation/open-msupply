@@ -1,6 +1,9 @@
-import { Requisition } from './../../mock-server/src/data/types';
-import { SupplierRequisitionNodeStatus } from '@openmsupply-client/common';
-import { SupplierRequisition, CustomerRequisition } from './types';
+import {
+  SupplierRequisitionNodeStatus,
+  SupplierRequisitionNodeStatus,
+} from '@openmsupply-client/common';
+
+import { Requisition, SupplierRequisition, CustomerRequisition } from './types';
 
 export const placeholderSupplierRequisition: SupplierRequisition = {
   id: '',
