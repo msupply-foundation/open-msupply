@@ -211,6 +211,34 @@ mutation insertSupplierRequisition($input: InsertSupplierRequisitionInput!) {
   }
 }
 
+mutation deleteCustomerRequisitions($ids: [DeleteCustomerRequisitionInput!]) {
+  batchCustomerRequisition(deleteCustomerRequisitions: $ids) {
+    __typename
+    deleteCustomerRequisitions {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateCustomerRequisition($input: UpdateCustomerRequisitionInput!) {
+  updateCustomerRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertCustomerRequisition($input: InsertCustomerRequisitionInput!) {
+  insertCustomerRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
 query invoices(
   $first: Int
   $offset: Int

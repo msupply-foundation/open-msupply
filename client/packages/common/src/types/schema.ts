@@ -1905,6 +1905,27 @@ export type InsertSupplierRequisitionMutationVariables = Exact<{
 
 export type InsertSupplierRequisitionMutation = { __typename?: 'Mutations', insertSupplierRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
 
+export type DeleteCustomerRequisitionsMutationVariables = Exact<{
+  ids?: Maybe<Array<DeleteCustomerRequisitionInput> | DeleteCustomerRequisitionInput>;
+}>;
+
+
+export type DeleteCustomerRequisitionsMutation = { __typename?: 'Mutations', batchCustomerRequisition: { __typename: 'BatchCustomerRequisitionResponse', deleteCustomerRequisitions?: Array<{ __typename: 'DeleteCustomerRequisitionResponseWithId', id: string }> | null | undefined } };
+
+export type UpdateCustomerRequisitionMutationVariables = Exact<{
+  input: UpdateCustomerRequisitionInput;
+}>;
+
+
+export type UpdateCustomerRequisitionMutation = { __typename?: 'Mutations', updateCustomerRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
+
+export type InsertCustomerRequisitionMutationVariables = Exact<{
+  input: InsertCustomerRequisitionInput;
+}>;
+
+
+export type InsertCustomerRequisitionMutation = { __typename?: 'Mutations', insertCustomerRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
+
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
@@ -2217,6 +2238,37 @@ export const UpdateSupplierRequisitionDocument = gql`
 export const InsertSupplierRequisitionDocument = gql`
     mutation insertSupplierRequisition($input: InsertSupplierRequisitionInput!) {
   insertSupplierRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const DeleteCustomerRequisitionsDocument = gql`
+    mutation deleteCustomerRequisitions($ids: [DeleteCustomerRequisitionInput!]) {
+  batchCustomerRequisition(deleteCustomerRequisitions: $ids) {
+    __typename
+    deleteCustomerRequisitions {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const UpdateCustomerRequisitionDocument = gql`
+    mutation updateCustomerRequisition($input: UpdateCustomerRequisitionInput!) {
+  updateCustomerRequisition(input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const InsertCustomerRequisitionDocument = gql`
+    mutation insertCustomerRequisition($input: InsertCustomerRequisitionInput!) {
+  insertCustomerRequisition(input: $input) {
     ... on RequisitionNode {
       __typename
       id
@@ -2776,6 +2828,15 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertSupplierRequisition(variables: InsertSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertSupplierRequisitionMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierRequisitionMutation>(InsertSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierRequisition');
+    },
+    deleteCustomerRequisitions(variables?: DeleteCustomerRequisitionsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteCustomerRequisitionsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteCustomerRequisitionsMutation>(DeleteCustomerRequisitionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteCustomerRequisitions');
+    },
+    updateCustomerRequisition(variables: UpdateCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateCustomerRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerRequisitionMutation>(UpdateCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerRequisition');
+    },
+    insertCustomerRequisition(variables: InsertCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertCustomerRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerRequisitionMutation>(InsertCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertCustomerRequisition');
     },
     invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices');
