@@ -5,12 +5,13 @@ import {
   TabContext,
   TabList,
   Tab,
+  alpha,
   TabPanel,
   styled,
-  BaseButton,
   useTranslation,
-  alpha,
   useIsMediumScreen,
+  ButtonWithIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundShipment, InboundShipmentItem } from '../../../../types';
 import { flattenInboundItems } from '../../../../utils';
@@ -90,13 +91,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               </TabList>
             </Box>
             <Box flex={1} justifyContent="flex-end" display="flex">
-              <BaseButton
+              <ButtonWithIcon
                 color="primary"
                 variant="outlined"
                 onClick={onAddBatch}
-              >
-                {t('label.add-batch')}
-              </BaseButton>
+                label={t('label.add-batch')}
+                Icon={<PlusCircleIcon />}
+              />
             </Box>
           </Box>
 
@@ -104,10 +105,22 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             sx={{
               height: isMediumScreen ? 300 : 400,
               marginTop: 2,
-              backgroundColor: theme => alpha(theme.palette.gray.pale, 0.5),
+              borderWidth: 1,
+              borderStyle: 'solid',
+              borderColor: 'divider',
               borderRadius: '20px',
             }}
           >
+            <Box
+              sx={{
+                width: 400,
+                height: isMediumScreen ? 300 : 400,
+                backgroundColor: theme =>
+                  alpha(theme.palette['background']['menu'], 0.4),
+                position: 'absolute',
+                borderRadius: '20px',
+              }}
+            />
             <StyledTabPanel value={Tabs.Batch}>
               <BatchTable batches={batches} />
             </StyledTabPanel>
