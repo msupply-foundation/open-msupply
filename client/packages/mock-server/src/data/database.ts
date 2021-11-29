@@ -198,7 +198,7 @@ export const insert = {
       itemCode: item.code,
       itemUnit: item.unitName ?? '',
       itemId: item.id,
-      expiryDate: 'stockLine?.expiryDate',
+      expiryDate: stockLine?.expiryDate ?? '',
       batch: '',
       stockLineId: stockLine?.id ?? '',
       packSize: stockLine?.packSize ?? 1,
