@@ -19,7 +19,7 @@ pub fn insert_inbound_shipment_line(
     let new_line = connection
         .transaction_sync(|connection| {
             let (item, invoice) = validate(&input, &connection)?;
-            let (new_line, new_batch_option) = generate(input, item, invoice, &connection)?;
+            let (new_line, new_batch_option) = generate(input, item, invoice)?;
 
             if let Some(new_batch) = new_batch_option {
                 StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;

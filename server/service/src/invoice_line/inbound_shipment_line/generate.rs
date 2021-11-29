@@ -1,10 +1,7 @@
-use repository::{
-    schema::{InvoiceLineRow, StockLineRow},
-    RepositoryError, StorageConnection,
-};
+use repository::schema::{InvoiceLineRow, StockLineRow};
 use util::uuid::uuid;
 
-use crate::invoice::current_store_id;
+use crate::current_store_id;
 
 pub fn generate_batch(
     InvoiceLineRow {
@@ -21,18 +18,17 @@ pub fn generate_batch(
         ..
     }: InvoiceLineRow,
     keep_existing_batch: bool,
-    connection: &StorageConnection,
-) -> Result<StockLineRow, RepositoryError> {
+) -> StockLineRow {
     // Generate new id if requested via parameter or if stock_line_id is not already set on line
     let stock_line_id = match (stock_line_id, keep_existing_batch) {
         (Some(stock_line_id), true) => stock_line_id,
         _ => uuid(),
     };
 
-    let batch = StockLineRow {
+    StockLineRow {
         id: stock_line_id,
         item_id,
-        store_id: current_store_id(connection)?,
+        store_id: current_store_id(),
         location_id,
         batch,
         pack_size,
@@ -43,7 +39,5 @@ pub fn generate_batch(
         expiry_date,
         on_hold: false,
         note,
-    };
-
-    Ok(batch)
+    }
 }

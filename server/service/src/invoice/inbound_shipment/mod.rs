@@ -2,9 +2,7 @@ use domain::{
     name::{Name, NameFilter},
     Pagination,
 };
-use repository::{
-    NameQueryRepository, RepositoryError, StorageConnection, StoreRepository,
-};
+use repository::{NameQueryRepository, RepositoryError, StorageConnection};
 
 pub mod insert;
 pub use self::insert::*;
@@ -14,11 +12,6 @@ pub use self::update::*;
 
 pub mod delete;
 pub use self::delete::*;
-
-pub fn current_store_id(connection: &StorageConnection) -> Result<String, RepositoryError> {
-    // Need to check session for store
-    Ok(StoreRepository::new(connection).all()?[0].id.clone())
-}
 
 pub enum OtherPartyError {
     NotASupplier(Name),
