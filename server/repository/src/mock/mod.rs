@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 pub use full_invoice::mock_full_invoices;
 pub use invoice::{mock_invoices, mock_outbound_shipments};
-pub use invoice_line::mock_invoice_lines;
+pub use invoice_line::{mock_invoice_lines, mock_outbound_shipment_invoice_lines};
 pub use item::mock_items;
 pub use location::mock_locations;
 pub use name::mock_names;
