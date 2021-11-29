@@ -1,4 +1,8 @@
-import { RequisitionNode } from './../../../common/src/types/schema';
+import {
+  RequisitionNode,
+  RequisitionLineNode,
+  RequisitionLinesResponse,
+} from './../../../common/src/types/schema';
 import {
   InvoiceLineNode,
   InvoiceNode,
@@ -115,9 +119,27 @@ export interface ResolvedStockCounts extends StockCounts {
   __typename: string;
 }
 
-export type Requisition = RequisitionNode;
+export interface Requisition
+  extends Omit<
+    RequisitionNode,
+    '__typename' | 'lines' | 'otherParty' | 'otherPartyName'
+  > {
+  otherPartyId: string;
+}
 
-export interface ResolvedRequisition extends RequisitionNode {
+export interface ResolvedRequisition extends Requisition {
   __typename: 'RequisitionNode';
+  // lines: ListResponse<ResolvedRequisitionLine>;
+  lines: RequisitionLinesResponse;
+  otherParty: Name;
   otherPartyName: string;
+}
+
+export interface RequisitionLine
+  extends Omit<RequisitionLineNode, '__typename'> {
+  requisitionId: string;
+}
+
+export interface ResolvedRequisitionLine extends RequisitionLine {
+  __typename: 'RequisitionLineNode';
 }

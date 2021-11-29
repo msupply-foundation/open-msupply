@@ -12,6 +12,7 @@ import {
   InvoiceLine,
   Name,
   Requisition,
+  RequisitionLine,
 } from './types';
 import {
   randomFloat,
@@ -311,6 +312,18 @@ export const getCustomers = (names = NameData) =>
 export const getSuppliers = (names = NameData) =>
   names.filter(({ isCustomer }) => isCustomer);
 
+export const getCustomerRequisitions = () =>
+  RequisitionData.filter(
+    ({ type }) => type === RequisitionNodeType.CustomerRequisition
+  );
+
+export const getSupplierRequisitions = () =>
+  RequisitionData.filter(
+    ({ type }) => type === RequisitionNodeType.SupplierRequisition
+  );
+
+export const getItems = () => [...ItemData];
+
 export const createInvoices = (
   names = NameData,
   numberToCreate = randomInteger({ min: 1, max: 100 })
@@ -352,7 +365,7 @@ export const createCustomers = (
     return takeRandomElementFrom(names);
   };
 
-  const customers = new Map();
+  const customers = new Map<string, string>();
   Array.from({ length: numberToCreate }).forEach(() => {
     const { code, name } = getNameAndCode();
     customers.set(name, code);
@@ -556,6 +569,23 @@ const createInvoicesLines = (
   return [...inboundLines, ...outboundLines];
 };
 
+const createRequisition = (
+  otherParty: Name,
+  type: RequisitionNodeType
+): Requisition => {
+  return {
+    id: `${faker.datatype.uuid()}`,
+    requisitionNumber: faker.datatype.number({ max: 1000 }),
+    storeId: '',
+    otherPartyId: otherParty.id,
+    orderDate: faker.date.past(1.5).toISOString(),
+    type,
+    maxMOS: 3,
+    thresholdMOS: 3,
+    status: SupplierRequisitionNodeStatus.Draft,
+  };
+};
+
 const createSupplierRequisitions = (): Requisition[] => {
   const suppliers = getSuppliers();
 
@@ -564,18 +594,10 @@ const createSupplierRequisitions = (): Requisition[] => {
       const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
 
       return Array.from({ length: numberOfRequisitions }).map(() => {
-        const requisition: Requisition = {
-          id: `${faker.datatype.uuid()}`,
-          requisitionNumber: faker.datatype.number({ max: 1000 }),
-          storeId: '',
-          nameId: supplier.id,
-          orderDate: faker.date.past(1.5).toISOString(),
-          type: RequisitionNodeType.SupplierRequisition,
-          maxMOS: 3,
-          thresholdMOS: 3,
-          status: SupplierRequisitionNodeStatus.Draft,
-        };
-
+        const requisition: Requisition = createRequisition(
+          supplier,
+          RequisitionNodeType.SupplierRequisition
+        );
         return requisition;
       });
     })
@@ -590,20 +612,97 @@ const createCustomerRequisitions = (): Requisition[] => {
       const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
 
       return Array.from({ length: numberOfRequisitions }).map(() => {
-        const requisition: Requisition = {
-          id: `${faker.datatype.uuid()}`,
-          requisitionNumber: faker.datatype.number({ max: 1000 }),
-          nameId: customer.id,
-          storeId: '',
-          orderDate: faker.date.past(1.5).toISOString(),
-          type: RequisitionNodeType.CustomerRequisition,
-          maxMOS: 3,
-          thresholdMOS: 3,
-          status: SupplierRequisitionNodeStatus.Draft,
-        };
+        const requisition: Requisition = createRequisition(
+          customer,
+          RequisitionNodeType.CustomerRequisition
+        );
 
         return requisition;
       });
+    })
+    .flat();
+};
+
+const createSupplierRequisitionLines = (): RequisitionLine[] => {
+  const supplierRequisitions = getSupplierRequisitions();
+  const items = getItems();
+
+  return supplierRequisitions
+    .map(req => {
+      const itemsSubset = takeRandomSubsetFrom(items, 10);
+
+      const getRandomFloat = () => faker.datatype.float({ min: 0, max: 100 });
+
+      return itemsSubset
+        .map(item => {
+          return {
+            id: faker.datatype.uuid(),
+            requisitionId: req.id,
+            closingQuantity: getRandomFloat(),
+            comment: '',
+            expiredQuantity: getRandomFloat(),
+            imprestQuantity: getRandomFloat(),
+            issuedQuantity: getRandomFloat(),
+            itemCode: item.code,
+            itemName: item.name,
+            itemUnit: item.unitName ?? '',
+            monthlyConsumption: getRandomFloat(),
+            monthsOfSupply: getRandomFloat(),
+            openingQuantity: getRandomFloat(),
+            otherPartyClosingQuantity: getRandomFloat(),
+            previousQuantity: getRandomFloat(),
+            previousStockOnHand: getRandomFloat(),
+            receivedQuantity: getRandomFloat(),
+            requestedQuantity: getRandomFloat(),
+            stockAdditions: getRandomFloat(),
+            stockLosses: getRandomFloat(),
+            supplyQuantity: getRandomFloat(),
+          };
+        })
+        .flat();
+    })
+    .flat();
+};
+
+const getRandomFloat = () => faker.datatype.float({ min: 0, max: 100 });
+
+export const createRequisitionLine = (req: Requisition, item: Item) => ({
+  id: faker.datatype.uuid(),
+  requisitionId: req.id,
+  closingQuantity: getRandomFloat(),
+  comment: '',
+  expiredQuantity: getRandomFloat(),
+  imprestQuantity: getRandomFloat(),
+  issuedQuantity: getRandomFloat(),
+  itemCode: item.code,
+  itemName: item.name,
+  itemUnit: item.unitName ?? '',
+  monthlyConsumption: getRandomFloat(),
+  monthsOfSupply: getRandomFloat(),
+  openingQuantity: getRandomFloat(),
+  otherPartyClosingQuantity: getRandomFloat(),
+  previousQuantity: getRandomFloat(),
+  previousStockOnHand: getRandomFloat(),
+  receivedQuantity: getRandomFloat(),
+  requestedQuantity: getRandomFloat(),
+  stockAdditions: getRandomFloat(),
+  stockLosses: getRandomFloat(),
+  supplyQuantity: getRandomFloat(),
+});
+
+const createCustomerRequisitionLines = (): RequisitionLine[] => {
+  const customerRequisitions = getSupplierRequisitions();
+  const items = getItems();
+
+  return customerRequisitions
+    .map(req => {
+      const itemsSubset = takeRandomSubsetFrom(items, 10);
+
+      return itemsSubset
+        .map(item => {
+          return createRequisitionLine(req, item);
+        })
+        .flat();
     })
     .flat();
 };
@@ -620,4 +719,9 @@ export let InvoiceLineData = createInvoicesLines(InvoiceData, StockLineData);
 export let RequisitionData = [
   ...createSupplierRequisitions(),
   ...createCustomerRequisitions(),
+];
+
+export let RequisitionLineData = [
+  ...createSupplierRequisitionLines(),
+  ...createCustomerRequisitionLines(),
 ];
