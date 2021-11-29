@@ -1,6 +1,7 @@
 use super::{DBType, StorageConnection};
 
 use crate::{
+    diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -62,27 +63,9 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         .into_boxed();
 
     if let Some(f) = filter {
-        if let Some(value) = f.id {
-            if let Some(eq) = value.equal_to {
-                query = query.filter(stock_line_dsl::id.eq(eq));
-            }
-
-            if let Some(eq) = value.equal_any {
-                query = query.filter(stock_line_dsl::id.eq_any(eq));
-            }
-        }
-
-        if let Some(value) = f.item_ids {
-            if let Some(eq) = value.equal_any {
-                query = query.filter(stock_line_dsl::item_id.eq_any(eq));
-            }
-        }
-
-        if let Some(value) = f.location_id {
-            if let Some(eq) = value.equal_any {
-                query = query.filter(stock_line_dsl::location_id.eq_any(eq));
-            }
-        }
+        apply_equal_filter!(query, f.id, stock_line_dsl::id);
+        apply_equal_filter!(query, f.item_id, stock_line_dsl::item_id);
+        apply_equal_filter!(query, f.location_id, stock_line_dsl::location_id);
     }
 
     query
