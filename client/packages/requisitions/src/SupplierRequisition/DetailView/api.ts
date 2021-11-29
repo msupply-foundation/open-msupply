@@ -1,9 +1,9 @@
-import { RequisitionLineConnector } from './../../../../common/src/types/schema';
 import {
   ConnectorError,
   NameResponse,
   OmSupplyApi,
   RequisitionQuery,
+  RequisitionLineConnector,
 } from '@openmsupply-client/common';
 import { Requisition, SupplierRequisition } from './../../types';
 

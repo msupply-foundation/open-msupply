@@ -1,4 +1,4 @@
-import { SupplierRequisitionNodeStatus } from './../../common/src/types/schema';
+import { SupplierRequisitionNodeStatus } from '@openmsupply-client/common';
 import { SupplierRequisition } from './types';
 
 export const placeholderSupplierRequisition: SupplierRequisition = {

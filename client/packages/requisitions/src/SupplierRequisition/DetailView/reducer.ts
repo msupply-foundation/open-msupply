@@ -1,14 +1,16 @@
-import { DefaultDocumentAction } from './../../../../common/src/hooks/useDocument/types';
-import { SupplierRequisitionLine } from './../../types';
-
 import {
   produce,
   DocumentActionSet,
   DocumentActionType,
   SortBy,
+  DefaultDocumentAction,
 } from '@openmsupply-client/common';
 import { placeholderSupplierRequisition } from '../../utils';
-import { SupplierRequisition, Requisition } from '../../types';
+import {
+  SupplierRequisition,
+  SupplierRequisitionLine,
+  Requisition,
+} from '../../types';
 
 export interface SupplierRequisitionStateShape {
   draft: SupplierRequisition;
