@@ -16,7 +16,7 @@ pub fn get_stock_line(
 
     let mut result = StockLineRepository::new(&connection).query(
         Pagination::one(),
-        Some(StockLineFilter::new().match_id(&id)),
+        Some(StockLineFilter::new().id(|f| f.equal_to(&id))),
         None,
     )?;
 

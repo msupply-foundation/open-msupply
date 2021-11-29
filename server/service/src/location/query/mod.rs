@@ -1,6 +1,6 @@
 use domain::{
     location::{Location, LocationFilter, LocationSort},
-    Pagination, PaginationOption,
+    PaginationOption,
 };
 use repository::LocationRepository;
 
@@ -30,11 +30,8 @@ impl<'a> LocationQueryServiceTrait for LocationQueryService<'a> {
     fn get_location(&self, id: String) -> Result<Location, SingleRecordError> {
         let repository = LocationRepository::new(&self.0);
 
-        let mut result = repository.query(
-            Pagination::one(),
-            Some(LocationFilter::new().match_id(&id)),
-            None,
-        )?;
+        let mut result =
+            repository.query_by_filter(LocationFilter::new().id(|f| f.equal_to(&id)))?;
 
         if let Some(record) = result.pop() {
             Ok(record)

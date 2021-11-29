@@ -3,7 +3,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use domain::{
     item::{Item, ItemFilter},
-    EqualFilter, SimpleStringFilter,
+    SimpleStringFilter,
 };
 
 use super::{
@@ -32,7 +32,7 @@ impl From<ItemFilterInput> for ItemFilter {
         ItemFilter {
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
-            is_visible: f.is_visible.map(EqualFilter::from),
+            is_visible: f.is_visible.and_then(|filter| filter.equal_to),
         }
     }
 }
