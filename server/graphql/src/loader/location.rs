@@ -18,7 +18,7 @@ impl Loader<String> for LocationByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = LocationRepository::new(&connection);
 
-        let result = repo.query_filter_only(LocationFilter::new().match_ids(ids.to_owned()))?;
+        let result = repo.query_by_filter(LocationFilter::new().match_ids(ids.to_owned()))?;
 
         Ok(result
             .into_iter()
