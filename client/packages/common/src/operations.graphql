@@ -284,6 +284,111 @@ mutation insertCustomerRequisition($input: InsertCustomerRequisitionInput!) {
   }
 }
 
+query requisition($id: String!) {
+  requisition(id: $id) {
+    __typename
+    ... on RequisitionNode {
+      __typename
+      id
+      orderDate
+      comment
+      otherPartyReference
+      type
+      requisitionNumber
+      thresholdMOS
+      maxMOS
+      status
+      otherPartyId
+      otherPartyName
+      storeId
+      lines {
+        __typename
+        ... on ConnectorError {
+          error {
+            description
+          }
+        }
+        ... on RequisitionLineConnector {
+          totalCount
+          nodes {
+            id
+            itemName
+            itemCode
+            itemUnit
+            comment
+            monthlyConsumption
+            monthsOfSupply
+            supplyQuantity
+            openingQuantity
+            issuedQuantity
+            requestedQuantity
+            receivedQuantity
+            imprestQuantity
+            previousQuantity
+            calculatedQuantity
+            previousStockOnHand
+            closingQuantity
+            stockAdditions
+            stockLosses
+            expiredQuantity
+            otherPartyClosingQuantity
+          }
+        }
+      }
+      otherParty {
+        __typename
+        ... on NodeError {
+          error {
+            description
+          }
+        }
+        ... on NameNode {
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+      }
+    }
+  }
+}
+
+mutation upsertSupplierRequisition(
+  $deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!]
+  $insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!]
+  $updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!]
+  $updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
+) {
+  batchSupplierRequisition(
+    deleteSupplierRequisitionLines: $deleteSupplierRequisitionLines
+    insertSupplierRequisitionLines: $insertSupplierRequisitionLines
+    updateSupplierRequisitionLines: $updateSupplierRequisitionLines
+    updateSupplierRequisitions: $updateSupplierRequisitions
+  ) {
+    __typename
+    updateSupplierRequisitions {
+      __typename
+      id
+    }
+
+    insertSupplierRequisitionLines {
+      __typename
+      id
+    }
+
+    deleteSupplierRequisitionLines {
+      __typename
+      id
+    }
+
+    updateSupplierRequisitionLines {
+      __typename
+      id
+    }
+  }
+}
+
 query invoices(
   $first: Int
   $offset: Int

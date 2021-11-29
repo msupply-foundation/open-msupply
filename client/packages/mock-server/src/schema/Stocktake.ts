@@ -23,7 +23,7 @@ import {
 } from '@openmsupply-client/common/src/types/schema';
 
 const QueryResolvers = {
-  requisition: (id: string): StocktakeResponse => {
+  stocktake: (_: unknown, { id }: { id: string }): StocktakeResponse => {
     return ResolverService.stocktake.byId(id);
   },
   stocktakes: (
