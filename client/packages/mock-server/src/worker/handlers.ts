@@ -273,6 +273,18 @@ const updateCustomerRequisition = graphql.mutation<
   }
 );
 
+export const requisitionDetail = graphql.query(
+  'requisition',
+  (request, response, context) => {
+    const { variables } = request;
+    const { id } = variables;
+
+    const requisition = ResolverService.requisition.get.byId(id as string);
+
+    return response(context.data({ requisition }));
+  }
+);
+
 export const invoiceDetail = graphql.query(
   'invoice',
   (request, response, context) => {
@@ -412,4 +424,5 @@ export const handlers = [
   insertStocktake,
   updateStocktake,
   deleteStocktakes,
+  requisitionDetail,
 ];

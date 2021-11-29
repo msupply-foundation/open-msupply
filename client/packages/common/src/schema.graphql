@@ -1382,13 +1382,13 @@ type RequisitionLineNode {
   calculatedQuantity: Float
 
   previousStockOnHand: Float
-  closingQuantity: Int
+  closingQuantity: Float
 
   stockAdditions: Float
   stockLosses: Float
   expiredQuantity: Float
 
-  otherPartyClosingQuantity: Int
+  otherPartyClosingQuantity: Float
 }
 
 union RequisitionLinesResponse = ConnectorError | RequisitionLineConnector
