@@ -16,6 +16,12 @@ export type Scalars = {
   NaiveDate: any;
 };
 
+export type AccessDenied = LogoutErrorInterface & UserErrorInterface & {
+  __typename?: 'AccessDenied';
+  description: Scalars['String'];
+  fullError: Scalars['String'];
+};
+
 export type AuthToken = {
   __typename?: 'AuthToken';
   token: Scalars['String'];
@@ -120,7 +126,7 @@ export type CountError = {
   description: Scalars['String'];
 };
 
-export type DatabaseError = ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -239,11 +245,6 @@ export type EqualFilterStringInput = {
   equalTo?: Maybe<Scalars['String']>;
 };
 
-export type ExpiredSignature = LogoutErrorInterface & {
-  __typename?: 'ExpiredSignature';
-  description: Scalars['String'];
-};
-
 export type FinalisedInvoiceIsNotEditableError = UpdateOutboundShipmentErrorInterface & {
   __typename?: 'FinalisedInvoiceIsNotEditableError';
   description: Scalars['String'];
@@ -252,6 +253,7 @@ export type FinalisedInvoiceIsNotEditableError = UpdateOutboundShipmentErrorInte
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
+  LocationId = 'locationId',
   OtherPartyId = 'otherPartyId',
   StockLineId = 'stockLineId'
 }
@@ -272,6 +274,7 @@ export type InsertInboundShipmentErrorInterface = {
 };
 
 export type InsertInboundShipmentInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -296,6 +299,7 @@ export type InsertInboundShipmentLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
+  locationId?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
@@ -327,6 +331,7 @@ export type InsertOutboundShipmentErrorInterface = {
 };
 
 export type InsertOutboundShipmentInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -368,7 +373,7 @@ export type InsertOutboundShipmentResponseWithId = {
   response: InsertOutboundShipmentResponse;
 };
 
-export type InternalError = AuthTokenErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UserRegisterErrorInterface & {
+export type InternalError = AuthTokenErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -379,7 +384,7 @@ export type InvalidCredentials = AuthTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-export type InvalidToken = LogoutErrorInterface & RefreshTokenErrorInterface & {
+export type InvalidToken = RefreshTokenErrorInterface & {
   __typename?: 'InvalidToken';
   description: Scalars['String'];
 };
@@ -449,6 +454,9 @@ export type InvoiceLineNode = {
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
   itemName: Scalars['String'];
+  location?: Maybe<LocationResponse>;
+  locationId?: Maybe<Scalars['String']>;
+  locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
@@ -462,8 +470,11 @@ export type InvoiceLinesResponse = ConnectorError | InvoiceLineConnector;
 
 export type InvoiceNode = {
   __typename?: 'InvoiceNode';
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
+  confirmedDatetime?: Maybe<Scalars['DateTime']>;
   entryDatetime: Scalars['DateTime'];
+  finalisedDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   invoiceNumber: Scalars['Int'];
   lines: InvoiceLinesResponse;
@@ -559,13 +570,50 @@ export type LineDoesNotReferenceStockLine = UpdateOutboundShipmentLineErrorInter
   description: Scalars['String'];
 };
 
+export type LocationConnector = {
+  __typename?: 'LocationConnector';
+  nodes: Array<LocationNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type LocationFilterInput = {
+  code?: Maybe<EqualFilterStringInput>;
+  id?: Maybe<EqualFilterStringInput>;
+  name?: Maybe<EqualFilterStringInput>;
+};
+
+export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+  __typename?: 'LocationIsOnHold';
+  description: Scalars['String'];
+};
+
 export type LocationNode = {
   __typename?: 'LocationNode';
   code: Scalars['String'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+  onHold: Scalars['Boolean'];
+  stock: StockLinesResponse;
+};
+
+export type LocationNotFound = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+  __typename?: 'LocationNotFound';
   description: Scalars['String'];
 };
 
 export type LocationResponse = LocationNode | NodeError;
+
+export enum LocationSortFieldInput {
+  Code = 'code',
+  Name = 'name'
+}
+
+export type LocationSortInput = {
+  desc?: Maybe<Scalars['Boolean']>;
+  key: LocationSortFieldInput;
+};
+
+export type LocationsResponse = ConnectorError | LocationConnector;
 
 export type Logout = {
   __typename?: 'Logout';
@@ -582,11 +630,6 @@ export type LogoutErrorInterface = {
 };
 
 export type LogoutResponse = Logout | LogoutError;
-
-export type MissingAuthToken = LogoutErrorInterface & {
-  __typename?: 'MissingAuthToken';
-  description: Scalars['String'];
-};
 
 export type Mutations = {
   __typename?: 'Mutations';
@@ -747,11 +790,6 @@ export type NotARefreshToken = RefreshTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-export type NotAnApiToken = LogoutErrorInterface & {
-  __typename?: 'NotAnApiToken';
-  description: Scalars['String'];
-};
-
 export type NotAnInboundShipment = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & {
   __typename?: 'NotAnInboundShipment';
   description: Scalars['String'];
@@ -810,7 +848,9 @@ export type Queries = {
   invoiceCounts: InvoiceCountsResponse;
   invoices: InvoicesResponse;
   items: ItemsResponse;
+  locations: LocationsResponse;
   logout: LogoutResponse;
+  me: UserResponse;
   names: NamesResponse;
   refreshToken: RefreshTokenResponse;
   stockCounts: StockCountsResponse;
@@ -847,6 +887,13 @@ export type QueriesItemsArgs = {
 };
 
 
+export type QueriesLocationsArgs = {
+  filter?: Maybe<LocationFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<LocationSortInput>>;
+};
+
+
 export type QueriesNamesArgs = {
   filter?: Maybe<NameFilterInput>;
   page?: Maybe<PaginationInput>;
@@ -867,7 +914,7 @@ export enum RangeField {
   PackSize = 'packSize'
 }
 
-export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & {
+export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'RecordAlreadyExist';
   description: Scalars['String'];
 };
@@ -944,7 +991,8 @@ export type StockLineNode = {
   id: Scalars['String'];
   itemId: Scalars['String'];
   location?: Maybe<LocationResponse>;
-  locationDescription?: Maybe<Scalars['String']>;
+  locationId?: Maybe<Scalars['String']>;
+  locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
   onHold: Scalars['Boolean'];
   packSize: Scalars['Int'];
@@ -962,11 +1010,6 @@ export type TokenExpired = RefreshTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-export type TokenInvalided = LogoutErrorInterface & {
-  __typename?: 'TokenInvalided';
-  description: Scalars['String'];
-};
-
 export type UpdateInboundShipmentError = {
   __typename?: 'UpdateInboundShipmentError';
   error: UpdateInboundShipmentErrorInterface;
@@ -977,6 +1020,7 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -1001,6 +1045,7 @@ export type UpdateInboundShipmentLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId?: Maybe<Scalars['String']>;
+  locationId?: Maybe<Scalars['String']>;
   numberOfPacks?: Maybe<Scalars['Int']>;
   packSize?: Maybe<Scalars['Int']>;
   sellPricePerPack?: Maybe<Scalars['Float']>;
@@ -1032,6 +1077,7 @@ export type UpdateOutboundShipmentErrorInterface = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
@@ -1073,6 +1119,21 @@ export type UpdateOutboundShipmentResponseWithId = {
   response: UpdateOutboundShipmentResponse;
 };
 
+export type User = {
+  __typename?: 'User';
+  email?: Maybe<Scalars['String']>;
+  userId: Scalars['String'];
+};
+
+export type UserError = {
+  __typename?: 'UserError';
+  error: UserErrorInterface;
+};
+
+export type UserErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type UserNameDoesNotExist = AuthTokenErrorInterface & {
   __typename?: 'UserNameDoesNotExist';
   description: Scalars['String'];
@@ -1095,12 +1156,14 @@ export type UserRegisterInput = {
 
 export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
+export type UserResponse = User | UserError;
+
 export type InvoiceQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationName?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
@@ -1301,6 +1364,7 @@ export const InvoiceDocument = gql`
             numberOfPacks
             packSize
             note
+            locationName
             sellPricePerPack
             stockLine {
               __typename

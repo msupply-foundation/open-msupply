@@ -49,7 +49,7 @@ export const getInvoiceLine = (
   itemCode: summaryItem.itemCode,
   // itemUnit: summaryItem.itemUnit ?? '',
   batch: stockLineOrPlaceholder.batch ?? '',
-  // locationDescription: stockLineOrPlaceholder.locationDescription ?? '',
+  locationName: stockLineOrPlaceholder.locationName ?? '',
   costPricePerPack: stockLineOrPlaceholder.costPricePerPack ?? 0,
   sellPricePerPack: stockLineOrPlaceholder.sellPricePerPack ?? 0,
   stockLineId: stockLineOrPlaceholder.id,
