@@ -6,6 +6,7 @@ export const placeholderSupplierRequisition: SupplierRequisition = {
   requisitionNumber: 0,
   isDeleted: false,
   lines: [],
+  color: '#cdcdcd',
   otherParty: {
     id: '',
     name: '',
@@ -16,10 +17,21 @@ export const placeholderSupplierRequisition: SupplierRequisition = {
   otherPartyId: '',
   otherPartyName: '',
   status: SupplierRequisitionNodeStatus.Draft,
-  storeId: '',
+  update: () => {
+    throw new Error(
+      'Placeholder callback update has been triggered. This should never happen!'
+    );
+  },
+  updateOtherParty: () => {
+    throw new Error(
+      'Placeholder callback updateOtherParty has been triggered. This should never happen!'
+    );
+  },
 };
 
-export const isRequisitionEditable = (requisition: SupplierRequisition) => {
+export const isRequisitionEditable = (
+  requisition: SupplierRequisition
+): boolean => {
   return (
     requisition.status === SupplierRequisitionNodeStatus.Draft ||
     requisition.status === SupplierRequisitionNodeStatus.InProgress

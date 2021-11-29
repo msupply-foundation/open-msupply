@@ -404,7 +404,7 @@ export type InsertCustomerRequisitionInput = {
   id: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
   otherPartyId: Scalars['String'];
-  otherPartyReference?: Maybe<Scalars['String']>;
+  theirReference?: Maybe<Scalars['String']>;
   type?: Maybe<RequisitionNodeType>;
 };
 
@@ -598,7 +598,7 @@ export type InsertSupplierRequisitionInput = {
   id: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
   otherPartyId: Scalars['String'];
-  otherPartyReference?: Maybe<Scalars['String']>;
+  theirReference?: Maybe<Scalars['String']>;
   type?: Maybe<RequisitionNodeType>;
 };
 
@@ -1392,6 +1392,7 @@ export type RequisitionLineNode = {
   imprestQuantity?: Maybe<Scalars['Float']>;
   issuedQuantity?: Maybe<Scalars['Float']>;
   itemCode?: Maybe<Scalars['String']>;
+  itemId: Scalars['String'];
   itemName?: Maybe<Scalars['String']>;
   itemUnit?: Maybe<Scalars['String']>;
   monthlyConsumption?: Maybe<Scalars['Float']>;
@@ -1419,6 +1420,7 @@ export type RequisitionListParameters = {
 
 export type RequisitionNode = {
   __typename?: 'RequisitionNode';
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   lines: RequisitionLinesResponse;
@@ -1427,10 +1429,9 @@ export type RequisitionNode = {
   otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
-  otherPartyReference?: Maybe<Scalars['String']>;
   requisitionNumber: Scalars['Int'];
   status: SupplierRequisitionNodeStatus;
-  storeId: Scalars['String'];
+  theirReference?: Maybe<Scalars['String']>;
   thresholdMOS?: Maybe<Scalars['Int']>;
   type?: Maybe<RequisitionNodeType>;
 };
@@ -1592,12 +1593,12 @@ export type TokenExpired = RefreshTokenErrorInterface & {
 };
 
 export type UpdateCustomerRequisitionInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   nameId?: Maybe<Scalars['String']>;
   orderDate?: Maybe<Scalars['String']>;
-  otherPartyReference?: Maybe<Scalars['String']>;
-  type?: Maybe<RequisitionNodeType>;
+  theirReference?: Maybe<Scalars['String']>;
 };
 
 export type UpdateCustomerRequisitionLineInput = {
@@ -1783,12 +1784,12 @@ export type UpdateStocktakeResponseWithId = {
 };
 
 export type UpdateSupplierRequisitionInput = {
+  color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   nameId?: Maybe<Scalars['String']>;
   orderDate?: Maybe<Scalars['String']>;
-  otherPartyReference?: Maybe<Scalars['String']>;
-  type?: Maybe<RequisitionNodeType>;
+  theirReference?: Maybe<Scalars['String']>;
 };
 
 export type UpdateSupplierRequisitionLineInput = {
@@ -1910,7 +1911,7 @@ export type RequisitionsQueryVariables = Exact<{
 }>;
 
 
-export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError' } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, otherPartyReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string } | null | undefined> } };
+export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError' } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, theirReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string } | null | undefined> } };
 
 export type DeleteSupplierRequisitionsMutationVariables = Exact<{
   ids?: Maybe<Array<DeleteSupplierRequisitionInput> | DeleteSupplierRequisitionInput>;
@@ -1959,7 +1960,7 @@ export type RequisitionQueryVariables = Exact<{
 }>;
 
 
-export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'NodeError' } | { __typename: 'RequisitionNode', id: string, orderDate?: string | null | undefined, comment?: string | null | undefined, otherPartyReference?: string | null | undefined, type?: RequisitionNodeType | null | undefined, requisitionNumber: number, thresholdMOS?: number | null | undefined, maxMOS?: number | null | undefined, status: SupplierRequisitionNodeStatus, otherPartyId: string, otherPartyName: string, storeId: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemName?: string | null | undefined, itemCode?: string | null | undefined, itemUnit?: string | null | undefined, comment?: string | null | undefined, monthlyConsumption?: number | null | undefined, monthsOfSupply?: number | null | undefined, supplyQuantity?: number | null | undefined, openingQuantity?: number | null | undefined, issuedQuantity?: number | null | undefined, requestedQuantity?: number | null | undefined, receivedQuantity?: number | null | undefined, imprestQuantity?: number | null | undefined, previousQuantity?: number | null | undefined, calculatedQuantity?: number | null | undefined, previousStockOnHand?: number | null | undefined, closingQuantity?: number | null | undefined, stockAdditions?: number | null | undefined, stockLosses?: number | null | undefined, expiredQuantity?: number | null | undefined, otherPartyClosingQuantity?: number | null | undefined }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'RecordNotFound', description: string } } } };
+export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'NodeError' } | { __typename: 'RequisitionNode', id: string, orderDate?: string | null | undefined, comment?: string | null | undefined, theirReference?: string | null | undefined, type?: RequisitionNodeType | null | undefined, requisitionNumber: number, thresholdMOS?: number | null | undefined, maxMOS?: number | null | undefined, status: SupplierRequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemName?: string | null | undefined, itemCode?: string | null | undefined, itemUnit?: string | null | undefined, itemId: string, comment?: string | null | undefined, monthlyConsumption?: number | null | undefined, monthsOfSupply?: number | null | undefined, supplyQuantity?: number | null | undefined, openingQuantity?: number | null | undefined, issuedQuantity?: number | null | undefined, requestedQuantity?: number | null | undefined, receivedQuantity?: number | null | undefined, imprestQuantity?: number | null | undefined, previousQuantity?: number | null | undefined, calculatedQuantity?: number | null | undefined, previousStockOnHand?: number | null | undefined, closingQuantity?: number | null | undefined, stockAdditions?: number | null | undefined, stockLosses?: number | null | undefined, expiredQuantity?: number | null | undefined, otherPartyClosingQuantity?: number | null | undefined }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'RecordNotFound', description: string } } } };
 
 export type UpsertSupplierRequisitionMutationVariables = Exact<{
   deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput> | DeleteSupplierRequisitionLineInput>;
@@ -2002,7 +2003,7 @@ export type ItemsWithStockLinesQueryVariables = Exact<{
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined }> } }> } };
+export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined, storeId: string }> } }> } };
 
 export type ItemsListViewQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
@@ -2298,7 +2299,7 @@ export const RequisitionsDocument = gql`
         id
         comment
         orderDate
-        otherPartyReference
+        theirReference
         requisitionNumber
         status
         otherPartyName
@@ -2379,15 +2380,13 @@ export const RequisitionDocument = gql`
       id
       orderDate
       comment
-      otherPartyReference
+      theirReference
       type
       requisitionNumber
       thresholdMOS
       maxMOS
       status
       otherPartyId
-      otherPartyName
-      storeId
       lines {
         __typename
         ... on ConnectorError {
@@ -2402,6 +2401,7 @@ export const RequisitionDocument = gql`
             itemName
             itemCode
             itemUnit
+            itemId
             comment
             monthlyConsumption
             monthsOfSupply
@@ -2646,10 +2646,10 @@ export const ItemsWithStockLinesDocument = gql`
               itemId
               packSize
               sellPricePerPack
-              storeId
               totalNumberOfPacks
               onHold
               note
+              storeId
             }
             totalCount
           }
