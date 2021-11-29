@@ -1,6 +1,8 @@
-import { Name } from './../../mock-server/src/data/types';
-import { RequisitionLineNode } from './../../common/src/types/schema';
-import { RequisitionNode } from '@openmsupply-client/common';
+import {
+  RequisitionNode,
+  RequisitionLineNode,
+  Name,
+} from '@openmsupply-client/common';
 
 export interface Requisition
   extends Omit<RequisitionNode, '__typename' | 'lines' | 'otherParty'> {
