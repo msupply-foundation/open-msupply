@@ -35,6 +35,14 @@ export const InventoryNav: FC = () => {
               .build()}
             text={t('stock')}
           />
+          <NavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Stocktake)
+              .build()}
+            text={t('stocktake')}
+          />
         </List>
       </Collapse>
     </>

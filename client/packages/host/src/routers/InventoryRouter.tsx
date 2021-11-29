@@ -7,16 +7,28 @@ const StockService = React.lazy(
   () => import('@openmsupply-client/system/src/Stock/Service/Service')
 );
 
+const InventoryService = React.lazy(
+  () => import('@openmsupply-client/inventory/src/InventoryService')
+);
+
 const fullItemPath = RouteBuilder.create(AppRoute.Inventory)
   .addPart(AppRoute.Stock)
+  .addWildCard()
+  .build();
+
+const fullStocktakePath = RouteBuilder.create(AppRoute.Inventory)
+  .addPart(AppRoute.Stocktake)
   .addWildCard()
   .build();
 
 export const InventoryRouter: FC = () => {
   if (useMatch(fullItemPath)) {
     return <StockService />;
-  } else {
-    const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
-    return <Navigate to={notFoundRoute} />;
   }
+  if (useMatch(fullStocktakePath)) {
+    return <InventoryService />;
+  }
+
+  const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
+  return <Navigate to={notFoundRoute} />;
 };
