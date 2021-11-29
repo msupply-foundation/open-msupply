@@ -1,11 +1,21 @@
-import { RequisitionLineConnector } from './../../../../common/src/types/schema';
+import {} from './../../../../mock-server/src/data/types';
+
 import {
   ConnectorError,
   NameResponse,
   OmSupplyApi,
   RequisitionQuery,
+  RequisitionLineConnector,
+  UpdateSupplierRequisitionInput,
+  UpdateSupplierRequisitionLineInput,
+  InsertSupplierRequisitionLineInput,
+  DeleteSupplierRequisitionLineInput,
 } from '@openmsupply-client/common';
-import { Requisition, SupplierRequisition } from './../../types';
+import {
+  Requisition,
+  SupplierRequisitionLine,
+  SupplierRequisition,
+} from './../../types';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -39,6 +49,43 @@ const linesGuard = (
   throw new Error('Unknown');
 };
 
+const createUpdateSupplierRequisitionInput = (
+  patch: SupplierRequisition
+): UpdateSupplierRequisitionInput => {
+  return {
+    comment: patch.comment,
+    id: patch.id,
+    nameId: patch.otherPartyId,
+    orderDate: patch.orderDate,
+    theirReference: patch.theirReference,
+  };
+};
+
+const createUpdateSupplierRequisitionLineInput = (
+  line: SupplierRequisitionLine
+): UpdateSupplierRequisitionLineInput => {
+  return {
+    ...line,
+  };
+};
+
+const createInsertSupplierRequisitionLineInput =
+  (requisition: SupplierRequisition) =>
+  (line: SupplierRequisitionLine): InsertSupplierRequisitionLineInput => {
+    return {
+      requisitionId: requisition.id,
+      ...line,
+    };
+  };
+
+const createDeleteSupplierRequisitionLineInput = (
+  line: SupplierRequisitionLine
+): DeleteSupplierRequisitionLineInput => {
+  return {
+    ...line,
+  };
+};
+
 interface Api<ReadType, UpdateType> {
   onRead: (id: string) => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<UpdateType>;
@@ -51,13 +98,55 @@ export const getSupplierRequisitionDetailViewApi = (
     const result = await api.requisition({ id });
 
     const requisition = requisitionGuard(result);
-    const lineNodes = linesGuard(requisition.lines);
+    const lines = linesGuard(requisition.lines);
+    const otherParty = otherPartyGuard(requisition.otherParty);
 
     return {
       ...requisition,
-      lines: lineNodes,
-      otherParty: otherPartyGuard(requisition.otherParty),
+      lines,
+      otherParty,
+      otherPartyName: otherParty.name,
     };
   },
-  onUpdate: async () => {},
+  onUpdate: async (
+    patch: SupplierRequisition
+  ): Promise<SupplierRequisition> => {
+    const deleteLines = patch.lines.filter(({ isDeleted }) => isDeleted);
+    const insertLines = patch.lines.filter(
+      ({ isCreated, isDeleted }) => !isDeleted && isCreated
+    );
+    const updateLines = patch.lines.filter(
+      ({ isUpdated, isCreated, isDeleted }) =>
+        isUpdated && !isCreated && !isDeleted
+    );
+
+    const result = await api.upsertSupplierRequisition({
+      updateSupplierRequisitions: [createUpdateSupplierRequisitionInput(patch)],
+      insertSupplierRequisitionLines: insertLines.map(
+        createInsertSupplierRequisitionLineInput(patch)
+      ),
+      deleteSupplierRequisitionLines: deleteLines.map(
+        createDeleteSupplierRequisitionLineInput
+      ),
+      updateSupplierRequisitionLines: updateLines.map(
+        createUpdateSupplierRequisitionLineInput
+      ),
+    });
+
+    const { batchSupplierRequisition } = result;
+
+    if (
+      batchSupplierRequisition.__typename === 'BatchSupplierRequisitionResponse'
+    ) {
+      const { updateSupplierRequisitions } = batchSupplierRequisition;
+      if (
+        updateSupplierRequisitions?.[0]?.__typename ===
+        'UpdateSupplierRequisitionResponseWithId'
+      ) {
+        return patch;
+      }
+    }
+
+    throw new Error('Could not update requisition');
+  },
 });

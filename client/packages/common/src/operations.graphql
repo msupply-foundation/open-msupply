@@ -218,7 +218,7 @@ query requisitions($params: RequisitionListParameters) {
         id
         comment
         orderDate
-        otherPartyReference
+        theirReference
         requisitionNumber
         status
         otherPartyName
@@ -292,15 +292,13 @@ query requisition($id: String!) {
       id
       orderDate
       comment
-      otherPartyReference
+      theirReference
       type
       requisitionNumber
       thresholdMOS
       maxMOS
       status
       otherPartyId
-      otherPartyName
-      storeId
       lines {
         __typename
         ... on ConnectorError {
@@ -315,6 +313,7 @@ query requisition($id: String!) {
             itemName
             itemCode
             itemUnit
+            itemId
             comment
             monthlyConsumption
             monthsOfSupply
@@ -588,10 +587,10 @@ query itemsWithStockLines(
               itemId
               packSize
               sellPricePerPack
-              storeId
               totalNumberOfPacks
               onHold
               note
+              storeId
             }
             totalCount
           }

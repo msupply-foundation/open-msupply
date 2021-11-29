@@ -1,6 +1,5 @@
-import { DefaultDocumentAction } from './../../../../common/src/hooks/useDocument/types';
-import { SupplierRequisitionLine } from './../../types';
-
+import { SupplierRequisitionLine, RequisitionActionType } from './../../types';
+import { Dispatch } from 'react';
 import {
   produce,
   DocumentActionSet,
@@ -8,12 +7,32 @@ import {
   SortBy,
 } from '@openmsupply-client/common';
 import { placeholderSupplierRequisition } from '../../utils';
-import { SupplierRequisition, Requisition } from '../../types';
+import {
+  RequisitionAction,
+  SupplierRequisition,
+  Requisition,
+} from '../../types';
+import { Name } from '../../../../mock-server/src/data/types';
 
 export interface SupplierRequisitionStateShape {
   draft: SupplierRequisition;
   sortBy: SortBy<SupplierRequisitionLine>;
 }
+
+const RequisitionActionCreator = {
+  update: (key: string, value: string): RequisitionAction => {
+    return {
+      type: RequisitionActionType.Update,
+      payload: { key, value },
+    };
+  },
+  updateOtherParty: (value: Name): RequisitionAction => {
+    return {
+      type: RequisitionActionType.UpdateOtherParty,
+      payload: { value },
+    };
+  },
+};
 
 export const getInitialState = (): SupplierRequisitionStateShape => ({
   draft: placeholderSupplierRequisition,
@@ -21,15 +40,16 @@ export const getInitialState = (): SupplierRequisitionStateShape => ({
 });
 
 export const reducer = (
-  data: Requisition = placeholderSupplierRequisition
+  data: Requisition = placeholderSupplierRequisition,
+  dispatch: Dispatch<DocumentActionSet<RequisitionAction>> | null
 ): ((
   state: SupplierRequisitionStateShape | undefined,
-  action: DocumentActionSet<DefaultDocumentAction>
+  action: DocumentActionSet<RequisitionAction>
 ) => SupplierRequisitionStateShape) =>
   produce(
     (
       state: SupplierRequisitionStateShape = getInitialState(),
-      action: DocumentActionSet<DefaultDocumentAction>
+      action: DocumentActionSet<RequisitionAction>
     ) => {
       switch (action.type) {
         case DocumentActionType.Init: {
@@ -42,7 +62,34 @@ export const reducer = (
             ...data,
           };
 
+          state.draft.update = (key: string, value: string) => {
+            dispatch(RequisitionActionCreator.update(key, value));
+          };
+
           break;
+        }
+
+        case RequisitionActionType.UpdateOtherParty: {
+          state.draft.otherParty = action.payload.value;
+          break;
+        }
+
+        case RequisitionActionType.Update: {
+          const { payload } = action;
+          const { value, key } = payload;
+
+          if (key === 'comment') {
+            state.draft.comment = value as string;
+          }
+          if (key === 'color') {
+            state.draft.color = value as string;
+          }
+          if (key === 'orderDate') {
+            state.draft.orderDate = value as string;
+          }
+          if (key === 'theirReference') {
+            state.draft.theirReference = value as string;
+          }
         }
       }
 

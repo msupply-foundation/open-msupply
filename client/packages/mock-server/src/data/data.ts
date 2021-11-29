@@ -573,7 +573,6 @@ const createRequisition = (
   return {
     id: `${faker.datatype.uuid()}`,
     requisitionNumber: faker.datatype.number({ max: 1000 }),
-    storeId: '',
     otherPartyId: otherParty.id,
     orderDate: faker.date.past(1.5).toISOString(),
     type,
@@ -651,6 +650,7 @@ export const createRequisitionLine = (req: Requisition, item: Item) => ({
   itemCode: item.code,
   itemName: item.name,
   itemUnit: item.unitName ?? '',
+  itemId: item.id,
   monthlyConsumption: getRandomFloat(),
   monthsOfSupply: getRandomFloat(),
   openingQuantity: getRandomFloat(),

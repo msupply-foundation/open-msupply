@@ -61,7 +61,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                     disabled={!isRequisitionEditable(draft)}
                     value={draft.otherParty}
                     onChange={name => {
-                      draft.update?.('otherParty', name);
+                      draft.updateOtherParty(name);
                     }}
                   />
                 }
@@ -74,8 +74,8 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                   disabled={!isRequisitionEditable(draft)}
                   size="small"
                   sx={{ width: 250 }}
-                  value={''}
-                  onChange={() => {}}
+                  value={draft.theirReference}
+                  onChange={e => draft.update('theirReference', e.target.value)}
                 />
               }
             />
