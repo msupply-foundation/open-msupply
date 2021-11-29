@@ -1,7 +1,10 @@
 use domain::location::{InsertLocation, LocationFilter};
 use repository::LocationRepository;
 
-use crate::{location::validate::{LocationWithCodeAlreadyExists, check_location_code_is_unique}, service_provider::ServiceConnection};
+use crate::{
+    location::validate::{check_location_code_is_unique, LocationWithCodeAlreadyExists},
+    service_provider::ServiceConnection,
+};
 
 use super::InsertLocationError;
 
@@ -10,9 +13,7 @@ pub fn validate(
     connection: &ServiceConnection,
 ) -> Result<(), InsertLocationError> {
     check_location_does_not_exist(&input.id, connection)?;
-    check_location_code_is_unique(&input.code, connection)?;
-
-    // TODO Check location belongs to current store
+    check_location_code_is_unique(&input.id, &Some(input.code.clone()), connection)?;
 
     Ok(())
 }
