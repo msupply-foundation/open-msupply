@@ -141,7 +141,7 @@ export type OutboundShipmentSummaryItem = {
   itemName: string;
   unitQuantity: number;
   numberOfPacks: number;
-  locationDescription?: string | null;
+  locationName?: string | null;
   itemUnit?: string;
   batch?: string | null;
   batches: Record<string, OutboundShipmentRow>;
@@ -176,7 +176,7 @@ export type InboundShipmentItem = {
   itemName: string;
   unitQuantity: number;
   numberOfPacks: number;
-  locationDescription?: string | null;
+  locationName?: string | null;
   itemUnit?: string;
   batch?: string | null;
   batches: Record<string, InboundShipmentRow>;

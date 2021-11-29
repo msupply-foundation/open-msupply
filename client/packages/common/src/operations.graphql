@@ -93,7 +93,7 @@ query invoice($id: String!) {
             note
 
             # itemUnit
-            # locationDescription
+            locationName
             sellPricePerPack
             stockLine {
               __typename

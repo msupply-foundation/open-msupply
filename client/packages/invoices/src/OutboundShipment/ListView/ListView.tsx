@@ -87,7 +87,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
           const createInvoice = async () => {
             const invoice = {
               id: String(Math.ceil(Math.random() * 1000000)),
-              nameId: name?.id,
+              otherPartyId: name?.id,
             };
 
             try {

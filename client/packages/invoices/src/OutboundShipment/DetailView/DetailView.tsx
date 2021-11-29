@@ -93,7 +93,7 @@ export const DetailView: FC = () => {
       'itemName',
       'batch',
       'expiryDate',
-      'locationDescription',
+      'locationName',
       'sellPricePerPack',
       'packSize',
       'itemUnit',
