@@ -33,9 +33,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
 
   const deleteAction = () => {
     if (selectedRows && selectedRows?.length > 0) {
-      selectedRows.forEach(item =>
-        Object.values(item.batches).forEach(line => draft.deleteLine?.(line))
-      );
+      selectedRows.forEach(item => draft.deleteItem?.(item));
       const successSnack = success(`Deleted ${selectedRows?.length} lines`);
       successSnack();
     } else {

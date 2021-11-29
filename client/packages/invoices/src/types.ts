@@ -90,6 +90,7 @@ export enum ActionType {
   UpsertLine = 'OutboundShipment/upsertLine',
   UpsertItem = 'OutboundShipment/upsertItem',
   DeleteLine = 'OutboundShipment/deleteLine',
+  DeleteItem = 'OutboundShipment/deleteItem',
 }
 
 export type OutboundShipmentAction =
@@ -116,6 +117,10 @@ export type OutboundShipmentAction =
   | {
       type: ActionType.DeleteLine;
       payload: { line: OutboundShipmentRow };
+    }
+  | {
+      type: ActionType.DeleteItem;
+      payload: { item: OutboundShipmentSummaryItem };
     };
 
 export interface OutboundShipmentRow extends InvoiceLine {
@@ -189,4 +194,5 @@ export interface InboundShipment extends Invoice {
   upsertLine?: (line: InboundShipmentRow) => void;
   upsertItem?: (line: InboundShipmentItem) => void;
   deleteLine?: (line: InboundShipmentRow) => void;
+  deleteItem?: (line: InboundShipmentItem) => void;
 }
