@@ -1,3 +1,4 @@
+import { StocktakeLineResolver } from './stocktakeLine';
 import { createListResponse } from './utils';
 import { getDataSorter } from './../../../../common/src/utils/arrays/sorters';
 import { db } from './../../data/database';
@@ -7,7 +8,8 @@ import { ResolvedStocktake, ListResponse } from './../../data/types';
 export const StocktakeResolver = {
   byId: (id: string): ResolvedStocktake => {
     const stocktake = db.stocktake.get.byId(id);
-    return { __typename: 'StocktakeNode', ...stocktake };
+    const lines = StocktakeLineResolver.byStocktakeId(id);
+    return { __typename: 'StocktakeNode', lines, ...stocktake };
   },
   list: (
     params: StocktakeListParameters
