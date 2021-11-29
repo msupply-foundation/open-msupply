@@ -34,7 +34,10 @@ export type ColumnKey =
   | 'numberOfPacks'
   | 'otherPartyName'
   | 'lineTotal'
-  | 'requisitionNumber';
+  | 'requisitionNumber'
+  | 'stocktakeNumber'
+  | 'description'
+  | 'stocktakeDate';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
@@ -53,6 +56,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     label: 'label.expiry',
     width: 100,
   },
+
   itemCode: {
     key: 'itemCode',
     label: 'label.code',
@@ -79,6 +83,11 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     label: 'label.requisition-number',
     width: 50,
   },
+  stocktakeNumber: {
+    key: 'stocktakeNumber',
+    label: 'label.number',
+    width: 50,
+  },
   invoiceNumber: {
     key: 'invoiceNumber',
     label: 'label.invoice-number',
@@ -97,6 +106,12 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   entryDatetime: {
     label: 'label.entered',
     key: 'entryDatetime',
+    format: ColumnFormat.Date,
+    width: 100,
+  },
+  stocktakeDate: {
+    label: 'label.date',
+    key: 'stocktakeDate',
     format: ColumnFormat.Date,
     width: 100,
   },
@@ -119,6 +134,11 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   comment: {
     label: 'label.comment',
     key: 'comment',
+    width: 250,
+  },
+  description: {
+    label: 'heading.description',
+    key: 'description',
     width: 250,
   },
   selection: getCheckboxSelectionColumn(),

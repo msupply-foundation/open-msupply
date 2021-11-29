@@ -1877,6 +1877,34 @@ export type InvoiceQueryVariables = Exact<{
 
 export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: any, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationName?: string | null | undefined, sellPricePerPack: number, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: any | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
+export type StocktakesQueryVariables = Exact<{
+  params?: Maybe<StocktakeListParameters>;
+}>;
+
+
+export type StocktakesQuery = { __typename?: 'Queries', stocktakes: { __typename: 'NodeError' } | { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename?: 'StocktakeNode', id: string, comment?: string | null | undefined, description?: string | null | undefined, stocktakeDate?: string | null | undefined, stocktakeNumber: number, status: StocktakeNodeStatus }> } };
+
+export type DeleteStocktakesMutationVariables = Exact<{
+  ids?: Maybe<Array<DeleteStocktakeInput> | DeleteStocktakeInput>;
+}>;
+
+
+export type DeleteStocktakesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null | undefined } };
+
+export type UpdateStocktakeMutationVariables = Exact<{
+  input: UpdateStocktakeInput;
+}>;
+
+
+export type UpdateStocktakeMutation = { __typename?: 'Mutations', updateStocktake: { __typename?: 'NodeError' } | { __typename: 'StocktakeNode', id: string } };
+
+export type InsertStocktakeMutationVariables = Exact<{
+  input: InsertStocktakeInput;
+}>;
+
+
+export type InsertStocktakeMutation = { __typename?: 'Mutations', insertStocktake: { __typename?: 'NodeError' } | { __typename: 'StocktakeNode', id: string } };
+
 export type RequisitionsQueryVariables = Exact<{
   params?: Maybe<RequisitionListParameters>;
 }>;
@@ -2191,6 +2219,55 @@ export const InvoiceDocument = gql`
       status
       theirReference
       type
+    }
+  }
+}
+    `;
+export const StocktakesDocument = gql`
+    query stocktakes($params: StocktakeListParameters) {
+  stocktakes(params: $params) {
+    __typename
+    ... on StocktakeConnector {
+      nodes {
+        id
+        comment
+        description
+        stocktakeDate
+        stocktakeNumber
+        status
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const DeleteStocktakesDocument = gql`
+    mutation deleteStocktakes($ids: [DeleteStocktakeInput!]) {
+  batchStocktake(deleteStocktakes: $ids) {
+    __typename
+    deleteStocktakes {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const UpdateStocktakeDocument = gql`
+    mutation updateStocktake($input: UpdateStocktakeInput!) {
+  updateStocktake(input: $input) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const InsertStocktakeDocument = gql`
+    mutation insertStocktake($input: InsertStocktakeInput!) {
+  insertStocktake(input: $input) {
+    ... on StocktakeNode {
+      __typename
+      id
     }
   }
 }
@@ -2816,6 +2893,18 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     invoice(variables: InvoiceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceQuery>(InvoiceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoice');
+    },
+    stocktakes(variables?: StocktakesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StocktakesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StocktakesQuery>(StocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakes');
+    },
+    deleteStocktakes(variables?: DeleteStocktakesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteStocktakesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteStocktakesMutation>(DeleteStocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteStocktakes');
+    },
+    updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStocktakeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake');
+    },
+    insertStocktake(variables: InsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertStocktakeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake');
     },
     requisitions(variables?: RequisitionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequisitionsQuery>(RequisitionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitions');
