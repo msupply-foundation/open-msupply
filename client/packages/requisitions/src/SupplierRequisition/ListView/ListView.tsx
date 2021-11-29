@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { useNavigate } from 'react-router';
 import {
   DataTable,
@@ -6,11 +6,8 @@ import {
   useListData,
   TableProvider,
   createTableStore,
-  useNotification,
-  generateUUID,
   useOmSupplyApi,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getSupplierRequisitionListViewApi } from './api';
@@ -18,7 +15,6 @@ import { RequisitionRow } from '../../types';
 
 export const SupplierRequisitionListView: FC = () => {
   const navigate = useNavigate();
-  const { error } = useNotification();
   const { api } = useOmSupplyApi();
 
   const {
@@ -29,7 +25,6 @@ export const SupplierRequisitionListView: FC = () => {
     // onUpdate,
     sortBy,
     onChangeSortBy,
-    onCreate,
     onChangePage,
     pagination,
     filter,
