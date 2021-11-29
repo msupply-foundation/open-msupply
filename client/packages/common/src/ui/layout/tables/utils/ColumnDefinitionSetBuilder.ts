@@ -33,7 +33,8 @@ export type ColumnKey =
   | 'unitQuantity'
   | 'numberOfPacks'
   | 'otherPartyName'
-  | 'lineTotal';
+  | 'lineTotal'
+  | 'requisitionNumber';
 
 const getColumnLookup = <T extends DomainObject>(): Record<
   ColumnKey,
@@ -72,6 +73,11 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     label: 'label.name',
     width: 75,
     sortable: false,
+  },
+  requisitionNumber: {
+    key: 'invoiceNumber',
+    label: 'label.requisition-number',
+    width: 50,
   },
   invoiceNumber: {
     key: 'invoiceNumber',

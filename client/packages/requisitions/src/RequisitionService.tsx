@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useMatch } from 'react-router-dom';
 import {
   ListView as SupplierRequisitionListView,
   DetailView as SupplierRequisitionDetailView,
@@ -29,25 +29,27 @@ const supplierRequisitionRoute = RouteBuilder.create(
   .addPart(':id')
   .build();
 
-export const RequisitionService: FC = () => (
-  <Routes>
-    <Route
-      path={customerRequisitionsRoute}
-      element={<CustomerRequisitionListView />}
-    />
-    <Route
-      path={customerRequisitionRoute}
-      element={<CustomerRequisitionDetailView />}
-    />
-    <Route
-      path={supplierRequisitionsRoute}
-      element={<SupplierRequisitionListView />}
-    />
-    <Route
-      path={supplierRequisitionRoute}
-      element={<SupplierRequisitionDetailView />}
-    />
-  </Routes>
-);
+export const RequisitionService: FC = () => {
+  return (
+    <Routes>
+      <Route
+        path={customerRequisitionsRoute}
+        element={<CustomerRequisitionListView />}
+      />
+      <Route
+        path={customerRequisitionRoute}
+        element={<CustomerRequisitionDetailView />}
+      />
+      <Route
+        path={supplierRequisitionsRoute}
+        element={<SupplierRequisitionListView />}
+      />
+      <Route
+        path={supplierRequisitionRoute}
+        element={<SupplierRequisitionDetailView />}
+      />
+    </Routes>
+  );
+};
 
 export default RequisitionService;

@@ -580,6 +580,7 @@ const createRequisition = (
     maxMOS: 3,
     thresholdMOS: 3,
     status: SupplierRequisitionNodeStatus.Draft,
+    comment: takeRandomElementFrom(comments),
   };
 };
 

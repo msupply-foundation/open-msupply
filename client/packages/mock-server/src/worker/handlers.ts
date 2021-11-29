@@ -1,16 +1,22 @@
-import { InvoiceNodeStatus } from './../../../common/src/types/schema';
 import { graphql } from 'msw';
 import { Invoice as InvoiceSchema } from './../schema/Invoice';
+import { Requisition as RequisitionSchema } from './../schema/Requisition';
+
 import { Invoice } from './../data/types';
 import { MutationService } from './../api/mutations';
 import { ResolverService } from './../api/resolvers';
 import {
+  InsertSupplierRequisitionInput,
+  InvoiceNodeStatus,
   UpdateOutboundShipmentInput,
   InvoiceNodeType,
   InvoicesQueryVariables,
   ItemsListViewQueryVariables,
   NamesQueryVariables,
   DeleteInboundShipmentInput,
+  RequisitionListParameters,
+  DeleteSupplierRequisitionInput,
+  UpdateSupplierRequisitionInput,
 } from '@openmsupply-client/common/src/types/schema';
 
 const updateOutboundInvoice = graphql.mutation<
@@ -115,6 +121,58 @@ export const invoiceList = graphql.query<
 
   return response(context.data({ invoices: result }));
 });
+
+export const requisitionList = graphql.query<
+  Record<string, any>,
+  RequisitionListParameters
+>('requisitions', (request, response, context) => {
+  const { variables } = request;
+
+  const result = ResolverService.requisition.get.list(variables);
+
+  return response(context.data({ requisitions: result }));
+});
+
+const insertSupplierRequisition = graphql.mutation<
+  Record<string, unknown>,
+  { input: InsertSupplierRequisitionInput }
+>('insertSupplierRequisition', (request, response, context) => {
+  const { variables } = request;
+
+  const result = MutationService.requisition.supplier.insert(variables.input);
+
+  return response(context.data({ insertSupplierRequisition: result }));
+});
+
+const deleteSupplierRequisitions = graphql.mutation<
+  Record<string, any>,
+  { ids: DeleteSupplierRequisitionInput[] }
+>('deleteSupplierRequisitions', (request, response, context) => {
+  const { variables } = request;
+  const { ids } = variables;
+
+  const queryResponse =
+    RequisitionSchema.MutationResolvers.batchSupplierRequisition(null, {
+      deleteSupplierRequisitions: ids,
+    });
+
+  return response(context.data({ batchInboundShipment: queryResponse }));
+});
+
+const updateSupplierRequisition = graphql.mutation<
+  Record<string, unknown>,
+  { input: UpdateSupplierRequisitionInput }
+>(
+  'updateSupplierRequisition',
+
+  (request, response, context) => {
+    const { variables } = request;
+
+    const result = MutationService.requisition.supplier.update(variables.input);
+
+    return response(context.data({ updateSupplierRequisition: result }));
+  }
+);
 
 export const invoiceDetail = graphql.query(
   'invoice',
@@ -245,4 +303,8 @@ export const handlers = [
   upsertInboundShipment,
   invoiceCounts,
   stockCounts,
+  requisitionList,
+  insertSupplierRequisition,
+  updateSupplierRequisition,
+  deleteSupplierRequisitions,
 ];
