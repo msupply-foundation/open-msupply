@@ -213,7 +213,10 @@ mod graphql {
 
         // Test filter
         let service_override = service_override!(|_, filter, _| {
-            assert_eq!(filter, Some(LocationFilter::new().match_name("match_name")));
+            assert_eq!(
+                filter,
+                Some(LocationFilter::new().name(|f| f.equal_to(&"match_name".to_owned())))
+            );
             Ok(ListResult::empty())
         });
 

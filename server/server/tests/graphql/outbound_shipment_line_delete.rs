@@ -7,6 +7,7 @@ mod graphql {
     use crate::graphql::{
         delete_outbound_shipment_line_full as delete, DeleteOutboundShipmentLineFull as Delete,
     };
+    use domain::invoice::{InvoiceStatus, InvoiceType};
     use repository::{InvoiceLineRowRepository, StockLineRowRepository};
     use server::test_utils::setup_all;
 
@@ -63,29 +64,29 @@ mod graphql {
 
         let draft_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_outbound_shipment()
-                .match_draft()
-                .match_id("outbound_shipment_c"),
+                .r#type(|f| f.equal_to(&InvoiceType::OutboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Draft))
+                .id(|f| f.equal_to(&"outbound_shipment_c".to_owned())),
             &connection
         );
         let confirmed_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_outbound_shipment()
-                .match_confirmed()
-                .match_id("outbound_shipment_a"),
+                .r#type(|f| f.equal_to(&InvoiceType::OutboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Confirmed))
+                .id(|f| f.equal_to(&"outbound_shipment_a".to_owned())),
             &connection
         );
         let finalised_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_outbound_shipment()
-                .match_finalised()
-                .match_id("outbound_shipment_b"),
+                .r#type(|f| f.equal_to(&InvoiceType::OutboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Finalised))
+                .id(|f| f.equal_to(&"outbound_shipment_b".to_owned())),
             &connection
         );
         let inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_id("inbound_shipment_a"),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .id(|f| f.equal_to(&"inbound_shipment_a".to_owned())),
             &connection
         );
         let confirmed_invoice_lines =

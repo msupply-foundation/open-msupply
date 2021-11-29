@@ -10,7 +10,11 @@ mod graphql {
         update_inbound_shipment_full as update, UpdateInboundShipmentFull as Update,
     };
     use chrono::{Duration, Utc};
-    use domain::{invoice::InvoiceFilter, name::NameFilter, Pagination};
+    use domain::{
+        invoice::{InvoiceFilter, InvoiceStatus, InvoiceType},
+        name::NameFilter,
+        Pagination,
+    };
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
@@ -73,19 +77,21 @@ mod graphql {
         let supplier = get_name_inline!(
             NameFilter::new()
                 .match_is_supplier(true)
-                .match_id("name_store_c"),
+                .id(|f| f.equal_to(&"name_store_c".to_owned())),
             &connection
         );
         let another_name = get_name_inline!(
-            NameFilter::new().match_is_supplier(true).match_id("name_a"),
+            NameFilter::new()
+                .match_is_supplier(true)
+                .id(|f| f.equal_to(&"name_a".to_owned())),
             &connection
         );
 
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_draft()
-                .match_id("inbound_shipment_c"),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Draft))
+                .id(|f| f.equal_to(&"inbound_shipment_c".to_owned())),
             &connection
         );
 
@@ -104,8 +110,10 @@ mod graphql {
             "draft inbound shipment should not have stock lines"
         );
 
-        let outbound_shipment =
-            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
+        let outbound_shipment = get_invoice_inline!(
+            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            &connection
+        );
 
         let base_variables = update::Variables {
             id: draft_inbound_shipment.id.clone(),
