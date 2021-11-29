@@ -5,6 +5,7 @@ use repository::{RepositoryError, StorageConnection, StorageConnectionManager, T
 use crate::{
     location::{
         insert::{InsertLocationService, InsertLocationServiceTrait},
+        update::{UpdateLocationService, UpdateLocationServiceTrait},
         LocationQueryService, LocationQueryServiceTrait,
     },
     WithDBError,
@@ -23,6 +24,13 @@ pub trait ServiceFactoryTrait: Send + Sync {
         service_connection: ServiceConnection<'a>,
     ) -> Box<dyn InsertLocationServiceTrait + 'a> {
         Box::new(InsertLocationService(service_connection))
+    }
+
+    fn update_location<'a>(
+        &'a self,
+        service_connection: ServiceConnection<'a>,
+    ) -> Box<dyn UpdateLocationServiceTrait + 'a> {
+        Box::new(UpdateLocationService(service_connection))
     }
 }
 
@@ -113,5 +121,13 @@ impl ServiceProvider {
         Ok(self
             .service_factory
             .insert_location(self.service_connection()?))
+    }
+
+    pub fn update_location<'a>(
+        &'a self,
+    ) -> Result<Box<dyn UpdateLocationServiceTrait + 'a>, RepositoryError> {
+        Ok(self
+            .service_factory
+            .update_location(self.service_connection()?))
     }
 }
