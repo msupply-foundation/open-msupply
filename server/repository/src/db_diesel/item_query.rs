@@ -1,6 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     diesel_extensions::OrderByExtensions,
+    diesel_macros::{apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -48,18 +49,10 @@ impl<'a> ItemQueryRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ItemSortField::Name => {
-                    if sort.desc.unwrap_or(false) {
-                        query = query.order(item_dsl::name.desc_no_case());
-                    } else {
-                        query = query.order(item_dsl::name.asc_no_case());
-                    }
+                    apply_sort_no_case!(query, sort, item_dsl::name);
                 }
                 ItemSortField::Code => {
-                    if sort.desc.unwrap_or(false) {
-                        query = query.order(item_dsl::code.desc_no_case());
-                    } else {
-                        query = query.order(item_dsl::code.asc_no_case());
-                    }
+                    apply_sort_no_case!(query, sort, item_dsl::code);
                 }
             }
         } else {
@@ -99,21 +92,10 @@ pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
         .into_boxed();
 
     if let Some(f) = filter {
-        if let Some(code) = f.code {
-            if let Some(eq) = code.equal_to {
-                query = query.filter(item_dsl::code.eq(eq));
-            } else if let Some(like) = code.like {
-                query = query.filter(item_dsl::code.like(format!("%{}%", like)));
-            }
-        }
-        if let Some(name) = f.name {
-            if let Some(eq) = name.equal_to {
-                query = query.filter(item_dsl::name.eq(eq));
-            } else if let Some(like) = name.like {
-                query = query.filter(item_dsl::name.like(format!("%{}%", like)));
-            }
-        }
-        if let Some(is_visible) = f.is_visible.as_ref().map(|v| v.equal_to).flatten() {
+        apply_simple_string_filter!(query, f.code, item_dsl::code);
+        apply_simple_string_filter!(query, f.name, item_dsl::name);
+
+        if let Some(is_visible) = f.is_visible {
             query = query.filter(item_is_visible::is_visible.eq(is_visible));
         }
     }
@@ -139,7 +121,7 @@ mod tests {
     };
     use domain::{
         item::{Item, ItemFilter, ItemSort, ItemSortField},
-        EqualFilter, Pagination, DEFAULT_LIMIT,
+        Pagination, DEFAULT_LIMIT,
     };
 
     impl PartialEq<ItemRow> for Item {
@@ -411,10 +393,7 @@ mod tests {
                     name: None,
                     code: None,
                     // query invisible rows
-                    is_visible: Some(EqualFilter {
-                        equal_to: Some(false),
-                        equal_any: None,
-                    }),
+                    is_visible: Some(false),
                 }),
                 None,
             )
@@ -428,10 +407,7 @@ mod tests {
                     name: None,
                     code: None,
                     // query invisible rows
-                    is_visible: Some(EqualFilter {
-                        equal_to: Some(true),
-                        equal_any: None,
-                    }),
+                    is_visible: Some(true),
                 }),
                 None,
             )

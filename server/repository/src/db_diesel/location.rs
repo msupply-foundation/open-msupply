@@ -1,6 +1,7 @@
 use super::StorageConnection;
 
 use crate::diesel_extensions::OrderByExtensions;
+use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
 use crate::repository_error::RepositoryError;
 use crate::schema::diesel_schema::{location, location::dsl as location_dsl};
 use crate::schema::LocationRow;
@@ -9,60 +10,6 @@ use crate::DBType;
 use diesel::prelude::*;
 use domain::location::{Location, LocationFilter, LocationSort, LocationSortField};
 use domain::Pagination;
-
-/// Example expand, when called with:
-///
-/// ```
-/// apply_equal_filter!(query, filter.id, location_dsl::id)
-/// ```
-///
-/// ```
-/// if let Some(equal_filter) = filter.id {
-///     if let Some(value) = equal_filter.equal_to {
-///         query = query.filterd(location_dsl::id.eq(value));
-///     }
-///
-///     if let Some(value) = equal_filter.equal_any {
-///         query = query.filter(location_dsl::id.eq_any(value));
-///     }
-/// }
-/// ```
-macro_rules! apply_equal_filter {
-    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        if let Some(equal_filter) = $filter_field {
-            if let Some(value) = equal_filter.equal_to {
-                $query = $query.filter($dsl_field.eq(value));
-            }
-
-            if let Some(value) = equal_filter.equal_any {
-                $query = $query.filter($dsl_field.eq_any(value));
-            }
-        }
-    }};
-}
-
-/// Example expand, when called with:
-///
-/// ```
-/// apply_sort_no_case!(query, sort, location_dsl, name)
-/// ```
-///
-/// ```
-/// if sort.desc.unwrap_or(false) {
-///     query = query.order(location_dsl::name.desc_no_case());
-/// } else {
-///     query = query.order(location_dsl::name.asc_no_case());
-/// }
-/// ```
-macro_rules! apply_sort_no_case {
-    ($query:ident, $sort:ident, $dsl_field:expr) => {{
-        if $sort.desc.unwrap_or(false) {
-            $query = $query.order($dsl_field.desc_no_case());
-        } else {
-            $query = $query.order($dsl_field.asc_no_case());
-        }
-    }};
-}
 
 pub struct LocationRepository<'a> {
     connection: &'a StorageConnection,
