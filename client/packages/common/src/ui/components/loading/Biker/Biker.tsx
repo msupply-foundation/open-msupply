@@ -58,7 +58,7 @@ const text = [
   "We sent a pigeon but it got lost. Don't worry though, we sent Craig",
   'Oh no, my batteries run out!',
   'Be there shortly, I blew a tyre and have to push.. its a real drag.',
-  'On the way! Im just very tyred..',
+  "On the way! I'm just very tyred..",
   'Nearly there, just wheelie tyred.',
   "I need a kickstand. I'm two tyred to stand up on my own.",
   'One sec, I crashed my bike into a wall. It was wheelie unfortunate',

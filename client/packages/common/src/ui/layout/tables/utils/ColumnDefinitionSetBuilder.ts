@@ -120,7 +120,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   },
   stocktakeNumber: {
     key: 'stocktakeNumber',
-    label: 'label.stocktake-number',
+    label: 'label.number',
     width: 50,
   },
   invoiceNumber: {
