@@ -7,7 +7,7 @@ use graphql::{
 use repository::{get_storage_connection_manager, StorageConnectionManager};
 use service::{
     auth_data::AuthData,
-    location::LocationQueryServiceTrait,
+    location::{insert::InsertLocationServiceTrait, LocationQueryServiceTrait},
     service_provider::{ServiceConnection, ServiceFactory, ServiceFactoryTrait, ServiceProvider},
     token_bucket::TokenBucket,
 };
@@ -29,6 +29,7 @@ mod inbound_shipment_update;
 mod invoice_query;
 mod invoices;
 mod items;
+mod location_insert;
 mod locations;
 mod names;
 mod outbound_shipment_delete;
@@ -187,12 +188,14 @@ async fn assert_gql_query(
 type CreateService<S> = Box<dyn Fn() -> Box<S> + Sync + Send>;
 pub struct ServiceOverride {
     location_query_service: Option<CreateService<dyn LocationQueryServiceTrait>>,
+    insert_location_service: Option<CreateService<dyn InsertLocationServiceTrait>>,
 }
 
 impl ServiceOverride {
     pub fn new() -> Self {
         ServiceOverride {
             location_query_service: None,
+            insert_location_service: None,
         }
     }
 
@@ -203,17 +206,36 @@ impl ServiceOverride {
         self.location_query_service = Some(location_query_service);
         self
     }
+
+    pub fn set_insert_location_service(
+        mut self,
+        insert_location_service: CreateService<dyn InsertLocationServiceTrait>,
+    ) -> Self {
+        self.insert_location_service = Some(insert_location_service);
+        self
+    }
 }
 
 impl ServiceFactoryTrait for ServiceOverride {
     fn location_query<'a>(
         &self,
-        connection: ServiceConnection<'a>,
+        service_connection: ServiceConnection<'a>,
     ) -> Box<dyn LocationQueryServiceTrait + 'a> {
         if let Some(location_query_service) = &self.location_query_service {
             location_query_service()
         } else {
-            ServiceFactory {}.location_query(connection)
+            ServiceFactory {}.location_query(service_connection)
+        }
+    }
+
+    fn insert_location<'a>(
+        &'a self,
+        service_connection: ServiceConnection<'a>,
+    ) -> Box<dyn InsertLocationServiceTrait + 'a> {
+        if let Some(insert_location_service) = &self.insert_location_service {
+            insert_location_service()
+        } else {
+            ServiceFactory {}.insert_location(service_connection)
         }
     }
 }
