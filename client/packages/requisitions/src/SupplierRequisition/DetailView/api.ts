@@ -1,5 +1,3 @@
-import {} from './../../../../mock-server/src/data/types';
-
 import {
   ConnectorError,
   NameResponse,

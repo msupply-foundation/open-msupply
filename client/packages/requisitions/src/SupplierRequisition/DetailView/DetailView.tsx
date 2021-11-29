@@ -11,16 +11,14 @@ import {
   usePagination,
   useTranslation,
 } from '@openmsupply-client/common';
-
 import { reducer } from './reducer';
 import { getSupplierRequisitionDetailViewApi } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-
 import { isRequisitionEditable } from '../../utils';
-import { RequisitionLine } from '../../../../mock-server/src/data';
+import { SupplierRequisitionLine } from '../../types';
 
 const useDraftSupplierRequisition = () => {
   const { id } = useParams();
@@ -40,7 +38,7 @@ const useDraftSupplierRequisition = () => {
 export const DetailView: FC = () => {
   const { draft, save, onChangeSortBy, sortBy } = useDraftSupplierRequisition();
 
-  const columns = useColumns<RequisitionLine>(
+  const columns = useColumns<SupplierRequisitionLine>(
     [
       ['itemCode', { width: 50 }],
       ['itemName', { width: 150 }],
