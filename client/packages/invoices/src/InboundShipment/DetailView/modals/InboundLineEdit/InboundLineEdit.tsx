@@ -8,9 +8,10 @@ import {
   alpha,
   TabPanel,
   styled,
-  BaseButton,
   useTranslation,
   useIsMediumScreen,
+  ButtonWithIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundShipment, InboundShipmentItem } from '../../../../types';
 import { flattenInboundItems } from '../../../../utils';
@@ -90,13 +91,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               </TabList>
             </Box>
             <Box flex={1} justifyContent="flex-end" display="flex">
-              <BaseButton
+              <ButtonWithIcon
                 color="primary"
                 variant="outlined"
                 onClick={onAddBatch}
-              >
-                {t('label.add-batch')}
-              </BaseButton>
+                label={t('label.add-batch')}
+                Icon={<PlusCircleIcon />}
+              />
             </Box>
           </Box>
 
