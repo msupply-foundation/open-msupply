@@ -7,6 +7,7 @@ use domain::{
 
 pub mod insert;
 pub mod query;
+pub mod update;
 mod validate;
 
 pub trait LocationQueryServiceTrait {
