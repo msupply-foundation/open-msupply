@@ -1,6 +1,7 @@
+import { InvoiceNodeStatus } from './../../../common/src/types/schema';
 import { graphql } from 'msw';
 import { Invoice as InvoiceSchema } from './../schema/Invoice';
-import { Invoice, InvoiceLine } from './../data/types';
+import { Invoice } from './../data/types';
 import { MutationService } from './../api/mutations';
 import { ResolverService } from './../api/resolvers';
 import {
@@ -9,10 +10,8 @@ import {
   InvoicesQueryVariables,
   ItemsListViewQueryVariables,
   NamesQueryVariables,
-  UpdateOutboundShipmentLineInput,
-  UpdateInboundShipmentLineInput,
-  InsertOutboundShipmentLineInput,
-} from '@openmsupply-client/common';
+  DeleteInboundShipmentInput,
+} from '@openmsupply-client/common/src/types/schema';
 
 const updateOutboundInvoice = graphql.mutation<
   Record<string, unknown>,
@@ -20,7 +19,7 @@ const updateOutboundInvoice = graphql.mutation<
 >('updateOutboundShipment', (request, response, context) => {
   const { variables } = request;
 
-  const result = MutationService.update.invoice(variables.input);
+  const result = MutationService.invoice.outbound.update(variables.input);
   return response(context.data({ updateOutboundShipment: result }));
 });
 
@@ -30,7 +29,7 @@ const updateInboundInvoice = graphql.mutation<
 >('updateInboundShipment', (request, response, context) => {
   const { variables } = request;
 
-  const result = MutationService.update.invoice(variables.input);
+  const result = MutationService.invoice.inbound.update(variables.input);
   return response(context.data({ updateInboundShipment: result }));
 });
 
@@ -40,7 +39,7 @@ const insertOutboundInvoice = graphql.mutation(
     const { variables } = request;
     const { id, otherPartyId } = variables;
 
-    const result = MutationService.insert.invoice({
+    const result = MutationService.invoice.outbound.insert({
       id,
       otherPartyId,
     } as unknown as Invoice);
@@ -53,12 +52,13 @@ const insertInboundInvoice = graphql.mutation(
   'insertInboundShipment',
   (request, response, context) => {
     const { variables } = request;
-    const { id, otherPartyId } = variables;
+    const { id = '', otherPartyId = '' } = variables;
 
-    const result = MutationService.insert.invoice({
+    const result = MutationService.invoice.inbound.insert({
       id,
       otherPartyId,
-    } as unknown as Invoice);
+      status: InvoiceNodeStatus.Draft,
+    });
 
     return response(context.data({ insertInboundShipment: result }));
   }
@@ -66,19 +66,15 @@ const insertInboundInvoice = graphql.mutation(
 
 const deleteInboundShipments = graphql.mutation<
   Record<string, any>,
-  { ids: { id: string }[] }
+  { ids: DeleteInboundShipmentInput[] }
 >('deleteInboundShipments', (request, response, context) => {
   const { variables } = request;
   const { ids } = variables;
 
-  const queryResponse = {
-    __typename: 'BatchInboundShipmentResponse',
-    deleteInboundShipments: [] as { id: string }[],
-  };
-
-  queryResponse.deleteInboundShipments = ids.map(id => ({
-    id: InvoiceSchema.MutationResolvers.deleteInboundShipment(null, id),
-  }));
+  const queryResponse = InvoiceSchema.MutationResolvers.batchInboundShipment(
+    null,
+    { deleteInboundShipments: ids }
+  );
 
   return response(context.data({ batchInboundShipment: queryResponse }));
 });
@@ -90,14 +86,10 @@ const deleteOutboundShipments = graphql.mutation<
   const { variables } = request;
   const { ids } = variables;
 
-  const queryResponse = {
-    __typename: 'BatchOutboundShipmentResponse',
-    deleteOutboundShipments: [] as { id: string }[],
-  };
-
-  queryResponse.deleteOutboundShipments = ids.map(id => ({
-    id: InvoiceSchema.MutationResolvers.deleteOutboundShipment(null, id),
-  }));
+  const queryResponse = InvoiceSchema.MutationResolvers.batchOutboundShipment(
+    null,
+    { deleteOutboundShipments: ids }
+  );
 
   return response(context.data({ batchOutboundShipment: queryResponse }));
 });
@@ -108,7 +100,7 @@ export const namesList = graphql.query<
 >('names', (request, response, context) => {
   const { variables } = request;
 
-  const result = ResolverService.list.name(variables);
+  const result = ResolverService.name.list(variables);
 
   return response(context.data({ names: result }));
 });
@@ -119,7 +111,7 @@ export const invoiceList = graphql.query<
 >('invoices', (request, response, context) => {
   const { variables } = request;
 
-  const result = ResolverService.list.invoice(variables);
+  const result = ResolverService.invoice.list(variables);
 
   return response(context.data({ invoices: result }));
 });
@@ -130,7 +122,7 @@ export const invoiceDetail = graphql.query(
     const { variables } = request;
     const { id } = variables;
 
-    const invoice = ResolverService.byId.invoice(id as string);
+    const invoice = ResolverService.invoice.byId(id as string);
 
     return response(context.data({ invoice }));
   }
@@ -142,7 +134,7 @@ export const invoiceDetailByInvoiceNumber = graphql.query(
     const { variables } = request;
     const { invoiceNumber } = variables;
 
-    const invoice = ResolverService.invoice.get.byInvoiceNumber(
+    const invoice = ResolverService.invoice.byInvoiceNumber(
       invoiceNumber as number
     );
 
@@ -155,7 +147,7 @@ export const itemsWithStockLines = graphql.query<
   ItemsListViewQueryVariables
 >('itemsWithStockLines', (request, response, context) => {
   const { variables } = request;
-  const result = ResolverService.list.item(variables);
+  const result = ResolverService.item.list(variables);
 
   return response(context.data({ items: result }));
 });
@@ -165,7 +157,7 @@ export const itemsListView = graphql.query<
   ItemsListViewQueryVariables
 >('itemsListView', (request, response, context) => {
   const { variables } = request;
-  const result = ResolverService.list.item(variables);
+  const result = ResolverService.item.list(variables);
 
   return response(context.data({ items: result }));
 });
@@ -212,54 +204,12 @@ export const upsertOutboundShipment = graphql.mutation(
   'upsertOutboundShipment',
   (request, response, context) => {
     const { variables } = request;
-    const {
-      insertOutboundShipmentLines,
-      updateOutboundShipments,
-      deleteOutboundShipmentLines,
-      updateOutboundShipmentLines,
-    } = variables;
 
-    const queryResponse = {
-      __typename: 'BatchOutboundShipmentResponse',
-      insertOutboundShipmentLines: [] as { id: string }[],
-      updateOutboundShipments: [] as { id: string; __typename: string }[],
-      deleteOutboundShipmentLines: [] as { id: string; __typename: string }[],
-      updateOutboundShipmentLines: [] as { id: string; __typename: string }[],
-    };
+    const queryResponse = InvoiceSchema.MutationResolvers.batchOutboundShipment(
+      null,
+      variables
+    );
 
-    if (updateOutboundShipments.length > 0) {
-      queryResponse.updateOutboundShipments = [
-        {
-          ...MutationService.update.invoice(updateOutboundShipments[0]),
-          __typename: 'UpdateOutboundShipmentResponseWithId',
-        },
-      ];
-    }
-
-    if (insertOutboundShipmentLines.length > 0) {
-      queryResponse.insertOutboundShipmentLines =
-        insertOutboundShipmentLines.map(
-          (line: InsertOutboundShipmentLineInput) => {
-            MutationService.insert.invoiceLine(line);
-          }
-        );
-    }
-
-    if (deleteOutboundShipmentLines.length > 0) {
-      queryResponse.deleteOutboundShipmentLines =
-        deleteOutboundShipmentLines.map((line: InvoiceLine) => {
-          MutationService.remove.invoiceLine(line.id);
-        });
-    }
-
-    if (updateOutboundShipmentLines.length > 0) {
-      queryResponse.deleteOutboundShipmentLines =
-        updateOutboundShipmentLines.map(
-          (line: UpdateOutboundShipmentLineInput) => {
-            MutationService.update.invoiceLine(line);
-          }
-        );
-    }
     return response(context.data({ batchOutboundShipment: queryResponse }));
   }
 );
@@ -268,53 +218,10 @@ export const upsertInboundShipment = graphql.mutation(
   'upsertInboundShipment',
   (request, response, context) => {
     const { variables } = request;
-    const {
-      insertInboundShipmentLines,
-      updateInboundShipments,
-      deleteInboundShipmentLines,
-      updateInboundShipmentLines,
-    } = variables;
-
-    const queryResponse = {
-      __typename: 'BatchInboundShipmentResponse',
-      insertInboundShipmentLines: [] as { id: string }[],
-      updateInboundShipments: [] as { id: string; __typename: string }[],
-      deleteInboundShipmentLines: [] as { id: string; __typename: string }[],
-      updateInboundShipmentLines: [] as { id: string; __typename: string }[],
-    };
-
-    if (updateInboundShipments.length > 0) {
-      queryResponse.updateInboundShipments = [
-        {
-          ...MutationService.update.invoice(updateInboundShipments[0]),
-          __typename: 'UpdateInboundShipmentResponseWithId',
-        },
-      ];
-    }
-
-    if (insertInboundShipmentLines.length > 0) {
-      queryResponse.insertInboundShipmentLines = insertInboundShipmentLines.map(
-        (line: InvoiceLine) => {
-          MutationService.insert.inboundInvoiceLine(line);
-        }
-      );
-    }
-
-    if (deleteInboundShipmentLines.length > 0) {
-      queryResponse.deleteInboundShipmentLines = deleteInboundShipmentLines.map(
-        (line: InvoiceLine) => {
-          MutationService.remove.invoiceLine(line.id);
-        }
-      );
-    }
-
-    if (updateInboundShipmentLines.length > 0) {
-      queryResponse.updateInboundShipmentLines = updateInboundShipmentLines.map(
-        (line: UpdateInboundShipmentLineInput) => {
-          MutationService.update.invoiceLine(line);
-        }
-      );
-    }
+    const queryResponse = InvoiceSchema.MutationResolvers.batchInboundShipment(
+      null,
+      variables
+    );
     return response(context.data({ batchInboundShipment: queryResponse }));
   }
 );
