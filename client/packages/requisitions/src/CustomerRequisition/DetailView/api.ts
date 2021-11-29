@@ -4,16 +4,16 @@ import {
   OmSupplyApi,
   RequisitionQuery,
   RequisitionLineConnector,
-  UpdateSupplierRequisitionInput,
-  UpdateSupplierRequisitionLineInput,
-  InsertSupplierRequisitionLineInput,
-  DeleteSupplierRequisitionLineInput,
+  UpdateCustomerRequisitionInput,
+  UpdateCustomerRequisitionLineInput,
+  InsertCustomerRequisitionLineInput,
+  DeleteCustomerRequisitionLineInput,
 } from '@openmsupply-client/common';
 import {
   Requisition,
-  SupplierRequisitionLine,
-  SupplierRequisition,
-} from './../../types';
+  CustomerRequisitionLine,
+  CustomerRequisition,
+} from '../../types';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -47,9 +47,9 @@ const linesGuard = (
   throw new Error('Unknown');
 };
 
-const createUpdateSupplierRequisitionInput = (
-  patch: SupplierRequisition
-): UpdateSupplierRequisitionInput => {
+const createUpdateCustomerRequisitionInput = (
+  patch: CustomerRequisition
+): UpdateCustomerRequisitionInput => {
   return {
     comment: patch.comment,
     id: patch.id,
@@ -59,26 +59,26 @@ const createUpdateSupplierRequisitionInput = (
   };
 };
 
-const createUpdateSupplierRequisitionLineInput = (
-  line: SupplierRequisitionLine
-): UpdateSupplierRequisitionLineInput => {
+const createUpdateCustomerRequisitionLineInput = (
+  line: CustomerRequisitionLine
+): UpdateCustomerRequisitionLineInput => {
   return {
     ...line,
   };
 };
 
-const createInsertSupplierRequisitionLineInput =
-  (requisition: SupplierRequisition) =>
-  (line: SupplierRequisitionLine): InsertSupplierRequisitionLineInput => {
+const createInsertCustomerRequisitionLineInput =
+  (requisition: CustomerRequisition) =>
+  (line: CustomerRequisitionLine): InsertCustomerRequisitionLineInput => {
     return {
       requisitionId: requisition.id,
       ...line,
     };
   };
 
-const createDeleteSupplierRequisitionLineInput = (
-  line: SupplierRequisitionLine
-): DeleteSupplierRequisitionLineInput => {
+const createDeleteCustomerRequisitionLineInput = (
+  line: CustomerRequisitionLine
+): DeleteCustomerRequisitionLineInput => {
   return {
     ...line,
   };
@@ -89,9 +89,9 @@ interface Api<ReadType, UpdateType> {
   onUpdate: (val: UpdateType) => Promise<UpdateType>;
 }
 
-export const getSupplierRequisitionDetailViewApi = (
+export const getCustomerRequisitionDetailViewApi = (
   api: OmSupplyApi
-): Api<Requisition, SupplierRequisition> => ({
+): Api<Requisition, CustomerRequisition> => ({
   onRead: async (id: string): Promise<Requisition> => {
     const result = await api.requisition({ id });
 
@@ -107,8 +107,8 @@ export const getSupplierRequisitionDetailViewApi = (
     };
   },
   onUpdate: async (
-    patch: SupplierRequisition
-  ): Promise<SupplierRequisition> => {
+    patch: CustomerRequisition
+  ): Promise<CustomerRequisition> => {
     const deleteLines = patch.lines.filter(({ isDeleted }) => isDeleted);
     const insertLines = patch.lines.filter(
       ({ isCreated, isDeleted }) => !isDeleted && isCreated
@@ -118,28 +118,28 @@ export const getSupplierRequisitionDetailViewApi = (
         isUpdated && !isCreated && !isDeleted
     );
 
-    const result = await api.upsertSupplierRequisition({
-      updateSupplierRequisitions: [createUpdateSupplierRequisitionInput(patch)],
-      insertSupplierRequisitionLines: insertLines.map(
-        createInsertSupplierRequisitionLineInput(patch)
+    const result = await api.upsertCustomerRequisition({
+      updateCustomerRequisitions: [createUpdateCustomerRequisitionInput(patch)],
+      insertCustomerRequisitionLines: insertLines.map(
+        createInsertCustomerRequisitionLineInput(patch)
       ),
-      deleteSupplierRequisitionLines: deleteLines.map(
-        createDeleteSupplierRequisitionLineInput
+      deleteCustomerRequisitionLines: deleteLines.map(
+        createDeleteCustomerRequisitionLineInput
       ),
-      updateSupplierRequisitionLines: updateLines.map(
-        createUpdateSupplierRequisitionLineInput
+      updateCustomerRequisitionLines: updateLines.map(
+        createUpdateCustomerRequisitionLineInput
       ),
     });
 
-    const { batchSupplierRequisition } = result;
+    const { batchCustomerRequisition } = result;
 
     if (
-      batchSupplierRequisition.__typename === 'BatchSupplierRequisitionResponse'
+      batchCustomerRequisition.__typename === 'BatchCustomerRequisitionResponse'
     ) {
-      const { updateSupplierRequisitions } = batchSupplierRequisition;
+      const { updateCustomerRequisitions } = batchCustomerRequisition;
       if (
-        updateSupplierRequisitions?.[0]?.__typename ===
-        'UpdateSupplierRequisitionResponseWithId'
+        updateCustomerRequisitions?.[0]?.__typename ===
+        'UpdateCustomerRequisitionResponseWithId'
       ) {
         return patch;
       }
