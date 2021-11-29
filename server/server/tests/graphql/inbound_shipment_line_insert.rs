@@ -7,6 +7,7 @@ mod graphql {
         InsertInboundShipmentLineFull as Insert,
     };
     use chrono::NaiveDate;
+    use domain::invoice::{InvoiceStatus, InvoiceType};
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use insert::InsertInboundShipmentLineErrorInterface::*;
@@ -74,23 +75,27 @@ mod graphql {
         // Setup
 
         let draft_inbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().match_inbound_shipment().match_draft(),
+            InvoiceFilter::new()
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Draft)),
             &connection
         );
         let confirmed_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_confirmed(),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Confirmed)),
             &connection
         );
         let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_finalised(),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
             &connection
         );
-        let outbound_shipment =
-            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
+        let outbound_shipment = get_invoice_inline!(
+            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            &connection
+        );
         let item = mock_data.items.pop().unwrap();
         let existing_line = mock_data.invoice_lines.pop().unwrap();
 
