@@ -1,15 +1,16 @@
+import { ResolvedRequisition, ListResponse } from './../data/types';
 import {
+  RequisitionListParameters,
+  BatchSupplierRequisitionInput,
+  BatchCustomerRequisitionInput,
+  BatchSupplierRequisitionResponse,
+  BatchCustomerRequisitionResponse,
   UpdateSupplierRequisitionInput,
   InsertSupplierRequisitionInput,
   DeleteSupplierRequisitionInput,
   UpdateCustomerRequisitionInput,
   InsertCustomerRequisitionInput,
   DeleteCustomerRequisitionInput,
-  RequisitionListParameters,
-  BatchSupplierRequisitionInput,
-  BatchCustomerRequisitionInput,
-  BatchSupplierRequisitionResponse,
-  BatchCustomerRequisitionResponse,
   InsertSupplierRequisitionResponse,
   InsertSupplierRequisitionResponseWithId,
   UpdateSupplierRequisitionResponse,
@@ -22,40 +23,55 @@ import {
   UpdateCustomerRequisitionResponseWithId,
   DeleteCustomerRequisitionResponse,
   DeleteCustomerRequisitionResponseWithId,
+  UpdateSupplierRequisitionLineInput,
+  InsertSupplierRequisitionLineInput,
+  DeleteSupplierRequisitionLineInput,
+  UpdateCustomerRequisitionLineInput,
+  InsertCustomerRequisitionLineInput,
+  DeleteCustomerRequisitionLineInput,
+  InsertSupplierRequisitionLineResponse,
+  InsertSupplierRequisitionLineResponseWithId,
+  UpdateSupplierRequisitionLineResponse,
+  UpdateSupplierRequisitionLineResponseWithId,
+  DeleteSupplierRequisitionLineResponse,
+  DeleteSupplierRequisitionLineResponseWithId,
+  InsertCustomerRequisitionLineResponse,
+  InsertCustomerRequisitionLineResponseWithId,
+  UpdateCustomerRequisitionLineResponse,
+  UpdateCustomerRequisitionLineResponseWithId,
+  DeleteCustomerRequisitionLineResponse,
+  DeleteCustomerRequisitionLineResponseWithId,
 } from './../../../common/src/types/schema';
 import { MutationService } from '../api/mutations';
 import { ResolverService } from './../api/resolvers';
 
 const QueryResolvers = {
-  requisition: (id: string) => {
+  requisition: (id: string): ResolvedRequisition => {
     return ResolverService.requisition.get.byId(id);
   },
-  requisitions: (_: any, vars: { params: RequisitionListParameters }) => {
+  requisitions: (
+    _: unknown,
+    vars: { params: RequisitionListParameters }
+  ): ListResponse<ResolvedRequisition> => {
     return ResolverService.requisition.get.list(vars.params);
   },
 };
 
 const MutationResolvers = {
   updateSupplierRequisition: (
-    _: any,
+    _: unknown,
     { input }: { input: UpdateSupplierRequisitionInput }
   ): UpdateSupplierRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.supplier.update(input),
-    };
+    return MutationService.requisition.supplier.update(input);
   },
   insertSupplierRequisition: (
-    _: any,
+    _: unknown,
     { input }: { input: InsertSupplierRequisitionInput }
   ): InsertSupplierRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.supplier.insert(input),
-    };
+    return MutationService.requisition.supplier.insert(input);
   },
   deleteSupplierRequisition: (
-    _: any,
+    _: unknown,
     { input }: { input: DeleteSupplierRequisitionInput }
   ): DeleteSupplierRequisitionResponse => {
     return {
@@ -64,25 +80,19 @@ const MutationResolvers = {
     };
   },
   updateCustomerRequisition: (
-    _: any,
+    _: unknown,
     { input }: { input: UpdateCustomerRequisitionInput }
   ): UpdateCustomerRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.customer.update(input),
-    };
+    return MutationService.requisition.customer.update(input);
   },
   insertCustomerRequisition: (
-    _: any,
+    _: unknown,
     { input }: { input: InsertCustomerRequisitionInput }
   ): InsertCustomerRequisitionResponse => {
-    return {
-      __typename: 'RequisitionNode',
-      ...MutationService.requisition.customer.insert(input),
-    };
+    return MutationService.requisition.customer.insert(input);
   },
   deleteCustomerRequisition: (
-    _: any,
+    _: unknown,
     { input }: { input: DeleteCustomerRequisitionInput }
   ): DeleteCustomerRequisitionResponse => {
     return {
@@ -90,8 +100,53 @@ const MutationResolvers = {
       ...MutationService.requisition.customer.delete(input),
     };
   },
+
+  updateCustomerRequisitionLine: (
+    _: unknown,
+    { input }: { input: UpdateCustomerRequisitionLineInput }
+  ): UpdateCustomerRequisitionLineResponse => {
+    return MutationService.requisitionLine.customer.update(input);
+  },
+  insertCustomerRequisitionLine: (
+    _: unknown,
+    { input }: { input: InsertCustomerRequisitionLineInput }
+  ): InsertCustomerRequisitionLineResponse => {
+    return MutationService.requisitionLine.customer.insert(input);
+  },
+  deleteCustomerRequisitionLine: (
+    _: unknown,
+    { input }: { input: DeleteCustomerRequisitionLineInput }
+  ): DeleteCustomerRequisitionLineResponse => {
+    return {
+      __typename: 'DeleteResponse',
+      ...MutationService.requisitionLine.customer.delete(input),
+    };
+  },
+
+  updateSupplierRequisitionLine: (
+    _: unknown,
+    { input }: { input: UpdateSupplierRequisitionLineInput }
+  ): UpdateSupplierRequisitionLineResponse => {
+    return MutationService.requisitionLine.supplier.update(input);
+  },
+  insertSupplierRequisitionLine: (
+    _: unknown,
+    { input }: { input: InsertSupplierRequisitionLineInput }
+  ): InsertSupplierRequisitionLineResponse => {
+    return MutationService.requisitionLine.supplier.insert(input);
+  },
+  deleteSupplierRequisitionLine: (
+    _: unknown,
+    { input }: { input: DeleteSupplierRequisitionLineInput }
+  ): DeleteSupplierRequisitionLineResponse => {
+    return {
+      __typename: 'DeleteResponse',
+      ...MutationService.requisitionLine.supplier.delete(input),
+    };
+  },
+
   batchSupplierRequisition: (
-    _: any,
+    _: unknown,
     vars: BatchSupplierRequisitionInput
   ): BatchSupplierRequisitionResponse => {
     const response: BatchSupplierRequisitionResponse = {
@@ -100,14 +155,12 @@ const MutationResolvers = {
 
     if (vars.insertSupplierRequisitions) {
       response.insertSupplierRequisitions = vars.insertSupplierRequisitions.map(
-        insert => {
+        input => {
           const regularInsertResponse =
-            MutationResolvers.insertSupplierRequisition(_, {
-              input: insert,
-            });
+            MutationResolvers.insertSupplierRequisition(_, { input });
           const batchInsertResponse: InsertSupplierRequisitionResponseWithId = {
             __typename: 'InsertSupplierRequisitionResponseWithId',
-            id: insert.id,
+            id: input.id,
             response: regularInsertResponse,
           };
 
@@ -118,15 +171,13 @@ const MutationResolvers = {
 
     if (vars.updateSupplierRequisitions) {
       response.updateSupplierRequisitions = vars.updateSupplierRequisitions.map(
-        insert => {
-          const regularInsertResponse =
-            MutationResolvers.updateSupplierRequisition(_, {
-              input: insert,
-            });
+        input => {
+          const regularUpdateResponse =
+            MutationResolvers.updateSupplierRequisition(_, { input });
           const batchUpdateResponse: UpdateSupplierRequisitionResponseWithId = {
             __typename: 'UpdateSupplierRequisitionResponseWithId',
-            id: insert.id,
-            response: regularInsertResponse,
+            id: input.id,
+            response: regularUpdateResponse,
           };
 
           return batchUpdateResponse;
@@ -136,15 +187,13 @@ const MutationResolvers = {
 
     if (vars.deleteSupplierRequisitions) {
       response.deleteSupplierRequisitions = vars.deleteSupplierRequisitions.map(
-        insert => {
-          const regularInsertResponse =
-            MutationResolvers.deleteSupplierRequisition(_, {
-              input: insert,
-            });
+        input => {
+          const regularDeleteResponse =
+            MutationResolvers.deleteSupplierRequisition(_, { input });
           const batchDeleteResponse: DeleteSupplierRequisitionResponseWithId = {
             __typename: 'DeleteSupplierRequisitionResponseWithId',
-            id: insert.id,
-            response: regularInsertResponse,
+            id: input.id,
+            response: regularDeleteResponse,
           };
 
           return batchDeleteResponse;
@@ -152,23 +201,73 @@ const MutationResolvers = {
       );
     }
 
+    if (vars.insertSupplierRequisitionLines) {
+      response.insertSupplierRequisitionLines =
+        vars.insertSupplierRequisitionLines.map(input => {
+          const regularInsertResponse =
+            MutationResolvers.insertSupplierRequisitionLine(_, { input });
+          const batchInsertResponse: InsertSupplierRequisitionLineResponseWithId =
+            {
+              __typename: 'InsertSupplierRequisitionLineResponseWithId',
+              id: input.id,
+              response: regularInsertResponse,
+            };
+
+          return batchInsertResponse;
+        });
+    }
+
+    if (vars.updateSupplierRequisitionLines) {
+      response.updateSupplierRequisitionLines =
+        vars.updateSupplierRequisitionLines.map(input => {
+          const regularUpdateResponse =
+            MutationResolvers.updateSupplierRequisitionLine(_, { input });
+          const batchInsertResponse: UpdateSupplierRequisitionLineResponseWithId =
+            {
+              __typename: 'UpdateSupplierRequisitionLineResponseWithId',
+              id: input.id,
+              response: regularUpdateResponse,
+            };
+
+          return batchInsertResponse;
+        });
+    }
+
+    if (vars.deleteSupplierRequisitionLines) {
+      response.deleteSupplierRequisitionLines =
+        vars.deleteSupplierRequisitionLines.map(input => {
+          const regularDeleteResponse =
+            MutationResolvers.deleteSupplierRequisitionLine(_, { input });
+          const batchInsertResponse: DeleteSupplierRequisitionLineResponseWithId =
+            {
+              __typename: 'DeleteSupplierRequisitionLineResponseWithId',
+              id: input.id,
+              response: regularDeleteResponse,
+            };
+
+          return batchInsertResponse;
+        });
+    }
+
     return response;
   },
-  batchCustomerRequisition: (_: any, vars: BatchCustomerRequisitionInput) => {
+
+  batchCustomerRequisition: (
+    _: unknown,
+    vars: BatchCustomerRequisitionInput
+  ): BatchCustomerRequisitionResponse => {
     const response: BatchCustomerRequisitionResponse = {
       __typename: 'BatchCustomerRequisitionResponse',
     };
 
     if (vars.insertCustomerRequisitions) {
       response.insertCustomerRequisitions = vars.insertCustomerRequisitions.map(
-        insert => {
+        input => {
           const regularInsertResponse =
-            MutationResolvers.insertCustomerRequisition(_, {
-              input: insert,
-            });
+            MutationResolvers.insertCustomerRequisition(_, { input });
           const batchInsertResponse: InsertCustomerRequisitionResponseWithId = {
             __typename: 'InsertCustomerRequisitionResponseWithId',
-            id: insert.id,
+            id: input.id,
             response: regularInsertResponse,
           };
 
@@ -179,14 +278,12 @@ const MutationResolvers = {
 
     if (vars.updateCustomerRequisitions) {
       response.updateCustomerRequisitions = vars.updateCustomerRequisitions.map(
-        insert => {
+        input => {
           const regularInsertResponse =
-            MutationResolvers.updateCustomerRequisition(_, {
-              input: insert,
-            });
+            MutationResolvers.updateCustomerRequisition(_, { input });
           const batchUpdateResponse: UpdateCustomerRequisitionResponseWithId = {
             __typename: 'UpdateCustomerRequisitionResponseWithId',
-            id: insert.id,
+            id: input.id,
             response: regularInsertResponse,
           };
 
@@ -197,20 +294,72 @@ const MutationResolvers = {
 
     if (vars.deleteCustomerRequisitions) {
       response.deleteCustomerRequisitions = vars.deleteCustomerRequisitions.map(
-        insert => {
+        input => {
           const regularInsertResponse =
             MutationResolvers.deleteCustomerRequisition(_, {
-              input: insert,
+              input,
             });
           const batchDeleteResponse: DeleteCustomerRequisitionResponseWithId = {
             __typename: 'DeleteCustomerRequisitionResponseWithId',
-            id: insert.id,
+            id: input.id,
             response: regularInsertResponse,
           };
 
           return batchDeleteResponse;
         }
       );
+    }
+
+    if (vars.insertCustomerRequisitionLines) {
+      response.insertCustomerRequisitionLines =
+        vars.insertCustomerRequisitionLines.map(input => {
+          const regularInsertResponse =
+            MutationResolvers.insertCustomerRequisitionLine(_, { input });
+          const batchInsertResponse: InsertCustomerRequisitionLineResponseWithId =
+            {
+              __typename: 'InsertCustomerRequisitionLineResponseWithId',
+              id: input.id,
+              response: regularInsertResponse,
+            };
+
+          return batchInsertResponse;
+        });
+    }
+
+    if (vars.updateCustomerRequisitionLines) {
+      response.updateCustomerRequisitionLines =
+        vars.updateCustomerRequisitionLines.map(input => {
+          const regularInsertResponse =
+            MutationResolvers.updateCustomerRequisitionLine(_, {
+              input,
+            });
+          const batchInsertResponse: UpdateCustomerRequisitionLineResponseWithId =
+            {
+              __typename: 'UpdateCustomerRequisitionLineResponseWithId',
+              id: input.id,
+              response: regularInsertResponse,
+            };
+
+          return batchInsertResponse;
+        });
+    }
+
+    if (vars.deleteCustomerRequisitionLines) {
+      response.deleteCustomerRequisitionLines =
+        vars.deleteCustomerRequisitionLines.map(input => {
+          const regularDeleteResponse =
+            MutationResolvers.deleteCustomerRequisitionLine(_, {
+              input,
+            });
+          const batchDeleteResponse: DeleteCustomerRequisitionLineResponseWithId =
+            {
+              __typename: 'DeleteCustomerRequisitionLineResponseWithId',
+              id: input.id,
+              response: regularDeleteResponse,
+            };
+
+          return batchDeleteResponse;
+        });
     }
 
     return response;

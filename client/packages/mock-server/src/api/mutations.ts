@@ -6,6 +6,12 @@ import {
   UpdateCustomerRequisitionInput,
   InsertCustomerRequisitionInput,
   DeleteCustomerRequisitionInput,
+  UpdateSupplierRequisitionLineInput,
+  InsertSupplierRequisitionLineInput,
+  DeleteSupplierRequisitionLineInput,
+  UpdateCustomerRequisitionLineInput,
+  InsertCustomerRequisitionLineInput,
+  DeleteCustomerRequisitionLineInput,
   InvoiceNodeType,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
@@ -22,31 +28,84 @@ import {
   adjustStockLineTotalNumberOfPacks,
 } from './../data/data';
 import { Api } from './index';
-import { ResolvedInvoice, Requisition } from './../data/types';
+import {
+  ResolvedInvoice,
+  ResolvedRequisitionLine,
+  ResolvedRequisition,
+} from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
 
 export const requisition = {
   supplier: {
-    update: (input: UpdateSupplierRequisitionInput): Requisition => {
-      return db.requisition.supplier.update(input);
+    update: (input: UpdateSupplierRequisitionInput): ResolvedRequisition => {
+      db.requisition.supplier.update(input);
+      const resolvedReq = ResolverService.requisition.get.byId(input.id);
+      return resolvedReq;
     },
-    insert: (input: InsertSupplierRequisitionInput): Requisition => {
-      return db.requisition.supplier.insert(input);
+    insert: (input: InsertSupplierRequisitionInput): ResolvedRequisition => {
+      db.requisition.supplier.insert(input);
+      const resolvedReq = ResolverService.requisition.get.byId(input.id);
+      return resolvedReq;
     },
     delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
       return db.requisition.supplier.delete(input);
     },
   },
   customer: {
-    update: (input: UpdateCustomerRequisitionInput): Requisition => {
-      return db.requisition.customer.update(input);
+    update: (input: UpdateCustomerRequisitionInput): ResolvedRequisition => {
+      db.requisition.customer.update(input);
+      const resolvedReq = ResolverService.requisition.get.byId(input.id);
+      return resolvedReq;
     },
-    insert: (input: InsertCustomerRequisitionInput): Requisition => {
-      return db.requisition.customer.insert(input);
+    insert: (input: InsertCustomerRequisitionInput): ResolvedRequisition => {
+      db.requisition.customer.insert(input);
+      const resolvedReq = ResolverService.requisition.get.byId(input.id);
+      return resolvedReq;
     },
     delete: (input: DeleteCustomerRequisitionInput): DeleteResponse => {
       return db.requisition.customer.delete(input);
+    },
+  },
+};
+
+export const requisitionLine = {
+  supplier: {
+    update: (
+      input: UpdateSupplierRequisitionLineInput
+    ): ResolvedRequisitionLine => {
+      db.requisitionLine.supplier.update(input);
+      const resolvedReq = ResolverService.requisitionLine.byId(input.id);
+      return resolvedReq;
+    },
+    insert: (
+      input: InsertSupplierRequisitionLineInput
+    ): ResolvedRequisitionLine => {
+      db.requisitionLine.supplier.insert(input);
+      const resolvedReq = ResolverService.requisitionLine.byId(input.id);
+      return resolvedReq;
+    },
+    delete: (input: DeleteSupplierRequisitionLineInput): DeleteResponse => {
+      return db.requisitionLine.supplier.delete(input);
+    },
+  },
+  customer: {
+    update: (
+      input: UpdateCustomerRequisitionLineInput
+    ): ResolvedRequisitionLine => {
+      db.requisitionLine.customer.update(input);
+      const resolvedReq = ResolverService.requisitionLine.byId(input.id);
+      return resolvedReq;
+    },
+    insert: (
+      input: InsertCustomerRequisitionLineInput
+    ): ResolvedRequisitionLine => {
+      db.requisitionLine.customer.insert(input);
+      const resolvedReq = ResolverService.requisitionLine.byId(input.id);
+      return resolvedReq;
+    },
+    delete: (input: DeleteCustomerRequisitionLineInput): DeleteResponse => {
+      return db.requisitionLine.customer.delete(input);
     },
   },
 };
@@ -261,6 +320,7 @@ export const remove = {
 
 export const MutationService = {
   requisition,
+  requisitionLine,
   update,
   remove,
   insert,
