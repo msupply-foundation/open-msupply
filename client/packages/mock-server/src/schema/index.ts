@@ -4,6 +4,7 @@ import { StockLine } from './StockLine';
 import { Item } from './Item';
 import { Invoice } from './Invoice';
 import { Statistics } from './Statistics';
+import { Requisition } from './Requisition';
 
 export const Schema = {
   Invoice,
@@ -12,4 +13,5 @@ export const Schema = {
   StockLine,
   Name,
   Statistics,
+  Requisition,
 };

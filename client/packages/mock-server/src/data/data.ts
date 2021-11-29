@@ -1,7 +1,18 @@
+import {
+  RequisitionNodeType,
+  SupplierRequisitionNodeStatus,
+} from './../../../common/src/types/schema';
 import faker from 'faker';
 // randomName
 /* eslint-disable prefer-const */
-import { StockLine, Invoice, Item, InvoiceLine, Name } from './types';
+import {
+  StockLine,
+  Invoice,
+  Item,
+  InvoiceLine,
+  Name,
+  Requisition,
+} from './types';
 import {
   randomFloat,
   addRandomPercentageTo,
@@ -295,6 +306,11 @@ export const createInvoice = (
   };
 };
 
+export const getCustomers = (names = NameData) =>
+  names.filter(({ isSupplier }) => isSupplier);
+export const getSuppliers = (names = NameData) =>
+  names.filter(({ isCustomer }) => isCustomer);
+
 export const createInvoices = (
   names = NameData,
   numberToCreate = randomInteger({ min: 1, max: 100 })
@@ -540,6 +556,58 @@ const createInvoicesLines = (
   return [...inboundLines, ...outboundLines];
 };
 
+const createSupplierRequisitions = (): Requisition[] => {
+  const suppliers = getSuppliers();
+
+  return suppliers
+    .map(supplier => {
+      const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
+
+      return Array.from({ length: numberOfRequisitions }).map(() => {
+        const requisition: Requisition = {
+          id: `${faker.datatype.uuid()}`,
+          requisitionNumber: faker.datatype.number({ max: 1000 }),
+          storeId: '',
+          nameId: supplier.id,
+          orderDate: faker.date.past(1.5).toISOString(),
+          type: RequisitionNodeType.SupplierRequisition,
+          maxMOS: 3,
+          thresholdMOS: 3,
+          status: SupplierRequisitionNodeStatus.Draft,
+        };
+
+        return requisition;
+      });
+    })
+    .flat();
+};
+
+const createCustomerRequisitions = (): Requisition[] => {
+  const customers = getCustomers();
+
+  return customers
+    .map(customer => {
+      const numberOfRequisitions = randomInteger({ min: 0, max: 3 });
+
+      return Array.from({ length: numberOfRequisitions }).map(() => {
+        const requisition: Requisition = {
+          id: `${faker.datatype.uuid()}`,
+          requisitionNumber: faker.datatype.number({ max: 1000 }),
+          nameId: customer.id,
+          storeId: '',
+          orderDate: faker.date.past(1.5).toISOString(),
+          type: RequisitionNodeType.CustomerRequisition,
+          maxMOS: 3,
+          thresholdMOS: 3,
+          status: SupplierRequisitionNodeStatus.Draft,
+        };
+
+        return requisition;
+      });
+    })
+    .flat();
+};
+
 export const removeElement = (source: any[], idx: number): void => {
   source = source.splice(idx, 1);
 };
@@ -549,3 +617,7 @@ export let ItemData = createItems();
 export let InvoiceData = createInvoices(NameData);
 export let StockLineData = createStockLines(ItemData);
 export let InvoiceLineData = createInvoicesLines(InvoiceData, StockLineData);
+export let RequisitionData = [
+  ...createSupplierRequisitions(),
+  ...createCustomerRequisitions(),
+];

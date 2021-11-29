@@ -646,6 +646,36 @@ type Mutations {
     updateOutboundShipments: [UpdateOutboundShipmentInput!]
     deleteOutboundShipments: [String!]
   ): BatchOutboundShipmentResponse!
+
+  updateSupplierRequisition(
+    input: UpdateSupplierRequisitionInput!
+  ): UpdateSupplierRequisitionResponse!
+  insertSupplierRequisition(
+    input: InsertSupplierRequisitionInput!
+  ): InsertSupplierRequisitionResponse!
+  deleteSupplierRequisition(
+    input: DeleteSupplierRequisitionInput!
+  ): DeleteSupplierRequisitionResponse!
+  batchSupplierRequisition(
+    insertSupplierRequisitions: [InsertSupplierRequisitionInput!]
+    updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
+    deleteSupplierRequisitions: [DeleteSupplierRequisitionInput!]
+  ): BatchSupplierRequisitionResponse!
+
+  updateCustomerRequisition(
+    input: UpdateCustomerRequisitionInput!
+  ): UpdateCustomerRequisitionResponse!
+  insertCustomerRequisition(
+    input: InsertCustomerRequisitionInput!
+  ): InsertCustomerRequisitionResponse!
+  deleteCustomerRequisition(
+    input: DeleteCustomerRequisitionInput!
+  ): DeleteCustomerRequisitionResponse!
+  batchCustomerRequisition(
+    insertCustomerRequisitions: [InsertCustomerRequisitionInput!]
+    updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]
+    deleteCustomerRequisitions: [DeleteCustomerRequisitionInput!]
+  ): BatchCustomerRequisitionResponse!
 }
 
 # ISO 8601 calendar date without timezone.
@@ -840,6 +870,32 @@ type Queries {
   ## Additions
   invoiceCounts(type: InvoiceNodeType!): InvoiceCountsResponse!
   stockCounts: StockCountsResponse!
+
+  requisition(
+    # id of the invoice
+    id: String!
+  ): RequisitionResponse!
+
+  requisitions(params: RequisitionListParameters): RequisitionsResponse!
+}
+
+input RequisitionListParameters {
+  page: PaginationInput
+  filter: RequisitionFilterInput
+  sort: [RequisitionSortInput!]
+}
+
+input RequisitionFilterInput {
+  type: SimpleStringFilterInput
+}
+
+enum RequisitionSortFieldInput {
+  otherPartyName
+}
+
+input RequisitionSortInput {
+  key: RequisitionSortFieldInput!
+  desc: Boolean
 }
 
 type RangeError implements UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
@@ -1146,4 +1202,155 @@ union StockCountsResponse = StockCountsConnector | ConnectorError
 type UpdateOutboundShipmentResponseWithId {
   id: String!
   response: UpdateOutboundShipmentResponse!
+}
+
+type RequisitionNode {
+  id: String!
+  orderDate: String
+  storeId: String!
+  nameId: String!
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+  requisitionNumber: Int!
+  thresholdMOS: Int
+  maxMOS: Int
+  status: SupplierRequisitionNodeStatus!
+}
+
+enum SupplierRequisitionNodeStatus {
+  DRAFT
+  SENT
+  IN_PROGRESS
+  FINALISED
+}
+
+enum CustomerRequisitionNodeStatus {
+  NEW
+  IN_PROGRESS
+  FINALISED
+}
+
+union RequisitionResponse = RequisitionNode | NodeError
+
+enum RequisitionNodeType {
+  CUSTOMER_REQUISITION
+  SUPPLIER_REQUISITION
+}
+
+union RequisitionsResponse = ConnectorError | RequisitionConnector
+
+type RequisitionConnector {
+  totalCount: Int!
+  nodes: [RequisitionNode]!
+}
+
+input UpdateSupplierRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input InsertSupplierRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String!
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input DeleteSupplierRequisitionInput {
+  id: String!
+}
+
+union UpdateSupplierRequisitionResponse = NodeError | RequisitionNode
+type UpdateSupplierRequisitionResponseWithId {
+  id: String!
+  response: UpdateSupplierRequisitionResponse
+}
+
+union InsertSupplierRequisitionResponse = NodeError | RequisitionNode
+type InsertSupplierRequisitionResponseWithId {
+  id: String!
+  response: InsertSupplierRequisitionResponse
+}
+
+union DeleteSupplierRequisitionResponse = NodeError | DeleteResponse
+type DeleteSupplierRequisitionResponseWithId {
+  id: String!
+  response: DeleteSupplierRequisitionResponse
+}
+
+input UpdateCustomerRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input InsertCustomerRequisitionInput {
+  id: String!
+  orderDate: String
+  nameId: String!
+  comment: String
+  otherPartyReference: String
+  type: RequisitionNodeType
+}
+
+input DeleteCustomerRequisitionInput {
+  id: String!
+}
+
+union UpdateCustomerRequisitionResponse = NodeError | RequisitionNode
+type UpdateCustomerRequisitionResponseWithId {
+  id: String!
+  response: UpdateCustomerRequisitionResponse
+}
+
+union InsertCustomerRequisitionResponse = NodeError | RequisitionNode
+type InsertCustomerRequisitionResponseWithId {
+  id: String!
+  response: InsertCustomerRequisitionResponse
+}
+
+union DeleteCustomerRequisitionResponse = NodeError | DeleteResponse
+type DeleteCustomerRequisitionResponseWithId {
+  id: String!
+  response: DeleteCustomerRequisitionResponse
+}
+
+input BatchSupplierRequisitionInput {
+  insertSupplierRequisitions: [InsertSupplierRequisitionInput!]
+  updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
+  deleteSupplierRequisitions: [DeleteSupplierRequisitionInput!]
+}
+
+input BatchCustomerRequisitionInput {
+  insertCustomerRequisitions: [InsertCustomerRequisitionInput!]
+  updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]
+  deleteCustomerRequisitions: [DeleteCustomerRequisitionInput!]
+}
+
+type BatchCustomerRequisitionResponse {
+  # insertCustomerRequisitionLines: [InsertCustomerRequisitionLineResponseWithId!]
+  # updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineResponseWithId!]
+  # deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineResponseWithId!]
+  insertCustomerRequisitions: [InsertCustomerRequisitionResponseWithId!]
+  updateCustomerRequisitions: [UpdateCustomerRequisitionResponseWithId!]
+  deleteCustomerRequisitions: [DeleteCustomerRequisitionResponseWithId!]
+}
+
+type BatchSupplierRequisitionResponse {
+  # insertSupplierRequisitionLines: [InsertSupplierRequisitionLineResponseWithId!]
+  # updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineResponseWithId!]
+  # deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineResponseWithId!]
+  insertSupplierRequisitions: [InsertSupplierRequisitionResponseWithId!]
+  updateSupplierRequisitions: [UpdateSupplierRequisitionResponseWithId!]
+  deleteSupplierRequisitions: [DeleteSupplierRequisitionResponseWithId!]
 }

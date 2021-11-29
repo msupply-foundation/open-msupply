@@ -1,11 +1,18 @@
-import { InsertInboundShipmentLineInput } from './../../../common/src/types/schema';
 import {
+  InsertInboundShipmentLineInput,
+  UpdateSupplierRequisitionInput,
+  InsertSupplierRequisitionInput,
+  DeleteSupplierRequisitionInput,
+  UpdateCustomerRequisitionInput,
+  InsertCustomerRequisitionInput,
+  DeleteCustomerRequisitionInput,
   InvoiceNodeType,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
   UpdateInboundShipmentInput,
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
+  DeleteResponse,
 } from '@openmsupply-client/common/src/types';
 
 import { ResolverService } from './resolvers';
@@ -15,9 +22,34 @@ import {
   adjustStockLineTotalNumberOfPacks,
 } from './../data/data';
 import { Api } from './index';
-import { ResolvedInvoice } from './../data/types';
+import { ResolvedInvoice, Requisition } from './../data/types';
 import { db } from '../data';
 import { Invoice, InvoiceLine } from '../data/types';
+
+export const requisition = {
+  supplier: {
+    update: (input: UpdateSupplierRequisitionInput): Requisition => {
+      return db.requisition.supplier.update(input);
+    },
+    insert: (input: InsertSupplierRequisitionInput): Requisition => {
+      return db.requisition.supplier.insert(input);
+    },
+    delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+      return db.requisition.supplier.delete(input);
+    },
+  },
+  customer: {
+    update: (input: UpdateCustomerRequisitionInput): Requisition => {
+      return db.requisition.customer.update(input);
+    },
+    insert: (input: InsertCustomerRequisitionInput): Requisition => {
+      return db.requisition.customer.insert(input);
+    },
+    delete: (input: DeleteCustomerRequisitionInput): DeleteResponse => {
+      return db.requisition.customer.delete(input);
+    },
+  },
+};
 
 export const insert = {
   invoice: (invoice: Invoice): Invoice & { __typename: string } => {
@@ -228,6 +260,7 @@ export const remove = {
 };
 
 export const MutationService = {
+  requisition,
   update,
   remove,
   insert,
