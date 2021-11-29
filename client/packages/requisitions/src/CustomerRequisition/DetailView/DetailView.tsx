@@ -12,22 +12,22 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { reducer } from './reducer';
-import { getSupplierRequisitionDetailViewApi } from './api';
+import { getCustomerRequisitionDetailViewApi } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { isRequisitionEditable } from '../../utils';
-import { SupplierRequisitionLine } from '../../types';
+import { CustomerRequisitionLine } from '../../types';
 
-const useDraftSupplierRequisition = () => {
+const useDraftCustomerRequisition = () => {
   const { id } = useParams();
   const { api } = useOmSupplyApi();
 
   const { draft, save, dispatch, state } = useDocument(
     ['requisition', id],
     reducer,
-    getSupplierRequisitionDetailViewApi(api)
+    getCustomerRequisitionDetailViewApi(api)
   );
 
   const onChangeSortBy = () => {};
@@ -36,45 +36,10 @@ const useDraftSupplierRequisition = () => {
 };
 
 export const DetailView: FC = () => {
-  const { draft, save, onChangeSortBy, sortBy } = useDraftSupplierRequisition();
+  const { draft, save, onChangeSortBy, sortBy } = useDraftCustomerRequisition();
 
-  const columns = useColumns<SupplierRequisitionLine>(
-    [
-      ['itemCode', { width: 50 }],
-      ['itemName', { width: 150 }],
-
-      'monthlyConsumption',
-
-      [
-        'previousStockOnHand',
-        {
-          accessor: line =>
-            `${line.previousStockOnHand} (${Math.floor(
-              line.previousStockOnHand / line.monthlyConsumption
-            )} months)`,
-        },
-      ],
-      [
-        'calculatedQuantity',
-        {
-          accessor: line => {
-            const threeMonthsStock = line.monthlyConsumption * 3;
-            const diff = threeMonthsStock - line.previousStockOnHand;
-            if (diff > 0) {
-              return `${diff.toFixed(2)} (${Math.floor(
-                diff / line.monthlyConsumption
-              )} months)`;
-            } else {
-              return 0;
-            }
-          },
-        },
-      ],
-      ['forecastMethod', { accessor: () => 'AMC' }],
-      'requestedQuantity',
-      ['comment', { width: 150 }],
-      GenericColumnKey.Selection,
-    ],
+  const columns = useColumns<CustomerRequisitionLine>(
+    ['itemCode', 'itemName', 'comment', GenericColumnKey.Selection],
     { onChangeSortBy, sortBy },
     [sortBy]
   );

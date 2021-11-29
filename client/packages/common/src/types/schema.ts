@@ -1972,6 +1972,16 @@ export type UpsertSupplierRequisitionMutationVariables = Exact<{
 
 export type UpsertSupplierRequisitionMutation = { __typename?: 'Mutations', batchSupplierRequisition: { __typename: 'BatchSupplierRequisitionResponse', updateSupplierRequisitions?: Array<{ __typename: 'UpdateSupplierRequisitionResponseWithId', id: string }> | null | undefined, insertSupplierRequisitionLines?: Array<{ __typename: 'InsertSupplierRequisitionLineResponseWithId', id: string }> | null | undefined, deleteSupplierRequisitionLines?: Array<{ __typename: 'DeleteSupplierRequisitionLineResponseWithId', id: string }> | null | undefined, updateSupplierRequisitionLines?: Array<{ __typename: 'UpdateSupplierRequisitionLineResponseWithId', id: string }> | null | undefined } };
 
+export type UpsertCustomerRequisitionMutationVariables = Exact<{
+  deleteCustomerRequisitionLines?: Maybe<Array<DeleteCustomerRequisitionLineInput> | DeleteCustomerRequisitionLineInput>;
+  insertCustomerRequisitionLines?: Maybe<Array<InsertCustomerRequisitionLineInput> | InsertCustomerRequisitionLineInput>;
+  updateCustomerRequisitionLines?: Maybe<Array<UpdateCustomerRequisitionLineInput> | UpdateCustomerRequisitionLineInput>;
+  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput> | UpdateCustomerRequisitionInput>;
+}>;
+
+
+export type UpsertCustomerRequisitionMutation = { __typename?: 'Mutations', batchCustomerRequisition: { __typename: 'BatchCustomerRequisitionResponse', updateCustomerRequisitions?: Array<{ __typename: 'UpdateCustomerRequisitionResponseWithId', id: string }> | null | undefined, insertCustomerRequisitionLines?: Array<{ __typename: 'InsertCustomerRequisitionLineResponseWithId', id: string }> | null | undefined, deleteCustomerRequisitionLines?: Array<{ __typename: 'DeleteCustomerRequisitionLineResponseWithId', id: string }> | null | undefined, updateCustomerRequisitionLines?: Array<{ __typename: 'UpdateCustomerRequisitionLineResponseWithId', id: string }> | null | undefined } };
+
 export type InvoicesQueryVariables = Exact<{
   first?: Maybe<Scalars['Int']>;
   offset?: Maybe<Scalars['Int']>;
@@ -2463,6 +2473,34 @@ export const UpsertSupplierRequisitionDocument = gql`
       id
     }
     updateSupplierRequisitionLines {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const UpsertCustomerRequisitionDocument = gql`
+    mutation upsertCustomerRequisition($deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!], $insertCustomerRequisitionLines: [InsertCustomerRequisitionLineInput!], $updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!], $updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]) {
+  batchCustomerRequisition(
+    deleteCustomerRequisitionLines: $deleteCustomerRequisitionLines
+    insertCustomerRequisitionLines: $insertCustomerRequisitionLines
+    updateCustomerRequisitionLines: $updateCustomerRequisitionLines
+    updateCustomerRequisitions: $updateCustomerRequisitions
+  ) {
+    __typename
+    updateCustomerRequisitions {
+      __typename
+      id
+    }
+    insertCustomerRequisitionLines {
+      __typename
+      id
+    }
+    deleteCustomerRequisitionLines {
+      __typename
+      id
+    }
+    updateCustomerRequisitionLines {
       __typename
       id
     }
@@ -3048,6 +3086,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     upsertSupplierRequisition(variables?: UpsertSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertSupplierRequisitionMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertSupplierRequisitionMutation>(UpsertSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertSupplierRequisition');
+    },
+    upsertCustomerRequisition(variables?: UpsertCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertCustomerRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertCustomerRequisitionMutation>(UpsertCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertCustomerRequisition');
     },
     invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices');

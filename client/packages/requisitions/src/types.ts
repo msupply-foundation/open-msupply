@@ -35,8 +35,24 @@ export interface SupplierRequisition extends Requisition {
   deleteLine?: (line: SupplierRequisitionLine) => void;
 }
 
+export interface CustomerRequisition extends Requisition {
+  isDeleted: boolean;
+  otherParty: Name;
+  lines: SupplierRequisitionLine[];
+  update: (key: string, value: string) => void;
+  updateOtherParty: (value: Name) => void;
+  upsertLine?: (line: SupplierRequisitionLine) => void;
+  deleteLine?: (line: SupplierRequisitionLine) => void;
+}
+
 export type RequisitionLine = Omit<RequisitionLineNode, '__typename'>;
 export interface SupplierRequisitionLine extends RequisitionLineNode {
+  isUpdated?: boolean;
+  isDeleted?: boolean;
+  isCreated?: boolean;
+}
+
+export interface CustomerRequisitionLine extends RequisitionLineNode {
   isUpdated?: boolean;
   isDeleted?: boolean;
   isCreated?: boolean;
