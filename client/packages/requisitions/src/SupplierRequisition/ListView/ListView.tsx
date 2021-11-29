@@ -54,7 +54,7 @@ export const SupplierRequisitionListView: FC = () => {
   return (
     <>
       <NameSearchModal
-        type="customer"
+        type="supplier"
         open={open}
         onClose={() => setOpen(false)}
         onChange={async name => {
