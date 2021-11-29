@@ -17,8 +17,57 @@ pub struct SimpleStringFilter {
 #[derive(Clone, PartialEq, Debug)]
 pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
+    pub not_equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
 }
+
+pub trait AddToFilter {
+    type Target;
+    fn add<F: FnOnce(Self::Target) -> Self::Target>(self, f: F) -> Option<Self::Target>;
+}
+
+impl<T> AddToFilter for Option<EqualFilter<T>>
+where
+    T: ToOwned<Owned = T>,
+{
+    type Target = EqualFilter<T>;
+
+    fn add<F: FnOnce(Self::Target) -> Self::Target>(self, f: F) -> Option<Self::Target> {
+        Some(match self {
+            Some(filter) => f(filter),
+            None => f(EqualFilter::new()),
+        })
+    }
+}
+
+impl<T> EqualFilter<T>
+where
+    T: ToOwned<Owned = T>,
+{
+    pub fn new() -> EqualFilter<T> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+        }
+    }
+
+    pub fn equal_to(mut self, value: &T) -> Self {
+        self.equal_to = Some(value.to_owned());
+        self
+    }
+
+    pub fn not_equal_to(mut self, value: &T) -> Self {
+        self.not_equal_to = Some(value.to_owned());
+        self
+    }
+
+    pub fn equal_any(mut self, value: Vec<T>) -> Self {
+        self.equal_any = Some(value);
+        self
+    }
+}
+
 #[derive(Clone)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,

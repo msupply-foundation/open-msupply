@@ -1,5 +1,7 @@
 use chrono::NaiveDateTime;
 
+use crate::AddToFilter;
+
 use super::{DatetimeFilter, EqualFilter, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
@@ -62,75 +64,39 @@ impl InvoiceFilter {
         }
     }
 
-    pub fn match_id(mut self, id: &str) -> Self {
-        self.id = Some(EqualFilter {
-            equal_to: Some(id.to_owned()),
-            equal_any: None,
-        });
-
+    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
+        self.id = self.id.add(f);
         self
     }
 
-    pub fn match_inbound_shipment(mut self) -> Self {
-        self.r#type = Some(EqualFilter {
-            equal_to: Some(InvoiceType::InboundShipment),
-            equal_any: None,
-        });
-
+    pub fn r#type<F: FnOnce(EqualFilter<InvoiceType>) -> EqualFilter<InvoiceType>>(
+        mut self,
+        f: F,
+    ) -> Self {
+        self.r#type = self.r#type.add(f);
         self
     }
 
-    pub fn match_outbound_shipment(mut self) -> Self {
-        self.r#type = Some(EqualFilter {
-            equal_to: Some(InvoiceType::OutboundShipment),
-            equal_any: None,
-        });
-
+    pub fn status<F: FnOnce(EqualFilter<InvoiceStatus>) -> EqualFilter<InvoiceStatus>>(
+        mut self,
+        f: F,
+    ) -> Self {
+        self.status = self.status.add(f);
         self
     }
 
-    pub fn match_draft(mut self) -> Self {
-        self.status = Some(EqualFilter {
-            equal_to: Some(InvoiceStatus::Draft),
-            equal_any: None,
-        });
-
-        self
-    }
-
-    pub fn match_confirmed(mut self) -> Self {
-        self.status = Some(EqualFilter {
-            equal_to: Some(InvoiceStatus::Confirmed),
-            equal_any: None,
-        });
-
-        self
-    }
-
-    pub fn match_finalised(mut self) -> Self {
-        self.status = Some(EqualFilter {
-            equal_to: Some(InvoiceStatus::Finalised),
-            equal_any: None,
-        });
-
-        self
-    }
-
-    pub fn set_entry_datetime(mut self, filter: DatetimeFilter) -> Self {
+    pub fn entry_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.entry_datetime = Some(filter);
-
         self
     }
 
-    pub fn set_confirm_datetime(mut self, filter: DatetimeFilter) -> Self {
+    pub fn confirm_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.confirm_datetime = Some(filter);
-
         self
     }
 
-    pub fn set_finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
+    pub fn finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.finalised_datetime = Some(filter);
-
         self
     }
 }

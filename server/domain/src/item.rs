@@ -1,4 +1,4 @@
-use super::{EqualFilter, SimpleStringFilter, Sort};
+use super::{SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug)]
 pub struct Item {
@@ -14,7 +14,7 @@ pub struct ItemFilter {
     pub name: Option<SimpleStringFilter>,
     pub code: Option<SimpleStringFilter>,
     /// If true it only returns ItemAndMasterList that have a name join row
-    pub is_visible: Option<EqualFilter<bool>>,
+    pub is_visible: Option<bool>,
 }
 
 pub enum ItemSortField {
