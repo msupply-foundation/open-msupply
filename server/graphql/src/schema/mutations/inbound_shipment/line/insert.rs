@@ -127,7 +127,7 @@ impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse 
                 field: RangeField::PackSize,
                 range: Range::Min(1),
             }),
-            InsertInboundShipmentLineError::LocationDoesNotExists => {
+            InsertInboundShipmentLineError::LocationDoesNotExist => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::LocationId))
             }
         };

@@ -53,7 +53,7 @@ pub enum UpdateInboundShipmentLineError {
     NotAnInboundShipment,
     NotThisStoreInvoice,
     CannotEditFinalised,
-    LocationDoesNotExists,
+    LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowOne,
