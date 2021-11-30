@@ -10,7 +10,6 @@ const unsupported = [...StocktakeHandlers, ...RequisitionHandlers];
 const supported = [...InvoiceHandlers, ...NameHandlers, ...ItemHandlers];
 
 const DevHandlers = [...unsupported, ...supported];
-
 const ProdHandlers = [...unsupported];
 
 export const Handlers = isDev ? DevHandlers : ProdHandlers;
