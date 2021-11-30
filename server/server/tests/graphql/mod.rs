@@ -8,8 +8,8 @@ use repository::{get_storage_connection_manager, StorageConnectionManager};
 use service::{
     auth_data::AuthData,
     location::{
-        insert::InsertLocationServiceTrait, update::UpdateLocationServiceTrait,
-        LocationQueryServiceTrait,
+        delete::DeleteLocationServiceTrait, insert::InsertLocationServiceTrait,
+        update::UpdateLocationServiceTrait, LocationQueryServiceTrait,
     },
     service_provider::{ServiceConnection, ServiceFactory, ServiceFactoryTrait, ServiceProvider},
     token_bucket::TokenBucket,
@@ -32,6 +32,7 @@ mod inbound_shipment_update;
 mod invoice_query;
 mod invoices;
 mod items;
+mod location_delete;
 mod location_insert;
 mod location_update;
 mod locations;
@@ -194,6 +195,7 @@ pub struct ServiceOverride {
     location_query_service: Option<CreateService<dyn LocationQueryServiceTrait>>,
     insert_location_service: Option<CreateService<dyn InsertLocationServiceTrait>>,
     update_location_service: Option<CreateService<dyn UpdateLocationServiceTrait>>,
+    delete_location_service: Option<CreateService<dyn DeleteLocationServiceTrait>>,
 }
 
 impl ServiceOverride {
@@ -202,6 +204,7 @@ impl ServiceOverride {
             location_query_service: None,
             insert_location_service: None,
             update_location_service: None,
+            delete_location_service: None,
         }
     }
 
@@ -226,6 +229,14 @@ impl ServiceOverride {
         update_location_service: CreateService<dyn UpdateLocationServiceTrait>,
     ) -> Self {
         self.update_location_service = Some(update_location_service);
+        self
+    }
+
+    pub fn set_delete_location_service(
+        mut self,
+        delete_location_service: CreateService<dyn DeleteLocationServiceTrait>,
+    ) -> Self {
+        self.delete_location_service = Some(delete_location_service);
         self
     }
 }
@@ -261,6 +272,17 @@ impl ServiceFactoryTrait for ServiceOverride {
             update_location_service()
         } else {
             ServiceFactory {}.update_location(service_connection)
+        }
+    }
+
+    fn delete_location<'a>(
+        &'a self,
+        service_connection: ServiceConnection<'a>,
+    ) -> Box<dyn DeleteLocationServiceTrait + 'a> {
+        if let Some(delete_location_service) = &self.delete_location_service {
+            delete_location_service()
+        } else {
+            ServiceFactory {}.delete_location(service_connection)
         }
     }
 }

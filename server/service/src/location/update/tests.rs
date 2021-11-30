@@ -54,7 +54,7 @@ mod query {
             Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore)
         );
 
-        // Location for another store
+        // Code used in another store
         assert_eq!(
             service.update_location(UpdateLocation {
                 id: locations_in_store[0].id.clone(),
