@@ -5,7 +5,10 @@ pub mod location;
 pub mod outbound_shipment;
 pub mod user_register;
 
-use self::location::{InsertLocationInput, InsertLocationResponse, UpdateLocationInput, UpdateLocationResponse};
+use self::location::{
+    DeleteLocationInput, DeleteLocationResponse, InsertLocationInput, InsertLocationResponse,
+    UpdateLocationInput, UpdateLocationResponse,
+};
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
 use crate::ContextExt;
@@ -57,6 +60,23 @@ impl Mutations {
         match update_location_service.update_location(input.into()) {
             Ok(location) => UpdateLocationResponse::Response(location.into()),
             Err(error) => UpdateLocationResponse::Error(error.into()),
+        }
+    }
+
+    async fn delete_location(
+        &self,
+        ctx: &Context<'_>,
+        input: DeleteLocationInput,
+    ) -> DeleteLocationResponse {
+        let service_provider = ctx.service_provider();
+        let delete_location_service = match service_provider.delete_location() {
+            Ok(service) => service,
+            Err(error) => return DeleteLocationResponse::Error(error.into()),
+        };
+
+        match delete_location_service.delete_location(input.into()) {
+            Ok(id) => DeleteLocationResponse::Response(DeleteResponse(id)),
+            Err(error) => DeleteLocationResponse::Error(error.into()),
         }
     }
 
