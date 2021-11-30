@@ -16,7 +16,7 @@ pub fn validate(
     let location_row = check_location_exists(&input.id, connection)?;
     check_location_code_is_unique(&input.id, &input.code, connection)?;
 
-    check_record_belongs_to_current_store(&location_row.store_id)?;
+    check_record_belongs_to_current_store(&location_row.store_id, &connection)?;
 
     Ok(location_row)
 }

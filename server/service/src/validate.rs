@@ -1,13 +1,16 @@
-use crate::current_store_id;
+use repository::StorageConnection;
+
+use crate::{current_store_id, WithDBError};
 
 pub struct RecordDoesNotBelongToCurrentStore;
 
 pub fn check_record_belongs_to_current_store(
     store_id: &str,
-) -> Result<(), RecordDoesNotBelongToCurrentStore> {
-    if store_id == &current_store_id() {
+    connection: &StorageConnection,
+) -> Result<(), WithDBError<RecordDoesNotBelongToCurrentStore>> {
+    if store_id == &current_store_id(connection)? {
         Ok(())
     } else {
-        Err(RecordDoesNotBelongToCurrentStore)
+        Err(WithDBError::Error(RecordDoesNotBelongToCurrentStore))
     }
 }
