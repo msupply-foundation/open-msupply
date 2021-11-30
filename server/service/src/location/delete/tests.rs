@@ -33,7 +33,8 @@ mod query {
 
         let locations_not_in_store = location_repository
             .query_by_filter(
-                LocationFilter::new().store_id(|f| f.not_equal_to(&current_store_id())),
+                LocationFilter::new()
+                    .store_id(|f| f.not_equal_to(&current_store_id(&connection).unwrap())),
             )
             .unwrap();
 

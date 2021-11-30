@@ -17,7 +17,7 @@ pub fn validate(
     connection: &ServiceConnection,
 ) -> Result<(), DeleteLocationError> {
     let location_row = check_location_exists(&input.id, connection)?;
-    check_record_belongs_to_current_store(&location_row.store_id)?;
+    check_record_belongs_to_current_store(&location_row.store_id, &connection)?;
     check_location_is_empty(&input.id, connection)?;
 
     Ok(())
