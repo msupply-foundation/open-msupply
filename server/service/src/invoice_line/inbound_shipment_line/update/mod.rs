@@ -21,7 +21,7 @@ pub fn update_inbound_shipment_line(
             let (line, item, invoice) = validate(&input, &connection)?;
 
             let (updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(input, line, item, invoice)?;
+                generate(input, line, item, invoice, connection)?;
 
             let stock_line_respository = StockLineRowRepository::new(&connection);
 
