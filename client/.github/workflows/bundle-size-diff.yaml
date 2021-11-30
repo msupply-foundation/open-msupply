@@ -73,7 +73,7 @@ jobs:
 
       - name: Get diff
         id: get-diff
-        uses: ./
+        uses: NejcZdovc/bundle-size-diff@v1
         with:
           base_path: './base/stats.json'
           pr_path: './pr/stats.json'
