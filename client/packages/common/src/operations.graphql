@@ -877,6 +877,10 @@ mutation upsertOutboundShipment(
       __typename
       id
     }
+    updateOutboundShipmentLines {
+      __typename
+      id
+    }
   }
 }
 

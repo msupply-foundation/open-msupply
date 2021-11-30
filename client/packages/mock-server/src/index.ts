@@ -30,5 +30,3 @@ server.listen().then(({ url }) => {
     `🚀🚀🚀 Server   @ ${url}         🚀🚀🚀\n🤖🤖🤖 GraphiQL @ ${url}graphiql 🤖🤖🤖`
   );
 });
-
-export { handlers } from './worker/handlers';

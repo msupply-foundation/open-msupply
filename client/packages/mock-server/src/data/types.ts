@@ -38,7 +38,7 @@ export type Location = LocationNode;
 
 export interface ResolvedItem extends Item {
   __typename: 'ItemNode';
-  availableBatches: StockLineConnector;
+  availableBatches: Required<StockLineConnector>;
   availableQuantity: number;
 }
 
@@ -83,8 +83,7 @@ export interface InvoiceLine extends Omit<InvoiceLineNode, 'location'> {
 
 export interface ResolvedInvoiceLine extends InvoiceLine {
   __typename: 'InvoiceLineNode';
-  stockLine?: StockLine;
-  // item: Item;
+  stockLine?: ResolvedStockLine;
 }
 
 export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
@@ -101,7 +100,7 @@ export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
 export interface ResolvedInvoice extends Invoice {
   __typename: 'InvoiceNode';
   lines: ListResponse<ResolvedInvoiceLine, 'InvoiceLineConnector'>;
-  otherParty: Name;
+  otherParty: NameNode;
   otherPartyName: string;
 }
 
@@ -143,7 +142,7 @@ export interface Requisition
 export interface ResolvedRequisition extends Requisition {
   __typename: 'RequisitionNode';
   lines: ListResponse<ResolvedRequisitionLine, 'RequisitionLineConnector'>;
-  otherParty: Name;
+  otherParty: ResolvedName;
   otherPartyName: string;
 }
 

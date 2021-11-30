@@ -7,3 +7,4 @@ generates:
       - typescript
       - typescript-operations
       - typescript-graphql-request
+      - typescript-msw
