@@ -1,3 +1,6 @@
+mod delete;
+pub use self::delete::*;
+
 mod insert;
 pub use self::insert::*;
 
