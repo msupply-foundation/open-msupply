@@ -24,6 +24,7 @@
     "@graphql-codegen/cli": "2.2.2",
     "@graphql-codegen/typescript": "2.3.0",
     "@graphql-codegen/typescript-graphql-request": "^4.2.0",
+    "@graphql-codegen/typescript-msw": "^1.0.0",
     "@graphql-codegen/typescript-operations": "^2.2.0",
     "@storybook/addon-actions": "^6.3.7",
     "@storybook/addon-essentials": "^6.3.7",

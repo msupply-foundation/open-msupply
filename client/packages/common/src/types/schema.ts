@@ -1,6 +1,7 @@
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
+import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type Maybe<T> = T | null;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
@@ -2068,7 +2069,7 @@ export type UpsertOutboundShipmentMutationVariables = Exact<{
 }>;
 
 
-export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null | undefined } };
+export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null | undefined } };
 
 export type UpsertInboundShipmentMutationVariables = Exact<{
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
@@ -2906,6 +2907,10 @@ export const UpsertOutboundShipmentDocument = gql`
       __typename
       id
     }
+    updateOutboundShipmentLines {
+      __typename
+      id
+    }
   }
 }
     `;
@@ -3135,3 +3140,495 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInvoiceQuery((req, res, ctx) => {
+ *   const { id } = req.variables;
+ *   return res(
+ *     ctx.data({ invoice })
+ *   )
+ * })
+ */
+export const mockInvoiceQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceQueryVariables>, GraphQLContext<InvoiceQuery>, any>) =>
+  graphql.query<InvoiceQuery, InvoiceQueryVariables>(
+    'invoice',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockStocktakesQuery((req, res, ctx) => {
+ *   const { params } = req.variables;
+ *   return res(
+ *     ctx.data({ stocktakes })
+ *   )
+ * })
+ */
+export const mockStocktakesQuery = (resolver: ResponseResolver<GraphQLRequest<StocktakesQueryVariables>, GraphQLContext<StocktakesQuery>, any>) =>
+  graphql.query<StocktakesQuery, StocktakesQueryVariables>(
+    'stocktakes',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteStocktakesMutation((req, res, ctx) => {
+ *   const { ids } = req.variables;
+ *   return res(
+ *     ctx.data({ batchStocktake })
+ *   )
+ * })
+ */
+export const mockDeleteStocktakesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteStocktakesMutationVariables>, GraphQLContext<DeleteStocktakesMutation>, any>) =>
+  graphql.mutation<DeleteStocktakesMutation, DeleteStocktakesMutationVariables>(
+    'deleteStocktakes',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateStocktakeMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateStocktake })
+ *   )
+ * })
+ */
+export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStocktakeMutationVariables>, GraphQLContext<UpdateStocktakeMutation>, any>) =>
+  graphql.mutation<UpdateStocktakeMutation, UpdateStocktakeMutationVariables>(
+    'updateStocktake',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertStocktakeMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertStocktake })
+ *   )
+ * })
+ */
+export const mockInsertStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<InsertStocktakeMutationVariables>, GraphQLContext<InsertStocktakeMutation>, any>) =>
+  graphql.mutation<InsertStocktakeMutation, InsertStocktakeMutationVariables>(
+    'insertStocktake',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockRequisitionsQuery((req, res, ctx) => {
+ *   const { params } = req.variables;
+ *   return res(
+ *     ctx.data({ requisitions })
+ *   )
+ * })
+ */
+export const mockRequisitionsQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionsQueryVariables>, GraphQLContext<RequisitionsQuery>, any>) =>
+  graphql.query<RequisitionsQuery, RequisitionsQueryVariables>(
+    'requisitions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteSupplierRequisitionsMutation((req, res, ctx) => {
+ *   const { ids } = req.variables;
+ *   return res(
+ *     ctx.data({ batchSupplierRequisition })
+ *   )
+ * })
+ */
+export const mockDeleteSupplierRequisitionsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteSupplierRequisitionsMutationVariables>, GraphQLContext<DeleteSupplierRequisitionsMutation>, any>) =>
+  graphql.mutation<DeleteSupplierRequisitionsMutation, DeleteSupplierRequisitionsMutationVariables>(
+    'deleteSupplierRequisitions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateSupplierRequisitionMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateSupplierRequisition })
+ *   )
+ * })
+ */
+export const mockUpdateSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSupplierRequisitionMutationVariables>, GraphQLContext<UpdateSupplierRequisitionMutation>, any>) =>
+  graphql.mutation<UpdateSupplierRequisitionMutation, UpdateSupplierRequisitionMutationVariables>(
+    'updateSupplierRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertSupplierRequisitionMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertSupplierRequisition })
+ *   )
+ * })
+ */
+export const mockInsertSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<InsertSupplierRequisitionMutationVariables>, GraphQLContext<InsertSupplierRequisitionMutation>, any>) =>
+  graphql.mutation<InsertSupplierRequisitionMutation, InsertSupplierRequisitionMutationVariables>(
+    'insertSupplierRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteCustomerRequisitionsMutation((req, res, ctx) => {
+ *   const { ids } = req.variables;
+ *   return res(
+ *     ctx.data({ batchCustomerRequisition })
+ *   )
+ * })
+ */
+export const mockDeleteCustomerRequisitionsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteCustomerRequisitionsMutationVariables>, GraphQLContext<DeleteCustomerRequisitionsMutation>, any>) =>
+  graphql.mutation<DeleteCustomerRequisitionsMutation, DeleteCustomerRequisitionsMutationVariables>(
+    'deleteCustomerRequisitions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateCustomerRequisitionMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateCustomerRequisition })
+ *   )
+ * })
+ */
+export const mockUpdateCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateCustomerRequisitionMutationVariables>, GraphQLContext<UpdateCustomerRequisitionMutation>, any>) =>
+  graphql.mutation<UpdateCustomerRequisitionMutation, UpdateCustomerRequisitionMutationVariables>(
+    'updateCustomerRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertCustomerRequisitionMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertCustomerRequisition })
+ *   )
+ * })
+ */
+export const mockInsertCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<InsertCustomerRequisitionMutationVariables>, GraphQLContext<InsertCustomerRequisitionMutation>, any>) =>
+  graphql.mutation<InsertCustomerRequisitionMutation, InsertCustomerRequisitionMutationVariables>(
+    'insertCustomerRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockRequisitionQuery((req, res, ctx) => {
+ *   const { id } = req.variables;
+ *   return res(
+ *     ctx.data({ requisition })
+ *   )
+ * })
+ */
+export const mockRequisitionQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionQueryVariables>, GraphQLContext<RequisitionQuery>, any>) =>
+  graphql.query<RequisitionQuery, RequisitionQueryVariables>(
+    'requisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpsertSupplierRequisitionMutation((req, res, ctx) => {
+ *   const { deleteSupplierRequisitionLines, insertSupplierRequisitionLines, updateSupplierRequisitionLines, updateSupplierRequisitions } = req.variables;
+ *   return res(
+ *     ctx.data({ batchSupplierRequisition })
+ *   )
+ * })
+ */
+export const mockUpsertSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertSupplierRequisitionMutationVariables>, GraphQLContext<UpsertSupplierRequisitionMutation>, any>) =>
+  graphql.mutation<UpsertSupplierRequisitionMutation, UpsertSupplierRequisitionMutationVariables>(
+    'upsertSupplierRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpsertCustomerRequisitionMutation((req, res, ctx) => {
+ *   const { deleteCustomerRequisitionLines, insertCustomerRequisitionLines, updateCustomerRequisitionLines, updateCustomerRequisitions } = req.variables;
+ *   return res(
+ *     ctx.data({ batchCustomerRequisition })
+ *   )
+ * })
+ */
+export const mockUpsertCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertCustomerRequisitionMutationVariables>, GraphQLContext<UpsertCustomerRequisitionMutation>, any>) =>
+  graphql.mutation<UpsertCustomerRequisitionMutation, UpsertCustomerRequisitionMutationVariables>(
+    'upsertCustomerRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInvoicesQuery((req, res, ctx) => {
+ *   const { first, offset, key, desc, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ invoices })
+ *   )
+ * })
+ */
+export const mockInvoicesQuery = (resolver: ResponseResolver<GraphQLRequest<InvoicesQueryVariables>, GraphQLContext<InvoicesQuery>, any>) =>
+  graphql.query<InvoicesQuery, InvoicesQueryVariables>(
+    'invoices',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockNamesQuery((req, res, ctx) => {
+ *   const { key, desc, first, offset, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ names })
+ *   )
+ * })
+ */
+export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
+  graphql.query<NamesQuery, NamesQueryVariables>(
+    'names',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockItemsWithStockLinesQuery((req, res, ctx) => {
+ *   const { first, offset, key, desc, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ items })
+ *   )
+ * })
+ */
+export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsWithStockLinesQueryVariables>, GraphQLContext<ItemsWithStockLinesQuery>, any>) =>
+  graphql.query<ItemsWithStockLinesQuery, ItemsWithStockLinesQueryVariables>(
+    'itemsWithStockLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockItemsListViewQuery((req, res, ctx) => {
+ *   const { first, offset, key, desc, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ items })
+ *   )
+ * })
+ */
+export const mockItemsListViewQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsListViewQueryVariables>, GraphQLContext<ItemsListViewQuery>, any>) =>
+  graphql.query<ItemsListViewQuery, ItemsListViewQueryVariables>(
+    'itemsListView',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertOutboundShipmentMutation((req, res, ctx) => {
+ *   const { id, otherPartyId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertOutboundShipment })
+ *   )
+ * })
+ */
+export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundShipmentMutationVariables>, GraphQLContext<InsertOutboundShipmentMutation>, any>) =>
+  graphql.mutation<InsertOutboundShipmentMutation, InsertOutboundShipmentMutationVariables>(
+    'insertOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateOutboundShipmentMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateOutboundShipment })
+ *   )
+ * })
+ */
+export const mockUpdateOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundShipmentMutationVariables>, GraphQLContext<UpdateOutboundShipmentMutation>, any>) =>
+  graphql.mutation<UpdateOutboundShipmentMutation, UpdateOutboundShipmentMutationVariables>(
+    'updateOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteOutboundShipmentsMutation((req, res, ctx) => {
+ *   const { ids } = req.variables;
+ *   return res(
+ *     ctx.data({ batchOutboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentsMutationVariables>, GraphQLContext<DeleteOutboundShipmentsMutation>, any>) =>
+  graphql.mutation<DeleteOutboundShipmentsMutation, DeleteOutboundShipmentsMutationVariables>(
+    'deleteOutboundShipments',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInvoiceCountsQuery((req, res, ctx) => {
+ *   const { type } = req.variables;
+ *   return res(
+ *     ctx.data({ invoiceCounts })
+ *   )
+ * })
+ */
+export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
+  graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
+    'invoiceCounts',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockStockCountsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ stockCounts })
+ *   )
+ * })
+ */
+export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<StockCountsQueryVariables>, GraphQLContext<StockCountsQuery>, any>) =>
+  graphql.query<StockCountsQuery, StockCountsQueryVariables>(
+    'stockCounts',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpsertOutboundShipmentMutation((req, res, ctx) => {
+ *   const { deleteOutboundShipmentLines, insertOutboundShipmentLines, updateOutboundShipmentLines, updateOutboundShipments } = req.variables;
+ *   return res(
+ *     ctx.data({ batchOutboundShipment })
+ *   )
+ * })
+ */
+export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertOutboundShipmentMutationVariables>, GraphQLContext<UpsertOutboundShipmentMutation>, any>) =>
+  graphql.mutation<UpsertOutboundShipmentMutation, UpsertOutboundShipmentMutationVariables>(
+    'upsertOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpsertInboundShipmentMutation((req, res, ctx) => {
+ *   const { deleteInboundShipmentLines, insertInboundShipmentLines, updateInboundShipmentLines, updateInboundShipments } = req.variables;
+ *   return res(
+ *     ctx.data({ batchInboundShipment })
+ *   )
+ * })
+ */
+export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertInboundShipmentMutationVariables>, GraphQLContext<UpsertInboundShipmentMutation>, any>) =>
+  graphql.mutation<UpsertInboundShipmentMutation, UpsertInboundShipmentMutationVariables>(
+    'upsertInboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateInboundShipmentMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateInboundShipment })
+ *   )
+ * })
+ */
+export const mockUpdateInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateInboundShipmentMutationVariables>, GraphQLContext<UpdateInboundShipmentMutation>, any>) =>
+  graphql.mutation<UpdateInboundShipmentMutation, UpdateInboundShipmentMutationVariables>(
+    'updateInboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteInboundShipmentsMutation((req, res, ctx) => {
+ *   const { ids } = req.variables;
+ *   return res(
+ *     ctx.data({ batchInboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteInboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentsMutationVariables>, GraphQLContext<DeleteInboundShipmentsMutation>, any>) =>
+  graphql.mutation<DeleteInboundShipmentsMutation, DeleteInboundShipmentsMutationVariables>(
+    'deleteInboundShipments',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertInboundShipmentMutation((req, res, ctx) => {
+ *   const { id, otherPartyId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertInboundShipment })
+ *   )
+ * })
+ */
+export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertInboundShipmentMutationVariables>, GraphQLContext<InsertInboundShipmentMutation>, any>) =>
+  graphql.mutation<InsertInboundShipmentMutation, InsertInboundShipmentMutationVariables>(
+    'insertInboundShipment',
+    resolver
+  )
