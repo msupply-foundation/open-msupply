@@ -44,4 +44,10 @@ impl<'a> LocationRowRepository<'a> {
             Err(error) => Err(RepositoryError::from(error)),
         }
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
