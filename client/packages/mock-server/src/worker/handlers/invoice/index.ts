@@ -16,8 +16,14 @@ import { ResolverService } from '../../../api/resolvers';
 import { Invoice as InvoiceSchema } from '../../../schema/Invoice';
 
 const invoiceQuery = mockInvoiceQuery((req, res, ctx) => {
+  const invoice = ResolverService.invoice.byId(req.variables.id);
   return res(
-    ctx.data({ invoice: ResolverService.invoice.byId(req.variables.id) })
+    ctx.data({
+      invoice: {
+        ...invoice,
+        otherParty: { ...invoice.otherParty, __typename: 'NameNode' },
+      },
+    })
   );
 });
 
