@@ -202,7 +202,6 @@ mod graphql {
           }
         }));
 
-        // Record Already Exists
         let service_override = service_override!(|_| Ok(Location {
             id: "id".to_owned(),
             name: "name".to_owned(),
