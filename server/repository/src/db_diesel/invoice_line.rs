@@ -102,6 +102,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, invoice_line_dsl::id);
         apply_equal_filter!(query, f.invoice_id, invoice_line_dsl::invoice_id);
+        apply_equal_filter!(query, f.location_id, invoice_line_dsl::location_id);
     }
 
     query
