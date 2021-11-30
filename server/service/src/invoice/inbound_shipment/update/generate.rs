@@ -110,7 +110,7 @@ pub fn generate_lines_and_stock_lines(
         let stock_line = StockLineRow {
             id: stock_line_id,
             item_id,
-            store_id: current_store_id(),
+            store_id: current_store_id(connection)?,
             location_id,
             batch,
             pack_size,

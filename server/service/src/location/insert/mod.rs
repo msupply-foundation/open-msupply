@@ -20,7 +20,7 @@ impl<'a> InsertLocationServiceTrait for InsertLocationService<'a> {
     fn insert_location(&self, input: InsertLocation) -> Result<Location, InsertLocationError> {
         let location = self.0.transaction(|connection| {
             validate(&input, &connection)?;
-            let new_location = generate(input);
+            let new_location = generate(input, &connection)?;
             LocationRowRepository::new(&connection).upsert_one(&new_location)?;
 
             LocationQueryService(connection.duplicate())
