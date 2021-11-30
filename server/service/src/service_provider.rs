@@ -4,6 +4,7 @@ use repository::{RepositoryError, StorageConnection, StorageConnectionManager, T
 
 use crate::{
     location::{
+        delete::{DeleteLocationService, DeleteLocationServiceTrait},
         insert::{InsertLocationService, InsertLocationServiceTrait},
         update::{UpdateLocationService, UpdateLocationServiceTrait},
         LocationQueryService, LocationQueryServiceTrait,
@@ -31,6 +32,13 @@ pub trait ServiceFactoryTrait: Send + Sync {
         service_connection: ServiceConnection<'a>,
     ) -> Box<dyn UpdateLocationServiceTrait + 'a> {
         Box::new(UpdateLocationService(service_connection))
+    }
+
+    fn delete_location<'a>(
+        &'a self,
+        service_connection: ServiceConnection<'a>,
+    ) -> Box<dyn DeleteLocationServiceTrait + 'a> {
+        Box::new(DeleteLocationService(service_connection))
     }
 }
 
@@ -129,5 +137,13 @@ impl ServiceProvider {
         Ok(self
             .service_factory
             .update_location(self.service_connection()?))
+    }
+
+    pub fn delete_location<'a>(
+        &'a self,
+    ) -> Result<Box<dyn DeleteLocationServiceTrait + 'a>, RepositoryError> {
+        Ok(self
+            .service_factory
+            .delete_location(self.service_connection()?))
     }
 }
