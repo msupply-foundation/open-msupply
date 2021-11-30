@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use crate::AddToFilter;
 
 use super::{EqualFilter, Sort};
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 
 pub struct InvoiceLine {
     pub id: String,
@@ -26,6 +26,7 @@ pub struct InvoiceLine {
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub invoice_id: Option<EqualFilter<String>>,
+    pub location_id: Option<EqualFilter<String>>,
 }
 
 impl InvoiceLineFilter {
@@ -33,6 +34,7 @@ impl InvoiceLineFilter {
         InvoiceLineFilter {
             id: None,
             invoice_id: None,
+            location_id: None,
         }
     }
 
@@ -46,6 +48,14 @@ impl InvoiceLineFilter {
         f: F,
     ) -> Self {
         self.invoice_id = self.invoice_id.add(f);
+        self
+    }
+
+    pub fn location_id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(
+        mut self,
+        f: F,
+    ) -> Self {
+        self.location_id = self.location_id.add(f);
         self
     }
 }
