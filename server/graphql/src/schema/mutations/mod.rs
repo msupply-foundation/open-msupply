@@ -6,8 +6,8 @@ pub mod outbound_shipment;
 pub mod user_register;
 
 use self::location::{
-    DeleteLocationInput, DeleteLocationResponse, InsertLocationInput, InsertLocationResponse,
-    UpdateLocationInput, UpdateLocationResponse,
+    delete_location, insert_location, update_location, DeleteLocationInput, DeleteLocationResponse,
+    InsertLocationInput, InsertLocationResponse, UpdateLocationInput, UpdateLocationResponse,
 };
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
@@ -34,19 +34,7 @@ impl Mutations {
         ctx: &Context<'_>,
         input: InsertLocationInput,
     ) -> InsertLocationResponse {
-        let service_provider = ctx.service_provider();
-        let service_context = match service_provider.context() {
-            Ok(service) => service,
-            Err(error) => return InsertLocationResponse::Error(error.into()),
-        };
-
-        match service_provider
-            .location_service
-            .insert_location(input.into(), &service_context)
-        {
-            Ok(location) => InsertLocationResponse::Response(location.into()),
-            Err(error) => InsertLocationResponse::Error(error.into()),
-        }
+        insert_location(ctx, input)
     }
 
     async fn update_location(
@@ -54,19 +42,7 @@ impl Mutations {
         ctx: &Context<'_>,
         input: UpdateLocationInput,
     ) -> UpdateLocationResponse {
-        let service_provider = ctx.service_provider();
-        let service_context = match service_provider.context() {
-            Ok(service) => service,
-            Err(error) => return UpdateLocationResponse::Error(error.into()),
-        };
-
-        match service_provider
-            .location_service
-            .update_location(input.into(), &service_context)
-        {
-            Ok(location) => UpdateLocationResponse::Response(location.into()),
-            Err(error) => UpdateLocationResponse::Error(error.into()),
-        }
+        update_location(ctx, input)
     }
 
     async fn delete_location(
@@ -74,19 +50,7 @@ impl Mutations {
         ctx: &Context<'_>,
         input: DeleteLocationInput,
     ) -> DeleteLocationResponse {
-        let service_provider = ctx.service_provider();
-        let service_context = match service_provider.context() {
-            Ok(service) => service,
-            Err(error) => return DeleteLocationResponse::Error(error.into()),
-        };
-
-        match service_provider
-            .location_service
-            .delete_location(input.into(), &service_context)
-        {
-            Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
-            Err(error) => DeleteLocationResponse::Error(error.into()),
-        }
+        delete_location(ctx, input)
     }
 
     async fn insert_outbound_shipment(

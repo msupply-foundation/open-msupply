@@ -34,7 +34,7 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
-use super::mutations::{inbound_shipment::*, location::*, outbound_shipment::*};
+use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 
 /// Generic Connector
 #[derive(SimpleObject)]
@@ -149,9 +149,6 @@ impl From<PaginationInput> for PaginationOption {
     name = "DeleteOutboundShipmentLineError",
     params(DeleteOutboundShipmentLineErrorInterface)
 ))]
-#[graphql(concrete(name = "InsertLocationError", params(InsertLocationErrorInterface)))]
-#[graphql(concrete(name = "UpdateLocationError", params(UpdateLocationErrorInterface)))]
-#[graphql(concrete(name = "DeleteLocationError", params(DeleteLocationErrorInterface)))]
 #[graphql(concrete(name = "UserRegisterError", params(UserRegisterErrorInterface)))]
 #[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
 #[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]

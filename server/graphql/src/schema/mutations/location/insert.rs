@@ -1,12 +1,33 @@
 use async_graphql::*;
 use domain::location::InsertLocation;
 use repository::RepositoryError;
-use service::location::insert::InsertLocationError;
+use service::location::insert::InsertLocationError as InError;
 
-use crate::schema::{
-    mutations::{error::DatabaseError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation},
-    types::{ErrorWrapper, InternalError, LocationNode},
+use crate::{
+    schema::{
+        mutations::{
+            error::DatabaseError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
+        },
+        types::{InternalError, LocationNode},
+    },
+    ContextExt,
 };
+
+pub fn insert_location(ctx: &Context<'_>, input: InsertLocationInput) -> InsertLocationResponse {
+    let service_provider = ctx.service_provider();
+    let service_context = match service_provider.context() {
+        Ok(service) => service,
+        Err(error) => return InsertLocationResponse::Error(error.into()),
+    };
+
+    match service_provider
+        .location_service
+        .insert_location(input.into(), &service_context)
+    {
+        Ok(location) => InsertLocationResponse::Response(location.into()),
+        Err(error) => InsertLocationResponse::Error(error.into()),
+    }
+}
 
 #[derive(InputObject)]
 pub struct InsertLocationInput {
@@ -33,10 +54,14 @@ impl From<InsertLocationInput> for InsertLocation {
         }
     }
 }
+#[derive(SimpleObject)]
+pub struct InsertLocationError {
+    pub error: InsertLocationErrorInterface,
+}
 
 #[derive(Union)]
 pub enum InsertLocationResponse {
-    Error(ErrorWrapper<InsertLocationErrorInterface>),
+    Error(InsertLocationError),
     Response(LocationNode),
 }
 
@@ -49,30 +74,28 @@ pub enum InsertLocationErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-impl From<RepositoryError> for ErrorWrapper<InsertLocationErrorInterface> {
+impl From<RepositoryError> for InsertLocationError {
     fn from(error: RepositoryError) -> Self {
         let error = InsertLocationErrorInterface::DatabaseError(DatabaseError(error));
-        ErrorWrapper { error }
+        InsertLocationError { error }
     }
 }
 
-impl From<InsertLocationError> for ErrorWrapper<InsertLocationErrorInterface> {
-    fn from(error: InsertLocationError) -> Self {
+impl From<InError> for InsertLocationError {
+    fn from(error: InError) -> Self {
         use InsertLocationErrorInterface as OutError;
         let error = match error {
-            InsertLocationError::LocationAlreadyExists => {
+            InError::LocationAlreadyExists => {
                 OutError::LocationAlreadyExists(RecordAlreadyExist {})
             }
-            InsertLocationError::LocationWithCodeAlreadyExists => {
+            InError::LocationWithCodeAlreadyExists => {
                 OutError::UniqueValueViolation(UniqueValueViolation(UniqueValueKey::Code))
             }
-            InsertLocationError::CreatedRecordDoesNotExist => OutError::InternalError(
-                InternalError("Could not find record after creation".to_owned()),
-            ),
-            InsertLocationError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
+            InError::CreatedRecordDoesNotExist => OutError::InternalError(InternalError(
+                "Could not find record after creation".to_owned(),
+            )),
+            InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),
         };
-        ErrorWrapper { error }
+        InsertLocationError { error }
     }
 }
