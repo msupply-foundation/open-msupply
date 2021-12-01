@@ -17,8 +17,8 @@ mod graphql {
     impl LocationServiceTrait for TestService {
         fn update_location(
             &self,
-            input: UpdateLocation,
             _: &ServiceContext,
+            input: UpdateLocation,
         ) -> Result<Location, UpdateLocationError> {
             (self.0)(input)
         }

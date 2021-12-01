@@ -35,13 +35,13 @@ mod query {
         // Location does not exist
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: "invalid".to_owned(),
                     code: None,
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(UpdateLocationError::LocationDoesNotExist)
         );
@@ -49,13 +49,13 @@ mod query {
         // Location for another store
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: locations_not_in_store[0].id.clone(),
                     code: None,
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore)
         );
@@ -63,13 +63,13 @@ mod query {
         // Code used in another store
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: locations_in_store[0].id.clone(),
                     code: Some(locations_in_store[1].code.clone()),
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(UpdateLocationError::CodeAlreadyExists)
         );
@@ -96,13 +96,13 @@ mod query {
         let location = locations_in_store[0].clone();
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: location.id.clone(),
                     code: None,
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Ok(location.clone())
         );
@@ -122,13 +122,13 @@ mod query {
 
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: location.id.clone(),
                     code: Some(location.code.clone()),
                     name: Some(location.name.clone()),
                     on_hold: Some(location.on_hold),
                 },
-                &context
             ),
             Ok(location.clone())
         );

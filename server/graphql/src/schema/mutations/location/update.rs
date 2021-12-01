@@ -22,7 +22,7 @@ pub fn update_location(ctx: &Context<'_>, input: UpdateLocationInput) -> UpdateL
 
     match service_provider
         .location_service
-        .update_location(input.into(), &service_context)
+        .update_location(&service_context, input.into())
     {
         Ok(location) => UpdateLocationResponse::Response(location.into()),
         Err(error) => UpdateLocationResponse::Error(error.into()),

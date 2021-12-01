@@ -15,8 +15,8 @@ pub enum InsertLocationError {
 }
 
 pub fn insert_location(
-    input: InsertLocation,
     ctx: &ServiceContext,
+    input: InsertLocation,
 ) -> Result<Location, InsertLocationError> {
     let location = ctx
         .connection
@@ -25,7 +25,7 @@ pub fn insert_location(
             let new_location = generate(input, connection)?;
             LocationRowRepository::new(&connection).upsert_one(&new_location)?;
 
-            get_location(new_location.id, ctx).map_err(InsertLocationError::from)
+            get_location(ctx, new_location.id).map_err(InsertLocationError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(location)

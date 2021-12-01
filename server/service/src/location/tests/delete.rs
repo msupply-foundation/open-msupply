@@ -40,10 +40,10 @@ mod query {
         // Location does not exist
         assert_eq!(
             service.delete_location(
+                &context,
                 DeleteLocation {
                     id: "invalid".to_owned(),
                 },
-                &context
             ),
             Err(DeleteLocationError::LocationDoesNotExist)
         );
@@ -51,10 +51,10 @@ mod query {
         // Location for another store
         assert_eq!(
             service.delete_location(
+                &context,
                 DeleteLocation {
                     id: locations_not_in_store[0].id.clone(),
                 },
-                &context
             ),
             Err(DeleteLocationError::LocationDoesNotBelongToCurrentStore)
         );
@@ -69,7 +69,7 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(DeleteLocation { id: location_id }, &context),
+            service.delete_location(&context, DeleteLocation { id: location_id }),
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
                 invoice_lines
@@ -86,7 +86,7 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(DeleteLocation { id: location_id }, &context),
+            service.delete_location(&context, DeleteLocation { id: location_id }),
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
                 invoice_lines
@@ -106,10 +106,10 @@ mod query {
 
         assert_eq!(
             service.delete_location(
+                &context,
                 DeleteLocation {
                     id: "location_2".to_owned()
                 },
-                &context
             ),
             Ok("location_2".to_owned())
         );

@@ -23,44 +23,44 @@ mod validate;
 pub trait LocationServiceTrait: Sync + Send {
     fn get_locations(
         &self,
+        ctx: &ServiceContext,
         pagination: Option<PaginationOption>,
         filter: Option<LocationFilter>,
         sort: Option<LocationSort>,
-        ctx: &ServiceContext,
     ) -> Result<ListResult<Location>, ListError> {
-        get_locations(pagination, filter, sort, ctx)
+        get_locations(ctx, pagination, filter, sort)
     }
 
     fn get_location(
         &self,
-        id: String,
         ctx: &ServiceContext,
+        id: String,
     ) -> Result<Location, SingleRecordError> {
-        get_location(id, ctx)
+        get_location(ctx, id)
     }
 
     fn delete_location(
         &self,
-        input: DeleteLocation,
         ctx: &ServiceContext,
+        input: DeleteLocation,
     ) -> Result<String, DeleteLocationError> {
-        delete_location(input, ctx)
+        delete_location(ctx, input)
     }
 
     fn insert_location(
         &self,
-        input: InsertLocation,
         ctx: &ServiceContext,
+        input: InsertLocation,
     ) -> Result<Location, InsertLocationError> {
-        insert_location(input, ctx)
+        insert_location(ctx, input)
     }
 
     fn update_location(
         &self,
-        input: UpdateLocation,
         ctx: &ServiceContext,
+        input: UpdateLocation,
     ) -> Result<Location, UpdateLocationError> {
-        update_location(input, ctx)
+        update_location(ctx, input)
     }
 }
 

@@ -13,10 +13,10 @@ pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_locations(
+    ctx: &ServiceContext,
     pagination: Option<PaginationOption>,
     filter: Option<LocationFilter>,
     sort: Option<LocationSort>,
-    ctx: &ServiceContext,
 ) -> Result<ListResult<Location>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = LocationRepository::new(&ctx.connection);
@@ -27,7 +27,7 @@ pub fn get_locations(
     })
 }
 
-pub fn get_location(id: String, ctx: &ServiceContext) -> Result<Location, SingleRecordError> {
+pub fn get_location(ctx: &ServiceContext, id: String) -> Result<Location, SingleRecordError> {
     let repository = LocationRepository::new(&ctx.connection);
 
     let mut result = repository.query_by_filter(LocationFilter::new().id(|f| f.equal_to(&id)))?;

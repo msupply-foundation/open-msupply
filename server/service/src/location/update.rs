@@ -19,8 +19,8 @@ pub enum UpdateLocationError {
 }
 
 pub fn update_location(
-    input: UpdateLocation,
     ctx: &ServiceContext,
+    input: UpdateLocation,
 ) -> Result<Location, UpdateLocationError> {
     let location = ctx
         .connection
@@ -29,7 +29,7 @@ pub fn update_location(
             let updated_location_row = generate(input, location_row);
             LocationRowRepository::new(&connection).upsert_one(&updated_location_row)?;
 
-            get_location(updated_location_row.id, ctx).map_err(UpdateLocationError::from)
+            get_location(ctx, updated_location_row.id).map_err(UpdateLocationError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(location)

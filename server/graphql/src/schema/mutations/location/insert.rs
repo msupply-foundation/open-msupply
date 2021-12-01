@@ -22,7 +22,7 @@ pub fn insert_location(ctx: &Context<'_>, input: InsertLocationInput) -> InsertL
 
     match service_provider
         .location_service
-        .insert_location(input.into(), &service_context)
+        .insert_location(&service_context, input.into())
     {
         Ok(location) => InsertLocationResponse::Response(location.into()),
         Err(error) => InsertLocationResponse::Error(error.into()),
