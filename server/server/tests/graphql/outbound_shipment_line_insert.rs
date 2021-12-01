@@ -8,6 +8,7 @@ mod graphql {
         insert_outbound_shipment_line_full as insert, InsertOutboundShipmentLineFull as Insert,
     };
     use domain::invoice::{InvoiceStatus, InvoiceType};
+    use domain::EqualFilter;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
@@ -67,31 +68,31 @@ mod graphql {
 
         let draft_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::OutboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Draft))
-                .id(|f| f.equal_to(&"outbound_shipment_c".to_owned())),
+                .r#type(InvoiceType::OutboundShipment.equal_to())
+                .status(InvoiceStatus::Draft.equal_to())
+                .id(EqualFilter::equal_to("outbound_shipment_c")),
             &connection
         );
 
         let confirmed_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::OutboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Confirmed))
-                .id(|f| f.equal_to(&"outbound_shipment_d".to_owned())),
+                .r#type(InvoiceType::OutboundShipment.equal_to())
+                .status(InvoiceStatus::Confirmed.equal_to())
+                .id(EqualFilter::equal_to("outbound_shipment_d")),
             &connection
         );
 
         let finalised_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::OutboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
+                .r#type(InvoiceType::OutboundShipment.equal_to())
+                .status(InvoiceStatus::Finalised.equal_to()),
             &connection
         );
 
         let inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .id(|f| f.equal_to(&"inbound_shipment_c".to_owned())),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
 

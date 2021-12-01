@@ -1,5 +1,3 @@
-use crate::AddToFilter;
-
 use super::{EqualFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
@@ -27,23 +25,23 @@ impl LocationFilter {
         }
     }
 
-    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.id = self.id.add(f);
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
         self
     }
 
-    pub fn name<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.name = self.name.add(f);
+    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+        self.name = Some(filter);
         self
     }
 
-    pub fn code<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.code = self.code.add(f);
+    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
+        self.code = Some(filter);
         self
     }
 
-    pub fn store_id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.store_id = self.store_id.add(f);
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

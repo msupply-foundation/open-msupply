@@ -2,7 +2,7 @@ mod graphql {
     use crate::graphql::assert_gql_query;
     use domain::{
         location::{Location, LocationFilter, LocationSort, LocationSortField},
-        PaginationOption, Sort,
+        EqualFilter, PaginationOption, Sort,
     };
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
@@ -228,7 +228,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, filter, _| {
             assert_eq!(
                 filter,
-                Some(LocationFilter::new().name(|f| f.equal_to(&"match_name".to_owned())))
+                Some(LocationFilter::new().name(EqualFilter::equal_to("match_name")))
             );
             Ok(ListResult::empty())
         }));

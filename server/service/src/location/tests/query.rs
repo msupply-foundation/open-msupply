@@ -2,7 +2,7 @@
 mod query {
     use domain::{
         location::{LocationFilter, LocationSortField},
-        PaginationOption, Sort,
+        EqualFilter, PaginationOption, Sort,
     };
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
@@ -79,7 +79,7 @@ mod query {
             .get_locations(
                 &context,
                 None,
-                Some(LocationFilter::new().id(|f| f.equal_to(&"location_1".to_owned()))),
+                Some(LocationFilter::new().id(EqualFilter::equal_to("location_1"))),
                 None,
             )
             .unwrap();
@@ -91,9 +91,10 @@ mod query {
             .get_locations(
                 &context,
                 None,
-                Some(LocationFilter::new().id(|f| {
-                    f.equal_any(vec!["location_1".to_owned(), "location_on_hold".to_owned()])
-                })),
+                Some(LocationFilter::new().id(EqualFilter::equal_any(vec![
+                    "location_1".to_owned(),
+                    "location_on_hold".to_owned(),
+                ]))),
                 None,
             )
             .unwrap();

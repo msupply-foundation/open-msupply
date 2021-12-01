@@ -1,8 +1,5 @@
-use chrono::NaiveDateTime;
-
-use crate::AddToFilter;
-
 use super::{DatetimeFilter, EqualFilter, SimpleStringFilter, Sort};
+use chrono::NaiveDateTime;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum InvoiceStatus {
@@ -64,24 +61,18 @@ impl InvoiceFilter {
         }
     }
 
-    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.id = self.id.add(f);
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
         self
     }
 
-    pub fn r#type<F: FnOnce(EqualFilter<InvoiceType>) -> EqualFilter<InvoiceType>>(
-        mut self,
-        f: F,
-    ) -> Self {
-        self.r#type = self.r#type.add(f);
+    pub fn r#type(mut self, filter: EqualFilter<InvoiceType>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 
-    pub fn status<F: FnOnce(EqualFilter<InvoiceStatus>) -> EqualFilter<InvoiceStatus>>(
-        mut self,
-        f: F,
-    ) -> Self {
-        self.status = self.status.add(f);
+    pub fn status(mut self, filter: EqualFilter<InvoiceStatus>) -> Self {
+        self.status = Some(filter);
         self
     }
 
@@ -117,4 +108,56 @@ pub type InvoiceSort = Sort<InvoiceSortField>;
 #[derive(Clone)]
 pub struct InvoicePricing {
     pub total_after_tax: f64,
+}
+
+impl InvoiceStatus {
+    pub fn equal_to(&self) -> EqualFilter<InvoiceStatus> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<InvoiceStatus> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: Some(self.clone()),
+            equal_any: None,
+        }
+    }
+
+    pub fn equal_any(value: Vec<InvoiceStatus>) -> EqualFilter<InvoiceStatus> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: Some(value),
+        }
+    }
+}
+
+impl InvoiceType {
+    pub fn equal_to(&self) -> EqualFilter<InvoiceType> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<InvoiceType> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: Some(self.clone()),
+            equal_any: None,
+        }
+    }
+
+    pub fn equal_any(value: Vec<InvoiceType>) -> EqualFilter<InvoiceType> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: Some(value),
+        }
+    }
 }

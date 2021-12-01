@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod query {
-    use domain::location::{LocationFilter, UpdateLocation};
+    use domain::{
+        location::{LocationFilter, UpdateLocation},
+        EqualFilter,
+    };
     use repository::{mock::MockDataInserts, test_db::setup_all, LocationRepository};
 
     use crate::{
@@ -19,17 +22,15 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(
-                LocationFilter::new()
-                    .store_id(|f| f.equal_to(&current_store_id(&connection).unwrap())),
-            )
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to(
+                &current_store_id(&connection).unwrap(),
+            )))
             .unwrap();
 
         let locations_not_in_store = location_repository
-            .query_by_filter(
-                LocationFilter::new()
-                    .store_id(|f| f.not_equal_to(&current_store_id(&connection).unwrap())),
-            )
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to(
+                &current_store_id(&connection).unwrap(),
+            )))
             .unwrap();
 
         // Location does not exist
@@ -86,10 +87,9 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(
-                LocationFilter::new()
-                    .store_id(|f| f.equal_to(&current_store_id(&connection).unwrap())),
-            )
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to(
+                &current_store_id(&connection).unwrap(),
+            )))
             .unwrap();
 
         // Success with no changes
@@ -109,7 +109,7 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(|f| f.equal_to(&location.id)))
+                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location.id)))
                 .unwrap()[0],
             location
         );
@@ -135,7 +135,7 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(|f| f.equal_to(&location.id)))
+                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location.id)))
                 .unwrap()[0],
             location
         );

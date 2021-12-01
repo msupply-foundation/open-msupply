@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod query {
-    use domain::location::{InsertLocation, Location, LocationFilter};
+    use domain::{
+        location::{InsertLocation, Location, LocationFilter},
+        EqualFilter,
+    };
     use repository::{mock::MockDataInserts, test_db::setup_all, LocationRepository};
 
     use crate::{
@@ -19,10 +22,9 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(
-                LocationFilter::new()
-                    .store_id(|f| f.equal_to(&current_store_id(&connection).unwrap())),
-            )
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to(
+                &current_store_id(&connection).unwrap(),
+            )))
             .unwrap();
 
         assert_eq!(
@@ -87,8 +89,10 @@ mod query {
             location_repository
                 .query_by_filter(
                     LocationFilter::new()
-                        .id(|f| f.equal_to(&"new_id".to_owned()))
-                        .store_id(|f| f.equal_to(&current_store_id(&connection).unwrap()))
+                        .id(EqualFilter::equal_to("new_id"))
+                        .store_id(EqualFilter::equal_to(
+                            &current_store_id(&connection).unwrap()
+                        ))
                 )
                 .unwrap(),
             vec![result_location]

@@ -13,7 +13,7 @@ mod graphql {
     use domain::{
         invoice::{InvoiceFilter, InvoiceStatus, InvoiceType},
         name::NameFilter,
-        Pagination,
+        EqualFilter, Pagination,
     };
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
@@ -77,21 +77,21 @@ mod graphql {
         let supplier = get_name_inline!(
             NameFilter::new()
                 .match_is_supplier(true)
-                .id(|f| f.equal_to(&"name_store_c".to_owned())),
+                .id(EqualFilter::equal_to("name_store_c")),
             &connection
         );
         let another_name = get_name_inline!(
             NameFilter::new()
                 .match_is_supplier(true)
-                .id(|f| f.equal_to(&"name_a".to_owned())),
+                .id(EqualFilter::equal_to("name_a")),
             &connection
         );
 
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Draft))
-                .id(|f| f.equal_to(&"inbound_shipment_c".to_owned())),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Draft.equal_to())
+                .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
 
@@ -111,7 +111,7 @@ mod graphql {
         );
 
         let outbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
 

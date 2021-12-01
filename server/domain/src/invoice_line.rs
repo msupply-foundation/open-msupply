@@ -1,7 +1,5 @@
 use chrono::NaiveDate;
 
-use crate::AddToFilter;
-
 use super::{EqualFilter, Sort};
 #[derive(Clone, PartialEq, Debug)]
 
@@ -38,24 +36,18 @@ impl InvoiceLineFilter {
         }
     }
 
-    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.id = self.id.add(f);
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
         self
     }
 
-    pub fn invoice_id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(
-        mut self,
-        f: F,
-    ) -> Self {
-        self.invoice_id = self.invoice_id.add(f);
+    pub fn invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.invoice_id = Some(filter);
         self
     }
 
-    pub fn location_id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(
-        mut self,
-        f: F,
-    ) -> Self {
-        self.location_id = self.location_id.add(f);
+    pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_id = Some(filter);
         self
     }
 }

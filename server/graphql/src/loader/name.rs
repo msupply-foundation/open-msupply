@@ -1,7 +1,10 @@
 use async_graphql::dataloader::*;
 use std::collections::HashMap;
 
-use domain::name::{Name, NameFilter};
+use domain::{
+    name::{Name, NameFilter},
+    EqualFilter,
+};
 use repository::{NameQueryRepository, RepositoryError, StorageConnectionManager};
 
 pub struct NameByIdLoader {
@@ -18,7 +21,7 @@ impl Loader<String> for NameByIdLoader {
         let repo = NameQueryRepository::new(&connection);
 
         Ok(repo
-            .query_by_filter(NameFilter::new().id(|f| f.equal_any(ids.to_owned())))?
+            .query_by_filter(NameFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?
             .into_iter()
             .map(|name| (name.id.clone(), name))
             .collect())

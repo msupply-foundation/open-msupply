@@ -1,4 +1,4 @@
-use domain::{name::NameFilter, outbound_shipment::InsertOutboundShipment};
+use domain::{name::NameFilter, outbound_shipment::InsertOutboundShipment, EqualFilter};
 use repository::{InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection};
 
 use super::InsertOutboundShipmentError;
@@ -42,7 +42,7 @@ pub fn check_other_party_id(
 
     let other_party_id = &input.other_party_id;
     let mut result =
-        repository.query_by_filter(NameFilter::new().id(|f| f.equal_to(&other_party_id)))?;
+        repository.query_by_filter(NameFilter::new().id(EqualFilter::equal_to(&other_party_id)))?;
 
     if let Some(name) = result.pop() {
         if name.is_customer {

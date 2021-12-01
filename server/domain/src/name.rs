@@ -1,5 +1,3 @@
-use crate::AddToFilter;
-
 use super::{EqualFilter, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
@@ -37,8 +35,8 @@ impl NameFilter {
         }
     }
 
-    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
-        self.id = self.id.add(f);
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
         self
     }
 

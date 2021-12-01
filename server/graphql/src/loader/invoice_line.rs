@@ -1,5 +1,6 @@
 use domain::invoice::InvoicePricing;
 use domain::invoice_line::{InvoiceLine, InvoiceLineFilter};
+use domain::EqualFilter;
 use repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
@@ -24,7 +25,7 @@ impl Loader<String> for InvoiceLineLoader {
 
         let result = repo
             .query_by_filter(
-                InvoiceLineFilter::new().id(|f| f.equal_any(invoice_line_ids.to_owned())),
+                InvoiceLineFilter::new().id(EqualFilter::equal_any(invoice_line_ids.to_owned())),
             )?
             .into_iter()
             .map(|invoice_line| (invoice_line.id.clone(), invoice_line))
