@@ -212,7 +212,6 @@ mod graphql {
           }
         }));
 
-        // Record Already Exists
         let test_service = TestService(Box::new(|_| {
             Ok(Location {
                 id: "id".to_owned(),
