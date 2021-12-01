@@ -1,10 +1,13 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, ServiceOverride};
+    use crate::graphql::assert_gql_query;
     use domain::location::{Location, UpdateLocation};
-    use repository::mock::MockDataInserts;
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
-    use service::location::update::{UpdateLocationError, UpdateLocationServiceTrait};
+    use service::{
+        location::update::{UpdateLocationError, UpdateLocationServiceTrait},
+        service_provider::{ServiceContext, ServiceProvider},
+    };
 
     type UpdateLocationMethod =
         dyn Fn(UpdateLocation) -> Result<Location, UpdateLocationError> + Sync + Send;
@@ -12,21 +15,29 @@ mod graphql {
     struct TestService(pub Box<UpdateLocationMethod>);
 
     impl UpdateLocationServiceTrait for TestService {
-        fn update_location(&self, input: UpdateLocation) -> Result<Location, UpdateLocationError> {
+        fn update_location(
+            &self,
+            input: UpdateLocation,
+            _: &ServiceContext,
+        ) -> Result<Location, UpdateLocationError> {
             (self.0)(input)
         }
     }
 
-    macro_rules! service_override {
-        ($closure:expr) => {{
-            ServiceOverride::new()
-                .set_update_location_service(Box::new(|| Box::new(TestService(Box::new($closure)))))
-        }};
+    impl TestService {
+        pub fn service_provider(
+            self,
+            connection_manager: StorageConnectionManager,
+        ) -> ServiceProvider {
+            let mut service_provider = ServiceProvider::new(connection_manager);
+            service_provider.update_location_service = Box::new(self);
+            service_provider
+        }
     }
 
     #[actix_rt::test]
     async fn test_graphql_update_location_errors() {
-        let (_, _, settings) = setup_all(
+        let (_, _, connection_manager, settings) = setup_all(
             "test_graphql_update_location_errors",
             MockDataInserts::all(),
         )
@@ -53,8 +64,8 @@ mod graphql {
         }));
 
         // Record Not Found
-        let service_override =
-            service_override!(|_| Err(UpdateLocationError::LocationDoesNotExist));
+        let test_service =
+            TestService(Box::new(|_| Err(UpdateLocationError::LocationDoesNotExist)));
 
         let expected = json!({
             "updateLocation": {
@@ -70,13 +81,14 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
         // Not current store location
-        let service_override =
-            service_override!(|_| Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore));
+        let test_service = TestService(Box::new(|_| {
+            Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore)
+        }));
 
         let expected = json!({
             "updateLocation": {
@@ -92,7 +104,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
@@ -111,8 +123,7 @@ mod graphql {
                   }
                 }
               "#;
-
-        let service_override = service_override!(|_| Err(UpdateLocationError::CodeAlreadyExists));
+        let test_service = TestService(Box::new(|_| Err(UpdateLocationError::CodeAlreadyExists)));
 
         let expected = json!({
             "updateLocation": {
@@ -129,7 +140,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
@@ -150,8 +161,9 @@ mod graphql {
            }
          "#;
 
-        let service_override =
-            service_override!(|_| Err(UpdateLocationError::UpdatedRecordDoesNotExist));
+        let test_service = TestService(Box::new(|_| {
+            Err(UpdateLocationError::UpdatedRecordDoesNotExist)
+        }));
 
         let expected = json!({
             "updateLocation": {
@@ -169,14 +181,14 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
     }
 
     #[actix_rt::test]
     async fn test_graphql_update_location_success() {
-        let (_, _, settings) = setup_all(
+        let (_, _, connection_manager, settings) = setup_all(
             "test_graphql_update_location_success",
             MockDataInserts::all(),
         )
@@ -202,11 +214,14 @@ mod graphql {
           }
         }));
 
-        let service_override = service_override!(|_| Ok(Location {
-            id: "id".to_owned(),
-            name: "name".to_owned(),
-            code: "code".to_owned(),
-            on_hold: true
+        // Record Already Exists
+        let test_service = TestService(Box::new(|_| {
+            Ok(Location {
+                id: "id".to_owned(),
+                name: "name".to_owned(),
+                code: "code".to_owned(),
+                on_hold: true,
+            })
         }));
 
         let expected = json!({
@@ -225,7 +240,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
     }

@@ -1,26 +1,25 @@
 use domain::location::{InsertLocation, LocationFilter};
-use repository::LocationRepository;
+use repository::{LocationRepository, StorageConnection};
 
-use crate::{
-    location::validate::{check_location_code_is_unique, LocationWithCodeAlreadyExists},
-    service_provider::ServiceConnection,
-};
+use crate::location::validate::{check_location_code_is_unique, LocationWithCodeAlreadyExists};
 
 use super::InsertLocationError;
 
 pub fn validate(
     input: &InsertLocation,
-    connection: &ServiceConnection,
+    connection: &StorageConnection,
 ) -> Result<(), InsertLocationError> {
     check_location_does_not_exist(&input.id, connection)?;
     check_location_code_is_unique(&input.id, &Some(input.code.clone()), connection)?;
+
+    // TODO Check location belongs to current store
 
     Ok(())
 }
 
 pub fn check_location_does_not_exist(
     id: &String,
-    connection: &ServiceConnection,
+    connection: &StorageConnection,
 ) -> Result<(), InsertLocationError> {
     let locations = LocationRepository::new(connection)
         .query_by_filter(LocationFilter::new().id(|f| f.equal_to(id)))?;

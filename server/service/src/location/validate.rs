@@ -1,14 +1,14 @@
 use domain::location::LocationFilter;
-use repository::{schema::LocationRow, LocationRepository, LocationRowRepository};
+use repository::{LocationRepository, StorageConnection};
 
-use crate::{current_store_id, service_provider::ServiceConnection, WithDBError};
+use crate::{current_store_id, WithDBError};
 
 pub struct LocationWithCodeAlreadyExists;
 
 pub fn check_location_code_is_unique(
     id: &String,
     code_option: &Option<String>,
-    connection: &ServiceConnection,
+    connection: &StorageConnection,
 ) -> Result<(), WithDBError<LocationWithCodeAlreadyExists>> {
     if let Some(code) = code_option {
         let current_store_id = current_store_id(connection)?;
@@ -23,6 +23,7 @@ pub fn check_location_code_is_unique(
             return Err(WithDBError::Error(LocationWithCodeAlreadyExists {}));
         }
     }
+
     Ok(())
 }
 

@@ -4,22 +4,27 @@ use domain::{
 };
 use repository::LocationRepository;
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
+use crate::{
+    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    SingleRecordError,
+};
 
-use super::{LocationQueryService, LocationQueryServiceTrait};
+use super::LocationQueryServiceTrait;
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
+pub struct LocationQueryService {}
 
-impl<'a> LocationQueryServiceTrait for LocationQueryService<'a> {
+impl LocationQueryServiceTrait for LocationQueryService {
     fn get_locations(
         &self,
         pagination: Option<PaginationOption>,
         filter: Option<LocationFilter>,
         sort: Option<LocationSort>,
+        ctx: &ServiceContext,
     ) -> Result<ListResult<Location>, ListError> {
         let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-        let repository = LocationRepository::new(&self.0);
+        let repository = LocationRepository::new(&ctx.connection);
 
         Ok(ListResult {
             rows: repository.query(pagination, filter.clone(), sort)?,
@@ -27,8 +32,12 @@ impl<'a> LocationQueryServiceTrait for LocationQueryService<'a> {
         })
     }
 
-    fn get_location(&self, id: String) -> Result<Location, SingleRecordError> {
-        let repository = LocationRepository::new(&self.0);
+    fn get_location(
+        &self,
+        id: String,
+        ctx: &ServiceContext,
+    ) -> Result<Location, SingleRecordError> {
+        let repository = LocationRepository::new(&ctx.connection);
 
         let mut result =
             repository.query_by_filter(LocationFilter::new().id(|f| f.equal_to(&id)))?;

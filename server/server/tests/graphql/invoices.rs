@@ -10,7 +10,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_pricing() {
-        let (_, connection, settings) = setup_all(
+        let (_, connection, _, settings) = setup_all(
             "omsupply-database-gql-invoices-query-pricing",
             MockDataInserts::all(),
         )
@@ -61,7 +61,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_filters() {
-        let (_, connection, settings) = setup_all(
+        let (_, connection, _, settings) = setup_all(
             "omsupply-database-gql-invoices-query-filters",
             MockDataInserts::all(),
         )
@@ -162,7 +162,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_sort() {
-        let (_, connection, settings) = setup_all(
+        let (_, connection, _, settings) = setup_all(
             "omsupply-database-gql-invoices-query-sort",
             MockDataInserts::all(),
         )
