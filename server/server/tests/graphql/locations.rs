@@ -8,7 +8,7 @@ mod graphql {
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
-        location::LocationQueryServiceTrait,
+        location::LocationServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
@@ -23,7 +23,7 @@ mod graphql {
 
     struct TestService(pub Box<GetLocations>);
 
-    impl LocationQueryServiceTrait for TestService {
+    impl LocationServiceTrait for TestService {
         fn get_locations(
             &self,
             pagination: Option<PaginationOption>,
@@ -33,14 +33,6 @@ mod graphql {
         ) -> Result<ListResult<Location>, ListError> {
             (self.0)(pagination, filter, sort)
         }
-
-        fn get_location(
-            &self,
-            _: String,
-            _: &ServiceContext,
-        ) -> Result<domain::location::Location, service::SingleRecordError> {
-            todo!()
-        }
     }
 
     impl TestService {
@@ -49,7 +41,7 @@ mod graphql {
             connection_manager: StorageConnectionManager,
         ) -> ServiceProvider {
             let mut service_provider = ServiceProvider::new(connection_manager);
-            service_provider.location_query_service = Box::new(self);
+            service_provider.location_service = Box::new(self);
             service_provider
         }
     }

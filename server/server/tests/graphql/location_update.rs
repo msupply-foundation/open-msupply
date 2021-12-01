@@ -5,7 +5,7 @@ mod graphql {
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
-        location::update::{UpdateLocationError, UpdateLocationServiceTrait},
+        location::{update::{ UpdateLocationError}, LocationServiceTrait},
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -14,7 +14,7 @@ mod graphql {
 
     struct TestService(pub Box<UpdateLocationMethod>);
 
-    impl UpdateLocationServiceTrait for TestService {
+    impl LocationServiceTrait for TestService {
         fn update_location(
             &self,
             input: UpdateLocation,
@@ -30,7 +30,7 @@ mod graphql {
             connection_manager: StorageConnectionManager,
         ) -> ServiceProvider {
             let mut service_provider = ServiceProvider::new(connection_manager);
-            service_provider.update_location_service = Box::new(self);
+            service_provider.location_service = Box::new(self);
             service_provider
         }
     }

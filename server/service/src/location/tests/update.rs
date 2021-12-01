@@ -8,15 +8,15 @@ mod query {
     };
 
     #[actix_rt::test]
-    async fn update_location_service_errors() {
+    async fn location_service_update_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("update_location_service_errors", MockDataInserts::all()).await;
+            setup_all("location_service_update_errors", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.update_location_service;
+        let service = service_provider.location_service;
 
         let locations_in_store = location_repository
             .query_by_filter(
@@ -75,15 +75,15 @@ mod query {
         );
     }
     #[actix_rt::test]
-    async fn update_location_service_success() {
+    async fn location_service_update_success() {
         let (_, _, connection_manager, _) =
-            setup_all("update_location_service_success", MockDataInserts::all()).await;
+            setup_all("location_service_update_success", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.update_location_service;
+        let service = service_provider.location_service;
 
         let locations_in_store = location_repository
             .query_by_filter(

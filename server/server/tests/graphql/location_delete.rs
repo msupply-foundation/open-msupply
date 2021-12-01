@@ -5,7 +5,7 @@ mod graphql {
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
-        location::delete::{DeleteLocationError, DeleteLocationServiceTrait},
+        location::{delete::{DeleteLocationError, LocationInUse}, LocationServiceTrait},
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -14,7 +14,7 @@ mod graphql {
 
     struct TestService(pub Box<DeleteLocationMethod>);
 
-    impl DeleteLocationServiceTrait for TestService {
+    impl LocationServiceTrait for TestService {
         fn delete_location(
             &self,
             input: DeleteLocation,
@@ -30,7 +30,7 @@ mod graphql {
             connection_manager: StorageConnectionManager,
         ) -> ServiceProvider {
             let mut service_provider = ServiceProvider::new(connection_manager);
-            service_provider.delete_location_service = Box::new(self);
+            service_provider.location_service = Box::new(self);
             service_provider
         }
     }
@@ -132,7 +132,7 @@ mod graphql {
         "#;
 
         let test_service = TestService(Box::new(|_| {
-            Err(DeleteLocationError::LocationInUse {
+            Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines: vec![StockLine {
                     id: "stock_line_id".to_owned(),
                     item_id: "n/a".to_owned(),
@@ -166,7 +166,7 @@ mod graphql {
                     expiry_date: None,
                     note: None,
                 }],
-            })
+            }))
         }));
 
         // let invoice_line_ids = stock_lines.iter();
