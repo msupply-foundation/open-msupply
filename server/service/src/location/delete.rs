@@ -62,7 +62,7 @@ pub fn validate(
 }
 
 pub fn check_location_in_use(
-    id: &String,
+    id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<LocationInUse>, RepositoryError> {
     let stock_lines = StockLineRepository::new(connection)

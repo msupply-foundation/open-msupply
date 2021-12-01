@@ -7,8 +7,8 @@ use repository::{
 use crate::current_store_id;
 
 pub fn check_location_code_is_unique(
-    id: &String,
-    code: &String,
+    id: &str,
+    code: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let current_store_id = current_store_id(connection)?;

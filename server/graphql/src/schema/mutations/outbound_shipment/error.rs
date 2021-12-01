@@ -89,7 +89,7 @@ impl InvoiceLineHasNoStockLineError {
         format!("Invoice line ({}) has no matching stock line", self.0)
     }
 
-    pub async fn invoice_line_id(&self) -> &String {
+    pub async fn invoice_line_id(&self) -> &str {
         &self.0
     }
 }

@@ -69,7 +69,7 @@ pub fn generate(
 }
 
 pub fn check_location_does_not_exist(
-    id: &String,
+    id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let locations = LocationRepository::new(connection)
