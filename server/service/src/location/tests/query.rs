@@ -19,26 +19,26 @@ mod query {
 
         assert_eq!(
             service.get_locations(
+                &context,
                 Some(PaginationOption {
                     limit: Some(2000),
                     offset: None
                 }),
                 None,
                 None,
-                &context
             ),
             Err(ListError::LimitAboveMax(1000))
         );
 
         assert_eq!(
             service.get_locations(
+                &context,
                 Some(PaginationOption {
                     limit: Some(0),
                     offset: None,
                 }),
                 None,
                 None,
-                &context
             ),
             Err(ListError::LimitBelowMin(1))
         );
@@ -54,12 +54,12 @@ mod query {
         let service = service_provider.location_service;
 
         assert_eq!(
-            service.get_location("invalid_id".to_owned(), &context),
+            service.get_location(&context, "invalid_id".to_owned()),
             Err(SingleRecordError::NotFound("invalid_id".to_owned()))
         );
 
         let result = service
-            .get_location("location_on_hold".to_owned(), &context)
+            .get_location(&context, "location_on_hold".to_owned())
             .unwrap();
 
         assert_eq!(result.id, "location_on_hold");
@@ -77,10 +77,10 @@ mod query {
 
         let result = service
             .get_locations(
+                &context,
                 None,
                 Some(LocationFilter::new().id(|f| f.equal_to(&"location_1".to_owned()))),
                 None,
-                &context,
             )
             .unwrap();
 
@@ -89,12 +89,12 @@ mod query {
 
         let result = service
             .get_locations(
+                &context,
                 None,
                 Some(LocationFilter::new().id(|f| {
                     f.equal_any(vec!["location_1".to_owned(), "location_on_hold".to_owned()])
                 })),
                 None,
-                &context,
             )
             .unwrap();
 
@@ -114,13 +114,13 @@ mod query {
         // Test Name sort with default sort order
         let result = service
             .get_locations(
+                &context,
                 None,
                 None,
                 Some(Sort {
                     key: LocationSortField::Name,
                     desc: None,
                 }),
-                &context,
             )
             .unwrap();
 
@@ -142,13 +142,13 @@ mod query {
         // Test Name sort with desc sort
         let result = service
             .get_locations(
+                &context,
                 None,
                 None,
                 Some(Sort {
                     key: LocationSortField::Name,
                     desc: Some(true),
                 }),
-                &context,
             )
             .unwrap();
 

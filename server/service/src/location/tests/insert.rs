@@ -27,26 +27,26 @@ mod query {
 
         assert_eq!(
             service.insert_location(
+                &context,
                 InsertLocation {
                     id: mock_data.locations[0].id.clone(),
                     code: "invalid".to_owned(),
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(InsertLocationError::LocationAlreadyExists)
         );
 
         assert_eq!(
             service.insert_location(
+                &context,
                 InsertLocation {
                     id: "new_id".to_owned(),
                     code: locations_in_store[0].code.clone(),
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(InsertLocationError::LocationWithCodeAlreadyExists)
         );
@@ -72,13 +72,13 @@ mod query {
 
         assert_eq!(
             service.insert_location(
+                &context,
                 InsertLocation {
                     id: "new_id".to_owned(),
                     code: "new_code".to_owned(),
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Ok(result_location.clone())
         );
@@ -97,13 +97,13 @@ mod query {
         // Insert location with code that appears in location in another store
         assert_eq!(
             service.insert_location(
+                &context,
                 InsertLocation {
                     id: "new_id2".to_owned(),
                     code: "store_b_location_code".to_owned(),
                     name: Some("new_location_name".to_owned()),
                     on_hold: Some(true),
                 },
-                &context
             ),
             Ok(Location {
                 id: "new_id2".to_owned(),

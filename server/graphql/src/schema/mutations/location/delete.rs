@@ -22,7 +22,7 @@ pub fn delete_location(ctx: &Context<'_>, input: DeleteLocationInput) -> DeleteL
 
     match service_provider
         .location_service
-        .delete_location(input.into(), &service_context)
+        .delete_location(&service_context, input.into())
     {
         Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
         Err(error) => DeleteLocationResponse::Error(error.into()),

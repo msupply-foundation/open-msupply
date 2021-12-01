@@ -26,20 +26,12 @@ mod graphql {
     impl LocationServiceTrait for TestService {
         fn get_locations(
             &self,
+            _: &ServiceContext,
             pagination: Option<PaginationOption>,
             filter: Option<LocationFilter>,
             sort: Option<LocationSort>,
-            _: &ServiceContext,
         ) -> Result<ListResult<Location>, ListError> {
             (self.0)(pagination, filter, sort)
-        }
-
-        fn get_location(
-            &self,
-            _: String,
-            _: &ServiceContext,
-        ) -> Result<domain::location::Location, service::SingleRecordError> {
-            todo!()
         }
     }
 

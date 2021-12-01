@@ -20,8 +20,8 @@ mod graphql {
     impl LocationServiceTrait for TestService {
         fn delete_location(
             &self,
-            input: DeleteLocation,
             _: &ServiceContext,
+            input: DeleteLocation,
         ) -> Result<String, DeleteLocationError> {
             (self.0)(input)
         }

@@ -26,8 +26,8 @@ pub enum DeleteLocationError {
 }
 
 pub fn delete_location(
-    input: DeleteLocation,
     ctx: &ServiceContext,
+    input: DeleteLocation,
 ) -> Result<String, DeleteLocationError> {
     let location_id = ctx
         .connection
