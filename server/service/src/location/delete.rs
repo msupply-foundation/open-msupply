@@ -1,7 +1,5 @@
 use super::validate::check_location_exists;
-use crate::{
-    service_provider::ServiceContext, validate::check_record_belongs_to_current_store, WithDBError,
-};
+use crate::{service_provider::ServiceContext, validate::check_record_belongs_to_current_store};
 use domain::{
     invoice_line::{InvoiceLine, InvoiceLineFilter},
     location::DeleteLocation,
@@ -82,17 +80,5 @@ pub fn check_location_in_use(
 impl From<RepositoryError> for DeleteLocationError {
     fn from(error: RepositoryError) -> Self {
         DeleteLocationError::DatabaseError(error)
-    }
-}
-
-impl<E> From<WithDBError<E>> for DeleteLocationError
-where
-    E: Into<DeleteLocationError>,
-{
-    fn from(result: WithDBError<E>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
-        }
     }
 }
