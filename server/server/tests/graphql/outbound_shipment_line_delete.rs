@@ -53,7 +53,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_delete_outbound_shipment_line() {
-        let (_, connection, settings) = setup_all(
+        let (_, connection, _, settings) = setup_all(
             "test_delete_outbound_shipment_line_query",
             MockDataInserts::all(),
         )

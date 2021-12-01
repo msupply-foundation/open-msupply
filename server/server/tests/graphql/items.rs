@@ -6,7 +6,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_items_query() {
-        let (_, _, settings) = setup_all("test_items_query", MockDataInserts::all()).await;
+        let (_, _, _, settings) = setup_all("test_items_query", MockDataInserts::all()).await;
 
         let query = r#"query items($itemFilter: ItemFilterInput!) {
             items(filter: $itemFilter) {

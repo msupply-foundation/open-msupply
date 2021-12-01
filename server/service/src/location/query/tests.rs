@@ -6,20 +6,16 @@ mod query {
     };
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
-    use crate::{
-        location::{LocationQueryService, LocationQueryServiceTrait},
-        service_provider::ServiceConnection,
-        ListError, SingleRecordError,
-    };
+    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
     #[actix_rt::test]
     async fn location_service_pagination() {
         let (_, _, connection_manager, _) =
             setup_all("test_location_service_pagination", MockDataInserts::all()).await;
 
-        let service = LocationQueryService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.location_query_service;
 
         assert_eq!(
             service.get_locations(
@@ -28,7 +24,8 @@ mod query {
                     offset: None
                 }),
                 None,
-                None
+                None,
+                &context
             ),
             Err(ListError::LimitAboveMax(1000))
         );
@@ -40,7 +37,8 @@ mod query {
                     offset: None,
                 }),
                 None,
-                None
+                None,
+                &context
             ),
             Err(ListError::LimitBelowMin(1))
         );
@@ -51,16 +49,18 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_location_single_record", MockDataInserts::all()).await;
 
-        let service = LocationQueryService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.location_query_service;
 
         assert_eq!(
-            service.get_location("invalid_id".to_owned()),
+            service.get_location("invalid_id".to_owned(), &context),
             Err(SingleRecordError::NotFound("invalid_id".to_owned()))
         );
 
-        let result = service.get_location("location_on_hold".to_owned()).unwrap();
+        let result = service
+            .get_location("location_on_hold".to_owned(), &context)
+            .unwrap();
 
         assert_eq!(result.id, "location_on_hold");
         assert_eq!(result.on_hold, true);
@@ -71,15 +71,16 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_location_filter", MockDataInserts::all()).await;
 
-        let service = LocationQueryService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.location_query_service;
 
         let result = service
             .get_locations(
                 None,
                 Some(LocationFilter::new().match_id("location_1")),
                 None,
+                &context,
             )
             .unwrap();
 
@@ -94,6 +95,7 @@ mod query {
                         .match_ids(vec!["location_1".to_owned(), "location_on_hold".to_owned()]),
                 ),
                 None,
+                &context,
             )
             .unwrap();
 
@@ -107,9 +109,9 @@ mod query {
         let (mock_data, _, connection_manager, _) =
             setup_all("test_location_sort", MockDataInserts::all()).await;
 
-        let service = LocationQueryService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.location_query_service;
         // Test Name sort with default sort order
         let result = service
             .get_locations(
@@ -119,6 +121,7 @@ mod query {
                     key: LocationSortField::Name,
                     desc: None,
                 }),
+                &context,
             )
             .unwrap();
 
@@ -146,6 +149,7 @@ mod query {
                     key: LocationSortField::Name,
                     desc: Some(true),
                 }),
+                &context,
             )
             .unwrap();
 

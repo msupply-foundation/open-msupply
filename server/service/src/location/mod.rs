@@ -1,5 +1,5 @@
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceConnection, SingleRecordError};
+use crate::{service_provider::ServiceContext, SingleRecordError};
 use domain::{
     location::{Location, LocationFilter, LocationSort},
     PaginationOption,
@@ -7,15 +7,15 @@ use domain::{
 
 pub mod query;
 
-pub trait LocationQueryServiceTrait {
+pub trait LocationQueryServiceTrait: Sync + Send {
     fn get_locations(
         &self,
         pagination: Option<PaginationOption>,
         filter: Option<LocationFilter>,
         sort: Option<LocationSort>,
+        ctx: &ServiceContext,
     ) -> Result<ListResult<Location>, ListError>;
 
-    fn get_location(&self, id: String) -> Result<Location, SingleRecordError>;
+    fn get_location(&self, id: String, ctx: &ServiceContext)
+        -> Result<Location, SingleRecordError>;
 }
-
-pub struct LocationQueryService<'a>(pub ServiceConnection<'a>);
