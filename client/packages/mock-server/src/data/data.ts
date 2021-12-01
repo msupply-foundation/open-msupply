@@ -713,6 +713,7 @@ export const createStocktakeLine = (
     sellPricePerPack: stockLine?.sellPricePerPack,
     countedNumPacks: stockLine?.totalNumberOfPacks,
     expiryDate: stockLine?.expiryDate,
+    itemId: item.id,
     itemCode: item.code,
     itemName: item.name,
     snapshotNumPacks: stockLine?.totalNumberOfPacks,
