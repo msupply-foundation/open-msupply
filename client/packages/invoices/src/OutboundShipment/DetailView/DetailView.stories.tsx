@@ -3,7 +3,8 @@ import { Route } from 'react-router';
 
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { StoryProvider, TestingRouter } from '@openmsupply-client/common';
-import { handlers } from '@openmsupply-client/mock-server/src/worker/handlers';
+
+const handlers: any[] = [];
 
 import { DetailView } from './DetailView';
 

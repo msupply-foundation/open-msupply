@@ -40,11 +40,11 @@ export interface SupplierRequisition extends Requisition {
 export interface CustomerRequisition extends Requisition {
   isDeleted: boolean;
   otherParty: Name;
-  lines: SupplierRequisitionLine[];
+  lines: CustomerRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
-  upsertLine?: (line: SupplierRequisitionLine) => void;
-  deleteLine?: (line: SupplierRequisitionLine) => void;
+  upsertLine?: (line: CustomerRequisitionLine) => void;
+  deleteLine?: (line: CustomerRequisitionLine) => void;
 }
 
 export type RequisitionLine = Omit<RequisitionLineNode, '__typename'>;
