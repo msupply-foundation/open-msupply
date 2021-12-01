@@ -75,13 +75,16 @@ impl Mutations {
         input: DeleteLocationInput,
     ) -> DeleteLocationResponse {
         let service_provider = ctx.service_provider();
-        let delete_location_service = match service_provider.delete_location() {
+        let service_context = match service_provider.context() {
             Ok(service) => service,
             Err(error) => return DeleteLocationResponse::Error(error.into()),
         };
 
-        match delete_location_service.delete_location(input.into()) {
-            Ok(id) => DeleteLocationResponse::Response(DeleteResponse(id)),
+        match service_provider
+            .delete_location_service
+            .delete_location(input.into(), &service_context)
+        {
+            Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
             Err(error) => DeleteLocationResponse::Error(error.into()),
         }
     }

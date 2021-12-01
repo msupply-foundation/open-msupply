@@ -1,8 +1,11 @@
 use domain::location::UpdateLocation;
-use repository::{schema::LocationRow, LocationRowRepository, StorageConnection};
+use repository::{schema::LocationRow, StorageConnection};
 
 use crate::{
-    location::validate::{check_location_code_is_unique, LocationWithCodeAlreadyExists},
+    location::validate::{
+        check_location_code_is_unique, check_location_exists, LocationDoesNotExist,
+        LocationWithCodeAlreadyExists,
+    },
     validate::{check_record_belongs_to_current_store, RecordDoesNotBelongToCurrentStore},
 };
 
@@ -20,19 +23,6 @@ pub fn validate(
     Ok(location_row)
 }
 
-pub fn check_location_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<LocationRow, UpdateLocationError> {
-    let location_option = LocationRowRepository::new(connection).find_one_by_id(id)?;
-
-    if let Some(location) = location_option {
-        Ok(location)
-    } else {
-        Err(UpdateLocationError::LocationDoesNotExist)
-    }
-}
-
 impl From<LocationWithCodeAlreadyExists> for UpdateLocationError {
     fn from(_: LocationWithCodeAlreadyExists) -> Self {
         UpdateLocationError::CodeAlreadyExists
@@ -42,5 +32,11 @@ impl From<LocationWithCodeAlreadyExists> for UpdateLocationError {
 impl From<RecordDoesNotBelongToCurrentStore> for UpdateLocationError {
     fn from(_: RecordDoesNotBelongToCurrentStore) -> Self {
         UpdateLocationError::LocationDoesNotBelongToCurrentStore
+    }
+}
+
+impl From<LocationDoesNotExist> for UpdateLocationError {
+    fn from(_: LocationDoesNotExist) -> Self {
+        UpdateLocationError::LocationDoesNotExist
     }
 }

@@ -11,11 +11,7 @@ mod query {
     };
 
     use crate::{
-        current_store_id,
-        location::delete::{
-            DeleteLocationError, DeleteLocationService, DeleteLocationServiceTrait,
-        },
-        service_provider::ServiceConnection,
+        current_store_id, location::delete::DeleteLocationError, service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -27,9 +23,10 @@ mod query {
         let location_repository = LocationRepository::new(&connection);
         let stock_line_repository = StockLineRepository::new(&connection);
         let invoice_line_repository = InvoiceLineRepository::new(&connection);
-        let service = DeleteLocationService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.delete_location_service;
 
         let locations_not_in_store = location_repository
             .query_by_filter(
@@ -40,17 +37,23 @@ mod query {
 
         // Location does not exist
         assert_eq!(
-            service.delete_location(DeleteLocation {
-                id: "invalid".to_owned(),
-            }),
+            service.delete_location(
+                DeleteLocation {
+                    id: "invalid".to_owned(),
+                },
+                &context
+            ),
             Err(DeleteLocationError::LocationDoesNotExist)
         );
 
         // Location for another store
         assert_eq!(
-            service.delete_location(DeleteLocation {
-                id: locations_not_in_store[0].id.clone(),
-            }),
+            service.delete_location(
+                DeleteLocation {
+                    id: locations_not_in_store[0].id.clone(),
+                },
+                &context
+            ),
             Err(DeleteLocationError::LocationDoesNotBelongToCurrentStore)
         );
 
@@ -64,7 +67,7 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(DeleteLocation { id: location_id }),
+            service.delete_location(DeleteLocation { id: location_id }, &context),
             Err(DeleteLocationError::LocationInUse {
                 stock_lines,
                 invoice_lines
@@ -81,7 +84,7 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(DeleteLocation { id: location_id }),
+            service.delete_location(DeleteLocation { id: location_id }, &context),
             Err(DeleteLocationError::LocationInUse {
                 stock_lines,
                 invoice_lines
@@ -95,14 +98,17 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service = DeleteLocationService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.delete_location_service;
 
         assert_eq!(
-            service.delete_location(DeleteLocation {
-                id: "location_2".to_owned()
-            }),
+            service.delete_location(
+                DeleteLocation {
+                    id: "location_2".to_owned()
+                },
+                &context
+            ),
             Ok("location_2".to_owned())
         );
 

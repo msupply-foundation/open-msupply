@@ -5,23 +5,34 @@ use domain::{invoice_line::InvoiceLine, location::DeleteLocation, stock_line::St
 use repository::{LocationRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{service_provider::ServiceConnection, WithDBError};
+use crate::{service_provider::ServiceContext, WithDBError};
 
-pub trait DeleteLocationServiceTrait {
-    fn delete_location(&self, input: DeleteLocation) -> Result<String, DeleteLocationError>;
+pub trait DeleteLocationServiceTrait: Send + Sync {
+    fn delete_location(
+        &self,
+        input: DeleteLocation,
+        ctx: &ServiceContext,
+    ) -> Result<String, DeleteLocationError>;
 }
 
-pub struct DeleteLocationService<'a>(pub ServiceConnection<'a>);
+pub struct DeleteLocationService;
 
-impl<'a> DeleteLocationServiceTrait for DeleteLocationService<'a> {
-    fn delete_location(&self, input: DeleteLocation) -> Result<String, DeleteLocationError> {
-        let location_id = self.0.transaction(|connection| {
-            validate(&input, &connection)?;
-            match LocationRowRepository::new(&connection).delete(&input.id) {
-                Ok(_) => Ok(input.id),
-                Err(err) => Err(DeleteLocationError::from(err)),
-            }
-        })?;
+impl DeleteLocationServiceTrait for DeleteLocationService {
+    fn delete_location(
+        &self,
+        input: DeleteLocation,
+        ctx: &ServiceContext,
+    ) -> Result<String, DeleteLocationError> {
+        let location_id = ctx
+            .connection
+            .transaction_sync(|connection| {
+                validate(&input, &connection)?;
+                match LocationRowRepository::new(&connection).delete(&input.id) {
+                    Ok(_) => Ok(input.id),
+                    Err(err) => Err(DeleteLocationError::from(err)),
+                }
+            })
+            .map_err(|error| error.to_inner_error())?;
         Ok(location_id)
     }
 }

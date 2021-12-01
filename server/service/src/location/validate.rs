@@ -1,5 +1,7 @@
 use domain::location::LocationFilter;
-use repository::{LocationRepository, StorageConnection};
+use repository::{
+    schema::LocationRow, LocationRepository, LocationRowRepository, StorageConnection,
+};
 
 use crate::{current_store_id, WithDBError};
 
@@ -31,7 +33,7 @@ pub struct LocationDoesNotExist;
 
 pub fn check_location_exists(
     id: &str,
-    connection: &ServiceConnection,
+    connection: &StorageConnection,
 ) -> Result<LocationRow, WithDBError<LocationDoesNotExist>> {
     let location_option = LocationRowRepository::new(connection).find_one_by_id(id)?;
 
