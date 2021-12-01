@@ -25,6 +25,7 @@ mod invoice_query;
 mod invoices;
 mod items;
 mod location_insert;
+mod location_update;
 mod locations;
 mod names;
 mod outbound_shipment_delete;

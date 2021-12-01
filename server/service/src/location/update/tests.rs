@@ -4,11 +4,7 @@ mod query {
     use repository::{mock::MockDataInserts, test_db::setup_all, LocationRepository};
 
     use crate::{
-        current_store_id,
-        location::update::{
-            UpdateLocationError, UpdateLocationService, UpdateLocationServiceTrait,
-        },
-        service_provider::ServiceConnection,
+        current_store_id, location::update::UpdateLocationError, service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -18,9 +14,9 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service = UpdateLocationService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.update_location_service;
 
         let locations_in_store = location_repository
             .query_by_filter(
@@ -38,34 +34,43 @@ mod query {
 
         // Location does not exist
         assert_eq!(
-            service.update_location(UpdateLocation {
-                id: "invalid".to_owned(),
-                code: None,
-                name: None,
-                on_hold: None
-            }),
+            service.update_location(
+                UpdateLocation {
+                    id: "invalid".to_owned(),
+                    code: None,
+                    name: None,
+                    on_hold: None
+                },
+                &context
+            ),
             Err(UpdateLocationError::LocationDoesNotExist)
         );
 
         // Location for another store
         assert_eq!(
-            service.update_location(UpdateLocation {
-                id: locations_not_in_store[0].id.clone(),
-                code: None,
-                name: None,
-                on_hold: None
-            }),
+            service.update_location(
+                UpdateLocation {
+                    id: locations_not_in_store[0].id.clone(),
+                    code: None,
+                    name: None,
+                    on_hold: None
+                },
+                &context
+            ),
             Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore)
         );
 
         // Location for another store
         assert_eq!(
-            service.update_location(UpdateLocation {
-                id: locations_in_store[0].id.clone(),
-                code: Some(locations_in_store[1].code.clone()),
-                name: None,
-                on_hold: None
-            }),
+            service.update_location(
+                UpdateLocation {
+                    id: locations_in_store[0].id.clone(),
+                    code: Some(locations_in_store[1].code.clone()),
+                    name: None,
+                    on_hold: None
+                },
+                &context
+            ),
             Err(UpdateLocationError::CodeAlreadyExists)
         );
     }
@@ -76,9 +81,9 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service = UpdateLocationService(ServiceConnection::Connection(
-            connection_manager.connection().unwrap(),
-        ));
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.update_location_service;
 
         let locations_in_store = location_repository
             .query_by_filter(
@@ -90,12 +95,15 @@ mod query {
         // Success with no changes
         let location = locations_in_store[0].clone();
         assert_eq!(
-            service.update_location(UpdateLocation {
-                id: location.id.clone(),
-                code: None,
-                name: None,
-                on_hold: None
-            }),
+            service.update_location(
+                UpdateLocation {
+                    id: location.id.clone(),
+                    code: None,
+                    name: None,
+                    on_hold: None
+                },
+                &context
+            ),
             Ok(location.clone())
         );
 
@@ -113,12 +121,15 @@ mod query {
         location.on_hold = !location.on_hold;
 
         assert_eq!(
-            service.update_location(UpdateLocation {
-                id: location.id.clone(),
-                code: Some(location.code.clone()),
-                name: Some(location.name.clone()),
-                on_hold: Some(location.on_hold),
-            }),
+            service.update_location(
+                UpdateLocation {
+                    id: location.id.clone(),
+                    code: Some(location.code.clone()),
+                    name: Some(location.name.clone()),
+                    on_hold: Some(location.on_hold),
+                },
+                &context
+            ),
             Ok(location.clone())
         );
 

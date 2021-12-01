@@ -22,7 +22,7 @@ pub enum TransactionError<E> {
 }
 
 impl<E> TransactionError<E> {
-    pub fn convert(self) -> E
+    pub fn to_inner_error(self) -> E
     where
         E: From<RepositoryError>,
     {
