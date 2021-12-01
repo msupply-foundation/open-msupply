@@ -21,7 +21,7 @@ mod graphql {
         + Sync
         + Send;
 
-    struct TestService(pub Box<GetLocations>);
+    pub struct TestService(pub Box<GetLocations>);
 
     impl LocationServiceTrait for TestService {
         fn get_locations(
@@ -43,15 +43,13 @@ mod graphql {
         }
     }
 
-    impl TestService {
-        pub fn service_provider(
-            self,
-            connection_manager: StorageConnectionManager,
-        ) -> ServiceProvider {
-            let mut service_provider = ServiceProvider::new(connection_manager);
-            service_provider.location_service = Box::new(self);
-            service_provider
-        }
+    pub fn service_provider(
+        location_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.location_service = Box::new(location_service);
+        service_provider
     }
 
     #[actix_rt::test]
@@ -101,7 +99,7 @@ mod graphql {
             query,
             &None,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -127,7 +125,7 @@ mod graphql {
             query,
             &None,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -174,7 +172,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
     }
