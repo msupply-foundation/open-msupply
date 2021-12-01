@@ -10,7 +10,7 @@ use async_graphql_actix_web::{Request, Response};
 use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
-use service::service_registry::ServiceRegistry;
+use service::service_provider::ServiceProvider;
 
 use self::{
     loader::LoaderRegistry,
@@ -21,7 +21,7 @@ use self::{
 pub trait ContextExt {
     fn get_connection_manager(&self) -> &StorageConnectionManager;
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
-    fn get_service<T: anymap::any::Any + Send + Sync>(&self) -> &T;
+    fn service_provider(&self) -> &ServiceProvider;
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
 }
@@ -35,8 +35,8 @@ impl<'a> ContextExt for Context<'a> {
         self.data_unchecked::<Data<LoaderRegistry>>().get::<T>()
     }
 
-    fn get_service<T: anymap::any::Any + Send + Sync>(&self) -> &T {
-        self.data_unchecked::<Data<ServiceRegistry>>().get::<T>()
+    fn service_provider(&self) -> &ServiceProvider {
+        self.data_unchecked::<Data<ServiceProvider>>()
     }
 
     fn get_auth_data(&self) -> &AuthData {
@@ -58,14 +58,14 @@ pub fn build_schema() -> Builder {
 pub fn config(
     connection_manager: Data<StorageConnectionManager>,
     loader_registry: Data<LoaderRegistry>,
-    service_registry: Data<ServiceRegistry>,
+    service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let schema = build_schema()
             .data(connection_manager)
             .data(loader_registry)
-            .data(service_registry)
+            .data(service_provider)
             .data(auth_data)
             .finish();
         cfg.service(
