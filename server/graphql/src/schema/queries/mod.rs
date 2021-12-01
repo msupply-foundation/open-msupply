@@ -80,15 +80,16 @@ impl Queries {
         sort: Option<Vec<LocationSortInput>>,
     ) -> LocationsResponse {
         let service_provider = ctx.service_provider();
-        let location_query_service = match service_provider.location_query() {
+        let service_context = match service_provider.context() {
             Ok(service) => service,
             Err(error) => return LocationsResponse::Error(error.into()),
         };
 
-        match location_query_service.get_locations(
+        match service_provider.location_query_service.get_locations(
             page.map(PaginationOption::from),
             filter.map(LocationFilter::from),
             convert_sort(sort),
+            &service_context,
         ) {
             Ok(locations) => LocationsResponse::Response(locations.into()),
             Err(error) => LocationsResponse::Error(error.into()),
