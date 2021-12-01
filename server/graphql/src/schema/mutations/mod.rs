@@ -35,12 +35,15 @@ impl Mutations {
         input: InsertLocationInput,
     ) -> InsertLocationResponse {
         let service_provider = ctx.service_provider();
-        let insert_location_service = match service_provider.insert_location() {
+        let service_context = match service_provider.context() {
             Ok(service) => service,
             Err(error) => return InsertLocationResponse::Error(error.into()),
         };
 
-        match insert_location_service.insert_location(input.into()) {
+        match service_provider
+            .insert_location_service
+            .insert_location(input.into(), &service_context)
+        {
             Ok(location) => InsertLocationResponse::Response(location.into()),
             Err(error) => InsertLocationResponse::Error(error.into()),
         }
@@ -52,12 +55,15 @@ impl Mutations {
         input: UpdateLocationInput,
     ) -> UpdateLocationResponse {
         let service_provider = ctx.service_provider();
-        let update_location_service = match service_provider.update_location() {
+        let service_context = match service_provider.context() {
             Ok(service) => service,
             Err(error) => return UpdateLocationResponse::Error(error.into()),
         };
 
-        match update_location_service.update_location(input.into()) {
+        match service_provider
+            .update_location_service
+            .update_location(input.into(), &service_context)
+        {
             Ok(location) => UpdateLocationResponse::Response(location.into()),
             Err(error) => UpdateLocationResponse::Error(error.into()),
         }

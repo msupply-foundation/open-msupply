@@ -4,16 +4,8 @@ use graphql::{
     config as graphql_config,
     loader::{get_loaders, LoaderRegistry},
 };
-use repository::{get_storage_connection_manager, StorageConnectionManager};
-use service::{
-    auth_data::AuthData,
-    location::{
-        delete::DeleteLocationServiceTrait, insert::InsertLocationServiceTrait,
-        update::UpdateLocationServiceTrait, LocationQueryServiceTrait,
-    },
-    service_provider::{ServiceConnection, ServiceFactory, ServiceFactoryTrait, ServiceProvider},
-    token_bucket::TokenBucket,
-};
+use repository::get_storage_connection_manager;
+use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};
 
 use std::sync::RwLock;
 
@@ -32,7 +24,6 @@ mod inbound_shipment_update;
 mod invoice_query;
 mod invoices;
 mod items;
-mod location_delete;
 mod location_insert;
 mod location_update;
 mod locations;
@@ -101,15 +92,17 @@ async fn run_gql_query(
     settings: &Settings,
     query: &str,
     variables: &Option<serde_json::Value>,
-    service_override: Option<ServiceOverride>,
+    service_provider_override: Option<ServiceProvider>,
 ) -> serde_json::Value {
     let connection_manager = get_storage_connection_manager(&settings.database);
     let loaders = get_loaders(&connection_manager).await;
-    let services_provider = get_test_services(connection_manager.clone(), service_override);
 
-    let connection_manager_data = actix_web::web::Data::new(connection_manager);
+    let connection_manager_data = actix_web::web::Data::new(connection_manager.clone());
     let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
-    let services_provider_data = actix_web::web::Data::new(services_provider);
+    let service_provider_data = actix_web::web::Data::new(match service_provider_override {
+        Some(service_provider) => service_provider,
+        None => ServiceProvider::new(connection_manager.clone()),
+    });
 
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
@@ -126,7 +119,7 @@ async fn run_gql_query(
             .configure(graphql_config(
                 connection_manager_data,
                 loader_registry,
-                services_provider_data,
+                service_provider_data,
                 auth_data,
             )),
     )
@@ -159,9 +152,9 @@ async fn assert_gql_not_found(
     settings: &Settings,
     query: &str,
     variables: &Option<serde_json::Value>,
-    service_override: Option<ServiceOverride>,
+    service_provider_override: Option<ServiceProvider>,
 ) -> serde_json::Value {
-    let actual = run_gql_query(settings, query, variables, service_override).await;
+    let actual = run_gql_query(settings, query, variables, service_provider_override).await;
     let error_message = actual["data"].to_string();
     assert!(error_message.contains("RecordNotFound"));
     actual
@@ -178,9 +171,9 @@ async fn assert_gql_query(
     query: &str,
     variables: &Option<serde_json::Value>,
     expected: &serde_json::Value,
-    service_override: Option<ServiceOverride>,
+    service_provider_override: Option<ServiceProvider>,
 ) -> serde_json::Value {
-    let actual = run_gql_query(settings, query, variables, service_override).await;
+    let actual = run_gql_query(settings, query, variables, service_provider_override).await;
     // println!("{}", serde_json::to_string_pretty(&actual).unwrap());
     assert_gql_no_response_error(&actual);
     let expected_with_data = json!({
@@ -188,116 +181,6 @@ async fn assert_gql_query(
     });
     assert_json_eq!(&actual, expected_with_data);
     actual
-}
-
-type CreateService<S> = Box<dyn Fn() -> Box<S> + Sync + Send>;
-pub struct ServiceOverride {
-    location_query_service: Option<CreateService<dyn LocationQueryServiceTrait>>,
-    insert_location_service: Option<CreateService<dyn InsertLocationServiceTrait>>,
-    update_location_service: Option<CreateService<dyn UpdateLocationServiceTrait>>,
-    delete_location_service: Option<CreateService<dyn DeleteLocationServiceTrait>>,
-}
-
-impl ServiceOverride {
-    pub fn new() -> Self {
-        ServiceOverride {
-            location_query_service: None,
-            insert_location_service: None,
-            update_location_service: None,
-            delete_location_service: None,
-        }
-    }
-
-    pub fn set_location_query_service(
-        mut self,
-        location_query_service: CreateService<dyn LocationQueryServiceTrait>,
-    ) -> Self {
-        self.location_query_service = Some(location_query_service);
-        self
-    }
-
-    pub fn set_insert_location_service(
-        mut self,
-        insert_location_service: CreateService<dyn InsertLocationServiceTrait>,
-    ) -> Self {
-        self.insert_location_service = Some(insert_location_service);
-        self
-    }
-
-    pub fn set_update_location_service(
-        mut self,
-        update_location_service: CreateService<dyn UpdateLocationServiceTrait>,
-    ) -> Self {
-        self.update_location_service = Some(update_location_service);
-        self
-    }
-
-    pub fn set_delete_location_service(
-        mut self,
-        delete_location_service: CreateService<dyn DeleteLocationServiceTrait>,
-    ) -> Self {
-        self.delete_location_service = Some(delete_location_service);
-        self
-    }
-}
-
-impl ServiceFactoryTrait for ServiceOverride {
-    fn location_query<'a>(
-        &self,
-        service_connection: ServiceConnection<'a>,
-    ) -> Box<dyn LocationQueryServiceTrait + 'a> {
-        if let Some(location_query_service) = &self.location_query_service {
-            location_query_service()
-        } else {
-            ServiceFactory {}.location_query(service_connection)
-        }
-    }
-
-    fn insert_location<'a>(
-        &'a self,
-        service_connection: ServiceConnection<'a>,
-    ) -> Box<dyn InsertLocationServiceTrait + 'a> {
-        if let Some(insert_location_service) = &self.insert_location_service {
-            insert_location_service()
-        } else {
-            ServiceFactory {}.insert_location(service_connection)
-        }
-    }
-
-    fn update_location<'a>(
-        &'a self,
-        service_connection: ServiceConnection<'a>,
-    ) -> Box<dyn UpdateLocationServiceTrait + 'a> {
-        if let Some(update_location_service) = &self.update_location_service {
-            update_location_service()
-        } else {
-            ServiceFactory {}.update_location(service_connection)
-        }
-    }
-
-    fn delete_location<'a>(
-        &'a self,
-        service_connection: ServiceConnection<'a>,
-    ) -> Box<dyn DeleteLocationServiceTrait + 'a> {
-        if let Some(delete_location_service) = &self.delete_location_service {
-            delete_location_service()
-        } else {
-            ServiceFactory {}.delete_location(service_connection)
-        }
-    }
-}
-
-fn get_test_services(
-    connection_manager: StorageConnectionManager,
-    service_factory_override: Option<ServiceOverride>,
-) -> ServiceProvider {
-    let mut service_provider = ServiceProvider::new(connection_manager);
-
-    if let Some(service_factory_override) = service_factory_override {
-        service_provider.service_factory = Box::new(service_factory_override);
-    }
-
-    service_provider
 }
 
 use chrono::{DateTime as ChronoDateTime, NaiveDate, Utc};

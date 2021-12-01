@@ -1,13 +1,17 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, ServiceOverride};
+    use crate::graphql::assert_gql_query;
     use domain::{
         location::{Location, LocationFilter, LocationSort, LocationSortField},
         PaginationOption, Sort,
     };
-    use repository::mock::MockDataInserts;
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
-    use service::{location::LocationQueryServiceTrait, ListError, ListResult};
+    use service::{
+        location::LocationQueryServiceTrait,
+        service_provider::{ServiceContext, ServiceProvider},
+        ListError, ListResult,
+    };
 
     type GetLocations = dyn Fn(
             Option<PaginationOption>,
@@ -25,6 +29,7 @@ mod graphql {
             pagination: Option<PaginationOption>,
             filter: Option<LocationFilter>,
             sort: Option<LocationSort>,
+            _: &ServiceContext,
         ) -> Result<ListResult<Location>, ListError> {
             (self.0)(pagination, filter, sort)
         }
@@ -32,21 +37,26 @@ mod graphql {
         fn get_location(
             &self,
             _: String,
+            _: &ServiceContext,
         ) -> Result<domain::location::Location, service::SingleRecordError> {
             todo!()
         }
     }
 
-    macro_rules! service_override {
-        ($closure:expr) => {{
-            ServiceOverride::new()
-                .set_location_query_service(Box::new(|| Box::new(TestService(Box::new($closure)))))
-        }};
+    impl TestService {
+        pub fn service_provider(
+            self,
+            connection_manager: StorageConnectionManager,
+        ) -> ServiceProvider {
+            let mut service_provider = ServiceProvider::new(connection_manager);
+            service_provider.location_query_service = Box::new(self);
+            service_provider
+        }
     }
 
     #[actix_rt::test]
     async fn test_graphql_locations_success() {
-        let (_, _, settings) =
+        let (_, _, connection_manager, settings) =
             setup_all("test_graphql_locations_success", MockDataInserts::all()).await;
 
         let query = r#"
@@ -73,8 +83,7 @@ mod graphql {
         "#;
 
         // Test single record
-
-        let service_override = service_override!(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: vec![Location {
                     id: "location_on_hold".to_owned(),
@@ -84,7 +93,7 @@ mod graphql {
                 }],
                 count: 1,
             })
-        });
+        }));
 
         let expected = json!({
               "locations": {
@@ -108,16 +117,23 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &None, &expected, Some(service_override)).await;
+        assert_gql_query(
+            &settings,
+            query,
+            &None,
+            &expected,
+            Some(test_service.service_provider(connection_manager.clone())),
+        )
+        .await;
 
         // Test no records
 
-        let service_override = service_override!(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: Vec::new(),
                 count: 0,
             })
-        });
+        }));
 
         let expected = json!({
               "locations": {
@@ -129,12 +145,19 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &None, &expected, Some(service_override)).await;
+        assert_gql_query(
+            &settings,
+            query,
+            &None,
+            &expected,
+            Some(test_service.service_provider(connection_manager.clone())),
+        )
+        .await;
     }
 
     #[actix_rt::test]
     async fn test_graphql_locations_inputs() {
-        let (_, _, settings) =
+        let (_, _, connection_manager, settings) =
             setup_all("test_graphql_location_inputs", MockDataInserts::all()).await;
 
         let query = r#"
@@ -157,7 +180,7 @@ mod graphql {
         );
 
         // Test sort by name no desc
-        let service_override = service_override!(|_, _, sort| {
+        let test_service = TestService(Box::new(|_, _, sort| {
             assert_eq!(
                 sort,
                 Some(Sort {
@@ -166,7 +189,7 @@ mod graphql {
                 })
             );
             Ok(ListResult::empty())
-        });
+        }));
 
         let variables = json!({
           "sort": [{
@@ -179,12 +202,12 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
         // Test sort by code with desc
-        let service_override = service_override!(|_, _, sort| {
+        let test_service = TestService(Box::new(|_, _, sort| {
             assert_eq!(
                 sort,
                 Some(Sort {
@@ -193,7 +216,7 @@ mod graphql {
                 })
             );
             Ok(ListResult::empty())
-        });
+        }));
 
         let variables = json!({
           "sort": [{
@@ -207,18 +230,18 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
         // Test filter
-        let service_override = service_override!(|_, filter, _| {
+        let test_service = TestService(Box::new(|_, filter, _| {
             assert_eq!(
                 filter,
                 Some(LocationFilter::new().name(|f| f.equal_to(&"match_name".to_owned())))
             );
             Ok(ListResult::empty())
-        });
+        }));
 
         let variables = json!({
           "filter": {
@@ -231,7 +254,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
     }
