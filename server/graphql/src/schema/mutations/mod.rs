@@ -5,7 +5,9 @@ pub mod location;
 pub mod outbound_shipment;
 pub mod user_register;
 
-use self::location::{InsertLocationInput, InsertLocationResponse, UpdateLocationInput, UpdateLocationResponse};
+use self::location::{
+    InsertLocationInput, InsertLocationResponse, UpdateLocationInput, UpdateLocationResponse,
+};
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
 use crate::ContextExt;
@@ -52,12 +54,15 @@ impl Mutations {
         input: UpdateLocationInput,
     ) -> UpdateLocationResponse {
         let service_provider = ctx.service_provider();
-        let update_location_service = match service_provider.update_location() {
+        let service_context = match service_provider.context() {
             Ok(service) => service,
             Err(error) => return UpdateLocationResponse::Error(error.into()),
         };
 
-        match update_location_service.update_location(input.into()) {
+        match service_provider
+            .update_location_service
+            .update_location(input.into(), &service_context)
+        {
             Ok(location) => UpdateLocationResponse::Response(location.into()),
             Err(error) => UpdateLocationResponse::Error(error.into()),
         }

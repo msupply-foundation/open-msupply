@@ -6,27 +6,38 @@ use generate::generate;
 use repository::{LocationRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{service_provider::ServiceConnection, SingleRecordError, WithDBError};
+use crate::{service_provider::ServiceContext, SingleRecordError, WithDBError};
 
-use super::{LocationQueryService, LocationQueryServiceTrait};
+use super::{query::LocationQueryService, LocationQueryServiceTrait};
 
-pub trait UpdateLocationServiceTrait {
-    fn update_location(&self, input: UpdateLocation) -> Result<Location, UpdateLocationError>;
+pub trait UpdateLocationServiceTrait: Send + Sync {
+    fn update_location(
+        &self,
+        input: UpdateLocation,
+        ctx: &ServiceContext,
+    ) -> Result<Location, UpdateLocationError>;
 }
 
-pub struct UpdateLocationService<'a>(pub ServiceConnection<'a>);
+pub struct UpdateLocationService;
 
-impl<'a> UpdateLocationServiceTrait for UpdateLocationService<'a> {
-    fn update_location(&self, input: UpdateLocation) -> Result<Location, UpdateLocationError> {
-        let location = self.0.transaction(|connection| {
-            let location_row = validate(&input, &connection)?;
-            let updated_location_row = generate(input, location_row);
-            LocationRowRepository::new(&connection).upsert_one(&updated_location_row)?;
+impl UpdateLocationServiceTrait for UpdateLocationService {
+    fn update_location(
+        &self,
+        input: UpdateLocation,
+        ctx: &ServiceContext,
+    ) -> Result<Location, UpdateLocationError> {
+        let location = ctx
+            .connection
+            .transaction_sync(|connection| {
+                let location_row = validate(&input, &connection)?;
+                let updated_location_row = generate(input, location_row);
+                LocationRowRepository::new(&connection).upsert_one(&updated_location_row)?;
 
-            LocationQueryService(connection.duplicate())
-                .get_location(updated_location_row.id)
-                .map_err(UpdateLocationError::from)
-        })?;
+                LocationQueryService {}
+                    .get_location(updated_location_row.id, ctx)
+                    .map_err(UpdateLocationError::from)
+            })
+            .map_err(|error| error.to_inner_error())?;
         Ok(location)
     }
 }

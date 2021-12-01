@@ -1,11 +1,17 @@
 use repository::{RepositoryError, StorageConnection, StorageConnectionManager};
 
-use crate::location::{query::LocationQueryService, LocationQueryServiceTrait, insert::{InsertLocationServiceTrait, InsertLocationService}};
+use crate::location::{
+    insert::{InsertLocationService, InsertLocationServiceTrait},
+    query::LocationQueryService,
+    update::{UpdateLocationService, UpdateLocationServiceTrait},
+    LocationQueryServiceTrait,
+};
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
     pub location_query_service: Box<dyn LocationQueryServiceTrait>,
     pub insert_location_service: Box<dyn InsertLocationServiceTrait>,
+    pub update_location_service: Box<dyn UpdateLocationServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -18,6 +24,7 @@ impl ServiceProvider {
             connection_manager,
             location_query_service: Box::new(LocationQueryService {}),
             insert_location_service: Box::new(InsertLocationService {}),
+            update_location_service: Box::new(UpdateLocationService {}),
         }
     }
 
