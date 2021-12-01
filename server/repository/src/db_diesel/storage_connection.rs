@@ -21,6 +21,22 @@ pub enum TransactionError<E> {
     Inner(E),
 }
 
+impl<E> TransactionError<E> {
+    pub fn convert(self) -> E
+    where
+        E: From<RepositoryError>,
+    {
+        match self {
+            TransactionError::Transaction { msg } => RepositoryError::DBError {
+                msg,
+                extra: "".to_string(),
+            }
+            .into(),
+            TransactionError::Inner(e) => e,
+        }
+    }
+}
+
 impl From<TransactionError<RepositoryError>> for RepositoryError {
     fn from(error: TransactionError<RepositoryError>) -> Self {
         match error {

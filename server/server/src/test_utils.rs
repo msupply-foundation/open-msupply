@@ -1,7 +1,7 @@
 use repository::{
     mock::{MockData, MockDataInserts},
     test_db::{self, get_test_db_settings},
-    StorageConnection,
+    StorageConnection, StorageConnectionManager,
 };
 
 use super::settings::{AuthSettings, ServerSettings, Settings, SyncSettings};
@@ -30,7 +30,12 @@ pub fn get_test_settings(db_name: &str) -> Settings {
 pub async fn setup_all(
     db_name: &str,
     inserts: MockDataInserts,
-) -> (MockData, StorageConnection, Settings) {
+) -> (
+    MockData,
+    StorageConnection,
+    StorageConnectionManager,
+    Settings,
+) {
     let repo = test_db::setup_all(db_name, inserts).await;
-    (repo.0, repo.1, get_test_settings(db_name))
+    (repo.0, repo.1, repo.2, get_test_settings(db_name))
 }

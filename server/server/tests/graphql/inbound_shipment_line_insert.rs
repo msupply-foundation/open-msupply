@@ -66,7 +66,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_insert_inbound_shipment_line() {
-        let (mut mock_data, connection, settings) = setup_all(
+        let (mut mock_data, connection, _, settings) = setup_all(
             "test_insert_inbound_shipment_line_query",
             MockDataInserts::all(),
         )
