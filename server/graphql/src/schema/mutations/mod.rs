@@ -41,7 +41,7 @@ impl Mutations {
         };
 
         match service_provider
-            .insert_location_service
+            .location_service
             .insert_location(input.into(), &service_context)
         {
             Ok(location) => InsertLocationResponse::Response(location.into()),
@@ -61,7 +61,7 @@ impl Mutations {
         };
 
         match service_provider
-            .update_location_service
+            .location_service
             .update_location(input.into(), &service_context)
         {
             Ok(location) => UpdateLocationResponse::Response(location.into()),
@@ -81,7 +81,7 @@ impl Mutations {
         };
 
         match service_provider
-            .delete_location_service
+            .location_service
             .delete_location(input.into(), &service_context)
         {
             Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),

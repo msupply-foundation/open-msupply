@@ -1,7 +1,7 @@
 use async_graphql::*;
 use domain::location::DeleteLocation;
 use repository::RepositoryError;
-use service::location::delete::DeleteLocationError;
+use service::location::delete::{DeleteLocationError, LocationInUse as ServiceLocationInUse};
 
 use crate::schema::{
     mutations::{error::DatabaseError, DeleteResponse, RecordBelongsToAnotherStore},
@@ -68,10 +68,10 @@ impl From<DeleteLocationError> for ErrorWrapper<DeleteLocationErrorInterface> {
             DeleteLocationError::LocationDoesNotExist => {
                 OutError::LocationNotFound(RecordNotFound {})
             }
-            DeleteLocationError::LocationInUse {
+            DeleteLocationError::LocationInUse(ServiceLocationInUse {
                 stock_lines,
                 invoice_lines,
-            } => OutError::LocationInUse(LocationInUse {
+            }) => OutError::LocationInUse(LocationInUse {
                 stock_lines: stock_lines.into(),
                 invoice_lines: invoice_lines.into(),
             }),

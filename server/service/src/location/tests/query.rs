@@ -15,7 +15,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.location_query_service;
+        let service = service_provider.location_service;
 
         assert_eq!(
             service.get_locations(
@@ -51,7 +51,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.location_query_service;
+        let service = service_provider.location_service;
 
         assert_eq!(
             service.get_location("invalid_id".to_owned(), &context),
@@ -73,7 +73,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.location_query_service;
+        let service = service_provider.location_service;
 
         let result = service
             .get_locations(
@@ -110,7 +110,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.location_query_service;
+        let service = service_provider.location_service;
         // Test Name sort with default sort order
         let result = service
             .get_locations(
