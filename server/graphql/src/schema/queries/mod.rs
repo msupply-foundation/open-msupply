@@ -1,7 +1,6 @@
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, item::ItemFilter, name::NameFilter, PaginationOption};
-use service::location::LocationServiceQuery;
 use service::{invoice::get_invoices, item::get_items, name::get_names};
 
 use async_graphql::{Context, Object};
@@ -80,12 +79,17 @@ impl Queries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<LocationSortInput>>,
     ) -> LocationsResponse {
-        let location_service = ctx.get_service::<Box<dyn LocationServiceQuery>>();
+        let service_provider = ctx.service_provider();
+        let service_context = match service_provider.context() {
+            Ok(service) => service,
+            Err(error) => return LocationsResponse::Error(error.into()),
+        };
 
-        match location_service.get_locations(
+        match service_provider.location_query_service.get_locations(
             page.map(PaginationOption::from),
             filter.map(LocationFilter::from),
             convert_sort(sort),
+            &service_context,
         ) {
             Ok(locations) => LocationsResponse::Response(locations.into()),
             Err(error) => LocationsResponse::Error(error.into()),

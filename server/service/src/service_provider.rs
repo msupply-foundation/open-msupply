@@ -1,0 +1,31 @@
+use repository::{RepositoryError, StorageConnection, StorageConnectionManager};
+
+use crate::location::{LocationQueryServiceTrait, query::LocationQueryService};
+
+pub struct ServiceProvider {
+    pub connection_manager: StorageConnectionManager,
+    pub location_query_service: Box<dyn LocationQueryServiceTrait>,
+}
+
+pub struct ServiceContext {
+    pub connection: StorageConnection,
+}
+
+impl ServiceProvider {
+    pub fn new(connection_manager: StorageConnectionManager) -> Self {
+        ServiceProvider {
+            connection_manager,
+            location_query_service: Box::new(LocationQueryService {}),
+        }
+    }
+
+    pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+        })
+    }
+
+    pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
+        self.connection_manager.connection()
+    }
+}

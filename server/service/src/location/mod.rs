@@ -1,30 +1,21 @@
 use super::{ListError, ListResult};
-use crate::SingleRecordError;
+use crate::{service_provider::ServiceContext, SingleRecordError};
 use domain::{
     location::{Location, LocationFilter, LocationSort},
     PaginationOption,
 };
-use repository::StorageConnectionManager;
 
 pub mod query;
 
-pub trait LocationServiceQuery: Sync + Send {
+pub trait LocationQueryServiceTrait: Sync + Send {
     fn get_locations(
         &self,
         pagination: Option<PaginationOption>,
         filter: Option<LocationFilter>,
         sort: Option<LocationSort>,
+        ctx: &ServiceContext,
     ) -> Result<ListResult<Location>, ListError>;
 
-    fn get_location(&self, id: String) -> Result<Location, SingleRecordError>;
-}
-
-pub struct LocationService {
-    connection_manager: StorageConnectionManager,
-}
-
-impl LocationService {
-    pub fn new(connection_manager: StorageConnectionManager) -> Self {
-        LocationService { connection_manager }
-    }
+    fn get_location(&self, id: String, ctx: &ServiceContext)
+        -> Result<Location, SingleRecordError>;
 }

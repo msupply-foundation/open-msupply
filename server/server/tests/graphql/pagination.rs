@@ -1,37 +1,35 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, ServicesOverride};
+    use crate::graphql::assert_gql_query;
     use domain::{
         location::{Location, LocationFilter, LocationSort},
         PaginationOption,
     };
-    use repository::mock::MockDataInserts;
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
-    use service::{location::LocationServiceQuery, ListError, ListResult};
+    use service::{
+        location::LocationQueryServiceTrait,
+        service_provider::{ServiceContext, ServiceProvider},
+        ListError, ListResult,
+    };
 
-    struct TestService<F>(pub F)
-    where
-        F: Fn(
+    type GetLocations = dyn Fn(
             Option<PaginationOption>,
             Option<LocationFilter>,
             Option<LocationSort>,
-        ) -> Result<ListResult<Location>, ListError>;
+        ) -> Result<ListResult<Location>, ListError>
+        + Sync
+        + Send;
 
-    impl<F> LocationServiceQuery for TestService<F>
-    where
-        F: Fn(
-                Option<PaginationOption>,
-                Option<LocationFilter>,
-                Option<LocationSort>,
-            ) -> Result<ListResult<Location>, ListError>
-            + Send
-            + Sync,
-    {
+    struct TestService(pub Box<GetLocations>);
+
+    impl LocationQueryServiceTrait for TestService {
         fn get_locations(
             &self,
             pagination: Option<PaginationOption>,
             filter: Option<LocationFilter>,
             sort: Option<LocationSort>,
+            _: &ServiceContext,
         ) -> Result<ListResult<Location>, ListError> {
             (self.0)(pagination, filter, sort)
         }
@@ -39,41 +37,50 @@ mod graphql {
         fn get_location(
             &self,
             _: String,
+            _: &ServiceContext,
         ) -> Result<domain::location::Location, service::SingleRecordError> {
             todo!()
         }
     }
 
+    impl TestService {
+        pub fn service_provider(
+            self,
+            connection_manager: StorageConnectionManager,
+        ) -> ServiceProvider {
+            let mut service_provider = ServiceProvider::new(connection_manager);
+            service_provider.location_query_service = Box::new(self);
+            service_provider
+        }
+    }
+
     #[actix_rt::test]
     async fn test_graphql_locations_pagination() {
-        let (_, _, settings) =
+        let (_, _, connection_manager, settings) =
             setup_all("test_graphql_locations_pagination", MockDataInserts::all()).await;
 
         // Test errors
         let query = r#"
-        query {
-            locations {
-              ... on ConnectorError {
-                error {
-                    ...on PaginationError {
-                       rangeError {
-                          description
-                          field
-                          max
-                          min
-                       }   
-                    }
-                }
+      query {
+          locations {
+            ... on ConnectorError {
+              error {
+                  ...on PaginationError {
+                     rangeError {
+                        description
+                        field
+                        max
+                        min
+                     }
+                  }
               }
             }
-        }
-        "#;
+          }
+      }
+      "#;
 
         // Test pagination, first over limit
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Err(ListError::LimitAboveMax(1000))
-            })));
+        let test_service = TestService(Box::new(|_, _, _| Err(ListError::LimitAboveMax(1000))));
 
         let expected = json!({
               "locations": {
@@ -94,15 +101,12 @@ mod graphql {
             query,
             &None,
             &expected,
-            Some(ServicesOverride::new().location_service(service)),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
         // Test pagination, first too small
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|_, _, _| {
-                Err(ListError::LimitBelowMin(1))
-            })));
+        let test_service = TestService(Box::new(|_, _, _| Err(ListError::LimitBelowMin(1))));
 
         let expected = json!({
               "locations": {
@@ -123,21 +127,21 @@ mod graphql {
             query,
             &None,
             &expected,
-            Some(ServicesOverride::new().location_service(service)),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
 
         // Test success
         let query = r#"
-        query(
-            $page: PaginationInput
-          ) {
-            locations(page: $page) {
-              __typename
-            }
+      query(
+          $page: PaginationInput
+        ) {
+          locations(page: $page) {
+            __typename
           }
-          
-        "#;
+        }
+
+      "#;
 
         let expected = json!({
               "locations": {
@@ -147,17 +151,16 @@ mod graphql {
         );
 
         // Test pagination
-        let service: Option<Box<dyn LocationServiceQuery>> =
-            Some(Box::new(TestService(|page, _, _| {
-                assert_eq!(
-                    page,
-                    Some(PaginationOption {
-                        limit: Some(2),
-                        offset: Some(1)
-                    })
-                );
-                Ok(ListResult::empty())
-            })));
+        let test_service = TestService(Box::new(|page, _, _| {
+            assert_eq!(
+                page,
+                Some(PaginationOption {
+                    limit: Some(2),
+                    offset: Some(1)
+                })
+            );
+            Ok(ListResult::empty())
+        }));
 
         let variables = json!({
           "page": {
@@ -171,7 +174,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(ServicesOverride::new().location_service(service)),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
     }
