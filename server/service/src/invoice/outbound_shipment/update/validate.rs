@@ -1,5 +1,5 @@
 use crate::invoice::{check_invoice_status, InvoiceStatusError};
-use domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment};
+use domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment, EqualFilter};
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
@@ -59,7 +59,8 @@ pub fn check_other_party(
     if let Some(id) = id_option {
         let repository = NameQueryRepository::new(&connection);
 
-        let mut result = repository.query_by_filter(NameFilter::new().id(|f| f.equal_to(&id)))?;
+        let mut result =
+            repository.query_by_filter(NameFilter::new().id(EqualFilter::equal_to(&id)))?;
 
         if let Some(name) = result.pop() {
             if name.is_customer {

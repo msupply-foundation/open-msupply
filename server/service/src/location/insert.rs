@@ -1,6 +1,9 @@
 use super::{query::get_location, validate::check_location_code_is_unique};
 use crate::{current_store_id, service_provider::ServiceContext, SingleRecordError};
-use domain::location::{InsertLocation, Location, LocationFilter};
+use domain::{
+    location::{InsertLocation, Location, LocationFilter},
+    EqualFilter,
+};
 use repository::{
     schema::LocationRow, LocationRepository, LocationRowRepository, RepositoryError,
     StorageConnection,
@@ -70,7 +73,7 @@ pub fn check_location_does_not_exist(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let locations = LocationRepository::new(connection)
-        .query_by_filter(LocationFilter::new().id(|f| f.equal_to(id)))?;
+        .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id)))?;
 
     Ok(locations.len() == 0)
 }

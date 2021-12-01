@@ -4,6 +4,7 @@ mod query {
         invoice_line::InvoiceLineFilter,
         location::{DeleteLocation, LocationFilter},
         stock_line::StockLineFilter,
+        EqualFilter,
     };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, InvoiceLineRepository, LocationRepository,
@@ -31,10 +32,9 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_not_in_store = location_repository
-            .query_by_filter(
-                LocationFilter::new()
-                    .store_id(|f| f.not_equal_to(&current_store_id(&connection).unwrap())),
-            )
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to(
+                &current_store_id(&connection).unwrap(),
+            )))
             .unwrap();
 
         // Location does not exist
@@ -62,10 +62,14 @@ mod query {
         // Location is not empty (invoice lines in use)
         let location_id = "location_1".to_owned();
         let stock_lines = stock_line_repository
-            .query_by_filter(StockLineFilter::new().location_id(|f| f.equal_to(&location_id)))
+            .query_by_filter(
+                StockLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+            )
             .unwrap();
         let invoice_lines = invoice_line_repository
-            .query_by_filter(InvoiceLineFilter::new().location_id(|f| f.equal_to(&location_id)))
+            .query_by_filter(
+                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+            )
             .unwrap();
 
         assert_eq!(
@@ -79,10 +83,14 @@ mod query {
         // Location is not empty (stock_lines in use)
         let location_id = "location_on_hold".to_owned();
         let stock_lines = stock_line_repository
-            .query_by_filter(StockLineFilter::new().location_id(|f| f.equal_to(&location_id)))
+            .query_by_filter(
+                StockLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+            )
             .unwrap();
         let invoice_lines = invoice_line_repository
-            .query_by_filter(InvoiceLineFilter::new().location_id(|f| f.equal_to(&location_id)))
+            .query_by_filter(
+                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+            )
             .unwrap();
 
         assert_eq!(
@@ -116,7 +124,7 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(|f| f.equal_to(&"location_2".to_owned())))
+                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to("location_2")))
                 .unwrap(),
             vec![]
         );

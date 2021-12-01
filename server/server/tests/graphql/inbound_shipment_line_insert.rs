@@ -76,24 +76,24 @@ mod graphql {
 
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Draft)),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Draft.equal_to()),
             &connection
         );
         let confirmed_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Confirmed)),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Confirmed.equal_to()),
             &connection
         );
         let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Finalised.equal_to()),
             &connection
         );
         let outbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
         let item = mock_data.items.pop().unwrap();

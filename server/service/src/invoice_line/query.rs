@@ -1,7 +1,7 @@
 use crate::SingleRecordError;
 use domain::{
     invoice_line::{InvoiceLine, InvoiceLineFilter},
-    Pagination,
+    EqualFilter, Pagination,
 };
 use repository::{InvoiceLineRepository, StorageConnectionManager};
 
@@ -16,7 +16,7 @@ pub fn get_invoice_line(
 
     let mut result = InvoiceLineRepository::new(&connection).query(
         Pagination::one(),
-        Some(InvoiceLineFilter::new().id(|f| f.equal_to(&id))),
+        Some(InvoiceLineFilter::new().id(EqualFilter::equal_to(&id))),
         None,
     )?;
 

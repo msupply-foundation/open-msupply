@@ -9,6 +9,7 @@ mod graphql {
     };
     use chrono::NaiveDate;
     use domain::invoice::{InvoiceStatus, InvoiceType};
+    use domain::EqualFilter;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
@@ -78,26 +79,26 @@ mod graphql {
 
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Draft))
-                .id(|f| f.equal_to(&"inbound_shipment_c".to_owned())),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Draft.equal_to())
+                .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
         let confirmed_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Confirmed))
-                .id(|f| f.equal_to(&"inbound_shipment_d".to_owned())),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Confirmed.equal_to())
+                .id(EqualFilter::equal_to("inbound_shipment_d")),
             &connection
         );
         let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Finalised.equal_to()),
             &connection
         );
         let outbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
         let item = mock_data.items.first().unwrap();

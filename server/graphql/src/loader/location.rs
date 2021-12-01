@@ -1,4 +1,5 @@
 use domain::location::{Location, LocationFilter};
+use domain::EqualFilter;
 use repository::{LocationRepository, RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
@@ -19,7 +20,7 @@ impl Loader<String> for LocationByIdLoader {
         let repo = LocationRepository::new(&connection);
 
         let result =
-            repo.query_by_filter(LocationFilter::new().id(|f| f.equal_any(ids.to_owned())))?;
+            repo.query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
 
         Ok(result
             .into_iter()

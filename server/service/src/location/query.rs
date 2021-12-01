@@ -1,6 +1,6 @@
 use domain::{
     location::{Location, LocationFilter, LocationSort},
-    PaginationOption,
+    EqualFilter, PaginationOption,
 };
 use repository::LocationRepository;
 
@@ -30,7 +30,8 @@ pub fn get_locations(
 pub fn get_location(ctx: &ServiceContext, id: String) -> Result<Location, SingleRecordError> {
     let repository = LocationRepository::new(&ctx.connection);
 
-    let mut result = repository.query_by_filter(LocationFilter::new().id(|f| f.equal_to(&id)))?;
+    let mut result =
+        repository.query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

@@ -62,13 +62,13 @@ mod graphql {
 
         let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
-                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
+                .r#type(InvoiceType::InboundShipment.equal_to())
+                .status(InvoiceStatus::Finalised.equal_to()),
             &connection
         );
 
         let outbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
         let lines_in_invoice = get_invoice_lines_inline!(invoice_with_lines_id, &connection);
