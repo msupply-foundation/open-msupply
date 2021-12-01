@@ -1,14 +1,33 @@
 use async_graphql::*;
 use domain::location::UpdateLocation;
 use repository::RepositoryError;
-use service::location::update::UpdateLocationError;
+use service::location::update::UpdateLocationError as InError;
 
-use crate::schema::{
-    mutations::{
-        error::DatabaseError, RecordBelongsToAnotherStore, UniqueValueKey, UniqueValueViolation,
+use crate::{
+    schema::{
+        mutations::{
+            error::DatabaseError, RecordBelongsToAnotherStore, UniqueValueKey, UniqueValueViolation,
+        },
+        types::{InternalError, LocationNode, RecordNotFound},
     },
-    types::{ErrorWrapper, InternalError, LocationNode, RecordNotFound},
+    ContextExt,
 };
+
+pub fn update_location(ctx: &Context<'_>, input: UpdateLocationInput) -> UpdateLocationResponse {
+    let service_provider = ctx.service_provider();
+    let service_context = match service_provider.context() {
+        Ok(service) => service,
+        Err(error) => return UpdateLocationResponse::Error(error.into()),
+    };
+
+    match service_provider
+        .location_service
+        .update_location(input.into(), &service_context)
+    {
+        Ok(location) => UpdateLocationResponse::Response(location.into()),
+        Err(error) => UpdateLocationResponse::Error(error.into()),
+    }
+}
 
 #[derive(InputObject)]
 pub struct UpdateLocationInput {
@@ -36,9 +55,14 @@ impl From<UpdateLocationInput> for UpdateLocation {
     }
 }
 
+#[derive(SimpleObject)]
+pub struct UpdateLocationError {
+    pub error: UpdateLocationErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateLocationResponse {
-    Error(ErrorWrapper<UpdateLocationErrorInterface>),
+    Error(UpdateLocationError),
     Response(LocationNode),
 }
 
@@ -52,33 +76,29 @@ pub enum UpdateLocationErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-impl From<RepositoryError> for ErrorWrapper<UpdateLocationErrorInterface> {
+impl From<RepositoryError> for UpdateLocationError {
     fn from(error: RepositoryError) -> Self {
         let error = UpdateLocationErrorInterface::DatabaseError(DatabaseError(error));
-        ErrorWrapper { error }
+        UpdateLocationError { error }
     }
 }
 
-impl From<UpdateLocationError> for ErrorWrapper<UpdateLocationErrorInterface> {
-    fn from(error: UpdateLocationError) -> Self {
+impl From<InError> for UpdateLocationError {
+    fn from(error: InError) -> Self {
         use UpdateLocationErrorInterface as OutError;
         let error = match error {
-            UpdateLocationError::LocationDoesNotExist => {
-                OutError::LocationNotFound(RecordNotFound {})
-            }
-            UpdateLocationError::CodeAlreadyExists => {
+            InError::LocationDoesNotExist => OutError::LocationNotFound(RecordNotFound {}),
+            InError::CodeAlreadyExists => {
                 OutError::UniqueValueViolation(UniqueValueViolation(UniqueValueKey::Code))
             }
-            UpdateLocationError::LocationDoesNotBelongToCurrentStore => {
+            InError::LocationDoesNotBelongToCurrentStore => {
                 OutError::RecordBelongsToAnotherStore(RecordBelongsToAnotherStore {})
             }
-            UpdateLocationError::UpdatedRecordDoesNotExist => OutError::InternalError(
-                InternalError("Could not find record after updating".to_owned()),
-            ),
-            UpdateLocationError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
+            InError::UpdatedRecordDoesNotExist => OutError::InternalError(InternalError(
+                "Could not find record after updating".to_owned(),
+            )),
+            InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),
         };
-        ErrorWrapper { error }
+        UpdateLocationError { error }
     }
 }
