@@ -18,7 +18,7 @@ pub fn validate(
 }
 
 pub fn check_location_does_not_exist(
-    id: &str,
+    id: &String,
     connection: &StorageConnection,
 ) -> Result<(), InsertLocationError> {
     let locations = LocationRepository::new(connection)
