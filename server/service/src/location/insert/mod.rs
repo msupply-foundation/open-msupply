@@ -6,27 +6,38 @@ use generate::generate;
 use repository::{LocationRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{service_provider::ServiceConnection, SingleRecordError, WithDBError};
+use crate::{service_provider::ServiceContext, SingleRecordError, WithDBError};
 
-use super::{LocationQueryService, LocationQueryServiceTrait};
+use super::{query::LocationQueryService, LocationQueryServiceTrait};
 
-pub trait InsertLocationServiceTrait {
-    fn insert_location(&self, input: InsertLocation) -> Result<Location, InsertLocationError>;
+pub trait InsertLocationServiceTrait: Sync + Send {
+    fn insert_location(
+        &self,
+        input: InsertLocation,
+        ctx: &ServiceContext,
+    ) -> Result<Location, InsertLocationError>;
 }
 
-pub struct InsertLocationService<'a>(pub ServiceConnection<'a>);
+pub struct InsertLocationService;
 
-impl<'a> InsertLocationServiceTrait for InsertLocationService<'a> {
-    fn insert_location(&self, input: InsertLocation) -> Result<Location, InsertLocationError> {
-        let location = self.0.transaction(|connection| {
-            validate(&input, &connection)?;
-            let new_location = generate(input);
-            LocationRowRepository::new(&connection).upsert_one(&new_location)?;
+impl<'a> InsertLocationServiceTrait for InsertLocationService {
+    fn insert_location(
+        &self,
+        input: InsertLocation,
+        ctx: &ServiceContext,
+    ) -> Result<Location, InsertLocationError> {
+        let location = ctx
+            .connection
+            .transaction_sync(|connection| {
+                validate(&input, &connection)?;
+                let new_location = generate(input);
+                LocationRowRepository::new(&connection).upsert_one(&new_location)?;
 
-            LocationQueryService(connection.duplicate())
-                .get_location(new_location.id)
-                .map_err(InsertLocationError::from)
-        })?;
+                LocationQueryService {}
+                    .get_location(new_location.id, ctx)
+                    .map_err(InsertLocationError::from)
+            })
+            .map_err(|error| error.convert())?;
         Ok(location)
     }
 }

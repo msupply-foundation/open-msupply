@@ -1,13 +1,13 @@
 use domain::location::LocationFilter;
-use repository::LocationRepository;
+use repository::{LocationRepository, StorageConnection};
 
-use crate::{current_store_id, service_provider::ServiceConnection, WithDBError};
+use crate::{current_store_id, WithDBError};
 
 pub struct LocationWithCodeAlreadyExists;
 
 pub fn check_location_code_is_unique(
     code: &str,
-    connection: &ServiceConnection,
+    connection: &StorageConnection,
 ) -> Result<(), WithDBError<LocationWithCodeAlreadyExists>> {
     let locations = LocationRepository::new(connection).query_by_filter(
         LocationFilter::new()
