@@ -57,7 +57,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_insert_inbound_shipment() {
-        let (_, connection, settings) =
+        let (_, connection, _, settings) =
             setup_all("test_insert_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
