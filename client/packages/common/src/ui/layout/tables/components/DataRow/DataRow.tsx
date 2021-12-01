@@ -5,7 +5,7 @@ import { Column } from '../../columns/types';
 import { DomainObject } from '../../../../../types';
 import { useExpanded, useDisabled } from '../../context';
 import { Collapse } from '@mui/material';
-
+import { cellHorizontalPadding } from '../index';
 interface DataRowProps<T extends DomainObject> {
   columns: Column<T>[];
   onClick?: (rowData: T) => void;
@@ -60,10 +60,9 @@ export const DataRow = <T extends DomainObject>({
                 borderBottom: 'none',
                 justifyContent: 'flex-end',
                 overflow: 'hidden',
-                textOverflow: 'none',
                 whiteSpace: 'nowrap',
-                paddingLeft: '16px',
-                paddingRight: '16px',
+                paddingLeft: `${cellHorizontalPadding}px`,
+                paddingRight: `${cellHorizontalPadding}px`,
                 ...(hasOnClick && { cursor: 'pointer' }),
                 flex: `${column.width} 0 auto`,
                 minWidth: column.minWidth,
