@@ -8,7 +8,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_delete() {
-        let (_, connection, settings) = setup_all(
+        let (_, connection, _, settings) = setup_all(
             "omsupply-database-gql-outbound_shipment_delete",
             MockDataInserts::all(),
         )

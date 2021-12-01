@@ -1,13 +1,17 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, ServiceOverride};
+    use crate::graphql::assert_gql_query;
     use domain::{
         location::{Location, LocationFilter, LocationSort},
         PaginationOption,
     };
-    use repository::mock::MockDataInserts;
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
-    use service::{location::LocationQueryServiceTrait, ListError, ListResult};
+    use service::{
+        location::LocationQueryServiceTrait,
+        service_provider::{ServiceContext, ServiceProvider},
+        ListError, ListResult,
+    };
 
     type GetLocations = dyn Fn(
             Option<PaginationOption>,
@@ -25,6 +29,7 @@ mod graphql {
             pagination: Option<PaginationOption>,
             filter: Option<LocationFilter>,
             sort: Option<LocationSort>,
+            _: &ServiceContext,
         ) -> Result<ListResult<Location>, ListError> {
             (self.0)(pagination, filter, sort)
         }
@@ -32,21 +37,26 @@ mod graphql {
         fn get_location(
             &self,
             _: String,
+            _: &ServiceContext,
         ) -> Result<domain::location::Location, service::SingleRecordError> {
             todo!()
         }
     }
 
-    macro_rules! service_override {
-        ($closure:expr) => {{
-            ServiceOverride::new()
-                .set_location_query_service(Box::new(|| Box::new(TestService(Box::new($closure)))))
-        }};
+    impl TestService {
+        pub fn service_provider(
+            self,
+            connection_manager: StorageConnectionManager,
+        ) -> ServiceProvider {
+            let mut service_provider = ServiceProvider::new(connection_manager);
+            service_provider.location_query_service = Box::new(self);
+            service_provider
+        }
     }
 
     #[actix_rt::test]
     async fn test_graphql_locations_pagination() {
-        let (_, _, settings) =
+        let (_, _, connection_manager, settings) =
             setup_all("test_graphql_locations_pagination", MockDataInserts::all()).await;
 
         // Test errors
@@ -70,7 +80,7 @@ mod graphql {
       "#;
 
         // Test pagination, first over limit
-        let service_override = service_override!(|_, _, _| { Err(ListError::LimitAboveMax(1000)) });
+        let test_service = TestService(Box::new(|_, _, _| Err(ListError::LimitAboveMax(1000))));
 
         let expected = json!({
               "locations": {
@@ -86,10 +96,17 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &None, &expected, Some(service_override)).await;
+        assert_gql_query(
+            &settings,
+            query,
+            &None,
+            &expected,
+            Some(test_service.service_provider(connection_manager.clone())),
+        )
+        .await;
 
         // Test pagination, first too small
-        let service_override = service_override!(|_, _, _| { Err(ListError::LimitBelowMin(1)) });
+        let test_service = TestService(Box::new(|_, _, _| Err(ListError::LimitBelowMin(1))));
 
         let expected = json!({
               "locations": {
@@ -105,7 +122,14 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &None, &expected, Some(service_override)).await;
+        assert_gql_query(
+            &settings,
+            query,
+            &None,
+            &expected,
+            Some(test_service.service_provider(connection_manager.clone())),
+        )
+        .await;
 
         // Test success
         let query = r#"
@@ -127,7 +151,7 @@ mod graphql {
         );
 
         // Test pagination
-        let service_override = service_override!(|page, _, _| {
+        let test_service = TestService(Box::new(|page, _, _| {
             assert_eq!(
                 page,
                 Some(PaginationOption {
@@ -136,7 +160,7 @@ mod graphql {
                 })
             );
             Ok(ListResult::empty())
-        });
+        }));
 
         let variables = json!({
           "page": {
@@ -150,7 +174,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(service_override),
+            Some(test_service.service_provider(connection_manager.clone())),
         )
         .await;
     }
