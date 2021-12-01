@@ -9,7 +9,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoice_query() {
-        let (mock_data, _, settings) = setup_all(
+        let (mock_data, _, _, settings) = setup_all(
             "omsupply-database-gql-invoice-query",
             MockDataInserts::all(),
         )

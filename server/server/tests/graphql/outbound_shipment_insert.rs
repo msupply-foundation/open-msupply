@@ -8,7 +8,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_insert() {
-        let (mock_data, connection, settings) = setup_all(
+        let (mock_data, connection, _, settings) = setup_all(
             "omsupply-database-gql-outbound_shipment_insert",
             MockDataInserts::all(),
         )
