@@ -5,7 +5,6 @@ import { useTranslation, useFormatDate } from '../../../../intl';
 
 export * from './DataRow';
 export * from './Cells';
-export const cellHorizontalPadding = 16;
 
 export const BasicCell = <T extends DomainObject>({
   column,
@@ -15,16 +14,14 @@ export const BasicCell = <T extends DomainObject>({
   const d = useFormatDate();
 
   return (
-    <span
+    <div
       style={{
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        width: column.width - 2 * cellHorizontalPadding,
-        display: 'inline-block',
       }}
     >
       {column.formatter(column.accessor(rowData), { t, d })}
-    </span>
+    </div>
   );
 };
 
