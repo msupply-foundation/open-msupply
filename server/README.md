@@ -74,7 +74,7 @@ rustflags = "-L /opt/homebrew/opt/libpq/lib"
 
 ### Optional
 
-- Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image).
+- Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image)
 
 ## Getting started
 
