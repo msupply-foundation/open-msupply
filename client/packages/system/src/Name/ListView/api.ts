@@ -15,7 +15,7 @@ const namesGuard = (namesQuery: NamesQuery) => {
 };
 
 const onRead =
-  (api: OmSupplyApi) =>
+  (api: OmSupplyApi, type: 'customer' | 'supplier') =>
   async ({
     first,
     offset,
@@ -36,16 +36,22 @@ const onRead =
       offset,
       key,
       desc: sortBy.isDesc,
+      filter: {
+        [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
+      },
     });
 
     return namesGuard(result);
   };
 
-export const getNameListViewApi = (api: OmSupplyApi): ListApi<Name> => ({
+export const getNameListViewApi = (
+  api: OmSupplyApi,
+  type: 'customer' | 'supplier'
+): ListApi<Name> => ({
   onRead:
     ({ first, offset, sortBy }) =>
     () =>
-      onRead(api)({ first, offset, sortBy }),
+      onRead(api, type)({ first, offset, sortBy }),
   // TODO: Mutations!
   onDelete: async () => [''],
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

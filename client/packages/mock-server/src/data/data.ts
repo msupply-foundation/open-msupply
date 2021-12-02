@@ -378,7 +378,7 @@ export const createCustomers = (
 
   return Array.from(customers.entries()).map(([name, code], i) => {
     return {
-      id: `${i}`,
+      id: `customer-${i}`,
       name,
       code,
       isCustomer: true,
@@ -388,7 +388,7 @@ export const createCustomers = (
 };
 
 export const createSuppliers = (
-  numberToCreate = randomInteger({ min: 2, max: 2 })
+  numberToCreate = randomInteger({ min: 2, max: 20 })
 ): Name[] => {
   const getNameAndCode = () => {
     return takeRandomElementFrom(names);
@@ -398,7 +398,7 @@ export const createSuppliers = (
     const { name, code } = getNameAndCode();
 
     return {
-      id: `${i}`,
+      id: `supplier-${i}`,
       name,
       code,
       isCustomer: false,
