@@ -47,7 +47,7 @@ export const getNextStocktakeStatus = (
   return nextStatus;
 };
 
-// TODO: When supplier requisition statuses are finalised, this function should be passed
+// TODO: When stocktake statuses are finalised, this function should be passed
 // `t` and should properly translate the status.
 export const getStocktakeTranslator =
   () =>

@@ -54,7 +54,7 @@ const createStatusLog = (status: 'DRAFT' | 'CONFIRMED' | 'FINALISED') => {
   };
 };
 
-export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
+export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
   const t = useTranslation('common');
   const { success } = useNotification();
