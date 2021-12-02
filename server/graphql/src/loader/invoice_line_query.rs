@@ -1,6 +1,9 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use domain::invoice_line::{InvoiceLine, InvoiceLineFilter};
+use domain::{
+    invoice_line::{InvoiceLine, InvoiceLineFilter},
+    EqualFilter,
+};
 use repository::{InvoiceLineRepository, StorageConnectionManager};
 use std::collections::HashMap;
 
@@ -23,7 +26,7 @@ impl Loader<String> for InvoiceLineQueryLoader {
         let repo = InvoiceLineRepository::new(&connection);
 
         let all_invoice_lines = repo.query_by_filter(
-            InvoiceLineFilter::new().invoice_id(|f| f.equal_any(invoice_ids.to_owned())),
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(invoice_ids.to_owned())),
         )?;
 
         // Put lines into a map grouped by invoice id:

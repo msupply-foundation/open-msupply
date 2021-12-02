@@ -1,7 +1,7 @@
 use crate::SingleRecordError;
 use domain::{
     stock_line::{StockLine, StockLineFilter},
-    Pagination,
+    Pagination, EqualFilter,
 };
 use repository::{StockLineRepository, StorageConnectionManager};
 
@@ -16,7 +16,7 @@ pub fn get_stock_line(
 
     let mut result = StockLineRepository::new(&connection).query(
         Pagination::one(),
-        Some(StockLineFilter::new().id(|f| f.equal_to(&id))),
+        Some(StockLineFilter::new().id(EqualFilter::equal_to(&id))),
         None,
     )?;
 

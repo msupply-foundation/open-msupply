@@ -40,11 +40,9 @@ impl<E> TransactionError<E> {
         E: From<RepositoryError>,
     {
         match self {
-            TransactionError::Transaction { msg } => RepositoryError::DBError {
-                msg,
-                extra: "".to_string(),
+            TransactionError::Transaction { msg, level } => {
+                RepositoryError::TransactionError { msg, level }.into()
             }
-            .into(),
             TransactionError::Inner(e) => e,
         }
     }

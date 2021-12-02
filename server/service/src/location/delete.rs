@@ -4,6 +4,7 @@ use domain::{
     invoice_line::{InvoiceLine, InvoiceLineFilter},
     location::DeleteLocation,
     stock_line::{StockLine, StockLineFilter},
+    EqualFilter,
 };
 use repository::{
     InvoiceLineRepository, LocationRowRepository, RepositoryError, StockLineRepository,
@@ -59,13 +60,13 @@ pub fn validate(
 }
 
 pub fn check_location_in_use(
-    id: &String,
+    id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<LocationInUse>, RepositoryError> {
     let stock_lines = StockLineRepository::new(connection)
-        .query_by_filter(StockLineFilter::new().location_id(|f| f.equal_to(id)))?;
+        .query_by_filter(StockLineFilter::new().location_id(EqualFilter::equal_to(id)))?;
     let invoice_lines = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().location_id(|f| f.equal_to(id)))?;
+        .query_by_filter(InvoiceLineFilter::new().location_id(EqualFilter::equal_to(id)))?;
 
     if stock_lines.len() > 0 || invoice_lines.len() > 0 {
         Ok(Some(LocationInUse {

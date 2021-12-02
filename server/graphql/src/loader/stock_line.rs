@@ -1,4 +1,5 @@
 use domain::stock_line::{StockLine, StockLineFilter};
+use domain::EqualFilter;
 use repository::{RepositoryError, StockLineRepository, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
@@ -22,7 +23,7 @@ impl Loader<String> for StockLineByLocationIdLoader {
         let repo = StockLineRepository::new(&connection);
 
         let result = repo.query_by_filter(
-            StockLineFilter::new().location_id(|f| f.equal_any(location_ids.to_owned())),
+            StockLineFilter::new().location_id(EqualFilter::equal_any(location_ids.to_owned())),
         )?;
 
         let mut result_map = HashMap::new();
@@ -52,7 +53,7 @@ impl Loader<String> for StockLineByItemIdLoader {
         let repo = StockLineRepository::new(&connection);
 
         let result = repo.query_by_filter(
-            StockLineFilter::new().item_id(|f| f.equal_any(item_ids.to_owned())),
+            StockLineFilter::new().item_id(EqualFilter::equal_any(item_ids.to_owned())),
         )?;
 
         let mut result_map = HashMap::new();
@@ -79,8 +80,8 @@ impl Loader<String> for StockLineByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        let result =
-            repo.query_by_filter(StockLineFilter::new().id(|f| f.equal_any(ids.to_owned())))?;
+        let result = repo
+            .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
 
         Ok(result
             .into_iter()

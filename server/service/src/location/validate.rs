@@ -1,4 +1,4 @@
-use domain::location::LocationFilter;
+use domain::{location::LocationFilter, EqualFilter};
 use repository::{
     schema::LocationRow, LocationRepository, LocationRowRepository, RepositoryError,
     StorageConnection,
@@ -7,7 +7,7 @@ use repository::{
 use crate::current_store_id;
 
 pub fn check_location_code_is_unique(
-    id: &String,
+    id: &str,
     code_option: Option<String>,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
@@ -17,9 +17,9 @@ pub fn check_location_code_is_unique(
             let current_store_id = current_store_id(connection)?;
             let locations = LocationRepository::new(connection).query_by_filter(
                 LocationFilter::new()
-                    .code(|f| f.equal_to(&code))
-                    .id(|f| f.not_equal_to(id))
-                    .store_id(|f| f.equal_to(&current_store_id)),
+                    .code(EqualFilter::equal_to(&code))
+                    .id(EqualFilter::not_equal_to(id))
+                    .store_id(EqualFilter::equal_to(&current_store_id)),
             )?;
 
             Ok(locations.len() == 0)
