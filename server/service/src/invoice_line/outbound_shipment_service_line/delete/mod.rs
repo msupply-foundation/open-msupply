@@ -21,21 +21,6 @@ pub fn delete_outbound_shipment_service_line(
             let stock_line_id_option = line.stock_line_id.clone();
 
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
-
-            if let Some(stock_line_id) = stock_line_id_option {
-                let invoice_repository = InvoiceRepository::new(&connection);
-                let stock_line_repository = StockLineRowRepository::new(&connection);
-
-                let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
-                stock_line.available_number_of_packs += line.number_of_packs;
-
-                let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
-                if invoice.status == InvoiceRowStatus::Confirmed {
-                    stock_line.total_number_of_packs += line.number_of_packs;
-                }
-
-                stock_line_repository.upsert_one(&stock_line)?;
-            }
             Ok(line)
         })
         .map_err(
