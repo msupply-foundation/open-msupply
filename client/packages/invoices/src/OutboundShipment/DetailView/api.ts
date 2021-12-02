@@ -180,6 +180,14 @@ export const onUpdate =
       ) {
         return patch;
       }
+
+      const { updateOutboundShipmentLines } = batchOutboundShipment;
+      if (
+        updateOutboundShipmentLines?.[0]?.__typename ===
+        'UpdateOutboundShipmentLineResponseWithId'
+      ) {
+        return patch;
+      }
     }
 
     throw new Error(':shrug');
