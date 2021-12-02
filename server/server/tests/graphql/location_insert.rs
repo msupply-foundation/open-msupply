@@ -5,34 +5,32 @@ mod graphql {
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
-        location::insert::{InsertLocationError, InsertLocationServiceTrait},
+        location::{insert::InsertLocationError, LocationServiceTrait},
         service_provider::{ServiceContext, ServiceProvider},
     };
 
     type InsertLocationMethod =
         dyn Fn(InsertLocation) -> Result<Location, InsertLocationError> + Sync + Send;
 
-    struct TestService(pub Box<InsertLocationMethod>);
+    pub struct TestService(pub Box<InsertLocationMethod>);
 
-    impl InsertLocationServiceTrait for TestService {
+    impl LocationServiceTrait for TestService {
         fn insert_location(
             &self,
-            input: InsertLocation,
             _: &ServiceContext,
+            input: InsertLocation,
         ) -> Result<Location, InsertLocationError> {
             (self.0)(input)
         }
     }
 
-    impl TestService {
-        pub fn service_provider(
-            self,
-            connection_manager: StorageConnectionManager,
-        ) -> ServiceProvider {
-            let mut service_provider = ServiceProvider::new(connection_manager);
-            service_provider.insert_location_service = Box::new(self);
-            service_provider
-        }
+    pub fn service_provider(
+        location_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.location_service = Box::new(location_service);
+        service_provider
     }
 
     #[actix_rt::test]
@@ -82,7 +80,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -121,7 +119,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -162,7 +160,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
     }
@@ -222,7 +220,7 @@ mod graphql {
             mutation,
             &variables,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
     }

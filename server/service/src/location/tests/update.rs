@@ -8,15 +8,15 @@ mod query {
     };
 
     #[actix_rt::test]
-    async fn update_location_service_errors() {
+    async fn location_service_update_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("update_location_service_errors", MockDataInserts::all()).await;
+            setup_all("location_service_update_errors", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.update_location_service;
+        let service = service_provider.location_service;
 
         let locations_in_store = location_repository
             .query_by_filter(
@@ -35,13 +35,13 @@ mod query {
         // Location does not exist
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: "invalid".to_owned(),
                     code: None,
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(UpdateLocationError::LocationDoesNotExist)
         );
@@ -49,13 +49,13 @@ mod query {
         // Location for another store
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: locations_not_in_store[0].id.clone(),
                     code: None,
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore)
         );
@@ -63,27 +63,27 @@ mod query {
         // Code used in another store
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: locations_in_store[0].id.clone(),
                     code: Some(locations_in_store[1].code.clone()),
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Err(UpdateLocationError::CodeAlreadyExists)
         );
     }
     #[actix_rt::test]
-    async fn update_location_service_success() {
+    async fn location_service_update_success() {
         let (_, _, connection_manager, _) =
-            setup_all("update_location_service_success", MockDataInserts::all()).await;
+            setup_all("location_service_update_success", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.update_location_service;
+        let service = service_provider.location_service;
 
         let locations_in_store = location_repository
             .query_by_filter(
@@ -96,13 +96,13 @@ mod query {
         let location = locations_in_store[0].clone();
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: location.id.clone(),
                     code: None,
                     name: None,
                     on_hold: None
                 },
-                &context
             ),
             Ok(location.clone())
         );
@@ -122,13 +122,13 @@ mod query {
 
         assert_eq!(
             service.update_location(
+                &context,
                 UpdateLocation {
                     id: location.id.clone(),
                     code: Some(location.code.clone()),
                     name: Some(location.name.clone()),
                     on_hold: Some(location.on_hold),
                 },
-                &context
             ),
             Ok(location.clone())
         );
