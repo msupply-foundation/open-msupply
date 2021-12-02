@@ -1302,6 +1302,7 @@ type StocktakeNode {
 
 type StocktakeLineNode {
   id: String!
+  itemId: String!
   itemName: String!
   itemCode: String!
   batch: String

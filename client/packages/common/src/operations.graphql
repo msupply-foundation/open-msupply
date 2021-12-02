@@ -165,6 +165,85 @@ query invoice($id: String!) {
   }
 }
 
+query stocktake($stocktakeId: String!) {
+  stocktake(id: $stocktakeId) {
+    __typename
+    ... on StocktakeNode {
+      __typename
+      id
+      stocktakeNumber
+      comment
+      stocktakeDate
+      status
+      description
+      lines {
+        __typename
+
+        ... on ConnectorError {
+          __typename
+          error {
+            description
+          }
+        }
+
+        ... on StocktakeLineConnector {
+          __typename
+          nodes {
+            __typename
+            batch
+            itemCode
+            itemName
+            itemId
+            id
+            expiryDate
+            snapshotNumPacks
+            snapshotPackSize
+            countedNumPacks
+            sellPricePerPack
+            costPricePerPack
+          }
+          totalCount
+        }
+      }
+    }
+  }
+}
+
+mutation upsertStocktake(
+  $deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  $insertStocktakeLines: [InsertStocktakeLineInput!]
+  $updateStocktakeLines: [UpdateStocktakeLineInput!]
+  $updateStocktakes: [UpdateStocktakeInput!]
+) {
+  batchStocktake(
+    deleteStocktakeLines: $deleteStocktakeLines
+    insertStocktakeLines: $insertStocktakeLines
+    updateStocktakeLines: $updateStocktakeLines
+    updateStocktakes: $updateStocktakes
+  ) {
+    __typename
+    updateStocktakes {
+      __typename
+      id
+    }
+
+    insertStocktakeLines {
+      __typename
+      id
+    }
+
+    deleteStocktakeLines {
+      __typename
+      id
+    }
+
+    updateStocktakeLines {
+      __typename
+      id
+    }
+  }
+}
+
 query stocktakes($params: StocktakeListParameters) {
   stocktakes(params: $params) {
     __typename
