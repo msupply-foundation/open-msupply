@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     diesel_extensions::OrderByExtensions,
-    diesel_macros::{apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -92,6 +92,7 @@ pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
         .into_boxed();
 
     if let Some(f) = filter {
+        apply_equal_filter!(query, f.id, item_dsl::id);
         apply_simple_string_filter!(query, f.code, item_dsl::code);
         apply_simple_string_filter!(query, f.name, item_dsl::name);
 
@@ -121,7 +122,7 @@ mod tests {
     };
     use domain::{
         item::{Item, ItemFilter, ItemSort, ItemSortField},
-        Pagination, DEFAULT_LIMIT,
+        EqualFilter, Pagination, DEFAULT_LIMIT,
     };
 
     impl PartialEq<ItemRow> for Item {
@@ -222,6 +223,47 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), rows.len() - 150);
         assert_eq!((*result.last().unwrap()), (*rows.last().unwrap()));
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_filter_repository() {
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_item_query_filter_repository",
+            MockDataInserts {
+                names: true,
+                stores: false,
+                units: true,
+                items: true,
+                locations: false,
+                name_store_joins: false,
+                invoices: false,
+                stock_lines: false,
+                invoice_lines: false,
+                full_invoices: false,
+                full_master_list: true,
+            },
+        )
+        .await;
+        let item_query_repository = ItemQueryRepository::new(&storage_connection);
+
+        // test any id filter:
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(ItemFilter {
+                    id: Some(EqualFilter::equal_any(vec![
+                        "item_b".to_string(),
+                        "item_c".to_string(),
+                    ])),
+                    name: None,
+                    code: None,
+                    // query invisible rows
+                    is_visible: Some(false),
+                }),
+                None,
+            )
+            .unwrap();
+        assert_eq!(results.len(), 2);
     }
 
     // TODO not sure where this fits, seems like this unit test has a lot of dependencies
@@ -390,6 +432,7 @@ mod tests {
             .query(
                 Pagination::new(),
                 Some(ItemFilter {
+                    id: None,
                     name: None,
                     code: None,
                     // query invisible rows
@@ -404,6 +447,7 @@ mod tests {
             .query(
                 Pagination::new(),
                 Some(ItemFilter {
+                    id: None,
                     name: None,
                     code: None,
                     // query invisible rows
