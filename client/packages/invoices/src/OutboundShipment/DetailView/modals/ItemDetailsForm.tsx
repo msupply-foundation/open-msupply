@@ -67,7 +67,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
             onChange={onChangeItem}
             extraFilter={item => {
               const itemAlreadyInShipment = draft.items.some(
-                ({ id }) => id === item.id
+                ({ id, isDeleted }) => id === item.id && !isDeleted
               );
               return !itemAlreadyInShipment;
             }}
@@ -78,7 +78,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       <ModalRow>
         <ModalLabel label={t('label.available')} />
         <NumericTextInput
-          value={Math.max(availableQuantity - allocatedQuantity, 0)}
+          value={availableQuantity}
           disabled
           style={{ width: 85 }}
         />
