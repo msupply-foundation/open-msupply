@@ -47,7 +47,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
             }
             extraFilter={item => {
               const itemAlreadyInShipment = draft.items.some(
-                ({ id }) => id === item.id
+                ({ id, isDeleted }) => id === item.id && !isDeleted
               );
               return !itemAlreadyInShipment;
             }}
