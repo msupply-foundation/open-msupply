@@ -19,7 +19,7 @@ import {
 } from '../../utils';
 import { StocktakeController } from '../../types';
 
-interface OutboundDetailFooterProps {
+interface StocktakeDetailFooterProps {
   draft: StocktakeController;
   save: () => Promise<void>;
 }
