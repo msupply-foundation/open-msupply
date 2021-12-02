@@ -24,20 +24,30 @@ export const nameResolver = {
   list: (
     params: NameListParameters
   ): ListResponse<ResolvedName, 'NameConnector'> => {
-    // TODO: Filter customers/suppliers etc
-    const names = db.get.all.name().filter(({ isCustomer }) => isCustomer);
+    const names = db.get.all.name();
     const resolvedNames = names.map(name => nameResolver.byId(name.id));
 
-    const { page = {}, sort = [] } = params ?? {};
+    const { page = {}, sort = [], filter } = params ?? {};
 
     const { offset = 0, first = 20 } = page ?? {};
     const { key = 'name', desc = false } = sort && sort[0] ? sort[0] : {};
 
+    let filteredData = resolvedNames;
+
+    if (filter) {
+      if (filter.isCustomer) {
+        filteredData = filteredData.filter(({ isCustomer }) => isCustomer);
+      }
+
+      if (filter.isSupplier) {
+        filteredData = filteredData.filter(({ isSupplier }) => isSupplier);
+      }
+    }
     if (key) {
-      resolvedNames.sort(getDataSorter(getNamesSortKey(key), !!desc));
+      filteredData.sort(getDataSorter(getNamesSortKey(key), !!desc));
     }
 
-    const paged = resolvedNames.slice(
+    const paged = filteredData.slice(
       offset ?? 0,
       (offset ?? 0) + (first ?? 20)
     );

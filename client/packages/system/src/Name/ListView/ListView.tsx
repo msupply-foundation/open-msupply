@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { getNameListViewApi } from './api';
 
-export const ListView: FC = () => {
+export const ListView: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const navigate = useNavigate();
   const { api } = useOmSupplyApi();
   const {
@@ -25,7 +25,7 @@ export const ListView: FC = () => {
   } = useListData(
     { initialSortBy: { key: 'name' } },
     ['names', 'list'],
-    getNameListViewApi(api)
+    getNameListViewApi(api, type)
   );
 
   const columns = useColumns<Name>(
@@ -46,7 +46,7 @@ export const ListView: FC = () => {
         data={data ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/distribution/customer/${row.id}`);
+          navigate(row.id);
         }}
       />
     </TableProvider>
