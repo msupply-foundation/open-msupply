@@ -100,7 +100,6 @@ const useBatchRows = (summaryItem: OutboundShipmentSummaryItem | null) => {
         .sort(sortByExpiry);
 
       rows.push(createPlaceholderRow());
-
       return rows;
     });
   }, [data]);
@@ -168,10 +167,12 @@ const sumAvailableQuantity = (batchRows: BatchRow[]) => {
 };
 
 const getAllocatedQuantity = (batchRows: BatchRow[]) => {
-  return batchRows.reduce(
-    (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-    0
-  );
+  return batchRows
+    .filter(({ id }) => id !== 'placeholder')
+    .reduce(
+      (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+      0
+    );
 };
 
 const issueStock = (
@@ -329,20 +330,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          disabled={
-            isEditMode ? isOnlyItem : getAllocatedQuantity(batchRows) <= 0
-          }
+          disabled={isEditMode && isOnlyItem}
           variant="next"
           onClick={onNext}
         />
       }
-      okButton={
-        <DialogButton
-          variant="ok"
-          onClick={upsertAndClose}
-          disabled={getAllocatedQuantity(batchRows) <= 0}
-        />
-      }
+      okButton={<DialogButton variant="ok" onClick={upsertAndClose} />}
       height={600}
       width={900}
     >

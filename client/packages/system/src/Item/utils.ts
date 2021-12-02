@@ -5,6 +5,7 @@ import {
   ItemsWithStockLinesQuery,
   StockLineNode,
   ItemNode,
+  Item,
 } from '@openmsupply-client/common';
 
 export const itemsGuard = (
@@ -32,4 +33,31 @@ export const availableBatchesGuard = (
 export const getItemSortField = (sortField: string): ItemSortFieldInput => {
   if (sortField === 'name') return ItemSortFieldInput.Name;
   return ItemSortFieldInput.Code;
+};
+
+export const mapItemNodes = (
+  result: ItemsWithStockLinesQuery
+): {
+  nodes: Item[];
+  totalCount: number;
+} => {
+  const items = itemsGuard(result);
+  const { totalCount } = items;
+  const nodes: Item[] = items.nodes.map(item => {
+    const availableBatches = availableBatchesGuard(item.availableBatches);
+    return {
+      ...item,
+      availableQuantity: availableBatches.reduce(
+        (sum, batch) =>
+          sum +
+          (batch.onHold ? 0 : batch.availableNumberOfPacks * batch.packSize),
+        0
+      ),
+      allocatedQuantity: 0,
+      unitName: item.unitName ?? '',
+      availableBatches,
+    };
+  });
+
+  return { nodes, totalCount };
 };
