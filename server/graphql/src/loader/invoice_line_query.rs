@@ -22,8 +22,9 @@ impl Loader<String> for InvoiceLineQueryLoader {
         let connection = self.connection_manager.connection()?;
         let repo = InvoiceLineRepository::new(&connection);
 
-        let all_invoice_lines = repo
-            .query_by_filter(InvoiceLineFilter::new().match_invoice_ids(invoice_ids.to_owned()))?;
+        let all_invoice_lines = repo.query_by_filter(
+            InvoiceLineFilter::new().invoice_id(|f| f.equal_any(invoice_ids.to_owned())),
+        )?;
 
         // Put lines into a map grouped by invoice id:
         // invoice_id -> list of invoice_line for the invoice id

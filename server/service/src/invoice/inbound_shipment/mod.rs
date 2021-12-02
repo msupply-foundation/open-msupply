@@ -1,7 +1,4 @@
-use domain::{
-    name::{Name, NameFilter},
-    Pagination,
-};
+use domain::name::{Name, NameFilter};
 use repository::{NameQueryRepository, RepositoryError, StorageConnection};
 
 pub mod insert;
@@ -27,11 +24,7 @@ fn check_other_party(
     if let Some(id) = id {
         let repository = NameQueryRepository::new(&connection);
 
-        let mut result = repository.query(
-            Pagination::one(),
-            Some(NameFilter::new().match_id(&id)),
-            None,
-        )?;
+        let mut result = repository.query_by_filter(NameFilter::new().id(|f| f.equal_to(&id)))?;
 
         if let Some(name) = result.pop() {
             if name.is_supplier {

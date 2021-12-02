@@ -4,6 +4,7 @@ extern crate diesel;
 pub mod database_settings;
 mod db_diesel;
 pub mod diesel_extensions;
+pub mod diesel_macros;
 pub mod mock;
 mod repository_error;
 pub mod schema;

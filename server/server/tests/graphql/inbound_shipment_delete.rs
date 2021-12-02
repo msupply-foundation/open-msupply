@@ -7,6 +7,7 @@ mod graphql {
     use crate::graphql::{
         delete_inbound_shipment_full as delete, DeleteInboundShipmentFull as Delete,
     };
+    use domain::invoice::{InvoiceStatus, InvoiceType};
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::mock::MockDataInserts;
@@ -61,13 +62,15 @@ mod graphql {
 
         let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_finalised(),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
             &connection
         );
 
-        let outbound_shipment =
-            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
+        let outbound_shipment = get_invoice_inline!(
+            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            &connection
+        );
         let lines_in_invoice = get_invoice_lines_inline!(invoice_with_lines_id, &connection);
 
         let base_variables = delete::Variables {

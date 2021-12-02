@@ -1,7 +1,7 @@
 use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
 use domain::{
     invoice::{Invoice, InvoiceFilter, InvoiceSort},
-    Pagination, PaginationOption,
+    PaginationOption,
 };
 use repository::{InvoiceQueryRepository, StorageConnectionManager};
 
@@ -30,11 +30,8 @@ pub fn get_invoice(
 ) -> Result<Invoice, SingleRecordError> {
     let connection = connection_manager.connection()?;
 
-    let mut result = InvoiceQueryRepository::new(&connection).query(
-        Pagination::one(),
-        Some(InvoiceFilter::new().match_id(&id)),
-        None,
-    )?;
+    let mut result = InvoiceQueryRepository::new(&connection)
+        .query_by_filter(InvoiceFilter::new().id(|f| f.equal_to(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

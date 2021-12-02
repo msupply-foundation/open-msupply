@@ -16,7 +16,7 @@ pub fn get_invoice_line(
 
     let mut result = InvoiceLineRepository::new(&connection).query(
         Pagination::one(),
-        Some(InvoiceLineFilter::new().match_id(&id)),
+        Some(InvoiceLineFilter::new().id(|f| f.equal_to(&id))),
         None,
     )?;
 

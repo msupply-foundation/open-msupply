@@ -78,7 +78,7 @@ mod query {
         let result = service
             .get_locations(
                 None,
-                Some(LocationFilter::new().match_id("location_1")),
+                Some(LocationFilter::new().id(|f| f.equal_to(&"location_1".to_owned()))),
                 None,
                 &context,
             )
@@ -90,10 +90,9 @@ mod query {
         let result = service
             .get_locations(
                 None,
-                Some(
-                    LocationFilter::new()
-                        .match_ids(vec!["location_1".to_owned(), "location_on_hold".to_owned()]),
-                ),
+                Some(LocationFilter::new().id(|f| {
+                    f.equal_any(vec!["location_1".to_owned(), "location_on_hold".to_owned()])
+                })),
                 None,
                 &context,
             )

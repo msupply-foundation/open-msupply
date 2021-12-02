@@ -76,7 +76,9 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
 #[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceNodeType)))]
 #[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceNodeStatus)))]
 pub struct EqualFilterInput<T: InputType> {
-    equal_to: Option<T>,
+    pub equal_to: Option<T>,
+    pub equal_any: Option<Vec<T>>,
+    pub not_equal_to: Option<T>,
 }
 
 pub type EqualFilterBoolInput = EqualFilterInput<bool>;
@@ -87,28 +89,49 @@ impl<T> From<EqualFilterInput<T>> for EqualFilter<T>
 where
     T: InputType,
 {
-    fn from(input: EqualFilterInput<T>) -> Self {
+    fn from(
+        EqualFilterInput {
+            equal_to,
+            equal_any,
+            not_equal_to,
+        }: EqualFilterInput<T>,
+    ) -> Self {
         EqualFilter {
-            equal_to: input.equal_to,
-            equal_any: None,
+            equal_to,
+            equal_any,
+            not_equal_to,
         }
     }
 }
 
 impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
-    fn from(f: EqualFilterInput<InvoiceNodeType>) -> Self {
+    fn from(
+        EqualFilterInput {
+            equal_to,
+            equal_any,
+            not_equal_to,
+        }: EqualFilterInput<InvoiceNodeType>,
+    ) -> Self {
         EqualFilter {
-            equal_to: f.equal_to.map(InvoiceType::from),
-            equal_any: None,
+            equal_to: equal_to.map(InvoiceType::from),
+            equal_any: equal_any.map(|types| types.into_iter().map(InvoiceType::from).collect()),
+            not_equal_to: not_equal_to.map(InvoiceType::from),
         }
     }
 }
 
 impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
-    fn from(f: EqualFilterInput<InvoiceNodeStatus>) -> Self {
+    fn from(
+        EqualFilterInput {
+            equal_to,
+            equal_any,
+            not_equal_to,
+        }: EqualFilterInput<InvoiceNodeStatus>,
+    ) -> Self {
         EqualFilter {
-            equal_to: f.equal_to.map(InvoiceStatus::from),
-            equal_any: None,
+            equal_to: equal_to.map(InvoiceStatus::from),
+            equal_any: equal_any.map(|types| types.into_iter().map(InvoiceStatus::from).collect()),
+            not_equal_to: not_equal_to.map(InvoiceStatus::from),
         }
     }
 }

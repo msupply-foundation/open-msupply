@@ -1,6 +1,7 @@
 use super::{DBType, StorageConnection};
 use crate::{
     diesel_extensions::OrderByExtensions,
+    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -38,6 +39,10 @@ impl<'a> NameQueryRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
+    pub fn query_by_filter(&self, filter: NameFilter) -> Result<Vec<Name>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
+    }
+
     pub fn query(
         &self,
         pagination: Pagination,
@@ -50,18 +55,10 @@ impl<'a> NameQueryRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 NameSortField::Name => {
-                    if sort.desc.unwrap_or(false) {
-                        query = query.order(name_table_dsl::name.desc_no_case());
-                    } else {
-                        query = query.order(name_table_dsl::name.asc_no_case());
-                    }
+                    apply_sort_no_case!(query, sort, name_table_dsl::name);
                 }
                 NameSortField::Code => {
-                    if sort.desc.unwrap_or(false) {
-                        query = query.order(name_table_dsl::code.desc_no_case());
-                    } else {
-                        query = query.order(name_table_dsl::code.asc_no_case());
-                    }
+                    apply_sort_no_case!(query, sort, name_table_dsl::code);
                 }
             }
         } else {
@@ -104,30 +101,10 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
         .into_boxed();
 
     if let Some(f) = filter {
-        if let Some(value) = f.id {
-            if let Some(eq) = value.equal_to {
-                query = query.filter(name_table_dsl::id.eq(eq));
-            }
+        apply_equal_filter!(query, f.id, name_table_dsl::id);
+        apply_simple_string_filter!(query, f.code, name_table_dsl::code);
+        apply_simple_string_filter!(query, f.name, name_table_dsl::name);
 
-            if let Some(equal_any) = value.equal_any {
-                query = query.filter(name_table_dsl::id.eq_any(equal_any));
-            }
-        }
-
-        if let Some(code) = f.code {
-            if let Some(eq) = code.equal_to {
-                query = query.filter(name_table_dsl::code.eq(eq));
-            } else if let Some(like) = code.like {
-                query = query.filter(name_table_dsl::code.like(format!("%{}%", like)));
-            }
-        }
-        if let Some(name) = f.name {
-            if let Some(eq) = name.equal_to {
-                query = query.filter(name_table_dsl::name.eq(eq));
-            } else if let Some(like) = &name.like {
-                query = query.filter(name_table_dsl::name.like(format!("%{}%", like)));
-            }
-        }
         if let Some(is_customer) = f.is_customer {
             query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
         }
