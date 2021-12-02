@@ -24,10 +24,10 @@ impl From<RepositoryError> for InsertOutboundShipmentError {
 impl From<TransactionError<InsertOutboundShipmentError>> for InsertOutboundShipmentError {
     fn from(error: TransactionError<InsertOutboundShipmentError>) -> Self {
         match error {
-            TransactionError::Transaction { msg } => {
-                InsertOutboundShipmentError::DatabaseError(RepositoryError::DBError {
+            TransactionError::Transaction { msg, level } => {
+                InsertOutboundShipmentError::DatabaseError(RepositoryError::TransactionError {
                     msg,
-                    extra: "".to_string(),
+                    level,
                 })
             }
             TransactionError::Inner(e) => e,

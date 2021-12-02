@@ -39,8 +39,8 @@ pub fn update_inbound_shipment(
         })
         .map_err(
             |error: TransactionError<UpdateInboundShipmentError>| match error {
-                TransactionError::Transaction { msg } => {
-                    RepositoryError::as_db_error(&msg, "").into()
+                TransactionError::Transaction { msg, level } => {
+                    RepositoryError::TransactionError { msg, level }.into()
                 }
                 TransactionError::Inner(error) => error,
             },

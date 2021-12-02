@@ -41,7 +41,7 @@ pub fn validate(
     if !check_location_does_not_exist(&input.id, connection)? {
         return Err(InsertLocationError::LocationAlreadyExists);
     }
-    if !check_location_code_is_unique(&input.id, &input.code, connection)? {
+    if !check_location_code_is_unique(&input.id, Some(input.code.clone()), connection)? {
         return Err(InsertLocationError::LocationWithCodeAlreadyExists);
     }
 

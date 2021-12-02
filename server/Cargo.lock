@@ -2972,6 +2972,7 @@ dependencies = [
  "domain",
  "futures-util",
  "libsqlite3-sys",
+ "log",
  "serde 1.0.130",
  "serde_json",
  "thiserror",

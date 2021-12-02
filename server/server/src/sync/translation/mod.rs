@@ -202,7 +202,8 @@ async fn store_integration_records(
         for record in &integration_records.upserts {
             // Integrate every record in a sub transaction. This is mainly for Postgres where the
             // whole transaction fails when there is a DB error (not a problem in sqlite).
-            let sub_result = con.transaction_sync(|sub_tx| integrate_record(record, sub_tx));
+            let sub_result =
+                con.transaction_sync_etc(|sub_tx| integrate_record(record, sub_tx), false);
             match sub_result {
                 Ok(_) => Ok(()),
                 Err(TransactionError::Inner(err @ RepositoryError::ForeignKeyViolation(_))) => {
@@ -219,9 +220,10 @@ async fn store_integration_records(
     })
     .await
     .map_err(|error| match error {
-        TransactionError::Transaction { msg } => {
-            SyncImportError::as_integration_error(RepositoryError::as_db_error(&msg, ""), "")
-        }
+        TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
+            RepositoryError::TransactionError { msg, level },
+            "",
+        ),
         TransactionError::Inner(e) => e,
     })
 }

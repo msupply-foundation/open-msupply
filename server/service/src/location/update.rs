@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     service_provider::ServiceContext, validate::check_record_belongs_to_current_store,
-    SingleRecordError, WithDBError,
+    SingleRecordError,
 };
 use domain::location::{Location, UpdateLocation};
 use repository::{schema::LocationRow, LocationRowRepository, RepositoryError, StorageConnection};
@@ -43,11 +43,11 @@ pub fn validate(
         Some(location_row) => location_row,
         None => return Err(UpdateLocationError::LocationDoesNotExist),
     };
-    if let Some(code) = &input.code {
-        if !check_location_code_is_unique(&input.id, code, connection)? {
-            return Err(UpdateLocationError::CodeAlreadyExists);
-        }
+
+    if !check_location_code_is_unique(&input.id, input.code.clone(), connection)? {
+        return Err(UpdateLocationError::CodeAlreadyExists);
     }
+
     if !check_record_belongs_to_current_store(&location_row.store_id, &connection)? {
         return Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore);
     }
@@ -82,18 +82,6 @@ impl From<SingleRecordError> for UpdateLocationError {
         match error {
             SingleRecordError::DatabaseError(error) => DatabaseError(error),
             SingleRecordError::NotFound(_) => UpdatedRecordDoesNotExist,
-        }
-    }
-}
-
-impl<E> From<WithDBError<E>> for UpdateLocationError
-where
-    E: Into<UpdateLocationError>,
-{
-    fn from(result: WithDBError<E>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
         }
     }
 }
