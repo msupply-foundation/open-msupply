@@ -122,6 +122,6 @@ export const getStocktakeDetailViewApi = (
       }
     }
 
-    throw new Error('Could not update requisition');
+    throw new Error('Could not update stocktake');
   },
 });
