@@ -1,12 +1,33 @@
 use async_graphql::*;
 use domain::location::DeleteLocation;
 use repository::RepositoryError;
-use service::location::delete::DeleteLocationError;
-
-use crate::schema::{
-    mutations::{error::DatabaseError, DeleteResponse, RecordBelongsToAnotherStore},
-    types::{Connector, ErrorWrapper, InvoiceLineNode, RecordNotFound, StockLineNode},
+use service::location::delete::{
+    DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
 };
+
+use crate::{
+    schema::{
+        mutations::{error::DatabaseError, DeleteResponse, RecordBelongsToAnotherStore},
+        types::{Connector, InvoiceLineNode, RecordNotFound, StockLineNode},
+    },
+    ContextExt,
+};
+
+pub fn delete_location(ctx: &Context<'_>, input: DeleteLocationInput) -> DeleteLocationResponse {
+    let service_provider = ctx.service_provider();
+    let service_context = match service_provider.context() {
+        Ok(service) => service,
+        Err(error) => return DeleteLocationResponse::Error(error.into()),
+    };
+
+    match service_provider
+        .location_service
+        .delete_location(&service_context, input.into())
+    {
+        Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
+        Err(error) => DeleteLocationResponse::Error(error.into()),
+    }
+}
 
 #[derive(InputObject)]
 pub struct DeleteLocationInput {
@@ -19,9 +40,14 @@ impl From<DeleteLocationInput> for DeleteLocation {
     }
 }
 
+#[derive(SimpleObject)]
+pub struct DeleteLocationError {
+    pub error: DeleteLocationErrorInterface,
+}
+
 #[derive(Union)]
 pub enum DeleteLocationResponse {
-    Error(ErrorWrapper<DeleteLocationErrorInterface>),
+    Error(DeleteLocationError),
     Response(DeleteResponse),
 }
 
@@ -54,34 +80,30 @@ impl LocationInUse {
     }
 }
 
-impl From<RepositoryError> for ErrorWrapper<DeleteLocationErrorInterface> {
+impl From<RepositoryError> for DeleteLocationError {
     fn from(error: RepositoryError) -> Self {
         let error = DeleteLocationErrorInterface::DatabaseError(DatabaseError(error));
-        ErrorWrapper { error }
+        DeleteLocationError { error }
     }
 }
 
-impl From<DeleteLocationError> for ErrorWrapper<DeleteLocationErrorInterface> {
-    fn from(error: DeleteLocationError) -> Self {
+impl From<InError> for DeleteLocationError {
+    fn from(error: InError) -> Self {
         use DeleteLocationErrorInterface as OutError;
         let error = match error {
-            DeleteLocationError::LocationDoesNotExist => {
-                OutError::LocationNotFound(RecordNotFound {})
-            }
-            DeleteLocationError::LocationInUse {
+            InError::LocationDoesNotExist => OutError::LocationNotFound(RecordNotFound {}),
+            InError::LocationInUse(ServiceLocationInUse {
                 stock_lines,
                 invoice_lines,
-            } => OutError::LocationInUse(LocationInUse {
+            }) => OutError::LocationInUse(LocationInUse {
                 stock_lines: stock_lines.into(),
                 invoice_lines: invoice_lines.into(),
             }),
-            DeleteLocationError::LocationDoesNotBelongToCurrentStore => {
+            InError::LocationDoesNotBelongToCurrentStore => {
                 OutError::RecordBelongsToAnotherStore(RecordBelongsToAnotherStore {})
             }
-            DeleteLocationError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
+            InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),
         };
-        ErrorWrapper { error }
+        DeleteLocationError { error }
     }
 }

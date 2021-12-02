@@ -85,11 +85,11 @@ impl Queries {
             Err(error) => return LocationsResponse::Error(error.into()),
         };
 
-        match service_provider.location_query_service.get_locations(
+        match service_provider.location_service.get_locations(
+            &service_context,
             page.map(PaginationOption::from),
             filter.map(LocationFilter::from),
             convert_sort(sort),
-            &service_context,
         ) {
             Ok(locations) => LocationsResponse::Response(locations.into()),
             Err(error) => LocationsResponse::Error(error.into()),

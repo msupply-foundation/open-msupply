@@ -8,7 +8,7 @@ mod graphql {
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
-        location::LocationQueryServiceTrait,
+        location::LocationServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
@@ -21,37 +21,27 @@ mod graphql {
         + Sync
         + Send;
 
-    struct TestService(pub Box<GetLocations>);
+    pub struct TestService(pub Box<GetLocations>);
 
-    impl LocationQueryServiceTrait for TestService {
+    impl LocationServiceTrait for TestService {
         fn get_locations(
             &self,
+            _: &ServiceContext,
             pagination: Option<PaginationOption>,
             filter: Option<LocationFilter>,
             sort: Option<LocationSort>,
-            _: &ServiceContext,
         ) -> Result<ListResult<Location>, ListError> {
             (self.0)(pagination, filter, sort)
         }
-
-        fn get_location(
-            &self,
-            _: String,
-            _: &ServiceContext,
-        ) -> Result<domain::location::Location, service::SingleRecordError> {
-            todo!()
-        }
     }
 
-    impl TestService {
-        pub fn service_provider(
-            self,
-            connection_manager: StorageConnectionManager,
-        ) -> ServiceProvider {
-            let mut service_provider = ServiceProvider::new(connection_manager);
-            service_provider.location_query_service = Box::new(self);
-            service_provider
-        }
+    pub fn service_provider(
+        location_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.location_service = Box::new(location_service);
+        service_provider
     }
 
     #[actix_rt::test]
@@ -122,7 +112,7 @@ mod graphql {
             query,
             &None,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -150,7 +140,7 @@ mod graphql {
             query,
             &None,
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
     }
@@ -202,7 +192,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -230,7 +220,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
 
@@ -254,7 +244,7 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
-            Some(test_service.service_provider(connection_manager.clone())),
+            Some(service_provider(test_service, &connection_manager)),
         )
         .await;
     }

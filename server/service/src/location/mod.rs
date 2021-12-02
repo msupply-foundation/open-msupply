@@ -1,7 +1,16 @@
+use self::{
+    delete::{delete_location, DeleteLocationError},
+    insert::{insert_location, InsertLocationError},
+    query::{get_location, get_locations},
+    update::{update_location, UpdateLocationError},
+};
+
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use domain::{
-    location::{Location, LocationFilter, LocationSort},
+    location::{
+        DeleteLocation, InsertLocation, Location, LocationFilter, LocationSort, UpdateLocation,
+    },
     PaginationOption,
 };
 
@@ -11,15 +20,52 @@ pub mod query;
 pub mod update;
 mod validate;
 
-pub trait LocationQueryServiceTrait: Sync + Send {
+pub trait LocationServiceTrait: Sync + Send {
     fn get_locations(
         &self,
+        ctx: &ServiceContext,
         pagination: Option<PaginationOption>,
         filter: Option<LocationFilter>,
         sort: Option<LocationSort>,
-        ctx: &ServiceContext,
-    ) -> Result<ListResult<Location>, ListError>;
+    ) -> Result<ListResult<Location>, ListError> {
+        get_locations(ctx, pagination, filter, sort)
+    }
 
-    fn get_location(&self, id: String, ctx: &ServiceContext)
-        -> Result<Location, SingleRecordError>;
+    fn get_location(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<Location, SingleRecordError> {
+        get_location(ctx, id)
+    }
+
+    fn delete_location(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteLocation,
+    ) -> Result<String, DeleteLocationError> {
+        delete_location(ctx, input)
+    }
+
+    fn insert_location(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertLocation,
+    ) -> Result<Location, InsertLocationError> {
+        insert_location(ctx, input)
+    }
+
+    fn update_location(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateLocation,
+    ) -> Result<Location, UpdateLocationError> {
+        update_location(ctx, input)
+    }
 }
+
+pub struct LocationService {}
+impl LocationServiceTrait for LocationService {}
+
+#[cfg(test)]
+mod tests;

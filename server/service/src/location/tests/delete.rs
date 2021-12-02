@@ -11,13 +11,15 @@ mod query {
     };
 
     use crate::{
-        current_store_id, location::delete::DeleteLocationError, service_provider::ServiceProvider,
+        current_store_id,
+        location::delete::{DeleteLocationError, LocationInUse},
+        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn delete_location_service_errors() {
+    async fn location_service_delete_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("delete_location_service_errors", MockDataInserts::all()).await;
+            setup_all("location_service_delete_errors", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
@@ -26,7 +28,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.delete_location_service;
+        let service = service_provider.location_service;
 
         let locations_not_in_store = location_repository
             .query_by_filter(
@@ -38,10 +40,10 @@ mod query {
         // Location does not exist
         assert_eq!(
             service.delete_location(
+                &context,
                 DeleteLocation {
                     id: "invalid".to_owned(),
                 },
-                &context
             ),
             Err(DeleteLocationError::LocationDoesNotExist)
         );
@@ -49,10 +51,10 @@ mod query {
         // Location for another store
         assert_eq!(
             service.delete_location(
+                &context,
                 DeleteLocation {
                     id: locations_not_in_store[0].id.clone(),
                 },
-                &context
             ),
             Err(DeleteLocationError::LocationDoesNotBelongToCurrentStore)
         );
@@ -67,11 +69,11 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(DeleteLocation { id: location_id }, &context),
-            Err(DeleteLocationError::LocationInUse {
+            service.delete_location(&context, DeleteLocation { id: location_id }),
+            Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
                 invoice_lines
-            })
+            }))
         );
 
         // Location is not empty (stock_lines in use)
@@ -84,30 +86,30 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(DeleteLocation { id: location_id }, &context),
-            Err(DeleteLocationError::LocationInUse {
+            service.delete_location(&context, DeleteLocation { id: location_id }),
+            Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
                 invoice_lines
-            })
+            }))
         );
     }
     #[actix_rt::test]
-    async fn delete_location_service_success() {
+    async fn location_service_delete_success() {
         let (_, _, connection_manager, _) =
-            setup_all("delete_location_service_success", MockDataInserts::all()).await;
+            setup_all("location_service_delete_success", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.delete_location_service;
+        let service = service_provider.location_service;
 
         assert_eq!(
             service.delete_location(
+                &context,
                 DeleteLocation {
                     id: "location_2".to_owned()
                 },
-                &context
             ),
             Ok("location_2".to_owned())
         );
