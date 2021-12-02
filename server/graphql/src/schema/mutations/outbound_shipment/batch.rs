@@ -10,14 +10,20 @@ use repository::StorageConnectionManager;
 
 use super::{
     delete::DeleteOutboundShipmentResponse,
+    get_delete_outbound_shipment_service_line_response,
+    get_insert_outbound_shipment_service_line_response,
+    get_update_outbound_shipment_service_line_response,
     insert::{
         get_insert_outbound_shipment_response, InsertOutboundShipmentInput,
         InsertOutboundShipmentResponse,
     },
     DeleteOutboundShipmentLineInput, DeleteOutboundShipmentLineResponse,
+    DeleteOutboundShipmentServiceLineInput, DeleteOutboundShipmentServiceLineResponse,
     InsertOutboundShipmentLineInput, InsertOutboundShipmentLineResponse,
+    InsertOutboundShipmentServiceLineInput, InsertOutboundShipmentServiceLineResponse,
     UpdateOutboundShipmentInput, UpdateOutboundShipmentLineInput,
     UpdateOutboundShipmentLineResponse, UpdateOutboundShipmentResponse,
+    UpdateOutboundShipmentServiceLineInput, UpdateOutboundShipmentServiceLineResponse,
 };
 use async_graphql::*;
 
@@ -27,6 +33,12 @@ pub struct BatchOutboundShipmentResponse {
     insert_outbound_shipment_lines: Option<Vec<MutationWithId<InsertOutboundShipmentLineResponse>>>,
     update_outbound_shipment_lines: Option<Vec<MutationWithId<UpdateOutboundShipmentLineResponse>>>,
     delete_outbound_shipment_lines: Option<Vec<MutationWithId<DeleteOutboundShipmentLineResponse>>>,
+    insert_outbound_shipment_service_lines:
+        Option<Vec<MutationWithId<InsertOutboundShipmentServiceLineResponse>>>,
+    update_outbound_shipment_service_lines:
+        Option<Vec<MutationWithId<UpdateOutboundShipmentServiceLineResponse>>>,
+    delete_outbound_shipment_service_lines:
+        Option<Vec<MutationWithId<DeleteOutboundShipmentServiceLineResponse>>>,
     update_outbound_shipments: Option<Vec<MutationWithId<UpdateOutboundShipmentResponse>>>,
     delete_outbound_shipments: Option<Vec<MutationWithId<DeleteOutboundShipmentResponse>>>,
 }
@@ -37,6 +49,9 @@ pub fn get_batch_outbound_shipment_response(
     insert_outbound_shipment_lines: Option<Vec<InsertOutboundShipmentLineInput>>,
     update_outbound_shipment_lines: Option<Vec<UpdateOutboundShipmentLineInput>>,
     delete_outbound_shipment_lines: Option<Vec<DeleteOutboundShipmentLineInput>>,
+    insert_outbound_shipment_service_lines: Option<Vec<InsertOutboundShipmentServiceLineInput>>,
+    update_outbound_shipment_service_lines: Option<Vec<UpdateOutboundShipmentServiceLineInput>>,
+    delete_outbound_shipment_service_lines: Option<Vec<DeleteOutboundShipmentServiceLineInput>>,
     update_outbound_shipments: Option<Vec<UpdateOutboundShipmentInput>>,
     delete_outbound_shipments: Option<Vec<String>>,
 ) -> BatchOutboundShipmentResponse {
@@ -45,6 +60,9 @@ pub fn get_batch_outbound_shipment_response(
         insert_outbound_shipment_lines: None,
         update_outbound_shipment_lines: None,
         delete_outbound_shipment_lines: None,
+        insert_outbound_shipment_service_lines: None,
+        update_outbound_shipment_service_lines: None,
+        delete_outbound_shipment_service_lines: None,
         update_outbound_shipments: None,
         delete_outbound_shipments: None,
     };
@@ -76,6 +94,33 @@ pub fn get_batch_outbound_shipment_response(
     if let Some(inputs) = delete_outbound_shipment_lines {
         let (has_errors, responses) = do_delete_outbound_shipment_lines(connection_manager, inputs);
         result.delete_outbound_shipment_lines = Some(responses);
+        if has_errors {
+            return result;
+        }
+    }
+
+    if let Some(inputs) = insert_outbound_shipment_service_lines {
+        let (has_errors, responses) =
+            do_insert_outbound_shipment_service_lines(connection_manager, inputs);
+        result.insert_outbound_shipment_service_lines = Some(responses);
+        if has_errors {
+            return result;
+        }
+    }
+
+    if let Some(inputs) = update_outbound_shipment_service_lines {
+        let (has_errors, responses) =
+            do_update_outbound_shipment_service_lines(connection_manager, inputs);
+        result.update_outbound_shipment_service_lines = Some(responses);
+        if has_errors {
+            return result;
+        }
+    }
+
+    if let Some(inputs) = delete_outbound_shipment_service_lines {
+        let (has_errors, responses) =
+            do_delete_outbound_shipment_service_lines(connection_manager, inputs);
+        result.delete_outbound_shipment_service_lines = Some(responses);
         if has_errors {
             return result;
         }
@@ -235,6 +280,81 @@ pub fn do_delete_outbound_shipment_lines(
         matches!(
             mutation_with_id.response,
             DeleteOutboundShipmentLineResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_insert_outbound_shipment_service_lines(
+    connection: &StorageConnectionManager,
+    inputs: Vec<InsertOutboundShipmentServiceLineInput>,
+) -> (
+    bool,
+    Vec<MutationWithId<InsertOutboundShipmentServiceLineResponse>>,
+) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_insert_outbound_shipment_service_line_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            InsertOutboundShipmentServiceLineResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_update_outbound_shipment_service_lines(
+    connection: &StorageConnectionManager,
+    inputs: Vec<UpdateOutboundShipmentServiceLineInput>,
+) -> (
+    bool,
+    Vec<MutationWithId<UpdateOutboundShipmentServiceLineResponse>>,
+) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_update_outbound_shipment_service_line_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            UpdateOutboundShipmentServiceLineResponse::Error(_)
+        )
+    });
+
+    (has_errors, responses)
+}
+
+pub fn do_delete_outbound_shipment_service_lines(
+    connection: &StorageConnectionManager,
+    inputs: Vec<DeleteOutboundShipmentServiceLineInput>,
+) -> (
+    bool,
+    Vec<MutationWithId<DeleteOutboundShipmentServiceLineResponse>>,
+) {
+    let mut responses = Vec::new();
+    for input in inputs.into_iter() {
+        let id = input.id.clone();
+        responses.push(MutationWithId {
+            id,
+            response: get_delete_outbound_shipment_service_line_response(connection, input),
+        });
+    }
+    let has_errors = responses.iter().any(|mutation_with_id| {
+        matches!(
+            mutation_with_id.response,
+            DeleteOutboundShipmentServiceLineResponse::Error(_)
         )
     });
 

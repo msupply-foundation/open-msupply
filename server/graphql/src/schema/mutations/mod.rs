@@ -77,6 +77,33 @@ impl Mutations {
         get_delete_outbound_shipment_line_response(connection_manager, input)
     }
 
+    async fn insert_outbound_shipment_service_line(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertOutboundShipmentServiceLineInput,
+    ) -> InsertOutboundShipmentServiceLineResponse {
+        let connection_manager = ctx.get_connection_manager();
+        get_insert_outbound_shipment_service_line_response(connection_manager, input)
+    }
+
+    async fn update_outbound_shipment_service_line(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateOutboundShipmentServiceLineInput,
+    ) -> UpdateOutboundShipmentServiceLineResponse {
+        let connection_manager = ctx.get_connection_manager();
+        get_update_outbound_shipment_service_line_response(connection_manager, input)
+    }
+
+    async fn delete_outbound_shipment_service_line(
+        &self,
+        ctx: &Context<'_>,
+        input: DeleteOutboundShipmentServiceLineInput,
+    ) -> DeleteOutboundShipmentServiceLineResponse {
+        let connection_manager = ctx.get_connection_manager();
+        get_delete_outbound_shipment_service_line_response(connection_manager, input)
+    }
+
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
@@ -161,6 +188,9 @@ impl Mutations {
         insert_outbound_shipment_lines: Option<Vec<InsertOutboundShipmentLineInput>>,
         update_outbound_shipment_lines: Option<Vec<UpdateOutboundShipmentLineInput>>,
         delete_outbound_shipment_lines: Option<Vec<DeleteOutboundShipmentLineInput>>,
+        insert_outbound_shipment_service_lines: Option<Vec<InsertOutboundShipmentServiceLineInput>>,
+        update_outbound_shipment_service_lines: Option<Vec<UpdateOutboundShipmentServiceLineInput>>,
+        delete_outbound_shipment_service_lines: Option<Vec<DeleteOutboundShipmentServiceLineInput>>,
         update_outbound_shipments: Option<Vec<UpdateOutboundShipmentInput>>,
         delete_outbound_shipments: Option<Vec<String>>,
     ) -> BatchOutboundShipmentResponse {
@@ -172,6 +202,9 @@ impl Mutations {
             insert_outbound_shipment_lines,
             update_outbound_shipment_lines,
             delete_outbound_shipment_lines,
+            insert_outbound_shipment_service_lines,
+            update_outbound_shipment_service_lines,
+            delete_outbound_shipment_service_lines,
             update_outbound_shipments,
             delete_outbound_shipments,
         )
@@ -340,7 +373,18 @@ impl InvoiceLineBelongsToAnotherInvoice {
     name = "DeleteOutboundShipmentLineResponseWithId",
     params(DeleteOutboundShipmentLineResponse)
 ))]
-
+#[graphql(concrete(
+    name = "InsertOutboundShipmentServiceLineResponseWithId",
+    params(InsertOutboundShipmentServiceLineResponse)
+))]
+#[graphql(concrete(
+    name = "UpdateOutboundShipmentServiceLineResponseWithId",
+    params(UpdateOutboundShipmentServiceLineResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteOutboundShipmentServiceLineResponseWithId",
+    params(DeleteOutboundShipmentServiceLineResponse)
+))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,

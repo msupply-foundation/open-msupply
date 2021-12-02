@@ -154,6 +154,18 @@ impl From<PaginationInput> for PaginationOption {
 #[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
 #[graphql(concrete(name = "LogoutError", params(LogoutErrorInterface)))]
 #[graphql(concrete(name = "UserError", params(UserErrorInterface)))]
+#[graphql(concrete(
+    name = "InsertOutboundShipmentServiceLineError",
+    params(InsertOutboundShipmentServiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "UpdateOutboundShipmentServiceLineError",
+    params(UpdateOutboundShipmentServiceLineErrorInterface)
+))]
+#[graphql(concrete(
+    name = "DeleteOutboundShipmentServiceLineError",
+    params(DeleteOutboundShipmentServiceLineErrorInterface)
+))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
