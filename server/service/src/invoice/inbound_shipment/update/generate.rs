@@ -1,12 +1,13 @@
 use chrono::Utc;
 
-use crate::invoice::current_store_id;
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
     InvoiceLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
+
+use crate::current_store_id;
 
 use super::UpdateInboundShipmentError;
 
@@ -109,7 +110,7 @@ pub fn generate_lines_and_stock_lines(
         let stock_line = StockLineRow {
             id: stock_line_id,
             item_id,
-            store_id: current_store_id(connection)?,
+            store_id: current_store_id(),
             location_id,
             batch,
             pack_size,

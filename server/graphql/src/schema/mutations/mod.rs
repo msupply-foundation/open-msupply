@@ -1,8 +1,11 @@
 mod error;
 
 pub mod inbound_shipment;
+pub mod location;
 pub mod outbound_shipment;
 pub mod user_register;
+
+use self::location::{InsertLocationInput, InsertLocationResponse};
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
 use crate::ContextExt;
@@ -21,6 +24,26 @@ impl Mutations {
         input: UserRegisterInput,
     ) -> UserRegisterResponse {
         user_register(ctx, input)
+    }
+
+    async fn insert_location(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertLocationInput,
+    ) -> InsertLocationResponse {
+        let service_provider = ctx.service_provider();
+        let service_context = match service_provider.context() {
+            Ok(service) => service,
+            Err(error) => return InsertLocationResponse::Error(error.into()),
+        };
+
+        match service_provider
+            .insert_location_service
+            .insert_location(input.into(), &service_context)
+        {
+            Ok(location) => InsertLocationResponse::Response(location.into()),
+            Err(error) => InsertLocationResponse::Error(error.into()),
+        }
     }
 
     async fn insert_outbound_shipment(
@@ -197,6 +220,24 @@ impl ForeignKeyError {
     }
 
     pub async fn key(&self) -> ForeignKey {
+        self.0
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum UniqueValueKey {
+    Code,
+}
+
+pub struct UniqueValueViolation(UniqueValueKey);
+#[Object]
+impl UniqueValueViolation {
+    pub async fn description(&self) -> &'static str {
+        "Field needs to be unique"
+    }
+
+    pub async fn field(&self) -> UniqueValueKey {
         self.0
     }
 }

@@ -24,5 +24,13 @@ pub fn mock_locations() -> Vec<LocationRow> {
             on_hold: false,
             store_id: "store_a".to_string(),
         },
+        // Location in another store, for unique code check
+        LocationRow {
+            id: "location_in_another_store".to_owned(),
+            code: "store_b_location".to_owned(),
+            name: "store_b_location_name".to_owned(),
+            on_hold: false,
+            store_id: "store_b".to_string(),
+        },
     ]
 }

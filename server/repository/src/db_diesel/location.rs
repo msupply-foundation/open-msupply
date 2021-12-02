@@ -80,7 +80,7 @@ impl<'a> LocationRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_filter_only(
+    pub fn query_by_filter(
         &self,
         filter: LocationFilter,
     ) -> Result<Vec<Location>, RepositoryError> {
@@ -127,6 +127,7 @@ fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
         apply_equal_filter!(query, filter.id, location_dsl::id);
         apply_equal_filter!(query, filter.name, location_dsl::name);
         apply_equal_filter!(query, filter.code, location_dsl::code);
+        apply_equal_filter!(query, filter.store_id, location_dsl::store_id);
     }
 
     query

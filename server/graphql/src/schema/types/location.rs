@@ -33,6 +33,7 @@ impl From<LocationFilterInput> for LocationFilter {
             name: f.name.map(EqualFilter::from),
             code: f.code.map(EqualFilter::from),
             id: f.id.map(EqualFilter::from),
+            store_id: None,
         }
     }
 }
