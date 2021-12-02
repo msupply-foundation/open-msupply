@@ -40,6 +40,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
               isVisible: true,
               availableBatches: [],
               unitName: '',
+              availableQuantity: 0,
             }}
             onChange={(newItem: Item | null) =>
               newItem && onChangeItem(itemToSummaryItem(newItem))

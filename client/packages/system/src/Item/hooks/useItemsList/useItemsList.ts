@@ -1,42 +1,14 @@
 import {
   useOmSupplyApi,
-  ItemsWithStockLinesQuery,
   Item,
-  StockLineConnector,
-  ConnectorError,
   FilterBy,
-  ItemSortFieldInput,
   useQueryParams,
   SortRule,
   useQuery,
   UseQueryResult,
   useQueryClient,
 } from '@openmsupply-client/common';
-
-const itemsGuard = (itemsQuery: ItemsWithStockLinesQuery) => {
-  if (itemsQuery.items.__typename === 'ItemConnector') {
-    return itemsQuery.items;
-  } else {
-    throw new Error(itemsQuery.items.error.description);
-  }
-};
-
-const availableBatchesGuard = (
-  availableBatches: StockLineConnector | ConnectorError
-) => {
-  if (availableBatches.__typename === 'StockLineConnector') {
-    return availableBatches.nodes;
-  } else if (availableBatches.__typename === 'ConnectorError') {
-    throw new Error(availableBatches.error.description);
-  }
-
-  throw new Error('Unknown');
-};
-
-const getItemSortField = (sortField: string): ItemSortFieldInput => {
-  if (sortField === 'name') return ItemSortFieldInput.Name;
-  return ItemSortFieldInput.Code;
-};
+import { getItemSortField, mapItemNodes } from '../../utils';
 
 export const useItemsList = (initialListParameters: {
   initialFilterBy?: FilterBy;
@@ -64,15 +36,7 @@ export const useItemsList = (initialListParameters: {
         offset,
       });
 
-      const items = itemsGuard(result);
-
-      const nodes: Item[] = items.nodes.map(item => ({
-        ...item,
-        unitName: item.unitName ?? '',
-        availableBatches: availableBatchesGuard(item.availableBatches),
-      }));
-
-      return { totalCount: items.totalCount, nodes };
+      return mapItemNodes(result);
     },
     {
       keepPreviousData: true,
