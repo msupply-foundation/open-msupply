@@ -19,7 +19,10 @@ mod query {
         let service = service_provider.insert_location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(|f| f.equal_to(&current_store_id())))
+            .query_by_filter(
+                LocationFilter::new()
+                    .store_id(|f| f.equal_to(&current_store_id(&connection).unwrap())),
+            )
             .unwrap();
 
         assert_eq!(
@@ -85,7 +88,7 @@ mod query {
                 .query_by_filter(
                     LocationFilter::new()
                         .id(|f| f.equal_to(&"new_id".to_owned()))
-                        .store_id(|f| f.equal_to(&current_store_id()))
+                        .store_id(|f| f.equal_to(&current_store_id(&connection).unwrap()))
                 )
                 .unwrap(),
             vec![result_location]

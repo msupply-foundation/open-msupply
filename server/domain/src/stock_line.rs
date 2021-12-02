@@ -4,7 +4,7 @@ use crate::AddToFilter;
 
 use super::{EqualFilter, Sort};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct StockLine {
     pub id: String,
     pub item_id: String,

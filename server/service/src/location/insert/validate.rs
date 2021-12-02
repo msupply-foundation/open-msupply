@@ -10,7 +10,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertLocationError> {
     check_location_does_not_exist(&input.id, connection)?;
-    check_location_code_is_unique(&input.code, connection)?;
+    check_location_code_is_unique(&input.id, &Some(input.code.clone()), connection)?;
 
     // TODO Check location belongs to current store
 

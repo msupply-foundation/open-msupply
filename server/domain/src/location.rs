@@ -68,3 +68,7 @@ pub struct UpdateLocation {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
 }
+
+pub struct DeleteLocation {
+    pub id: String,
+}

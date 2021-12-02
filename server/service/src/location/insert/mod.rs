@@ -29,15 +29,15 @@ impl<'a> InsertLocationServiceTrait for InsertLocationService {
         let location = ctx
             .connection
             .transaction_sync(|connection| {
-                validate(&input, &connection)?;
-                let new_location = generate(input);
+                validate(&input, connection)?;
+                let new_location = generate(input, connection)?;
                 LocationRowRepository::new(&connection).upsert_one(&new_location)?;
 
                 LocationQueryService {}
                     .get_location(new_location.id, ctx)
                     .map_err(InsertLocationError::from)
             })
-            .map_err(|error| error.convert())?;
+            .map_err(|error| error.to_inner_error())?;
         Ok(location)
     }
 }
