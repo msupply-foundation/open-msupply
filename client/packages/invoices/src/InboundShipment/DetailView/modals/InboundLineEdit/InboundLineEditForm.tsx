@@ -40,13 +40,14 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
               isVisible: true,
               availableBatches: [],
               unitName: '',
+              availableQuantity: 0,
             }}
             onChange={(newItem: Item | null) =>
               newItem && onChangeItem(itemToSummaryItem(newItem))
             }
             extraFilter={item => {
               const itemAlreadyInShipment = draft.items.some(
-                ({ id }) => id === item.id
+                ({ id, isDeleted }) => id === item.id && !isDeleted
               );
               return !itemAlreadyInShipment;
             }}

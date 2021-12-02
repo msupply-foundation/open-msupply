@@ -29,7 +29,7 @@ export interface Item extends Omit<ItemNode, 'availableBatches'>, DomainObject {
   isVisible: boolean;
   code: string;
   name: string;
-  // availableQuantity: number;
+  availableQuantity: number;
   availableBatches: StockLine[];
   unitName: string;
 }

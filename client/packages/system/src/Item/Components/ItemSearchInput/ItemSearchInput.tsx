@@ -1,5 +1,10 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Item, useTranslation, styled } from '@openmsupply-client/common';
+import {
+  Item,
+  useFormatNumber,
+  useTranslation,
+  styled,
+} from '@openmsupply-client/common';
 import { useItemsList } from '../../hooks/useItemsList';
 import {
   Autocomplete,
@@ -16,16 +21,22 @@ const filterOptions = {
   limit: 100,
 };
 
-const renderOption = (
-  props: React.HTMLAttributes<HTMLLIElement>,
-  item: Item
-) => (
-  <ItemOption {...props} key={item.code}>
-    <span style={{ width: 100 }}>{item.code}</span>
-    <span style={{ width: 500 }}>{item.name}</span>
-    {/* <span>{item.availableQuantity}</span> */}
-  </ItemOption>
-);
+const getOptionRenderer =
+  (label: string, formatNumber: (value: number) => string) =>
+  (props: React.HTMLAttributes<HTMLLIElement>, item: Item) =>
+    (
+      <ItemOption {...props} key={item.code}>
+        <span style={{ whiteSpace: 'nowrap', width: 100 }}>{item.code}</span>
+        <span style={{ whiteSpace: 'nowrap', width: 500 }}>{item.name}</span>
+        <span
+          style={{
+            width: 200,
+            textAlign: 'right',
+            whiteSpace: 'nowrap',
+          }}
+        >{`${formatNumber(item.availableQuantity)} ${label}`}</span>
+      </ItemOption>
+    );
 
 interface ItemSearchInputProps {
   onChange: (item: Item | null) => void;
@@ -50,6 +61,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
     initialSortBy: { key: 'name' },
   });
   const t = useTranslation('common');
+  const formatNumber = useFormatNumber();
 
   useEffect(() => {
     if (!filter) return;
@@ -98,7 +110,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
         onChange(item);
       }}
       options={defaultOptionMapper(options, 'name')}
-      renderOption={renderOption}
+      renderOption={getOptionRenderer(t('label.units'), formatNumber)}
       width="100%"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
     />
