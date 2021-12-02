@@ -36,18 +36,25 @@ pub enum InsertOutboundShipmentServiceLineResponse {
 
 pub fn get_insert_outbound_shipment_service_line_response(
     connection_manager: &StorageConnectionManager,
-    input: InsertOutboundShipmentServiceLineInput,
+    InsertOutboundShipmentServiceLineInput {
+        id,
+        invoice_id,
+        item_id,
+        name,
+        total_after_tax,
+        note,
+    }: InsertOutboundShipmentServiceLineInput,
 ) -> InsertOutboundShipmentServiceLineResponse {
     use InsertOutboundShipmentServiceLineResponse::*;
     let id = match insert_outbound_shipment_service_line(
         connection_manager,
         InsertOutboundShipmentServiceLine {
-            id: input.id,
-            invoice_id: input.invoice_id,
-            item_id: input.item_id,
-            name: input.name,
-            total_after_tax: input.total_after_tax,
-            note: input.note,
+            id,
+            invoice_id,
+            item_id,
+            name,
+            total_after_tax,
+            note,
         },
     ) {
         Ok(id) => id,
