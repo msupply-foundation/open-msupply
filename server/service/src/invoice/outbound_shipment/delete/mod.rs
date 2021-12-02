@@ -38,10 +38,10 @@ impl From<RepositoryError> for DeleteOutboundShipmentError {
 impl From<TransactionError<DeleteOutboundShipmentError>> for DeleteOutboundShipmentError {
     fn from(error: TransactionError<DeleteOutboundShipmentError>) -> Self {
         match error {
-            TransactionError::Transaction { msg } => {
-                DeleteOutboundShipmentError::DatabaseError(RepositoryError::DBError {
+            TransactionError::Transaction { msg, level } => {
+                DeleteOutboundShipmentError::DatabaseError(RepositoryError::TransactionError {
                     msg,
-                    extra: "".to_string(),
+                    level,
                 })
             }
             TransactionError::Inner(e) => e,
