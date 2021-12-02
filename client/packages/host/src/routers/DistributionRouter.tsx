@@ -7,8 +7,8 @@ const InvoiceService = React.lazy(
   () => import('@openmsupply-client/invoices/src/InvoiceService')
 );
 
-const CustomerService = React.lazy(
-  () => import('@openmsupply-client/system/src/Name')
+const NameService = React.lazy(
+  () => import('@openmsupply-client/system/src/Name/Service')
 );
 
 const RequisitionService = React.lazy(
@@ -39,7 +39,7 @@ export const DistributionRouter: FC = () => {
   }
 
   if (useMatch(fullCustomersPath)) {
-    return <CustomerService />;
+    return <NameService />;
   }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();

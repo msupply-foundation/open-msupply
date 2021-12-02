@@ -1,14 +1,14 @@
 import React, { FC } from 'react';
 import { Navigate, useMatch } from 'react-router-dom';
-import { RouteBuilder, Typography } from '@openmsupply-client/common';
+import { RouteBuilder } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const InvoiceService = React.lazy(
   () => import('@openmsupply-client/invoices/src/InvoiceService')
 );
 
-const SupplierService: React.FC = () => (
-  <Typography style={{ margin: 25 }}>coming soon..</Typography>
+const NameService = React.lazy(
+  () => import('@openmsupply-client/system/src/Name/Service')
 );
 
 const RequisitionService = React.lazy(
@@ -44,7 +44,7 @@ export const ReplenishmentRouter: FC = () => {
   }
 
   if (useMatch(fullSuppliersPath)) {
-    return <SupplierService />;
+    return <NameService />;
   }
 
   if (useMatch(fullInboundShipmentPath)) {
