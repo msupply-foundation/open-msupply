@@ -78,7 +78,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
       <ModalRow>
         <ModalLabel label={t('label.available')} />
         <NumericTextInput
-          value={availableQuantity}
+          value={Math.max(availableQuantity - allocatedQuantity, 0)}
           disabled
           style={{ width: 85 }}
         />
