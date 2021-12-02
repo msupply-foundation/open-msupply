@@ -1,3 +1,5 @@
+use crate::AddToFilter;
+
 use super::{EqualFilter, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
@@ -35,21 +37,8 @@ impl NameFilter {
         }
     }
 
-    pub fn match_id(mut self, id: &str) -> Self {
-        self.id = Some(EqualFilter {
-            equal_to: Some(id.to_owned()),
-            equal_any: None,
-        });
-
-        self
-    }
-
-    pub fn any_id(mut self, ids: Vec<String>) -> Self {
-        self.id = Some(EqualFilter {
-            equal_to: None,
-            equal_any: Some(ids),
-        });
-
+    pub fn id<F: FnOnce(EqualFilter<String>) -> EqualFilter<String>>(mut self, f: F) -> Self {
+        self.id = self.id.add(f);
         self
     }
 

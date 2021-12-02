@@ -2,7 +2,6 @@ use crate::WithDBError;
 use domain::{
     invoice::{InvoiceStatus, InvoiceType},
     invoice_line::{InvoiceLine, InvoiceLineFilter},
-    Pagination,
 };
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus},
@@ -76,15 +75,11 @@ pub fn check_invoice_exists(
 pub struct InvoiceLinesExist(pub Vec<InvoiceLine>);
 
 pub fn check_invoice_is_empty(
-    id: &str,
+    id: &String,
     connection: &StorageConnection,
 ) -> Result<(), WithDBError<InvoiceLinesExist>> {
     let lines = InvoiceLineRepository::new(connection)
-        .query(
-            Pagination::new(),
-            Some(InvoiceLineFilter::new().match_invoice_id(id)),
-            None,
-        )
+        .query_by_filter(InvoiceLineFilter::new().invoice_id(|f| f.equal_to(id)))
         .map_err(WithDBError::db)?;
 
     if lines.len() > 0 {

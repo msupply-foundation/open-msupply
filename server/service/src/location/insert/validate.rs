@@ -18,11 +18,11 @@ pub fn validate(
 }
 
 pub fn check_location_does_not_exist(
-    id: &str,
+    id: &String,
     connection: &StorageConnection,
 ) -> Result<(), InsertLocationError> {
-    let locations =
-        LocationRepository::new(connection).query_by_filter(LocationFilter::new().match_id(id))?;
+    let locations = LocationRepository::new(connection)
+        .query_by_filter(LocationFilter::new().id(|f| f.equal_to(id)))?;
 
     if locations.len() > 0 {
         Err(InsertLocationError::LocationAlreadyExists)

@@ -1,4 +1,5 @@
 use crate::{
+    diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -99,25 +100,8 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         .into_boxed();
 
     if let Some(f) = filter {
-        if let Some(value) = f.id {
-            if let Some(eq) = value.equal_to {
-                query = query.filter(invoice_line_dsl::id.eq(eq));
-            }
-
-            if let Some(eq) = value.equal_any {
-                query = query.filter(invoice_line_dsl::id.eq_any(eq));
-            }
-        }
-
-        if let Some(invoice_id) = f.invoice_id {
-            if let Some(eq) = invoice_id.equal_to {
-                query = query.filter(invoice_line_dsl::invoice_id.eq(eq));
-            }
-
-            if let Some(eq) = invoice_id.equal_any {
-                query = query.filter(invoice_line_dsl::invoice_id.eq_any(eq));
-            }
-        }
+        apply_equal_filter!(query, f.id, invoice_line_dsl::id);
+        apply_equal_filter!(query, f.invoice_id, invoice_line_dsl::invoice_id);
     }
 
     query

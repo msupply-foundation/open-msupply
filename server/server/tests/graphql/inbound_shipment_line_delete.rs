@@ -8,6 +8,7 @@ mod graphql {
         delete_inbound_shipment_line_full as delete, DeleteInboundShipmentLineFull as Delete,
     };
 
+    use domain::invoice::{InvoiceStatus, InvoiceType};
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{mock::MockDataInserts, RepositoryError};
@@ -63,26 +64,28 @@ mod graphql {
 
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_draft()
-                .match_id("inbound_shipment_c"),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Draft))
+                .id(|f| f.equal_to(&"inbound_shipment_c".to_owned())),
             &connection
         );
         let confirmed_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_confirmed()
-                .match_id("inbound_shipment_d"),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Confirmed))
+                .id(|f| f.equal_to(&"inbound_shipment_d".to_owned())),
             &connection
         );
         let finalised_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .match_inbound_shipment()
-                .match_finalised(),
+                .r#type(|f| f.equal_to(&InvoiceType::InboundShipment))
+                .status(|f| f.equal_to(&InvoiceStatus::Finalised)),
             &connection
         );
-        let outbound_shipment =
-            get_invoice_inline!(InvoiceFilter::new().match_outbound_shipment(), &connection);
+        let outbound_shipment = get_invoice_inline!(
+            InvoiceFilter::new().r#type(|f| f.equal_to(&InvoiceType::OutboundShipment)),
+            &connection
+        );
         let confirmed_invoice_lines =
             get_invoice_lines_inline!(&confirmed_inbound_shipment.id.clone(), &connection);
         let outbound_shipment_lines =
