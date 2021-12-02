@@ -26,6 +26,7 @@ pub fn validate(
         return Err(InsertOutboundShipmentServiceLineError::NotAServiceItem);
     }
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    // TODO:
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
     check_invoice_is_not_finalised(&invoice)?;
