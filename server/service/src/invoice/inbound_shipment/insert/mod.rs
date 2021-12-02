@@ -18,7 +18,7 @@ pub fn insert_inbound_shipment(
     let new_invoice = connection
         .transaction_sync(|connection| {
             validate(&input, &connection)?;
-            let new_invoice = generate(input);
+            let new_invoice = generate(input, connection)?;
             InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
             Ok(new_invoice)
         })

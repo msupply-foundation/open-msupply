@@ -9,7 +9,7 @@ use crate::{
             check_item, check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
             ItemNotFound, LineDoesNotExist, NotInvoiceLine, NumberOfPacksBelowOne,
         },
-        BatchIsReserved, LocationDoesNotExists, PackSizeBelowOne,
+        BatchIsReserved, LocationDoesNotExist, PackSizeBelowOne,
     },
 };
 use domain::{inbound_shipment::UpdateInboundShipmentLine, invoice::InvoiceType};
@@ -63,9 +63,9 @@ impl From<ItemNotFound> for UpdateInboundShipmentLineError {
     }
 }
 
-impl From<LocationDoesNotExists> for UpdateInboundShipmentLineError {
-    fn from(_: LocationDoesNotExists) -> Self {
-        UpdateInboundShipmentLineError::LocationDoesNotExists
+impl From<LocationDoesNotExist> for UpdateInboundShipmentLineError {
+    fn from(_: LocationDoesNotExist) -> Self {
+        UpdateInboundShipmentLineError::LocationDoesNotExist
     }
 }
 

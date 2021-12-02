@@ -10,7 +10,7 @@ use crate::{
             check_item, check_line_does_not_exists, check_number_of_packs, ItemNotFound,
             LineAlreadyExists, NumberOfPacksBelowOne,
         },
-        LocationDoesNotExists, PackSizeBelowOne,
+        LocationDoesNotExist, PackSizeBelowOne,
     },
 };
 use domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType};
@@ -49,9 +49,9 @@ impl From<ItemNotFound> for InsertInboundShipmentLineError {
     }
 }
 
-impl From<LocationDoesNotExists> for InsertInboundShipmentLineError {
-    fn from(_: LocationDoesNotExists) -> Self {
-        InsertInboundShipmentLineError::LocationDoesNotExists
+impl From<LocationDoesNotExist> for InsertInboundShipmentLineError {
+    fn from(_: LocationDoesNotExist) -> Self {
+        InsertInboundShipmentLineError::LocationDoesNotExist
     }
 }
 

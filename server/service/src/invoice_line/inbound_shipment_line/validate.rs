@@ -43,12 +43,12 @@ pub fn check_batch_stock_reserved(
     }
 }
 
-pub struct LocationDoesNotExists;
+pub struct LocationDoesNotExist;
 
 pub fn check_location_exists(
     location_id: &Option<String>,
     connection: &StorageConnection,
-) -> Result<(), WithDBError<LocationDoesNotExists>> {
+) -> Result<(), WithDBError<LocationDoesNotExist>> {
     match location_id {
         Some(location_id) => {
             let location = LocationRowRepository::new(connection)
@@ -57,7 +57,7 @@ pub fn check_location_exists(
 
             match location {
                 Some(_) => Ok(()),
-                None => Err(WithDBError::err(LocationDoesNotExists)),
+                None => Err(WithDBError::err(LocationDoesNotExist)),
             }
         }
         None => Ok(()),

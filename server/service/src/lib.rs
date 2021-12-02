@@ -1,5 +1,5 @@
 use domain::{Pagination, PaginationOption, DEFAULT_LIMIT};
-use repository::RepositoryError;
+use repository::{RepositoryError, StorageConnection, StoreRepository};
 use std::convert::TryInto;
 
 pub mod auth_data;
@@ -16,6 +16,7 @@ pub mod stock_line;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod validate;
 
 #[derive(PartialEq, Debug)]
 pub struct ListResult<T> {
@@ -124,6 +125,12 @@ pub fn u32_to_i32(num: u32) -> i32 {
 }
 
 // TODO from session
-pub fn current_store_id() -> String {
-    "store_a".to_owned()
+pub fn current_store_id(connection: &StorageConnection) -> Result<String, RepositoryError> {
+    let repository = StoreRepository::new(connection);
+
+    match repository.find_one_by_id("store_a") {
+        Ok(_) => Ok("store_a".to_owned()),
+        Err(RepositoryError::NotFound) => Ok(repository.all()?[0].id.clone()),
+        Err(error) => Err(error),
+    }
 }

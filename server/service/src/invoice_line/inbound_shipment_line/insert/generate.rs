@@ -1,6 +1,9 @@
 use crate::{invoice_line::generate_batch, u32_to_i32};
 use domain::inbound_shipment::InsertInboundShipmentLine;
-use repository::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
+use repository::{
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
+    StorageConnection,
+};
 
 use super::InsertInboundShipmentLineError;
 
@@ -8,11 +11,12 @@ pub fn generate(
     input: InsertInboundShipmentLine,
     item_row: ItemRow,
     InvoiceRow { status, .. }: InvoiceRow,
+    connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, Option<StockLineRow>), InsertInboundShipmentLineError> {
     let mut new_line = generate_line(input, item_row);
 
     let new_batch_option = if status != InvoiceRowStatus::Draft {
-        let new_batch = generate_batch(new_line.clone(), false);
+        let new_batch = generate_batch(new_line.clone(), false, connection)?;
         new_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {

@@ -150,6 +150,8 @@ impl From<PaginationInput> for PaginationOption {
     params(DeleteOutboundShipmentLineErrorInterface)
 ))]
 #[graphql(concrete(name = "InsertLocationError", params(InsertLocationErrorInterface)))]
+#[graphql(concrete(name = "UpdateLocationError", params(UpdateLocationErrorInterface)))]
+#[graphql(concrete(name = "DeleteLocationError", params(DeleteLocationErrorInterface)))]
 #[graphql(concrete(name = "UserRegisterError", params(UserRegisterErrorInterface)))]
 #[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
 #[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
