@@ -4,9 +4,9 @@ use domain::{
     inbound_shipment::InsertInboundShipment,
     invoice::{InvoiceStatus, InvoiceType},
 };
-use repository::{schema::InvoiceRow, RepositoryError, StorageConnection, StoreRepository};
+use repository::schema::InvoiceRow;
 
-use super::InsertInboundShipmentError;
+use crate::current_store_id;
 
 pub fn generate(
     InsertInboundShipment {
@@ -18,27 +18,24 @@ pub fn generate(
         their_reference,
         color,
     }: InsertInboundShipment,
-    connection: &StorageConnection,
-) -> Result<InvoiceRow, InsertInboundShipmentError> {
+) -> InvoiceRow {
     let current_datetime = Utc::now().naive_utc();
 
-    let result = InvoiceRow {
+    InvoiceRow {
         id,
         name_id: other_party_id,
         r#type: InvoiceType::InboundShipment.into(),
         comment,
         their_reference,
         invoice_number: new_invoice_number(),
-        store_id: current_store_id(connection)?,
+        store_id: current_store_id(),
         confirm_datetime: confirm_datetime(&status, &current_datetime),
         finalised_datetime: finalised_datetime(&status, &current_datetime),
         status: status.into(),
         on_hold: on_hold.unwrap_or(false),
         entry_datetime: current_datetime,
         color,
-    };
-
-    Ok(result)
+    }
 }
 
 fn new_invoice_number() -> i32 {
@@ -61,9 +58,4 @@ fn finalised_datetime(
         InvoiceStatus::Finalised => Some(current_time.clone()),
         _ => None,
     }
-}
-
-pub fn current_store_id(connection: &StorageConnection) -> Result<String, RepositoryError> {
-    // Need to check session for store
-    Ok(StoreRepository::new(connection).all()?[0].id.clone())
 }

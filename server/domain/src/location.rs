@@ -12,6 +12,7 @@ pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
     pub code: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 impl LocationFilter {
@@ -20,6 +21,7 @@ impl LocationFilter {
             id: None,
             name: None,
             code: None,
+            store_id: None,
         }
     }
 
@@ -49,6 +51,24 @@ impl LocationFilter {
 
         self
     }
+
+    pub fn match_code(mut self, code: &str) -> Self {
+        self.code = Some(EqualFilter {
+            equal_to: Some(code.to_owned()),
+            equal_any: None,
+        });
+
+        self
+    }
+
+    pub fn match_store_id(mut self, store_id: &str) -> Self {
+        self.store_id = Some(EqualFilter {
+            equal_to: Some(store_id.to_owned()),
+            equal_any: None,
+        });
+
+        self
+    }
 }
 #[derive(PartialEq, Debug)]
 pub enum LocationSortField {
@@ -57,3 +77,10 @@ pub enum LocationSortField {
 }
 
 pub type LocationSort = Sort<LocationSortField>;
+
+pub struct InsertLocation {
+    pub id: String,
+    pub code: String,
+    pub name: Option<String>,
+    pub on_hold: Option<bool>,
+}

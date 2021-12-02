@@ -59,6 +59,12 @@ impl<T> WithDBError<T> {
     }
 }
 
+impl<T> From<RepositoryError> for WithDBError<T> {
+    fn from(error: RepositoryError) -> Self {
+        WithDBError::DatabaseError(error)
+    }
+}
+
 impl From<RepositoryError> for ListError {
     fn from(error: RepositoryError) -> Self {
         ListError::DatabaseError(error)
@@ -115,4 +121,9 @@ pub fn usize_to_u32(num: usize) -> u32 {
 
 pub fn u32_to_i32(num: u32) -> i32 {
     num.try_into().unwrap_or(0)
+}
+
+// TODO from session
+pub fn current_store_id() -> String {
+    "store_a".to_owned()
 }
