@@ -61,6 +61,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               code: summaryItem?.itemCode ?? '',
               isVisible: true,
               availableBatches: [],
+              availableQuantity: 0,
               unitName: '',
             }}
             onChange={onChangeItem}

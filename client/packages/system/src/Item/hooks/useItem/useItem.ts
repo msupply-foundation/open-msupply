@@ -5,11 +5,7 @@ import {
   useQueryParams,
 } from '@openmsupply-client/common';
 import { useEffect } from 'react';
-import {
-  availableBatchesGuard,
-  getItemSortField,
-  itemsGuard,
-} from '../../utils';
+import { getItemSortField, mapItemNodes } from '../../utils';
 
 // TODO: Use itemID to filter when possible.
 export const useItem = (itemCode: string): UseQueryResult<Item> => {
@@ -28,19 +24,13 @@ export const useItem = (itemCode: string): UseQueryResult<Item> => {
       offset,
     });
 
-    const items = itemsGuard(result);
+    const { nodes, totalCount } = mapItemNodes(result);
 
     // TODO: This shouldn't be a problem when we are filtering by the item id.
     // when we filter by the item id, we should have an error returned, rather
     // than an empty item connector, in which case the error would be thrown
     // from a higher in the call chain.
-    if (!items.totalCount) throw new Error("Couldn't find item");
-
-    const nodes: Item[] = items.nodes.map(item => ({
-      ...item,
-      unitName: item.unitName ?? '',
-      availableBatches: availableBatchesGuard(item.availableBatches),
-    }));
+    if (!totalCount) throw new Error("Couldn't find item");
 
     return nodes[0] as Item;
   });
