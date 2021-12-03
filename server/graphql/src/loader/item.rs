@@ -28,10 +28,10 @@ impl Loader<String> for ItemLoader {
                 Some(ItemFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
                 None,
             )?
-            .iter()
-            .map(|item: &Item| {
+            .into_iter()
+            .map(|item| {
                 let id = item.id.clone();
-                let item = item.clone();
+                let item = item;
                 (id, item)
             })
             .collect();
