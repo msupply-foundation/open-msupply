@@ -425,10 +425,6 @@ mod graphql {
         );
         assert_eq!(new_item.name, new_line.item_name);
         assert_eq!(new_item.code, new_line.item_code);
-        assert_eq!(
-            new_line.total_after_tax,
-            new_line.number_of_packs as f64 * new_line.sell_price_per_pack
-        );
 
         assert_eq!(new_stock_line, FromStockLine(new_line));
 
