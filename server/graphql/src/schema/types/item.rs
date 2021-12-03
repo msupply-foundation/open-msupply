@@ -7,8 +7,8 @@ use domain::{
 };
 
 use super::{
-    Connector, ConnectorError, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
-    StockLinesResponse,
+    Connector, ConnectorError, EqualFilterBoolInput, InternalError, SimpleStringFilterInput,
+    SortInput, StockLinesResponse,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -30,6 +30,7 @@ pub struct ItemFilterInput {
 impl From<ItemFilterInput> for ItemFilter {
     fn from(f: ItemFilterInput) -> Self {
         ItemFilter {
+            id: None,
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
             is_visible: f.is_visible.and_then(|filter| filter.equal_to),
@@ -79,6 +80,22 @@ impl ItemNode {
 pub enum ItemsResponse {
     Error(ConnectorError),
     Response(Connector<ItemNode>),
+}
+
+#[derive(Union)]
+pub enum ItemResponseError {
+    InternalError(InternalError),
+}
+
+#[derive(SimpleObject)]
+pub struct ItemError {
+    pub error: ItemResponseError,
+}
+
+#[derive(Union)]
+pub enum ItemResponse {
+    Error(ItemError),
+    Response(ItemNode),
 }
 
 impl From<Item> for ItemNode {

@@ -1,6 +1,9 @@
-use super::{Connector, ConnectorError, LocationResponse, NodeError, StockLineResponse};
+use super::{
+    Connector, ConnectorError, InternalError, ItemError, ItemResponse, ItemResponseError,
+    LocationResponse, NodeError, StockLineResponse,
+};
 use crate::{
-    loader::{LocationByIdLoader, StockLineByIdLoader},
+    loader::{ItemLoader, LocationByIdLoader, StockLineByIdLoader},
     ContextExt,
 };
 use async_graphql::*;
@@ -27,6 +30,22 @@ impl InvoiceLineNode {
     }
     pub async fn item_code(&self) -> &str {
         &self.invoice_line.item_code
+    }
+    pub async fn item(&self, ctx: &Context<'_>) -> ItemResponse {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        match loader.load_one(self.invoice_line.item_id.clone()).await {
+            Ok(response) => match response {
+                Some(item) => ItemResponse::Response(item.into()),
+                None => ItemResponse::Error(ItemError {
+                    error: ItemResponseError::InternalError(InternalError(
+                        "Missing item".to_string(),
+                    )),
+                }),
+            },
+            Err(error) => ItemResponse::Error(ItemError {
+                error: ItemResponseError::InternalError(InternalError(format!("{:?}", error))),
+            }),
+        }
     }
     pub async fn pack_size(&self) -> i32 {
         self.invoice_line.pack_size
