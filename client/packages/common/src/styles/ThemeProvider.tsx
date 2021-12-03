@@ -5,6 +5,8 @@ import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
 
 /**
  * Need a cache with the rtl plugin for when we are using rtl.
@@ -33,11 +35,13 @@ const ThemeProvider: React.FC = ({ children }) => {
   const appTheme = useAppTheme();
 
   return (
-    <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
-      <RTLProvider>
-        <MuiThemeProvider theme={appTheme}>{children}</MuiThemeProvider>
-      </RTLProvider>
-    </CacheProvider>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
+        <RTLProvider>
+          <MuiThemeProvider theme={appTheme}>{children}</MuiThemeProvider>
+        </RTLProvider>
+      </CacheProvider>
+    </LocalizationProvider>
   );
 };
 
