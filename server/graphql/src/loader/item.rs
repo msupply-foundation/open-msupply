@@ -25,12 +25,7 @@ impl Loader<String> for ItemLoader {
                     limit: keys.len() as u32,
                     offset: 0,
                 },
-                Some(ItemFilter {
-                    id: Some(EqualFilter::equal_any(keys.to_vec())),
-                    name: None,
-                    code: None,
-                    is_visible: None,
-                }),
+                Some(ItemFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
                 None,
             )?
             .iter()
