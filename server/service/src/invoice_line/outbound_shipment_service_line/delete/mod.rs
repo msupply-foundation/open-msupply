@@ -1,8 +1,7 @@
 use crate::WithDBError;
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
-    StockLineRowRepository, StorageConnectionManager, TransactionError,
+    InvoiceLineRowRepository, RepositoryError, StorageConnectionManager, TransactionError,
 };
 
 mod validate;
@@ -18,8 +17,6 @@ pub fn delete_outbound_shipment_service_line(
     let line = connection
         .transaction_sync(|connection| {
             let line = validate(&input, &connection)?;
-            let stock_line_id_option = line.stock_line_id.clone();
-
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
             Ok(line)
         })
