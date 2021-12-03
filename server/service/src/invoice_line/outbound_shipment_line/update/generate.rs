@@ -77,7 +77,9 @@ fn generate_line(
         id,
         invoice_id,
         number_of_packs,
+        total_before_tax,
         total_after_tax,
+        tax,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -112,17 +114,24 @@ fn generate_line(
         item_name,
         item_code,
         stock_line_id: Some(stock_line_id),
+        total_before_tax,
         total_after_tax,
+        tax,
         note,
     };
 
-    update_line.number_of_packs = input
-        .number_of_packs
-        .map(u32_to_i32)
-        .unwrap_or(update_line.number_of_packs);
-
-    update_line.total_after_tax =
-        update_line.sell_price_per_pack * update_line.number_of_packs as f64;
+    if let Some(number_of_packs) = input.number_of_packs {
+        update_line.number_of_packs = u32_to_i32(number_of_packs);
+    }
+    if let Some(total_before_tax) = input.total_before_tax {
+        update_line.total_before_tax = total_before_tax;
+    }
+    if let Some(total_after_tax) = input.total_after_tax {
+        update_line.total_after_tax = total_after_tax;
+    }
+    if let Some(tax) = input.tax {
+        update_line.tax = tax.percentage;
+    }
 
     update_line
 }

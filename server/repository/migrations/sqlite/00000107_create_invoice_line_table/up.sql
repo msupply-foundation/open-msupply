@@ -9,8 +9,11 @@ CREATE TABLE invoice_line (
     batch TEXT,
     expiry_date TEXT,
     cost_price_per_pack REAL NOT NULL,
+    -- sell price without tax
     sell_price_per_pack REAL NOT NULL,
+    total_before_tax REAL NOT NULL,
     total_after_tax REAL NOT NULL,
+    tax REAL,
     number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL,
     note TEXT

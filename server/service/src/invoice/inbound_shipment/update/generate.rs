@@ -102,7 +102,9 @@ pub fn generate_lines_and_stock_lines(
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
+            total_before_tax: _,
             total_after_tax: _,
+            tax: _,
             number_of_packs,
             note,
         }: InvoiceLineRow = invoice_lines;
