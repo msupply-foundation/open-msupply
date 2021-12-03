@@ -6,7 +6,7 @@ export interface StockRow extends ObjectWithStringKeys {
   itemName: string;
   itemUnit: string;
   batch: string;
-  expiryDate: Date;
+  expiryDate: Date | null;
   packSize: number;
   numberOfPacks: number;
 }

@@ -21,8 +21,9 @@ export const BasicTextInput: FC<StandardTextFieldProps> = React.forwardRef(
         disableUnderline: true,
         ...InputProps,
         sx: {
-          border: theme =>
-            error ? `2px solid ${theme.palette.error.main}` : 'none',
+          border: theme => {
+            return error ? `2px solid ${theme.palette.error.main}` : 'none';
+          },
           backgroundColor: theme => theme.palette.background.menu,
           borderRadius: '8px',
           padding: '4px 8px',

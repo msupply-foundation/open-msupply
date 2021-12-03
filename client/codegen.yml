@@ -8,3 +8,7 @@ generates:
       - typescript-operations
       - typescript-graphql-request
       - typescript-msw
+    config:
+      scalars:
+        DateTime: string
+        NaiveDate: string

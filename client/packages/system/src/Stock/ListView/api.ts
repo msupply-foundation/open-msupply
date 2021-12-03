@@ -42,7 +42,7 @@ const onRead =
             itemName: item.name,
             itemUnit: item.unitName ?? '',
             batch: batch.batch ?? '',
-            expiryDate: batch.expiryDate,
+            expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : null,
             packSize: batch.packSize,
             numberOfPacks: batch.totalNumberOfPacks,
           })

@@ -447,10 +447,10 @@ export const get = {
     },
     stock: {
       expired: StockLineData.filter(stockLine =>
-        isExpired(new Date(stockLine.expiryDate))
+        isExpired(new Date(stockLine.expiryDate as string))
       ).length,
       expiringSoon: StockLineData.filter(stockLine =>
-        isAlmostExpired(new Date(stockLine.expiryDate))
+        isAlmostExpired(new Date(stockLine.expiryDate as string))
       ).length,
     },
   },
@@ -515,7 +515,7 @@ export const insert = {
       itemCode: item.code,
       itemUnit: item.unitName ?? '',
       itemId: item.id,
-      expiryDate: invoiceLine?.expiryDate ?? null,
+      expiryDate: invoiceLine?.expiryDate ?? '',
       batch: '',
       stockLineId: '',
       packSize: invoiceLine.packSize ?? 1,
