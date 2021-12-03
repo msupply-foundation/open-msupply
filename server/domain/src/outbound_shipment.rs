@@ -1,3 +1,5 @@
+use crate::shipment_tax_update::ShipmentTaxUpdate;
+
 use super::invoice::InvoiceStatus;
 
 pub struct InsertOutboundShipment {
@@ -26,6 +28,9 @@ pub struct InsertOutboundShipmentLine {
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: u32,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
 }
 
 pub struct UpdateOutboundShipmentLine {
@@ -34,6 +39,9 @@ pub struct UpdateOutboundShipmentLine {
     pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<u32>,
+    pub total_before_tax: Option<f64>,
+    pub total_after_tax: Option<f64>,
+    pub tax: Option<ShipmentTaxUpdate>,
 }
 
 pub struct DeleteOutboundShipmentLine {

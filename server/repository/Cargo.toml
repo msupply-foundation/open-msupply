@@ -10,7 +10,7 @@ path = "src/lib.rs"
 domain = { path = "../domain" }
 
 chrono = { version = "0.4", features = ["serde"] }
-diesel = { version = "1.4.7", default-features = false, features = ["r2d2", "numeric", "chrono"] }
+diesel = { version = "1.4.7", default-features = false, features = ["r2d2", "numeric", "chrono", "32-column-tables"] }
 diesel-derive-enum = { version = "1.1.1", default-features = false }
 diesel_migrations = "1.4.0"
 futures-util = "0.3.15"
