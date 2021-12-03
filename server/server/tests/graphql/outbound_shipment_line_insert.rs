@@ -110,6 +110,8 @@ mod graphql {
             item_id: item_not_in_invoices_id.clone(),
             number_of_packs: 3,
             stock_line_id: stock_line_not_in_invoices_id.clone(),
+            total_before_tax: 1.0,
+            total_after_tax: 1.0,
         };
 
         // Test RecordAlreadyExist

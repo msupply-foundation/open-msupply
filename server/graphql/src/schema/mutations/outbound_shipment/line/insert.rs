@@ -27,6 +27,9 @@ pub struct InsertOutboundShipmentLineInput {
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: u32,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
 }
 
 #[derive(Union)]
@@ -77,6 +80,9 @@ impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }: InsertOutboundShipmentLineInput,
     ) -> Self {
         InsertOutboundShipmentLine {
@@ -85,6 +91,9 @@ impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }
     }
 }

@@ -24,7 +24,9 @@ pub struct InsertOutboundShipmentServiceLineInput {
     pub invoice_id: String,
     pub item_id: String,
     name: Option<String>,
-    total_after_tax: Option<f64>,
+    total_before_tax: f64,
+    total_after_tax: f64,
+    tax: Option<f64>,
     note: Option<String>,
 }
 
@@ -41,7 +43,9 @@ pub fn get_insert_outbound_shipment_service_line_response(
         invoice_id,
         item_id,
         name,
+        total_before_tax,
         total_after_tax,
+        tax,
         note,
     }: InsertOutboundShipmentServiceLineInput,
 ) -> InsertOutboundShipmentServiceLineResponse {
@@ -53,7 +57,9 @@ pub fn get_insert_outbound_shipment_service_line_response(
             invoice_id,
             item_id,
             name,
+            total_before_tax,
             total_after_tax,
+            tax,
             note,
         },
     ) {
