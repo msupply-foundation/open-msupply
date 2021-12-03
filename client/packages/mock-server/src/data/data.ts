@@ -478,7 +478,7 @@ const createInvoiceLine = (
     location: stockLine.location,
 
     batch: stockLine.batch ?? '',
-    expiryDate: stockLine.expiryDate,
+    expiryDate: stockLine.expiryDate as string,
 
     costPricePerPack: stockLine.costPricePerPack,
     sellPricePerPack: stockLine.sellPricePerPack,

@@ -41,7 +41,7 @@ const createUpdateStocktakeInput = (
   return {
     description: patch.description,
     status: patch.status,
-    stocktakeDate: patch.stocktakeDate,
+    stocktakeDate: patch.stocktakeDate.toISOString(),
     comment: patch.comment,
     id: patch.id,
   };
@@ -88,6 +88,9 @@ export const getStocktakeDetailViewApi = (
 
     return {
       ...stocktake,
+      stocktakeDate: stocktake.stocktakeDate
+        ? new Date(stocktake.stocktakeDate)
+        : null,
       lines,
     };
   },
