@@ -47,14 +47,16 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         flex={1}
         alignItems="flex-end"
       >
-        <DropdownMenu
-          disabled={!isStocktakeEditable(draft)}
-          label={t('label.select')}
-        >
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
-            {t('button.delete-lines', { ns: 'distribution' })}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <Grid item display="flex" justifyContent="flex-end" flex={1}>
+          <DropdownMenu
+            disabled={!isStocktakeEditable(draft)}
+            label={t('label.select')}
+          >
+            <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+              {t('button.delete-lines', { ns: 'distribution' })}
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </Grid>
       </Grid>
     </AppBarContentPortal>
   );
