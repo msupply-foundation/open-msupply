@@ -24,6 +24,12 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        <PanelLabel>{t('heading.description')}</PanelLabel>
+        <TextArea
+          disabled={!isStocktakeEditable(draft)}
+          onChange={e => draft.update('description', e.target.value)}
+          value={draft.description}
+        />
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <TextArea
           disabled={!isStocktakeEditable(draft)}

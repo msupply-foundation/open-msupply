@@ -39,6 +39,9 @@ const createUpdateStocktakeInput = (
   patch: StocktakeController
 ): UpdateStocktakeInput => {
   return {
+    description: patch.description,
+    status: patch.status,
+    stocktakeDate: patch.stocktakeDate,
     comment: patch.comment,
     id: patch.id,
   };

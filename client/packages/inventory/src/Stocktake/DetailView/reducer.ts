@@ -68,6 +68,9 @@ export const reducer = (
           if (key === 'comment') {
             state.draft.comment = value as string;
           }
+          if (key === 'description') {
+            state.draft.description = value as string;
+          }
 
           break;
         }
