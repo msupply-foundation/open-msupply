@@ -25,40 +25,33 @@ interface StocktakeDetailFooterProps {
   save: () => Promise<void>;
 }
 
-const getNextStatusText = (draft: StocktakeController) => {
+const getNextStatusText = (
+  draft: StocktakeController,
+  t: ReturnType<typeof useTranslation>
+) => {
   const nextStatus = getNextStocktakeStatus(draft.status);
-  const translation = getStocktakeTranslator()(nextStatus);
+  const translation = getStocktakeTranslator(t)(nextStatus);
   return translation;
 };
 
-const createStatusLog = (status: 'DRAFT' | 'CONFIRMED' | 'FINALISED') => {
-  if (status === 'DRAFT') {
+const createStatusLog = (status: 'SUGGESTED' | 'FINALISED') => {
+  if (status === 'SUGGESTED') {
     return {
-      DRAFT: new Date().toISOString(),
-      CONFIRMED: null,
-      FINALISED: null,
-    };
-  }
-
-  if (status === 'CONFIRMED') {
-    return {
-      DRAFT: new Date().toISOString(),
-      CONFIRMED: new Date().toISOString(),
+      SUGGESTED: new Date().toISOString(),
       FINALISED: null,
     };
   }
 
   return {
-    DRAFT: new Date().toISOString(),
-    CONFIRMED: new Date().toISOString(),
+    SUGGESTED: new Date().toISOString(),
     FINALISED: new Date().toISOString(),
   };
 };
 
 export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
-  const t = useTranslation('common');
-  const { success } = useNotification();
+  const t = useTranslation(['common', 'inventory']);
+  const { success, error } = useNotification();
 
   return (
     <AppFooterPortal
@@ -83,7 +76,7 @@ export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
             <StatusCrumbs
               statuses={getStocktakeStatuses()}
               statusLog={createStatusLog(draft.status)}
-              statusFormatter={getStocktakeTranslator()}
+              statusFormatter={getStocktakeTranslator(t)}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
@@ -114,14 +107,21 @@ export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
                     shrinkThreshold="lg"
                     Icon={<ArrowRightIcon />}
                     label={t('button.save-and-confirm-status', {
-                      status: getNextStatusText(draft),
+                      status: getNextStatusText(draft, t),
                     })}
                     sx={{ fontSize: '12px' }}
                     variant="contained"
                     color="secondary"
                     onClick={async () => {
-                      success('Saved stocktake! 🥳 ')();
-                      save();
+                      try {
+                        await draft.updateStatus(
+                          getNextStocktakeStatus(draft.status)
+                        );
+                        success('Saved stocktake! 🥳 ')();
+                        save();
+                      } catch (e) {
+                        error('Could not save stocktake')();
+                      }
                     }}
                   />
                 </>

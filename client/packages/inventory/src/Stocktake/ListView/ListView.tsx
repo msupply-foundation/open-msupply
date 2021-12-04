@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router';
 import {
+  StocktakeNodeStatus,
   DataTable,
   useColumns,
   useListData,
@@ -9,16 +10,19 @@ import {
   useNotification,
   generateUUID,
   useOmSupplyApi,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeListViewApi } from './api';
 import { StocktakeRow } from '../../types';
+import { getStocktakeTranslator } from '../../utils';
 
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const { api } = useOmSupplyApi();
+  const t = useTranslation('inventory');
 
   const {
     totalCount,
@@ -40,10 +44,17 @@ export const StocktakeListView: FC = () => {
     getStocktakeListViewApi(api)
   );
 
+  const statusTranslator = getStocktakeTranslator(t);
+
   const columns = useColumns<StocktakeRow>(
     [
       'stocktakeNumber',
-      'status',
+      [
+        'status',
+        {
+          formatter: status => statusTranslator(status as StocktakeNodeStatus),
+        },
+      ],
       'description',
       'comment',
       'stocktakeDatetime',
