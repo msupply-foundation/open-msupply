@@ -1,3 +1,4 @@
+import { randomName } from './../utils';
 import faker from 'faker';
 import {
   DeleteResponse,
@@ -142,7 +143,13 @@ export const stocktake = {
     const stocktakeNumber = faker.datatype.number({ max: 1000 });
     const status = StocktakeNodeStatus.Draft;
 
-    const stocktake = { ...input, stocktakeNumber, status };
+    const stocktake = {
+      ...input,
+      stocktakeNumber,
+      status,
+      entryDatetime: new Date().toISOString(),
+      enteredByName: randomName(),
+    };
     StocktakeData.push(stocktake);
     return stocktake;
   },

@@ -26,9 +26,13 @@ export interface StocktakeItem {
 }
 
 export interface Stocktake
-  extends Omit<StocktakeNode, 'lines' | '__typename' | 'stocktakeDate'> {
+  extends Omit<
+    StocktakeNode,
+    'lines' | '__typename' | 'stocktakeDate' | 'entryDatetime'
+  > {
   lines: StocktakeLine[];
   stocktakeDate: Date;
+  entryDatetime: Date;
 }
 
 export interface StocktakeController extends Omit<Stocktake, 'lines'> {

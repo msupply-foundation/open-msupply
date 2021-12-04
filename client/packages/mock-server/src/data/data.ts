@@ -17,6 +17,7 @@ import {
   StocktakeLine,
 } from './types';
 import {
+  randomName,
   randomFloat,
   addRandomPercentageTo,
   alphaString,
@@ -690,6 +691,8 @@ const createStocktake = (): Stocktake => {
     comment: takeRandomElementFrom(comments),
     description: takeRandomElementFrom(comments),
     status: StocktakeNodeStatus.Draft,
+    entryDatetime: faker.date.past(1.5).toISOString(),
+    enteredByName: randomName(),
   };
 };
 

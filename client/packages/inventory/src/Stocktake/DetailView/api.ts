@@ -91,6 +91,8 @@ export const getStocktakeDetailViewApi = (
       stocktakeDate: stocktake.stocktakeDate
         ? new Date(stocktake.stocktakeDate)
         : null,
+      entryDatetime: new Date(stocktake.entryDatetime),
+
       lines,
     };
   },

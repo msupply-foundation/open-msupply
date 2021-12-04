@@ -176,6 +176,8 @@ query stocktake($stocktakeId: String!) {
       stocktakeDate
       status
       description
+      entryDatetime
+      enteredByName
       lines {
         __typename
 
