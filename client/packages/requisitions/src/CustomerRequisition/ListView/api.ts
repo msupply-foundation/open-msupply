@@ -25,6 +25,9 @@ const onRead =
       nodes: nodes.map(requisition => ({
         ...requisition,
         color: requisition?.color ?? '#8f90a6',
+        orderDate: requisition?.orderDate
+          ? new Date(requisition.orderDate)
+          : null,
       })),
       totalCount: requisitions.totalCount,
     };
@@ -67,7 +70,7 @@ const requisitionToInput = (
 ): UpdateCustomerRequisitionInput => {
   return {
     id: requisitionRow.id,
-    orderDate: requisitionRow.orderDate,
+    orderDate: requisitionRow?.orderDate?.toISOString(),
     otherPartyId: requisitionRow.otherPartyId,
     comment: requisitionRow.comment,
     theirReference: requisitionRow.theirReference,

@@ -28,14 +28,10 @@ export interface Requisition
 export interface RequisitionRow
   extends Pick<
     RequisitionNode,
-    | 'id'
-    | 'comment'
-    | 'otherPartyName'
-    | 'orderDate'
-    | 'otherPartyId'
-    | 'theirReference'
+    'id' | 'comment' | 'otherPartyName' | 'otherPartyId' | 'theirReference'
   > {
   color: string;
+  orderDate: Date | null;
 }
 
 export interface SupplierRequisition extends Requisition {
