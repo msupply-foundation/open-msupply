@@ -1,6 +1,7 @@
-import { FC } from 'react';
+import React, { FC } from 'react';
 import { StocktakeController, StocktakeItem } from '../../../../types';
 import { ModalMode } from '../../DetailView';
+import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 
 interface StocktakeLineEditProps {
   item: StocktakeItem | null;
@@ -9,4 +10,16 @@ interface StocktakeLineEditProps {
   draft: StocktakeController;
 }
 
-export const StocktakeLineEdit: FC<StocktakeLineEditProps> = () => null;
+export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
+  item,
+  draft,
+  onChangeItem,
+  mode,
+}) => (
+  <StocktakeLineEditForm
+    item={item}
+    onChangeItem={onChangeItem}
+    mode={mode}
+    draft={draft}
+  />
+);
