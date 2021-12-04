@@ -8,6 +8,7 @@ import {
   useTranslation,
   useNotification,
   AppFooterPortal,
+  ToggleButton,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -70,6 +71,15 @@ export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
             alignItems="center"
             height={64}
           >
+            <ToggleButton
+              disabled={!isStocktakeEditable(draft)}
+              value={!!draft.onHold}
+              selected={!!draft.onHold}
+              onClick={() => {
+                draft.updateOnHold();
+              }}
+              label={t('label.hold')}
+            />
             <StatusCrumbs
               statuses={getStocktakeStatuses()}
               statusLog={createStatusLog(draft.status)}

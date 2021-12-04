@@ -1300,6 +1300,7 @@ type StocktakeNode {
   lines: StocktakeLinesResponse!
   entryDatetime: DateTime!
   enteredByName: String!
+  onHold: Boolean!
 }
 
 type StocktakeLineNode {
@@ -1524,6 +1525,7 @@ input UpdateStocktakeInput {
   comment: String
   description: String
   status: StocktakeNodeStatus
+  onHold: Boolean
 }
 union UpdateStocktakeResponse = NodeError | StocktakeNode
 type UpdateStocktakeResponseWithId {
