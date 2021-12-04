@@ -21,6 +21,7 @@ const itemToStocktakeItem = (item: Item): StocktakeItem => {
     snapshotNumPacks: () => '',
     lines: [],
     batch: () => '',
+    upsertLine: () => {},
   };
 };
 
