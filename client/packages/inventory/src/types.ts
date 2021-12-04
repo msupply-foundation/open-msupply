@@ -1,5 +1,5 @@
 import { StocktakeLineNode } from './../../common/src/types/schema';
-import { StocktakeNode } from '@openmsupply-client/common';
+import { StocktakeNode, StocktakeNodeStatus } from '@openmsupply-client/common';
 
 export type StocktakeRow = Pick<
   StocktakeNode,
@@ -40,12 +40,14 @@ export interface StocktakeController extends Omit<Stocktake, 'lines'> {
   update: (key: string, value: string) => void;
   updateStocktakeDatetime: (newDate: Date | null) => void;
   updateOnHold: () => void;
+  updateStatus: (newStatus: StocktakeNodeStatus) => void;
 }
 
 export enum StocktakeActionType {
   Update = 'Stocktake/Update',
   UpdateStocktakeDatetime = 'Stocktake/UpdateStocktakeDatetime',
   UpdateOnHold = 'Stocktake/UpdateOnHold',
+  UpdateStatus = 'Stocktake/UpdateStatus',
 }
 
 export type StocktakeAction =
@@ -59,4 +61,8 @@ export type StocktakeAction =
     }
   | {
       type: StocktakeActionType.UpdateOnHold;
+    }
+  | {
+      type: StocktakeActionType.UpdateStatus;
+      payload: { newStatus: StocktakeNodeStatus };
     };
