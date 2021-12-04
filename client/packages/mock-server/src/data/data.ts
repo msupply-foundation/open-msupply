@@ -735,7 +735,7 @@ const createStocktakeLines = (): StocktakeLine[] => {
 
   return stocktake
     .map(stocktake => {
-      const stockLineSubset = takeRandomSubsetFrom(stockLines, 10);
+      const stockLineSubset = takeRandomSubsetFrom(stockLines, 100);
       return stockLineSubset.map(seed => {
         const item = getItem(seed.itemId);
         return createStocktakeLine(stocktake.id, item, seed);

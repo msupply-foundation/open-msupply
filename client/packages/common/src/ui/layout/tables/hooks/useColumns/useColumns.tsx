@@ -57,7 +57,8 @@ const getDefaultAccessor =
   ): ColumnDataAccessor<T> =>
   (row: T) => {
     const key = column.key as keyof T;
-    return row[key];
+    const value = row[key];
+    return typeof value === 'function' ? value() : value;
   };
 
 const getDefaultFormatter = <T extends DomainObject>(

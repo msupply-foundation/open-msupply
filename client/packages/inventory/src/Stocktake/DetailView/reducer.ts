@@ -1,12 +1,16 @@
 import { Dispatch } from 'react';
 import {
+  Column,
   produce,
   DocumentActionSet,
   DocumentActionType,
   SortBy,
   StocktakeNodeStatus,
+  ifTheSameElseDefault,
+  getDataSorter,
 } from '@openmsupply-client/common';
 import {
+  StocktakeLine,
   StocktakeItem,
   StocktakeActionType,
   StocktakeAction,
@@ -21,7 +25,7 @@ export interface StocktakeStateShape {
   sortBy: SortBy<StocktakeItem>;
 }
 
-const StocktakeActionCreator = {
+export const StocktakeActionCreator = {
   update: (key: string, value: string): StocktakeAction => {
     return {
       type: StocktakeActionType.Update,
@@ -45,12 +49,55 @@ const StocktakeActionCreator = {
       payload: { newStatus },
     };
   },
+  sortBy: (column: Column<StocktakeItem>): StocktakeAction => ({
+    type: StocktakeActionType.SortBy,
+    payload: { column },
+  }),
 };
 
 export const getInitialState = (): StocktakeStateShape => ({
   draft: placeholderStocktake,
   sortBy: { key: 'itemName', isDesc: false, direction: 'asc' },
 });
+
+const toLookup = <T, K extends keyof T & string>(
+  things: T[],
+  key: K
+): Record<string, T[]> => {
+  const lookup: Record<string, T[]> = {} as Record<string, T[]>;
+  things.forEach(thing => {
+    const value = String(thing[key]);
+    if (!lookup[value]) {
+      lookup[value] = [];
+    }
+    lookup[value].push(thing);
+  });
+  return lookup;
+};
+
+const createStocktakeItem = (
+  id: string,
+  lines: StocktakeLine[]
+): StocktakeItem => {
+  return {
+    id,
+    lines,
+    itemName: () => ifTheSameElseDefault(lines, 'itemName', ''),
+    itemCode: () => ifTheSameElseDefault(lines, 'itemCode', ''),
+    batch: () => ifTheSameElseDefault(lines, 'batch', '[multiple]'),
+    expiryDate: () => ifTheSameElseDefault(lines, 'expiryDate', '[multiple]'),
+    countedNumPacks: () =>
+      String(ifTheSameElseDefault(lines, 'countedNumPacks', '[multiple]')),
+    snapshotNumPacks: () =>
+      String(ifTheSameElseDefault(lines, 'snapshotNumPacks', '[multiple]')),
+  };
+};
+
+const createStocktakeItems = (lines: StocktakeLine[]) => {
+  const lookup = toLookup(lines, 'itemId');
+  const ids = Object.keys(lookup);
+  return ids.map(id => createStocktakeItem(id, lookup[id]));
+};
 
 export const reducer = (
   data: Stocktake | undefined,
@@ -72,7 +119,7 @@ export const reducer = (
         case DocumentActionType.Merge: {
           state.draft = {
             ...data,
-            lines: data?.lines.map(line => ({ ...line, lines: [] })) ?? [],
+            lines: createStocktakeItems(data?.lines ?? []),
             update: (key: string, value: string) => {
               dispatch(StocktakeActionCreator.update(key, value));
             },
@@ -84,6 +131,8 @@ export const reducer = (
             },
             updateStatus: (newStatus: StocktakeNodeStatus) =>
               dispatch(StocktakeActionCreator.updateStatus(newStatus)),
+            sortBy: (column: Column<StocktakeItem>) =>
+              dispatch(StocktakeActionCreator.sortBy(column)),
           };
 
           break;
@@ -119,6 +168,37 @@ export const reducer = (
           // TODO: Probably there should be some more checks here for
           // finalising
           state.draft.status = action.payload.newStatus;
+          break;
+        }
+
+        case StocktakeActionType.SortBy: {
+          const { payload } = action;
+          const { column } = payload;
+
+          const { key } = column;
+
+          const { draft, sortBy } = state;
+          const { lines } = draft;
+          const { key: currentSortKey, isDesc: currentIsDesc } = sortBy;
+
+          const newIsDesc = currentSortKey === key ? !currentIsDesc : false;
+          const newDirection: 'asc' | 'desc' = newIsDesc ? 'desc' : 'asc';
+          const newSortBy: SortBy<StocktakeItem> = {
+            key,
+            isDesc: newIsDesc,
+            direction: newDirection,
+          };
+
+          const sortedLines = lines.sort(
+            getDataSorter(
+              newSortBy.key as keyof StocktakeItem,
+              !!newSortBy.isDesc
+            )
+          );
+
+          draft.lines = sortedLines;
+          state.sortBy = newSortBy;
+
           break;
         }
       }
