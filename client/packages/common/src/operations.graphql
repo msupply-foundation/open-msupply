@@ -173,7 +173,7 @@ query stocktake($stocktakeId: String!) {
       id
       stocktakeNumber
       comment
-      stocktakeDate
+      stocktakeDatetime
       status
       description
       entryDatetime
@@ -254,7 +254,7 @@ query stocktakes($params: StocktakeListParameters) {
         id
         comment
         description
-        stocktakeDate
+        stocktakeDatetime
         stocktakeNumber
         status
       }
