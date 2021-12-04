@@ -46,8 +46,8 @@ export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
   const columns = useColumns<StocktakeLine>([
     getLineLabelColumn(),
     ['batch', { Cell: TextInputCell, width: 200 }],
-    ['sellPricePerPack', { Cell: CurrencyInputCell, width: 100 }],
-    ['costPricePerPack', { Cell: CurrencyInputCell, width: 100 }],
+    ['sellPricePerPack', { Cell: CurrencyInputCell, width: 200 }],
+    ['costPricePerPack', { Cell: CurrencyInputCell, width: 200 }],
   ]);
 
   return (
