@@ -1,5 +1,6 @@
 {
     "label.stocktake-date": "Stocktake Date",
     "label.suggested": "Suggested",
-    "label.finalised": "Finalised"
+    "label.finalised": "Finalised",
+    "label.counted-num-of-packs": "Counted # of Packs"
 }

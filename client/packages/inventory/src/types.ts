@@ -1,3 +1,4 @@
+import { Column } from './../../common/src/ui/layout/tables/columns/types';
 import { StocktakeLineNode } from './../../common/src/types/schema';
 import { StocktakeNode, StocktakeNodeStatus } from '@openmsupply-client/common';
 
@@ -19,10 +20,15 @@ export interface StocktakeLine extends StocktakeLineNode {
 
 export interface StocktakeItem {
   id: string;
-  itemCode: string;
-  itemName: string;
+  itemCode: () => string;
+  itemName: () => string;
   isDeleted?: boolean;
   lines: StocktakeLine[];
+
+  batch: () => string;
+  expiryDate: () => string;
+  countedNumPacks: () => string;
+  snapshotNumPacks: () => string;
 }
 
 export interface Stocktake
@@ -41,6 +47,7 @@ export interface StocktakeController extends Omit<Stocktake, 'lines'> {
   updateStocktakeDatetime: (newDate: Date | null) => void;
   updateOnHold: () => void;
   updateStatus: (newStatus: StocktakeNodeStatus) => void;
+  sortBy: (column: Column<StocktakeItem>) => void;
 }
 
 export enum StocktakeActionType {
@@ -48,6 +55,7 @@ export enum StocktakeActionType {
   UpdateStocktakeDatetime = 'Stocktake/UpdateStocktakeDatetime',
   UpdateOnHold = 'Stocktake/UpdateOnHold',
   UpdateStatus = 'Stocktake/UpdateStatus',
+  SortBy = 'Stocktake/SortBy',
 }
 
 export type StocktakeAction =
@@ -65,4 +73,8 @@ export type StocktakeAction =
   | {
       type: StocktakeActionType.UpdateStatus;
       payload: { newStatus: StocktakeNodeStatus };
+    }
+  | {
+      type: StocktakeActionType.SortBy;
+      payload: { column: Column<StocktakeItem> };
     };
