@@ -110,6 +110,7 @@ export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
                     }}
                   />
                   <ButtonWithIcon
+                    disabled={draft.onHold}
                     shrinkThreshold="lg"
                     Icon={<ArrowRightIcon />}
                     label={t('button.save-and-confirm-status', {
@@ -120,7 +121,6 @@ export const Footer: FC<StocktakeDetailFooterProps> = ({ draft, save }) => {
                     color="secondary"
                     onClick={async () => {
                       success('Saved stocktake! 🥳 ')();
-
                       save();
                     }}
                   />
