@@ -90,6 +90,7 @@ const createStocktakeItem = (
       String(ifTheSameElseDefault(lines, 'countedNumPacks', '[multiple]')),
     snapshotNumPacks: () =>
       String(ifTheSameElseDefault(lines, 'snapshotNumPacks', '[multiple]')),
+    upsertLine: () => {},
   };
 };
 

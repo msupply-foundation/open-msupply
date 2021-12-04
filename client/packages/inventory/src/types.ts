@@ -16,6 +16,7 @@ export interface StocktakeLine extends StocktakeLineNode {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
+  update: (key: string, value: string) => void;
 }
 
 export interface StocktakeItem {
@@ -29,6 +30,7 @@ export interface StocktakeItem {
   expiryDate: () => string;
   countedNumPacks: () => string;
   snapshotNumPacks: () => string;
+  upsertLine: (line: StocktakeLine) => void;
 }
 
 export interface Stocktake
