@@ -14,6 +14,8 @@ import {
   ColumnAlign,
   Box,
   Column,
+  useDialog,
+  DialogButton,
 } from '@openmsupply-client/common';
 import { reducer, StocktakeActionCreator } from './reducer';
 import { getStocktakeDetailViewApi } from './api';
@@ -23,6 +25,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { isStocktakeEditable } from '../../utils';
 import { StocktakeItem } from '../../types';
+import { StocktakeLineEdit } from './modal/StocktakeLineEdit/StocktakeLineEdit';
 
 const useDraftStocktake = () => {
   const { id } = useParams();
@@ -59,8 +62,35 @@ const Expand: FC<{ rowData: StocktakeItem }> = ({ rowData }) => {
   );
 };
 
+export enum ModalMode {
+  Create,
+  Update,
+}
+
 export const DetailView: FC = () => {
+  const { hideDialog, showDialog, Modal } = useDialog({
+    onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
+  });
   const { draft, save, onChangeSortBy, sortBy } = useDraftStocktake();
+
+  const onChangeItem = (item: StocktakeItem | null) => {
+    setModalState(state => ({ ...state, item }));
+  };
+
+  const onRowClick = (item: StocktakeItem) => {
+    setModalState({ item, mode: ModalMode.Update });
+    showDialog();
+  };
+
+  const onAddItem = () => {
+    setModalState({ item: null, mode: ModalMode.Create });
+    showDialog();
+  };
+
+  const onOK = () => {
+    // modalState.item && draft.upsertItem?.(modalState.item);
+    hideDialog();
+  };
 
   const columns = useColumns<StocktakeItem>(
     [
@@ -92,14 +122,20 @@ export const DetailView: FC = () => {
 
   const t = useTranslation('common');
 
+  const [modalState, setModalState] = React.useState<{
+    item: StocktakeItem | null;
+    mode: ModalMode;
+  }>({ item: null, mode: ModalMode.Create });
+
   return (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
         isDisabled={!isStocktakeEditable(draft)}
-        onAddItem={() => {}}
+        onAddItem={onAddItem}
       />
       <Toolbar draft={draft} />
       <DataTable
+        onRowClick={onRowClick}
         ExpandContent={Expand}
         pagination={{ ...pagination, total: activeRows.length }}
         columns={columns}
@@ -112,6 +148,32 @@ export const DetailView: FC = () => {
       />
       <Footer draft={draft} save={save} />
       <SidePanel draft={draft} />
+
+      <Modal
+        title={
+          modalState.mode === ModalMode.Create
+            ? t('heading.add-item')
+            : t('heading.edit-item')
+        }
+        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        nextButton={
+          <DialogButton
+            variant="next"
+            onClick={() => {}}
+            disabled={modalState.mode === ModalMode.Update}
+          />
+        }
+        okButton={<DialogButton variant="ok" onClick={onOK} />}
+        height={600}
+        width={1024}
+      >
+        <StocktakeLineEdit
+          draft={draft}
+          mode={modalState.mode}
+          item={modalState.item}
+          onChangeItem={onChangeItem}
+        />
+      </Modal>
     </TableProvider>
   );
 };
