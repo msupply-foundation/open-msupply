@@ -9,6 +9,8 @@ import {
   useNotification,
   generateUUID,
   useOmSupplyApi,
+  getNameAndColorColumn,
+  Color,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
@@ -24,9 +26,8 @@ export const CustomerRequisitionListView: FC = () => {
   const {
     totalCount,
     data,
-    isLoading,
     onDelete,
-    // onUpdate,
+    onUpdate,
     sortBy,
     onChangeSortBy,
     onCreate,
@@ -44,7 +45,15 @@ export const CustomerRequisitionListView: FC = () => {
   );
 
   const columns = useColumns<RequisitionRow>(
-    ['otherPartyName', 'requisitionNumber', 'status', 'comment', 'selection'],
+    [
+      getNameAndColorColumn((row: RequisitionRow, color: Color) => {
+        onUpdate({ ...row, color: color.hex });
+      }),
+      'requisitionNumber',
+      'status',
+      'comment',
+      'selection',
+    ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
@@ -90,7 +99,6 @@ export const CustomerRequisitionListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data ?? []}
-        isLoading={isLoading}
         onRowClick={row => {
           navigate(row.id);
         }}
