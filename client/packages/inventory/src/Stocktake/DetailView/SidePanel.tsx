@@ -10,6 +10,9 @@ import {
   TextArea,
   useNotification,
   useTranslation,
+  PanelRow,
+  PanelField,
+  useFormatDate,
 } from '@openmsupply-client/common';
 import { isStocktakeEditable } from '../../utils';
 import { StocktakeController } from '../../types';
@@ -20,10 +23,19 @@ interface SidePanelProps {
 
 const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   const t = useTranslation('common');
+  const d = useFormatDate();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        <PanelRow>
+          <PanelLabel>{t('label.entered-by')}</PanelLabel>
+          <PanelField>{draft.enteredByName}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{d(new Date(draft.entryDatetime))}</PanelField>
+        </PanelRow>
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <TextArea
           disabled={!isStocktakeEditable(draft)}
