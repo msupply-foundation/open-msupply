@@ -47,17 +47,6 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
   );
 };
 
-const RelatedDocumentsSection: FC<SidePanelProps> = () => {
-  const t = useTranslation(['common', 'distribution']);
-  return (
-    <DetailPanelSection
-      title={t('heading.related-documents', { ns: 'distribution' })}
-    >
-      <Grid container gap={0.5} key="additional-info"></Grid>
-    </DetailPanelSection>
-  );
-};
-
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
   const t = useTranslation(['outbound-shipment', 'common']);
@@ -93,7 +82,6 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
       }
     >
       <AdditionalInfoSection draft={draft} />
-      <RelatedDocumentsSection draft={draft} />
     </DetailPanelPortal>
   );
 };
