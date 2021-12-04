@@ -25,9 +25,9 @@ const StocktakeActionCreator = {
       payload: { key, value },
     };
   },
-  updatestocktakeDatetime: (newDate: Date | null): StocktakeAction => {
+  updateStocktakeDatetime: (newDate: Date | null): StocktakeAction => {
     return {
-      type: StocktakeActionType.UpdatestocktakeDatetime,
+      type: StocktakeActionType.UpdateStocktakeDatetime,
       payload: { newDate },
     };
   },
@@ -62,8 +62,8 @@ export const reducer = (
             update: (key: string, value: string) => {
               dispatch(StocktakeActionCreator.update(key, value));
             },
-            updatestocktakeDatetime: (newDate: Date | null) => {
-              dispatch(StocktakeActionCreator.updatestocktakeDatetime(newDate));
+            updateStocktakeDatetime: (newDate: Date | null) => {
+              dispatch(StocktakeActionCreator.updateStocktakeDatetime(newDate));
             },
           };
 
@@ -84,7 +84,7 @@ export const reducer = (
           break;
         }
 
-        case StocktakeActionType.UpdatestocktakeDatetime: {
+        case StocktakeActionType.UpdateStocktakeDatetime: {
           const { payload } = action;
           const { newDate } = payload;
           state.draft.stocktakeDatetime = newDate;

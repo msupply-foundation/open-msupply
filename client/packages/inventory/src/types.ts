@@ -38,12 +38,12 @@ export interface Stocktake
 export interface StocktakeController extends Omit<Stocktake, 'lines'> {
   lines: StocktakeItem[];
   update: (key: string, value: string) => void;
-  updatestocktakeDatetime: (newDate: Date | null) => void;
+  updateStocktakeDatetime: (newDate: Date | null) => void;
 }
 
 export enum StocktakeActionType {
   Update = 'Stocktake/Update',
-  UpdatestocktakeDatetime = 'Stocktake/UpdatestocktakeDatetime',
+  UpdateStocktakeDatetime = 'Stocktake/updateStocktakeDatetime',
 }
 
 export type StocktakeAction =
@@ -52,6 +52,6 @@ export type StocktakeAction =
       payload: { key: string; value: string };
     }
   | {
-      type: StocktakeActionType.UpdatestocktakeDatetime;
+      type: StocktakeActionType.UpdateStocktakeDatetime;
       payload: { newDate: Date | null };
     };
