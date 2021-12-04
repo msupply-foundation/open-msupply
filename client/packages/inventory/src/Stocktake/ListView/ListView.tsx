@@ -46,7 +46,7 @@ export const StocktakeListView: FC = () => {
       'status',
       'description',
       'comment',
-      'stocktakeDate',
+      'stocktakeDatetime',
       'selection',
     ],
     { onChangeSortBy, sortBy },

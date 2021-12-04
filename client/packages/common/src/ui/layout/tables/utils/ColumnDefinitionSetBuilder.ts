@@ -37,7 +37,7 @@ export type ColumnKey =
   | 'requisitionNumber'
   | 'stocktakeNumber'
   | 'description'
-  | 'stocktakeDate'
+  | 'stocktakeDatetime'
   | 'monthlyConsumption'
   | 'previousStockOnHand'
   | 'calculatedQuantity'
@@ -144,9 +144,9 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     format: ColumnFormat.Date,
     width: 100,
   },
-  stocktakeDate: {
+  stocktakeDatetime: {
     label: 'label.date',
-    key: 'stocktakeDate',
+    key: 'stocktakeDatetime',
     format: ColumnFormat.Date,
     width: 100,
   },
