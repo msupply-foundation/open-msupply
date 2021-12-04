@@ -149,6 +149,7 @@ export const stocktake = {
       status,
       entryDatetime: new Date().toISOString(),
       enteredByName: randomName(),
+      onHold: false,
     };
     StocktakeData.push(stocktake);
     return stocktake;

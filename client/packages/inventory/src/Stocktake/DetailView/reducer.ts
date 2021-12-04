@@ -31,6 +31,11 @@ const StocktakeActionCreator = {
       payload: { newDate },
     };
   },
+  updateOnHold: (): StocktakeAction => {
+    return {
+      type: StocktakeActionType.UpdateOnHold,
+    };
+  },
 };
 
 export const getInitialState = (): StocktakeStateShape => ({
@@ -65,6 +70,9 @@ export const reducer = (
             updateStocktakeDatetime: (newDate: Date | null) => {
               dispatch(StocktakeActionCreator.updateStocktakeDatetime(newDate));
             },
+            updateOnHold: () => {
+              dispatch(StocktakeActionCreator.updateOnHold());
+            },
           };
 
           break;
@@ -88,6 +96,11 @@ export const reducer = (
           const { payload } = action;
           const { newDate } = payload;
           state.draft.stocktakeDatetime = newDate;
+          break;
+        }
+
+        case StocktakeActionType.UpdateOnHold: {
+          state.draft.onHold = !state.draft.onHold;
           break;
         }
       }
