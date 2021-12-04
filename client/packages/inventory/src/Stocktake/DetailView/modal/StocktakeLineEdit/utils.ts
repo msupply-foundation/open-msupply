@@ -1,4 +1,5 @@
 import { generateUUID } from '@openmsupply-client/common';
+import { createStocktakeItem } from '../../reducer';
 
 import { StocktakeItem, StocktakeLine } from './../../../../types';
 
@@ -61,7 +62,9 @@ export const wrapStocktakeItem = (
       } else {
         updatedLines.push(line);
       }
-      const updatedItem = { ...seed, lines: updatedLines };
+
+      const updatedItem = createStocktakeItem(seed.id, updatedLines);
+      updatedItem.upsertLine = seed.upsertLine;
 
       updater(updatedItem);
     },

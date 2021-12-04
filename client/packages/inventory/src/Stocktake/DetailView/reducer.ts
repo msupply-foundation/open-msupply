@@ -53,6 +53,10 @@ export const StocktakeActionCreator = {
     type: StocktakeActionType.SortBy,
     payload: { column },
   }),
+  upsertItem: (item: StocktakeItem): StocktakeAction => ({
+    type: StocktakeActionType.Upsert,
+    payload: { item },
+  }),
 };
 
 export const getInitialState = (): StocktakeStateShape => ({
@@ -75,7 +79,7 @@ const toLookup = <T, K extends keyof T & string>(
   return lookup;
 };
 
-const createStocktakeItem = (
+export const createStocktakeItem = (
   id: string,
   lines: StocktakeLine[]
 ): StocktakeItem => {
@@ -134,6 +138,8 @@ export const reducer = (
               dispatch(StocktakeActionCreator.updateStatus(newStatus)),
             sortBy: (column: Column<StocktakeItem>) =>
               dispatch(StocktakeActionCreator.sortBy(column)),
+            upsertItem: (item: StocktakeItem) =>
+              dispatch(StocktakeActionCreator.upsertItem(item)),
           };
 
           break;
@@ -199,6 +205,17 @@ export const reducer = (
 
           draft.lines = sortedLines;
           state.sortBy = newSortBy;
+
+          break;
+        }
+
+        case StocktakeActionType.Upsert: {
+          const { payload } = action;
+          const { item } = payload;
+
+          const itemIdx = state.draft.lines.findIndex(i => i.id === item.id);
+          if (itemIdx >= 0) state.draft.lines[itemIdx] = item;
+          else state.draft.lines.push(item);
 
           break;
         }

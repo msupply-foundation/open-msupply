@@ -88,7 +88,7 @@ export const DetailView: FC = () => {
   };
 
   const onOK = () => {
-    // modalState.item && draft.upsertItem?.(modalState.item);
+    modalState.item && draft.upsertItem(modalState.item);
     hideDialog();
   };
 
