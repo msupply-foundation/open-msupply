@@ -50,6 +50,7 @@ export interface StocktakeController extends Omit<Stocktake, 'lines'> {
   updateOnHold: () => void;
   updateStatus: (newStatus: StocktakeNodeStatus) => void;
   sortBy: (column: Column<StocktakeItem>) => void;
+  upsertItem: (item: StocktakeItem) => void;
 }
 
 export enum StocktakeActionType {
@@ -58,6 +59,7 @@ export enum StocktakeActionType {
   UpdateOnHold = 'Stocktake/UpdateOnHold',
   UpdateStatus = 'Stocktake/UpdateStatus',
   SortBy = 'Stocktake/SortBy',
+  Upsert = 'Stocktake/Upsert',
 }
 
 export type StocktakeAction =
@@ -79,4 +81,8 @@ export type StocktakeAction =
   | {
       type: StocktakeActionType.SortBy;
       payload: { column: Column<StocktakeItem> };
+    }
+  | {
+      type: StocktakeActionType.Upsert;
+      payload: { item: StocktakeItem };
     };

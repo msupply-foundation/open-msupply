@@ -13,16 +13,22 @@ export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
   const columns = useColumns<StocktakeLine>([
     getLineLabelColumn(),
     ['batch', { Cell: TextInputCell, width: 200 }],
-    [
-      'numberOfPacks',
-      {
-        Cell: NumberInputCell,
-        width: 100,
-        label: 'label.num-packs',
-      },
-    ],
-    ['packSize', { Cell: NumberInputCell }],
-
+    {
+      key: 'snapshotNumPacks',
+      label: 'label.num-packs',
+      width: 100,
+    },
+    {
+      key: 'snapshotPackSize',
+      label: 'label.pack-size',
+      width: 100,
+    },
+    {
+      key: 'countedNumPacks',
+      label: 'label.counted-num-of-packs',
+      width: 100,
+      Cell: NumberInputCell,
+    },
     'expiryDate',
   ]);
 
@@ -42,17 +48,6 @@ export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
     ['batch', { Cell: TextInputCell, width: 200 }],
     ['sellPricePerPack', { Cell: CurrencyInputCell, width: 100 }],
     ['costPricePerPack', { Cell: CurrencyInputCell, width: 100 }],
-    // [
-    //   'unitQuantity',
-    //   { accessor: rowData => rowData.numberOfPacks * rowData.packSize },
-    // ],
-    // [
-    //   'lineTotal',
-    //   {
-    //     accessor: rowData =>
-    //       rowData.numberOfPacks * rowData.packSize * rowData.costPricePerPack,
-    //   },
-    // ],
   ]);
 
   return (
