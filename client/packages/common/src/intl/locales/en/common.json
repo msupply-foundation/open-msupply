@@ -71,6 +71,7 @@
   "label.customer-ref": "Customer Ref",
   "label.customer": "Customer",
   "label.date": "Date",
+  "label.requisition-date": "Requisition Date",
   "label.delivered": "Delivered",
   "label.details": "Details",
   "label.draft": "Draft",

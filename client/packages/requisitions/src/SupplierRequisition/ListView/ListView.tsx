@@ -9,6 +9,7 @@ import {
   useOmSupplyApi,
   getNameAndColorColumn,
   Color,
+  useFormatDate,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -18,6 +19,7 @@ import { RequisitionRow } from '../../types';
 export const SupplierRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const { api } = useOmSupplyApi();
+  const d = useFormatDate();
 
   const {
     totalCount,
@@ -43,9 +45,17 @@ export const SupplierRequisitionListView: FC = () => {
       getNameAndColorColumn((row: RequisitionRow, color: Color) => {
         onUpdate({ ...row, color: color.hex });
       }),
-      ,
-      'requisitionNumber',
+      {
+        key: 'requisitionNumber',
+        label: 'label.number',
+      },
       'status',
+      {
+        key: 'orderDate',
+        label: 'label.requisition-date',
+        width: 100,
+        accessor: rowData => (rowData.orderDate ? d(rowData.orderDate) : ''),
+      },
       'comment',
       'selection',
     ],
