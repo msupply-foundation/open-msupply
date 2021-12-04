@@ -7,6 +7,8 @@ import {
   TableProvider,
   createTableStore,
   useOmSupplyApi,
+  getNameAndColorColumn,
+  Color,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -20,9 +22,8 @@ export const SupplierRequisitionListView: FC = () => {
   const {
     totalCount,
     data,
-    isLoading,
     onDelete,
-    // onUpdate,
+    onUpdate,
     sortBy,
     onChangeSortBy,
     onChangePage,
@@ -38,7 +39,16 @@ export const SupplierRequisitionListView: FC = () => {
   );
 
   const columns = useColumns<RequisitionRow>(
-    ['otherPartyName', 'requisitionNumber', 'status', 'comment', 'selection'],
+    [
+      getNameAndColorColumn((row: RequisitionRow, color: Color) => {
+        onUpdate({ ...row, color: color.hex });
+      }),
+      ,
+      'requisitionNumber',
+      'status',
+      'comment',
+      'selection',
+    ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
@@ -53,7 +63,6 @@ export const SupplierRequisitionListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data ?? []}
-        isLoading={isLoading}
         onRowClick={row => {
           navigate(row.id);
         }}

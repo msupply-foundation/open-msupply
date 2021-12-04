@@ -21,7 +21,13 @@ const onRead =
     const requisitions = requisitionsGuard(result);
     const { nodes } = requisitions;
 
-    return { nodes, totalCount: requisitions.totalCount };
+    return {
+      nodes: nodes.map(requisition => ({
+        ...requisition,
+        color: requisition?.color ?? '#8f90a6',
+      })),
+      totalCount: requisitions.totalCount,
+    };
   };
 
 const getSortKey = (): RequisitionSortFieldInput => {
@@ -57,10 +63,15 @@ const onDelete =
   };
 
 const requisitionToInput = (
-  requisitionRow: RequisitionRow
+  requisitionRow: Partial<RequisitionRow> & { id: string }
 ): UpdateCustomerRequisitionInput => {
   return {
-    ...requisitionRow,
+    id: requisitionRow.id,
+    orderDate: requisitionRow.orderDate,
+    otherPartyId: requisitionRow.otherPartyId,
+    comment: requisitionRow.comment,
+    theirReference: requisitionRow.theirReference,
+    color: requisitionRow.color,
   };
 };
 
