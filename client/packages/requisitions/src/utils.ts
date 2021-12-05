@@ -30,6 +30,16 @@ export const placeholderSupplierRequisition: SupplierRequisition = {
       'Placeholder callback updateOtherParty has been triggered. This should never happen!'
     );
   },
+  updateRequisitionDate: () => {
+    throw new Error(
+      'Placeholder callback updateRequisitionDate has been triggered. This should never happen!'
+    );
+  },
+  updateOrderDate: () => {
+    throw new Error(
+      'Placeholder callback updateOrderDate has been triggered. This should never happen!'
+    );
+  },
 };
 
 export const placeholderCustomerRequisition: CustomerRequisition = {

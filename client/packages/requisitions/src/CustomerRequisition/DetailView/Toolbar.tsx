@@ -85,18 +85,17 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               />
             </Box>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              {draft.otherParty && (
-                <InputWithLabelRow
-                  label={t('label.order-date')}
-                  Input={
-                    <DatePickerInput
-                      disabled={!isRequisitionEditable(draft)}
-                      value={draft.orderDate}
-                      onChange={draft.updateOrderDate}
-                    />
-                  }
-                />
-              )}
+              <InputWithLabelRow
+                label={t('label.order-date')}
+                Input={
+                  <DatePickerInput
+                    disabled={!isRequisitionEditable(draft)}
+                    value={draft.orderDate}
+                    onChange={draft.updateOrderDate}
+                  />
+                }
+              />
+
               <InputWithLabelRow
                 label={t('label.requisition-date')}
                 Input={
