@@ -151,6 +151,15 @@ table! {
 }
 
 table! {
+    invoice_line_stats (invoice_id) {
+        invoice_id -> Text,
+        item_type -> crate::schema::item::ItemTypeMapping,
+        total_before_tax -> Double,
+        total_after_tax -> Double,
+    }
+}
+
+table! {
     user_account (id) {
         id -> Text,
         username -> Text,
@@ -247,6 +256,7 @@ allow_tables_to_appear_in_same_query!(
     sync_out,
     invoice,
     invoice_line,
+    invoice_line_stats,
     user_account,
     name_store_join,
     master_list_line,
