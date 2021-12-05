@@ -1273,7 +1273,8 @@ type UpdateOutboundShipmentResponseWithId {
 
 type RequisitionNode {
   id: String!
-  orderDate: String
+  orderDate: DateTime
+  requisitionDate: DateTime
   comment: String
   theirReference: String
   type: RequisitionNodeType
