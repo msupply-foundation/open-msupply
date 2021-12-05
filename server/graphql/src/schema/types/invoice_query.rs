@@ -163,14 +163,12 @@ impl InvoiceNode {
 
     async fn pricing(&self, ctx: &Context<'_>) -> InvoicePriceResponse {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
-        let default = InvoicePricing {
-            total_after_tax: 0.0,
-        };
+        let default = InvoicePricing::new(&self.invoice.id);
 
         match loader.load_one(self.invoice.id.to_string()).await {
-            Ok(result_option) => {
-                InvoicePriceResponse::Response(result_option.unwrap_or(default).into())
-            }
+            Ok(result_option) => InvoicePriceResponse::Response(InvoicePricingNode {
+                invoice_pricing: result_option.unwrap_or(default),
+            }),
             // TODO report error
             Err(error) => InvoicePriceResponse::Error(error.into()),
         }
@@ -226,8 +224,34 @@ pub struct InvoicePricingNode {
 
 #[Object]
 impl InvoicePricingNode {
+    // total
+
+    pub async fn total_before_tax(&self) -> f64 {
+        self.invoice_pricing.total_before_tax
+    }
+
     pub async fn total_after_tax(&self) -> f64 {
         self.invoice_pricing.total_after_tax
+    }
+
+    // stock
+
+    pub async fn stock_total_before_tax(&self) -> f64 {
+        self.invoice_pricing.stock_total_before_tax
+    }
+
+    pub async fn stock_total_after_tax(&self) -> f64 {
+        self.invoice_pricing.stock_total_after_tax
+    }
+
+    // service
+
+    pub async fn service_total_before_tax(&self) -> f64 {
+        self.invoice_pricing.service_total_before_tax
+    }
+
+    pub async fn service_total_after_tax(&self) -> f64 {
+        self.invoice_pricing.service_total_after_tax
     }
 }
 
@@ -235,10 +259,4 @@ impl InvoicePricingNode {
 pub enum InvoicePriceResponse {
     Error(NodeError),
     Response(InvoicePricingNode),
-}
-
-impl From<InvoicePricing> for InvoicePricingNode {
-    fn from(invoice_pricing: InvoicePricing) -> Self {
-        InvoicePricingNode { invoice_pricing }
-    }
 }
