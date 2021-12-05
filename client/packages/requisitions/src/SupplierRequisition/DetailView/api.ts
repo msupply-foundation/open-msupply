@@ -54,7 +54,7 @@ const createUpdateSupplierRequisitionInput = (
     comment: patch.comment,
     id: patch.id,
     otherPartyId: patch.otherPartyId,
-    orderDate: patch.orderDate,
+    orderDate: patch.orderDate?.toISOString(),
     theirReference: patch.theirReference,
   };
 };
@@ -103,6 +103,10 @@ export const getSupplierRequisitionDetailViewApi = (
       ...requisition,
       lines,
       otherParty,
+      orderDate: requisition.orderDate ? new Date(requisition.orderDate) : null,
+      requisitionDate: requisition.requisitionDate
+        ? new Date(requisition.requisitionDate)
+        : null,
       otherPartyName: otherParty.name,
     };
   },

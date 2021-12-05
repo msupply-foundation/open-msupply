@@ -20,9 +20,14 @@ export type RequisitionAction =
     };
 
 export interface Requisition
-  extends Omit<RequisitionNode, '__typename' | 'lines' | 'otherParty'> {
+  extends Omit<
+    RequisitionNode,
+    '__typename' | 'lines' | 'otherParty' | 'orderDate' | 'requisitionDate'
+  > {
   lines: RequisitionLine[];
   otherParty: Name;
+  orderDate: Date | null;
+  requisitionDate: Date | null;
 }
 
 export interface RequisitionRow

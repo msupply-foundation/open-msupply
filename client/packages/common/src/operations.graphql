@@ -403,6 +403,7 @@ query requisition($id: String!) {
       __typename
       id
       orderDate
+      requisitionDate
       comment
       theirReference
       type
