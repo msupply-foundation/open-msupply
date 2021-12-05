@@ -55,6 +55,8 @@ export interface SupplierRequisition extends Requisition {
   lines: SupplierRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
+  updateOrderDate: (value: Date) => void;
+  updateRequisitionDate: (value: Date) => void;
   upsertLine?: (line: SupplierRequisitionLine) => void;
   deleteLine?: (line: SupplierRequisitionLine) => void;
 }
