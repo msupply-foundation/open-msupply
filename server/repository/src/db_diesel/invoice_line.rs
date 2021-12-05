@@ -1,15 +1,19 @@
+use std::collections::HashMap;
+
 use crate::{
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
-            invoice_line, invoice_line::dsl as invoice_line_dsl, location,
+            invoice_line, invoice_line::dsl as invoice_line_dsl,
+            invoice_line_stats::dsl as invoice_line_stats_dsl, location,
             location::dsl as location_dsl,
         },
-        InvoiceLineRow, LocationRow,
+        InvoiceLineRow, InvoiceLineStatsRow, ItemType, LocationRow,
     },
 };
 use domain::{
+    invoice::InvoicePricing,
     invoice_line::{InvoiceLine, InvoiceLineFilter, InvoiceLineSort},
     Pagination,
 };
@@ -17,16 +21,9 @@ use domain::{
 use super::{DBType, StorageConnection};
 
 use diesel::{
-    dsl::{self, IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin},
     prelude::*,
-    sql_types::Double,
 };
-
-#[derive(Clone)]
-pub struct InvoiceLineStats {
-    pub invoice_id: String,
-    pub total_after_tax: f64,
-}
 
 type InvoiceLineJoin = (InvoiceLineRow, Option<LocationRow>);
 
@@ -71,23 +68,35 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 
     /// Calculates invoice line stats for a given invoice ids
-    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<InvoiceLineStats>, RepositoryError> {
-        let results = invoice_line_dsl::invoice_line
-            .select((
-                invoice_line_dsl::invoice_id,
-                dsl::sql::<Double>("sum(total_after_tax) as total_after_tax"),
-            ))
-            .group_by(invoice_line_dsl::invoice_id)
-            .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
+    pub fn stats(
+        &self,
+        invoice_ids: &[String],
+    ) -> Result<HashMap<String, InvoicePricing>, RepositoryError> {
+        let results: Vec<InvoiceLineStatsRow> = invoice_line_stats_dsl::invoice_line_stats
+            .filter(invoice_line_stats_dsl::invoice_id.eq_any(invoice_ids))
             .load(&self.connection.connection)?;
 
-        Ok(results
-            .iter()
-            .map(|v: &(String, f64)| InvoiceLineStats {
-                invoice_id: v.0.to_string(),
-                total_after_tax: v.1,
-            })
-            .collect())
+        // collect rows into InvoiceLineStats
+        let mut stats = HashMap::<String, InvoicePricing>::new();
+        for row in results {
+            let entry = stats
+                .entry(row.invoice_id.clone())
+                .or_insert_with(|| InvoicePricing::new(&row.invoice_id));
+            entry.total_before_tax += row.total_before_tax;
+            entry.total_after_tax += row.total_after_tax;
+            match row.item_type {
+                ItemType::Stock => {
+                    entry.stock_total_before_tax += row.total_before_tax;
+                    entry.stock_total_after_tax += row.total_after_tax;
+                }
+                ItemType::Service => {
+                    entry.service_total_before_tax += row.total_before_tax;
+                    entry.service_total_after_tax += row.total_after_tax;
+                }
+                ItemType::NonStock => {}
+            };
+        }
+        Ok(stats)
     }
 }
 
