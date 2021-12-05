@@ -7,6 +7,8 @@ import {
 export enum RequisitionActionType {
   Update = 'Requisition/Update',
   UpdateOtherParty = 'Requisition/UpdateOtherParty',
+  UpdateOrderDate = 'Requisition/UpdateOrderDate',
+  UpdateRequisitionDate = 'Requisition/UpdateRequisitionDate',
 }
 
 export type RequisitionAction =
@@ -17,6 +19,14 @@ export type RequisitionAction =
   | {
       type: RequisitionActionType.UpdateOtherParty;
       payload: { value: Name };
+    }
+  | {
+      type: RequisitionActionType.UpdateOrderDate;
+      payload: { value: Date };
+    }
+  | {
+      type: RequisitionActionType.UpdateRequisitionDate;
+      payload: { value: Date };
     };
 
 export interface Requisition
@@ -55,6 +65,8 @@ export interface CustomerRequisition extends Requisition {
   lines: CustomerRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
+  updateOrderDate: (value: Date) => void;
+  updateRequisitionDate: (value: Date) => void;
   upsertLine?: (line: CustomerRequisitionLine) => void;
   deleteLine?: (line: CustomerRequisitionLine) => void;
 }

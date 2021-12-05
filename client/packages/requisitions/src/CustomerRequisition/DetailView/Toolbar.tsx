@@ -11,6 +11,7 @@ import {
   useTranslation,
   useNotification,
   useTableStore,
+  DatePickerInput,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 import { CustomerRequisition, CustomerRequisitionLine } from '../../types';
@@ -51,34 +52,62 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         alignItems="flex-end"
       >
         <Grid item display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
-            {draft.otherParty && (
+          <Box display="flex" flexDirection="row" gap={4}>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
+              {draft.otherParty && (
+                <InputWithLabelRow
+                  label={t('label.customer-name')}
+                  Input={
+                    <NameSearchInput
+                      type="customer"
+                      disabled={!isRequisitionEditable(draft)}
+                      value={draft.otherParty}
+                      onChange={name => {
+                        draft.updateOtherParty(name);
+                      }}
+                    />
+                  }
+                />
+              )}
               <InputWithLabelRow
-                label={t('label.customer-name')}
+                label={t('label.customer-ref')}
                 Input={
-                  <NameSearchInput
-                    type="customer"
+                  <BasicTextInput
                     disabled={!isRequisitionEditable(draft)}
-                    value={draft.otherParty}
-                    onChange={name => {
-                      draft.updateOtherParty(name);
-                    }}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={draft.theirReference}
+                    onChange={e =>
+                      draft.update('theirReference', e.target.value)
+                    }
                   />
                 }
               />
-            )}
-            <InputWithLabelRow
-              label={t('label.customer-ref')}
-              Input={
-                <BasicTextInput
-                  disabled={!isRequisitionEditable(draft)}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={draft.theirReference}
-                  onChange={e => draft.update('theirReference', e.target.value)}
+            </Box>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
+              {draft.otherParty && (
+                <InputWithLabelRow
+                  label={t('label.order-date')}
+                  Input={
+                    <DatePickerInput
+                      disabled={!isRequisitionEditable(draft)}
+                      value={draft.orderDate}
+                      onChange={draft.updateOrderDate}
+                    />
+                  }
                 />
-              }
-            />
+              )}
+              <InputWithLabelRow
+                label={t('label.requisition-date')}
+                Input={
+                  <DatePickerInput
+                    disabled={!isRequisitionEditable(draft)}
+                    value={draft.requisitionDate}
+                    onChange={draft.updateRequisitionDate}
+                  />
+                }
+              />
+            </Box>
           </Box>
         </Grid>
         <DropdownMenu
