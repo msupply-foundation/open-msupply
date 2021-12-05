@@ -53,7 +53,7 @@ const createUpdateSupplierRequisitionInput = (
   return {
     comment: patch.comment,
     id: patch.id,
-    nameId: patch.otherPartyId,
+    otherPartyId: patch.otherPartyId,
     orderDate: patch.orderDate,
     theirReference: patch.theirReference,
   };
