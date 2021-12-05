@@ -50,17 +50,6 @@ impl Loader<String> for InvoiceLineStatsLoader {
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let repo = InvoiceLineRepository::new(&connection);
-        Ok(repo
-            .stats(invoice_ids)?
-            .into_iter()
-            .map(|stats| {
-                (
-                    stats.invoice_id.clone(),
-                    InvoicePricing {
-                        total_after_tax: stats.total_after_tax,
-                    },
-                )
-            })
-            .collect())
+        Ok(repo.stats(invoice_ids)?)
     }
 }
