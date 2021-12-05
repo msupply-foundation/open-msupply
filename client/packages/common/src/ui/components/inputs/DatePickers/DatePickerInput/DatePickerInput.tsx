@@ -10,5 +10,11 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
   value,
   onChange,
 }) => {
-  return <BaseDatePickerInput onChange={onChange} value={value} />;
+  return (
+    <BaseDatePickerInput
+      inputFormat="dd/MM/yyyy"
+      onChange={onChange}
+      value={value}
+    />
+  );
 };
