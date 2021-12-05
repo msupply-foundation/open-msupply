@@ -1,7 +1,4 @@
-import {
-  SupplierRequisitionNodeStatus,
-  SupplierRequisitionNodeStatus,
-} from '@openmsupply-client/common';
+import { SupplierRequisitionNodeStatus } from '@openmsupply-client/common';
 
 import { Requisition, SupplierRequisition, CustomerRequisition } from './types';
 
@@ -21,6 +18,8 @@ export const placeholderSupplierRequisition: SupplierRequisition = {
   otherPartyId: '',
   otherPartyName: '',
   status: SupplierRequisitionNodeStatus.Draft,
+  orderDate: null,
+  requisitionDate: null,
   update: () => {
     throw new Error(
       'Placeholder callback update has been triggered. This should never happen!'
@@ -49,6 +48,8 @@ export const placeholderCustomerRequisition: CustomerRequisition = {
   otherPartyId: '',
   otherPartyName: '',
   status: SupplierRequisitionNodeStatus.Draft,
+  orderDate: null,
+  requisitionDate: null,
   update: () => {
     throw new Error(
       'Placeholder callback update has been triggered. This should never happen!'
@@ -57,6 +58,16 @@ export const placeholderCustomerRequisition: CustomerRequisition = {
   updateOtherParty: () => {
     throw new Error(
       'Placeholder callback updateOtherParty has been triggered. This should never happen!'
+    );
+  },
+  updateRequisitionDate: () => {
+    throw new Error(
+      'Placeholder callback updateRequisitionDate has been triggered. This should never happen!'
+    );
+  },
+  updateOrderDate: () => {
+    throw new Error(
+      'Placeholder callback updateOrderDate has been triggered. This should never happen!'
     );
   },
 };

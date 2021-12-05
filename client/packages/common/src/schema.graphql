@@ -1687,6 +1687,7 @@ type DeleteCustomerRequisitionLineResponseWithId {
 input UpdateCustomerRequisitionInput {
   id: String!
   orderDate: String
+  requisitionDate: String
   otherPartyId: String
   comment: String
   theirReference: String
