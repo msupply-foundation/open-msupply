@@ -1600,8 +1600,8 @@ export type UpdateCustomerRequisitionInput = {
   color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  nameId?: Maybe<Scalars['String']>;
   orderDate?: Maybe<Scalars['String']>;
+  otherPartyId?: Maybe<Scalars['String']>;
   theirReference?: Maybe<Scalars['String']>;
 };
 
@@ -1792,8 +1792,8 @@ export type UpdateSupplierRequisitionInput = {
   color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  nameId?: Maybe<Scalars['String']>;
   orderDate?: Maybe<Scalars['String']>;
+  otherPartyId?: Maybe<Scalars['String']>;
   theirReference?: Maybe<Scalars['String']>;
 };
 
@@ -1933,7 +1933,7 @@ export type RequisitionsQueryVariables = Exact<{
 }>;
 
 
-export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError' } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, theirReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string } | null | undefined> } };
+export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError' } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, theirReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string, otherPartyId: string, color?: string | null | undefined } | null | undefined> } };
 
 export type DeleteSupplierRequisitionsMutationVariables = Exact<{
   ids?: Maybe<Array<DeleteSupplierRequisitionInput> | DeleteSupplierRequisitionInput>;
@@ -2409,6 +2409,8 @@ export const RequisitionsDocument = gql`
         requisitionNumber
         status
         otherPartyName
+        otherPartyId
+        color
       }
       totalCount
     }

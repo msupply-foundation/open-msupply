@@ -25,7 +25,14 @@ export interface Requisition
   otherParty: Name;
 }
 
-export type RequisitionRow = Pick<RequisitionNode, 'id' | 'comment'>;
+export interface RequisitionRow
+  extends Pick<
+    RequisitionNode,
+    'id' | 'comment' | 'otherPartyName' | 'otherPartyId' | 'theirReference'
+  > {
+  color: string;
+  orderDate: Date | null;
+}
 
 export interface SupplierRequisition extends Requisition {
   isDeleted: boolean;

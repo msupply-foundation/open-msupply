@@ -7,6 +7,9 @@ import {
   TableProvider,
   createTableStore,
   useOmSupplyApi,
+  getNameAndColorColumn,
+  Color,
+  useFormatDate,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -16,13 +19,13 @@ import { RequisitionRow } from '../../types';
 export const SupplierRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const { api } = useOmSupplyApi();
+  const d = useFormatDate();
 
   const {
     totalCount,
     data,
-    isLoading,
     onDelete,
-    // onUpdate,
+    onUpdate,
     sortBy,
     onChangeSortBy,
     onChangePage,
@@ -38,7 +41,24 @@ export const SupplierRequisitionListView: FC = () => {
   );
 
   const columns = useColumns<RequisitionRow>(
-    ['otherPartyName', 'requisitionNumber', 'status', 'comment', 'selection'],
+    [
+      getNameAndColorColumn((row: RequisitionRow, color: Color) => {
+        onUpdate({ ...row, color: color.hex });
+      }),
+      {
+        key: 'requisitionNumber',
+        label: 'label.number',
+      },
+      'status',
+      {
+        key: 'orderDate',
+        label: 'label.requisition-date',
+        width: 100,
+        accessor: rowData => (rowData.orderDate ? d(rowData.orderDate) : ''),
+      },
+      'comment',
+      'selection',
+    ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
@@ -53,7 +73,6 @@ export const SupplierRequisitionListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data ?? []}
-        isLoading={isLoading}
         onRowClick={row => {
           navigate(row.id);
         }}

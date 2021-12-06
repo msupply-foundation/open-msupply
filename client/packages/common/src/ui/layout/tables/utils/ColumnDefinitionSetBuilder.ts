@@ -34,7 +34,6 @@ export type ColumnKey =
   | 'numberOfPacks'
   | 'otherPartyName'
   | 'lineTotal'
-  | 'requisitionNumber'
   | 'stocktakeNumber'
   | 'description'
   | 'stocktakeDatetime'
@@ -112,11 +111,6 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     label: 'label.name',
     width: 75,
     sortable: false,
-  },
-  requisitionNumber: {
-    key: 'invoiceNumber',
-    label: 'label.requisition-number',
-    width: 50,
   },
   stocktakeNumber: {
     key: 'stocktakeNumber',
