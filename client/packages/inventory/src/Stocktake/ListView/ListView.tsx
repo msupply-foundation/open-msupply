@@ -22,7 +22,7 @@ export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const { api } = useOmSupplyApi();
-  const t = useTranslation('inventory');
+  const t = useTranslation(['common', 'inventory']);
 
   const {
     totalCount,
