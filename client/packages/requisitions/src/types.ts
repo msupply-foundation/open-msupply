@@ -7,6 +7,8 @@ import {
 export enum RequisitionActionType {
   Update = 'Requisition/Update',
   UpdateOtherParty = 'Requisition/UpdateOtherParty',
+  UpdateOrderDate = 'Requisition/UpdateOrderDate',
+  UpdateRequisitionDate = 'Requisition/UpdateRequisitionDate',
 }
 
 export type RequisitionAction =
@@ -17,12 +19,25 @@ export type RequisitionAction =
   | {
       type: RequisitionActionType.UpdateOtherParty;
       payload: { value: Name };
+    }
+  | {
+      type: RequisitionActionType.UpdateOrderDate;
+      payload: { value: Date };
+    }
+  | {
+      type: RequisitionActionType.UpdateRequisitionDate;
+      payload: { value: Date };
     };
 
 export interface Requisition
-  extends Omit<RequisitionNode, '__typename' | 'lines' | 'otherParty'> {
+  extends Omit<
+    RequisitionNode,
+    '__typename' | 'lines' | 'otherParty' | 'orderDate' | 'requisitionDate'
+  > {
   lines: RequisitionLine[];
   otherParty: Name;
+  orderDate: Date | null;
+  requisitionDate: Date | null;
 }
 
 export interface RequisitionRow
@@ -40,6 +55,8 @@ export interface SupplierRequisition extends Requisition {
   lines: SupplierRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
+  updateOrderDate: (value: Date) => void;
+  updateRequisitionDate: (value: Date) => void;
   upsertLine?: (line: SupplierRequisitionLine) => void;
   deleteLine?: (line: SupplierRequisitionLine) => void;
 }
@@ -50,6 +67,8 @@ export interface CustomerRequisition extends Requisition {
   lines: CustomerRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
+  updateOrderDate: (value: Date) => void;
+  updateRequisitionDate: (value: Date) => void;
   upsertLine?: (line: CustomerRequisitionLine) => void;
   deleteLine?: (line: CustomerRequisitionLine) => void;
 }

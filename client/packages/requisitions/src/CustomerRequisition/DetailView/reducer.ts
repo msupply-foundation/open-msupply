@@ -32,6 +32,18 @@ const RequisitionActionCreator = {
       payload: { value },
     };
   },
+  updateOrderDate: (value: Date): RequisitionAction => {
+    return {
+      type: RequisitionActionType.UpdateOrderDate,
+      payload: { value },
+    };
+  },
+  updateRequisitionDate: (value: Date): RequisitionAction => {
+    return {
+      type: RequisitionActionType.UpdateRequisitionDate,
+      payload: { value },
+    };
+  },
 };
 
 export const getInitialState = (): CustomerRequisitionStateShape => ({
@@ -66,6 +78,18 @@ export const reducer = (
             dispatch(RequisitionActionCreator.update(key, value));
           };
 
+          state.draft.updateOrderDate = (value: Date) => {
+            dispatch(RequisitionActionCreator.updateOrderDate(value));
+          };
+
+          state.draft.updateRequisitionDate = (value: Date) => {
+            dispatch(RequisitionActionCreator.updateRequisitionDate(value));
+          };
+
+          state.draft.update = (key: string, value: string) => {
+            dispatch(RequisitionActionCreator.update(key, value));
+          };
+
           break;
         }
 
@@ -84,12 +108,22 @@ export const reducer = (
           if (key === 'color') {
             state.draft.color = value as string;
           }
-          if (key === 'orderDate') {
-            state.draft.orderDate = value as string;
-          }
+
           if (key === 'theirReference') {
             state.draft.theirReference = value as string;
           }
+
+          break;
+        }
+
+        case RequisitionActionType.UpdateOrderDate: {
+          state.draft.orderDate = action.payload.value;
+          break;
+        }
+
+        case RequisitionActionType.UpdateRequisitionDate: {
+          state.draft.requisitionDate = action.payload.value;
+          break;
         }
       }
 
