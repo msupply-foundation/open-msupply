@@ -8,7 +8,7 @@ mod graphql {
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::MockDataInserts,
-        schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+        schema::{InvoiceRow, InvoiceRowType},
         InvoiceRepository,
     };
     use server::test_utils::setup_all;
@@ -74,7 +74,6 @@ mod graphql {
         let base_variables = insert::Variables {
             id: uuid(),
             other_party_id: supplier.id.clone(),
-            status: insert::InvoiceNodeStatus::Draft,
             on_hold_option: None,
             comment_option: Some("some comment_option".to_string()),
             their_reference_option: Some("some reference".to_string()),
@@ -127,10 +126,10 @@ mod graphql {
         assert_eq!(new_invoice.r#type, InvoiceRowType::InboundShipment);
 
         assert_eq!(new_invoice, variables);
-        assert!(new_invoice.entry_datetime > start);
-        assert!(new_invoice.entry_datetime < end);
-        assert_eq!(new_invoice.confirm_datetime, None);
-        assert_eq!(new_invoice.finalised_datetime, None);
+        assert!(new_invoice.created_datetime > start);
+        assert!(new_invoice.created_datetime < end);
+        assert_eq!(new_invoice.delivered_datetime, None);
+        assert_eq!(new_invoice.verified_datetime, None);
 
         // Test Success On Hold
 
@@ -164,11 +163,10 @@ mod graphql {
             },)
         );
 
-        // Test Confirmed
+        // Test Success
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
-        variables.status = insert::InvoiceNodeStatus::Confirmed;
         variables.comment_option = None;
         variables.their_reference_option = None;
 
@@ -185,56 +183,11 @@ mod graphql {
         assert_eq!(new_invoice.r#type, InvoiceRowType::InboundShipment);
 
         assert_eq!(new_invoice, variables);
-        assert!(new_invoice.entry_datetime > start);
-        assert!(new_invoice.entry_datetime < end);
+        assert!(new_invoice.created_datetime > start);
+        assert!(new_invoice.created_datetime < end);
 
-        let confirmed_datetime = new_invoice.confirm_datetime.unwrap();
-        assert!(confirmed_datetime > start);
-        assert!(confirmed_datetime < end);
-
-        assert_eq!(new_invoice.finalised_datetime, None);
-
-        // Test Finaized
-
-        let mut variables = base_variables.clone();
-        variables.id = uuid();
-        variables.status = insert::InvoiceNodeStatus::Finalised;
-        variables.color_option = None;
-
-        let query = Insert::build_query(variables.clone());
-        let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-
-        let invoice = assert_unwrap_invoice_response!(response);
-        assert_eq!(invoice.id, variables.id);
-
-        let new_invoice = InvoiceRepository::new(&connection)
-            .find_one_by_id(&variables.id)
-            .unwrap();
-
-        assert_eq!(new_invoice.r#type, InvoiceRowType::InboundShipment);
-        assert_eq!(new_invoice, variables);
-
-        assert!(new_invoice.entry_datetime > start);
-        assert!(new_invoice.entry_datetime < end);
-
-        let confirmed_datetime = new_invoice.confirm_datetime.unwrap();
-        assert!(confirmed_datetime > start);
-        assert!(confirmed_datetime < end);
-
-        let finalised_datetime = new_invoice.confirm_datetime.unwrap();
-        assert!(finalised_datetime > start);
-        assert!(finalised_datetime < end);
-    }
-
-    impl From<InvoiceRowStatus> for insert::InvoiceNodeStatus {
-        fn from(status: InvoiceRowStatus) -> Self {
-            use insert::InvoiceNodeStatus::*;
-            match status {
-                InvoiceRowStatus::Draft => Draft,
-                InvoiceRowStatus::Confirmed => Confirmed,
-                InvoiceRowStatus::Finalised => Finalised,
-            }
-        }
+        assert_eq!(new_invoice.delivered_datetime, None);
+        assert_eq!(new_invoice.verified_datetime, None);
     }
 
     impl PartialEq<insert::Variables> for InvoiceRow {
@@ -242,7 +195,6 @@ mod graphql {
             let insert::Variables {
                 id,
                 other_party_id,
-                status,
                 on_hold_option,
                 comment_option,
                 their_reference_option,
@@ -251,7 +203,6 @@ mod graphql {
 
             *id == self.id
                 && *other_party_id == self.name_id
-                && *status == self.status.clone().into()
                 && compare_option(on_hold_option, &self.on_hold)
                 && *comment_option == self.comment
                 && *their_reference_option == self.their_reference

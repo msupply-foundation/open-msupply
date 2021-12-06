@@ -68,23 +68,23 @@ mod graphql {
         let draft_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Draft.equal_to())
+                .status(InvoiceStatus::New.equal_to())
                 .id(EqualFilter::equal_to("outbound_shipment_c")),
             &connection
         );
 
-        let confirmed_outbound_shipment = get_invoice_inline!(
+        let picked_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Confirmed.equal_to())
+                .status(InvoiceStatus::Picked.equal_to())
                 .id(EqualFilter::equal_to("outbound_shipment_d")),
             &connection
         );
 
-        let finalised_outbound_shipment = get_invoice_inline!(
+        let shipped_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Finalised.equal_to()),
+                .status(InvoiceStatus::Shipped.equal_to()),
             &connection
         );
 
@@ -95,11 +95,9 @@ mod graphql {
             &connection
         );
 
-        let finalised_lines =
-            get_invoice_lines_inline!(&finalised_outbound_shipment.id, &connection);
+        let shipped_lines = get_invoice_lines_inline!(&shipped_outbound_shipment.id, &connection);
         let draft_lines = get_invoice_lines_inline!(&draft_outbound_shipment.id, &connection);
-        let confirmed_lines =
-            get_invoice_lines_inline!(&confirmed_outbound_shipment.id, &connection);
+        let picked_lines = get_invoice_lines_inline!(&picked_outbound_shipment.id, &connection);
 
         let supplier_lines = get_invoice_lines_inline!(&inbound_shipment.id, &connection);
         let item_not_in_invoices_id = "item_c".to_string();
@@ -111,8 +109,8 @@ mod graphql {
         let secondary_draft_line = draft_lines[1].clone();
         let secondary_draft_stock_line_id = secondary_draft_line.stock_line_id.clone().unwrap();
 
-        let confirmed_line = confirmed_lines[0].clone();
-        let confirmed_stock_line_id = confirmed_line.stock_line_id.clone().unwrap();
+        let picked_line = picked_lines[0].clone();
+        let picked_stock_line_id = picked_line.stock_line_id.clone().unwrap();
 
         let base_variables = update::Variables {
             id: main_draft_line.id.clone(),
@@ -167,18 +165,18 @@ mod graphql {
             })
         );
 
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.id = finalised_lines[0].id.clone();
-        variables.invoice_id = finalised_outbound_shipment.id.clone();
+        variables.id = shipped_lines[0].id.clone();
+        variables.invoice_id = shipped_outbound_shipment.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(update::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(update::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 
@@ -217,7 +215,7 @@ mod graphql {
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = confirmed_outbound_shipment.id.clone();
+        variables.invoice_id = picked_outbound_shipment.id.clone();
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -432,18 +430,18 @@ mod graphql {
 
         assert_eq!(new_stock_line, FromStockLine(new_line));
 
-        // Test Success Confirmed Reduction
+        // Test Success Picked Reduction
 
-        let start_stock_line = get_stock_line_inline!(&confirmed_stock_line_id, &connection);
+        let start_stock_line = get_stock_line_inline!(&picked_stock_line_id, &connection);
         let available_plus_adjusted =
-            start_stock_line.available_number_of_packs + confirmed_line.number_of_packs;
+            start_stock_line.available_number_of_packs + picked_line.number_of_packs;
         let total_plus_adjusted =
-            start_stock_line.total_number_of_packs + confirmed_line.number_of_packs;
+            start_stock_line.total_number_of_packs + picked_line.number_of_packs;
         let new_number_of_packs = 2;
 
         let mut variables = base_variables.clone();
-        variables.id = confirmed_line.id.clone();
-        variables.invoice_id = confirmed_outbound_shipment.id.clone();
+        variables.id = picked_line.id.clone();
+        variables.invoice_id = picked_outbound_shipment.id.clone();
         variables.item_id_option = Some(start_stock_line.item_id.clone());
         variables.stock_line_id_option = Some(start_stock_line.id.clone());
         variables.number_of_packs_option = Some(new_number_of_packs as i64);

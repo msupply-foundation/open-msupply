@@ -69,23 +69,23 @@ mod graphql {
         let draft_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Draft.equal_to())
+                .status(InvoiceStatus::New.equal_to())
                 .id(EqualFilter::equal_to("outbound_shipment_c")),
             &connection
         );
 
-        let confirmed_outbound_shipment = get_invoice_inline!(
+        let picked_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Confirmed.equal_to())
+                .status(InvoiceStatus::Picked.equal_to())
                 .id(EqualFilter::equal_to("outbound_shipment_d")),
             &connection
         );
 
-        let finalised_outbound_shipment = get_invoice_inline!(
+        let shipped_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Finalised.equal_to()),
+                .status(InvoiceStatus::Shipped.equal_to()),
             &connection
         );
 
@@ -157,17 +157,17 @@ mod graphql {
             })
         );
 
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = finalised_outbound_shipment.id.clone();
+        variables.invoice_id = shipped_outbound_shipment.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(insert::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(insert::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 
@@ -311,7 +311,7 @@ mod graphql {
         assert_eq!(item.code, new_line.item_code);
         assert_eq!(new_stock_line, FromStockLine(new_line));
 
-        // Test Confirmed Reduction
+        // Test Picked Reduction
 
         let start_stock_line = get_stock_line_inline!(&stock_line_not_in_invoices_id, &connection);
         let number_of_packs = 3;
@@ -322,7 +322,7 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.id = uuid();
         variables.number_of_packs = number_of_packs;
-        variables.invoice_id = confirmed_outbound_shipment.id.clone();
+        variables.invoice_id = picked_outbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;

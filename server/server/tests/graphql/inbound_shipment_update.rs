@@ -90,7 +90,7 @@ mod graphql {
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Draft.equal_to())
+                .status(InvoiceStatus::New.equal_to())
                 .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
@@ -118,7 +118,7 @@ mod graphql {
         let base_variables = update::Variables {
             id: draft_inbound_shipment.id.clone(),
             other_party_id_option: Some(supplier.id.clone()),
-            status_option: Some(update::InvoiceNodeStatus::Draft),
+            update_inbound_status_option: None,
             on_hold_option: None,
             comment_option: Some("some comment".to_string()),
             their_reference_option: Some("some reference".to_string()),
@@ -187,7 +187,8 @@ mod graphql {
         // Test Confirm
 
         let mut variables = base_variables.clone();
-        variables.status_option = Some(update::InvoiceNodeStatus::Confirmed);
+        variables.update_inbound_status_option =
+            Some(update::UpdateInboundShipmentStatusInput::Delivered);
         variables.other_party_id_option = Some(another_name.id.clone());
 
         let query = Update::build_query(variables.clone());
@@ -204,11 +205,11 @@ mod graphql {
 
         assert_eq!(updated_invoice, variables);
 
-        let confirmed_datetime = updated_invoice.confirm_datetime.unwrap();
-        assert!(confirmed_datetime > start);
-        assert!(confirmed_datetime < end);
+        let delivered_datetime = updated_invoice.delivered_datetime.unwrap();
+        assert!(delivered_datetime > start);
+        assert!(delivered_datetime < end);
 
-        assert_eq!(updated_invoice.finalised_datetime, None);
+        assert_eq!(updated_invoice.verified_datetime, None);
 
         for line in get_invoice_lines_inline!(&draft_inbound_shipment.id, &connection) {
             let cloned_line = line.clone();
@@ -223,7 +224,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
 
-        variables.status_option = None;
+        variables.update_inbound_status_option = None;
         variables.comment_option = None;
         variables.their_reference_option = None;
 
@@ -246,7 +247,8 @@ mod graphql {
         // Test Finaized (while setting invoice status onHold to true)
 
         let mut variables = base_variables.clone();
-        variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
+        variables.update_inbound_status_option =
+            Some(update::UpdateInboundShipmentStatusInput::Verified);
         variables.on_hold_option = Some(true);
         variables.color_option = Some("#FFFFFF".to_owned());
 
@@ -264,15 +266,15 @@ mod graphql {
 
         assert_eq!(updated_invoice, variables);
 
-        let confirmed_datetime = updated_invoice.confirm_datetime.unwrap();
-        assert!(confirmed_datetime > start);
-        assert!(confirmed_datetime < end);
+        let delivered_datetime = updated_invoice.delivered_datetime.unwrap();
+        assert!(delivered_datetime > start);
+        assert!(delivered_datetime < end);
 
-        let finalised_datetime = updated_invoice.confirm_datetime.unwrap();
-        assert!(finalised_datetime > start);
-        assert!(finalised_datetime < end);
+        let verified_datetime = updated_invoice.delivered_datetime.unwrap();
+        assert!(verified_datetime > start);
+        assert!(verified_datetime < end);
 
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let variables = base_variables.clone();
 
@@ -281,8 +283,8 @@ mod graphql {
 
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(update::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(update::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 
@@ -295,7 +297,8 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = full_invoice.invoice.id.clone();
-        variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
+        variables.update_inbound_status_option =
+            Some(update::UpdateInboundShipmentStatusInput::Verified);
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
 
@@ -315,7 +318,8 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = full_invoice.invoice.id.clone();
-        variables.status_option = Some(update::InvoiceNodeStatus::Finalised);
+        variables.update_inbound_status_option =
+            Some(update::UpdateInboundShipmentStatusInput::Verified);
         variables.on_hold_option = Some(false);
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -335,13 +339,13 @@ mod graphql {
     #[derive(Debug)]
     struct UpdatedStockLine(StockLineRow);
 
-    impl From<InvoiceRowStatus> for update::InvoiceNodeStatus {
+    impl From<InvoiceRowStatus> for update::UpdateInboundShipmentStatusInput {
         fn from(status: InvoiceRowStatus) -> Self {
-            use update::InvoiceNodeStatus::*;
+            use update::UpdateInboundShipmentStatusInput::*;
             match status {
-                InvoiceRowStatus::Draft => Draft,
-                InvoiceRowStatus::Confirmed => Confirmed,
-                InvoiceRowStatus::Finalised => Finalised,
+                InvoiceRowStatus::Delivered => Delivered,
+                InvoiceRowStatus::Verified => Verified,
+                _ => panic!("no other conversions from invoice row status to UpdateInboundShipmentStatusInput")
             }
         }
     }
@@ -387,7 +391,7 @@ mod graphql {
             let update::Variables {
                 id,
                 other_party_id_option,
-                status_option,
+                update_inbound_status_option,
                 on_hold_option,
                 color_option: _,           // Nullable option ?
                 comment_option: _,         // Nullable option ?
@@ -398,8 +402,8 @@ mod graphql {
                 && compare_option(other_party_id_option, &self.name_id)
                 && compare_option(on_hold_option, &self.on_hold)
                 && compare_option(
-                    status_option,
-                    &update::InvoiceNodeStatus::from(self.status.clone()),
+                    update_inbound_status_option,
+                    &update::UpdateInboundShipmentStatusInput::from(self.status.clone()),
                 )
         }
     }
