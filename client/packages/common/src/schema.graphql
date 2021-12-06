@@ -1273,8 +1273,6 @@ type UpdateOutboundShipmentResponseWithId {
 
 type RequisitionNode {
   id: String!
-
-  color: String
   orderDate: String
   comment: String
   theirReference: String
@@ -1284,7 +1282,7 @@ type RequisitionNode {
   maxMOS: Int
   status: SupplierRequisitionNodeStatus!
   lines: RequisitionLinesResponse!
-
+  color: String
   otherParty: NameResponse!
   otherPartyId: String!
   otherPartyName: String!
@@ -1446,7 +1444,7 @@ type RequisitionConnector {
 input UpdateSupplierRequisitionInput {
   id: String!
   orderDate: String
-  nameId: String
+  otherPartyId: String
   comment: String
   theirReference: String
   color: String
@@ -1688,7 +1686,7 @@ type DeleteCustomerRequisitionLineResponseWithId {
 input UpdateCustomerRequisitionInput {
   id: String!
   orderDate: String
-  nameId: String
+  otherPartyId: String
   comment: String
   theirReference: String
   color: String

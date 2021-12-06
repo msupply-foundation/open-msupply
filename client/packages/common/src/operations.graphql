@@ -304,6 +304,8 @@ query requisitions($params: RequisitionListParameters) {
         requisitionNumber
         status
         otherPartyName
+        otherPartyId
+        color
       }
       totalCount
     }
