@@ -10,8 +10,12 @@ import {
   DataTable,
   usePagination,
   useTranslation,
+  getRowExpandColumn,
+  ColumnAlign,
+  Box,
+  Column,
 } from '@openmsupply-client/common';
-import { reducer } from './reducer';
+import { reducer, StocktakeActionCreator } from './reducer';
 import { getStocktakeDetailViewApi } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -30,16 +34,55 @@ const useDraftStocktake = () => {
     getStocktakeDetailViewApi(api)
   );
 
-  const onChangeSortBy = () => {};
+  const onChangeSortBy = (column: Column<StocktakeItem>) => {
+    dispatch(StocktakeActionCreator.sortBy(column));
+  };
 
   return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
+};
+
+const Expand: FC<{ rowData: StocktakeItem }> = ({ rowData }) => {
+  return (
+    <Box p={1} height={300} style={{ overflow: 'scroll' }}>
+      <Box
+        flex={1}
+        display="flex"
+        height="100%"
+        borderRadius={4}
+        bgcolor="#c7c9d933"
+      >
+        <span style={{ whiteSpace: 'pre-wrap' }}>
+          {JSON.stringify(rowData, null, 2)}
+        </span>
+      </Box>
+    </Box>
+  );
 };
 
 export const DetailView: FC = () => {
   const { draft, save, onChangeSortBy, sortBy } = useDraftStocktake();
 
   const columns = useColumns<StocktakeItem>(
-    ['itemCode', 'itemName', GenericColumnKey.Selection],
+    [
+      'itemCode',
+      'itemName',
+      'batch',
+      'expiryDate',
+      {
+        key: 'countedNumPacks',
+        label: 'label.counted-num-of-packs',
+        width: 150,
+        align: ColumnAlign.Right,
+      },
+      {
+        key: 'snapshotNumPacks',
+        label: 'label.snapshot-num-of-packs',
+        align: ColumnAlign.Right,
+      },
+
+      getRowExpandColumn<StocktakeItem>(),
+      GenericColumnKey.Selection,
+    ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
@@ -57,6 +100,7 @@ export const DetailView: FC = () => {
       />
       <Toolbar draft={draft} />
       <DataTable
+        ExpandContent={Expand}
         pagination={{ ...pagination, total: activeRows.length }}
         columns={columns}
         data={activeRows.slice(
