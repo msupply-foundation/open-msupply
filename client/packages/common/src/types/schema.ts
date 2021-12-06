@@ -1426,10 +1426,11 @@ export type RequisitionNode = {
   id: Scalars['String'];
   lines: RequisitionLinesResponse;
   maxMOS?: Maybe<Scalars['Int']>;
-  orderDate?: Maybe<Scalars['String']>;
+  orderDate?: Maybe<Scalars['DateTime']>;
   otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  requisitionDate?: Maybe<Scalars['DateTime']>;
   requisitionNumber: Scalars['Int'];
   status: SupplierRequisitionNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
@@ -1982,7 +1983,7 @@ export type RequisitionQueryVariables = Exact<{
 }>;
 
 
-export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'NodeError' } | { __typename: 'RequisitionNode', id: string, orderDate?: string | null | undefined, comment?: string | null | undefined, theirReference?: string | null | undefined, type?: RequisitionNodeType | null | undefined, requisitionNumber: number, thresholdMOS?: number | null | undefined, maxMOS?: number | null | undefined, status: SupplierRequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemName?: string | null | undefined, itemCode?: string | null | undefined, itemUnit?: string | null | undefined, itemId: string, comment?: string | null | undefined, monthlyConsumption?: number | null | undefined, monthsOfSupply?: number | null | undefined, supplyQuantity?: number | null | undefined, openingQuantity?: number | null | undefined, issuedQuantity?: number | null | undefined, requestedQuantity?: number | null | undefined, receivedQuantity?: number | null | undefined, imprestQuantity?: number | null | undefined, previousQuantity?: number | null | undefined, calculatedQuantity?: number | null | undefined, previousStockOnHand?: number | null | undefined, closingQuantity?: number | null | undefined, stockAdditions?: number | null | undefined, stockLosses?: number | null | undefined, expiredQuantity?: number | null | undefined, otherPartyClosingQuantity?: number | null | undefined }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'RecordNotFound', description: string } } } };
+export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'NodeError' } | { __typename: 'RequisitionNode', id: string, orderDate?: string | null | undefined, requisitionDate?: string | null | undefined, comment?: string | null | undefined, theirReference?: string | null | undefined, type?: RequisitionNodeType | null | undefined, requisitionNumber: number, thresholdMOS?: number | null | undefined, maxMOS?: number | null | undefined, status: SupplierRequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemName?: string | null | undefined, itemCode?: string | null | undefined, itemUnit?: string | null | undefined, itemId: string, comment?: string | null | undefined, monthlyConsumption?: number | null | undefined, monthsOfSupply?: number | null | undefined, supplyQuantity?: number | null | undefined, openingQuantity?: number | null | undefined, issuedQuantity?: number | null | undefined, requestedQuantity?: number | null | undefined, receivedQuantity?: number | null | undefined, imprestQuantity?: number | null | undefined, previousQuantity?: number | null | undefined, calculatedQuantity?: number | null | undefined, previousStockOnHand?: number | null | undefined, closingQuantity?: number | null | undefined, stockAdditions?: number | null | undefined, stockLosses?: number | null | undefined, expiredQuantity?: number | null | undefined, otherPartyClosingQuantity?: number | null | undefined }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'RecordNotFound', description: string } } } };
 
 export type UpsertSupplierRequisitionMutationVariables = Exact<{
   deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput> | DeleteSupplierRequisitionLineInput>;
@@ -2487,6 +2488,7 @@ export const RequisitionDocument = gql`
       __typename
       id
       orderDate
+      requisitionDate
       comment
       theirReference
       type

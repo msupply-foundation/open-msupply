@@ -1273,7 +1273,8 @@ type UpdateOutboundShipmentResponseWithId {
 
 type RequisitionNode {
   id: String!
-  orderDate: String
+  orderDate: DateTime
+  requisitionDate: DateTime
   comment: String
   theirReference: String
   type: RequisitionNodeType
@@ -1686,6 +1687,7 @@ type DeleteCustomerRequisitionLineResponseWithId {
 input UpdateCustomerRequisitionInput {
   id: String!
   orderDate: String
+  requisitionDate: String
   otherPartyId: String
   comment: String
   theirReference: String

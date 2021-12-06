@@ -15,5 +15,7 @@
   "label.num-packs": "# Packs",
   "label.packs-to-batches-with": "packs to batches with a pack size of",
   "label.placeholder": "Placeholder",
-  "label.add-batch": "Add batch"
+  "label.add-batch": "Add batch",
+  "label.order-date": "Order date",
+  "label.requisition-date": "Requisition date"
 }

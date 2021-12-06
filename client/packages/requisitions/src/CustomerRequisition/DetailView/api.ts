@@ -54,7 +54,7 @@ const createUpdateCustomerRequisitionInput = (
     comment: patch.comment,
     id: patch.id,
     otherPartyId: patch.otherPartyId,
-    orderDate: patch.orderDate,
+    orderDate: patch.orderDate?.toISOString(),
     theirReference: patch.theirReference,
   };
 };
@@ -101,6 +101,10 @@ export const getCustomerRequisitionDetailViewApi = (
 
     return {
       ...requisition,
+      orderDate: requisition.orderDate ? new Date(requisition.orderDate) : null,
+      requisitionDate: requisition.requisitionDate
+        ? new Date(requisition.requisitionDate)
+        : null,
       lines,
       otherParty,
       otherPartyName: otherParty.name,

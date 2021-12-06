@@ -576,6 +576,7 @@ const createRequisition = (
     requisitionNumber: faker.datatype.number({ max: 1000 }),
     otherPartyId: otherParty.id,
     orderDate: faker.date.past(1.5).toISOString(),
+    requisitionDate: faker.date.past(1.5).toISOString(),
     type,
     maxMOS: 3,
     thresholdMOS: 3,
