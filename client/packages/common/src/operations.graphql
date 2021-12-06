@@ -178,6 +178,7 @@ query stocktake($stocktakeId: String!) {
       description
       entryDatetime
       enteredByName
+      onHold
       lines {
         __typename
 

@@ -693,6 +693,7 @@ const createStocktake = (): Stocktake => {
     status: StocktakeNodeStatus.Draft,
     entryDatetime: faker.date.past(1.5).toISOString(),
     enteredByName: randomName(),
+    onHold: faker.datatype.boolean(),
   };
 };
 
