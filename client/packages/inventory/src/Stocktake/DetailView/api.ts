@@ -44,6 +44,7 @@ const createUpdateStocktakeInput = (
     stocktakeDatetime: patch.stocktakeDatetime.toISOString(),
     comment: patch.comment,
     id: patch.id,
+    onHold: !!patch.onHold,
   };
 };
 
