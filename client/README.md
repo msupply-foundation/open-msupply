@@ -1,5 +1,3 @@
-# openmsupply-client
-
 # Open mSupply Client
 
 Welcome! This is the front end application for open mSupply.
