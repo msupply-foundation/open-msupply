@@ -564,7 +564,7 @@ export type InsertStocktakeInput = {
   comment?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
   id: Scalars['String'];
-  stocktakeDate?: Maybe<Scalars['String']>;
+  stocktakeDatetime?: Maybe<Scalars['String']>;
 };
 
 export type InsertStocktakeLineInput = {
@@ -1556,10 +1556,12 @@ export type StocktakeNode = {
   __typename?: 'StocktakeNode';
   comment?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  enteredByName: Scalars['String'];
+  entryDatetime: Scalars['DateTime'];
   id: Scalars['String'];
   lines: StocktakeLinesResponse;
   status: StocktakeNodeStatus;
-  stocktakeDate?: Maybe<Scalars['String']>;
+  stocktakeDatetime?: Maybe<Scalars['String']>;
   stocktakeNumber: Scalars['Int'];
 };
 
@@ -1757,7 +1759,7 @@ export type UpdateStocktakeInput = {
   description?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   status?: Maybe<StocktakeNodeStatus>;
-  stocktakeDate?: Maybe<Scalars['String']>;
+  stocktakeDatetime?: Maybe<Scalars['String']>;
 };
 
 export type UpdateStocktakeLineInput = {
@@ -1885,7 +1887,7 @@ export type StocktakeQueryVariables = Exact<{
 }>;
 
 
-export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null | undefined, stocktakeDate?: string | null | undefined, status: StocktakeNodeStatus, description?: string | null | undefined, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StocktakeLineConnector', totalCount: number, nodes?: Array<{ __typename: 'StocktakeLineNode', batch?: string | null | undefined, itemCode: string, itemName: string, itemId: string, id: string, expiryDate?: string | null | undefined, snapshotNumPacks?: number | null | undefined, snapshotPackSize?: number | null | undefined, countedNumPacks?: number | null | undefined, sellPricePerPack?: number | null | undefined, costPricePerPack?: number | null | undefined }> | null | undefined } } };
+export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null | undefined, stocktakeDatetime?: string | null | undefined, status: StocktakeNodeStatus, description?: string | null | undefined, entryDatetime: string, enteredByName: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StocktakeLineConnector', totalCount: number, nodes?: Array<{ __typename: 'StocktakeLineNode', batch?: string | null | undefined, itemCode: string, itemName: string, itemId: string, id: string, expiryDate?: string | null | undefined, snapshotNumPacks?: number | null | undefined, snapshotPackSize?: number | null | undefined, countedNumPacks?: number | null | undefined, sellPricePerPack?: number | null | undefined, costPricePerPack?: number | null | undefined }> | null | undefined } } };
 
 export type UpsertStocktakeMutationVariables = Exact<{
   deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
@@ -1902,7 +1904,7 @@ export type StocktakesQueryVariables = Exact<{
 }>;
 
 
-export type StocktakesQuery = { __typename?: 'Queries', stocktakes: { __typename: 'NodeError' } | { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename?: 'StocktakeNode', id: string, comment?: string | null | undefined, description?: string | null | undefined, stocktakeDate?: string | null | undefined, stocktakeNumber: number, status: StocktakeNodeStatus }> } };
+export type StocktakesQuery = { __typename?: 'Queries', stocktakes: { __typename: 'NodeError' } | { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename?: 'StocktakeNode', id: string, comment?: string | null | undefined, description?: string | null | undefined, stocktakeDatetime?: string | null | undefined, stocktakeNumber: number, status: StocktakeNodeStatus }> } };
 
 export type DeleteStocktakesMutationVariables = Exact<{
   ids?: Maybe<Array<DeleteStocktakeInput> | DeleteStocktakeInput>;
@@ -2279,9 +2281,11 @@ export const StocktakeDocument = gql`
       id
       stocktakeNumber
       comment
-      stocktakeDate
+      stocktakeDatetime
       status
       description
+      entryDatetime
+      enteredByName
       lines {
         __typename
         ... on ConnectorError {
@@ -2350,7 +2354,7 @@ export const StocktakesDocument = gql`
         id
         comment
         description
-        stocktakeDate
+        stocktakeDatetime
         stocktakeNumber
         status
       }

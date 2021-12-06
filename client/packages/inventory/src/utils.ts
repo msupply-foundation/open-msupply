@@ -7,12 +7,14 @@ export const placeholderStocktake: StocktakeController = {
   description: '',
   lines: [],
   status: StocktakeNodeStatus.Draft,
-  stocktakeDate: null,
+  stocktakeDatetime: null,
   stocktakeNumber: 0,
+  entryDatetime: new Date(),
+  enteredByName: '',
   update: () => {
     throw new Error("Placeholder updater triggered - this shouldn't happen!");
   },
-  updateStocktakeDate: () => {
+  updateStocktakeDatetime: () => {
     throw new Error("Placeholder updater triggered - this shouldn't happen!");
   },
 };

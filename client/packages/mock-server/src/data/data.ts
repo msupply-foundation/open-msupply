@@ -17,6 +17,7 @@ import {
   StocktakeLine,
 } from './types';
 import {
+  randomName,
   randomFloat,
   addRandomPercentageTo,
   alphaString,
@@ -686,10 +687,12 @@ const createStocktake = (): Stocktake => {
   return {
     id: faker.datatype.uuid(),
     stocktakeNumber: faker.datatype.number({ max: 1000 }),
-    stocktakeDate: faker.date.past(1.5).toISOString(),
+    stocktakeDatetime: faker.date.past(1.5).toISOString(),
     comment: takeRandomElementFrom(comments),
     description: takeRandomElementFrom(comments),
     status: StocktakeNodeStatus.Draft,
+    entryDatetime: faker.date.past(1.5).toISOString(),
+    enteredByName: randomName(),
   };
 };
 

@@ -6,7 +6,7 @@ export type StocktakeRow = Pick<
   | 'id'
   | 'comment'
   | 'description'
-  | 'stocktakeDate'
+  | 'stocktakeDatetime'
   | 'stocktakeNumber'
   | 'status'
 >;
@@ -26,20 +26,24 @@ export interface StocktakeItem {
 }
 
 export interface Stocktake
-  extends Omit<StocktakeNode, 'lines' | '__typename' | 'stocktakeDate'> {
+  extends Omit<
+    StocktakeNode,
+    'lines' | '__typename' | 'stocktakeDatetime' | 'entryDatetime'
+  > {
   lines: StocktakeLine[];
-  stocktakeDate: Date;
+  stocktakeDatetime: Date;
+  entryDatetime: Date;
 }
 
 export interface StocktakeController extends Omit<Stocktake, 'lines'> {
   lines: StocktakeItem[];
   update: (key: string, value: string) => void;
-  updateStocktakeDate: (newDate: Date | null) => void;
+  updateStocktakeDatetime: (newDate: Date | null) => void;
 }
 
 export enum StocktakeActionType {
   Update = 'Stocktake/Update',
-  UpdateStocktakeDate = 'Stocktake/UpdateStocktakeDate',
+  UpdateStocktakeDatetime = 'Stocktake/updateStocktakeDatetime',
 }
 
 export type StocktakeAction =
@@ -48,6 +52,6 @@ export type StocktakeAction =
       payload: { key: string; value: string };
     }
   | {
-      type: StocktakeActionType.UpdateStocktakeDate;
+      type: StocktakeActionType.UpdateStocktakeDatetime;
       payload: { newDate: Date | null };
     };

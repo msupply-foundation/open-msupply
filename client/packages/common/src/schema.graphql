@@ -1293,11 +1293,13 @@ type RequisitionNode {
 type StocktakeNode {
   id: String!
   stocktakeNumber: Int!
-  stocktakeDate: String
+  stocktakeDatetime: String
   comment: String
   description: String
   status: StocktakeNodeStatus!
   lines: StocktakeLinesResponse!
+  entryDatetime: DateTime!
+  enteredByName: String!
 }
 
 type StocktakeLineNode {
@@ -1518,7 +1520,7 @@ input InsertSupplierRequisitionInput {
 
 input UpdateStocktakeInput {
   id: String!
-  stocktakeDate: String
+  stocktakeDatetime: String
   comment: String
   description: String
   status: StocktakeNodeStatus
@@ -1543,7 +1545,7 @@ type DeleteStocktakeResponseWithId {
 
 input InsertStocktakeInput {
   id: String!
-  stocktakeDate: String
+  stocktakeDatetime: String
   comment: String
   description: String
 }

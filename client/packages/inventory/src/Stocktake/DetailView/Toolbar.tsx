@@ -71,7 +71,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               <DatePickerInput
                 value={draft.stocktakeDate}
                 onChange={newDate => {
-                  draft.updateStocktakeDate(newDate);
+                  draft.updateStocktakeDatetime(newDate);
                 }}
               />
             }
