@@ -1,7 +1,6 @@
-import { generateUUID, arrayToRecord } from '@openmsupply-client/common';
+import { generateUUID, arrayToRecord, Item } from '@openmsupply-client/common';
 import { InboundShipmentItem, InboundShipmentRow } from '../../../../types';
 import { recalculateSummary } from '../../../../OutboundShipment/DetailView/reducer';
-import { Item } from '@openmsupply-client/mock-server/src/data';
 
 export const createInboundShipmentBatch = (
   inboundItem: InboundShipmentItem,
