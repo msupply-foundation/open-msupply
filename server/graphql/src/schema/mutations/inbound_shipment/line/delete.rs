@@ -3,7 +3,7 @@ use async_graphql::*;
 use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
 use crate::schema::{
     mutations::{
-        CannotEditFinalisedInvoice, DeleteResponse, ForeignKey, ForeignKeyError,
+        CannotEditInvoice, DeleteResponse, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
     types::{DatabaseError, ErrorWrapper, RecordNotFound},
@@ -41,7 +41,7 @@ pub enum DeleteInboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
@@ -77,7 +77,7 @@ impl From<DeleteInboundShipmentLineError> for DeleteInboundShipmentLineResponse 
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             DeleteInboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
 
             DeleteInboundShipmentLineError::BatchIsReserved => {

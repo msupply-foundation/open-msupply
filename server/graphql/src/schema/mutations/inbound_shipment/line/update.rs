@@ -3,8 +3,8 @@ use chrono::NaiveDate;
 
 use crate::schema::{
     mutations::{
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
+        CannotEditInvoice, ForeignKey, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
+        NotAnInboundShipment,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
@@ -58,7 +58,7 @@ pub enum UpdateInboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
@@ -116,7 +116,7 @@ impl From<UpdateInboundShipmentLineError> for UpdateInboundShipmentLineResponse 
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             UpdateInboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             UpdateInboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
