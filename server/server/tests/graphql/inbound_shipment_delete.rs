@@ -60,10 +60,10 @@ mod graphql {
         let invoice_with_lines_id = "inbound_shipment_a";
         let empty_draft_invoice_id = "empty_draft_inbound_shipment";
 
-        let finalised_inbound_shipment = get_invoice_inline!(
+        let verified_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Finalised.equal_to()),
+                .status(InvoiceStatus::Verified.equal_to()),
             &connection
         );
 
@@ -107,18 +107,18 @@ mod graphql {
             },)
         );
 
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.id = finalised_inbound_shipment.id.clone();
+        variables.id = verified_inbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
 
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(delete::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(delete::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 

@@ -83,10 +83,10 @@ mod graphql {
         }"#;
 
         // test time range filter
-        let filter_time = invoices.get(1).unwrap().entry_datetime;
+        let filter_time = invoices.get(1).unwrap().created_datetime;
         let variables = Some(json!({
           "filter": {
-            "entryDatetime": {
+            "createdDatetime": {
                 "beforeOrEqualTo": DateTime::<Utc>::from_utc(filter_time, Utc).to_rfc3339()
             },
           }
@@ -94,7 +94,7 @@ mod graphql {
         let expected = json!({
             "invoices": {
                 "nodes": invoices.iter()
-                    .filter(|invoice| invoice.entry_datetime <= filter_time)
+                    .filter(|invoice| invoice.created_datetime <= filter_time)
                     .map(|invoice| json!({
                         "id": invoice.id,
                     })).collect::<Vec<serde_json::Value>>(),
