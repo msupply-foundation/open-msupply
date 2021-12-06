@@ -28,9 +28,12 @@ impl From<InvoiceRowStatus> for InvoiceStatus {
     fn from(status: InvoiceRowStatus) -> Self {
         use InvoiceStatus::*;
         match status {
-            InvoiceRowStatus::Draft => Draft,
-            InvoiceRowStatus::Confirmed => Confirmed,
-            InvoiceRowStatus::Finalised => Finalised,
+            InvoiceRowStatus::New => New,
+            InvoiceRowStatus::Allocated => Allocated,
+            InvoiceRowStatus::Picked => Picked,
+            InvoiceRowStatus::Shipped => Shipped,
+            InvoiceRowStatus::Delivered => Delivered,
+            InvoiceRowStatus::Verified => Verified,
         }
     }
 }
@@ -49,9 +52,12 @@ impl From<InvoiceStatus> for InvoiceRowStatus {
     fn from(status: InvoiceStatus) -> Self {
         use InvoiceRowStatus::*;
         match status {
-            InvoiceStatus::Draft => Draft,
-            InvoiceStatus::Confirmed => Confirmed,
-            InvoiceStatus::Finalised => Finalised,
+            InvoiceStatus::New => New,
+            InvoiceStatus::Allocated => Allocated,
+            InvoiceStatus::Picked => Picked,
+            InvoiceStatus::Shipped => Shipped,
+            InvoiceStatus::Delivered => Delivered,
+            InvoiceStatus::Verified => Verified,
         }
     }
 }
@@ -105,14 +111,23 @@ impl<'a> InvoiceQueryRepository<'a> {
                 InvoiceSortField::Status => {
                     apply_sort!(query, sort, invoice_dsl::status);
                 }
-                InvoiceSortField::EntryDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::entry_datetime);
+                InvoiceSortField::CreatedDatetime => {
+                    apply_sort!(query, sort, invoice_dsl::created_datetime);
                 }
-                InvoiceSortField::ConfirmDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::confirm_datetime);
+                InvoiceSortField::AllocatedDatetime => {
+                    apply_sort!(query, sort, invoice_dsl::allocated_datetime);
                 }
-                InvoiceSortField::FinalisedDateTime => {
-                    apply_sort!(query, sort, invoice_dsl::finalised_datetime);
+                InvoiceSortField::PickedDatetime => {
+                    apply_sort!(query, sort, invoice_dsl::picked_datetime);
+                }
+                InvoiceSortField::ShippedDatetime => {
+                    apply_sort!(query, sort, invoice_dsl::shipped_datetime);
+                }
+                InvoiceSortField::DeliveredDatetime => {
+                    apply_sort!(query, sort, invoice_dsl::delivered_datetime);
+                }
+                InvoiceSortField::VerifiedDatetime => {
+                    apply_sort!(query, sort, invoice_dsl::verified_datetime);
                 }
                 InvoiceSortField::OtherPartyName => {
                     apply_sort_no_case!(query, sort, name_dsl::name);
@@ -156,9 +171,12 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         invoice_number: invoice_row.invoice_number,
         their_reference: invoice_row.their_reference,
         comment: invoice_row.comment,
-        entry_datetime: invoice_row.entry_datetime,
-        confirm_datetime: invoice_row.confirm_datetime,
-        finalised_datetime: invoice_row.finalised_datetime,
+        created_datetime: invoice_row.created_datetime,
+        allocated_datetime: invoice_row.allocated_datetime,
+        picked_datetime: invoice_row.picked_datetime,
+        shipped_datetime: invoice_row.shipped_datetime,
+        delivered_datetime: invoice_row.delivered_datetime,
+        verified_datetime: invoice_row.verified_datetime,
         color: invoice_row.color,
     }
 }
@@ -196,9 +214,12 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
             }
         }
 
-        apply_date_time_filter!(query, f.entry_datetime, invoice_dsl::entry_datetime);
-        apply_date_time_filter!(query, f.confirm_datetime, invoice_dsl::confirm_datetime);
-        apply_date_time_filter!(query, f.finalised_datetime, invoice_dsl::finalised_datetime);
+        apply_date_time_filter!(query, f.created_datetime, invoice_dsl::created_datetime);
+        apply_date_time_filter!(query, f.allocated_datetime, invoice_dsl::allocated_datetime);
+        apply_date_time_filter!(query, f.picked_datetime, invoice_dsl::picked_datetime);
+        apply_date_time_filter!(query, f.shipped_datetime, invoice_dsl::shipped_datetime);
+        apply_date_time_filter!(query, f.delivered_datetime, invoice_dsl::delivered_datetime);
+        apply_date_time_filter!(query, f.verified_datetime, invoice_dsl::verified_datetime);
     }
     query
 }

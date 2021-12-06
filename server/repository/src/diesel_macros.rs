@@ -67,21 +67,21 @@ macro_rules! apply_simple_string_filter {
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_date_time_filter!(query, filter.entry_datetime, invoice_dsl::entry_datetime)
+/// apply_date_time_filter!(query, filter.created_datetime, invoice_dsl::created_datetime)
 /// ```
 ///
 /// ```
-/// if let Some(date_time_filter) = filter.entry_datetime {
+/// if let Some(date_time_filter) = filter.created_datetime {
 ///     if let Some(value) = date_time_filter.equal_to {
-///         query = query.filterd(invoice_dsl::entry_datetime.eq(value));
+///         query = query.filterd(invoice_dsl::created_datetime.eq(value));
 ///     }
 ///
 ///     if let Some(value) = date_time_filter.before_or_equal_to {
-///         query = query.filterd(invoice_dsl::entry_datetime.le(value));
+///         query = query.filterd(invoice_dsl::created_datetime.le(value));
 ///     }
 ///
 ///     if let Some(value) = date_time_filter.after_or_equal_to {
-///         query = query.filterd(invoice_dsl::entry_datetime.ge(value));
+///         query = query.filterd(invoice_dsl::created_datetime.ge(value));
 ///     }
 /// }
 /// ```

@@ -178,15 +178,18 @@ mod repository_test {
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceRowType::InboundShipment,
-                status: InvoiceRowStatus::Draft,
+                status: InvoiceRowStatus::New,
                 on_hold: false,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
                 // Note: keep nsecs small enough for Postgres which has limited precision.
-                entry_datetime: NaiveDateTime::from_timestamp(1000, 0),
-                confirm_datetime: Some(NaiveDateTime::from_timestamp(1001, 0)),
-                finalised_datetime: Some(NaiveDateTime::from_timestamp(1002, 0)),
+                created_datetime: NaiveDateTime::from_timestamp(1000, 0),
                 color: None,
+                allocated_datetime: None,
+                picked_datetime: None,
+                shipped_datetime: None,
+                delivered_datetime: None,
+                verified_datetime: None,
             }
         }
 
@@ -197,14 +200,17 @@ mod repository_test {
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceRowType::OutboundShipment,
-                status: InvoiceRowStatus::Draft,
+                status: InvoiceRowStatus::New,
                 on_hold: false,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
-                entry_datetime: NaiveDateTime::from_timestamp(2000, 0),
-                confirm_datetime: Some(NaiveDateTime::from_timestamp(2001, 0)),
-                finalised_datetime: Some(NaiveDateTime::from_timestamp(2002, 0)),
+                created_datetime: NaiveDateTime::from_timestamp(2000, 0),
                 color: None,
+                allocated_datetime: None,
+                picked_datetime: None,
+                shipped_datetime: None,
+                delivered_datetime: None,
+                verified_datetime: None,
             }
         }
 
