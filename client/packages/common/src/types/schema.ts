@@ -1603,6 +1603,7 @@ export type UpdateCustomerRequisitionInput = {
   id: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
   otherPartyId?: Maybe<Scalars['String']>;
+  requisitionDate?: Maybe<Scalars['String']>;
   theirReference?: Maybe<Scalars['String']>;
 };
 
