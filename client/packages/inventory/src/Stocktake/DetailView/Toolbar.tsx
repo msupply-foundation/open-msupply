@@ -10,6 +10,7 @@ import {
   useTableStore,
   BasicTextInput,
   InputWithLabelRow,
+  DatePickerInput,
 } from '@openmsupply-client/common';
 import { StocktakeController, StocktakeItem } from '../../types';
 import { isStocktakeEditable } from '../../utils';
@@ -19,7 +20,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation(['distribution', 'common', 'inventory']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
@@ -48,17 +49,29 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         flex={1}
         alignItems="flex-end"
       >
-        <Grid item display="flex" flex={1}>
+        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('heading.description')}
             Input={
               <BasicTextInput
                 disabled={!isStocktakeEditable(draft)}
                 size="small"
-                sx={{ width: 250 }}
-                value={draft?.description ?? ''}
+                sx={{ width: 220 }}
+                value={draft.description ?? ''}
                 onChange={event => {
-                  draft.update?.('description', event.target.value);
+                  draft.update('description', event.target.value);
+                }}
+              />
+            }
+          />
+
+          <InputWithLabelRow
+            label={t('label.stocktake-date', { ns: 'inventory' })}
+            Input={
+              <DatePickerInput
+                value={draft.stocktakeDate}
+                onChange={newDate => {
+                  draft.updateStocktakeDate(newDate);
                 }}
               />
             }
