@@ -6,10 +6,12 @@ import {
   getLineLabelColumn,
   NumberInputCell,
   CurrencyInputCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { StocktakeLine } from '../../../../types';
 
 export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
+  const t = useTranslation('inventory');
   const columns = useColumns<StocktakeLine>([
     getLineLabelColumn(),
     ['batch', { Cell: TextInputCell, width: 200 }],
@@ -36,13 +38,14 @@ export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
     <DataTable
       columns={columns}
       data={batches}
-      noDataMessage="Add a new line"
+      noDataMessage={t('label.add-new-line')}
       dense
     />
   );
 };
 
 export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
+  const t = useTranslation('inventory');
   const columns = useColumns<StocktakeLine>([
     getLineLabelColumn(),
     ['batch', { Cell: TextInputCell, width: 200 }],
@@ -54,7 +57,7 @@ export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
     <DataTable
       columns={columns}
       data={batches}
-      noDataMessage="Add a new line"
+      noDataMessage={t('label.add-new-line')}
       dense
     />
   );

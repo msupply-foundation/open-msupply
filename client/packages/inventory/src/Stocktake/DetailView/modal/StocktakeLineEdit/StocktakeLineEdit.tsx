@@ -88,7 +88,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 color="primary"
                 variant="outlined"
                 onClick={onAddBatch}
-                label={t('label.add-line', { ns: 'inventory' })}
+                label={t('label.add-batch', { ns: 'inventory' })}
                 Icon={<PlusCircleIcon />}
               />
             </Box>
