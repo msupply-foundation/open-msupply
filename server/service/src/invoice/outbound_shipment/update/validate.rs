@@ -1,7 +1,9 @@
-use crate::invoice::{check_invoice_status, InvoiceStatusError};
+use crate::invoice::{
+    check_invoice_is_editable, check_invoice_status, InvoiceIsNotEditable, InvoiceStatusError,
+};
 use domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment, EqualFilter};
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{InvoiceRow, InvoiceRowType},
     InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
 };
 
@@ -15,8 +17,8 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice)?;
-    check_invoice_is_not_finalised(&invoice)?;
-    check_invoice_status(&invoice, &patch.status, &patch.on_hold)?;
+    check_invoice_is_editable(&invoice)?;
+    check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
     check_other_party(&patch.other_party_id, connection)?;
 
     Ok(invoice)
@@ -37,14 +39,6 @@ fn check_invoice_exists(
 fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
     if invoice.r#type != InvoiceRowType::OutboundShipment {
         Err(UpdateOutboundShipmentError::NotAnOutboundShipment)
-    } else {
-        Ok(())
-    }
-}
-
-fn check_invoice_is_not_finalised(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
-    if invoice.status == InvoiceRowStatus::Finalised {
-        Err(UpdateOutboundShipmentError::InvoiceIsFinalised)
     } else {
         Ok(())
     }
@@ -76,6 +70,12 @@ pub fn check_other_party(
     }
 }
 
+impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentError {
+    fn from(_: InvoiceIsNotEditable) -> Self {
+        UpdateOutboundShipmentError::InvoiceIsNotEditable
+    }
+}
+
 impl From<InvoiceStatusError> for UpdateOutboundShipmentError {
     fn from(error: InvoiceStatusError) -> Self {
         use UpdateOutboundShipmentError::*;
@@ -83,7 +83,7 @@ impl From<InvoiceStatusError> for UpdateOutboundShipmentError {
             InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold => {
                 CannotChangeStatusOfInvoiceOnHold
             }
-            InvoiceStatusError::CannotChangeInvoiceBackToDraft => CannotChangeInvoiceBackToDraft,
+            InvoiceStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         }
     }
 }
