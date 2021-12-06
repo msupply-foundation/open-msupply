@@ -15,7 +15,8 @@ pub fn validate(
 ) -> Result<InvoiceRow, UpdateOutboundShipmentError> {
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    // TODO check that during allocated status change, all unallocated lines are fullfilled
+    // TODO check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
