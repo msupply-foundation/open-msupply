@@ -8,7 +8,6 @@ import {
 
 export { useDrawer } from './useDrawer';
 export { useHostContext } from './useHostContext';
-export { useNotification } from './useNotification';
 export { useRemoteFn } from './useRemoteFn';
 export { useRemoteScript } from './useRemoteScript';
 export { FieldValues, FormProvider, useForm, useFormContext, UseFormRegister };
@@ -33,3 +32,4 @@ export * from './useDocument';
 export * from './useToggle';
 export * from './useContentAreaHeight';
 export * from './useFilterBy';
+export * from './useNotification';
