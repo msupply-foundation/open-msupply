@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { useNavigate } from 'react-router';
 import {
   DataTable,
@@ -10,7 +10,6 @@ import {
   generateUUID,
   useOmSupplyApi,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeListViewApi } from './api';
@@ -26,7 +25,6 @@ export const StocktakeListView: FC = () => {
     data,
     isLoading,
     onDelete,
-    // onUpdate,
     sortBy,
     onChangeSortBy,
     onCreate,
@@ -44,52 +42,35 @@ export const StocktakeListView: FC = () => {
 
   const columns = useColumns<StocktakeRow>(
     [
-      'stocktakeDate',
       'stocktakeNumber',
-      'comment',
-      'description',
       'status',
+      'description',
+      'comment',
+      'stocktakeDate',
       'selection',
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
 
-  const [open, setOpen] = useState(false);
+  const onNewStocktake = async () => {
+    try {
+      const id = generateUUID();
+      const result = await onCreate({ id });
+      invalidate();
+      navigate(result);
+    } catch (e) {
+      const errorSnack = error(
+        'Failed to create stocktake! ' + (e as Error).message
+      );
+      errorSnack();
+    }
+  };
 
   return (
     <>
-      <NameSearchModal
-        type="customer"
-        open={open}
-        onClose={() => setOpen(false)}
-        onChange={async name => {
-          setOpen(false);
-
-          const createStocktake = async () => {
-            const stocktake = {
-              id: generateUUID(),
-              otherPartyId: name?.id,
-            };
-
-            try {
-              const result = await onCreate(stocktake);
-              invalidate();
-              navigate(result);
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create stocktake! ' + (e as Error).message
-              );
-              errorSnack();
-            }
-          };
-
-          createStocktake();
-        }}
-      />
-
       <Toolbar onDelete={onDelete} data={data} filter={filter} />
-      <AppBarButtons onCreate={setOpen} />
+      <AppBarButtons onCreate={onNewStocktake} />
 
       <DataTable
         pagination={{ ...pagination, total: totalCount }}
