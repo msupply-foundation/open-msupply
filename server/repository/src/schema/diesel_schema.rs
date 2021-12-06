@@ -121,9 +121,12 @@ table! {
         on_hold -> Bool,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
-        entry_datetime -> Timestamp,
-        confirm_datetime -> Nullable<Timestamp>,
-        finalised_datetime -> Nullable<Timestamp>,
+        created_datetime -> Timestamp,
+        allocated_datetime -> Nullable<Timestamp>,
+        picked_datetime -> Nullable<Timestamp>,
+        shipped_datetime -> Nullable<Timestamp>,
+        delivered_datetime -> Nullable<Timestamp>,
+        verified_datetime -> Nullable<Timestamp>,
         color -> Nullable<Text>,
     }
 }
