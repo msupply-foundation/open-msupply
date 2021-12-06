@@ -6,8 +6,8 @@ use repository::{
 
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
-        InvoiceDoesNotExist, InvoiceIsFinalised, WrongInvoiceType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
+        InvoiceIsNotEditable, WrongInvoiceType,
     },
     invoice_line::validate::{
         check_item, check_line_does_not_exists, ItemNotFound, LineAlreadyExists,
@@ -29,7 +29,7 @@ pub fn validate(
     // TODO:
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_is_not_finalised(&invoice)?;
+    check_invoice_is_editable(&invoice)?;
 
     Ok((item, invoice))
 }
@@ -58,8 +58,8 @@ impl From<WrongInvoiceType> for InsertOutboundShipmentServiceLineError {
     }
 }
 
-impl From<InvoiceIsFinalised> for InsertOutboundShipmentServiceLineError {
-    fn from(_: InvoiceIsFinalised) -> Self {
+impl From<InvoiceIsNotEditable> for InsertOutboundShipmentServiceLineError {
+    fn from(_: InvoiceIsNotEditable) -> Self {
         InsertOutboundShipmentServiceLineError::CannotEditFinalised
     }
 }
