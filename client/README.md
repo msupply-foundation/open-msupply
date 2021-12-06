@@ -38,19 +38,26 @@ When developing, create an issue first then a branch based on the issue number. 
 
 When creating a new component, please create a story in storybook. For functional areas, please add a test or two - just check the current examples of tests and stories to see how things works now.
 
-Code is separated into functional areas, so that we can isolate bundles to functional areas. Within each area you'll see a similar pattern of this for tabular data, which is pretty much everything:
+Code is separated into functional areas, so that we can isolate bundles to these areas. These are not the same as areas in the site; there is a separation between code organisation and UI organisation - for example the site has `Distribution > Outbound Shipments` and `Replenishment > Inbound Shipments` and both of these are found in the `invoices` package in the code, as they are functionally very similar while being logically different.
 
-- [package name]
-  - src
-    - [functional area]
-      - DetailView
-        - api.ts
-        - DetailView.tsx
-        - [other components]
-      - ListView
-        - api.ts
-        - ListView.tsx
-        - [other components]
+Within each area you'll see a similar pattern of this for tabular data, which is pretty much everything:
+
+```
+.
+├── [package name]
+│   └── src
+│        └── [functional area]
+│            ├── DetailView
+│            │   ├── api.ts
+│            │   ├── DetailView.tsx
+│            │   └── [other components]
+│            └── ListView
+│                ├── api.ts
+│                ├── ListView.tsx
+│                └── [other components]
+├── [package name]
+│   └── src
+```
 
 Couple of things to note:
 
