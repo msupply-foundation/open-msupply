@@ -1,3 +1,5 @@
 {
-    "label.stocktake-date": "Stocktake Date"
+    "label.stocktake-date": "Stocktake Date",
+    "label.suggested": "Suggested",
+    "label.finalised": "Finalised"
 }

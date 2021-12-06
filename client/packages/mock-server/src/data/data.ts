@@ -690,7 +690,10 @@ const createStocktake = (): Stocktake => {
     stocktakeDatetime: faker.date.past(1.5).toISOString(),
     comment: takeRandomElementFrom(comments),
     description: takeRandomElementFrom(comments),
-    status: StocktakeNodeStatus.Draft,
+    status: takeRandomElementFrom([
+      StocktakeNodeStatus.Suggested,
+      StocktakeNodeStatus.Finalised,
+    ]),
     entryDatetime: faker.date.past(1.5).toISOString(),
     enteredByName: randomName(),
     onHold: faker.datatype.boolean(),

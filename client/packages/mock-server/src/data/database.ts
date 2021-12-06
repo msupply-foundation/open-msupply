@@ -141,7 +141,7 @@ export const stocktake = {
   },
   insert: (input: InsertStocktakeInput): Stocktake => {
     const stocktakeNumber = faker.datatype.number({ max: 1000 });
-    const status = StocktakeNodeStatus.Draft;
+    const status = StocktakeNodeStatus.Suggested;
 
     const stocktake = {
       ...input,

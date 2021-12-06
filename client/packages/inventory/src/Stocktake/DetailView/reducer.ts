@@ -1,17 +1,20 @@
-import {
-  StocktakeItem,
-  StocktakeActionType,
-  StocktakeController,
-} from '../../types';
 import { Dispatch } from 'react';
 import {
   produce,
   DocumentActionSet,
   DocumentActionType,
   SortBy,
+  StocktakeNodeStatus,
 } from '@openmsupply-client/common';
+import {
+  StocktakeItem,
+  StocktakeActionType,
+  StocktakeAction,
+  Stocktake,
+  StocktakeController,
+} from '../../types';
+
 import { placeholderStocktake } from '../../utils';
-import { StocktakeAction, Stocktake } from '../../types';
 
 export interface StocktakeStateShape {
   draft: StocktakeController;
@@ -34,6 +37,12 @@ const StocktakeActionCreator = {
   updateOnHold: (): StocktakeAction => {
     return {
       type: StocktakeActionType.UpdateOnHold,
+    };
+  },
+  updateStatus: (newStatus: StocktakeNodeStatus): StocktakeAction => {
+    return {
+      type: StocktakeActionType.UpdateStatus,
+      payload: { newStatus },
     };
   },
 };
@@ -73,6 +82,8 @@ export const reducer = (
             updateOnHold: () => {
               dispatch(StocktakeActionCreator.updateOnHold());
             },
+            updateStatus: (newStatus: StocktakeNodeStatus) =>
+              dispatch(StocktakeActionCreator.updateStatus(newStatus)),
           };
 
           break;
@@ -101,6 +112,13 @@ export const reducer = (
 
         case StocktakeActionType.UpdateOnHold: {
           state.draft.onHold = !state.draft.onHold;
+          break;
+        }
+
+        case StocktakeActionType.UpdateStatus: {
+          // TODO: Probably there should be some more checks here for
+          // finalising
+          state.draft.status = action.payload.newStatus;
           break;
         }
       }

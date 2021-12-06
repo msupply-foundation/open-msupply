@@ -1,3 +1,4 @@
+import { useTranslation } from './../../common/src/intl/intlHelpers';
 import { StocktakeNodeStatus } from '@openmsupply-client/common';
 import { StocktakeItem, StocktakeLine, StocktakeController } from './types';
 
@@ -6,7 +7,7 @@ export const placeholderStocktake: StocktakeController = {
   comment: '',
   description: '',
   lines: [],
-  status: StocktakeNodeStatus.Draft,
+  status: StocktakeNodeStatus.Suggested,
   stocktakeDatetime: null,
   stocktakeNumber: 0,
   enteredByName: '',
@@ -36,8 +37,7 @@ export const flattenStocktakeItems = (
 };
 
 export const getStocktakeStatuses = (): StocktakeNodeStatus[] => [
-  StocktakeNodeStatus.Draft,
-  StocktakeNodeStatus.Confirmed,
+  StocktakeNodeStatus.Suggested,
   StocktakeNodeStatus.Finalised,
 ];
 
@@ -59,6 +59,11 @@ export const getNextStocktakeStatus = (
 // TODO: When stocktake statuses are finalised, this function should be passed
 // `t` and should properly translate the status.
 export const getStocktakeTranslator =
-  () =>
-  (currentStatus: StocktakeNodeStatus): string =>
-    currentStatus;
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: StocktakeNodeStatus): string => {
+    if (currentStatus === StocktakeNodeStatus.Suggested) {
+      return t('label.suggested', { ns: 'inventory' });
+    }
+
+    return t('label.finalised', { ns: 'inventory' });
+  };

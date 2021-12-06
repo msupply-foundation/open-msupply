@@ -69,6 +69,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             label={t('label.stocktake-date', { ns: 'inventory' })}
             Input={
               <DatePickerInput
+                disabled={!isStocktakeEditable(draft)}
                 value={draft.stocktakeDate}
                 onChange={newDate => {
                   draft.updateStocktakeDatetime(newDate);

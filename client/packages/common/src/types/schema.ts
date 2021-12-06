@@ -1567,9 +1567,8 @@ export type StocktakeNode = {
 };
 
 export enum StocktakeNodeStatus {
-  Confirmed = 'CONFIRMED',
-  Draft = 'DRAFT',
-  Finalised = 'FINALISED'
+  Finalised = 'FINALISED',
+  Suggested = 'SUGGESTED'
 }
 
 export type StocktakeResponse = NodeError | StocktakeNode;
