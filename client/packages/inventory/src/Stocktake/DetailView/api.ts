@@ -41,7 +41,7 @@ const createUpdateStocktakeInput = (
   return {
     description: patch.description,
     status: patch.status,
-    stocktakeDatetime: patch.stocktakeDatetime.toISOString(),
+    stocktakeDatetime: patch.stocktakeDatetime?.toISOString(),
     comment: patch.comment,
     id: patch.id,
     onHold: !!patch.onHold,

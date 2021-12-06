@@ -2,5 +2,7 @@
     "label.stocktake-date": "Stocktake Date",
     "label.suggested": "Suggested",
     "label.finalised": "Finalised",
-    "label.counted-num-of-packs": "Counted # of Packs"
+    "label.counted-num-of-packs": "Counted # of Packs",
+    "label.add-batch": "Add batch",
+    "label.add-new-line": "Add a new line"
 }

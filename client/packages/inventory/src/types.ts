@@ -16,6 +16,7 @@ export interface StocktakeLine extends StocktakeLineNode {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
+  update: (key: string, value: string) => void;
 }
 
 export interface StocktakeItem {
@@ -29,6 +30,7 @@ export interface StocktakeItem {
   expiryDate: () => string;
   countedNumPacks: () => string;
   snapshotNumPacks: () => string;
+  upsertLine: (line: StocktakeLine) => void;
 }
 
 export interface Stocktake
@@ -48,6 +50,7 @@ export interface StocktakeController extends Omit<Stocktake, 'lines'> {
   updateOnHold: () => void;
   updateStatus: (newStatus: StocktakeNodeStatus) => void;
   sortBy: (column: Column<StocktakeItem>) => void;
+  upsertItem: (item: StocktakeItem) => void;
 }
 
 export enum StocktakeActionType {
@@ -56,6 +59,7 @@ export enum StocktakeActionType {
   UpdateOnHold = 'Stocktake/UpdateOnHold',
   UpdateStatus = 'Stocktake/UpdateStatus',
   SortBy = 'Stocktake/SortBy',
+  Upsert = 'Stocktake/Upsert',
 }
 
 export type StocktakeAction =
@@ -77,4 +81,8 @@ export type StocktakeAction =
   | {
       type: StocktakeActionType.SortBy;
       payload: { column: Column<StocktakeItem> };
+    }
+  | {
+      type: StocktakeActionType.Upsert;
+      payload: { item: StocktakeItem };
     };
