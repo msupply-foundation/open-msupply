@@ -13,8 +13,6 @@ import {
   PanelRow,
   PanelField,
   ColorSelectButton,
-  useFormatDate,
-  DatePickerInput,
 } from '@openmsupply-client/common';
 import { isRequisitionEditable } from '../../utils';
 import { CustomerRequisition } from '../../types';
@@ -61,24 +59,6 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
   );
 };
 
-const DatesSection: FC<SidePanelProps> = ({ draft }) => {
-  const t = useTranslation(['common', 'distribution']);
-  const d = useFormatDate();
-  return (
-    <DetailPanelSection
-      title={t('heading.related-documents', { ns: 'distribution' })}
-    >
-      <Grid container gap={0.5}>
-        <PanelRow>
-          <PanelLabel>Order date:</PanelLabel>
-
-          <DatePickerInput value={draft.orderDate} onChange={() => {}} />
-        </PanelRow>
-      </Grid>
-    </DetailPanelSection>
-  );
-};
-
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
   const t = useTranslation(['outbound-shipment', 'common']);
@@ -114,7 +94,6 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
       }
     >
       <AdditionalInfoSection draft={draft} />
-      <DatesSection draft={draft} />
       <RelatedDocumentsSection draft={draft} />
     </DetailPanelPortal>
   );
