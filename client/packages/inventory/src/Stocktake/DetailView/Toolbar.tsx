@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import {
   AppBarContentPortal,
-  Box,
   Grid,
   DropdownMenu,
   DropdownMenuItem,
@@ -9,6 +8,8 @@ import {
   useTranslation,
   useNotification,
   useTableStore,
+  BasicTextInput,
+  InputWithLabelRow,
 } from '@openmsupply-client/common';
 import { StocktakeController, StocktakeItem } from '../../types';
 import { isStocktakeEditable } from '../../utils';
@@ -47,14 +48,32 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         flex={1}
         alignItems="flex-end"
       >
-        <DropdownMenu
-          disabled={!isStocktakeEditable(draft)}
-          label={t('label.select')}
-        >
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
-            {t('button.delete-lines', { ns: 'distribution' })}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <Grid item display="flex" flex={1}>
+          <InputWithLabelRow
+            label={t('heading.description')}
+            Input={
+              <BasicTextInput
+                disabled={!isStocktakeEditable(draft)}
+                size="small"
+                sx={{ width: 250 }}
+                value={draft?.description ?? ''}
+                onChange={event => {
+                  draft.update?.('description', event.target.value);
+                }}
+              />
+            }
+          />
+        </Grid>
+        <Grid item>
+          <DropdownMenu
+            disabled={!isStocktakeEditable(draft)}
+            label={t('label.select')}
+          >
+            <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+              {t('button.delete-lines', { ns: 'distribution' })}
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </Grid>
       </Grid>
     </AppBarContentPortal>
   );
