@@ -35,6 +35,16 @@ mod repository_test {
             }
         }
 
+        pub fn name_a_umlaut() -> NameRow {
+            NameRow {
+                id: "name_äÄ_umlaut".to_string(),
+                name: "a_umlaut_äÄ_name".to_string(),
+                code: "a_umlaut_äÄ_code".to_string(),
+                is_customer: true,
+                is_supplier: false,
+            }
+        }
+
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
@@ -345,6 +355,7 @@ mod repository_test {
         name_repo.insert_one(&data::name_1()).await.unwrap();
         name_repo.insert_one(&data::name_2()).await.unwrap();
         name_repo.insert_one(&data::name_3()).await.unwrap();
+        name_repo.insert_one(&data::name_a_umlaut()).await.unwrap();
 
         let repo = NameQueryRepository::new(&connection);
         // test filter:
@@ -384,6 +395,47 @@ mod repository_test {
             )
             .unwrap();
         assert_eq!(result.len(), 3);
+
+        // case insensitive search
+        let result = repo
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
+                    id: None,
+                    name: Some(SimpleStringFilter {
+                        equal_to: None,
+                        like: Some("mE_".to_string()),
+                    }),
+                    code: None,
+                    is_customer: None,
+                    is_supplier: None,
+                }),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 3);
+
+        // case insensitive search with umlaute
+        /* Works for postgres but not for sqlite:
+        let result = repo
+            .query(
+                Pagination::new(),
+                Some(NameFilter {
+                    id: None,
+                    name: Some(SimpleStringFilter {
+                        equal_to: None,
+                        // filter for "umlaut_äÄ_name"
+                        like: Some("T_Ää_N".to_string()),
+                    }),
+                    code: None,
+                    is_customer: None,
+                    is_supplier: None,
+                }),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        */
 
         let result = repo
             .query(
