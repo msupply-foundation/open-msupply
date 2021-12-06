@@ -28,9 +28,12 @@ pub enum InvoiceSortFieldInput {
     InvoiceNumber,
     Comment,
     Status,
-    EntryDatetime,
-    ConfirmDatetime,
-    FinalisedDateTime,
+    CreatedDatetime,
+    AllocatedDatetime,
+    PickedDatetime,
+    ShippedDatetime,
+    DeliveredDatetime,
+    VerifiedDatetime,
 }
 
 pub type InvoiceSortInput = SortInput<InvoiceSortFieldInput>;
@@ -44,9 +47,12 @@ pub struct InvoiceFilterInput {
     pub status: Option<EqualFilterInput<InvoiceNodeStatus>>,
     pub comment: Option<SimpleStringFilterInput>,
     pub their_reference: Option<EqualFilterStringInput>,
-    pub entry_datetime: Option<DatetimeFilterInput>,
-    pub confirm_datetime: Option<DatetimeFilterInput>,
-    pub finalised_datetime: Option<DatetimeFilterInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
+    pub allocated_datetime: Option<DatetimeFilterInput>,
+    pub picked_datetime: Option<DatetimeFilterInput>,
+    pub shipped_datetime: Option<DatetimeFilterInput>,
+    pub delivered_datetime: Option<DatetimeFilterInput>,
+    pub verified_datetime: Option<DatetimeFilterInput>,
 }
 
 impl From<InvoiceFilterInput> for InvoiceFilter {
@@ -60,9 +66,12 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
             status: f.status.map(EqualFilter::from),
             comment: f.comment.map(SimpleStringFilter::from),
             their_reference: f.their_reference.map(EqualFilter::from),
-            entry_datetime: f.entry_datetime.map(DatetimeFilter::from),
-            confirm_datetime: f.confirm_datetime.map(DatetimeFilter::from),
-            finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
+            created_datetime: f.created_datetime.map(DatetimeFilter::from),
+            allocated_datetime: f.allocated_datetime.map(DatetimeFilter::from),
+            picked_datetime: f.picked_datetime.map(DatetimeFilter::from),
+            shipped_datetime: f.shipped_datetime.map(DatetimeFilter::from),
+            delivered_datetime: f.delivered_datetime.map(DatetimeFilter::from),
+            verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
         }
     }
 }
@@ -79,14 +88,12 @@ pub enum InvoiceNodeType {
 #[graphql(remote = "domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
-    /// For outbound shipments: In DRAFT mode only the available_number_of_packs in a stock line gets
-    /// updated when items are added to the invoice.
-    Draft,
-    /// For outbound shipments: When an invoice is CONFIRMED available_number_of_packs and
-    /// total_number_of_packs get updated when items are added to the invoice.
-    Confirmed,
-    /// A FINALISED invoice can't be edited nor deleted.
-    Finalised,
+    New,
+    Allocated,
+    Picked,
+    Shipped,
+    Delivered,
+    Verified,
 }
 
 pub struct InvoiceNode {
@@ -131,19 +138,37 @@ impl InvoiceNode {
         self.invoice.on_hold
     }
 
-    pub async fn entry_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.invoice.entry_datetime, Utc)
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.invoice.created_datetime, Utc)
     }
 
-    pub async fn confirmed_datetime(&self) -> Option<DateTime<Utc>> {
+    pub async fn allocated_datetime(&self) -> Option<DateTime<Utc>> {
         self.invoice
-            .confirm_datetime
+            .allocated_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
-    pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
+    pub async fn picked_datetime(&self) -> Option<DateTime<Utc>> {
         self.invoice
-            .finalised_datetime
+            .picked_datetime
+            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+
+    pub async fn shipped_datetime(&self) -> Option<DateTime<Utc>> {
+        self.invoice
+            .shipped_datetime
+            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+
+    pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
+        self.invoice
+            .delivered_datetime
+            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+
+    pub async fn verified_datetime(&self) -> Option<DateTime<Utc>> {
+        self.invoice
+            .verified_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
