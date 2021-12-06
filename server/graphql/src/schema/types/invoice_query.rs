@@ -88,11 +88,31 @@ pub enum InvoiceNodeType {
 #[graphql(remote = "domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
+    /// Outbound Shippment: available_number_of_packs in a stock line gets
+    /// updated when items are added to the invoice.
+    /// Inbound Shippment: No stock changes in this status, only manually entered
+    /// inbound shippments have new status
     New,
+    /// Outbound Shippment: Invoice can only be turned to allocated status when
+    /// all unallocated lines are fullfilled
+    /// Inbound Shippment: not applicable
     Allocated,
+    /// Outbound Shippment: available_number_of_packs and
+    /// total_number_of_packs get updated when items are added to the invoice
+    /// Inbound Shippment: For inter store stock transfers an inbound shippment
+    /// is created when corresponding outbound shippment is picked and ready for
+    /// shippment, inbound shippment is not editable in this status
     Picked,
+    /// Outbound Shippment: Becomes not editable
+    /// Inbound Shippment: For inter store stock transfers an inbound shippment
+    /// becomes editable when this status is set as a result of corresponding
+    /// outbound shippment being chagned to shipped (this is similar to New status)
     Shipped,
+    /// Outbound Shippment: Status is updated based on corresponding inbound shippment
+    /// Inbound Shippment: Stock is introduced and can be issued
     Delivered,
+    /// Outbound Shippment: Status is updated based on corresponding inbound shippment
+    /// Inbound Shippment: Becomes not editable
     Verified,
 }
 
