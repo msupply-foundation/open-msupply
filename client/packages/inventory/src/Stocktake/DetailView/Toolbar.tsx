@@ -69,7 +69,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             label={t('label.stocktake-date', { ns: 'inventory' })}
             Input={
               <DatePickerInput
-                value={new Date(draft.stocktakeDatetime)}
+                value={draft.stocktakeDate}
                 onChange={newDate => {
                   draft.updateStocktakeDatetime(newDate);
                 }}
