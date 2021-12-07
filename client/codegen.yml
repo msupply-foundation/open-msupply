@@ -1,5 +1,5 @@
 overwrite: true
-schema: "./packages/common/src/schema.graphql"
+schema: ["./packages/common/src/schema.graphql", "./packages/common/src/additions.schema.graphql"]
 documents: './packages/common/src/operations.graphql'
 generates:
   ./packages/common/src/types/schema.ts:
