@@ -13,9 +13,4 @@ module.exports = {
       prefix: '<rootDir>',
     }),
   },
-  globals: {
-    'ts-jest': {
-      diagnostics: true,
-    },
-  },
 };

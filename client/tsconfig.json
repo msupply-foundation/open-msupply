@@ -3,12 +3,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@common/types": ["packages/common/src/types"],
       "@common/components": ["packages/common/src/ui/components"],
-      "@common/icons": ["packages/common/src/ui/icons"],
       "@common/hooks": ["packages/common/src/hooks"],
+      "@common/icons": ["packages/common/src/ui/icons"],
       "@common/intl": ["packages/common/src/intl"],
-      "@common/styles": ["packages/common/src/styles"]
+      "@common/styles": ["packages/common/src/styles"],
+      "@common/types": ["packages/common/src/types"]
     },
     "resolveJsonModule": true,
     "target": "es5",
