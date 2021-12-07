@@ -316,13 +316,15 @@ mod repository_test {
 
     use crate::{
         database_settings::get_storage_connection_manager, test_db, CentralSyncBufferRepository,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, ItemRepository,
-        MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
-        NameQueryRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
-        RepositoryError, RequisitionLineRepository, RequisitionRepository, StockLineRowRepository,
-        StoreRepository, UserAccountRepository,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository,
+        ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+        MasterListRepository, NameQueryRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRepository, RepositoryError, RequisitionLineRepository,
+        RequisitionRepository, StockLineRowRepository, StoreRepository, UserAccountRepository,
     };
+    use chrono::Utc;
     use domain::{
+        invoice::InvoiceType,
         name::{NameFilter, NameSort, NameSortField},
         Pagination, SimpleStringFilter,
     };
@@ -730,6 +732,52 @@ mod repository_test {
             .find_many_by_store_id(&item1.store_id)
             .unwrap();
         assert_eq!(1, loaded_item.len());
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_query_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-invoice-query-repository");
+        test_db::setup(&settings).await;
+        let connection_manager = get_storage_connection_manager(&settings);
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        let name_repo = NameRepository::new(&connection);
+        name_repo.insert_one(&data::name_1()).await.unwrap();
+        let store_repo = StoreRepository::new(&connection);
+        store_repo.insert_one(&data::store_1()).await.unwrap();
+
+        let invoice_repo = InvoiceRepository::new(&connection);
+        let item1 = data::invoice_1();
+        invoice_repo.upsert_one(&item1).unwrap();
+
+        let repo = InvoiceQueryRepository::new(&connection);
+
+        // created invoices count
+
+        // oldest > item1.entry_datetime
+        let item1_type: InvoiceType = item1.r#type.into();
+        let count = repo
+            .created_invoices_count(item1_type.clone(), Utc::now().naive_local(), None)
+            .unwrap();
+        assert_eq!(0, count);
+        // oldest = item1.entry_datetime
+        let count = repo
+            .created_invoices_count(item1_type.clone(), item1.entry_datetime.clone(), None)
+            .unwrap();
+        assert_eq!(1, count);
+        // oldest < item1.entry_datetime
+        let oldest = item1.entry_datetime - chrono::Duration::milliseconds(50);
+        let count = repo
+            .created_invoices_count(item1_type.clone(), oldest.clone(), None)
+            .unwrap();
+        assert_eq!(1, count);
+        // test that earliest exclude the invoice
+        let earliest = item1.entry_datetime - chrono::Duration::milliseconds(20);
+        let count = repo
+            .created_invoices_count(item1_type.clone(), oldest.clone(), Some(earliest.clone()))
+            .unwrap();
+        assert_eq!(0, count);
     }
 
     #[actix_rt::test]
