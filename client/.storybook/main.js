@@ -1,4 +1,5 @@
 const path = require('path');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const toPath = filePath => path.join(process.cwd(), filePath);
 
 module.exports = {
@@ -21,6 +22,7 @@ module.exports = {
           '@emotion/core': toPath('node_modules/@emotion/react'),
           'emotion-theming': toPath('node_modules/@emotion/react'),
         },
+        plugins: [new TsconfigPathsPlugin()],
       },
     };
   },
