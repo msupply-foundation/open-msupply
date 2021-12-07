@@ -5,8 +5,8 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { ColorMenu } from './ColorMenu';
 import { StoryProvider } from '../../../../utils';
 import { IconButton } from '../../buttons';
-import { CircleIcon } from '../../../icons';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { CircleIcon } from '@common/icons';
+import { useTranslation } from '@common/intl';
 
 export default {
   title: 'Menus/ColorMenu',

@@ -12,7 +12,7 @@ import {
   styled,
 } from '@mui/material';
 
-import { ChevronDownIcon } from '../../../icons';
+import { ChevronDownIcon } from '@common/icons';
 
 interface DropdownMenuItemProps extends MenuItemProps {
   IconComponent?: React.JSXElementConstructor<SvgIconProps>;

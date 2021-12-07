@@ -2,7 +2,7 @@ import React from 'react';
 import { Story } from '@storybook/react';
 
 import { useNotification } from './useNotification';
-import { BaseButton } from '../../ui/components/buttons';
+import { BaseButton } from '@common/components';
 
 export default {
   title: 'Hooks/useNotification',

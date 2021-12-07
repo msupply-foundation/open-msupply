@@ -1,6 +1,6 @@
 import { Paper, Popover } from '@mui/material';
 import React, { FC } from 'react';
-import { CircleIcon } from '../../../icons';
+import { CircleIcon } from '@common/icons';
 
 export interface Color {
   hex: string;

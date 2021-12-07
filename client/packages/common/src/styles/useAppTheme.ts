@@ -2,7 +2,7 @@ import { Direction } from '@mui/material/styles';
 import { Theme } from '@mui/material';
 import { useState, useEffect } from 'react';
 import theme from './theme';
-import { useRtl } from '../intl/intlHelpers';
+import { useRtl } from '@common/intl';
 
 export const useAppTheme = (): Theme => {
   const [currentTheme, setTheme] = useState(theme);

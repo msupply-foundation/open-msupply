@@ -7,7 +7,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import { StatusCrumbs } from './StatusCrumbs';
-import { LocaleKey, useTranslation } from '../../../../intl';
+import { LocaleKey, useTranslation } from '@common/intl';
 
 const statusTranslation: Record<string, LocaleKey> = {
   DRAFT: 'label.draft',

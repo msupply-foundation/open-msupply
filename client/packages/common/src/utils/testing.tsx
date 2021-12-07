@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import AppThemeProvider from '../styles/ThemeProvider';
-import { SupportedLocales } from '../intl/intlHelpers';
+import { AppThemeProvider } from '@common/styles';
+import { SupportedLocales } from '@common/intl';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';

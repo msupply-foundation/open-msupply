@@ -1,9 +1,8 @@
 import React from 'react';
-import { Color } from '../../../components';
 import { Box } from '@mui/system';
-import { DomainObject } from '../../../../types';
+import { DomainObject } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
-import { ColorSelectButton } from '../../../components/buttons';
+import { Color, ColorSelectButton } from '@common/components';
 
 interface DomainObjectWithRequiredFields extends DomainObject {
   color: string;

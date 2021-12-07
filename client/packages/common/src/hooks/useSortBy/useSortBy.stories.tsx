@@ -2,7 +2,7 @@ import React from 'react';
 import { useSortBy } from './useSortBy';
 import { Story } from '@storybook/react';
 
-import { BaseButton } from '../../ui/components/buttons';
+import { BaseButton } from '@common/components';
 
 export default {
   title: 'Hooks/useSortBy',

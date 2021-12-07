@@ -9,10 +9,10 @@ import {
   useTheme,
   Portal,
 } from '@mui/material';
-import { useDetailPanelStore, useHostContext } from '../../../../hooks';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { useDetailPanelStore, useHostContext } from '@common/hooks';
+import { useTranslation } from '@common/intl';
 import { FlatButton } from '../../buttons';
-import { CloseIcon } from '../../../icons';
+import { CloseIcon } from '@common/icons';
 import { Divider } from '../../divider/Divider';
 
 export interface DetailPanelPortalProps {

@@ -15,8 +15,8 @@ import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
-import { DomainObject } from '../../../types';
-import { useTranslation } from '../../../intl';
+import { DomainObject } from '@common/types';
+import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 export const DataTable = <T extends DomainObject>({

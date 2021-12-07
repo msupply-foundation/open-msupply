@@ -1,7 +1,7 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { HoverPopover } from './HoverPopover';
-import { UnhappyMan } from '../../../icons';
+import { UnhappyMan } from '@common/icons';
 import { Box } from '@mui/system';
 import { Typography } from '@mui/material';
 

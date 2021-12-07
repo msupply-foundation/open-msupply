@@ -4,7 +4,7 @@ import {
   Autocomplete,
   defaultOptionMapper,
   getDefaultOptionRenderer,
-} from '@openmsupply-client/common/src/ui/components/inputs/Autocomplete';
+} from '@common/components';
 import { useNames } from '../../hooks';
 
 const filterOptions = {

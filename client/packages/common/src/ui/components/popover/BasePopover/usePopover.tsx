@@ -1,6 +1,6 @@
 import React, { Dispatch, FC, useState, useRef, MutableRefObject } from 'react';
 import { BasePopoverProps } from '.';
-import { useDebounceCallback } from '../../../../hooks/useDebounce';
+import { useDebounceCallback } from '@common/hooks';
 import { BasePopover } from './BasePopover';
 
 type VirtualElement = { getBoundingClientRect: () => DOMRect };

@@ -15,7 +15,7 @@ import {
   InvoiceNodeType,
   InvoiceNodeStatus,
   DeleteResponse,
-} from '@openmsupply-client/common/src/types/schema';
+} from '@openmsupply-client/common/src/types';
 
 export const InvoiceLineMutation = {
   outbound: {

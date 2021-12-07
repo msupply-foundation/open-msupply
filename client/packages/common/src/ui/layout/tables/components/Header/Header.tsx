@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
 import { Column } from '../../columns/types';
-import { SortDescIcon } from '../../../../icons';
-import { DomainObject } from '../../../../../types';
-import { useDebounceCallback } from '../../../../../hooks';
+import { SortDescIcon } from '@common/icons';
+import { DomainObject } from '@common/types';
+import { useDebounceCallback } from '@common/hooks';
 
 export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
   <TableRow

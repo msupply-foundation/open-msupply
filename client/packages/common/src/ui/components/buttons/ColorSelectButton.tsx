@@ -1,8 +1,8 @@
 import React, { FC, useState } from 'react';
 import { ColorMenu, Color } from '../menus';
 import { IconButton } from './IconButton';
-import { CircleIcon } from '../../icons';
-import { useTranslation } from '../../../intl/intlHelpers';
+import { CircleIcon } from '@common/icons';
+import { useTranslation } from '@common/intl';
 
 interface ColorSelectButtonProps {
   color: string;

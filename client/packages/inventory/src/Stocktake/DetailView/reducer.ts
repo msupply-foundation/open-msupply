@@ -74,7 +74,7 @@ const toLookup = <T, K extends keyof T & string>(
     if (!lookup[value]) {
       lookup[value] = [];
     }
-    lookup[value].push(thing);
+    (lookup[value] ?? []).push(thing);
   });
   return lookup;
 };
@@ -88,8 +88,9 @@ export const createStocktakeItem = (
     lines,
     itemName: () => ifTheSameElseDefault(lines, 'itemName', ''),
     itemCode: () => ifTheSameElseDefault(lines, 'itemCode', ''),
-    batch: () => ifTheSameElseDefault(lines, 'batch', '[multiple]'),
-    expiryDate: () => ifTheSameElseDefault(lines, 'expiryDate', '[multiple]'),
+    batch: () => ifTheSameElseDefault(lines, 'batch', '[multiple]') ?? '',
+    expiryDate: () =>
+      ifTheSameElseDefault(lines, 'expiryDate', '[multiple]') ?? '',
     countedNumPacks: () =>
       String(ifTheSameElseDefault(lines, 'countedNumPacks', '[multiple]')),
     snapshotNumPacks: () =>
@@ -101,7 +102,7 @@ export const createStocktakeItem = (
 const createStocktakeItems = (lines: StocktakeLine[]) => {
   const lookup = toLookup(lines, 'itemId');
   const ids = Object.keys(lookup);
-  return ids.map(id => createStocktakeItem(id, lookup[id]));
+  return ids.map(id => createStocktakeItem(id, lookup[id] ?? []));
 };
 
 export const reducer = (
@@ -123,23 +124,26 @@ export const reducer = (
 
         case DocumentActionType.Merge: {
           state.draft = {
+            ...state.draft,
             ...data,
             lines: createStocktakeItems(data?.lines ?? []),
             update: (key: string, value: string) => {
-              dispatch(StocktakeActionCreator.update(key, value));
+              dispatch?.(StocktakeActionCreator.update(key, value));
             },
             updateStocktakeDatetime: (newDate: Date | null) => {
-              dispatch(StocktakeActionCreator.updateStocktakeDatetime(newDate));
+              dispatch?.(
+                StocktakeActionCreator.updateStocktakeDatetime(newDate)
+              );
             },
             updateOnHold: () => {
-              dispatch(StocktakeActionCreator.updateOnHold());
+              dispatch?.(StocktakeActionCreator.updateOnHold());
             },
             updateStatus: (newStatus: StocktakeNodeStatus) =>
-              dispatch(StocktakeActionCreator.updateStatus(newStatus)),
+              dispatch?.(StocktakeActionCreator.updateStatus(newStatus)),
             sortBy: (column: Column<StocktakeItem>) =>
-              dispatch(StocktakeActionCreator.sortBy(column)),
+              dispatch?.(StocktakeActionCreator.sortBy(column)),
             upsertItem: (item: StocktakeItem) =>
-              dispatch(StocktakeActionCreator.upsertItem(item)),
+              dispatch?.(StocktakeActionCreator.upsertItem(item)),
           };
 
           break;
