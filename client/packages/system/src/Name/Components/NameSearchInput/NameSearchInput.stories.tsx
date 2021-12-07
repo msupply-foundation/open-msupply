@@ -18,6 +18,7 @@ const Template: Story = () => {
       onChange={name => {
         setSelectedName(name);
       }}
+      type="customer"
     />
   );
 };

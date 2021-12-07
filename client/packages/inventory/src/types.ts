@@ -1,5 +1,5 @@
 import { Column } from './../../common/src/ui/layout/tables/columns/types';
-import { StocktakeLineNode } from './../../common/src/types/schema';
+import { StocktakeLineNode } from '@common/types';
 import { StocktakeNode, StocktakeNodeStatus } from '@openmsupply-client/common';
 
 export type StocktakeRow = Pick<
@@ -16,7 +16,7 @@ export interface StocktakeLine extends StocktakeLineNode {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
-  update: (key: string, value: string) => void;
+  update?: (key: string, value: string) => void;
 }
 
 export interface StocktakeItem {
@@ -39,7 +39,7 @@ export interface Stocktake
     'lines' | '__typename' | 'stocktakeDatetime' | 'entryDatetime'
   > {
   lines: StocktakeLine[];
-  stocktakeDatetime: Date;
+  stocktakeDatetime: Date | null;
   entryDatetime: Date;
 }
 

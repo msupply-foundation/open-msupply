@@ -1,8 +1,8 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { NameSearchModal } from './NameSearchModal';
-import { useToggle } from '@openmsupply-client/common';
-import { BaseButton } from '@openmsupply-client/common/src/ui/components/buttons';
+import { useToggle } from '@common/hooks';
+import { BaseButton } from '@common/components';
 
 export default {
   title: 'Name/NameSearchModal',
@@ -22,6 +22,7 @@ const Template: Story = () => {
           toggleOn();
           alert(JSON.stringify(name, null, 2));
         }}
+        type="customer"
       />
     </>
   );

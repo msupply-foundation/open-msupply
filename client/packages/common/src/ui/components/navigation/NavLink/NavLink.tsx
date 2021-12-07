@@ -10,8 +10,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { useDrawer } from '../../../../hooks/useDrawer';
-import { useDebounceCallback } from '../../../../hooks';
+import { useDrawer, useDebounceCallback } from '@common/hooks';
 
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements

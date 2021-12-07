@@ -2,7 +2,7 @@ import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Widget } from './Widget';
 import { Typography } from '@mui/material';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 
 const Template: ComponentStory<typeof Widget> = () => {
   const t = useTranslation('app');

@@ -53,7 +53,9 @@ const onDelete =
     throw new Error('Unknown');
   };
 
-const stocktakeToInput = (StocktakeRow: StocktakeRow): UpdateStocktakeInput => {
+const stocktakeToInput = (
+  StocktakeRow: Partial<StocktakeRow> & { id: string }
+): UpdateStocktakeInput => {
   return {
     ...StocktakeRow,
   };

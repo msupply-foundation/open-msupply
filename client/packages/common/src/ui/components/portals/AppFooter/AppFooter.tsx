@@ -1,7 +1,7 @@
 import { Box, BoxProps } from '@mui/system';
 import { Portal, styled } from '@mui/material';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
-import { useHostContext } from '../../../../hooks';
+import { useHostContext } from '@common/hooks';
 
 const Container = styled('div')(({ theme }) => ({
   backgroundColor: theme.palette.background.menu,

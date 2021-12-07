@@ -3,7 +3,7 @@ import { Story } from '@storybook/react';
 import Box from '@mui/material/Box';
 import { BasePopover } from '../BasePopover';
 import { BaseButton } from '../../buttons';
-import { UnhappyMan } from '../../../icons';
+import { UnhappyMan } from '@common/icons';
 
 type VirtualElement = { getBoundingClientRect: () => DOMRect };
 

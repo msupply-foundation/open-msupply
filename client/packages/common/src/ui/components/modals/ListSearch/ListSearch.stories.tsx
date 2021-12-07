@@ -3,7 +3,7 @@ import { Grid } from '@mui/material';
 import { Story } from '@storybook/react';
 import { ListSearch } from './ListSearch';
 import { BaseButton } from '../../buttons';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 
 export default {
   title: 'Modals/ListSearch',

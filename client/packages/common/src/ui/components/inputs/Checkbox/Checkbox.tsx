@@ -5,7 +5,7 @@ import {
   CheckboxEmptyIcon,
   CheckboxCheckedIcon,
   CheckboxIndeterminateIcon,
-} from '../../../icons';
+} from '@common/icons';
 
 export const Checkbox: FC<CheckboxProps> = props => {
   return (

@@ -1,5 +1,5 @@
 import { ColumnDefinitionSetBuilder } from './ColumnDefinitionSetBuilder';
-import { DomainObject } from '../../../../types';
+import { DomainObject } from '@common/types';
 
 interface Invoice extends DomainObject {
   id: string;

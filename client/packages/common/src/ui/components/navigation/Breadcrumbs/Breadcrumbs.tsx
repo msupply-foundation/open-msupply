@@ -3,7 +3,7 @@ import { styled } from '@mui/system';
 import { Typography } from '@mui/material';
 import { useLocation, Link } from 'react-router-dom';
 
-import { LocaleKey, useTranslation } from '../../../../intl';
+import { LocaleKey, useTranslation } from '@common/intl';
 
 interface UrlPart {
   path: string;

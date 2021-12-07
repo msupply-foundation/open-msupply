@@ -8,6 +8,7 @@ const path = require('path');
 // const deps = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = env => {
   const isProduction = !!env.production;
@@ -34,6 +35,7 @@ module.exports = env => {
     },
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
+      plugins: [new TsconfigPathsPlugin()],
     },
     output: {
       publicPath: isProduction ? '/' : 'http://localhost:3003/',
@@ -77,7 +79,7 @@ module.exports = env => {
          * In "json" mode single JSON file with bundle report will be generated
          */
         analyzerMode: 'disabled',
-        generateStatsFile: true,
+        generateStatsFile: isProduction,
       }),
 
       new HtmlWebpackPlugin({

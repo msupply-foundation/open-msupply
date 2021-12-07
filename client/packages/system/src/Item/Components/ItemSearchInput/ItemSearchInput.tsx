@@ -6,10 +6,7 @@ import {
   styled,
 } from '@openmsupply-client/common';
 import { useItemsList } from '../../hooks/useItemsList';
-import {
-  Autocomplete,
-  defaultOptionMapper,
-} from '@openmsupply-client/common/src/ui/components/inputs/Autocomplete';
+import { Autocomplete, defaultOptionMapper } from '@openmsupply-client/common';
 
 const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,

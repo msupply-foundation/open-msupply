@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
-import { DomainObject } from '../../../../types';
-import { useTranslation, useFormatDate } from '../../../../intl';
+import { DomainObject } from '@common/types';
+import { useTranslation, useFormatDate } from '@common/intl';
 
 export * from './DataRow';
 export * from './Cells';

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React, { FC } from 'react';
 import { act } from 'react-dom/test-utils';
-import { useI18N } from '../intl/intlHelpers';
+import { useI18N } from '@common/intl';
 import { LocalStorage } from '../localStorage';
 import { RTLProvider } from './RTLProvider';
 
