@@ -1,6 +1,6 @@
 import {
-  InvoiceQuery,
   InvoiceLineConnector,
+  InvoiceQuery,
   InvoicePriceResponse,
   ConnectorError,
   NameResponse,
