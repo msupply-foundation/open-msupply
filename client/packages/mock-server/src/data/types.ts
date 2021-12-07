@@ -63,7 +63,8 @@ export interface ResolvedStockLine extends StockLine {
   item: Item;
 }
 
-export interface InvoiceLine extends Omit<InvoiceLineNode, 'location'> {
+export interface InvoiceLine
+  extends Omit<InvoiceLineNode, 'location' | 'item'> {
   id: string;
   itemName: string;
   location?: Location;
@@ -84,6 +85,7 @@ export interface InvoiceLine extends Omit<InvoiceLineNode, 'location'> {
 export interface ResolvedInvoiceLine extends InvoiceLine {
   __typename: 'InvoiceLineNode';
   stockLine?: ResolvedStockLine;
+  item: ResolvedItem;
 }
 
 export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
