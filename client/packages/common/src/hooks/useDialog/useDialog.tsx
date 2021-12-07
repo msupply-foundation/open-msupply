@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import { Slide } from '../../ui/animations';
-import { BasicModal } from '../../ui/components/modals/BasicModal';
-import { ModalTitle } from '../../ui/components/modals/ModalTitle';
+import { BasicModal, ModalTitle } from '@common/components';
 
 export interface ButtonProps {
   icon?: React.ReactElement;

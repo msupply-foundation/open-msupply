@@ -4,8 +4,8 @@ import { Route } from 'react-router-dom';
 
 import { NavLink, NavLinkProps } from './NavLink';
 import { StoryProvider, TestingRouter } from '../../../../utils/testing';
-import { TruckIcon } from '../../../icons';
-import { useDrawer } from '../../../../hooks';
+import { TruckIcon } from '@common/icons';
+import { useDrawer } from '@common/hooks';
 import { Box } from '@mui/system';
 
 export default {

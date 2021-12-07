@@ -2,7 +2,7 @@ import React from 'react';
 import { Grid } from '@mui/material';
 import { get, UseFormRegisterReturn, useFormState } from 'react-hook-form';
 
-import { NumericTextInput } from '../../components/inputs/TextInput/NumericTextInput';
+import { NumericTextInput } from '@common/components';
 
 export interface ModalNumericInputProps {
   defaultValue?: unknown;

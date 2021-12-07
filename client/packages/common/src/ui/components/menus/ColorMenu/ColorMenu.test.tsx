@@ -5,7 +5,7 @@ import { IconButton } from '../../buttons';
 import { TestingProvider } from '../../../../utils';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { CircleIcon } from '../../../icons';
+import { CircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
 describe('ColorMenu', () => {

@@ -7,7 +7,7 @@ import {
   DownloadIcon,
   SuppliersIcon,
   ToolsIcon,
-} from '../../../icons';
+} from '@common/icons';
 
 export default {
   title: 'Menus/DropdownMenu',

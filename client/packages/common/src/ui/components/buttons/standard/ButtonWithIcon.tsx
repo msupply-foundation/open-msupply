@@ -1,7 +1,7 @@
 import React from 'react';
 import { ButtonProps, Tooltip } from '@mui/material';
 import { ShrinkableBaseButton } from './ShrinkableBaseButton';
-import { useIsScreen } from '../../../../hooks/useIsScreen';
+import { useIsScreen } from '@common/hooks';
 
 interface ButtonWithIconProps extends ButtonProps {
   Icon: React.ReactNode;

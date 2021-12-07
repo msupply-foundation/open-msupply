@@ -3,7 +3,7 @@ import { act, render, waitFor } from '@testing-library/react';
 import { TestingProvider } from '@openmsupply-client/common';
 
 import { useDialog } from './useDialog';
-import { DialogButton } from '../../ui/components/buttons';
+import { DialogButton } from '@common/components';
 
 describe('useDialog', () => {
   const DialogExample: React.FC = () => {

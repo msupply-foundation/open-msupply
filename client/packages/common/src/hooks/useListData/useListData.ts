@@ -5,7 +5,7 @@ import { useQueryClient, useMutation, useQuery } from 'react-query';
 import { QueryParams, useQueryParams } from '../useQueryParams';
 import { FilterBy } from '../useFilterBy';
 import { ClientError } from 'graphql-request';
-import { useNotification } from '../../hooks';
+import { useNotification } from '@common/hooks';
 
 export interface ListApi<T extends DomainObject> {
   onRead: ({
