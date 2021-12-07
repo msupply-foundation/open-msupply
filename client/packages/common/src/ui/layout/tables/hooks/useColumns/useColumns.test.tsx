@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks';
 import { ColumnAlign, ColumnFormat } from '../../columns';
 import { useColumns } from './useColumns';
-import { DomainObject } from '../../../../../types';
+import { DomainObject } from '@common/types';
 
 interface Test extends DomainObject {
   id: string;

@@ -1,6 +1,6 @@
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
-import { DomainObject } from '../../../../types';
+import { DomainObject } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 
 const createColumn = <T extends DomainObject>(

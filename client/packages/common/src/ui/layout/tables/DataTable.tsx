@@ -15,7 +15,7 @@ import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { HeaderCell, HeaderRow } from './components/Header';
-import { DomainObject } from '../../../types';
+import { DomainObject } from '@common/types';
 import { useTranslation } from '../../../intl';
 import { useTableStore } from './context';
 

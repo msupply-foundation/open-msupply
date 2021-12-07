@@ -2,7 +2,7 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { StoryProvider } from '../../utils';
 import { useRowRenderCount } from './useRowRenderCount';
-import { useTheme } from '../../styles';
+import { useTheme } from '@common/styles';
 import { Box } from '@mui/system';
 import { Typography } from '@mui/material';
 

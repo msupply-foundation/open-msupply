@@ -1,7 +1,7 @@
 import { nameResolver } from './name';
 import { ListResponse } from './../../data/types';
 import { db, ResolvedInvoice, InvoiceListParameters } from './../../data';
-import { InvoiceSortFieldInput } from '@openmsupply-client/common/src/types/schema';
+import { InvoiceSortFieldInput } from '@openmsupply-client/common/src/types';
 import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
 import { invoiceLineResolver } from './invoiceLine';
 import { createListResponse } from './utils';

@@ -6,7 +6,7 @@ import {
   UpdateStocktakeInput,
   DeleteStocktakeInput,
   DeleteResponse,
-} from '@openmsupply-client/common/src/types/schema';
+} from '@openmsupply-client/common/src/types';
 
 export const StocktakeMutation = {
   update: (input: UpdateStocktakeInput): ResolvedStocktake => {

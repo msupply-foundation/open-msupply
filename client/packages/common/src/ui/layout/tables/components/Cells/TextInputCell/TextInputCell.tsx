@@ -1,7 +1,7 @@
 import React from 'react';
 import { CellProps } from '../../../columns';
 import { BasicTextInput } from '../../../../../components/inputs/TextInput';
-import { DomainObject } from '../../../../../../types';
+import { DomainObject } from '@common/types';
 import { useDebounceCallback } from '../../../../../../hooks';
 
 type DomainObjectWithUpdater<T> = T &

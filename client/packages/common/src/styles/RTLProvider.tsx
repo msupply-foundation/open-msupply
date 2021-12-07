@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { useRtl } from '../intl/intlHelpers';
+import { useRtl } from '@common/intl';
 
 export const RTLProvider: FC = props => {
   const isRtl = useRtl();
