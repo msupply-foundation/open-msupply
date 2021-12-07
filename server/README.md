@@ -22,6 +22,8 @@ openssl req -x509 -newkey rsa:4096 -nodes -keyout certs/key.pem -out certs/cert.
 
 ## Dependencies
 
+When using Postgres, Postgres 12 or higher is required.
+
 ### Windows
 
 - Install [rustup.exe](https://www.rust-lang.org/tools/install), following the instructions for installing Visual Studio C++ Build Tools if prompted.
