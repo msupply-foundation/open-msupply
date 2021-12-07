@@ -1,10 +1,20 @@
 require('graphql-import-node/register');
+import { loadSchemaSync } from '@graphql-tools/load';
 
+import { UrlLoader } from '@graphql-tools/url-loader';
 import { ApolloServer } from 'apollo-server';
 import { Schema } from './schema';
+import { mergeTypeDefs } from '@graphql-tools/merge';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const typeDefs = require('@openmsupply-client/common/src/schema.graphql');
+const typeDefs2 = require('@openmsupply-client/common/src/additions.schema.graphql');
+const remoteSchema = loadSchemaSync(
+  'https://demo-open.msupply.org:8000/graphql',
+  {
+    loaders: [new UrlLoader()],
+  }
+);
+const typeDefs = mergeTypeDefs([remoteSchema, typeDefs2]);
 
 const resolvers = {
   Queries: {
@@ -24,7 +34,6 @@ const resolvers = {
 };
 
 const server = new ApolloServer({ typeDefs, resolvers });
-
 server.listen().then(({ url }) => {
   console.log(
     `🚀🚀🚀 Server   @ ${url}         🚀🚀🚀\n🤖🤖🤖 GraphiQL @ ${url}graphiql 🤖🤖🤖`

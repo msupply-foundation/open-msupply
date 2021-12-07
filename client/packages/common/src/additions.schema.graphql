@@ -662,3 +662,21 @@ type StockCountsConnector {
 
 union InvoiceCountsResponse = InvoiceCountsConnector | ConnectorError
 union StockCountsResponse = StockCountsConnector | ConnectorError
+
+input BatchOutboundShipmentInput {
+  insertOutboundShipments: [InsertOutboundShipmentInput!]
+  insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
+  updateOutboundShipmentLines: [UpdateOutboundShipmentLineInput!]
+  deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
+  updateOutboundShipments: [UpdateOutboundShipmentInput!]
+  deleteOutboundShipments: [String!]
+}
+
+input BatchInboundShipmentInput {
+  insertOutboundShipments: [InsertInboundShipmentInput!]
+  insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
+  updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
+  deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
+  updateInboundShipments: [UpdateInboundShipmentInput!]
+  deleteInboundShipments: [DeleteInboundShipmentInput!]
+}

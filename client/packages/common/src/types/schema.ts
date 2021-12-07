@@ -74,6 +74,15 @@ export type BatchCustomerRequisitionResponse = {
   updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionResponseWithId>>;
 };
 
+export type BatchInboundShipmentInput = {
+  deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
+  deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentInput>>;
+  insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput>>;
+  insertOutboundShipments?: Maybe<Array<InsertInboundShipmentInput>>;
+  updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput>>;
+  updateInboundShipments?: Maybe<Array<UpdateInboundShipmentInput>>;
+};
+
 export type BatchInboundShipmentResponse = {
   __typename?: 'BatchInboundShipmentResponse';
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineResponseWithId>>;
@@ -87,6 +96,15 @@ export type BatchInboundShipmentResponse = {
 export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & {
   __typename?: 'BatchIsReserved';
   description: Scalars['String'];
+};
+
+export type BatchOutboundShipmentInput = {
+  deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineInput>>;
+  deleteOutboundShipments?: Maybe<Array<Scalars['String']>>;
+  insertOutboundShipmentLines?: Maybe<Array<InsertOutboundShipmentLineInput>>;
+  insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
+  updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
+  updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
 };
 
 export type BatchOutboundShipmentResponse = {
