@@ -1,8 +1,8 @@
 import { InputAdornment, Tooltip, Typography } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { ColumnDefinition } from './types';
-import { DomainObject } from '../../../../types';
-import { NumericTextInput } from '../../../components';
+import { DomainObject } from '@common/types';
+import { NumericTextInput } from '@common/components';
 
 interface SomeQuantityEntity extends DomainObject {
   quantity: number;

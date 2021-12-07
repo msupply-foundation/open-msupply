@@ -3,9 +3,9 @@ import { Box } from '@mui/system';
 import { render } from '@testing-library/react';
 import { Route } from 'react-router';
 import { NavLink } from './NavLink';
-import { useDrawer } from '../../../../hooks';
+import { useDrawer } from '@common/hooks';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
-import { TruckIcon } from '../../../icons';
+import { TruckIcon } from '@common/icons';
 
 const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   const drawer = useDrawer();

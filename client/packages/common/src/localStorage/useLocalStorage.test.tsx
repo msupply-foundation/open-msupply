@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { LocalStorage } from '.';
-import { BaseButton } from '../ui/components/buttons';
+import { BaseButton } from '@common/components';
 import { useLocalStorage } from './useLocalStorage';
 
 const UseLocalStorageExample = () => {

@@ -2,11 +2,11 @@ import React from 'react';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import { ChevronDownIcon } from '../../../icons';
-import { useTranslation, useFormatDate } from '../../../../intl';
+import { ChevronDownIcon } from '@common/icons';
+import { useTranslation, useFormatDate } from '@common/intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperPopover, PaperPopoverSection } from '../../popover';
-import { useIsSmallScreen } from '../../../../hooks';
+import { useIsSmallScreen } from '@common/hooks';
 import { styled } from '@mui/system';
 
 interface StatusCrumbsProps<StatusType extends string> {

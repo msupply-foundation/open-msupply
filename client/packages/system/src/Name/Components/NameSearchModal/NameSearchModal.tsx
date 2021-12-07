@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Name, useTranslation } from '@openmsupply-client/common';
-import { ListSearch } from '@openmsupply-client/common/src/ui/components/modals/ListSearch';
+import { ListSearch } from '@common/components';
 import { useNames } from '../../hooks';
 
 interface NameSearchProps {

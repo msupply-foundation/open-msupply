@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
-import { SearchIcon } from '../../../icons';
-import { useDebounceCallback } from '../../../../hooks';
+import { SearchIcon } from '@common/icons';
+import { useDebounceCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
 
 interface SearchBarProps {

@@ -1,4 +1,4 @@
-import { SupportedLocales } from '../intl/intlHelpers';
+import { SupportedLocales } from '@common/intl';
 
 export type LocalStorageRecord = {
   '/appdrawer/open': boolean;

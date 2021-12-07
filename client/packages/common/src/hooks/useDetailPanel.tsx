@@ -1,6 +1,6 @@
 import React from 'react';
 import create from 'zustand';
-import { useTranslation } from '../intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 import { SidebarIcon, ButtonWithIcon } from '../ui';
 
 type DetailPanelController = {

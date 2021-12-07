@@ -3,7 +3,7 @@ import { waitFor, render } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
 import { useColumns } from '../../hooks';
-import { Item } from '../../../../../types';
+import { Item } from '@common/types';
 import { TestingProvider } from '../../../../../utils';
 
 describe('HeaderRow', () => {

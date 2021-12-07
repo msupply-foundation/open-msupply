@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Grow } from '.';
-import { UnhappyMan } from '../icons/UnhappyMan';
+import { UnhappyMan } from '@common/icons';
 
 const Template: ComponentStory<typeof Grow> = args => (
   <Grow in {...args}>

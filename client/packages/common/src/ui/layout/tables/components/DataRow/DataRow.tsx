@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
-import { DomainObject } from '../../../../../types';
+import { DomainObject } from '@common/types';
 import { useExpanded, useDisabled } from '../../context';
 import { Collapse } from '@mui/material';
 interface DataRowProps<T extends DomainObject> {

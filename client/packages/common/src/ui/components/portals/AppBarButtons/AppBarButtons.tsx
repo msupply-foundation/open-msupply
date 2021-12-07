@@ -1,7 +1,7 @@
 import { Box, BoxProps, styled } from '@mui/system';
 import { Portal } from '@mui/material';
 import React, { FC, useEffect, useRef } from 'react';
-import { useHostContext } from '../../../../hooks';
+import { useHostContext } from '@common/hooks';
 
 const Container = styled('div')({
   display: 'flex',

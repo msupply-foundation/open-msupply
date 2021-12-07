@@ -2,9 +2,9 @@ import React from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
 import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
-import { useSortBy } from '../../../../../hooks/useSortBy';
+import { useSortBy } from '@common/hooks';
 import { useColumns } from '../../hooks';
-import { Item } from '../../../../../types';
+import { Item } from '@common/types';
 
 export default {
   title: 'Table/HeaderRow',
