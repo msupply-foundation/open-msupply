@@ -1104,21 +1104,3 @@ type UpdateOutboundShipmentResponseWithId {
 union UserRegisterResponse = UserRegisterError | RegisteredUser
 
 union UserResponse = UserError | User
-
-input BatchOutboundShipmentInput {
-  insertOutboundShipments: [InsertOutboundShipmentInput!]
-  insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
-  updateOutboundShipmentLines: [UpdateOutboundShipmentLineInput!]
-  deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
-  updateOutboundShipments: [UpdateOutboundShipmentInput!]
-  deleteOutboundShipments: [String!]
-}
-
-input BatchInboundShipmentInput {
-  insertOutboundShipments: [InsertInboundShipmentInput!]
-  insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
-  updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
-  deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
-  updateInboundShipments: [UpdateInboundShipmentInput!]
-  deleteInboundShipments: [DeleteInboundShipmentInput!]
-}

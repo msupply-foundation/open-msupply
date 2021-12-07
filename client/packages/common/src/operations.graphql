@@ -91,6 +91,46 @@ query invoice($id: String!) {
             numberOfPacks
             packSize
             note
+            item {
+              ... on ItemNode {
+                id
+                name
+                code
+                isVisible
+                availableBatches {
+                  ... on StockLineConnector {
+                    totalCount
+                    nodes {
+                      id
+                      availableNumberOfPacks
+                      costPricePerPack
+                      itemId
+                      onHold
+                      packSize
+                      sellPricePerPack
+                      storeId
+                      totalNumberOfPacks
+                    }
+                  }
+                  ... on ConnectorError {
+                    __typename
+                    error {
+                      description
+                    }
+                  }
+                }
+              }
+              ... on ItemError {
+                __typename
+                error {
+                  ... on InternalError {
+                    __typename
+                    description
+                    fullError
+                  }
+                }
+              }
+            }
 
             # itemUnit
             locationName
