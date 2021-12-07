@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { ButtonWithIcon } from './ButtonWithIcon';
-import { BookIcon } from '../../../icons';
+import { BookIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
 const Template: ComponentStory<typeof ButtonWithIcon> = () => {

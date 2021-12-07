@@ -1,11 +1,8 @@
 import React from 'react';
 import { DomainObject } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
-import { MessageSquareIcon } from '../../../../icons';
-import {
-  PaperPopover,
-  PaperPopoverSection,
-} from '../../../../components/popover';
+import { MessageSquareIcon } from '@common/icons';
+import { PaperPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
 
 interface DomainObjectWithComment extends DomainObject {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Grid } from '@mui/material';
 import { get, UseFormRegisterReturn, useFormState } from 'react-hook-form';
 
-import { BasicTextInput } from '../../components/inputs/TextInput/BasicTextInput';
+import { BasicTextInput } from '@common/components';
 
 export interface ModalInputProps {
   defaultValue?: unknown;

@@ -1,6 +1,6 @@
 import React from 'react';
-import { LocaleKey, useTranslation } from '../../../../intl';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../icons';
+import { LocaleKey, useTranslation } from '@common/intl';
+import { ArrowRightIcon, CheckIcon, XCircleIcon } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
 type DialogButtonVariant = 'cancel' | 'next' | 'ok';

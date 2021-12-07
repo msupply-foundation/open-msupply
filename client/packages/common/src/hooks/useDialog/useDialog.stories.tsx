@@ -2,8 +2,7 @@ import React from 'react';
 import { useDialog } from './useDialog';
 import { Story } from '@storybook/react';
 
-import { DialogButton } from '../../ui/components/buttons/standard/DialogButton';
-import { BaseButton } from '../../ui/components/buttons/standard/BaseButton';
+import { BaseButton, DialogButton } from '@common/components';
 
 export default {
   title: 'Hooks/useDialog',

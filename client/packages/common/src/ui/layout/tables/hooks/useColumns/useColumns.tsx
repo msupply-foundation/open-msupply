@@ -10,7 +10,7 @@ import {
 import { useFormatDate, useFormatNumber } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
 import { getDateOrNull } from '../../../../../utils';
-import { SortBy } from '../../../../../hooks';
+import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
 const getColumnWidths = <T extends DomainObject>(
