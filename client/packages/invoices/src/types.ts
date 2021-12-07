@@ -38,7 +38,9 @@ export type InboundShipmentStatus =
 // | InvoiceNodeStatus.Delivered
 // | 'VERIFIED';
 
-export interface InvoiceLine extends InvoiceLineNode, DomainObject {
+export interface InvoiceLine
+  extends Omit<InvoiceLineNode, 'item'>,
+    DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
   invoiceId: string;
@@ -123,7 +125,7 @@ export type OutboundShipmentAction =
       payload: { item: OutboundShipmentSummaryItem };
     };
 
-export interface OutboundShipmentRow extends InvoiceLine {
+export interface OutboundShipmentRow extends Omit<InvoiceLine, 'item'> {
   updateNumberOfPacks?: (quantity: number) => void;
 
   stockLineId: string;
@@ -158,7 +160,7 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
   upsertLine?: (line: OutboundShipmentRow) => void;
   deleteLine?: (line: OutboundShipmentRow) => void;
 }
-export interface InboundShipmentRow extends InvoiceLine {
+export interface InboundShipmentRow extends Omit<InvoiceLine, 'item'> {
   updateNumberOfPacks?: (quantity: number) => void;
   update?: (key: string, value: string) => void;
   stockLineId: string;
