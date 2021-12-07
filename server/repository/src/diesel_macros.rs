@@ -50,6 +50,7 @@ macro_rules! apply_equal_filter {
 ///     }
 /// }
 /// ```
+#[cfg(not(feature = "postgres"))]
 macro_rules! apply_simple_string_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
         if let Some(string_filter) = $filter_field {
@@ -58,7 +59,23 @@ macro_rules! apply_simple_string_filter {
             }
 
             if let Some(value) = string_filter.like {
+                // in sqlite like is case insensitive (but on only works with ASCII chars)
                 $query = $query.filter($dsl_field.like(format!("%{}%", value)));
+            }
+        }
+    }};
+}
+#[cfg(feature = "postgres")]
+macro_rules! apply_simple_string_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(string_filter) = $filter_field {
+            if let Some(value) = string_filter.equal_to {
+                $query = $query.filter($dsl_field.eq(value));
+            }
+
+            if let Some(value) = string_filter.like {
+                // Use case insensitive like
+                $query = $query.filter($dsl_field.ilike(format!("%{}%", value)));
             }
         }
     }};
