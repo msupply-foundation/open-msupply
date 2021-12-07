@@ -1,7 +1,7 @@
 import React from 'react';
-import { DomainObject } from '../../../../../types';
+import { DomainObject } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
-import { useTranslation } from '../../../../../intl';
+import { useTranslation } from '@common/intl';
 
 export const getLineLabelColumn = <
   T extends DomainObject

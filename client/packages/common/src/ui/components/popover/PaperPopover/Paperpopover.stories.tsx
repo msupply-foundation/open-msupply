@@ -4,7 +4,7 @@ import { PaperPopover } from './PaperPopover';
 import { PaperPopoverSection } from '../../../components/popover';
 import { Box } from '@mui/system';
 import { Typography } from '@mui/material';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 
 export default {
   title: 'Popover/PaperPopover',

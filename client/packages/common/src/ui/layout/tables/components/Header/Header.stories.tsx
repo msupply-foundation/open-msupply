@@ -4,7 +4,7 @@ import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useSortBy } from '../../../../../hooks/useSortBy';
 import { useColumns } from '../../hooks';
-import { Item } from '../../../../../types';
+import { Item } from '@common/types';
 
 export default {
   title: 'Table/HeaderRow',

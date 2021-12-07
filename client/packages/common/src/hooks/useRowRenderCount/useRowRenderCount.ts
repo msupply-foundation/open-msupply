@@ -1,4 +1,4 @@
-import { useTheme } from '../../styles';
+import { useTheme } from '@common/styles';
 import { useWindowDimensions } from '../useWindowDimensions';
 import { useAppBarRectStore } from '../useAppBarRect';
 

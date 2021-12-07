@@ -1,4 +1,4 @@
-import { DomainObject } from './../../types/index';
+import { DomainObject } from '@common/types';
 import { SortRule, SortBy } from './../useSortBy';
 import { UseMutateAsyncFunction } from 'react-query';
 import { useQueryClient, useMutation, useQuery } from 'react-query';

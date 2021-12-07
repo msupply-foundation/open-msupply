@@ -70,7 +70,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             Input={
               <DatePickerInput
                 disabled={!isStocktakeEditable(draft)}
-                value={draft.stocktakeDate}
+                value={draft.stocktakeDatetime}
                 onChange={newDate => {
                   draft.updateStocktakeDatetime(newDate);
                 }}

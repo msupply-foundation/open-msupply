@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { DomainObject } from '../../../../types';
+import { DomainObject } from '@common/types';
 import { Checkbox } from '../../../components/inputs/Checkbox';
 import { useTableStore, TableStore } from '../context';
 import { ColumnAlign, ColumnDefinition, GenericColumnKey } from './types';

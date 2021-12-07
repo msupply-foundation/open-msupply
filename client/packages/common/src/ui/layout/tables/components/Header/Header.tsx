@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '../../../../icons';
-import { DomainObject } from '../../../../../types';
+import { DomainObject } from '@common/types';
 import { useDebounceCallback } from '../../../../../hooks';
 
 export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (

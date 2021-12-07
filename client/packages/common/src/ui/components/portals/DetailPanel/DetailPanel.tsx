@@ -10,7 +10,7 @@ import {
   Portal,
 } from '@mui/material';
 import { useDetailPanelStore, useHostContext } from '../../../../hooks';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 import { FlatButton } from '../../buttons';
 import { CloseIcon } from '../../../icons';
 import { Divider } from '../../divider/Divider';

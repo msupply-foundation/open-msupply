@@ -1,5 +1,5 @@
 import { DependencyList, useMemo } from 'react';
-import { DomainObject } from '../../../../../types';
+import { DomainObject } from '@common/types';
 import {
   ColumnDataAccessor,
   ColumnDefinition,
@@ -7,7 +7,7 @@ import {
   ColumnAlign,
   Column,
 } from '../../columns/types';
-import { useFormatDate, useFormatNumber } from '../../../../../intl';
+import { useFormatDate, useFormatNumber } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
 import { getDateOrNull } from '../../../../../utils';
 import { SortBy } from '../../../../../hooks';
