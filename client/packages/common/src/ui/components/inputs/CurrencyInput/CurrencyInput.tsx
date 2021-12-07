@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from 'react';
-import { styled } from '../../../../styles';
+import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';

@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import Fade from '@mui/material/Fade';
 import Popper, { PopperProps } from '@mui/material/Popper';
-import { useAppTheme } from '../../../../styles';
+import { useAppTheme } from '@common/styles';
 
 export interface BasePopoverProps extends Omit<PopperProps, 'open'> {
   isOpen: boolean;

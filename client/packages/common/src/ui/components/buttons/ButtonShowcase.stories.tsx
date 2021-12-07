@@ -2,13 +2,13 @@ import React, { FC, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 import { FlatButton } from './FlatButton';
-import { BookIcon, TruckIcon } from '../../icons';
+import { BookIcon, TruckIcon } from '@common/icons';
 import { BaseButton, ButtonWithIcon } from '.';
 import { DialogButton, IconButton } from '../buttons';
 import { Color } from '../menus';
 import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
-import { useTranslation } from '../../../intl';
+import { useTranslation } from '@common/intl';
 import { StoryProvider } from '../../../utils/testing';
 
 const getOnClick = (someText: string) => () => {

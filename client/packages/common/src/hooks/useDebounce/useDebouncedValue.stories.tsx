@@ -4,7 +4,7 @@ import { useDebouncedValue } from './useDebouncedValue';
 import { TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { useDebounceCallback } from '.';
-import { BaseButton } from '../../ui/components/buttons';
+import { BaseButton } from '@common/components';
 
 export default {
   title: 'Hooks/useDebounce',

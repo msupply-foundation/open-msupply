@@ -25,7 +25,7 @@ const linesGuard = (
   stocktakeLines: StocktakeLineConnector | ConnectorError
 ): StocktakeLineNode[] => {
   if (stocktakeLines.__typename === 'StocktakeLineConnector') {
-    return stocktakeLines.nodes;
+    return stocktakeLines.nodes ?? [];
   }
 
   if (stocktakeLines.__typename === 'ConnectorError') {
@@ -93,7 +93,6 @@ export const getStocktakeDetailViewApi = (
         ? new Date(stocktake.stocktakeDatetime)
         : null,
       entryDatetime: new Date(stocktake.entryDatetime),
-
       lines,
     };
   },

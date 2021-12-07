@@ -7,8 +7,8 @@ import {
   styled,
   Typography,
 } from '@mui/material';
-import { Divider } from '../../components/divider/Divider';
-import { ChevronDownIcon } from '../../icons';
+import { Divider } from '@common/components';
+import { ChevronDownIcon } from '@common/icons';
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({
   backgroundColor: theme.palette.background.menu,

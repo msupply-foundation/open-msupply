@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { FlatButton } from './FlatButton';
-import { BookIcon } from '../../icons';
+import { BookIcon } from '@common/icons';
 
 const Template: ComponentStory<typeof FlatButton> = args => (
   <Box>

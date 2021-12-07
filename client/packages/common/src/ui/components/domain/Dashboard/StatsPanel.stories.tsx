@@ -2,7 +2,7 @@ import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { StatsPanel, Stat } from './StatsPanel';
 import { Box } from '@mui/material';
-import { useTranslation } from '../../../../intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 
 const Template: ComponentStory<typeof StatsPanel> = () => {
   const [isLoading, setIsLoading] = React.useState(true);

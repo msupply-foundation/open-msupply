@@ -1,6 +1,6 @@
 import React, { FC, ReactNode } from 'react';
 import { TestingProvider } from '../../utils/testing';
-import { useTheme } from '../../styles';
+import { useTheme } from '@common/styles';
 import { renderHook } from '@testing-library/react-hooks';
 import { useQueryParams } from './useQueryParams';
 

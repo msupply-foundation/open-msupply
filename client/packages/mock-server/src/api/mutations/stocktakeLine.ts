@@ -5,7 +5,7 @@ import {
   InsertStocktakeLineInput,
   DeleteStocktakeLineInput,
   DeleteResponse,
-} from './../../../../common/src/types/schema';
+} from '@openmsupply-client/common/src/types';
 import { db } from './../../data/database';
 
 export const StocktakeLineMutation = {

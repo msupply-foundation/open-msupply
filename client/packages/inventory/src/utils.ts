@@ -1,4 +1,4 @@
-import { useTranslation } from './../../common/src/intl/intlHelpers';
+import { useTranslation } from '@common/intl';
 import { StocktakeNodeStatus } from '@openmsupply-client/common';
 import { StocktakeItem, StocktakeLine, StocktakeController } from './types';
 
@@ -20,6 +20,15 @@ export const placeholderStocktake: StocktakeController = {
     throw new Error("Placeholder updater triggered - this shouldn't happen!");
   },
   updateOnHold: () => {
+    throw new Error("Placeholder updater triggered - this shouldn't happen!");
+  },
+  updateStatus: () => {
+    throw new Error("Placeholder updater triggered - this shouldn't happen!");
+  },
+  sortBy: () => {
+    throw new Error("Placeholder updater triggered - this shouldn't happen!");
+  },
+  upsertItem: () => {
     throw new Error("Placeholder updater triggered - this shouldn't happen!");
   },
 };

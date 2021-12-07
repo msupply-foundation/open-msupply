@@ -5,7 +5,7 @@ import { render, waitFor } from '@testing-library/react';
 import { request, gql } from 'graphql-request';
 import { Test, DomainObject } from '../../types';
 import { ListApi, useListData } from './useListData';
-import { ErrorBoundary } from '../../ui/components/errors';
+import { ErrorBoundary } from '@common/components';
 import { TestingProvider } from '../../utils/testing';
 
 interface TestType extends Test, DomainObject {}

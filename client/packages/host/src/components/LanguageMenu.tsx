@@ -7,7 +7,7 @@ import {
   useI18N,
   useTranslation,
 } from '@openmsupply-client/common';
-import { SupportedLocales } from '@openmsupply-client/common/src/intl/intlHelpers';
+import { SupportedLocales } from '@common/intl';
 import { useNavigate } from 'react-router';
 
 interface LanguageMenuItemProps {

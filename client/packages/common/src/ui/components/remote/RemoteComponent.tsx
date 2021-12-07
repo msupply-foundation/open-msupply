@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { useRemoteScript } from '../../../hooks/useRemoteScript';
+import { useRemoteScript } from '@common/hooks';
 import { loadAndInjectDeps } from '../../../hooks/useRemoteFn';
 
 interface RemoteComponentProps {

@@ -13,7 +13,7 @@ const Template: Story = () => {
 
   return (
     <ItemSearchInput
-      currentItem={selectedItem}
+      currentItem={selectedItem ?? undefined}
       onChange={item => {
         setSelectedItem(item);
       }}

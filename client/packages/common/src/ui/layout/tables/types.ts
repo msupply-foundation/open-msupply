@@ -1,7 +1,6 @@
 import { ReactNode, FC } from 'react';
-import { DomainObject } from './../../../types';
-import { Pagination } from '../../../hooks/usePagination';
-import { SortRule } from '../../../hooks/useSortBy';
+import { DomainObject } from '@common/types';
+import { Pagination, SortRule } from '@common/hooks';
 import { Column } from './columns/types';
 
 export interface QueryProps<D> {
