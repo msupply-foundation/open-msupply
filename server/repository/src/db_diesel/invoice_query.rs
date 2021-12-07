@@ -14,13 +14,14 @@ use crate::{
     },
     RepositoryError,
 };
+use chrono::NaiveDateTime;
 use domain::{
     invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus, InvoiceType},
-    Pagination,
+    DatetimeFilter, Pagination,
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{count, InnerJoin, IntoBoxed},
     prelude::*,
 };
 
@@ -142,6 +143,38 @@ impl<'a> InvoiceQueryRepository<'a> {
             .inner_join(name_dsl::name_table)
             .inner_join(store_dsl::store)
             .first::<InvoiceQueryJoin>(&self.connection.connection)?)
+    }
+
+    /// Count created invoices in a given timespan. If earliest is not specified the time range
+    /// [now, oldest] is used.
+    pub fn created_invoices_count(
+        &self,
+        invoice_type: InvoiceType,
+        oldest: NaiveDateTime,
+        earliest: Option<NaiveDateTime>,
+    ) -> Result<i64, RepositoryError> {
+        let mut creation_datetime_filter = DatetimeFilter {
+            equal_to: None,
+            before_or_equal_to: None,
+            after_or_equal_to: Some(oldest),
+        };
+        if let Some(earliest) = earliest {
+            creation_datetime_filter.before_or_equal_to = Some(earliest);
+        }
+
+        let invoice_row_type: InvoiceRowType = invoice_type.into();
+        let mut query = invoice_dsl::invoice
+            .select(count(invoice_dsl::id))
+            .filter(invoice_dsl::type_.eq(invoice_row_type))
+            .into_boxed();
+        apply_date_time_filter!(
+            query,
+            Some(creation_datetime_filter),
+            invoice_dsl::entry_datetime
+        );
+
+        let count = query.first::<i64>(&self.connection.connection).optional()?;
+        Ok(count.unwrap_or(0))
     }
 }
 
