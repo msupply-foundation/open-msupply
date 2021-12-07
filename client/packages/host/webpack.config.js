@@ -77,7 +77,7 @@ module.exports = env => {
          * In "json" mode single JSON file with bundle report will be generated
          */
         analyzerMode: 'disabled',
-        generateStatsFile: true,
+        generateStatsFile: isProduction,
       }),
 
       new HtmlWebpackPlugin({
