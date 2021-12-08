@@ -2,8 +2,8 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        outbound_shipment::CannotChangeStatusOfInvoiceOnHold, tax_update_input::TaxUpdate,
-        CannotChangeInvoiceBackToDraft, CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotChangeInvoiceBackToDraft,
+        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
     types::{
@@ -11,10 +11,7 @@ use crate::schema::{
         InvoiceResponse, NameNode, NodeError, RecordNotFound,
     },
 };
-use domain::{
-    inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus,
-    shipment_tax_update::ShipmentTaxUpdate,
-};
+use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
 use repository::StorageConnectionManager;
 use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError};
 
@@ -29,9 +26,6 @@ pub struct UpdateInboundShipmentInput {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub color: Option<String>,
-    pub total_before_tax: Option<f64>,
-    pub total_after_tax: Option<f64>,
-    pub tax: Option<TaxUpdate>,
 }
 
 #[derive(Union)]
@@ -79,9 +73,6 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             comment,
             their_reference,
             color,
-            total_before_tax,
-            total_after_tax,
-            tax,
         }: UpdateInboundShipmentInput,
     ) -> Self {
         UpdateInboundShipment {
@@ -92,11 +83,6 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             comment,
             their_reference,
             color,
-            total_before_tax,
-            total_after_tax,
-            tax: tax.map(|tax| ShipmentTaxUpdate {
-                percentage: tax.percentage,
-            }),
         }
     }
 }
