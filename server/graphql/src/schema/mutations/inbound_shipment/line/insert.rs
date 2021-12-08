@@ -3,8 +3,8 @@ use chrono::NaiveDate;
 
 use crate::schema::{
     mutations::{
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, RecordAlreadyExist,
+        CannotEditInvoice, ForeignKey, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
+        NotAnInboundShipment, RecordAlreadyExist,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
@@ -27,6 +27,9 @@ pub struct InsertInboundShipmentLineInput {
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: u32,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
 }
 
 #[derive(Union)]
@@ -57,7 +60,7 @@ pub enum InsertInboundShipmentLineErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
     RangeError(RangeError),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
 }
@@ -75,6 +78,9 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }: InsertInboundShipmentLineInput,
     ) -> Self {
         InsertInboundShipmentLine {
@@ -88,6 +94,9 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }
     }
 }
@@ -112,7 +121,7 @@ impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse 
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             InsertInboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             InsertInboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

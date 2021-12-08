@@ -3,9 +3,12 @@ use chrono::NaiveDateTime;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum InvoiceStatus {
-    Draft,
-    Confirmed,
-    Finalised,
+    New,
+    Allocated,
+    Picked,
+    Shipped,
+    Delivered,
+    Verified,
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum InvoiceType {
@@ -24,9 +27,12 @@ pub struct Invoice {
     pub invoice_number: i32,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub entry_datetime: NaiveDateTime,
-    pub confirm_datetime: Option<NaiveDateTime>,
-    pub finalised_datetime: Option<NaiveDateTime>,
+    pub created_datetime: NaiveDateTime,
+    pub allocated_datetime: Option<NaiveDateTime>,
+    pub picked_datetime: Option<NaiveDateTime>,
+    pub shipped_datetime: Option<NaiveDateTime>,
+    pub delivered_datetime: Option<NaiveDateTime>,
+    pub verified_datetime: Option<NaiveDateTime>,
     pub color: Option<String>,
 }
 #[derive(Clone)]
@@ -39,9 +45,12 @@ pub struct InvoiceFilter {
     pub status: Option<EqualFilter<InvoiceStatus>>,
     pub comment: Option<SimpleStringFilter>,
     pub their_reference: Option<EqualFilter<String>>,
-    pub entry_datetime: Option<DatetimeFilter>,
-    pub confirm_datetime: Option<DatetimeFilter>,
-    pub finalised_datetime: Option<DatetimeFilter>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub allocated_datetime: Option<DatetimeFilter>,
+    pub picked_datetime: Option<DatetimeFilter>,
+    pub shipped_datetime: Option<DatetimeFilter>,
+    pub delivered_datetime: Option<DatetimeFilter>,
+    pub verified_datetime: Option<DatetimeFilter>,
 }
 
 impl InvoiceFilter {
@@ -55,9 +64,12 @@ impl InvoiceFilter {
             status: None,
             comment: None,
             their_reference: None,
-            entry_datetime: None,
-            confirm_datetime: None,
-            finalised_datetime: None,
+            created_datetime: None,
+            allocated_datetime: None,
+            picked_datetime: None,
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
         }
     }
 
@@ -76,18 +88,33 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn entry_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.entry_datetime = Some(filter);
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
         self
     }
 
-    pub fn confirm_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.confirm_datetime = Some(filter);
+    pub fn allocated_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.allocated_datetime = Some(filter);
         self
     }
 
-    pub fn finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.finalised_datetime = Some(filter);
+    pub fn picked_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.picked_datetime = Some(filter);
+        self
+    }
+
+    pub fn shipped_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.shipped_datetime = Some(filter);
+        self
+    }
+
+    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_datetime = Some(filter);
+        self
+    }
+
+    pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.verified_datetime = Some(filter);
         self
     }
 }
@@ -98,9 +125,12 @@ pub enum InvoiceSortField {
     InvoiceNumber,
     Comment,
     Status,
-    EntryDatetime,
-    ConfirmDatetime,
-    FinalisedDateTime,
+    CreatedDatetime,
+    AllocatedDatetime,
+    PickedDatetime,
+    ShippedDatetime,
+    DeliveredDatetime,
+    VerifiedDatetime,
 }
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
@@ -158,6 +188,19 @@ impl InvoiceType {
             equal_to: None,
             not_equal_to: None,
             equal_any: Some(value),
+        }
+    }
+}
+
+impl InvoiceStatus {
+    pub fn index(&self) -> u8 {
+        match self {
+            InvoiceStatus::New => 1,
+            InvoiceStatus::Allocated => 2,
+            InvoiceStatus::Picked => 3,
+            InvoiceStatus::Shipped => 4,
+            InvoiceStatus::Delivered => 5,
+            InvoiceStatus::Verified => 6,
         }
     }
 }

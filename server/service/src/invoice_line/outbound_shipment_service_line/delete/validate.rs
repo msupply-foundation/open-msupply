@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
-        validate::InvoiceIsFinalised, InvoiceDoesNotExist, WrongInvoiceType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type,
+        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceType,
     },
     invoice_line::validate::{
         check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
@@ -30,7 +30,7 @@ pub fn validate(
 
     check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_is_not_finalised(&invoice)?;
+    check_invoice_is_editable(&invoice)?;
 
     Ok(line)
 }
@@ -53,8 +53,8 @@ impl From<WrongInvoiceType> for DeleteOutboundShipmentServiceLineError {
     }
 }
 
-impl From<InvoiceIsFinalised> for DeleteOutboundShipmentServiceLineError {
-    fn from(_: InvoiceIsFinalised) -> Self {
+impl From<InvoiceIsNotEditable> for DeleteOutboundShipmentServiceLineError {
+    fn from(_: InvoiceIsNotEditable) -> Self {
         DeleteOutboundShipmentServiceLineError::CannotEditFinalised
     }
 }

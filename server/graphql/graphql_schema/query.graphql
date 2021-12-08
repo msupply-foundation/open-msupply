@@ -5,7 +5,6 @@
 mutation insertInboundShipmentFull(
   $id: String!
   $otherPartyId: String!
-  $status: InvoiceNodeStatus!
   $on_hold_option: Boolean
   $comment_option: String
   $theirReference_option: String
@@ -15,7 +14,6 @@ mutation insertInboundShipmentFull(
     input: {
       id: $id
       otherPartyId: $otherPartyId
-      status: $status
       onHold: $on_hold_option
       theirReference: $theirReference_option
       comment: $comment_option
@@ -52,7 +50,7 @@ fragment InsertInboundShipmentErrorInterface on InsertInboundShipmentErrorInterf
 mutation updateInboundShipmentFull(
   $id: String!
   $otherPartyId_option: String
-  $status_option: InvoiceNodeStatus
+  $update_inbound_status_option: UpdateInboundShipmentStatusInput
   $on_hold_option: Boolean
   $comment_option: String
   $theirReference_option: String
@@ -62,7 +60,7 @@ mutation updateInboundShipmentFull(
     input: {
       id: $id
       otherPartyId: $otherPartyId_option
-      status: $status_option
+      status: $update_inbound_status_option
       onHold: $on_hold_option
       theirReference: $theirReference_option
       comment: $comment_option
@@ -92,10 +90,10 @@ fragment UpdateInboundShipmentErrorInterface on UpdateInboundShipmentErrorInterf
   ...ForeignKeyError
   ...OtherPartyNotASupplier
   ...RecordNotFound
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...NotAnInboundShipment
   ...InvoiceDoesNotBelongToCurrentStore
-  ...CannotChangeInvoiceBackToDraft
+  ...CannotReverseInvoiceStatus
   ...CannotChangeStatusOfInvoiceOnHold
 }
 
@@ -123,7 +121,7 @@ fragment DeleteInboundShipmentErrorInterface on DeleteInboundShipmentErrorInterf
   __typename
   ...DatabaseError
   ...RecordNotFound
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...NotAnInboundShipment
   ...InvoiceDoesNotBelongToCurrentStore
   ...CannotDeleteInvoiceWithLines
@@ -142,6 +140,8 @@ mutation insertInboundShipmentLineFull(
   $numberOfPacks: Int!
   $sellPricePerPack: Float!
   $packSize: Int!
+  $total_before_tax: Float!
+  $total_after_tax: Float!
 ) {
   insertInboundShipmentLine(
     input: {
@@ -156,6 +156,8 @@ mutation insertInboundShipmentLineFull(
       expiryDate: $expiryDate_option
       batch: $batch_option
       packSize: $packSize
+      totalBeforeTax: $total_before_tax
+      totalAfterTax: $total_after_tax
     }
   ) {
     ...InsertInboundShipmentLineResponse
@@ -177,7 +179,7 @@ fragment InsertInboundShipmentLineError on InsertInboundShipmentLineError {
 
 fragment InsertInboundShipmentLineErrorInterface on InsertInboundShipmentLineErrorInterface {
   __typename
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
@@ -234,7 +236,7 @@ fragment UpdateInboundShipmentLineError on UpdateInboundShipmentLineError {
 
 fragment UpdateInboundShipmentLineErrorInterface on UpdateInboundShipmentLineErrorInterface {
   __typename
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
@@ -282,7 +284,7 @@ fragment UpdateOutboundShipmentLineError on UpdateOutboundShipmentLineError {
 
 fragment UpdateOutboundShipmentLineErrorInterface on UpdateOutboundShipmentLineErrorInterface {
   __typename
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
@@ -307,6 +309,8 @@ mutation insertOutboundShipmentLineFull(
   $itemId: String!
   $numberOfPacks: Int!
   $stockLineId: String!
+  $total_before_tax: Float!
+  $total_after_tax: Float!
 ) {
   insertOutboundShipmentLine(
     input: {
@@ -315,6 +319,8 @@ mutation insertOutboundShipmentLineFull(
       itemId: $itemId
       numberOfPacks: $numberOfPacks
       stockLineId: $stockLineId
+      totalBeforeTax: $total_before_tax
+      totalAfterTax: $total_after_tax
     }
   ) {
     ...InsertOutboundShipmentLineResponse
@@ -336,7 +342,7 @@ fragment InsertOutboundShipmentLineError on InsertOutboundShipmentLineError {
 
 fragment InsertOutboundShipmentLineErrorInterface on InsertOutboundShipmentLineErrorInterface {
   __typename
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
@@ -373,7 +379,7 @@ fragment DeleteInboundShipmentLineError on DeleteInboundShipmentLineError {
 
 fragment DeleteInboundShipmentLineErrorInterface on DeleteInboundShipmentLineErrorInterface {
   __typename
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
@@ -405,7 +411,7 @@ fragment DeleteOutboundShipmentLineError on DeleteOutboundShipmentLineError {
 
 fragment DeleteOutboundShipmentLineErrorInterface on DeleteOutboundShipmentLineErrorInterface {
   __typename
-  ...CannotEditFinalisedInvoice
+  ...CannotEditInvoice
   ...DatabaseError
   ...ForeignKeyError
   ...InvoiceDoesNotBelongToCurrentStore
@@ -430,9 +436,12 @@ fragment InvoiceResponse on InvoiceResponse {
 
 fragment InvoiceNode on InvoiceNode {
   comment
-  confirmedDatetime
-  entryDatetime
-  finalisedDatetime
+  createdDatetime
+  allocatedDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
   id
   invoiceNumber
   lines {
@@ -602,7 +611,7 @@ fragment ConnectorErrorInterface on ConnectorErrorInterface {
   ...PaginationError
 }
 
-fragment CannotEditFinalisedInvoice on CannotEditFinalisedInvoice {
+fragment CannotEditInvoice on CannotEditInvoice {
   description
 }
 
@@ -622,7 +631,7 @@ fragment CannotChangeStatusOfInvoiceOnHold on CannotChangeStatusOfInvoiceOnHold 
   description
 }
 
-fragment CannotChangeInvoiceBackToDraft on CannotChangeInvoiceBackToDraft {
+fragment CannotReverseInvoiceStatus on CannotReverseInvoiceStatus {
   description
 }
 

@@ -188,15 +188,18 @@ mod repository_test {
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceRowType::InboundShipment,
-                status: InvoiceRowStatus::Draft,
+                status: InvoiceRowStatus::New,
                 on_hold: false,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
                 // Note: keep nsecs small enough for Postgres which has limited precision.
-                entry_datetime: NaiveDateTime::from_timestamp(1000, 0),
-                confirm_datetime: Some(NaiveDateTime::from_timestamp(1001, 0)),
-                finalised_datetime: Some(NaiveDateTime::from_timestamp(1002, 0)),
+                created_datetime: NaiveDateTime::from_timestamp(1000, 0),
                 color: None,
+                allocated_datetime: None,
+                picked_datetime: None,
+                shipped_datetime: None,
+                delivered_datetime: None,
+                verified_datetime: None,
             }
         }
 
@@ -207,14 +210,17 @@ mod repository_test {
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceRowType::OutboundShipment,
-                status: InvoiceRowStatus::Draft,
+                status: InvoiceRowStatus::New,
                 on_hold: false,
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
-                entry_datetime: NaiveDateTime::from_timestamp(2000, 0),
-                confirm_datetime: Some(NaiveDateTime::from_timestamp(2001, 0)),
-                finalised_datetime: Some(NaiveDateTime::from_timestamp(2002, 0)),
+                created_datetime: NaiveDateTime::from_timestamp(2000, 0),
                 color: None,
+                allocated_datetime: None,
+                picked_datetime: None,
+                shipped_datetime: None,
+                delivered_datetime: None,
+                verified_datetime: None,
             }
         }
 
@@ -231,7 +237,9 @@ mod repository_test {
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
+                total_before_tax: 1.0,
                 total_after_tax: 1.0,
+                tax: None,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -250,7 +258,9 @@ mod repository_test {
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
+                total_before_tax: 2.0,
                 total_after_tax: 2.0,
+                tax: None,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -270,7 +280,9 @@ mod repository_test {
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
+                total_before_tax: 3.0,
                 total_after_tax: 3.0,
+                tax: None,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -865,6 +877,15 @@ mod repository_test {
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 
+        let name_1 = data::name_1();
+        NameRepository::new(&connection)
+            .upsert_one(&name_1)
+            .unwrap();
+        let store_1 = data::store_1();
+        StoreRepository::new(&connection)
+            .upsert_one(&store_1)
+            .unwrap();
+
         let test_counter = "test_counter_name";
         let repo = NumberRowRepository::new(&connection);
         matches!(
@@ -872,11 +893,11 @@ mod repository_test {
             Err(RepositoryError::NotFound)
         );
 
-        let row = repo.increment(test_counter).unwrap();
+        let row = repo.increment(test_counter, &store_1.id).unwrap();
         assert_eq!(1, row.value);
         let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(1, row.value);
-        let row = repo.increment(test_counter).unwrap();
+        let row = repo.increment(test_counter, &store_1.id).unwrap();
         assert_eq!(2, row.value);
         let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(2, row.value);

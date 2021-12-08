@@ -23,9 +23,16 @@ pub fn generate(
         invoice_id: input.invoice_id,
         item_id: input.item_id.unwrap_or(existing_line.item_id),
         item_name,
+        total_before_tax: input
+            .total_after_tax
+            .unwrap_or(existing_line.total_before_tax),
         total_after_tax: input
             .total_after_tax
             .unwrap_or(existing_line.total_after_tax),
+        tax: input
+            .tax
+            .map(|update_tax| update_tax.percentage)
+            .unwrap_or(existing_line.tax),
         note: input.note.or(existing_line.note),
 
         // keep stock related fields
@@ -68,7 +75,9 @@ mod outbound_shipment_service_line_update_test {
                 invoice_id: "".to_string(),
                 item_id: None,
                 name: None,
+                total_before_tax: None,
                 total_after_tax: None,
+                tax: None,
                 note: None,
             },
             line.clone(),
@@ -84,7 +93,9 @@ mod outbound_shipment_service_line_update_test {
                 invoice_id: "".to_string(),
                 item_id: None,
                 name: Some("input name".to_string()),
+                total_before_tax: None,
                 total_after_tax: None,
+                tax: None,
                 note: None,
             },
             line.clone(),
@@ -100,7 +111,9 @@ mod outbound_shipment_service_line_update_test {
                 invoice_id: "".to_string(),
                 item_id: Some(item2.id.to_owned()),
                 name: Some("input name 2".to_string()),
+                total_before_tax: None,
                 total_after_tax: None,
+                tax: None,
                 note: None,
             },
             line.clone(),
@@ -116,7 +129,9 @@ mod outbound_shipment_service_line_update_test {
                 invoice_id: "".to_string(),
                 item_id: Some(item2.id.to_owned()),
                 name: None,
+                total_before_tax: None,
                 total_after_tax: None,
+                tax: None,
                 note: None,
             },
             line.clone(),

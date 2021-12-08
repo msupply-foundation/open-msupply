@@ -2,16 +2,16 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotChangeInvoiceBackToDraft,
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotEditInvoice,
+        CannotReverseInvoiceStatus, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
     types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus,
-        InvoiceResponse, NameNode, NodeError, RecordNotFound,
+        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceResponse, NameNode,
+        NodeError, RecordNotFound,
     },
 };
-use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
+use domain::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus};
 use repository::StorageConnectionManager;
 use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError};
 
@@ -21,11 +21,27 @@ use super::OtherPartyNotASupplier;
 pub struct UpdateInboundShipmentInput {
     pub id: String,
     pub other_party_id: Option<String>,
-    pub status: Option<InvoiceNodeStatus>,
+    pub status: Option<UpdateInboundShipmentStatusInput>,
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub color: Option<String>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateInboundShipmentStatusInput {
+    Delivered,
+    Verified,
+}
+
+impl UpdateInboundShipmentStatusInput {
+    pub fn to_domain(&self) -> UpdateInboundShipmentStatus {
+        use UpdateInboundShipmentStatus::*;
+        match self {
+            UpdateInboundShipmentStatusInput::Delivered => Delivered,
+            UpdateInboundShipmentStatusInput::Verified => Verified,
+        }
+    }
 }
 
 #[derive(Union)]
@@ -56,10 +72,10 @@ pub enum UpdateInboundShipmentErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
-    CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft),
+    CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
 }
 
@@ -78,7 +94,7 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
         UpdateInboundShipment {
             id,
             other_party_id,
-            status: status.map(InvoiceStatus::from),
+            status: status.map(|status| status.to_domain()),
             on_hold,
             comment,
             their_reference,
@@ -109,11 +125,11 @@ impl From<UpdateInboundShipmentError> for UpdateInboundShipmentResponse {
             UpdateInboundShipmentError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
-            UpdateInboundShipmentError::CannotChangeInvoiceBackToDraft => {
-                OutError::CannotChangeInvoiceBackToDraft(CannotChangeInvoiceBackToDraft {})
+            UpdateInboundShipmentError::CannotReverseInvoiceStatus => {
+                OutError::CannotReverseInvoiceStatus(CannotReverseInvoiceStatus {})
             }
             UpdateInboundShipmentError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             UpdateInboundShipmentError::CannotChangeStatusOfInvoiceOnHold => {
                 OutError::CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold {})

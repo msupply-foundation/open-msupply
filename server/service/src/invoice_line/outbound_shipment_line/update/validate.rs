@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_not_finalised, check_invoice_type,
-        InvoiceDoesNotExist, InvoiceIsFinalised, WrongInvoiceType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
+        InvoiceIsNotEditable, WrongInvoiceType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -40,7 +40,7 @@ pub fn validate(
 
     check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
-    check_invoice_is_not_finalised(&invoice)?;
+    check_invoice_is_editable(&invoice)?;
 
     check_number_of_packs(input.number_of_packs.clone())?;
     let batch_pair = check_batch_exists_option(&input, &line, connection)?;
@@ -182,8 +182,8 @@ impl From<WrongInvoiceType> for UpdateOutboundShipmentLineError {
     }
 }
 
-impl From<InvoiceIsFinalised> for UpdateOutboundShipmentLineError {
-    fn from(_: InvoiceIsFinalised) -> Self {
+impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentLineError {
+    fn from(_: InvoiceIsNotEditable) -> Self {
         UpdateOutboundShipmentLineError::CannotEditFinalised
     }
 }
