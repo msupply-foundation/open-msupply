@@ -105,34 +105,6 @@ pub enum InvoiceSortField {
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
 
-#[derive(Clone)]
-pub struct InvoicePricing {
-    pub invoice_id: String,
-    // Total for all lines
-    pub total_before_tax: f64,
-    pub total_after_tax: f64,
-    // Total for all stock lines
-    pub stock_total_before_tax: f64,
-    pub stock_total_after_tax: f64,
-    // Total for all service lines
-    pub service_total_before_tax: f64,
-    pub service_total_after_tax: f64,
-}
-
-impl InvoicePricing {
-    pub fn new(invoice_id: &str) -> Self {
-        InvoicePricing {
-            invoice_id: invoice_id.to_string(),
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
-            stock_total_before_tax: 0.0,
-            stock_total_after_tax: 0.0,
-            service_total_before_tax: 0.0,
-            service_total_after_tax: 0.0,
-        }
-    }
-}
-
 impl InvoiceStatus {
     pub fn equal_to(&self) -> EqualFilter<InvoiceStatus> {
         EqualFilter {

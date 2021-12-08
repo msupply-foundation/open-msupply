@@ -1,15 +1,15 @@
 use crate::{
-    loader::{InvoiceLineQueryLoader, InvoiceLineStatsLoader, NameByIdLoader},
+    loader::{InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader},
     ContextExt,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use domain::{
-    invoice::{Invoice, InvoiceFilter, InvoicePricing},
+    invoice::{Invoice, InvoiceFilter},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
-use repository::StorageConnectionManager;
+use repository::{schema::InvoiceStatsRow, StorageConnectionManager};
 use serde::Serialize;
 use service::invoice::get_invoice;
 
@@ -162,8 +162,16 @@ impl InvoiceNode {
     }
 
     async fn pricing(&self, ctx: &Context<'_>) -> InvoicePriceResponse {
-        let loader = ctx.get_loader::<DataLoader<InvoiceLineStatsLoader>>();
-        let default = InvoicePricing::new(&self.invoice.id);
+        let loader = ctx.get_loader::<DataLoader<InvoiceStatsLoader>>();
+        let default = InvoiceStatsRow {
+            invoice_id: self.invoice.id.clone(),
+            total_before_tax: 0.0,
+            total_after_tax: 0.0,
+            stock_total_before_tax: 0.0,
+            stock_total_after_tax: 0.0,
+            service_total_before_tax: 0.0,
+            service_total_after_tax: 0.0,
+        };
 
         match loader.load_one(self.invoice.id.to_string()).await {
             Ok(result_option) => InvoicePriceResponse::Response(InvoicePricingNode {
@@ -219,7 +227,7 @@ impl From<Invoice> for InvoiceNode {
 
 // INVOICE LINE PRICING
 pub struct InvoicePricingNode {
-    invoice_pricing: InvoicePricing,
+    invoice_pricing: InvoiceStatsRow,
 }
 
 #[Object]

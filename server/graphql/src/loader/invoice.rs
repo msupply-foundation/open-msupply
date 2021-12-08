@@ -1,3 +1,5 @@
+use repository::schema::InvoiceStatsRow;
+use repository::InvoiceLineRepository;
 use repository::{
     schema::InvoiceRow, InvoiceRepository, RepositoryError, StorageConnectionManager,
 };
@@ -28,5 +30,32 @@ impl Loader<String> for InvoiceLoader {
                 (invoice_id, invoice)
             })
             .collect())
+    }
+}
+
+pub struct InvoiceStatsLoader {
+    pub connection_manager: StorageConnectionManager,
+}
+
+#[async_trait::async_trait]
+impl Loader<String> for InvoiceStatsLoader {
+    type Value = InvoiceStatsRow;
+    type Error = RepositoryError;
+
+    async fn load(
+        &self,
+        invoice_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let connection = self.connection_manager.connection()?;
+        let repo = InvoiceLineRepository::new(&connection);
+        let result = repo
+            .stats(invoice_ids)?
+            .into_iter()
+            .map(|row| {
+                let invoice_id = row.invoice_id.clone();
+                (invoice_id, row)
+            })
+            .collect();
+        Ok(result)
     }
 }
