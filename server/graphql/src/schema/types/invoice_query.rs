@@ -88,36 +88,36 @@ pub enum InvoiceNodeType {
 #[graphql(remote = "domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
-    /// Outbound Shippment: available_number_of_packs in a stock line gets
+    /// Outbound Shipment: available_number_of_packs in a stock line gets
     /// updated when items are added to the invoice.
-    /// Inbound Shippment: No stock changes in this status, only manually entered
-    /// inbound shippments have new status
+    /// Inbound Shipment: No stock changes in this status, only manually entered
+    /// inbound Shipments have new status
     New,
-    /// General description: Outbound shippment is ready for picking (all unallocated lines need to be fullfilled)
-    /// Outbound Shippment: Invoice can only be turned to allocated status when
+    /// General description: Outbound Shipment is ready for picking (all unallocated lines need to be fullfilled)
+    /// Outbound Shipment: Invoice can only be turned to allocated status when
     /// all unallocated lines are fullfilled
-    /// Inbound Shippment: not applicable
+    /// Inbound Shipment: not applicable
     Allocated,
-    /// General description: Outbound shippment was picked from shelf and ready for shippment
-    /// Outbound Shippment: available_number_of_packs and
+    /// General description: Outbound Shipment was picked from shelf and ready for Shipment
+    /// Outbound Shipment: available_number_of_packs and
     /// total_number_of_packs get updated when items are added to the invoice
-    /// Inbound Shippment: For inter store stock transfers an inbound shippment
-    /// is created when corresponding outbound shippment is picked and ready for
-    /// shippment, inbound shippment is not editable in this status
+    /// Inbound Shipment: For inter store stock transfers an inbound Shipment
+    /// is created when corresponding outbound Shipment is picked and ready for
+    /// Shipment, inbound Shipment is not editable in this status
     Picked,
-    /// General description: Outbound shippment is sent out for delivery
-    /// Outbound Shippment: Becomes not editable
-    /// Inbound Shippment: For inter store stock transfers an inbound shippment
+    /// General description: Outbound Shipment is sent out for delivery
+    /// Outbound Shipment: Becomes not editable
+    /// Inbound Shipment: For inter store stock transfers an inbound Shipment
     /// becomes editable when this status is set as a result of corresponding
-    /// outbound shippment being chagned to shipped (this is similar to New status)
+    /// outbound Shipment being chagned to shipped (this is similar to New status)
     Shipped,
-    /// General description: Inbound shippment was received
-    /// Outbound Shippment: Status is updated based on corresponding inbound shippment
-    /// Inbound Shippment: Stock is introduced and can be issued
+    /// General description: Inbound Shipment was received
+    /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
+    /// Inbound Shipment: Stock is introduced and can be issued
     Delivered,
-    /// General description: Received inbound shippment was counted and verified
-    /// Outbound Shippment: Status is updated based on corresponding inbound shippment
-    /// Inbound Shippment: Becomes not editable
+    /// General description: Received inbound Shipment was counted and verified
+    /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
+    /// Inbound Shipment: Becomes not editable
     Verified,
 }
 
