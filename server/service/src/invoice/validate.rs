@@ -25,10 +25,24 @@ pub fn check_invoice_type(
 pub struct InvoiceIsNotEditable;
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNotEditable> {
-    let status_index = InvoiceStatus::from(invoice.status.clone()).index();
+    let status = InvoiceStatus::from(invoice.status.clone());
     let is_editable = match &invoice.r#type {
-        InvoiceRowType::OutboundShipment => status_index < InvoiceStatus::Shipped.index(),
-        InvoiceRowType::InboundShipment => status_index < InvoiceStatus::Verified.index(), // TODO it's also possible for non editable status like picked or shipped
+        InvoiceRowType::OutboundShipment => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Allocated => true,
+            InvoiceStatus::Picked => true,
+            InvoiceStatus::Shipped => false,
+            InvoiceStatus::Delivered => false,
+            InvoiceStatus::Verified => false,
+        },
+        InvoiceRowType::InboundShipment => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Shipped => true,
+            InvoiceStatus::Delivered => true,
+            InvoiceStatus::Allocated => false,
+            InvoiceStatus::Picked => false,
+            InvoiceStatus::Verified => false,
+        },
     };
 
     if is_editable {
