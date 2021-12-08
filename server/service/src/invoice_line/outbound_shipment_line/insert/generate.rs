@@ -10,7 +10,7 @@ pub fn generate(
     batch: StockLineRow,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertOutboundShipmentLineError> {
-    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Confirmed;
+    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
 
     let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
     let new_line = generate_line(input, item_row, batch);

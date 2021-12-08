@@ -3,8 +3,8 @@ use async_graphql::*;
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
     types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus,
-        InvoiceResponse, NameNode, NodeError,
+        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceResponse, NameNode,
+        NodeError,
     },
 };
 use domain::inbound_shipment::InsertInboundShipment;
@@ -17,7 +17,6 @@ use super::OtherPartyNotASupplier;
 pub struct InsertInboundShipmentInput {
     pub id: String,
     pub other_party_id: String,
-    pub status: InvoiceNodeStatus,
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
@@ -59,7 +58,6 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
         InsertInboundShipmentInput {
             id,
             other_party_id,
-            status,
             on_hold,
             comment,
             their_reference,
@@ -69,7 +67,6 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
         InsertInboundShipment {
             id,
             other_party_id,
-            status: status.into(),
             on_hold,
             comment,
             their_reference,

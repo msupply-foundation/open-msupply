@@ -174,6 +174,7 @@ async fn assert_gql_query(
     expected: &serde_json::Value,
     service_provider_override: Option<ServiceProvider>,
 ) -> serde_json::Value {
+    // println!("{} {:#?}", query, variables);
     let actual = run_gql_query(settings, query, variables, service_provider_override).await;
     // println!("{}", serde_json::to_string_pretty(&actual).unwrap());
     assert_gql_no_response_error(&actual);

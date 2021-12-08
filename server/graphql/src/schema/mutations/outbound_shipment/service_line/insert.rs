@@ -2,8 +2,7 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError, NotAnOutboundShipment,
-        RecordAlreadyExist,
+        CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnOutboundShipment, RecordAlreadyExist,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InternalError, InvoiceLineNode,
@@ -86,7 +85,7 @@ pub enum InsertOutboundShipmentServiceLineErrorInterface {
     InternalError(InternalError),
     RecordAlreadyExist(RecordAlreadyExist),
     NotAnOutboundShipment(NotAnOutboundShipment),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAServiceItem(NotAServiceItem),
 }
 
@@ -107,7 +106,7 @@ impl From<InsertOutboundShipmentServiceLineError> for InsertOutboundShipmentServ
                 OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
             }
             InsertOutboundShipmentServiceLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             InsertOutboundShipmentServiceLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

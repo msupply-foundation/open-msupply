@@ -77,19 +77,19 @@ mod graphql {
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Draft.equal_to()),
+                .status(InvoiceStatus::New.equal_to()),
             &connection
         );
-        let confirmed_inbound_shipment = get_invoice_inline!(
+        let delivered_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Confirmed.equal_to()),
+                .status(InvoiceStatus::Delivered.equal_to()),
             &connection
         );
-        let finalised_inbound_shipment = get_invoice_inline!(
+        let verified_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Finalised.equal_to()),
+                .status(InvoiceStatus::Verified.equal_to()),
             &connection
         );
         let outbound_shipment = get_invoice_inline!(
@@ -156,17 +156,17 @@ mod graphql {
                 key: insert::ForeignKey::InvoiceId,
             })
         );
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = finalised_inbound_shipment.id.clone();
+        variables.invoice_id = verified_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(insert::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(insert::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 
@@ -245,11 +245,11 @@ mod graphql {
 
         assert_eq!(new_line, variables);
 
-        // Success Confirmed
+        // Success Delivered
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -269,13 +269,13 @@ mod graphql {
         assert_eq!(new_line, variables);
         assert_eq!(new_stock_line, variables);
 
-        // Success Confirmed
+        // Success Delivered
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
         variables.expiry_date_option = None;
         variables.batch_option = None;
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -295,11 +295,11 @@ mod graphql {
         assert_eq!(new_line, variables);
         assert_eq!(new_stock_line, variables);
 
-        // Success Confirmed check Item
+        // Success Delivered check Item
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
