@@ -36,6 +36,13 @@ export const DataTable = <T extends DomainObject>({
     if (data.length) setActiveRows(data.map(({ id }) => id as string));
   }, [data]);
 
+  // guard against a page number being set which is greater than the data allows
+  useEffect(() => {
+    if (!pagination || !onChangePage || !pagination.total) return;
+    const { page, first, total } = pagination;
+    if (page * first > total) onChangePage(0);
+  }, [pagination]);
+
   if (isLoading)
     return (
       <Box
