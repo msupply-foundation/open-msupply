@@ -73,6 +73,16 @@ mod repository_test {
             }
         }
 
+        pub fn item_service_1() -> ItemRow {
+            ItemRow {
+                id: "item_service_1".to_string(),
+                name: "item_service_name_1".to_string(),
+                code: "item_service_code_1".to_string(),
+                unit_id: None,
+                r#type: ItemType::Service,
+            }
+        }
+
         pub fn stock_line_1() -> StockLineRow {
             StockLineRow {
                 id: "StockLine1".to_string(),
@@ -289,6 +299,28 @@ mod repository_test {
             }
         }
 
+        pub fn invoice_line_service() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test_service_item".to_string(),
+                item_id: item_service_1().id.to_string(),
+                item_name: item_service_1().name.to_string(),
+                item_code: item_service_1().code.to_string(),
+                invoice_id: invoice_1().id.to_string(),
+                stock_line_id: None,
+                batch: Some("".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd(2021, 12, 6)),
+                pack_size: 1,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 10.0,
+                total_after_tax: 15.0,
+                tax: None,
+                number_of_packs: 1,
+                note: None,
+                location_id: None,
+            }
+        }
+
         pub fn user_account_1() -> UserAccountRow {
             UserAccountRow {
                 id: "user1".to_string(),
@@ -327,12 +359,12 @@ mod repository_test {
     }
 
     use crate::{
-        database_settings::get_storage_connection_manager, test_db, CentralSyncBufferRepository,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, ItemRepository,
-        MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
-        NameQueryRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
-        RepositoryError, RequisitionLineRepository, RequisitionRepository, StockLineRowRepository,
-        StoreRepository, UserAccountRepository,
+        database_settings::get_storage_connection_manager, schema::InvoiceStatsRow, test_db,
+        CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
+        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+        MasterListRepository, NameQueryRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRepository, RepositoryError, RequisitionLineRepository,
+        RequisitionRepository, StockLineRowRepository, StoreRepository, UserAccountRepository,
     };
     use domain::{
         name::{NameFilter, NameSort, NameSortField},
@@ -797,6 +829,7 @@ mod repository_test {
         let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
+        item_repo.insert_one(&data::item_service_1()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRepository::new(&connection);
@@ -813,13 +846,29 @@ mod repository_test {
         repo.upsert_one(&item2).unwrap();
         let item3 = data::invoice_line_3();
         repo.upsert_one(&item3).unwrap();
+        let service_item = data::invoice_line_service();
+        repo.upsert_one(&service_item).unwrap();
 
         // line stats
         let repo = InvoiceLineRepository::new(&connection);
-        let result = repo.stats(&vec![data::invoice_1().id]).unwrap();
-        let stats_invoice_1 = result.get(0).unwrap();
-        assert_eq!(stats_invoice_1.invoice_id, data::invoice_1().id);
-        assert_eq!(stats_invoice_1.total_after_tax, 3.0);
+        let invoice_1_id = data::invoice_1().id;
+        let result = repo.stats(&vec![invoice_1_id.clone()]).unwrap();
+        let stats_invoice_1 = result
+            .into_iter()
+            .find(|row| row.invoice_id == invoice_1_id)
+            .unwrap();
+        assert_eq!(
+            stats_invoice_1,
+            InvoiceStatsRow {
+                invoice_id: invoice_1_id,
+                total_before_tax: 13.0,
+                total_after_tax: 18.0,
+                stock_total_before_tax: 3.0,
+                stock_total_after_tax: 3.0,
+                service_total_before_tax: 10.0,
+                service_total_after_tax: 15.0
+            }
+        );
     }
 
     #[actix_rt::test]

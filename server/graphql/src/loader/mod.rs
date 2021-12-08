@@ -11,8 +11,8 @@ mod stock_line;
 mod store;
 mod user_account;
 
-pub use invoice::InvoiceLoader;
-pub use invoice_line::{InvoiceLineLoader, InvoiceLineStatsLoader};
+pub use invoice::{InvoiceLoader, InvoiceStatsLoader};
+pub use invoice_line::InvoiceLineLoader;
 pub use invoice_line_query::InvoiceLineQueryLoader;
 pub use item::ItemLoader;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
