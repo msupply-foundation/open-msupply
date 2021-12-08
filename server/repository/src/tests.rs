@@ -877,6 +877,15 @@ mod repository_test {
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 
+        let name_1 = data::name_1();
+        NameRepository::new(&connection)
+            .upsert_one(&name_1)
+            .unwrap();
+        let store_1 = data::store_1();
+        StoreRepository::new(&connection)
+            .upsert_one(&store_1)
+            .unwrap();
+
         let test_counter = "test_counter_name";
         let repo = NumberRowRepository::new(&connection);
         matches!(
@@ -884,11 +893,11 @@ mod repository_test {
             Err(RepositoryError::NotFound)
         );
 
-        let row = repo.increment(test_counter).unwrap();
+        let row = repo.increment(test_counter, &store_1.id).unwrap();
         assert_eq!(1, row.value);
         let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(1, row.value);
-        let row = repo.increment(test_counter).unwrap();
+        let row = repo.increment(test_counter, &store_1.id).unwrap();
         assert_eq!(2, row.value);
         let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(2, row.value);
