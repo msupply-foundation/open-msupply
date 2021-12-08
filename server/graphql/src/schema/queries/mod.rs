@@ -1,7 +1,7 @@
 use crate::ContextExt;
 use domain::location::LocationFilter;
-use domain::{invoice::InvoiceFilter, item::ItemFilter, name::NameFilter, PaginationOption};
-use service::{invoice::get_invoices, item::get_items, name::get_names};
+use domain::{invoice::InvoiceFilter, item::ItemFilter, PaginationOption};
+use service::{invoice::get_invoices, item::get_items};
 
 use async_graphql::{Context, Object};
 
@@ -16,6 +16,8 @@ pub mod me;
 pub use self::me::*;
 pub mod refresh_token;
 pub use self::refresh_token::*;
+pub mod names;
+pub use self::names::*;
 
 #[Object]
 impl Queries {
@@ -58,16 +60,7 @@ impl Queries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
     ) -> NamesResponse {
-        let connection_manager = ctx.get_connection_manager();
-        match get_names(
-            connection_manager,
-            page.map(PaginationOption::from),
-            filter.map(NameFilter::from),
-            convert_sort(sort),
-        ) {
-            Ok(names) => NamesResponse::Response(names.into()),
-            Err(error) => NamesResponse::Error(error.into()),
-        }
+        names(ctx, page, filter, sort)
     }
 
     /// Query omSupply "item" entries
