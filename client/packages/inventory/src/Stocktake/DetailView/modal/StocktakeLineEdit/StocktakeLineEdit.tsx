@@ -90,7 +90,7 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
   );
 
   React.useEffect(() => {
-    if (wrappedStocktakeItem && selectedRows?.length > 0) {
+    if (wrappedStocktakeItem) {
       const { lines } = wrappedStocktakeItem;
       const checkedRows = lines.filter(line => selectedRows.includes(line.id));
       const unCheckedRows = lines.filter(
