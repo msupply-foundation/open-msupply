@@ -7,8 +7,22 @@ import { Test, DomainObject } from '../../types';
 import { ListApi, useListData } from './useListData';
 import { ErrorBoundary } from '@common/components';
 import { TestingProvider } from '../../utils/testing';
+import { setupMockServer } from '@openmsupply-client/mock-server/src/worker/server';
 
 interface TestType extends Test, DomainObject {}
+
+const server = setupMockServer();
+
+beforeAll(() => {
+  // Establish requests interception layer before all tests.
+  server.listen();
+});
+
+afterAll(() => {
+  // Clean up after all tests are done, preventing this
+  // interception layer from affecting irrelevant tests.
+  server.close();
+});
 
 beforeEach(() => {
   jest.spyOn(console, 'error');

@@ -5,10 +5,24 @@ import { Route } from 'react-router';
 
 import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
 import { AppBar } from '@openmsupply-client/host/src/components';
+import { setupMockServer } from '@openmsupply-client/mock-server/src/worker/server';
 
 import { OutboundShipmentListView } from './ListView';
 
 jest.setTimeout(10000);
+
+const server = setupMockServer();
+
+beforeAll(() => {
+  // Establish requests interception layer before all tests.
+  server.listen();
+});
+
+afterAll(() => {
+  // Clean up after all tests are done, preventing this
+  // interception layer from affecting irrelevant tests.
+  server.close();
+});
 
 describe('OutboundShipmentListView', () => {
   it('Renders all the headers for the list', async () => {
