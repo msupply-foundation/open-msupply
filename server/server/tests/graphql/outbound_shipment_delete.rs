@@ -41,14 +41,14 @@ mod graphql {
         );
         assert_gql_query(&settings, query, &variables, &expected, None).await;
 
-        // CannotEditFinalisedInvoice
+        // CannotEditInvoice
         let variables = Some(json!({
-          "id": "outbound_shipment_finalised"
+          "id": "outbound_shipment_shipped"
         }));
         let expected = json!({
             "deleteOutboundShipment": {
               "error": {
-                "__typename": "CannotEditFinalisedInvoice"
+                "__typename": "CannotEditInvoice"
               }
             }
           }

@@ -32,34 +32,33 @@ mod graphql {
             }
         }"#;
 
-        // CannotChangeStatusBackToDraftError
+        // CannotReverseInvoiceStatus
         let variables = Some(json!({
           "input": {
-            "id": "outbound_shipment_confirmed",
-            "status": "DRAFT"
+            "id": "outbound_shipment_picked",
+            "status": "ALLOCATED"
           }
         }));
         let expected = json!({
             "updateOutboundShipment": {
               "error": {
-                "__typename": "CannotChangeStatusBackToDraftError"
+                "__typename": "CannotReverseInvoiceStatus"
               }
             }
           }
         );
         assert_gql_query(&settings, query, &variables, &expected, None).await;
 
-        // FinalisedInvoiceIsNotEditableError
+        // InvoiceIsNotEditable
         let variables = Some(json!({
           "input": {
-            "id": "outbound_shipment_finalised",
-            "status": "DRAFT"
+            "id": "outbound_shipment_shipped",
           }
         }));
         let expected = json!({
             "updateOutboundShipment": {
               "error": {
-                "__typename": "FinalisedInvoiceIsNotEditableError"
+                "__typename": "InvoiceIsNotEditable"
               }
             }
           }
@@ -137,7 +136,7 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_invalid_stock_line",
-            "status": "FINALISED"
+            "status": "SHIPPED"
           }
         }));
         let expected = json!({
@@ -193,7 +192,7 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
-            "status": "CONFIRMED",
+            "status": "PICKED",
             "comment": "test_comment"
           }
         }));
@@ -215,7 +214,7 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": invoice_id,
-            "status": "FINALISED",
+            "status": "SHIPPED",
             "comment": "test_comment_b",
             "onHold": true,
           }
@@ -240,7 +239,7 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": invoice_id,
-            "status": "FINALISED",
+            "status": "SHIPPED",
             "comment": "test_comment_b"
           }
         }));
@@ -264,7 +263,7 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": invoice_id,
-            "status": "FINALISED",
+            "status": "SHIPPED",
             "onHold": false,
           }
         }));

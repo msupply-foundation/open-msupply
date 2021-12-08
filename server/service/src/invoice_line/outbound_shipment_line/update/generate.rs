@@ -11,7 +11,7 @@ pub fn generate(
     batch_pair: BatchPair,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, BatchPair), UpdateOutboundShipmentLineError> {
-    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Confirmed;
+    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
 
     let batch_pair = BatchPair {
         main_batch: generate_batch_update(

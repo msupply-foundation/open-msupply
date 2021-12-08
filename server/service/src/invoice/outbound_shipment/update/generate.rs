@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, StockLineRow},
+    schema::{InvoiceRow, StockLineRow},
     InvoiceLineRowRepository, StockLineRowRepository, StorageConnection,
 };
 
@@ -25,7 +25,7 @@ pub fn generate(
     update_invoice.color = patch.color.or(update_invoice.color);
 
     if let Some(status) = patch.status {
-        update_invoice.status = status.into()
+        update_invoice.status = status.full_status().into()
     }
 
     if !should_create_batches {
@@ -39,29 +39,38 @@ pub fn generate(
 }
 
 pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateOutboundShipment) -> bool {
-    match (&invoice.status, &patch.status) {
-        (InvoiceRowStatus::Draft, Some(InvoiceStatus::Confirmed)) => true,
-        (InvoiceRowStatus::Draft, Some(InvoiceStatus::Finalised)) => true,
-        _ => false,
+    if let Some(new_invoice_status) = patch.full_status() {
+        let invoice_status_index = InvoiceStatus::from(invoice.status.clone()).index();
+        let new_invoice_status_index = new_invoice_status.index();
+
+        new_invoice_status_index >= InvoiceStatus::Picked.index()
+            && invoice_status_index < new_invoice_status_index
+    } else {
+        false
     }
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateOutboundShipment) {
-    let current_datetime = Utc::now().naive_utc();
+    if let Some(new_invoice_status) = patch.full_status() {
+        let current_datetime = Utc::now().naive_utc();
+        let invoice_status_index = InvoiceStatus::from(invoice.status.clone()).index();
+        let new_invoice_status_index = new_invoice_status.index();
 
-    if let Some(InvoiceStatus::Finalised) = &patch.status {
-        if invoice.status == InvoiceRowStatus::Draft {
-            invoice.confirm_datetime = Some(current_datetime.clone());
+        let is_status_update = |status: InvoiceStatus| {
+            new_invoice_status_index >= status.index()
+                && invoice_status_index < new_invoice_status_index
+        };
+
+        if is_status_update(InvoiceStatus::Allocated) {
+            invoice.allocated_datetime = Some(current_datetime.clone());
         }
 
-        if invoice.status != InvoiceRowStatus::Finalised {
-            invoice.finalised_datetime = Some(current_datetime.clone());
+        if is_status_update(InvoiceStatus::Picked) {
+            invoice.picked_datetime = Some(current_datetime);
         }
-    }
 
-    if let Some(InvoiceStatus::Confirmed) = &patch.status {
-        if invoice.status == InvoiceRowStatus::Draft {
-            invoice.confirm_datetime = Some(current_datetime.clone());
+        if is_status_update(InvoiceStatus::Shipped) {
+            invoice.shipped_datetime = Some(current_datetime);
         }
     }
 }

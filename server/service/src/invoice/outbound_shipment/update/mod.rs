@@ -34,10 +34,10 @@ pub fn update_outbound_shipment(
 }
 
 pub enum UpdateOutboundShipmentError {
-    CannotChangeInvoiceBackToDraft,
+    CannotReverseInvoiceStatus,
     CannotChangeStatusOfInvoiceOnHold,
     InvoiceDoesNotExists,
-    InvoiceIsFinalised,
+    InvoiceIsNotEditable,
     DatabaseError(RepositoryError),
     OtherPartyDoesNotExists,
     OtherPartyNotACustomer(Name),

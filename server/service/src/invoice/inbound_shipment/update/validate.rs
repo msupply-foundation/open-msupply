@@ -1,6 +1,6 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_not_finalised, check_invoice_status, check_invoice_type,
-    inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsFinalised,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
+    inbound_shipment::check_other_party, InvoiceDoesNotExist, InvoiceIsNotEditable,
     InvoiceStatusError, OtherPartyError, WrongInvoiceType,
 };
 use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceType};
@@ -16,8 +16,8 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
-    check_invoice_is_not_finalised(&invoice)?;
-    check_invoice_status(&invoice, &patch.status, &patch.on_hold)?;
+    check_invoice_is_editable(&invoice)?;
+    check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
     check_other_party(patch.other_party_id.clone(), connection)?;
 
     Ok(invoice)
@@ -40,8 +40,8 @@ impl From<WrongInvoiceType> for UpdateInboundShipmentError {
     }
 }
 
-impl From<InvoiceIsFinalised> for UpdateInboundShipmentError {
-    fn from(_: InvoiceIsFinalised) -> Self {
+impl From<InvoiceIsNotEditable> for UpdateInboundShipmentError {
+    fn from(_: InvoiceIsNotEditable) -> Self {
         UpdateInboundShipmentError::CannotEditFinalised
     }
 }
@@ -59,7 +59,7 @@ impl From<InvoiceStatusError> for UpdateInboundShipmentError {
             InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold => {
                 CannotChangeStatusOfInvoiceOnHold
             }
-            InvoiceStatusError::CannotChangeInvoiceBackToDraft => CannotChangeInvoiceBackToDraft,
+            InvoiceStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         }
     }
 }

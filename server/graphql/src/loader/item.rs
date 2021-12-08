@@ -1,4 +1,7 @@
-use repository::{schema::ItemRow, ItemRepository, RepositoryError, StorageConnectionManager};
+use domain::item::{Item, ItemFilter};
+use domain::{EqualFilter, Pagination};
+use repository::ItemQueryRepository;
+use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -10,20 +13,26 @@ pub struct ItemLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for ItemLoader {
-    type Value = ItemRow;
+    type Value = Item;
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = ItemRepository::new(&connection);
+        let repo = ItemQueryRepository::new(&connection);
         let result = repo
-            .find_many_by_id(keys)
-            .unwrap()
-            .iter()
-            .map(|item: &ItemRow| {
-                let item_id = item.id.clone();
-                let item = item.clone();
-                (item_id, item)
+            .query(
+                Pagination {
+                    limit: keys.len() as u32,
+                    offset: 0,
+                },
+                Some(ItemFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
+                None,
+            )?
+            .into_iter()
+            .map(|item| {
+                let id = item.id.clone();
+                let item = item;
+                (id, item)
             })
             .collect();
         Ok(result)

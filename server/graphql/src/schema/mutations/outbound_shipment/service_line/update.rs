@@ -3,7 +3,7 @@ use domain::shipment_tax_update::ShipmentTaxUpdate;
 
 use crate::schema::{
     mutations::{
-        tax_update_input::TaxUpdate, CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        tax_update_input::TaxUpdate, CannotEditInvoice, ForeignKey, ForeignKeyError,
         InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
     },
     types::{
@@ -89,7 +89,7 @@ pub enum UpdateOutboundShipmentServiceLineErrorInterface {
     ForeignKeyError(ForeignKeyError),
     NotAnOutboundShipment(NotAnOutboundShipment),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAServiceItem(NotAServiceItem),
 }
 
@@ -115,7 +115,7 @@ impl From<UpdateOutboundShipmentServiceLineError> for UpdateOutboundShipmentServ
                 ))
             }
             UpdateOutboundShipmentServiceLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             UpdateOutboundShipmentServiceLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

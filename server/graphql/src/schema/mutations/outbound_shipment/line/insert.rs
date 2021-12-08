@@ -3,8 +3,8 @@ use async_graphql::*;
 use crate::schema::{
     mutations::{
         outbound_shipment::{LocationIsOnHold, NotEnoughStockForReduction, StockLineIsOnHold},
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-        InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordAlreadyExist,
+        CannotEditInvoice, ForeignKey, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
+        NotAnOutboundShipment, RecordAlreadyExist,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
@@ -60,7 +60,7 @@ pub enum InsertOutboundShipmentLineErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
     RangeError(RangeError),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAnOutboundShipment(NotAnOutboundShipment),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
     ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
@@ -118,7 +118,7 @@ impl From<InsertOutboundShipmentLineError> for InsertOutboundShipmentLineRespons
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             InsertOutboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             InsertOutboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

@@ -12,9 +12,12 @@ pub enum InvoiceRowType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceRowStatus {
-    Draft,
-    Confirmed,
-    Finalised,
+    New,
+    Allocated,
+    Picked,
+    Shipped,
+    Delivered,
+    Verified,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
@@ -30,8 +33,11 @@ pub struct InvoiceRow {
     pub on_hold: bool,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
-    pub entry_datetime: NaiveDateTime,
-    pub confirm_datetime: Option<NaiveDateTime>,
-    pub finalised_datetime: Option<NaiveDateTime>,
+    pub created_datetime: NaiveDateTime,
+    pub allocated_datetime: Option<NaiveDateTime>,
+    pub picked_datetime: Option<NaiveDateTime>,
+    pub shipped_datetime: Option<NaiveDateTime>,
+    pub delivered_datetime: Option<NaiveDateTime>,
+    pub verified_datetime: Option<NaiveDateTime>,
     pub color: Option<String>,
 }
