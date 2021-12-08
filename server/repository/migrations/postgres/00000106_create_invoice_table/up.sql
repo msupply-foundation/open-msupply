@@ -4,9 +4,12 @@ CREATE TYPE invoice_type AS ENUM (
 );
 
 CREATE TYPE invoice_status AS ENUM (
-    'DRAFT',
-    'CONFIRMED',
-    'FINALISED'
+    'NEW',
+    'ALLOCATED',
+    'PICKED',
+    'SHIPPED',
+    'DELIVERED',
+    'VERIFIED'
 );
 
 CREATE TABLE invoice (
@@ -23,7 +26,10 @@ CREATE TABLE invoice (
     on_hold boolean NOT NULL,
     comment text,
     their_reference text,
-    entry_datetime timestamp NOT NULL,
-    confirm_datetime timestamp,
-    finalised_datetime timestamp,
+    created_datetime timestamp NOT NULL,
+    allocated_datetime timestamp,
+    picked_datetime timestamp,
+    shipped_datetime timestamp,
+    delivered_datetime timestamp,
+    verified_datetime timestamp,
     color text)

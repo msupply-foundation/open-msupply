@@ -55,7 +55,7 @@ pub enum UpdateInboundShipmentError {
     OtherPartyNotASupplier(Name),
     NotAnInboundShipment,
     NotThisStoreInvoice,
-    CannotChangeInvoiceBackToDraft,
+    CannotReverseInvoiceStatus,
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
 }

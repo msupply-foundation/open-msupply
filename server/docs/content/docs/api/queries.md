@@ -40,7 +40,7 @@ query {
       invoiceNumber: Number!
       theirReference: String
       comment: String
-      entryDatetime: Datetime!
+      CreatedDatetime: Datetime!
       confirmDatetime: DateTime
       finalisedDatetime: DateTime
       pricing {
@@ -101,7 +101,7 @@ query {
     invoiceNumber: Number!
     theirReference: String
     comment: String
-    entryDatetime: Datetime!
+    CreatedDatetime: Datetime!
     confirmDatetime: DateTime
     finalisedDatetime: DateTime
     lines {

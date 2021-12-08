@@ -1,8 +1,9 @@
 use async_graphql::*;
+use domain::shipment_tax_update::ShipmentTaxUpdate;
 
 use crate::schema::{
     mutations::{
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        tax_update_input::TaxUpdate, CannotEditInvoice, ForeignKey, ForeignKeyError,
         InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
     },
     types::{
@@ -24,7 +25,9 @@ pub struct UpdateOutboundShipmentServiceLineInput {
     invoice_id: String,
     item_id: Option<String>,
     name: Option<String>,
+    total_before_tax: Option<f64>,
     total_after_tax: Option<f64>,
+    tax: Option<TaxUpdate>,
     note: Option<String>,
 }
 
@@ -41,7 +44,11 @@ pub fn get_update_outbound_shipment_service_line_response(
             invoice_id: input.invoice_id,
             item_id: input.item_id,
             name: input.name,
+            total_before_tax: input.total_before_tax,
             total_after_tax: input.total_after_tax,
+            tax: input.tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
+            }),
             note: input.note,
         },
     ) {
@@ -82,7 +89,7 @@ pub enum UpdateOutboundShipmentServiceLineErrorInterface {
     ForeignKeyError(ForeignKeyError),
     NotAnOutboundShipment(NotAnOutboundShipment),
     InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAServiceItem(NotAServiceItem),
 }
 
@@ -108,7 +115,7 @@ impl From<UpdateOutboundShipmentServiceLineError> for UpdateOutboundShipmentServ
                 ))
             }
             UpdateOutboundShipmentServiceLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             UpdateOutboundShipmentServiceLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

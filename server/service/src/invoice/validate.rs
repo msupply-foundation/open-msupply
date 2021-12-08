@@ -5,7 +5,7 @@ use domain::{
     EqualFilter,
 };
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus},
+    schema::{InvoiceRow, InvoiceRowType},
     InvoiceLineRepository, InvoiceRepository, RepositoryError, StorageConnection,
 };
 
@@ -22,23 +22,43 @@ pub fn check_invoice_type(
     }
 }
 
-pub struct InvoiceIsFinalised;
+pub struct InvoiceIsNotEditable;
 
-pub fn check_invoice_is_not_finalised(invoice: &InvoiceRow) -> Result<(), InvoiceIsFinalised> {
-    if invoice.status == InvoiceRowStatus::Finalised {
-        Err(InvoiceIsFinalised {})
-    } else {
+pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNotEditable> {
+    let status = InvoiceStatus::from(invoice.status.clone());
+    let is_editable = match &invoice.r#type {
+        InvoiceRowType::OutboundShipment => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Allocated => true,
+            InvoiceStatus::Picked => true,
+            InvoiceStatus::Shipped => false,
+            InvoiceStatus::Delivered => false,
+            InvoiceStatus::Verified => false,
+        },
+        InvoiceRowType::InboundShipment => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Shipped => true,
+            InvoiceStatus::Delivered => true,
+            InvoiceStatus::Allocated => false,
+            InvoiceStatus::Picked => false,
+            InvoiceStatus::Verified => false,
+        },
+    };
+
+    if is_editable {
         Ok(())
+    } else {
+        Err(InvoiceIsNotEditable {})
     }
 }
 pub enum InvoiceStatusError {
     CannotChangeStatusOfInvoiceOnHold,
-    CannotChangeInvoiceBackToDraft,
+    CannotReverseInvoiceStatus,
 }
 
 pub fn check_invoice_status(
     invoice: &InvoiceRow,
-    status_option: &Option<InvoiceStatus>,
+    status_option: Option<InvoiceStatus>,
     on_hold_option: &Option<bool>,
 ) -> Result<(), InvoiceStatusError> {
     if let Some(new_status) = status_option {
@@ -47,11 +67,11 @@ pub fn check_invoice_status(
         // * invoice is currently on hold and is not being change to be not on hold
         let is_not_on_hold = !invoice.on_hold || !on_hold_option.unwrap_or(true);
 
-        if *new_status != existing_status && !is_not_on_hold {
+        if new_status != existing_status && !is_not_on_hold {
             return Err(InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold);
         }
-        if *new_status == InvoiceStatus::Draft && existing_status == InvoiceStatus::Confirmed {
-            return Err(InvoiceStatusError::CannotChangeInvoiceBackToDraft);
+        if new_status.index() < existing_status.index() {
+            return Err(InvoiceStatusError::CannotReverseInvoiceStatus);
         }
     }
 

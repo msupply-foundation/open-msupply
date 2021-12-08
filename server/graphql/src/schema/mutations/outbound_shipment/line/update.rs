@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        tax_update_input::TaxUpdate, CannotEditInvoice, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
         NotAnOutboundShipment,
     },
@@ -11,7 +11,9 @@ use crate::schema::{
         InvoiceLineResponse, NodeError, Range, RangeError, RangeField, RecordNotFound,
     },
 };
-use domain::outbound_shipment::UpdateOutboundShipmentLine;
+use domain::{
+    outbound_shipment::UpdateOutboundShipmentLine, shipment_tax_update::ShipmentTaxUpdate,
+};
 use repository::StorageConnectionManager;
 use service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError};
 
@@ -28,6 +30,9 @@ pub struct UpdateOutboundShipmentLineInput {
     item_id: Option<String>,
     stock_line_id: Option<String>,
     number_of_packs: Option<u32>,
+    total_before_tax: Option<f64>,
+    total_after_tax: Option<f64>,
+    tax: Option<TaxUpdate>,
 }
 
 pub fn get_update_outbound_shipment_line_response(
@@ -57,7 +62,7 @@ pub enum UpdateOutboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
     LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine),
@@ -80,6 +85,9 @@ impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }: UpdateOutboundShipmentLineInput,
     ) -> Self {
         UpdateOutboundShipmentLine {
@@ -88,6 +96,11 @@ impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
+            }),
         }
     }
 }
@@ -109,7 +122,7 @@ impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineRespons
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             UpdateOutboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             UpdateOutboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

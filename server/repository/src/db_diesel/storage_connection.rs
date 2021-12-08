@@ -214,6 +214,7 @@ mod connection_manager_tests {
     #[actix_rt::test]
     async fn test_nested_tx() {
         let settings = test_db::get_test_db_settings("omsupply-nested-tx");
+        test_db::setup(&settings).await;
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 

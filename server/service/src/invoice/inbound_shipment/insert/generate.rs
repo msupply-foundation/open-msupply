@@ -1,10 +1,10 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 
-use domain::{
-    inbound_shipment::InsertInboundShipment,
-    invoice::{InvoiceStatus, InvoiceType},
+use domain::{inbound_shipment::InsertInboundShipment, invoice::InvoiceType};
+use repository::{
+    schema::{InvoiceRow, InvoiceRowStatus},
+    RepositoryError, StorageConnection,
 };
-use repository::{schema::InvoiceRow, RepositoryError, StorageConnection};
 
 use crate::current_store_id;
 
@@ -12,7 +12,6 @@ pub fn generate(
     InsertInboundShipment {
         id,
         other_party_id,
-        status,
         on_hold,
         comment,
         their_reference,
@@ -30,12 +29,15 @@ pub fn generate(
         their_reference,
         invoice_number: new_invoice_number(),
         store_id: current_store_id(connection)?,
-        confirm_datetime: confirm_datetime(&status, &current_datetime),
-        finalised_datetime: finalised_datetime(&status, &current_datetime),
-        status: status.into(),
+        created_datetime: current_datetime,
+        status: InvoiceRowStatus::New,
         on_hold: on_hold.unwrap_or(false),
-        entry_datetime: current_datetime,
         color,
+        allocated_datetime: None,
+        picked_datetime: None,
+        shipped_datetime: None,
+        delivered_datetime: None,
+        verified_datetime: None,
     };
 
     Ok(result)
@@ -44,21 +46,4 @@ pub fn generate(
 fn new_invoice_number() -> i32 {
     // TODO Existing mSupply Mechanism for this
     1
-}
-
-fn confirm_datetime(status: &InvoiceStatus, current_time: &NaiveDateTime) -> Option<NaiveDateTime> {
-    match status {
-        InvoiceStatus::Draft => None,
-        _ => Some(current_time.clone()),
-    }
-}
-
-fn finalised_datetime(
-    status: &InvoiceStatus,
-    current_time: &NaiveDateTime,
-) -> Option<NaiveDateTime> {
-    match status {
-        InvoiceStatus::Finalised => Some(current_time.clone()),
-        _ => None,
-    }
 }

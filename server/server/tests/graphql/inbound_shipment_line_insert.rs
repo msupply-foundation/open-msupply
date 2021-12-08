@@ -77,19 +77,19 @@ mod graphql {
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Draft.equal_to()),
+                .status(InvoiceStatus::New.equal_to()),
             &connection
         );
-        let confirmed_inbound_shipment = get_invoice_inline!(
+        let delivered_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Confirmed.equal_to()),
+                .status(InvoiceStatus::Delivered.equal_to()),
             &connection
         );
-        let finalised_inbound_shipment = get_invoice_inline!(
+        let verified_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Finalised.equal_to()),
+                .status(InvoiceStatus::Verified.equal_to()),
             &connection
         );
         let outbound_shipment = get_invoice_inline!(
@@ -110,6 +110,8 @@ mod graphql {
             expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
             batch_option: Some("some batch name".to_string()),
             location_id_option: None,
+            total_before_tax: 1.0,
+            total_after_tax: 1.0,
         };
 
         // Test ForeingKeyError Item
@@ -156,17 +158,17 @@ mod graphql {
                 key: insert::ForeignKey::InvoiceId,
             })
         );
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = finalised_inbound_shipment.id.clone();
+        variables.invoice_id = verified_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(insert::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(insert::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 
@@ -245,11 +247,11 @@ mod graphql {
 
         assert_eq!(new_line, variables);
 
-        // Success Confirmed
+        // Success Delivered
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -269,13 +271,13 @@ mod graphql {
         assert_eq!(new_line, variables);
         assert_eq!(new_stock_line, variables);
 
-        // Success Confirmed
+        // Success Delivered
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
         variables.expiry_date_option = None;
         variables.batch_option = None;
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -295,11 +297,11 @@ mod graphql {
         assert_eq!(new_line, variables);
         assert_eq!(new_stock_line, variables);
 
-        // Success Confirmed check Item
+        // Success Delivered check Item
 
         let mut variables = base_variables.clone();
         variables.id = uuid();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Insert::build_query(variables.clone());
 
@@ -314,12 +316,6 @@ mod graphql {
 
         assert_eq!(new_line.item_code, item.code);
         assert_eq!(new_line.item_name, item.name);
-
-        // Check total calculation
-        assert_eq!(
-            new_line.total_after_tax,
-            new_line.number_of_packs as f64 * new_line.cost_price_per_pack
-        );
     }
 
     impl PartialEq<insert::Variables> for InvoiceLineRow {
@@ -335,6 +331,8 @@ mod graphql {
                 sell_price_per_pack,
                 pack_size,
                 location_id_option,
+                total_before_tax,
+                total_after_tax,
             } = other;
 
             *cost_price_per_pack == self.cost_price_per_pack
@@ -347,6 +345,8 @@ mod graphql {
                 && *batch_option == self.batch
                 && *pack_size == self.pack_size as i64
                 && *location_id_option == self.location_id
+                && *total_before_tax == self.total_before_tax
+                && *total_after_tax == self.total_after_tax
         }
     }
 
@@ -363,6 +363,8 @@ mod graphql {
                 sell_price_per_pack,
                 pack_size,
                 location_id_option,
+                total_before_tax: _,
+                total_after_tax: _,
             } = other;
 
             *cost_price_per_pack == self.cost_price_per_pack

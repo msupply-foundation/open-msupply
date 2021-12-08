@@ -32,7 +32,11 @@ impl<'a> NumberRowRepository<'a> {
 
     /// Increments the counter and returns the updated row
     /// Note: its assumed that this call done in a transaction
-    pub fn increment(&self, counter_id: &str) -> Result<NumberRow, RepositoryError> {
+    pub fn increment(
+        &self,
+        counter_id: &str,
+        store_id: &str,
+    ) -> Result<NumberRow, RepositoryError> {
         Ok(self.connection.transaction_sync(|con| {
             match find_one_by_id_tx(con, counter_id)? {
                 Some(mut row) => {
@@ -48,6 +52,7 @@ impl<'a> NumberRowRepository<'a> {
                     let row = NumberRow {
                         id: counter_id.to_string(),
                         value: 1,
+                        store_id: store_id.to_string(),
                     };
                     diesel::insert_into(number_dsl::number)
                         .values(&row)

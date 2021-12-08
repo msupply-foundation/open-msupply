@@ -3,8 +3,8 @@ use async_graphql::*;
 use crate::schema::{
     mutations::{
         outbound_shipment::{LocationIsOnHold, NotEnoughStockForReduction, StockLineIsOnHold},
-        CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
-        InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordAlreadyExist,
+        CannotEditInvoice, ForeignKey, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
+        NotAnOutboundShipment, RecordAlreadyExist,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
@@ -27,6 +27,9 @@ pub struct InsertOutboundShipmentLineInput {
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: u32,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
 }
 
 #[derive(Union)]
@@ -57,7 +60,7 @@ pub enum InsertOutboundShipmentLineErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
     RangeError(RangeError),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAnOutboundShipment(NotAnOutboundShipment),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
     ItemDoesNotMatchStockLine(ItemDoesNotMatchStockLine),
@@ -77,6 +80,9 @@ impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }: InsertOutboundShipmentLineInput,
     ) -> Self {
         InsertOutboundShipmentLine {
@@ -85,6 +91,9 @@ impl From<InsertOutboundShipmentLineInput> for InsertOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }
     }
 }
@@ -109,7 +118,7 @@ impl From<InsertOutboundShipmentLineError> for InsertOutboundShipmentLineRespons
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             InsertOutboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             InsertOutboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

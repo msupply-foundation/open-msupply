@@ -12,7 +12,9 @@ pub fn generate(
         item_id: input.item_id,
         item_code: item.code,
         item_name: input.name.unwrap_or(item.name),
-        total_after_tax: input.total_after_tax.unwrap_or(0.0),
+        total_before_tax: input.total_before_tax,
+        total_after_tax: input.total_after_tax,
+        tax: input.tax,
         note: input.note,
 
         // unrelated to a service item:

@@ -91,7 +91,7 @@ fn created_invoices_count(
                 not_equal_to: None,
                 equal_any: None,
             })
-            .entry_datetime(creation_datetime_filter),
+            .created_datetime(creation_datetime_filter),
     ))
 }
 
@@ -154,22 +154,22 @@ mod invoice_count_service_test {
 
         let repo = InvoiceQueryRepository::new(&connection);
 
-        // oldest > item1.entry_datetime
+        // oldest > item1.created_datetime
         let item1_type: InvoiceType = invoice_1.r#type.into();
         let count =
             created_invoices_count(&repo, &item1_type, Utc::now().naive_local(), None).unwrap();
         assert_eq!(0, count);
-        // oldest = item1.entry_datetime
+        // oldest = item1.created_datetime
         let count =
-            created_invoices_count(&repo, &item1_type, invoice_1.entry_datetime.clone(), None)
+            created_invoices_count(&repo, &item1_type, invoice_1.created_datetime.clone(), None)
                 .unwrap();
         assert_eq!(1, count);
-        // oldest < item1.entry_datetime
-        let oldest = invoice_1.entry_datetime - chrono::Duration::milliseconds(50);
+        // oldest < item1.created_datetime
+        let oldest = invoice_1.created_datetime - chrono::Duration::milliseconds(50);
         let count = created_invoices_count(&repo, &item1_type, oldest.clone(), None).unwrap();
         assert_eq!(1, count);
         // test that earliest exclude the invoice
-        let earliest = invoice_1.entry_datetime - chrono::Duration::milliseconds(20);
+        let earliest = invoice_1.created_datetime - chrono::Duration::milliseconds(20);
         let count =
             created_invoices_count(&repo, &item1_type, oldest.clone(), Some(earliest.clone()))
                 .unwrap();
