@@ -728,6 +728,7 @@ export const createStocktakeLine = (
     snapshotNumPacks: stockLine?.totalNumberOfPacks,
     snapshotPackSize: stockLine?.packSize,
     stocktakeId,
+    stockLineId: stockLine?.id,
   };
 };
 
