@@ -3,7 +3,7 @@ use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, item::ItemFilter, PaginationOption};
 use service::{invoice::get_invoices, item::get_items};
 
-use async_graphql::{Context, Object};
+use async_graphql::{Context, Object, Result};
 
 use super::types::*;
 pub struct Queries;
@@ -16,6 +16,8 @@ pub mod me;
 pub use self::me::*;
 pub mod refresh_token;
 pub use self::refresh_token::*;
+pub mod invoice_counts;
+pub use self::invoice_counts::*;
 pub mod names;
 pub use self::names::*;
 
@@ -137,5 +139,14 @@ impl Queries {
             Ok(invoices) => InvoicesResponse::Response(invoices.into()),
             Err(error) => InvoicesResponse::Error(error.into()),
         }
+    }
+
+    pub async fn invoice_counts(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Invoice type")] invoice_type: InvoiceNodeType,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<InvoiceCountsResponse> {
+        invoice_counts(ctx, invoice_type, timezone_offset)
     }
 }
