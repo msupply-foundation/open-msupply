@@ -110,6 +110,8 @@ mod graphql {
             expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
             batch_option: Some("some batch name".to_string()),
             location_id_option: None,
+            total_before_tax: 1.0,
+            total_after_tax: 1.0,
         };
 
         // Test ForeingKeyError Item
@@ -314,12 +316,6 @@ mod graphql {
 
         assert_eq!(new_line.item_code, item.code);
         assert_eq!(new_line.item_name, item.name);
-
-        // Check total calculation
-        assert_eq!(
-            new_line.total_after_tax,
-            new_line.number_of_packs as f64 * new_line.cost_price_per_pack
-        );
     }
 
     impl PartialEq<insert::Variables> for InvoiceLineRow {
@@ -335,6 +331,8 @@ mod graphql {
                 sell_price_per_pack,
                 pack_size,
                 location_id_option,
+                total_before_tax,
+                total_after_tax,
             } = other;
 
             *cost_price_per_pack == self.cost_price_per_pack
@@ -347,6 +345,8 @@ mod graphql {
                 && *batch_option == self.batch
                 && *pack_size == self.pack_size as i64
                 && *location_id_option == self.location_id
+                && *total_before_tax == self.total_before_tax
+                && *total_after_tax == self.total_after_tax
         }
     }
 
@@ -363,6 +363,8 @@ mod graphql {
                 sell_price_per_pack,
                 pack_size,
                 location_id_option,
+                total_before_tax: _,
+                total_after_tax: _,
             } = other;
 
             *cost_price_per_pack == self.cost_price_per_pack

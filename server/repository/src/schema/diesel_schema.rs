@@ -145,7 +145,9 @@ table! {
         pack_size -> Integer,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
+        total_before_tax -> Double,
         total_after_tax -> Double,
+        tax -> Nullable<Double>,
         number_of_packs -> Integer,
         note -> Nullable<Text>,
     }

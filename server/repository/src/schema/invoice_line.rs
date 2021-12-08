@@ -16,8 +16,12 @@ pub struct InvoiceLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: i32,
     pub cost_price_per_pack: f64,
+    /// Sell price before tax
     pub sell_price_per_pack: f64,
+    pub total_before_tax: f64,
     pub total_after_tax: f64,
+    /// Optional column to store line a line specific tax value
+    pub tax: Option<f64>,
     pub number_of_packs: i32,
     pub note: Option<String>,
 }

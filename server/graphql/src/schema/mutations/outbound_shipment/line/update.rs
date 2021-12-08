@@ -2,15 +2,18 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        CannotEditInvoice, ForeignKey, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
-        InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
+        tax_update_input::TaxUpdate, CannotEditInvoice, ForeignKey, ForeignKeyError,
+        InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
+        NotAnOutboundShipment,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
         InvoiceLineResponse, NodeError, Range, RangeError, RangeField, RecordNotFound,
     },
 };
-use domain::outbound_shipment::UpdateOutboundShipmentLine;
+use domain::{
+    outbound_shipment::UpdateOutboundShipmentLine, shipment_tax_update::ShipmentTaxUpdate,
+};
 use repository::StorageConnectionManager;
 use service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError};
 
@@ -27,6 +30,9 @@ pub struct UpdateOutboundShipmentLineInput {
     item_id: Option<String>,
     stock_line_id: Option<String>,
     number_of_packs: Option<u32>,
+    total_before_tax: Option<f64>,
+    total_after_tax: Option<f64>,
+    tax: Option<TaxUpdate>,
 }
 
 pub fn get_update_outbound_shipment_line_response(
@@ -79,6 +85,9 @@ impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax,
         }: UpdateOutboundShipmentLineInput,
     ) -> Self {
         UpdateOutboundShipmentLine {
@@ -87,6 +96,11 @@ impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
             item_id,
             stock_line_id,
             number_of_packs,
+            total_before_tax,
+            total_after_tax,
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
+            }),
         }
     }
 }
