@@ -34,7 +34,7 @@ pub fn invoice_counts(
     })?;
     let service = InvoiceCountService {};
     let created = service
-        .invoice_count_created(
+        .created_invoices_count(
             &service_ctx,
             invoice_type.into(),
             Utc::now(),

@@ -1,7 +1,10 @@
 use chrono::{
     DateTime, Datelike, FixedOffset, Local, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday,
 };
-use domain::invoice::InvoiceType;
+use domain::{
+    invoice::{InvoiceFilter, InvoiceType},
+    DatetimeFilter, EqualFilter,
+};
 use repository::{InvoiceQueryRepository, RepositoryError};
 
 use crate::service_provider::ServiceContext;
@@ -18,10 +21,12 @@ pub enum InvoiceCountError {
 }
 
 pub trait InvoiceCountServiceTrait {
+    /// Returns number of created invoices
+    ///
     /// Arguments
     /// * now UTC DateTime that should be used for now (useful for testing)
     /// * timezone_offset offset in hours, if not specified the server local timezone is used
-    fn invoice_count_created(
+    fn created_invoices_count(
         &self,
         ctx: &ServiceContext,
         invoice_type: InvoiceType,
@@ -65,8 +70,33 @@ fn start_of_week(datetime: NaiveDateTime) -> NaiveDateTime {
 
 pub struct InvoiceCountService {}
 
+fn created_invoices_count(
+    repo: &InvoiceQueryRepository,
+    invoice_type: &InvoiceType,
+    oldest: NaiveDateTime,
+    earliest: Option<NaiveDateTime>,
+) -> Result<i64, RepositoryError> {
+    let mut creation_datetime_filter = DatetimeFilter {
+        equal_to: None,
+        before_or_equal_to: None,
+        after_or_equal_to: Some(oldest),
+    };
+    if let Some(earliest) = earliest {
+        creation_datetime_filter.before_or_equal_to = Some(earliest);
+    }
+    repo.count(Some(
+        InvoiceFilter::new()
+            .r#type(EqualFilter {
+                equal_to: Some(invoice_type.clone()),
+                not_equal_to: None,
+                equal_any: None,
+            })
+            .entry_datetime(creation_datetime_filter),
+    ))
+}
+
 impl InvoiceCountServiceTrait for InvoiceCountService {
-    fn invoice_count_created(
+    fn created_invoices_count(
         &self,
         ctx: &ServiceContext,
         invoice_type: InvoiceType,
@@ -82,22 +112,72 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let start_of_this_week =
             to_utc(start_of_week(now), &tz).ok_or(InvoiceCountError::BadTimezoneOffset)?;
 
-        let today =
-            repo.created_invoices_count(invoice_type.clone(), start_of_today.naive_utc(), None)?;
+        let today = created_invoices_count(&repo, &invoice_type, start_of_today.naive_utc(), None)?;
         let this_week =
-            repo.created_invoices_count(invoice_type, start_of_this_week.naive_utc(), None)?;
+            created_invoices_count(&repo, &invoice_type, start_of_this_week.naive_utc(), None)?;
         Ok(InvoiceCountCreated { today, this_week })
     }
 }
 
 #[cfg(test)]
 mod invoice_count_service_test {
-    use repository::{mock::MockDataInserts, test_db};
+    use repository::{
+        mock::{
+            mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_b,
+            MockDataInserts,
+        },
+        test_db, InvoiceRepository, NameRepository, StoreRepository,
+    };
 
     use super::*;
 
     #[actix_rt::test]
-    async fn test_user_auth() {
+    async fn test_created_invoice_count() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "omsupply-database-created-invoice-count",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // setup exactly one invoice to test the time range
+        let name_store_a = mock_name_store_a();
+        let name_store_b = mock_name_store_b();
+        let store_1 = mock_store_b();
+        let invoice_1 = mock_outbound_shipment_a();
+        let name_repo = NameRepository::new(&connection);
+        name_repo.insert_one(&name_store_a).await.unwrap();
+        name_repo.insert_one(&name_store_b).await.unwrap();
+        let store_repo = StoreRepository::new(&connection);
+        store_repo.insert_one(&store_1).await.unwrap();
+        let invoice_repo = InvoiceRepository::new(&connection);
+        invoice_repo.upsert_one(&invoice_1).unwrap();
+
+        let repo = InvoiceQueryRepository::new(&connection);
+
+        // oldest > item1.entry_datetime
+        let item1_type: InvoiceType = invoice_1.r#type.into();
+        let count =
+            created_invoices_count(&repo, &item1_type, Utc::now().naive_local(), None).unwrap();
+        assert_eq!(0, count);
+        // oldest = item1.entry_datetime
+        let count =
+            created_invoices_count(&repo, &item1_type, invoice_1.entry_datetime.clone(), None)
+                .unwrap();
+        assert_eq!(1, count);
+        // oldest < item1.entry_datetime
+        let oldest = invoice_1.entry_datetime - chrono::Duration::milliseconds(50);
+        let count = created_invoices_count(&repo, &item1_type, oldest.clone(), None).unwrap();
+        assert_eq!(1, count);
+        // test that earliest exclude the invoice
+        let earliest = invoice_1.entry_datetime - chrono::Duration::milliseconds(20);
+        let count =
+            created_invoices_count(&repo, &item1_type, oldest.clone(), Some(earliest.clone()))
+                .unwrap();
+        assert_eq!(0, count);
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_count_service() {
         let (_, connection, _, _) = test_db::setup_all(
             "omsupply-database-invoice_count_service",
             MockDataInserts::all(),
@@ -115,7 +195,7 @@ mod invoice_count_service_test {
         // captured
         let test_now = Utc.ymd(2021, 12, 7).and_hms_milli(15, 30, 0, 0);
         let result = service
-            .invoice_count_created(
+            .created_invoices_count(
                 &ctx,
                 InvoiceType::InboundShipment,
                 test_now,
@@ -128,7 +208,7 @@ mod invoice_count_service_test {
         // Expect only one entry today in UTC tz
         let test_now = Utc.ymd(2021, 12, 8).and_hms_milli(15, 30, 0, 0);
         let result = service
-            .invoice_count_created(&ctx, InvoiceType::InboundShipment, test_now, Some(0))
+            .created_invoices_count(&ctx, InvoiceType::InboundShipment, test_now, Some(0))
             .unwrap();
         assert_eq!(result.today, 1);
         assert_eq!(result.this_week, 2);
