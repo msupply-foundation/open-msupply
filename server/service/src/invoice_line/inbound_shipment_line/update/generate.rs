@@ -1,6 +1,9 @@
 use crate::{invoice_line::inbound_shipment_line::generate_batch, u32_to_i32};
 use domain::inbound_shipment::UpdateInboundShipmentLine;
-use repository::{StorageConnection, schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow}};
+use repository::{
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
+    StorageConnection,
+};
 
 use super::UpdateInboundShipmentLineError;
 
@@ -16,7 +19,7 @@ pub fn generate(
 
     let mut update_line = generate_line(input, current_line, new_item_option);
 
-    let upsert_batch_option = if status != InvoiceRowStatus::Draft {
+    let upsert_batch_option = if status != InvoiceRowStatus::New {
         let new_batch = generate_batch(
             update_line.clone(),
             batch_to_delete_id.is_none(),

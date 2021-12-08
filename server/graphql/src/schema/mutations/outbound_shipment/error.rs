@@ -1,16 +1,6 @@
 use async_graphql::Object;
 
 use crate::schema::types::NameNode;
-
-pub struct CannotChangeStatusBackToDraftError;
-
-#[Object]
-impl CannotChangeStatusBackToDraftError {
-    pub async fn description(&self) -> &'static str {
-        "Once confirmed or finalised, an invoice cannot be changed back to a draft."
-    }
-}
-
 pub struct CannotChangeStatusOfInvoiceOnHold;
 
 #[Object]
@@ -29,10 +19,10 @@ impl CanOnlyEditInvoicesInLoggedInStoreError {
     }
 }
 
-pub struct FinalisedInvoiceIsNotEditableError;
+pub struct InvoiceIsNotEditable;
 
 #[Object]
-impl FinalisedInvoiceIsNotEditableError {
+impl InvoiceIsNotEditable {
     pub async fn description(&self) -> &'static str {
         "Once finalised, an invoice cannot be edited."
     }

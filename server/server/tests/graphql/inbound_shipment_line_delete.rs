@@ -66,33 +66,33 @@ mod graphql {
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Draft.equal_to())
+                .status(InvoiceStatus::New.equal_to())
                 .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
-        let confirmed_inbound_shipment = get_invoice_inline!(
+        let delivered_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Confirmed.equal_to())
+                .status(InvoiceStatus::Delivered.equal_to())
                 .id(EqualFilter::equal_to("inbound_shipment_d")),
             &connection
         );
-        let finalised_inbound_shipment = get_invoice_inline!(
+        let verified_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Finalised.equal_to()),
+                .status(InvoiceStatus::Verified.equal_to()),
             &connection
         );
         let outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
-        let confirmed_invoice_lines =
-            get_invoice_lines_inline!(&confirmed_inbound_shipment.id.clone(), &connection);
+        let delivered_invoice_lines =
+            get_invoice_lines_inline!(&delivered_inbound_shipment.id.clone(), &connection);
         let outbound_shipment_lines =
             get_invoice_lines_inline!(&outbound_shipment.id.clone(), &connection);
-        let finalised_invoice_lines =
-            get_invoice_lines_inline!(&finalised_inbound_shipment.id.clone(), &connection);
+        let verified_invoice_lines =
+            get_invoice_lines_inline!(&verified_inbound_shipment.id.clone(), &connection);
         let draft_invoice_lines =
             get_invoice_lines_inline!(&draft_inbound_shipment.id.clone(), &connection);
 
@@ -131,18 +131,18 @@ mod graphql {
             })
         );
 
-        // Test CannotEditFinalisedInvoice
+        // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.id = finalised_invoice_lines[0].id.clone();
-        variables.invoice_id = finalised_inbound_shipment.id.clone();
+        variables.id = verified_invoice_lines[0].id.clone();
+        variables.invoice_id = verified_inbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
         assert_error!(
             response,
-            CannotEditFinalisedInvoice(delete::CannotEditFinalisedInvoice {
-                description: "Cannot edit finalised invoice".to_string(),
+            CannotEditInvoice(delete::CannotEditInvoice {
+                description: "Cannot edit invoice".to_string(),
             },)
         );
 
@@ -164,7 +164,7 @@ mod graphql {
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -178,10 +178,10 @@ mod graphql {
         // Test BatchIsReserved
 
         let mut variables = base_variables.clone();
-        variables.id = confirmed_invoice_lines[1].id.clone();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.id = delivered_invoice_lines[1].id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
         let mut stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(confirmed_invoice_lines[1].stock_line_id.as_ref().unwrap())
+            .find_one_by_id(delivered_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
         stock_line.available_number_of_packs -= 1;
         StockLineRowRepository::new(&connection)
@@ -217,11 +217,11 @@ mod graphql {
 
         assert!(matches!(deleted_line, Err(RepositoryError::NotFound)));
 
-        // Success Confirmed
+        // Success Delivered
 
         let mut variables = base_variables.clone();
-        variables.id = confirmed_invoice_lines[0].id.clone();
-        variables.invoice_id = confirmed_inbound_shipment.id.clone();
+        variables.id = delivered_invoice_lines[0].id.clone();
+        variables.invoice_id = delivered_inbound_shipment.id.clone();
 
         let query = Delete::build_query(variables.clone());
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -229,7 +229,7 @@ mod graphql {
 
         let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
         let deleted_stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&confirmed_invoice_lines[0].stock_line_id.clone().unwrap());
+            .find_one_by_id(&delivered_invoice_lines[0].stock_line_id.clone().unwrap());
 
         assert_eq!(
             delete_response,

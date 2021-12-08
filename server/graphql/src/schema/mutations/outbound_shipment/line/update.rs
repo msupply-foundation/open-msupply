@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{
-        tax_update_input::TaxUpdate, CannotEditFinalisedInvoice, ForeignKey, ForeignKeyError,
+        tax_update_input::TaxUpdate, CannotEditInvoice, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
         NotAnOutboundShipment,
     },
@@ -62,7 +62,7 @@ pub enum UpdateOutboundShipmentLineErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     StockLineDoesNotBelongToCurrentStore(StockLineDoesNotBelongToCurrentStore),
     LineDoesNotReferenceStockLine(LineDoesNotReferenceStockLine),
@@ -122,7 +122,7 @@ impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineRespons
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
             }
             UpdateOutboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             UpdateOutboundShipmentLineError::ItemNotFound => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))

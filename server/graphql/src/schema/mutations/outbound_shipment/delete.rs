@@ -1,6 +1,6 @@
 use crate::schema::{
     mutations::{
-        CannotDeleteInvoiceWithLines, CannotEditFinalisedInvoice, DeleteResponse,
+        CannotDeleteInvoiceWithLines, CannotEditInvoice, DeleteResponse,
         InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
     },
     types::{DatabaseError, ErrorWrapper, RecordNotFound},
@@ -31,7 +31,7 @@ pub fn get_delete_outbound_shipment_response(
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteOutboundShipmentErrorInterface {
     RecordNotFound(RecordNotFound),
-    CannotEditFinalisedInvoice(CannotEditFinalisedInvoice),
+    CannotEditInvoice(CannotEditInvoice),
     NotAnOutboundShipment(NotAnOutboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
@@ -46,7 +46,7 @@ impl From<DeleteOutboundShipmentError> for DeleteOutboundShipmentResponse {
                 OutError::RecordNotFound(RecordNotFound {})
             }
             DeleteOutboundShipmentError::CannotEditFinalised => {
-                OutError::CannotEditFinalisedInvoice(CannotEditFinalisedInvoice {})
+                OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             DeleteOutboundShipmentError::NotThisStoreInvoice => {
                 OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})

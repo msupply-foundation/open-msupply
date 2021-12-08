@@ -92,7 +92,7 @@ All other fields are translated directly to snake case equivalent.
 `type` to be set as: `OUTBOUND_SHIPMENT`
 `store_id` to be set as current logged in store in session
 
-On Insertion `entry_datetime` is set.
+On Insertion `created_datetime` is set.
 
 On status change the datetime fields are set:
 - `confirm_datetime` is set when the status is changed to `confirmed`

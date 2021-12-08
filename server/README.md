@@ -22,6 +22,8 @@ openssl req -x509 -newkey rsa:4096 -nodes -keyout certs/key.pem -out certs/cert.
 
 ## Dependencies
 
+When using Postgres, Postgres 12 or higher is required.
+
 ### Windows
 
 - Install [rustup.exe](https://www.rust-lang.org/tools/install), following the instructions for installing Visual Studio C++ Build Tools if prompted.
@@ -74,7 +76,7 @@ rustflags = "-L /opt/homebrew/opt/libpq/lib"
 
 ### Optional
 
-- Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image).
+- Install [pgAdmin](https://www.pgadmin.org/download/) (see [deployment instructions](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html) if using the Docker image)
 
 ## Getting started
 
