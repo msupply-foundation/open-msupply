@@ -1,7 +1,5 @@
 use chrono::NaiveDate;
 
-use crate::shipment_tax_update::ShipmentTaxUpdate;
-
 use super::invoice::InvoiceStatus;
 
 pub struct InsertInboundShipment {
@@ -22,9 +20,6 @@ pub struct UpdateInboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub color: Option<String>,
-    pub total_before_tax: Option<f64>,
-    pub total_after_tax: Option<f64>,
-    pub tax: Option<ShipmentTaxUpdate>,
 }
 pub struct DeleteInboundShipment {
     pub id: String,
