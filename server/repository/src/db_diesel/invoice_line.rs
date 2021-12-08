@@ -1,19 +1,15 @@
-use std::collections::HashMap;
-
 use crate::{
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
             invoice_line, invoice_line::dsl as invoice_line_dsl,
-            invoice_line_stats::dsl as invoice_line_stats_dsl, location,
-            location::dsl as location_dsl,
+            invoice_stats::dsl as invoice_stats_dsl, location, location::dsl as location_dsl,
         },
-        InvoiceLineRow, InvoiceLineStatsRow, ItemType, LocationRow,
+        InvoiceLineRow, InvoiceStatsRow, LocationRow,
     },
 };
 use domain::{
-    invoice::InvoicePricing,
     invoice_line::{InvoiceLine, InvoiceLineFilter, InvoiceLineSort},
     Pagination,
 };
@@ -68,35 +64,11 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 
     /// Calculates invoice line stats for a given invoice ids
-    pub fn stats(
-        &self,
-        invoice_ids: &[String],
-    ) -> Result<HashMap<String, InvoicePricing>, RepositoryError> {
-        let results: Vec<InvoiceLineStatsRow> = invoice_line_stats_dsl::invoice_line_stats
-            .filter(invoice_line_stats_dsl::invoice_id.eq_any(invoice_ids))
+    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<InvoiceStatsRow>, RepositoryError> {
+        let results: Vec<InvoiceStatsRow> = invoice_stats_dsl::invoice_stats
+            .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
             .load(&self.connection.connection)?;
-
-        // collect rows into InvoiceLineStats
-        let mut stats = HashMap::<String, InvoicePricing>::new();
-        for row in results {
-            let entry = stats
-                .entry(row.invoice_id.clone())
-                .or_insert_with(|| InvoicePricing::new(&row.invoice_id));
-            entry.total_before_tax += row.total_before_tax;
-            entry.total_after_tax += row.total_after_tax;
-            match row.item_type {
-                ItemType::Stock => {
-                    entry.stock_total_before_tax += row.total_before_tax;
-                    entry.stock_total_after_tax += row.total_after_tax;
-                }
-                ItemType::Service => {
-                    entry.service_total_before_tax += row.total_before_tax;
-                    entry.service_total_after_tax += row.total_after_tax;
-                }
-                ItemType::NonStock => {}
-            };
-        }
-        Ok(stats)
+        Ok(results)
     }
 }
 

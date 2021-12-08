@@ -343,12 +343,12 @@ mod repository_test {
     }
 
     use crate::{
-        database_settings::get_storage_connection_manager, test_db, CentralSyncBufferRepository,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, ItemRepository,
-        MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
-        NameQueryRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
-        RepositoryError, RequisitionLineRepository, RequisitionRepository, StockLineRowRepository,
-        StoreRepository, UserAccountRepository,
+        database_settings::get_storage_connection_manager, schema::InvoiceStatsRow, test_db,
+        CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
+        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+        MasterListRepository, NameQueryRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRepository, RepositoryError, RequisitionLineRepository,
+        RequisitionRepository, StockLineRowRepository, StoreRepository, UserAccountRepository,
     };
     use domain::{
         name::{NameFilter, NameSort, NameSortField},
@@ -795,14 +795,22 @@ mod repository_test {
         let repo = InvoiceLineRepository::new(&connection);
         let invoice_1_id = data::invoice_1().id;
         let result = repo.stats(&vec![invoice_1_id.clone()]).unwrap();
-        let stats_invoice_1 = result.get(&invoice_1_id.clone()).unwrap();
-        assert_eq!(stats_invoice_1.invoice_id, invoice_1_id.clone());
-        assert_eq!(stats_invoice_1.total_before_tax, 13.0);
-        assert_eq!(stats_invoice_1.total_after_tax, 18.0);
-        assert_eq!(stats_invoice_1.stock_total_before_tax, 3.0);
-        assert_eq!(stats_invoice_1.stock_total_after_tax, 3.0);
-        assert_eq!(stats_invoice_1.service_total_before_tax, 10.0);
-        assert_eq!(stats_invoice_1.service_total_after_tax, 15.0);
+        let stats_invoice_1 = result
+            .into_iter()
+            .find(|row| row.invoice_id == invoice_1_id)
+            .unwrap();
+        assert_eq!(
+            stats_invoice_1,
+            InvoiceStatsRow {
+                invoice_id: invoice_1_id,
+                total_before_tax: 13.0,
+                total_after_tax: 18.0,
+                stock_total_before_tax: 3.0,
+                stock_total_after_tax: 3.0,
+                service_total_before_tax: 10.0,
+                service_total_after_tax: 15.0
+            }
+        );
     }
 
     #[actix_rt::test]
