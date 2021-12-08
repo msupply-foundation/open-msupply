@@ -208,6 +208,7 @@ table! {
     number (id) {
         id -> Text,
         value -> BigInt,
+        store_id -> Text,
     }
 }
 
