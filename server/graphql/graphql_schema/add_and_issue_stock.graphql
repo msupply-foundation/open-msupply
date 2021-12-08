@@ -162,7 +162,7 @@ mutation issueStock(
     ... on InvoiceNode {
       id
       confirmedDatetime
-      entryDatetime
+      CreatedDatetime
       lines {
         ... on InvoiceLineConnector {
           nodes {

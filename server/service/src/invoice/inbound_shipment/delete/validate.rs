@@ -1,7 +1,6 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_empty, check_invoice_is_not_finalised,
-    check_invoice_type, InvoiceDoesNotExist, InvoiceIsFinalised, InvoiceLinesExist,
-    WrongInvoiceType,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_is_empty, check_invoice_type,
+    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceType,
 };
 use domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType};
 use repository::{schema::InvoiceRow, StorageConnection};
@@ -16,7 +15,7 @@ pub fn validate(
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
-    check_invoice_is_not_finalised(&invoice)?;
+    check_invoice_is_editable(&invoice)?;
     check_invoice_is_empty(&input.id, connection)?;
 
     Ok(invoice)
@@ -28,8 +27,8 @@ impl From<WrongInvoiceType> for DeleteInboundShipmentError {
     }
 }
 
-impl From<InvoiceIsFinalised> for DeleteInboundShipmentError {
-    fn from(_: InvoiceIsFinalised) -> Self {
+impl From<InvoiceIsNotEditable> for DeleteInboundShipmentError {
+    fn from(_: InvoiceIsNotEditable) -> Self {
         DeleteInboundShipmentError::CannotEditFinalised
     }
 }

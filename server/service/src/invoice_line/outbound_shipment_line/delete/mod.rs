@@ -30,7 +30,7 @@ pub fn delete_outbound_shipment_line(
                 stock_line.available_number_of_packs += line.number_of_packs;
 
                 let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
-                if invoice.status == InvoiceRowStatus::Confirmed {
+                if invoice.status == InvoiceRowStatus::Picked {
                     stock_line.total_number_of_packs += line.number_of_packs;
                 }
 

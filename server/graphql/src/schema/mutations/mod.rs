@@ -306,11 +306,11 @@ impl RecordBelongsToAnotherStore {
     }
 }
 
-pub struct CannotEditFinalisedInvoice;
+pub struct CannotEditInvoice;
 #[Object]
-impl CannotEditFinalisedInvoice {
+impl CannotEditInvoice {
     pub async fn description(&self) -> &'static str {
-        "Cannot edit finalised invoice"
+        "Cannot edit invoice"
     }
 }
 
@@ -350,11 +350,11 @@ impl InvoiceDoesNotBelongToCurrentStore {
     }
 }
 
-pub struct CannotChangeInvoiceBackToDraft;
+pub struct CannotReverseInvoiceStatus;
 #[Object]
-impl CannotChangeInvoiceBackToDraft {
+impl CannotReverseInvoiceStatus {
     pub async fn description(&self) -> &'static str {
-        "Cannot change invoice back to draft"
+        "Cannot reverse invoice status"
     }
 }
 

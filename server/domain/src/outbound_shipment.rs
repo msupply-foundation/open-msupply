@@ -1,5 +1,11 @@
 use super::invoice::InvoiceStatus;
 
+pub enum UpdateOutboundShipmentStatus {
+    Allocated,
+    Picked,
+    Shipped,
+}
+
 pub struct InsertOutboundShipment {
     pub id: String,
     pub other_party_id: String,
@@ -13,7 +19,7 @@ pub struct InsertOutboundShipment {
 pub struct UpdateOutboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,
-    pub status: Option<InvoiceStatus>,
+    pub status: Option<UpdateOutboundShipmentStatus>,
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
@@ -39,4 +45,23 @@ pub struct UpdateOutboundShipmentLine {
 pub struct DeleteOutboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
+}
+
+impl UpdateOutboundShipmentStatus {
+    pub fn full_status(&self) -> InvoiceStatus {
+        match self {
+            UpdateOutboundShipmentStatus::Allocated => InvoiceStatus::Allocated,
+            UpdateOutboundShipmentStatus::Picked => InvoiceStatus::Picked,
+            UpdateOutboundShipmentStatus::Shipped => InvoiceStatus::Shipped,
+        }
+    }
+}
+
+impl UpdateOutboundShipment {
+    pub fn full_status(&self) -> Option<InvoiceStatus> {
+        match &self.status {
+            Some(status) => Some(status.full_status()),
+            None => None,
+        }
+    }
 }

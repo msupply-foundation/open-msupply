@@ -5,24 +5,23 @@ use crate::schema::{
             CannotChangeStatusOfInvoiceOnHold, InvoiceLineHasNoStockLineError,
             NotAnOutboundShipmentError,
         },
-        ForeignKey, ForeignKeyError,
+        CannotReverseInvoiceStatus, ForeignKey, ForeignKeyError,
     },
     types::{
-        get_invoice_response, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, InvoiceResponse,
-        NameNode, NodeError, RecordNotFound,
+        get_invoice_response, ErrorWrapper, InvoiceNode, InvoiceResponse, NameNode, NodeError,
+        RecordNotFound,
     },
 };
-use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
+use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};
 use repository::StorageConnectionManager;
 use service::invoice::{update_outbound_shipment, UpdateOutboundShipmentError};
 
 use super::{
-    CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusBackToDraftError,
-    FinalisedInvoiceIsNotEditableError, OtherPartyCannotBeThisStoreError,
-    OtherPartyNotACustomerError,
+    CanOnlyEditInvoicesInLoggedInStoreError, InvoiceIsNotEditable,
+    OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError,
 };
 
-use async_graphql::{InputObject, Interface, Union};
+use async_graphql::*;
 
 #[derive(InputObject)]
 pub struct UpdateOutboundShipmentInput {
@@ -33,7 +32,7 @@ pub struct UpdateOutboundShipmentInput {
     other_party_id: Option<String>,
     /// When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
     /// existing invoice items gets updated.
-    status: Option<InvoiceNodeStatus>,
+    status: Option<UpdateOutboundShipmentStatusInput>,
     on_hold: Option<bool>,
     comment: Option<String>,
     /// External invoice reference, e.g. purchase or shipment number
@@ -41,12 +40,30 @@ pub struct UpdateOutboundShipmentInput {
     color: Option<String>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateOutboundShipmentStatusInput {
+    Allocated,
+    Picked,
+    Shipped,
+}
+
+impl UpdateOutboundShipmentStatusInput {
+    pub fn to_domain(&self) -> UpdateOutboundShipmentStatus {
+        use UpdateOutboundShipmentStatus::*;
+        match self {
+            UpdateOutboundShipmentStatusInput::Allocated => Allocated,
+            UpdateOutboundShipmentStatusInput::Picked => Picked,
+            UpdateOutboundShipmentStatusInput::Shipped => Shipped,
+        }
+    }
+}
+
 impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
     fn from(input: UpdateOutboundShipmentInput) -> Self {
         UpdateOutboundShipment {
             id: input.id,
             other_party_id: input.other_party_id,
-            status: input.status.map(InvoiceStatus::from),
+            status: input.status.map(|status| status.to_domain()),
             on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,
@@ -79,10 +96,10 @@ pub fn get_update_outbound_shipment_response(
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateOutboundShipmentErrorInterface {
-    CannotChangeInvoiceBackToDraft(CannotChangeStatusBackToDraftError),
+    CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
-    InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError),
+    InvoiceIsNotEditable(InvoiceIsNotEditable),
     InvoiceDoesNotExists(RecordNotFound),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
     /// Other party does not exist
@@ -97,8 +114,8 @@ impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
     fn from(error: UpdateOutboundShipmentError) -> Self {
         use UpdateOutboundShipmentErrorInterface as OutError;
         let error = match error {
-            UpdateOutboundShipmentError::CannotChangeInvoiceBackToDraft => {
-                OutError::CannotChangeInvoiceBackToDraft(CannotChangeStatusBackToDraftError {})
+            UpdateOutboundShipmentError::CannotReverseInvoiceStatus => {
+                OutError::CannotReverseInvoiceStatus(CannotReverseInvoiceStatus {})
             }
             UpdateOutboundShipmentError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
@@ -106,8 +123,8 @@ impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
             UpdateOutboundShipmentError::InvoiceDoesNotExists => {
                 OutError::InvoiceDoesNotExists(RecordNotFound {})
             }
-            UpdateOutboundShipmentError::InvoiceIsFinalised => {
-                OutError::InvoiceIsFinalised(FinalisedInvoiceIsNotEditableError {})
+            UpdateOutboundShipmentError::InvoiceIsNotEditable => {
+                OutError::InvoiceIsNotEditable(InvoiceIsNotEditable {})
             }
             UpdateOutboundShipmentError::OtherPartyDoesNotExists => {
                 OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
