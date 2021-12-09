@@ -1,5 +1,6 @@
 pub mod loader;
 pub mod schema;
+pub mod standard_graphql_error;
 
 use actix_web::cookie::Cookie;
 use actix_web::HttpRequest;
