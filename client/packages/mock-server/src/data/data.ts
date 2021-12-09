@@ -768,5 +768,3 @@ export let RequisitionLineData = [
 
 export let StocktakeData = createStocktakes();
 export let StocktakeLineData = createStocktakeLines();
-
-("I missed the convo cause I usually have channel on mute - ya'll just be speaking some bullshit all day");
