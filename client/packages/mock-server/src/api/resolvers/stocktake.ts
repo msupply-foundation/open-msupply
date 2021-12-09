@@ -12,7 +12,7 @@ export const StocktakeResolver = {
     return { __typename: 'StocktakeNode', lines, ...stocktake };
   },
   list: (
-    params: StocktakeListParameters
+    params?: StocktakeListParameters | null
   ): ListResponse<ResolvedStocktake, 'StocktakeConnector'> => {
     const stocktakes = db.stocktake.get.list();
 

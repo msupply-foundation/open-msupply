@@ -5,7 +5,7 @@ import {
   ConnectorError,
   NameResponse,
   UpdateOutboundShipmentInput,
-  InvoiceNodeStatus,
+  UpdateOutboundShipmentStatusInput,
   OmSupplyApi,
   InsertOutboundShipmentLineInput,
   StockLineResponse,
@@ -104,7 +104,7 @@ const invoiceToInput = (
     id: patch.id,
     // color: patch.color,
     comment: patch.comment,
-    status: patch.status as InvoiceNodeStatus,
+    status: patch.status as unknown as UpdateOutboundShipmentStatusInput,
     onHold: patch.onHold,
     otherPartyId: patch.otherParty?.id,
     theirReference: patch.theirReference,
@@ -120,6 +120,8 @@ const createInsertOutboundLineInput = (
     numberOfPacks: line.numberOfPacks,
     stockLineId: line.stockLineId,
     invoiceId: line.invoiceId,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
   };
 };
 
