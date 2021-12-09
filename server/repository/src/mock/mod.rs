@@ -275,7 +275,6 @@ pub async fn insert_mock_data(
         if inserts.invoices {
             let repo = InvoiceRepository::new(connection);
             for row in &mock_data.invoices {
-                println!("{:?}", row);
                 repo.upsert_one(&row).unwrap();
             }
         }
