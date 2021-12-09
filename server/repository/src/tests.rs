@@ -361,10 +361,11 @@ mod repository_test {
     use crate::{
         database_settings::get_storage_connection_manager, schema::InvoiceStatsRow, test_db,
         CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-        MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
-        OutboundShipmentRepository, RepositoryError, RequisitionLineRepository,
-        RequisitionRepository, StockLineRowRepository, StoreRepository, UserAccountRepository,
+        InvoiceRepository, ItemRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
+        NumberRowRepository, OutboundShipmentRepository, RepositoryError,
+        RequisitionLineRepository, RequisitionRepository, StockLineRowRepository, StoreRepository,
+        UserAccountRepository,
     };
     use domain::{
         name::{NameFilter, NameSort, NameSortField},
@@ -630,7 +631,7 @@ mod repository_test {
             .upsert_one(&data::master_list_1())
             .unwrap();
 
-        let repo = MasterListLineRepository::new(&connection);
+        let repo = MasterListLineRowRepository::new(&connection);
         let master_list_line_1 = data::master_list_line_1();
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
