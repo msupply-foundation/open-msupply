@@ -210,7 +210,6 @@ export const reducer = (
           state.draft = {
             ...state.draft,
             ...data,
-            status: state.draft.status,
             items: state.draft.items,
           };
 

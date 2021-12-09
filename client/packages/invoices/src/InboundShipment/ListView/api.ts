@@ -30,12 +30,10 @@ const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
     // case 'allocatedDatetime': {
     //   return InvoiceSortFieldInput.ConfirmDatetime;
     // }
-    case 'entryDatetime': {
-      return InvoiceSortFieldInput.EntryDatetime;
+    case 'createdDatetime': {
+      return InvoiceSortFieldInput.CreatedDatetime;
     }
-    case 'finalisedDateTime': {
-      return InvoiceSortFieldInput.FinalisedDateTime;
-    }
+
     case 'comment': {
       return InvoiceSortFieldInput.Comment;
     }

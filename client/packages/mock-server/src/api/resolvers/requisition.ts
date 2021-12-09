@@ -22,7 +22,7 @@ export const requisitionResolver = {
       };
     },
     list: (
-      params: RequisitionListParameters
+      params?: RequisitionListParameters | null
     ): ListResponse<ResolvedRequisition, 'RequisitionConnector'> => {
       const requisitions = db.requisition.get.list();
 

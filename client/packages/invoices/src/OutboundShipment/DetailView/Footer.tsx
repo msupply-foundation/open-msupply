@@ -9,6 +9,7 @@ import {
   useTranslation,
   useNotification,
   AppFooterPortal,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -26,46 +27,44 @@ interface OutboundDetailFooterProps {
   save: () => Promise<void>;
 }
 
-const createStatusLog = (status: 'DRAFT' | 'CONFIRMED' | 'FINALISED') => {
-  // const {
-  //   entryDatetime,
-  //   allocatedDatetime,
-  //   shippedDatetime,
-  //   pickedDatetime,
-  //   deliveredDatetime,
-  // } = draft;
-
-  if (status === 'DRAFT') {
-    return {
-      DRAFT: new Date().toISOString(),
-      CONFIRMED: null,
-      FINALISED: null,
-    };
-  }
-  if (status === 'CONFIRMED') {
-    return {
-      DRAFT: new Date().toISOString(),
-      CONFIRMED: new Date().toISOString(),
-      FINALISED: null,
-    };
-  }
-
-  return {
-    DRAFT: new Date().toISOString(),
-    CONFIRMED: new Date().toISOString(),
-    FINALISED: new Date().toISOString(),
+const createStatusLog = (draft: OutboundShipment) => {
+  const statusIdx = outboundStatuses.findIndex(s => draft.status === s);
+  console.log('-------------------------------------------');
+  console.log('statusIdx', statusIdx, draft.status);
+  console.log('-------------------------------------------');
+  const statusLog = {
+    [InvoiceNodeStatus.New]: null,
+    [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Picked]: null,
+    [InvoiceNodeStatus.Shipped]: null,
+    [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Verified]: null,
   };
 
-  // return {
-  //   DRAFT: entryDatetime,
-  //   ALLOCATED: allocatedDatetime,
-  //   SHIPPED: shippedDatetime,
-  //   PICKED: pickedDatetime,
-  //   DELIVERED: deliveredDatetime,
-  // };
+  if (statusIdx >= 0) {
+    statusLog[InvoiceNodeStatus.New] = draft.createdDatetime;
+  }
+  if (statusIdx >= 1) {
+    statusLog[InvoiceNodeStatus.Allocated] = draft.allocatedDatetime;
+  }
+  if (statusIdx >= 2) {
+    statusLog[InvoiceNodeStatus.Picked] = draft.pickedDatetime;
+  }
+  if (statusIdx >= 3) {
+    statusLog[InvoiceNodeStatus.Shipped] = draft.shippedDatetime;
+  }
+  if (statusIdx >= 4) {
+    statusLog[InvoiceNodeStatus.Picked] = draft.deliveredDatetime;
+  }
+  if (statusIdx >= 5) {
+    statusLog[InvoiceNodeStatus.Picked] = draft.verifiedDatetime;
+  }
+
+  return statusLog;
 };
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
+  console.log('footer', draft);
   const navigate = useNavigate();
   const t = useTranslation('common');
   const { success } = useNotification();
@@ -93,7 +92,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
 
             <StatusCrumbs
               statuses={outboundStatuses}
-              statusLog={createStatusLog(draft.status)}
+              statusLog={createStatusLog(draft)}
               statusFormatter={getStatusTranslator(t)}
             />
 

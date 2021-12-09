@@ -33,7 +33,7 @@ export const InvoiceLineMutation = {
 
       if (
         invoice.type === InvoiceNodeType.InboundShipment &&
-        invoice.status !== InvoiceNodeStatus.Draft
+        invoice.status !== InvoiceNodeStatus.New
       ) {
         adjustStockLineAvailableNumberOfPacks(
           invoiceLine.stockLineId,
@@ -42,18 +42,6 @@ export const InvoiceLineMutation = {
         adjustStockLineTotalNumberOfPacks(
           invoiceLine.stockLineId,
           invoiceLine.numberOfPacks
-        );
-      }
-
-      adjustStockLineAvailableNumberOfPacks(
-        invoiceLine.stockLineId,
-        -invoiceLine.numberOfPacks
-      );
-
-      if (invoice.status === InvoiceNodeStatus.Confirmed) {
-        adjustStockLineTotalNumberOfPacks(
-          invoiceLine.stockLineId,
-          -invoiceLine.numberOfPacks
         );
       }
 
@@ -78,7 +66,7 @@ export const InvoiceLineMutation = {
           difference
         );
 
-        if (invoice.status === InvoiceNodeStatus.Confirmed) {
+        if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineTotalNumberOfPacks(
             currentInvoiceLine.stockLineId,
             difference
@@ -99,7 +87,7 @@ export const InvoiceLineMutation = {
           numberOfPacks
         );
 
-        if (invoice.status === InvoiceNodeStatus.Confirmed) {
+        if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineTotalNumberOfPacks(
             invoiceLine.stockLineId,
             numberOfPacks
@@ -127,7 +115,7 @@ export const InvoiceLineMutation = {
 
       if (
         insertedLine.stockLineId &&
-        invoice.status !== InvoiceNodeStatus.Draft
+        invoice.status !== InvoiceNodeStatus.New
       ) {
         adjustStockLineAvailableNumberOfPacks(
           insertedLine.stockLineId,
@@ -153,7 +141,7 @@ export const InvoiceLineMutation = {
       const difference = numberOfPacks - (invoiceLine?.numberOfPacks ?? 0);
 
       if (currentInvoiceLine.stockLineId) {
-        if (invoice.status !== InvoiceNodeStatus.Draft) {
+        if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineAvailableNumberOfPacks(
             currentInvoiceLine.stockLineId,
             -difference
@@ -173,7 +161,7 @@ export const InvoiceLineMutation = {
       const { numberOfPacks } = invoiceLine;
 
       if (invoiceLine.stockLineId) {
-        if (invoice.status !== InvoiceNodeStatus.Draft) {
+        if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineAvailableNumberOfPacks(
             invoiceLine.stockLineId,
             -numberOfPacks

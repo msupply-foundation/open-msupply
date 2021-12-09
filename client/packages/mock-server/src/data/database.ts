@@ -1,6 +1,7 @@
 import { randomName } from './../utils';
 import faker from 'faker';
 import {
+  InvoiceNodeStatus,
   DeleteResponse,
   InsertSupplierRequisitionInput,
   UpdateSupplierRequisitionInput,
@@ -11,6 +12,7 @@ import {
   InsertSupplierRequisitionLineInput,
   UpdateSupplierRequisitionLineInput,
   DeleteSupplierRequisitionLineInput,
+  UpdateInboundShipmentInput,
   InsertCustomerRequisitionLineInput,
   UpdateCustomerRequisitionLineInput,
   DeleteCustomerRequisitionLineInput,
@@ -440,18 +442,19 @@ export const get = {
         today: InvoiceData.filter(
           invoice =>
             invoice.type === 'INBOUND_SHIPMENT' &&
-            isToday(new Date(invoice.entryDatetime))
+            isToday(new Date(invoice.createdDatetime))
         ).length,
         thisWeek: InvoiceData.filter(
           invoice =>
             invoice.type === 'INBOUND_SHIPMENT' &&
-            isThisWeek(new Date(invoice.entryDatetime))
+            isThisWeek(new Date(invoice.createdDatetime))
         ).length,
       },
     },
     outboundShipment: {
-      toBePicked: InvoiceData.filter(invoice => invoice.status === 'CONFIRMED')
-        .length,
+      toBePicked: InvoiceData.filter(
+        invoice => invoice.status === InvoiceNodeStatus.Picked
+      ).length,
     },
     stock: {
       expired: StockLineData.filter(stockLine =>
@@ -466,7 +469,7 @@ export const get = {
 
 export const update = {
   invoice: (
-    invoice: UpdateOutboundShipmentInput & {
+    invoice: (UpdateOutboundShipmentInput | UpdateInboundShipmentInput) & {
       allocatedDatetime?: string;
       shippedDatetime?: string;
       pickedDatetime?: string;
@@ -481,7 +484,9 @@ export const update = {
       comment: invoice?.comment ?? existingInvoice.comment,
       theirReference: invoice?.theirReference ?? existingInvoice.theirReference,
       onHold: invoice?.onHold ?? existingInvoice.onHold,
-      status: invoice?.status ?? existingInvoice.status,
+      status:
+        (invoice?.status as unknown as InvoiceNodeStatus) ??
+        existingInvoice.status,
       otherPartyId: invoice?.otherPartyId ?? existingInvoice.otherPartyId,
       // allocatedDatetime:
       //   invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
