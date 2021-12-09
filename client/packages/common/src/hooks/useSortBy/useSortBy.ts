@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useSearchParameters } from '../useSearchParameters';
 
 export interface SortRule<T> {
   key: keyof T | string;
@@ -24,9 +25,11 @@ export const useSortBy = <T>({
   key: initialSortKey,
   isDesc: initialIsDesc = false,
 }: SortRule<T>): SortState<T> => {
+  const searchParams = useSearchParameters();
+  const descParam = searchParams.get('desc');
   const [sortBy, setSortBy] = useState<SortBy<T>>({
-    key: initialSortKey,
-    isDesc: initialIsDesc,
+    key: searchParams.get('sort') ?? initialSortKey,
+    isDesc: descParam ? descParam === 'true' : initialIsDesc,
     direction: getDirection(initialIsDesc),
   });
 
@@ -42,6 +45,11 @@ export const useSortBy = <T>({
         isDesc: newIsDesc,
         direction: getDirection(newIsDesc),
       };
+
+      searchParams.set({
+        sort: String(newSortBy.key),
+        desc: String(newIsDesc),
+      });
 
       return newSortBy;
     });
