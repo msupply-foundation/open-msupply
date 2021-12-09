@@ -10,7 +10,6 @@ import {
   DeleteInboundShipmentInput,
   BatchInboundShipmentInput,
   BatchOutboundShipmentInput,
-  InvoiceNodeStatus,
 } from '@openmsupply-client/common/src/types';
 import { ResolverService } from '../../../api/resolvers';
 import { Invoice as InvoiceSchema } from '../../../schema/Invoice';
@@ -40,7 +39,9 @@ const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
       ids
     )
       ? ids
-      : [ids];
+      : ids
+      ? [ids]
+      : [];
 
     const params: BatchInboundShipmentInput = {
       deleteInboundShipments,
@@ -53,12 +54,12 @@ const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
             InvoiceSchema.MutationResolvers.batchInboundShipment(
               null,
               params
-            ).deleteInboundShipments.map(response => ({
+            ).deleteInboundShipments?.map?.(response => ({
               // The type for DeleteInboundShipmentResponseWithId has an optional
               // typename for some unknown reason, so re-add the typename to keep typescript happy.
               __typename: 'DeleteInboundShipmentResponseWithId',
               ...response,
-            })),
+            })) ?? [],
         },
       })
     );
@@ -68,7 +69,11 @@ const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
 const deleteOutboundShipmentsMutation = mockDeleteOutboundShipmentsMutation(
   (req, res, ctx) => {
     const { ids } = req.variables;
-    const deleteOutboundShipments: string[] = Array.isArray(ids) ? ids : [ids];
+    const deleteOutboundShipments: string[] = Array.isArray(ids)
+      ? ids
+      : ids
+      ? [ids]
+      : [];
     const params: BatchOutboundShipmentInput = {
       deleteOutboundShipments,
     };
@@ -80,12 +85,12 @@ const deleteOutboundShipmentsMutation = mockDeleteOutboundShipmentsMutation(
             InvoiceSchema.MutationResolvers.batchOutboundShipment(
               null,
               params
-            ).deleteOutboundShipments.map(response => ({
+            ).deleteOutboundShipments?.map?.(response => ({
               // The type for DeleteInboundShipmentResponseWithId has an optional
               // typename for some unknown reason, so re-add the typename to keep typescript happy.
               __typename: 'DeleteOutboundShipmentResponseWithId',
               ...response,
-            })),
+            })) ?? [],
         },
       })
     );
@@ -99,7 +104,7 @@ const insertInboundShipmentMutation = mockInsertInboundShipmentMutation(
         insertInboundShipment: {
           __typename: 'InvoiceNode',
           ...InvoiceSchema.MutationResolvers.insertInboundShipment(null, {
-            input: { ...req.variables, status: InvoiceNodeStatus.Draft },
+            input: req.variables,
           }),
         },
       })
@@ -138,22 +143,30 @@ const upsertInboundShipmentMutation = mockUpsertInboundShipmentMutation(
         req.variables.deleteInboundShipmentLines
       )
         ? req.variables.deleteInboundShipmentLines
-        : [req.variables.deleteInboundShipmentLines],
+        : req.variables.deleteInboundShipmentLines
+        ? [req.variables.deleteInboundShipmentLines]
+        : [],
       insertInboundShipmentLines: Array.isArray(
         req.variables.insertInboundShipmentLines
       )
         ? req.variables.insertInboundShipmentLines
-        : [req.variables.insertInboundShipmentLines],
+        : req.variables.insertInboundShipmentLines
+        ? [req.variables.insertInboundShipmentLines]
+        : [],
       updateInboundShipmentLines: Array.isArray(
         req.variables.updateInboundShipmentLines
       )
         ? req.variables.updateInboundShipmentLines
-        : [req.variables.updateInboundShipmentLines],
+        : req.variables.updateInboundShipmentLines
+        ? [req.variables.updateInboundShipmentLines]
+        : [],
       updateInboundShipments: Array.isArray(
         req.variables.updateInboundShipments
       )
         ? req.variables.updateInboundShipments
-        : [req.variables.updateInboundShipments],
+        : req.variables.updateInboundShipments
+        ? [req.variables.updateInboundShipments]
+        : [],
     };
 
     const response = InvoiceSchema.MutationResolvers.batchInboundShipment(
@@ -164,34 +177,38 @@ const upsertInboundShipmentMutation = mockUpsertInboundShipmentMutation(
     const updateInboundShipments: {
       __typename: 'UpdateInboundShipmentResponseWithId';
       id: string;
-    }[] = response.updateInboundShipments.map(r => ({
-      __typename: 'UpdateInboundShipmentResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.updateInboundShipments?.map?.(r => ({
+        __typename: 'UpdateInboundShipmentResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     const insertInboundShipmentLines: {
       __typename: 'InsertInboundShipmentLineResponseWithId';
       id: string;
-    }[] = response.insertInboundShipmentLines.map(r => ({
-      __typename: 'InsertInboundShipmentLineResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.insertInboundShipmentLines?.map?.(r => ({
+        __typename: 'InsertInboundShipmentLineResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     const deleteInboundShipmentLines: {
       __typename: 'DeleteInboundShipmentLineResponseWithId';
       id: string;
-    }[] = response.deleteInboundShipmentLines.map(r => ({
-      __typename: 'DeleteInboundShipmentLineResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.deleteInboundShipmentLines?.map?.(r => ({
+        __typename: 'DeleteInboundShipmentLineResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     const updateInboundShipmentLines: {
       __typename: 'UpdateInboundShipmentLineResponseWithId';
       id: string;
-    }[] = response.updateInboundShipmentLines.map(r => ({
-      __typename: 'UpdateInboundShipmentLineResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.updateInboundShipmentLines?.map?.(r => ({
+        __typename: 'UpdateInboundShipmentLineResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     return res(
       ctx.data({
@@ -223,22 +240,30 @@ const upsertOutboundShipmentMutation = mockUpsertOutboundShipmentMutation(
         req.variables.deleteOutboundShipmentLines
       )
         ? req.variables.deleteOutboundShipmentLines
-        : [req.variables.deleteOutboundShipmentLines],
+        : req.variables.deleteOutboundShipmentLines
+        ? [req.variables.deleteOutboundShipmentLines]
+        : [],
       insertOutboundShipmentLines: Array.isArray(
         req.variables.insertOutboundShipmentLines
       )
         ? req.variables.insertOutboundShipmentLines
-        : [req.variables.insertOutboundShipmentLines],
+        : req.variables.insertOutboundShipmentLines
+        ? [req.variables.insertOutboundShipmentLines]
+        : [],
       updateOutboundShipmentLines: Array.isArray(
         req.variables.updateOutboundShipmentLines
       )
         ? req.variables.updateOutboundShipmentLines
-        : [req.variables.updateOutboundShipmentLines],
+        : req.variables.updateOutboundShipmentLines
+        ? [req.variables.updateOutboundShipmentLines]
+        : [],
       updateOutboundShipments: Array.isArray(
         req.variables.updateOutboundShipments
       )
         ? req.variables.updateOutboundShipments
-        : [req.variables.updateOutboundShipments],
+        : req.variables.updateOutboundShipments
+        ? [req.variables.updateOutboundShipments]
+        : [],
     };
 
     const response = InvoiceSchema.MutationResolvers.batchOutboundShipment(
@@ -249,34 +274,38 @@ const upsertOutboundShipmentMutation = mockUpsertOutboundShipmentMutation(
     const updateOutboundShipments: {
       __typename: 'UpdateOutboundShipmentResponseWithId';
       id: string;
-    }[] = response.updateOutboundShipments.map(r => ({
-      __typename: 'UpdateOutboundShipmentResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.updateOutboundShipments?.map?.(r => ({
+        __typename: 'UpdateOutboundShipmentResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     const insertOutboundShipmentLines: {
       __typename: 'InsertOutboundShipmentLineResponseWithId';
       id: string;
-    }[] = response.insertOutboundShipmentLines.map(r => ({
-      __typename: 'InsertOutboundShipmentLineResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.insertOutboundShipmentLines?.map?.(r => ({
+        __typename: 'InsertOutboundShipmentLineResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     const deleteOutboundShipmentLines: {
       __typename: 'DeleteOutboundShipmentLineResponseWithId';
       id: string;
-    }[] = response.deleteOutboundShipmentLines.map(r => ({
-      __typename: 'DeleteOutboundShipmentLineResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.deleteOutboundShipmentLines?.map?.(r => ({
+        __typename: 'DeleteOutboundShipmentLineResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     const updateOutboundShipmentLines: {
       __typename: 'UpdateOutboundShipmentLineResponseWithId';
       id: string;
-    }[] = response.updateOutboundShipmentLines.map(r => ({
-      __typename: 'UpdateOutboundShipmentLineResponseWithId',
-      id: r.id,
-    }));
+    }[] =
+      response.updateOutboundShipmentLines?.map?.(r => ({
+        __typename: 'UpdateOutboundShipmentLineResponseWithId',
+        id: r.id,
+      })) ?? [];
 
     return res(
       ctx.data({

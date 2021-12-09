@@ -5,7 +5,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "populate": "ts-node ./src/populate.ts",
-    "tsc": "tsc --build",
+    "tsc": "tsc",
     "start": "nodemon ./src/index.ts"
   },
   "devDependencies": {
