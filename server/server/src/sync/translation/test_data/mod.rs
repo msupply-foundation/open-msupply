@@ -11,8 +11,9 @@ use repository::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         NameRow, StoreRow, UnitRow,
     },
-    ItemRepository, MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
-    NameRepository, RepositoryError, StorageConnectionManager, StoreRepository, UnitRowRepository,
+    ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+    MasterListRowRepository, NameRepository, RepositoryError, StorageConnectionManager,
+    StoreRepository, UnitRowRepository,
 };
 
 #[allow(dead_code)]
@@ -94,7 +95,7 @@ pub async fn check_records_against_database(
             }
             TestSyncDataRecord::MasterList(comparison_record) => {
                 assert_eq!(
-                    MasterListRepository::new(&connection)
+                    MasterListRowRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .await,
                     from_option_to_db_result(comparison_record)
