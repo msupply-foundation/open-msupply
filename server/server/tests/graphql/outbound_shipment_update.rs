@@ -99,7 +99,7 @@ mod graphql {
         assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // OtherPartyNotACustomerError
-        let other_party_supplier = &mock_data.names[2];
+        let other_party_supplier = &mock_data["base"].names[2];
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_a",
@@ -207,7 +207,7 @@ mod graphql {
         assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test DRAFT to FINALISED (while setting onHold to true)
-        let full_invoice = mock_data.full_invoices.get("draft_ci_a").unwrap();
+        let full_invoice = mock_data["base"].full_invoices.get("draft_ci_a").unwrap();
         let invoice_id = full_invoice.invoice.id.clone();
         let invoice_lines = full_invoice.get_lines();
         let expected_totals = expected_stock_line_totals(&invoice_lines);
@@ -230,7 +230,7 @@ mod graphql {
         assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test Status Change on Hold
-        let full_invoice = mock_data
+        let full_invoice = mock_data["base"]
             .full_invoices
             .get("outbound_shipment_on_hold")
             .unwrap();
@@ -254,7 +254,7 @@ mod graphql {
         assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // test Status Change and on hold change
-        let full_invoice = mock_data
+        let full_invoice = mock_data["base"]
             .full_invoices
             .get("outbound_shipment_on_hold")
             .unwrap();

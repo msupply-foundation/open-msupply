@@ -258,48 +258,6 @@ pub fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
     }
 }
 
-// Added for invoice_count_service_test
-pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
-    InvoiceRow {
-        id: String::from("inbound_shipment_invoice_count_a"),
-        name_id: String::from("name_store_b"),
-        store_id: String::from("store_a"),
-        invoice_number: 4,
-        r#type: InvoiceRowType::InboundShipment,
-        status: InvoiceRowStatus::New,
-        on_hold: false,
-        comment: Some("Sort comment test Ac".to_owned()),
-        their_reference: Some(String::from("")),
-        created_datetime: NaiveDate::from_ymd(2021, 12, 7).and_hms_milli(13, 30, 0, 0),
-        allocated_datetime: None,
-        picked_datetime: None,
-        shipped_datetime: None,
-        delivered_datetime: None,
-        verified_datetime: None,
-        color: None,
-    }
-}
-pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
-    InvoiceRow {
-        id: String::from("inbound_shipment_invoice_count_b"),
-        name_id: String::from("name_store_b"),
-        store_id: String::from("store_a"),
-        invoice_number: 4,
-        r#type: InvoiceRowType::InboundShipment,
-        status: InvoiceRowStatus::New,
-        on_hold: false,
-        comment: Some("Sort comment test Ac".to_owned()),
-        their_reference: Some(String::from("")),
-        created_datetime: NaiveDate::from_ymd(2021, 12, 8).and_hms_milli(8, 30, 0, 0),
-        allocated_datetime: None,
-        picked_datetime: None,
-        shipped_datetime: None,
-        delivered_datetime: None,
-        verified_datetime: None,
-        color: None,
-    }
-}
-
 pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
     InvoiceRow {
         id: String::from("empty_draft_inbound_shipment"),
@@ -341,8 +299,6 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
         mock_inbound_shipment_c(),
         mock_inbound_shipment_d(),
         mock_empty_draft_inbound_shipment(),
-        mock_inbound_shipment_invoice_count_service_a(),
-        mock_inbound_shipment_invoice_count_service_b(),
     ]
 }
 

@@ -71,7 +71,7 @@ mod graphql {
             MockDataInserts::all(),
         )
         .await;
-
+        let mock_data = mock_data.get_mut("base");
         // Setup
 
         let draft_inbound_shipment = get_invoice_inline!(

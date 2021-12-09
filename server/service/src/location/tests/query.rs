@@ -125,7 +125,7 @@ mod query {
             )
             .unwrap();
 
-        let mut locations = mock_data.locations.clone();
+        let mut locations = mock_data["base"].locations.clone();
         locations.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
         let result_names: Vec<String> = result
@@ -153,7 +153,7 @@ mod query {
             )
             .unwrap();
 
-        let mut locations = mock_data.locations.clone();
+        let mut locations = mock_data["base"].locations.clone();
         locations.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
 
         let result_names: Vec<String> = result

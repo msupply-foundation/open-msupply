@@ -1,5 +1,5 @@
 use repository::{
-    mock::{MockData, MockDataInserts},
+    mock::{MockDataCollection, MockDataInserts},
     test_db::{self, get_test_db_settings},
     StorageConnection, StorageConnectionManager,
 };
@@ -31,7 +31,7 @@ pub async fn setup_all(
     db_name: &str,
     inserts: MockDataInserts,
 ) -> (
-    MockData,
+    MockDataCollection,
     StorageConnection,
     StorageConnectionManager,
     Settings,
