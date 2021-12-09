@@ -73,6 +73,7 @@
   "label.date": "Date",
   "label.requisition-date": "Requisition Date",
   "label.delivered": "Delivered",
+  "label.verified": "Verified",
   "label.details": "Details",
   "label.draft": "Draft",
   "label.entered-by": "Entered by",

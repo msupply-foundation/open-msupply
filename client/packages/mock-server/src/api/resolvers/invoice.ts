@@ -11,8 +11,8 @@ const getInvoiceSortKey = (key: string) => {
     // case InvoiceSortFieldInput.ConfirmDatetime: {
     //   return 'allocatedDatetime';
     // }
-    case InvoiceSortFieldInput.EntryDatetime: {
-      return 'entryDatetime';
+    case InvoiceSortFieldInput.CreatedDatetime: {
+      return 'createdDatetime';
     }
     case InvoiceSortFieldInput.Comment: {
       return 'comment';

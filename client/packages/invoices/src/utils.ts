@@ -24,9 +24,9 @@ export const placeholderInbound: InboundShipment = {
   otherParty: undefined,
   otherPartyId: '',
   items: [],
-  status: InvoiceNodeStatus.Draft,
+  status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.InboundShipment,
-  entryDatetime: '',
+  createdDatetime: '',
   invoiceNumber: 0,
   lines: [],
   pricing: {
@@ -57,9 +57,9 @@ export const placeholderInvoice: Invoice = {
   otherPartyName: '',
   comment: '',
   theirReference: '',
-  status: InvoiceNodeStatus.Draft,
+  status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.OutboundShipment,
-  entryDatetime: '',
+  createdDatetime: '',
   invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
@@ -77,9 +77,9 @@ export const placeholderOutboundShipment: OutboundShipment = {
   otherPartyName: '',
   comment: '',
   theirReference: '',
-  status: InvoiceNodeStatus.Draft,
+  status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.OutboundShipment,
-  entryDatetime: '',
+  createdDatetime: '',
   invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
@@ -106,37 +106,34 @@ export const placeholderOutboundShipment: OutboundShipment = {
   // donorName: '',
 };
 
-export const outboundStatuses: OutboundShipmentStatus[] = [
-  // InvoiceNodeStatus.Allocated,
-  // InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Confirmed,
-  InvoiceNodeStatus.Finalised,
+export const outboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
 ];
 
-export const inboundStatuses: InboundShipmentStatus[] = [
-  // 'NEW',
-  InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Confirmed,
-  InvoiceNodeStatus.Finalised,
-  // 'VERIFIED',
+export const inboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
 ];
 
 const statusTranslation: Record<
   OutboundShipmentStatus | InboundShipmentStatus,
   LocaleKey
 > = {
+  ALLOCATED: 'label.allocated',
+  PICKED: 'label.picked',
+  SHIPPED: 'label.shipped',
+  DELIVERED: 'label.delivered',
   DRAFT: 'label.draft',
-  CONFIRMED: 'label.confirmed',
-  FINALISED: 'label.delivered',
-  // ALLOCATED: 'label.allocated',
-  // PICKED: 'label.picked',
-  // SHIPPED: 'label.shipped',
-  // DELIVERED: 'label.delivered',
-
-  // TODO: Update this to be the correct translation
-  // NEW: 'label.draft',
-  // VERIFIED: 'label.delivered',
+  NEW: 'label.new',
+  VERIFIED: 'label.verified',
 };
 
 export const getNextOutboundStatus = (
@@ -192,7 +189,7 @@ export const getStatusTranslator =
   (currentStatus: OutboundShipmentStatus): string => {
     return t(
       statusTranslation[currentStatus] ??
-        statusTranslation[InvoiceNodeStatus.Draft]
+        statusTranslation[InvoiceNodeStatus.New]
     );
   };
 

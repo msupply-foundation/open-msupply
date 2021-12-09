@@ -10,7 +10,7 @@ import { ExperimentalHandlers } from './experimental';
 // test during tests. For now, the test and dev
 // environments are the same so can is sufficient
 // to not differentiate between them.
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = process.env['NODE_ENV'] !== 'production';
 
 const unsupported = [
   ...StocktakeHandlers,
