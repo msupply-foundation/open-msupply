@@ -1,0 +1,24 @@
+use super::diesel_schema::stock_take;
+use chrono::NaiveDateTime;
+use diesel_derive_enum::DbEnum;
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum StockTakeStatus {
+    New,
+    Finalized,
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[table_name = "stock_take"]
+pub struct StockTakeRow {
+    pub id: String,
+    pub store_id: String,
+    pub comment: Option<String>,
+    pub description: Option<String>,
+    pub status: StockTakeStatus,
+    pub created_datetime: NaiveDateTime,
+    pub finalised_datetime: Option<NaiveDateTime>,
+    pub inventory_additions_id: Option<String>,
+    pub inventory_reductions_id: Option<String>,
+}

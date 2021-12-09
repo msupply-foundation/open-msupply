@@ -560,7 +560,7 @@ mod repository_test {
         let repo = StoreRepository::new(&connection);
         let store_1 = data::store_1();
         repo.insert_one(&store_1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap().unwrap();
         assert_eq!(store_1, loaded_item);
     }
 
@@ -978,7 +978,7 @@ mod repository_test {
                 ))
                 .unwrap();
 
-            for (count, line) in mock_data
+            for (count, line) in mock_data["base"]
                 .full_master_list
                 .get("master_list_master_list_line_filter_test")
                 .unwrap()

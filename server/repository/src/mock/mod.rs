@@ -1,3 +1,5 @@
+use std::{collections::HashMap, ops::Index};
+
 mod full_invoice;
 mod full_master_list;
 mod invoice;
@@ -9,14 +11,15 @@ mod name_store_join;
 mod requisition;
 mod requisition_line;
 mod stock_line;
+mod stock_take;
 mod store;
 mod test_invoice_count_service;
 mod test_outbound_shipment_update;
 mod unit;
 mod user_account;
-use std::{collections::HashMap, ops::Index};
 
 pub use full_invoice::mock_full_invoices;
+pub use full_master_list::*;
 pub use invoice::{mock_invoices, mock_outbound_shipment_a, mock_outbound_shipments};
 pub use invoice_line::{mock_invoice_lines, mock_outbound_shipment_invoice_lines};
 pub use item::mock_items;
@@ -26,16 +29,18 @@ pub use name_store_join::mock_name_store_joins;
 pub use requisition::mock_requisitions;
 pub use requisition_line::mock_requisition_lines;
 pub use stock_line::mock_stock_lines;
-pub use store::{mock_store_b, mock_stores};
+pub use stock_take::*;
+pub use store::*;
 pub use test_invoice_count_service::*;
 pub use test_outbound_shipment_update::*;
 pub use user_account::mock_user_accounts;
 
-use crate::{InvoiceLineRowRepository, LocationRowRepository, StockLineRowRepository};
+use crate::{
+    InvoiceLineRowRepository, LocationRowRepository, StockLineRowRepository, StockTakeRowRepository,
+};
 
 use self::{
     full_invoice::{insert_full_mock_invoice, FullMockInvoice},
-    full_master_list::{insert_full_mock_master_list, mock_full_master_list, FullMockMasterList},
     unit::mock_units,
 };
 
@@ -60,6 +65,7 @@ pub struct MockData {
     pub invoice_lines: Vec<InvoiceLineRow>,
     pub full_invoices: HashMap<String, FullMockInvoice>,
     pub full_master_list: HashMap<String, FullMockMasterList>,
+    pub stock_takes: Vec<StockTakeRow>,
 }
 pub struct MockDataInserts {
     pub names: bool,
@@ -73,6 +79,7 @@ pub struct MockDataInserts {
     pub invoice_lines: bool,
     pub full_invoices: bool,
     pub full_master_list: bool,
+    pub stock_takes: bool,
 }
 
 impl MockDataInserts {
@@ -89,6 +96,7 @@ impl MockDataInserts {
             invoice_lines: true,
             full_invoices: true,
             full_master_list: true,
+            stock_takes: true,
         }
     }
 
@@ -105,6 +113,7 @@ impl MockDataInserts {
             invoice_lines: false,
             full_invoices: false,
             full_master_list: false,
+            stock_takes: false,
         }
     }
 
@@ -162,6 +171,11 @@ impl MockDataInserts {
         self.full_master_list = true;
         self
     }
+
+    pub fn stock_takes(mut self) -> Self {
+        self.stock_takes = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -210,6 +224,7 @@ fn all_mock_data() -> MockDataCollection {
             invoice_lines: mock_invoice_lines(),
             full_invoices: mock_full_invoices(),
             full_master_list: mock_full_master_list(),
+            stock_takes: mock_stock_take_data(),
         },
     );
     data.insert(
@@ -302,6 +317,13 @@ pub async fn insert_mock_data(
         if inserts.full_master_list {
             for row in mock_data.full_master_list.values() {
                 insert_full_mock_master_list(row, connection)
+            }
+        }
+
+        if inserts.stock_takes {
+            for row in &mock_data.stock_takes {
+                let repo = StockTakeRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
             }
         }
     }
