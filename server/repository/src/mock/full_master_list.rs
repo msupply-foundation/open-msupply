@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     db_diesel::{
-        MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
+        MasterListLineRepository, MasterListNameJoinRepository, MasterListRowRepository,
         StorageConnection,
     },
     schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
@@ -35,11 +35,28 @@ pub fn mock_master_list_item_query_test1() -> FullMockMasterList {
     }
 }
 
+pub fn mock_master_list_master_list_filter_test() -> FullMockMasterList {
+    FullMockMasterList {
+        master_list: MasterListRow {
+            id: "master_list_filter_test".to_owned(),
+            name: "name_master_list_filter_test".to_owned(),
+            code: "code_master_list_filter_test".to_owned(),
+            description: "description_master_list_filter_test".to_owned(),
+        },
+        joins: vec![MasterListNameJoinRow {
+            id: "master_list_filter_test".to_owned(),
+            master_list_id: "master_list_filter_test".to_owned(),
+            name_id: "id_master_list_filter_test".to_owned(),
+        }],
+        lines: Vec::new(),
+    }
+}
+
 pub fn insert_full_mock_master_list(
     full_master_list: &FullMockMasterList,
     connection: &StorageConnection,
 ) {
-    MasterListRepository::new(&connection)
+    MasterListRowRepository::new(&connection)
         .upsert_one(&full_master_list.master_list)
         .unwrap();
 
@@ -57,10 +74,16 @@ pub fn insert_full_mock_master_list(
 }
 
 pub fn mock_full_master_list() -> HashMap<String, FullMockMasterList> {
-    vec![(
-        "item_query_test1".to_string(),
-        mock_master_list_item_query_test1(),
-    )]
+    vec![
+        (
+            "item_query_test1".to_string(),
+            mock_master_list_item_query_test1(),
+        ),
+        (
+            "master_list_filter_test".to_string(),
+            mock_master_list_master_list_filter_test(),
+        ),
+    ]
     .into_iter()
     .collect()
 }
