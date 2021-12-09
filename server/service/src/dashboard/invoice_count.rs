@@ -24,6 +24,7 @@ pub trait InvoiceCountServiceTrait {
     /// Returns number of invoices of a certain status for today
     ///
     /// Arguments
+    /// * invoice_status the status change in the requested time range (not the current status)
     /// * now UTC DateTime that should be used for now (useful for testing)
     /// * timezone_offset offset in hours, if not specified the server local timezone is used
     fn invoices_count(
