@@ -4,13 +4,13 @@ use crate::{repository_error::RepositoryError, schema::MasterListLineRow};
 
 use diesel::prelude::*;
 
-pub struct MasterListLineRepository<'a> {
+pub struct MasterListLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> MasterListLineRepository<'a> {
+impl<'a> MasterListLineRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        MasterListLineRepository { connection }
+        MasterListLineRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]

@@ -115,7 +115,7 @@ mod tests {
         test_db,
         {
             db_diesel::{
-                MasterListLineRepository, MasterListNameJoinRepository, MasterListRowRepository,
+                MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
             },
             mock::MockDataInserts,
             schema::{
@@ -394,7 +394,7 @@ mod tests {
         }
 
         for row in master_list_line_rows {
-            MasterListLineRepository::new(&storage_connection)
+            MasterListLineRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }

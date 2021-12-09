@@ -13,7 +13,7 @@ use repository::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         NameRow, StoreRow, UnitRow,
     },
-    ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
+    ItemRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
     MasterListRowRepository, NameRepository, RepositoryError, StorageConnection,
     StorageConnectionManager, StoreRepository, TransactionError, UnitRowRepository,
 };
@@ -183,7 +183,7 @@ fn integrate_record(
             MasterListRowRepository::new(con).upsert_one(record)
         }
         IntegrationUpsertRecord::MasterListLine(record) => {
-            MasterListLineRepository::new(con).upsert_one(record)
+            MasterListLineRowRepository::new(con).upsert_one(record)
         }
         IntegrationUpsertRecord::MasterListNameJoin(record) => {
             MasterListNameJoinRepository::new(con).upsert_one(record)
