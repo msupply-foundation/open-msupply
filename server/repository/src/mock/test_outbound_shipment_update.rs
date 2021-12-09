@@ -6,7 +6,6 @@ use crate::schema::{
 
 use super::MockData;
 
-// Added for CI update test
 fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: String::from("outbound_shipment_line_no_stock_line"),
@@ -29,7 +28,6 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
     }
 }
 
-// Added for CI update test
 fn mock_item_with_no_stock_line() -> ItemRow {
     ItemRow {
         id: String::from("item_with_no_stock_line"),
@@ -40,7 +38,6 @@ fn mock_item_with_no_stock_line() -> ItemRow {
     }
 }
 
-// Added for CI update test
 // invoice containing invoice lines without stock line
 fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
     InvoiceRow {
