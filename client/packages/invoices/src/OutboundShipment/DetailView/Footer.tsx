@@ -29,9 +29,7 @@ interface OutboundDetailFooterProps {
 
 const createStatusLog = (draft: OutboundShipment) => {
   const statusIdx = outboundStatuses.findIndex(s => draft.status === s);
-  console.log('-------------------------------------------');
-  console.log('statusIdx', statusIdx, draft.status);
-  console.log('-------------------------------------------');
+
   const statusLog = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Allocated]: null,
@@ -64,7 +62,6 @@ const createStatusLog = (draft: OutboundShipment) => {
 };
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
-  console.log('footer', draft);
   const navigate = useNavigate();
   const t = useTranslation('common');
   const { success } = useNotification();
