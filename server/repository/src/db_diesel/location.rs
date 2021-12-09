@@ -1,6 +1,4 @@
 use super::StorageConnection;
-
-use crate::diesel_extensions::OrderByExtensions;
 use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
 use crate::repository_error::RepositoryError;
 use crate::schema::diesel_schema::{location, location::dsl as location_dsl};
