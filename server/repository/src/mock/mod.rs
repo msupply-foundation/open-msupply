@@ -11,6 +11,7 @@ mod requisition_line;
 mod stock_line;
 mod store;
 mod test_invoice_count_service;
+mod test_outbound_shipment_update;
 mod unit;
 mod user_account;
 use std::{collections::HashMap, ops::Index};
@@ -27,6 +28,7 @@ pub use requisition_line::mock_requisition_lines;
 pub use stock_line::mock_stock_lines;
 pub use store::{mock_store_b, mock_stores};
 pub use test_invoice_count_service::*;
+pub use test_outbound_shipment_update::*;
 pub use user_account::mock_user_accounts;
 
 use crate::{InvoiceLineRowRepository, LocationRowRepository, StockLineRowRepository};
@@ -213,6 +215,10 @@ fn all_mock_data() -> MockDataCollection {
     data.insert(
         "test_invoice_count_service_data",
         test_invoice_count_service_data(),
+    );
+    data.insert(
+        "test_outbound_shipment_update_data",
+        test_outbound_shipment_update_data(),
     );
 
     data

@@ -235,29 +235,6 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
     }
 }
 
-// Added for CI update test
-// invoice containing invoice lines without stock line
-pub fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
-    InvoiceRow {
-        id: String::from("outbound_shipment_invalid_stock_line"),
-        name_id: String::from("name_store_a"),
-        store_id: String::from("store_c"),
-        invoice_number: 3,
-        r#type: InvoiceRowType::OutboundShipment,
-        status: InvoiceRowStatus::New,
-        on_hold: false,
-        comment: Some("Sort comment test cA".to_owned()),
-        their_reference: Some(String::from("")),
-        created_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
-        color: None,
-        allocated_datetime: None,
-        picked_datetime: None,
-        shipped_datetime: None,
-        delivered_datetime: None,
-        verified_datetime: None,
-    }
-}
-
 pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
     InvoiceRow {
         id: String::from("empty_draft_inbound_shipment"),
@@ -286,7 +263,6 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
         mock_outbound_shipment_c(),
         mock_outbound_shipment_d(),
         mock_outbound_shipment_shipped(),
-        mock_outbound_shipment_invalid_stock_line(),
         mock_outbound_shipment_picked(),
         mock_outbound_shipment_no_lines(),
     ]
