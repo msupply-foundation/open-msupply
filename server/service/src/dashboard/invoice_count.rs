@@ -2,7 +2,7 @@ use chrono::{
     DateTime, Datelike, FixedOffset, Local, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday,
 };
 use domain::{
-    invoice::{InvoiceFilter, InvoiceType},
+    invoice::{InvoiceFilter, InvoiceStatus, InvoiceType},
     DatetimeFilter, EqualFilter,
 };
 use repository::{InvoiceQueryRepository, RepositoryError};
@@ -33,6 +33,11 @@ pub trait InvoiceCountServiceTrait {
         now: DateTime<Utc>,
         timezone_offset: Option<i32>,
     ) -> Result<InvoiceCountCreated, InvoiceCountError>;
+
+    fn outbound_invoices_pickable_count(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<i64, RepositoryError>;
 }
 
 impl From<RepositoryError> for InvoiceCountError {
@@ -116,6 +121,26 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let this_week =
             created_invoices_count(&repo, &invoice_type, start_of_this_week.naive_utc(), None)?;
         Ok(InvoiceCountCreated { today, this_week })
+    }
+
+    fn outbound_invoices_pickable_count(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<i64, RepositoryError> {
+        let repo = InvoiceQueryRepository::new(&ctx.connection);
+        Ok(repo.count(Some(
+            InvoiceFilter::new()
+                .r#type(EqualFilter {
+                    equal_to: Some(InvoiceType::OutboundShipment),
+                    not_equal_to: None,
+                    equal_any: None,
+                })
+                .status(EqualFilter {
+                    equal_to: Some(InvoiceStatus::Picked),
+                    not_equal_to: None,
+                    equal_any: None,
+                }),
+        ))?)
     }
 }
 
