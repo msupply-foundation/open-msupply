@@ -1,6 +1,7 @@
 mod generate;
 mod validate;
 
+use domain::shipment_tax_update::ShipmentTaxUpdate;
 use generate::generate;
 use repository::{
     InvoiceLineRowRepository, RepositoryError, StorageConnectionManager, TransactionError,
@@ -14,7 +15,9 @@ pub struct UpdateOutboundShipmentServiceLine {
     pub invoice_id: String,
     pub item_id: Option<String>,
     pub name: Option<String>,
+    pub total_before_tax: Option<f64>,
     pub total_after_tax: Option<f64>,
+    pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
 }
 

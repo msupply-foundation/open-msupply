@@ -14,7 +14,9 @@ pub struct InsertOutboundShipmentServiceLine {
     pub invoice_id: String,
     pub item_id: String,
     pub name: Option<String>,
-    pub total_after_tax: Option<f64>,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
     pub note: Option<String>,
 }
 

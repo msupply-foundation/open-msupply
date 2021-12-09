@@ -140,6 +140,8 @@ mutation insertInboundShipmentLineFull(
   $numberOfPacks: Int!
   $sellPricePerPack: Float!
   $packSize: Int!
+  $total_before_tax: Float!
+  $total_after_tax: Float!
 ) {
   insertInboundShipmentLine(
     input: {
@@ -154,6 +156,8 @@ mutation insertInboundShipmentLineFull(
       expiryDate: $expiryDate_option
       batch: $batch_option
       packSize: $packSize
+      totalBeforeTax: $total_before_tax
+      totalAfterTax: $total_after_tax
     }
   ) {
     ...InsertInboundShipmentLineResponse
@@ -305,6 +309,8 @@ mutation insertOutboundShipmentLineFull(
   $itemId: String!
   $numberOfPacks: Int!
   $stockLineId: String!
+  $total_before_tax: Float!
+  $total_after_tax: Float!
 ) {
   insertOutboundShipmentLine(
     input: {
@@ -313,6 +319,8 @@ mutation insertOutboundShipmentLineFull(
       itemId: $itemId
       numberOfPacks: $numberOfPacks
       stockLineId: $stockLineId
+      totalBeforeTax: $total_before_tax
+      totalAfterTax: $total_after_tax
     }
   ) {
     ...InsertOutboundShipmentLineResponse

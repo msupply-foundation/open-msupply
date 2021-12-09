@@ -3,6 +3,7 @@ use repository::{RepositoryError, StorageConnection, StoreRepository};
 use std::convert::TryInto;
 
 pub mod auth_data;
+pub mod dashboard;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;

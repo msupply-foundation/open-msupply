@@ -30,7 +30,7 @@ mod user_account;
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use invoice::{InvoiceRepository, OutboundShipmentRepository};
-pub use invoice_line::{InvoiceLineRepository, InvoiceLineStats};
+pub use invoice_line::InvoiceLineRepository;
 pub use invoice_line_row::InvoiceLineRowRepository;
 pub use invoice_query::InvoiceQueryRepository;
 pub use item::ItemRepository;

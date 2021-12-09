@@ -145,9 +145,23 @@ table! {
         pack_size -> Integer,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
+        total_before_tax -> Double,
         total_after_tax -> Double,
+        tax -> Nullable<Double>,
         number_of_packs -> Integer,
         note -> Nullable<Text>,
+    }
+}
+
+table! {
+    invoice_stats (invoice_id) {
+        invoice_id -> Text,
+        total_before_tax -> Double,
+        total_after_tax -> Double,
+        stock_total_before_tax -> Double,
+        stock_total_after_tax -> Double,
+        service_total_before_tax -> Double,
+        service_total_after_tax -> Double,
     }
 }
 
@@ -206,6 +220,7 @@ table! {
     number (id) {
         id -> Text,
         value -> BigInt,
+        store_id -> Text,
     }
 }
 
@@ -248,6 +263,7 @@ allow_tables_to_appear_in_same_query!(
     sync_out,
     invoice,
     invoice_line,
+    invoice_stats,
     user_account,
     name_store_join,
     master_list_line,
