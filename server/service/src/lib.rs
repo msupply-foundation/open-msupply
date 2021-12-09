@@ -7,6 +7,7 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod location;
+pub mod master_list;
 pub mod name;
 pub mod number;
 pub mod permission_validation;
