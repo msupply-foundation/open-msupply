@@ -3,6 +3,7 @@ mod error;
 pub mod inbound_shipment;
 pub mod location;
 pub mod outbound_shipment;
+pub mod tax_update_input;
 pub mod user_register;
 
 use self::location::{

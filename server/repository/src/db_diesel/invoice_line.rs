@@ -3,10 +3,10 @@ use crate::{
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
-            invoice_line, invoice_line::dsl as invoice_line_dsl, location,
-            location::dsl as location_dsl,
+            invoice_line, invoice_line::dsl as invoice_line_dsl,
+            invoice_stats::dsl as invoice_stats_dsl, location, location::dsl as location_dsl,
         },
-        InvoiceLineRow, LocationRow,
+        InvoiceLineRow, InvoiceStatsRow, LocationRow,
     },
 };
 use domain::{
@@ -17,16 +17,9 @@ use domain::{
 use super::{DBType, StorageConnection};
 
 use diesel::{
-    dsl::{self, IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin},
     prelude::*,
-    sql_types::Double,
 };
-
-#[derive(Clone)]
-pub struct InvoiceLineStats {
-    pub invoice_id: String,
-    pub total_after_tax: f64,
-}
 
 type InvoiceLineJoin = (InvoiceLineRow, Option<LocationRow>);
 
@@ -71,23 +64,11 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 
     /// Calculates invoice line stats for a given invoice ids
-    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<InvoiceLineStats>, RepositoryError> {
-        let results = invoice_line_dsl::invoice_line
-            .select((
-                invoice_line_dsl::invoice_id,
-                dsl::sql::<Double>("sum(total_after_tax) as total_after_tax"),
-            ))
-            .group_by(invoice_line_dsl::invoice_id)
-            .filter(invoice_line_dsl::invoice_id.eq_any(invoice_ids))
+    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<InvoiceStatsRow>, RepositoryError> {
+        let results: Vec<InvoiceStatsRow> = invoice_stats_dsl::invoice_stats
+            .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
             .load(&self.connection.connection)?;
-
-        Ok(results
-            .iter()
-            .map(|v: &(String, f64)| InvoiceLineStats {
-                invoice_id: v.0.to_string(),
-                total_after_tax: v.1,
-            })
-            .collect())
+        Ok(results)
     }
 }
 

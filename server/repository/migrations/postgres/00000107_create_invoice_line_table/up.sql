@@ -10,7 +10,9 @@ CREATE TABLE invoice_line (
     expiry_date DATE,
     cost_price_per_pack DOUBLE PRECISION NOT NULL,
     sell_price_per_pack DOUBLE PRECISION NOT NULL,
+    total_before_tax DOUBLE PRECISION NOT NULL,
     total_after_tax DOUBLE PRECISION NOT NULL,
+    tax DOUBLE PRECISION,
     number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL,
     note TEXT

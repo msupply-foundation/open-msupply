@@ -16,7 +16,9 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 0.87,
         total_after_tax: 1.0,
+        tax: Some(15.0),
         number_of_packs: 10,
         note: None,
     };
@@ -34,7 +36,9 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 1.74,
         total_after_tax: 2.0,
+        tax: Some(15.0),
         number_of_packs: 4,
         note: None,
     };
@@ -53,7 +57,9 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 2.0,
         total_after_tax: 2.0,
+        tax: None,
         number_of_packs: 1,
         note: None,
     };
@@ -79,7 +85,9 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 3.0,
         total_after_tax: 3.0,
+        tax: None,
         number_of_packs: 3,
         note: None,
     };
@@ -97,7 +105,9 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 4.0,
         total_after_tax: 4.0,
+        tax: None,
         number_of_packs: 5,
         note: None,
     };
@@ -122,7 +132,9 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 3,
         cost_price_per_pack: 8.0,
         sell_price_per_pack: 9.0,
+        total_before_tax: 27.0,
         total_after_tax: 27.0,
+        tax: None,
         number_of_packs: 3,
         note: None,
     };
@@ -140,7 +152,9 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 7,
         cost_price_per_pack: 54.0,
         sell_price_per_pack: 34.0,
+        total_before_tax: 34.0,
         total_after_tax: 34.0,
+        tax: None,
         number_of_packs: 1,
         note: None,
     };
@@ -165,7 +179,9 @@ pub fn mock_outbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 2,
         cost_price_per_pack: 10.0,
         sell_price_per_pack: 11.0,
+        total_before_tax: 22.0,
         total_after_tax: 22.0,
+        tax: None,
         number_of_packs: 2,
         note: None,
     };
@@ -187,7 +203,9 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 5.0,
         total_after_tax: 5.0,
+        tax: None,
         number_of_packs: 1,
         note: None,
     };
@@ -205,7 +223,9 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 6.0,
         total_after_tax: 6.0,
+        tax: None,
         number_of_packs: 1,
         note: None,
     };
@@ -230,7 +250,9 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 7.0,
         total_after_tax: 7.0,
+        tax: None,
         number_of_packs: 1,
         note: None,
     };
@@ -248,7 +270,9 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
+        total_before_tax: 8.0,
         total_after_tax: 8.0,
+        tax: None,
         number_of_packs: 1,
         note: None,
     };
@@ -273,7 +297,9 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 7.0,
         sell_price_per_pack: 5.0,
+        total_before_tax: 21.0,
         total_after_tax: 21.0,
+        tax: None,
         number_of_packs: 3,
         note: None,
     };
@@ -291,7 +317,9 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 4.0,
         sell_price_per_pack: 2.0,
+        total_before_tax: 8.0,
         total_after_tax: 8.0,
+        tax: None,
         number_of_packs: 2,
         note: None,
     };
@@ -316,7 +344,9 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 1,
         cost_price_per_pack: 2.0,
         sell_price_per_pack: 18.0,
+        total_before_tax: 14.0,
         total_after_tax: 14.0,
+        tax: None,
         number_of_packs: 7,
         note: None,
     };
@@ -334,7 +364,9 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         pack_size: 3,
         cost_price_per_pack: 45.0,
         sell_price_per_pack: 34.0,
+        total_before_tax: 270.0,
         total_after_tax: 270.0,
+        tax: None,
         number_of_packs: 2,
         note: None,
     };

@@ -23,31 +23,12 @@ impl<'a> NumberServiceImpl<'a> {
         NumberServiceImpl { connection }
     }
 
-    fn next(&self, counter_id: &str) -> Result<i64, RepositoryError> {
+    pub fn next(&self, counter_id: &str, store_id: &str) -> Result<i64, RepositoryError> {
         let next_number = self.connection.transaction_sync(|connection| {
             let repo = NumberRowRepository::new(connection);
-            let row = repo.increment(counter_id)?;
+            let row = repo.increment(counter_id, store_id)?;
             Ok(row.value)
         })?;
         Ok(next_number)
-    }
-}
-
-impl<'a> NumberService for NumberServiceImpl<'a> {
-    fn next_general(&self, counter_name: &str) -> Result<i64, RepositoryError> {
-        self.next(&counter_name)
-    }
-
-    fn next_store(&self, counter_name: &str, store_id: &str) -> Result<i64, RepositoryError> {
-        self.next(&format!("{}/{}", counter_name, store_id))
-    }
-
-    fn next_store_table(
-        &self,
-        counter_name: &str,
-        store_id: &str,
-        table: &str,
-    ) -> Result<i64, RepositoryError> {
-        self.next(&format!("{}/{}/{}", counter_name, store_id, table))
     }
 }

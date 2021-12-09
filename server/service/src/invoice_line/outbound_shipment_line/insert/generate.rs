@@ -42,6 +42,9 @@ fn generate_line(
         item_id,
         stock_line_id,
         number_of_packs,
+        total_before_tax,
+        total_after_tax,
+        tax,
     }: InsertOutboundShipmentLine,
     ItemRow {
         name: item_name,
@@ -59,8 +62,6 @@ fn generate_line(
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
-    let total_after_tax = sell_price_per_pack * number_of_packs as f64;
-
     InvoiceLineRow {
         id,
         invoice_id,
@@ -75,7 +76,9 @@ fn generate_line(
         item_name,
         item_code,
         stock_line_id: Some(stock_line_id),
+        total_before_tax,
         total_after_tax,
+        tax,
         note,
     }
 }

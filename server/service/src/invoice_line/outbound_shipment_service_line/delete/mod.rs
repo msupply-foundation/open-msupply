@@ -17,8 +17,6 @@ pub fn delete_outbound_shipment_service_line(
     let line = connection
         .transaction_sync(|connection| {
             let line = validate(&input, &connection)?;
-            let stock_line_id_option = line.stock_line_id.clone();
-
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
             Ok(line)
         })

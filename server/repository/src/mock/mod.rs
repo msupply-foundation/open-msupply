@@ -16,16 +16,16 @@ mod user_account;
 use std::collections::HashMap;
 
 pub use full_invoice::mock_full_invoices;
-pub use invoice::{mock_invoices, mock_outbound_shipments};
+pub use invoice::{mock_invoices, mock_outbound_shipment_a, mock_outbound_shipments};
 pub use invoice_line::{mock_invoice_lines, mock_outbound_shipment_invoice_lines};
 pub use item::mock_items;
 pub use location::mock_locations;
-pub use name::mock_names;
+pub use name::{mock_name_store_a, mock_name_store_b, mock_names};
 pub use name_store_join::mock_name_store_joins;
 pub use requisition::mock_requisitions;
 pub use requisition_line::mock_requisition_lines;
 pub use stock_line::mock_stock_lines;
-pub use store::mock_stores;
+pub use store::{mock_store_b, mock_stores};
 pub use user_account::mock_user_accounts;
 
 use crate::{InvoiceLineRowRepository, LocationRowRepository, StockLineRowRepository};

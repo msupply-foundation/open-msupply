@@ -10,7 +10,7 @@ use repository::StorageConnectionManager;
 use async_graphql::dataloader::DataLoader;
 
 use super::{
-    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceLineStatsLoader, LocationByIdLoader,
+    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceStatsLoader, LocationByIdLoader,
     StockLineByIdLoader, StockLineByItemIdLoader, StockLineByLocationIdLoader,
 };
 
@@ -61,7 +61,7 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
         connection_manager: connection_manager.clone(),
     });
 
-    let invoice_line_stats_loader = DataLoader::new(InvoiceLineStatsLoader {
+    let invoice_line_stats_loader = DataLoader::new(InvoiceStatsLoader {
         connection_manager: connection_manager.clone(),
     });
 
