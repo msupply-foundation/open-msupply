@@ -38,14 +38,15 @@ enum Tabs {
 }
 
 const createStocktakeLine = (
+  item: StocktakeItem,
   stockLine: StockLine,
   countThisLine = true
 ): StocktakeLine => {
   return {
     id: stockLine.id,
     stockLineId: stockLine.id,
-    itemCode: '',
-    itemName: '',
+    itemCode: item.itemCode(),
+    itemName: item.itemName(),
     countThisLine,
     ...stockLine,
   };
@@ -96,7 +97,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         const stocktakeRows: StocktakeLine[] = uncountedLines.map(line =>
           createStocktakeRow(
             wrappedStocktakeItem,
-            createStocktakeLine(line, mode === ModalMode.Create)
+            createStocktakeLine(
+              wrappedStocktakeItem,
+              line,
+              mode === ModalMode.Create
+            )
           )
         );
 
