@@ -11,13 +11,14 @@ import {
   useOmSupplyApi,
   useNotification,
   useTranslation,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getOutboundShipmentListViewApi } from './api';
-import { OutboundShipmentStatus, InvoiceRow } from '../../types';
+import { InvoiceRow } from '../../types';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const t = useTranslation('common');
@@ -59,11 +60,11 @@ export const OutboundShipmentListViewComponent: FC = () => {
         'status',
         {
           formatter: status =>
-            getStatusTranslator(t)(status as OutboundShipmentStatus),
+            getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
       'invoiceNumber',
-      'entryDatetime',
+      'createdDatetime',
       // 'allocatedDatetime',
       'comment',
       ['totalAfterTax', { accessor: invoice => invoice.pricing.totalAfterTax }],

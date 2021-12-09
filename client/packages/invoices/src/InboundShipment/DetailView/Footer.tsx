@@ -9,6 +9,7 @@ import {
   useTranslation,
   useNotification,
   AppFooterPortal,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +18,7 @@ import {
   getNextInboundStatusButtonTranslation,
   getStatusTranslator,
   isInboundEditable,
-  outboundStatuses,
+  inboundStatuses,
 } from '../../utils';
 import { InboundShipment } from '../../types';
 
@@ -26,43 +27,37 @@ interface InboundDetailFooterProps {
   save: () => Promise<void>;
 }
 
-const createStatusLog = (status: 'DRAFT' | 'CONFIRMED' | 'FINALISED') => {
-  // const {
-  //   entryDatetime,
-  //   allocatedDatetime,
-  //   shippedDatetime,
-  //   pickedDatetime,
-  //   deliveredDatetime,
-  // } = draft;
-
-  if (status === 'DRAFT') {
-    return {
-      DRAFT: new Date().toISOString(),
-      CONFIRMED: null,
-      FINALISED: null,
-    };
-  }
-  if (status === 'CONFIRMED') {
-    return {
-      DRAFT: new Date().toISOString(),
-      CONFIRMED: new Date().toISOString(),
-      FINALISED: null,
-    };
-  }
-
-  return {
-    DRAFT: new Date().toISOString(),
-    CONFIRMED: new Date().toISOString(),
-    FINALISED: new Date().toISOString(),
+const createStatusLog = (draft: InboundShipment) => {
+  const statusIdx = inboundStatuses.findIndex(s => draft.status === s);
+  const statusLog = {
+    [InvoiceNodeStatus.New]: null,
+    [InvoiceNodeStatus.Picked]: null,
+    [InvoiceNodeStatus.Shipped]: null,
+    [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Verified]: null,
+    // Placeholder for typescript, not used in inbounds
+    [InvoiceNodeStatus.Allocated]: null,
   };
 
-  // return {
-  //   DRAFT: entryDatetime,
-  //   ALLOCATED: allocatedDatetime,
-  //   SHIPPED: shippedDatetime,
-  //   PICKED: pickedDatetime,
-  //   DELIVERED: deliveredDatetime,
-  // };
+  statusLog;
+
+  if (statusIdx >= 0) {
+    statusLog[InvoiceNodeStatus.New] = draft.createdDatetime;
+  }
+  if (statusIdx >= 1) {
+    statusLog[InvoiceNodeStatus.Picked] = draft.pickedDatetime;
+  }
+  if (statusIdx >= 2) {
+    statusLog[InvoiceNodeStatus.Shipped] = draft.shippedDatetime;
+  }
+  if (statusIdx >= 3) {
+    statusLog[InvoiceNodeStatus.Picked] = draft.deliveredDatetime;
+  }
+  if (statusIdx >= 4) {
+    statusLog[InvoiceNodeStatus.Picked] = draft.verifiedDatetime;
+  }
+
+  return statusLog;
 };
 
 export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
@@ -92,8 +87,8 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
             />
 
             <StatusCrumbs
-              statuses={outboundStatuses}
-              statusLog={createStatusLog(draft.status)}
+              statuses={inboundStatuses}
+              statusLog={createStatusLog(draft)}
               statusFormatter={getStatusTranslator(t)}
             />
 
