@@ -19,25 +19,6 @@ import {
  * TODO: Maybe we can get away with just using `Shipment` for both.
  */
 
-export type OutboundShipmentStatus =
-  | InvoiceNodeStatus.Draft
-  | InvoiceNodeStatus.Confirmed
-  | InvoiceNodeStatus.Finalised;
-// | InvoiceNodeStatus.Allocated
-// | InvoiceNodeStatus.Picked
-// | InvoiceNodeStatus.Shipped
-// | InvoiceNodeStatus.Delivered;
-
-export type InboundShipmentStatus =
-  | InvoiceNodeStatus.Draft
-  | InvoiceNodeStatus.Confirmed
-  | InvoiceNodeStatus.Finalised;
-// | InvoiceNodeStatus.Picked
-// | 'NEW'
-// | InvoiceNodeStatus.Shipped
-// | InvoiceNodeStatus.Delivered
-// | 'VERIFIED';
-
 export interface InvoiceLine
   extends Omit<InvoiceLineNode, 'item'>,
     DomainObject {
@@ -50,7 +31,7 @@ export interface InvoiceRow
   extends Pick<
       InvoiceNode,
       | 'comment'
-      | 'entryDatetime'
+      | 'createdDatetime'
       | 'id'
       | 'invoiceNumber'
       | 'otherPartyId'
@@ -65,12 +46,14 @@ export interface InvoiceRow
 }
 
 export interface Invoice
-  extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty'>,
+  extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty' | 'pricing'>,
     DomainObject {
-  status: InvoiceNodeStatus | 'NEW' | 'VERIFIED';
+  status: InvoiceNodeStatus;
   otherParty?: Name;
   lines: InvoiceLine[];
-  pricing: InvoicePricingNode;
+  pricing: {
+    totalAfterTax: number;
+  };
 }
 
 export interface BatchRow extends StockLine {
@@ -155,7 +138,7 @@ export type OutboundShipmentSummaryItem = {
 
 export interface OutboundShipment extends Omit<Invoice, 'lines'> {
   items: OutboundShipmentSummaryItem[];
-  status: OutboundShipmentStatus;
+  status: InvoiceNodeStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: OutboundShipmentRow) => void;
   deleteLine?: (line: OutboundShipmentRow) => void;
@@ -191,7 +174,7 @@ export type InboundShipmentItem = {
 
 export interface InboundShipment extends Invoice {
   items: InboundShipmentItem[];
-  status: InboundShipmentStatus;
+  status: InvoiceNodeStatus;
   update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
   upsertLine?: (line: InboundShipmentRow) => void;
   upsertItem?: (line: InboundShipmentItem) => void;

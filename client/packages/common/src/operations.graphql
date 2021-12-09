@@ -20,13 +20,14 @@ query invoice($id: String!) {
       __typename
       id
       comment
-      entryDatetime
+      createdDatetime
+      allocatedDatetime
+      deliveredDatetime
+      pickedDatetime
+      shippedDatetime
+      verifiedDatetime
       invoiceNumber
 
-      # allocatedDatetime
-      # pickedDatetime
-      # shippedDatetime
-      # deliveredDatetime
       # enteredByName
       # donorName
       # requisitionNumber
@@ -613,7 +614,12 @@ query invoices(
       __typename
       nodes {
         comment
-        entryDatetime
+        createdDatetime
+        allocatedDatetime
+        deliveredDatetime
+        pickedDatetime
+        shippedDatetime
+        verifiedDatetime
         id
         invoiceNumber
         otherPartyId
@@ -1085,9 +1091,7 @@ mutation deleteInboundShipments($ids: [DeleteInboundShipmentInput!]) {
 }
 
 mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
-  insertInboundShipment(
-    input: { id: $id, status: DRAFT, otherPartyId: $otherPartyId }
-  ) {
+  insertInboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
     __typename
     ... on InvoiceNode {
       id

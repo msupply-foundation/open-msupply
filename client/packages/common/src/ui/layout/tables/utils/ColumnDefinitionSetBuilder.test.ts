@@ -66,12 +66,12 @@ describe('ColumnDefinitionSetBuilder', () => {
       .addColumn({ key: 'status' })
       .addColumn({ key: 'invoiceNumber' })
       .addColumn('allocatedDatetime', { order: 3 })
-      .addColumn('entryDatetime', { order: 1 })
+      .addColumn('createdDatetime', { order: 1 })
       .build();
 
     expect(columns).toEqual([
       expect.objectContaining({ key: 'type' }),
-      expect.objectContaining({ key: 'entryDatetime' }),
+      expect.objectContaining({ key: 'createdDatetime' }),
       expect.objectContaining({ key: 'allocatedDatetime' }),
       expect.objectContaining({ key: 'status' }),
       expect.objectContaining({ key: 'invoiceNumber' }),

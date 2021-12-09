@@ -107,7 +107,7 @@ export const DetailView: FC = () => {
   );
 
   const onChangeSelectedItem = (newItem: Item | null) => {
-    if (!newItem) return setSelectedItem({ item: newItem, editing: false });
+    if (!newItem) return setSelectedItem({ item: null, editing: false });
 
     // Try and find the outbound summary row that matches the new item
     const item = draft.items.find(
