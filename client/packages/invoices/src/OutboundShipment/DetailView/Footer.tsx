@@ -52,10 +52,10 @@ const createStatusLog = (draft: OutboundShipment) => {
     statusLog[InvoiceNodeStatus.Shipped] = draft.shippedDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Delivered] = draft.deliveredDatetime;
   }
   if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.verifiedDatetime;
+    statusLog[InvoiceNodeStatus.Verified] = draft.verifiedDatetime;
   }
 
   return statusLog;
