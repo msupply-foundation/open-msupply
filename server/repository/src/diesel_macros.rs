@@ -135,6 +135,7 @@ macro_rules! apply_date_time_filter {
 /// ```
 macro_rules! apply_sort_no_case {
     ($query:ident, $sort:ident, $dsl_field:expr) => {{
+        use crate::diesel_extensions::OrderByExtensions;
         if $sort.desc.unwrap_or(false) {
             $query = $query.order($dsl_field.desc_no_case());
         } else {
