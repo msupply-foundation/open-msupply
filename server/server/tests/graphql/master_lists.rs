@@ -5,7 +5,7 @@ mod graphql {
         EqualFilter, PaginationOption, SimpleStringFilter,
     };
     use repository::{mock::MockDataInserts, MasterList, StorageConnectionManager};
-    use serde_json::json;
+    use serde_json::{json, Value};
     use server::test_utils::setup_all;
     use service::{
         master_list::MasterListServiceTrait,
@@ -46,7 +46,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_masterlists_success() {
-        let (_, _, connection_manager, settings) =
+        let (mock_data, _, connection_manager, settings) =
             setup_all("test_graphql_masterlists_success", MockDataInserts::all()).await;
 
         let query = r#"
@@ -58,6 +58,15 @@ mod graphql {
                   name
                   code
                   description
+                  lines {
+                      nodes {
+                          id
+                          item {
+                              id
+                          }
+                      }
+                      totalCount
+                  }
                 }
                 totalCount
               }
@@ -69,7 +78,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: vec![MasterList {
-                    id: "test_id".to_owned(),
+                    id: "master_list_master_list_line_filter_test".to_owned(),
                     name: "test_name".to_owned(),
                     code: "test_code".to_owned(),
                     description: "test_description".to_owned(),
@@ -78,14 +87,40 @@ mod graphql {
             })
         }));
 
+        // TODO would prefer for loaders to be using service provider
+        // in which case we would override both item and master list line service
+        // and test it's mapping here, rather then from mock data
+        let mock_data_lines = &mock_data
+            .full_master_list
+            .get("master_list_master_list_line_filter_test")
+            .unwrap()
+            .lines;
+
+        let lines: Vec<Value> = mock_data_lines
+            .iter()
+            .map(|line| {
+                json!({
+                    "id": line.id,
+                    "item": {
+                        "id": line.item_id
+                    }
+                })
+            })
+            .collect();
+
         let expected = json!({
               "masterLists": {
                   "nodes": [
                       {
-                          "id": "test_id",
+                          "id": "master_list_master_list_line_filter_test",
                           "name": "test_name",
                           "code": "test_code",
                           "description": "test_description",
+                          "lines": {
+                              "nodes": lines,
+                              "totalCount": lines.len()
+                          }
+
                       },
                   ],
                   "totalCount": 1
