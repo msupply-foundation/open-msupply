@@ -290,7 +290,7 @@ mod graphql {
 
         // Test CannotChangeStatusOfInvoiceOnHold
 
-        let full_invoice = mock_data
+        let full_invoice = mock_data["base"]
             .full_invoices
             .get("inbound_shipment_on_hold")
             .unwrap();
@@ -311,7 +311,7 @@ mod graphql {
 
         // Test can change status if on hold is update in the same mutation
 
-        let full_invoice = mock_data
+        let full_invoice = mock_data["base"]
             .full_invoices
             .get("inbound_shipment_on_hold")
             .unwrap();

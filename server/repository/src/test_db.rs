@@ -1,7 +1,7 @@
 use crate::{
     database_settings::DatabaseSettings,
     db_diesel::{DBBackendConnection, StorageConnection, StorageConnectionManager},
-    mock::{insert_mock_data, MockData, MockDataInserts},
+    mock::{insert_mock_data, MockDataCollection, MockDataInserts},
 };
 
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -120,7 +120,7 @@ pub async fn setup_all(
     db_name: &str,
     inserts: MockDataInserts,
 ) -> (
-    MockData,
+    MockDataCollection,
     StorageConnection,
     StorageConnectionManager,
     DatabaseSettings,
