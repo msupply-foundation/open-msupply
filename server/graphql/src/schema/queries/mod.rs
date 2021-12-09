@@ -16,6 +16,8 @@ pub mod me;
 pub use self::me::*;
 pub mod refresh_token;
 pub use self::refresh_token::*;
+pub mod master_list;
+pub use self::master_list::*;
 
 #[Object]
 impl Queries {
@@ -70,7 +72,7 @@ impl Queries {
         }
     }
 
-    /// Query omSupply "item" entries
+    /// Query omSupply "locations" entries
     pub async fn locations(
         &self,
         ctx: &Context<'_>,
@@ -94,6 +96,18 @@ impl Queries {
             Ok(locations) => LocationsResponse::Response(locations.into()),
             Err(error) => LocationsResponse::Error(error.into()),
         }
+    }
+
+    /// Query omSupply "master_lists" entries
+    pub async fn master_lists(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<MasterListFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<MasterListSortInput>>,
+    ) -> MasterListsResponse {
+        master_lists(ctx, page, filter, sort)
     }
 
     /// Query omSupply "item" entries
