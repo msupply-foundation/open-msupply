@@ -18,9 +18,6 @@ import {
   PlusCircleIcon,
   Box,
   StockLine,
-  TableProvider,
-  createTableStore,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { BatchTable, PricingTable } from './StocktakeLineEditTables';
 import { StocktakeLinePanel } from './StocktakeLinePanel';
@@ -40,17 +37,21 @@ enum Tabs {
   Pricing = 'Pricing',
 }
 
-const createStocktakeLine = (stockLine: StockLine): StocktakeLine => {
+const createStocktakeLine = (
+  stockLine: StockLine,
+  countThisLine = true
+): StocktakeLine => {
   return {
     id: stockLine.id,
     stockLineId: stockLine.id,
     itemCode: '',
     itemName: '',
+    countThisLine,
     ...stockLine,
   };
 };
 
-export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
+export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   item,
   draft,
   onChangeItem,
@@ -70,31 +71,6 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
       item ? wrapStocktakeItem(item, onChangeItem) : null
     );
   }, [item]);
-
-  const [batches, setBatches] = React.useState(
-    wrappedStocktakeItem ? wrappedStocktakeItem.lines : []
-  );
-
-  const { selectedRows } = useTableStore(
-    state => ({
-      selectedRows: Object.keys(state.rowState).filter(
-        id => state.rowState[id]?.isSelected
-      ),
-    }),
-    (oldState, newState) =>
-      JSON.stringify(oldState) === JSON.stringify(newState)
-  );
-
-  React.useEffect(() => {
-    if (wrappedStocktakeItem) {
-      const { lines } = wrappedStocktakeItem;
-      const checkedRows = lines.filter(line => selectedRows.includes(line.id));
-      const unCheckedRows = lines.filter(
-        line => !selectedRows.includes(line.id)
-      );
-      setBatches([...checkedRows, ...unCheckedRows]);
-    }
-  }, [wrappedStocktakeItem, selectedRows]);
 
   const onAddBatch = (seed?: StocktakeLine) => {
     if (wrappedStocktakeItem) {
@@ -118,7 +94,10 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
         });
 
         const stocktakeRows: StocktakeLine[] = uncountedLines.map(line =>
-          createStocktakeRow(wrappedStocktakeItem, createStocktakeLine(line))
+          createStocktakeRow(
+            wrappedStocktakeItem,
+            createStocktakeLine(line, mode === ModalMode.Create)
+          )
         );
 
         const updated = createStocktakeItem(wrappedStocktakeItem.id, [
@@ -158,7 +137,7 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
               <ButtonWithIcon
                 color="primary"
                 variant="outlined"
-                onClick={onAddBatch}
+                onClick={() => onAddBatch()}
                 label={t('label.add-batch', { ns: 'inventory' })}
                 Icon={<PlusCircleIcon />}
               />
@@ -166,12 +145,18 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
           </Box>
 
           <TableContainer>
-            <StocktakeLinePanel batches={batches} value={Tabs.Batch}>
-              <BatchTable batches={batches} />
+            <StocktakeLinePanel
+              batches={wrappedStocktakeItem?.lines ?? []}
+              value={Tabs.Batch}
+            >
+              <BatchTable batches={wrappedStocktakeItem?.lines ?? []} />
             </StocktakeLinePanel>
 
-            <StocktakeLinePanel batches={batches} value={Tabs.Pricing}>
-              <PricingTable batches={batches} />
+            <StocktakeLinePanel
+              batches={wrappedStocktakeItem?.lines ?? []}
+              value={Tabs.Pricing}
+            >
+              <PricingTable batches={wrappedStocktakeItem?.lines ?? []} />
             </StocktakeLinePanel>
           </TableContainer>
         </TabContext>
@@ -179,23 +164,5 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
         <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
       )}
     </>
-  );
-};
-
-export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
-  item,
-  draft,
-  onChangeItem,
-  mode,
-}) => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <StocktakeLineEditComponent
-        item={item}
-        draft={draft}
-        onChangeItem={onChangeItem}
-        mode={mode}
-      />
-    </TableProvider>
   );
 };

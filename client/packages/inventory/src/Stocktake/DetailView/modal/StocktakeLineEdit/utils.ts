@@ -23,20 +23,30 @@ export const createStocktakeRow = (
     isCreated: !seed,
     isUpdated: false,
     isDeleted: false,
+    countThisLine: true,
     ...seed,
     update: (key: string, value: string) => {
       if (key === 'batch') {
         row.batch = value;
+        row.countThisLine = true;
       }
       if (key === 'countedNumPacks') {
         row.countedNumPacks = Number(value);
+        row.countThisLine = true;
       }
 
       if (key === 'costPricePerPack') {
         row.costPricePerPack = Number(value);
+        row.countThisLine = true;
       }
       if (key === 'sellPricePerPack') {
         row.sellPricePerPack = Number(value);
+        row.countThisLine = true;
+      }
+
+      if (key === 'countThisLine') {
+        const countThisLine = value === 'true';
+        row.countThisLine = countThisLine;
       }
 
       row.isUpdated = true;
