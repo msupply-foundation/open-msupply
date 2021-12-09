@@ -1,18 +1,19 @@
 use async_graphql::*;
 use chrono::Utc;
-use domain::invoice::InvoiceType;
+use domain::invoice::{InvoiceStatus, InvoiceType};
 use service::dashboard::invoice_count::{
-    InvoiceCountError, InvoiceCountService, InvoiceCountServiceTrait,
+    CountTimeRange, InvoiceCountError, InvoiceCountService, InvoiceCountServiceTrait,
 };
 
 use crate::ContextExt;
 
-// TODO could be split into today, this_week, etc.
-fn created_summary(
+fn do_invoice_count(
     ctx: &Context<'_>,
-    invoice_type: InvoiceType,
-    timezone_offset: Option<i32>,
-) -> Result<InvoiceCountsSummary> {
+    invoice_type: &InvoiceType,
+    invoice_status: &InvoiceStatus,
+    range: &CountTimeRange,
+    timezone_offset: &Option<i32>,
+) -> Result<i64> {
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context().map_err(|_| Error {
         message: "InternalError".to_string(),
@@ -20,8 +21,15 @@ fn created_summary(
         extensions: None,
     })?;
     let service = InvoiceCountService {};
-    let created = service
-        .created_invoices_count(&service_ctx, invoice_type, Utc::now(), timezone_offset)
+    let count = service
+        .invoices_count(
+            &service_ctx,
+            invoice_type,
+            invoice_status,
+            range,
+            &Utc::now(),
+            timezone_offset,
+        )
         .map_err(|err| match err {
             InvoiceCountError::RepositoryError(_) => Error {
                 message: "InternalError".to_string(),
@@ -35,10 +43,36 @@ fn created_summary(
             },
         })?;
 
-    Ok(InvoiceCountsSummary {
-        today: created.today,
-        this_week: created.this_week,
-    })
+    Ok(count)
+}
+
+pub struct InvoiceCountsSummary {
+    invoice_type: InvoiceType,
+    invoice_status: InvoiceStatus,
+    timezone_offset: Option<i32>,
+}
+
+#[Object]
+impl InvoiceCountsSummary {
+    async fn today(&self, ctx: &Context<'_>) -> Result<i64> {
+        do_invoice_count(
+            ctx,
+            &self.invoice_type,
+            &self.invoice_status,
+            &CountTimeRange::Today,
+            &self.timezone_offset,
+        )
+    }
+
+    async fn this_week(&self, ctx: &Context<'_>) -> Result<i64> {
+        do_invoice_count(
+            ctx,
+            &self.invoice_type,
+            &self.invoice_status,
+            &CountTimeRange::ThisWeek,
+            &self.timezone_offset,
+        )
+    }
 }
 
 pub struct OutboundInvoiceCounts {
@@ -47,12 +81,12 @@ pub struct OutboundInvoiceCounts {
 
 #[Object]
 impl OutboundInvoiceCounts {
-    async fn created(&self, ctx: &Context<'_>) -> Result<InvoiceCountsSummary> {
-        created_summary(
-            ctx,
-            InvoiceType::OutboundShipment,
-            self.timezone_offset.clone(),
-        )
+    async fn created(&self) -> InvoiceCountsSummary {
+        InvoiceCountsSummary {
+            invoice_type: InvoiceType::OutboundShipment,
+            invoice_status: InvoiceStatus::New,
+            timezone_offset: self.timezone_offset,
+        }
     }
 
     /// Number of outbound shipments ready to be picked
@@ -81,12 +115,12 @@ pub struct InboundInvoiceCounts {
 
 #[Object]
 impl InboundInvoiceCounts {
-    async fn created(&self, ctx: &Context<'_>) -> Result<InvoiceCountsSummary> {
-        created_summary(
-            ctx,
-            InvoiceType::InboundShipment,
-            self.timezone_offset.clone(),
-        )
+    async fn created(&self) -> InvoiceCountsSummary {
+        InvoiceCountsSummary {
+            invoice_type: InvoiceType::InboundShipment,
+            invoice_status: InvoiceStatus::New,
+            timezone_offset: self.timezone_offset,
+        }
     }
 }
 
@@ -107,12 +141,6 @@ impl InvoiceCounts {
             timezone_offset: self.timezone_offset,
         }
     }
-}
-
-#[derive(SimpleObject)]
-pub struct InvoiceCountsSummary {
-    pub today: i64,
-    pub this_week: i64,
 }
 
 pub fn invoice_counts(timezone_offset: Option<i32>) -> InvoiceCounts {
