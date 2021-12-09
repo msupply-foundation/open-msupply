@@ -40,11 +40,22 @@ pub fn mock_name_a() -> NameRow {
     }
 }
 
+pub fn mock_name_master_list_filter_test() -> NameRow {
+    NameRow {
+        id: String::from("id_master_list_filter_test"),
+        name: String::from("name_master_list_filter_test"),
+        code: String::from("master_list_filter_test"),
+        is_customer: false,
+        is_supplier: true,
+    }
+}
+
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_store_a(),
         mock_name_store_b(),
         mock_name_store_c(),
         mock_name_a(),
+        mock_name_master_list_filter_test(),
     ]
 }

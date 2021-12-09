@@ -28,6 +28,7 @@ mod location_delete;
 mod location_insert;
 mod location_update;
 mod locations;
+mod master_lists;
 mod names;
 mod outbound_shipment_delete;
 mod outbound_shipment_insert;
