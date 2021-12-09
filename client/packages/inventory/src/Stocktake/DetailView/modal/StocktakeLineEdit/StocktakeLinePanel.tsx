@@ -58,36 +58,48 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
             <HeaderCell dense column={batchColumn} />
           </Box>
 
-          {batches.map(({ id, batch }, index) => (
-            <Box
-              flexDirection="row"
-              display="flex"
-              alignItems="center"
-              key={id}
-            >
+          {batches.map((line, index) => {
+            const { id, batch, countThisLine } = line;
+            return (
               <Box
-                paddingLeft="16px"
-                paddingRight="16px"
-                width="125px"
-                display="flex"
                 flexDirection="row"
+                display="flex"
                 alignItems="center"
+                key={id}
               >
-                <Checkbox key={id} />
-                <Box>{`${t('label.line', { line: index + 1 })}`}</Box>
-              </Box>
+                <Box
+                  paddingLeft="16px"
+                  paddingRight="16px"
+                  width="125px"
+                  display="flex"
+                  flexDirection="row"
+                  alignItems="center"
+                >
+                  <Checkbox
+                    key={id}
+                    checked={countThisLine}
+                    onClick={() =>
+                      line.update(
+                        'countThisLine',
+                        countThisLine ? 'false' : 'true'
+                      )
+                    }
+                  />
+                  <Box>{`${t('label.line', { line: index + 1 })}`}</Box>
+                </Box>
 
-              <Box
-                flexDirection="row"
-                display="flex"
-                alignItems="center"
-                paddingLeft="16px"
-                paddingRight="16px"
-              >
-                <BasicTextInput value={batch} />
+                <Box
+                  flexDirection="row"
+                  display="flex"
+                  alignItems="center"
+                  paddingLeft="16px"
+                  paddingRight="16px"
+                >
+                  <BasicTextInput value={batch} />
+                </Box>
               </Box>
-            </Box>
-          ))}
+            );
+          })}
         </StyledStaticArea>
         {children}
       </StyledTabContainer>

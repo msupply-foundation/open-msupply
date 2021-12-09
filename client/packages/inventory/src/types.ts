@@ -19,6 +19,7 @@ export interface StocktakeLine extends StocktakeLineNode {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
+  countThisLine: boolean;
   update?: (key: string, value: string) => void;
 }
 
