@@ -224,6 +224,35 @@ table! {
     }
 }
 
+table! {
+    stock_take (id) {
+        id -> Text,
+        store_id -> Text,
+        comment	-> Nullable<Text>,
+        description -> Nullable<Text>,
+        status -> crate::schema::stock_take::StockTakeStatusMapping,
+        created_datetime -> Timestamp,
+        finalised_datetime -> Nullable<Timestamp>,
+        inventory_additions_id -> Nullable<Text>,
+        inventory_reductions_id -> Nullable<Text>,
+    }
+}
+
+table! {
+    stock_take_line (id) {
+        id -> Text,
+        stock_take_id -> Text,
+        stock_line_id -> Text,
+        location_id	-> Nullable<Text>,
+        batch -> Nullable<Text>,
+        comment	-> Nullable<Text>,
+        cost_price_pack -> Double,
+        sell_price_pack -> Double,
+        snapshot_number_of_packs -> Integer,
+        counted_number_of_packs -> Integer,
+    }
+}
+
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
@@ -248,6 +277,8 @@ joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name (name_id));
 joinable!(item_is_visible -> item(id));
 joinable!(location -> store(store_id));
+joinable!(stock_take -> store(store_id));
+joinable!(stock_take_line -> location (location_id));
 
 allow_tables_to_appear_in_same_query!(
     unit,
@@ -268,5 +299,7 @@ allow_tables_to_appear_in_same_query!(
     name_store_join,
     master_list_line,
     master_list_name_join,
-    item_is_visible
+    item_is_visible,
+    stock_take,
+    stock_take_line,
 );
