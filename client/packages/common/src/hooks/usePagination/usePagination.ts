@@ -38,6 +38,12 @@ export const usePagination = (initialFirst = 20): PaginationState => {
     pageRef.current = newPage;
   }, [location]);
 
+  useEffect(() => {
+    if (!searchParams.getNumber('page')) {
+      searchParams.set({ page: String(page + 1) });
+    }
+  }, []);
+
   const nextPage = () => {
     onChangePage(pageRef.current + 1);
   };

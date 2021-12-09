@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useSearchParameters } from '../useSearchParameters';
 
 export interface SortRule<T> {
@@ -46,16 +46,27 @@ export const useSortBy = <T>({
         direction: getDirection(newIsDesc),
       };
 
-      searchParams.set({
-        sort: String(newSortBy.key),
-        desc: String(newIsDesc),
-      });
-
       return newSortBy;
     });
 
     return { ...newSortBy, direction: getDirection(!!newSortBy?.isDesc) };
   }, []);
+
+  useEffect(() => {
+    searchParams.set({
+      sort: String(sortBy.key),
+      desc: String(!!sortBy.isDesc),
+    });
+  }, [sortBy]);
+
+  useEffect(() => {
+    if (!searchParams.get('sort')) {
+      searchParams.set({
+        sort: String(initialSortKey),
+        desc: String(!!initialIsDesc),
+      });
+    }
+  }, [initialSortKey, initialIsDesc]);
 
   return { sortBy, onChangeSortBy, sort: { sortBy, onChangeSortBy } };
 };

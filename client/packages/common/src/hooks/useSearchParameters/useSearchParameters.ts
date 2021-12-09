@@ -12,8 +12,14 @@ export const useSearchParameters = (): SearchParams => {
   const searchParameters = {
     get: (key: string) => searchParams.get(String(key)),
     set: (params: Record<string, string>) => {
-      const oldParams: Record<string, string> = {};
-      searchParams.forEach((v, k) => (oldParams[k] = v));
+      const oldParams = window.location.search
+        ? Object.fromEntries(
+            window.location.search
+              .substring(1)
+              .split('&')
+              .map(group => group.split('='))
+          )
+        : {};
       setSearchParams({ ...oldParams, ...params });
     },
     getNumber: (key: string) => {
