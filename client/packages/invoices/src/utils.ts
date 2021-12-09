@@ -8,9 +8,7 @@ import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
-  OutboundShipmentStatus,
   InboundShipment,
-  InboundShipmentStatus,
   InboundShipmentItem,
   InboundShipmentRow,
   Invoice,
@@ -33,15 +31,15 @@ export const placeholderInbound: InboundShipment = {
     totalAfterTax: 0,
   },
   onHold: false,
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
 
   // color: 'grey',
   // subtotal: 0,
   // taxPercentage: 0
   // dispatch: null,
-  // allocatedDatetime: '',
-  // shippedDatetime: '',
-  // pickedDatetime: '',
-  // deliveredDatetime: '',
   // purchaseOrderNumber: undefined,
   // goodsReceiptNumber: undefined,
   // requisitionNumber: undefined,
@@ -60,6 +58,10 @@ export const placeholderInvoice: Invoice = {
   status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.OutboundShipment,
   createdDatetime: '',
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
   invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
@@ -80,6 +82,10 @@ export const placeholderOutboundShipment: OutboundShipment = {
   status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.OutboundShipment,
   createdDatetime: '',
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
   invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
@@ -92,10 +98,6 @@ export const placeholderOutboundShipment: OutboundShipment = {
   },
 
   // color: 'grey',
-  // allocatedDatetime: '',
-  // shippedDatetime: '',
-  // pickedDatetime: '',
-  // deliveredDatetime: '',
   // purchaseOrderNumber: undefined,
   // goodsReceiptNumber: undefined,
   // requisitionNumber: undefined,
@@ -123,22 +125,18 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
-const statusTranslation: Record<
-  OutboundShipmentStatus | InboundShipmentStatus,
-  LocaleKey
-> = {
+const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
   SHIPPED: 'label.shipped',
   DELIVERED: 'label.delivered',
-  DRAFT: 'label.draft',
   NEW: 'label.new',
   VERIFIED: 'label.verified',
 };
 
 export const getNextOutboundStatus = (
-  currentStatus: OutboundShipmentStatus
-): OutboundShipmentStatus => {
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus => {
   const currentStatusIdx = outboundStatuses.findIndex(
     status => currentStatus === status
   );
@@ -151,8 +149,8 @@ export const getNextOutboundStatus = (
 };
 
 export const getNextInboundStatus = (
-  currentStatus: InboundShipmentStatus
-): InboundShipmentStatus => {
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus => {
   const currentStatusIdx = inboundStatuses.findIndex(
     status => currentStatus === status
   );
@@ -165,7 +163,7 @@ export const getNextInboundStatus = (
 };
 
 export const getNextOutboundStatusButtonTranslation = (
-  currentStatus: OutboundShipmentStatus
+  currentStatus: InvoiceNodeStatus
 ): LocaleKey | undefined => {
   const nextStatus = getNextOutboundStatus(currentStatus);
 
@@ -175,7 +173,7 @@ export const getNextOutboundStatusButtonTranslation = (
 };
 
 export const getNextInboundStatusButtonTranslation = (
-  currentStatus: InboundShipmentStatus
+  currentStatus: InvoiceNodeStatus
 ): LocaleKey | undefined => {
   const nextStatus = getNextInboundStatus(currentStatus);
 
@@ -186,7 +184,7 @@ export const getNextInboundStatusButtonTranslation = (
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: OutboundShipmentStatus): string => {
+  (currentStatus: InvoiceNodeStatus): string => {
     return t(
       statusTranslation[currentStatus] ??
         statusTranslation[InvoiceNodeStatus.New]
@@ -194,13 +192,12 @@ export const getStatusTranslator =
   };
 
 export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
-  // return outbound.status !== 'SHIPPED' && outbound.status !== 'DELIVERED';
-  return outbound.status !== 'FINALISED';
+  return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
 export const isInboundEditable = (inbound: InboundShipment): boolean => {
   // return inbound.status !== 'VERIFIED' && inbound.status !== 'DELIVERED';
-  return inbound.status !== 'FINALISED';
+  return inbound.status === 'NEW';
 };
 
 export const flattenOutboundItems = (

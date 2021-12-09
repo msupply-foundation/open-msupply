@@ -46,12 +46,14 @@ export interface InvoiceRow
 }
 
 export interface Invoice
-  extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty'>,
+  extends Omit<InvoiceNode, 'lines' | 'status' | 'otherParty' | 'pricing'>,
     DomainObject {
   status: InvoiceNodeStatus;
   otherParty?: Name;
   lines: InvoiceLine[];
-  pricing: InvoicePricingNode;
+  pricing: {
+    totalAfterTax: number;
+  };
 }
 
 export interface BatchRow extends StockLine {
