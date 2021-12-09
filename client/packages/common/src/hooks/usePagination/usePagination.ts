@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-
+import { useSearchParameters } from '../useSearchParameters';
 export interface Pagination {
   page: number;
   offset: number;
@@ -17,16 +17,32 @@ export interface PaginationState extends PaginationController {
 }
 
 export const usePagination = (initialFirst = 20): PaginationState => {
+  const searchParams = useSearchParameters();
+  const getPageFromSearchParams = () =>
+    Math.max(0, searchParams.getNumber('page') - 1);
   const [first, onChangeFirst] = useState(initialFirst);
   const [offset, onChangeOffset] = useState(0);
-  const [page, onChangePage] = useState(0);
+  const [page, onChangePage] = useState(getPageFromSearchParams());
 
   const pageRef = useRef(page);
 
   useEffect(() => {
     onChangeOffset(page * first);
     pageRef.current = page;
+    searchParams.set({ page: String(page + 1) });
   }, [first, page]);
+
+  useEffect(() => {
+    const newPage = getPageFromSearchParams();
+    onChangeOffset(newPage * first);
+    pageRef.current = newPage;
+  }, [location]);
+
+  useEffect(() => {
+    if (!searchParams.getNumber('page')) {
+      searchParams.set({ page: String(page + 1) });
+    }
+  }, []);
 
   const nextPage = () => {
     onChangePage(pageRef.current + 1);
