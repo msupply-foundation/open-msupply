@@ -12,9 +12,6 @@ import {
   TabContext,
   TabList,
   Tab,
-  alpha,
-  TabPanel,
-  styled,
   useTranslation,
   useIsMediumScreen,
   ButtonWithIcon,
@@ -26,6 +23,7 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { BatchTable, PricingTable } from './StocktakeLineEditTables';
+import { StocktakeLinePanel } from './StocktakeLinePanel';
 import { createStocktakeRow, wrapStocktakeItem } from './utils';
 import { useStockLines } from '@openmsupply-client/system';
 import { createStocktakeItem } from '../../reducer';
@@ -37,10 +35,6 @@ interface StocktakeLineEditProps {
   draft: StocktakeController;
 }
 
-const StyledTabPanel = styled(TabPanel)({
-  height: '100%',
-});
-
 enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
@@ -50,6 +44,8 @@ const createStocktakeLine = (stockLine: StockLine): StocktakeLine => {
   return {
     id: stockLine.id,
     stockLineId: stockLine.id,
+    itemCode: '',
+    itemName: '',
     ...stockLine,
   };
 };
@@ -169,33 +165,14 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
             </Box>
           </Box>
 
-          <TableContainer
-            sx={{
-              height: isMediumScreen ? 300 : 400,
-              marginTop: 2,
-              borderWidth: 1,
-              borderStyle: 'solid',
-              borderColor: 'divider',
-              borderRadius: '20px',
-            }}
-          >
-            <Box
-              sx={{
-                width: 400,
-                height: isMediumScreen ? 300 : 400,
-                backgroundColor: theme =>
-                  alpha(theme.palette['background']['menu'], 0.4),
-                position: 'absolute',
-                borderRadius: '20px',
-              }}
-            />
-            <StyledTabPanel value={Tabs.Batch}>
+          <TableContainer>
+            <StocktakeLinePanel batches={batches} value={Tabs.Batch}>
               <BatchTable batches={batches} />
-            </StyledTabPanel>
+            </StocktakeLinePanel>
 
-            <StyledTabPanel value={Tabs.Pricing}>
+            <StocktakeLinePanel batches={batches} value={Tabs.Pricing}>
               <PricingTable batches={batches} />
-            </StyledTabPanel>
+            </StocktakeLinePanel>
           </TableContainer>
         </TabContext>
       ) : (

@@ -34,7 +34,9 @@ export interface Item extends Omit<ItemNode, 'availableBatches'>, DomainObject {
   unitName: string;
 }
 
-export interface StockLine extends DomainObject, StockLineNode {}
+export interface StockLine
+  extends DomainObject,
+    Omit<StockLineNode, '__typename'> {}
 
 export type Test = {
   id: string;
