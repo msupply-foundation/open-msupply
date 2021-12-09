@@ -21,6 +21,7 @@ query invoice($id: String!) {
       id
       comment
       createdDatetime
+      allocatedDatetime
       deliveredDatetime
       pickedDatetime
       shippedDatetime
@@ -614,6 +615,7 @@ query invoices(
       nodes {
         comment
         createdDatetime
+        allocatedDatetime
         deliveredDatetime
         pickedDatetime
         shippedDatetime

@@ -290,8 +290,11 @@ export const createInvoice = (
     pricing: {
       __typename: 'InvoicePricingNode',
       totalAfterTax,
-      // subtotal,
-      // taxPercentage,
+      serviceTotalAfterTax: 0,
+      serviceTotalBeforeTax: 0,
+      stockTotalAfterTax: 0,
+      stockTotalBeforeTax: 0,
+      totalBeforeTax: 0,
     },
 
     // color: 'grey',
@@ -769,5 +772,3 @@ export let RequisitionLineData = [
 
 export let StocktakeData = createStocktakes();
 export let StocktakeLineData = createStocktakeLines();
-
-("I missed the convo cause I usually have channel on mute - ya'll just be speaking some bullshit all day");

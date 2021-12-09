@@ -98,6 +98,10 @@ export const invoiceResolver = {
       otherParty,
       otherPartyName: otherParty.name,
       lines,
+      pricing: {
+        ...invoice.pricing,
+        __typename: 'InvoicePricingNode',
+      },
     };
   },
 };
