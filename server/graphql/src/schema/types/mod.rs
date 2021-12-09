@@ -28,6 +28,9 @@ pub use self::location::*;
 pub mod master_list;
 pub use self::master_list::*;
 
+pub mod master_list_line;
+pub use self::master_list_line::*;
+
 pub mod invoice_query;
 pub use self::invoice_query::*;
 
