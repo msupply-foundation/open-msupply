@@ -62,9 +62,9 @@ table! {
 
 table! {
     #[sql_name = "name"]
-    name_table (id) {
+    name (id) {
         id -> Text,
-        name -> Text,
+        #[sql_name = "name"] name_  -> Text,
         code -> Text,
         is_customer -> Bool,
         is_supplier -> Bool,
@@ -213,24 +213,24 @@ joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
-joinable!(requisition -> name_table (name_id));
+joinable!(requisition -> name (name_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
-joinable!(store -> name_table (name_id));
+joinable!(store -> name (name_id));
 joinable!(sync_out -> store (store_id));
-joinable!(invoice -> name_table (name_id));
+joinable!(invoice -> name (name_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(name_store_join -> store (store_id));
-joinable!(name_store_join -> name_table (name_id));
+joinable!(name_store_join -> name (name_id));
 joinable!(master_list_line -> master_list (master_list_id));
 joinable!(master_list_line -> item (item_id));
 joinable!(master_list_name_join -> master_list (master_list_id));
-joinable!(master_list_name_join -> name_table (name_id));
+joinable!(master_list_name_join -> name (name_id));
 joinable!(item_is_visible -> item(id));
 joinable!(location -> store(store_id));
 
@@ -241,7 +241,7 @@ allow_tables_to_appear_in_same_query!(
     central_sync_cursor,
     item,
     stock_line,
-    name_table,
+    name,
     requisition,
     requisition_line,
     store,
