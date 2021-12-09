@@ -13,7 +13,8 @@ import { StocktakeLine } from '../../../../types';
 export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
   const t = useTranslation('inventory');
   const columns = useColumns<StocktakeLine>([
-    getLineLabelColumn(),
+    ['selection', { width: 40 }],
+    { ...getLineLabelColumn(), width: 80 },
     ['batch', { Cell: TextInputCell, width: 200 }],
     {
       key: 'snapshotNumPacks',

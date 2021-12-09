@@ -1796,6 +1796,7 @@ export type StocktakeLineNode = {
   sellPricePerPack?: Maybe<Scalars['Float']>;
   snapshotNumPacks?: Maybe<Scalars['Int']>;
   snapshotPackSize?: Maybe<Scalars['Int']>;
+  stockLineId?: Maybe<Scalars['String']>;
 };
 
 export type StocktakeLinesResponse = ConnectorError | StocktakeLineConnector;
