@@ -27,10 +27,6 @@ query invoice($id: String!) {
       verifiedDatetime
       invoiceNumber
 
-      # allocatedDatetime
-      # pickedDatetime
-      # shippedDatetime
-      # deliveredDatetime
       # enteredByName
       # donorName
       # requisitionNumber
