@@ -1,12 +1,11 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    diesel_extensions::OrderByExtensions,
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
-            name_store_join, name_store_join::dsl as name_store_join_dsl, name_table,
-            name_table::dsl as name_table_dsl,
+            name, name::dsl as name_dsl, name_store_join,
+            name_store_join::dsl as name_store_join_dsl,
         },
         NameRow, NameStoreJoinRow,
     },
@@ -55,14 +54,14 @@ impl<'a> NameQueryRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 NameSortField::Name => {
-                    apply_sort_no_case!(query, sort, name_table_dsl::name);
+                    apply_sort_no_case!(query, sort, name_dsl::name_);
                 }
                 NameSortField::Code => {
-                    apply_sort_no_case!(query, sort, name_table_dsl::code);
+                    apply_sort_no_case!(query, sort, name_dsl::code);
                 }
             }
         } else {
-            query = query.order(name_table_dsl::id.asc())
+            query = query.order(name_dsl::id.asc())
         }
 
         let result = query
@@ -92,18 +91,17 @@ fn to_domain((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Na
     }
 }
 
-type BoxedNameQuery =
-    IntoBoxed<'static, LeftJoin<name_table::table, name_store_join::table>, DBType>;
+type BoxedNameQuery = IntoBoxed<'static, LeftJoin<name::table, name_store_join::table>, DBType>;
 
 pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
-    let mut query = name_table_dsl::name_table
+    let mut query = name_dsl::name
         .left_join(name_store_join_dsl::name_store_join)
         .into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, name_table_dsl::id);
-        apply_simple_string_filter!(query, f.code, name_table_dsl::code);
-        apply_simple_string_filter!(query, f.name, name_table_dsl::name);
+        apply_equal_filter!(query, f.id, name_dsl::id);
+        apply_simple_string_filter!(query, f.code, name_dsl::code);
+        apply_simple_string_filter!(query, f.name, name_dsl::name_);
 
         if let Some(is_customer) = f.is_customer {
             query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
