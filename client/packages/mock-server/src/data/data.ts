@@ -290,8 +290,11 @@ export const createInvoice = (
     pricing: {
       __typename: 'InvoicePricingNode',
       totalAfterTax,
-      // subtotal,
-      // taxPercentage,
+      serviceTotalAfterTax: 0,
+      serviceTotalBeforeTax: 0,
+      stockTotalAfterTax: 0,
+      stockTotalBeforeTax: 0,
+      totalBeforeTax: 0,
     },
 
     // color: 'grey',
