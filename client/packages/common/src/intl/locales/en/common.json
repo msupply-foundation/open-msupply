@@ -63,6 +63,8 @@
   "label.allocated": "Allocated",
   "label.batch": "Batch",
   "label.code": "Code",
+  "label.collapse": "Collapse",
+  "label.collapse-all": "Collapse all",
   "label.color": "Colour",
   "label.comment": "Comment",
   "label.confirmed": "Confirmed",
