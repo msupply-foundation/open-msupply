@@ -361,10 +361,11 @@ mod repository_test {
     use crate::{
         database_settings::get_storage_connection_manager, schema::InvoiceStatsRow, test_db,
         CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-        MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
-        OutboundShipmentRepository, RepositoryError, RequisitionLineRepository,
-        RequisitionRepository, StockLineRowRepository, StoreRepository, UserAccountRepository,
+        InvoiceRepository, ItemRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
+        NumberRowRepository, OutboundShipmentRepository, RepositoryError,
+        RequisitionLineRepository, RequisitionRepository, StockLineRowRepository, StoreRepository,
+        UserAccountRepository,
     };
     use domain::{
         name::{NameFilter, NameSort, NameSortField},
@@ -630,7 +631,7 @@ mod repository_test {
             .upsert_one(&data::master_list_1())
             .unwrap();
 
-        let repo = MasterListLineRepository::new(&connection);
+        let repo = MasterListLineRowRepository::new(&connection);
         let master_list_line_1 = data::master_list_line_1();
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
@@ -950,5 +951,43 @@ mod repository_test {
         assert_eq!(2, row.value);
         let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(2, row.value);
+    }
+
+    #[cfg(test)]
+    mod test {
+        use domain::{master_list_line::MasterListLineFilter, EqualFilter};
+
+        use crate::{mock::MockDataInserts, test_db, MasterListLineRepository};
+
+        #[actix_rt::test]
+        async fn test_master_list_line_repository_filter() {
+            let (mock_data, connection, _, _) = test_db::setup_all(
+                "test_master_list_line_repository_filter",
+                MockDataInserts::all(),
+            )
+            .await;
+
+            let repo = MasterListLineRepository::new(&connection);
+
+            // Test filter by master_list_id
+            let lines = repo
+                .query_by_filter(MasterListLineFilter::new().master_list_id(
+                    EqualFilter::equal_any(vec![
+                        "master_list_master_list_line_filter_test".to_string(),
+                    ]),
+                ))
+                .unwrap();
+
+            for (count, line) in mock_data
+                .full_master_list
+                .get("master_list_master_list_line_filter_test")
+                .unwrap()
+                .lines
+                .iter()
+                .enumerate()
+            {
+                assert_eq!(lines[count].id, line.id)
+            }
+        }
     }
 }

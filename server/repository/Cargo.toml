@@ -25,6 +25,7 @@ log = "0.4.14"
 actix-rt = "1.1.1" # for Tokio 0.2
 
 [features]
+default = ["sqlite"]
 sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
 postgres = ["diesel/postgres" , "diesel-derive-enum/postgres"]
 

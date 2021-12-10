@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     db_diesel::{
-        MasterListLineRepository, MasterListNameJoinRepository, MasterListRowRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
         StorageConnection,
     },
     schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
@@ -52,6 +52,30 @@ pub fn mock_master_list_master_list_filter_test() -> FullMockMasterList {
     }
 }
 
+pub fn mock_master_list_master_list_line_filter_test() -> FullMockMasterList {
+    FullMockMasterList {
+        master_list: MasterListRow {
+            id: "master_list_master_list_line_filter_test".to_owned(),
+            name: "name_master_list_master_list_line_filter_test".to_owned(),
+            code: "code_master_list_master_list_line_filter_test".to_owned(),
+            description: "description_master_list_master_list_line_filter_test".to_owned(),
+        },
+        joins: Vec::new(),
+        lines: vec![
+            MasterListLineRow {
+                id: "master_list_line_filter_test_1".to_owned(),
+                item_id: "item_a".to_owned(),
+                master_list_id: "master_list_master_list_line_filter_test".to_owned(),
+            },
+            MasterListLineRow {
+                id: "master_list_line_filter_test_2".to_owned(),
+                item_id: "item_b".to_owned(),
+                master_list_id: "master_list_master_list_line_filter_test".to_owned(),
+            },
+        ],
+    }
+}
+
 pub fn insert_full_mock_master_list(
     full_master_list: &FullMockMasterList,
     connection: &StorageConnection,
@@ -61,7 +85,7 @@ pub fn insert_full_mock_master_list(
         .unwrap();
 
     for line in full_master_list.lines.iter() {
-        MasterListLineRepository::new(&connection)
+        MasterListLineRowRepository::new(&connection)
             .upsert_one(line)
             .unwrap();
     }
@@ -82,6 +106,10 @@ pub fn mock_full_master_list() -> HashMap<String, FullMockMasterList> {
         (
             "master_list_filter_test".to_string(),
             mock_master_list_master_list_filter_test(),
+        ),
+        (
+            "master_list_master_list_line_filter_test".to_string(),
+            mock_master_list_master_list_line_filter_test(),
         ),
     ]
     .into_iter()

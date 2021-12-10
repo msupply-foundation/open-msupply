@@ -1,8 +1,18 @@
-use super::StorageConnection;
+use crate::{
+    diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
+    schema::{
+        diesel_schema::{master_list_line, master_list_line::dsl as master_list_line_dsl},
+        MasterListLineRow,
+    },
+};
+use domain::{master_list_line::MasterListLineFilter, Pagination};
 
-use crate::{repository_error::RepositoryError, schema::MasterListLineRow};
+use super::{DBType, StorageConnection};
 
 use diesel::prelude::*;
+
+pub type MasterListLine = MasterListLineRow;
 
 pub struct MasterListLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -13,35 +23,54 @@ impl<'a> MasterListLineRepository<'a> {
         MasterListLineRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::master_list_line::dsl::*;
-        diesel::insert_into(master_list_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
+    pub fn count(&self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter)?;
+
+        Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::master_list_line::dsl::*;
-        diesel::replace_into(master_list_line)
-            .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    pub async fn find_one_by_id(
+    pub fn query_by_filter(
         &self,
-        line_id: &str,
-    ) -> Result<MasterListLineRow, RepositoryError> {
-        use crate::schema::diesel_schema::master_list_line::dsl::*;
-        let result = master_list_line
-            .filter(id.eq(line_id))
-            .first(&self.connection.connection)?;
+        filter: MasterListLineFilter,
+    ) -> Result<Vec<MasterListLine>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter))
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<MasterListLineFilter>,
+    ) -> Result<Vec<MasterListLine>, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let mut query = create_filtered_query(filter)?;
+
+        query = query.order(master_list_line_dsl::id.asc());
+
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<MasterListLineRow>(&self.connection.connection)?;
+
         Ok(result)
     }
+}
+
+type BoxedMasterListLineQuery = master_list_line::BoxedQuery<'static, DBType>;
+
+fn create_filtered_query(
+    filter: Option<MasterListLineFilter>,
+) -> Result<BoxedMasterListLineQuery, RepositoryError> {
+    let mut query = master_list_line_dsl::master_list_line.into_boxed();
+
+    if let Some(f) = filter {
+        apply_equal_filter!(query, f.id, master_list_line_dsl::id);
+        apply_equal_filter!(
+            query,
+            f.master_list_id,
+            master_list_line_dsl::master_list_id
+        );
+    }
+
+    Ok(query)
 }
