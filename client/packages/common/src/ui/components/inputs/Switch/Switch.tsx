@@ -5,11 +5,17 @@ type LabelPlacement = 'bottom' | 'end' | 'start' | 'top';
 
 interface SwitchProps {
   checked?: boolean;
+  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'default';
+  defaultChecked?: boolean;
   disabled?: boolean;
-  label?: string;
-  labelPlacement: LabelPlacement;
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  label?: JSX.Element | number | string;
+  labelPlacement?: LabelPlacement;
+  onChange?: (
+    event: React.SyntheticEvent<Element, Event>,
+    checked: boolean
+  ) => void;
   size?: 'medium' | 'small';
+  value?: any;
 }
 
 const getLabelStyle = (
@@ -29,11 +35,14 @@ const getLabelStyle = (
 
 export const Switch: React.FC<SwitchProps> = ({
   checked,
+  color,
+  defaultChecked,
   disabled,
   label,
   labelPlacement = 'start',
   onChange,
   size = 'medium',
+  value,
 }) => {
   const isSmall = size === 'small';
   const switchStyle = {
@@ -69,9 +78,10 @@ export const Switch: React.FC<SwitchProps> = ({
   const styledSwitch = (
     <MuiSwitch
       checked={checked}
+      color={color}
+      defaultChecked={defaultChecked}
       size={size}
       sx={switchStyle}
-      onChange={onChange}
       focusVisibleClassName=".Mui-focusVisibles"
     />
   );
@@ -81,7 +91,9 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled={disabled}
       label={label}
       labelPlacement={labelPlacement}
+      onChange={onChange}
       sx={labelStyle}
+      value={value}
     />
   );
 };

@@ -151,6 +151,7 @@ export type OutboundShipmentSummaryItem = {
   packSize?: number | undefined;
   note?: string | null;
   isDeleted?: boolean;
+  canExpand?: boolean;
 };
 
 export interface OutboundShipment extends Omit<Invoice, 'lines'> {
