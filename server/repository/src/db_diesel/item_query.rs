@@ -1,6 +1,5 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    diesel_extensions::OrderByExtensions,
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
@@ -116,7 +115,7 @@ mod tests {
         test_db,
         {
             db_diesel::{
-                MasterListLineRepository, MasterListNameJoinRepository, MasterListRepository,
+                MasterListLineRepository, MasterListNameJoinRepository, MasterListRowRepository,
             },
             mock::MockDataInserts,
             schema::{
@@ -389,7 +388,7 @@ mod tests {
         }
 
         for row in master_list_rows {
-            MasterListRepository::new(&storage_connection)
+            MasterListRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }

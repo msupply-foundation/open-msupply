@@ -362,7 +362,7 @@ mod repository_test {
         database_settings::get_storage_connection_manager, schema::InvoiceStatsRow, test_db,
         CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
         InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListNameJoinRepository,
-        MasterListRepository, NameQueryRepository, NameRepository, NumberRowRepository,
+        MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
         OutboundShipmentRepository, RepositoryError, RequisitionLineRepository,
         RequisitionRepository, StockLineRowRepository, StoreRepository, UserAccountRepository,
     };
@@ -595,7 +595,7 @@ mod repository_test {
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 
-        let repo = MasterListRepository::new(&connection);
+        let repo = MasterListRowRepository::new(&connection);
 
         let master_list_1 = data::master_list_1();
         repo.upsert_one(&master_list_1).unwrap();
@@ -626,7 +626,7 @@ mod repository_test {
         let item_repo = ItemRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
-        MasterListRepository::new(&connection)
+        MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();
 
@@ -659,7 +659,7 @@ mod repository_test {
         // setup
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        MasterListRepository::new(&connection)
+        MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();
 

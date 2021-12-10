@@ -22,10 +22,10 @@ impl<'a> NameStoreJoinRepository<'a> {
     // these records should actually sync from server in remote sync
     // for now we create/update name_store_join for every name
     pub fn m1_add(&self) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::name_table::dsl as name_dsl;
+        use crate::schema::diesel_schema::name::dsl as name_dsl;
         use crate::schema::diesel_schema::store::dsl as store_dsl;
 
-        let names: Vec<NameRow> = name_dsl::name_table.load(&self.connection.connection)?;
+        let names: Vec<NameRow> = name_dsl::name.load(&self.connection.connection)?;
         let stores: Vec<StoreRow> = store_dsl::store.load(&self.connection.connection)?;
 
         let joins: Vec<NameStoreJoinRow> =

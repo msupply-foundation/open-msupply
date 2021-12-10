@@ -1,9 +1,10 @@
-use super::diesel_schema::name_table;
+use super::diesel_schema::name;
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "name_table"]
+#[table_name = "name"]
 pub struct NameRow {
     pub id: String,
+    #[column_name = "name_"]
     pub name: String,
     pub code: String,
     pub is_customer: bool,

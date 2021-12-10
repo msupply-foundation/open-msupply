@@ -1,13 +1,12 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    diesel_extensions::OrderByExtensions,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
         apply_sort_no_case,
     },
     schema::{
         diesel_schema::{
-            invoice, invoice::dsl as invoice_dsl, name_table, name_table::dsl as name_dsl, store,
+            invoice, invoice::dsl as invoice_dsl, name, name::dsl as name_dsl, store,
             store::dsl as store_dsl,
         },
         InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, StoreRow,
@@ -130,7 +129,7 @@ impl<'a> InvoiceQueryRepository<'a> {
                     apply_sort!(query, sort, invoice_dsl::verified_datetime);
                 }
                 InvoiceSortField::OtherPartyName => {
-                    apply_sort_no_case!(query, sort, name_dsl::name);
+                    apply_sort_no_case!(query, sort, name_dsl::name_);
                 }
                 InvoiceSortField::InvoiceNumber => {
                     apply_sort!(query, sort, invoice_dsl::invoice_number);
@@ -154,7 +153,7 @@ impl<'a> InvoiceQueryRepository<'a> {
     pub fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceQueryJoin, RepositoryError> {
         Ok(invoice_dsl::invoice
             .filter(invoice_dsl::id.eq(row_id))
-            .inner_join(name_dsl::name_table)
+            .inner_join(name_dsl::name)
             .inner_join(store_dsl::store)
             .first::<InvoiceQueryJoin>(&self.connection.connection)?)
     }
@@ -181,15 +180,12 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
     }
 }
 
-type BoxedInvoiceQuery = IntoBoxed<
-    'static,
-    InnerJoin<InnerJoin<invoice::table, name_table::table>, store::table>,
-    DBType,
->;
+type BoxedInvoiceQuery =
+    IntoBoxed<'static, InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, DBType>;
 
 pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice_dsl::invoice
-        .inner_join(name_dsl::name_table)
+        .inner_join(name_dsl::name)
         .inner_join(store_dsl::store)
         .into_boxed();
 
