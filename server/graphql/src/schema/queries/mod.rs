@@ -1,7 +1,7 @@
 use crate::ContextExt;
 use domain::location::LocationFilter;
-use domain::{invoice::InvoiceFilter, item::ItemFilter, PaginationOption};
-use service::{invoice::get_invoices, item::get_items};
+use domain::{invoice::InvoiceFilter, PaginationOption};
+use service::invoice::get_invoices;
 
 use async_graphql::{Context, Object, Result};
 
@@ -20,6 +20,8 @@ pub mod invoice_counts;
 pub use self::invoice_counts::*;
 pub mod names;
 pub use self::names::*;
+pub mod item;
+pub use self::item::*;
 
 #[Object]
 impl Queries {
@@ -100,16 +102,7 @@ impl Queries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ItemSortInput>>,
     ) -> ItemsResponse {
-        let connection_manager = ctx.get_connection_manager();
-        match get_items(
-            connection_manager,
-            page.map(PaginationOption::from),
-            filter.map(ItemFilter::from),
-            convert_sort(sort),
-        ) {
-            Ok(items) => ItemsResponse::Response(items.into()),
-            Err(error) => ItemsResponse::Error(error.into()),
-        }
+        items(ctx, page, filter, sort)
     }
 
     pub async fn invoice(
