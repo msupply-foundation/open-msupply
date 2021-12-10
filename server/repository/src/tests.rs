@@ -952,4 +952,42 @@ mod repository_test {
         let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
         assert_eq!(2, row.value);
     }
+
+    #[cfg(test)]
+    mod test {
+        use domain::{master_list_line::MasterListLineFilter, EqualFilter};
+
+        use crate::{mock::MockDataInserts, test_db, MasterListLineRepository};
+
+        #[actix_rt::test]
+        async fn test_master_list_line_repository_filter() {
+            let (mock_data, connection, _, _) = test_db::setup_all(
+                "test_master_list_line_repository_filter",
+                MockDataInserts::all(),
+            )
+            .await;
+
+            let repo = MasterListLineRepository::new(&connection);
+
+            // Test filter by master_list_id
+            let lines = repo
+                .query_by_filter(MasterListLineFilter::new().master_list_id(
+                    EqualFilter::equal_any(vec![
+                        "master_list_master_list_line_filter_test".to_string(),
+                    ]),
+                ))
+                .unwrap();
+
+            for (count, line) in mock_data
+                .full_master_list
+                .get("master_list_master_list_line_filter_test")
+                .unwrap()
+                .lines
+                .iter()
+                .enumerate()
+            {
+                assert_eq!(lines[count].id, line.id)
+            }
+        }
+    }
 }
