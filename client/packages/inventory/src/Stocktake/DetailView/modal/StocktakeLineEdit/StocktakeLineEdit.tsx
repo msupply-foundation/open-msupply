@@ -12,20 +12,15 @@ import {
   TabContext,
   TabList,
   Tab,
-  alpha,
-  TabPanel,
-  styled,
   useTranslation,
   useIsMediumScreen,
   ButtonWithIcon,
   PlusCircleIcon,
   Box,
   StockLine,
-  TableProvider,
-  createTableStore,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { BatchTable, PricingTable } from './StocktakeLineEditTables';
+import { StocktakeLinePanel } from './StocktakeLinePanel';
 import { createStocktakeRow, wrapStocktakeItem } from './utils';
 import { useStockLines } from '@openmsupply-client/system';
 import { createStocktakeItem } from '../../reducer';
@@ -37,24 +32,27 @@ interface StocktakeLineEditProps {
   draft: StocktakeController;
 }
 
-const StyledTabPanel = styled(TabPanel)({
-  height: '100%',
-});
-
 enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
 }
 
-const createStocktakeLine = (stockLine: StockLine): StocktakeLine => {
+const createStocktakeLine = (
+  item: StocktakeItem,
+  stockLine: StockLine,
+  countThisLine = true
+): StocktakeLine => {
   return {
     id: stockLine.id,
     stockLineId: stockLine.id,
+    itemCode: item.itemCode(),
+    itemName: item.itemName(),
+    countThisLine,
     ...stockLine,
   };
 };
 
-export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
+export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   item,
   draft,
   onChangeItem,
@@ -74,31 +72,6 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
       item ? wrapStocktakeItem(item, onChangeItem) : null
     );
   }, [item]);
-
-  const [batches, setBatches] = React.useState(
-    wrappedStocktakeItem ? wrappedStocktakeItem.lines : []
-  );
-
-  const { selectedRows } = useTableStore(
-    state => ({
-      selectedRows: Object.keys(state.rowState).filter(
-        id => state.rowState[id]?.isSelected
-      ),
-    }),
-    (oldState, newState) =>
-      JSON.stringify(oldState) === JSON.stringify(newState)
-  );
-
-  React.useEffect(() => {
-    if (wrappedStocktakeItem) {
-      const { lines } = wrappedStocktakeItem;
-      const checkedRows = lines.filter(line => selectedRows.includes(line.id));
-      const unCheckedRows = lines.filter(
-        line => !selectedRows.includes(line.id)
-      );
-      setBatches([...checkedRows, ...unCheckedRows]);
-    }
-  }, [wrappedStocktakeItem, selectedRows]);
 
   const onAddBatch = (seed?: StocktakeLine) => {
     if (wrappedStocktakeItem) {
@@ -122,7 +95,14 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
         });
 
         const stocktakeRows: StocktakeLine[] = uncountedLines.map(line =>
-          createStocktakeRow(wrappedStocktakeItem, createStocktakeLine(line))
+          createStocktakeRow(
+            wrappedStocktakeItem,
+            createStocktakeLine(
+              wrappedStocktakeItem,
+              line,
+              mode === ModalMode.Create
+            )
+          )
         );
 
         const updated = createStocktakeItem(wrappedStocktakeItem.id, [
@@ -162,63 +142,32 @@ export const StocktakeLineEditComponent: FC<StocktakeLineEditProps> = ({
               <ButtonWithIcon
                 color="primary"
                 variant="outlined"
-                onClick={onAddBatch}
+                onClick={() => onAddBatch()}
                 label={t('label.add-batch', { ns: 'inventory' })}
                 Icon={<PlusCircleIcon />}
               />
             </Box>
           </Box>
 
-          <TableContainer
-            sx={{
-              height: isMediumScreen ? 300 : 400,
-              marginTop: 2,
-              borderWidth: 1,
-              borderStyle: 'solid',
-              borderColor: 'divider',
-              borderRadius: '20px',
-            }}
-          >
-            <Box
-              sx={{
-                width: 400,
-                height: isMediumScreen ? 300 : 400,
-                backgroundColor: theme =>
-                  alpha(theme.palette['background']['menu'], 0.4),
-                position: 'absolute',
-                borderRadius: '20px',
-              }}
-            />
-            <StyledTabPanel value={Tabs.Batch}>
-              <BatchTable batches={batches} />
-            </StyledTabPanel>
+          <TableContainer>
+            <StocktakeLinePanel
+              batches={wrappedStocktakeItem?.lines ?? []}
+              value={Tabs.Batch}
+            >
+              <BatchTable batches={wrappedStocktakeItem?.lines ?? []} />
+            </StocktakeLinePanel>
 
-            <StyledTabPanel value={Tabs.Pricing}>
-              <PricingTable batches={batches} />
-            </StyledTabPanel>
+            <StocktakeLinePanel
+              batches={wrappedStocktakeItem?.lines ?? []}
+              value={Tabs.Pricing}
+            >
+              <PricingTable batches={wrappedStocktakeItem?.lines ?? []} />
+            </StocktakeLinePanel>
           </TableContainer>
         </TabContext>
       ) : (
         <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
       )}
     </>
-  );
-};
-
-export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
-  item,
-  draft,
-  onChangeItem,
-  mode,
-}) => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <StocktakeLineEditComponent
-        item={item}
-        draft={draft}
-        onChangeItem={onChangeItem}
-        mode={mode}
-      />
-    </TableProvider>
   );
 };

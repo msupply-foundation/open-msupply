@@ -7,15 +7,15 @@ import {
   NumberInputCell,
   CurrencyInputCell,
   useTranslation,
+  getCheckboxSelectionColumn,
+  ColumnDefinition,
 } from '@openmsupply-client/common';
 import { StocktakeLine } from '../../../../types';
 
 export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
   const t = useTranslation('inventory');
+
   const columns = useColumns<StocktakeLine>([
-    ['selection', { width: 40 }],
-    { ...getLineLabelColumn(), width: 80 },
-    ['batch', { Cell: TextInputCell, width: 200 }],
     {
       key: 'snapshotNumPacks',
       label: 'label.num-packs',
@@ -48,8 +48,6 @@ export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
 export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
   const t = useTranslation('inventory');
   const columns = useColumns<StocktakeLine>([
-    getLineLabelColumn(),
-    ['batch', { Cell: TextInputCell, width: 200 }],
     ['sellPricePerPack', { Cell: CurrencyInputCell, width: 200 }],
     ['costPricePerPack', { Cell: CurrencyInputCell, width: 200 }],
   ]);
