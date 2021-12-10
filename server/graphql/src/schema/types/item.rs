@@ -1,42 +1,9 @@
 use crate::{loader::StockLineByItemIdLoader, ContextExt};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use domain::{
-    item::{Item, ItemFilter},
-    SimpleStringFilter,
-};
+use domain::item::Item;
 
-use super::{
-    Connector, ConnectorError, EqualFilterBoolInput, InternalError, SimpleStringFilterInput,
-    SortInput, StockLinesResponse,
-};
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::item::ItemSortField")]
-#[graphql(rename_items = "camelCase")]
-pub enum ItemSortFieldInput {
-    Name,
-    Code,
-}
-pub type ItemSortInput = SortInput<ItemSortFieldInput>;
-
-#[derive(InputObject, Clone)]
-pub struct ItemFilterInput {
-    pub name: Option<SimpleStringFilterInput>,
-    pub code: Option<SimpleStringFilterInput>,
-    pub is_visible: Option<EqualFilterBoolInput>,
-}
-
-impl From<ItemFilterInput> for ItemFilter {
-    fn from(f: ItemFilterInput) -> Self {
-        ItemFilter {
-            id: None,
-            name: f.name.map(SimpleStringFilter::from),
-            code: f.code.map(SimpleStringFilter::from),
-            is_visible: f.is_visible.and_then(|filter| filter.equal_to),
-        }
-    }
-}
+use super::{InternalError, StockLinesResponse};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -74,12 +41,6 @@ impl ItemNode {
             Err(error) => StockLinesResponse::Error(error.into()),
         }
     }
-}
-
-#[derive(Union)]
-pub enum ItemsResponse {
-    Error(ConnectorError),
-    Response(Connector<ItemNode>),
 }
 
 #[derive(Union)]
