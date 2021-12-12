@@ -31,7 +31,7 @@ mod query {
             service.insert_location(
                 &context,
                 InsertLocation {
-                    id: mock_data.locations[0].id.clone(),
+                    id: mock_data["base"].locations[0].id.clone(),
                     code: "invalid".to_owned(),
                     name: None,
                     on_hold: None

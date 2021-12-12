@@ -43,31 +43,9 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
     };
 
-    // Added for CI update test
-    let mock_outbound_shipment_line_no_stock_line: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("outbound_shipment_line_no_stock_line"),
-        invoice_id: String::from("outbound_shipment_invalid_stock_line"),
-        item_id: String::from("item_with_no_stock_line"),
-        location_id: None,
-        item_name: String::from("item_b"),
-        item_code: String::from("item_b"),
-        stock_line_id: None,
-        batch: Some(String::from("item_a_line_a")),
-        expiry_date: Some(NaiveDate::from_ymd(2020, 8, 2)),
-        pack_size: 1,
-        cost_price_per_pack: 0.0,
-        sell_price_per_pack: 0.0,
-        total_before_tax: 2.0,
-        total_after_tax: 2.0,
-        tax: None,
-        number_of_packs: 1,
-        note: None,
-    };
-
     vec![
         mock_outbound_shipment_a_invoice_line_a,
         mock_outbound_shipment_a_invoice_line_b,
-        mock_outbound_shipment_line_no_stock_line,
     ]
 }
 

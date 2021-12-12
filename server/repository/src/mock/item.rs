@@ -30,17 +30,6 @@ pub fn mock_item_c() -> ItemRow {
     }
 }
 
-// Added for CI update test
-pub fn mock_item_with_no_stock_line() -> ItemRow {
-    ItemRow {
-        id: String::from("item_with_no_stock_line"),
-        name: String::from("Item with no stock line"),
-        code: String::from("code"),
-        unit_id: None,
-        r#type: ItemType::Stock,
-    }
-}
-
 pub fn item_query_test1() -> ItemRow {
     ItemRow {
         id: String::from("item_query_test1"),
@@ -66,7 +55,6 @@ pub fn mock_items() -> Vec<ItemRow> {
         mock_item_a(),
         mock_item_b(),
         mock_item_c(),
-        mock_item_with_no_stock_line(),
         item_query_test1(),
         item_query_test2(),
     ]
