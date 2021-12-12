@@ -7,7 +7,7 @@ use crate::{
         sort_filter_types::{
             convert_sort, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
         },
-        Connector, ConnectorError, ItemNode, PaginationInput,
+        ConnectorError, ItemNode, PaginationInput,
     },
     ContextExt,
 };
@@ -39,10 +39,16 @@ impl From<ItemFilterInput> for ItemFilter {
     }
 }
 
+#[derive(SimpleObject)]
+pub struct ItemConnector {
+    total_count: u32,
+    nodes: Vec<ItemNode>,
+}
+
 #[derive(Union)]
 pub enum ItemsResponse {
     Error(ConnectorError),
-    Response(Connector<ItemNode>),
+    Response(ItemConnector),
 }
 
 pub fn items(
@@ -58,7 +64,10 @@ pub fn items(
         filter.map(ItemFilter::from),
         convert_sort(sort),
     ) {
-        Ok(items) => ItemsResponse::Response(items.into()),
+        Ok(items) => ItemsResponse::Response(ItemConnector {
+            total_count: items.count,
+            nodes: items.rows.into_iter().map(ItemNode::from).collect(),
+        }),
         Err(error) => ItemsResponse::Error(error.into()),
     }
 }
