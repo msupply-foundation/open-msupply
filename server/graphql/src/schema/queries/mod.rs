@@ -3,7 +3,7 @@ use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
 use service::invoice::get_invoices;
 
-use async_graphql::{Context, Object, Result};
+use async_graphql::{Context, Object};
 
 use super::types::*;
 pub struct Queries;
@@ -150,10 +150,8 @@ impl Queries {
 
     pub async fn invoice_counts(
         &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "Invoice type")] invoice_type: InvoiceNodeType,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
-    ) -> Result<InvoiceCountsResponse> {
-        invoice_counts(ctx, invoice_type, timezone_offset)
+    ) -> InvoiceCounts {
+        invoice_counts(timezone_offset)
     }
 }
