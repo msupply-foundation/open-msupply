@@ -948,20 +948,13 @@ mutation deleteOutboundShipments($ids: [String!]) {
   }
 }
 
-query invoiceCounts($type: InvoiceNodeType!) {
-  invoiceCounts(type: $type) {
-    ... on InvoiceCountsConnector {
+query invoiceCounts($invoiceType: InvoiceNodeType!) {
+  invoiceCounts(invoiceType: $invoiceType) {
+    ... on InvoiceCounts {
       __typename
       created {
-        today
         thisWeek
-      }
-      toBePicked
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
+        today
       }
     }
   }

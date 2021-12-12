@@ -113,7 +113,7 @@ interface InvoiceCountsCreated {
   thisWeek: number;
 }
 export interface InvoiceCounts {
-  created?: InvoiceCountsCreated;
+  created: InvoiceCountsCreated;
   toBePicked?: number;
 }
 

@@ -67,7 +67,6 @@ type Mutations {
 }
 
 type Queries {
-  invoiceCounts(type: InvoiceNodeType!): InvoiceCountsResponse!
   stockCounts: StockCountsResponse!
 
   requisition(
@@ -134,6 +133,7 @@ type StocktakeLineNode {
   countedNumPacks: Int
   sellPricePerPack: Float
   costPricePerPack: Float
+  stockLineId: String
 }
 
 input UpdateStocktakeLineInput {
@@ -645,22 +645,11 @@ type CountError {
   description: String!
 }
 
-type InvoiceCountsCreated {
-  today: Int!
-  thisWeek: Int!
-}
-
-type InvoiceCountsConnector {
-  created: InvoiceCountsCreated
-  toBePicked: Int
-}
-
 type StockCountsConnector {
   expired: Int!
   expiringSoon: Int!
 }
 
-union InvoiceCountsResponse = InvoiceCountsConnector | ConnectorError
 union StockCountsResponse = StockCountsConnector | ConnectorError
 
 input BatchOutboundShipmentInput {

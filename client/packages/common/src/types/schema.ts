@@ -788,19 +788,18 @@ export type InvoiceConnector = {
   totalCount: Scalars['Int'];
 };
 
-export type InvoiceCountsConnector = {
-  __typename?: 'InvoiceCountsConnector';
-  created?: Maybe<InvoiceCountsCreated>;
-  toBePicked?: Maybe<Scalars['Int']>;
+export type InvoiceCounts = {
+  __typename?: 'InvoiceCounts';
+  created: InvoiceCountsSummary;
 };
 
-export type InvoiceCountsCreated = {
-  __typename?: 'InvoiceCountsCreated';
+export type InvoiceCountsResponse = InvoiceCounts;
+
+export type InvoiceCountsSummary = {
+  __typename?: 'InvoiceCountsSummary';
   thisWeek: Scalars['Int'];
   today: Scalars['Int'];
 };
-
-export type InvoiceCountsResponse = ConnectorError | InvoiceCountsConnector;
 
 export type InvoiceDoesNotBelongToCurrentStore = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename?: 'InvoiceDoesNotBelongToCurrentStore';
@@ -985,7 +984,6 @@ export type InvoiceSortInput = {
 
 export type InvoicesResponse = ConnectorError | InvoiceConnector;
 
-/** Generic Connector */
 export type ItemConnector = {
   __typename?: 'ItemConnector';
   nodes: Array<ItemNode>;
@@ -1119,6 +1117,61 @@ export type LogoutErrorInterface = {
 };
 
 export type LogoutResponse = Logout | LogoutError;
+
+export type MasterListConnector = {
+  __typename?: 'MasterListConnector';
+  nodes: Array<MasterListNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type MasterListFilterInput = {
+  code?: Maybe<SimpleStringFilterInput>;
+  description?: Maybe<SimpleStringFilterInput>;
+  existsForName?: Maybe<SimpleStringFilterInput>;
+  existsForNameId?: Maybe<EqualFilterStringInput>;
+  id?: Maybe<EqualFilterStringInput>;
+  name?: Maybe<SimpleStringFilterInput>;
+};
+
+export type MasterListLineConnector = {
+  __typename?: 'MasterListLineConnector';
+  nodes: Array<MasterListLineNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type MasterListLineNode = {
+  __typename?: 'MasterListLineNode';
+  id: Scalars['String'];
+  item: ItemNode;
+  itemId: Scalars['String'];
+};
+
+export type MasterListNode = {
+  __typename?: 'MasterListNode';
+  code: Scalars['String'];
+  description: Scalars['String'];
+  id: Scalars['String'];
+  lines: MasterListLineConnector;
+  name: Scalars['String'];
+};
+
+export enum MasterListSortFieldInput {
+  Code = 'code',
+  Description = 'description',
+  Name = 'name'
+}
+
+export type MasterListSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: Maybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: MasterListSortFieldInput;
+};
+
+export type MasterListsResponse = ConnectorError | MasterListConnector;
 
 export type Mutations = {
   __typename?: 'Mutations';
@@ -1386,7 +1439,6 @@ export type MutationsUpdateSupplierRequisitionLineArgs = {
   input: UpdateSupplierRequisitionLineInput;
 };
 
-/** Generic Connector */
 export type NameConnector = {
   __typename?: 'NameConnector';
   nodes: Array<NameNode>;
@@ -1527,9 +1579,11 @@ export type Queries = {
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
-  /** Query omSupply "item" entries */
+  /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logout: LogoutResponse;
+  /** Query omSupply "master_lists" entries */
+  masterLists: MasterListsResponse;
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
@@ -1558,7 +1612,8 @@ export type QueriesInvoiceArgs = {
 
 
 export type QueriesInvoiceCountsArgs = {
-  type: InvoiceNodeType;
+  invoiceType: InvoiceNodeType;
+  timezoneOffset?: Maybe<Scalars['Int']>;
 };
 
 
@@ -1580,6 +1635,13 @@ export type QueriesLocationsArgs = {
   filter?: Maybe<LocationFilterInput>;
   page?: Maybe<PaginationInput>;
   sort?: Maybe<Array<LocationSortInput>>;
+};
+
+
+export type QueriesMasterListsArgs = {
+  filter?: Maybe<MasterListFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<MasterListSortInput>>;
 };
 
 
@@ -2468,11 +2530,11 @@ export type DeleteOutboundShipmentsMutationVariables = Exact<{
 export type DeleteOutboundShipmentsMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null | undefined } };
 
 export type InvoiceCountsQueryVariables = Exact<{
-  type: InvoiceNodeType;
+  invoiceType: InvoiceNodeType;
 }>;
 
 
-export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceCountsConnector', toBePicked?: number | null | undefined, created?: { __typename?: 'InvoiceCountsCreated', today: number, thisWeek: number } | null | undefined } };
+export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', thisWeek: number, today: number } } };
 
 export type StockCountsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3395,20 +3457,13 @@ export const DeleteOutboundShipmentsDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($type: InvoiceNodeType!) {
-  invoiceCounts(type: $type) {
-    ... on InvoiceCountsConnector {
+    query invoiceCounts($invoiceType: InvoiceNodeType!) {
+  invoiceCounts(invoiceType: $invoiceType) {
+    ... on InvoiceCounts {
       __typename
       created {
-        today
         thisWeek
-      }
-      toBePicked
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
+        today
       }
     }
   }
@@ -4103,7 +4158,7 @@ export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<G
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { type } = req.variables;
+ *   const { invoiceType } = req.variables;
  *   return res(
  *     ctx.data({ invoiceCounts })
  *   )
