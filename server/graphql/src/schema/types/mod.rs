@@ -44,8 +44,6 @@ use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 
 /// Generic Connector
 #[derive(SimpleObject)]
-#[graphql(concrete(name = "ItemConnector", params(ItemNode)))]
-#[graphql(concrete(name = "NameConnector", params(NameNode)))]
 #[graphql(concrete(name = "InvoiceConnector", params(InvoiceNode)))]
 #[graphql(concrete(name = "InvoiceLineConnector", params(InvoiceLineNode)))]
 #[graphql(concrete(name = "StockLineConnector", params(StockLineNode)))]
