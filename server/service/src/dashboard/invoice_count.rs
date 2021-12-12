@@ -35,12 +35,25 @@ pub trait InvoiceCountServiceTrait {
         range: &CountTimeRange,
         now: &DateTime<Utc>,
         timezone_offset: &Option<i32>,
-    ) -> Result<i64, InvoiceCountError>;
+    ) -> Result<i64, InvoiceCountError> {
+        // default implementation:
+        InvoiceCountService {}.invoices_count(
+            ctx,
+            invoice_type,
+            invoice_status,
+            range,
+            now,
+            timezone_offset,
+        )
+    }
 
     fn outbound_invoices_pickable_count(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<i64, RepositoryError>;
+    ) -> Result<i64, RepositoryError> {
+        // default implementation:
+        InvoiceCountService {}.outbound_invoices_pickable_count(ctx)
+    }
 }
 
 impl From<RepositoryError> for InvoiceCountError {
