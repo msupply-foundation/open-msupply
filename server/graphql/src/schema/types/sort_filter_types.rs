@@ -1,9 +1,6 @@
-use crate::schema::queries::NameSortFieldInput;
+use crate::schema::queries::{ItemSortFieldInput, NameSortFieldInput};
 
-use super::{
-    InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, ItemSortFieldInput,
-    LocationSortFieldInput,
-};
+use super::{InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, LocationSortFieldInput};
 
 use domain::{
     invoice::{InvoiceStatus, InvoiceType},

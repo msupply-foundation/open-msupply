@@ -7,7 +7,7 @@ use crate::schema::types::sort_filter_types::convert_sort;
 use crate::schema::types::{name::NameNode, PaginationInput};
 use crate::ContextExt;
 
-use super::{Connector, ConnectorError, SimpleStringFilterInput, SortInput};
+use super::{ConnectorError, SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "domain::name::NameSortField")]
@@ -42,12 +42,16 @@ impl From<NameFilterInput> for NameFilter {
     }
 }
 
-type CurrentConnector = Connector<NameNode>;
+#[derive(SimpleObject)]
+pub struct NameConnector {
+    total_count: u32,
+    nodes: Vec<NameNode>,
+}
 
 #[derive(Union)]
 pub enum NamesResponse {
     Error(ConnectorError),
-    Response(CurrentConnector),
+    Response(NameConnector),
 }
 
 pub fn names(
@@ -63,7 +67,10 @@ pub fn names(
         filter.map(NameFilter::from),
         convert_sort(sort),
     ) {
-        Ok(names) => NamesResponse::Response(names.into()),
+        Ok(names) => NamesResponse::Response(NameConnector {
+            total_count: names.count,
+            nodes: names.rows.into_iter().map(NameNode::from).collect(),
+        }),
         Err(error) => NamesResponse::Error(error.into()),
     }
 }
