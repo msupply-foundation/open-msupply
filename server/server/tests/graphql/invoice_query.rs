@@ -15,7 +15,7 @@ mod graphql {
         )
         .await;
 
-        let full_invoice = mock_data.full_invoices.get("draft_ci_a").unwrap();
+        let full_invoice = mock_data["base"].full_invoices.get("draft_ci_a").unwrap();
 
         let query = r#"query Invoice($id: String) {            
                 invoice(id: $id) {

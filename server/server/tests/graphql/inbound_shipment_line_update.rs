@@ -101,7 +101,7 @@ mod graphql {
             InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
-        let item = mock_data.items.first().unwrap();
+        let item = mock_data["base"].items.first().unwrap();
         let delivered_invoice_lines =
             get_invoice_lines_inline!(&delivered_inbound_shipment.id.clone(), &connection);
         let outbound_shipment_lines =

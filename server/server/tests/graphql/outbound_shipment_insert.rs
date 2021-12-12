@@ -14,8 +14,8 @@ mod graphql {
         )
         .await;
 
-        let other_party_supplier = &mock_data.names[2];
-        let other_party_customer = &mock_data.names[0];
+        let other_party_supplier = &mock_data["base"].names[2];
+        let other_party_customer = &mock_data["base"].names[0];
 
         let query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
             insertOutboundShipment(input: $input) {
