@@ -1,6 +1,11 @@
 import { SupplierRequisitionNodeStatus } from '@openmsupply-client/common';
 
-import { Requisition, SupplierRequisition, CustomerRequisition } from './types';
+import {
+  Requisition,
+  SupplierRequisition,
+  CustomerRequisition,
+  RequisitionRow,
+} from './types';
 
 export const placeholderSupplierRequisition: SupplierRequisition = {
   id: '',
@@ -111,3 +116,6 @@ export const getSupplierRequisitionStatuses =
     SupplierRequisitionNodeStatus.Finalised,
     SupplierRequisitionNodeStatus.Sent,
   ];
+
+export const canDeleteRequisition = (requisitionRow: RequisitionRow): boolean =>
+  requisitionRow.status === SupplierRequisitionNodeStatus.Draft;
