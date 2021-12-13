@@ -36,7 +36,7 @@ impl<'a> NumberRowRepository<'a> {
     pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
         diesel::insert_into(number_dsl::number)
             .values(number_row)
-            .on_conflict(id)
+            .on_conflict(number_dsl::id)
             .do_update()
             .set(number_row)
             .execute(&self.connection.connection)?;
