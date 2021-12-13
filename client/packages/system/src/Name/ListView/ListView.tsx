@@ -11,7 +11,9 @@ import {
 } from '@openmsupply-client/common';
 import { getNameListViewApi } from './api';
 
-export const ListView: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
+export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
+  type,
+}) => {
   const navigate = useNavigate();
   const { api } = useOmSupplyApi();
   const {
