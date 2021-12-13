@@ -29,6 +29,7 @@ export const DataTable = <T extends DomainObject>({
   noDataMessage,
   ExpandContent,
   dense = false,
+  noLines = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
   const { setActiveRows } = useTableStore();
@@ -73,6 +74,7 @@ export const DataTable = <T extends DomainObject>({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        overflowX: 'unset',
       }}
     >
       <MuiTable sx={{ display: 'block', flex: 1 }}>
@@ -98,7 +100,7 @@ export const DataTable = <T extends DomainObject>({
                 onClick={onRowClick}
                 rowData={row}
                 rowKey={String(idx)}
-                dense={dense}
+                noLines={noLines}
               />
             );
           })}
