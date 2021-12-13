@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 
 import { RouteBuilder } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ListView } from '../ListView';
+import { NameListView } from '../ListView';
 
 const ComingSoon = () => <div>Coming Soon</div>;
 
@@ -22,9 +22,9 @@ export const Service: FC = () => {
 
   return (
     <Routes>
-      <Route path={customersRoute} element={<ListView type="customer" />} />
+      <Route path={customersRoute} element={<NameListView type="customer" />} />
       <Route path={customerRoute} element={<ComingSoon />} />
-      <Route path={suppliersRoute} element={<ListView type="supplier" />} />
+      <Route path={suppliersRoute} element={<NameListView type="supplier" />} />
       <Route path={supplierRoute} element={<ComingSoon />} />
     </Routes>
   );
