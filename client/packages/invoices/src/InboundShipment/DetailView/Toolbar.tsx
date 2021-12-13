@@ -18,9 +18,10 @@ import { isInboundEditable } from '../../utils';
 
 interface ToolbarProps {
   draft: InboundShipment;
+  update: (patch: Partial<InboundShipment>) => Promise<InboundShipment>;
 }
 
-export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+export const Toolbar: FC<ToolbarProps> = ({ draft, update }) => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
 
@@ -62,7 +63,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                     disabled={!isInboundEditable(draft)}
                     value={draft.otherParty}
                     onChange={name => {
-                      draft.update?.('otherParty', name);
+                      update({ otherParty: name });
                     }}
                   />
                 }
@@ -77,7 +78,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                   sx={{ width: 250 }}
                   value={draft?.theirReference ?? ''}
                   onChange={event => {
-                    draft.update?.('theirReference', event.target.value);
+                    update({ theirReference: event.target.value });
                   }}
                 />
               }

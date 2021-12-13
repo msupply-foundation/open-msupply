@@ -93,28 +93,8 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.cancel')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigate(-1)}
-              />
               {isInboundEditable(draft) && (
                 <>
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    Icon={<SaveIcon />}
-                    label={t('button.save')}
-                    variant="contained"
-                    color="secondary"
-                    sx={{ fontSize: '12px' }}
-                    onClick={() => {
-                      success('Saved invoice! 🥳 ')();
-                      save();
-                    }}
-                  />
                   <ButtonWithIcon
                     shrinkThreshold="lg"
                     disabled={draft.onHold}
