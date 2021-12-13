@@ -8,7 +8,7 @@ pub fn next_number(
     connection: &StorageConnection,
     r#type: &NumberRowType,
     store_id: &str,
-) -> Result<i32, RepositoryError> {
+) -> Result<i64, RepositoryError> {
     // Should be done in transaction
     let next_number = connection.transaction_sync(|connection_tx| {
         let repo = NumberRowRepository::new(&connection_tx);
