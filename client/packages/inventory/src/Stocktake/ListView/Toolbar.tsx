@@ -18,7 +18,7 @@ export const Toolbar: FC<{
   filter: FilterController;
   data?: StocktakeRow[];
 }> = ({ onDelete, data, filter }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('inventory');
 
   const { success, info } = useNotification();
 
