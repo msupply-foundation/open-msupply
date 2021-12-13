@@ -7,7 +7,7 @@ mod graphql {
     use domain::{name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
-        mock::MockDataInserts,
+        mock::{mock_inbound_shipment_number_store_a, MockDataInserts},
         schema::{InvoiceRow, InvoiceRowType},
         InvoiceRepository,
     };
@@ -67,6 +67,8 @@ mod graphql {
             .checked_add_signed(Duration::seconds(5))
             .unwrap();
 
+        let starting_invoice_number = mock_inbound_shipment_number_store_a().value;
+
         let not_supplier =
             get_name_inline!(NameFilter::new().match_is_supplier(false), &connection);
         let supplier = get_name_inline!(NameFilter::new().match_is_supplier(true), &connection);
@@ -110,7 +112,6 @@ mod graphql {
         assert_eq!(error.other_party.id, not_supplier.id.clone());
 
         // Test Success
-
         let variables = base_variables.clone();
 
         let query = Insert::build_query(variables.clone());
@@ -131,6 +132,8 @@ mod graphql {
         assert_eq!(new_invoice.delivered_datetime, None);
         assert_eq!(new_invoice.verified_datetime, None);
 
+        assert_eq!(new_invoice.invoice_number, starting_invoice_number + 1);
+
         // Test Success On Hold
 
         let mut variables = base_variables.clone();
@@ -148,6 +151,8 @@ mod graphql {
             .unwrap();
 
         assert_eq!(new_invoice, variables);
+
+        assert_eq!(new_invoice.invoice_number, starting_invoice_number + 2);
 
         // Test RecordAlreadyExist
 
@@ -188,6 +193,8 @@ mod graphql {
 
         assert_eq!(new_invoice.delivered_datetime, None);
         assert_eq!(new_invoice.verified_datetime, None);
+
+        assert_eq!(new_invoice.invoice_number, starting_invoice_number + 3);
     }
 
     impl PartialEq<insert::Variables> for InvoiceRow {
