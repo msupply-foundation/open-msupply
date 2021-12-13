@@ -452,9 +452,23 @@ export const get = {
       },
     },
     outboundShipment: {
-      toBePicked: InvoiceData.filter(
-        invoice => invoice.status === InvoiceNodeStatus.Picked
-      ).length,
+      created: {
+        today: InvoiceData.filter(
+          invoice =>
+            invoice.type === 'OUTBOUND_SHIPMENT' &&
+            isToday(new Date(invoice.createdDatetime))
+        ).length,
+        thisWeek: InvoiceData.filter(
+          invoice =>
+            invoice.type === 'OUTBOUND_SHIPMENT' &&
+            isThisWeek(new Date(invoice.createdDatetime))
+        ).length,
+
+        // TODO: Not supported currently.
+        toBePicked: InvoiceData.filter(
+          invoice => invoice.status === InvoiceNodeStatus.Picked
+        ).length,
+      },
     },
     stock: {
       expired: StockLineData.filter(stockLine =>

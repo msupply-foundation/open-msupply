@@ -7,10 +7,10 @@ export const getInboundShipmentCountQueryFn =
     thisWeek: number;
   }> => {
     const result = await omSupplyApi.invoiceCounts({
-      type: InvoiceNodeType.InboundShipment,
+      invoiceType: InvoiceNodeType.InboundShipment,
     });
 
-    if (result.invoiceCounts.__typename === 'InvoiceCountsConnector') {
+    if (result.invoiceCounts.__typename === 'InvoiceCounts') {
       return {
         thisWeek: result.invoiceCounts.created?.thisWeek ?? 0,
         today: result.invoiceCounts.created?.today ?? 0,

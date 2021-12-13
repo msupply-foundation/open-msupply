@@ -7,12 +7,12 @@ import {
 
 const mockInvoiceCounts = mockInvoiceCountsQuery((req, res, ctx) => {
   const { variables } = req;
-  const { type } = variables;
-  const invoiceCounts = ResolverService.statistics.invoice(type);
+  const { invoiceType } = variables;
+  const invoiceCounts = ResolverService.statistics.invoice(invoiceType);
 
   return res(
     ctx.data({
-      invoiceCounts: { ...invoiceCounts, __typename: 'InvoiceCountsConnector' },
+      invoiceCounts: { ...invoiceCounts, __typename: 'InvoiceCounts' },
     })
   );
 });
