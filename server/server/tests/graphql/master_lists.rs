@@ -90,7 +90,7 @@ mod graphql {
         // TODO would prefer for loaders to be using service provider
         // in which case we would override both item and master list line service
         // and test it's mapping here, rather then from mock data
-        let mock_data_lines = &mock_data
+        let mock_data_lines = &mock_data["base"]
             .full_master_list
             .get("master_list_master_list_line_filter_test")
             .unwrap()
