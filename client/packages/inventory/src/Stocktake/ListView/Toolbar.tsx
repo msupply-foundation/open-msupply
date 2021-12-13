@@ -11,6 +11,7 @@ import {
   FilterController,
 } from '@openmsupply-client/common';
 import { StocktakeRow } from '../../types';
+import { canDeleteStocktake } from '../../utils';
 
 export const Toolbar: FC<{
   onDelete: (toDelete: StocktakeRow[]) => void;
@@ -29,11 +30,23 @@ export const Toolbar: FC<{
   }));
 
   const deleteAction = () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      onDelete(selectedRows);
-      success(`Deleted ${selectedRows?.length} stocktakes`)();
+    const numberSelected = selectedRows.length;
+    if (selectedRows && numberSelected > 0) {
+      const canDeleteRows = selectedRows.every(canDeleteStocktake);
+      if (!canDeleteRows) {
+        const cannotDeleteSnack = info(t('message.cant-delete-stocktakes'));
+        cannotDeleteSnack();
+      } else {
+        onDelete(selectedRows);
+        const deletedMessage = t('messages.deleted-stocktakes', {
+          number: numberSelected,
+        });
+        const successSnack = success(deletedMessage);
+        successSnack();
+      }
     } else {
-      info('Select rows to delete them')();
+      const selectRowsSnack = info(t('message.select-rows-to-delete'));
+      selectRowsSnack();
     }
   };
 
