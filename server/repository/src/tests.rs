@@ -1014,7 +1014,7 @@ mod repository_test {
 
         #[actix_rt::test]
         async fn test_master_list_line_repository_filter() {
-            let (mock_data, connection, _, _) = test_db::setup_all(
+            let (_, connection, _, _) = test_db::setup_all(
                 "test_master_list_line_repository_filter",
                 MockDataInserts::all(),
             )
