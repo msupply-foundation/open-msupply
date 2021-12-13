@@ -12,7 +12,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.11.0",
     "@emotion/react": "^11.4.1",
-    "@emotion/styled": "^11.3.0",
+    "@emotion/styled": "^11.6.0",
     "@mui/lab": "^5.0.0-alpha.58",
     "@mui/material": "^5.0.0",
     "@openmsupply-client/config": "^0.0.0",
