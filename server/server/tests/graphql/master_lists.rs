@@ -4,7 +4,10 @@ mod graphql {
         master_list::{MasterListFilter, MasterListSort},
         EqualFilter, PaginationOption, SimpleStringFilter,
     };
-    use repository::{mock::MockDataInserts, MasterList, StorageConnectionManager};
+    use repository::{
+        mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
+        MasterList, StorageConnectionManager,
+    };
     use serde_json::{json, Value};
     use server::test_utils::setup_all;
     use service::{
@@ -90,11 +93,7 @@ mod graphql {
         // TODO would prefer for loaders to be using service provider
         // in which case we would override both item and master list line service
         // and test it's mapping here, rather then from mock data
-        let mock_data_lines = &mock_data
-            .full_master_list
-            .get("master_list_master_list_line_filter_test")
-            .unwrap()
-            .lines;
+        let mock_data_lines = &mock_master_list_master_list_line_filter_test().lines;
 
         let lines: Vec<Value> = mock_data_lines
             .iter()

@@ -1007,7 +1007,10 @@ mod repository_test {
     mod test {
         use domain::{master_list_line::MasterListLineFilter, EqualFilter};
 
-        use crate::{mock::MockDataInserts, test_db, MasterListLineRepository};
+        use crate::{
+            mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
+            test_db, MasterListLineRepository,
+        };
 
         #[actix_rt::test]
         async fn test_master_list_line_repository_filter() {
@@ -1028,10 +1031,7 @@ mod repository_test {
                 ))
                 .unwrap();
 
-            for (count, line) in mock_data
-                .full_master_list
-                .get("master_list_master_list_line_filter_test")
-                .unwrap()
+            for (count, line) in mock_master_list_master_list_line_filter_test()
                 .lines
                 .iter()
                 .enumerate()
