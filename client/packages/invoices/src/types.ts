@@ -130,11 +130,12 @@ export type OutboundShipmentSummaryItem = {
   itemUnit?: string;
   batch?: string | null;
   batches: Record<string, OutboundShipmentRow>;
-  sellPrice?: number | undefined;
+  sellPricePerPack?: number | undefined;
   packSize?: number | undefined;
   note?: string | null;
   isDeleted?: boolean;
   canExpand?: boolean;
+  expiryDate?: string;
 };
 
 export interface OutboundShipment extends Omit<Invoice, 'lines'> {
