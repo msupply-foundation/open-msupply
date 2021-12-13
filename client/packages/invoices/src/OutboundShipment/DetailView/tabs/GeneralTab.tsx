@@ -31,16 +31,19 @@ const Expand: FC<{
     'batch',
     'expiryDate',
     'locationName',
-    'sellPricePerPack',
-    'packSize',
     'itemUnit',
-    'unitQuantity',
     'numberOfPacks',
+    'packSize',
+    'unitQuantity',
+    'sellPricePerUnit',
+    'lineTotal',
   ]);
 
   const batches = Object.values(rowData.batches).map(batch => ({
     ...batch,
     unitQuantity: batch.numberOfPacks * batch.packSize,
+    sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
+    lineTotal: (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
   }));
   const BatchTable = React.useMemo(
     () => (
@@ -88,38 +91,37 @@ export const GeneralTabComponent: FC<
   );
 
   React.useEffect(() => {
-    if (isOn) {
-      setGrouped(
-        paged.map(row => {
-          const batches = Object.values(row.batches);
-          return {
-            ...row,
-            batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-            expiryDate: ifTheSameElseDefault(
-              batches,
-              'expiryDate',
-              '[multiple]'
-            ),
-            canExpand: Object.keys(row.batches).length > 1,
-          };
-        })
-      );
-    } else {
-      const unGrouped: OutboundShipmentSummaryItem[] = [];
-      paged.forEach(row => {
-        Object.values(row.batches).forEach(batch => {
-          unGrouped.push({
+    const newGrouped: OutboundShipmentSummaryItem[] = [];
+    paged.forEach(row => {
+      const batches = Object.values(row.batches);
+      const lineTotal = (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
+
+      if (isOn) {
+        newGrouped.push({
+          ...row,
+          lineTotal,
+          sellPricePerUnit: lineTotal / row.unitQuantity,
+          batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+          expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
+          canExpand: Object.keys(row.batches).length > 1,
+        });
+      } else {
+        batches.forEach(batch => {
+          newGrouped.push({
             ...row,
             batch: batch.batch,
             expiryDate: batch.expiryDate,
             packSize: batch.packSize,
+            lineTotal,
+            sellPricePerUnit: lineTotal / row.unitQuantity,
             canExpand: false,
           });
         });
-      });
-      setGrouped(unGrouped);
-    }
+      }
+    });
+    setGrouped(newGrouped);
   }, [isOn, data]);
+
   const t = useTranslation('distribution');
   const activeRows = grouped.filter(({ isDeleted }) => !isDeleted);
 
