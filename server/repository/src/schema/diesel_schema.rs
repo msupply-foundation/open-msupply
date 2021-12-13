@@ -219,8 +219,9 @@ table! {
 table! {
     number (id) {
         id -> Text,
-        value -> BigInt,
+        value -> Integer,
         store_id -> Text,
+        #[sql_name = "type"] type_ -> crate::schema::number::NumberRowTypeMapping,
     }
 }
 
