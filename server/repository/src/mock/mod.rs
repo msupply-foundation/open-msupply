@@ -17,6 +17,7 @@ mod user_account;
 use std::{collections::HashMap, ops::Index};
 
 pub use full_invoice::mock_full_invoices;
+pub use full_master_list::*;
 pub use invoice::{mock_invoices, mock_outbound_shipment_a, mock_outbound_shipments};
 pub use invoice_line::{mock_invoice_lines, mock_outbound_shipment_invoice_lines};
 pub use item::mock_items;
@@ -35,7 +36,6 @@ use crate::{InvoiceLineRowRepository, LocationRowRepository, StockLineRowReposit
 
 use self::{
     full_invoice::{insert_full_mock_invoice, FullMockInvoice},
-    full_master_list::{insert_full_mock_master_list, mock_full_master_list, FullMockMasterList},
     unit::mock_units,
 };
 
