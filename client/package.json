@@ -20,7 +20,6 @@
     ]
   },
   "devDependencies": {
-    "@emotion/styled": "^11.0.0-next.19",
     "@graphql-codegen/cli": "2.2.2",
     "@graphql-codegen/typescript": "2.3.0",
     "@graphql-codegen/typescript-graphql-request": "^4.2.0",
