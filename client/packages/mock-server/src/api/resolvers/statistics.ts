@@ -11,12 +11,12 @@ export const statisticsResolver = {
         case InvoiceNodeType.InboundShipment:
           return db.get.statistics.inboundShipment;
         default:
-          return {};
+          throw new Error('Invoice type not supported!');
       }
     };
 
     return {
-      __typename: 'InvoiceCountsConnector',
+      __typename: 'InvoiceCounts',
       ...getStats(type),
     };
   },

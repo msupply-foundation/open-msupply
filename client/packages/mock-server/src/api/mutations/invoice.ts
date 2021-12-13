@@ -68,10 +68,10 @@ export const InvoiceMutation = {
       const resolvedInvoice = ResolverService.invoice.byId(String(invoiceId));
 
       if (
-        resolvedInvoice.status === InvoiceNodeStatus.Confirmed ||
-        resolvedInvoice.status === InvoiceNodeStatus.Finalised
+        resolvedInvoice.status !== InvoiceNodeStatus.Allocated &&
+        resolvedInvoice.status !== InvoiceNodeStatus.New
       ) {
-        throw new Error("Can't delete delivered or finalised invoice");
+        throw new Error('Only allocated or new shipments can be deleted');
       }
 
       resolvedInvoice.lines.nodes.forEach(line => {
@@ -119,11 +119,8 @@ export const InvoiceMutation = {
     remove: (input: DeleteInboundShipmentInput): DeleteResponse => {
       const resolvedInvoice = ResolverService.invoice.byId(input.id);
 
-      if (
-        resolvedInvoice.status === InvoiceNodeStatus.Confirmed ||
-        resolvedInvoice.status === InvoiceNodeStatus.Finalised
-      ) {
-        throw new Error("Can't delete delivered or finalised invoice");
+      if (resolvedInvoice.status !== InvoiceNodeStatus.New) {
+        throw new Error("Can't delete non new shipment");
       }
 
       resolvedInvoice.lines.nodes.forEach(line => {

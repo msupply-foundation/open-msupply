@@ -5,6 +5,7 @@ import { useTranslation, useFormatDate } from '@common/intl';
 
 export * from './DataRow';
 export * from './Cells';
+export * from './Header';
 
 export const BasicCell = <T extends DomainObject>({
   column,

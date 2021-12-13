@@ -22,6 +22,7 @@ import {
   NameNode,
   StocktakeNode,
   StocktakeLineNode,
+  InvoicePricingNode,
 } from '@openmsupply-client/common/src/types/schema';
 
 export { ItemSortFieldInput, RequisitionListParameters, ItemsResponse };
@@ -88,15 +89,10 @@ export interface ResolvedInvoiceLine extends InvoiceLine {
   item: ResolvedItem;
 }
 
-export interface Invoice extends Omit<InvoiceNode, 'lines' | 'otherParty'> {
+export interface Invoice
+  extends Omit<InvoiceNode, 'lines' | 'otherParty' | 'pricing'> {
   totalAfterTax: number;
-  verifiedDatetime?: string;
-  pricing: {
-    __typename: 'InvoicePricingNode';
-    totalAfterTax: number;
-    // taxPercentage: number;
-    // subtotal: number;
-  };
+  pricing: InvoicePricingNode & { __typename: 'InvoicePricingNode' };
 }
 
 export interface ResolvedInvoice extends Invoice {
@@ -104,6 +100,7 @@ export interface ResolvedInvoice extends Invoice {
   lines: ListResponse<ResolvedInvoiceLine, 'InvoiceLineConnector'>;
   otherParty: NameNode;
   otherPartyName: string;
+  pricing: InvoicePricingNode & { __typename: 'InvoicePricingNode' };
 }
 
 export interface ListResponse<T, TypeName> {
@@ -116,7 +113,7 @@ interface InvoiceCountsCreated {
   thisWeek: number;
 }
 export interface InvoiceCounts {
-  created?: InvoiceCountsCreated;
+  created: InvoiceCountsCreated;
   toBePicked?: number;
 }
 

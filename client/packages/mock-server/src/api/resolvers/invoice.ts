@@ -11,8 +11,8 @@ const getInvoiceSortKey = (key: string) => {
     // case InvoiceSortFieldInput.ConfirmDatetime: {
     //   return 'allocatedDatetime';
     // }
-    case InvoiceSortFieldInput.EntryDatetime: {
-      return 'entryDatetime';
+    case InvoiceSortFieldInput.CreatedDatetime: {
+      return 'createdDatetime';
     }
     case InvoiceSortFieldInput.Comment: {
       return 'comment';
@@ -98,6 +98,10 @@ export const invoiceResolver = {
       otherParty,
       otherPartyName: otherParty.name,
       lines,
+      pricing: {
+        ...invoice.pricing,
+        __typename: 'InvoicePricingNode',
+      },
     };
   },
 };

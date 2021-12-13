@@ -153,96 +153,103 @@ export const createItems = (
 };
 
 const outboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.Draft,
-  // InvoiceNodeStatus.Allocated,
-  // InvoiceNodeStatus.Picked,
-  // InvoiceNodeStatus.Shipped,
-  // InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Confirmed,
-  InvoiceNodeStatus.Finalised,
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
 ];
 
 const inboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Confirmed,
-  // InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Finalised,
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
 ];
 
-// const createInboundStatusLog = (status: string, entered: Date) => {
-//   const statusIdx = inboundStatuses.findIndex(s => status === s);
+const createInboundStatusLog = (status: string, createdDatetime: Date) => {
+  const statusIdx = inboundStatuses.findIndex(s => status === s);
 
-//   const statusTimes: {
-//     entryDatetime?: Date;
-//     deliveredDatetime?: Date;
-//     verifiedDatetime?: Date;
-//     allocatedDatetime?: Date;
-//     pickedDatetime?: Date;
-//     shippedDatetime?: Date;
-//   } = {};
+  const statusTimes: {
+    pickedDatetime?: Date;
+    shippedDatetime?: Date;
+    deliveredDatetime?: Date;
+    verifiedDatetime?: Date;
+    allocatedDatetime?: Date;
+  } = {};
 
-//   if (statusIdx >= 0) {
-//     statusTimes.entryDatetime = faker.date.future(0.1, entered);
-//   }
-//   if (statusIdx >= 1) {
-//     statusTimes.deliveredDatetime = faker.date.future(
-//       0.1,
-//       statusTimes.entryDatetime
-//     );
-//   }
-//   if (statusIdx >= 2) {
-//     statusTimes.verifiedDatetime = faker.date.future(
-//       0.1,
-//       statusTimes.deliveredDatetime
-//     );
-//   }
+  if (statusIdx >= 1) {
+    statusTimes.pickedDatetime = faker.date.future(0.1, createdDatetime);
+  }
+  if (statusIdx >= 2) {
+    statusTimes.shippedDatetime = faker.date.future(
+      0.1,
+      statusTimes.pickedDatetime
+    );
+  }
+  if (statusIdx >= 3) {
+    statusTimes.deliveredDatetime = faker.date.future(
+      0.1,
+      statusTimes.shippedDatetime
+    );
+  }
 
-//   return statusTimes;
-// };
+  if (statusIdx >= 4) {
+    statusTimes.verifiedDatetime = faker.date.future(
+      0.1,
+      statusTimes.deliveredDatetime
+    );
+  }
 
-// const createOutboundStatusLog = (status: string, entered: Date) => {
-//   const statusIdx = outboundStatuses.findIndex(s => status === s);
+  return statusTimes;
+};
 
-//   const statusTimes: {
-//     entryDatetime?: Date;
-//     allocatedDatetime?: Date;
-//     pickedDatetime?: Date;
-//     shippedDatetime?: Date;
-//     deliveredDatetime?: Date;
-//     verifiedDatetime?: Date;
-//   } = {};
+const createOutboundStatusLog = (status: string, createdDatetime: Date) => {
+  const statusIdx = outboundStatuses.findIndex(s => status === s);
 
-//   if (statusIdx >= 0) {
-//     statusTimes.entryDatetime = faker.date.future(0.1, entered);
-//   }
-//   if (statusIdx >= 1) {
-//     statusTimes.allocatedDatetime = faker.date.future(
-//       0.1,
-//       statusTimes.entryDatetime
-//     );
-//   }
-//   if (statusIdx >= 2) {
-//     statusTimes.pickedDatetime = faker.date.future(
-//       0.1,
-//       statusTimes.allocatedDatetime
-//     );
-//   }
-//   if (statusIdx >= 3) {
-//     statusTimes.shippedDatetime = faker.date.future(
-//       0.1,
-//       statusTimes.pickedDatetime
-//     );
-//   }
+  const statusTimes: {
+    pickedDatetime?: Date;
+    allocatedDatetime?: Date;
+    shippedDatetime?: Date;
+    deliveredDatetime?: Date;
+    verifiedDatetime?: Date;
+  } = {};
 
-//   if (statusIdx >= 4) {
-//     statusTimes.deliveredDatetime = faker.date.future(
-//       0.1,
-//       statusTimes.shippedDatetime
-//     );
-//   }
+  if (statusIdx >= 1) {
+    statusTimes.pickedDatetime = faker.date.future(0.1, createdDatetime);
+  }
 
-//   return statusTimes;
-// };
+  if (statusIdx >= 2) {
+    statusTimes.allocatedDatetime = faker.date.future(
+      0.1,
+      statusTimes.pickedDatetime
+    );
+  }
+
+  if (statusIdx >= 3) {
+    statusTimes.shippedDatetime = faker.date.future(
+      0.1,
+      statusTimes.allocatedDatetime
+    );
+  }
+  if (statusIdx >= 4) {
+    statusTimes.deliveredDatetime = faker.date.future(
+      0.1,
+      statusTimes.shippedDatetime
+    );
+  }
+
+  if (statusIdx >= 5) {
+    statusTimes.verifiedDatetime = faker.date.future(
+      0.1,
+      statusTimes.deliveredDatetime
+    );
+  }
+
+  return statusTimes;
+};
 
 // const shippingMethods = ['Air', 'Sea', 'Road', 'Rail'];
 
@@ -261,10 +268,10 @@ export const createInvoice = (
       ? inboundStatuses
       : outboundStatuses
   );
-  // const statusTimes =
-  //   type === InvoiceNodeType.InboundShipment
-  //     ? createInboundStatusLog(status, entered)
-  //     : createOutboundStatusLog(status, entered);
+  const statusTimes =
+    type === InvoiceNodeType.InboundShipment
+      ? createInboundStatusLog(status, entered)
+      : createOutboundStatusLog(status, entered);
 
   const taxPercentage = randomFloat(10, 40);
   const subtotal = randomFloat(100, 1000);
@@ -283,20 +290,23 @@ export const createInvoice = (
     pricing: {
       __typename: 'InvoicePricingNode',
       totalAfterTax,
-      // subtotal,
-      // taxPercentage,
+      serviceTotalAfterTax: 0,
+      serviceTotalBeforeTax: 0,
+      stockTotalAfterTax: 0,
+      stockTotalBeforeTax: 0,
+      totalBeforeTax: 0,
     },
 
     // color: 'grey',
     comment: takeRandomElementFrom(comments),
     onHold: false,
 
-    entryDatetime: entered.toISOString(),
-    // allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
-    // pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
-    // shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
-    // deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
-    // verifiedDatetime: statusTimes?.verifiedDatetime?.toISOString(),
+    createdDatetime: entered.toISOString(),
+    allocatedDatetime: statusTimes.allocatedDatetime?.toISOString(),
+    pickedDatetime: statusTimes.pickedDatetime?.toISOString(),
+    shippedDatetime: statusTimes.shippedDatetime?.toISOString(),
+    deliveredDatetime: statusTimes.deliveredDatetime?.toISOString(),
+    verifiedDatetime: statusTimes?.verifiedDatetime?.toISOString(),
     // enteredByName: randomName(),
     // donorName: randomName(),
     // otherPartyName: otherParty.name,
@@ -514,10 +524,7 @@ const createInvoicesLines = (
         const invoiceLine = createInvoiceLine(invoice, item, stockLine);
         const numberOfPacks = invoiceLine.numberOfPacks;
 
-        if (
-          invoice.status === InvoiceNodeStatus.Confirmed ||
-          invoice.status === InvoiceNodeStatus.Finalised
-        ) {
+        if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineTotalNumberOfPacks(stockLine.id, numberOfPacks);
           adjustStockLineAvailableNumberOfPacks(stockLine.id, numberOfPacks);
         }
@@ -552,10 +559,7 @@ const createInvoicesLines = (
         );
         adjustStockLineAvailableNumberOfPacks(stockLine.id, -numberOfPacks);
 
-        if (
-          invoice.status === InvoiceNodeStatus.Confirmed ||
-          invoice.status === InvoiceNodeStatus.Finalised
-        ) {
+        if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineTotalNumberOfPacks(stockLine.id, numberOfPacks);
         }
 

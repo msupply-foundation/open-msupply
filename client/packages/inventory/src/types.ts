@@ -1,6 +1,9 @@
 import { Column } from './../../common/src/ui/layout/tables/columns/types';
-import { StocktakeLineNode } from '@common/types';
-import { StocktakeNode, StocktakeNodeStatus } from '@openmsupply-client/common';
+import {
+  StocktakeLineNode,
+  StocktakeNode,
+  StocktakeNodeStatus,
+} from '@openmsupply-client/common';
 
 export type StocktakeRow = Pick<
   StocktakeNode,
@@ -16,6 +19,7 @@ export interface StocktakeLine extends StocktakeLineNode {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
+  countThisLine: boolean;
   update?: (key: string, value: string) => void;
 }
 

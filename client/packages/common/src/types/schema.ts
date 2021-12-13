@@ -163,16 +163,6 @@ export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateOutboundShipmentErro
   description: Scalars['String'];
 };
 
-export type CannotChangeInvoiceBackToDraft = UpdateInboundShipmentErrorInterface & {
-  __typename?: 'CannotChangeInvoiceBackToDraft';
-  description: Scalars['String'];
-};
-
-export type CannotChangeStatusBackToDraftError = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'CannotChangeStatusBackToDraftError';
-  description: Scalars['String'];
-};
-
 export type CannotChangeStatusOfInvoiceOnHold = UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
   __typename?: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String'];
@@ -184,8 +174,13 @@ export type CannotDeleteInvoiceWithLines = DeleteInboundShipmentErrorInterface &
   lines: InvoiceLineConnector;
 };
 
-export type CannotEditFinalisedInvoice = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'CannotEditFinalisedInvoice';
+export type CannotEditInvoice = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+  __typename?: 'CannotEditInvoice';
+  description: Scalars['String'];
+};
+
+export type CannotReverseInvoiceStatus = UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
+  __typename?: 'CannotReverseInvoiceStatus';
   description: Scalars['String'];
 };
 
@@ -453,11 +448,6 @@ export type EqualFilterStringInput = {
   notEqualTo?: Maybe<Scalars['String']>;
 };
 
-export type FinalisedInvoiceIsNotEditableError = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'FinalisedInvoiceIsNotEditableError';
-  description: Scalars['String'];
-};
-
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -539,7 +529,6 @@ export type InsertInboundShipmentInput = {
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
   otherPartyId: Scalars['String'];
-  status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
 };
 
@@ -564,6 +553,9 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
+  tax?: Maybe<Scalars['Float']>;
+  totalAfterTax: Scalars['Float'];
+  totalBeforeTax: Scalars['Float'];
 };
 
 export type InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode | NodeError;
@@ -638,6 +630,9 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Int'];
   stockLineId: Scalars['String'];
+  tax?: Maybe<Scalars['Float']>;
+  totalAfterTax: Scalars['Float'];
+  totalBeforeTax: Scalars['Float'];
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode | NodeError;
@@ -672,7 +667,9 @@ export type InsertOutboundShipmentServiceLineInput = {
   itemId: Scalars['String'];
   name?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
-  totalAfterTax?: Maybe<Scalars['Float']>;
+  tax?: Maybe<Scalars['Float']>;
+  totalAfterTax: Scalars['Float'];
+  totalBeforeTax: Scalars['Float'];
 };
 
 export type InsertOutboundShipmentServiceLineResponse = InsertOutboundShipmentServiceLineError | InvoiceLineNode;
@@ -791,19 +788,18 @@ export type InvoiceConnector = {
   totalCount: Scalars['Int'];
 };
 
-export type InvoiceCountsConnector = {
-  __typename?: 'InvoiceCountsConnector';
-  created?: Maybe<InvoiceCountsCreated>;
-  toBePicked?: Maybe<Scalars['Int']>;
+export type InvoiceCounts = {
+  __typename?: 'InvoiceCounts';
+  created: InvoiceCountsSummary;
 };
 
-export type InvoiceCountsCreated = {
-  __typename?: 'InvoiceCountsCreated';
+export type InvoiceCountsResponse = InvoiceCounts;
+
+export type InvoiceCountsSummary = {
+  __typename?: 'InvoiceCountsSummary';
   thisWeek: Scalars['Int'];
   today: Scalars['Int'];
 };
-
-export type InvoiceCountsResponse = ConnectorError | InvoiceCountsConnector;
 
 export type InvoiceDoesNotBelongToCurrentStore = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename?: 'InvoiceDoesNotBelongToCurrentStore';
@@ -811,16 +807,24 @@ export type InvoiceDoesNotBelongToCurrentStore = DeleteInboundShipmentErrorInter
 };
 
 export type InvoiceFilterInput = {
+  allocatedDatetime?: Maybe<DatetimeFilterInput>;
   comment?: Maybe<SimpleStringFilterInput>;
-  confirmDatetime?: Maybe<DatetimeFilterInput>;
-  entryDatetime?: Maybe<DatetimeFilterInput>;
-  finalisedDatetime?: Maybe<DatetimeFilterInput>;
+  createdDatetime?: Maybe<DatetimeFilterInput>;
+  deliveredDatetime?: Maybe<DatetimeFilterInput>;
   invoiceNumber?: Maybe<EqualFilterNumberInput>;
   nameId?: Maybe<EqualFilterStringInput>;
+  pickedDatetime?: Maybe<DatetimeFilterInput>;
+  shippedDatetime?: Maybe<DatetimeFilterInput>;
   status?: Maybe<EqualFilterInvoiceStatusInput>;
   storeId?: Maybe<EqualFilterStringInput>;
   theirReference?: Maybe<EqualFilterStringInput>;
   type?: Maybe<EqualFilterInvoiceTypeInput>;
+  verifiedDatetime?: Maybe<DatetimeFilterInput>;
+};
+
+export type InvoiceIsNotEditable = UpdateOutboundShipmentErrorInterface & {
+  __typename?: 'InvoiceIsNotEditable';
+  description: Scalars['String'];
 };
 
 export type InvoiceLineBelongsToAnotherInvoice = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
@@ -868,11 +872,11 @@ export type InvoiceLinesResponse = ConnectorError | InvoiceLineConnector;
 
 export type InvoiceNode = {
   __typename?: 'InvoiceNode';
+  allocatedDatetime?: Maybe<Scalars['DateTime']>;
   color?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
-  confirmedDatetime?: Maybe<Scalars['DateTime']>;
-  entryDatetime: Scalars['DateTime'];
-  finalisedDatetime?: Maybe<Scalars['DateTime']>;
+  createdDatetime: Scalars['DateTime'];
+  deliveredDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   invoiceNumber: Scalars['Int'];
   lines: InvoiceLinesResponse;
@@ -880,25 +884,59 @@ export type InvoiceNode = {
   otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: InvoicePriceResponse;
+  shippedDatetime?: Maybe<Scalars['DateTime']>;
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
+  verifiedDatetime?: Maybe<Scalars['DateTime']>;
 };
 
 export enum InvoiceNodeStatus {
   /**
-   * For outbound shipments: When an invoice is CONFIRMED available_number_of_packs and
-   * total_number_of_packs get updated when items are added to the invoice.
+   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fullfilled)
+   * Outbound Shipment: Invoice can only be turned to allocated status when
+   * all unallocated lines are fullfilled
+   * Inbound Shipment: not applicable
    */
-  Confirmed = 'CONFIRMED',
+  Allocated = 'ALLOCATED',
   /**
-   * For outbound shipments: In DRAFT mode only the available_number_of_packs in a stock line gets
-   * updated when items are added to the invoice.
+   * General description: Inbound Shipment was received
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Stock is introduced and can be issued
    */
-  Draft = 'DRAFT',
-  /** A FINALISED invoice can't be edited nor deleted. */
-  Finalised = 'FINALISED'
+  Delivered = 'DELIVERED',
+  /**
+   * Outbound Shipment: available_number_of_packs in a stock line gets
+   * updated when items are added to the invoice.
+   * Inbound Shipment: No stock changes in this status, only manually entered
+   * inbound Shipments have new status
+   */
+  New = 'NEW',
+  /**
+   * General description: Outbound Shipment was picked from shelf and ready for Shipment
+   * Outbound Shipment: available_number_of_packs and
+   * total_number_of_packs get updated when items are added to the invoice
+   * Inbound Shipment: For inter store stock transfers an inbound Shipment
+   * is created when corresponding outbound Shipment is picked and ready for
+   * Shipment, inbound Shipment is not editable in this status
+   */
+  Picked = 'PICKED',
+  /**
+   * General description: Outbound Shipment is sent out for delivery
+   * Outbound Shipment: Becomes not editable
+   * Inbound Shipment: For inter store stock transfers an inbound Shipment
+   * becomes editable when this status is set as a result of corresponding
+   * outbound Shipment being chagned to shipped (this is similar to New status)
+   */
+  Shipped = 'SHIPPED',
+  /**
+   * General description: Received inbound Shipment was counted and verified
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Becomes not editable
+   */
+  Verified = 'VERIFIED'
 }
 
 export enum InvoiceNodeType {
@@ -910,20 +948,28 @@ export type InvoicePriceResponse = InvoicePricingNode | NodeError;
 
 export type InvoicePricingNode = {
   __typename?: 'InvoicePricingNode';
+  serviceTotalAfterTax: Scalars['Float'];
+  serviceTotalBeforeTax: Scalars['Float'];
+  stockTotalAfterTax: Scalars['Float'];
+  stockTotalBeforeTax: Scalars['Float'];
   totalAfterTax: Scalars['Float'];
+  totalBeforeTax: Scalars['Float'];
 };
 
 export type InvoiceResponse = InvoiceNode | NodeError;
 
 export enum InvoiceSortFieldInput {
+  AllocatedDatetime = 'allocatedDatetime',
   Comment = 'comment',
-  ConfirmDatetime = 'confirmDatetime',
-  EntryDatetime = 'entryDatetime',
-  FinalisedDateTime = 'finalisedDateTime',
+  CreatedDatetime = 'createdDatetime',
+  DeliveredDatetime = 'deliveredDatetime',
   InvoiceNumber = 'invoiceNumber',
   OtherPartyName = 'otherPartyName',
+  PickedDatetime = 'pickedDatetime',
+  ShippedDatetime = 'shippedDatetime',
   Status = 'status',
-  Type = 'type'
+  Type = 'type',
+  VerifiedDatetime = 'verifiedDatetime'
 }
 
 export type InvoiceSortInput = {
@@ -938,7 +984,6 @@ export type InvoiceSortInput = {
 
 export type InvoicesResponse = ConnectorError | InvoiceConnector;
 
-/** Generic Connector */
 export type ItemConnector = {
   __typename?: 'ItemConnector';
   nodes: Array<ItemNode>;
@@ -1072,6 +1117,61 @@ export type LogoutErrorInterface = {
 };
 
 export type LogoutResponse = Logout | LogoutError;
+
+export type MasterListConnector = {
+  __typename?: 'MasterListConnector';
+  nodes: Array<MasterListNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type MasterListFilterInput = {
+  code?: Maybe<SimpleStringFilterInput>;
+  description?: Maybe<SimpleStringFilterInput>;
+  existsForName?: Maybe<SimpleStringFilterInput>;
+  existsForNameId?: Maybe<EqualFilterStringInput>;
+  id?: Maybe<EqualFilterStringInput>;
+  name?: Maybe<SimpleStringFilterInput>;
+};
+
+export type MasterListLineConnector = {
+  __typename?: 'MasterListLineConnector';
+  nodes: Array<MasterListLineNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type MasterListLineNode = {
+  __typename?: 'MasterListLineNode';
+  id: Scalars['String'];
+  item: ItemNode;
+  itemId: Scalars['String'];
+};
+
+export type MasterListNode = {
+  __typename?: 'MasterListNode';
+  code: Scalars['String'];
+  description: Scalars['String'];
+  id: Scalars['String'];
+  lines: MasterListLineConnector;
+  name: Scalars['String'];
+};
+
+export enum MasterListSortFieldInput {
+  Code = 'code',
+  Description = 'description',
+  Name = 'name'
+}
+
+export type MasterListSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: Maybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: MasterListSortFieldInput;
+};
+
+export type MasterListsResponse = ConnectorError | MasterListConnector;
 
 export type Mutations = {
   __typename?: 'Mutations';
@@ -1339,7 +1439,6 @@ export type MutationsUpdateSupplierRequisitionLineArgs = {
   input: UpdateSupplierRequisitionLineInput;
 };
 
-/** Generic Connector */
 export type NameConnector = {
   __typename?: 'NameConnector';
   nodes: Array<NameNode>;
@@ -1480,9 +1579,11 @@ export type Queries = {
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
-  /** Query omSupply "item" entries */
+  /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logout: LogoutResponse;
+  /** Query omSupply "master_lists" entries */
+  masterLists: MasterListsResponse;
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
@@ -1511,7 +1612,8 @@ export type QueriesInvoiceArgs = {
 
 
 export type QueriesInvoiceCountsArgs = {
-  type: InvoiceNodeType;
+  invoiceType: InvoiceNodeType;
+  timezoneOffset?: Maybe<Scalars['Int']>;
 };
 
 
@@ -1533,6 +1635,13 @@ export type QueriesLocationsArgs = {
   filter?: Maybe<LocationFilterInput>;
   page?: Maybe<PaginationInput>;
   sort?: Maybe<Array<LocationSortInput>>;
+};
+
+
+export type QueriesMasterListsArgs = {
+  filter?: Maybe<MasterListFilterInput>;
+  page?: Maybe<PaginationInput>;
+  sort?: Maybe<Array<MasterListSortInput>>;
 };
 
 
@@ -1846,6 +1955,11 @@ export enum SupplierRequisitionNodeStatus {
   Sent = 'SENT'
 }
 
+export type TaxUpdate = {
+  /** Set or unset the tax value (in percentage) */
+  percentage?: Maybe<Scalars['Float']>;
+};
+
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename?: 'TokenExpired';
   description: Scalars['String'];
@@ -1927,7 +2041,7 @@ export type UpdateInboundShipmentInput = {
   id: Scalars['String'];
   onHold?: Maybe<Scalars['Boolean']>;
   otherPartyId?: Maybe<Scalars['String']>;
-  status?: Maybe<InvoiceNodeStatus>;
+  status?: Maybe<UpdateInboundShipmentStatusInput>;
   theirReference?: Maybe<Scalars['String']>;
 };
 
@@ -1969,6 +2083,11 @@ export type UpdateInboundShipmentResponseWithId = {
   id: Scalars['String'];
   response: UpdateInboundShipmentResponse;
 };
+
+export enum UpdateInboundShipmentStatusInput {
+  Delivered = 'DELIVERED',
+  Verified = 'VERIFIED'
+}
 
 export type UpdateLocationError = {
   __typename?: 'UpdateLocationError';
@@ -2013,7 +2132,7 @@ export type UpdateOutboundShipmentInput = {
    * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
    */
-  status?: Maybe<InvoiceNodeStatus>;
+  status?: Maybe<UpdateOutboundShipmentStatusInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: Maybe<Scalars['String']>;
 };
@@ -2034,6 +2153,9 @@ export type UpdateOutboundShipmentLineInput = {
   itemId?: Maybe<Scalars['String']>;
   numberOfPacks?: Maybe<Scalars['Int']>;
   stockLineId?: Maybe<Scalars['String']>;
+  tax?: Maybe<TaxUpdate>;
+  totalAfterTax?: Maybe<Scalars['Float']>;
+  totalBeforeTax?: Maybe<Scalars['Float']>;
 };
 
 export type UpdateOutboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateOutboundShipmentLineError;
@@ -2068,7 +2190,9 @@ export type UpdateOutboundShipmentServiceLineInput = {
   itemId?: Maybe<Scalars['String']>;
   name?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
+  tax?: Maybe<TaxUpdate>;
   totalAfterTax?: Maybe<Scalars['Float']>;
+  totalBeforeTax?: Maybe<Scalars['Float']>;
 };
 
 export type UpdateOutboundShipmentServiceLineResponse = InvoiceLineNode | UpdateOutboundShipmentServiceLineError;
@@ -2078,6 +2202,12 @@ export type UpdateOutboundShipmentServiceLineResponseWithId = {
   id: Scalars['String'];
   response: UpdateOutboundShipmentServiceLineResponse;
 };
+
+export enum UpdateOutboundShipmentStatusInput {
+  Allocated = 'ALLOCATED',
+  Picked = 'PICKED',
+  Shipped = 'SHIPPED'
+}
 
 export type UpdateStocktakeInput = {
   comment?: Maybe<Scalars['String']>;
@@ -2210,7 +2340,7 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, entryDatetime: string, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationName?: string | null | undefined, sellPricePerPack: number, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename?: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationName?: string | null | undefined, sellPricePerPack: number, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename?: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type StocktakeQueryVariables = Exact<{
   stocktakeId: Scalars['String'];
@@ -2342,7 +2472,7 @@ export type InvoicesQueryVariables = Exact<{
 }>;
 
 
-export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename?: 'InvoiceNode', comment?: string | null | undefined, entryDatetime: string, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null | undefined, type: InvoiceNodeType, status: InvoiceNodeStatus, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
+export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename?: 'InvoiceNode', comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null | undefined, type: InvoiceNodeType, status: InvoiceNodeStatus, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
 
 export type NamesQueryVariables = Exact<{
   key: NameSortFieldInput;
@@ -2390,7 +2520,7 @@ export type UpdateOutboundShipmentMutationVariables = Exact<{
 }>;
 
 
-export type UpdateOutboundShipmentMutation = { __typename?: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename?: 'CannotChangeStatusBackToDraftError', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'FinalisedInvoiceIsNotEditableError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceLineHasNoStockLineError', description: string } | { __typename?: 'NotAnOutboundShipmentError', description: string } | { __typename?: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename?: 'OtherPartyNotACustomerError', description: string } | { __typename?: 'RecordNotFound', description: string } } };
+export type UpdateOutboundShipmentMutation = { __typename?: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceIsNotEditable', description: string } | { __typename?: 'InvoiceLineHasNoStockLineError', description: string } | { __typename?: 'NotAnOutboundShipmentError', description: string } | { __typename?: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename?: 'OtherPartyNotACustomerError', description: string } | { __typename?: 'RecordNotFound', description: string } } };
 
 export type DeleteOutboundShipmentsMutationVariables = Exact<{
   ids?: Maybe<Array<Scalars['String']> | Scalars['String']>;
@@ -2400,11 +2530,11 @@ export type DeleteOutboundShipmentsMutationVariables = Exact<{
 export type DeleteOutboundShipmentsMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null | undefined } };
 
 export type InvoiceCountsQueryVariables = Exact<{
-  type: InvoiceNodeType;
+  invoiceType: InvoiceNodeType;
 }>;
 
 
-export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceCountsConnector', toBePicked?: number | null | undefined, created?: { __typename?: 'InvoiceCountsCreated', today: number, thisWeek: number } | null | undefined } };
+export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', thisWeek: number, today: number } } };
 
 export type StockCountsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2436,7 +2566,7 @@ export type UpdateInboundShipmentMutationVariables = Exact<{
 }>;
 
 
-export type UpdateInboundShipmentMutation = { __typename?: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename?: 'CannotChangeInvoiceBackToDraft', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotEditFinalisedInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'OtherPartyNotASupplier', description: string } | { __typename?: 'RecordNotFound', description: string } } };
+export type UpdateInboundShipmentMutation = { __typename?: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'OtherPartyNotASupplier', description: string } | { __typename?: 'RecordNotFound', description: string } } };
 
 export type DeleteInboundShipmentsMutationVariables = Exact<{
   ids?: Maybe<Array<DeleteInboundShipmentInput> | DeleteInboundShipmentInput>;
@@ -2477,7 +2607,12 @@ export const InvoiceDocument = gql`
       __typename
       id
       comment
-      entryDatetime
+      createdDatetime
+      allocatedDatetime
+      deliveredDatetime
+      pickedDatetime
+      shippedDatetime
+      verifiedDatetime
       invoiceNumber
       onHold
       otherParty {
@@ -3007,7 +3142,12 @@ export const InvoicesDocument = gql`
       __typename
       nodes {
         comment
-        entryDatetime
+        createdDatetime
+        allocatedDatetime
+        deliveredDatetime
+        pickedDatetime
+        shippedDatetime
+        verifiedDatetime
         id
         invoiceNumber
         otherPartyId
@@ -3317,20 +3457,13 @@ export const DeleteOutboundShipmentsDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($type: InvoiceNodeType!) {
-  invoiceCounts(type: $type) {
-    ... on InvoiceCountsConnector {
+    query invoiceCounts($invoiceType: InvoiceNodeType!) {
+  invoiceCounts(invoiceType: $invoiceType) {
+    ... on InvoiceCounts {
       __typename
       created {
-        today
         thisWeek
-      }
-      toBePicked
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
+        today
       }
     }
   }
@@ -3453,9 +3586,7 @@ export const DeleteInboundShipmentsDocument = gql`
     `;
 export const InsertInboundShipmentDocument = gql`
     mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
-  insertInboundShipment(
-    input: {id: $id, status: DRAFT, otherPartyId: $otherPartyId}
-  ) {
+  insertInboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
     __typename
     ... on InvoiceNode {
       id
@@ -4027,7 +4158,7 @@ export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<G
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { type } = req.variables;
+ *   const { invoiceType } = req.variables;
  *   return res(
  *     ctx.data({ invoiceCounts })
  *   )

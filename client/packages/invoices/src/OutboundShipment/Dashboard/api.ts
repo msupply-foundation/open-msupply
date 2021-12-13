@@ -6,12 +6,13 @@ export const getOutboundShipmentCountQueryFn =
     toBePicked: number;
   }> => {
     const result = await omSupplyApi.invoiceCounts({
-      type: InvoiceNodeType.OutboundShipment,
+      invoiceType: InvoiceNodeType.OutboundShipment,
     });
 
-    if (result.invoiceCounts.__typename === 'InvoiceCountsConnector') {
+    // TODO: Replace with result data once supported by the API
+    if (result.invoiceCounts.__typename === 'InvoiceCounts') {
       return {
-        toBePicked: result.invoiceCounts.toBePicked ?? 0,
+        toBePicked: Math.floor(Math.random() * 100),
       };
     }
 
