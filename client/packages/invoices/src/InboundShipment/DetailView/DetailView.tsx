@@ -1,10 +1,7 @@
 import React, { FC } from 'react';
-import { useParams } from 'react-router';
 import {
-  useQuery,
   TableProvider,
   createTableStore,
-  useOmSupplyApi,
   useColumns,
   GenericColumnKey,
   getNotePopoverColumn,
@@ -12,99 +9,16 @@ import {
   useDialog,
   DialogButton,
   useTranslation,
-  useMutation,
-  useQueryClient,
 } from '@openmsupply-client/common';
-
-import { getInboundShipmentDetailViewApi } from './api';
+import { useDraftInbound } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
-import { inboundLinesToSummaryItems } from './reducer/reducer';
-import {
-  getNextInboundStatus,
-  isInboundEditable,
-  placeholderInbound,
-} from '../../utils';
-import {
-  InboundShipmentItem,
-  InboundShipment,
-  Invoice,
-  OutboundShipmentSummaryItem,
-} from '../../types';
-
-const useDraftInbound = () => {
-  const queryClient = useQueryClient();
-  const { id } = useParams();
-  const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
-
-  const onChangeSortBy = () => {};
-
-  const { data } = useQuery(['invoice', id], () => {
-    return queries.onRead(id);
-  });
-
-  const draft = data
-    ? { ...data, items: inboundLinesToSummaryItems(data?.lines ?? []) }
-    : placeholderInbound;
-
-  const { mutateAsync } = useMutation(queries.onUpdate, {
-    onMutate: async (patch: Partial<InboundShipment>) => {
-      await queryClient.cancelQueries(['invoice', id]);
-
-      const previousInbound: Invoice = queryClient.getQueryData([
-        'invoice',
-        id,
-      ]);
-
-      queryClient.setQueryData(['invoice', id], {
-        ...previousInbound,
-        ...patch,
-      });
-
-      return { previousInbound, patch };
-    },
-    onSettled: () => queryClient.invalidateQueries(['invoice', id]),
-    onError: (_, __, context) => {
-      queryClient.setQueryData(['invoice', id], context.previousInbound);
-    },
-  });
-
-  const { isLoading: isAddingItem, mutateAsync: noOptimisticMutate } =
-    useMutation(queries.onUpdate, {
-      onSettled: () => queryClient.invalidateQueries(['invoice', id]),
-    });
-
-  const updateInvoice = async (patch: Partial<InboundShipment>) => {
-    return mutateAsync({ ...data, ...patch, items: [] });
-  };
-
-  const upsertItem = async (item: OutboundShipmentSummaryItem) => {
-    const itemIdx = draft.items.findIndex(i => i.id === item.id);
-    if (itemIdx >= 0) draft.items[itemIdx] = item;
-    else draft.items.push(item);
-
-    // throw new Error('testing!');
-    const result = await noOptimisticMutate(draft);
-
-    return result;
-  };
-
-  return {
-    isAddingItem,
-    updateInvoice,
-    upsertItem,
-    draft:
-      { ...data, items: inboundLinesToSummaryItems(data?.lines ?? []) } ??
-      placeholderInbound,
-
-    onChangeSortBy,
-  };
-};
+import { getNextInboundStatus, isInboundEditable } from '../../utils';
+import { InboundShipmentItem } from '../../types';
 
 export enum ModalMode {
   Create,
@@ -118,7 +32,7 @@ export const DetailView: FC = () => {
     draft,
 
     onChangeSortBy,
-
+    sortBy,
     updateInvoice,
     upsertItem,
     isAddingItem,
@@ -168,8 +82,8 @@ export const DetailView: FC = () => {
       getRowExpandColumn<InboundShipmentItem>(),
       GenericColumnKey.Selection,
     ],
-    { onChangeSortBy },
-    []
+    { onChangeSortBy, sortBy },
+    [sortBy]
   );
 
   return (
