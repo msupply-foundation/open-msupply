@@ -75,6 +75,7 @@
   "label.date": "Date",
   "label.requisition-date": "Requisition Date",
   "label.delivered": "Delivered",
+  "label.verified": "Verified",
   "label.details": "Details",
   "label.draft": "Draft",
   "label.entered-by": "Entered by",
@@ -133,5 +134,6 @@
   "placeholder.enter-a-suppliers-name": "Enter a suppliers name",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "label.counted-num-of-packs": "Counted # of Packs",
-  "label.snapshot-num-of-packs": "Snapshot # of Packs"
+  "label.snapshot-num-of-packs": "Snapshot # of Packs",
+  "label.count-this-line": "Count this line"
 }

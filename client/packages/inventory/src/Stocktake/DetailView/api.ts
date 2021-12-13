@@ -93,7 +93,10 @@ export const getStocktakeDetailViewApi = (
         ? new Date(stocktake.stocktakeDatetime)
         : null,
       entryDatetime: new Date(stocktake.entryDatetime),
-      lines,
+      lines: lines.map(line => ({
+        ...line,
+        countThisLine: true,
+      })),
     };
   },
   onUpdate: async (

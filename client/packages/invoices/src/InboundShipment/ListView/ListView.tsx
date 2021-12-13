@@ -12,12 +12,14 @@ import {
   useOmSupplyApi,
   useNotification,
   generateUUID,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
-// import { InvoiceRow } from '../../types';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { InvoiceRow } from '../../types';
+import { getStatusTranslator } from '../../utils';
 
 export const InboundListView: FC = () => {
   const navigate = useNavigate();
@@ -45,8 +47,9 @@ export const InboundListView: FC = () => {
     'invoice',
     getInboundShipmentListViewApi(api)
   );
+  const t = useTranslation();
 
-  const columns = useColumns(
+  const columns = useColumns<InvoiceRow>(
     [
       // getNameAndColorColumn((row: InvoiceRow, color: Color) => {
       //   onUpdate({ ...row, color: color.hex });
@@ -55,12 +58,11 @@ export const InboundListView: FC = () => {
       [
         'status',
         {
-          // TODO: use translated status string
-          formatter: status => String(status),
+          formatter: status => getStatusTranslator(t)(status),
         },
       ],
       'invoiceNumber',
-      'entryDatetime',
+      'createdDatetime',
       'allocatedDatetime',
       'comment',
       ['totalAfterTax', { accessor: invoice => invoice.pricing.totalAfterTax }],

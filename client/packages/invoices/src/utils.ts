@@ -8,9 +8,7 @@ import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
-  OutboundShipmentStatus,
   InboundShipment,
-  InboundShipmentStatus,
   InboundShipmentItem,
   InboundShipmentRow,
   Invoice,
@@ -24,24 +22,24 @@ export const placeholderInbound: InboundShipment = {
   otherParty: undefined,
   otherPartyId: '',
   items: [],
-  status: InvoiceNodeStatus.Draft,
+  status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.InboundShipment,
-  entryDatetime: '',
+  createdDatetime: '',
   invoiceNumber: 0,
   lines: [],
   pricing: {
     totalAfterTax: 0,
   },
   onHold: false,
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
 
   // color: 'grey',
   // subtotal: 0,
   // taxPercentage: 0
   // dispatch: null,
-  // allocatedDatetime: '',
-  // shippedDatetime: '',
-  // pickedDatetime: '',
-  // deliveredDatetime: '',
   // purchaseOrderNumber: undefined,
   // goodsReceiptNumber: undefined,
   // requisitionNumber: undefined,
@@ -57,9 +55,13 @@ export const placeholderInvoice: Invoice = {
   otherPartyName: '',
   comment: '',
   theirReference: '',
-  status: InvoiceNodeStatus.Draft,
+  status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.OutboundShipment,
-  entryDatetime: '',
+  createdDatetime: '',
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
   invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
@@ -77,9 +79,13 @@ export const placeholderOutboundShipment: OutboundShipment = {
   otherPartyName: '',
   comment: '',
   theirReference: '',
-  status: InvoiceNodeStatus.Draft,
+  status: InvoiceNodeStatus.New,
   type: InvoiceNodeType.OutboundShipment,
-  entryDatetime: '',
+  createdDatetime: '',
+  allocatedDatetime: '',
+  shippedDatetime: '',
+  pickedDatetime: '',
+  deliveredDatetime: '',
   invoiceNumber: 0,
   onHold: false,
   otherParty: undefined,
@@ -92,10 +98,6 @@ export const placeholderOutboundShipment: OutboundShipment = {
   },
 
   // color: 'grey',
-  // allocatedDatetime: '',
-  // shippedDatetime: '',
-  // pickedDatetime: '',
-  // deliveredDatetime: '',
   // purchaseOrderNumber: undefined,
   // goodsReceiptNumber: undefined,
   // requisitionNumber: undefined,
@@ -106,42 +108,35 @@ export const placeholderOutboundShipment: OutboundShipment = {
   // donorName: '',
 };
 
-export const outboundStatuses: OutboundShipmentStatus[] = [
-  // InvoiceNodeStatus.Allocated,
-  // InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Confirmed,
-  InvoiceNodeStatus.Finalised,
+export const outboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
 ];
 
-export const inboundStatuses: InboundShipmentStatus[] = [
-  // 'NEW',
-  InvoiceNodeStatus.Draft,
-  InvoiceNodeStatus.Confirmed,
-  InvoiceNodeStatus.Finalised,
-  // 'VERIFIED',
+export const inboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
 ];
 
-const statusTranslation: Record<
-  OutboundShipmentStatus | InboundShipmentStatus,
-  LocaleKey
-> = {
-  DRAFT: 'label.draft',
-  CONFIRMED: 'label.confirmed',
-  FINALISED: 'label.delivered',
-  // ALLOCATED: 'label.allocated',
-  // PICKED: 'label.picked',
-  // SHIPPED: 'label.shipped',
-  // DELIVERED: 'label.delivered',
-
-  // TODO: Update this to be the correct translation
-  // NEW: 'label.draft',
-  // VERIFIED: 'label.delivered',
+const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
+  ALLOCATED: 'label.allocated',
+  PICKED: 'label.picked',
+  SHIPPED: 'label.shipped',
+  DELIVERED: 'label.delivered',
+  NEW: 'label.new',
+  VERIFIED: 'label.verified',
 };
 
 export const getNextOutboundStatus = (
-  currentStatus: OutboundShipmentStatus
-): OutboundShipmentStatus => {
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus => {
   const currentStatusIdx = outboundStatuses.findIndex(
     status => currentStatus === status
   );
@@ -154,8 +149,8 @@ export const getNextOutboundStatus = (
 };
 
 export const getNextInboundStatus = (
-  currentStatus: InboundShipmentStatus
-): InboundShipmentStatus => {
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus => {
   const currentStatusIdx = inboundStatuses.findIndex(
     status => currentStatus === status
   );
@@ -168,7 +163,7 @@ export const getNextInboundStatus = (
 };
 
 export const getNextOutboundStatusButtonTranslation = (
-  currentStatus: OutboundShipmentStatus
+  currentStatus: InvoiceNodeStatus
 ): LocaleKey | undefined => {
   const nextStatus = getNextOutboundStatus(currentStatus);
 
@@ -178,7 +173,7 @@ export const getNextOutboundStatusButtonTranslation = (
 };
 
 export const getNextInboundStatusButtonTranslation = (
-  currentStatus: InboundShipmentStatus
+  currentStatus: InvoiceNodeStatus
 ): LocaleKey | undefined => {
   const nextStatus = getNextInboundStatus(currentStatus);
 
@@ -189,21 +184,20 @@ export const getNextInboundStatusButtonTranslation = (
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: OutboundShipmentStatus): string => {
+  (currentStatus: InvoiceNodeStatus): string => {
     return t(
       statusTranslation[currentStatus] ??
-        statusTranslation[InvoiceNodeStatus.Draft]
+        statusTranslation[InvoiceNodeStatus.New]
     );
   };
 
 export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
-  // return outbound.status !== 'SHIPPED' && outbound.status !== 'DELIVERED';
-  return outbound.status !== 'FINALISED';
+  return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
 export const isInboundEditable = (inbound: InboundShipment): boolean => {
   // return inbound.status !== 'VERIFIED' && inbound.status !== 'DELIVERED';
-  return inbound.status !== 'FINALISED';
+  return inbound.status === 'NEW';
 };
 
 export const flattenOutboundItems = (

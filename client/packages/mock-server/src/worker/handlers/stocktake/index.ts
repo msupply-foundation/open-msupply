@@ -22,7 +22,7 @@ const stocktakeQuery = mockStocktakeQuery((req, res, ctx) => {
 const stocktakesQuery = mockStocktakesQuery((req, res, ctx) => {
   return res(
     ctx.data({
-      stocktakes: ResolverService.stocktake.list(req.variables.params),
+      stocktakes: ResolverService.stocktake.list(req?.variables.params),
     })
   );
 });
@@ -30,26 +30,31 @@ const stocktakesQuery = mockStocktakesQuery((req, res, ctx) => {
 const deleteStocktakesMutation = mockDeleteStocktakesMutation(
   (req, res, ctx) => {
     const { ids } = req.variables;
-    const deleteStocktakes: DeleteStocktakeInput[] = Array.isArray(ids)
-      ? ids
-      : [ids];
+
+    let deleteStocktakes: DeleteStocktakeInput[] = [];
+    if (Array.isArray(ids)) {
+      deleteStocktakes = ids;
+    } else {
+      deleteStocktakes = ids ? [ids] : [];
+    }
 
     const params: BatchStocktakeInput = {
-      deleteStocktakes,
+      deleteStocktakes: deleteStocktakes ?? [],
     };
     return res(
       ctx.data({
         batchStocktake: {
           __typename: 'BatchStocktakeResponse',
-          deleteStocktakes: StocktakeSchema.MutationResolvers.batchStocktake(
-            null,
-            params
-          ).deleteStocktakes.map(response => ({
-            // The type for DeleteStocktakeResponseWithId has an optional
-            // typename for some unknown reason, so re-add the typename to keep typescript happy.
-            __typename: 'DeleteStocktakeResponseWithId',
-            ...response,
-          })),
+          deleteStocktakes:
+            StocktakeSchema.MutationResolvers.batchStocktake(
+              null,
+              params
+            ).deleteStocktakes?.map?.(response => ({
+              // The type for DeleteStocktakeResponseWithId has an optional
+              // typename for some unknown reason, so re-add the typename to keep typescript happy.
+              __typename: 'DeleteStocktakeResponseWithId',
+              ...response,
+            })) ?? [],
         },
       })
     );
@@ -60,7 +65,6 @@ const insertStocktakeMutation = mockInsertStocktakeMutation((req, res, ctx) => {
   return res(
     ctx.data({
       insertStocktake: {
-        __typename: 'StocktakeNode',
         ...MutationService.stocktake.insert(req.variables.input),
       },
     })
@@ -80,16 +84,24 @@ const upsertStocktakeMutation = mockUpsertStocktakeMutation((req, res, ctx) => {
     ...req.variables,
     deleteStocktakeLines: Array.isArray(req.variables.deleteStocktakeLines)
       ? req.variables.deleteStocktakeLines
-      : [req.variables.deleteStocktakeLines],
+      : req.variables.deleteStocktakeLines
+      ? [req.variables.deleteStocktakeLines]
+      : [],
     insertStocktakeLines: Array.isArray(req.variables.insertStocktakeLines)
       ? req.variables.insertStocktakeLines
-      : [req.variables.insertStocktakeLines],
+      : req.variables.insertStocktakeLines
+      ? [req.variables.insertStocktakeLines]
+      : req.variables.insertStocktakeLines,
     updateStocktakeLines: Array.isArray(req.variables.updateStocktakeLines)
       ? req.variables.updateStocktakeLines
-      : [req.variables.updateStocktakeLines],
+      : req.variables.updateStocktakeLines
+      ? [req.variables.updateStocktakeLines]
+      : [],
     updateStocktakes: Array.isArray(req.variables.updateStocktakes)
       ? req.variables.updateStocktakes
-      : [req.variables.updateStocktakes],
+      : req.variables.updateStocktakes
+      ? [req.variables.updateStocktakes]
+      : [],
   };
 
   const response = StocktakeSchema.MutationResolvers.batchStocktake(
@@ -100,34 +112,38 @@ const upsertStocktakeMutation = mockUpsertStocktakeMutation((req, res, ctx) => {
   const updateStocktakes: {
     __typename: 'UpdateStocktakeResponseWithId';
     id: string;
-  }[] = response.updateStocktakes.map(r => ({
-    __typename: 'UpdateStocktakeResponseWithId',
-    id: r.id,
-  }));
+  }[] =
+    response?.updateStocktakes?.map(r => ({
+      __typename: 'UpdateStocktakeResponseWithId',
+      id: r.id,
+    })) ?? [];
 
   const insertStocktakeLines: {
     __typename: 'InsertStocktakeLineResponseWithId';
     id: string;
-  }[] = response.insertStocktakeLines.map(r => ({
-    __typename: 'InsertStocktakeLineResponseWithId',
-    id: r.id,
-  }));
+  }[] =
+    response?.insertStocktakeLines?.map(r => ({
+      __typename: 'InsertStocktakeLineResponseWithId',
+      id: r.id,
+    })) ?? [];
 
   const deleteStocktakeLines: {
     __typename: 'DeleteStocktakeLineResponseWithId';
     id: string;
-  }[] = response.deleteStocktakeLines.map(r => ({
-    __typename: 'DeleteStocktakeLineResponseWithId',
-    id: r.id,
-  }));
+  }[] =
+    response?.deleteStocktakeLines?.map(r => ({
+      __typename: 'DeleteStocktakeLineResponseWithId',
+      id: r.id,
+    })) ?? [];
 
   const updateStocktakeLines: {
     __typename: 'UpdateStocktakeLineResponseWithId';
     id: string;
-  }[] = response.updateStocktakeLines.map(r => ({
-    __typename: 'UpdateStocktakeLineResponseWithId',
-    id: r.id,
-  }));
+  }[] =
+    response?.updateStocktakeLines?.map(r => ({
+      __typename: 'UpdateStocktakeLineResponseWithId',
+      id: r.id,
+    })) ?? [];
 
   return res(
     ctx.data({
