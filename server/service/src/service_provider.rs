@@ -3,12 +3,14 @@ use repository::{RepositoryError, StorageConnection, StorageConnectionManager};
 use crate::{
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    stock_take::{StockTakeService, StockTakeServiceTrait},
 };
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
     pub location_service: Box<dyn LocationServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
+    pub stock_take_service: Box<dyn StockTakeServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -21,6 +23,7 @@ impl ServiceProvider {
             connection_manager,
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
+            stock_take_service: Box::new(StockTakeService {}),
         }
     }
 
