@@ -1,34 +1,40 @@
-use repository::{NumberRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    schema::{NumberRow, NumberRowType},
+    NumberRowRepository, RepositoryError,
+};
+use util::uuid::uuid;
 
-pub struct NumberServiceImpl<'a> {
-    connection: &'a StorageConnection,
-}
+use crate::service_provider::ServiceContext;
 
-pub trait NumberService {
-    /// Next number for a general counter (no associated store or table)
-    fn next_general(&self, counter_name: &str) -> Result<i64, RepositoryError>;
-    /// Next number associated to a store
-    fn next_store(&self, counter_name: &str, store_id: &str) -> Result<i64, RepositoryError>;
-    /// Next number associate to a store and table
-    fn next_store_table(
-        &self,
-        counter_name: &str,
-        store_id: &str,
-        table: &str,
-    ) -> Result<i64, RepositoryError>;
-}
+pub fn next_number(
+    ctx: &ServiceContext,
+    r#type: &NumberRowType,
+    store_id: &str,
+) -> Result<i64, RepositoryError> {
+    // Should be done in transaction
+    let next_number = ctx.transaction(|ctx| {
+        let repo = NumberRowRepository::new(&ctx.connection);
 
-impl<'a> NumberServiceImpl<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        NumberServiceImpl { connection }
-    }
-
-    pub fn next(&self, counter_id: &str, store_id: &str) -> Result<i64, RepositoryError> {
-        let next_number = self.connection.transaction_sync(|connection| {
-            let repo = NumberRowRepository::new(connection);
-            let row = repo.increment(counter_id, store_id)?;
-            Ok(row.value)
-        })?;
-        Ok(next_number)
-    }
+        let updated_number_row = match repo.find_one_by_type_and_store(r#type, store_id)? {
+            Some(mut row) => {
+                // update existing counter
+                row.value = row.value + 1;
+                repo.upsert_one(&row)?;
+                row
+            }
+            None => {
+                // insert new counter
+                let row = NumberRow {
+                    id: uuid(),
+                    value: 1,
+                    r#type: r#type.clone(),
+                    store_id: store_id.to_owned(),
+                };
+                repo.upsert_one(&row)?;
+                row
+            }
+        };
+        Ok(updated_number_row.value)
+    })?;
+    Ok(next_number)
 }

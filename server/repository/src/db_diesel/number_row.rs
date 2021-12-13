@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     repository_error::RepositoryError,
-    schema::{diesel_schema::number::dsl as number_dsl, NumberRow},
+    schema::{diesel_schema::number::dsl as number_dsl, NumberRow, NumberRowType},
 };
 
 use diesel::prelude::*;
@@ -11,59 +11,43 @@ pub struct NumberRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-fn find_one_by_id_tx(
-    con: &StorageConnection,
-    counter_id: &str,
-) -> Result<Option<NumberRow>, RepositoryError> {
-    match number_dsl::number
-        .filter(number_dsl::id.eq(counter_id))
-        .first(&con.connection)
-    {
-        Ok(row) => Ok(Some(row)),
-        Err(diesel::result::Error::NotFound) => Ok(None),
-        Err(error) => Err(RepositoryError::from(error)),
-    }
-}
-
 impl<'a> NumberRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         NumberRowRepository { connection }
     }
 
-    /// Increments the counter and returns the updated row
-    /// Note: its assumed that this call done in a transaction
-    pub fn increment(
+    pub fn find_one_by_type_and_store(
         &self,
-        counter_id: &str,
+        r#type: &NumberRowType,
         store_id: &str,
-    ) -> Result<NumberRow, RepositoryError> {
-        Ok(self.connection.transaction_sync(|con| {
-            match find_one_by_id_tx(con, counter_id)? {
-                Some(mut row) => {
-                    // update existing counter
-                    row.value = row.value + 1;
-                    diesel::update(number_dsl::number)
-                        .set(&row)
-                        .execute(&con.connection)?;
-                    Ok(row)
-                }
-                None => {
-                    // insert new counter
-                    let row = NumberRow {
-                        id: counter_id.to_string(),
-                        value: 1,
-                        store_id: store_id.to_string(),
-                    };
-                    diesel::insert_into(number_dsl::number)
-                        .values(&row)
-                        .execute(&con.connection)?;
-                    Ok(row)
-                }
-            }
-        })?)
+    ) -> Result<Option<NumberRow>, RepositoryError> {
+        match number_dsl::number
+            .filter(number_dsl::store_id.eq(store_id))
+            .filter(number_dsl::type_.eq(r#type))
+            .first(&self.connection.connection)
+        {
+            Ok(row) => Ok(Some(row)),
+            Err(diesel::result::Error::NotFound) => Ok(None),
+            Err(error) => Err(RepositoryError::from(error)),
+        }
     }
 
-    pub fn find_one_by_id(&self, counter_id: &str) -> Result<Option<NumberRow>, RepositoryError> {
-        find_one_by_id_tx(&self.connection, counter_id)
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(number_dsl::number)
+            .values(number_row)
+            .on_conflict(id)
+            .do_update()
+            .set(number_row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(number_dsl::number)
+            .values(number_row)
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 }
