@@ -233,19 +233,11 @@ mod tests {
     async fn test_item_query_filter_repository() {
         let (_, storage_connection, _, _) = test_db::setup_all(
             "test_item_query_filter_repository",
-            MockDataInserts {
-                names: true,
-                stores: false,
-                units: true,
-                items: true,
-                locations: false,
-                name_store_joins: false,
-                invoices: false,
-                stock_lines: false,
-                invoice_lines: false,
-                full_invoices: false,
-                full_master_list: true,
-            },
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .full_master_list(),
         )
         .await;
         let item_query_repository = ItemQueryRepository::new(&storage_connection);
