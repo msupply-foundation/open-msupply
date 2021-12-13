@@ -84,6 +84,8 @@ export const DetailView: FC = () => {
     } else {
       setSelectedItem({ item: null, editing: false });
     }
+
+    return true;
   };
 
   const columns = useColumns(
