@@ -15,6 +15,7 @@ pub mod permission_validation;
 pub mod permissions;
 pub mod service_provider;
 pub mod stock_line;
+pub mod stock_take;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
