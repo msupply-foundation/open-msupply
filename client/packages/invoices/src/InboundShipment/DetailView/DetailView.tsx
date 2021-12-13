@@ -2,10 +2,6 @@ import React, { FC } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useColumns,
-  GenericColumnKey,
-  getNotePopoverColumn,
-  getRowExpandColumn,
   useDialog,
   DialogButton,
   useTranslation,
@@ -28,15 +24,7 @@ export enum ModalMode {
 export const DetailView: FC = () => {
   const t = useTranslation('distribution');
 
-  const {
-    draft,
-
-    onChangeSortBy,
-    sortBy,
-    updateInvoice,
-    upsertItem,
-    isAddingItem,
-  } = useDraftInbound();
+  const { draft, updateInvoice, upsertItem, isAddingItem } = useDraftInbound();
 
   const [modalState, setModalState] = React.useState<{
     item: InboundShipmentItem | null;
@@ -66,26 +54,6 @@ export const DetailView: FC = () => {
     hideDialog();
   };
 
-  const columns = useColumns(
-    [
-      getNotePopoverColumn<InboundShipmentItem>(),
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      'locationName',
-      'sellPricePerPack',
-      'packSize',
-      'itemUnit',
-      'unitQuantity',
-      'numberOfPacks',
-      getRowExpandColumn<InboundShipmentItem>(),
-      GenericColumnKey.Selection,
-    ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
-  );
-
   return (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
@@ -95,11 +63,7 @@ export const DetailView: FC = () => {
 
       <Toolbar draft={draft} update={updateInvoice} />
 
-      <GeneralTab
-        columns={columns}
-        data={draft.items}
-        onRowClick={onRowClick}
-      />
+      <GeneralTab onRowClick={onRowClick} />
 
       <Footer
         draft={draft}
