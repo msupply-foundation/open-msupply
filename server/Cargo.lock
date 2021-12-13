@@ -1677,6 +1677,7 @@ dependencies = [
  "serde_json",
  "service",
  "thiserror",
+ "util",
 ]
 
 [[package]]
@@ -3952,6 +3953,7 @@ dependencies = [
 name = "util"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "sha2",
  "uuid",
 ]

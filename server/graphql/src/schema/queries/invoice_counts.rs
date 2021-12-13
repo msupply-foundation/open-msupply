@@ -1,25 +1,22 @@
 use async_graphql::*;
-use chrono::Utc;
+use chrono::{FixedOffset, Utc};
 use domain::invoice::{InvoiceStatus, InvoiceType};
 use service::dashboard::invoice_count::{
     CountTimeRange, InvoiceCountError, InvoiceCountService, InvoiceCountServiceTrait,
 };
+use util::timezone::offset_to_timezone;
 
-use crate::ContextExt;
+use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 fn do_invoice_count(
     ctx: &Context<'_>,
     invoice_type: &InvoiceType,
     invoice_status: &InvoiceStatus,
     range: &CountTimeRange,
-    timezone_offset: &Option<i32>,
+    timezone_offset: &FixedOffset,
 ) -> Result<i64> {
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context().map_err(|_| Error {
-        message: "InternalError".to_string(),
-        source: None,
-        extensions: None,
-    })?;
+    let service_ctx = service_provider.context()?;
     let service = InvoiceCountService {};
     let count = service
         .invoices_count(
@@ -31,16 +28,10 @@ fn do_invoice_count(
             timezone_offset,
         )
         .map_err(|err| match err {
-            InvoiceCountError::RepositoryError(_) => Error {
-                message: "InternalError".to_string(),
-                source: None,
-                extensions: None,
-            },
-            InvoiceCountError::BadTimezoneOffset => Error {
-                message: "BadUserInput".to_string(),
-                source: None,
-                extensions: None,
-            },
+            InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
+            InvoiceCountError::BadTimezoneOffset => {
+                StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string())
+            }
         })?;
 
     Ok(count)
@@ -49,7 +40,7 @@ fn do_invoice_count(
 pub struct InvoiceCountsSummary {
     invoice_type: InvoiceType,
     invoice_status: InvoiceStatus,
-    timezone_offset: Option<i32>,
+    timezone_offset: FixedOffset,
 }
 
 #[Object]
@@ -76,7 +67,7 @@ impl InvoiceCountsSummary {
 }
 
 pub struct OutboundInvoiceCounts {
-    timezone_offset: Option<i32>,
+    timezone_offset: FixedOffset,
 }
 
 #[Object]
@@ -110,7 +101,7 @@ impl OutboundInvoiceCounts {
 }
 
 pub struct InboundInvoiceCounts {
-    timezone_offset: Option<i32>,
+    timezone_offset: FixedOffset,
 }
 
 #[Object]
@@ -125,24 +116,27 @@ impl InboundInvoiceCounts {
 }
 
 pub struct InvoiceCounts {
-    timezone_offset: Option<i32>,
+    timezone_offset: FixedOffset,
 }
 
 #[Object]
 impl InvoiceCounts {
     async fn outbound(&self) -> OutboundInvoiceCounts {
         OutboundInvoiceCounts {
-            timezone_offset: self.timezone_offset,
+            timezone_offset: self.timezone_offset.clone(),
         }
     }
 
     async fn inbound(&self) -> InboundInvoiceCounts {
         InboundInvoiceCounts {
-            timezone_offset: self.timezone_offset,
+            timezone_offset: self.timezone_offset.clone(),
         }
     }
 }
 
-pub fn invoice_counts(timezone_offset: Option<i32>) -> InvoiceCounts {
-    InvoiceCounts { timezone_offset }
+pub fn invoice_counts(timezone_offset: Option<i32>) -> Result<InvoiceCounts> {
+    let timezone_offset = offset_to_timezone(&timezone_offset).ok_or(
+        StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()),
+    )?;
+    Ok(InvoiceCounts { timezone_offset })
 }

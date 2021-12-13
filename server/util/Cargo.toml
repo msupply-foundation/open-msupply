@@ -9,3 +9,4 @@ path = "src/lib.rs"
 [dependencies]
 sha2 = "0.9.5"
 uuid = { version = "0.8", features = ["v4"] }
+chrono = "0.4.19"
