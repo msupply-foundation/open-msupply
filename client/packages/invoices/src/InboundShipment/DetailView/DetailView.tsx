@@ -2,11 +2,9 @@ import React, { FC } from 'react';
 import { useParams } from 'react-router';
 import {
   useQuery,
-  Column,
   TableProvider,
   createTableStore,
   useOmSupplyApi,
-  useDocument,
   useColumns,
   GenericColumnKey,
   getNotePopoverColumn,
@@ -14,17 +12,10 @@ import {
   useDialog,
   DialogButton,
   useTranslation,
-  Item,
-  groupBy,
-  ifTheSameElseDefault,
-  arrayToRecord,
-  getUnitQuantity,
-  getSumOfKeyReducer,
   useMutation,
   useQueryClient,
 } from '@openmsupply-client/common';
 
-import { InboundAction, reducer } from './reducer';
 import { getInboundShipmentDetailViewApi } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -32,41 +23,18 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
-
-import { isInboundEditable, placeholderInbound } from '../../utils';
+import { inboundLinesToSummaryItems } from './reducer/reducer';
+import {
+  getNextInboundStatus,
+  isInboundEditable,
+  placeholderInbound,
+} from '../../utils';
 import {
   InboundShipmentItem,
   InboundShipment,
   Invoice,
   OutboundShipmentSummaryItem,
-  InvoiceLine,
 } from '../../types';
-
-const createSummaryItem = (itemId: string, batches: InvoiceLine[]) => ({
-  id: itemId,
-  itemId: itemId,
-  itemName: ifTheSameElseDefault(batches, 'itemName', ''),
-  itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
-  // itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
-  batches: arrayToRecord(batches),
-  unitQuantity: batches.reduce(getUnitQuantity, 0),
-  numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
-  locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
-  batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-  // TODO: Likely should just be a string.
-  sellPrice: ifTheSameElseDefault(batches, 'sellPricePerPack', undefined),
-  // TODO: Likely should just be a string.
-  packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
-});
-
-const inboundLinesToSummaryItems = (
-  lines: InvoiceLine[]
-): OutboundShipmentSummaryItem[] => {
-  const grouped = groupBy(lines, 'itemId');
-  return Object.keys(grouped).map(itemId =>
-    createSummaryItem(itemId, grouped[itemId])
-  );
-};
 
 const useDraftInbound = () => {
   const queryClient = useQueryClient();
@@ -74,15 +42,7 @@ const useDraftInbound = () => {
   const { api } = useOmSupplyApi();
   const queries = getInboundShipmentDetailViewApi(api);
 
-  const { save, dispatch, state } = useDocument(
-    ['invoice', id],
-    reducer,
-    queries
-  );
-
-  const onChangeSortBy = (column: Column<InboundShipmentItem>) => {
-    dispatch(InboundAction.onSortBy(column));
-  };
+  const onChangeSortBy = () => {};
 
   const { data } = useQuery(['invoice', id], () => {
     return queries.onRead(id);
@@ -128,7 +88,7 @@ const useDraftInbound = () => {
     if (itemIdx >= 0) draft.items[itemIdx] = item;
     else draft.items.push(item);
 
-    throw new Error('testing!');
+    // throw new Error('testing!');
     const result = await noOptimisticMutate(draft);
 
     return result;
@@ -141,23 +101,8 @@ const useDraftInbound = () => {
     draft:
       { ...data, items: inboundLinesToSummaryItems(data?.lines ?? []) } ??
       placeholderInbound,
-    save,
-    dispatch,
-    onChangeSortBy,
-    sortBy: state.sortBy,
-  };
-};
 
-export const itemToSummaryItem = (item: Item): InboundShipmentItem => {
-  return {
-    id: item.id,
-    itemId: item.id,
-    itemName: item.name,
-    itemCode: item.code,
-    itemUnit: item.unitName,
-    batches: {},
-    unitQuantity: 0,
-    numberOfPacks: 0,
+    onChangeSortBy,
   };
 };
 
@@ -171,9 +116,9 @@ export const DetailView: FC = () => {
 
   const {
     draft,
-    save,
+
     onChangeSortBy,
-    sortBy,
+
     updateInvoice,
     upsertItem,
     isAddingItem,
@@ -223,8 +168,8 @@ export const DetailView: FC = () => {
       getRowExpandColumn<InboundShipmentItem>(),
       GenericColumnKey.Selection,
     ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
+    { onChangeSortBy },
+    []
   );
 
   return (
@@ -242,7 +187,12 @@ export const DetailView: FC = () => {
         onRowClick={onRowClick}
       />
 
-      <Footer draft={draft} save={save} />
+      <Footer
+        draft={draft}
+        save={async () => {
+          updateInvoice({ status: getNextInboundStatus(draft?.status) });
+        }}
+      />
       <SidePanel draft={draft} update={updateInvoice} />
 
       <Modal

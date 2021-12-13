@@ -2,19 +2,15 @@ import {
   Box,
   ArrowRightIcon,
   ButtonWithIcon,
-  SaveIcon,
   StatusCrumbs,
   ToggleButton,
-  XCircleIcon,
   useTranslation,
   useNotification,
   AppFooterPortal,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  getNextInboundStatus,
   getNextInboundStatusButtonTranslation,
   getStatusTranslator,
   isInboundEditable,
@@ -61,7 +57,6 @@ const createStatusLog = (draft: InboundShipment) => {
 };
 
 export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
-  const navigate = useNavigate();
   const t = useTranslation('common');
   const { success } = useNotification();
 
@@ -109,11 +104,6 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
                     color="secondary"
                     onClick={async () => {
                       success('Saved invoice! 🥳 ')();
-                      await draft.update?.(
-                        'status',
-                        getNextInboundStatus(draft?.status)
-                      );
-
                       save();
                     }}
                   />
