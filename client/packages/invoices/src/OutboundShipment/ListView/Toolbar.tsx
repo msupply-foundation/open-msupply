@@ -11,6 +11,7 @@ import {
   FilterController,
 } from '@openmsupply-client/common';
 import { InvoiceRow } from '../../types';
+import { canDeleteInvoice } from '../../utils';
 
 export const Toolbar: FC<{
   onDelete: (toDelete: InvoiceRow[]) => void;
@@ -29,11 +30,23 @@ export const Toolbar: FC<{
   }));
 
   const deleteAction = () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      onDelete(selectedRows);
-      success(`Deleted ${selectedRows?.length} invoices`)();
+    const numberSelected = selectedRows.length;
+    if (selectedRows && numberSelected > 0) {
+      const canDeleteRows = selectedRows.every(canDeleteInvoice);
+      if (!canDeleteRows) {
+        const cannotDeleteSnack = info(t('message.cant-delete-invoices'));
+        cannotDeleteSnack();
+      } else {
+        onDelete(selectedRows);
+        const deletedMessage = t('messages.deleted-invoices', {
+          number: numberSelected,
+        });
+        const successSnack = success(deletedMessage);
+        successSnack();
+      }
     } else {
-      info('Select rows to delete them')();
+      const selectRowsSnack = info(t('message.select-rows-to-delete'));
+      selectRowsSnack();
     }
   };
 
