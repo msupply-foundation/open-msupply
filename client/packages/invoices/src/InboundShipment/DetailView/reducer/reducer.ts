@@ -1,3 +1,4 @@
+import { groupBy } from './../../../../../common/src/utils/arrays/utils';
 import {
   getUnitQuantity,
   getSumOfKeyReducer,
@@ -20,6 +21,7 @@ import {
   InboundShipment,
   InboundShipmentItem,
   InboundShipmentRow,
+  OutboundShipmentSummaryItem,
 } from '../../../types';
 import { Dispatch } from 'react';
 
@@ -137,6 +139,15 @@ export const createSummaryItem = (
   };
 
   return item;
+};
+
+export const inboundLinesToSummaryItems = (
+  lines: InvoiceLine[]
+): OutboundShipmentSummaryItem[] => {
+  const grouped = groupBy(lines, 'itemId');
+  return Object.keys(grouped).map(itemId =>
+    createSummaryItem(itemId, grouped[itemId])
+  );
 };
 
 export const getInitialState = (): InboundShipmentStateShape => ({
