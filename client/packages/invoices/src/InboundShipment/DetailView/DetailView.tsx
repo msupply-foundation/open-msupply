@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { useParams } from 'react-router';
 import {
+  useQuery,
   Column,
   TableProvider,
   createTableStore,
@@ -14,6 +15,13 @@ import {
   DialogButton,
   useTranslation,
   Item,
+  groupBy,
+  ifTheSameElseDefault,
+  arrayToRecord,
+  getUnitQuantity,
+  getSumOfKeyReducer,
+  useMutation,
+  useQueryClient,
 } from '@openmsupply-client/common';
 
 import { InboundAction, reducer } from './reducer';
@@ -25,24 +33,119 @@ import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 
-import { isInboundEditable } from '../../utils';
-import { InboundShipmentItem } from '../../types';
+import { isInboundEditable, placeholderInbound } from '../../utils';
+import {
+  InboundShipmentItem,
+  InboundShipment,
+  Invoice,
+  OutboundShipmentSummaryItem,
+  InvoiceLine,
+} from '../../types';
+
+const createSummaryItem = (itemId: string, batches: InvoiceLine[]) => ({
+  id: itemId,
+  itemId: itemId,
+  itemName: ifTheSameElseDefault(batches, 'itemName', ''),
+  itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
+  // itemUnit: ifTheSameElseDefault(batches, 'itemUnit', ''),
+  batches: arrayToRecord(batches),
+  unitQuantity: batches.reduce(getUnitQuantity, 0),
+  numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
+  locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
+  batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+  // TODO: Likely should just be a string.
+  sellPrice: ifTheSameElseDefault(batches, 'sellPricePerPack', undefined),
+  // TODO: Likely should just be a string.
+  packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
+});
+
+const inboundLinesToSummaryItems = (
+  lines: InvoiceLine[]
+): OutboundShipmentSummaryItem[] => {
+  const grouped = groupBy(lines, 'itemId');
+  return Object.keys(grouped).map(itemId =>
+    createSummaryItem(itemId, grouped[itemId])
+  );
+};
 
 const useDraftInbound = () => {
+  const queryClient = useQueryClient();
   const { id } = useParams();
   const { api } = useOmSupplyApi();
+  const queries = getInboundShipmentDetailViewApi(api);
 
-  const { draft, save, dispatch, state } = useDocument(
+  const { save, dispatch, state } = useDocument(
     ['invoice', id],
     reducer,
-    getInboundShipmentDetailViewApi(api)
+    queries
   );
 
   const onChangeSortBy = (column: Column<InboundShipmentItem>) => {
     dispatch(InboundAction.onSortBy(column));
   };
 
-  return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
+  const { data } = useQuery(['invoice', id], () => {
+    return queries.onRead(id);
+  });
+
+  const draft = data
+    ? { ...data, items: inboundLinesToSummaryItems(data?.lines ?? []) }
+    : placeholderInbound;
+
+  const { mutateAsync } = useMutation(queries.onUpdate, {
+    onMutate: async (patch: Partial<InboundShipment>) => {
+      await queryClient.cancelQueries(['invoice', id]);
+
+      const previousInbound: Invoice = queryClient.getQueryData([
+        'invoice',
+        id,
+      ]);
+
+      queryClient.setQueryData(['invoice', id], {
+        ...previousInbound,
+        ...patch,
+      });
+
+      return { previousInbound, patch };
+    },
+    onSettled: () => queryClient.invalidateQueries(['invoice', id]),
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['invoice', id], context.previousInbound);
+    },
+  });
+
+  const { isLoading: isAddingItem, mutateAsync: noOptimisticMutate } =
+    useMutation(queries.onUpdate, {
+      onSettled: () => queryClient.invalidateQueries(['invoice', id]),
+    });
+
+  const updateInvoice = async (patch: Partial<InboundShipment>) => {
+    return mutateAsync({ ...data, ...patch, items: [] });
+  };
+
+  const upsertItem = async (item: OutboundShipmentSummaryItem) => {
+    const itemIdx = draft.items.findIndex(i => i.id === item.id);
+    if (itemIdx >= 0) draft.items[itemIdx] = item;
+    else draft.items.push(item);
+
+    throw new Error('testing!');
+    const result = await noOptimisticMutate(draft);
+
+    return result;
+  };
+
+  return {
+    isAddingItem,
+    updateInvoice,
+    upsertItem,
+    draft:
+      { ...data, items: inboundLinesToSummaryItems(data?.lines ?? []) } ??
+      placeholderInbound,
+    save,
+    dispatch,
+    onChangeSortBy,
+    sortBy: state.sortBy,
+  };
 };
 
 export const itemToSummaryItem = (item: Item): InboundShipmentItem => {
@@ -66,7 +169,15 @@ export enum ModalMode {
 export const DetailView: FC = () => {
   const t = useTranslation('distribution');
 
-  const { draft, save, onChangeSortBy, sortBy } = useDraftInbound();
+  const {
+    draft,
+    save,
+    onChangeSortBy,
+    sortBy,
+    updateInvoice,
+    upsertItem,
+    isAddingItem,
+  } = useDraftInbound();
 
   const [modalState, setModalState] = React.useState<{
     item: InboundShipmentItem | null;
@@ -90,8 +201,9 @@ export const DetailView: FC = () => {
     showDialog();
   };
 
-  const onOK = () => {
-    modalState.item && draft.upsertItem?.(modalState.item);
+  const onOK = async () => {
+    await (modalState.item && upsertItem(modalState.item));
+
     hideDialog();
   };
 
@@ -122,7 +234,7 @@ export const DetailView: FC = () => {
         onAddItem={onAddItem}
       />
 
-      <Toolbar draft={draft} />
+      <Toolbar draft={draft} update={updateInvoice} />
 
       <GeneralTab
         columns={columns}
@@ -131,7 +243,7 @@ export const DetailView: FC = () => {
       />
 
       <Footer draft={draft} save={save} />
-      <SidePanel draft={draft} />
+      <SidePanel draft={draft} update={updateInvoice} />
 
       <Modal
         title={
@@ -143,7 +255,14 @@ export const DetailView: FC = () => {
         nextButton={
           <DialogButton
             variant="next"
-            onClick={() => {}}
+            onClick={async () => {
+              try {
+                await (modalState.item && upsertItem(modalState.item));
+                return setModalState({ mode: ModalMode.Create, item: null });
+              } catch (e) {
+                return false;
+              }
+            }}
             disabled={
               modalState.mode === ModalMode.Update && draft.items.length === 3
             }
@@ -154,6 +273,7 @@ export const DetailView: FC = () => {
         width={1024}
       >
         <InboundLineEdit
+          loading={isAddingItem}
           draft={draft}
           mode={modalState.mode}
           item={modalState.item}

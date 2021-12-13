@@ -16,7 +16,7 @@ export interface ModalProps {
   cancelButton?: JSX.Element;
   height?: number;
   nextButton?: React.ReactElement<{
-    onClick: () => void;
+    onClick: () => Promise<boolean>;
   }>;
 
   okButton?: JSX.Element;
@@ -90,9 +90,10 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
       WrappedNextButton = React.cloneElement(nextButton, {
-        onClick: () => {
-          onTriggerSlide();
-          onClick();
+        onClick: async () => {
+          const result = await onClick();
+          if (!!result) onTriggerSlide();
+          return result;
         },
         ...restOfNextButtonProps,
       });

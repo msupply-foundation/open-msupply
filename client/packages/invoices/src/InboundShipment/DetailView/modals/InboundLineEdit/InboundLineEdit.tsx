@@ -12,6 +12,7 @@ import {
   useIsMediumScreen,
   ButtonWithIcon,
   PlusCircleIcon,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { InboundShipment, InboundShipmentItem } from '../../../../types';
 import { flattenInboundItems } from '../../../../utils';
@@ -30,6 +31,7 @@ interface InboundLineEditProps {
   onChangeItem: (item: InboundShipmentItem | null) => void;
   mode: ModalMode;
   draft: InboundShipment;
+  loading: boolean;
 }
 
 enum Tabs {
@@ -42,6 +44,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   onChangeItem,
   mode,
   draft,
+  loading,
 }) => {
   const t = useTranslation('distribution');
   const isMediumScreen = useIsMediumScreen();
@@ -67,7 +70,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     }
   });
 
-  return (
+  return loading ? (
+    <BasicSpinner />
+  ) : (
     <>
       <InboundLineEditForm
         draft={draft}
