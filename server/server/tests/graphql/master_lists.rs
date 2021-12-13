@@ -49,7 +49,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_masterlists_success() {
-        let (mock_data, _, connection_manager, settings) =
+        let (_, _, connection_manager, settings) =
             setup_all("test_graphql_masterlists_success", MockDataInserts::all()).await;
 
         let query = r#"
