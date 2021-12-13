@@ -298,33 +298,6 @@ export const useInboundLines = () => {
   return { data, sortBy, onSort };
 };
 
-export const useUpsertInboundItem = () => {
-  const { id } = useParams();
-  const { api } = useOmSupplyApi();
-  const queryClient = useQueryClient();
-  const queries = getInboundShipmentDetailViewApi(api);
-
-  const { data } = useInboundShipment();
-  const { data: lines } = useInboundLines();
-
-  const { isLoading, mutateAsync } = useMutation(queries.onUpdate, {
-    onSettled: () => queryClient.invalidateQueries(['invoice', id]),
-  });
-
-  const upsertItem = async (item: OutboundShipmentSummaryItem) => {
-    const draft = { ...data, items: lines };
-    const itemIdx = draft.items.findIndex(i => i.id === item.id);
-    if (itemIdx >= 0) draft.items[itemIdx] = item;
-    else draft.items.push(item);
-
-    const result = await mutateAsync(draft);
-
-    return result;
-  };
-
-  return { upsertItem, isLoading };
-};
-
 export const useDraftInbound = () => {
   const queryClient = useQueryClient();
   const { id } = useParams();
