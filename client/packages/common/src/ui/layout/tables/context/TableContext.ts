@@ -12,6 +12,7 @@ export interface TableStore {
   rowState: Record<string, RowState>;
   numberSelected: number;
   numberExpanded: number;
+  isGrouped: boolean;
 
   toggleExpanded: (id: string) => void;
   toggleAllExpanded: () => void;
@@ -19,6 +20,7 @@ export interface TableStore {
   toggleAll: () => void;
   setActiveRows: (id: string[]) => void;
   setDisabledRows: (id: string[]) => void;
+  setIsGrouped: (grouped: boolean) => void;
 }
 
 export const { Provider: TableProvider, useStore: useTableStore } =
@@ -29,6 +31,7 @@ export const createTableStore = (): UseStore<TableStore> =>
     rowState: {},
     numberSelected: 0,
     numberExpanded: 0,
+    isGrouped: false,
 
     toggleAll: () => {
       set(state => {
@@ -47,7 +50,7 @@ export const createTableStore = (): UseStore<TableStore> =>
                 ...state.rowState[id],
                 isSelected,
                 isExpanded: state.rowState[id]?.isExpanded ?? false,
-                isDisabled: state.rowState[id]?.isExpanded ?? false,
+                isDisabled: state.rowState[id]?.isDisabled ?? false,
               },
             }),
             state.rowState
@@ -98,7 +101,7 @@ export const createTableStore = (): UseStore<TableStore> =>
                 ...rowState[id],
                 isSelected: rowState[id]?.isSelected ?? false,
                 isExpanded: false,
-                isDisabled: state.rowState[id]?.isExpanded ?? false,
+                isDisabled: state.rowState[id]?.isDisabled ?? false,
               },
             };
           },
@@ -114,6 +117,15 @@ export const createTableStore = (): UseStore<TableStore> =>
           numberSelected,
           numberExpanded: 0,
           rowState: newRowState,
+        };
+      });
+    },
+
+    setIsGrouped: (grouped: boolean) => {
+      set(state => {
+        return {
+          ...state,
+          isGrouped: grouped,
         };
       });
     },
@@ -139,7 +151,7 @@ export const createTableStore = (): UseStore<TableStore> =>
               ...state.rowState[id],
               isSelected,
               isExpanded: state.rowState[id]?.isExpanded ?? false,
-              isDisabled: state.rowState[id]?.isExpanded ?? false,
+              isDisabled: state.rowState[id]?.isDisabled ?? false,
             },
           },
         };
