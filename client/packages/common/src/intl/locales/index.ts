@@ -4,7 +4,7 @@ import * as common from './en/common.json';
 import * as dashboard from './en/dashboard.json';
 import * as distribution from './en/distribution.json';
 import * as inventory from './en/inventory.json';
-import * as replenishment from './en/distribution.json';
+import * as replenishment from './en/replenishment.json';
 
 export type LocaleKey =
   | keyof typeof app
