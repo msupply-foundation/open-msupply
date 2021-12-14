@@ -14,7 +14,6 @@ import {
   ModalNumericInput,
   FlatButton,
   CheckIcon,
-  FormControlLabel,
   Switch,
   Divider,
   Box,
@@ -116,12 +115,13 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 
           <Box display="flex" flex={1} flexDirection="column">
             <ModalRow>
-              <FormControlLabel
+              <Switch
+                defaultChecked
+                color="secondary"
+                size="small"
+                labelPlacement="end"
                 onChange={(_, checked) =>
                   setIssueType(checked ? 'packs' : 'units')
-                }
-                control={
-                  <Switch defaultChecked color="secondary" size="small" />
                 }
                 label={<Box fontSize={10}>{t('label.allocate-to-packs')}</Box>}
                 value="packs"
