@@ -2,16 +2,18 @@ import React, { FC } from 'react';
 import {
   DataTable,
   usePagination,
-  Column,
   DomainObject,
   Box,
   useTranslation,
+  useColumns,
+  getNotePopoverColumn,
+  getRowExpandColumn,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem } from '../../types';
+import { useInboundLines } from './api';
 
 interface GeneralTabProps<T extends DomainObject> {
-  data: T[];
-  columns: Column<T>[];
   onRowClick?: (rowData: T) => void;
 }
 
@@ -34,13 +36,33 @@ const Expand: FC<{ rowData: InboundShipmentItem }> = ({ rowData }) => {
 };
 
 export const GeneralTabComponent: FC<GeneralTabProps<InboundShipmentItem>> = ({
-  data,
-  columns,
   onRowClick,
 }) => {
   const { pagination } = usePagination();
-  const activeRows = data.filter(({ isDeleted }) => !isDeleted);
   const t = useTranslation('common');
+
+  const { data, sortBy, onSort } = useInboundLines();
+  const activeRows = data?.filter(({ isDeleted }) => !isDeleted) ?? [];
+
+  const columns = useColumns(
+    [
+      getNotePopoverColumn<InboundShipmentItem>(),
+      'itemCode',
+      'itemName',
+      'batch',
+      'expiryDate',
+      'locationName',
+      'sellPricePerPack',
+      'packSize',
+      'itemUnit',
+      'unitQuantity',
+      'numberOfPacks',
+      getRowExpandColumn<InboundShipmentItem>(),
+      GenericColumnKey.Selection,
+    ],
+    { onChangeSortBy: onSort, sortBy },
+    [sortBy]
+  );
 
   return (
     <DataTable
