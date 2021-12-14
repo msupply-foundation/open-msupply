@@ -89,6 +89,8 @@ export const Switch: React.FC<SwitchProps> = ({
     <FormControlLabel
       control={styledSwitch}
       disabled={disabled}
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       label={label}
       labelPlacement={labelPlacement}
       onChange={onChange}
