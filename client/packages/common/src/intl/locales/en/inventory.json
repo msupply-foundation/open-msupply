@@ -4,5 +4,9 @@
     "label.finalised": "Finalised",
     "label.counted-num-of-packs": "Counted # of Packs",
     "label.add-batch": "Add batch",
-    "label.add-new-line": "Add a new line"
+    "label.add-new-line": "Add a new line",
+    "button.delete-lines": "Delete lines",
+    "message.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'Suggested'",
+    "message.deleted-stocktakes": "Deleted {{number}} stocktakes",
+    "message.select-rows-to-delete": "Select rows to delete"
 }

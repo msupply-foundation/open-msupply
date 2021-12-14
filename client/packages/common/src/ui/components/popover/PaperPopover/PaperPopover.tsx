@@ -16,8 +16,8 @@ export const PaperPopover: FC<PaperPopoverProps> = ({
   children,
   Content,
   paperProps,
-  width = 250,
-  height = 125,
+  width,
+  height,
   placement = 'left',
 }) => {
   return (
@@ -26,8 +26,8 @@ export const PaperPopover: FC<PaperPopoverProps> = ({
       Content={
         <Paper
           sx={{
-            width,
-            height,
+            height: height ? `${height}px` : 'auto',
+            width: width ? `${width}px` : 'auto',
             borderRadius: '16px',
             boxShadow: theme => theme.shadows[7],
             ...paperProps?.sx,

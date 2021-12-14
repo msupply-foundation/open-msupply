@@ -18,6 +18,7 @@ import {
   InboundShipmentRow,
   Invoice,
   InvoiceLine,
+  InvoiceRow,
 } from './types';
 
 export const placeholderInbound: InboundShipment = {
@@ -247,3 +248,6 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, grouped[itemId])
   );
 };
+export const canDeleteInvoice = (invoice: InvoiceRow): boolean =>
+  invoice.status === InvoiceNodeStatus.New ||
+  invoice.status === InvoiceNodeStatus.Allocated;
