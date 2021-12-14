@@ -38,7 +38,7 @@ export const Toolbar: FC<{
         cannotDeleteSnack();
       } else {
         onDelete(selectedRows);
-        const deletedMessage = t('messages.deleted-requisitions', {
+        const deletedMessage = t('message.deleted-requisitions', {
           number: numberSelected,
         });
         const successSnack = success(deletedMessage);
