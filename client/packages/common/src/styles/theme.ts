@@ -50,6 +50,12 @@ declare module '@mui/material/Checkbox' {
   }
 }
 
+declare module '@mui/material/Switch' {
+  export interface SwitchPropsColorOverrides {
+    gray: true;
+  }
+}
+
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;

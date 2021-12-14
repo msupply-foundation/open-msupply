@@ -140,6 +140,7 @@ export const GeneralTabComponent: FC<
           checked={isOn}
           size="small"
           disabled={grouped.length === 0}
+          color="secondary"
         />
       </Grid>
       <Grid item>
