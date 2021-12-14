@@ -17,5 +17,10 @@
   "label.placeholder": "Placeholder",
   "label.add-batch": "Add batch",
   "label.order-date": "Order date",
-  "label.requisition-date": "Requisition date"
+  "label.requisition-date": "Requisition date",
+  "message.cant-delete-invoices": "Can only delete invoices with a status of 'New' or 'Allocated'",
+  "message.deleted-invoices": "Deleted {{number}} invoices",
+  "message.select-rows-to-delete": "Select rows to delete",
+  "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
+  "message.deleted-requisitions": "Deleted {{number}} requisitions"
 }
