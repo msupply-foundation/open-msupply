@@ -18,7 +18,7 @@ pub enum CountTimeRange {
     ThisWeek,
 }
 
-pub trait InvoiceCountServiceTrait {
+pub trait InvoiceCountServiceTrait: Send + Sync {
     /// Returns number of invoices of a certain status for today
     ///
     /// Arguments

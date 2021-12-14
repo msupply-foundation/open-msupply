@@ -4,7 +4,7 @@ use repository::{RepositoryError, StockLineRepository};
 
 use crate::service_provider::ServiceContext;
 
-pub trait StockExpiryCountTrait {
+pub trait StockExpiryCountServiceTrait: Send + Sync {
     /// # Arguments
     ///
     /// * date_time date at which the expired stock is counted
@@ -12,12 +12,14 @@ pub trait StockExpiryCountTrait {
         &self,
         ctx: &ServiceContext,
         date_time: NaiveDate,
-    ) -> Result<i64, RepositoryError>;
+    ) -> Result<i64, RepositoryError> {
+        StockExpiryServiceCount {}.count_expired_stock(ctx, date_time)
+    }
 }
 
-pub struct StockExpiryCount {}
+pub struct StockExpiryServiceCount {}
 
-impl StockExpiryCountTrait for StockExpiryCount {
+impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
     fn count_expired_stock(
         &self,
         ctx: &ServiceContext,

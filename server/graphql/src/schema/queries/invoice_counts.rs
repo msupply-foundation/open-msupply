@@ -1,9 +1,7 @@
 use async_graphql::*;
 use chrono::{FixedOffset, Utc};
 use domain::invoice::{InvoiceStatus, InvoiceType};
-use service::dashboard::invoice_count::{
-    CountTimeRange, InvoiceCountError, InvoiceCountService, InvoiceCountServiceTrait,
-};
+use service::dashboard::invoice_count::{CountTimeRange, InvoiceCountError};
 use util::timezone::offset_to_timezone;
 
 use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
@@ -17,7 +15,7 @@ fn do_invoice_count(
 ) -> Result<i64> {
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
-    let service = InvoiceCountService {};
+    let service = &service_provider.invoice_count_service;
     let count = service
         .invoices_count(
             &service_ctx,
@@ -88,7 +86,7 @@ impl OutboundInvoiceCounts {
             source: None,
             extensions: None,
         })?;
-        let service = InvoiceCountService {};
+        let service = &service_provider.invoice_count_service;
         let to_by_picked = service
             .outbound_invoices_pickable_count(&service_ctx)
             .map_err(|_| Error {
