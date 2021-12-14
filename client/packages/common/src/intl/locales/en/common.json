@@ -63,6 +63,8 @@
   "label.allocated": "Allocated",
   "label.batch": "Batch",
   "label.code": "Code",
+  "label.collapse": "Collapse",
+  "label.collapse-all": "Collapse all",
   "label.color": "Colour",
   "label.comment": "Comment",
   "label.confirmed": "Confirmed",
@@ -133,5 +135,6 @@
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.snapshot-num-of-packs": "Snapshot # of Packs",
-  "label.count-this-line": "Count this line"
+  "label.count-this-line": "Count this line",
+  "label.unit-price": "Unit Price"
 }

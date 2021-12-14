@@ -7,6 +7,12 @@ import {
   DomainObject,
   Box,
   useTranslation,
+  Grid,
+  useToggle,
+  Switch,
+  alpha,
+  useColumns,
+  ifTheSameElseDefault,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
 
@@ -16,19 +22,55 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   onRowClick?: (rowData: T) => void;
 }
 
-const Expand: FC<{ rowData: OutboundShipmentSummaryItem }> = ({ rowData }) => {
+const Expand: FC<{
+  rowData: OutboundShipmentSummaryItem;
+}> = ({ rowData }) => {
+  const t = useTranslation();
+
+  const columns = useColumns([
+    'batch',
+    'expiryDate',
+    'locationName',
+    'itemUnit',
+    'numberOfPacks',
+    'packSize',
+    'unitQuantity',
+    'sellPricePerUnit',
+    'lineTotal',
+  ]);
+
+  const batches = Object.values(rowData.batches).map(batch => ({
+    ...batch,
+    unitQuantity: batch.numberOfPacks * batch.packSize,
+    sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
+    lineTotal: (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
+  }));
+  const BatchTable = React.useMemo(
+    () => (
+      <DataTable
+        dense
+        columns={columns}
+        data={batches}
+        noDataMessage={t('error.no-items')}
+      />
+    ),
+    []
+  );
+
+  if (!rowData?.canExpand) return <></>;
+
   return (
-    <Box p={1} height={300} style={{ overflow: 'scroll' }}>
+    <Box p={1} style={{ padding: '0 50px 0 200px' }}>
       <Box
         flex={1}
         display="flex"
         height="100%"
         borderRadius={4}
-        bgcolor="#c7c9d933"
+        sx={{
+          backgroundColor: theme => alpha(theme.palette['gray']['light'], 0.2),
+        }}
       >
-        <span style={{ whiteSpace: 'pre-wrap' }}>
-          {JSON.stringify(rowData, null, 2)}
-        </span>
+        {BatchTable}
       </Box>
     </Box>
   );
@@ -38,22 +80,80 @@ export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
   const { pagination } = usePagination();
-  const t = useTranslation('common');
-  const activeRows = data.filter(({ isDeleted }) => !isDeleted);
+  const { isOn, toggle } = useToggle();
+
+  const [grouped, setGrouped] = React.useState<OutboundShipmentSummaryItem[]>(
+    []
+  );
+  const paged = data.slice(
+    pagination.offset,
+    pagination.offset + pagination.first
+  );
+
+  React.useEffect(() => {
+    const newGrouped: OutboundShipmentSummaryItem[] = [];
+    paged.forEach(row => {
+      const batches = Object.values(row.batches);
+      const lineTotal = (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
+
+      if (isOn) {
+        newGrouped.push({
+          ...row,
+          lineTotal,
+          sellPricePerUnit: lineTotal / row.unitQuantity,
+          batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+          expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
+          canExpand: Object.keys(row.batches).length > 1,
+        });
+      } else {
+        batches.forEach(batch => {
+          newGrouped.push({
+            ...row,
+            batch: batch.batch,
+            expiryDate: batch.expiryDate,
+            packSize: batch.packSize,
+            lineTotal,
+            sellPricePerUnit: lineTotal / row.unitQuantity,
+            canExpand: false,
+          });
+        });
+      }
+    });
+    setGrouped(newGrouped);
+  }, [isOn, data]);
+
+  const t = useTranslation('distribution');
+  const activeRows = grouped.filter(({ isDeleted }) => !isDeleted);
 
   return (
-    <DataTable
-      onRowClick={onRowClick}
-      ExpandContent={Expand}
-      pagination={{ ...pagination, total: activeRows.length }}
-      columns={columns}
-      data={activeRows.slice(
-        pagination.offset,
-        pagination.offset + pagination.first
-      )}
-      onChangePage={pagination.onChangePage}
-      noDataMessage={t('error.no-items')}
-    />
+    <Grid container flexDirection="column" flexWrap="nowrap">
+      <Grid
+        item
+        justifyContent="flex-end"
+        display="flex"
+        flex={0}
+        sx={{ padding: '5px', paddingRight: '15px', width: '100%' }}
+      >
+        <Switch
+          label={t('label.group-by-item')}
+          onChange={toggle}
+          checked={isOn}
+          size="small"
+          disabled={grouped.length === 0}
+        />
+      </Grid>
+      <Grid item>
+        <DataTable
+          onRowClick={onRowClick}
+          ExpandContent={Expand}
+          pagination={{ ...pagination, total: activeRows.length }}
+          columns={columns}
+          data={grouped}
+          onChangePage={pagination.onChangePage}
+          noDataMessage={t('error.no-items')}
+        />
+      </Grid>
+    </Grid>
   );
 };
 
