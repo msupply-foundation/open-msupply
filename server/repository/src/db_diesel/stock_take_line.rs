@@ -51,6 +51,7 @@ pub type InvoiceLineSort = Sort<()>;
 
 type StockTakeLineJoin = (StockTakeLineRow, Option<LocationRow>);
 
+#[derive(Debug)]
 pub struct StockTakeLine {
     pub line: StockTakeLineRow,
     pub location: Option<LocationRow>,
@@ -74,7 +75,7 @@ impl<'a> StockTakeLineRepository<'a> {
         &self,
         filter: StockTakeLineFilter,
     ) -> Result<Vec<StockTakeLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
