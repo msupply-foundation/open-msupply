@@ -1,8 +1,7 @@
 import React from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
-import { styled } from '@mui/system';
-
+import { styled } from '@mui/material/styles';
 import { Autocomplete } from './Autocomplete';
 import { AutocompleteList } from './AutocompleteList';
 

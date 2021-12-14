@@ -2,7 +2,7 @@ import MuiTabPanel from '@mui/lab/TabPanel';
 import MuiTab from '@mui/material/Tab';
 import MuiTabContext from '@mui/lab/TabContext';
 import MuiTabList from '@mui/lab/TabList';
-import { styled } from '@mui/system';
+import { styled } from '@mui/material/styles';
 
 export const TabContext = MuiTabContext;
 

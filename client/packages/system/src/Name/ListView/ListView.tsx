@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
+  useNavigate,
   TableProvider,
   DataTable,
   useListData,

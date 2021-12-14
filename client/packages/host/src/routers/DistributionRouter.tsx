@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import { Navigate, useMatch } from 'react-router-dom';
-import { RouteBuilder } from '@openmsupply-client/common';
+import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const InvoiceService = React.lazy(
@@ -31,14 +30,18 @@ const fullCustomersPath = RouteBuilder.create(AppRoute.Distribution)
   .build();
 
 export const DistributionRouter: FC = () => {
-  if (useMatch(fullOutboundShipmentPath)) {
+  const gotoOutboundShipment = useMatch(fullOutboundShipmentPath);
+  const gotoCustomerRequisition = useMatch(fullCustomerRequisitionPath);
+  const gotoCustomers = useMatch(fullCustomersPath);
+
+  if (gotoOutboundShipment) {
     return <InvoiceService />;
   }
-  if (useMatch(fullCustomerRequisitionPath)) {
+  if (gotoCustomerRequisition) {
     return <RequisitionService />;
   }
 
-  if (useMatch(fullCustomersPath)) {
+  if (gotoCustomers) {
     return <NameService />;
   }
 

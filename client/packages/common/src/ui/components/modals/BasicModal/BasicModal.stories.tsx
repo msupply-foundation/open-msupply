@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Grid, Button } from '@mui/material';
+import { Box, Grid, Button } from '@mui/material';
 import { Story } from '@storybook/react';
 import { BasicModal } from './BasicModal';
-import { Box } from '@mui/system';
 
 export default {
   title: 'Modals/BasicModal',

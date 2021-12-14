@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Routes, Route, useMatch } from 'react-router-dom';
+
 import {
   ListView as SupplierRequisitionListView,
   DetailView as SupplierRequisitionDetailView,
@@ -8,7 +8,7 @@ import {
   ListView as CustomerRequisitionListView,
   DetailView as CustomerRequisitionDetailView,
 } from './CustomerRequisition';
-import { RouteBuilder } from '@openmsupply-client/common';
+import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const customerRequisitionsRoute = RouteBuilder.create(
