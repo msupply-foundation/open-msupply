@@ -1,6 +1,11 @@
 import { useTranslation } from '@common/intl';
 import { StocktakeNodeStatus } from '@openmsupply-client/common';
-import { StocktakeItem, StocktakeLine, StocktakeController } from './types';
+import {
+  StocktakeItem,
+  StocktakeLine,
+  StocktakeController,
+  StocktakeRow,
+} from './types';
 
 export const placeholderStocktake: StocktakeController = {
   id: '',
@@ -76,3 +81,6 @@ export const getStocktakeTranslator =
 
     return t('label.finalised', { ns: 'inventory' });
   };
+
+export const canDeleteStocktake = (row: StocktakeRow): boolean =>
+  row.status === StocktakeNodeStatus.Suggested;

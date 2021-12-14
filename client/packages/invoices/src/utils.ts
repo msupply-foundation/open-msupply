@@ -12,6 +12,7 @@ import {
   InboundShipmentItem,
   InboundShipmentRow,
   Invoice,
+  InvoiceRow,
 } from './types';
 
 export const placeholderInbound: InboundShipment = {
@@ -211,3 +212,7 @@ export const flattenInboundItems = (
 ): InboundShipmentRow[] => {
   return summaryItems.map(({ batches }) => Object.values(batches)).flat();
 };
+
+export const canDeleteInvoice = (invoice: InvoiceRow): boolean =>
+  invoice.status === InvoiceNodeStatus.New ||
+  invoice.status === InvoiceNodeStatus.Allocated;
