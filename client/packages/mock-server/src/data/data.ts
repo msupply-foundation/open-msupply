@@ -585,7 +585,10 @@ const createRequisition = (
     maxMOS: 3,
     thresholdMOS: 3,
     color: '#8f90a6',
-    status: SupplierRequisitionNodeStatus.Draft,
+    status: takeRandomElementFrom([
+      SupplierRequisitionNodeStatus.Draft,
+      SupplierRequisitionNodeStatus.Finalised,
+    ]),
     comment: takeRandomElementFrom(comments),
   };
 };

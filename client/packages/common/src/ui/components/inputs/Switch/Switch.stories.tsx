@@ -14,9 +14,23 @@ const Template: ComponentStory<typeof Switch> = args => {
   return (
     <Box>
       <Switch
-        label="this is a pointless label"
+        label="default color"
         onChange={() => setChecked(!checked)}
         checked={checked}
+        {...args}
+      />
+      <Switch
+        label="color set to gray"
+        onChange={() => setChecked(!checked)}
+        checked={checked}
+        {...args}
+        color="gray"
+      />
+      <Switch
+        label="color set to secondary"
+        onChange={() => setChecked(!checked)}
+        checked={checked}
+        color="secondary"
         {...args}
       />
       <div style={{ marginTop: 50, fontStyle: 'italic' }}>
