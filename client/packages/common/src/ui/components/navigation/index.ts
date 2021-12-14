@@ -1,3 +1,3 @@
 export * from './Breadcrumbs';
-export * from './NavLink';
+export * from './AppNavLink';
 export * from './Tabs';

@@ -1,9 +1,12 @@
 import React from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route } from 'react-router';
 
-import { TestingProvider, TestingRouter } from '@openmsupply-client/common';
+import {
+  Route,
+  TestingProvider,
+  TestingRouter,
+} from '@openmsupply-client/common';
 import { AppBar } from '@openmsupply-client/host/src/components';
 import { setupMockServer } from '@openmsupply-client/mock-server/src/worker/server';
 

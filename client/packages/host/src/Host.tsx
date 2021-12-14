@@ -1,12 +1,11 @@
 import React, { FC } from 'react';
+
 import {
   BrowserRouter,
   Routes,
   Route,
   useNavigate,
   Navigate,
-} from 'react-router-dom';
-import {
   AppFooterPortal,
   Box,
   AppThemeProvider,
@@ -31,6 +30,7 @@ import {
   OmSupplyApiProvider,
   IntlProvider,
   Biker,
+  useMatches,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import {
@@ -74,7 +74,7 @@ const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   },
 }));
 
-const CustomKBarResults = styled(KBarResults)({
+const StyledKBarResults = styled(KBarResults)({
   width: 500,
   fontSize: 16,
   borderRadius: '5px',
@@ -83,6 +83,29 @@ const CustomKBarResults = styled(KBarResults)({
     outline: 'none',
   },
 });
+
+const CustomKBarResults = () => {
+  const { results } = useMatches();
+
+  return (
+    <StyledKBarResults
+      items={results}
+      onRender={({ item, active }) =>
+        typeof item === 'string' ? (
+          <div>{item}</div>
+        ) : (
+          <div
+            style={{
+              background: active ? '#eee' : 'transparent',
+            }}
+          >
+            {item.name}
+          </div>
+        )
+      }
+    />
+  );
+};
 
 const CommandK: FC = ({ children }) => {
   const navigate = useNavigate();

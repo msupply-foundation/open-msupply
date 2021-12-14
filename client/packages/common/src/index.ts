@@ -8,6 +8,7 @@ export {
   KBarSearch,
   KBarResults,
   useRegisterActions,
+  useMatches,
 } from 'kbar';
 
 export { produce } from 'immer';
@@ -16,7 +17,7 @@ export * from 'graphql-request';
 export * from 'react-query';
 export * from 'react-query/devtools';
 export * from 'immer';
-
+export * from 'react-router-dom';
 export * from './utils';
 export * from './ui';
 export * from './hooks';

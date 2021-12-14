@@ -12,8 +12,8 @@ import {
   useTranslation,
   StatsPanel,
   Widget,
+  useNavigate,
 } from '@openmsupply-client/common';
-import { useNavigate } from 'react-router';
 import { getOutboundShipmentCountQueryFn } from './api';
 
 export const OutboundShipmentWidget: React.FC = () => {

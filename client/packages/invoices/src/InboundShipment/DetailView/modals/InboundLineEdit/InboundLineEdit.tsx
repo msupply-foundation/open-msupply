@@ -12,6 +12,7 @@ import {
   useIsMediumScreen,
   ButtonWithIcon,
   PlusCircleIcon,
+  Box,
 } from '@openmsupply-client/common';
 import { InboundShipment, InboundShipmentItem } from '../../../../types';
 import { flattenInboundItems } from '../../../../utils';
@@ -19,7 +20,6 @@ import { ModalMode } from '../../DetailView';
 import { BatchTable, PricingTable } from './TabTables';
 import { createInboundShipmentBatch, wrapInboundShipmentItem } from './utils';
 import { InboundLineEditForm } from './InboundLineEditForm';
-import { Box } from '@mui/system';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',

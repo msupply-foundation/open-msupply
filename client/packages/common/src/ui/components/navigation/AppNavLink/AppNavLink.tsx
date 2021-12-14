@@ -45,7 +45,7 @@ const StyledListItem = styled<
   },
 }));
 
-export interface NavLinkProps {
+export interface AppNavLinkProps {
   end?: boolean; // denotes lowest level menu item, using terminology from useMatch
   icon?: JSX.Element;
   expandOnHover?: boolean;
@@ -53,7 +53,7 @@ export interface NavLinkProps {
   to: string;
 }
 
-export const NavLink: FC<NavLinkProps> = props => {
+export const AppNavLink: FC<AppNavLinkProps> = props => {
   const {
     end,
     icon = <span style={{ width: 2 }} />,
@@ -62,6 +62,7 @@ export const NavLink: FC<NavLinkProps> = props => {
     to,
   } = props;
   const drawer = useDrawer();
+
   const selected = useSelectedNavMenuItem(to, !!end);
 
   const CustomLink = React.useMemo(

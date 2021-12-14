@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import { Navigate, useMatch } from 'react-router-dom';
-import { RouteBuilder } from '@openmsupply-client/common';
+import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const ItemService = React.lazy(
@@ -13,10 +12,12 @@ const fullItemPath = RouteBuilder.create(AppRoute.Catalogue)
   .build();
 
 export const CatalogueRouter: FC = () => {
-  if (useMatch(fullItemPath)) {
+  const gotoItems = useMatch(fullItemPath);
+
+  if (gotoItems) {
     return <ItemService />;
-  } else {
-    const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
-    return <Navigate to={notFoundRoute} />;
   }
+
+  const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
+  return <Navigate to={notFoundRoute} />;
 };
