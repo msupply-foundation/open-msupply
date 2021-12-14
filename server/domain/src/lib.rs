@@ -110,6 +110,13 @@ impl Pagination {
         }
     }
 
+    pub fn all() -> Pagination {
+        Pagination {
+            offset: 0,
+            limit: std::u32::MAX,
+        }
+    }
+
     pub fn one() -> Pagination {
         Pagination {
             offset: 0,
