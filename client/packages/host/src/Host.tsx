@@ -214,7 +214,7 @@ const Host: FC = () => (
                 <CommandK>
                   <SnackbarProvider maxSnack={3}>
                     <Viewport>
-                      <Box display="flex" height="100%">
+                      <Box display="flex" style={{ minHeight: '100%' }}>
                         <AppDrawer />
                         <Box
                           flex={1}

@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ListView } from '../ListView';
+import { ItemListView } from '../ListView';
 
 const Service: FC = () => {
   const itemsRoute = RouteBuilder.create(AppRoute.Items).build();
@@ -12,8 +12,8 @@ const Service: FC = () => {
 
   return (
     <Routes>
-      <Route path={itemsRoute} element={<ListView />} />
-      <Route path={itemRoute} element={<ListView />} />
+      <Route path={itemsRoute} element={<ItemListView />} />
+      <Route path={itemRoute} element={<ItemListView />} />
     </Routes>
   );
 };

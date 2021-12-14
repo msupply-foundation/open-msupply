@@ -11,11 +11,17 @@
   "label.allocated": "Allocated",
   "label.allocation": "Allocation",
   "label.available": "Available",
+  "label.group-by-item": "Group by Item",
   "label.in-store": "In store",
   "label.num-packs": "# Packs",
   "label.packs-to-batches-with": "packs to batches with a pack size of",
   "label.placeholder": "Placeholder",
   "label.add-batch": "Add batch",
   "label.order-date": "Order date",
-  "label.requisition-date": "Requisition date"
+  "label.requisition-date": "Requisition date",
+  "message.cant-delete-invoices": "Can only delete invoices with a status of 'New' or 'Allocated'",
+  "message.deleted-invoices": "Deleted {{number}} invoices",
+  "message.select-rows-to-delete": "Select rows to delete",
+  "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
+  "message.deleted-requisitions": "Deleted {{number}} requisitions"
 }

@@ -11,7 +11,7 @@ import {
 import { getItemListViewApi } from './api';
 import { ItemRow } from '../types';
 
-export const ListView: FC = () => {
+export const ItemListView: FC = () => {
   const { api } = useOmSupplyApi();
   const {
     totalCount,

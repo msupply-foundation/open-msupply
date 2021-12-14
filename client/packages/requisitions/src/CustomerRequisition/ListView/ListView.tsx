@@ -42,7 +42,7 @@ export const CustomerRequisitionListView: FC = () => {
       initialSortBy: { key: 'otherPartyName' },
       initialFilterBy: { type: { equalTo: 'CUSTOMER_REQUISITION' } },
     },
-    'invoice',
+    'requisition',
     getCustomerRequisitionListViewApi(api)
   );
 

@@ -25,4 +25,5 @@ export interface TableProps<T extends DomainObject> {
   noDataMessage?: string;
   ExpandContent?: FC<{ rowData: T }>;
   dense?: boolean;
+  noLines?: boolean;
 }

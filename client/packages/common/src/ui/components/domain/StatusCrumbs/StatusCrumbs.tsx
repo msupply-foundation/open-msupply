@@ -71,7 +71,7 @@ export const StatusCrumbs = <StatusType extends string>(
   return (
     <PaperPopover
       placement="top"
-      height={200}
+      width={250}
       Content={
         <PaperPopoverSection label={t('label.order-history')}>
           <VerticalStepper activeStep={currentStep} steps={steps} />

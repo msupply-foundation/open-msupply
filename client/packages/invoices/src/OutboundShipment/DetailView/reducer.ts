@@ -127,8 +127,13 @@ export const createSummaryItem = (
     locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
 
     batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+    expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
     // TODO: Likely should just be a string.
-    sellPrice: ifTheSameElseDefault(batches, 'sellPricePerPack', undefined),
+    sellPricePerPack: ifTheSameElseDefault(
+      batches,
+      'sellPricePerPack',
+      undefined
+    ),
     // TODO: Likely should just be a string.
     packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
   };
