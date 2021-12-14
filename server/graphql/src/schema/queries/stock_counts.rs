@@ -1,6 +1,5 @@
 use async_graphql::*;
 use chrono::{Duration, FixedOffset, Utc};
-use service::dashboard::stock_expiry_count::{StockExpiryCount, StockExpiryCountTrait};
 use util::timezone::offset_to_timezone;
 
 use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
@@ -15,7 +14,7 @@ impl StockCounts {
     async fn expired(&self, ctx: &Context<'_>) -> Result<i64> {
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.context()?;
-        let service = StockExpiryCount {};
+        let service = &service_provider.stock_expiry_count_service;
         let date = Utc::now()
             .with_timezone(&self.timezone_offset)
             .date()
@@ -26,7 +25,7 @@ impl StockCounts {
     async fn expiring_soon(&self, ctx: &Context<'_>) -> Result<i64> {
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.context()?;
-        let service = StockExpiryCount {};
+        let service = &service_provider.stock_expiry_count_service;
         let days_till_expired = self.days_till_expired.unwrap_or(7);
         let date = Utc::now()
             .with_timezone(&self.timezone_offset)
