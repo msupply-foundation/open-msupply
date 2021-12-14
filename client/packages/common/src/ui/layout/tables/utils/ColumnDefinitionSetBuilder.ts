@@ -29,6 +29,7 @@ export type ColumnKey =
   | 'batch'
   | 'costPricePerPack'
   | 'sellPricePerPack'
+  | 'sellPricePerUnit'
   | 'locationName'
   | 'unitQuantity'
   | 'numberOfPacks'
@@ -203,6 +204,13 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   sellPricePerPack: {
     label: 'label.sell',
     key: 'sellPricePerPack',
+    width: 100,
+    align: ColumnAlign.Right,
+    format: ColumnFormat.Currency,
+  },
+  sellPricePerUnit: {
+    label: 'label.unit-price',
+    key: 'sellPricePerUnit',
     width: 100,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,

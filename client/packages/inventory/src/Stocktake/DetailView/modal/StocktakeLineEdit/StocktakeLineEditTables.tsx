@@ -41,6 +41,7 @@ export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      noLines
     />
   );
 };
@@ -58,6 +59,7 @@ export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      noLines
     />
   );
 };

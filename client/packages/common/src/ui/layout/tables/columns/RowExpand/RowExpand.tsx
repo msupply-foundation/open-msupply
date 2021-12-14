@@ -12,7 +12,9 @@ type RowExpandLabels = {
   cell: string;
 };
 
-export const getRowExpandColumn = <T extends DomainObject>(
+export const getRowExpandColumn = <
+  T extends DomainObject & { canExpand: boolean }
+>(
   labels?: RowExpandLabels
 ): ColumnDefinition<T> => ({
   key: 'expand',
@@ -25,7 +27,11 @@ export const getRowExpandColumn = <T extends DomainObject>(
 
     return (
       <IconButton
-        label={labels?.header ?? t('label.expand-all')}
+        label={
+          labels?.header ?? !!numberExpanded
+            ? t('label.collapse-all')
+            : t('label.expand-all')
+        }
         onClick={toggleAllExpanded}
         icon={
           <Box
@@ -44,12 +50,16 @@ export const getRowExpandColumn = <T extends DomainObject>(
     );
   },
   Cell: ({ rowData }) => {
+    if (!rowData.canExpand) return null;
+
     const t = useTranslation('common');
     const { toggleExpanded, isExpanded } = useExpanded(rowData.id);
 
     return (
       <IconButton
-        label={labels?.cell ?? t('label.expand')}
+        label={
+          labels?.cell ?? isExpanded ? t('label.collapse') : t('label.expand')
+        }
         onClick={event => {
           event.stopPropagation();
           toggleExpanded();
