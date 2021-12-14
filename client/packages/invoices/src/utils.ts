@@ -1,8 +1,13 @@
 import {
+  getUnitQuantity,
+  getSumOfKeyReducer,
   LocaleKey,
   InvoiceNodeStatus,
   useTranslation,
   InvoiceNodeType,
+  groupBy,
+  ifTheSameElseDefault,
+  arrayToRecord,
 } from '@openmsupply-client/common';
 import {
   OutboundShipment,
@@ -12,6 +17,7 @@ import {
   InboundShipmentItem,
   InboundShipmentRow,
   Invoice,
+  InvoiceLine,
   InvoiceRow,
 } from './types';
 
@@ -213,6 +219,35 @@ export const flattenInboundItems = (
   return summaryItems.map(({ batches }) => Object.values(batches)).flat();
 };
 
+export const createSummaryItem = (
+  itemId: string,
+  batches: InboundShipmentRow[] = []
+): InboundShipmentItem => {
+  const item: InboundShipmentItem = {
+    id: itemId,
+    itemId: itemId,
+    itemName: ifTheSameElseDefault(batches, 'itemName', ''),
+    itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
+    batches: arrayToRecord(batches),
+    unitQuantity: batches.reduce(getUnitQuantity, 0),
+    numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
+    locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
+    batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+    sellPrice: ifTheSameElseDefault(batches, 'sellPricePerPack', undefined),
+    packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
+  };
+
+  return item;
+};
+
+export const inboundLinesToSummaryItems = (
+  lines: InvoiceLine[]
+): OutboundShipmentSummaryItem[] => {
+  const grouped = groupBy(lines, 'itemId');
+  return Object.keys(grouped).map(itemId =>
+    createSummaryItem(itemId, grouped[itemId])
+  );
+};
 export const canDeleteInvoice = (invoice: InvoiceRow): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;

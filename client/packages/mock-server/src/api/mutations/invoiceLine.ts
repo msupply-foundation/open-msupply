@@ -74,6 +74,8 @@ export const InvoiceLineMutation = {
         }
       }
 
+      db.update.invoiceLine(invoiceLine);
+
       return currentInvoiceLine;
     },
     remove: (input: DeleteOutboundShipmentLineInput): DeleteResponse => {
@@ -137,6 +139,7 @@ export const InvoiceLineMutation = {
       const currentInvoiceLine = ResolverService.invoiceLine.byId(
         invoiceLine.id
       );
+
       const { numberOfPacks } = currentInvoiceLine;
       const difference = numberOfPacks - (invoiceLine?.numberOfPacks ?? 0);
 
@@ -144,14 +147,16 @@ export const InvoiceLineMutation = {
         if (invoice.status !== InvoiceNodeStatus.New) {
           adjustStockLineAvailableNumberOfPacks(
             currentInvoiceLine.stockLineId,
-            -difference
+            difference
           );
           adjustStockLineTotalNumberOfPacks(
             currentInvoiceLine.stockLineId,
-            -difference
+            difference
           );
         }
       }
+
+      db.update.invoiceLine(invoiceLine);
 
       return currentInvoiceLine;
     },

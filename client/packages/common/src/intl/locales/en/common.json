@@ -33,7 +33,7 @@
   "button.ok-and-next": "OK & Next",
   "button.ok": "OK",
   "button.print": "Print",
-  "button.save-and-confirm-status": "Save & Confirm {{status}}",
+  "button.save-and-confirm-status": "Confirm {{status}}",
   "button.save": "Save",
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",

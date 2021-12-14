@@ -19,9 +19,10 @@ import { InboundShipment } from '../../types';
 
 interface SidePanelProps {
   draft: InboundShipment;
+  update: (patch: Partial<InboundShipment>) => Promise<InboundShipment>;
 }
 
-const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
+const AdditionalInfoSection: FC<SidePanelProps> = ({ draft, update }) => {
   const t = useTranslation('common');
 
   return (
@@ -46,7 +47,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <TextArea
           disabled={!isInboundEditable(draft)}
-          onChange={e => draft.update?.('comment', e.target.value)}
+          onChange={e => update({ comment: e.target.value })}
           value={draft.comment}
         />
       </Grid>
@@ -104,7 +105,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
   );
 };
 
-export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
+export const SidePanel: FC<SidePanelProps> = ({ draft, update }) => {
   const { success } = useNotification();
   const t = useTranslation(['outbound-shipment', 'common']);
 
@@ -141,8 +142,8 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
         </>
       }
     >
-      <AdditionalInfoSection draft={draft} />
-      <RelatedDocumentsSection draft={draft} />
+      <AdditionalInfoSection draft={draft} update={update} />
+      <RelatedDocumentsSection draft={draft} update={update} />
     </DetailPanelPortal>
   );
 };

@@ -1,10 +1,17 @@
+import { useCallback } from 'react';
+import { OutboundShipmentSummaryItem } from './../../types';
+import { placeholderInbound, inboundLinesToSummaryItems } from './../../utils';
+import { useParams } from 'react-router';
 import {
+  useOmSupplyApi,
+  Column,
+  useQueryClient,
+  useMutation,
   InvoiceLineConnector,
   InvoiceQuery,
   InvoicePriceResponse,
   ConnectorError,
   NameResponse,
-  InvoiceNodeStatus,
   OmSupplyApi,
   StockLineResponse,
   StockLineNode,
@@ -13,6 +20,11 @@ import {
   DeleteInboundShipmentLineInput,
   UpdateInboundShipmentInput,
   formatNaiveDate,
+  useQuery,
+  UpdateInboundShipmentStatusInput,
+  UseQueryResult,
+  useSortBy,
+  getDataSorter,
 } from '@openmsupply-client/common';
 
 import {
@@ -81,7 +93,7 @@ const invoiceToInput = (
     comment: patch.comment,
 
     // TODO: Don't cast status
-    status: patch.status as InvoiceNodeStatus,
+    status: patch.status as unknown as UpdateInboundShipmentStatusInput,
     onHold: patch.onHold,
     otherPartyId: patch.otherParty?.id,
     theirReference: patch.theirReference,
@@ -104,6 +116,8 @@ const createInsertInboundLineInput =
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId,
+      totalAfterTax: 0,
+      totalBeforeTax: 0,
     };
   };
 
@@ -204,3 +218,121 @@ export const getInboundShipmentDetailViewApi = (
     throw new Error(':shrug');
   },
 });
+
+export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
+  const { id } = useParams();
+  const { api } = useOmSupplyApi();
+  const queries = getInboundShipmentDetailViewApi(api);
+  return useQuery(['invoice', id], () => {
+    return queries.onRead(id);
+  });
+};
+
+export const useInboundShipmentSelector = <T = Invoice>(
+  select?: (data: Invoice) => T
+): UseQueryResult<T, unknown> => {
+  const { id } = useParams();
+  const { api } = useOmSupplyApi();
+  const queries = getInboundShipmentDetailViewApi(api);
+  return useQuery(
+    ['invoice', id],
+    () => {
+      return queries.onRead(id);
+    },
+    { select }
+  );
+};
+
+const useOptimisticInboundUpdate = () => {
+  const { api } = useOmSupplyApi();
+  const queries = getInboundShipmentDetailViewApi(api);
+  const queryClient = useQueryClient();
+  const { id } = useParams();
+  return useMutation(queries.onUpdate, {
+    onMutate: async (patch: Partial<InboundShipment>) => {
+      await queryClient.cancelQueries(['invoice', id]);
+
+      const previousInbound: Invoice = queryClient.getQueryData([
+        'invoice',
+        id,
+      ]);
+
+      queryClient.setQueryData(['invoice', id], {
+        ...previousInbound,
+        ...patch,
+      });
+
+      return { previousInbound, patch };
+    },
+    onSettled: () => queryClient.invalidateQueries(['invoice', id]),
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['invoice', id], context.previousInbound);
+    },
+  });
+};
+
+export const useInboundLines = () => {
+  const { sortBy, onChangeSortBy } = useSortBy<OutboundShipmentSummaryItem>({
+    key: 'itemName',
+  });
+  const onSort = (column: Column<OutboundShipmentSummaryItem>) => {
+    onChangeSortBy({
+      key: column.key,
+      isDesc: sortBy.key === column.key ? !sortBy.isDesc : false,
+    });
+  };
+  const selectItems = useCallback(
+    (invoice: Invoice) => {
+      return inboundLinesToSummaryItems(invoice.lines).sort(
+        getDataSorter(
+          sortBy.key as keyof OutboundShipmentSummaryItem,
+          !!sortBy.isDesc
+        )
+      );
+    },
+    [sortBy]
+  );
+
+  const { data } = useInboundShipmentSelector(selectItems);
+
+  return { data, sortBy, onSort };
+};
+
+export const useDraftInbound = () => {
+  const queryClient = useQueryClient();
+  const { id } = useParams();
+  const { api } = useOmSupplyApi();
+  const queries = getInboundShipmentDetailViewApi(api);
+
+  const { data } = useInboundShipment();
+
+  const draft = data ? { ...data, items: [] } : placeholderInbound;
+  const { mutateAsync: optimisticUpdate } = useOptimisticInboundUpdate();
+  const { isLoading: isAddingItem, mutateAsync } = useMutation(
+    queries.onUpdate,
+    {
+      onSettled: () => queryClient.invalidateQueries(['invoice', id]),
+    }
+  );
+
+  const updateInvoice = async (patch: Partial<InboundShipment>) => {
+    return optimisticUpdate({ ...data, ...patch, items: [] });
+  };
+
+  const upsertItem = async (item: OutboundShipmentSummaryItem) => {
+    const itemIdx = draft.items.findIndex(i => i.id === item.id);
+    if (itemIdx >= 0) draft.items[itemIdx] = item;
+    else draft.items.push(item);
+
+    const result = await mutateAsync(draft);
+
+    return result;
+  };
+
+  return {
+    isAddingItem,
+    updateInvoice,
+    upsertItem,
+    draft,
+  };
+};
