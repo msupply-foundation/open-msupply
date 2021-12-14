@@ -8,11 +8,11 @@ import {
   Box,
   useTranslation,
   Grid,
-  useToggle,
   Switch,
   alpha,
   useColumns,
   ifTheSameElseDefault,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
 
@@ -67,7 +67,7 @@ const Expand: FC<{
         height="100%"
         borderRadius={4}
         sx={{
-          backgroundColor: theme => alpha(theme.palette['gray']['light'], 0.2),
+          backgroundColor: theme => alpha(theme.palette.gray.light, 0.2),
         }}
       >
         {BatchTable}
@@ -80,7 +80,7 @@ export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
   const { pagination } = usePagination();
-  const { isOn, toggle } = useToggle();
+  const [isGroupedByItem, setIsGroupedByItem] = React.useState(false);
 
   const [grouped, setGrouped] = React.useState<OutboundShipmentSummaryItem[]>(
     []
@@ -96,7 +96,7 @@ export const GeneralTabComponent: FC<
       const batches = Object.values(row.batches);
       const lineTotal = (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
 
-      if (isOn) {
+      if (isGroupedByItem) {
         newGrouped.push({
           ...row,
           lineTotal,
@@ -120,10 +120,15 @@ export const GeneralTabComponent: FC<
       }
     });
     setGrouped(newGrouped);
-  }, [isOn, data]);
+  }, [isGroupedByItem, data]);
 
   const t = useTranslation('distribution');
   const activeRows = grouped.filter(({ isDeleted }) => !isDeleted);
+  const { setIsGrouped } = useTableStore();
+  const toggleGrouped = () => {
+    setIsGrouped(!isGroupedByItem);
+    setIsGroupedByItem(!isGroupedByItem);
+  };
 
   return (
     <Grid container flexDirection="column" flexWrap="nowrap">
@@ -136,8 +141,8 @@ export const GeneralTabComponent: FC<
       >
         <Switch
           label={t('label.group-by-item')}
-          onChange={toggle}
-          checked={isOn}
+          onChange={toggleGrouped}
+          checked={isGroupedByItem}
           size="small"
           disabled={grouped.length === 0}
           color="secondary"

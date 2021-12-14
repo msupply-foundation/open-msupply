@@ -23,9 +23,9 @@ export const getRowExpandColumn = <
   width: 60,
   Header: () => {
     const t = useTranslation('common');
-    const { numberExpanded, toggleAllExpanded } = useTableStore();
+    const { isGrouped, numberExpanded, toggleAllExpanded } = useTableStore();
 
-    return (
+    return isGrouped ? (
       <IconButton
         label={
           labels?.header ?? !!numberExpanded
@@ -47,7 +47,7 @@ export const getRowExpandColumn = <
           </Box>
         }
       />
-    );
+    ) : null;
   },
   Cell: ({ rowData }) => {
     if (!rowData.canExpand) return null;
