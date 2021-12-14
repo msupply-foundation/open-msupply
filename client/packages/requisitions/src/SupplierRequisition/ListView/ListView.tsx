@@ -43,7 +43,7 @@ export const SupplierRequisitionListView: FC = () => {
       initialSortBy: { key: 'otherPartyName' },
       initialFilterBy: { type: { equalTo: 'SUPPLIER_REQUISITION' } },
     },
-    'invoice',
+    'requisition',
     getSupplierRequisitionListViewApi(api)
   );
 
@@ -93,7 +93,7 @@ export const SupplierRequisitionListView: FC = () => {
               navigate(result);
             } catch (e) {
               const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
+                'Failed to create requisition! ' + (e as Error).message
               );
               errorSnack();
             }
