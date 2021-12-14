@@ -44,7 +44,15 @@ pub fn get_insert_outbound_shipment_line_response(
     input: InsertOutboundShipmentLineInput,
 ) -> InsertOutboundShipmentLineResponse {
     use InsertOutboundShipmentLineResponse::*;
-    match insert_outbound_shipment_line(connection_manager, input.into()) {
+    let connection = match connection_manager.connection() {
+        Ok(con) => con,
+        Err(err) => {
+            return InsertOutboundShipmentLineResponse::Error(ErrorWrapper {
+                error: InsertOutboundShipmentLineErrorInterface::DatabaseError(DatabaseError(err)),
+            })
+        }
+    };
+    match insert_outbound_shipment_line(&connection, input.into()) {
         Ok(id) => match get_invoice_line_response(connection_manager, id) {
             InvoiceLineResponse::Response(node) => Response(node),
             InvoiceLineResponse::Error(err) => NodeError(err),

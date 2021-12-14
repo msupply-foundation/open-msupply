@@ -1,6 +1,6 @@
 use crate::WithDBError;
 use domain::{inbound_shipment::InsertInboundShipment, name::Name};
-use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError};
+use repository::{InvoiceRepository, RepositoryError, StorageConnection, TransactionError};
 
 mod generate;
 mod validate;
@@ -11,10 +11,9 @@ use validate::validate;
 use super::OtherPartyError;
 
 pub fn insert_inbound_shipment(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     input: InsertInboundShipment,
 ) -> Result<String, InsertInboundShipmentError> {
-    let connection = connection_manager.connection()?;
     let new_invoice = connection
         .transaction_sync(|connection| {
             validate(&input, &connection)?;
@@ -33,6 +32,7 @@ pub fn insert_inbound_shipment(
     Ok(new_invoice.id)
 }
 
+#[derive(Debug)]
 pub enum InsertInboundShipmentError {
     InvoiceAlreadyExists,
     DatabaseError(RepositoryError),

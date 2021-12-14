@@ -1,7 +1,6 @@
 use domain::{name::Name, outbound_shipment::UpdateOutboundShipment};
 use repository::{
-    InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
-    TransactionError,
+    InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnection, TransactionError,
 };
 
 pub mod generate;
@@ -11,10 +10,9 @@ use generate::generate;
 use validate::validate;
 
 pub fn update_outbound_shipment(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     patch: UpdateOutboundShipment,
 ) -> Result<String, UpdateOutboundShipmentError> {
-    let connection = connection_manager.connection()?;
     let updated_invoice_id = connection.transaction_sync(|connection| {
         let invoice = validate(&patch, &connection)?;
         let invoice_id = invoice.id.to_owned();
@@ -33,6 +31,7 @@ pub fn update_outbound_shipment(
     Ok(updated_invoice_id)
 }
 
+#[derive(Debug)]
 pub enum UpdateOutboundShipmentError {
     CannotReverseInvoiceStatus,
     CannotChangeStatusOfInvoiceOnHold,

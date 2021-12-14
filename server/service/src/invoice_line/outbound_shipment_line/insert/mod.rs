@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use domain::outbound_shipment::InsertOutboundShipmentLine;
 use repository::{
-    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
     TransactionError,
 };
 
@@ -12,10 +12,9 @@ use generate::generate;
 use validate::validate;
 
 pub fn insert_outbound_shipment_line(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     input: InsertOutboundShipmentLine,
 ) -> Result<String, InsertOutboundShipmentLineError> {
-    let connection = connection_manager.connection()?;
     let new_line = connection
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&input, &connection)?;
@@ -35,6 +34,7 @@ pub fn insert_outbound_shipment_line(
     Ok(new_line.id)
 }
 
+#[derive(Debug)]
 pub enum InsertOutboundShipmentLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
