@@ -35,7 +35,15 @@ pub fn get_insert_inbound_shipment_response(
     input: InsertInboundShipmentInput,
 ) -> InsertInboundShipmentResponse {
     use InsertInboundShipmentResponse::*;
-    match insert_inbound_shipment(connection_manager, input.into()) {
+    let connection = match connection_manager.connection() {
+        Ok(con) => con,
+        Err(err) => {
+            return InsertInboundShipmentResponse::Error(ErrorWrapper {
+                error: InsertInboundShipmentErrorInterface::DatabaseError(DatabaseError(err)),
+            })
+        }
+    };
+    match insert_inbound_shipment(&connection, input.into()) {
         Ok(id) => match get_invoice_response(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),

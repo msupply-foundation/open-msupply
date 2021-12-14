@@ -84,7 +84,15 @@ pub fn get_update_outbound_shipment_response(
     input: UpdateOutboundShipmentInput,
 ) -> UpdateOutboundShipmentResponse {
     use UpdateOutboundShipmentResponse::*;
-    match update_outbound_shipment(connection_manager, input.into()) {
+    let connection = match connection_manager.connection() {
+        Ok(con) => con,
+        Err(err) => {
+            return UpdateOutboundShipmentResponse::Error(ErrorWrapper {
+                error: UpdateOutboundShipmentErrorInterface::DatabaseError(DatabaseError(err)),
+            })
+        }
+    };
+    match update_outbound_shipment(&connection, input.into()) {
         Ok(id) => match get_invoice_response(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
