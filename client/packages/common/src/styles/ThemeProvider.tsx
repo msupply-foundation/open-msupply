@@ -28,7 +28,6 @@ const cacheRtl = createCache({
   // cast to the reference to `any`, walk away and pretend nothing happened.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stylisPlugins: [rtlPlugin as any],
-  prepend: true,
 });
 
 const ThemeProvider: React.FC = ({ children }) => {
