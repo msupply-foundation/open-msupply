@@ -3,6 +3,6 @@
     "message.cant-delete-invoices": "Can only delete invoices with a status of 'New'",
     "message.deleted-invoices": "Deleted {{number}} invoices",
     "message.select-rows-to-delete": "Select rows to delete",
-    "message.cant-delete-requisitions": "Can only delete invoices with a status of 'Draft'",
-    "message.deleted-requisitions": "Deleted {{number}} invoices"
+    "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
+    "message.deleted-requisitions": "Deleted {{number}} requisitions"
 }
