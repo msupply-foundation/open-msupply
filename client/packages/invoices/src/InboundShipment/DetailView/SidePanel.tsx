@@ -9,19 +9,21 @@ import {
   PanelField,
   PanelLabel,
   PanelRow,
-  TextArea,
+  BufferedTextArea,
   useNotification,
   useTranslation,
   // ColorSelectButton,
 } from '@openmsupply-client/common';
-import { isInboundEditable } from '../../utils';
 import { InboundShipment } from '../../types';
+import { useInboundFields, useIsInboundEditable } from './api';
 
 interface SidePanelProps {
   draft: InboundShipment;
 }
 
-const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
+const AdditionalInfoSection: FC = () => {
+  const { comment, update } = useInboundFields('comment');
+  const isEditable = useIsInboundEditable();
   const t = useTranslation('common');
 
   return (
@@ -44,10 +46,10 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
-        <TextArea
-          disabled={!isInboundEditable(draft)}
-          onChange={e => draft.update?.('comment', e.target.value)}
-          value={draft.comment}
+        <BufferedTextArea
+          disabled={!isEditable}
+          onChange={e => update({ comment: e.target.value })}
+          value={comment}
         />
       </Grid>
     </DetailPanelSection>
@@ -72,7 +74,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 //   );
 // };
 
-const RelatedDocumentsSection: FC<SidePanelProps> = () => {
+const RelatedDocumentsSection: FC = () => {
   const t = useTranslation(['common', 'distribution']);
   return (
     <DetailPanelSection
@@ -141,8 +143,8 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
         </>
       }
     >
-      <AdditionalInfoSection draft={draft} />
-      <RelatedDocumentsSection draft={draft} />
+      <AdditionalInfoSection />
+      <RelatedDocumentsSection />
     </DetailPanelPortal>
   );
 };

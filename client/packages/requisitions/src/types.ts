@@ -43,7 +43,12 @@ export interface Requisition
 export interface RequisitionRow
   extends Pick<
     RequisitionNode,
-    'id' | 'comment' | 'otherPartyName' | 'otherPartyId' | 'theirReference'
+    | 'id'
+    | 'comment'
+    | 'otherPartyName'
+    | 'otherPartyId'
+    | 'theirReference'
+    | 'status'
   > {
   color: string;
   orderDate: Date | null;

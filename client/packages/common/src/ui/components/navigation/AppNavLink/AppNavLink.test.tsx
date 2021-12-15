@@ -1,8 +1,8 @@
 import React, { FC, useEffect } from 'react';
-import { Box } from '@mui/system';
+import { Box } from '@mui/material';
 import { render } from '@testing-library/react';
 import { Route } from 'react-router';
-import { NavLink } from './NavLink';
+import { AppNavLink } from './AppNavLink';
 import { useDrawer } from '@common/hooks';
 import { TestingProvider, TestingRouter } from '../../../../utils/testing';
 import { TruckIcon } from '@common/icons';
@@ -18,7 +18,7 @@ const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   return null;
 };
 
-describe('NavLink', () => {
+describe('AppNavLink', () => {
   it('Correctly renders a link item with the name correct name and href when the nav link is collapsed', () => {
     const { getByRole } = render(
       <TestingProvider>
@@ -28,7 +28,7 @@ describe('NavLink', () => {
             element={
               <Box>
                 <Wrapper collapsed />
-                <NavLink
+                <AppNavLink
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"
@@ -56,7 +56,7 @@ describe('NavLink', () => {
             element={
               <Box>
                 <Wrapper collapsed={false} />
-                <NavLink
+                <AppNavLink
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"
@@ -84,7 +84,7 @@ describe('NavLink', () => {
             element={
               <Box>
                 <Wrapper collapsed />
-                <NavLink
+                <AppNavLink
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"

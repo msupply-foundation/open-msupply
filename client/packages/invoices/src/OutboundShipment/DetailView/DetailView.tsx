@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { useParams } from 'react-router';
 import {
+  useParams,
   Column,
   TableProvider,
   createTableStore,
@@ -86,6 +86,8 @@ export const DetailView: FC = () => {
     } else {
       setSelectedItem({ item: null, editing: false });
     }
+
+    return true;
   };
 
   const columns = useColumns(

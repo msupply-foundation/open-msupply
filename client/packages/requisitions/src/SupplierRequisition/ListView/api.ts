@@ -97,7 +97,10 @@ export const onCreate =
   (api: OmSupplyApi) =>
   async (requisition: Partial<RequisitionRow>): Promise<string> => {
     const result = await api.insertSupplierRequisition({
-      input: { id: requisition.id ?? '', otherPartyId: '' },
+      input: {
+        id: requisition.id ?? '',
+        otherPartyId: requisition?.otherPartyId ?? '',
+      },
     });
 
     const { insertSupplierRequisition } = result;

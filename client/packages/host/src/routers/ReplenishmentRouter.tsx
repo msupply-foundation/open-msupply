@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import { Navigate, useMatch } from 'react-router-dom';
-import { RouteBuilder } from '@openmsupply-client/common';
+import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const InvoiceService = React.lazy(
@@ -14,11 +13,6 @@ const NameService = React.lazy(
 const RequisitionService = React.lazy(
   () => import('@openmsupply-client/requisitions/src/RequisitionService')
 );
-
-const fullOutboundShipmentPath = RouteBuilder.create(AppRoute.Replenishment)
-  .addPart(AppRoute.InboundShipment)
-  .addWildCard()
-  .build();
 
 const fullInboundShipmentPath = RouteBuilder.create(AppRoute.Replenishment)
   .addPart(AppRoute.InboundShipment)
@@ -36,18 +30,19 @@ const fullSuppliersPath = RouteBuilder.create(AppRoute.Replenishment)
   .build();
 
 export const ReplenishmentRouter: FC = () => {
-  if (useMatch(fullOutboundShipmentPath)) {
-    return <InvoiceService />;
-  }
-  if (useMatch(fullSupplierRequisitionPath)) {
+  const gotoRequisition = useMatch(fullSupplierRequisitionPath);
+  const gotoSuppliers = useMatch(fullSuppliersPath);
+  const gotoInboundShipment = useMatch(fullInboundShipmentPath);
+
+  if (gotoRequisition) {
     return <RequisitionService />;
   }
 
-  if (useMatch(fullSuppliersPath)) {
+  if (gotoSuppliers) {
     return <NameService />;
   }
 
-  if (useMatch(fullInboundShipmentPath)) {
+  if (gotoInboundShipment) {
     return <InvoiceService />;
   }
 

@@ -1,9 +1,8 @@
 import React from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { Story } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
-
-import { styled } from '@mui/system';
 import { InputWithLabelRow } from './InputWithLabelRow';
 
 export default {

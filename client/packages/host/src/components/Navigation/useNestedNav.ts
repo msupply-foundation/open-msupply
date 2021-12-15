@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDrawer } from '@openmsupply-client/common';
-import { useMatch } from 'react-router-dom';
+import { useMatch, useDrawer } from '@openmsupply-client/common';
 
 const matchPath = (key: string, path: string) =>
   `/${key.replace(/^\//, '')}/`.startsWith(path.replace(/\*$/, ''));

@@ -6,9 +6,9 @@ import {
   TranslateIcon,
   useI18N,
   useTranslation,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { SupportedLocales } from '@common/intl';
-import { useNavigate } from 'react-router';
 
 interface LanguageMenuItemProps {
   children: string;

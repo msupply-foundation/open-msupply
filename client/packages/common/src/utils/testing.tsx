@@ -4,7 +4,7 @@ import { SupportedLocales } from '@common/intl';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
-import { MemoryRouter, Routes } from 'react-router';
+import { MemoryRouter, Routes } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../ui/layout/tables';
 import { IntlTestProvider, OmSupplyApiProvider } from '..';
 import { Environment } from '@openmsupply-client/config';

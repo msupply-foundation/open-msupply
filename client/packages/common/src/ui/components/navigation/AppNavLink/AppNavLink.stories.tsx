@@ -1,17 +1,16 @@
 import React, { FC, useEffect } from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
 import { Route } from 'react-router-dom';
-
-import { NavLink, NavLinkProps } from './NavLink';
+import { Box } from '@mui/material';
+import { AppNavLink, AppNavLinkProps } from './AppNavLink';
 import { StoryProvider, TestingRouter } from '../../../../utils/testing';
 import { TruckIcon } from '@common/icons';
 import { useDrawer } from '@common/hooks';
-import { Box } from '@mui/system';
 
 export default {
-  title: 'Components/NavLink',
-  component: NavLink,
-} as ComponentMeta<typeof NavLink>;
+  title: 'Components/AppNavLink',
+  component: AppNavLink,
+} as ComponentMeta<typeof AppNavLink>;
 
 const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   const drawer = useDrawer();
@@ -24,7 +23,7 @@ const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   return null;
 };
 
-const Template: Story<NavLinkProps & { collapsed: boolean }> = args => {
+const Template: Story<AppNavLinkProps & { collapsed: boolean }> = args => {
   return (
     <StoryProvider>
       <TestingRouter initialEntries={['/distribution']}>
@@ -33,7 +32,7 @@ const Template: Story<NavLinkProps & { collapsed: boolean }> = args => {
           element={
             <Box>
               <Wrapper collapsed={args.collapsed} />
-              <NavLink {...args} />
+              <AppNavLink {...args} />
             </Box>
           }
         ></Route>
