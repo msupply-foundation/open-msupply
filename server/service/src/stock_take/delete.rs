@@ -1,6 +1,6 @@
 use repository::{RepositoryError, StockTakeRowRepository, StorageConnection, TransactionError};
 
-use crate::{service_provider::ServiceContext, validate::check_store_exists};
+use crate::{service_provider::ServiceContext, validate::check_store_id_matches};
 
 use super::validate::check_stock_take_exist;
 
@@ -13,17 +13,18 @@ pub enum DeleteStockTakeError {
 
 pub struct DeleteStockTakeInput {
     pub id: String,
-    pub store_id: String,
 }
 
 fn validate(
     connection: &StorageConnection,
-    input: &DeleteStockTakeInput,
+    store_id: &str,
+    stock_take_id: &str,
 ) -> Result<(), DeleteStockTakeError> {
-    if !check_stock_take_exist(connection, &input.id)?.is_some() {
-        return Err(DeleteStockTakeError::StockTakeDoesNotExist);
-    }
-    if !check_store_exists(connection, &input.store_id)? {
+    let existing = match check_stock_take_exist(connection, stock_take_id)? {
+        Some(existing) => existing,
+        None => return Err(DeleteStockTakeError::StockTakeDoesNotExist),
+    };
+    if !check_store_id_matches(store_id, &existing.store_id) {
         return Err(DeleteStockTakeError::InvalidStoreId);
     }
     Ok(())
@@ -32,16 +33,17 @@ fn validate(
 /// Returns the id of the deleted stock_take
 pub fn delete_stock_take(
     ctx: &ServiceContext,
-    input: DeleteStockTakeInput,
+    store_id: &str,
+    stock_take_id: &str,
 ) -> Result<String, DeleteStockTakeError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
-            StockTakeRowRepository::new(&connection).delete(&input.id)?;
+            validate(connection, store_id, stock_take_id)?;
+            StockTakeRowRepository::new(&connection).delete(stock_take_id)?;
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStockTakeError>| error.to_inner_error())?;
-    Ok(input.id)
+    Ok(stock_take_id.to_string())
 }
 
 impl From<RepositoryError> for DeleteStockTakeError {

@@ -9,6 +9,10 @@ pub fn check_record_belongs_to_current_store(
     Ok(store_id == &current_store_id(connection)?)
 }
 
+pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
+    store_id_a == store_id_b
+}
+
 pub fn check_store_exists(
     connection: &StorageConnection,
     store_id: &str,

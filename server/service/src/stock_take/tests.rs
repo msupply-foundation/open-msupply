@@ -9,7 +9,7 @@ mod stock_take_test {
     use crate::{
         service_provider::ServiceProvider,
         stock_take::{
-            delete::{DeleteStockTakeError, DeleteStockTakeInput},
+            delete::DeleteStockTakeError,
             insert::{InsertStockTakeError, InsertStockTakeInput},
         },
     };
@@ -83,26 +83,14 @@ mod stock_take_test {
         // error: stock does not exist
         let store_a = mock_store_a();
         let error = service
-            .delete_stock_take(
-                &context,
-                DeleteStockTakeInput {
-                    id: "invalid".to_string(),
-                    store_id: store_a.id,
-                },
-            )
+            .delete_stock_take(&context, &store_a.id, "invalid")
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeError::StockTakeDoesNotExist);
 
         // error: store does not exist
         let existing_stock_take = mock_stock_take_a();
         let error = service
-            .delete_stock_take(
-                &context,
-                DeleteStockTakeInput {
-                    id: existing_stock_take.id,
-                    store_id: "invalid".to_string(),
-                },
-            )
+            .delete_stock_take(&context, "invalid", &existing_stock_take.id)
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeError::InvalidStoreId);
 
@@ -110,13 +98,7 @@ mod stock_take_test {
         let store_a = mock_store_a();
         let existing_stock_take = mock_stock_take_a();
         let deleted_stock_take_id = service
-            .delete_stock_take(
-                &context,
-                DeleteStockTakeInput {
-                    id: existing_stock_take.id.clone(),
-                    store_id: store_a.id,
-                },
-            )
+            .delete_stock_take(&context, &store_a.id, &existing_stock_take.id)
             .unwrap();
         assert_eq!(existing_stock_take.id, deleted_stock_take_id);
     }

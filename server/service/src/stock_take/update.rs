@@ -26,14 +26,13 @@ use crate::{
     },
     invoice_line::{insert_inbound_shipment_line, insert_outbound_shipment_line},
     service_provider::ServiceContext,
-    validate::check_store_exists,
+    validate::check_store_id_matches,
 };
 
 use super::{query::get_stock_take, validate::check_stock_take_exist};
 
 pub struct UpdateStockTakeInput {
     pub id: String,
-    pub store_id: Option<String>,
     pub comment: Option<String>,
     pub description: Option<String>,
     pub status: Option<StockTakeStatus>,
@@ -52,6 +51,7 @@ fn check_not_finalized(status: &StockTakeStatus) -> bool {
 }
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     input: &UpdateStockTakeInput,
 ) -> Result<StockTakeRow, UpdateStockTakeError> {
     let existing = match check_stock_take_exist(connection, &input.id)? {
@@ -61,10 +61,8 @@ fn validate(
     if !check_not_finalized(&existing.status) {
         return Err(UpdateStockTakeError::CannotEditFinalised);
     }
-    if let Some(ref store_id) = input.store_id {
-        if !check_store_exists(connection, store_id)? {
-            return Err(UpdateStockTakeError::InvalidStoreId);
-        }
+    if !check_store_id_matches(store_id, &existing.store_id) {
+        return Err(UpdateStockTakeError::InvalidStoreId);
     }
 
     Ok(existing)
@@ -212,7 +210,6 @@ fn generate(
     connection: &StorageConnection,
     UpdateStockTakeInput {
         id,
-        store_id,
         comment,
         description,
         status,
@@ -230,7 +227,7 @@ fn generate(
     }
     let stock_take_row = StockTakeRow {
         id,
-        store_id: store_id.unwrap_or(existing.store_id),
+        store_id: existing.store_id,
         comment: comment.or(existing.comment),
         description: description.or(existing.description),
         status: status.unwrap_or(existing.status),
@@ -250,12 +247,13 @@ fn generate(
 
 pub fn update_stock_take(
     ctx: &ServiceContext,
+    store_id: &str,
     input: UpdateStockTakeInput,
 ) -> Result<StockTake, UpdateStockTakeError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let existing = validate(connection, &input)?;
+            let existing = validate(connection, store_id, &input)?;
             let (stock_take_row, shipments) = generate(connection, input, existing)?;
 
             // write new shipments
