@@ -2,12 +2,13 @@ use repository::{RepositoryError, StockTakeRowRepository, StorageConnection, Tra
 
 use crate::{service_provider::ServiceContext, validate::check_store_id_matches};
 
-use super::validate::check_stock_take_exist;
+use super::validate::{check_no_stock_take_lines_exist, check_stock_take_exist};
 
 #[derive(Debug, PartialEq)]
 pub enum DeleteStockTakeError {
     DatabaseError(RepositoryError),
     StockTakeDoesNotExist,
+    StockTakeLinesExist,
     InvalidStoreId,
 }
 
@@ -26,6 +27,9 @@ fn validate(
     };
     if !check_store_id_matches(store_id, &existing.store_id) {
         return Err(DeleteStockTakeError::InvalidStoreId);
+    }
+    if !check_no_stock_take_lines_exist(connection, stock_take_id)? {
+        return Err(DeleteStockTakeError::StockTakeLinesExist);
     }
     Ok(())
 }

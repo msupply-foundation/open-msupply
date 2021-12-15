@@ -55,6 +55,8 @@ mod stock_take_test {
             .unwrap_err();
         assert_eq!(error, InsertStockTakeError::InvalidStoreId);
 
+        // TODO error: StockTakeLinesExist
+
         // success
         let store_a = mock_store_a();
         service
