@@ -2,10 +2,17 @@ import React from 'react';
 import { FormControlLabel, Switch as MuiSwitch, Theme } from '@mui/material';
 
 type LabelPlacement = 'bottom' | 'end' | 'start' | 'top';
-
+type SwitchColor =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'default'
+  | 'gray';
 interface SwitchProps {
   checked?: boolean;
-  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'default';
+  color?: SwitchColor;
   defaultChecked?: boolean;
   disabled?: boolean;
   label?: JSX.Element | number | string;
@@ -33,6 +40,17 @@ const getLabelStyle = (
   }
 };
 
+const getTrackBorderColor = (color?: SwitchColor) => (theme: Theme) => {
+  switch (color) {
+    case 'gray':
+      return theme.palette.gray.dark;
+    case 'secondary':
+      return theme.palette.secondary.dark;
+    default:
+      return theme.palette.primary.dark;
+  }
+};
+
 export const Switch: React.FC<SwitchProps> = ({
   checked,
   color,
@@ -50,24 +68,27 @@ export const Switch: React.FC<SwitchProps> = ({
     padding: isSmall ? '1px' : '6px 12px',
     '& .MuiSwitch-switchBase': {
       paddingLeft: '3px',
-
       right: 'auto', // emotion is setting this and making a mess
+    },
+    '& .MuiSwitch-thumb': {
+      color: disabled ? 'gray.light' : 'gray.main',
     },
     '& .Mui-checked .MuiSwitch-thumb': {
       color: 'inherit',
     },
-    '& .MuiSwitch-thumb': {
-      color: 'gray.dark',
-    },
     '& .MuiSwitch-track': {
       borderWidth: 1,
       borderStyle: 'solid',
-      borderColor: 'border',
+      borderColor: 'gray.main',
       backgroundColor: '#fff',
+      borderRadius: isSmall ? '11px' : '13px',
       transition: (theme: Theme) =>
         theme.transitions.create(['background-color'], {
           duration: 500,
         }),
+    },
+    '& .Mui-checked ~ .MuiSwitch-track': {
+      borderColor: getTrackBorderColor(color),
     },
   };
 

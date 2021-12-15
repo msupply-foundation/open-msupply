@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   DataTable,
   ObjectWithStringKeys,
@@ -8,11 +8,11 @@ import {
   Box,
   useTranslation,
   Grid,
-  useToggle,
   Switch,
   alpha,
   useColumns,
-  ifTheSameElseDefault,
+  useLocalStorage,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
 
@@ -36,14 +36,12 @@ const Expand: FC<{
     'packSize',
     'unitQuantity',
     'sellPricePerUnit',
-    'lineTotal',
   ]);
 
   const batches = Object.values(rowData.batches).map(batch => ({
     ...batch,
     unitQuantity: batch.numberOfPacks * batch.packSize,
     sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
-    lineTotal: (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
   }));
   const BatchTable = React.useMemo(
     () => (
@@ -60,14 +58,14 @@ const Expand: FC<{
   if (!rowData?.canExpand) return <></>;
 
   return (
-    <Box p={1} style={{ padding: '0 50px 0 200px' }}>
+    <Box p={1} style={{ padding: '0 100px', width: '100%' }}>
       <Box
         flex={1}
         display="flex"
         height="100%"
         borderRadius={4}
         sx={{
-          backgroundColor: theme => alpha(theme.palette['gray']['light'], 0.2),
+          backgroundColor: theme => alpha(theme.palette.gray.light, 0.2),
         }}
       >
         {BatchTable}
@@ -79,36 +77,46 @@ const Expand: FC<{
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
+  const [isGroupedByItem, setIsGroupedByItem] = useLocalStorage('/groupbyitem');
   const { pagination } = usePagination();
-  const { isOn, toggle } = useToggle();
+  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
+  const t = useTranslation('distribution');
+  const { setIsGrouped } = useTableStore();
 
-  const [grouped, setGrouped] = React.useState<OutboundShipmentSummaryItem[]>(
-    []
-  );
   const paged = data.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
 
-  React.useEffect(() => {
-    const newGrouped: OutboundShipmentSummaryItem[] = [];
-    paged.forEach(row => {
-      const batches = Object.values(row.batches);
-      const lineTotal = (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
+  const activeRows = useMemo(
+    () => grouped.filter(({ isDeleted }) => !isDeleted),
+    [grouped]
+  );
 
-      if (isOn) {
-        newGrouped.push({
-          ...row,
-          lineTotal,
-          sellPricePerUnit: lineTotal / row.unitQuantity,
-          batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-          expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
-          canExpand: Object.keys(row.batches).length > 1,
-        });
-      } else {
+  const toggleGrouped = () => {
+    setIsGroupedByItem({
+      ...isGroupedByItem,
+      outboundShipment: !isGroupedByItem.outboundShipment,
+    });
+  };
+
+  useEffect(() => {
+    if (isGroupedByItem.outboundShipment) {
+      setGrouped(paged);
+    } else {
+      const newGrouped: OutboundShipmentSummaryItem[] = [];
+      paged.forEach(row => {
+        const batches = Object.values(row.batches);
+        const lineTotal =
+          (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
+
         batches.forEach(batch => {
           newGrouped.push({
             ...row,
+            id: batch.id,
+            numberOfPacks: batch.numberOfPacks,
+            unitQuantity: batch.numberOfPacks * batch.packSize,
+            locationName: batch.locationName,
             batch: batch.batch,
             expiryDate: batch.expiryDate,
             packSize: batch.packSize,
@@ -117,29 +125,31 @@ export const GeneralTabComponent: FC<
             canExpand: false,
           });
         });
-      }
-    });
-    setGrouped(newGrouped);
-  }, [isOn, data]);
+        setGrouped(newGrouped);
+      });
+    }
+  }, [isGroupedByItem, data]);
 
-  const t = useTranslation('distribution');
-  const activeRows = grouped.filter(({ isDeleted }) => !isDeleted);
+  useEffect(() => {
+    setIsGrouped(isGroupedByItem.outboundShipment);
+  }, [isGroupedByItem, setIsGrouped]);
 
   return (
-    <Grid container flexDirection="column" flexWrap="nowrap">
+    <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
       <Grid
         item
-        justifyContent="flex-end"
+        justifyContent="flex-start"
         display="flex"
         flex={0}
-        sx={{ padding: '5px', paddingRight: '15px', width: '100%' }}
+        sx={{ padding: '5px', paddingLeft: '15px' }}
       >
         <Switch
           label={t('label.group-by-item')}
-          onChange={toggle}
-          checked={isOn}
+          onChange={toggleGrouped}
+          checked={isGroupedByItem.outboundShipment}
           size="small"
-          disabled={grouped.length === 0}
+          disabled={activeRows.length === 0}
+          color="secondary"
         />
       </Grid>
       <Grid item>
@@ -148,7 +158,7 @@ export const GeneralTabComponent: FC<
           ExpandContent={Expand}
           pagination={{ ...pagination, total: activeRows.length }}
           columns={columns}
-          data={grouped}
+          data={activeRows}
           onChangePage={pagination.onChangePage}
           noDataMessage={t('error.no-items')}
         />
