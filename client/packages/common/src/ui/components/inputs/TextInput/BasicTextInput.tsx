@@ -1,12 +1,14 @@
 import React, { FC } from 'react';
 import { StandardTextFieldProps, TextField } from '@mui/material';
 
+export type BasicTextInputProps = StandardTextFieldProps;
+
 /**
  * Very basic TextInput component with some simple styling applied where you can
  * build your input on top.
  */
 
-export const BasicTextInput: FC<StandardTextFieldProps> = React.forwardRef(
+export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
   ({ sx, InputProps, error, ...props }, ref) => (
     <TextField
       ref={ref}
