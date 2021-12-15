@@ -1,7 +1,7 @@
 use super::{DBType, StorageConnection};
 
 use crate::{
-    diesel_macros::apply_equal_filter,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter},
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -28,6 +28,11 @@ pub struct StockLineRepository<'a> {
 impl<'a> StockLineRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         StockLineRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<StockLineFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter);
+        Ok(query.count().get_result(&self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -66,6 +71,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, f.id, stock_line_dsl::id);
         apply_equal_filter!(query, f.item_id, stock_line_dsl::item_id);
         apply_equal_filter!(query, f.location_id, stock_line_dsl::location_id);
+        apply_date_time_filter!(query, f.expiry_date, stock_line_dsl::expiry_date);
     }
 
     query

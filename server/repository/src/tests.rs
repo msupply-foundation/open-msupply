@@ -94,7 +94,7 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 1,
-                expiry_date: None,
+                expiry_date: Some(NaiveDate::from_ymd(2021, 12, 13)),
                 on_hold: false,
                 note: None,
                 location_id: None,
@@ -364,12 +364,14 @@ mod repository_test {
         InvoiceRepository, ItemRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
         NumberRowRepository, OutboundShipmentRepository, RepositoryError,
-        RequisitionLineRepository, RequisitionRepository, StockLineRowRepository, StoreRepository,
-        UserAccountRepository,
+        RequisitionLineRepository, RequisitionRepository, StockLineRepository,
+        StockLineRowRepository, StoreRepository, UserAccountRepository,
     };
+    use chrono::Duration;
     use domain::{
         name::{NameFilter, NameSort, NameSortField},
-        Pagination, SimpleStringFilter,
+        stock_line::StockLineFilter,
+        DateFilter, Pagination, SimpleStringFilter,
     };
 
     #[actix_rt::test]
@@ -587,6 +589,54 @@ mod repository_test {
             .find_one_by_id(stock_line.id.as_str())
             .unwrap();
         assert_eq!(stock_line, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_query() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-item-line-query-repository");
+        test_db::setup(&settings).await;
+        let connection_manager = get_storage_connection_manager(&settings);
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        let item_repo = ItemRepository::new(&connection);
+        item_repo.insert_one(&data::item_1()).await.unwrap();
+        let name_repo = NameRepository::new(&connection);
+        name_repo.insert_one(&data::name_1()).await.unwrap();
+        let store_repo = StoreRepository::new(&connection);
+        store_repo.insert_one(&data::store_1()).await.unwrap();
+        let stock_line = data::stock_line_1();
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+        stock_line_repo.upsert_one(&stock_line).unwrap();
+
+        // test expiry data filter
+        let expiry_date = stock_line.expiry_date.unwrap();
+        let stock_line_repo = StockLineRepository::new(&connection);
+        let result = stock_line_repo
+            .query_by_filter(StockLineFilter::new().expiry_date(DateFilter {
+                equal_to: None,
+                before_or_equal_to: Some(expiry_date - Duration::days(1)),
+                after_or_equal_to: None,
+            }))
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        let result = stock_line_repo
+            .query_by_filter(StockLineFilter::new().expiry_date(DateFilter {
+                equal_to: None,
+                before_or_equal_to: Some(expiry_date),
+                after_or_equal_to: None,
+            }))
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        let result = stock_line_repo
+            .query_by_filter(StockLineFilter::new().expiry_date(DateFilter {
+                equal_to: None,
+                before_or_equal_to: Some(expiry_date + Duration::days(1)),
+                after_or_equal_to: None,
+            }))
+            .unwrap();
+        assert_eq!(result.len(), 1);
     }
 
     #[actix_rt::test]
@@ -957,11 +1007,14 @@ mod repository_test {
     mod test {
         use domain::{master_list_line::MasterListLineFilter, EqualFilter};
 
-        use crate::{mock::MockDataInserts, test_db, MasterListLineRepository};
+        use crate::{
+            mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
+            test_db, MasterListLineRepository,
+        };
 
         #[actix_rt::test]
         async fn test_master_list_line_repository_filter() {
-            let (mock_data, connection, _, _) = test_db::setup_all(
+            let (_, connection, _, _) = test_db::setup_all(
                 "test_master_list_line_repository_filter",
                 MockDataInserts::all(),
             )
@@ -978,10 +1031,7 @@ mod repository_test {
                 ))
                 .unwrap();
 
-            for (count, line) in mock_data["base"]
-                .full_master_list
-                .get("master_list_master_list_line_filter_test")
-                .unwrap()
+            for (count, line) in mock_master_list_master_list_line_filter_test()
                 .lines
                 .iter()
                 .enumerate()

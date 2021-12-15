@@ -10,7 +10,7 @@ pub mod outbound_shipment;
 pub mod shipment_tax_update;
 pub mod stock_line;
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct SimpleStringFilter {
@@ -67,7 +67,7 @@ impl EqualFilter<String> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
@@ -83,6 +83,24 @@ impl DatetimeFilter {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct DateFilter {
+    pub equal_to: Option<NaiveDate>,
+    pub before_or_equal_to: Option<NaiveDate>,
+    pub after_or_equal_to: Option<NaiveDate>,
+}
+
+impl DateFilter {
+    pub fn date_range(from: NaiveDate, to: NaiveDate) -> DateFilter {
+        DateFilter {
+            equal_to: None,
+            after_or_equal_to: Some(from),
+            before_or_equal_to: Some(to),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct Sort<T> {
     pub key: T,

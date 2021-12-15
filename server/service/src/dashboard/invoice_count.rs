@@ -1,6 +1,4 @@
-use chrono::{
-    DateTime, Datelike, FixedOffset, Local, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday,
-};
+use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
 use domain::{
     invoice::{InvoiceFilter, InvoiceStatus, InvoiceType},
     DatetimeFilter, EqualFilter,
@@ -20,7 +18,7 @@ pub enum CountTimeRange {
     ThisWeek,
 }
 
-pub trait InvoiceCountServiceTrait {
+pub trait InvoiceCountServiceTrait: Send + Sync {
     /// Returns number of invoices of a certain status for today
     ///
     /// Arguments
@@ -34,7 +32,7 @@ pub trait InvoiceCountServiceTrait {
         invoice_status: &InvoiceStatus,
         range: &CountTimeRange,
         now: &DateTime<Utc>,
-        timezone_offset: &Option<i32>,
+        timezone_offset: &FixedOffset,
     ) -> Result<i64, InvoiceCountError> {
         // default implementation:
         InvoiceCountService {}.invoices_count(
@@ -69,13 +67,6 @@ fn to_local(datetime: &DateTime<Utc>, timezone: &FixedOffset) -> NaiveDateTime {
 fn to_utc(datetime: &NaiveDateTime, timezone: &FixedOffset) -> Option<DateTime<Utc>> {
     let datetime_tz = timezone.from_local_datetime(&datetime).single()?;
     Some(DateTime::from(datetime_tz))
-}
-
-fn offset_to_timezone(timezone_offset: &Option<i32>) -> Option<FixedOffset> {
-    match timezone_offset {
-        None => Some(Local::now().offset().clone()),
-        Some(offset) => FixedOffset::east_opt(offset * 60 * 60),
-    }
 }
 
 fn start_of_day(datetime: &NaiveDateTime) -> NaiveDateTime {
@@ -136,18 +127,15 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         invoice_status: &InvoiceStatus,
         range: &CountTimeRange,
         now: &DateTime<Utc>,
-        timezone_offset: &Option<i32>,
+        timezone_offset: &FixedOffset,
     ) -> Result<i64, InvoiceCountError> {
         let repo = InvoiceQueryRepository::new(&ctx.connection);
-        let tz = offset_to_timezone(timezone_offset).ok_or(InvoiceCountError::BadTimezoneOffset)?;
-        let now = to_local(now, &tz);
+        let now = to_local(now, &timezone_offset);
         let oldest = match range {
-            CountTimeRange::Today => {
-                to_utc(&start_of_day(&now), &tz).ok_or(InvoiceCountError::BadTimezoneOffset)?
-            }
-            CountTimeRange::ThisWeek => {
-                to_utc(&start_of_week(&now), &tz).ok_or(InvoiceCountError::BadTimezoneOffset)?
-            }
+            CountTimeRange::Today => to_utc(&start_of_day(&now), &timezone_offset)
+                .ok_or(InvoiceCountError::BadTimezoneOffset)?,
+            CountTimeRange::ThisWeek => to_utc(&start_of_week(&now), &timezone_offset)
+                .ok_or(InvoiceCountError::BadTimezoneOffset)?,
         };
         let count = invoices_count(
             &repo,
@@ -189,6 +177,7 @@ mod invoice_count_service_test {
         },
         test_db, InvoiceRepository, NameRepository, StoreRepository,
     };
+    use util::timezone::offset_to_timezone;
 
     use super::*;
 
@@ -262,7 +251,7 @@ mod invoice_count_service_test {
         // 1) UTC 2021_12_7 20:30 -> NZ 2021_12_8 13:30
         // 2) UTC 2021_12_8 08:30 -> NZ 2021_12_8 21:30
 
-        let nz_tz_offset = 13;
+        let nz_tz_offset = offset_to_timezone(&Some(13)).unwrap();
         // Create UTC date that is already one day later in NZ time, i.e. both event should be
         // captured
         let test_now = Utc.ymd(2021, 12, 7).and_hms_milli(15, 30, 0, 0);
@@ -273,7 +262,7 @@ mod invoice_count_service_test {
                 &InvoiceStatus::New,
                 &CountTimeRange::Today,
                 &test_now,
-                &Some(nz_tz_offset),
+                &nz_tz_offset,
             )
             .unwrap();
         assert_eq!(today, 2);
@@ -284,13 +273,13 @@ mod invoice_count_service_test {
                 &InvoiceStatus::New,
                 &CountTimeRange::ThisWeek,
                 &test_now,
-                &Some(nz_tz_offset),
+                &nz_tz_offset,
             )
             .unwrap();
         assert_eq!(this_week, 2);
 
         // Expect only one entry today in UTC tz
-        let nz_tz_offset = 0;
+        let utc_offset = offset_to_timezone(&Some(0)).unwrap();
         let test_now = Utc.ymd(2021, 12, 8).and_hms_milli(15, 30, 0, 0);
         let today = service
             .invoices_count(
@@ -299,7 +288,7 @@ mod invoice_count_service_test {
                 &InvoiceStatus::New,
                 &CountTimeRange::Today,
                 &test_now,
-                &Some(nz_tz_offset),
+                &utc_offset,
             )
             .unwrap();
         assert_eq!(today, 1);
@@ -310,7 +299,7 @@ mod invoice_count_service_test {
                 &InvoiceStatus::New,
                 &CountTimeRange::ThisWeek,
                 &test_now,
-                &Some(nz_tz_offset),
+                &utc_offset,
             )
             .unwrap();
         assert_eq!(this_week, 2);
