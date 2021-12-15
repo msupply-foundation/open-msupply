@@ -3,7 +3,7 @@ CREATE TABLE stock_take (
     store_id TEXT NOT NULL REFERENCES store(id),
     comment	TEXT,
     description TEXT,
-    status TEXT,
+    status TEXT CHECK (status IN ('NEW', 'FINALIZED')) NOT NULL,
     created_datetime TEXT NOT NULL,
     finalised_datetime TEXT,
     inventory_additions_id TEXT REFERENCES invoice(id),
