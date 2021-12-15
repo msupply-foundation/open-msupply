@@ -52,7 +52,7 @@ pub use master_list_line::MasterListLineRow;
 pub use master_list_name_join::MasterListNameJoinRow;
 pub use name::NameRow;
 pub use name_store_join::NameStoreJoinRow;
-pub use number::NumberRow;
+pub use number::{NumberRow, NumberRowType};
 pub use requisition::{RequisitionRow, RequisitionRowType};
 pub use requisition_line::RequisitionLineRow;
 pub use stock_line::StockLineRow;

@@ -234,9 +234,9 @@ mod tests {
         let (_, storage_connection, _, _) = test_db::setup_all(
             "test_item_query_filter_repository",
             MockDataInserts::none()
-                .names()
                 .units()
                 .items()
+                .names()
                 .full_master_list(),
         )
         .await;

@@ -14,7 +14,7 @@ use serde::Serialize;
 use service::invoice::get_invoice;
 
 use super::{
-    Connector, ConnectorError, DatetimeFilterInput, EqualFilterInput, EqualFilterNumberInput,
+    Connector, ConnectorError, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
     EqualFilterStringInput, ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError,
     NodeErrorInterface, SimpleStringFilterInput, SortInput,
 };
@@ -40,7 +40,7 @@ pub type InvoiceSortInput = SortInput<InvoiceSortFieldInput>;
 
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
-    pub invoice_number: Option<EqualFilterNumberInput>,
+    pub invoice_number: Option<EqualFilterBigNumberInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterInput<InvoiceNodeType>>,
@@ -147,7 +147,7 @@ impl InvoiceNode {
         self.invoice.status.clone().into()
     }
 
-    pub async fn invoice_number(&self) -> i32 {
+    pub async fn invoice_number(&self) -> i64 {
         self.invoice.invoice_number
     }
 

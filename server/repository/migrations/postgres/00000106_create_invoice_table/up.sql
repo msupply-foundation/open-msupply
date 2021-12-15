@@ -20,7 +20,7 @@ CREATE TABLE invoice (
     -- For outbound shipments, the id of the issuing store.
     -- For inbound shipments, the id of the receiving store.
     store_id text NOT NULL REFERENCES store (id),
-    invoice_number integer NOT NULL,
+    invoice_number BIGINT NOT NULL,
     type invoice_type NOT NULL,
     status invoice_status NOT NULL,
     on_hold boolean NOT NULL,

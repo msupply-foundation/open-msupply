@@ -115,7 +115,7 @@ table! {
         id -> Text,
         name_id -> Text,
         store_id -> Text,
-        invoice_number -> Integer,
+        invoice_number -> BigInt,
         #[sql_name = "type"] type_ -> crate::schema::invoice::InvoiceRowTypeMapping,
         status -> crate::schema::invoice::InvoiceRowStatusMapping,
         on_hold -> Bool,
@@ -221,6 +221,7 @@ table! {
         id -> Text,
         value -> BigInt,
         store_id -> Text,
+        #[sql_name = "type"] type_ -> crate::schema::number::NumberRowTypeMapping,
     }
 }
 

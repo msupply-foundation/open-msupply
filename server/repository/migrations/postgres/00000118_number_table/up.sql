@@ -1,8 +1,13 @@
--- Numbering table holding a list of named counters
+CREATE TYPE number_type AS ENUM (
+    'INBOUND_SHIPMENT',
+    'OUTBOUND_SHIPMENT'
+);
+
+-- Numbering table holding a list of typed counters
 CREATE TABLE number (
-    -- unique key in the format: `${name}_${store_id}`
     id TEXT NOT NULL PRIMARY KEY,
     -- current counter value
     value BIGINT NOT NULL,
-    store_id TEXT NOT NULL REFERENCES store(id)
+    store_id TEXT NOT NULL REFERENCES store(id),
+    type number_type NOT NULL
 )

@@ -359,13 +359,18 @@ mod repository_test {
     }
 
     use crate::{
-        database_settings::get_storage_connection_manager, schema::InvoiceStatsRow, test_db,
-        CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
+        database_settings::get_storage_connection_manager,
+        mock::{
+            mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
+            MockDataInserts,
+        },
+        schema::{InvoiceStatsRow, NumberRowType},
+        test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
         InvoiceRepository, ItemRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
-        NumberRowRepository, OutboundShipmentRepository, RepositoryError,
-        RequisitionLineRepository, RequisitionRepository, StockLineRepository,
-        StockLineRowRepository, StoreRepository, UserAccountRepository,
+        NumberRowRepository, OutboundShipmentRepository, RequisitionLineRepository,
+        RequisitionRepository, StockLineRepository, StockLineRowRepository, StoreRepository,
+        UserAccountRepository,
     };
     use chrono::Duration;
     use domain::{
@@ -972,35 +977,28 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_number() {
-        let settings = test_db::get_test_db_settings("omsupply-database-number");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
-        let connection = connection_manager.connection().unwrap();
+        let (_, connection, _, _) = test_db::setup_all("test_number", MockDataInserts::all()).await;
 
-        let name_1 = data::name_1();
-        NameRepository::new(&connection)
-            .upsert_one(&name_1)
-            .unwrap();
-        let store_1 = data::store_1();
-        StoreRepository::new(&connection)
-            .upsert_one(&store_1)
-            .unwrap();
-
-        let test_counter = "test_counter_name";
         let repo = NumberRowRepository::new(&connection);
-        matches!(
-            repo.find_one_by_id(test_counter),
-            Err(RepositoryError::NotFound)
-        );
 
-        let row = repo.increment(test_counter, &store_1.id).unwrap();
-        assert_eq!(1, row.value);
-        let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
-        assert_eq!(1, row.value);
-        let row = repo.increment(test_counter, &store_1.id).unwrap();
-        assert_eq!(2, row.value);
-        let row = repo.find_one_by_id(test_counter).unwrap().unwrap();
-        assert_eq!(2, row.value);
+        let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
+        let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
+
+        let result = repo
+            .find_one_by_type_and_store(&NumberRowType::InboundShipment, "store_a")
+            .unwrap();
+        assert_eq!(result, Some(inbound_shipment_store_a_number));
+
+        let result = repo
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_a")
+            .unwrap();
+        assert_eq!(result, Some(outbound_shipment_store_b_number));
+
+        // Test not existing
+        let result = repo
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_b")
+            .unwrap();
+        assert_eq!(result, None);
     }
 
     #[cfg(test)]
