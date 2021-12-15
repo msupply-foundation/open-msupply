@@ -3,7 +3,7 @@ use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
 use service::invoice::get_invoices;
 
-use async_graphql::{Context, Object};
+use async_graphql::{Context, Object, Result};
 
 use super::types::*;
 pub struct Queries;
@@ -24,6 +24,8 @@ pub mod names;
 pub use self::names::*;
 pub mod item;
 pub use self::item::*;
+pub mod stock_counts;
+pub use self::stock_counts::*;
 
 #[Object]
 impl Queries {
@@ -151,7 +153,15 @@ impl Queries {
     pub async fn invoice_counts(
         &self,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
-    ) -> InvoiceCounts {
+    ) -> Result<InvoiceCounts> {
         invoice_counts(timezone_offset)
+    }
+
+    pub async fn stock_counts(
+        &self,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+        #[graphql(desc = "Expiring soon threshold")] days_till_expired: Option<i32>,
+    ) -> Result<StockCounts> {
+        stock_counts(timezone_offset, days_till_expired)
     }
 }

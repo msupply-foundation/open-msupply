@@ -1,5 +1,7 @@
 use chrono::NaiveDate;
 
+use crate::DateFilter;
+
 use super::{EqualFilter, Sort};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -24,6 +26,7 @@ pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
+    pub expiry_date: Option<DateFilter>,
 }
 
 impl StockLineFilter {
@@ -32,6 +35,7 @@ impl StockLineFilter {
             id: None,
             item_id: None,
             location_id: None,
+            expiry_date: None,
         }
     }
 
@@ -47,6 +51,11 @@ impl StockLineFilter {
 
     pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
         self.location_id = Some(filter);
+        self
+    }
+
+    pub fn expiry_date(mut self, filter: DateFilter) -> Self {
+        self.expiry_date = Some(filter);
         self
     }
 }
