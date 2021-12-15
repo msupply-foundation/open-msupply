@@ -111,6 +111,7 @@ export const DetailView: FC = () => {
         accessor: row =>
           ((row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0)) /
           row.unitQuantity,
+        sortable: false,
       },
       {
         label: 'label.line-total',
@@ -119,6 +120,7 @@ export const DetailView: FC = () => {
         align: ColumnAlign.Right,
         format: ColumnFormat.Currency,
         accessor: row => (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0),
+        sortable: false,
       },
       getRowExpandColumn<OutboundShipmentSummaryItem>(),
       GenericColumnKey.Selection,

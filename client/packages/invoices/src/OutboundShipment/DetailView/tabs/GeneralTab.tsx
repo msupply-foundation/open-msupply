@@ -58,7 +58,7 @@ const Expand: FC<{
   if (!rowData?.canExpand) return <></>;
 
   return (
-    <Box p={1} style={{ padding: '0 100px 0 100px' }}>
+    <Box p={1} style={{ padding: '0 100px', width: '100%' }}>
       <Box
         flex={1}
         display="flex"
@@ -77,19 +77,31 @@ const Expand: FC<{
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
-  const [storedIsGrouped, setStoredIsGrouped] = useLocalStorage(
-    '/outboundshipment/groupbyitem'
-  );
+  const [isGroupedByItem, setIsGroupedByItem] = useLocalStorage('/groupbyitem');
   const { pagination } = usePagination();
-  const [isGroupedByItem, setIsGroupedByItem] = useState(storedIsGrouped);
+  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
+  const t = useTranslation('distribution');
+  const { setIsGrouped } = useTableStore();
+
   const paged = data.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
-  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
+
+  const activeRows = useMemo(
+    () => grouped.filter(({ isDeleted }) => !isDeleted),
+    [grouped]
+  );
+
+  const toggleGrouped = () => {
+    setIsGroupedByItem({
+      ...isGroupedByItem,
+      outboundShipment: !isGroupedByItem.outboundShipment,
+    });
+  };
 
   useEffect(() => {
-    if (isGroupedByItem) {
+    if (isGroupedByItem.outboundShipment) {
       setGrouped(paged);
     } else {
       const newGrouped: OutboundShipmentSummaryItem[] = [];
@@ -101,6 +113,7 @@ export const GeneralTabComponent: FC<
         batches.forEach(batch => {
           newGrouped.push({
             ...row,
+            id: batch.id,
             numberOfPacks: batch.numberOfPacks,
             unitQuantity: batch.numberOfPacks * batch.packSize,
             locationName: batch.locationName,
@@ -117,32 +130,23 @@ export const GeneralTabComponent: FC<
     }
   }, [isGroupedByItem, data]);
 
-  const t = useTranslation('distribution');
-  const activeRows = useMemo(
-    () => grouped.filter(({ isDeleted }) => !isDeleted),
-    [grouped]
-  );
-  const { setIsGrouped } = useTableStore();
-  const toggleGrouped = () => {
-    const newIsGroupedByItem = !isGroupedByItem;
-    setIsGrouped(newIsGroupedByItem);
-    setIsGroupedByItem(newIsGroupedByItem);
-    setStoredIsGrouped(newIsGroupedByItem);
-  };
+  useEffect(() => {
+    setIsGrouped(isGroupedByItem.outboundShipment);
+  }, [isGroupedByItem, setIsGrouped]);
 
   return (
-    <Grid container flexDirection="column" flexWrap="nowrap">
+    <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
       <Grid
         item
-        justifyContent="flex-end"
+        justifyContent="flex-start"
         display="flex"
         flex={0}
-        sx={{ padding: '5px', paddingRight: '15px', width: '100%' }}
+        sx={{ padding: '5px', paddingLeft: '15px' }}
       >
         <Switch
           label={t('label.group-by-item')}
           onChange={toggleGrouped}
-          checked={isGroupedByItem}
+          checked={isGroupedByItem.outboundShipment}
           size="small"
           disabled={activeRows.length === 0}
           color="secondary"
