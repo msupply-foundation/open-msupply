@@ -3,7 +3,7 @@ import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
-  BasicTextInput,
+  BufferedTextInput,
   Grid,
   DropdownMenu,
   DropdownMenuItem,
@@ -13,6 +13,7 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
+import { useInboundFields } from './api';
 import { InboundShipment, InboundShipmentItem } from '../../types';
 import { isInboundEditable } from '../../utils';
 
@@ -21,7 +22,12 @@ interface ToolbarProps {
   update: (patch: Partial<InboundShipment>) => Promise<InboundShipment>;
 }
 
-export const Toolbar: FC<ToolbarProps> = ({ draft, update }) => {
+export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+  const { otherParty, theirReference, update } = useInboundFields([
+    'otherParty',
+    'theirReference',
+  ]);
+
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
 
@@ -54,14 +60,14 @@ export const Toolbar: FC<ToolbarProps> = ({ draft, update }) => {
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
-            {draft.otherParty && (
+            {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
                 Input={
                   <NameSearchInput
                     type="supplier"
                     disabled={!isInboundEditable(draft)}
-                    value={draft.otherParty}
+                    value={otherParty}
                     onChange={name => {
                       update({ otherParty: name });
                     }}
@@ -72,11 +78,11 @@ export const Toolbar: FC<ToolbarProps> = ({ draft, update }) => {
             <InputWithLabelRow
               label={t('label.supplier-ref')}
               Input={
-                <BasicTextInput
+                <BufferedTextInput
                   disabled={!isInboundEditable(draft)}
                   size="small"
                   sx={{ width: 250 }}
-                  value={draft?.theirReference ?? ''}
+                  value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
                   }}

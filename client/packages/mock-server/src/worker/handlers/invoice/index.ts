@@ -1,3 +1,4 @@
+import { MutationService } from './../../../api/mutations/index';
 import {
   mockInvoiceQuery,
   mockInvoicesQuery,
@@ -10,6 +11,7 @@ import {
   DeleteInboundShipmentInput,
   BatchInboundShipmentInput,
   BatchOutboundShipmentInput,
+  mockUpdateInboundShipmentMutation,
 } from '@openmsupply-client/common/src/types';
 import { ResolverService } from '../../../api/resolvers';
 import { Invoice as InvoiceSchema } from '../../../schema/Invoice';
@@ -31,6 +33,14 @@ const invoicesQuery = mockInvoicesQuery((req, res, ctx) => {
     ctx.data({ invoices: ResolverService.invoice.list(req.variables) })
   );
 });
+
+const updateInboundShipmentMutation = mockUpdateInboundShipmentMutation(
+  (req, res, ctx) => {
+    const { input } = req.variables;
+    const updateInboundShipment = MutationService.invoice.inbound.update(input);
+    return res(ctx.data({ updateInboundShipment }));
+  }
+);
 
 const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
   (req, res, ctx) => {
@@ -330,4 +340,5 @@ export const InvoiceHandlers = [
   insertOutboundShipmentMutation,
   upsertInboundShipmentMutation,
   upsertOutboundShipmentMutation,
+  updateInboundShipmentMutation,
 ];

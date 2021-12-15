@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Name } from '@openmsupply-client/common';
+import { Name, useBufferState } from '@openmsupply-client/common';
 import {
   Autocomplete,
   defaultOptionMapper,
@@ -30,20 +30,24 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
   const isCustomerLookup = type === 'customer';
   const filter = isCustomerLookup ? { isCustomer: true } : { isSupplier: true };
   const { data, isLoading } = useNames(filter);
+  const [buffer, setBuffer] = useBufferState(value);
 
   return (
     <Autocomplete
       disabled={disabled}
       clearable={false}
       value={
-        value && {
-          ...value,
-          label: value.name,
+        buffer && {
+          ...buffer,
+          label: buffer.name,
         }
       }
       filterOptionConfig={filterOptions}
       loading={isLoading}
-      onChange={(_, name) => name && onChange(name)}
+      onChange={(_, name) => {
+        setBuffer(name);
+        name && onChange(name);
+      }}
       options={defaultOptionMapper(data?.nodes ?? [], 'name')}
       renderOption={getDefaultOptionRenderer('name')}
       width={`${width}px`}
