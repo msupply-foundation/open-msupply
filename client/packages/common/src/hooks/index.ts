@@ -33,3 +33,4 @@ export * from './useToggle';
 export * from './useContentAreaHeight';
 export * from './useFilterBy';
 export * from './useNotification';
+export * from './useBufferState';

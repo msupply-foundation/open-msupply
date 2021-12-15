@@ -9,20 +9,21 @@ import {
   PanelField,
   PanelLabel,
   PanelRow,
-  TextArea,
+  BufferedTextArea,
   useNotification,
   useTranslation,
   // ColorSelectButton,
 } from '@openmsupply-client/common';
-import { isInboundEditable } from '../../utils';
 import { InboundShipment } from '../../types';
+import { useInboundFields, useIsInboundEditable } from './api';
 
 interface SidePanelProps {
   draft: InboundShipment;
-  update: (patch: Partial<InboundShipment>) => Promise<InboundShipment>;
 }
 
-const AdditionalInfoSection: FC<SidePanelProps> = ({ draft, update }) => {
+const AdditionalInfoSection: FC = () => {
+  const { comment, update } = useInboundFields('comment');
+  const isEditable = useIsInboundEditable();
   const t = useTranslation('common');
 
   return (
@@ -45,10 +46,10 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft, update }) => {
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
-        <TextArea
-          disabled={!isInboundEditable(draft)}
+        <BufferedTextArea
+          disabled={!isEditable}
           onChange={e => update({ comment: e.target.value })}
-          value={draft.comment}
+          value={comment}
         />
       </Grid>
     </DetailPanelSection>
@@ -73,7 +74,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft, update }) => {
 //   );
 // };
 
-const RelatedDocumentsSection: FC<SidePanelProps> = () => {
+const RelatedDocumentsSection: FC = () => {
   const t = useTranslation(['common', 'distribution']);
   return (
     <DetailPanelSection
@@ -105,7 +106,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
   );
 };
 
-export const SidePanel: FC<SidePanelProps> = ({ draft, update }) => {
+export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
   const t = useTranslation(['outbound-shipment', 'common']);
 
@@ -142,8 +143,8 @@ export const SidePanel: FC<SidePanelProps> = ({ draft, update }) => {
         </>
       }
     >
-      <AdditionalInfoSection draft={draft} update={update} />
-      <RelatedDocumentsSection draft={draft} update={update} />
+      <AdditionalInfoSection />
+      <RelatedDocumentsSection />
     </DetailPanelPortal>
   );
 };

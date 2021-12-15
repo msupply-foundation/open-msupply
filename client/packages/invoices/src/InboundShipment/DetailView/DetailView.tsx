@@ -71,7 +71,7 @@ export const DetailView: FC = () => {
           updateInvoice({ status: getNextInboundStatus(draft?.status) });
         }}
       />
-      <SidePanel draft={draft} update={updateInvoice} />
+      <SidePanel draft={draft} />
 
       <Modal
         title={
