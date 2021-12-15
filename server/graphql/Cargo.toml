@@ -16,6 +16,7 @@ bench = false
 domain = { path = "../domain" }
 repository = { path = "../repository" }
 service = { path = "../service" }
+util = { path = "../util" }
 
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
 anymap = "0.12"
