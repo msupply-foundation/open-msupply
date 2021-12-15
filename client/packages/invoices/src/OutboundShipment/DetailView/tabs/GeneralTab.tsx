@@ -11,7 +11,7 @@ import {
   Switch,
   alpha,
   useColumns,
-  ifTheSameElseDefault,
+  useLocalStorage,
   useTableStore,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
@@ -36,14 +36,12 @@ const Expand: FC<{
     'packSize',
     'unitQuantity',
     'sellPricePerUnit',
-    'lineTotal',
   ]);
 
   const batches = Object.values(rowData.batches).map(batch => ({
     ...batch,
     unitQuantity: batch.numberOfPacks * batch.packSize,
     sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
-    lineTotal: (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
   }));
   const BatchTable = React.useMemo(
     () => (
@@ -79,34 +77,33 @@ const Expand: FC<{
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
+  const [storedIsGrouped, setStoredIsGrouped] = useLocalStorage(
+    '/outboundshipment/groupbyitem'
+  );
   const { pagination } = usePagination();
-  const [isGroupedByItem, setIsGroupedByItem] = useState(false);
-
-  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
+  const [isGroupedByItem, setIsGroupedByItem] = useState(storedIsGrouped);
   const paged = data.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
+  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
 
   useEffect(() => {
-    const newGrouped: OutboundShipmentSummaryItem[] = [];
-    paged.forEach(row => {
-      const batches = Object.values(row.batches);
-      const lineTotal = (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
+    if (isGroupedByItem) {
+      setGrouped(paged);
+    } else {
+      const newGrouped: OutboundShipmentSummaryItem[] = [];
+      paged.forEach(row => {
+        const batches = Object.values(row.batches);
+        const lineTotal =
+          (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
 
-      if (isGroupedByItem) {
-        newGrouped.push({
-          ...row,
-          lineTotal,
-          sellPricePerUnit: lineTotal / row.unitQuantity,
-          // batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-          // expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
-          canExpand: Object.keys(row.batches).length > 1,
-        });
-      } else {
         batches.forEach(batch => {
           newGrouped.push({
             ...row,
+            numberOfPacks: batch.numberOfPacks,
+            unitQuantity: batch.numberOfPacks * batch.packSize,
+            locationName: batch.locationName,
             batch: batch.batch,
             expiryDate: batch.expiryDate,
             packSize: batch.packSize,
@@ -115,9 +112,9 @@ export const GeneralTabComponent: FC<
             canExpand: false,
           });
         });
-      }
-    });
-    setGrouped(newGrouped);
+        setGrouped(newGrouped);
+      });
+    }
   }, [isGroupedByItem, data]);
 
   const t = useTranslation('distribution');
@@ -127,8 +124,10 @@ export const GeneralTabComponent: FC<
   );
   const { setIsGrouped } = useTableStore();
   const toggleGrouped = () => {
-    setIsGrouped(!isGroupedByItem);
-    setIsGroupedByItem(!isGroupedByItem);
+    const newIsGroupedByItem = !isGroupedByItem;
+    setIsGrouped(newIsGroupedByItem);
+    setIsGroupedByItem(newIsGroupedByItem);
+    setStoredIsGrouped(newIsGroupedByItem);
   };
 
   return (

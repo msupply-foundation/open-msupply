@@ -12,6 +12,8 @@ import {
   getRowExpandColumn,
   useOmSupplyApi,
   Item,
+  ColumnAlign,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
 import { getOutboundShipmentDetailViewApi } from './api';
@@ -98,8 +100,24 @@ export const DetailView: FC = () => {
       'numberOfPacks',
       'packSize',
       'unitQuantity',
-      'sellPricePerUnit',
-      'lineTotal',
+      {
+        label: 'label.unit-price',
+        key: 'sellPricePerUnit',
+        width: 100,
+        align: ColumnAlign.Right,
+        format: ColumnFormat.Currency,
+        accessor: row =>
+          ((row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0)) /
+          row.unitQuantity,
+      },
+      {
+        label: 'label.line-total',
+        key: 'lineTotal',
+        width: 100,
+        align: ColumnAlign.Right,
+        format: ColumnFormat.Currency,
+        accessor: row => (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0),
+      },
       getRowExpandColumn<OutboundShipmentSummaryItem>(),
       GenericColumnKey.Selection,
     ],
