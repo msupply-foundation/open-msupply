@@ -368,9 +368,9 @@ mod repository_test {
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
         InvoiceRepository, ItemRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
-        NumberRowRepository, OutboundShipmentRepository, RepositoryError,
-        RequisitionLineRepository, RequisitionRepository, StockLineRepository,
-        StockLineRowRepository, StoreRepository, UserAccountRepository,
+        NumberRowRepository, OutboundShipmentRepository, RequisitionLineRepository,
+        RequisitionRepository, StockLineRepository, StockLineRowRepository, StoreRepository,
+        UserAccountRepository,
     };
     use chrono::Duration;
     use domain::{
