@@ -24,7 +24,7 @@ export const BufferedTextInput: FC<BufferedTextInputProps> = ({
       value={buffer}
       onChange={e => {
         setBuffer(e.target.value);
-        onChange && onChange(e);
+        onChange?.(e);
       }}
     />
   );
