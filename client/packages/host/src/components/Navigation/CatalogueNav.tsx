@@ -4,7 +4,7 @@ import {
   List,
   useTranslation,
   RouteBuilder,
-  NavLink,
+  AppNavLink,
   ListIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -18,7 +18,7 @@ export const CatalogueNav: FC = () => {
 
   return (
     <>
-      <NavLink
+      <AppNavLink
         end={false}
         to={AppRoute.Catalogue}
         icon={<ListIcon color="primary" />}
@@ -27,7 +27,7 @@ export const CatalogueNav: FC = () => {
       />
       <Collapse in={isActive}>
         <List>
-          <NavLink
+          <AppNavLink
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Catalogue)

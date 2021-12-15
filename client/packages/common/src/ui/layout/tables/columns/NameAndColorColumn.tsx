@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/system';
+import { Box } from '@mui/material';
 import { DomainObject } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 import { Color, ColorSelectButton } from '@common/components';

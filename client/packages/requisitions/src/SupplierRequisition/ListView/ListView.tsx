@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { useNavigate } from 'react-router';
 import {
+  useNavigate,
   useNotification,
   DataTable,
   useColumns,

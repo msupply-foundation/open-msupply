@@ -15,7 +15,7 @@ import {
   styled,
   useDrawer,
   useTranslation,
-  NavLink,
+  AppNavLink,
   useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -137,7 +137,7 @@ export const AppDrawer: React.FC = () => {
       </ToolbarIconContainer>
       <UpperListContainer>
         <List>
-          <NavLink
+          <AppNavLink
             to={AppRoute.Dashboard}
             icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('dashboard')}
@@ -147,23 +147,23 @@ export const AppDrawer: React.FC = () => {
           <CatalogueNav />
           <InventoryNav />
 
-          {/* <NavLink
+          {/* <AppNavLink
             to={AppRoute.Suppliers}
             icon={<SuppliersIcon fontSize="small" color="primary" />}
             text={t('suppliers')}
           /> */}
 
-          {/* <NavLink
+          {/* <AppNavLink
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('tools')}
           /> */}
-          <NavLink
+          <AppNavLink
             to={AppRoute.Reports}
             icon={<ReportsIcon fontSize="small" color="primary" />}
             text={t('reports')}
           />
-          {/* <NavLink
+          {/* <AppNavLink
             to={AppRoute.Messages}
             icon={<MessagesIcon fontSize="small" color="primary" />}
             text={t('messages')}
@@ -173,17 +173,17 @@ export const AppDrawer: React.FC = () => {
       <LowerListContainer>
         <List>
           {drawer.isOpen && <StyledDivider />}
-          <NavLink
+          <AppNavLink
             to={AppRoute.Sync}
             icon={<RadioIcon fontSize="small" color="primary" />}
             text={t('sync')}
           />
-          <NavLink
+          <AppNavLink
             to={AppRoute.Admin}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('admin')}
           />
-          <NavLink
+          <AppNavLink
             to={AppRoute.Logout}
             icon={<PowerIcon fontSize="small" color="primary" />}
             text={t('logout')}

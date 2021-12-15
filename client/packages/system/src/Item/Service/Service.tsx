@@ -1,7 +1,5 @@
 import React, { FC } from 'react';
-import { Routes, Route } from 'react-router-dom';
-
-import { RouteBuilder } from '@openmsupply-client/common';
+import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ItemListView } from '../ListView';
 
