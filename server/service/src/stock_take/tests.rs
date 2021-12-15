@@ -2,7 +2,7 @@
 mod stock_take_test {
     use chrono::Utc;
     use repository::{
-        mock::{mock_stock_take_a, mock_store_a, MockDataInserts},
+        mock::{mock_stock_take_a, mock_stock_take_without_lines, mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
 
@@ -83,14 +83,14 @@ mod stock_take_test {
         let service = service_provider.stock_take_service;
 
         // error: stock does not exist
-        let store_a = mock_store_a();
+        let store_a = mock_stock_take_without_lines();
         let error = service
             .delete_stock_take(&context, &store_a.id, "invalid")
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeError::StockTakeDoesNotExist);
 
         // error: store does not exist
-        let existing_stock_take = mock_stock_take_a();
+        let existing_stock_take = mock_stock_take_without_lines();
         let error = service
             .delete_stock_take(&context, "invalid", &existing_stock_take.id)
             .unwrap_err();
@@ -98,7 +98,7 @@ mod stock_take_test {
 
         // success
         let store_a = mock_store_a();
-        let existing_stock_take = mock_stock_take_a();
+        let existing_stock_take = mock_stock_take_without_lines();
         let deleted_stock_take_id = service
             .delete_stock_take(&context, &store_a.id, &existing_stock_take.id)
             .unwrap();
