@@ -6,6 +6,7 @@ mod item;
 mod location;
 mod name;
 mod name_store_join;
+mod number;
 mod requisition;
 mod requisition_line;
 mod stock_line;
@@ -24,6 +25,7 @@ pub use item::mock_items;
 pub use location::mock_locations;
 pub use name::{mock_name_store_a, mock_name_store_b, mock_names};
 pub use name_store_join::mock_name_store_joins;
+pub use number::*;
 pub use requisition::mock_requisitions;
 pub use requisition_line::mock_requisition_lines;
 pub use stock_line::mock_stock_lines;
@@ -32,7 +34,9 @@ pub use test_invoice_count_service::*;
 pub use test_outbound_shipment_update::*;
 pub use user_account::mock_user_accounts;
 
-use crate::{InvoiceLineRowRepository, LocationRowRepository, StockLineRowRepository};
+use crate::{
+    InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository, StockLineRowRepository,
+};
 
 use self::{
     full_invoice::{insert_full_mock_invoice, FullMockInvoice},
@@ -60,6 +64,7 @@ pub struct MockData {
     pub invoice_lines: Vec<InvoiceLineRow>,
     pub full_invoices: HashMap<String, FullMockInvoice>,
     pub full_master_list: HashMap<String, FullMockMasterList>,
+    pub numbers: Vec<NumberRow>,
 }
 pub struct MockDataInserts {
     pub names: bool,
@@ -73,6 +78,7 @@ pub struct MockDataInserts {
     pub invoice_lines: bool,
     pub full_invoices: bool,
     pub full_master_list: bool,
+    pub numbers: bool,
 }
 
 impl MockDataInserts {
@@ -89,6 +95,7 @@ impl MockDataInserts {
             invoice_lines: true,
             full_invoices: true,
             full_master_list: true,
+            numbers: true,
         }
     }
 
@@ -105,6 +112,7 @@ impl MockDataInserts {
             invoice_lines: false,
             full_invoices: false,
             full_master_list: false,
+            numbers: false,
         }
     }
 
@@ -210,6 +218,7 @@ fn all_mock_data() -> MockDataCollection {
             invoice_lines: mock_invoice_lines(),
             full_invoices: mock_full_invoices(),
             full_master_list: mock_full_master_list(),
+            numbers: mock_numbers(),
         },
     );
     data.insert(
@@ -302,6 +311,13 @@ pub async fn insert_mock_data(
         if inserts.full_master_list {
             for row in mock_data.full_master_list.values() {
                 insert_full_mock_master_list(row, connection)
+            }
+        }
+
+        if inserts.numbers {
+            let repo = NumberRowRepository::new(connection);
+            for row in &mock_data.numbers {
+                repo.upsert_one(&row).unwrap();
             }
         }
     }

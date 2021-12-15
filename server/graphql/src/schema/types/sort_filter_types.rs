@@ -72,6 +72,7 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
 #[graphql(concrete(name = "EqualFilterStringInput", params(String)))]
 #[graphql(concrete(name = "EqualFilterBooleanInput", params(bool)))]
 #[graphql(concrete(name = "EqualFilterNumberInput", params(i32)))]
+#[graphql(concrete(name = "EqualFilterBigNumberInput", params(i64)))]
 #[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceNodeType)))]
 #[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceNodeStatus)))]
 pub struct EqualFilterInput<T: InputType> {
@@ -83,6 +84,7 @@ pub struct EqualFilterInput<T: InputType> {
 pub type EqualFilterBoolInput = EqualFilterInput<bool>;
 pub type EqualFilterStringInput = EqualFilterInput<String>;
 pub type EqualFilterNumberInput = EqualFilterInput<i32>;
+pub type EqualFilterBigNumberInput = EqualFilterInput<i64>;
 
 impl<T> From<EqualFilterInput<T>> for EqualFilter<T>
 where

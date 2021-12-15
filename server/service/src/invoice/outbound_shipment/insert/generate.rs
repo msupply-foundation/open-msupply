@@ -2,17 +2,18 @@ use chrono::Utc;
 
 use domain::{invoice::InvoiceType, outbound_shipment::InsertOutboundShipment};
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus},
+    schema::{InvoiceRow, InvoiceRowStatus, NumberRowType},
     RepositoryError, StorageConnection,
 };
 
-use crate::current_store_id;
+use crate::{current_store_id, number::next_number};
 
 pub fn generate(
     input: InsertOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
+    let current_store_id = current_store_id(connection)?;
 
     let result = InvoiceRow {
         id: input.id,
@@ -20,8 +21,12 @@ pub fn generate(
         r#type: InvoiceType::OutboundShipment.into(),
         comment: input.comment,
         their_reference: input.their_reference,
-        invoice_number: new_invoice_number(),
-        store_id: current_store_id(connection)?,
+        invoice_number: next_number(
+            connection,
+            &NumberRowType::OutboundShipment,
+            &current_store_id,
+        )?,
+        store_id: current_store_id,
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         on_hold: input.on_hold.unwrap_or(false),
@@ -34,9 +39,4 @@ pub fn generate(
     };
 
     Ok(result)
-}
-
-fn new_invoice_number() -> i32 {
-    // TODO Existing mSupply Mechanism for this
-    1
 }
