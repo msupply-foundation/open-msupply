@@ -29,9 +29,9 @@ mod stock_take_test {
         let error = service
             .insert_stock_take(
                 &context,
+                &store_a.id,
                 InsertStockTakeInput {
                     id: existing_stock_take.id,
-                    store_id: store_a.id,
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
@@ -44,9 +44,9 @@ mod stock_take_test {
         let error = service
             .insert_stock_take(
                 &context,
+                "invalid",
                 InsertStockTakeInput {
                     id: "new_stock_take".to_string(),
-                    store_id: "invalid".to_string(),
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
@@ -60,9 +60,9 @@ mod stock_take_test {
         service
             .insert_stock_take(
                 &context,
+                &store_a.id,
                 InsertStockTakeInput {
                     id: "new_stock_take".to_string(),
-                    store_id: store_a.id,
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
