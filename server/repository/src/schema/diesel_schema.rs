@@ -277,7 +277,6 @@ joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name (name_id));
 joinable!(item_is_visible -> item(id));
 joinable!(location -> store(store_id));
-joinable!(stock_take -> store(store_id));
 joinable!(stock_take_line -> location (location_id));
 
 allow_tables_to_appear_in_same_query!(
