@@ -12,6 +12,7 @@ import {
   StockLineNode,
   DeleteOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 
 import {
@@ -97,19 +98,30 @@ export const onRead =
     };
   };
 
+const getPatchStatus = (patch: Partial<OutboundShipment>) => {
+  switch (patch.status) {
+    case InvoiceNodeStatus.Allocated:
+      return UpdateOutboundShipmentStatusInput.Allocated;
+    case InvoiceNodeStatus.Picked:
+      return UpdateOutboundShipmentStatusInput.Picked;
+    case InvoiceNodeStatus.Shipped:
+      return UpdateOutboundShipmentStatusInput.Shipped;
+    default:
+      return undefined;
+  }
+};
+
 const invoiceToInput = (
   patch: Partial<OutboundShipment> & { id: string }
-): UpdateOutboundShipmentInput => {
-  return {
-    id: patch.id,
-    // color: patch.color,
-    comment: patch.comment,
-    status: patch.status as unknown as UpdateOutboundShipmentStatusInput,
-    onHold: patch.onHold,
-    otherPartyId: patch.otherParty?.id,
-    theirReference: patch.theirReference,
-  };
-};
+): UpdateOutboundShipmentInput => ({
+  id: patch.id,
+  // color: patch.color,
+  comment: patch.comment,
+  status: getPatchStatus(patch),
+  onHold: patch.onHold,
+  otherPartyId: patch.otherParty?.id,
+  theirReference: patch.theirReference,
+});
 
 const createInsertOutboundLineInput = (
   line: OutboundShipmentRow

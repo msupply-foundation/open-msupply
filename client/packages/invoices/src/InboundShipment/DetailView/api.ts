@@ -325,10 +325,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
           id,
         ]);
 
-        queryClient.setQueryData(['invoice', id], {
-          ...previousInbound,
-          ...patch,
-        });
+        queryClient.setQueryData(['invoice', id], patch);
 
         return { previousInbound, patch };
       },
