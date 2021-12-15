@@ -37,7 +37,6 @@ export const BatchTable: FC<{ batches: InboundShipmentRow[] }> = ({
       data={batches}
       noDataMessage="Add a new line"
       dense
-      noLines
     />
   );
 };
@@ -69,7 +68,6 @@ export const PricingTable: FC<{ batches: InboundShipmentRow[] }> = ({
       data={batches}
       noDataMessage="Add a new line"
       dense
-      noLines
     />
   );
 };

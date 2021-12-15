@@ -2,13 +2,9 @@ import React, { FC } from 'react';
 import {
   DataTable,
   useColumns,
-  TextInputCell,
-  getLineLabelColumn,
   NumberInputCell,
   CurrencyInputCell,
   useTranslation,
-  getCheckboxSelectionColumn,
-  ColumnDefinition,
 } from '@openmsupply-client/common';
 import { StocktakeLine } from '../../../../types';
 
@@ -41,7 +37,6 @@ export const BatchTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
-      noLines
     />
   );
 };
@@ -59,7 +54,6 @@ export const PricingTable: FC<{ batches: StocktakeLine[] }> = ({ batches }) => {
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
-      noLines
     />
   );
 };
