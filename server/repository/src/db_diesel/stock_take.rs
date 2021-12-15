@@ -3,19 +3,13 @@ use domain::{DatetimeFilter, EqualFilter, Pagination, Sort};
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
     schema::{
-        diesel_schema::{
-            stock_take::{self, dsl as stock_take_dsl},
-            store::{self, dsl as store_dsl},
-        },
-        StockTakeRow, StockTakeStatus, StoreRow,
+        diesel_schema::stock_take::{self, dsl as stock_take_dsl},
+        StockTakeRow, StockTakeStatus,
     },
     DBType, RepositoryError, StorageConnection,
 };
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone)]
 pub struct StockTakeFilter {
@@ -69,22 +63,14 @@ pub enum StockTakeSortField {
     FinalisedDatetime,
 }
 
-#[derive(Debug)]
-pub struct StockTake {
-    pub stock_take: StockTakeRow,
-    pub store: StoreRow,
-}
-
-type StockTakeJoin = (StockTakeRow, StoreRow);
+pub type StockTake = StockTakeRow;
 
 pub type StockTakeSort = Sort<StockTakeSortField>;
 
-type BoxedStockTakeQuery = IntoBoxed<'static, InnerJoin<stock_take::table, store::table>, DBType>;
+type BoxedStockTakeQuery = IntoBoxed<'static, stock_take::table, DBType>;
 
 pub fn create_filtered_query<'a>(filter: Option<StockTakeFilter>) -> BoxedStockTakeQuery {
-    let mut query = stock_take_dsl::stock_take
-        .inner_join(store_dsl::store)
-        .into_boxed();
+    let mut query = stock_take_dsl::stock_take.into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, stock_take::id);
@@ -150,18 +136,14 @@ impl<'a> StockTakeRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StockTakeJoin>(&self.connection.connection)?;
+            .load::<StockTake>(&self.connection.connection)?;
 
-        Ok(result
-            .into_iter()
-            .map(|(stock_take, store)| StockTake { stock_take, store })
-            .collect())
+        Ok(result)
     }
 
-    pub fn find_one_by_id(&self, row_id: &str) -> Result<StockTakeJoin, RepositoryError> {
+    pub fn find_one_by_id(&self, row_id: &str) -> Result<StockTake, RepositoryError> {
         Ok(stock_take_dsl::stock_take
             .filter(stock_take_dsl::id.eq(row_id))
-            .inner_join(store_dsl::store)
-            .first::<StockTakeJoin>(&self.connection.connection)?)
+            .first::<StockTake>(&self.connection.connection)?)
     }
 }
