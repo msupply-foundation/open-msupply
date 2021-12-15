@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
-import { OutboundShipmentSummaryItem } from './../../types';
-import { placeholderInbound, inboundLinesToSummaryItems } from './../../utils';
-import { useParams } from 'react-router';
 import {
+  UpdateInboundShipmentMutation,
+  useParams,
   useOmSupplyApi,
   Column,
   useQueryClient,
@@ -25,6 +24,7 @@ import {
   UseQueryResult,
   useSortBy,
   getDataSorter,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 
 import {
@@ -33,8 +33,13 @@ import {
   InvoiceLine,
   InboundShipment,
   InboundShipmentRow,
+  OutboundShipmentSummaryItem,
 } from '../../types';
-import { flattenInboundItems } from '../../utils';
+import {
+  flattenInboundItems,
+  placeholderInbound,
+  inboundLinesToSummaryItems,
+} from '../../utils';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -85,7 +90,7 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
 };
 
 const invoiceToInput = (
-  patch: Partial<InboundShipment> & { id: string }
+  patch: Partial<Invoice> & { id: string }
 ): UpdateInboundShipmentInput => {
   return {
     id: patch.id,
@@ -221,6 +226,7 @@ export const getInboundShipmentDetailViewApi = (
 
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
   const { id } = useParams();
+
   const { api } = useOmSupplyApi();
   const queries = getInboundShipmentDetailViewApi(api);
   return useQuery(['invoice', id], () => {
@@ -239,9 +245,15 @@ export const useInboundShipmentSelector = <T = Invoice>(
     () => {
       return queries.onRead(id);
     },
-    { select }
+    { select, notifyOnChangeProps: ['data'] }
   );
 };
+
+const getUpdateInbound =
+  (api: ReturnType<typeof useOmSupplyApi>['api']) =>
+  async (patch: Partial<Invoice> & { id: string }) => {
+    return api.updateInboundShipment({ input: invoiceToInput(patch) });
+  };
 
 const useOptimisticInboundUpdate = () => {
   const { api } = useOmSupplyApi();
@@ -269,6 +281,72 @@ const useOptimisticInboundUpdate = () => {
       queryClient.setQueryData(['invoice', id], context.previousInbound);
     },
   });
+};
+
+export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
+  keyOrKeys: KeyOfInvoice | KeyOfInvoice[],
+  timeout = 1000
+): { [k in KeyOfInvoice]: Invoice[k] } & {
+  update: (
+    patch: Partial<Invoice>
+  ) => Promise<Promise<UpdateInboundShipmentMutation>>;
+} => {
+  const queryClient = useQueryClient();
+  const { id } = useParams();
+  const { api } = useOmSupplyApi();
+  const select = useCallback(
+    (invoice: Invoice) => {
+      if (Array.isArray(keyOrKeys)) {
+        const mapped = keyOrKeys.reduce((acc, val) => {
+          acc[val] = invoice[val];
+          return acc;
+        }, {} as { [k in KeyOfInvoice]: Invoice[k] });
+
+        return mapped;
+      } else {
+        return { [keyOrKeys]: invoice[keyOrKeys] } as {
+          [k in KeyOfInvoice]: Invoice[k];
+        };
+      }
+    },
+    [keyOrKeys]
+  );
+  const { data } = useInboundShipmentSelector(select);
+
+  const { mutateAsync } = useMutation(
+    (patch: Partial<InboundShipment>) =>
+      getUpdateInbound(api)({ id, ...patch }),
+    {
+      onMutate: async (patch: Partial<InboundShipment>) => {
+        await queryClient.cancelQueries(['invoice', id]);
+
+        const previousInbound: Invoice = queryClient.getQueryData([
+          'invoice',
+          id,
+        ]);
+
+        queryClient.setQueryData(['invoice', id], {
+          ...previousInbound,
+          ...patch,
+        });
+
+        return { previousInbound, patch };
+      },
+      onSettled: () => queryClient.invalidateQueries(['invoice', id]),
+      onError: (_, __, context) => {
+        queryClient.setQueryData(['invoice', id], context.previousInbound);
+      },
+    }
+  );
+
+  const update = useDebounceCallback(mutateAsync, [], timeout);
+
+  return { ...data, update };
+};
+
+export const useIsInboundEditable = (): boolean => {
+  const { status } = useInboundFields('status');
+  return status === 'NEW' || status === 'ALLOCATED';
 };
 
 export const useInboundLines = () => {
