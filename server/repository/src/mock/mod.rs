@@ -32,7 +32,7 @@ pub use name_store_join::mock_name_store_joins;
 pub use number::*;
 pub use requisition::mock_requisitions;
 pub use requisition_line::mock_requisition_lines;
-pub use stock_line::mock_stock_lines;
+pub use stock_line::*;
 pub use stock_take::*;
 pub use stock_take_line::*;
 pub use store::*;

@@ -1,14 +1,50 @@
-use crate::service_provider::ServiceContext;
+use domain::PaginationOption;
+use repository::{RepositoryError, StockTakeLine, StockTakeLineFilter, StockTakeLineSort};
 
-use self::delete::{delete_stock_take_line, DeleteStockTakeLineError};
+use crate::{service_provider::ServiceContext, ListError, ListResult};
+
+use self::{
+    delete::{delete_stock_take_line, DeleteStockTakeLineError},
+    insert::{insert_stock_take_line, InsertStockTakeLineError, InsertStockTakeLineInput},
+    query::{get_stock_take_line, get_stock_take_lines},
+};
 
 pub mod delete;
+pub mod insert;
+pub mod query;
 pub mod validate;
 
 #[cfg(test)]
 mod tests;
 
 pub trait StockTakeLineServiceTrait: Sync + Send {
+    fn get_stock_take_lines(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<StockTakeLineFilter>,
+        sort: Option<StockTakeLineSort>,
+    ) -> Result<ListResult<StockTakeLine>, ListError> {
+        get_stock_take_lines(ctx, pagination, filter, sort)
+    }
+
+    fn get_stock_take_line(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<Option<StockTakeLine>, RepositoryError> {
+        get_stock_take_line(ctx, id)
+    }
+
+    fn insert_stock_take_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: InsertStockTakeLineInput,
+    ) -> Result<StockTakeLine, InsertStockTakeLineError> {
+        insert_stock_take_line(ctx, store_id, input)
+    }
+
     fn delete_stock_take_line(
         &self,
         ctx: &ServiceContext,

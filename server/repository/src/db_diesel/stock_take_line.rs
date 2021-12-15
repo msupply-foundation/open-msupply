@@ -17,6 +17,7 @@ use crate::{
     DBType, RepositoryError, StorageConnection,
 };
 
+#[derive(Clone)]
 pub struct StockTakeLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub stock_take_id: Option<EqualFilter<String>>,
@@ -48,7 +49,7 @@ impl StockTakeLineFilter {
     }
 }
 
-pub type InvoiceLineSort = Sort<()>;
+pub type StockTakeLineSort = Sort<()>;
 
 type StockTakeLineJoin = (StockTakeLineRow, StockLineRow, Option<LocationRow>);
 
@@ -84,7 +85,7 @@ impl<'a> StockTakeLineRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<StockTakeLineFilter>,
-        _: Option<InvoiceLineSort>,
+        _: Option<StockTakeLineSort>,
     ) -> Result<Vec<StockTakeLine>, RepositoryError> {
         let query = create_filtered_query(filter);
 
