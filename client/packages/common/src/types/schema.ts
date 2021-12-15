@@ -195,11 +195,6 @@ export type ConnectorErrorInterface = {
   description: Scalars['String'];
 };
 
-export type CountError = {
-  __typename?: 'CountError';
-  description: Scalars['String'];
-};
-
 export enum CustomerRequisitionNodeStatus {
   Finalised = 'FINALISED',
   InProgress = 'IN_PROGRESS',
@@ -419,6 +414,12 @@ export type DeleteSupplierRequisitionResponseWithId = {
   response?: Maybe<DeleteSupplierRequisitionResponse>;
 };
 
+export type EqualFilterBigNumberInput = {
+  equalAny?: InputMaybe<Array<Scalars['Int']>>;
+  equalTo?: InputMaybe<Scalars['Int']>;
+  notEqualTo?: InputMaybe<Scalars['Int']>;
+};
+
 export type EqualFilterBooleanInput = {
   equalAny?: InputMaybe<Array<Scalars['Boolean']>>;
   equalTo?: InputMaybe<Scalars['Boolean']>;
@@ -435,12 +436,6 @@ export type EqualFilterInvoiceTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeType>>;
   equalTo?: InputMaybe<InvoiceNodeType>;
   notEqualTo?: InputMaybe<InvoiceNodeType>;
-};
-
-export type EqualFilterNumberInput = {
-  equalAny?: InputMaybe<Array<Scalars['Int']>>;
-  equalTo?: InputMaybe<Scalars['Int']>;
-  notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
 export type EqualFilterStringInput = {
@@ -461,6 +456,11 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOu
   __typename?: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
+};
+
+export type InboundInvoiceCounts = {
+  __typename?: 'InboundInvoiceCounts';
+  created: InvoiceCountsSummary;
 };
 
 export type InsertCustomerRequisitionInput = {
@@ -791,10 +791,9 @@ export type InvoiceConnector = {
 
 export type InvoiceCounts = {
   __typename?: 'InvoiceCounts';
-  created: InvoiceCountsSummary;
+  inbound: InboundInvoiceCounts;
+  outbound: OutboundInvoiceCounts;
 };
-
-export type InvoiceCountsResponse = InvoiceCounts;
 
 export type InvoiceCountsSummary = {
   __typename?: 'InvoiceCountsSummary';
@@ -812,7 +811,7 @@ export type InvoiceFilterInput = {
   comment?: InputMaybe<SimpleStringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
-  invoiceNumber?: InputMaybe<EqualFilterNumberInput>;
+  invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -1549,6 +1548,13 @@ export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & Updat
   otherParty: NameNode;
 };
 
+export type OutboundInvoiceCounts = {
+  __typename?: 'OutboundInvoiceCounts';
+  created: InvoiceCountsSummary;
+  /** Number of outbound shipments ready to be picked */
+  toBePicked: Scalars['Int'];
+};
+
 export type PaginationError = ConnectorErrorInterface & {
   __typename?: 'PaginationError';
   description: Scalars['String'];
@@ -1576,7 +1582,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   invoice: InvoiceResponse;
-  invoiceCounts: InvoiceCountsResponse;
+  invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
@@ -1595,7 +1601,7 @@ export type Queries = {
   refreshToken: RefreshTokenResponse;
   requisition: RequisitionResponse;
   requisitions: RequisitionsResponse;
-  stockCounts: StockCountsResponse;
+  stockCounts: StockCounts;
   stocktake: StocktakeResponse;
   stocktakes: StocktakesResponse;
 };
@@ -1613,7 +1619,6 @@ export type QueriesInvoiceArgs = {
 
 
 export type QueriesInvoiceCountsArgs = {
-  invoiceType: InvoiceNodeType;
   timezoneOffset?: InputMaybe<Scalars['Int']>;
 };
 
@@ -1660,6 +1665,12 @@ export type QueriesRequisitionArgs = {
 
 export type QueriesRequisitionsArgs = {
   params?: InputMaybe<RequisitionListParameters>;
+};
+
+
+export type QueriesStockCountsArgs = {
+  daysTillExpired?: InputMaybe<Scalars['Int']>;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1823,13 +1834,11 @@ export type SimpleStringFilterInput = {
   like?: InputMaybe<Scalars['String']>;
 };
 
-export type StockCountsConnector = {
-  __typename?: 'StockCountsConnector';
+export type StockCounts = {
+  __typename?: 'StockCounts';
   expired: Scalars['Int'];
   expiringSoon: Scalars['Int'];
 };
-
-export type StockCountsResponse = ConnectorError | StockCountsConnector;
 
 export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename?: 'StockLineAlreadyExistsInInvoice';
@@ -2531,16 +2540,19 @@ export type DeleteOutboundShipmentsMutationVariables = Exact<{
 export type DeleteOutboundShipmentsMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null | undefined } };
 
 export type InvoiceCountsQueryVariables = Exact<{
-  invoiceType: InvoiceNodeType;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
 }>;
 
 
-export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', thisWeek: number, today: number } } };
+export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename?: 'InvoiceCounts', outbound: { __typename?: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename?: 'InboundInvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
-export type StockCountsQueryVariables = Exact<{ [key: string]: never; }>;
+export type StockCountsQueryVariables = Exact<{
+  daysTillExpired?: InputMaybe<Scalars['Int']>;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
+}>;
 
 
-export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockCountsConnector', expired: number, expiringSoon: number } };
+export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typename?: 'StockCounts', expired: number, expiringSoon: number } };
 
 export type UpsertOutboundShipmentMutationVariables = Exact<{
   deleteOutboundShipmentLines?: InputMaybe<Array<DeleteOutboundShipmentLineInput> | DeleteOutboundShipmentLineInput>;
@@ -3468,32 +3480,29 @@ export const DeleteOutboundShipmentsDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($invoiceType: InvoiceNodeType!) {
-  invoiceCounts(invoiceType: $invoiceType) {
-    ... on InvoiceCounts {
-      __typename
+    query invoiceCounts($timezoneOffset: Int) {
+  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    outbound {
       created {
-        thisWeek
         today
+        thisWeek
+      }
+      toBePicked
+    }
+    inbound {
+      created {
+        today
+        thisWeek
       }
     }
   }
 }
     `;
 export const StockCountsDocument = gql`
-    query stockCounts {
-  stockCounts {
-    ... on StockCountsConnector {
-      __typename
-      expired
-      expiringSoon
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-      }
-    }
+    query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
+  stockCounts(daysTillExpired: $daysTillExpired, timezoneOffset: $timezoneOffset) {
+    expired
+    expiringSoon
   }
 }
     `;
@@ -3731,7 +3740,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteOutboundShipments(variables?: DeleteOutboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentsMutation>(DeleteOutboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipments');
     },
-    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
+    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     },
     stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
@@ -4169,7 +4178,7 @@ export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<G
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { invoiceType } = req.variables;
+ *   const { timezoneOffset } = req.variables;
  *   return res(
  *     ctx.data({ invoiceCounts })
  *   )
@@ -4186,6 +4195,7 @@ export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockStockCountsQuery((req, res, ctx) => {
+ *   const { daysTillExpired, timezoneOffset } = req.variables;
  *   return res(
  *     ctx.data({ stockCounts })
  *   )

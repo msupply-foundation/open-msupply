@@ -954,31 +954,31 @@ mutation deleteOutboundShipments($ids: [String!]) {
   }
 }
 
-query invoiceCounts($invoiceType: InvoiceNodeType!) {
-  invoiceCounts(invoiceType: $invoiceType) {
-    ... on InvoiceCounts {
-      __typename
+query invoiceCounts($timezoneOffset: Int) {
+  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    outbound {
       created {
-        thisWeek
         today
+        thisWeek
+      }
+      toBePicked
+    }
+    inbound {
+      created {
+        today
+        thisWeek
       }
     }
   }
 }
 
-query stockCounts {
-  stockCounts {
-    ... on StockCountsConnector {
-      __typename
-      expired
-      expiringSoon
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-      }
-    }
+query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
+  stockCounts(
+    daysTillExpired: $daysTillExpired
+    timezoneOffset: $timezoneOffset
+  ) {
+    expired
+    expiringSoon
   }
 }
 
