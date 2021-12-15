@@ -5,7 +5,7 @@ import {
   List,
   useTranslation,
   RouteBuilder,
-  NavLink,
+  AppNavLink,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -18,7 +18,7 @@ export const DistributionNav: FC = () => {
 
   return (
     <>
-      <NavLink
+      <AppNavLink
         end={false}
         to={AppRoute.Distribution}
         icon={<TruckIcon color="primary" fontSize="small" />}
@@ -27,7 +27,7 @@ export const DistributionNav: FC = () => {
       />
       <Collapse in={isActive}>
         <List>
-          <NavLink
+          <AppNavLink
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)
@@ -35,7 +35,7 @@ export const DistributionNav: FC = () => {
               .build()}
             text={t('outbound-shipment')}
           />
-          <NavLink
+          <AppNavLink
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)
@@ -43,7 +43,7 @@ export const DistributionNav: FC = () => {
               .build()}
             text={t('customer-requisition')}
           />
-          <NavLink
+          <AppNavLink
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)

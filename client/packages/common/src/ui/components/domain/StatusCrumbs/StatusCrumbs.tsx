@@ -7,7 +7,7 @@ import { useTranslation, useFormatDate } from '@common/intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperPopover, PaperPopoverSection } from '../../popover';
 import { useIsSmallScreen } from '@common/hooks';
-import { styled } from '@mui/system';
+import { styled } from '@mui/material/styles';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
@@ -71,7 +71,7 @@ export const StatusCrumbs = <StatusType extends string>(
   return (
     <PaperPopover
       placement="top"
-      height={200}
+      width={250}
       Content={
         <PaperPopoverSection label={t('label.order-history')}>
           <VerticalStepper activeStep={currentStep} steps={steps} />

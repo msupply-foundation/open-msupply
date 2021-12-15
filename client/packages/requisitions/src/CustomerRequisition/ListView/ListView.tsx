@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
-import { useNavigate } from 'react-router';
 import {
+  useNavigate,
   DataTable,
   useColumns,
   useListData,
@@ -42,7 +42,7 @@ export const CustomerRequisitionListView: FC = () => {
       initialSortBy: { key: 'otherPartyName' },
       initialFilterBy: { type: { equalTo: 'CUSTOMER_REQUISITION' } },
     },
-    'invoice',
+    'requisition',
     getCustomerRequisitionListViewApi(api)
   );
 

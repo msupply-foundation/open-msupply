@@ -8,9 +8,9 @@ import {
   useTranslation,
   useNotification,
   AppFooterPortal,
+  useNavigate,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   getSupplierRequisitionStatuses,
   getNextSupplierRequisitionStatus,

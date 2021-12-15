@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
-import { BoxProps } from '@mui/system';
+import { Box, BoxProps } from '@mui/material';
 
 interface DividerProps extends BoxProps {
   margin?: number;

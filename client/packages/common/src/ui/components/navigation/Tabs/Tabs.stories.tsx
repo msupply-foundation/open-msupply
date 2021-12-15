@@ -2,7 +2,7 @@ import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { TabList, Tab, TabPanel, TabContext } from './Tabs';
 import { useTabs } from './useTabs';
-import { Box } from '@mui/system';
+import { Box } from '@mui/material';
 
 export default {
   title: 'Navigation/Tabs',
