@@ -51,16 +51,29 @@ const getExistingLine = (
 
 export const recalculateSummary = (
   summaryItem: OutboundShipmentSummaryItem
-): { unitQuantity: number; numberOfPacks: number } => {
-  const unitQuantity = Object.values<OutboundShipmentRow>(
-    summaryItem.batches
-  ).reduce(getUnitQuantity, 0);
+): Partial<OutboundShipmentSummaryItem> => {
+  const batches = Object.values<OutboundShipmentRow>(summaryItem.batches);
+  const unitQuantity = batches.reduce(getUnitQuantity, 0);
+  const numberOfPacks = batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+  const locationName = ifTheSameElseDefault(batches, 'locationName', undefined);
+  const batch = ifTheSameElseDefault(batches, 'batch', '[multiple]');
+  const expiryDate = ifTheSameElseDefault(batches, 'expiryDate', '[multiple]');
+  const sellPricePerPack = ifTheSameElseDefault(
+    batches,
+    'sellPricePerPack',
+    undefined
+  );
+  const packSize = ifTheSameElseDefault(batches, 'packSize', undefined);
 
-  const numberOfPacks = Object.values<OutboundShipmentRow>(
-    summaryItem.batches
-  ).reduce(getSumOfKeyReducer('numberOfPacks'), 0);
-
-  return { unitQuantity, numberOfPacks };
+  return {
+    unitQuantity,
+    numberOfPacks,
+    locationName,
+    batch,
+    expiryDate,
+    sellPricePerPack,
+    packSize,
+  };
 };
 
 export const OutboundAction = {
@@ -136,6 +149,7 @@ export const createSummaryItem = (
     ),
     // TODO: Likely should just be a string.
     packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
+    canExpand: batches.length > 1,
   };
 
   return item;
@@ -195,18 +209,37 @@ export const reducer = (
               summaryItem.batches[outboundShipmentRow.id] = outboundShipmentRow;
             }
 
-            const { unitQuantity, numberOfPacks } =
-              recalculateSummary(summaryItem);
+            const {
+              unitQuantity,
+              numberOfPacks,
+              locationName,
+              batch,
+              expiryDate,
+              sellPricePerPack,
+              packSize,
+            } = recalculateSummary(summaryItem);
 
             if (!existingSummaryItem) {
               itemsArray.push({
                 ...summaryItem,
                 unitQuantity,
                 numberOfPacks,
+                locationName,
+                batch,
+                expiryDate,
+                sellPricePerPack,
+                packSize,
               });
             } else {
               existingSummaryItem.unitQuantity = unitQuantity;
               existingSummaryItem.numberOfPacks = numberOfPacks;
+              existingSummaryItem.locationName = locationName;
+              existingSummaryItem.batch = batch;
+              existingSummaryItem.expiryDate = expiryDate;
+              existingSummaryItem.sellPricePerPack = sellPricePerPack;
+              existingSummaryItem.packSize = packSize;
+              existingSummaryItem.canExpand =
+                Object.keys(existingSummaryItem.batches).length > 1;
             }
 
             return itemsArray;
@@ -309,11 +342,25 @@ export const reducer = (
                 existingRow.numberOfPacks = line.numberOfPacks;
               }
 
-              const { unitQuantity, numberOfPacks } =
-                recalculateSummary(existingSummaryItem);
+              const {
+                unitQuantity,
+                numberOfPacks,
+                locationName,
+                batch,
+                expiryDate,
+                sellPricePerPack,
+                packSize,
+              } = recalculateSummary(existingSummaryItem);
               existingSummaryItem.unitQuantity = unitQuantity;
               existingSummaryItem.numberOfPacks = numberOfPacks;
               existingSummaryItem.batches[existingRow.id] = existingRow;
+              existingSummaryItem.locationName = locationName;
+              existingSummaryItem.batch = batch;
+              existingSummaryItem.expiryDate = expiryDate;
+              existingSummaryItem.sellPricePerPack = sellPricePerPack;
+              existingSummaryItem.packSize = packSize;
+              existingSummaryItem.canExpand =
+                Object.keys(existingSummaryItem.batches).length > 1;
             } else {
               if (line.numberOfPacks === 0) break;
               const newLine = {
