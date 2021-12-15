@@ -1,7 +1,9 @@
 use chrono::NaiveDateTime;
+use domain::EqualFilter;
 use repository::{
     schema::{StockTakeRow, StockTakeStatus},
-    RepositoryError, StockTake, StockTakeRowRepository, StorageConnection,
+    RepositoryError, StockTake, StockTakeFilter, StockTakeRepository, StockTakeRowRepository,
+    StorageConnection,
 };
 
 use crate::{service_provider::ServiceContext, validate::check_store_exists};
@@ -10,7 +12,6 @@ use super::query::get_stock_take;
 
 pub struct InsertStockTakeInput {
     pub id: String,
-    pub store_id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
     pub created_datetime: NaiveDateTime,
@@ -28,28 +29,29 @@ fn check_stock_take_does_not_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    Ok(StockTakeRowRepository::new(connection)
-        .find_one_by_id(id)?
-        .is_none())
+    let count = StockTakeRepository::new(connection)
+        .count(Some(StockTakeFilter::new().id(EqualFilter::equal_to(id))))?;
+    Ok(count == 0)
 }
 
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     stock_take: &InsertStockTakeInput,
 ) -> Result<(), InsertStockTakeError> {
     if !check_stock_take_does_not_exist(connection, &stock_take.id)? {
         return Err(InsertStockTakeError::StockTakeAlreadyExists);
     }
-    if !check_store_exists(connection, &stock_take.store_id)? {
+    if !check_store_exists(connection, store_id)? {
         return Err(InsertStockTakeError::InvalidStoreId);
     }
     Ok(())
 }
 
 fn generate(
+    store_id: &str,
     InsertStockTakeInput {
         id,
-        store_id,
         comment,
         description,
         created_datetime,
@@ -57,7 +59,7 @@ fn generate(
 ) -> StockTakeRow {
     StockTakeRow {
         id,
-        store_id,
+        store_id: store_id.to_string(),
         comment,
         description,
         status: StockTakeStatus::New,
@@ -70,13 +72,14 @@ fn generate(
 
 pub fn insert_stock_take(
     ctx: &ServiceContext,
+    store_id: &str,
     input: InsertStockTakeInput,
 ) -> Result<StockTake, InsertStockTakeError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
-            let new_stock_take = generate(input);
+            validate(connection, store_id, &input)?;
+            let new_stock_take = generate(store_id, input);
             StockTakeRowRepository::new(&connection).upsert_one(&new_stock_take)?;
 
             let stock_take =

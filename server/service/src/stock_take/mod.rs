@@ -41,9 +41,10 @@ pub trait StockTakeServiceTrait: Sync + Send {
     fn insert_stock_take(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: InsertStockTakeInput,
     ) -> Result<StockTake, InsertStockTakeError> {
-        insert_stock_take(ctx, input)
+        insert_stock_take(ctx, store_id, input)
     }
 
     /// # Arguments
