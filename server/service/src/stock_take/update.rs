@@ -9,12 +9,11 @@ use domain::{
         InsertOutboundShipment, InsertOutboundShipmentLine, UpdateOutboundShipment,
         UpdateOutboundShipmentStatus,
     },
-    stock_line::StockLineFilter,
     EqualFilter,
 };
 use repository::{
     schema::{StockTakeRow, StockTakeStatus},
-    RepositoryError, StockLineRepository, StockTake, StockTakeLineFilter, StockTakeLineRepository,
+    RepositoryError, StockTake, StockTakeLineFilter, StockTakeLineRepository,
     StockTakeRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
@@ -94,12 +93,6 @@ fn generate_invoices(
     let stock_take_lines = StockTakeLineRepository::new(connection).query_by_filter(
         StockTakeLineFilter::new().stock_take_id(EqualFilter::equal_to(stock_take_id)),
     )?;
-    let stock_line_ids = stock_take_lines
-        .iter()
-        .map(|line| line.line.stock_line_id.to_owned())
-        .collect();
-    let stock = StockLineRepository::new(connection)
-        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids)))?;
 
     // generate invoice line rows for additions and reductions invoices
     let mut added_inbound_lines: Vec<InsertInboundShipmentLine> = Vec::new();
@@ -107,13 +100,7 @@ fn generate_invoices(
     let inbound_id = uuid();
     let outbound_uid = uuid();
     for stock_take_line in stock_take_lines {
-        let stock_line = stock
-            .iter()
-            .find(|stock| stock.id == stock_take_line.line.stock_line_id)
-            .ok_or(UpdateStockTakeError::InternalError(format!(
-                "Stock take line refers to invalid stock line: {:?}",
-                stock_take_line
-            )))?;
+        let stock_line = stock_take_line.stock_line;
         if stock_take_line.line.counted_number_of_packs > stock_line.total_number_of_packs {
             // additions
             added_inbound_lines.push(InsertInboundShipmentLine {
