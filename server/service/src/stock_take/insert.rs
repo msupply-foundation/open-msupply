@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use repository::{
     schema::{StockTakeRow, StockTakeStatus},
-    RepositoryError, StockTake, StockTakeRowRepository, StorageConnection, TransactionError,
+    RepositoryError, StockTake, StockTakeRowRepository, StorageConnection,
 };
 
 use crate::{service_provider::ServiceContext, validate::check_store_exists};
@@ -85,7 +85,7 @@ pub fn insert_stock_take(
                 "Failed to read the just inserted stock take!".to_string(),
             ))
         })
-        .map_err(|error: TransactionError<InsertStockTakeError>| error.to_inner_error())?;
+        .map_err(|error| error.to_inner_error())?;
     Ok(result)
 }
 
