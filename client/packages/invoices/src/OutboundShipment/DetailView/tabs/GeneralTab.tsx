@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   DataTable,
   ObjectWithStringKeys,
@@ -60,7 +60,7 @@ const Expand: FC<{
   if (!rowData?.canExpand) return <></>;
 
   return (
-    <Box p={1} style={{ padding: '0 50px 0 200px' }}>
+    <Box p={1} style={{ padding: '0 100px 0 100px' }}>
       <Box
         flex={1}
         display="flex"
@@ -80,17 +80,15 @@ export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
   const { pagination } = usePagination();
-  const [isGroupedByItem, setIsGroupedByItem] = React.useState(false);
+  const [isGroupedByItem, setIsGroupedByItem] = useState(false);
 
-  const [grouped, setGrouped] = React.useState<OutboundShipmentSummaryItem[]>(
-    []
-  );
+  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
   const paged = data.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     const newGrouped: OutboundShipmentSummaryItem[] = [];
     paged.forEach(row => {
       const batches = Object.values(row.batches);
@@ -101,8 +99,8 @@ export const GeneralTabComponent: FC<
           ...row,
           lineTotal,
           sellPricePerUnit: lineTotal / row.unitQuantity,
-          batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-          expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
+          // batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
+          // expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
           canExpand: Object.keys(row.batches).length > 1,
         });
       } else {
@@ -123,7 +121,10 @@ export const GeneralTabComponent: FC<
   }, [isGroupedByItem, data]);
 
   const t = useTranslation('distribution');
-  const activeRows = grouped.filter(({ isDeleted }) => !isDeleted);
+  const activeRows = useMemo(
+    () => grouped.filter(({ isDeleted }) => !isDeleted),
+    [grouped]
+  );
   const { setIsGrouped } = useTableStore();
   const toggleGrouped = () => {
     setIsGrouped(!isGroupedByItem);
@@ -144,7 +145,7 @@ export const GeneralTabComponent: FC<
           onChange={toggleGrouped}
           checked={isGroupedByItem}
           size="small"
-          disabled={grouped.length === 0}
+          disabled={activeRows.length === 0}
           color="secondary"
         />
       </Grid>
@@ -154,7 +155,7 @@ export const GeneralTabComponent: FC<
           ExpandContent={Expand}
           pagination={{ ...pagination, total: activeRows.length }}
           columns={columns}
-          data={grouped}
+          data={activeRows}
           onChangePage={pagination.onChangePage}
           noDataMessage={t('error.no-items')}
         />

@@ -29,7 +29,6 @@ export const DataTable = <T extends DomainObject>({
   noDataMessage,
   ExpandContent,
   dense = false,
-  noLines = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
   const { setActiveRows } = useTableStore();
@@ -100,7 +99,7 @@ export const DataTable = <T extends DomainObject>({
                 onClick={onRowClick}
                 rowData={row}
                 rowKey={String(idx)}
-                noLines={noLines}
+                dense={dense}
               />
             );
           })}
