@@ -2,7 +2,10 @@
 
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use repository::{mock::MockDataInserts, InvoiceRepository};
+    use repository::{
+        mock::{mock_outbound_shipment_number_store_a, MockDataInserts},
+        InvoiceRepository,
+    };
     use serde_json::json;
     use server::test_utils::setup_all;
 
@@ -16,6 +19,8 @@ mod graphql {
 
         let other_party_supplier = &mock_data["base"].names[2];
         let other_party_customer = &mock_data["base"].names[0];
+
+        let starting_invoice_number = mock_outbound_shipment_number_store_a().value;
 
         let query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
             insertOutboundShipment(input: $input) {
@@ -32,6 +37,7 @@ mod graphql {
                 ... on InvoiceNode {
                     id
                     otherPartyId
+                    invoiceNumber
                     type
                     comment
                     theirReference
@@ -99,6 +105,7 @@ mod graphql {
         let expected = json!({
             "insertOutboundShipment": {
               "id": "ci_insert_1",
+              "invoiceNumber": starting_invoice_number+1,
               "otherPartyId": other_party_customer.id,
               "type": "OUTBOUND_SHIPMENT",
               "comment": "ci comment",
@@ -127,6 +134,7 @@ mod graphql {
         let expected = json!({
             "insertOutboundShipment": {
               "id": "ci_insert_2",
+              "invoiceNumber": starting_invoice_number+2,
               "otherPartyId": other_party_customer.id,
               "type": "OUTBOUND_SHIPMENT",
               "comment": null,

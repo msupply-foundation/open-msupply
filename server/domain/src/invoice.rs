@@ -24,7 +24,7 @@ pub struct Invoice {
     pub status: InvoiceStatus,
     pub on_hold: bool,
     pub r#type: InvoiceType,
-    pub invoice_number: i32,
+    pub invoice_number: i64,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub created_datetime: NaiveDateTime,
@@ -38,7 +38,7 @@ pub struct Invoice {
 #[derive(Clone)]
 pub struct InvoiceFilter {
     pub id: Option<EqualFilter<String>>,
-    pub invoice_number: Option<EqualFilter<i32>>,
+    pub invoice_number: Option<EqualFilter<i64>>,
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceType>>,

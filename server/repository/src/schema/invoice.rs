@@ -26,7 +26,7 @@ pub struct InvoiceRow {
     pub id: String,
     pub name_id: String,
     pub store_id: String,
-    pub invoice_number: i32,
+    pub invoice_number: i64,
     #[column_name = "type_"]
     pub r#type: InvoiceRowType,
     pub status: InvoiceRowStatus,
