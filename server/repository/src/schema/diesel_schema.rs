@@ -279,6 +279,7 @@ joinable!(item_is_visible -> item (id));
 joinable!(location -> store (store_id));
 joinable!(stock_take_line -> location (location_id));
 joinable!(stock_take_line -> stock_take (stock_take_id));
+joinable!(stock_take_line -> stock_line (stock_line_id));
 
 allow_tables_to_appear_in_same_query!(
     unit,

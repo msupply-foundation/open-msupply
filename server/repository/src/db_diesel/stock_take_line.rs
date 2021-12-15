@@ -1,5 +1,5 @@
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 use domain::{EqualFilter, Pagination, Sort};
@@ -9,9 +9,10 @@ use crate::{
     schema::{
         diesel_schema::{
             location::{self, dsl as location_dsl},
+            stock_line::{self, dsl as stock_line_dsl},
             stock_take_line::{self, dsl as stock_take_line_dsl},
         },
-        LocationRow, StockTakeLineRow,
+        LocationRow, StockLineRow, StockTakeLineRow,
     },
     DBType, RepositoryError, StorageConnection,
 };
@@ -49,11 +50,12 @@ impl StockTakeLineFilter {
 
 pub type InvoiceLineSort = Sort<()>;
 
-type StockTakeLineJoin = (StockTakeLineRow, Option<LocationRow>);
+type StockTakeLineJoin = (StockTakeLineRow, StockLineRow, Option<LocationRow>);
 
 #[derive(Debug)]
 pub struct StockTakeLine {
     pub line: StockTakeLineRow,
+    pub stock_line: StockLineRow,
     pub location: Option<LocationRow>,
 }
 
@@ -93,16 +95,24 @@ impl<'a> StockTakeLineRepository<'a> {
 
         Ok(result
             .into_iter()
-            .map(|(line, location)| StockTakeLine { line, location })
+            .map(|(line, stock_line, location)| StockTakeLine {
+                line,
+                stock_line,
+                location,
+            })
             .collect())
     }
 }
 
-type BoxedStockTakeLineQuery =
-    IntoBoxed<'static, LeftJoin<stock_take_line::table, location::table>, DBType>;
+type BoxedStockTakeLineQuery = IntoBoxed<
+    'static,
+    LeftJoin<InnerJoin<stock_take_line::table, stock_line::table>, location::table>,
+    DBType,
+>;
 
 fn create_filtered_query(filter: Option<StockTakeLineFilter>) -> BoxedStockTakeLineQuery {
     let mut query = stock_take_line_dsl::stock_take_line
+        .inner_join(stock_line_dsl::stock_line)
         .left_join(location_dsl::location)
         .into_boxed();
 
