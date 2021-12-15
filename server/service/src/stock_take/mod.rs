@@ -4,7 +4,7 @@ use repository::{RepositoryError, StockTake, StockTakeFilter, StockTakeSort};
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 use self::{
-    delete::{delete_stock_take, DeleteStockTakeError, DeleteStockTakeInput},
+    delete::{delete_stock_take, DeleteStockTakeError},
     insert::{insert_stock_take, InsertStockTakeError, InsertStockTakeInput},
     query::{get_stock_take, get_stock_takes},
     update::{update_stock_take, UpdateStockTakeError, UpdateStockTakeInput},
@@ -46,20 +46,27 @@ pub trait StockTakeServiceTrait: Sync + Send {
         insert_stock_take(ctx, input)
     }
 
+    /// # Arguments
+    /// * store_id the current store (must match the store id of stock take)
+    /// * stock_take_id the stock take to be deleted
     fn delete_stock_take(
         &self,
         ctx: &ServiceContext,
-        input: DeleteStockTakeInput,
+        store_id: &str,
+        stock_take_id: &str,
     ) -> Result<String, DeleteStockTakeError> {
-        delete_stock_take(ctx, input)
+        delete_stock_take(ctx, store_id, stock_take_id)
     }
 
+    /// # Arguments
+    /// * store_id the current store (must match the store id of stock take)
     fn update_stock_take(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: UpdateStockTakeInput,
     ) -> Result<StockTake, UpdateStockTakeError> {
-        update_stock_take(ctx, input)
+        update_stock_take(ctx, store_id, input)
     }
 }
 
