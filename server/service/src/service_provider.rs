@@ -1,6 +1,10 @@
 use repository::{RepositoryError, StorageConnection, StorageConnectionManager};
 
 use crate::{
+    dashboard::{
+        invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
+        stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
+    },
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     stock_take::{StockTakeService, StockTakeServiceTrait},
@@ -11,6 +15,9 @@ pub struct ServiceProvider {
     pub location_service: Box<dyn LocationServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stock_take_service: Box<dyn StockTakeServiceTrait>,
+    // Dashboard:
+    pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
+    pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -23,6 +30,8 @@ impl ServiceProvider {
             connection_manager,
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
+            invoice_count_service: Box::new(InvoiceCountService {}),
+            stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
             stock_take_service: Box::new(StockTakeService {}),
         }
     }
