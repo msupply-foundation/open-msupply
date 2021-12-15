@@ -9,33 +9,21 @@ export const TextArea: FC<StandardTextFieldProps> = ({
   minRows = 4,
   InputProps,
   ...props
-}) => {
-  const [buffer, setBuffer] = React.useState(value);
-
-  React.useEffect(() => {
-    setBuffer(value);
-  }, [value]);
-
-  return (
-    <BasicTextInput
-      sx={{ width: '100%' }}
-      InputProps={{
-        ...InputProps,
-        sx: {
-          backgroundColor: 'white',
-          ...InputProps?.sx,
-        },
-      }}
-      multiline
-      value={buffer}
-      onChange={e => {
-        const newVal = e.target.value;
-        onChange?.(e);
-        setBuffer(newVal);
-      }}
-      maxRows={maxRows}
-      minRows={minRows}
-      {...props}
-    />
-  );
-};
+}) => (
+  <BasicTextInput
+    sx={{ width: '100%' }}
+    InputProps={{
+      ...InputProps,
+      sx: {
+        backgroundColor: 'white',
+        ...InputProps?.sx,
+      },
+    }}
+    multiline
+    value={value}
+    onChange={onChange}
+    maxRows={maxRows}
+    minRows={minRows}
+    {...props}
+  />
+);

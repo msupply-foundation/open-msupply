@@ -9,7 +9,7 @@ import {
   PanelField,
   PanelLabel,
   PanelRow,
-  TextArea,
+  BufferedTextArea,
   useNotification,
   useTranslation,
   // ColorSelectButton,
@@ -46,7 +46,7 @@ const AdditionalInfoSection: FC = () => {
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
-        <TextArea
+        <BufferedTextArea
           disabled={!isEditable}
           onChange={e => update({ comment: e.target.value })}
           value={comment}
