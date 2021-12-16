@@ -1,3 +1,5 @@
+import { toItem } from './DetailView';
+import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
   InvoiceNodeStatus,
@@ -29,7 +31,6 @@ import {
 } from '@openmsupply-client/common';
 
 import {
-  OutboundShipmentRow,
   Invoice,
   InvoiceLine,
   InboundShipment,
@@ -115,26 +116,23 @@ const invoiceToInput = (
   };
 };
 
-const createInsertInboundLineInput =
-  (invoiceId: string) =>
-  (line: OutboundShipmentRow): InsertInboundShipmentLineInput => {
-    return {
-      id: line.id,
-      itemId: line.itemId,
-      batch: line.batch,
-      costPricePerPack: line.costPricePerPack,
-      expiryDate: line.expiryDate
-        ? formatNaiveDate(new Date(line.expiryDate))
-        : null,
-
-      sellPricePerPack: line.sellPricePerPack,
-      packSize: line.packSize,
-      numberOfPacks: line.numberOfPacks,
-      invoiceId,
-      totalAfterTax: 0,
-      totalBeforeTax: 0,
-    };
+const createInsertLineInput = (
+  line: DraftInboundLine
+): InsertInboundShipmentLineInput => {
+  return {
+    id: line.id,
+    itemId: line.itemId,
+    batch: line.batch,
+    costPricePerPack: line.costPricePerPack,
+    sellPricePerPack: line.sellPricePerPack,
+    expiryDate: line.expiryDate,
+    packSize: line.packSize,
+    numberOfPacks: line.numberOfPacks,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
+    invoiceId: line.invoiceId,
   };
+};
 
 const createDeleteInboundLineInput = (
   line: InboundShipmentRow
@@ -145,28 +143,41 @@ const createDeleteInboundLineInput = (
   };
 };
 
-const createUpdateInboundLineInput = (
-  line: InboundShipmentRow
-): UpdateInboundShipmentLineInput => {
-  return {
-    id: line.id,
-    itemId: line.itemId,
-    batch: line.batch,
-    costPricePerPack: line.costPricePerPack,
-    expiryDate: line.expiryDate
-      ? formatNaiveDate(new Date(line.expiryDate))
-      : null,
-    sellPricePerPack: line.sellPricePerPack,
-    packSize: line.packSize,
-    numberOfPacks: line.numberOfPacks,
-    invoiceId: line.invoiceId,
-  };
-};
+const createUpdateLineInput = (
+  line: DraftInboundLine
+): UpdateInboundShipmentLineInput => ({
+  id: line.id,
+  itemId: line.itemId,
+  batch: line.batch,
+  costPricePerPack: line.costPricePerPack,
+  expiryDate: line.expiryDate
+    ? formatNaiveDate(new Date(line.expiryDate))
+    : null,
+  sellPricePerPack: line.sellPricePerPack,
+  packSize: line.packSize,
+  numberOfPacks: line.numberOfPacks,
+  invoiceId: line.invoiceId,
+});
 
 interface Api<ReadType, UpdateType> {
   onRead: (id: string) => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<UpdateType>;
 }
+
+export const getSaveInboundShipmentLines =
+  (api: OmSupplyApi) => (lines: DraftInboundLine[]) => {
+    const insertInboundShipmentLines = lines
+      .filter(({ isCreated }) => isCreated)
+      .map(createInsertLineInput);
+    const updateInboundShipmentLines = lines
+      .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
+      .map(createUpdateLineInput);
+
+    return api.upsertInboundShipment({
+      insertInboundShipmentLines,
+      updateInboundShipmentLines,
+    });
+  };
 
 export const getInboundShipmentDetailViewApi = (
   api: OmSupplyApi
@@ -201,21 +212,10 @@ export const getInboundShipmentDetailViewApi = (
   onUpdate: async (patch: InboundShipment): Promise<InboundShipment> => {
     const rows = flattenInboundItems(patch.items);
     const deleteLines = rows.filter(({ isDeleted }) => isDeleted);
-    const insertLines = rows.filter(
-      ({ isCreated, isDeleted }) => !isDeleted && isCreated
-    );
-    const updateLines = rows.filter(
-      ({ isUpdated, isCreated, isDeleted }) =>
-        isUpdated && !isCreated && !isDeleted
-    );
 
     const result = await api.upsertInboundShipment({
       updateInboundShipments: [invoiceToInput(patch)],
-      insertInboundShipmentLines: insertLines.map(
-        createInsertInboundLineInput(patch.id)
-      ),
       deleteInboundShipmentLines: deleteLines.map(createDeleteInboundLineInput),
-      updateInboundShipmentLines: updateLines.map(createUpdateInboundLineInput),
     });
 
     const { batchInboundShipment } = result;
@@ -359,7 +359,24 @@ export const useIsInboundEditable = (): boolean => {
   return status === 'NEW' || status === 'ALLOCATED';
 };
 
-export const useInboundLines = () => {
+export const useInboundLines = (itemId?: string): InvoiceLine[] => {
+  const selectItems = useCallback(
+    (invoice: Invoice) => {
+      return itemId
+        ? invoice.lines.filter(
+            ({ itemId: invoiceLineItemId }) => itemId === invoiceLineItemId
+          )
+        : invoice.lines;
+    },
+    [itemId]
+  );
+
+  const { data } = useInboundShipmentSelector(selectItems);
+
+  return data ?? [];
+};
+
+export const useInboundItems = () => {
   const { sortBy, onChangeSortBy } = useSortBy<OutboundShipmentSummaryItem>({
     key: 'itemName',
   });
@@ -384,6 +401,29 @@ export const useInboundLines = () => {
   const { data } = useInboundShipmentSelector(selectItems);
 
   return { data, sortBy, onSort };
+};
+
+export const useNextItem = (currentItemId: string) => {
+  const { data } = useInboundItems();
+
+  if (!data) return null;
+
+  const currentIndex = data?.findIndex(
+    ({ itemId }) => itemId === currentItemId
+  );
+  const nextItem = data[(currentIndex + 1) % data.length];
+
+  return toItem(nextItem);
+};
+
+export const useSaveInboundLines = () => {
+  const queryClient = useQueryClient();
+  const { id } = useParams();
+  const { api } = useOmSupplyApi();
+
+  return useMutation(getSaveInboundShipmentLines(api), {
+    onSettled: () => queryClient.invalidateQueries(['invoice', id]),
+  });
 };
 
 export const useDraftInbound = () => {
