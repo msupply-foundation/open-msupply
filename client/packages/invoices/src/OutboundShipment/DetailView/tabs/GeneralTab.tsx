@@ -96,12 +96,12 @@ export const GeneralTabComponent: FC<
   const toggleGrouped = () => {
     setIsGroupedByItem({
       ...isGroupedByItem,
-      outboundShipment: !isGroupedByItem.outboundShipment,
+      outboundShipment: !isGroupedByItem?.outboundShipment,
     });
   };
 
   useEffect(() => {
-    if (isGroupedByItem.outboundShipment) {
+    if (!!isGroupedByItem?.outboundShipment) {
       setGrouped(paged);
     } else {
       const newGrouped: OutboundShipmentSummaryItem[] = [];
@@ -131,7 +131,7 @@ export const GeneralTabComponent: FC<
   }, [isGroupedByItem, data]);
 
   useEffect(() => {
-    setIsGrouped(isGroupedByItem.outboundShipment);
+    setIsGrouped(!!isGroupedByItem?.outboundShipment);
   }, [isGroupedByItem, setIsGrouped]);
 
   return (
@@ -146,7 +146,7 @@ export const GeneralTabComponent: FC<
         <Switch
           label={t('label.group-by-item')}
           onChange={toggleGrouped}
-          checked={isGroupedByItem.outboundShipment}
+          checked={!!isGroupedByItem?.outboundShipment}
           size="small"
           disabled={activeRows.length === 0}
           color="secondary"
