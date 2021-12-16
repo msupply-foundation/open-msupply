@@ -26,7 +26,7 @@ export const groupBy = <T, K extends keyof T & string>(
   key: K
 ): Record<string, T[]> => {
   const lookup: Record<string, T[]> = {} as Record<string, T[]>;
-  things.forEach(thing => {
+  things?.forEach(thing => {
     const value = String(thing[key]);
     if (!lookup[value]) {
       lookup[value] = [];
