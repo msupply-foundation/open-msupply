@@ -67,8 +67,6 @@ type Mutations {
 }
 
 type Queries {
-  stockCounts: StockCountsResponse!
-
   requisition(
     # id of the invoice
     id: String!
@@ -638,19 +636,6 @@ type RequisitionNode {
   otherPartyId: String!
   otherPartyName: String!
 }
-
-### Stats
-
-type CountError {
-  description: String!
-}
-
-type StockCountsConnector {
-  expired: Int!
-  expiringSoon: Int!
-}
-
-union StockCountsResponse = StockCountsConnector | ConnectorError
 
 input BatchOutboundShipmentInput {
   insertOutboundShipments: [InsertOutboundShipmentInput!]
