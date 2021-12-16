@@ -24,12 +24,12 @@ fn validate(
         Some(line) => line,
         None => return Err(DeleteStockTakeLineError::StockTakeLineDoesNotExist),
     };
-    let stock_take = match check_stock_take_exist(connection, &line.line.stock_take_id)? {
+    let stock_take = match check_stock_take_exist(connection, &line.stock_take_id)? {
         Some(stock_take) => stock_take,
         None => {
             return Err(DeleteStockTakeLineError::InternalError(format!(
                 "Stock take is missing: {}",
-                line.line.stock_take_id
+                line.stock_take_id
             )))
         }
     };
