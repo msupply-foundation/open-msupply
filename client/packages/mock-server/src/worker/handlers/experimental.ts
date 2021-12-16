@@ -1,31 +1,4 @@
 import { graphql } from 'msw';
-import { ResolverService } from './../../api/resolvers/index';
-import {
-  mockStockCountsQuery,
-  mockInvoiceCountsQuery,
-} from '@openmsupply-client/common/src/types/schema';
-
-const mockInvoiceCounts = mockInvoiceCountsQuery((req, res, ctx) => {
-  const { variables } = req;
-  const { invoiceType } = variables;
-  const invoiceCounts = ResolverService.statistics.invoice(invoiceType);
-
-  return res(
-    ctx.data({
-      invoiceCounts: { ...invoiceCounts, __typename: 'InvoiceCounts' },
-    })
-  );
-});
-
-const mockStockCounts = mockStockCountsQuery((_, res, ctx) => {
-  const stockCounts = ResolverService.statistics.stock();
-
-  return res(
-    ctx.data({
-      stockCounts: { ...stockCounts, __typename: 'StockCountsConnector' },
-    })
-  );
-});
 
 export const permissionError = graphql.query(
   'error401',
@@ -45,9 +18,4 @@ export const serverError = graphql.query('error500', (_, response, context) =>
   )
 );
 
-export const ExperimentalHandlers = [
-  mockInvoiceCounts,
-  mockStockCounts,
-  permissionError,
-  serverError,
-];
+export const ExperimentalHandlers = [permissionError, serverError];
