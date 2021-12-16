@@ -128,7 +128,21 @@ const useDraftInboundLines = (itemId: string) => {
         key: K,
         value: DraftInboundLine[K]
       ) => {
-        updateDraftLine({ id: line.id, [key]: Number(value) });
+        const parseValue = (value: DraftInboundLine[K]) => {
+          switch (key) {
+            case 'numberOfPacks':
+              return Number(value);
+            case 'packSize':
+              return Number(value);
+            case 'sellPricePerkPack':
+              return Number(value);
+            case 'costPricePerPack':
+              return Number(value);
+            default:
+              return value;
+          }
+        };
+        updateDraftLine({ id: line.id, [key]: parseValue(value) });
       };
       return line;
     }),
