@@ -1,7 +1,6 @@
-use domain::{stock_line::StockLineFilter, EqualFilter};
 use repository::{
-    schema::StockTakeLineRow, RepositoryError, StockLineRepository, StockTakeLine,
-    StockTakeLineRowRepository, StorageConnection,
+    schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
@@ -9,7 +8,10 @@ use crate::{
     validate::check_store_id_matches,
 };
 
-use super::query::get_stock_take_line;
+use super::{
+    query::get_stock_take_line,
+    validate::{check_location_exists, check_stock_line_exist},
+};
 
 pub struct InsertStockTakeLineInput {
     pub id: String,
@@ -31,15 +33,7 @@ pub enum InsertStockTakeLineError {
     InvalidStockTakeId,
     InvalidStockLineId,
     InvalidStoreId,
-}
-
-fn check_stock_line_exist(
-    connection: &StorageConnection,
-    id: &str,
-) -> Result<bool, RepositoryError> {
-    let count = StockLineRepository::new(connection)
-        .count(Some(StockLineFilter::new().id(EqualFilter::equal_to(id))))?;
-    Ok(count == 1)
+    InvalidLocationId,
 }
 
 fn validate(
@@ -57,6 +51,12 @@ fn validate(
 
     if !check_stock_line_exist(connection, &stock_take_line.stock_line_id)? {
         return Err(InsertStockTakeLineError::InvalidStockLineId);
+    }
+
+    if let Some(location_id) = &stock_take_line.location_id {
+        if !check_location_exists(connection, location_id)? {
+            return Err(InsertStockTakeLineError::InvalidLocationId);
+        }
     }
 
     Ok(())
