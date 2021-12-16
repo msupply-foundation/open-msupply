@@ -3,8 +3,6 @@ import {
   Checkbox,
   Divider,
   FieldValues,
-  Grid,
-  InfoIcon,
   isAlmostExpired,
   ModalNumericInput,
   Table,
@@ -19,8 +17,6 @@ import {
   useFormatDate,
   useTranslation,
   ReadOnlyInput,
-  PaperPopover,
-  PaperPopoverSection,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../../../types';
 
@@ -105,41 +101,6 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
       <BasicCell align="center">
         <Checkbox disabled checked={batch.onHold} />
-      </BasicCell>
-      <BasicCell>
-        <PaperPopover
-          Content={
-            <PaperPopoverSection label={t('label.details')}>
-              <Grid container fontSize="12px">
-                <Grid container justifyContent="space-between">
-                  <Grid item>Invoice #xxxx</Grid>
-                  <Grid item>
-                    {`${
-                      (batch.totalNumberOfPacks -
-                        batch.availableNumberOfPacks) /
-                      2
-                    } packs`}
-                  </Grid>
-                </Grid>
-                <Grid container justifyContent="space-between">
-                  <Grid item>Invoice #yyyy</Grid>
-                  <Grid item>
-                    {`${
-                      (batch.totalNumberOfPacks -
-                        batch.availableNumberOfPacks) /
-                      2
-                    } packs`}
-                  </Grid>
-                </Grid>
-              </Grid>
-            </PaperPopoverSection>
-          }
-        >
-          <InfoIcon
-            fontSize="small"
-            sx={{ color: 'gray.light', cursor: 'help' }}
-          />
-        </PaperPopover>
       </BasicCell>
     </TableRow>
   );
@@ -235,7 +196,6 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
               <HeaderCell>{t('label.location')}</HeaderCell>
               <HeaderCell>{t('label.sell')}</HeaderCell>
               <HeaderCell>{t('label.on-hold')}</HeaderCell>
-              <HeaderCell></HeaderCell>
             </TableRow>
           </TableHead>
           <TableBody sx={{ overflowY: 'scroll' }}>
