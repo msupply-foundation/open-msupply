@@ -20,9 +20,9 @@ export enum ModalMode {
 }
 
 export const toItem = (summaryItem: InboundShipmentItem): Item => ({
-  name: summaryItem.itemName,
-  code: summaryItem.itemCode,
-  id: summaryItem.id,
+  name: summaryItem?.itemName,
+  code: summaryItem?.itemCode,
+  id: summaryItem?.id,
   isVisible: true,
   availableBatches: [],
   availableQuantity: 0,
