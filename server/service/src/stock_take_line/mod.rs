@@ -7,11 +7,13 @@ use self::{
     delete::{delete_stock_take_line, DeleteStockTakeLineError},
     insert::{insert_stock_take_line, InsertStockTakeLineError, InsertStockTakeLineInput},
     query::{get_stock_take_line, get_stock_take_lines},
+    update::{update_stock_take_line, UpdateStockTakeLineError, UpdateStockTakeLineInput},
 };
 
 pub mod delete;
 pub mod insert;
 pub mod query;
+pub mod update;
 pub mod validate;
 
 #[cfg(test)]
@@ -43,6 +45,15 @@ pub trait StockTakeLineServiceTrait: Sync + Send {
         input: InsertStockTakeLineInput,
     ) -> Result<StockTakeLine, InsertStockTakeLineError> {
         insert_stock_take_line(ctx, store_id, input)
+    }
+
+    fn update_stock_take_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateStockTakeLineInput,
+    ) -> Result<StockTakeLine, UpdateStockTakeLineError> {
+        update_stock_take_line(ctx, store_id, input)
     }
 
     fn delete_stock_take_line(
