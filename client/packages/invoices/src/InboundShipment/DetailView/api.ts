@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import {
+  InvoiceNodeStatus,
   UpdateInboundShipmentMutation,
   useParams,
   useOmSupplyApi,
@@ -89,6 +90,17 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
   throw new Error('Unknown');
 };
 
+const getPatchStatus = (patch: Partial<Invoice>) => {
+  switch (patch.status) {
+    case InvoiceNodeStatus.Verified:
+      return UpdateInboundShipmentStatusInput.Verified;
+    case InvoiceNodeStatus.Delivered:
+      return UpdateInboundShipmentStatusInput.Delivered;
+    default:
+      return undefined;
+  }
+};
+
 const invoiceToInput = (
   patch: Partial<Invoice> & { id: string }
 ): UpdateInboundShipmentInput => {
@@ -96,9 +108,7 @@ const invoiceToInput = (
     id: patch.id,
     // color: patch.color,
     comment: patch.comment,
-
-    // TODO: Don't cast status
-    status: patch.status as unknown as UpdateInboundShipmentStatusInput,
+    status: getPatchStatus(patch),
     onHold: patch.onHold,
     otherPartyId: patch.otherParty?.id,
     theirReference: patch.theirReference,
@@ -325,7 +335,10 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
           id,
         ]);
 
-        queryClient.setQueryData(['invoice', id], patch);
+        queryClient.setQueryData(['invoice', id], {
+          ...previousInbound,
+          ...patch,
+        });
 
         return { previousInbound, patch };
       },
