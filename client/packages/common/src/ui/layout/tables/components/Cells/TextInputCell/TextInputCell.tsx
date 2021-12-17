@@ -2,7 +2,7 @@ import React from 'react';
 import { CellProps } from '../../../columns';
 import { BasicTextInput } from '@common/components';
 import { DomainObject } from '@common/types';
-import { useDebounceCallback } from '@common/hooks';
+import { useBufferState, useDebounceCallback } from '@common/hooks';
 
 type RowData<T> = T & DomainObject;
 
@@ -18,7 +18,7 @@ export const TextInputCell = <T extends DomainObject>({
 }: CellPropsWithUpdaterObject<T>): React.ReactElement<
   CellPropsWithUpdaterObject<T>
 > => {
-  const [buffer, setBuffer] = React.useState(column.accessor(rowData));
+  const [buffer, setBuffer] = useBufferState(column.accessor(rowData));
   const updater = useDebounceCallback(column.setter, [rowData], 500);
 
   return (
