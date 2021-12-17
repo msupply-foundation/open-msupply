@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React from 'react';
+import { Route } from 'react-router-dom';
 import { setLogger } from 'react-query';
-import { render, waitFor } from '@testing-library/react';
 import { request, gql } from 'graphql-request';
 import { Test, DomainObject } from '../../types';
 import { ListApi, useListData } from './useListData';
 import { ErrorBoundary } from '@common/components';
-import { TestingProvider } from '../../utils/testing';
+import { TestingProvider, TestingRouter } from '../../utils/testing';
 import { setupMockServer } from '@openmsupply-client/mock-server/src/worker/server';
+import { render, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react-hooks';
 
 interface TestType extends Test, DomainObject {}
 
@@ -28,11 +30,6 @@ beforeEach(() => {
   jest.spyOn(console, 'error');
   // @ts-ignore jest.spyOn adds this functionality
   console.error.mockImplementation(() => null);
-});
-
-afterEach(() => {
-  // @ts-ignore jest.spyOn adds this functionality
-  console.error.mockRestore();
 });
 
 describe('useListData', () => {
@@ -63,13 +60,8 @@ describe('useListData', () => {
   `;
 
   const PermissionErrorApi: ListApi<TestType> = {
-    onRead: () => async () => {
-      return await request(
-        'http://localhost:4000',
-        getPermissionErrorQuery(),
-        {}
-      );
-    },
+    onRead: () => async () =>
+      request('http://localhost:4000', getPermissionErrorQuery(), {}),
     onDelete: () => new Promise(() => {}),
     onUpdate: () => new Promise(() => {}),
     onCreate: async () => '',
@@ -84,35 +76,32 @@ describe('useListData', () => {
   `;
 
   const ErrorFallback = () => <div>error boundary</div>;
+
   const Wrapper: React.FC = ({ children }) => (
     <ErrorBoundary Fallback={ErrorFallback}>
-      <TestingProvider>{children}</TestingProvider>
+      <TestingProvider>
+        <TestingRouter initialEntries={['/distribution']}>
+          <Route path="distribution" element={<>{children}</>} />
+        </TestingRouter>
+      </TestingProvider>
     </ErrorBoundary>
   );
 
   it('calls the provided error method on non-critical error', async () => {
     const onError = jest.fn();
-    const ErrorTest = () => {
-      const { data } = useListData(
-        { initialSortBy: { key: 'message' } },
-        '401test',
-        PermissionErrorApi,
-        onError
-      );
-      const [response] = data || [];
-
-      return <div>{response?.message}</div>;
-    };
-
-    render(
-      <Wrapper>
-        <ErrorTest />
-      </Wrapper>
+    renderHook(
+      () => {
+        useListData(
+          { initialSortBy: { key: 'message' } },
+          '401test',
+          PermissionErrorApi,
+          onError
+        );
+      },
+      { wrapper: Wrapper }
     );
 
-    await waitFor(() => {
-      expect(onError).toBeCalledTimes(1);
-    });
+    await waitFor(() => expect(onError).toBeCalledTimes(1));
   });
 
   it('calls error boundary on server error', async () => {

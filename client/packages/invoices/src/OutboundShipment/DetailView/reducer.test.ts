@@ -1,5 +1,4 @@
 import { placeholderOutboundShipment } from './../../utils';
-import { InboundAction } from './../../InboundShipment/DetailView/reducer/reducer';
 import { InboundShipmentItem, Invoice } from './../../types';
 import {
   Column,
@@ -123,7 +122,7 @@ describe('DetailView reducer: sorting', () => {
     const column = createColumns<InboundShipmentItem>([
       'numberOfPacks',
     ])[0] as Column<InboundShipmentItem>;
-    const action = InboundAction.onSortBy(column);
+    const action = OutboundAction.onSortBy(column);
     const items = [
       { id: '1', numberOfPacks: 2 },
       { id: '2', numberOfPacks: 1 },

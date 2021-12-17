@@ -1,16 +1,21 @@
+import { TestingRouterContext } from '@openmsupply-client/common';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
 import { usePagination } from './usePagination';
 
 describe('usePagination', () => {
   it('has first correctly set to the initial value passed', () => {
-    const { result } = renderHook(() => usePagination(10));
+    const { result } = renderHook(() => usePagination(10), {
+      wrapper: TestingRouterContext,
+    });
 
     expect(result.current.first).toEqual(10);
   });
 
   it('has correct offset, first and page values When the page is changed', () => {
-    const { result } = renderHook(() => usePagination(10));
+    const { result } = renderHook(() => usePagination(10), {
+      wrapper: TestingRouterContext,
+    });
 
     act(() => {
       result.current.onChangePage(3);
@@ -22,7 +27,9 @@ describe('usePagination', () => {
   });
 
   it('still has correct state after a series of page changes', () => {
-    const { result } = renderHook(() => usePagination(10));
+    const { result } = renderHook(() => usePagination(10), {
+      wrapper: TestingRouterContext,
+    });
 
     act(() => {
       result.current.onChangePage(3);
