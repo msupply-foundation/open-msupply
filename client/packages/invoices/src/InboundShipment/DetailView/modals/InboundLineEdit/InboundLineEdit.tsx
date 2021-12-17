@@ -18,6 +18,7 @@ import {
   useDialog,
   generateUUID,
   Item,
+  useNotification,
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
 import { ModalMode } from '../../DetailView';
@@ -61,7 +62,6 @@ export type DraftInboundLine = Pick<
 > & {
   isCreated?: boolean;
   isUpdated?: boolean;
-  update?: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 };
 
 const createDraftInvoiceLine = (
@@ -123,12 +123,7 @@ const useDraftInboundLines = (itemId: string) => {
   };
 
   return {
-    draftLines: draftLines.map(line => {
-      line.update = (patch: Partial<DraftInboundLine> & { id: string }) => {
-        updateDraftLine(patch);
-      };
-      return line;
-    }),
+    draftLines,
     addDraftLine,
     updateDraftLine,
     isLoading,
@@ -143,6 +138,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   onClose,
 }) => {
   const t = useTranslation('distribution');
+  const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<Item | null>(item);
   const nextItem = useNextItem(currentItem?.id);
   const isMediumScreen = useIsMediumScreen();
@@ -178,7 +174,19 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
           }}
         />
       }
-      okButton={<DialogButton variant="ok" onClick={saveLines} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            try {
+              await saveLines();
+              onClose();
+            } catch (e) {
+              error((error as unknown as Error).message);
+            }
+          }}
+        />
+      }
       height={600}
       width={1024}
     >
