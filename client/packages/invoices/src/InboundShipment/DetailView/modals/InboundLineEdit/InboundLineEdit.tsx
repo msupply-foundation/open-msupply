@@ -61,7 +61,7 @@ export type DraftInboundLine = Pick<
 > & {
   isCreated?: boolean;
   isUpdated?: boolean;
-  update?: (key: keyof DraftInboundLine, value: any) => void;
+  update?: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 };
 
 const createDraftInvoiceLine = (
@@ -124,25 +124,8 @@ const useDraftInboundLines = (itemId: string) => {
 
   return {
     draftLines: draftLines.map(line => {
-      line.update = <K extends keyof DraftInboundLine>(
-        key: K,
-        value: DraftInboundLine[K]
-      ) => {
-        const parseValue = (value: DraftInboundLine[K]) => {
-          switch (key) {
-            case 'numberOfPacks':
-              return Number(value);
-            case 'packSize':
-              return Number(value);
-            case 'sellPricePerkPack':
-              return Number(value);
-            case 'costPricePerPack':
-              return Number(value);
-            default:
-              return value;
-          }
-        };
-        updateDraftLine({ id: line.id, [key]: parseValue(value) });
+      line.update = (patch: Partial<DraftInboundLine> & { id: string }) => {
+        updateDraftLine(patch);
       };
       return line;
     }),

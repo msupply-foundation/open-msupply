@@ -4,8 +4,11 @@ import { BasicTextInput } from '@common/components';
 import { DomainObject } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 
-type DomainObjectWithUpdater<T> = T &
-  DomainObject & { update?: (key: string, value: string) => void };
+type RowData<T> = T & DomainObject;
+
+type DomainObjectWithUpdater<T> = RowData<T> & {
+  update: (patch: Partial<RowData<T>>) => void;
+};
 
 type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
@@ -28,7 +31,7 @@ export const NumberInputCell = <T extends DomainObject>({
       onChange={e => {
         const newValue = e.target.value;
         setBuffer(newValue);
-        updater(String(column.key), newValue);
+        updater({ ...rowData, [column.key]: Number(newValue) });
       }}
     />
   );

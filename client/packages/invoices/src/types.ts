@@ -149,7 +149,7 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
 }
 export interface InboundShipmentRow extends Omit<InvoiceLine, 'item'> {
   updateNumberOfPacks?: (quantity: number) => void;
-  update?: (key: string, value: string) => void;
+  update?: (patch: Partial<InboundShipmentRow> & { id: string }) => void;
   stockLineId: string;
   invoiceId: string;
   itemId: string;

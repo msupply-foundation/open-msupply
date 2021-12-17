@@ -4,8 +4,11 @@ import { CurrencyInput } from '@common/components';
 import { DomainObject } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 
-type DomainObjectWithUpdater<T> = T &
-  DomainObject & { update?: (key: string, value: string) => void };
+type RowData<T> = T & DomainObject;
+
+type DomainObjectWithUpdater<T> = RowData<T> & {
+  update: (patch: Partial<RowData<T>>) => void;
+};
 
 type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
@@ -26,7 +29,7 @@ export const CurrencyInputCell = <T extends DomainObject>({
       value={buffer}
       onChangeNumber={newNumber => {
         setBuffer(newNumber);
-        updater(String(column.key), String(newNumber));
+        updater({ ...rowData, [column.key]: Number(newNumber) });
       }}
     />
   );
