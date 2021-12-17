@@ -61,6 +61,20 @@ const getDefaultAccessor =
     return typeof value === 'function' ? value() : value;
   };
 
+const getDefaultColumnSetter =
+  <T extends DomainObject>(column: ColumnDefinition<T>) =>
+  () => {
+    if (process.env['NODE_ENV']) {
+      throw new Error(
+        `The cell from the column with key [${column.key}] called the default setter.
+         Did you forget to set a custom setter?
+         When defining your columns, add a setter for this column, i.e.
+         const columns = useColumns(['${column.key}', { Cell: TextInputCell, setter }])
+         `
+      );
+    }
+  };
+
 const getDefaultFormatter = <T extends DomainObject>(
   column: ColumnDefinition<T>
 ) => {
@@ -147,6 +161,7 @@ export const createColumnWithDefaults = <T extends DomainObject>(
     sortType: getSortType(column),
     align: getDefaultColumnAlign(column),
     formatter: getDefaultFormatter<T>(column),
+    setter: getDefaultColumnSetter<T>(column),
 
     ...getColumnWidths(column),
   };

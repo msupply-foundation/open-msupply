@@ -4,10 +4,9 @@ import {
   DataTable,
   useColumns,
   useListData,
-  // getNameAndColorColumn,
+  getNameAndColorColumn,
   TableProvider,
   createTableStore,
-  // Color,
   useOmSupplyApi,
   useNotification,
   generateUUID,
@@ -50,9 +49,7 @@ export const InboundListView: FC = () => {
 
   const columns = useColumns<InvoiceRow>(
     [
-      // getNameAndColorColumn((row: InvoiceRow, color: Color) => {
-      //   onUpdate({ ...row, color: color.hex });
-      // }),
+      getNameAndColorColumn(),
       'otherPartyName',
       [
         'status',

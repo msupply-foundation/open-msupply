@@ -19,9 +19,7 @@ export const TextInputCell = <T extends DomainObject>({
   CellPropsWithUpdaterObject<T>
 > => {
   const [buffer, setBuffer] = React.useState(column.accessor(rowData));
-
-  const noop = () => {};
-  const updater = useDebounceCallback(rowData.update ?? noop, [rowData], 500);
+  const updater = useDebounceCallback(column.setter, [rowData], 500);
 
   return (
     <BasicTextInput
