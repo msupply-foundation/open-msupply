@@ -25,9 +25,9 @@ export const getNameAndColorColumn = <
       );
     }
   },
-  accessor: (rowData: T) => rowData.otherPartyName,
+  accessor: ({ rowData }) => rowData.otherPartyName,
   key: 'otherPartyName',
-  Cell: ({ rowData, column }) => (
+  Cell: ({ rowData, column, rows }) => (
     <Box
       sx={{
         flexDirection: 'row',
@@ -37,11 +37,11 @@ export const getNameAndColorColumn = <
       }}
     >
       <ColorSelectButton
-        onChange={color => column.setter({ ...rowData, color })}
+        onChange={color => column.setter({ ...rowData, color: color.hex })}
         color={rowData.color}
       />
       <Box ml={1} />
-      {column.accessor(rowData)}
+      {column.accessor({ rowData, rows })}
     </Box>
   ),
 });

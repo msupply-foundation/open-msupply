@@ -14,11 +14,14 @@ type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
 export const CurrencyInputCell = <T extends DomainObject>({
   rowData,
+  rows,
   column,
 }: CellPropsWithUpdaterObject<T>): React.ReactElement<
   CellPropsWithUpdaterObject<T>
 > => {
-  const [buffer, setBuffer] = useBufferState(Number(column.accessor(rowData)));
+  const [buffer, setBuffer] = useBufferState(
+    Number(column.accessor({ rowData, rows }))
+  );
 
   const updater = useDebounceCallback(column.setter, [rowData], 250);
 

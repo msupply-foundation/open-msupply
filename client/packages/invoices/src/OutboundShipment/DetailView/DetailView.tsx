@@ -108,9 +108,9 @@ export const DetailView: FC = () => {
         width: 100,
         align: ColumnAlign.Right,
         format: ColumnFormat.Currency,
-        accessor: row =>
-          ((row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0)) /
-          row.unitQuantity,
+        accessor: ({ rowData }) =>
+          ((rowData.sellPricePerPack ?? 0) * (rowData.numberOfPacks ?? 0)) /
+          rowData.unitQuantity,
         sortable: false,
       },
       {
@@ -119,7 +119,8 @@ export const DetailView: FC = () => {
         width: 100,
         align: ColumnAlign.Right,
         format: ColumnFormat.Currency,
-        accessor: row => (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0),
+        accessor: ({ rowData }) =>
+          (rowData.sellPricePerPack ?? 0) * (rowData.numberOfPacks ?? 0),
         sortable: false,
       },
       getRowExpandColumn<OutboundShipmentSummaryItem>(),

@@ -5,6 +5,7 @@ import { DomainObject } from '@common/types';
 
 export interface CellProps<T extends DomainObject> {
   rowData: T;
+  rows: T[];
   columns: Column<T>[];
   column: Column<T>;
   rowKey: string;
@@ -30,9 +31,10 @@ export enum ColumnAlign {
   Center = 'center',
 }
 
-export type ColumnDataAccessor<T extends DomainObject> = (
-  rowData: T
-) => unknown;
+export type ColumnDataAccessor<T extends DomainObject> = (params: {
+  rowData: T;
+  rows: T[];
+}) => unknown;
 
 export type Translators = {
   t: ReturnType<typeof useTranslation>;
