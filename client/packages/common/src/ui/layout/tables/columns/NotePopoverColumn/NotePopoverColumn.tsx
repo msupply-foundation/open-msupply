@@ -16,14 +16,14 @@ export const getNotePopoverColumn = <T extends DomainObjectWithComment>(
   sortable: false,
   align: ColumnAlign.Center,
   width: 60,
-  accessor: rowData => rowData.note,
+  accessor: ({ rowData }) => rowData.note,
   Header: () => {
     return null;
   },
 
-  Cell: props => {
+  Cell: ({ column, rowData, rows }) => {
     const t = useTranslation('common');
-    const value = props.column.accessor(props.rowData);
+    const value = column.accessor({ rowData, rows });
 
     return value ? (
       <PaperPopover

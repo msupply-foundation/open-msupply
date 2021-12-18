@@ -516,7 +516,7 @@ const createInvoicesLines = (
       // +/- this subset size to change the number of lines per
       // inbound shipment.
       const validStockLines = stockLines.filter(({ onHold }) => !onHold);
-      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 10);
+      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 200);
 
       return stockLineSubset.map(stockLine => {
         const item = getItem(stockLine.itemId);

@@ -9,6 +9,9 @@ import {
   getNotePopoverColumn,
   getRowExpandColumn,
   GenericColumnKey,
+  ifTheSameElseDefault,
+  getUnitQuantity,
+  getSumOfKeyReducer,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem } from '../../types';
 import { useInboundItems } from './api';
@@ -47,16 +50,87 @@ export const GeneralTabComponent: FC<GeneralTabProps<InboundShipmentItem>> = ({
   const columns = useColumns(
     [
       getNotePopoverColumn<InboundShipmentItem>(),
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      'locationName',
-      'sellPricePerPack',
-      'packSize',
-      'itemUnit',
-      'unitQuantity',
-      'numberOfPacks',
+      [
+        'itemCode',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'itemCode', '');
+          },
+        },
+      ],
+      [
+        'itemName',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'itemName', '');
+          },
+        },
+      ],
+      [
+        'batch',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'batch', '[multiple]');
+          },
+        },
+      ],
+      [
+        'expiryDate',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'expiryDate', '');
+          },
+        },
+      ],
+      [
+        'locationName',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'locationName', '');
+          },
+        },
+      ],
+      [
+        'sellPricePerPack',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'sellPricePerPack', '');
+          },
+        },
+      ],
+      [
+        'packSize',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return ifTheSameElseDefault(lines, 'packSize', '');
+          },
+        },
+      ],
+      [
+        'unitQuantity',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return lines.reduce(getUnitQuantity, 0);
+          },
+        },
+      ],
+      [
+        'numberOfPacks',
+        {
+          accessor: ({ rowData: { batches } }) => {
+            const lines = Object.values(batches);
+            return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+          },
+        },
+      ],
       getRowExpandColumn<InboundShipmentItem>(),
       GenericColumnKey.Selection,
     ],

@@ -10,7 +10,6 @@ import {
   generateUUID,
   useOmSupplyApi,
   getNameAndColorColumn,
-  Color,
   useFormatDate,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
@@ -48,9 +47,7 @@ export const CustomerRequisitionListView: FC = () => {
 
   const columns = useColumns<RequisitionRow>(
     [
-      getNameAndColorColumn((row: RequisitionRow, color: Color) => {
-        onUpdate({ ...row, color: color.hex });
-      }),
+      { ...getNameAndColorColumn(), setter: onUpdate },
       {
         key: 'requisitionNumber',
         label: 'label.number',
@@ -60,7 +57,8 @@ export const CustomerRequisitionListView: FC = () => {
         key: 'orderDate',
         label: 'label.requisition-date',
         width: 100,
-        accessor: rowData => (rowData.orderDate ? d(rowData.orderDate) : ''),
+        accessor: ({ rowData }) =>
+          rowData.orderDate ? d(rowData.orderDate) : '',
       },
       'comment',
       'selection',
