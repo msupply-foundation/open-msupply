@@ -26,7 +26,11 @@ fn validate(
 ) -> Result<(), DeleteStockTakeLineError> {
     let line = match check_stock_take_line_exist(connection, stock_take_line_id)? {
         Some(line) => line,
-        None => return Err(DeleteStockTakeLineError::StockTakeLineDoesNotExist),
+        None => {
+            return Err(DeleteStockTakeLineError::StockTakeLineDoesNotExist(
+                stock_take_line_id.to_string(),
+            ))
+        }
     };
     let stock_take = match check_stock_take_exist(connection, &line.stock_take_id)? {
         Some(stock_take) => stock_take,
@@ -41,7 +45,9 @@ fn validate(
         return Err(DeleteStockTakeLineError::CannotEditFinalised);
     }
     if !check_store_id_matches(store_id, &stock_take.store_id) {
-        return Err(DeleteStockTakeLineError::InvalidStore);
+        return Err(DeleteStockTakeLineError::InvalidStoreId(
+            store_id.to_string(),
+        ));
     }
     Ok(())
 }
