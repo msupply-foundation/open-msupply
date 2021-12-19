@@ -2563,6 +2563,13 @@ export type UpsertOutboundShipmentMutationVariables = Exact<{
 
 export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null | undefined } };
 
+export type DeleteInboundShipmentLinesMutationVariables = Exact<{
+  input?: Maybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
+}>;
+
+
+export type DeleteInboundShipmentLinesMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename?: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename?: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename?: 'BatchIsReserved', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null | undefined } };
+
 export type UpsertInboundShipmentMutationVariables = Exact<{
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
   insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput> | InsertInboundShipmentLineInput>;
@@ -3533,6 +3540,26 @@ export const UpsertOutboundShipmentDocument = gql`
   }
 }
     `;
+export const DeleteInboundShipmentLinesDocument = gql`
+    mutation deleteInboundShipmentLines($input: [DeleteInboundShipmentLineInput!]) {
+  batchInboundShipment(deleteInboundShipmentLines: $input) {
+    deleteInboundShipmentLines {
+      id
+      response {
+        ... on DeleteInboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 export const UpsertInboundShipmentDocument = gql`
     mutation upsertInboundShipment($deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!], $insertInboundShipmentLines: [InsertInboundShipmentLineInput!], $updateInboundShipmentLines: [UpdateInboundShipmentLineInput!], $updateInboundShipments: [UpdateInboundShipmentInput!]) {
   batchInboundShipment(
@@ -3747,6 +3774,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     upsertOutboundShipment(variables?: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment');
+    },
+    deleteInboundShipmentLines(variables?: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines');
     },
     upsertInboundShipment(variables?: UpsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertInboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment');
@@ -4220,6 +4250,23 @@ export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<S
 export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertOutboundShipmentMutationVariables>, GraphQLContext<UpsertOutboundShipmentMutation>, any>) =>
   graphql.mutation<UpsertOutboundShipmentMutation, UpsertOutboundShipmentMutationVariables>(
     'upsertOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteInboundShipmentLinesMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ batchInboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
+  graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
+    'deleteInboundShipmentLines',
     resolver
   )
 
