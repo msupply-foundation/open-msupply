@@ -29,7 +29,7 @@ export const Breadcrumbs: React.FC = () => {
     parts.reduce((fullPath, part, index) => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
-      console.info(`part: ${part} index: ${index} path: ${path}`);
+
       if (index > 1)
         urlParts.push({
           path,
