@@ -24,7 +24,7 @@ interface SidePanelProps {
 const AdditionalInfoSection: FC = () => {
   const { comment, update } = useInboundFields('comment');
   const isEditable = useIsInboundEditable();
-  const t = useTranslation('common');
+  const t = useTranslation(['common', 'replenishment']);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
