@@ -102,8 +102,8 @@ const useDraftInboundLines = (itemId: string) => {
   }, [lines, itemId]);
 
   const addDraftLine = () => {
-    const newBatch = createDraftInvoiceLine(itemId, id);
-    setDraftLines([...draftLines, newBatch]);
+    const newLine = createDraftInvoiceLine(itemId, id);
+    setDraftLines([...draftLines, newLine]);
   };
 
   const updateDraftLine = (
