@@ -24,14 +24,13 @@ interface ToolbarProps {
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
   const { data } = useInboundItems();
-
   const { mutate } = useDeleteInboundLine();
   const { otherParty, theirReference, update } = useInboundFields([
     'otherParty',
     'theirReference',
   ]);
 
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation(['replenishment', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
@@ -46,7 +45,8 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
 
   const deleteAction = async () => {
     if (selectedRows && selectedRows?.length > 0) {
-      const onSuccess = success(`Deleted ${selectedRows?.length} lines`);
+      const number = selectedRows?.length;
+      const onSuccess = success(t('message.deleted-lines', { number }));
       mutate(selectedRows, {
         onSuccess,
       });
