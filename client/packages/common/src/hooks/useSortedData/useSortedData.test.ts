@@ -1,3 +1,4 @@
+import { TestingRouterContext } from '@openmsupply-client/common';
 import { useSortedData } from './useSortedData';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
@@ -12,7 +13,9 @@ const data = [
 
 describe('useSortedData', () => {
   it('sorts the initially passed data array with the sort by passed', () => {
-    const { result } = renderHook(() => useSortedData(data, { key: 'a' }));
+    const { result } = renderHook(() => useSortedData(data, { key: 'a' }), {
+      wrapper: TestingRouterContext,
+    });
 
     expect(result.current.sortedData).toEqual([
       expect.objectContaining({ a: 1 }),
@@ -24,7 +27,9 @@ describe('useSortedData', () => {
   });
 
   it('sorts the initially passed data array with the sort by passed', () => {
-    const { result } = renderHook(() => useSortedData(data, { key: 'a' }));
+    const { result } = renderHook(() => useSortedData(data, { key: 'a' }), {
+      wrapper: TestingRouterContext,
+    });
 
     act(() => {
       result.current.onChangeSortBy({ key: 'b' });
