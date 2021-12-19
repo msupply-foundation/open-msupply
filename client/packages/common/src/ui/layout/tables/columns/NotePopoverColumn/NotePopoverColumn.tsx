@@ -4,19 +4,41 @@ import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
 import { PaperPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
+import { isProduction } from '../../../../../utils';
 
-interface DomainObjectWithComment extends DomainObject {
-  note?: string | null;
+interface ObjectWithNote {
+  note: string;
 }
 
-export const getNotePopoverColumn = <T extends DomainObjectWithComment>(
+const isObjectWithANote = (
+  variableToCheck: unknown
+): variableToCheck is ObjectWithNote =>
+  (variableToCheck as ObjectWithNote).note !== undefined;
+
+export const getNotePopoverColumn = <T extends DomainObject>(
   label?: string
 ): ColumnDefinition<T> => ({
   key: 'comment',
   sortable: false,
   align: ColumnAlign.Center,
   width: 60,
-  accessor: ({ rowData }) => rowData.note,
+  accessor: ({ rowData }) => {
+    if (isObjectWithANote(rowData)) {
+      return rowData.note;
+    } else {
+      if (!isProduction()) {
+        // TODO: Bugsnag during prod
+        throw new Error(`
+        The default accessor for the note popover column has been called with a row
+        that does not have a note field.
+        Have you forgotten to provide a custom accessor to return a value? i.e.
+        { ...getNotePopoverColumn(), accessor: ({rowData}) => rowData.comment }
+        `);
+      } else {
+        return '';
+      }
+    }
+  },
   Header: () => {
     return null;
   },
