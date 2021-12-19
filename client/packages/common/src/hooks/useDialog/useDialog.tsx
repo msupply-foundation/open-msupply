@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import { Slide } from '../../ui/animations';
@@ -25,6 +25,7 @@ export interface ModalProps {
 }
 export interface DialogProps {
   onClose?: () => void;
+  isOpen: boolean;
 }
 
 interface DialogState {
@@ -58,10 +59,14 @@ const useSlideAnimation = () => {
 };
 
 export const useDialog = (dialogProps?: DialogProps): DialogState => {
-  const { onClose } = dialogProps ?? {};
+  const { onClose, isOpen } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
+
+  useEffect(() => {
+    if (isOpen != null) setOpen(isOpen);
+  }, [isOpen]);
 
   const handleClose = () => {
     onClose && onClose();

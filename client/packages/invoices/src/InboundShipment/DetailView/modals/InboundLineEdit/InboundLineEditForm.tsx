@@ -7,46 +7,36 @@ import {
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
-import { InboundShipment, InboundShipmentItem } from '../../../../types';
 import { ItemSearchInput } from '@openmsupply-client/system';
-import { ModalMode } from '../../DetailView';
-import { itemToSummaryItem } from './utils';
+import { useInboundItems } from '../../api';
 
 interface InboundLineEditProps {
-  item: InboundShipmentItem | null;
-  mode: ModalMode;
-  onChangeItem: (item: InboundShipmentItem) => void;
-  draft: InboundShipment;
+  item: Item | null;
+  disabled: boolean;
+  onChangeItem: (item: Item) => void;
 }
 
 export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   item,
-  mode,
+  disabled,
   onChangeItem,
-  draft,
 }) => {
   const t = useTranslation('common');
+  const { data } = useInboundItems();
+
   return (
     <>
       <ModalRow>
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
-            disabled={mode === ModalMode.Update}
-            currentItem={{
-              name: item?.itemName ?? '',
-              id: item?.itemId ?? '',
-              code: item?.itemCode ?? '',
-              isVisible: true,
-              availableBatches: [],
-              unitName: '',
-              availableQuantity: 0,
-            }}
+            disabled={disabled}
+            currentItem={item}
             onChange={(newItem: Item | null) =>
-              newItem && onChangeItem(itemToSummaryItem(newItem))
+              newItem && onChangeItem(newItem)
             }
             extraFilter={item => {
-              const itemAlreadyInShipment = draft.items.some(
+              const itemAlreadyInShipment = data?.some(
                 ({ id, isDeleted }) => id === item.id && !isDeleted
               );
               return !itemAlreadyInShipment;
@@ -59,11 +49,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
         <ModalRow>
           <Grid style={{ display: 'flex', marginTop: 10 }} flex={1}>
             <ModalLabel label={t('label.code')} />
-            <BasicTextInput
-              disabled
-              sx={{ width: 150 }}
-              value={item.itemCode}
-            />
+            <BasicTextInput disabled sx={{ width: 150 }} value={item.code} />
           </Grid>
           <Grid
             style={{ display: 'flex', marginTop: 10 }}
@@ -74,7 +60,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
             <BasicTextInput
               disabled
               sx={{ width: 150 }}
-              value={item.itemUnit}
+              value={item.unitName}
             />
           </Grid>
         </ModalRow>
