@@ -464,3 +464,47 @@ export const useDraftInbound = () => {
     draft,
   };
 };
+
+const getCreateDeleteInboundLineInput =
+  (invoiceId: string) =>
+  (id: string): DeleteInboundShipmentLineInput => {
+    return { id, invoiceId };
+  };
+
+const getDeleteInboundLinesQuery =
+  (api: OmSupplyApi, invoiceId: string) => (ids: string[]) => {
+    return api.deleteInboundShipmentLines({
+      input: ids.map(getCreateDeleteInboundLineInput(invoiceId)),
+    });
+  };
+
+export const useDeleteInboundLine = (): UseMutationResult<
+  DeleteInboundShipmentLinesMutation,
+  unknown,
+  string[],
+  { previous: Invoice; ids: string[] }
+> => {
+  // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
+  // input object should not require the invoice ID. Waiting for an API change.
+  const { id } = useParams();
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  const mutation = getDeleteInboundLinesQuery(api, id);
+  return useMutation(mutation, {
+    onMutate: async (ids: string[]) => {
+      await queryClient.cancelQueries(['invoice', id]);
+      const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
+      queryClient.setQueryData<Invoice>(['invoice', id], old => ({
+        ...old,
+        lines: old.lines.filter(({ id: lineId }) => !ids.includes(lineId)),
+      }));
+      return { previous, ids };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['invoice', id], context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['invoice', id]);
+    },
+  });
+};
