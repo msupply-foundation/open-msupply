@@ -12,6 +12,7 @@ import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer, useDebounceCallback } from '@common/hooks';
 
+const HOVER_DEBOUNCE_TIME = 300;
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
@@ -64,6 +65,11 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end);
+  const debouncedClearHoverActive = useDebounceCallback(
+    drawer.clearHoverActive,
+    [],
+    HOVER_DEBOUNCE_TIME + 50
+  );
 
   const CustomLink = React.useMemo(
     () =>
@@ -82,6 +88,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
+            onClick={debouncedClearHoverActive}
           />
         )
       ),
@@ -91,12 +98,12 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const debouncedHoverActive = useDebounceCallback(
     drawer.setHoverActive,
     [],
-    300
+    HOVER_DEBOUNCE_TIME
   );
 
   const onHoverOver = () => {
     if (expandOnHover) {
-      drawer.setHoverActive(to, true);
+      drawer.setHoverActive(to, 'over');
       if (!drawer.isOpen) {
         drawer.open();
         drawer.setHoverOpen(true);
@@ -106,15 +113,18 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
 
   const onHoverOut = () => {
     if (expandOnHover) {
-      debouncedHoverActive(to, false);
+      debouncedHoverActive(to, 'out');
     }
   };
 
   React.useEffect(() => {
-    const isActive = Object.values(drawer.hoverActive).some(active => active);
+    const isActive = Object.values(drawer.hoverActive).some(
+      active => active === 'over'
+    );
     if (drawer.hoverOpen && !isActive) {
       drawer.close();
       drawer.setHoverOpen(false);
+      drawer.clearHoverActive();
     }
   }, [drawer.hoverActive]);
 

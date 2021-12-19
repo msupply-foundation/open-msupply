@@ -2,15 +2,16 @@ import create from 'zustand';
 import LocalStorage from '../localStorage/LocalStorage';
 
 type DrawerController = {
-  hoverActive: Record<string, boolean>;
+  hoverActive: Record<string, string>;
   hoverOpen: boolean;
   isOpen: boolean;
   hasUserSet: boolean;
   open: () => void;
   close: () => void;
   toggle: () => void;
-  setHoverActive: (key: string, active: boolean) => void;
+  setHoverActive: (key: string, active: string) => void;
   setHoverOpen: (open: boolean) => void;
+  clearHoverActive: () => void;
 };
 
 export const useDrawer = create<DrawerController>(set => {
@@ -30,6 +31,7 @@ export const useDrawer = create<DrawerController>(set => {
     close: () => set(state => ({ ...state, isOpen: false, hoverOpen: false })),
     toggle: () =>
       set(state => ({ ...state, isOpen: !state.isOpen, hasUserSet: true })),
+    clearHoverActive: () => set(state => ({ ...state, hoverActive: {} })),
   };
 });
 
