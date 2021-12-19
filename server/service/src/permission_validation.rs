@@ -20,12 +20,27 @@ pub enum PermissionDSL {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
+    DeleteStockTakeLine,
 }
 
-/// TODO use lasy_static! ?
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
-    map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+    // The purpose of the following match is to enforce every resource type is handled, i.e. that we
+    // don't forget to add permissions for a resource. Better way to do it?
+    match Resource::RouteMe {
+        Resource::RouteMe => {
+            map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+        }
+        Resource::DeleteStockTakeLine => {
+            map.insert(
+                Resource::DeleteStockTakeLine,
+                PermissionDSL::And(vec![
+                    PermissionDSL::HasApiRole(ApiRole::User),
+                    PermissionDSL::HasStoreAccess(StoreRole::User),
+                ]),
+            );
+        }
+    }
     map
 }
 
@@ -136,6 +151,10 @@ fn validate_resource_permissions(
             }
         }
         PermissionDSL::HasStoreAccess(store_role) => {
+            // give admin users access to any store
+            if !user_permissions.api.contains(&ApiRole::Admin) {
+                return Ok(());
+            }
             let store_id = match &resource_request.store_id {
                 Some(id) => id,
                 None => return Err("Store id not specified in request".to_string()),

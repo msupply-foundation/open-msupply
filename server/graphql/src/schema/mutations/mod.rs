@@ -3,16 +3,23 @@ mod error;
 pub mod inbound_shipment;
 pub mod location;
 pub mod outbound_shipment;
+pub mod stock_take;
 pub mod tax_update_input;
 pub mod user_register;
 
-use self::location::{
-    delete_location, insert_location, update_location, DeleteLocationInput, DeleteLocationResponse,
-    InsertLocationInput, InsertLocationResponse, UpdateLocationInput, UpdateLocationResponse,
+use self::{
+    location::{
+        delete_location, insert_location, update_location, DeleteLocationInput,
+        DeleteLocationResponse, InsertLocationInput, InsertLocationResponse, UpdateLocationInput,
+        UpdateLocationResponse,
+    },
+    stock_take::line::delete::{
+        delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+    },
 };
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
-use crate::ContextExt;
+use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
@@ -240,6 +247,15 @@ impl Mutations {
             delete_outbound_shipments,
         )
     }
+
+    async fn delete_stock_take_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: DeleteStockTakeLineInput,
+    ) -> Result<DeleteStockTakeLineResponse, StandardGraphqlError> {
+        delete_stock_take_line(ctx, &store_id, &input)
+    }
 }
 
 // Common Mutation Errors
@@ -441,6 +457,10 @@ impl InvoiceLineBelongsToAnotherInvoice {
 #[graphql(concrete(
     name = "DeleteOutboundShipmentServiceLineResponseWithId",
     params(DeleteOutboundShipmentServiceLineResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteStockTakeLineResponseWithId",
+    params(DeleteStockTakeLineResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
