@@ -1,5 +1,6 @@
 use async_graphql::ErrorExtensions;
 use repository::RepositoryError;
+use service::permission_validation::{ValidationDeniedKind, ValidationError};
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
@@ -35,5 +36,21 @@ impl ErrorExtensions for StandardGraphqlError {
 impl From<RepositoryError> for StandardGraphqlError {
     fn from(err: RepositoryError) -> Self {
         StandardGraphqlError::InternalError(format!("{:?}", err))
+    }
+}
+
+impl From<ValidationError> for StandardGraphqlError {
+    fn from(err: ValidationError) -> Self {
+        match err {
+            ValidationError::Denied(kind) => match kind {
+                ValidationDeniedKind::NotAuthenticated(_) => {
+                    StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
+                }
+                ValidationDeniedKind::InsufficientPermission(_) => {
+                    StandardGraphqlError::Forbidden(format!("{:?}", kind))
+                }
+            },
+            ValidationError::InternalError(err) => StandardGraphqlError::InternalError(err),
+        }
     }
 }
