@@ -2,10 +2,13 @@ import React from 'react';
 import { CellProps } from '../../../columns';
 import { BasicTextInput } from '@common/components';
 import { DomainObject } from '@common/types';
-import { useDebounceCallback } from '@common/hooks';
+import { useBufferState, useDebounceCallback } from '@common/hooks';
 
-type DomainObjectWithUpdater<T> = T &
-  DomainObject & { update?: (key: string, value: string) => void };
+type RowData<T> = T & DomainObject;
+
+type DomainObjectWithUpdater<T> = RowData<T> & {
+  update: (patch: Partial<RowData<T>>) => void;
+};
 
 type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
@@ -15,10 +18,8 @@ export const TextInputCell = <T extends DomainObject>({
 }: CellPropsWithUpdaterObject<T>): React.ReactElement<
   CellPropsWithUpdaterObject<T>
 > => {
-  const [buffer, setBuffer] = React.useState(column.accessor(rowData));
-
-  const noop = () => {};
-  const updater = useDebounceCallback(rowData.update ?? noop, [rowData], 500);
+  const [buffer, setBuffer] = useBufferState(column.accessor(rowData));
+  const updater = useDebounceCallback(column.setter, [rowData], 500);
 
   return (
     <BasicTextInput
@@ -26,7 +27,7 @@ export const TextInputCell = <T extends DomainObject>({
       onChange={e => {
         const newValue = e.target.value;
         setBuffer(newValue);
-        updater(String(column.key), newValue);
+        updater({ ...rowData, [column.key]: newValue });
       }}
     />
   );

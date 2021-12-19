@@ -20,7 +20,7 @@ export interface StocktakeLine extends StocktakeLineNode {
   isDeleted?: boolean;
   isUpdated?: boolean;
   countThisLine: boolean;
-  update?: (key: string, value: string) => void;
+  update?: (patch: Partial<StocktakeLine> & { id: string }) => void;
 }
 
 export interface StocktakeItem {

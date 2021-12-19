@@ -79,10 +79,10 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                     key={id}
                     checked={countThisLine}
                     onClick={() =>
-                      line.update(
-                        'countThisLine',
-                        countThisLine ? 'false' : 'true'
-                      )
+                      line.update({
+                        id: line.id,
+                        countThisLine: !countThisLine,
+                      })
                     }
                   />
                   <Box>{`${t('label.line', { line: index + 1 })}`}</Box>

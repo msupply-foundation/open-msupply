@@ -109,8 +109,6 @@ export type OutboundShipmentAction =
     };
 
 export interface OutboundShipmentRow extends Omit<InvoiceLine, 'item'> {
-  updateNumberOfPacks?: (quantity: number) => void;
-
   stockLineId: string;
   invoiceId: string;
   itemId: string;
@@ -148,8 +146,6 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
   deleteLine?: (line: OutboundShipmentRow) => void;
 }
 export interface InboundShipmentRow extends Omit<InvoiceLine, 'item'> {
-  updateNumberOfPacks?: (quantity: number) => void;
-  update?: (key: string, value: string) => void;
   stockLineId: string;
   invoiceId: string;
   itemId: string;
@@ -173,15 +169,11 @@ export type InboundShipmentItem = {
   packSize?: number | undefined;
   note?: string | null;
   isDeleted?: boolean;
-  upsertLine?: (line: InboundShipmentRow) => void;
 };
 
 export interface InboundShipment extends Invoice {
   items: InboundShipmentItem[];
   status: InvoiceNodeStatus;
-  update?: <K extends keyof Invoice>(key: K, value: Invoice[K]) => void;
-  upsertLine?: (line: InboundShipmentRow) => void;
-  upsertItem?: (line: InboundShipmentItem) => void;
   deleteLine?: (line: InboundShipmentRow) => void;
   deleteItem?: (line: InboundShipmentItem) => void;
 }
