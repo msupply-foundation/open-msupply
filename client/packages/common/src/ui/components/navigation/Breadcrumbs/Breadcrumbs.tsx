@@ -26,14 +26,16 @@ export const Breadcrumbs: React.FC = () => {
     const parts = location.pathname.split('/');
     const urlParts: UrlPart[] = [];
 
-    parts.reduce((fullPath, part) => {
+    parts.reduce((fullPath, part, index) => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
-      urlParts.push({
-        path,
-        key: `${part}` as unknown as LocaleKey,
-        value: part,
-      });
+      console.info(`part: ${part} index: ${index} path: ${path}`);
+      if (index > 1)
+        urlParts.push({
+          path,
+          key: `${part}` as unknown as LocaleKey,
+          value: part,
+        });
       return path;
     }, '');
     setUrlParts(urlParts);
@@ -43,7 +45,7 @@ export const Breadcrumbs: React.FC = () => {
     if (index === urlParts.length - 1) {
       const title = /^\d+$/.test(part.value)
         ? t('breadcrumb.item', { id: part.value })
-        : t(part.key, '');
+        : t(part.key);
 
       return <span key={part.key}>{title}</span>;
     }
