@@ -390,21 +390,24 @@ mod stock_take_line_test {
         let error = service
             .delete_stock_take_line(&context, &store_a.id, "invalid")
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeLineError::StockTakeLineDoesNotExist);
+        assert!(matches!(
+            error,
+            DeleteStockTakeLineError::StockTakeLineDoesNotExist(_)
+        ));
 
         // error: invalid store
         let existing_line = mock_stock_take_line_a();
         let error = service
             .delete_stock_take_line(&context, "invalid", &existing_line.id)
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeLineError::InvalidStore);
+        assert!(matches!(error, DeleteStockTakeLineError::InvalidStoreId(_)));
         // error: invalid store
         let store_b = mock_store_b();
         let existing_line = mock_stock_take_line_a();
         let error = service
             .delete_stock_take_line(&context, &store_b.id, &existing_line.id)
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeLineError::InvalidStore);
+        assert!(matches!(error, DeleteStockTakeLineError::InvalidStoreId(_)));
 
         // error CannotEditFinalised
         let store_a = mock_store_a();
