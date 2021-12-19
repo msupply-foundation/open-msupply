@@ -1,4 +1,5 @@
 import React, { FC, ReactNode } from 'react';
+import { TestingRouterContext } from '@openmsupply-client/common';
 import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '@common/styles';
 import { renderHook } from '@testing-library/react-hooks';
@@ -51,15 +52,17 @@ describe('useQueryParams', () => {
     ({ children }: { children: ReactNode[] }) => {
       return (
         <TestingProvider>
-          <ThemeChangerer
-            paginationRowHeight={paginationRowHeight}
-            dataRowHeight={dataRowHeight}
-            headerRowHeight={headerRowHeight}
-            footerHeight={footerHeight}
-            saveButtonRowHeight={saveButtonRowHeight}
-          >
-            {children}
-          </ThemeChangerer>
+          <TestingRouterContext>
+            <ThemeChangerer
+              paginationRowHeight={paginationRowHeight}
+              dataRowHeight={dataRowHeight}
+              headerRowHeight={headerRowHeight}
+              footerHeight={footerHeight}
+              saveButtonRowHeight={saveButtonRowHeight}
+            >
+              {children}
+            </ThemeChangerer>
+          </TestingRouterContext>
         </TestingProvider>
       );
     };

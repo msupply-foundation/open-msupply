@@ -4,7 +4,7 @@ import { SupportedLocales } from '@common/intl';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
-import { MemoryRouter, Routes } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../ui/layout/tables';
 import { IntlTestProvider, OmSupplyApiProvider } from '..';
 import { Environment } from '@openmsupply-client/config';
@@ -33,6 +33,12 @@ export const TestingRouter: FC<TestingRouterProps> = ({
   <MemoryRouter initialEntries={initialEntries}>
     <Routes>{children}</Routes>
   </MemoryRouter>
+);
+
+export const TestingRouterContext: FC = ({ children }) => (
+  <TestingRouter initialEntries={['/testing']}>
+    <Route path="/testing" element={<>{children}</>} />
+  </TestingRouter>
 );
 
 export const TestingProvider: FC = ({ children }) => (
