@@ -7,12 +7,13 @@ import {
   NumberInputCell,
   CurrencyInputCell,
 } from '@openmsupply-client/common';
-import { InboundShipmentRow } from '../../../../types';
+import { DraftInboundLine } from './InboundLineEdit';
 
-export const BatchTable: FC<{ batches: InboundShipmentRow[] }> = ({
-  batches,
-}) => {
-  const columns = useColumns<InboundShipmentRow>([
+export const BatchTable: FC<{
+  batches: DraftInboundLine[];
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+}> = ({ batches }) => {
+  const columns = useColumns<DraftInboundLine>([
     getLineLabelColumn(),
     ['batch', { Cell: TextInputCell, width: 200 }],
     [
@@ -41,10 +42,11 @@ export const BatchTable: FC<{ batches: InboundShipmentRow[] }> = ({
   );
 };
 
-export const PricingTable: FC<{ batches: InboundShipmentRow[] }> = ({
-  batches,
-}) => {
-  const columns = useColumns<InboundShipmentRow>([
+export const PricingTable: FC<{
+  batches: DraftInboundLine[];
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+}> = ({ batches }) => {
+  const columns = useColumns<DraftInboundLine>([
     getLineLabelColumn(),
     ['batch', { Cell: TextInputCell, width: 200 }],
     ['sellPricePerPack', { Cell: CurrencyInputCell, width: 100 }],

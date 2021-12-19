@@ -11,7 +11,7 @@ import {
   GenericColumnKey,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem } from '../../types';
-import { useInboundLines } from './api';
+import { useInboundItems } from './api';
 
 interface GeneralTabProps<T extends DomainObject> {
   onRowClick?: (rowData: T) => void;
@@ -41,7 +41,7 @@ export const GeneralTabComponent: FC<GeneralTabProps<InboundShipmentItem>> = ({
   const { pagination } = usePagination();
   const t = useTranslation('common');
 
-  const { data, sortBy, onSort } = useInboundLines();
+  const { data, sortBy, onSort } = useInboundItems();
   const activeRows = data?.filter(({ isDeleted }) => !isDeleted) ?? [];
 
   const columns = useColumns(
