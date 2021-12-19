@@ -18,6 +18,7 @@ import {
   useDialog,
   generateUUID,
   Item,
+  useNotification,
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
 import { ModalMode } from '../../DetailView';
@@ -61,7 +62,6 @@ export type DraftInboundLine = Pick<
 > & {
   isCreated?: boolean;
   isUpdated?: boolean;
-  update?: (key: keyof DraftInboundLine, value: any) => void;
 };
 
 const createDraftInvoiceLine = (
@@ -123,29 +123,7 @@ const useDraftInboundLines = (itemId: string) => {
   };
 
   return {
-    draftLines: draftLines.map(line => {
-      line.update = <K extends keyof DraftInboundLine>(
-        key: K,
-        value: DraftInboundLine[K]
-      ) => {
-        const parseValue = (value: DraftInboundLine[K]) => {
-          switch (key) {
-            case 'numberOfPacks':
-              return Number(value);
-            case 'packSize':
-              return Number(value);
-            case 'sellPricePerkPack':
-              return Number(value);
-            case 'costPricePerPack':
-              return Number(value);
-            default:
-              return value;
-          }
-        };
-        updateDraftLine({ id: line.id, [key]: parseValue(value) });
-      };
-      return line;
-    }),
+    draftLines,
     addDraftLine,
     updateDraftLine,
     isLoading,
@@ -160,6 +138,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   onClose,
 }) => {
   const t = useTranslation('distribution');
+  const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<Item | null>(item);
   const nextItem = useNextItem(currentItem?.id);
   const isMediumScreen = useIsMediumScreen();
@@ -195,7 +174,19 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
           }}
         />
       }
-      okButton={<DialogButton variant="ok" onClick={saveLines} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            try {
+              await saveLines();
+              onClose();
+            } catch (e) {
+              error((error as unknown as Error).message);
+            }
+          }}
+        />
+      }
       height={600}
       width={1024}
     >

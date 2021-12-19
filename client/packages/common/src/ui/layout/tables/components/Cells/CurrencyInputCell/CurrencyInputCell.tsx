@@ -2,10 +2,13 @@ import React from 'react';
 import { CellProps } from '../../../columns';
 import { CurrencyInput } from '@common/components';
 import { DomainObject } from '@common/types';
-import { useDebounceCallback } from '@common/hooks';
+import { useBufferState, useDebounceCallback } from '@common/hooks';
 
-type DomainObjectWithUpdater<T> = T &
-  DomainObject & { update?: (key: string, value: string) => void };
+type RowData<T> = T & DomainObject;
+
+type DomainObjectWithUpdater<T> = RowData<T> & {
+  update: (patch: Partial<RowData<T>>) => void;
+};
 
 type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
 
@@ -15,10 +18,9 @@ export const CurrencyInputCell = <T extends DomainObject>({
 }: CellPropsWithUpdaterObject<T>): React.ReactElement<
   CellPropsWithUpdaterObject<T>
 > => {
-  const [buffer, setBuffer] = React.useState(Number(column.accessor(rowData)));
+  const [buffer, setBuffer] = useBufferState(Number(column.accessor(rowData)));
 
-  const noop = () => {};
-  const updater = useDebounceCallback(rowData.update ?? noop, [rowData], 250);
+  const updater = useDebounceCallback(column.setter, [rowData], 250);
 
   return (
     <CurrencyInput
@@ -26,7 +28,7 @@ export const CurrencyInputCell = <T extends DomainObject>({
       value={buffer}
       onChangeNumber={newNumber => {
         setBuffer(newNumber);
-        updater(String(column.key), String(newNumber));
+        updater({ ...rowData, [column.key]: Number(newNumber) });
       }}
     />
   );

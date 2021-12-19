@@ -12,19 +12,20 @@ import { DraftInboundLine } from './InboundLineEdit';
 export const BatchTable: FC<{
   batches: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
-}> = ({ batches }) => {
+}> = ({ batches, updateDraftLine }) => {
   const columns = useColumns<DraftInboundLine>([
     getLineLabelColumn(),
-    ['batch', { Cell: TextInputCell, width: 200 }],
+    ['batch', { Cell: TextInputCell, width: 200, setter: updateDraftLine }],
     [
       'numberOfPacks',
       {
         Cell: NumberInputCell,
         width: 100,
         label: 'label.num-packs',
+        setter: updateDraftLine,
       },
     ],
-    ['packSize', { Cell: NumberInputCell }],
+    ['packSize', { Cell: NumberInputCell, setter: updateDraftLine }],
     [
       'unitQuantity',
       { accessor: rowData => rowData.numberOfPacks * rowData.packSize },
@@ -45,12 +46,18 @@ export const BatchTable: FC<{
 export const PricingTable: FC<{
   batches: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
-}> = ({ batches }) => {
+}> = ({ batches, updateDraftLine }) => {
   const columns = useColumns<DraftInboundLine>([
     getLineLabelColumn(),
-    ['batch', { Cell: TextInputCell, width: 200 }],
-    ['sellPricePerPack', { Cell: CurrencyInputCell, width: 100 }],
-    ['costPricePerPack', { Cell: CurrencyInputCell, width: 100 }],
+    ['batch', { Cell: TextInputCell, width: 200, setter: updateDraftLine }],
+    [
+      'sellPricePerPack',
+      { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
+    ],
+    [
+      'costPricePerPack',
+      { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
+    ],
     [
       'unitQuantity',
       { accessor: rowData => rowData.numberOfPacks * rowData.packSize },

@@ -44,6 +44,10 @@ export type ColumnDataFormatter = (
   t: Translators
 ) => string;
 
+export type ColumnDataSetter<T> = (
+  rowData: Partial<T> & { id: string }
+) => void;
+
 export enum GenericColumnKey {
   Selection = 'selection',
 }
@@ -61,18 +65,21 @@ export interface Column<T extends DomainObject> {
   sortDescFirst: boolean;
   sortType: 'datetime' | 'numeric' | 'alphanumeric';
   sortInverted: boolean;
+
   onChangeSortBy?: (column: Column<T>) => void;
   sortBy?: SortBy<T>;
 
   width: number;
   minWidth: number;
 
-  order?: number;
-
   Cell: JSXElementConstructor<CellProps<T>>;
   Header: JSXElementConstructor<HeaderProps<T>>;
 
   formatter: ColumnDataFormatter;
+
+  order?: number;
+
+  setter: ColumnDataSetter<T>;
 }
 
 export interface ColumnDefinition<T extends DomainObject>
