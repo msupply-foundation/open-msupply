@@ -12,6 +12,7 @@ import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer, useDebounceCallback } from '@common/hooks';
 
+const HOVER_DEBOUNCE_TIME = 500;
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
@@ -23,20 +24,19 @@ const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   return !!selected;
 };
 
-const getListItemCommonStyles = (isOpen: boolean) => ({
+const getListItemCommonStyles = () => ({
   height: 40,
   borderRadius: 20,
-  width: isOpen ? 200 : 40,
   justifyContent: 'center',
   alignItems: 'center',
 });
 
 const StyledListItem = styled<
-  FC<ListItemProps & { isOpen: boolean; isSelected: boolean; to: string }>
+  FC<ListItemProps & { isSelected: boolean; to: string }>
 >(ListItem, {
-  shouldForwardProp: prop => prop !== 'isSelected' && prop !== 'isOpen',
-})(({ theme, isOpen, isSelected }) => ({
-  ...getListItemCommonStyles(isOpen),
+  shouldForwardProp: prop => prop !== 'isSelected',
+})(({ theme, isSelected }) => ({
+  ...getListItemCommonStyles(),
   backgroundColor: isSelected ? theme.palette.background.white : 'transparent',
   boxShadow: isSelected ? theme.shadows[3] : 'none',
   marginTop: 5,
@@ -64,6 +64,11 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end);
+  const debouncedClearHoverActive = useDebounceCallback(
+    drawer.clearHoverActive,
+    [],
+    HOVER_DEBOUNCE_TIME + 50
+  );
 
   const CustomLink = React.useMemo(
     () =>
@@ -71,7 +76,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         expandOnHover && !end ? (
           <span
             {...linkProps}
-            onClick={drawer.open}
+            onClick={onHoverOver}
             data-testid={`${to}_hover`}
           />
         ) : (
@@ -82,6 +87,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
+            onClick={debouncedClearHoverActive}
           />
         )
       ),
@@ -91,7 +97,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const debouncedHoverActive = useDebounceCallback(
     drawer.setHoverActive,
     [],
-    300
+    HOVER_DEBOUNCE_TIME
   );
 
   const onHoverOver = () => {
@@ -115,6 +121,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     if (drawer.hoverOpen && !isActive) {
       drawer.close();
       drawer.setHoverOpen(false);
+      drawer.clearHoverActive();
     }
   }, [drawer.hoverActive]);
 
@@ -126,10 +133,10 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
       onOpen={onHoverOver}
       PopperProps={expandOnHover ? { style: { display: 'none' } } : {}}
     >
-      <StyledListItem isOpen={drawer.isOpen} isSelected={selected} to={to}>
+      <StyledListItem isSelected={selected} to={to}>
         <ListItemButton
           sx={{
-            ...getListItemCommonStyles(drawer.isOpen),
+            ...getListItemCommonStyles(),
             '&.MuiListItemButton-root:hover': {
               backgroundColor: 'transparent',
             },
@@ -143,8 +150,10 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           component={CustomLink}
         >
           <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-          {drawer.isOpen && <Box width={10} />}
-          {drawer.isOpen && <ListItemText primary={text} />}
+          <Box className="navLinkText">
+            <Box width={10} />
+            <ListItemText primary={text} />
+          </Box>
         </ListItemButton>
       </StyledListItem>
     </Tooltip>
