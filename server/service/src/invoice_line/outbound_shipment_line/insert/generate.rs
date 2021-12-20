@@ -1,6 +1,8 @@
 use crate::u32_to_i32;
 use domain::outbound_shipment::InsertOutboundShipmentLine;
-use repository::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
+use repository::schema::{
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
+};
 
 use super::InsertOutboundShipmentLineError;
 
@@ -72,6 +74,7 @@ fn generate_line(
         expiry_date,
         sell_price_per_pack,
         cost_price_per_pack,
+        r#type: InvoiceLineRowType::StockOut,
         number_of_packs: u32_to_i32(number_of_packs),
         item_name,
         item_code,

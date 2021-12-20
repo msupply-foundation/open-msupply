@@ -7,45 +7,30 @@ pub fn generate(
     existing_line: InvoiceLineRow,
     item: ItemRow,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentServiceLineError> {
+    let mut update_line = existing_line;
     // 1) Use name from input (if specified)
     // 2) else: if item has been updated use name from the updated item name
     // 3) else: use existing line name
-    let item_name = if let Some(input_name) = input.name {
-        input_name
-    } else if input.item_id.is_some() && input.item_id != Some(existing_line.item_id.to_owned()) {
-        item.name
-    } else {
-        existing_line.item_name
-    };
+    if let Some(input_name) = input.name {
+        update_line.item_name = input_name
+    } else if let Some(input_item_id) = input.item_id {
+        if input_item_id != update_line.item_id {
+            update_line.item_name = item.name;
+            update_line.item_id = input_item_id;
+        }
+    }
 
-    let update_line = InvoiceLineRow {
-        id: input.id,
-        invoice_id: input.invoice_id,
-        item_id: input.item_id.unwrap_or(existing_line.item_id),
-        item_name,
-        total_before_tax: input
-            .total_after_tax
-            .unwrap_or(existing_line.total_before_tax),
-        total_after_tax: input
-            .total_after_tax
-            .unwrap_or(existing_line.total_after_tax),
-        tax: input
-            .tax
-            .map(|update_tax| update_tax.percentage)
-            .unwrap_or(existing_line.tax),
-        note: input.note.or(existing_line.note),
+    if let Some(total_after_tax) = input.total_before_tax {
+        update_line.total_before_tax = total_after_tax;
+    }
 
-        // keep stock related fields
-        location_id: existing_line.location_id,
-        pack_size: existing_line.pack_size,
-        batch: existing_line.batch,
-        expiry_date: existing_line.expiry_date,
-        sell_price_per_pack: existing_line.sell_price_per_pack,
-        cost_price_per_pack: existing_line.cost_price_per_pack,
-        number_of_packs: existing_line.number_of_packs,
-        item_code: existing_line.item_code,
-        stock_line_id: existing_line.stock_line_id,
-    };
+    if let Some(total_after_tax) = input.total_after_tax {
+        update_line.total_after_tax = total_after_tax;
+    }
+
+    if let Some(tax) = input.tax {
+        update_line.tax = tax.percentage;
+    }
 
     Ok(update_line)
 }
