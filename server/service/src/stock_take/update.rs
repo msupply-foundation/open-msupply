@@ -43,8 +43,8 @@ pub struct UpdateStockTakeInput {
 pub enum UpdateStockTakeError {
     DatabaseError(RepositoryError),
     InternalError(String),
+    InvalidStore,
     StockTakeDoesNotExist,
-    InvalidStoreId,
     CannotEditFinalised,
 }
 
@@ -61,7 +61,7 @@ fn validate(
         return Err(UpdateStockTakeError::CannotEditFinalised);
     }
     if !check_store_id_matches(store_id, &existing.store_id) {
-        return Err(UpdateStockTakeError::InvalidStoreId);
+        return Err(UpdateStockTakeError::InvalidStore);
     }
 
     Ok(existing)

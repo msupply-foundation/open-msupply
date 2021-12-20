@@ -14,8 +14,8 @@ use super::validate::check_stock_take_line_exist;
 pub enum DeleteStockTakeLineError {
     DatabaseError(RepositoryError),
     InternalError(String),
+    InvalidStore,
     StockTakeLineDoesNotExist,
-    InvalidStoreId,
     CannotEditFinalised,
 }
 
@@ -41,7 +41,7 @@ fn validate(
         return Err(DeleteStockTakeLineError::CannotEditFinalised);
     }
     if !check_store_id_matches(store_id, &stock_take.store_id) {
-        return Err(DeleteStockTakeLineError::InvalidStoreId);
+        return Err(DeleteStockTakeLineError::InvalidStore);
     }
     Ok(())
 }
