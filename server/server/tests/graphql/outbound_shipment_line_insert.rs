@@ -11,6 +11,7 @@ mod graphql {
     use domain::EqualFilter;
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
+    use repository::schema::InvoiceLineRowType;
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, StockLineRow},
@@ -309,6 +310,7 @@ mod graphql {
             start_stock_line.total_number_of_packs
         );
 
+        assert_eq!(new_line.r#type, InvoiceLineRowType::StockOut);
         assert_eq!(item.name, new_line.item_name);
         assert_eq!(item.code, new_line.item_code);
         assert_eq!(new_stock_line, FromStockLine(new_line));

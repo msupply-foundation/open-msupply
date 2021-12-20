@@ -11,6 +11,7 @@ mod graphql {
     use domain::{invoice::InvoiceFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use insert::InsertInboundShipmentLineErrorInterface::*;
+    use repository::schema::InvoiceLineRowType;
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, StockLineRow},
@@ -245,6 +246,7 @@ mod graphql {
             .find_one_by_id(&variables.id)
             .unwrap();
 
+        assert_eq!(new_line.r#type, InvoiceLineRowType::StockIn);
         assert_eq!(new_line, variables);
 
         // Success Delivered
@@ -268,10 +270,11 @@ mod graphql {
             .find_one_by_id(&batch.id)
             .unwrap();
 
+        assert_eq!(new_line.r#type, InvoiceLineRowType::StockIn);
         assert_eq!(new_line, variables);
         assert_eq!(new_stock_line, variables);
 
-        // Success Delivered
+        // Success Delivered with optional fields
 
         let mut variables = base_variables.clone();
         variables.id = uuid();

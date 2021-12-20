@@ -4,7 +4,10 @@ use chrono::NaiveDate;
 
 use crate::{
     db_diesel::{InvoiceRepository, StorageConnection},
-    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
+    schema::{
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        StockLineRow,
+    },
     InvoiceLineRowRepository, StockLineRowRepository,
 };
 
@@ -71,6 +74,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     total_before_tax: 278.26,
                     total_after_tax: 320.0,
                     tax: Some(15.0),
+                    r#type: InvoiceLineRowType::StockOut,
                     number_of_packs: 10,
                     note: None,
                 },
@@ -107,6 +111,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     total_before_tax: 210.0,
                     total_after_tax: 210.0,
                     tax: None,
+                    r#type: InvoiceLineRowType::StockOut,
                     number_of_packs: 2,
                     note: None,
                 },
