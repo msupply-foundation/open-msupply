@@ -5,18 +5,18 @@ import AppDrawer from './AppDrawer';
 import {
   setScreenSize_ONLY_FOR_TESTING,
   TestingProvider,
+  TestingRouterContext,
 } from '@openmsupply-client/common';
 import { act } from 'react-dom/test-utils';
-import { BrowserRouter } from 'react-router-dom';
 
 describe('AppDrawer', () => {
   it('Collapses when clicking the drawer open/close button for the first time on a large screen', async () => {
     setScreenSize_ONLY_FOR_TESTING(1441);
     const { getByRole, getByTestId } = render(
       <TestingProvider>
-        <BrowserRouter>
+        <TestingRouterContext>
           <AppDrawer />
-        </BrowserRouter>
+        </TestingRouterContext>
       </TestingProvider>
     );
 
@@ -35,9 +35,9 @@ describe('AppDrawer', () => {
     setScreenSize_ONLY_FOR_TESTING(1199);
     const { getByRole, getByTestId } = render(
       <TestingProvider>
-        <BrowserRouter>
+        <TestingRouterContext>
           <AppDrawer />
-        </BrowserRouter>
+        </TestingRouterContext>
       </TestingProvider>
     );
 
@@ -56,9 +56,9 @@ describe('AppDrawer', () => {
     setScreenSize_ONLY_FOR_TESTING(1441);
     const { getByText } = render(
       <TestingProvider>
-        <BrowserRouter>
+        <TestingRouterContext>
           <AppDrawer />
-        </BrowserRouter>
+        </TestingRouterContext>
       </TestingProvider>
     );
 
@@ -76,9 +76,9 @@ describe('AppDrawer', () => {
     setScreenSize_ONLY_FOR_TESTING(1442);
     const { getByText } = render(
       <TestingProvider>
-        <BrowserRouter>
+        <TestingRouterContext>
           <AppDrawer />
-        </BrowserRouter>
+        </TestingRouterContext>
       </TestingProvider>
     );
 
