@@ -77,7 +77,17 @@ export const DataTable = <T extends DomainObject>({
       }}
     >
       <MuiTable sx={{ display: 'block', flex: 1 }}>
-        <TableHead sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <TableHead
+          sx={{
+            backgroundColor: 'background.white',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+          }}
+        >
           <HeaderRow dense={dense}>
             {columns.map(column => (
               <HeaderCell
