@@ -1,4 +1,4 @@
-use domain::{name::Name, outbound_shipment::UpdateOutboundShipment};
+use domain::{name::Name, outbound_shipment::UpdateOutboundShipment, invoice_line::InvoiceLine};
 use repository::{
     InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
@@ -43,6 +43,7 @@ pub enum UpdateOutboundShipmentError {
     OtherPartyNotACustomer(Name),
     OtherPartyCannotBeThisStore,
     NotAnOutboundShipment,
+    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
 }
