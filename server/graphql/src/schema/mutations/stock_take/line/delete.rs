@@ -1,6 +1,6 @@
 use async_graphql::*;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest, ValidationService},
+    permission_validation::{Resource, ResourceAccessRequest},
     stock_take_line::delete::DeleteStockTakeLineError,
 };
 
@@ -29,7 +29,8 @@ pub fn delete_stock_take_line(
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
 
-    ValidationService::new(&service_ctx.connection).validate(
+    service_provider.validation_service.validate(
+        &service_ctx,
         ctx.get_auth_data(),
         &ctx.get_auth_token(),
         &ResourceAccessRequest {

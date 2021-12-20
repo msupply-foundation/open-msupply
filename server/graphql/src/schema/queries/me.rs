@@ -1,14 +1,9 @@
 use async_graphql::*;
-use service::permission_validation::{
-    Resource, ResourceAccessRequest, ValidationError, ValidationService,
-};
+use service::permission_validation::{Resource, ResourceAccessRequest};
 use service::user_account::{UserAccount, UserAccountService};
 
-use crate::schema::types::{AccessDenied, DatabaseError, InternalError};
-use crate::schema::validation_denied_kind_to_string;
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
-
-use super::ErrorWrapper;
 
 pub struct User {
     pub user: UserAccount,
@@ -27,68 +22,35 @@ impl User {
     }
 }
 
-#[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
-pub enum UserErrorInterface {
-    AccessDenied(AccessDenied),
-    DatabaseError(DatabaseError),
-    InternalError(InternalError),
-}
-
-pub type UserError = ErrorWrapper<UserErrorInterface>;
-
 #[derive(Union)]
 pub enum UserResponse {
-    Error(UserError),
     Response(User),
 }
 
-pub fn me(ctx: &Context<'_>) -> UserResponse {
-    let connection_manager = ctx.get_connection_manager();
-    let con = match connection_manager.connection() {
-        Ok(con) => con,
-        Err(err) => {
-            return UserResponse::Error(ErrorWrapper {
-                error: UserErrorInterface::DatabaseError(DatabaseError(err)),
-            })
-        }
-    };
-    let service = ValidationService::new(&con);
-    let resource_req = ResourceAccessRequest {
-        resource: Resource::RouteMe,
-        store_id: None,
-    };
-    let user = match service.validate(ctx.get_auth_data(), &ctx.get_auth_token(), &resource_req) {
-        Ok(value) => value,
-        Err(err) => {
-            let error = match err {
-                ValidationError::Denied(denied) => UserErrorInterface::AccessDenied(AccessDenied(
-                    validation_denied_kind_to_string(denied),
-                )),
-                ValidationError::InternalError(err) => {
-                    UserErrorInterface::InternalError(InternalError(err))
-                }
-            };
-            return UserResponse::Error(ErrorWrapper { error });
-        }
-    };
+pub fn me(ctx: &Context<'_>) -> Result<UserResponse, StandardGraphqlError> {
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
 
-    let user_service = UserAccountService::new(&con);
+    let user = service_provider.validation_service.validate(
+        &service_ctx,
+        ctx.get_auth_data(),
+        &ctx.get_auth_token(),
+        &ResourceAccessRequest {
+            resource: Resource::RouteMe,
+            store_id: None,
+        },
+    )?;
+
+    let user_service = UserAccountService::new(&service_ctx.connection);
     let user = match user_service.find_user(&user.user_id) {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return UserResponse::Error(ErrorWrapper {
-                error: UserErrorInterface::InternalError(InternalError(
-                    "Can't find user account data".to_string(),
-                )),
-            })
+            return Err(StandardGraphqlError::InternalError(
+                "Can't find user account data".to_string(),
+            ));
         }
-        Err(err) => {
-            return UserResponse::Error(ErrorWrapper {
-                error: UserErrorInterface::DatabaseError(DatabaseError(err)),
-            })
-        }
+        Err(err) => return Err(err.into()),
     };
 
-    UserResponse::Response(User { user })
+    Ok(UserResponse::Response(User { user }))
 }

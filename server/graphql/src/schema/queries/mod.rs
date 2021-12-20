@@ -1,3 +1,4 @@
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
@@ -55,7 +56,7 @@ impl Queries {
         refresh_token(ctx)
     }
 
-    pub async fn me(&self, ctx: &Context<'_>) -> UserResponse {
+    pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse, StandardGraphqlError> {
         me(ctx)
     }
 
