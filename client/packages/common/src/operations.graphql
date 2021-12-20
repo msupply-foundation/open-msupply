@@ -1014,6 +1014,25 @@ mutation upsertOutboundShipment(
   }
 }
 
+mutation deleteInboundShipmentLines($input: [DeleteInboundShipmentLineInput!]) {
+  batchInboundShipment(deleteInboundShipmentLines: $input) {
+    deleteInboundShipmentLines {
+      id
+      response {
+        ... on DeleteInboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
 mutation upsertInboundShipment(
   $deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
   $insertInboundShipmentLines: [InsertInboundShipmentLineInput!]

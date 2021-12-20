@@ -22,7 +22,7 @@ interface SidePanelProps {
 }
 
 const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
-  const t = useTranslation('common');
+  const t = useTranslation(['common', 'distribution']);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>

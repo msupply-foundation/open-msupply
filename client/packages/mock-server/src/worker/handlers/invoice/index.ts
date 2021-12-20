@@ -11,7 +11,10 @@ import {
   DeleteInboundShipmentInput,
   BatchInboundShipmentInput,
   BatchOutboundShipmentInput,
+  mockDeleteInboundShipmentLinesMutation,
   mockUpdateInboundShipmentMutation,
+  DeleteInboundShipmentLineInput,
+  DeleteInboundShipmentLinesMutation,
 } from '@openmsupply-client/common/src/types';
 import { ResolverService } from '../../../api/resolvers';
 import { Invoice as InvoiceSchema } from '../../../schema/Invoice';
@@ -27,6 +30,28 @@ const invoiceQuery = mockInvoiceQuery((req, res, ctx) => {
     })
   );
 });
+
+const deleteInboundShipmentLines = mockDeleteInboundShipmentLinesMutation(
+  (req, res, ctx) => {
+    const { variables } = req;
+
+    if (Array.isArray(variables.input)) {
+      variables.input.map(input =>
+        MutationService.invoiceLine.inbound.remove(input)
+      );
+    } else {
+      MutationService.invoiceLine.inbound.remove(
+        variables.input as DeleteInboundShipmentLineInput
+      );
+    }
+
+    const response: DeleteInboundShipmentLinesMutation = {
+      batchInboundShipment: { deleteInboundShipmentLines: null },
+    };
+
+    return res(ctx.data(response));
+  }
+);
 
 const invoicesQuery = mockInvoicesQuery((req, res, ctx) => {
   return res(
@@ -341,4 +366,5 @@ export const InvoiceHandlers = [
   upsertInboundShipmentMutation,
   upsertOutboundShipmentMutation,
   updateInboundShipmentMutation,
+  deleteInboundShipmentLines,
 ];

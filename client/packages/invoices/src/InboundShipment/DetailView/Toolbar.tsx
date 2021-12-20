@@ -13,8 +13,8 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { useInboundFields } from './api';
-import { InboundShipment, InboundShipmentItem } from '../../types';
+import { useDeleteInboundLine, useInboundFields, useInboundItems } from './api';
+import { InboundShipment } from '../../types';
 import { isInboundEditable } from '../../utils';
 
 interface ToolbarProps {
@@ -23,26 +23,33 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+  const { data } = useInboundItems();
+  const { mutate } = useDeleteInboundLine();
   const { otherParty, theirReference, update } = useInboundFields([
     'otherParty',
     'theirReference',
   ]);
 
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation(['replenishment', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => draft.items.find(({ id }) => selectedId === id))
-      .filter(Boolean) as InboundShipmentItem[],
+      .map(selectedId => data.find(({ id }) => selectedId === id))
+      .filter(Boolean)
+      .map(({ batches }) => Object.values(batches))
+      .flat()
+      .map(({ id }) => id),
   }));
 
-  const deleteAction = () => {
+  const deleteAction = async () => {
     if (selectedRows && selectedRows?.length > 0) {
-      selectedRows.forEach(item => draft.deleteItem?.(item));
-      const successSnack = success(`Deleted ${selectedRows?.length} lines`);
-      successSnack();
+      const number = selectedRows?.length;
+      const onSuccess = success(t('message.deleted-lines', { number }));
+      mutate(selectedRows, {
+        onSuccess,
+      });
     } else {
       const infoSnack = info(t('label.select-rows-to-delete-them'));
       infoSnack();
