@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use repository::{RepositoryError, StorageConnection, StorageConnectionManager};
 
 use crate::{
@@ -8,12 +10,14 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     permission_validation::{ValidationService, ValidationServiceTrait},
+    permissions::{PermissionService, PermissionServiceTrait},
     stock_take::{StockTakeService, StockTakeServiceTrait},
     stock_take_line::{StockTakeLineService, StockTakeLineServiceTrait},
 };
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
+    pub permission_service: Arc<dyn PermissionServiceTrait>,
     pub validation_service: Box<dyn ValidationServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
@@ -31,9 +35,11 @@ pub struct ServiceContext {
 
 impl ServiceProvider {
     pub fn new(connection_manager: StorageConnectionManager) -> Self {
+        let permission_service = Arc::new(PermissionService::new());
         ServiceProvider {
             connection_manager,
-            validation_service: Box::new(ValidationService::new()),
+            permission_service: permission_service.clone(),
+            validation_service: Box::new(ValidationService::new(permission_service)),
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
