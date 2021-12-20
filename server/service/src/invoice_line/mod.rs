@@ -26,6 +26,22 @@ pub trait OutboundShipmentLineServiceTrait: Sync + Send {
     ) -> Result<InvoiceLine, InsertOutboundShipmentUnallocatedLineError> {
         insert_outbound_shipment_unallocated_line(ctx, input)
     }
+
+    fn update_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateOutboundShipmentUnallocatedLine,
+    ) -> Result<InvoiceLine, UpdateOutboundShipmentUnallocatedLineError> {
+        update_outbound_shipment_unallocated_line(ctx, input)
+    }
+
+    fn delete_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteOutboundShipmentUnallocatedLine,
+    ) -> Result<String, DeleteOutboundShipmentUnallocatedLineError> {
+        delete_outbound_shipment_unallocated_line(ctx, input)
+    }
 }
 
 pub struct OutboundShipmentLineService {}
