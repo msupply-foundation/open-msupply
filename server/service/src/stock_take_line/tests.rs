@@ -243,12 +243,12 @@ mod stock_take_line_test {
         // success: no update
         let store_a = mock_store_a();
         let stock_take_line_a = mock_stock_take_line_a();
-        service
+        let result = service
             .update_stock_take_line(
                 &context,
                 &store_a.id,
                 UpdateStockTakeLineInput {
-                    id: stock_take_line_a.id,
+                    id: stock_take_line_a.id.clone(),
                     stock_line_id: None,
                     location_id: None,
                     batch: None,
@@ -260,6 +260,7 @@ mod stock_take_line_test {
                 },
             )
             .unwrap();
+        assert_eq!(result.line, stock_take_line_a);
 
         // success: full update
         let store_a = mock_store_a();
@@ -338,5 +339,11 @@ mod stock_take_line_test {
             .delete_stock_take_line(&context, &store_a.id, &existing_line.id)
             .unwrap();
         assert_eq!(existing_line.id, deleted_id);
+        assert_eq!(
+            service
+                .get_stock_take_line(&context, existing_line.id)
+                .unwrap(),
+            None
+        );
     }
 }

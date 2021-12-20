@@ -109,5 +109,11 @@ mod stock_take_test {
             .delete_stock_take(&context, &store_a.id, &existing_stock_take.id)
             .unwrap();
         assert_eq!(existing_stock_take.id, deleted_stock_take_id);
+        assert_eq!(
+            service
+                .get_stock_take(&context, existing_stock_take.id)
+                .unwrap(),
+            None
+        );
     }
 }

@@ -53,7 +53,7 @@ pub type StockTakeLineSort = Sort<()>;
 
 type StockTakeLineJoin = (StockTakeLineRow, StockLineRow, Option<LocationRow>);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct StockTakeLine {
     pub line: StockTakeLineRow,
     pub stock_line: StockLineRow,
