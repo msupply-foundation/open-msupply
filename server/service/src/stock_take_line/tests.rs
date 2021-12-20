@@ -3,7 +3,8 @@ mod stock_take_line_test {
     use repository::{
         mock::{
             mock_item_a_lines, mock_item_b_lines, mock_locations, mock_stock_take_a,
-            mock_stock_take_line_a, mock_store_a, mock_store_b, MockDataInserts,
+            mock_stock_take_line_a, mock_stock_take_line_finalized, mock_store_a, mock_store_b,
+            MockDataInserts,
         },
         schema::StockTakeLineRow,
         test_db::setup_all,
@@ -240,6 +241,30 @@ mod stock_take_line_test {
             .unwrap_err();
         assert_eq!(error, UpdateStockTakeLineError::InvalidLocationId);
 
+        // error CannotEditFinalised
+        let store_a = mock_store_a();
+        let stock_take_line_a = mock_stock_take_line_finalized();
+        let error = service
+            .update_stock_take_line(
+                &context,
+                &store_a.id,
+                UpdateStockTakeLineInput {
+                    id: stock_take_line_a.id,
+                    stock_line_id: None,
+                    location_id: None,
+                    batch: None,
+                    comment: Some(
+                        "Trying to edit a stock take line of a finalised stock take".to_string(),
+                    ),
+                    cost_price_pack: None,
+                    sell_price_pack: None,
+                    snapshot_number_of_packs: None,
+                    counted_number_of_packs: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStockTakeLineError::CannotEditFinalised);
+
         // success: no update
         let store_a = mock_store_a();
         let stock_take_line_a = mock_stock_take_line_a();
@@ -331,6 +356,14 @@ mod stock_take_line_test {
             .delete_stock_take_line(&context, &store_b.id, &existing_line.id)
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeLineError::InvalidStoreId);
+
+        // error CannotEditFinalised
+        let store_a = mock_store_a();
+        let existing_line = mock_stock_take_line_finalized();
+        let error = service
+            .delete_stock_take_line(&context, &store_a.id, &existing_line.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStockTakeLineError::CannotEditFinalised);
 
         // success
         let store_a = mock_store_a();
