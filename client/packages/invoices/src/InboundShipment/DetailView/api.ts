@@ -473,8 +473,9 @@ const getCreateDeleteInboundLineInput =
 
 const getDeleteInboundLinesQuery =
   (api: OmSupplyApi, invoiceId: string) => (ids: string[]) => {
+    const createDeleteLineInput = getCreateDeleteInboundLineInput(invoiceId);
     return api.deleteInboundShipmentLines({
-      input: ids.map(getCreateDeleteInboundLineInput(invoiceId)),
+      input: ids.map(createDeleteLineInput),
     });
   };
 
