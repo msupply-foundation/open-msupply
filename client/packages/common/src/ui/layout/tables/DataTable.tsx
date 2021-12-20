@@ -86,6 +86,7 @@ export const DataTable = <T extends DomainObject>({
             position: 'sticky',
             top: 0,
             zIndex: 10,
+            boxShadow: theme => theme.shadows[2],
           }}
         >
           <HeaderRow dense={dense}>
