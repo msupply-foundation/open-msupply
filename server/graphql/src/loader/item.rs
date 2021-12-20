@@ -1,6 +1,6 @@
-use domain::item::{Item, ItemFilter};
+use domain::item::Item;
 use domain::{EqualFilter, Pagination};
-use repository::ItemQueryRepository;
+use repository::{ItemFilter, ItemQueryRepository};
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;

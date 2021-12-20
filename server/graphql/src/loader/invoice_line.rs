@@ -1,6 +1,8 @@
-use domain::invoice_line::{InvoiceLine, InvoiceLineFilter};
+use domain::invoice_line::InvoiceLine;
 use domain::EqualFilter;
-use repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager};
+use repository::{
+    InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnectionManager,
+};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

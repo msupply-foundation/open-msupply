@@ -1,14 +1,14 @@
 use super::validate::check_location_exists;
 use crate::{service_provider::ServiceContext, validate::check_record_belongs_to_current_store};
 use domain::{
-    invoice_line::{InvoiceLine, InvoiceLineFilter},
+    invoice_line::InvoiceLine,
     location::DeleteLocation,
     stock_line::{StockLine, StockLineFilter},
     EqualFilter,
 };
 use repository::{
     InvoiceLineRepository, LocationRowRepository, RepositoryError, StockLineRepository,
-    StorageConnection,
+    StorageConnection, InvoiceLineFilter,
 };
 #[derive(PartialEq, Debug)]
 pub struct LocationInUse {

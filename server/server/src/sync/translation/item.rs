@@ -1,5 +1,5 @@
 use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_ITEM};
-use repository::schema::{CentralSyncBufferRow, ItemRow, ItemType};
+use repository::schema::{CentralSyncBufferRow, ItemRow, ItemRowType};
 
 use serde::Deserialize;
 
@@ -21,11 +21,11 @@ pub struct LegacyItemRow {
     type_of: LegacyItemType,
 }
 
-fn to_item_type(type_of: LegacyItemType) -> ItemType {
+fn to_item_type(type_of: LegacyItemType) -> ItemRowType {
     match type_of {
-        LegacyItemType::non_stock => ItemType::NonStock,
-        LegacyItemType::service => ItemType::Service,
-        LegacyItemType::general => ItemType::Stock,
+        LegacyItemType::non_stock => ItemRowType::NonStock,
+        LegacyItemType::service => ItemRowType::Service,
+        LegacyItemType::general => ItemRowType::Stock,
     }
 }
 

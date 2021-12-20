@@ -1,6 +1,6 @@
 use domain::invoice::InvoiceType;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, ItemRow, ItemType},
+    schema::{InvoiceLineRow, InvoiceRow, ItemRow, ItemRowType},
     StorageConnection,
 };
 
@@ -29,7 +29,7 @@ pub fn validate(
     } else {
         check_item(&line.item_id, connection)?
     };
-    if item.r#type != ItemType::Service {
+    if item.r#type != ItemRowType::Service {
         return Err(UpdateOutboundShipmentServiceLineError::NotAServiceItem);
     }
 
