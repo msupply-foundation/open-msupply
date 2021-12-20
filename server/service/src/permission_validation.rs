@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     auth_data::AuthData,
-    permissions::{ApiRole, PermissionService, StoreRole, UserPermissions},
+    permissions::{ApiRole, PermissionServiceTrait, StoreRole, UserPermissions},
     service_provider::ServiceContext,
     token::{JWTValidationError, OmSupplyClaim, TokenService},
 };
@@ -205,12 +205,14 @@ pub trait ValidationServiceTrait: Send + Sync {
 }
 
 pub struct ValidationService {
+    pub permission_service: Arc<dyn PermissionServiceTrait>,
     pub permissions: HashMap<Resource, PermissionDSL>,
 }
 
 impl ValidationService {
-    pub fn new() -> Self {
+    pub fn new(permission_service: Arc<dyn PermissionServiceTrait>) -> Self {
         ValidationService {
+            permission_service,
             permissions: all_permissions(),
         }
     }
@@ -225,8 +227,7 @@ impl ValidationServiceTrait for ValidationService {
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, ValidationError> {
         let validated_auth = validate_auth(auth_data, auth_token)?;
-        let permission_service = PermissionService::new();
-        let permissions = permission_service.permissions(&validated_auth.user_id);
+        let permissions = self.permission_service.permissions(&validated_auth.user_id);
 
         let resource_permissions = self.permissions.get(&resource_request.resource).ok_or(
             ValidationError::InternalError(format!(
@@ -263,7 +264,8 @@ mod permission_validation_test {
 
     use super::*;
     use crate::{
-        auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket,
+        auth_data::AuthData, permissions::PermissionService, service_provider::ServiceProvider,
+        token_bucket::TokenBucket,
     };
     use repository::{get_storage_connection_manager, test_db};
 
@@ -289,7 +291,12 @@ mod permission_validation_test {
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
 
-        let mut service = ValidationService::new();
+        let mut service = ValidationService::new(Arc::new(PermissionService {
+            user_permissions: UserPermissions {
+                api: vec![ApiRole::User],
+                stores: HashMap::new(),
+            },
+        }));
         service.permissions.clear();
         service
             .permissions
