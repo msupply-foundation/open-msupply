@@ -35,8 +35,10 @@ const deleteInboundShipmentLines = mockDeleteInboundShipmentLinesMutation(
   (req, res, ctx) => {
     const { variables } = req;
 
-    if (Array.isArray(variables)) {
-      variables.map(input => MutationService.invoiceLine.inbound.remove(input));
+    if (Array.isArray(variables.input)) {
+      variables.input.map(input =>
+        MutationService.invoiceLine.inbound.remove(input)
+      );
     } else {
       MutationService.invoiceLine.inbound.remove(
         variables.input as DeleteInboundShipmentLineInput
