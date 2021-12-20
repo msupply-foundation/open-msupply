@@ -31,11 +31,11 @@ pub struct InsertStockTakeLineInput {
 pub enum InsertStockTakeLineError {
     DatabaseError(RepositoryError),
     InternalError(String),
-    InvalidStockTakeId,
+    InvalidStore,
+    StockTakeDoesNotExist,
     StockTakeLineAlreadyExists,
-    InvalidStockLineId,
-    InvalidStoreId,
-    InvalidLocationId,
+    StockLineDoesNotExist,
+    LocationDoesNotExist,
 }
 
 fn check_stock_take_line_does_not_exist(
@@ -55,21 +55,21 @@ fn validate(
 ) -> Result<(), InsertStockTakeLineError> {
     let stock_take = match check_stock_take_exist(connection, &stock_take_line.stock_take_id)? {
         Some(stock_take) => stock_take,
-        None => return Err(InsertStockTakeLineError::InvalidStockTakeId),
+        None => return Err(InsertStockTakeLineError::StockTakeDoesNotExist),
     };
     if !check_store_id_matches(store_id, &stock_take.store_id) {
-        return Err(InsertStockTakeLineError::InvalidStoreId);
+        return Err(InsertStockTakeLineError::InvalidStore);
     }
     if !check_stock_take_line_does_not_exist(connection, &stock_take_line.id)? {
         return Err(InsertStockTakeLineError::StockTakeLineAlreadyExists);
     }
     if !check_stock_line_exist(connection, &stock_take_line.stock_line_id)? {
-        return Err(InsertStockTakeLineError::InvalidStockLineId);
+        return Err(InsertStockTakeLineError::StockLineDoesNotExist);
     }
 
     if let Some(location_id) = &stock_take_line.location_id {
         if !check_location_exists(connection, location_id)? {
-            return Err(InsertStockTakeLineError::InvalidLocationId);
+            return Err(InsertStockTakeLineError::LocationDoesNotExist);
         }
     }
 

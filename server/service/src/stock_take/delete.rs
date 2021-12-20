@@ -9,9 +9,9 @@ use super::validate::{
 #[derive(Debug, PartialEq)]
 pub enum DeleteStockTakeError {
     DatabaseError(RepositoryError),
+    InvalidStore,
     StockTakeDoesNotExist,
     StockTakeLinesExist,
-    InvalidStoreId,
     CannotEditFinalised,
 }
 
@@ -29,7 +29,7 @@ fn validate(
         None => return Err(DeleteStockTakeError::StockTakeDoesNotExist),
     };
     if !check_store_id_matches(store_id, &existing.store_id) {
-        return Err(DeleteStockTakeError::InvalidStoreId);
+        return Err(DeleteStockTakeError::InvalidStore);
     }
     if !check_stock_take_not_finalized(&existing.status) {
         return Err(DeleteStockTakeError::CannotEditFinalised);

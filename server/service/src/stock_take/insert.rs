@@ -22,7 +22,7 @@ pub enum InsertStockTakeError {
     DatabaseError(RepositoryError),
     InternalError(String),
     StockTakeAlreadyExists,
-    InvalidStoreId,
+    InvalidStore,
 }
 
 fn check_stock_take_does_not_exist(
@@ -43,7 +43,7 @@ fn validate(
         return Err(InsertStockTakeError::StockTakeAlreadyExists);
     }
     if !check_store_exists(connection, store_id)? {
-        return Err(InsertStockTakeError::InvalidStoreId);
+        return Err(InsertStockTakeError::InvalidStore);
     }
     Ok(())
 }

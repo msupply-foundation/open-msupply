@@ -26,7 +26,7 @@ mod stock_take_test {
         let context = service_provider.context().unwrap();
         let service = service_provider.stock_take_service;
 
-        // error: stock take exists
+        // error: stock take already exists
         let store_a = mock_store_a();
         let existing_stock_take = mock_stock_take_a();
         let error = service
@@ -56,7 +56,7 @@ mod stock_take_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, InsertStockTakeError::InvalidStoreId);
+        assert_eq!(error, InsertStockTakeError::InvalidStore);
 
         // success
         let store_a = mock_store_a();
@@ -90,12 +90,12 @@ mod stock_take_test {
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeError::StockTakeDoesNotExist);
 
-        // error: store does not exist
+        // error: invalid store
         let existing_stock_take = mock_stock_take_without_lines();
         let error = service
             .delete_stock_take(&context, "invalid", &existing_stock_take.id)
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeError::InvalidStoreId);
+        assert_eq!(error, DeleteStockTakeError::InvalidStore);
 
         // error: StockTakeLinesExist
         let store_a = mock_store_a();

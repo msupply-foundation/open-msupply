@@ -29,7 +29,7 @@ mod stock_take_line_test {
         let context = service_provider.context().unwrap();
         let service = service_provider.stock_take_line_service;
 
-        // error: InvalidStockTakeId,
+        // error: StockTakeDoesNotExist,
         let store_a = mock_store_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
@@ -50,9 +50,9 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::InvalidStockTakeId);
+        assert_eq!(error, InsertStockTakeLineError::StockTakeDoesNotExist);
 
-        // error: InvalidStockLineId,
+        // error: StockLineDoesNotExist,
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();
         let error = service
@@ -73,9 +73,9 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::InvalidStockLineId);
+        assert_eq!(error, InsertStockTakeLineError::StockLineDoesNotExist);
 
-        // error: InvalidStoreId,
+        // error: InvalidStore,
         let stock_take_a = mock_stock_take_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
@@ -96,9 +96,9 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::InvalidStoreId);
+        assert_eq!(error, InsertStockTakeLineError::InvalidStore);
 
-        // error InvalidLocationId
+        // error LocationDoesNotExist
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
@@ -120,7 +120,7 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::InvalidLocationId);
+        assert_eq!(error, InsertStockTakeLineError::LocationDoesNotExist);
 
         // error StockTakeLineAlreadyExists
         let store_a = mock_store_a();
@@ -180,7 +180,7 @@ mod stock_take_line_test {
         let context = service_provider.context().unwrap();
         let service = service_provider.stock_take_line_service;
 
-        // error: InvalidStockTakeLineId
+        // error: StockTakeLineDoesNotExist
         let store_a = mock_store_a();
         let error = service
             .update_stock_take_line(
@@ -199,9 +199,9 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::InvalidStockTakeLineId);
+        assert_eq!(error, UpdateStockTakeLineError::StockTakeLineDoesNotExist);
 
-        // error: InvalidStoreId
+        // error: InvalidStore
         let stock_take_line_a = mock_stock_take_line_a();
         let error = service
             .update_stock_take_line(
@@ -220,9 +220,9 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::InvalidStoreId);
+        assert_eq!(error, UpdateStockTakeLineError::InvalidStore);
 
-        // error: InvalidStockLineId
+        // error: StockLineDoesNotExist
         let store_a = mock_store_a();
         let stock_take_line_a = mock_stock_take_line_a();
         let error = service
@@ -242,9 +242,9 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::InvalidStockLineId);
+        assert_eq!(error, UpdateStockTakeLineError::StockLineDoesNotExist);
 
-        // error: InvalidLocationId
+        // error: LocationDoesNotExist
         let store_a = mock_store_a();
         let stock_take_line_a = mock_stock_take_line_a();
         let error = service
@@ -264,7 +264,7 @@ mod stock_take_line_test {
                 },
             )
             .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::InvalidLocationId);
+        assert_eq!(error, UpdateStockTakeLineError::LocationDoesNotExist);
 
         // error CannotEditFinalised
         let store_a = mock_store_a();
@@ -373,14 +373,14 @@ mod stock_take_line_test {
         let error = service
             .delete_stock_take_line(&context, "invalid", &existing_line.id)
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeLineError::InvalidStoreId);
+        assert_eq!(error, DeleteStockTakeLineError::InvalidStore);
         // error: invalid store
         let store_b = mock_store_b();
         let existing_line = mock_stock_take_line_a();
         let error = service
             .delete_stock_take_line(&context, &store_b.id, &existing_line.id)
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeLineError::InvalidStoreId);
+        assert_eq!(error, DeleteStockTakeLineError::InvalidStore);
 
         // error CannotEditFinalised
         let store_a = mock_store_a();
