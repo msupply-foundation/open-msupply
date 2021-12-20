@@ -1,12 +1,14 @@
 use domain::{invoice_line::InvoiceLine, EqualFilter};
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRowType, ItemRow, ItemRowType},
+    schema::{
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow, ItemRowType,
+    },
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, RepositoryError,
     StorageConnection,
 };
 
 use crate::{
-    invoice::{check_invoice_exists_option, check_invoice_is_editable},
+    invoice::check_invoice_exists_option,
     invoice_line::{
         get_invoice_line_ctx,
         validate::{check_item_exists_option, check_line_does_not_exists_new},
@@ -30,7 +32,7 @@ pub enum InsertOutboundShipmentUnallocatedLineError {
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
     //NotThisStoreInvoice,
-    CannotEditShippedOutboundShipment,
+    CanOnlyAddLinesToNewOutboundShipment,
     ItemNotFound,
     NotAStockItem,
     UnallocatedLineForItemAlreadyExistsInInvoice,
@@ -82,8 +84,9 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_invoice_is_editable(&invoice_row)
-        .map_err(|_| OutError::CannotEditShippedOutboundShipment)?;
+    if invoice_row.status != InvoiceRowStatus::New {
+        return Err(OutError::CanOnlyAddLinesToNewOutboundShipment);
+    }
 
     if !check_unallocated_line_does_not_exist(connection, &input.item_id)? {
         return Err(OutError::UnallocatedLineForItemAlreadyExistsInInvoice);
@@ -156,9 +159,9 @@ mod test_insert {
     use domain::EqualFilter;
     use repository::{
         mock::{
-            mock_full_draft_outbound_shipment_a, mock_inbound_shipment_a, mock_item_service_item,
-            mock_outbound_shipment_shipped, mock_unallocated_line_invoice,
-            mock_unallocated_line_line_1, MockDataInserts,
+            mock_inbound_shipment_a, mock_item_service_item,
+            mock_unallocated_line_allocated_invoice, mock_unallocated_line_new_invoice,
+            mock_unallocated_line_new_invoice_line_1, MockDataInserts,
         },
         schema::{InvoiceLineRow, InvoiceLineRowType, ItemRowType},
         test_db::setup_all,
@@ -182,16 +185,17 @@ mod test_insert {
         let context = service_provider.context().unwrap();
         let service = service_provider.outbound_shipment_line;
 
-        let draft_outbound_shipment = mock_full_draft_outbound_shipment_a();
+        let new_outbound_shipment = mock_unallocated_line_new_invoice();
+        let existing_invoice_line = mock_unallocated_line_new_invoice_line_1();
+
         let new_line_id = "new_line".to_owned();
 
         // Line Already Exists
-        let existing_line_id = draft_outbound_shipment.lines[0].line.id.clone();
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
-                    id: existing_line_id,
+                    id: existing_invoice_line.id.clone(),
                     invoice_id: "".to_owned(),
                     item_id: "".to_owned(),
                     quantity: 0
@@ -228,18 +232,18 @@ mod test_insert {
             Err(ServiceError::NotAnOutboundShipment)
         );
 
-        // CannotEditShippedOutboundShipment
+        // CanOnlyAddLinesToNewOutboundShipment
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
-                    invoice_id: mock_outbound_shipment_shipped().id.clone(),
+                    invoice_id: mock_unallocated_line_allocated_invoice().id.clone(),
                     item_id: "item_a".to_owned(),
                     quantity: 0
                 },
             ),
-            Err(ServiceError::CannotEditShippedOutboundShipment)
+            Err(ServiceError::CanOnlyAddLinesToNewOutboundShipment)
         );
 
         // ItemNotFound
@@ -248,7 +252,7 @@ mod test_insert {
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
-                    invoice_id: mock_unallocated_line_invoice().id.clone(),
+                    invoice_id: new_outbound_shipment.id.clone(),
                     item_id: "invalid".to_owned(),
                     quantity: 0
                 },
@@ -261,7 +265,7 @@ mod test_insert {
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
-                    invoice_id: mock_unallocated_line_invoice().id.clone(),
+                    invoice_id: new_outbound_shipment.id.clone(),
                     item_id: mock_item_service_item().id.clone(),
                     quantity: 0
                 },
@@ -274,8 +278,8 @@ mod test_insert {
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
-                    invoice_id: mock_unallocated_line_invoice().id.clone(),
-                    item_id: mock_unallocated_line_line_1().item_id.clone(),
+                    invoice_id: new_outbound_shipment.id.clone(),
+                    item_id: existing_invoice_line.item_id.clone(),
                     quantity: 0
                 },
             ),
@@ -294,12 +298,12 @@ mod test_insert {
         let service = service_provider.outbound_shipment_line;
 
         // Succesfull insert
-        let invoice_id = mock_unallocated_line_invoice().id.clone();
+        let invoice_id = mock_unallocated_line_new_invoice().id.clone();
         let item = ItemQueryRepository::new(&connection)
             .query_by_filter(
                 ItemFilter::new()
                     .id(EqualFilter::not_equal_to(
-                        &mock_unallocated_line_line_1().item_id,
+                        &mock_unallocated_line_new_invoice_line_1().item_id,
                     ))
                     .r#type(EqualFilter {
                         equal_to: Some(ItemRowType::Stock),
