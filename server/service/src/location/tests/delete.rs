@@ -1,14 +1,13 @@
 #[cfg(test)]
 mod query {
     use domain::{
-        invoice_line::InvoiceLineFilter,
         location::{DeleteLocation, LocationFilter},
         stock_line::StockLineFilter,
         EqualFilter,
     };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, InvoiceLineRepository, LocationRepository,
-        StockLineRepository,
+        StockLineRepository, InvoiceLineFilter,
     };
 
     use crate::{
