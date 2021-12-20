@@ -1,4 +1,6 @@
-use repository::{RepositoryError, StockTakeRowRepository, StorageConnection, TransactionError};
+use repository::{
+    RepositoryError, StockTakeLineRowRepository, StorageConnection, TransactionError,
+};
 
 use crate::{
     service_provider::ServiceContext, stock_take::validate::check_stock_take_exist,
@@ -48,7 +50,7 @@ pub fn delete_stock_take_line(
     ctx.connection
         .transaction_sync(|connection| {
             validate(connection, store_id, stock_take_line_id)?;
-            StockTakeRowRepository::new(&connection).delete(stock_take_line_id)?;
+            StockTakeLineRowRepository::new(&connection).delete(stock_take_line_id)?;
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStockTakeLineError>| error.to_inner_error())?;
