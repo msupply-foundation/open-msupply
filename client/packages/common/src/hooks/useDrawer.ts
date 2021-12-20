@@ -2,14 +2,14 @@ import create from 'zustand';
 import LocalStorage from '../localStorage/LocalStorage';
 
 type DrawerController = {
-  hoverActive: Record<string, string>;
+  hoverActive: Record<string, boolean>;
   hoverOpen: boolean;
   isOpen: boolean;
   hasUserSet: boolean;
   open: () => void;
   close: () => void;
   toggle: () => void;
-  setHoverActive: (key: string, active: string) => void;
+  setHoverActive: (key: string, active: boolean) => void;
   setHoverOpen: (open: boolean) => void;
   clearHoverActive: () => void;
 };
