@@ -79,14 +79,14 @@ export const DataTable = <T extends DomainObject>({
       <MuiTable sx={{ display: 'block', flex: 1 }}>
         <TableHead
           sx={{
-            backgroundColor: 'background.white',
+            backgroundColor: dense ? 'transparent' : 'background.white',
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            boxShadow: theme => theme.shadows[2],
+            boxShadow: dense ? null : theme => theme.shadows[2],
           }}
         >
           <HeaderRow dense={dense}>
