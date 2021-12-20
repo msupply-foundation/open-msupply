@@ -101,10 +101,39 @@ const StyledDrawer = styled(Box, {
   ...(isOpen && {
     ...openedMixin(theme),
     '& .MuiDrawer-paper': openedMixin(theme),
+    '& .navLinkText': {
+      display: 'inline-flex',
+      flex: 1,
+    },
+    '& div > ul > li': {
+      width: 200,
+    },
   }),
   ...(!isOpen && {
     ...closedMixin(theme),
     '& .MuiDrawer-paper': closedMixin(theme),
+    '& .navLinkText': {
+      display: 'none',
+    },
+    '& div > ul > li': {
+      width: 40,
+    },
+    '&:hover': {
+      ...openedMixin(theme),
+      '& .navLinkText': {
+        display: 'inline-flex',
+        flex: 1,
+      },
+      '& div > ul > li': {
+        width: 200,
+      },
+    },
+    '&:not(:hover)': {
+      ...closedMixin(theme),
+      '& div > ul > li': {
+        width: 40,
+      },
+    },
   }),
 }));
 

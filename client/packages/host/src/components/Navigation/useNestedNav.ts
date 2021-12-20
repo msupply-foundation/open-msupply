@@ -13,7 +13,7 @@ export const useNestedNav = (path: string): NestedNavState => {
   const match = useMatch(path);
   const [expanded, setExpanded] = useState(false);
   const hovered = Object.keys(hoverActive).some(
-    key => matchPath(key, path) && !!hoverActive[key]
+    key => matchPath(key, path) && hoverActive[key]
   );
 
   useEffect(() => {
