@@ -23,6 +23,7 @@ use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
+use service::current_store_id;
 pub use user_register::*;
 
 pub struct Mutations;
@@ -251,9 +252,13 @@ impl Mutations {
     async fn delete_stock_take_line(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
+        store_id: Option<String>,
         input: DeleteStockTakeLineInput,
     ) -> Result<DeleteStockTakeLineResponse, StandardGraphqlError> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
         delete_stock_take_line(ctx, &store_id, &input)
     }
 }
