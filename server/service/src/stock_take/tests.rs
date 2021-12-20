@@ -2,7 +2,10 @@
 mod stock_take_test {
     use chrono::Utc;
     use repository::{
-        mock::{mock_stock_take_a, mock_stock_take_without_lines, mock_store_a, MockDataInserts},
+        mock::{
+            mock_stock_take_a, mock_stock_take_finalized_without_lines,
+            mock_stock_take_without_lines, mock_store_a, MockDataInserts,
+        },
         test_db::setup_all,
     };
 
@@ -101,6 +104,14 @@ mod stock_take_test {
             .delete_stock_take(&context, &store_a.id, &stock_take_a.id)
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeError::StockTakeLinesExist);
+
+        // error: CannotEditFinalised
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_finalized_without_lines();
+        let error = service
+            .delete_stock_take(&context, &store_a.id, &stock_take.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStockTakeError::CannotEditFinalised);
 
         // success
         let store_a = mock_store_a();

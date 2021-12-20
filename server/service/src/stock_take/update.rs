@@ -28,7 +28,10 @@ use crate::{
     validate::check_store_id_matches,
 };
 
-use super::{query::get_stock_take, validate::check_stock_take_exist};
+use super::{
+    query::get_stock_take,
+    validate::{check_stock_take_exist, check_stock_take_not_finalized},
+};
 
 pub struct UpdateStockTakeInput {
     pub id: String,
@@ -45,9 +48,6 @@ pub enum UpdateStockTakeError {
     CannotEditFinalised,
 }
 
-fn check_not_finalized(status: &StockTakeStatus) -> bool {
-    *status != StockTakeStatus::Finalized
-}
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
@@ -57,7 +57,7 @@ fn validate(
         Some(existing) => existing,
         None => return Err(UpdateStockTakeError::StockTakeDoesNotExist),
     };
-    if !check_not_finalized(&existing.status) {
+    if !check_stock_take_not_finalized(&existing.status) {
         return Err(UpdateStockTakeError::CannotEditFinalised);
     }
     if !check_store_id_matches(store_id, &existing.store_id) {
