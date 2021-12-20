@@ -99,6 +99,7 @@ fn to_domain((invoice_line, location_row_option): InvoiceLineJoin) -> InvoiceLin
         item_name: invoice_line.item_name,
         item_code: invoice_line.item_code,
         pack_size: invoice_line.pack_size,
+        r#type: invoice_line.r#type.to_domain(),
         number_of_packs: invoice_line.number_of_packs,
         cost_price_per_pack: invoice_line.cost_price_per_pack,
         sell_price_per_pack: invoice_line.sell_price_per_pack,
