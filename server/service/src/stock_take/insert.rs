@@ -82,8 +82,7 @@ pub fn insert_stock_take(
             let new_stock_take = generate(store_id, input);
             StockTakeRowRepository::new(&connection).upsert_one(&new_stock_take)?;
 
-            let stock_take =
-                get_stock_take(ctx, new_stock_take.id).map_err(InsertStockTakeError::from)?;
+            let stock_take = get_stock_take(ctx, new_stock_take.id)?;
             stock_take.ok_or(InsertStockTakeError::InternalError(
                 "Failed to read the just inserted stock take!".to_string(),
             ))

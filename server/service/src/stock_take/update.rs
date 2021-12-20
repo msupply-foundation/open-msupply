@@ -274,8 +274,7 @@ pub fn update_stock_take(
             // update stock take
             StockTakeRowRepository::new(&connection).upsert_one(&stock_take_row)?;
 
-            let stock_take =
-                get_stock_take(ctx, stock_take_row.id).map_err(UpdateStockTakeError::from)?;
+            let stock_take = get_stock_take(ctx, stock_take_row.id)?;
             stock_take.ok_or(UpdateStockTakeError::InternalError(
                 "Failed to read the just inserted stock take!".to_string(),
             ))

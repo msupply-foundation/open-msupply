@@ -102,8 +102,7 @@ pub fn insert_stock_take_line(
             let new_stock_take_line = generate(input);
             StockTakeLineRowRepository::new(&connection).upsert_one(&new_stock_take_line)?;
 
-            let line = get_stock_take_line(ctx, new_stock_take_line.id)
-                .map_err(InsertStockTakeLineError::from)?;
+            let line = get_stock_take_line(ctx, new_stock_take_line.id)?;
             line.ok_or(InsertStockTakeLineError::InternalError(
                 "Failed to read the just inserted stock take line!".to_string(),
             ))
