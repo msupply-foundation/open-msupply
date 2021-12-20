@@ -7,12 +7,15 @@ use crate::{
     },
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    permission_validation::{ValidationService, ValidationServiceTrait},
     stock_take::{StockTakeService, StockTakeServiceTrait},
     stock_take_line::{StockTakeLineService, StockTakeLineServiceTrait},
 };
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
+    pub validation_service: Box<dyn ValidationServiceTrait>,
+
     pub location_service: Box<dyn LocationServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stock_take_service: Box<dyn StockTakeServiceTrait>,
@@ -30,6 +33,7 @@ impl ServiceProvider {
     pub fn new(connection_manager: StorageConnectionManager) -> Self {
         ServiceProvider {
             connection_manager,
+            validation_service: Box::new(ValidationService::new()),
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
