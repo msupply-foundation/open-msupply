@@ -122,6 +122,31 @@ mod stock_take_line_test {
             .unwrap_err();
         assert_eq!(error, InsertStockTakeLineError::InvalidLocationId);
 
+        // error StockTakeLineAlreadyExists
+        let store_a = mock_store_a();
+        let stock_take_a = mock_stock_take_a();
+        let stock_take_line_a = mock_stock_take_line_a();
+        let stock_line_a = mock_item_a_lines()[0].clone();
+        let error = service
+            .insert_stock_take_line(
+                &context,
+                &store_a.id,
+                InsertStockTakeLineInput {
+                    id: stock_take_line_a.id,
+                    stock_take_id: stock_take_a.id,
+                    stock_line_id: stock_line_a.id,
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_pack: 0.0,
+                    sell_price_pack: 0.0,
+                    snapshot_number_of_packs: 15,
+                    counted_number_of_packs: 17,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStockTakeLineError::StockTakeLineAlreadyExists);
+
         // success
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();

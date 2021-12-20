@@ -1,6 +1,7 @@
+use domain::EqualFilter;
 use repository::{
-    schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineRowRepository,
-    StorageConnection,
+    schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineFilter,
+    StockTakeLineRepository, StockTakeLineRowRepository, StorageConnection,
 };
 
 use crate::{
@@ -31,9 +32,20 @@ pub enum InsertStockTakeLineError {
     DatabaseError(RepositoryError),
     InternalError(String),
     InvalidStockTakeId,
+    StockTakeLineAlreadyExists,
     InvalidStockLineId,
     InvalidStoreId,
     InvalidLocationId,
+}
+
+fn check_stock_take_line_does_not_exist(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = StockTakeLineRepository::new(connection).count(Some(
+        StockTakeLineFilter::new().id(EqualFilter::equal_to(id)),
+    ))?;
+    Ok(count == 0)
 }
 
 fn validate(
@@ -48,7 +60,9 @@ fn validate(
     if !check_store_id_matches(store_id, &stock_take.store_id) {
         return Err(InsertStockTakeLineError::InvalidStoreId);
     }
-
+    if !check_stock_take_line_does_not_exist(connection, &stock_take_line.id)? {
+        return Err(InsertStockTakeLineError::StockTakeLineAlreadyExists);
+    }
     if !check_stock_line_exist(connection, &stock_take_line.stock_line_id)? {
         return Err(InsertStockTakeLineError::InvalidStockLineId);
     }
