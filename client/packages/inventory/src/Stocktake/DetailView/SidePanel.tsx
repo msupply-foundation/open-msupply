@@ -49,7 +49,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
-  const t = useTranslation(['outbound-shipment', 'common']);
+  const t = useTranslation(['inventory', 'common']);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
