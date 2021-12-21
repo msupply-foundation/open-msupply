@@ -1,6 +1,5 @@
 import { generateUUID } from '@openmsupply-client/common';
 import { createStocktakeItem } from '../../reducer';
-
 import { StocktakeItem, StocktakeLine } from './../../../../types';
 
 export const createStocktakeRow = (
@@ -28,7 +27,7 @@ export const createStocktakeRow = (
     update: (patch: Partial<StocktakeLine> & { id: string }) => {
       const newRow = { ...row, ...patch, isUpdated: true };
       newRow.countThisLine =
-        patch.countedNumPacks !== undefined ? true : patch.countThisLine;
+        patch.countedNumPacks !== undefined ? true : !!patch.countThisLine;
       stocktakeItem.upsertLine?.(newRow);
     },
   };

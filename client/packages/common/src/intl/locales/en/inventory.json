@@ -9,5 +9,6 @@
   "button.delete-lines": "Delete lines",
   "message.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'Suggested'",
   "message.deleted-stocktakes": "Deleted {{number}} stocktakes",
-  "message.select-rows-to-delete": "Select rows to delete"
+  "message.select-rows-to-delete": "Select rows to delete",
+  "messages.deleted-stocktakes": "Deleted {{number}} stocktakes"
 }
