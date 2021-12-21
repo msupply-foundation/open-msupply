@@ -143,15 +143,15 @@ const themeOptions = {
   },
   typography: {
     body1: {
-      fontFamily: 'Inter',
+      fontFamily: 'InterVariable',
       fontSize: 14,
       lineHeight: 1.71,
       color: '#1c1c28',
     },
-    fontFamily: 'Inter',
+    fontFamily: 'InterVariable',
     th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
-      fontFamily: 'Inter',
+      fontFamily: 'InterVariable',
       fontSize: 16,
       color: '#555770',
     },

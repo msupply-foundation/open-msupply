@@ -65,6 +65,14 @@ module.exports = env => {
             },
           },
         },
+        {
+          test: /\.css$/,
+          use: ['style-loader', 'css-loader'],
+        },
+        {
+          test: /\.(woff|woff2|ttf|eot)$/,
+          use: 'file-loader?name=fonts/[name].[ext]!static',
+        },
       ],
     },
     plugins: [
