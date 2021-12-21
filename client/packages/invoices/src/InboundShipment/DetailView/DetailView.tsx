@@ -12,17 +12,17 @@ import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 import { getNextInboundStatus, isInboundEditable } from '../../utils';
-import { InboundShipmentItem } from '../../types';
+import { InvoiceLine, InboundShipmentItem } from '../../types';
 
 export enum ModalMode {
   Create,
   Update,
 }
 
-export const toItem = (summaryItem: InboundShipmentItem): Item => ({
-  name: summaryItem?.itemName,
-  code: summaryItem?.itemCode,
-  id: summaryItem?.itemId,
+export const toItem = (line: InboundShipmentItem | InvoiceLine): Item => ({
+  id: 'lines' in line ? line.lines[0].id : line.itemId,
+  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
+  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
   isVisible: true,
   availableBatches: [],
   availableQuantity: 0,
@@ -38,9 +38,13 @@ export const DetailView: FC = () => {
     open: boolean;
   }>({ mode: ModalMode.Create, item: null, open: false });
 
-  const onRowClick = (item: InboundShipmentItem) => {
-    setModalState({ mode: ModalMode.Update, item: toItem(item), open: true });
-  };
+  const onRowClick = React.useCallback(
+    (line: InboundShipmentItem | InvoiceLine) => {
+      const item = toItem(line);
+      setModalState({ mode: ModalMode.Update, item, open: true });
+    },
+    [setModalState]
+  );
 
   const onClose = () => {
     setModalState({ mode: ModalMode.Create, item: null, open: false });
@@ -49,6 +53,8 @@ export const DetailView: FC = () => {
   const onAddItem = () => {
     setModalState({ mode: ModalMode.Create, item: null, open: true });
   };
+
+  if (!draft) return null;
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -67,7 +73,7 @@ export const DetailView: FC = () => {
           updateInvoice({ status: getNextInboundStatus(draft?.status) });
         }}
       />
-      <SidePanel draft={draft} />
+      <SidePanel />
 
       <InboundLineEdit
         isOpen={modalState.open}

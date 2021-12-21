@@ -92,7 +92,10 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
-      getNotePopoverColumn<OutboundShipmentSummaryItem>(),
+      {
+        ...getNotePopoverColumn<OutboundShipmentSummaryItem>(),
+        accessor: () => '',
+      },
       'itemCode',
       'itemName',
       'batch',

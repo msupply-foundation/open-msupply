@@ -145,10 +145,12 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
   upsertLine?: (line: OutboundShipmentRow) => void;
   deleteLine?: (line: OutboundShipmentRow) => void;
 }
-export interface InboundShipmentRow extends Omit<InvoiceLine, 'item'> {
+export interface InboundShipmentRow {
+  id: string;
   stockLineId: string;
   invoiceId: string;
   itemId: string;
+  batches: InvoiceLine[];
   isUpdated?: boolean;
   isDeleted?: boolean;
   isCreated?: boolean;
@@ -157,23 +159,5 @@ export interface InboundShipmentRow extends Omit<InvoiceLine, 'item'> {
 export type InboundShipmentItem = {
   id: string;
   itemId: string;
-  itemCode: string;
-  itemName: string;
-  unitQuantity: number;
-  numberOfPacks: number;
-  locationName?: string | null;
-  itemUnit?: string;
-  batch?: string | null;
-  batches: Record<string, InboundShipmentRow>;
-  sellPrice?: number | undefined;
-  packSize?: number | undefined;
-  note?: string | null;
-  isDeleted?: boolean;
+  lines: [InvoiceLine, ...InvoiceLine[]];
 };
-
-export interface InboundShipment extends Invoice {
-  items: InboundShipmentItem[];
-  status: InvoiceNodeStatus;
-  deleteLine?: (line: InboundShipmentRow) => void;
-  deleteItem?: (line: InboundShipmentItem) => void;
-}

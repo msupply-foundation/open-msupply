@@ -14,12 +14,11 @@ import {
   useTranslation,
   // ColorSelectButton,
 } from '@openmsupply-client/common';
-import { InboundShipment } from '../../types';
-import { useInboundFields, useIsInboundEditable } from './api';
-
-interface SidePanelProps {
-  draft: InboundShipment;
-}
+import {
+  useInboundFields,
+  useInboundShipment,
+  useIsInboundEditable,
+} from './api';
 
 const AdditionalInfoSection: FC = () => {
   const { comment, update } = useInboundFields('comment');
@@ -106,12 +105,13 @@ const RelatedDocumentsSection: FC = () => {
   );
 };
 
-export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
+export const SidePanel: FC = () => {
+  const { data } = useInboundShipment();
   const { success } = useNotification();
   const t = useTranslation(['distribution', 'common']);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
+    navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
     success('Copied to clipboard successfully')();
   };
 
@@ -119,22 +119,6 @@ export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
     <DetailPanelPortal
       Actions={
         <>
-          {!process.env['NODE_ENV'] ||
-            (process.env['NODE_ENV'] === 'development' && (
-              <DetailPanelAction
-                icon={<CopyIcon />}
-                title={t('dev.log-draft')}
-                onClick={() => {
-                  console.table(draft);
-                  draft.items.forEach(item => {
-                    console.table(item);
-                    Object.values(item.batches).forEach(batch => {
-                      console.table(batch);
-                    });
-                  });
-                }}
-              />
-            ))}
           <DetailPanelAction
             icon={<CopyIcon />}
             title={t('link.copy-to-clipboard')}

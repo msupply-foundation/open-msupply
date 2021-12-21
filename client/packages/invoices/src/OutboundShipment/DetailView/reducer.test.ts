@@ -1,5 +1,5 @@
 import { placeholderOutboundShipment } from './../../utils';
-import { InboundShipmentItem, Invoice } from './../../types';
+import { Invoice } from './../../types';
 import {
   Column,
   createColumns,
@@ -119,14 +119,14 @@ const findRow = (
 describe('DetailView reducer: sorting', () => {
   it('sorts ascending when not sorted by the key passed, then sorts descending when sorted by the column same column', () => {
     const state = getState();
-    const column = createColumns<InboundShipmentItem>([
+    const column = createColumns<OutboundShipmentSummaryItem>([
       'numberOfPacks',
-    ])[0] as Column<InboundShipmentItem>;
+    ])[0] as Column<OutboundShipmentSummaryItem>;
     const action = OutboundAction.onSortBy(column);
     const items = [
       { id: '1', numberOfPacks: 2 },
       { id: '2', numberOfPacks: 1 },
-    ] as InboundShipmentItem[];
+    ] as OutboundShipmentSummaryItem[];
     state.draft.items = items;
 
     const newState = callReducer(action, state);
