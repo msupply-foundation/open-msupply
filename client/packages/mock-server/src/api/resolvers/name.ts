@@ -1,10 +1,10 @@
-import { getDataSorter } from './../../../../common/src/utils/arrays/sorters';
 import { db } from './../../data/database';
 import {
   NameListParameters,
   ListResponse,
   ResolvedName,
 } from './../../data/types';
+import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
 import { NameSortFieldInput } from '@openmsupply-client/common/src/types/schema';
 import { createListResponse } from './utils';
 
