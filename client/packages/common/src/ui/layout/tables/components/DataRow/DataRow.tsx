@@ -8,6 +8,7 @@ import { Collapse } from '@mui/material';
 
 interface DataRowProps<T extends DomainObject> {
   columns: Column<T>[];
+  rows: T[];
   onClick?: (rowData: T) => void;
   rowData: T;
   rowKey: string;
@@ -24,6 +25,7 @@ export const DataRow = <T extends DomainObject>({
   rowIndex,
   ExpandContent,
   dense = false,
+  rows,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
@@ -72,6 +74,7 @@ export const DataRow = <T extends DomainObject>({
               }}
             >
               <column.Cell
+                rows={rows}
                 rowData={rowData}
                 columns={columns}
                 column={column}

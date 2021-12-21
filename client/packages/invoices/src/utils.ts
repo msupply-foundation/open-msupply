@@ -1,61 +1,19 @@
 import {
-  getUnitQuantity,
-  getSumOfKeyReducer,
   LocaleKey,
   InvoiceNodeStatus,
   useTranslation,
   InvoiceNodeType,
   groupBy,
-  ifTheSameElseDefault,
-  arrayToRecord,
 } from '@openmsupply-client/common';
 import {
   OutboundShipment,
   OutboundShipmentRow,
   OutboundShipmentSummaryItem,
-  InboundShipment,
   InboundShipmentItem,
-  InboundShipmentRow,
   Invoice,
   InvoiceLine,
   InvoiceRow,
 } from './types';
-
-export const placeholderInbound: InboundShipment = {
-  id: '',
-  otherPartyName: '',
-  comment: '',
-  theirReference: '',
-  otherParty: undefined,
-  otherPartyId: '',
-  items: [],
-  status: InvoiceNodeStatus.New,
-  type: InvoiceNodeType.InboundShipment,
-  createdDatetime: '',
-  invoiceNumber: 0,
-  lines: [],
-  pricing: {
-    totalAfterTax: 0,
-  },
-  onHold: false,
-  allocatedDatetime: '',
-  shippedDatetime: '',
-  pickedDatetime: '',
-  deliveredDatetime: '',
-
-  // color: 'grey',
-  // subtotal: 0,
-  // taxPercentage: 0
-  // dispatch: null,
-  // purchaseOrderNumber: undefined,
-  // goodsReceiptNumber: undefined,
-  // requisitionNumber: undefined,
-  // inboundShipmentNumber: undefined,
-  // transportReference: undefined,
-  // shippingMethod: undefined,
-  // enteredByName: '',
-  // donorName: '',
-};
 
 export const placeholderInvoice: Invoice = {
   id: '',
@@ -202,7 +160,7 @@ export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
   return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
-export const isInboundEditable = (inbound: InboundShipment): boolean => {
+export const isInboundEditable = (inbound: Invoice): boolean => {
   // return inbound.status !== 'VERIFIED' && inbound.status !== 'DELIVERED';
   return inbound.status === 'NEW';
 };
@@ -213,28 +171,17 @@ export const flattenOutboundItems = (
   return summaryItems.map(({ batches }) => Object.values(batches)).flat();
 };
 
-export const flattenInboundItems = (
-  summaryItems: InboundShipmentItem[]
-): InboundShipmentRow[] => {
-  return summaryItems.map(({ batches }) => Object.values(batches)).flat();
-};
-
 export const createSummaryItem = (
   itemId: string,
-  batches: InboundShipmentRow[] = []
+  lines: [InvoiceLine, ...InvoiceLine[]]
 ): InboundShipmentItem => {
   const item: InboundShipmentItem = {
+    // TODO: Could generate a unique UUID here if wanted for the id. But not needed for now.
+    // the lines all have the itemID in common, so we can use that. Have added the itemID also
+    // as it is explicit that this is the itemID in common for all of the invoice lines.
     id: itemId,
-    itemId: itemId,
-    itemName: ifTheSameElseDefault(batches, 'itemName', ''),
-    itemCode: ifTheSameElseDefault(batches, 'itemCode', ''),
-    batches: arrayToRecord(batches),
-    unitQuantity: batches.reduce(getUnitQuantity, 0),
-    numberOfPacks: batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0),
-    locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
-    batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-    sellPrice: ifTheSameElseDefault(batches, 'sellPricePerPack', undefined),
-    packSize: ifTheSameElseDefault(batches, 'packSize', undefined),
+    itemId,
+    lines,
   };
 
   return item;
@@ -242,10 +189,10 @@ export const createSummaryItem = (
 
 export const inboundLinesToSummaryItems = (
   lines: InvoiceLine[]
-): OutboundShipmentSummaryItem[] => {
+): InboundShipmentItem[] => {
   const grouped = groupBy(lines, 'itemId');
-  return Object.keys(grouped).map(itemId =>
-    createSummaryItem(itemId, grouped[itemId])
+  return Object.entries(grouped).map(([itemId, lines]) =>
+    createSummaryItem(itemId, lines)
   );
 };
 export const canDeleteInvoice = (invoice: InvoiceRow): boolean =>

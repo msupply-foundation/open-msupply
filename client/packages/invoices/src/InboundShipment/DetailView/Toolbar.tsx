@@ -12,17 +12,24 @@ import {
   useNotification,
   useTableStore,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { useDeleteInboundLine, useInboundFields, useInboundItems } from './api';
-import { InboundShipment, InboundShipmentItem } from '../../types';
+import { NameSearchInput } from '@openmsupply-client/system';
+import {
+  useDeleteInboundLine,
+  useInboundFields,
+  useInboundItems,
+  useInboundLines,
+} from './api';
+import { InboundShipmentItem, Invoice, InvoiceLine } from '../../types';
 import { isInboundEditable } from '../../utils';
 
 interface ToolbarProps {
-  draft: InboundShipment;
+  draft: Invoice;
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
   const { data } = useInboundItems();
+  const lines = useInboundLines();
+
   const { mutate } = useDeleteInboundLine();
   const { otherParty, theirReference, update } = useInboundFields([
     'otherParty',
@@ -34,17 +41,32 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
   const t = useTranslation(['replenishment', 'common']);
   const { success, info } = useNotification();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: (
-      Object.keys(state.rowState)
-        .filter(id => state.rowState[id]?.isSelected)
-        .map(selectedId => data.find(({ id }) => selectedId === id))
-        .filter(Boolean) as InboundShipmentItem[]
-    )
-      .map(({ batches }) => Object.values(batches))
-      .flat()
-      .map(({ id }) => id),
-  }));
+  const { selectedRows } = useTableStore(state => {
+    const { isGrouped } = state;
+
+    if (isGrouped) {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => data.find(({ id }) => selectedId === id))
+            .filter(Boolean) as InboundShipmentItem[]
+        )
+          .map(({ lines }) => lines)
+          .flat()
+          .map(({ id }) => id),
+      };
+    } else {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => lines.find(({ id }) => selectedId === id))
+            .filter(Boolean) as InvoiceLine[]
+        ).map(({ id }) => id),
+      };
+    }
+  });
 
   const deleteAction = async () => {
     if (selectedRows && selectedRows?.length > 0) {
