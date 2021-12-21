@@ -8,6 +8,7 @@ import {
   TableProvider,
   createTableStore,
   // Color,
+  InvoiceNodeStatus,
   useOmSupplyApi,
   useNotification,
   generateUUID,
@@ -57,7 +58,8 @@ export const InboundListView: FC = () => {
       [
         'status',
         {
-          formatter: status => getStatusTranslator(t)(status),
+          formatter: status =>
+            getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
       'invoiceNumber',

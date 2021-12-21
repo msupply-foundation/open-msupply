@@ -4,21 +4,11 @@ import { BasicTextInput } from '@common/components';
 import { DomainObject } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
 
-type RowData<T> = T & DomainObject;
-
-type DomainObjectWithUpdater<T> = RowData<T> & {
-  update: (patch: Partial<RowData<T>>) => void;
-};
-
-type CellPropsWithUpdaterObject<T> = CellProps<DomainObjectWithUpdater<T>>;
-
 export const TextInputCell = <T extends DomainObject>({
   rowData,
   column,
   rows,
-}: CellPropsWithUpdaterObject<T>): React.ReactElement<
-  CellPropsWithUpdaterObject<T>
-> => {
+}: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
   );

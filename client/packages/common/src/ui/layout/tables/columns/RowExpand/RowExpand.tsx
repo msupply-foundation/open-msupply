@@ -13,7 +13,7 @@ type RowExpandLabels = {
 };
 
 export const getRowExpandColumn = <
-  T extends DomainObject & { canExpand: boolean }
+  T extends DomainObject & { canExpand?: boolean }
 >(
   labels?: RowExpandLabels
 ): ColumnDefinition<T> => ({

@@ -1,5 +1,4 @@
 import {
-  InvoiceNodeStatus,
   UpdateOutboundShipmentInput,
   InvoicesQuery,
   SortBy,
@@ -8,8 +7,9 @@ import {
   InvoicesQueryVariables,
   InvoicePriceResponse,
   OmSupplyApi,
+  UpdateOutboundShipmentStatusInput,
 } from '@openmsupply-client/common';
-import { OutboundShipment, Invoice, InvoiceRow } from '../../types';
+import { Invoice, InvoiceRow } from '../../types';
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
@@ -101,16 +101,14 @@ const invoiceToInput = (
     id: patch.id,
     // color: patch.color,
     comment: patch.comment,
-    status: patch.status as InvoiceNodeStatus,
+    status: patch.status as unknown as UpdateOutboundShipmentStatusInput,
     onHold: patch.onHold,
     otherPartyId: patch.otherParty?.id,
     theirReference: patch.theirReference,
   };
 };
 
-const getSortKey = (
-  sortBy: SortBy<OutboundShipment>
-): InvoiceSortFieldInput => {
+const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
   switch (sortBy.key) {
     // case 'allocatedDatetime': {
     //   return InvoiceSortFieldInput.ConfirmDatetime;
@@ -138,7 +136,7 @@ const getSortKey = (
   }
 };
 
-const getSortDesc = (sortBy: SortBy<OutboundShipment>): boolean => {
+const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
   return !!sortBy.isDesc;
 };
 
