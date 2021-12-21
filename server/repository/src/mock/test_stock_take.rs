@@ -50,14 +50,18 @@ pub fn mock_stock_take_line_finalized() -> StockTakeLineRow {
     StockTakeLineRow {
         id: "stock_take_line_finalized".to_string(),
         stock_take_id: mock_stock_take_finalized().id,
-        stock_line_id: "item_a_line_a".to_string(),
+        stock_line_id: Some("item_a_line_a".to_string()),
         location_id: None,
-        batch: None,
         comment: None,
-        cost_price_pack: 0.0,
-        sell_price_pack: 0.0,
         snapshot_number_of_packs: 11,
-        counted_number_of_packs: 11,
+        counted_number_of_packs: Some(11),
+        item_id: None,
+        expiry_date: None,
+        batch: None,
+        pack_size: None,
+        cost_price_per_pack: None,
+        sell_price_per_pack: None,
+        note: None,
     }
 }
 

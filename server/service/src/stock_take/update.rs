@@ -101,6 +101,7 @@ fn generate_invoices(
     let outbound_uid = uuid();
     for stock_take_line in stock_take_lines {
         let stock_line = stock_take_line.stock_line;
+        /*
         if stock_take_line.line.counted_number_of_packs > stock_line.total_number_of_packs {
             // additions
             added_inbound_lines.push(InsertInboundShipmentLine {
@@ -134,6 +135,7 @@ fn generate_invoices(
                 tax: None,
             });
         }
+        */
     }
 
     let additions = if !added_inbound_lines.is_empty() {
