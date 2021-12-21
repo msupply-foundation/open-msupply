@@ -13,6 +13,7 @@ import {
   Item,
   arrayToRecord,
   getDataSorter,
+  getColumnSorter,
 } from '@openmsupply-client/common';
 import { placeholderInvoice, placeholderOutboundShipment } from '../../utils';
 import {
@@ -266,7 +267,7 @@ export const reducer = (
           const { payload } = action;
           const { column } = payload;
 
-          const { key } = column;
+          const { key, getSortValue } = column;
 
           const { draft, sortBy } = state;
           const { items } = draft;
@@ -280,12 +281,16 @@ export const reducer = (
             direction: newDirection,
           };
 
-          const newItems = items.sort(
-            getDataSorter(
-              newSortBy.key as keyof OutboundShipmentSummaryItem,
-              !!newSortBy.isDesc
-            )
-          );
+          const sorter = getSortValue
+            ? getColumnSorter(getSortValue, !!newSortBy.isDesc)
+            : getDataSorter<
+                OutboundShipmentSummaryItem,
+                keyof OutboundShipmentSummaryItem
+              >(
+                newSortBy.key as keyof OutboundShipmentSummaryItem,
+                !!newSortBy.isDesc
+              );
+          const newItems = items.sort(sorter);
 
           draft.items = newItems;
           state.sortBy = newSortBy;

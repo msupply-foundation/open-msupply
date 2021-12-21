@@ -114,7 +114,9 @@ export const DetailView: FC = () => {
         accessor: ({ rowData }) =>
           ((rowData.sellPricePerPack ?? 0) * (rowData.numberOfPacks ?? 0)) /
           rowData.unitQuantity,
-        sortable: false,
+        getSortValue: row =>
+          ((row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0)) /
+          row.unitQuantity,
       },
       {
         label: 'label.line-total',
