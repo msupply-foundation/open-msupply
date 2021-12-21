@@ -68,7 +68,6 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
   return (
     <AppFooterPortal
       Content={
-        !!onHold &&
         !!status && (
           <Box
             gap={2}
