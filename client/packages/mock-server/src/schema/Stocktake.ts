@@ -1,11 +1,10 @@
 import { MutationService } from './../api/mutations/index';
 import { ResolverService } from './../api/resolvers/index';
+
 import {
   StocktakeResponse,
   StocktakesResponse,
   StocktakeListParameters,
-} from './../../../common/src/types/schema';
-import {
   InsertStocktakeInput,
   UpdateStocktakeInput,
   DeleteStocktakeInput,

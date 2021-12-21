@@ -1,7 +1,3 @@
-import {
-  RequisitionNodeType,
-  SupplierRequisitionNodeStatus,
-} from './../../../common/src/types/schema';
 import faker from 'faker';
 // randomName
 /* eslint-disable prefer-const */
@@ -36,6 +32,8 @@ import {
   InvoiceNodeStatus,
   InvoiceNodeType,
   StocktakeNodeStatus,
+  RequisitionNodeType,
+  SupplierRequisitionNodeStatus,
 } from '@openmsupply-client/common/src/types/schema';
 
 const units = [
