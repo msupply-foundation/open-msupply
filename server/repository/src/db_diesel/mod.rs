@@ -25,6 +25,7 @@ mod stock_line;
 mod stock_line_row;
 mod storage_connection;
 mod store;
+mod store_row;
 mod unit_row;
 mod user_account;
 
@@ -52,7 +53,8 @@ pub use requisition_line::RequisitionLineRepository;
 pub use stock_line::StockLineRepository;
 pub use stock_line_row::StockLineRowRepository;
 pub use storage_connection::{StorageConnection, StorageConnectionManager, TransactionError};
-pub use store::StoreRepository;
+pub use store::*;
+pub use store_row::StoreRowRepository;
 pub use unit_row::UnitRowRepository;
 pub use user_account::UserAccountRepository;
 

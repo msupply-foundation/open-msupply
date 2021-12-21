@@ -15,7 +15,7 @@ use repository::{
     },
     ItemRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
     MasterListRowRepository, NameRepository, RepositoryError, StorageConnection,
-    StorageConnectionManager, StoreRepository, TransactionError, UnitRowRepository,
+    StorageConnectionManager, StoreRowRepository, TransactionError, UnitRowRepository,
 };
 
 use self::{
@@ -178,7 +178,7 @@ fn integrate_record(
         IntegrationUpsertRecord::Name(record) => NameRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::Unit(record) => UnitRowRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::Item(record) => ItemRepository::new(con).upsert_one(record),
-        IntegrationUpsertRecord::Store(record) => StoreRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::Store(record) => StoreRowRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::MasterList(record) => {
             MasterListRowRepository::new(con).upsert_one(record)
         }

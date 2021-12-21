@@ -46,7 +46,7 @@ use self::{
 use super::{
     db_diesel::{
         InvoiceRepository, ItemRepository, NameRepository, NameStoreJoinRepository,
-        StorageConnection, StoreRepository, UnitRowRepository,
+        StorageConnection, StoreRowRepository, UnitRowRepository,
     },
     schema::*,
 };
@@ -247,7 +247,7 @@ pub async fn insert_mock_data(
         }
 
         if inserts.stores {
-            let repo = StoreRepository::new(connection);
+            let repo = StoreRowRepository::new(connection);
             for row in &mock_data.stores {
                 repo.insert_one(&row).await.unwrap();
             }

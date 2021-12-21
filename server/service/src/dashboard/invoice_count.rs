@@ -175,7 +175,7 @@ mod invoice_count_service_test {
             mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_b,
             MockDataInserts,
         },
-        test_db, InvoiceRepository, NameRepository, StoreRepository,
+        test_db, InvoiceRepository, NameRepository, StoreRowRepository,
     };
     use util::timezone::offset_to_timezone;
 
@@ -197,7 +197,7 @@ mod invoice_count_service_test {
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&name_store_a).await.unwrap();
         name_repo.insert_one(&name_store_b).await.unwrap();
-        let store_repo = StoreRepository::new(&connection);
+        let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&store_1).await.unwrap();
         let invoice_repo = InvoiceRepository::new(&connection);
         invoice_repo.upsert_one(&invoice_1).unwrap();
