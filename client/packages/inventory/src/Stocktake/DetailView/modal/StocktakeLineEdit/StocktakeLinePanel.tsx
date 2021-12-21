@@ -9,6 +9,7 @@ import {
   Checkbox,
   BasicTextInput,
   useTranslation,
+  Column,
 } from '@openmsupply-client/common';
 import { StocktakeLine } from '../../../../types';
 
@@ -47,7 +48,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
   const [selectionColumn, batchColumn] = useColumns([
     { key: 'count', label: 'label.count-this-line', width: 200 },
     ['batch', { width: 100 }],
-  ]);
+  ]) as [Column<StocktakeLine>, Column<StocktakeLine>];
 
   return (
     <StyledTabPanel value={value}>
@@ -79,7 +80,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                     key={id}
                     checked={countThisLine}
                     onClick={() =>
-                      line.update({
+                      line.update?.({
                         id: line.id,
                         countThisLine: !countThisLine,
                       })
