@@ -15,18 +15,15 @@ import {
   getStatusTranslator,
   inboundStatuses,
 } from '../../utils';
-import { InboundShipment } from '../../types';
-import {
-  useInboundFields,
-  useIsInboundEditable,
-} from 'packages/invoices/src/InboundShipment/DetailView/api';
+import { Invoice } from '../../types';
+import { useInboundFields, useIsInboundEditable } from './api';
 
 interface InboundDetailFooterProps {
-  draft: InboundShipment;
+  draft: Invoice;
   save: () => Promise<void>;
 }
 
-const createStatusLog = (draft: InboundShipment) => {
+const createStatusLog = (draft: Invoice) => {
   const statusIdx = inboundStatuses.findIndex(s => draft.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
     [InvoiceNodeStatus.New]: null,

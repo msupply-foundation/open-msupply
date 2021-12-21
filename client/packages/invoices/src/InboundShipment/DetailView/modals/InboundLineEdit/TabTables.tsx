@@ -28,7 +28,7 @@ export const BatchTable: FC<{
     ['packSize', { Cell: NumberInputCell, setter: updateDraftLine }],
     [
       'unitQuantity',
-      { accessor: rowData => rowData.numberOfPacks * rowData.packSize },
+      { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
     ],
     'expiryDate',
   ]);
@@ -60,12 +60,12 @@ export const PricingTable: FC<{
     ],
     [
       'unitQuantity',
-      { accessor: rowData => rowData.numberOfPacks * rowData.packSize },
+      { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
     ],
     [
       'lineTotal',
       {
-        accessor: rowData =>
+        accessor: ({ rowData }) =>
           rowData.numberOfPacks * rowData.packSize * rowData.costPricePerPack,
       },
     ],

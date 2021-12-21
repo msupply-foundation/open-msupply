@@ -103,6 +103,7 @@ export const DataTable = <T extends DomainObject>({
           {data.map((row, idx) => {
             return (
               <DataRow
+                rows={data}
                 ExpandContent={ExpandContent}
                 rowIndex={idx}
                 columns={columns}

@@ -7,8 +7,11 @@ import { useBufferState, useDebounceCallback } from '@common/hooks';
 export const NumberInputCell = <T extends DomainObject>({
   rowData,
   column,
+  rows,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
-  const [buffer, setBuffer] = useBufferState(column.accessor(rowData));
+  const [buffer, setBuffer] = useBufferState(
+    column.accessor({ rowData, rows })
+  );
   const updater = useDebounceCallback(column.setter, [rowData], 250);
 
   return (
