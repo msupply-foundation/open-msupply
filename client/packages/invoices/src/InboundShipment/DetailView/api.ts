@@ -2,6 +2,8 @@ import { toItem } from './DetailView';
 import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
+  UseMutationResult,
+  DeleteInboundShipmentLinesMutation,
   InvoiceNodeStatus,
   UpdateInboundShipmentMutation,
   useParams,
@@ -235,7 +237,7 @@ export const getInboundShipmentDetailViewApi = (
 });
 
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
-  const { id } = useParams();
+  const { id = '' } = useParams();
 
   const { api } = useOmSupplyApi();
   const queries = getInboundShipmentDetailViewApi(api);
@@ -247,7 +249,7 @@ export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
 export const useInboundShipmentSelector = <T = Invoice>(
   select?: (data: Invoice) => T
 ): UseQueryResult<T, unknown> => {
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
   const queries = getInboundShipmentDetailViewApi(api);
   return useQuery(
@@ -274,21 +276,20 @@ const useOptimisticInboundUpdate = () => {
     onMutate: async (patch: Partial<InboundShipment>) => {
       await queryClient.cancelQueries(['invoice', id]);
 
-      const previousInbound: Invoice = queryClient.getQueryData([
-        'invoice',
-        id,
-      ]);
+      const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
 
-      queryClient.setQueryData(['invoice', id], {
-        ...previousInbound,
-        ...patch,
-      });
+      if (previous) {
+        queryClient.setQueryData<Invoice>(['invoice', id], {
+          ...previous,
+          ...patch,
+        });
+      }
 
-      return { previousInbound, patch };
+      return { previous, patch };
     },
     onSettled: () => queryClient.invalidateQueries(['invoice', id]),
     onError: (_, __, context) => {
-      queryClient.setQueryData(['invoice', id], context.previousInbound);
+      queryClient.setQueryData(['invoice', id], context?.previous);
     },
   });
 };
@@ -302,7 +303,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
   ) => Promise<Promise<UpdateInboundShipmentMutation>>;
 } => {
   const queryClient = useQueryClient();
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
   const select = useCallback(
     (invoice: Invoice) => {
@@ -330,28 +331,32 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
       onMutate: async (patch: Partial<InboundShipment>) => {
         await queryClient.cancelQueries(['invoice', id]);
 
-        const previousInbound: Invoice = queryClient.getQueryData([
-          'invoice',
-          id,
-        ]);
+        const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
 
-        queryClient.setQueryData(['invoice', id], {
-          ...previousInbound,
-          ...patch,
-        });
+        if (previous) {
+          queryClient.setQueryData<Invoice>(['invoice', id], {
+            ...previous,
+            ...patch,
+          });
+        }
 
-        return { previousInbound, patch };
+        return { previous, patch };
       },
       onSettled: () => queryClient.invalidateQueries(['invoice', id]),
       onError: (_, __, context) => {
-        queryClient.setQueryData(['invoice', id], context.previousInbound);
+        queryClient.setQueryData(['invoice', id], context?.previous);
       },
     }
   );
 
   const update = useDebounceCallback(mutateAsync, [], timeout);
 
-  return { ...data, update };
+  // When data is undefined, just return an empty object instead of undefined.
+  // This allows the caller to use, for example, const { comment } = useInboundFields('comment')
+  // and the comment is undefined when the invoice has not been fetched yet.
+  const returnVal = data ?? ({} as { [k in KeyOfInvoice]: Invoice[k] });
+
+  return { ...returnVal, update };
 };
 
 export const useIsInboundEditable = (): boolean => {
@@ -407,11 +412,9 @@ export const useNextItem = (currentItemId: string) => {
   const { data } = useInboundItems();
 
   if (!data) return null;
-
-  const currentIndex = data?.findIndex(
-    ({ itemId }) => itemId === currentItemId
-  );
-  const nextItem = data[(currentIndex + 1) % data.length];
+  const currentIndex = data.findIndex(({ itemId }) => itemId === currentItemId);
+  const nextItem = data?.[(currentIndex + 1) % data.length];
+  if (!nextItem) return null;
 
   return toItem(nextItem);
 };
@@ -444,7 +447,8 @@ export const useDraftInbound = () => {
   );
 
   const updateInvoice = async (patch: Partial<InboundShipment>) => {
-    return optimisticUpdate({ ...data, ...patch, items: [] });
+    if (!data) return;
+    else return optimisticUpdate({ ...data, ...patch, items: [] });
   };
 
   const upsertItem = async (item: OutboundShipmentSummaryItem) => {
@@ -483,26 +487,33 @@ export const useDeleteInboundLine = (): UseMutationResult<
   DeleteInboundShipmentLinesMutation,
   unknown,
   string[],
-  { previous: Invoice; ids: string[] }
+  { previous?: Invoice; ids: string[] }
 > => {
   // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
   // input object should not require the invoice ID. Waiting for an API change.
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const { api } = useOmSupplyApi();
   const mutation = getDeleteInboundLinesQuery(api, id);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(['invoice', id]);
+
       const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
-      queryClient.setQueryData<Invoice>(['invoice', id], old => ({
-        ...old,
-        lines: old.lines.filter(({ id: lineId }) => !ids.includes(lineId)),
-      }));
+
+      if (previous) {
+        queryClient.setQueryData<Invoice>(['invoice', id], {
+          ...previous,
+          lines: previous.lines.filter(
+            ({ id: lineId }) => !ids.includes(lineId)
+          ),
+        });
+      }
+
       return { previous, ids };
     },
     onError: (_, __, context) => {
-      queryClient.setQueryData(['invoice', id], context.previous);
+      queryClient.setQueryData(['invoice', id], context?.previous);
     },
     onSettled: () => {
       queryClient.invalidateQueries(['invoice', id]);

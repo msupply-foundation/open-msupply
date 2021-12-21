@@ -13,10 +13,13 @@ import React, { FC } from 'react';
 import {
   getNextInboundStatusButtonTranslation,
   getStatusTranslator,
-  isInboundEditable,
   inboundStatuses,
 } from '../../utils';
 import { InboundShipment } from '../../types';
+import {
+  useInboundFields,
+  useIsInboundEditable,
+} from 'packages/invoices/src/InboundShipment/DetailView/api';
 
 interface InboundDetailFooterProps {
   draft: InboundShipment;
@@ -25,7 +28,7 @@ interface InboundDetailFooterProps {
 
 const createStatusLog = (draft: InboundShipment) => {
   const statusIdx = inboundStatuses.findIndex(s => draft.status === s);
-  const statusLog = {
+  const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
@@ -59,11 +62,14 @@ const createStatusLog = (draft: InboundShipment) => {
 export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
   const t = useTranslation('common');
   const { success } = useNotification();
+  const { onHold, status, update } = useInboundFields(['onHold', 'status']);
+  const isEditable = useIsInboundEditable();
 
   return (
     <AppFooterPortal
       Content={
-        !!draft && (
+        !!onHold &&
+        !!status && (
           <Box
             gap={2}
             display="flex"
@@ -72,11 +78,11 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
             height={64}
           >
             <ToggleButton
-              disabled={!isInboundEditable(draft)}
-              value={!!draft.onHold}
-              selected={!!draft.onHold}
+              disabled={!isEditable}
+              value={onHold}
+              selected={onHold}
               onClick={(_, value) => {
-                draft.update?.('onHold', !value);
+                update?.({ onHold: !value });
               }}
               label={t('label.hold')}
             />
@@ -88,16 +94,14 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              {isInboundEditable(draft) && (
+              {!isEditable && (
                 <>
                   <ButtonWithIcon
                     shrinkThreshold="lg"
-                    disabled={draft.onHold}
+                    disabled={onHold}
                     Icon={<ArrowRightIcon />}
                     label={t('button.save-and-confirm-status', {
-                      status: t(
-                        getNextInboundStatusButtonTranslation(draft.status)
-                      ),
+                      status: t(getNextInboundStatusButtonTranslation(status)),
                     })}
                     sx={{ fontSize: '12px' }}
                     variant="contained"
