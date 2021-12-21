@@ -145,16 +145,6 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
   upsertLine?: (line: OutboundShipmentRow) => void;
   deleteLine?: (line: OutboundShipmentRow) => void;
 }
-export interface InboundShipmentRow {
-  id: string;
-  stockLineId: string;
-  invoiceId: string;
-  itemId: string;
-  batches: InvoiceLine[];
-  isUpdated?: boolean;
-  isDeleted?: boolean;
-  isCreated?: boolean;
-}
 
 export type InboundShipmentItem = {
   id: string;
