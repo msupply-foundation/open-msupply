@@ -12,6 +12,7 @@ import {
   BatchCustomerRequisitionInput,
   DeleteCustomerRequisitionInput,
   mockUpdateCustomerRequisitionMutation,
+  mockUpdateSupplierRequisitionMutation,
 } from '@openmsupply-client/common/src/types';
 import { ResolverService } from '../../../api/resolvers';
 import { MutationService } from '../../../api/mutations';
@@ -45,13 +46,13 @@ const updateCustomerRequisition = mockUpdateCustomerRequisitionMutation(
   }
 );
 
-const updateSupplierRequisition = mockUpdateCustomerRequisitionMutation(
+const updateSupplierRequisition = mockUpdateSupplierRequisitionMutation(
   (req, res, ctx) => {
+    const { input } = req.variables;
     return res(
       ctx.data({
-        updateCustomerRequisition: MutationService.requisition.customer.update(
-          req.variables.input
-        ),
+        updateSupplierRequisition:
+          MutationService.requisition.supplier.update(input),
       })
     );
   }

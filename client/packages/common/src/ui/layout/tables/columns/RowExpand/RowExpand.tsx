@@ -13,7 +13,7 @@ type RowExpandLabels = {
 };
 
 export const getRowExpandColumn = <
-  T extends DomainObject & { canExpand?: boolean }
+  T extends DomainObject & { canExpand?: boolean; lines?: T[] }
 >(
   labels?: RowExpandLabels
 ): ColumnDefinition<T> => ({
@@ -50,7 +50,7 @@ export const getRowExpandColumn = <
     ) : null;
   },
   Cell: ({ rowData }) => {
-    if (!rowData.canExpand) return null;
+    if (!rowData.canExpand && !((rowData?.lines?.length ?? 0) > 1)) return null;
 
     const t = useTranslation('common');
     const { toggleExpanded, isExpanded } = useExpanded(rowData.id);

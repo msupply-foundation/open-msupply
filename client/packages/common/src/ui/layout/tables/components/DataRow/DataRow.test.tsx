@@ -21,6 +21,7 @@ describe('DataRow', () => {
       <Table>
         <TableBody>
           <DataRow
+            rows={[]}
             columns={columns}
             rowKey="rowKey"
             rowIndex={0}

@@ -1,7 +1,9 @@
+import { InboundShipmentItem } from './../../types';
 import { toItem } from './DetailView';
 import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
+  Item,
   UseMutationResult,
   DeleteInboundShipmentLinesMutation,
   InvoiceNodeStatus,
@@ -32,18 +34,8 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 
-import {
-  Invoice,
-  InvoiceLine,
-  InboundShipment,
-  InboundShipmentRow,
-  OutboundShipmentSummaryItem,
-} from '../../types';
-import {
-  flattenInboundItems,
-  placeholderInbound,
-  inboundLinesToSummaryItems,
-} from '../../utils';
+import { Invoice, InvoiceLine } from '../../types';
+import { inboundLinesToSummaryItems } from '../../utils';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -136,15 +128,6 @@ const createInsertLineInput = (
   };
 };
 
-const createDeleteInboundLineInput = (
-  line: InboundShipmentRow
-): DeleteInboundShipmentLineInput => {
-  return {
-    id: line.id,
-    invoiceId: line.invoiceId,
-  };
-};
-
 const createUpdateLineInput = (
   line: DraftInboundLine
 ): UpdateInboundShipmentLineInput => ({
@@ -183,7 +166,7 @@ export const getSaveInboundShipmentLines =
 
 export const getInboundShipmentDetailViewApi = (
   api: OmSupplyApi
-): Api<Invoice, InboundShipment> => ({
+): Api<Invoice, Invoice> => ({
   onRead: async (id: string): Promise<Invoice> => {
     const result = await api.invoice({ id });
 
@@ -211,13 +194,9 @@ export const getInboundShipmentDetailViewApi = (
       otherParty: otherPartyGuard(invoice.otherParty),
     };
   },
-  onUpdate: async (patch: InboundShipment): Promise<InboundShipment> => {
-    const rows = flattenInboundItems(patch.items);
-    const deleteLines = rows.filter(({ isDeleted }) => isDeleted);
-
+  onUpdate: async (patch: Invoice): Promise<Invoice> => {
     const result = await api.upsertInboundShipment({
       updateInboundShipments: [invoiceToInput(patch)],
-      deleteInboundShipmentLines: deleteLines.map(createDeleteInboundLineInput),
     });
 
     const { batchInboundShipment } = result;
@@ -273,7 +252,7 @@ const useOptimisticInboundUpdate = () => {
   const queryClient = useQueryClient();
   const { id } = useParams();
   return useMutation(queries.onUpdate, {
-    onMutate: async (patch: Partial<InboundShipment>) => {
+    onMutate: async (patch: Partial<Invoice>) => {
       await queryClient.cancelQueries(['invoice', id]);
 
       const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
@@ -325,10 +304,9 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
   const { data } = useInboundShipmentSelector(select);
 
   const { mutateAsync } = useMutation(
-    (patch: Partial<InboundShipment>) =>
-      getUpdateInbound(api)({ id, ...patch }),
+    (patch: Partial<Invoice>) => getUpdateInbound(api)({ id, ...patch }),
     {
-      onMutate: async (patch: Partial<InboundShipment>) => {
+      onMutate: async (patch: Partial<Invoice>) => {
         await queryClient.cancelQueries(['invoice', id]);
 
         const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
@@ -382,33 +360,27 @@ export const useInboundLines = (itemId?: string): InvoiceLine[] => {
 };
 
 export const useInboundItems = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<OutboundShipmentSummaryItem>({
+  const { sortBy, onChangeSortBy } = useSortBy<InboundShipmentItem>({
     key: 'itemName',
   });
-  const onSort = (column: Column<OutboundShipmentSummaryItem>) => {
+  const onSort = (column: Column<InboundShipmentItem>) => {
     onChangeSortBy({
       key: column.key,
       isDesc: sortBy.key === column.key ? !sortBy.isDesc : false,
     });
   };
-  const selectItems = useCallback(
-    (invoice: Invoice) => {
-      return inboundLinesToSummaryItems(invoice.lines).sort(
-        getDataSorter(
-          sortBy.key as keyof OutboundShipmentSummaryItem,
-          !!sortBy.isDesc
-        )
-      );
-    },
-    [sortBy]
-  );
+  const selectItems = useCallback((invoice: Invoice) => {
+    return inboundLinesToSummaryItems(invoice.lines).sort(
+      getDataSorter(sortBy.key as keyof InboundShipmentItem, !!sortBy.isDesc)
+    );
+  }, []);
 
   const { data } = useInboundShipmentSelector(selectItems);
 
   return { data, sortBy, onSort };
 };
 
-export const useNextItem = (currentItemId: string) => {
+export const useNextItem = (currentItemId: string): Item | null => {
   const { data } = useInboundItems();
 
   if (!data) return null;
@@ -430,42 +402,18 @@ export const useSaveInboundLines = () => {
 };
 
 export const useDraftInbound = () => {
-  const queryClient = useQueryClient();
-  const { id } = useParams();
-  const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
-
   const { data } = useInboundShipment();
 
-  const draft = data ? { ...data, items: [] } : placeholderInbound;
   const { mutateAsync: optimisticUpdate } = useOptimisticInboundUpdate();
-  const { isLoading: isAddingItem, mutateAsync } = useMutation(
-    queries.onUpdate,
-    {
-      onSettled: () => queryClient.invalidateQueries(['invoice', id]),
-    }
-  );
 
-  const updateInvoice = async (patch: Partial<InboundShipment>) => {
+  const updateInvoice = async (patch: Partial<Invoice>) => {
     if (!data) return;
-    else return optimisticUpdate({ ...data, ...patch, items: [] });
-  };
-
-  const upsertItem = async (item: OutboundShipmentSummaryItem) => {
-    const itemIdx = draft.items.findIndex(i => i.id === item.id);
-    if (itemIdx >= 0) draft.items[itemIdx] = item;
-    else draft.items.push(item);
-
-    const result = await mutateAsync(draft);
-
-    return result;
+    else return optimisticUpdate({ ...data, ...patch });
   };
 
   return {
-    isAddingItem,
     updateInvoice,
-    upsertItem,
-    draft,
+    draft: data,
   };
 };
 

@@ -10,6 +10,7 @@ export * from './Header';
 export const BasicCell = <T extends DomainObject>({
   column,
   rowData,
+  rows,
 }: CellProps<T>): ReactElement => {
   const t = useTranslation();
   const d = useFormatDate();
@@ -21,7 +22,7 @@ export const BasicCell = <T extends DomainObject>({
         textOverflow: 'ellipsis',
       }}
     >
-      {column.formatter(column.accessor(rowData), { t, d })}
+      {column.formatter(column.accessor({ rowData, rows }), { t, d })}
     </div>
   );
 };

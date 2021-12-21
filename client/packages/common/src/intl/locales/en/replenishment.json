@@ -7,5 +7,6 @@
   "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
   "message.deleted-lines": "Deleted {{number}} lines",
-  "messages.deleted-invoices": "Deleted {{number}} invoices"
+  "messages.deleted-invoices": "Deleted {{number}} invoices",
+  "label.group-by-item": "Group by Item"
 }
