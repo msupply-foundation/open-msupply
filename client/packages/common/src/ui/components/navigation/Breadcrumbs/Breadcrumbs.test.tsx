@@ -10,7 +10,7 @@ import { Route } from 'react-router';
 import { Breadcrumbs } from './Breadcrumbs';
 
 describe('Breadcrumbs', () => {
-  it('does not renders the top level part of the current URL', () => {
+  it('does not render the top level part of the current URL', () => {
     const { queryByText } = render(
       <TestingProvider>
         <TestingRouter
