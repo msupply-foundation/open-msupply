@@ -4,7 +4,7 @@ import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
 import { PaperPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { isProduction } from '../../../../../utils';
+import { isProduction } from '@common/utils';
 
 interface ObjectWithNote {
   note: string;
@@ -18,7 +18,7 @@ const isObjectWithANote = (
 export const getNotePopoverColumn = <T extends DomainObject>(
   label?: string
 ): ColumnDefinition<T> => ({
-  key: 'comment',
+  key: 'note',
   sortable: false,
   align: ColumnAlign.Center,
   width: 60,
