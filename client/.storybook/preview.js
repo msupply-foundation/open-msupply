@@ -1,4 +1,5 @@
-import '@fontsource/inter';
+import '@fontsource/inter/variable.css';
+// import "@fontsource/inter/variable-italic.css"; // Italic variant: not currently used
 import React from 'react';
 import { CssBaseline } from '@mui/material';
 import { addDecorator } from '@storybook/react';
