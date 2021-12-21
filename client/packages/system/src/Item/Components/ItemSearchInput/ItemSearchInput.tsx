@@ -37,7 +37,7 @@ const getOptionRenderer =
 
 interface ItemSearchInputProps {
   onChange: (item: Item | null) => void;
-  currentItem?: Item;
+  currentItem?: Item | null;
   currentItemName?: string;
   disabled?: boolean;
   extraFilter?: (item: Item) => boolean;
