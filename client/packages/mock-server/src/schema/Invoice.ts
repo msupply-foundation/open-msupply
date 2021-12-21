@@ -14,7 +14,7 @@ import {
   BatchOutboundShipmentResponse,
   BatchInboundShipmentResponse,
   InsertInboundShipmentInput,
-} from './../../../common/src/types/schema';
+} from '@openmsupply-client/common/src/types/schema';
 import { Api } from '../api';
 
 import { Invoice as InvoiceType } from '../data/types';

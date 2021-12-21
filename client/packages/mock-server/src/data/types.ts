@@ -2,7 +2,7 @@ import {
   StockLineConnector,
   InvoiceSortInput,
   InvoiceFilterInput,
-} from './../../../common/src/types/schema';
+} from '@openmsupply-client/common/src/types/schema';
 import {
   InvoiceLineNode,
   InvoiceNode,

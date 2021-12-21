@@ -1,5 +1,5 @@
-import { Column } from './../../common/src/ui/layout/tables/columns/types';
 import {
+  Column,
   StocktakeLineNode,
   StocktakeNode,
   StocktakeNodeStatus,
