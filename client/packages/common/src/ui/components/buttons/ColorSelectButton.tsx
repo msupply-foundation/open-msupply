@@ -5,7 +5,7 @@ import { CircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
 interface ColorSelectButtonProps {
-  color: string;
+  color?: string | null;
   onChange: (color: Color) => void;
   colors?: Color[];
   disabled?: boolean;
@@ -44,7 +44,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
         disabled={disabled}
         icon={
           <CircleIcon
-            htmlColor={color}
+            htmlColor={color ?? '##8f90a6'}
             sx={{
               width: '12px',
               margin: 'margin: 0 9px 0 10px',

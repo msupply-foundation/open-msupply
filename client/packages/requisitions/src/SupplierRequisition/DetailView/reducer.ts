@@ -33,7 +33,7 @@ const RequisitionActionCreator = {
       payload: { value },
     };
   },
-  updateRequisitionDate: (value: Date): RequisitionAction => {
+  updateRequisitionDate: (value: Date | null): RequisitionAction => {
     return {
       type: RequisitionActionType.UpdateRequisitionDate,
       payload: { value },
@@ -70,11 +70,11 @@ export const reducer = (
           };
 
           state.draft.update = (key: string, value: string) => {
-            dispatch(RequisitionActionCreator.update(key, value));
+            dispatch?.(RequisitionActionCreator.update(key, value));
           };
 
-          state.draft.updateRequisitionDate = (value: Date) => {
-            dispatch(RequisitionActionCreator.updateRequisitionDate(value));
+          state.draft.updateRequisitionDate = (value: Date | null) => {
+            dispatch?.(RequisitionActionCreator.updateRequisitionDate(value));
           };
 
           break;

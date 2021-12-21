@@ -353,6 +353,18 @@ query requisitions($params: RequisitionListParameters) {
       }
       totalCount
     }
+
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+      }
+    }
   }
 }
 
