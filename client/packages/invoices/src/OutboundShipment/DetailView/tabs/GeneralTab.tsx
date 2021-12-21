@@ -5,14 +5,13 @@ import {
   usePagination,
   Column,
   DomainObject,
-  Box,
   useTranslation,
   Grid,
   Switch,
-  alpha,
   useColumns,
   useLocalStorage,
   useTableStore,
+  MiniTable,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
 
@@ -25,8 +24,6 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
 const Expand: FC<{
   rowData: OutboundShipmentSummaryItem;
 }> = ({ rowData }) => {
-  const t = useTranslation();
-
   const columns = useColumns([
     'batch',
     'expiryDate',
@@ -38,40 +35,19 @@ const Expand: FC<{
     'sellPricePerUnit',
   ]);
 
-  const batches = Object.values(rowData.batches).map(batch => ({
-    ...batch,
-    unitQuantity: batch.numberOfPacks * batch.packSize,
-    sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
-  }));
-  const BatchTable = React.useMemo(
-    () => (
-      <DataTable
-        dense
-        columns={columns}
-        data={batches}
-        noDataMessage={t('error.no-items')}
-      />
-    ),
-    []
+  const batches = React.useMemo(
+    () =>
+      Object.values(rowData.batches).map(batch => ({
+        ...batch,
+        unitQuantity: batch.numberOfPacks * batch.packSize,
+        sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
+      })),
+    [rowData.batches]
   );
 
-  if (!rowData?.canExpand) return <></>;
+  if (!rowData.canExpand) return null;
 
-  return (
-    <Box p={1} style={{ padding: '0 100px', width: '100%' }}>
-      <Box
-        flex={1}
-        display="flex"
-        height="100%"
-        borderRadius={4}
-        sx={{
-          backgroundColor: theme => alpha(theme.palette.gray.light, 0.2),
-        }}
-      >
-        {BatchTable}
-      </Box>
-    </Box>
-  );
+  return <MiniTable rows={batches} columns={columns} />;
 };
 
 export const GeneralTabComponent: FC<

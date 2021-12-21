@@ -3,46 +3,39 @@ import {
   DataTable,
   usePagination,
   DomainObject,
-  Box,
   useTranslation,
   useTableStore,
   Grid,
   Switch,
+  MiniTable,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem, InvoiceLine } from '../../types';
 import { useInboundItems, useInboundLines } from './api';
-import { useInboundShipmentColumns } from 'packages/invoices/src/InboundShipment/DetailView/columns';
+import { useExpansionColumns, useInboundShipmentColumns } from './columns';
 
 interface GeneralTabProps<T extends DomainObject> {
   onRowClick?: (rowData: T) => void;
 }
 
-const Expand: FC<{ rowData: InboundShipmentItem | InvoiceLine }> = ({
+const Expando = ({
   rowData,
+}: {
+  rowData: InvoiceLine | InboundShipmentItem;
 }) => {
-  return (
-    <Box p={1} height={300} style={{ overflow: 'scroll' }}>
-      <Box
-        flex={1}
-        display="flex"
-        height="100%"
-        borderRadius={4}
-        bgcolor="#c7c9d933"
-      >
-        <span style={{ whiteSpace: 'pre-wrap' }}>
-          {JSON.stringify(rowData, null, 2)}
-        </span>
-      </Box>
-    </Box>
-  );
+  const expandoColumns = useExpansionColumns();
+  if ('lines' in rowData && rowData.lines.length > 1) {
+    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
+  } else {
+    return null;
+  }
 };
 
-export const GeneralTabComponent: FC<
+export const GeneralTab: FC<
   GeneralTabProps<InboundShipmentItem | InvoiceLine>
-> = ({ onRowClick }) => {
+> = React.memo(({ onRowClick }) => {
   const { pagination } = usePagination();
   const t = useTranslation(['common', 'replenishment']);
-
+  const columns = useInboundShipmentColumns();
   const lines = useInboundLines();
   const { data: items } = useInboundItems();
   const tableStore = useTableStore();
@@ -52,8 +45,6 @@ export const GeneralTabComponent: FC<
     () => rows?.slice(pagination.offset, pagination.offset + pagination.first),
     [rows, pagination.offset, pagination.first]
   );
-
-  const columns = useInboundShipmentColumns();
 
   return (
     <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
@@ -76,7 +67,7 @@ export const GeneralTabComponent: FC<
       <Grid item>
         <DataTable
           onRowClick={onRowClick}
-          ExpandContent={Expand}
+          ExpandContent={Expando}
           pagination={{ ...pagination, total: rows?.length }}
           columns={columns}
           data={paged}
@@ -86,6 +77,4 @@ export const GeneralTabComponent: FC<
       </Grid>
     </Grid>
   );
-};
-
-export const GeneralTab = React.memo(GeneralTabComponent);
+});
