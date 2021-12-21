@@ -57,7 +57,7 @@ export const DetailView: FC = () => {
         onAddItem={onAddItem}
       />
 
-      <Toolbar draft={draft} update={updateInvoice} />
+      <Toolbar draft={draft} />
 
       <GeneralTab onRowClick={onRowClick} />
 

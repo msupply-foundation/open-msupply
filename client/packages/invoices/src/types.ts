@@ -134,7 +134,7 @@ export type OutboundShipmentSummaryItem = {
   note?: string | null;
   isDeleted?: boolean;
   canExpand?: boolean;
-  expiryDate?: string;
+  expiryDate?: string | null;
   lineTotal?: number;
 };
 

@@ -140,7 +140,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const t = useTranslation('distribution');
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<Item | null>(item);
-  const nextItem = useNextItem(currentItem?.id);
+  const nextItem = useNextItem(currentItem?.id ?? '');
   const isMediumScreen = useIsMediumScreen();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const { Modal } = useDialog({ isOpen, onClose });
@@ -150,7 +150,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   }, [item]);
 
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
-    useDraftInboundLines(currentItem?.id);
+    useDraftInboundLines(currentItem?.id ?? '');
 
   return (
     <Modal

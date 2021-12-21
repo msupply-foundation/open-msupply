@@ -30,7 +30,7 @@ interface OutboundDetailFooterProps {
 const createStatusLog = (draft: OutboundShipment) => {
   const statusIdx = outboundStatuses.findIndex(s => draft.status === s);
 
-  const statusLog = {
+  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Picked]: null,
