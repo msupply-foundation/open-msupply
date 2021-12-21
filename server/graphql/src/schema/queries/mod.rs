@@ -1,3 +1,4 @@
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
@@ -26,6 +27,8 @@ pub mod item;
 pub use self::item::*;
 pub mod stock_counts;
 pub use self::stock_counts::*;
+use self::store::{stores, StoreFilterInput, StoresResponse};
+pub mod store;
 
 #[Object]
 impl Queries {
@@ -69,6 +72,15 @@ impl Queries {
         sort: Option<Vec<NameSortInput>>,
     ) -> NamesResponse {
         names(ctx, page, filter, sort)
+    }
+
+    pub async fn stores(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<StoreFilterInput>,
+    ) -> Result<StoresResponse, StandardGraphqlError> {
+        stores(ctx, page, filter)
     }
 
     /// Query omSupply "locations" entries
