@@ -5,19 +5,13 @@ import {
   DomainObject,
   Box,
   useTranslation,
-  useColumns,
-  getNotePopoverColumn,
-  getRowExpandColumn,
-  GenericColumnKey,
-  ifTheSameElseDefault,
-  getUnitQuantity,
-  getSumOfKeyReducer,
   useTableStore,
   Grid,
   Switch,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem, InvoiceLine } from '../../types';
 import { useInboundItems, useInboundLines } from './api';
+import { useInboundShipmentColumns } from 'packages/invoices/src/InboundShipment/DetailView/columns';
 
 interface GeneralTabProps<T extends DomainObject> {
   onRowClick?: (rowData: T) => void;
@@ -47,7 +41,7 @@ export const GeneralTabComponent: FC<
   GeneralTabProps<InboundShipmentItem | InvoiceLine>
 > = ({ onRowClick }) => {
   const { pagination } = usePagination();
-  const t = useTranslation('common');
+  const t = useTranslation(['common', 'replenishment']);
 
   const lines = useInboundLines();
   const { data: items } = useInboundItems();
@@ -59,141 +53,7 @@ export const GeneralTabComponent: FC<
     [rows, pagination.offset, pagination.first]
   );
 
-  const columns = useColumns<InvoiceLine | InboundShipmentItem>(
-    [
-      {
-        ...getNotePopoverColumn(),
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            return rowData.lines[0].note;
-          } else {
-            return rowData.note;
-          }
-        },
-      },
-      [
-        'itemCode',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemCode', '');
-            } else {
-              return rowData.itemCode;
-            }
-          },
-        },
-      ],
-      [
-        'itemName',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemName', '');
-            } else {
-              return rowData.itemName;
-            }
-          },
-        },
-      ],
-      [
-        'batch',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'batch', '[multiple]');
-            } else {
-              return rowData.batch;
-            }
-          },
-        },
-      ],
-      [
-        'expiryDate',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'expiryDate', '');
-            } else {
-              return rowData.expiryDate;
-            }
-          },
-        },
-      ],
-      [
-        'locationName',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'locationName', '');
-            } else {
-              return rowData?.locationName;
-            }
-          },
-        },
-      ],
-      [
-        'sellPricePerPack',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'sellPricePerPack', '');
-            } else {
-              return rowData.sellPricePerPack;
-            }
-          },
-        },
-      ],
-      [
-        'packSize',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return rowData.packSize;
-            }
-          },
-        },
-      ],
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return lines.reduce(getUnitQuantity, 0);
-            } else {
-              return rowData.packSize * rowData.numberOfPacks;
-            }
-          },
-        },
-      ],
-      [
-        'numberOfPacks',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
-            } else {
-              return rowData.numberOfPacks;
-            }
-          },
-        },
-      ],
-      getRowExpandColumn(),
-      GenericColumnKey.Selection,
-    ],
-    {},
-    []
-  );
+  const columns = useInboundShipmentColumns();
 
   return (
     <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
@@ -205,7 +65,7 @@ export const GeneralTabComponent: FC<
         sx={{ padding: '5px', paddingLeft: '15px' }}
       >
         <Switch
-          label={t('label.group-by-item')}
+          label={t('label.group-by-item', { ns: 'replenishment' })}
           onChange={(_, check) => tableStore.setIsGrouped(check)}
           checked={tableStore.isGrouped}
           size="small"
