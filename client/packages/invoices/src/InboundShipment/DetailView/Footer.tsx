@@ -90,7 +90,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              {!isEditable && (
+              {isEditable && (
                 <>
                   <ButtonWithIcon
                     shrinkThreshold="lg"
