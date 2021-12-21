@@ -29,7 +29,7 @@ import {
   UpdateStocktakeInput,
   DeleteStocktakeInput,
   StocktakeNodeStatus,
-} from './../../../common/src/types/schema';
+} from '@openmsupply-client/common/src/types/schema';
 import {
   Item,
   StockLine,
