@@ -46,6 +46,7 @@ class LocalStorage {
     if (existingValue === value) return;
 
     const stringified = JSON.stringify(value);
+
     localStorage.setItem(this.createStorageKey(key), stringified);
 
     this.listeners.forEach(listener => listener(key, value));

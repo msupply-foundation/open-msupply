@@ -6,5 +6,6 @@
   "message.select-rows-to-delete": "Select rows to delete",
   "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
-  "message.deleted-lines": "Deleted {{number}} lines"
+  "message.deleted-lines": "Deleted {{number}} lines",
+  "messages.deleted-invoices": "Deleted {{number}} invoices"
 }

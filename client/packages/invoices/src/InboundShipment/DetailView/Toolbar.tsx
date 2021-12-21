@@ -14,12 +14,11 @@ import {
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 import { useDeleteInboundLine, useInboundFields, useInboundItems } from './api';
-import { InboundShipment } from '../../types';
+import { InboundShipment, InboundShipmentItem } from '../../types';
 import { isInboundEditable } from '../../utils';
 
 interface ToolbarProps {
   draft: InboundShipment;
-  update: (patch: Partial<InboundShipment>) => Promise<InboundShipment>;
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
@@ -30,14 +29,18 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
     'theirReference',
   ]);
 
+  if (!data) return null;
+
   const t = useTranslation(['replenishment', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data.find(({ id }) => selectedId === id))
-      .filter(Boolean)
+    selectedRows: (
+      Object.keys(state.rowState)
+        .filter(id => state.rowState[id]?.isSelected)
+        .map(selectedId => data.find(({ id }) => selectedId === id))
+        .filter(Boolean) as InboundShipmentItem[]
+    )
       .map(({ batches }) => Object.values(batches))
       .flat()
       .map(({ id }) => id),

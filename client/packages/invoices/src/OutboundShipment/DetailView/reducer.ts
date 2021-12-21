@@ -51,7 +51,15 @@ const getExistingLine = (
 
 export const recalculateSummary = (
   summaryItem: OutboundShipmentSummaryItem
-): Partial<OutboundShipmentSummaryItem> => {
+): {
+  unitQuantity: number;
+  numberOfPacks: number;
+  locationName?: string | null;
+  batch?: string | null;
+  expiryDate?: string | null;
+  sellPricePerPack?: number;
+  packSize?: number;
+} => {
   const batches = Object.values<OutboundShipmentRow>(summaryItem.batches);
   const unitQuantity = batches.reduce(getUnitQuantity, 0);
   const numberOfPacks = batches.reduce(getSumOfKeyReducer('numberOfPacks'), 0);

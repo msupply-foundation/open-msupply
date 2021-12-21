@@ -25,7 +25,7 @@ export interface ModalProps {
 }
 export interface DialogProps {
   onClose?: () => void;
-  isOpen: boolean;
+  isOpen?: boolean;
 }
 
 interface DialogState {
