@@ -1,8 +1,9 @@
 import { StocktakeLineResolver } from './stocktakeLine';
 import { createListResponse } from './utils';
-import { getDataSorter } from './../../../../common/src/utils/arrays/sorters';
-import { db } from './../../data/database';
+import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
 import { StocktakeListParameters } from '@openmsupply-client/common/src/types/schema';
+import { db } from './../../data/database';
+
 import { ResolvedStocktake, ListResponse } from './../../data/types';
 
 export const StocktakeResolver = {

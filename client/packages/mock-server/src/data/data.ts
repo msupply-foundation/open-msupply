@@ -1,7 +1,3 @@
-import {
-  RequisitionNodeType,
-  SupplierRequisitionNodeStatus,
-} from './../../../common/src/types/schema';
 import faker from 'faker';
 // randomName
 /* eslint-disable prefer-const */
@@ -36,6 +32,8 @@ import {
   InvoiceNodeStatus,
   InvoiceNodeType,
   StocktakeNodeStatus,
+  RequisitionNodeType,
+  SupplierRequisitionNodeStatus,
 } from '@openmsupply-client/common/src/types/schema';
 
 const units = [
@@ -516,7 +514,7 @@ const createInvoicesLines = (
       // +/- this subset size to change the number of lines per
       // inbound shipment.
       const validStockLines = stockLines.filter(({ onHold }) => !onHold);
-      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 10);
+      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 200);
 
       return stockLineSubset.map(stockLine => {
         const item = getItem(stockLine.itemId);
@@ -539,7 +537,7 @@ const createInvoicesLines = (
       // +/- this subset size to change the number of lines per
       // outbound shipment.
       const validStockLines = stockLines.filter(({ onHold }) => !onHold);
-      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 10);
+      const stockLineSubset = takeRandomSubsetFrom(validStockLines, 200);
 
       return stockLineSubset.map(({ id: stockLineId }) => {
         const { stockLine } = getStockLine(stockLineId);

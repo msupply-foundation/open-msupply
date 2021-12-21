@@ -55,9 +55,9 @@ const getDefaultAccessor =
   <T extends DomainObject>(
     column: ColumnDefinition<T>
   ): ColumnDataAccessor<T> =>
-  (row: T) => {
+  ({ rowData }) => {
     const key = column.key as keyof T;
-    const value = row[key];
+    const value = rowData[key];
     return typeof value === 'function' ? value() : value;
   };
 

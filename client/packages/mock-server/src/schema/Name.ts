@@ -1,4 +1,4 @@
-import { NamesResponse } from './../../../common/src/types/schema';
+import { NamesResponse } from '@openmsupply-client/common/src/types';
 import { NameListParameters } from './../data/types';
 import { Api } from '../api';
 

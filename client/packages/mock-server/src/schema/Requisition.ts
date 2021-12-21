@@ -42,7 +42,7 @@ import {
   DeleteCustomerRequisitionLineResponseWithId,
   RequisitionsResponse,
   RequisitionResponse,
-} from './../../../common/src/types/schema';
+} from '@openmsupply-client/common/src/types';
 import { MutationService } from '../api/mutations';
 import { ResolverService } from './../api/resolvers';
 

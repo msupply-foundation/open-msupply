@@ -66,7 +66,10 @@ export const InboundListView: FC = () => {
       'createdDatetime',
       'allocatedDatetime',
       'comment',
-      ['totalAfterTax', { accessor: invoice => invoice.pricing.totalAfterTax }],
+      [
+        'totalAfterTax',
+        { accessor: ({ rowData }) => rowData.pricing.totalAfterTax },
+      ],
       'selection',
     ],
     { onChangeSortBy, sortBy },

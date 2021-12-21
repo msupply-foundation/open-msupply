@@ -9,7 +9,6 @@ import {
   createTableStore,
   useOmSupplyApi,
   getNameAndColorColumn,
-  Color,
   useFormatDate,
   useToggle,
   generateUUID,
@@ -49,9 +48,7 @@ export const SupplierRequisitionListView: FC = () => {
 
   const columns = useColumns<RequisitionRow>(
     [
-      getNameAndColorColumn((row: RequisitionRow, color: Color) => {
-        onUpdate({ ...row, color: color.hex });
-      }),
+      { ...getNameAndColorColumn(), setter: onUpdate },
       {
         key: 'requisitionNumber',
         label: 'label.number',
@@ -61,7 +58,8 @@ export const SupplierRequisitionListView: FC = () => {
         key: 'orderDate',
         label: 'label.requisition-date',
         width: 100,
-        accessor: rowData => (rowData.orderDate ? d(rowData.orderDate) : ''),
+        accessor: ({ rowData }) =>
+          rowData.orderDate ? d(rowData.orderDate) : '',
       },
       'comment',
       'selection',

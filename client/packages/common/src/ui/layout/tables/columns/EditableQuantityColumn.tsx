@@ -70,5 +70,5 @@ export const getEditableQuantityColumn = <
     );
   },
   label: 'label.pack-quantity',
-  accessor: (row: T) => String(row.quantity),
+  accessor: ({ rowData }) => String(rowData.quantity),
 });
