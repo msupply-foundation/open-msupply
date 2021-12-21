@@ -10,8 +10,8 @@ import { Route } from 'react-router';
 import { Breadcrumbs } from './Breadcrumbs';
 
 describe('Breadcrumbs', () => {
-  it('Renders the name of the current route from the URL', () => {
-    const { getByText } = render(
+  it('does not renders the top level part of the current URL', () => {
+    const { queryByText } = render(
       <TestingProvider>
         <TestingRouter
           initialEntries={[RouteBuilder.create(AppRoute.Distribution).build()]}
@@ -21,9 +21,9 @@ describe('Breadcrumbs', () => {
       </TestingProvider>
     );
 
-    expect(getByText(/distribution/i));
+    expect(queryByText(/distribution/i)).not.toBeInTheDocument();
   });
-  it('Renders the names of the current routes from the URL', () => {
+  it('Renders the names of all the routes from the URL, excluding the first', () => {
     const { getByText } = render(
       <TestingProvider>
         <TestingRouter
@@ -38,10 +38,10 @@ describe('Breadcrumbs', () => {
       </TestingProvider>
     );
 
-    expect(getByText(/distribution/i));
+    expect(getByText(/outbound/i));
   });
 
-  it('Renders the non-last elements as links to the prior pages', () => {
+  it('Renders the non-last elements as links to the prior pages, excluding the first', () => {
     const { getByRole } = render(
       <TestingProvider>
         <TestingRouter
@@ -57,7 +57,6 @@ describe('Breadcrumbs', () => {
       </TestingProvider>
     );
 
-    expect(getByRole('link', { name: /distribution/i })).toBeInTheDocument();
     expect(getByRole('link', { name: /requisition/i })).toBeInTheDocument();
   });
 
@@ -98,10 +97,6 @@ describe('Breadcrumbs', () => {
       </TestingProvider>
     );
 
-    expect(getByRole('link', { name: /distribution/i })).toHaveAttribute(
-      'href',
-      '/distribution'
-    );
     expect(getByRole('link', { name: /requisition/i })).toHaveAttribute(
       'href',
       '/distribution/customer-requisition'
