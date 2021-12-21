@@ -1738,7 +1738,7 @@ export type RegisteredUser = {
 
 export type RequisitionConnector = {
   __typename?: 'RequisitionConnector';
-  nodes: Array<Maybe<RequisitionNode>>;
+  nodes: Array<RequisitionNode>;
   totalCount: Scalars['Int'];
 };
 
@@ -2401,7 +2401,7 @@ export type RequisitionsQueryVariables = Exact<{
 }>;
 
 
-export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError' } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, theirReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string, otherPartyId: string, color?: string | null | undefined } | null | undefined> } };
+export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, theirReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string, otherPartyId: string, color?: string | null | undefined }> } };
 
 export type DeleteSupplierRequisitionsMutationVariables = Exact<{
   ids?: Maybe<Array<DeleteSupplierRequisitionInput> | DeleteSupplierRequisitionInput>;
@@ -2941,6 +2941,17 @@ export const RequisitionsDocument = gql`
         color
       }
       totalCount
+    }
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+      }
     }
   }
 }
