@@ -1,6 +1,6 @@
 use domain::invoice::InvoiceType;
 use repository::{
-    schema::{InvoiceRow, ItemRow, ItemType},
+    schema::{InvoiceRow, ItemRow, ItemRowType},
     StorageConnection,
 };
 
@@ -22,7 +22,7 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow), InsertOutboundShipmentServiceLineError> {
     check_line_does_not_exists(&input.id, connection)?;
     let item = check_item(&input.item_id, connection)?;
-    if item.r#type != ItemType::Service {
+    if item.r#type != ItemRowType::Service {
         return Err(InsertOutboundShipmentServiceLineError::NotAServiceItem);
     }
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;

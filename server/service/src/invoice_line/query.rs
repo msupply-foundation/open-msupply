@@ -1,9 +1,6 @@
-use crate::SingleRecordError;
-use domain::{
-    invoice_line::{InvoiceLine, InvoiceLineFilter},
-    EqualFilter, Pagination,
-};
-use repository::{InvoiceLineRepository, StorageConnectionManager};
+use crate::{service_provider::ServiceContext, SingleRecordError};
+use domain::{invoice_line::InvoiceLine, EqualFilter, Pagination};
+use repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager, InvoiceLineFilter};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -25,4 +22,15 @@ pub fn get_invoice_line(
     } else {
         Err(SingleRecordError::NotFound(id))
     }
+}
+
+// TODO rename to get_invoice_line, when code is refactored to use service context
+pub fn get_invoice_line_ctx(
+    ctx: &ServiceContext,
+    id: String,
+) -> Result<Option<InvoiceLine>, RepositoryError> {
+    let mut result = InvoiceLineRepository::new(&ctx.connection)
+        .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(&id)))?;
+
+    Ok(result.pop())
 }
