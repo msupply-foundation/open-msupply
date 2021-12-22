@@ -1,6 +1,6 @@
 import { SupportedLocales } from '@common/intl';
 
-type GroupByItem = {
+export type GroupByItem = {
   outboundShipment?: boolean;
   inboundShipment?: boolean;
 };
