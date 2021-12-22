@@ -1,5 +1,6 @@
 use async_graphql::ErrorExtensions;
 use repository::RepositoryError;
+use service::ListError;
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
@@ -35,5 +36,15 @@ impl ErrorExtensions for StandardGraphqlError {
 impl From<RepositoryError> for StandardGraphqlError {
     fn from(err: RepositoryError) -> Self {
         StandardGraphqlError::InternalError(format!("{:?}", err))
+    }
+}
+
+impl From<ListError> for StandardGraphqlError {
+    fn from(err: ListError) -> Self {
+        match err {
+            ListError::DatabaseError(err) => err.into(),
+            ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
+            ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
+        }
     }
 }

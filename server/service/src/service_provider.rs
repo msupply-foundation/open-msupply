@@ -8,12 +8,14 @@ use crate::{
     invoice_line::{OutboundShipmentLineService, OutboundShipmentLineServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    store::{StoreService, StoreServiceTrait},
 };
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
     pub location_service: Box<dyn LocationServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
+    pub store_service: Box<dyn StoreServiceTrait>,
     pub outbound_shipment_line: Box<dyn OutboundShipmentLineServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
@@ -30,6 +32,7 @@ impl ServiceProvider {
             connection_manager,
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
+            store_service: Box::new(StoreService {}),
             outbound_shipment_line: Box::new(OutboundShipmentLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
             stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
