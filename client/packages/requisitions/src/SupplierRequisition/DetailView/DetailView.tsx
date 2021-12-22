@@ -50,7 +50,8 @@ export const DetailView: FC = () => {
         {
           accessor: ({ rowData }) =>
             `${rowData.previousStockOnHand} (${Math.floor(
-              rowData.previousStockOnHand / rowData.monthlyConsumption
+              (rowData?.previousStockOnHand ?? 0) /
+                (rowData?.monthlyConsumption ?? 0)
             )} months)`,
         },
       ],
@@ -58,11 +59,11 @@ export const DetailView: FC = () => {
         'calculatedQuantity',
         {
           accessor: ({ rowData }) => {
-            const threeMonthsStock = rowData.monthlyConsumption * 3;
-            const diff = threeMonthsStock - rowData.previousStockOnHand;
+            const threeMonthsStock = rowData?.monthlyConsumption ?? 1 * 3;
+            const diff = threeMonthsStock - (rowData?.previousStockOnHand ?? 0);
             if (diff > 0) {
               return `${diff.toFixed(2)} (${Math.floor(
-                diff / rowData.monthlyConsumption
+                diff / (rowData?.monthlyConsumption ?? 1)
               )} months)`;
             } else {
               return 0;

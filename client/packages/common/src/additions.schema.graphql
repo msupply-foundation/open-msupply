@@ -314,7 +314,7 @@ union RequisitionsResponse = ConnectorError | RequisitionConnector
 
 type RequisitionConnector {
   totalCount: Int!
-  nodes: [RequisitionNode]!
+  nodes: [RequisitionNode!]!
 }
 
 input UpdateSupplierRequisitionInput {

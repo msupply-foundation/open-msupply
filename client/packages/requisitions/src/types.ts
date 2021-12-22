@@ -22,11 +22,11 @@ export type RequisitionAction =
     }
   | {
       type: RequisitionActionType.UpdateOrderDate;
-      payload: { value: Date };
+      payload: { value: Date | null };
     }
   | {
       type: RequisitionActionType.UpdateRequisitionDate;
-      payload: { value: Date };
+      payload: { value: Date | null };
     };
 
 export interface Requisition
@@ -60,8 +60,8 @@ export interface SupplierRequisition extends Requisition {
   lines: SupplierRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
-  updateOrderDate: (value: Date) => void;
-  updateRequisitionDate: (value: Date) => void;
+  updateOrderDate: (value: Date | null) => void;
+  updateRequisitionDate: (value: Date | null) => void;
   upsertLine?: (line: SupplierRequisitionLine) => void;
   deleteLine?: (line: SupplierRequisitionLine) => void;
 }
@@ -72,8 +72,8 @@ export interface CustomerRequisition extends Requisition {
   lines: CustomerRequisitionLine[];
   update: (key: string, value: string) => void;
   updateOtherParty: (value: Name) => void;
-  updateOrderDate: (value: Date) => void;
-  updateRequisitionDate: (value: Date) => void;
+  updateOrderDate: (value: Date | null) => void;
+  updateRequisitionDate: (value: Date | null) => void;
   upsertLine?: (line: CustomerRequisitionLine) => void;
   deleteLine?: (line: CustomerRequisitionLine) => void;
 }
