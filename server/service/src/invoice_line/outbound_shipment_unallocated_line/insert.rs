@@ -159,9 +159,8 @@ mod test_insert {
     use domain::EqualFilter;
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_item_service_item,
-            mock_unallocated_line_allocated_invoice, mock_unallocated_line_new_invoice,
-            mock_unallocated_line_new_invoice_line_1, MockDataInserts,
+            mock_allocated_invoice, mock_inbound_shipment_a, mock_item_service_item,
+            mock_new_invoice_with_unallocated_line, mock_unallocated_line, MockDataInserts,
         },
         schema::{InvoiceLineRow, InvoiceLineRowType, ItemRowType},
         test_db::setup_all,
@@ -185,8 +184,8 @@ mod test_insert {
         let context = service_provider.context().unwrap();
         let service = service_provider.outbound_shipment_line;
 
-        let new_outbound_shipment = mock_unallocated_line_new_invoice();
-        let existing_invoice_line = mock_unallocated_line_new_invoice_line_1();
+        let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
+        let existing_invoice_line = mock_unallocated_line();
 
         let new_line_id = "new_line".to_owned();
 
@@ -238,7 +237,7 @@ mod test_insert {
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
-                    invoice_id: mock_unallocated_line_allocated_invoice().id.clone(),
+                    invoice_id: mock_allocated_invoice().id.clone(),
                     item_id: "item_a".to_owned(),
                     quantity: 0
                 },
@@ -298,13 +297,11 @@ mod test_insert {
         let service = service_provider.outbound_shipment_line;
 
         // Succesfull insert
-        let invoice_id = mock_unallocated_line_new_invoice().id.clone();
+        let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
         let item = ItemQueryRepository::new(&connection)
             .query_by_filter(
                 ItemFilter::new()
-                    .id(EqualFilter::not_equal_to(
-                        &mock_unallocated_line_new_invoice_line_1().item_id,
-                    ))
+                    .id(EqualFilter::not_equal_to(&mock_unallocated_line().item_id))
                     .r#type(EqualFilter {
                         equal_to: Some(ItemRowType::Stock),
                         not_equal_to: None,
