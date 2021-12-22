@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment};
 use repository::{
-    schema::{InvoiceRow, StockLineRow},
+    schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, StockLineRow},
     InvoiceLineRowRepository, StockLineRowRepository, StorageConnection,
 };
 
@@ -80,7 +80,16 @@ pub fn generate_batches(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<StockLineRow>, UpdateOutboundShipmentError> {
-    let invoice_lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
+    // TODO use InvoiceLineRepository (when r#type is available, use equal_any vs ||)
+    let invoice_lines: Vec<InvoiceLineRow> = InvoiceLineRowRepository::new(connection)
+        .find_many_by_invoice_id(id)?
+        .into_iter()
+        .filter(|line| {
+            line.r#type == InvoiceLineRowType::StockIn
+                || line.r#type == InvoiceLineRowType::StockOut
+        })
+        .collect();
+
     let stock_line_ids = invoice_lines
         .iter()
         .filter_map(|line| line.stock_line_id.clone())
