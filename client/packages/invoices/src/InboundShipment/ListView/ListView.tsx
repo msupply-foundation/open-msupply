@@ -54,7 +54,7 @@ export const InboundListView: FC = () => {
       // getNameAndColorColumn((row: InvoiceRow, color: Color) => {
       //   onUpdate({ ...row, color: color.hex });
       // }),
-      'otherPartyName',
+      ['otherPartyName', { width: 50 }],
       [
         'status',
         {

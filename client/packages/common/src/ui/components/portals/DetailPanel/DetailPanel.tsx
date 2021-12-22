@@ -42,6 +42,7 @@ const StyledDrawer = styled(Box, {
   borderRadius: 8,
   height: '100vh',
   overflow: 'hidden',
+  zIndex: theme.zIndex.drawer,
   boxShadow: theme.shadows[7],
   ...(isOpen && openedMixin(theme)),
   ...(!isOpen && closedMixin(theme)),

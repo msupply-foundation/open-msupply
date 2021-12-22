@@ -98,23 +98,24 @@ export const GeneralTabComponent: FC<
   }, [isGrouped, data]);
 
   return (
-    <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
-      <Grid
-        item
-        justifyContent="flex-start"
-        display="flex"
-        flex={0}
-        sx={{ padding: '5px', paddingLeft: '15px' }}
-      >
-        <Switch
-          label={t('label.group-by-item')}
-          onChange={toggleIsGrouped}
-          checked={isGrouped}
-          size="small"
-          disabled={activeRows.length === 0}
-          color="secondary"
-        />
-      </Grid>
+    <Grid container display="block">
+      {activeRows?.length !== 0 && (
+        <Grid
+          item
+          justifyContent="flex-start"
+          display="flex"
+          sx={{ padding: '5px', paddingLeft: '15px' }}
+        >
+          <Switch
+            label={t('label.group-by-item')}
+            onChange={toggleIsGrouped}
+            checked={isGrouped}
+            size="small"
+            disabled={activeRows.length === 0}
+            color="secondary"
+          />
+        </Grid>
+      )}
       <Grid item>
         <DataTable
           onRowClick={onRowClick}
