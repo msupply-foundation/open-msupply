@@ -1,6 +1,29 @@
 use super::diesel_schema::invoice_line;
 
 use chrono::NaiveDate;
+use diesel_derive_enum::DbEnum;
+use domain::invoice_line::InvoiceLineType;
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum InvoiceLineRowType {
+    StockIn,
+    StockOut,
+    UnallocatedStock,
+    Service,
+}
+
+impl InvoiceLineRowType {
+    pub fn to_domain(self) -> InvoiceLineType {
+        use InvoiceLineType::*;
+        match self {
+            InvoiceLineRowType::StockIn => StockIn,
+            InvoiceLineRowType::StockOut => StockOut,
+            InvoiceLineRowType::UnallocatedStock => UnallocatedStock,
+            InvoiceLineRowType::Service => Service,
+        }
+    }
+}
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "invoice_line"]
@@ -22,6 +45,8 @@ pub struct InvoiceLineRow {
     pub total_after_tax: f64,
     /// Optional column to store line a line specific tax value
     pub tax: Option<f64>,
+    #[column_name = "type_"]
+    pub r#type: InvoiceLineRowType,
     pub number_of_packs: i32,
     pub note: Option<String>,
 }

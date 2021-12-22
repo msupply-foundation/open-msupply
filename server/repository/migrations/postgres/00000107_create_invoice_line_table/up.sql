@@ -1,3 +1,11 @@
+CREATE TYPE invoice_line_type AS ENUM (
+    'STOCK_IN',
+    'STOCK_OUT',
+    'UNALLOCATED_STOCK',
+    'SERVICE'
+);
+
+
 CREATE TABLE invoice_line (
     id TEXT NOT NULL PRIMARY KEY,
     invoice_id TEXT NOT NULL REFERENCES invoice(id),
@@ -13,6 +21,7 @@ CREATE TABLE invoice_line (
     total_before_tax DOUBLE PRECISION NOT NULL,
     total_after_tax DOUBLE PRECISION NOT NULL,
     tax DOUBLE PRECISION,
+    type invoice_line_type NOT NULL,
     number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL,
     note TEXT

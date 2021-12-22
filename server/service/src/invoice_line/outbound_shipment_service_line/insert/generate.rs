@@ -1,4 +1,4 @@
-use repository::schema::{InvoiceLineRow, ItemRow};
+use repository::schema::{InvoiceLineRow, InvoiceLineRowType, ItemRow};
 
 use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
 
@@ -24,6 +24,8 @@ pub fn generate(
         expiry_date: None,
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
+        // TODO test
+        r#type: InvoiceLineRowType::Service,
         number_of_packs: 0,
         stock_line_id: None,
     };
