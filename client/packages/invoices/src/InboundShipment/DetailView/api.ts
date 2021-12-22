@@ -218,7 +218,6 @@ export const getInboundShipmentDetailViewApi = (
 
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
   const { id = '' } = useParams();
-
   const { api } = useOmSupplyApi();
   const queries = getInboundShipmentDetailViewApi(api);
   return useQuery(['invoice', id], () => {
@@ -322,10 +321,6 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
         await queryClient.cancelQueries(['invoice', id]);
 
         const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
-
-        console.log('-------------------------------------------');
-        console.log('patch', patch);
-        console.log('-------------------------------------------');
 
         if (previous) {
           queryClient.setQueryData<Invoice>(['invoice', id], {
