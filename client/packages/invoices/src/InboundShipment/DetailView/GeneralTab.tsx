@@ -47,23 +47,24 @@ export const GeneralTab: FC<
   );
 
   return (
-    <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
-      <Grid
-        item
-        justifyContent="flex-start"
-        display="flex"
-        flex={0}
-        sx={{ padding: '5px', paddingLeft: '15px' }}
-      >
-        <Switch
-          label={t('label.group-by-item', { ns: 'replenishment' })}
-          onChange={toggleIsGrouped}
-          checked={isGrouped}
-          size="small"
-          disabled={rows?.length === 0}
-          color="secondary"
-        />
-      </Grid>
+    <Grid container display="block">
+      {rows?.length !== 0 && (
+        <Grid
+          item
+          justifyContent="flex-start"
+          display="flex"
+          sx={{ padding: '5px', paddingLeft: '15px' }}
+        >
+          <Switch
+            label={t('label.group-by-item', { ns: 'replenishment' })}
+            onChange={toggleIsGrouped}
+            checked={isGrouped}
+            size="small"
+            disabled={rows?.length === 0}
+            color="secondary"
+          />
+        </Grid>
+      )}
       <Grid item>
         <DataTable
           onRowClick={onRowClick}
