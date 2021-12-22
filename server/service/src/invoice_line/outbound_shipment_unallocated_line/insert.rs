@@ -134,7 +134,7 @@ pub fn check_unallocated_line_does_not_exist(
     connection: &StorageConnection,
     item_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let result = InvoiceLineRepository::new(connection).query_by_filter(
+    let count = InvoiceLineRepository::new(connection).count(Some(
         InvoiceLineFilter::new()
             .item_id(EqualFilter::equal_to(&item_id))
             .r#type(EqualFilter {
@@ -142,9 +142,9 @@ pub fn check_unallocated_line_does_not_exist(
                 not_equal_to: None,
                 equal_any: None,
             }),
-    )?;
+    ))?;
 
-    Ok(result.len() == 0)
+    Ok(count == 0)
 }
 
 impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
