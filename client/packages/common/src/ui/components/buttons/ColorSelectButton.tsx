@@ -44,7 +44,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
         disabled={disabled}
         icon={
           <CircleIcon
-            htmlColor={color ?? '##8f90a6'}
+            htmlColor={color ?? '#8f90a6'}
             sx={{
               width: '12px',
               margin: 'margin: 0 9px 0 10px',
