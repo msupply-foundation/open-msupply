@@ -229,7 +229,7 @@ export const reducer = (
           state.draft = {
             ...state.draft,
             ...data,
-            items: groupItems(state.draft, data),
+            items: sortItems(state.sortBy, groupItems(state.draft, data)),
           };
           state.isGrouped = true;
 
@@ -250,7 +250,7 @@ export const reducer = (
           state.draft = {
             ...state.draft,
             ...data,
-            items: flattenItems(state.draft, data),
+            items: sortItems(state.sortBy, flattenItems(state.draft, data)),
           };
           state.isGrouped = false;
 
@@ -273,20 +273,10 @@ export const reducer = (
             key,
             isDesc: newIsDesc,
             direction: newDirection,
+            getSortValue,
           };
 
-          const sorter = getSortValue
-            ? getColumnSorter(getSortValue, !!newSortBy.isDesc)
-            : getDataSorter<
-                OutboundShipmentSummaryItem,
-                keyof OutboundShipmentSummaryItem
-              >(
-                newSortBy.key as keyof OutboundShipmentSummaryItem,
-                !!newSortBy.isDesc
-              );
-          const newItems = items.sort(sorter);
-
-          draft.items = newItems;
+          draft.items = sortItems(newSortBy, items);
           state.sortBy = newSortBy;
 
           break;
@@ -542,4 +532,18 @@ const groupItems = (draft: OutboundShipment, data: Invoice) => {
 
     return itemsArray;
   }, [] as OutboundShipmentSummaryItem[]);
+};
+
+const sortItems = (
+  sortBy: SortBy<OutboundShipmentSummaryItem>,
+  items: OutboundShipmentSummaryItem[]
+) => {
+  const sorter = sortBy.getSortValue
+    ? getColumnSorter(sortBy.getSortValue, !!sortBy.isDesc)
+    : getDataSorter<
+        OutboundShipmentSummaryItem,
+        keyof OutboundShipmentSummaryItem
+      >(sortBy.key as keyof OutboundShipmentSummaryItem, !!sortBy.isDesc);
+
+  return items.sort(sorter);
 };
