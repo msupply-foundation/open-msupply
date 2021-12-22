@@ -8,6 +8,7 @@ import {
   useNotification,
   AppFooterPortal,
   InvoiceNodeStatus,
+  useBufferState,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import {
@@ -16,7 +17,11 @@ import {
   inboundStatuses,
 } from '../../utils';
 import { Invoice } from '../../types';
-import { useInboundFields, useIsInboundEditable } from './api';
+import {
+  useInboundShipment,
+  useInboundFields,
+  useIsInboundEditable,
+} from './api';
 
 interface InboundDetailFooterProps {
   draft: Invoice;
@@ -56,16 +61,19 @@ const createStatusLog = (draft: Invoice) => {
   return statusLog;
 };
 
-export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
+export const Footer: FC<InboundDetailFooterProps> = ({ save }) => {
   const t = useTranslation('common');
   const { success } = useNotification();
   const { onHold, status, update } = useInboundFields(['onHold', 'status']);
   const isEditable = useIsInboundEditable();
+  const { data: inbound } = useInboundShipment();
+  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
     <AppFooterPortal
       Content={
-        !!status && (
+        !!status &&
+        !!inbound && (
           <Box
             gap={2}
             display="flex"
@@ -75,17 +83,18 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
           >
             <ToggleButton
               disabled={!isEditable}
-              value={onHold}
-              selected={onHold}
+              value={onHoldBuffer}
+              selected={onHoldBuffer}
               onClick={(_, value) => {
-                update?.({ onHold: !value });
+                setOnHoldBuffer(!value);
+                update({ onHold: !value });
               }}
               label={t('label.hold')}
             />
 
             <StatusCrumbs
               statuses={inboundStatuses}
-              statusLog={createStatusLog(draft)}
+              statusLog={createStatusLog(inbound)}
               statusFormatter={getStatusTranslator(t)}
             />
 
@@ -94,7 +103,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
                 <>
                   <ButtonWithIcon
                     shrinkThreshold="lg"
-                    disabled={onHold}
+                    disabled={onHoldBuffer}
                     Icon={<ArrowRightIcon />}
                     label={t('button.save-and-confirm-status', {
                       status: t(getNextInboundStatusButtonTranslation(status)),
@@ -103,7 +112,16 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
                     variant="contained"
                     color="secondary"
                     onClick={async () => {
-                      success('Saved invoice! 🥳 ')();
+                      update(
+                        {
+                          onHold: onHoldBuffer,
+                          status: InvoiceNodeStatus.Verified,
+                        },
+                        {
+                          onSuccess: success('Saved invoice! 🥳'),
+                        }
+                      );
+
                       save();
                     }}
                   />
