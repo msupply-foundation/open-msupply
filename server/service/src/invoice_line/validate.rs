@@ -68,13 +68,7 @@ pub fn check_item_exists_option(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ItemRow>, RepositoryError> {
-    let result = ItemRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(item) => Ok(Some(item)),
-        Err(RepositoryError::NotFound) => Ok(None),
-        Err(error) => Err(error),
-    }
+    ItemRepository::new(connection).find_one_by_id(id)
 }
 
 pub struct LineDoesNotExist;

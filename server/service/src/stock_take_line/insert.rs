@@ -1,8 +1,11 @@
 use chrono::NaiveDate;
-use domain::EqualFilter;
+use domain::{
+    stock_line::{StockLine, StockLineFilter},
+    EqualFilter,
+};
 use repository::{
-    schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineFilter,
-    StockTakeLineRepository, StockTakeLineRowRepository, StorageConnection,
+    schema::StockTakeLineRow, RepositoryError, StockLineRepository, StockTakeLine,
+    StockTakeLineFilter, StockTakeLineRepository, StockTakeLineRowRepository, StorageConnection,
 };
 
 use crate::{
@@ -13,7 +16,7 @@ use crate::{
 
 use super::{
     query::get_stock_take_line,
-    validate::{check_item_exists, check_location_exists, check_stock_line_exists},
+    validate::{check_item_exists, check_location_exists},
 };
 
 pub struct InsertStockTakeLineInput {
@@ -22,7 +25,6 @@ pub struct InsertStockTakeLineInput {
     pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
     pub comment: Option<String>,
-    pub snapshot_number_of_packs: i32,
     pub counted_number_of_packs: Option<i32>,
 
     pub item_id: Option<String>,
@@ -68,11 +70,20 @@ fn check_stock_line_xor_item(input: &InsertStockTakeLineInput) -> bool {
     true
 }
 
+fn check_stock_line_exists(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<StockLine>, RepositoryError> {
+    Ok(StockLineRepository::new(connection)
+        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)))?
+        .pop())
+}
+
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertStockTakeLineInput,
-) -> Result<(), InsertStockTakeLineError> {
+) -> Result<Option<StockLine>, InsertStockTakeLineError> {
     let stock_take = match check_stock_take_exist(connection, &input.stock_take_id)? {
         Some(stock_take) => stock_take,
         None => return Err(InsertStockTakeLineError::StockTakeDoesNotExist),
@@ -90,11 +101,14 @@ fn validate(
         return Err(InsertStockTakeLineError::StockTakeLineXOrItem);
     }
 
-    if let Some(stock_line_id) = &input.stock_line_id {
-        if !check_stock_line_exists(connection, stock_line_id)? {
-            return Err(InsertStockTakeLineError::StockLineDoesNotExist);
-        }
-    }
+    let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
+        Some(
+            check_stock_line_exists(connection, stock_line_id)?
+                .ok_or(InsertStockTakeLineError::StockLineDoesNotExist)?,
+        )
+    } else {
+        None
+    };
 
     if let Some(item_id) = &input.item_id {
         if !check_item_exists(connection, &item_id)? {
@@ -108,17 +122,17 @@ fn validate(
         }
     }
 
-    Ok(())
+    Ok(stock_line)
 }
 
 fn generate(
+    stock_line: Option<StockLine>,
     InsertStockTakeLineInput {
         id,
         stock_take_id,
         stock_line_id,
         location_id,
         comment,
-        snapshot_number_of_packs,
         counted_number_of_packs,
         item_id,
         batch,
@@ -129,6 +143,11 @@ fn generate(
         note,
     }: InsertStockTakeLineInput,
 ) -> StockTakeLineRow {
+    let snapshot_number_of_packs = if let Some(stock_line) = stock_line {
+        stock_line.total_number_of_packs
+    } else {
+        0
+    };
     StockTakeLineRow {
         id,
         stock_take_id,
@@ -155,8 +174,8 @@ pub fn insert_stock_take_line(
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
-            let new_stock_take_line = generate(input);
+            let stock_line = validate(connection, store_id, &input)?;
+            let new_stock_take_line = generate(stock_line, input);
             StockTakeLineRowRepository::new(&connection).upsert_one(&new_stock_take_line)?;
 
             let line = get_stock_take_line(ctx, new_stock_take_line.id)?;

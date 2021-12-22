@@ -6,6 +6,5 @@ CREATE TABLE stock_take (
     status TEXT CHECK (status IN ('NEW', 'FINALIZED')) NOT NULL,
     created_datetime TEXT NOT NULL,
     finalised_datetime TEXT,
-    inventory_additions_id TEXT REFERENCES invoice(id),
-    inventory_reductions_id TEXT REFERENCES invoice(id)
+    inventory_adjustment_id TEXT REFERENCES invoice(id)
 )
