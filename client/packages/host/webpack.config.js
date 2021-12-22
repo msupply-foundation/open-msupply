@@ -71,7 +71,7 @@ module.exports = env => {
         },
         {
           test: /\.(woff|woff2|ttf|eot)$/,
-          use: 'file-loader?name=fonts/[name].[ext]!static',
+          use: 'file-loader?name=fonts/[name].[ext]',
         },
       ],
     },

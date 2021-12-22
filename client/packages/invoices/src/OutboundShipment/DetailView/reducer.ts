@@ -113,11 +113,15 @@ export const OutboundAction = {
     type: ActionType.SortBy,
     payload: { column },
   }),
+
+  flattenRows: (): OutboundShipmentAction => ({ type: ActionType.Flatten }),
+  groupRows: (): OutboundShipmentAction => ({ type: ActionType.Group }),
 };
 
 export interface OutboundShipmentStateShape {
   draft: OutboundShipment;
   sortBy: SortBy<OutboundShipmentSummaryItem>;
+  isGrouped: boolean;
 }
 
 export const itemToSummaryItem = (item: Item): OutboundShipmentSummaryItem => {
@@ -167,6 +171,7 @@ export const createSummaryItem = (
 export const getInitialState = (): OutboundShipmentStateShape => ({
   draft: placeholderOutboundShipment,
   sortBy: { key: 'numberOfPacks', isDesc: true, direction: 'asc' },
+  isGrouped: true,
 });
 
 export const reducer = (
@@ -197,68 +202,57 @@ export const reducer = (
           state.draft.deleteLine = line =>
             dispatch?.(OutboundAction.deleteLine(line));
 
-          state.draft.items = data.lines?.reduce((itemsArray, serverLine) => {
-            const outboundShipmentRow = createLine(serverLine, state.draft);
-
-            const { existingRow, existingSummaryItem } = getExistingLine(
-              itemsArray,
-              outboundShipmentRow
-            );
-
-            const summaryItem =
-              existingSummaryItem ??
-              createSummaryItem(serverLine.itemId, [outboundShipmentRow]);
-
-            if (existingRow) {
-              delete summaryItem.batches[existingRow.id];
-              const newLine = mergeLines(serverLine, existingRow);
-
-              summaryItem.batches[newLine.id] = newLine;
-            } else {
-              summaryItem.batches[outboundShipmentRow.id] = outboundShipmentRow;
-            }
-
-            const {
-              unitQuantity,
-              numberOfPacks,
-              locationName,
-              batch,
-              expiryDate,
-              sellPricePerPack,
-              packSize,
-            } = recalculateSummary(summaryItem);
-
-            if (!existingSummaryItem) {
-              itemsArray.push({
-                ...summaryItem,
-                unitQuantity,
-                numberOfPacks,
-                locationName,
-                batch,
-                expiryDate,
-                sellPricePerPack,
-                packSize,
-              });
-            } else {
-              existingSummaryItem.unitQuantity = unitQuantity;
-              existingSummaryItem.numberOfPacks = numberOfPacks;
-              existingSummaryItem.locationName = locationName;
-              existingSummaryItem.batch = batch;
-              existingSummaryItem.expiryDate = expiryDate;
-              existingSummaryItem.sellPricePerPack = sellPricePerPack;
-              existingSummaryItem.packSize = packSize;
-              existingSummaryItem.canExpand =
-                Object.keys(existingSummaryItem.batches).length > 1;
-            }
-
-            return itemsArray;
-          }, state.draft.items);
+          const items = state.isGrouped
+            ? groupItems(state.draft, data)
+            : flattenItems(state.draft, data);
 
           state.draft = {
             ...state.draft,
             ...data,
-            items: state.draft.items,
+            items: [...state.draft.items, ...items],
           };
+
+          break;
+        }
+
+        case ActionType.Group: {
+          state.draft.update = (key, value) => {
+            dispatch?.(OutboundAction.updateInvoice(key, value));
+          };
+
+          state.draft.upsertLine = line =>
+            dispatch?.(OutboundAction.upsertLine(line));
+
+          state.draft.deleteLine = line =>
+            dispatch?.(OutboundAction.deleteLine(line));
+
+          state.draft = {
+            ...state.draft,
+            ...data,
+            items: groupItems(state.draft, data),
+          };
+          state.isGrouped = true;
+
+          break;
+        }
+
+        case ActionType.Flatten: {
+          state.draft.update = (key, value) => {
+            dispatch?.(OutboundAction.updateInvoice(key, value));
+          };
+
+          state.draft.upsertLine = line =>
+            dispatch?.(OutboundAction.upsertLine(line));
+
+          state.draft.deleteLine = line =>
+            dispatch?.(OutboundAction.deleteLine(line));
+
+          state.draft = {
+            ...state.draft,
+            ...data,
+            items: flattenItems(state.draft, data),
+          };
+          state.isGrouped = false;
 
           break;
         }
@@ -475,4 +469,77 @@ const createLine = (
     stockLineId: line.stockLine?.id ?? '',
     invoiceId: draft.id,
   };
+};
+
+const flattenItems = (draft: OutboundShipment, data: Invoice) =>
+  data.lines?.map(serverLine => {
+    const outboundShipmentRow = createLine(serverLine, draft);
+    const summaryItem = createSummaryItem(serverLine.itemId, [
+      outboundShipmentRow,
+    ]);
+
+    summaryItem.id = outboundShipmentRow.id;
+    summaryItem.sellPricePerPack = outboundShipmentRow.sellPricePerPack;
+    summaryItem.packSize = outboundShipmentRow.packSize;
+    summaryItem.locationName = outboundShipmentRow.locationName;
+    summaryItem.batches[outboundShipmentRow.id] = outboundShipmentRow;
+    return summaryItem;
+  });
+
+const groupItems = (draft: OutboundShipment, data: Invoice) => {
+  return data.lines?.reduce((itemsArray, serverLine) => {
+    const outboundShipmentRow = createLine(serverLine, draft);
+
+    const { existingRow, existingSummaryItem } = getExistingLine(
+      itemsArray,
+      outboundShipmentRow
+    );
+
+    const summaryItem =
+      existingSummaryItem ??
+      createSummaryItem(serverLine.itemId, [outboundShipmentRow]);
+
+    if (existingRow) {
+      delete summaryItem.batches[existingRow.id];
+      const newLine = mergeLines(serverLine, existingRow);
+
+      summaryItem.batches[newLine.id] = newLine;
+    } else {
+      summaryItem.batches[outboundShipmentRow.id] = outboundShipmentRow;
+    }
+
+    const {
+      unitQuantity,
+      numberOfPacks,
+      locationName,
+      batch,
+      expiryDate,
+      sellPricePerPack,
+      packSize,
+    } = recalculateSummary(summaryItem);
+    if (!existingSummaryItem) {
+      itemsArray.push({
+        ...summaryItem,
+        unitQuantity,
+        numberOfPacks,
+        locationName,
+        batch,
+        expiryDate,
+        sellPricePerPack,
+        packSize,
+      });
+    } else {
+      existingSummaryItem.unitQuantity = unitQuantity;
+      existingSummaryItem.numberOfPacks = numberOfPacks;
+      existingSummaryItem.locationName = locationName;
+      existingSummaryItem.batch = batch;
+      existingSummaryItem.expiryDate = expiryDate;
+      existingSummaryItem.sellPricePerPack = sellPricePerPack;
+      existingSummaryItem.packSize = packSize;
+      existingSummaryItem.canExpand =
+        Object.keys(existingSummaryItem.batches).length > 1;
+    }
+
+    return itemsArray;
+  }, [] as OutboundShipmentSummaryItem[]);
 };
