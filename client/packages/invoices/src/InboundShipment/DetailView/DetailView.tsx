@@ -11,7 +11,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
-import { getNextInboundStatus, isInboundEditable } from '../../utils';
+import { isInboundEditable } from '../../utils';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
 
 export enum ModalMode {
@@ -30,7 +30,7 @@ export const toItem = (line: InboundShipmentItem | InvoiceLine): Item => ({
 });
 
 export const DetailView: FC = () => {
-  const { draft, updateInvoice } = useDraftInbound();
+  const { draft } = useDraftInbound();
 
   const [modalState, setModalState] = React.useState<{
     item: Item | null;
@@ -67,12 +67,7 @@ export const DetailView: FC = () => {
 
       <GeneralTab onRowClick={onRowClick} />
 
-      <Footer
-        draft={draft}
-        save={async () => {
-          updateInvoice({ status: getNextInboundStatus(draft?.status) });
-        }}
-      />
+      <Footer />
       <SidePanel />
 
       <InboundLineEdit

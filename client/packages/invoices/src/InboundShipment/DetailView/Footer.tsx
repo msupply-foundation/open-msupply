@@ -23,13 +23,8 @@ import {
   useIsInboundEditable,
 } from './api';
 
-interface InboundDetailFooterProps {
-  draft: Invoice;
-  save: () => Promise<void>;
-}
-
-const createStatusLog = (draft: Invoice) => {
-  const statusIdx = inboundStatuses.findIndex(s => draft.status === s);
+const createStatusLog = (invoice: Invoice) => {
+  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
@@ -43,25 +38,25 @@ const createStatusLog = (draft: Invoice) => {
   statusLog;
 
   if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = draft.createdDatetime;
+    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
   }
   if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.pickedDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
   }
   if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = draft.shippedDatetime;
+    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
   if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.verifiedDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.verifiedDatetime;
   }
 
   return statusLog;
 };
 
-export const Footer: FC<InboundDetailFooterProps> = ({ save }) => {
+export const Footer: FC = () => {
   const t = useTranslation('common');
   const { success } = useNotification();
   const { onHold, status, update } = useInboundFields(['onHold', 'status']);
@@ -121,8 +116,6 @@ export const Footer: FC<InboundDetailFooterProps> = ({ save }) => {
                           onSuccess: success('Saved invoice! 🥳'),
                         }
                       );
-
-                      save();
                     }}
                   />
                 </>
