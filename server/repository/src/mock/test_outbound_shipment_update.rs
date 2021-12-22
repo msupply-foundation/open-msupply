@@ -1,7 +1,8 @@
 use chrono::NaiveDate;
 
 use crate::schema::{
-    InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ItemRow, ItemType,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ItemRow,
+    ItemRowType,
 };
 
 use super::MockData;
@@ -23,6 +24,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         total_before_tax: 2.0,
         total_after_tax: 2.0,
         tax: None,
+        r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 1,
         note: None,
     }
@@ -34,7 +36,7 @@ fn mock_item_with_no_stock_line() -> ItemRow {
         name: String::from("Item with no stock line"),
         code: String::from("code"),
         unit_id: None,
-        r#type: ItemType::Stock,
+        r#type: ItemRowType::Stock,
     }
 }
 

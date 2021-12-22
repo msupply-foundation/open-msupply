@@ -1,7 +1,9 @@
 use crate::{invoice_line::generate_batch, u32_to_i32};
 use domain::inbound_shipment::InsertInboundShipmentLine;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow},
+    schema::{
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
+    },
     StorageConnection,
 };
 
@@ -58,6 +60,7 @@ fn generate_line(
         expiry_date,
         sell_price_per_pack,
         cost_price_per_pack,
+        r#type: InvoiceLineRowType::StockIn,
         number_of_packs: u32_to_i32(number_of_packs),
         item_name,
         item_code,

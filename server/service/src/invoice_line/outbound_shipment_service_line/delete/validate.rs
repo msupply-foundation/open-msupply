@@ -10,7 +10,7 @@ use crate::{
 };
 use domain::{invoice::InvoiceType, outbound_shipment::DeleteOutboundShipmentLine};
 use repository::{
-    schema::{InvoiceLineRow, ItemType},
+    schema::{InvoiceLineRow, ItemRowType},
     StorageConnection,
 };
 
@@ -24,7 +24,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
 
     let item = check_item(&line.item_id, connection)?;
-    if item.r#type != ItemType::Service {
+    if item.r#type != ItemRowType::Service {
         return Err(DeleteOutboundShipmentServiceLineError::NotAServiceItem);
     }
 

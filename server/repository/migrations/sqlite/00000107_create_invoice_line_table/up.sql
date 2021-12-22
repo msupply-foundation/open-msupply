@@ -14,6 +14,7 @@ CREATE TABLE invoice_line (
     total_before_tax REAL NOT NULL,
     total_after_tax REAL NOT NULL,
     tax REAL,
+    type TEXT CHECK (type IN ('STOCK_IN', 'STOCK_OUT', 'UNALLOCATED_STOCK', 'SERVICE')) NOT NULL,
     number_of_packs INTEGER NOT NULL,
     pack_size INTEGER NOT NULL,
     note TEXT

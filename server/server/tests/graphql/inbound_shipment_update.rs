@@ -367,6 +367,7 @@ mod graphql {
                 total_before_tax: _,
                 total_after_tax: _,
                 tax: _,
+                r#type: _,
                 number_of_packs,
                 location_id,
                 note,

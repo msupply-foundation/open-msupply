@@ -8,7 +8,7 @@ CREATE TABLE invoice (
     store_id text NOT NULL REFERENCES store (id),
     invoice_number integer NOT NULL,
     type TEXT CHECK (type IN ('OUTBOUND_SHIPMENT', 'INBOUND_SHIPMENT')) NOT NULL,
-    status text CHECK (status IN ('PICKED', 'SHIPPED', 'NEW', 'DELIVERED', 'VERIFIED')) NOT NULL,
+    status text CHECK (status IN ('NEW','ALLOCATED', 'PICKED', 'SHIPPED',  'DELIVERED', 'VERIFIED')) NOT NULL,
     on_hold boolean NOT NULL,
     comment text,
     their_reference text,

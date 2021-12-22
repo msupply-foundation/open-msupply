@@ -1,6 +1,10 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
-    use domain::{invoice_line::InvoiceLine, location::DeleteLocation, stock_line::StockLine};
+    use domain::{
+        invoice_line::{InvoiceLine, InvoiceLineType},
+        location::DeleteLocation,
+        stock_line::StockLine,
+    };
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -159,6 +163,7 @@ mod graphql {
                     item_id: "n/a".to_owned(),
                     item_name: "n/a".to_owned(),
                     item_code: "n/a".to_owned(),
+                    r#type: InvoiceLineType::StockIn,
                     number_of_packs: 1,
                     pack_size: 1,
                     cost_price_per_pack: 1.0,

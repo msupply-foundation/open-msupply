@@ -3,49 +3,61 @@ use repository::schema::{InvoiceLineRow, ItemRow};
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 
 pub fn generate(
-    input: UpdateOutboundShipmentServiceLine,
+    UpdateOutboundShipmentServiceLine {
+        id: _,
+        invoice_id: _,
+        item_id: input_item_id,
+        name: input_name,
+        total_before_tax: input_total_before_tax,
+        total_after_tax: input_total_after_tax,
+        tax: input_tax,
+        note: input_note,
+    }: UpdateOutboundShipmentServiceLine,
     existing_line: InvoiceLineRow,
-    item: ItemRow,
+    ItemRow {
+        id: item_id,
+        name: item_name,
+        code: item_code,
+        ..
+    }: ItemRow,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentServiceLineError> {
     // 1) Use name from input (if specified)
     // 2) else: if item has been updated use name from the updated item name
     // 3) else: use existing line name
-    let item_name = if let Some(input_name) = input.name {
-        input_name
-    } else if input.item_id.is_some() && input.item_id != Some(existing_line.item_id.to_owned()) {
-        item.name
+    let updated_item_name = if let Some(input_name) = input_name {
+        Some(input_name)
+    } else if item_id != existing_line.item_id {
+        Some(item_name)
     } else {
-        existing_line.item_name
+        None
     };
 
-    let update_line = InvoiceLineRow {
-        id: input.id,
-        invoice_id: input.invoice_id,
-        item_id: input.item_id.unwrap_or(existing_line.item_id),
-        item_name,
-        total_before_tax: input
-            .total_after_tax
-            .unwrap_or(existing_line.total_before_tax),
-        total_after_tax: input
-            .total_after_tax
-            .unwrap_or(existing_line.total_after_tax),
-        tax: input
-            .tax
-            .map(|update_tax| update_tax.percentage)
-            .unwrap_or(existing_line.tax),
-        note: input.note.or(existing_line.note),
+    let mut update_line = existing_line;
 
-        // keep stock related fields
-        location_id: existing_line.location_id,
-        pack_size: existing_line.pack_size,
-        batch: existing_line.batch,
-        expiry_date: existing_line.expiry_date,
-        sell_price_per_pack: existing_line.sell_price_per_pack,
-        cost_price_per_pack: existing_line.cost_price_per_pack,
-        number_of_packs: existing_line.number_of_packs,
-        item_code: existing_line.item_code,
-        stock_line_id: existing_line.stock_line_id,
-    };
+    if let Some(item_name) = updated_item_name {
+        update_line.item_name = item_name;
+        update_line.item_code = item_code;
+    }
+
+    if let Some(input_item_id) = input_item_id {
+        update_line.item_id = input_item_id;
+    }
+
+    if let Some(total_after_tax) = input_total_before_tax {
+        update_line.total_before_tax = total_after_tax;
+    }
+
+    if let Some(total_after_tax) = input_total_after_tax {
+        update_line.total_after_tax = total_after_tax;
+    }
+
+    if let Some(tax) = input_tax {
+        update_line.tax = tax.percentage;
+    }
+
+    if let Some(note) = input_note {
+        update_line.note = Some(note);
+    }
 
     Ok(update_line)
 }
