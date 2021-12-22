@@ -7,7 +7,7 @@ use crate::schema::{
 use super::MockData;
 
 pub fn mock_test_unallocated_line() -> MockData {
-    let mut result = MockData::new();
+    let mut result = MockData::default();
     result.invoices.push(mock_unallocated_line_new_invoice());
     result
         .invoices
