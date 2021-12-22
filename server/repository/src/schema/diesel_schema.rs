@@ -235,8 +235,7 @@ table! {
         status -> crate::schema::stock_take::StockTakeStatusMapping,
         created_datetime -> Timestamp,
         finalised_datetime -> Nullable<Timestamp>,
-        inventory_additions_id -> Nullable<Text>,
-        inventory_reductions_id -> Nullable<Text>,
+        inventory_adjustment_id -> Nullable<Text>,
     }
 }
 

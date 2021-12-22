@@ -1,6 +1,7 @@
 CREATE TYPE number_type AS ENUM (
     'INBOUND_SHIPMENT',
-    'OUTBOUND_SHIPMENT'
+    'OUTBOUND_SHIPMENT',
+    'INVENTORY_ADJUSTMENT'
 );
 
 -- Numbering table holding a list of typed counters

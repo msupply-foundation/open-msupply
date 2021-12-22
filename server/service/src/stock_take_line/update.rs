@@ -1,7 +1,8 @@
 use chrono::NaiveDate;
+use domain::{stock_line::StockLineFilter, EqualFilter};
 use repository::{
-    schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineRowRepository,
-    StorageConnection,
+    schema::StockTakeLineRow, RepositoryError, StockLineRepository, StockTakeLine,
+    StockTakeLineRowRepository, StorageConnection,
 };
 
 use crate::{
@@ -12,10 +13,7 @@ use crate::{
 
 use super::{
     query::get_stock_take_line,
-    validate::{
-        check_item_exists, check_location_exists, check_stock_line_exists,
-        check_stock_take_line_exist,
-    },
+    validate::{check_item_exists, check_location_exists, check_stock_take_line_exist},
 };
 
 pub struct UpdateStockTakeLineInput {
@@ -54,6 +52,15 @@ fn check_stock_line_xor_item(input: &UpdateStockTakeLineInput) -> bool {
         return false;
     }
     true
+}
+
+fn check_stock_line_exists(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = StockLineRepository::new(connection)
+        .count(Some(StockLineFilter::new().id(EqualFilter::equal_to(id))))?;
+    Ok(count == 1)
 }
 
 fn validate(
