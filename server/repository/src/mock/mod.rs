@@ -69,24 +69,6 @@ pub struct MockData {
     pub numbers: Vec<NumberRow>,
 }
 
-impl MockData {
-    pub fn new() -> Self {
-        MockData {
-            names: Vec::new(),
-            stores: Vec::new(),
-            units: Vec::new(),
-            items: Vec::new(),
-            locations: Vec::new(),
-            name_store_joins: Vec::new(),
-            invoices: Vec::new(),
-            stock_lines: Vec::new(),
-            invoice_lines: Vec::new(),
-            full_invoices: HashMap::new(),
-            full_master_list: HashMap::new(),
-            numbers: Vec::new(),
-        }
-    }
-}
 pub struct MockDataInserts {
     pub names: bool,
     pub stores: bool,
