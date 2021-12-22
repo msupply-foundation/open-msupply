@@ -56,6 +56,12 @@ declare module '@mui/material/Switch' {
   }
 }
 
+declare module '@mui/material/styles/zIndex' {
+  interface ZIndex {
+    tableHeader: number;
+  }
+}
+
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
@@ -140,6 +146,18 @@ const themeOptions = {
       field: '#555770',
       label: '#28293d',
     },
+  },
+  zIndex: {
+    tableHeader: 1000,
+
+    // Defaults below. Pasted here for convenience!
+    mobileStepper: 1000,
+    speedDial: 1050,
+    appBar: 1100,
+    drawer: 1200,
+    modal: 1300,
+    snackbar: 1400,
+    tooltip: 1500,
   },
   typography: {
     body1: {

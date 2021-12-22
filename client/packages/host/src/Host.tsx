@@ -223,7 +223,7 @@ const Host: FC = () => (
                           overflow="hidden"
                         >
                           <AppBar />
-                          <Box display="flex" flex={1} overflow="scroll">
+                          <Box display="flex" flex={1} overflow="auto">
                             <Routes>
                               <Route
                                 path={RouteBuilder.create(AppRoute.Dashboard)

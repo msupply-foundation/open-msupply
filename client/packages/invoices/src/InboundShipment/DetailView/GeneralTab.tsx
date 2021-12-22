@@ -5,7 +5,7 @@ import {
   DomainObject,
   useTranslation,
   useIsGrouped,
-  Grid,
+  Box,
   Switch,
   MiniTable,
 } from '@openmsupply-client/common';
@@ -47,34 +47,28 @@ export const GeneralTab: FC<
   );
 
   return (
-    <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
-      <Grid
-        item
-        justifyContent="flex-start"
-        display="flex"
-        flex={0}
-        sx={{ padding: '5px', paddingLeft: '15px' }}
-      >
-        <Switch
-          label={t('label.group-by-item', { ns: 'replenishment' })}
-          onChange={toggleIsGrouped}
-          checked={isGrouped}
-          size="small"
-          disabled={rows?.length === 0}
-          color="secondary"
-        />
-      </Grid>
-      <Grid item>
-        <DataTable
-          onRowClick={onRowClick}
-          ExpandContent={Expando}
-          pagination={{ ...pagination, total: rows?.length }}
-          columns={columns}
-          data={paged}
-          onChangePage={pagination.onChangePage}
-          noDataMessage={t('error.no-items')}
-        />
-      </Grid>
-    </Grid>
+    <Box flexDirection="column">
+      {rows?.length !== 0 && (
+        <Box style={{ padding: 5, paddingLeft: 15 }}>
+          <Switch
+            label={t('label.group-by-item', { ns: 'replenishment' })}
+            onChange={toggleIsGrouped}
+            checked={isGrouped}
+            size="small"
+            disabled={rows?.length === 0}
+            color="secondary"
+          />
+        </Box>
+      )}
+      <DataTable
+        onRowClick={onRowClick}
+        ExpandContent={Expando}
+        pagination={{ ...pagination, total: rows?.length }}
+        columns={columns}
+        data={paged}
+        onChangePage={pagination.onChangePage}
+        noDataMessage={t('error.no-items')}
+      />
+    </Box>
   );
 });
