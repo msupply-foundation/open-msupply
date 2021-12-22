@@ -82,6 +82,7 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
 pub enum InvoiceNodeType {
     OutboundShipment,
     InboundShipment,
+    InventoryAdjustment,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
