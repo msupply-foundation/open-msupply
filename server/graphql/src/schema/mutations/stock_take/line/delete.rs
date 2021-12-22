@@ -47,10 +47,13 @@ pub fn delete_stock_take_line(
             DeleteStockTakeLineError::InternalError(err) => {
                 StandardGraphqlError::InternalError(err)
             }
-            DeleteStockTakeLineError::StockTakeLineDoesNotExist(_) => {
+            DeleteStockTakeLineError::StockTakeLineDoesNotExist => {
                 StandardGraphqlError::BadUserInput(format!("{:?}", err))
             }
-            DeleteStockTakeLineError::InvalidStoreId(_) => {
+            DeleteStockTakeLineError::InvalidStore => {
+                StandardGraphqlError::BadUserInput(format!("{:?}", err))
+            }
+            DeleteStockTakeLineError::CannotEditFinalised => {
                 StandardGraphqlError::BadUserInput(format!("{:?}", err))
             }
         }),
