@@ -148,3 +148,13 @@ export const useInboundShipmentColumns = (): Column<
     {},
     []
   );
+
+export const useExpansionColumns = (): Column<InvoiceLine>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    'locationName',
+    'numberOfPacks',
+    'packSize',
+    'costPricePerPack',
+  ]);

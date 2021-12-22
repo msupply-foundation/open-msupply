@@ -36,8 +36,6 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
     'theirReference',
   ]);
 
-  if (!data) return null;
-
   const t = useTranslation(['replenishment', 'common']);
   const { success, info } = useNotification();
 
@@ -49,7 +47,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         selectedRows: (
           Object.keys(state.rowState)
             .filter(id => state.rowState[id]?.isSelected)
-            .map(selectedId => data.find(({ id }) => selectedId === id))
+            .map(selectedId => data?.find(({ id }) => selectedId === id))
             .filter(Boolean) as InboundShipmentItem[]
         )
           .map(({ lines }) => lines)
@@ -80,6 +78,8 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
       infoSnack();
     }
   };
+
+  if (!data) return null;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

@@ -5,14 +5,12 @@ import {
   usePagination,
   Column,
   DomainObject,
-  Box,
   useTranslation,
   Grid,
   Switch,
-  alpha,
   useColumns,
-  useLocalStorage,
-  useTableStore,
+  MiniTable,
+  useIsGrouped,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
 
@@ -27,8 +25,6 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
 const Expand: FC<{
   rowData: OutboundShipmentSummaryItem;
 }> = ({ rowData }) => {
-  const t = useTranslation();
-
   const columns = useColumns([
     'batch',
     'expiryDate',
@@ -40,49 +36,28 @@ const Expand: FC<{
     'sellPricePerUnit',
   ]);
 
-  const batches = Object.values(rowData.batches).map(batch => ({
-    ...batch,
-    unitQuantity: batch.numberOfPacks * batch.packSize,
-    sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
-  }));
-  const BatchTable = React.useMemo(
-    () => (
-      <DataTable
-        dense
-        columns={columns}
-        data={batches}
-        noDataMessage={t('error.no-items')}
-      />
-    ),
-    []
+  const batches = React.useMemo(
+    () =>
+      Object.values(rowData.batches).map(batch => ({
+        ...batch,
+        unitQuantity: batch.numberOfPacks * batch.packSize,
+        sellPricePerUnit: (batch.sellPricePerPack ?? 0) / batch.packSize,
+      })),
+    [rowData.batches]
   );
 
-  if (!rowData?.canExpand) return <></>;
+  if (!rowData.canExpand) return null;
 
-  return (
-    <Box p={1} style={{ padding: '0 100px', width: '100%' }}>
-      <Box
-        flex={1}
-        display="flex"
-        height="100%"
-        borderRadius={4}
-        sx={{
-          backgroundColor: theme => alpha(theme.palette.gray.light, 0.2),
-        }}
-      >
-        {BatchTable}
-      </Box>
-    </Box>
-  );
+  return <MiniTable rows={batches} columns={columns} />;
 };
 
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick, onFlattenRows, onGroupRows }) => {
-  const [isGroupedByItem, setIsGroupedByItem] = useLocalStorage('/groupbyitem');
+  // const [isGroupedByItem, setIsGroupedByItem] = useLocalStorage('/groupbyitem');
   const { pagination } = usePagination();
   const t = useTranslation('distribution');
-  const { setIsGrouped } = useTableStore();
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
 
   const activeRows = useMemo(() => {
     const x = data
@@ -92,25 +67,21 @@ export const GeneralTabComponent: FC<
     return x;
   }, [data]);
 
-  const toggleGrouped = () => {
-    const outboundShipment = !isGroupedByItem?.outboundShipment;
-    setIsGroupedByItem({
-      ...isGroupedByItem,
-      outboundShipment,
-    });
-    if (outboundShipment) onGroupRows();
-    else onFlattenRows();
-  };
-
-  useEffect(() => {
-    setIsGrouped(!!isGroupedByItem?.outboundShipment);
-  }, [isGroupedByItem, setIsGrouped]);
+  // const toggleGrouped = () => {
+  //   const outboundShipment = !isGroupedByItem?.outboundShipment;
+  //   setIsGroupedByItem({
+  //     ...isGroupedByItem,
+  //     outboundShipment,
+  //   });
+  //   if (outboundShipment) onGroupRows();
+  //   else onFlattenRows();
+  // };
 
   useEffect(() => {
     // set the grouping state for the initial data load
-    if (!isGroupedByItem?.outboundShipment) onFlattenRows();
-    else onGroupRows();
-  }, []);
+    if (isGrouped) onGroupRows();
+    else onFlattenRows();
+  }, [isGrouped]);
 
   return (
     <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
@@ -123,8 +94,8 @@ export const GeneralTabComponent: FC<
       >
         <Switch
           label={t('label.group-by-item')}
-          onChange={toggleGrouped}
-          checked={!!isGroupedByItem?.outboundShipment}
+          onChange={toggleIsGrouped}
+          checked={isGrouped}
           size="small"
           disabled={activeRows.length === 0}
           color="secondary"

@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useLocalStorage, GroupByItem } from './../../../../localStorage';
+import { useCallback, useEffect } from 'react';
 import create, { UseStore } from 'zustand';
 import createContext from 'zustand/context';
 
@@ -246,7 +247,6 @@ export const useDisabled = (rowId: string): UseDisabledControl => {
       return {
         rowId,
         isDisabled: state.rowState[rowId]?.isDisabled ?? false,
-        // toggleExpanded: () => state.toggleExpanded(rowId),
       };
     },
     [rowId]
@@ -260,4 +260,31 @@ export const useDisabled = (rowId: string): UseDisabledControl => {
     oldState.rowId === newState.rowId;
 
   return useTableStore(selector, equalityFn);
+};
+
+interface IsGroupedControl {
+  isGrouped: boolean;
+  toggleIsGrouped: () => void;
+}
+
+export const useIsGrouped = (key: keyof GroupByItem): IsGroupedControl => {
+  const { setIsGrouped } = useTableStore();
+  const [groupByItem, setGroupByItem] = useLocalStorage('/groupbyitem', {
+    outboundShipment: false,
+    inboundShipment: false,
+  });
+
+  const toggleIsGrouped = useCallback(() => {
+    const newVal = !groupByItem?.[key];
+    setGroupByItem({ ...groupByItem, [key]: newVal });
+  }, [groupByItem, key, setGroupByItem, setIsGrouped]);
+
+  useEffect(() => {
+    // Sync the table state up with the local storage state.
+    // Syncing the states rather than explicitly setting in the callback
+    // as we need to do this on the initial mount regardless.
+    setIsGrouped(!!groupByItem?.[key]);
+  }, [groupByItem?.[key]]);
+
+  return { isGrouped: !!groupByItem?.[key], toggleIsGrouped };
 };

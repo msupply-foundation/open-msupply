@@ -1,5 +1,7 @@
-import { useTranslation } from '@common/intl';
-import { StocktakeNodeStatus } from '@openmsupply-client/common';
+import {
+  StocktakeNodeStatus,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   StocktakeItem,
   StocktakeLine,

@@ -43,7 +43,6 @@ const createStocktakeLine = (
   countThisLine = true
 ): StocktakeLine => {
   return {
-    id: stockLine.id,
     stockLineId: stockLine.id,
     itemCode: item.itemCode(),
     itemName: item.itemName(),
@@ -81,11 +80,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     }
   };
 
-  const { data } = useStockLines(item?.itemCode());
+  const { data } = useStockLines(item?.itemCode() ?? '');
 
   useEffect(() => {
     if (wrappedStocktakeItem) {
-      if (data?.length > 0) {
+      if (data && data.length > 0) {
         const uncountedLines = data.filter(({ id }) => {
           return (
             wrappedStocktakeItem.lines.find(
