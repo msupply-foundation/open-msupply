@@ -78,7 +78,7 @@ export const DataTable = <T extends DomainObject>({
         overflowX: 'unset',
       }}
     >
-      <MuiTable sx={{ display: 'block', flex: 1 }}>
+      <MuiTable>
         <TableHead
           sx={{
             backgroundColor: dense ? 'transparent' : 'background.white',

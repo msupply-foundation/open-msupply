@@ -6,7 +6,7 @@ import {
   Column,
   DomainObject,
   useTranslation,
-  Grid,
+  Box,
   Switch,
   useColumns,
   MiniTable,
@@ -98,14 +98,9 @@ export const GeneralTabComponent: FC<
   }, [isGrouped, data]);
 
   return (
-    <Grid container display="block">
+    <Box flexDirection="column">
       {activeRows?.length !== 0 && (
-        <Grid
-          item
-          justifyContent="flex-start"
-          display="flex"
-          sx={{ padding: '5px', paddingLeft: '15px' }}
-        >
+        <Box style={{ padding: 5, paddingLeft: 15 }}>
           <Switch
             label={t('label.group-by-item')}
             onChange={toggleIsGrouped}
@@ -114,20 +109,18 @@ export const GeneralTabComponent: FC<
             disabled={activeRows.length === 0}
             color="secondary"
           />
-        </Grid>
+        </Box>
       )}
-      <Grid item>
-        <DataTable
-          onRowClick={onRowClick}
-          ExpandContent={Expand}
-          pagination={{ ...pagination, total: activeRows.length }}
-          columns={columns}
-          data={activeRows}
-          onChangePage={pagination.onChangePage}
-          noDataMessage={t('error.no-items')}
-        />
-      </Grid>
-    </Grid>
+      <DataTable
+        onRowClick={onRowClick}
+        ExpandContent={Expand}
+        pagination={{ ...pagination, total: activeRows.length }}
+        columns={columns}
+        data={activeRows}
+        onChangePage={pagination.onChangePage}
+        noDataMessage={t('error.no-items')}
+      />
+    </Box>
   );
 };
 
