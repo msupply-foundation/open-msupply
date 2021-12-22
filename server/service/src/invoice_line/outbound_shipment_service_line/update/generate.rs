@@ -3,33 +3,60 @@ use repository::schema::{InvoiceLineRow, ItemRow};
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 
 pub fn generate(
-    input: UpdateOutboundShipmentServiceLine,
+    UpdateOutboundShipmentServiceLine {
+        id: _,
+        invoice_id: _,
+        item_id: input_item_id,
+        name: input_name,
+        total_before_tax: input_total_before_tax,
+        total_after_tax: input_total_after_tax,
+        tax: input_tax,
+        note: input_note,
+    }: UpdateOutboundShipmentServiceLine,
     existing_line: InvoiceLineRow,
-    item: ItemRow,
+    ItemRow {
+        id: item_id,
+        name: item_name,
+        code: item_code,
+        ..
+    }: ItemRow,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentServiceLineError> {
-    let mut update_line = existing_line;
     // 1) Use name from input (if specified)
     // 2) else: if item has been updated use name from the updated item name
     // 3) else: use existing line name
-    if let Some(input_name) = input.name {
-        update_line.item_name = input_name
-    } else if let Some(input_item_id) = input.item_id {
-        if input_item_id != update_line.item_id {
-            update_line.item_name = item.name;
-            update_line.item_id = input_item_id;
-        }
+    let updated_item_name = if let Some(input_name) = input_name {
+        Some(input_name)
+    } else if item_id != existing_line.item_id {
+        Some(item_name)
+    } else {
+        None
+    };
+
+    let mut update_line = existing_line;
+
+    if let Some(item_name) = updated_item_name {
+        update_line.item_name = item_name;
+        update_line.item_code = item_code;
     }
 
-    if let Some(total_after_tax) = input.total_before_tax {
+    if let Some(input_item_id) = input_item_id {
+        update_line.item_id = input_item_id;
+    }
+
+    if let Some(total_after_tax) = input_total_before_tax {
         update_line.total_before_tax = total_after_tax;
     }
 
-    if let Some(total_after_tax) = input.total_after_tax {
+    if let Some(total_after_tax) = input_total_after_tax {
         update_line.total_after_tax = total_after_tax;
     }
 
-    if let Some(tax) = input.tax {
+    if let Some(tax) = input_tax {
         update_line.tax = tax.percentage;
+    }
+
+    if let Some(note) = input_note {
+        update_line.note = Some(note);
     }
 
     Ok(update_line)
