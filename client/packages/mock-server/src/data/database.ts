@@ -1,6 +1,7 @@
 import { randomName } from './../utils';
 import faker from 'faker';
 import {
+  InvoiceLineNodeType,
   InvoiceNodeStatus,
   DeleteResponse,
   InsertSupplierRequisitionInput,
@@ -543,6 +544,7 @@ export const insert = {
       itemUnit: item.unitName ?? '',
       itemId: item.id,
       expiryDate: invoiceLine?.expiryDate ?? '',
+      type: InvoiceLineNodeType.StockIn,
       batch: '',
       stockLineId: '',
       packSize: invoiceLine.packSize ?? 1,
@@ -562,6 +564,7 @@ export const insert = {
 
     const newInvoiceLine: InvoiceLine = {
       ...invoiceLine,
+      type: InvoiceLineNodeType.StockOut,
       itemName: item.name,
       itemCode: item.code,
       itemUnit: item.unitName ?? '',

@@ -34,7 +34,7 @@ query invoice($id: String!) {
       # purchaseOrderNumber
       # inboundShipmentNumber
       # goodsReceiptNumber
-      # color
+      color
 
       onHold
 
@@ -82,6 +82,7 @@ query invoice($id: String!) {
           __typename
           nodes {
             __typename
+            type
             batch
             costPricePerPack
             expiryDate
@@ -642,8 +643,7 @@ query invoices(
         theirReference
         type
         status
-
-        # color
+        color
 
         pricing {
           __typename
