@@ -10,7 +10,6 @@ import {
   DataTable,
   usePagination,
   useTranslation,
-  getRowExpandColumn,
   ColumnAlign,
   Box,
   Column,
@@ -110,7 +109,6 @@ export const DetailView: FC = () => {
         align: ColumnAlign.Right,
       },
 
-      getRowExpandColumn<StocktakeItem>(),
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
