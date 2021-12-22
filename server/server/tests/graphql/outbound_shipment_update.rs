@@ -3,7 +3,7 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
     use repository::{
-        mock::{MockDataInserts, mock_unallocated_line_new_invoice},
+        mock::{MockDataInserts, mock_new_invoice_with_unallocated_line},
         schema::{InvoiceLineRow, StockLineRow},
         InvoiceLineRowRepository, StockLineRowRepository,
     };
@@ -152,7 +152,7 @@ mod graphql {
         // CanOnlyChangeToAllocatedWhenNoUnallocatedLines
         let variables = Some(json!({
           "input": {
-            "id": mock_unallocated_line_new_invoice().id.clone(),
+            "id": mock_new_invoice_with_unallocated_line().id.clone(),
             "status": "ALLOCATED"
           }
         }));
