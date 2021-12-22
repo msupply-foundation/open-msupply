@@ -59,7 +59,7 @@ mod repository_test {
                 name: "name1".to_string(),
                 code: "code1".to_string(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             }
         }
 
@@ -69,7 +69,7 @@ mod repository_test {
                 name: "item-2".to_string(),
                 code: "code2".to_string(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             }
         }
 
@@ -79,7 +79,7 @@ mod repository_test {
                 name: "item_service_name_1".to_string(),
                 code: "item_service_code_1".to_string(),
                 unit_id: None,
-                r#type: ItemType::Service,
+                r#type: ItemRowType::Service,
             }
         }
 
@@ -250,6 +250,7 @@ mod repository_test {
                 total_before_tax: 1.0,
                 total_after_tax: 1.0,
                 tax: None,
+                r#type: InvoiceLineRowType::StockIn,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -271,6 +272,7 @@ mod repository_test {
                 total_before_tax: 2.0,
                 total_after_tax: 2.0,
                 tax: None,
+                r#type: InvoiceLineRowType::StockIn,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -293,6 +295,7 @@ mod repository_test {
                 total_before_tax: 3.0,
                 total_after_tax: 3.0,
                 tax: None,
+                r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -315,6 +318,7 @@ mod repository_test {
                 total_before_tax: 10.0,
                 total_after_tax: 15.0,
                 tax: None,
+                r#type: InvoiceLineRowType::StockIn,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,

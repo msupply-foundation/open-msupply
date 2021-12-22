@@ -7,13 +7,60 @@ use crate::{
             item, item::dsl as item_dsl, item_is_visible,
             item_is_visible::dsl as item_is_visible_dsl, unit, unit::dsl as unit_dsl,
         },
-        ItemIsVisibleRow, ItemRow, UnitRow,
+        ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
     },
 };
 use domain::{
-    item::{Item, ItemFilter, ItemSort, ItemSortField},
-    Pagination,
+    item::{Item, ItemSort, ItemSortField},
+    EqualFilter, Pagination, SimpleStringFilter,
 };
+
+#[derive(Clone)]
+pub struct ItemFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub name: Option<SimpleStringFilter>,
+    pub code: Option<SimpleStringFilter>,
+    pub r#type: Option<EqualFilter<ItemRowType>>,
+    /// If true it only returns ItemAndMasterList that have a name join row
+    pub is_visible: Option<bool>,
+}
+
+impl ItemFilter {
+    pub fn new() -> ItemFilter {
+        ItemFilter {
+            id: None,
+            name: None,
+            code: None,
+            r#type: None,
+            is_visible: None,
+        }
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<ItemRowType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn match_is_visible(mut self, value: bool) -> Self {
+        self.is_visible = Some(value);
+        self
+    }
+}
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed, LeftJoin},
@@ -99,6 +146,7 @@ pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
         apply_equal_filter!(query, f.id, item_dsl::id);
         apply_simple_string_filter!(query, f.code, item_dsl::code);
         apply_simple_string_filter!(query, f.name, item_dsl::name);
+        apply_equal_filter!(query, f.r#type, item_dsl::type_);
 
         if let Some(is_visible) = f.is_visible {
             query = query.filter(item_is_visible::is_visible.eq(is_visible));
@@ -112,20 +160,20 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
+        db_diesel::item_query::ItemFilter,
+        schema::ItemRowType,
         test_db,
         {
             db_diesel::{
                 MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
             },
             mock::MockDataInserts,
-            schema::{
-                ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow,
-            },
+            schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
             ItemQueryRepository, ItemRepository, NameRepository,
         },
     };
     use domain::{
-        item::{Item, ItemFilter, ItemSort, ItemSortField},
+        item::{Item, ItemSort, ItemSortField},
         EqualFilter, Pagination, DEFAULT_LIMIT,
     };
 
@@ -144,7 +192,7 @@ mod tests {
                 name: format!("name{}", index),
                 code: format!("code{}", index),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             });
         }
         rows
@@ -255,6 +303,7 @@ mod tests {
                     code: None,
                     // query invisible rows
                     is_visible: Some(false),
+                    r#type: None,
                 }),
                 None,
             )
@@ -283,35 +332,35 @@ mod tests {
                 name: "name1".to_owned(),
                 code: "name1".to_owned(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             },
             ItemRow {
                 id: "item2".to_owned(),
                 name: "name2".to_owned(),
                 code: "name2".to_owned(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             },
             ItemRow {
                 id: "item3".to_owned(),
                 name: "name3".to_owned(),
                 code: "name3".to_owned(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             },
             ItemRow {
                 id: "item4".to_owned(),
                 name: "name4".to_owned(),
                 code: "name4".to_owned(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             },
             ItemRow {
                 id: "item5".to_owned(),
                 name: "name5".to_owned(),
                 code: "name5".to_owned(),
                 unit_id: None,
-                r#type: ItemType::Stock,
+                r#type: ItemRowType::Stock,
             },
         ];
 
@@ -433,6 +482,7 @@ mod tests {
                     code: None,
                     // query invisible rows
                     is_visible: Some(false),
+                    r#type: None,
                 }),
                 None,
             )
@@ -448,6 +498,7 @@ mod tests {
                     code: None,
                     // query invisible rows
                     is_visible: Some(true),
+                    r#type: None,
                 }),
                 None,
             )

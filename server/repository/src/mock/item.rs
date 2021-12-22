@@ -1,4 +1,4 @@
-use crate::schema::{ItemRow, ItemType};
+use crate::schema::{ItemRow, ItemRowType as ItemType};
 
 pub fn mock_item_a() -> ItemRow {
     ItemRow {
@@ -50,6 +50,16 @@ pub fn item_query_test2() -> ItemRow {
     }
 }
 
+pub fn mock_item_service_item() -> ItemRow {
+    ItemRow {
+        id: String::from("mock_item_service_item"),
+        name: String::from("name_mock_item_service_item"),
+        code: String::from("code_mock_item_service_item"),
+        unit_id: None,
+        r#type: ItemType::Service,
+    }
+}
+
 pub fn mock_items() -> Vec<ItemRow> {
     vec![
         mock_item_a(),
@@ -57,5 +67,6 @@ pub fn mock_items() -> Vec<ItemRow> {
         mock_item_c(),
         item_query_test1(),
         item_query_test2(),
+        mock_item_service_item(),
     ]
 }

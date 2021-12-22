@@ -1,10 +1,14 @@
 use crate::invoice::{
     check_invoice_is_editable, check_invoice_status, InvoiceIsNotEditable, InvoiceStatusError,
 };
-use domain::{name::NameFilter, outbound_shipment::UpdateOutboundShipment, EqualFilter};
+use domain::{
+    invoice::InvoiceStatus, name::NameFilter, outbound_shipment::UpdateOutboundShipment,
+    EqualFilter,
+};
 use repository::{
-    schema::{InvoiceRow, InvoiceRowType},
-    InvoiceRepository, NameQueryRepository, RepositoryError, StorageConnection,
+    schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,
+    RepositoryError, StorageConnection,
 };
 
 use super::UpdateOutboundShipmentError;
@@ -21,6 +25,7 @@ pub fn validate(
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
     check_other_party(&patch.other_party_id, connection)?;
+    check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
 
     Ok(invoice)
 }
@@ -35,6 +40,43 @@ fn check_invoice_exists(
         return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);
     }
     Ok(result?)
+}
+
+fn check_can_change_status_to_allocated(
+    connection: &StorageConnection,
+    invoice_row: &InvoiceRow,
+    status_option: Option<InvoiceStatus>,
+) -> Result<(), UpdateOutboundShipmentError> {
+    if invoice_row.status != InvoiceRowStatus::New {
+        return Ok(());
+    };
+
+    if let Some(new_status) = status_option {
+        if new_status == InvoiceStatus::New {
+            return Ok(());
+        }
+
+        let repository = InvoiceLineRepository::new(connection);
+        let unallocated_lines = repository.query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(&invoice_row.id))
+                .r#type(EqualFilter {
+                    equal_to: Some(InvoiceLineRowType::UnallocatedStock),
+                    not_equal_to: None,
+                    equal_any: None,
+                }),
+        )?;
+
+        if unallocated_lines.len() > 0 {
+            return Err(
+                UpdateOutboundShipmentError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(
+                    unallocated_lines,
+                ),
+            );
+        }
+    }
+
+    Ok(())
 }
 
 fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
