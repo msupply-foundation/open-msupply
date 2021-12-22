@@ -76,6 +76,8 @@ export enum ActionType {
   UpsertItem = 'OutboundShipment/upsertItem',
   DeleteLine = 'OutboundShipment/deleteLine',
   DeleteItem = 'OutboundShipment/deleteItem',
+  Group = 'OutboundShipment/group',
+  Flatten = 'OutboundShipment/flatten',
 }
 
 export type OutboundShipmentAction =
@@ -106,8 +108,13 @@ export type OutboundShipmentAction =
   | {
       type: ActionType.DeleteItem;
       payload: { item: OutboundShipmentSummaryItem };
+    }
+  | {
+      type: ActionType.Flatten;
+    }
+  | {
+      type: ActionType.Group;
     };
-
 export interface OutboundShipmentRow extends Omit<InvoiceLine, 'item'> {
   stockLineId: string;
   invoiceId: string;
