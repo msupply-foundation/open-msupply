@@ -67,6 +67,7 @@ export interface Column<T extends DomainObject> {
   sortDescFirst: boolean;
   sortType: 'datetime' | 'numeric' | 'alphanumeric';
   sortInverted: boolean;
+  getSortValue?: (row: T) => string | number;
 
   onChangeSortBy?: (column: Column<T>) => void;
   sortBy?: SortBy<T>;

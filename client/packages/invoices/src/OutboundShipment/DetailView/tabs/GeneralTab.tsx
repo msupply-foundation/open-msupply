@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
   DataTable,
   ObjectWithStringKeys,
@@ -6,7 +6,7 @@ import {
   Column,
   DomainObject,
   useTranslation,
-  Grid,
+  Box,
   Switch,
   useColumns,
   MiniTable,
@@ -18,6 +18,8 @@ interface GeneralTabProps<T extends ObjectWithStringKeys & DomainObject> {
   data: T[];
   columns: Column<T>[];
   onRowClick?: (rowData: T) => void;
+  onFlattenRows: () => void;
+  onGroupRows: () => void;
 }
 
 const Expand: FC<{
@@ -51,61 +53,40 @@ const Expand: FC<{
 
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
-> = ({ data, columns, onRowClick }) => {
+> = ({ data, columns, onRowClick, onFlattenRows, onGroupRows }) => {
+  // const [isGroupedByItem, setIsGroupedByItem] = useLocalStorage('/groupbyitem');
   const { pagination } = usePagination();
-  const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
 
-  const paged = data.slice(
-    pagination.offset,
-    pagination.offset + pagination.first
-  );
+  const activeRows = useMemo(() => {
+    const x = data
+      .filter(({ isDeleted }) => !isDeleted)
+      .slice(pagination.offset, pagination.offset + pagination.first);
 
-  const activeRows = useMemo(
-    () => grouped.filter(({ isDeleted }) => !isDeleted),
-    [grouped]
-  );
+    return x;
+  }, [data]);
+
+  // const toggleGrouped = () => {
+  //   const outboundShipment = !isGroupedByItem?.outboundShipment;
+  //   setIsGroupedByItem({
+  //     ...isGroupedByItem,
+  //     outboundShipment,
+  //   });
+  //   if (outboundShipment) onGroupRows();
+  //   else onFlattenRows();
+  // };
 
   useEffect(() => {
-    if (!!isGrouped) {
-      setGrouped(paged);
-    } else {
-      const newGrouped: OutboundShipmentSummaryItem[] = [];
-      paged.forEach(row => {
-        const batches = Object.values(row.batches);
-        const lineTotal =
-          (row.sellPricePerPack ?? 0) * (row.numberOfPacks ?? 0);
-
-        batches.forEach(batch => {
-          newGrouped.push({
-            ...row,
-            id: batch.id,
-            numberOfPacks: batch.numberOfPacks,
-            unitQuantity: batch.numberOfPacks * batch.packSize,
-            locationName: batch.locationName,
-            batch: batch.batch,
-            expiryDate: batch.expiryDate,
-            packSize: batch.packSize,
-            lineTotal,
-            sellPricePerUnit: lineTotal / row.unitQuantity,
-            canExpand: false,
-          });
-        });
-        setGrouped(newGrouped);
-      });
-    }
-  }, [isGrouped, data]);
+    // set the grouping state for the initial data load
+    if (isGrouped) onGroupRows();
+    else onFlattenRows();
+  }, [isGrouped]);
 
   return (
-    <Grid container display="block">
+    <Box flexDirection="column">
       {activeRows?.length !== 0 && (
-        <Grid
-          item
-          justifyContent="flex-start"
-          display="flex"
-          sx={{ padding: '5px', paddingLeft: '15px' }}
-        >
+        <Box style={{ padding: 5, paddingLeft: 15 }}>
           <Switch
             label={t('label.group-by-item')}
             onChange={toggleIsGrouped}
@@ -114,20 +95,18 @@ export const GeneralTabComponent: FC<
             disabled={activeRows.length === 0}
             color="secondary"
           />
-        </Grid>
+        </Box>
       )}
-      <Grid item>
-        <DataTable
-          onRowClick={onRowClick}
-          ExpandContent={Expand}
-          pagination={{ ...pagination, total: activeRows.length }}
-          columns={columns}
-          data={activeRows}
-          onChangePage={pagination.onChangePage}
-          noDataMessage={t('error.no-items')}
-        />
-      </Grid>
-    </Grid>
+      <DataTable
+        onRowClick={onRowClick}
+        ExpandContent={Expand}
+        pagination={{ ...pagination, total: activeRows.length }}
+        columns={columns}
+        data={activeRows}
+        onChangePage={pagination.onChangePage}
+        noDataMessage={t('error.no-items')}
+      />
+    </Box>
   );
 };
 

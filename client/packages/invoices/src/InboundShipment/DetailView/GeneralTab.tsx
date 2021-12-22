@@ -5,7 +5,7 @@ import {
   DomainObject,
   useTranslation,
   useIsGrouped,
-  Grid,
+  Box,
   Switch,
   MiniTable,
 } from '@openmsupply-client/common';
@@ -47,14 +47,9 @@ export const GeneralTab: FC<
   );
 
   return (
-    <Grid container display="block">
+    <Box flexDirection="column">
       {rows?.length !== 0 && (
-        <Grid
-          item
-          justifyContent="flex-start"
-          display="flex"
-          sx={{ padding: '5px', paddingLeft: '15px' }}
-        >
+        <Box style={{ padding: 5, paddingLeft: 15 }}>
           <Switch
             label={t('label.group-by-item', { ns: 'replenishment' })}
             onChange={toggleIsGrouped}
@@ -63,19 +58,17 @@ export const GeneralTab: FC<
             disabled={rows?.length === 0}
             color="secondary"
           />
-        </Grid>
+        </Box>
       )}
-      <Grid item>
-        <DataTable
-          onRowClick={onRowClick}
-          ExpandContent={Expando}
-          pagination={{ ...pagination, total: rows?.length }}
-          columns={columns}
-          data={paged}
-          onChangePage={pagination.onChangePage}
-          noDataMessage={t('error.no-items')}
-        />
-      </Grid>
-    </Grid>
+      <DataTable
+        onRowClick={onRowClick}
+        ExpandContent={Expando}
+        pagination={{ ...pagination, total: rows?.length }}
+        columns={columns}
+        data={paged}
+        onChangePage={pagination.onChangePage}
+        noDataMessage={t('error.no-items')}
+      />
+    </Box>
   );
 });

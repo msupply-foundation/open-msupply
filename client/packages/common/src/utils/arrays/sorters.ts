@@ -16,12 +16,29 @@ export const getDataSorter =
     const valueA = parseValue(a, sortKey);
     const valueB = parseValue(b, sortKey);
 
-    if (valueA < valueB) {
-      return desc ? 1 : -1;
-    }
-    if (valueA > valueB) {
-      return desc ? -1 : 1;
-    }
-
-    return 0;
+    return sortValues(valueA, valueB, desc);
   };
+
+export const getColumnSorter =
+  <T>(sortValueAccessor: (row: T) => string | number, desc: boolean) =>
+  (a: T, b: T): 1 | -1 | 0 => {
+    const valueA = sortValueAccessor(a);
+    const valueB = sortValueAccessor(b);
+
+    return sortValues(valueA, valueB, desc);
+  };
+
+export const sortValues = <T>(
+  a: T | string | number,
+  b: T | string | number,
+  desc: boolean
+) => {
+  if (a < b) {
+    return desc ? 1 : -1;
+  }
+  if (a > b) {
+    return desc ? -1 : 1;
+  }
+
+  return 0;
+};
