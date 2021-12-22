@@ -495,7 +495,7 @@ export const update = {
     const existingInvoice: Invoice = InvoiceData[idx] as Invoice;
     const newInvoice: Invoice = {
       ...existingInvoice,
-      // color: invoice?.color ?? existingInvoice.color,
+      color: invoice?.color ?? existingInvoice.color,
       comment: invoice?.comment ?? existingInvoice.comment,
       theirReference: invoice?.theirReference ?? existingInvoice.theirReference,
       onHold: invoice?.onHold ?? existingInvoice.onHold,

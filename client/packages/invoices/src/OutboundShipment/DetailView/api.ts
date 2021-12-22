@@ -115,7 +115,7 @@ const invoiceToInput = (
   patch: Partial<OutboundShipment> & { id: string }
 ): UpdateOutboundShipmentInput => ({
   id: patch.id,
-  // color: patch.color,
+  color: patch.color,
   comment: patch.comment,
   status: getPatchStatus(patch),
   onHold: patch.onHold,

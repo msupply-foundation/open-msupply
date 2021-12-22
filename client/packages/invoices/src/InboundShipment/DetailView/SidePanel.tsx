@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-// import { Link } from 'react-router-dom';
 import {
   Grid,
   CopyIcon,
@@ -12,7 +11,8 @@ import {
   BufferedTextArea,
   useNotification,
   useTranslation,
-  // ColorSelectButton,
+  ColorSelectButton,
+  useBufferState,
 } from '@openmsupply-client/common';
 import {
   useInboundFields,
@@ -21,9 +21,10 @@ import {
 } from './api';
 
 const AdditionalInfoSection: FC = () => {
-  const { comment, update } = useInboundFields('comment');
+  const { comment, color, update } = useInboundFields(['comment', 'color']);
   const isEditable = useIsInboundEditable();
   const t = useTranslation(['common', 'replenishment']);
+  const [bufferedColor, setBufferedColor] = useBufferState(color);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -36,11 +37,14 @@ const AdditionalInfoSection: FC = () => {
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
-            {/* <ColorSelectButton
-              disabled={!isInboundEditable(draft)}
-              onChange={color => draft.update?.('color', color.hex)}
-              color={draft.color}
-            /> */}
+            <ColorSelectButton
+              disabled={!isEditable}
+              onChange={({ hex }) => {
+                setBufferedColor(hex);
+                update({ color: hex });
+              }}
+              color={bufferedColor}
+            />
           </PanelField>
         </PanelRow>
 

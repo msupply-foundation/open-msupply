@@ -4,10 +4,9 @@ import {
   DataTable,
   useColumns,
   useListData,
-  // getNameAndColorColumn,
+  getNameAndColorColumn,
   TableProvider,
   createTableStore,
-  // Color,
   useOmSupplyApi,
   useNotification,
   useTranslation,
@@ -31,7 +30,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     data,
     isLoading,
     onDelete,
-    // onUpdate,
+    onUpdate,
     sortBy,
     onChangeSortBy,
     onCreate,
@@ -48,14 +47,9 @@ export const OutboundShipmentListViewComponent: FC = () => {
     getOutboundShipmentListViewApi(api)
   );
 
-  // const onColorUpdate = (row: InvoiceRow, color: Color) => {
-  //   onUpdate({ ...row, color: color.hex });
-  // };
-
   const columns = useColumns<InvoiceRow>(
     [
-      // getNameAndColorColumn(onColorUpdate),
-      'otherPartyName',
+      [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
         {

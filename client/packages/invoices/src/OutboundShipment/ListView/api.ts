@@ -99,7 +99,7 @@ const invoiceToInput = (
 ): UpdateOutboundShipmentInput => {
   return {
     id: patch.id,
-    // color: patch.color,
+    color: patch.color,
     comment: patch.comment,
     status: patch.status as unknown as UpdateOutboundShipmentStatusInput,
     onHold: patch.onHold,

@@ -37,7 +37,7 @@ export interface InvoiceRow
       | 'otherPartyId'
       | 'otherPartyName'
       | 'status'
-      // | 'color'
+      | 'color'
       | 'theirReference'
       | 'type'
     >,

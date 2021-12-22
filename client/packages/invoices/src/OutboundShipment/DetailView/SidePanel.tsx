@@ -10,10 +10,9 @@ import {
   TextArea,
   useNotification,
   useTranslation,
-  // ColorSelectButton,
+  ColorSelectButton,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
-// import { Link } from 'react-router-dom';
 import { isInvoiceEditable } from '../../utils';
 import { OutboundShipment } from '../../types';
 
@@ -35,11 +34,11 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
-            {/* <ColorSelectButton
+            <ColorSelectButton
               disabled={!isInvoiceEditable(draft)}
               onChange={color => draft.update?.('color', color.hex)}
               color={draft.color}
-            /> */}
+            />
           </PanelField>
         </PanelRow>
 
