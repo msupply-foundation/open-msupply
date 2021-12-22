@@ -82,10 +82,7 @@ impl From<RepositoryError> for UpdateOutboundShipmentUnallocatedLineError {
 mod test_update {
 
     use repository::{
-        mock::{
-            mock_outbound_shipment_a_invoice_lines, mock_unallocated_line_new_invoice_line_1,
-            MockDataInserts,
-        },
+        mock::{mock_outbound_shipment_a_invoice_lines, mock_unallocated_line, MockDataInserts},
         test_db::setup_all,
         InvoiceLineRowRepository,
     };
@@ -142,7 +139,7 @@ mod test_update {
         let context = service_provider.context().unwrap();
         let service = service_provider.outbound_shipment_line;
 
-        let mut line_to_update = mock_unallocated_line_new_invoice_line_1();
+        let mut line_to_update = mock_unallocated_line();
         // Succesfull update
         let result = service
             .update_outbound_shipment_unallocated_line(

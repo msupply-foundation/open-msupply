@@ -61,10 +61,7 @@ impl From<RepositoryError> for DeleteOutboundShipmentUnallocatedLineError {
 mod test_delete {
 
     use repository::{
-        mock::{
-            mock_outbound_shipment_a_invoice_lines, mock_unallocated_line_new_invoice_line_1,
-            MockDataInserts,
-        },
+        mock::{mock_outbound_shipment_a_invoice_lines, MockDataInserts, mock_unallocated_line},
         test_db::setup_all,
         InvoiceLineRowRepository, RepositoryError,
     };
@@ -119,7 +116,7 @@ mod test_delete {
         let context = service_provider.context().unwrap();
         let service = service_provider.outbound_shipment_line;
 
-        let mut line_to_delete = mock_unallocated_line_new_invoice_line_1();
+        let mut line_to_delete = mock_unallocated_line();
         // Succesfull delete
         let result = service
             .delete_outbound_shipment_unallocated_line(
