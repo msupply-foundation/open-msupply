@@ -4,7 +4,7 @@ import {
   usePagination,
   DomainObject,
   useTranslation,
-  useTableStore,
+  useIsGrouped,
   Grid,
   Switch,
   MiniTable,
@@ -38,8 +38,8 @@ export const GeneralTab: FC<
   const columns = useInboundShipmentColumns();
   const lines = useInboundLines();
   const { data: items } = useInboundItems();
-  const tableStore = useTableStore();
-  const rows = tableStore.isGrouped ? items : lines;
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
+  const rows = isGrouped ? items : lines;
 
   const paged = useMemo(
     () => rows?.slice(pagination.offset, pagination.offset + pagination.first),
@@ -57,8 +57,8 @@ export const GeneralTab: FC<
       >
         <Switch
           label={t('label.group-by-item', { ns: 'replenishment' })}
-          onChange={(_, check) => tableStore.setIsGrouped(check)}
-          checked={tableStore.isGrouped}
+          onChange={toggleIsGrouped}
+          checked={isGrouped}
           size="small"
           disabled={rows?.length === 0}
           color="secondary"

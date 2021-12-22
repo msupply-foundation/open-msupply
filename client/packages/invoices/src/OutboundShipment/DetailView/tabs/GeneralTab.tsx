@@ -9,9 +9,8 @@ import {
   Grid,
   Switch,
   useColumns,
-  useLocalStorage,
-  useTableStore,
   MiniTable,
+  useIsGrouped,
 } from '@openmsupply-client/common';
 import { OutboundShipmentSummaryItem } from '../../../types';
 
@@ -53,11 +52,10 @@ const Expand: FC<{
 export const GeneralTabComponent: FC<
   GeneralTabProps<OutboundShipmentSummaryItem>
 > = ({ data, columns, onRowClick }) => {
-  const [isGroupedByItem, setIsGroupedByItem] = useLocalStorage('/groupbyitem');
   const { pagination } = usePagination();
   const [grouped, setGrouped] = useState<OutboundShipmentSummaryItem[]>([]);
   const t = useTranslation('distribution');
-  const { setIsGrouped } = useTableStore();
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
 
   const paged = data.slice(
     pagination.offset,
@@ -69,15 +67,8 @@ export const GeneralTabComponent: FC<
     [grouped]
   );
 
-  const toggleGrouped = () => {
-    setIsGroupedByItem({
-      ...isGroupedByItem,
-      outboundShipment: !isGroupedByItem?.outboundShipment,
-    });
-  };
-
   useEffect(() => {
-    if (!!isGroupedByItem?.outboundShipment) {
+    if (!!isGrouped) {
       setGrouped(paged);
     } else {
       const newGrouped: OutboundShipmentSummaryItem[] = [];
@@ -104,11 +95,7 @@ export const GeneralTabComponent: FC<
         setGrouped(newGrouped);
       });
     }
-  }, [isGroupedByItem, data]);
-
-  useEffect(() => {
-    setIsGrouped(!!isGroupedByItem?.outboundShipment);
-  }, [isGroupedByItem, setIsGrouped]);
+  }, [isGrouped, data]);
 
   return (
     <Grid container flexDirection="column" flexWrap="nowrap" width="auto">
@@ -121,8 +108,8 @@ export const GeneralTabComponent: FC<
       >
         <Switch
           label={t('label.group-by-item')}
-          onChange={toggleGrouped}
-          checked={!!isGroupedByItem?.outboundShipment}
+          onChange={toggleIsGrouped}
+          checked={isGrouped}
           size="small"
           disabled={activeRows.length === 0}
           color="secondary"
