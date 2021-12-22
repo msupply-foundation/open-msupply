@@ -34,6 +34,7 @@ import {
   StocktakeNodeStatus,
   RequisitionNodeType,
   SupplierRequisitionNodeStatus,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common/src/types/schema';
 
 const units = [
@@ -485,7 +486,10 @@ const createInvoiceLine = (
     stockLineId: stockLine.id,
     locationName: stockLine.locationName,
     location: stockLine.location,
-
+    type:
+      invoice.type === InvoiceNodeType.InboundShipment
+        ? InvoiceLineNodeType.StockIn
+        : InvoiceLineNodeType.StockOut,
     batch: stockLine.batch ?? '',
     expiryDate: stockLine.expiryDate as string,
 
