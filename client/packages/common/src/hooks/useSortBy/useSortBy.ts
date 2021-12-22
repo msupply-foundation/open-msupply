@@ -8,6 +8,7 @@ export interface SortRule<T> {
 
 export interface SortBy<T> extends SortRule<T> {
   direction: 'asc' | 'desc';
+  getSortValue?: (row: T) => string | number;
 }
 export interface SortController<T> {
   sortBy: SortBy<T>;
