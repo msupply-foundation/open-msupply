@@ -3,7 +3,7 @@
 mod graphql {
     use crate::graphql::assert_gql_query;
     use repository::{
-        mock::MockDataInserts,
+        mock::{MockDataInserts, mock_unallocated_line_new_invoice},
         schema::{InvoiceLineRow, StockLineRow},
         InvoiceLineRowRepository, StockLineRowRepository,
     };
@@ -133,6 +133,40 @@ mod graphql {
         assert_gql_query(&settings, query, &variables, &expected, None).await;
 
         // InvoiceLineHasNoStockLineError
+        let variables = Some(json!({
+          "input": {
+            "id": "outbound_shipment_invalid_stock_line",
+            "status": "SHIPPED"
+          }
+        }));
+        let expected = json!({
+            "updateOutboundShipment": {
+              "error": {
+                "__typename": "InvoiceLineHasNoStockLineError"
+              }
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
+
+        // CanOnlyChangeToAllocatedWhenNoUnallocatedLines
+        let variables = Some(json!({
+          "input": {
+            "id": mock_unallocated_line_new_invoice().id.clone(),
+            "status": "ALLOCATED"
+          }
+        }));
+        let expected = json!({
+            "updateOutboundShipment": {
+              "error": {
+                "__typename": "CanOnlyChangeToAllocatedWhenNoUnallocatedLines"
+              }
+            }
+          }
+        );
+        assert_gql_query(&settings, query, &variables, &expected, None).await;
+
+        // Invoice
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_invalid_stock_line",
