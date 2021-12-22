@@ -1,5 +1,6 @@
 use async_graphql::*;
-use domain::{item::ItemFilter, PaginationOption, SimpleStringFilter};
+use domain::{PaginationOption, SimpleStringFilter};
+use repository::ItemFilter;
 use service::item::get_items;
 
 use crate::{
@@ -35,6 +36,7 @@ impl From<ItemFilterInput> for ItemFilter {
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
             is_visible: f.is_visible.and_then(|filter| filter.equal_to),
+            r#type: None,
         }
     }
 }

@@ -3,7 +3,7 @@ use diesel_derive_enum::DbEnum;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ItemType {
+pub enum ItemRowType {
     Stock,
     Service,
     NonStock,
@@ -17,5 +17,5 @@ pub struct ItemRow {
     pub code: String,
     pub unit_id: Option<String>,
     #[column_name = "type_"]
-    pub r#type: ItemType,
+    pub r#type: ItemRowType,
 }

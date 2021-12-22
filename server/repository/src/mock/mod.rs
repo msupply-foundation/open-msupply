@@ -13,15 +13,16 @@ mod stock_line;
 mod store;
 mod test_invoice_count_service;
 mod test_outbound_shipment_update;
+mod test_unallocated_line;
 mod unit;
 mod user_account;
 use std::{collections::HashMap, ops::Index};
 
-pub use full_invoice::mock_full_invoices;
+pub use full_invoice::*;
 pub use full_master_list::*;
-pub use invoice::{mock_invoices, mock_outbound_shipment_a, mock_outbound_shipments};
-pub use invoice_line::{mock_invoice_lines, mock_outbound_shipment_invoice_lines};
-pub use item::mock_items;
+pub use invoice::*;
+pub use invoice_line::*;
+pub use item::*;
 pub use location::mock_locations;
 pub use name::{mock_name_store_a, mock_name_store_b, mock_names};
 pub use name_store_join::mock_name_store_joins;
@@ -32,6 +33,7 @@ pub use stock_line::mock_stock_lines;
 pub use store::{mock_store_b, mock_stores};
 pub use test_invoice_count_service::*;
 pub use test_outbound_shipment_update::*;
+pub use test_unallocated_line::*;
 pub use user_account::mock_user_accounts;
 
 use crate::{
@@ -66,6 +68,7 @@ pub struct MockData {
     pub full_master_list: HashMap<String, FullMockMasterList>,
     pub numbers: Vec<NumberRow>,
 }
+
 pub struct MockDataInserts {
     pub names: bool,
     pub stores: bool,
@@ -229,6 +232,7 @@ fn all_mock_data() -> MockDataCollection {
         "test_outbound_shipment_update_data",
         test_outbound_shipment_update_data(),
     );
+    data.insert("mock_test_unallocated_line", mock_test_unallocated_line());
 
     data
 }
