@@ -70,6 +70,7 @@ const getState = ({ isDesc = true } = {}): OutboundShipmentStateShape => ({
     isDesc: isDesc,
     direction: isDesc ? 'desc' : 'asc',
   },
+  isGrouped: true,
 });
 
 const createLine = (
