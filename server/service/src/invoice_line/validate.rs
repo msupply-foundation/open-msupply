@@ -55,12 +55,11 @@ pub fn check_item(
     item_id: &str,
     connection: &StorageConnection,
 ) -> Result<ItemRow, WithDBError<ItemNotFound>> {
-    let item_result = ItemRepository::new(connection).find_one_by_id(item_id);
+    let item_result = ItemRepository::new(connection).find_one_by_id(item_id)?;
 
     match item_result {
-        Ok(item) => Ok(item),
-        Err(RepositoryError::NotFound) => Err(WithDBError::err(ItemNotFound {})),
-        Err(error) => Err(WithDBError::db(error)),
+        Some(item) => Ok(item),
+        None => Err(WithDBError::err(ItemNotFound {})),
     }
 }
 
