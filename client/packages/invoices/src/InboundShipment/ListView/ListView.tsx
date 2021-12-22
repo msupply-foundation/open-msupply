@@ -4,10 +4,9 @@ import {
   DataTable,
   useColumns,
   useListData,
-  // getNameAndColorColumn,
+  getNameAndColorColumn,
   TableProvider,
   createTableStore,
-  // Color,
   InvoiceNodeStatus,
   useOmSupplyApi,
   useNotification,
@@ -31,7 +30,7 @@ export const InboundListView: FC = () => {
     data,
     isLoading,
     onDelete,
-    // onUpdate,
+    onUpdate,
     sortBy,
     onChangeSortBy,
     onCreate,
@@ -51,10 +50,7 @@ export const InboundListView: FC = () => {
 
   const columns = useColumns<InvoiceRow>(
     [
-      // getNameAndColorColumn((row: InvoiceRow, color: Color) => {
-      //   onUpdate({ ...row, color: color.hex });
-      // }),
-      'otherPartyName',
+      [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
         {

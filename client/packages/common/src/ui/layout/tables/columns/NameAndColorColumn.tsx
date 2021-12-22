@@ -5,7 +5,7 @@ import { ColumnDefinition } from '../columns/types';
 import { ColorSelectButton } from '@common/components';
 
 interface DomainObjectWithRequiredFields extends DomainObject {
-  color: string;
+  color?: string | null;
   otherPartyName: string;
 }
 
@@ -20,7 +20,7 @@ export const getNameAndColorColumn = <
         `The default setter of the NameAndColor column was called.
         Have you forgotten to provide a custom setter?
         When setting up your columns, you should provide a setter function
-        const columns = useColumns([{...getNameAndColorColumn(), setter }])
+        const columns = useColumns([ getNameAndColorColumn(), { setter }])
         `
       );
     }

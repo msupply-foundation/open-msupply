@@ -296,7 +296,7 @@ export const createInvoice = (
       totalBeforeTax: 0,
     },
 
-    // color: 'grey',
+    color: '#8f90a6',
     comment: takeRandomElementFrom(comments),
     onHold: false,
 
