@@ -14,24 +14,29 @@ pub fn generate(
         note: input_note,
     }: UpdateOutboundShipmentServiceLine,
     existing_line: InvoiceLineRow,
-    item: ItemRow,
+    ItemRow {
+        id: item_id,
+        name: item_name,
+        code: item_code,
+        ..
+    }: ItemRow,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentServiceLineError> {
     // 1) Use name from input (if specified)
     // 2) else: if item has been updated use name from the updated item name
     // 3) else: use existing line name
-    let mut updated_item_name = None;
-    if let Some(input_name) = input_name {
-        updated_item_name = Some(input_name);
-    } else if let Some(input_item_id) = &input_item_id {
-        if *input_item_id != existing_line.item_id {
-            updated_item_name = Some(item.name);
-        }
+    let updated_item_name = if let Some(input_name) = input_name {
+        Some(input_name)
+    } else if item_id != existing_line.item_id {
+        Some(item_name)
+    } else {
+        None
     };
 
     let mut update_line = existing_line;
 
     if let Some(item_name) = updated_item_name {
         update_line.item_name = item_name;
+        update_line.item_code = item_code;
     }
 
     if let Some(input_item_id) = input_item_id {
