@@ -14,6 +14,7 @@ pub enum InvoiceStatus {
 pub enum InvoiceType {
     OutboundShipment,
     InboundShipment,
+    InventoryAdjustment,
 }
 
 #[derive(PartialEq, Debug)]

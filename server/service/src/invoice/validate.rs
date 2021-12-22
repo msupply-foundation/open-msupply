@@ -43,6 +43,14 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNo
             InvoiceStatus::Picked => false,
             InvoiceStatus::Verified => false,
         },
+        InvoiceRowType::InventoryAdjustment => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Shipped => false,
+            InvoiceStatus::Delivered => false,
+            InvoiceStatus::Allocated => false,
+            InvoiceStatus::Picked => false,
+            InvoiceStatus::Verified => false,
+        },
     };
 
     if is_editable {
