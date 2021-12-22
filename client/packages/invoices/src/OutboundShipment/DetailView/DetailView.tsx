@@ -42,11 +42,28 @@ const useDraftOutbound = () => {
     dispatch(OutboundAction.onSortBy(column));
   };
 
-  return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
+  const onFlattenRows = () => {
+    dispatch(OutboundAction.flattenRows());
+  };
+
+  const onGroupRows = () => {
+    dispatch(OutboundAction.groupRows());
+  };
+
+  return {
+    draft,
+    save,
+    dispatch,
+    onChangeSortBy,
+    sortBy: state.sortBy,
+    onFlattenRows,
+    onGroupRows,
+  };
 };
 
 export const DetailView: FC = () => {
-  const { draft, onChangeSortBy, save, sortBy } = useDraftOutbound();
+  const { draft, onChangeSortBy, save, sortBy, onFlattenRows, onGroupRows } =
+    useDraftOutbound();
 
   const { prefetchListByName } = useItemsList({
     initialSortBy: { key: 'name' },
@@ -112,9 +129,16 @@ export const DetailView: FC = () => {
         align: ColumnAlign.Right,
         format: ColumnFormat.Currency,
         accessor: ({ rowData }) =>
-          ((rowData.sellPricePerPack ?? 0) * (rowData.numberOfPacks ?? 0)) /
-          rowData.unitQuantity,
-        sortable: false,
+          Object.values(rowData.batches).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+            0
+          ),
+        getSortValue: row =>
+          Object.values(row.batches).reduce(
+            (sum, batch) => sum + batch.sellPricePerPack / batch.packSize,
+            0
+          ),
       },
       {
         label: 'label.line-total',
@@ -123,8 +147,15 @@ export const DetailView: FC = () => {
         align: ColumnAlign.Right,
         format: ColumnFormat.Currency,
         accessor: ({ rowData }) =>
-          (rowData.sellPricePerPack ?? 0) * (rowData.numberOfPacks ?? 0),
-        sortable: false,
+          Object.values(rowData.batches).reduce(
+            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
+            0
+          ),
+        getSortValue: row =>
+          Object.values(row.batches).reduce(
+            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
+            0
+          ),
       },
       getRowExpandColumn<OutboundShipmentSummaryItem>(),
       GenericColumnKey.Selection,
@@ -175,6 +206,8 @@ export const DetailView: FC = () => {
         columns={columns}
         data={draft.items}
         onRowClick={onRowClick}
+        onFlattenRows={onFlattenRows}
+        onGroupRows={onGroupRows}
       />
 
       <Footer draft={draft} save={save} />
