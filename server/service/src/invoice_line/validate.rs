@@ -92,6 +92,19 @@ pub fn check_line_exists(
         Err(error) => Err(WithDBError::db(error)),
     }
 }
+// TODO use this one instead of check_line_exists
+pub fn check_line_exists_option(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<InvoiceLineRow>, RepositoryError> {
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
+
+    match result {
+        Ok(line) => Ok(Some(line)),
+        Err(RepositoryError::NotFound) => Ok(None),
+        Err(error) => Err(error),
+    }
+}
 
 pub struct NotInvoiceLine(pub String);
 
