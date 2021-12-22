@@ -88,7 +88,7 @@ fn validate(
         return Err(OutError::CanOnlyAddLinesToNewOutboundShipment);
     }
 
-    if !check_unallocated_line_does_not_exist(connection, &input.item_id)? {
+    if !check_unallocated_line_does_not_exist(connection, &input.item_id, &invoice_row.id)? {
         return Err(OutError::UnallocatedLineForItemAlreadyExistsInInvoice);
     }
 
@@ -133,10 +133,12 @@ fn generate(
 pub fn check_unallocated_line_does_not_exist(
     connection: &StorageConnection,
     item_id: &str,
+    invoice_id: &str,
 ) -> Result<bool, RepositoryError> {
     let count = InvoiceLineRepository::new(connection).count(Some(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to(&item_id))
+            .item_id(EqualFilter::equal_to(item_id))
+            .invoice_id(EqualFilter::equal_to(invoice_id))
             .r#type(EqualFilter {
                 equal_to: Some(InvoiceLineRowType::UnallocatedStock),
                 not_equal_to: None,
@@ -155,16 +157,15 @@ impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
 
 #[cfg(test)]
 mod test_insert {
-
-    use domain::EqualFilter;
     use repository::{
         mock::{
             mock_allocated_invoice, mock_inbound_shipment_a, mock_item_service_item,
-            mock_new_invoice_with_unallocated_line, mock_unallocated_line, MockDataInserts,
+            mock_new_invoice_with_unallocated_line, mock_unallocated_line, mock_unallocated_line2,
+            MockDataInserts,
         },
-        schema::{InvoiceLineRow, InvoiceLineRowType, ItemRowType},
+        schema::{InvoiceLineRow, InvoiceLineRowType},
         test_db::setup_all,
-        InvoiceLineRowRepository, ItemFilter, ItemQueryRepository,
+        InvoiceLineRowRepository, ItemRepository,
     };
 
     use crate::{
@@ -298,18 +299,8 @@ mod test_insert {
 
         // Succesfull insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
-        let item = ItemQueryRepository::new(&connection)
-            .query_by_filter(
-                ItemFilter::new()
-                    .id(EqualFilter::not_equal_to(&mock_unallocated_line().item_id))
-                    .r#type(EqualFilter {
-                        equal_to: Some(ItemRowType::Stock),
-                        not_equal_to: None,
-                        equal_any: None,
-                    }),
-            )
-            .unwrap()
-            .pop()
+        let item = ItemRepository::new(&connection)
+            .find_one_by_id(&mock_unallocated_line2().item_id)
             .unwrap();
 
         let result = service
