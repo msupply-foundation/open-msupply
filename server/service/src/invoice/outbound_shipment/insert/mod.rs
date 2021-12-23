@@ -1,5 +1,5 @@
 use domain::{name::Name, outbound_shipment::InsertOutboundShipment};
-use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError};
+use repository::{InvoiceRepository, RepositoryError, StorageConnection, TransactionError};
 
 pub mod generate;
 pub mod validate;
@@ -7,6 +7,7 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+#[derive(Debug)]
 pub enum InsertOutboundShipmentError {
     OtherPartyCannotBeThisStore,
     OtherPartyIdNotFound(String),
@@ -37,11 +38,9 @@ impl From<TransactionError<InsertOutboundShipmentError>> for InsertOutboundShipm
 
 /// Insert a new outbound shipment and returns the invoice id when successful.
 pub fn insert_outbound_shipment(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     input: InsertOutboundShipment,
 ) -> Result<String, InsertOutboundShipmentError> {
-    let connection = connection_manager.connection()?;
-
     let new_invoice_id = connection.transaction_sync(|connection| {
         validate(&input, &connection)?;
         let new_invoice = generate(input, connection)?;

@@ -2,7 +2,7 @@ use crate::WithDBError;
 use domain::{inbound_shipment::UpdateInboundShipment, name::Name};
 use repository::{
     InvoiceLineRowRepository, InvoiceRepository, RepositoryError, StockLineRowRepository,
-    StorageConnectionManager, TransactionError,
+    StorageConnection, TransactionError,
 };
 
 mod generate;
@@ -14,10 +14,9 @@ use validate::validate;
 use self::generate::LineAndStockLine;
 
 pub fn update_inbound_shipment(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     patch: UpdateInboundShipment,
 ) -> Result<String, UpdateInboundShipmentError> {
-    let connection = connection_manager.connection()?;
     let update_invoice = connection
         .transaction_sync(|connection| {
             let invoice = validate(&patch, &connection)?;
@@ -48,6 +47,7 @@ pub fn update_inbound_shipment(
     Ok(update_invoice.id)
 }
 
+#[derive(Debug)]
 pub enum UpdateInboundShipmentError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),

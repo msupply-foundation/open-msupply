@@ -58,7 +58,7 @@ impl Queries {
         refresh_token(ctx)
     }
 
-    pub async fn me(&self, ctx: &Context<'_>) -> UserResponse {
+    pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse, StandardGraphqlError> {
         me(ctx)
     }
 

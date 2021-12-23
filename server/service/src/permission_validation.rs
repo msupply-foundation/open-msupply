@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
-use repository::StorageConnection;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     auth_data::AuthData,
-    permissions::{ApiRole, PermissionService, StoreRole, UserPermissions},
+    permissions::{ApiRole, PermissionServiceTrait, StoreRole, UserPermissions},
+    service_provider::ServiceContext,
     token::{JWTValidationError, OmSupplyClaim, TokenService},
 };
 
@@ -20,12 +19,27 @@ pub enum PermissionDSL {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
+    DeleteStockTakeLine,
 }
 
-/// TODO use lasy_static! ?
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
-    map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+    // The purpose of the following match is to enforce every resource type is handled, i.e. that we
+    // don't forget to add permissions for a resource. Better way to do it?
+    match Resource::RouteMe {
+        Resource::RouteMe => {
+            map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+        }
+        Resource::DeleteStockTakeLine => {
+            map.insert(
+                Resource::DeleteStockTakeLine,
+                PermissionDSL::And(vec![
+                    PermissionDSL::HasApiRole(ApiRole::User),
+                    PermissionDSL::HasStoreAccess(StoreRole::User),
+                ]),
+            );
+        }
+    }
     map
 }
 
@@ -136,6 +150,10 @@ fn validate_resource_permissions(
             }
         }
         PermissionDSL::HasStoreAccess(store_role) => {
+            // give admin users access to any store
+            if !user_permissions.api.contains(&ApiRole::Admin) {
+                return Ok(());
+            }
             let store_id = match &resource_request.store_id {
                 Some(id) => id,
                 None => return Err("Store id not specified in request".to_string()),
@@ -176,28 +194,40 @@ fn validate_resource_permissions(
     })
 }
 
-pub struct ValidationService<'a> {
-    _connection: &'a StorageConnection,
+pub trait ValidationServiceTrait: Send + Sync {
+    fn validate(
+        &self,
+        ctx: &ServiceContext,
+        auth_data: &AuthData,
+        auth_token: &Option<String>,
+        resource_request: &ResourceAccessRequest,
+    ) -> Result<ValidatedUser, ValidationError>;
+}
+
+pub struct ValidationService {
+    pub permission_service: Arc<dyn PermissionServiceTrait>,
     pub permissions: HashMap<Resource, PermissionDSL>,
 }
 
-impl<'a> ValidationService<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+impl ValidationService {
+    pub fn new(permission_service: Arc<dyn PermissionServiceTrait>) -> Self {
         ValidationService {
-            _connection: connection,
+            permission_service,
             permissions: all_permissions(),
         }
     }
+}
 
-    pub fn validate(
+impl ValidationServiceTrait for ValidationService {
+    fn validate(
         &self,
+        _: &ServiceContext,
         auth_data: &AuthData,
         auth_token: &Option<String>,
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, ValidationError> {
         let validated_auth = validate_auth(auth_data, auth_token)?;
-        let permission_service = PermissionService::new();
-        let permissions = permission_service.permissions(&validated_auth.user_id);
+        let permissions = self.permission_service.permissions(&validated_auth.user_id);
 
         let resource_permissions = self.permissions.get(&resource_request.resource).ok_or(
             ValidationError::InternalError(format!(
@@ -233,7 +263,10 @@ mod permission_validation_test {
     use std::sync::RwLock;
 
     use super::*;
-    use crate::{auth_data::AuthData, token_bucket::TokenBucket};
+    use crate::{
+        auth_data::AuthData, permissions::PermissionService, service_provider::ServiceProvider,
+        token_bucket::TokenBucket,
+    };
     use repository::{get_storage_connection_manager, test_db};
 
     #[actix_rt::test]
@@ -255,8 +288,15 @@ mod permission_validation_test {
             test_db::get_test_db_settings("omsupply-database-basic_permission_validation");
         test_db::setup(&settings).await;
         let connection_manager = get_storage_connection_manager(&settings);
-        let con = connection_manager.connection().unwrap();
-        let mut service = ValidationService::new(&con);
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+
+        let mut service = ValidationService::new(Arc::new(PermissionService {
+            user_permissions: UserPermissions {
+                api: vec![ApiRole::User],
+                stores: HashMap::new(),
+            },
+        }));
         service.permissions.clear();
         service
             .permissions
@@ -268,6 +308,7 @@ mod permission_validation_test {
         // validate user doesn't has Admin access
         assert!(service
             .validate(
+                &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
                 &resource_access_request
@@ -280,6 +321,7 @@ mod permission_validation_test {
             .insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
         service
             .validate(
+                &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
                 &resource_access_request,

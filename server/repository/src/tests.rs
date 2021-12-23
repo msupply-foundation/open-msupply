@@ -571,7 +571,7 @@ mod repository_test {
         let repo = StoreRowRepository::new(&connection);
         let store_1 = data::store_1();
         repo.insert_one(&store_1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap().unwrap();
         assert_eq!(store_1, loaded_item);
     }
 

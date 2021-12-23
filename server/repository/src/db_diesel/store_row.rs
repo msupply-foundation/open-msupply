@@ -42,11 +42,12 @@ impl<'a> StoreRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, store_id: &str) -> Result<StoreRow, RepositoryError> {
+    pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         use crate::schema::diesel_schema::store::dsl::*;
         let result = store
             .filter(id.eq(store_id))
-            .first(&self.connection.connection)?;
+            .first(&self.connection.connection)
+            .optional()?;
         Ok(result)
     }
 
