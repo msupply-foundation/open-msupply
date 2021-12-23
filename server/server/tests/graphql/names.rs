@@ -5,7 +5,7 @@ mod graphql {
         {
             mock::{mock_name_store_joins, mock_names, mock_stores},
             schema::{NameRow, NameStoreJoinRow, StoreRow},
-            NameRepository, NameStoreJoinRepository, StoreRepository,
+            NameRepository, NameStoreJoinRepository, StoreRowRepository,
         },
     };
     use serde_json::json;
@@ -20,7 +20,7 @@ mod graphql {
 
         // setup
         let name_repository = NameRepository::new(&connection);
-        let store_repository = StoreRepository::new(&connection);
+        let store_repository = StoreRowRepository::new(&connection);
         let name_store_repository = NameStoreJoinRepository::new(&connection);
         let mut mock_names: Vec<NameRow> = mock_names();
         mock_names.sort_by(|a, b| a.id.cmp(&b.id));

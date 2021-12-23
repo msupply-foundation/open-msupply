@@ -42,9 +42,9 @@ pub enum DatabaseRow {
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use central_sync_cursor::CentralSyncCursorRow;
 pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
-pub use invoice_line::InvoiceLineRow;
+pub use invoice_line::{InvoiceLineRow, InvoiceLineRowType};
 pub use invoice_stats::InvoiceStatsRow;
-pub use item::{ItemRow, ItemType};
+pub use item::{ItemRow, ItemRowType};
 pub use item_is_visible::ItemIsVisibleRow;
 pub use location::LocationRow;
 pub use master_list::MasterListRow;

@@ -1,11 +1,48 @@
-use super::StorageConnection;
+use domain::{Pagination, SimpleStringFilter, Sort};
 
-use crate::{repository_error::RepositoryError, schema::StoreRow};
+use crate::{
+    diesel_macros::apply_simple_string_filter,
+    schema::{
+        diesel_schema::{store, store::dsl as store_dsl},
+        StoreRow,
+    },
+    DBType, RepositoryError, StorageConnection,
+};
 
-use diesel::prelude::*;
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub struct StoreRepository<'a> {
     connection: &'a StorageConnection,
+}
+
+#[derive(Debug, Clone)]
+pub struct StoreFilter {
+    pub id: Option<SimpleStringFilter>,
+}
+
+impl StoreFilter {
+    pub fn new() -> StoreFilter {
+        StoreFilter { id: None }
+    }
+
+    pub fn id(mut self, filter: SimpleStringFilter) -> Self {
+        self.id = Some(filter);
+        self
+    }
+}
+
+pub type StoreSort = Sort<()>;
+
+type BoxedStoreQuery = IntoBoxed<'static, store::table, DBType>;
+
+fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
+    let mut query = store_dsl::store.into_boxed();
+
+    if let Some(f) = filter {
+        apply_simple_string_filter!(query, f.id, store_dsl::id);
+    }
+
+    query
 }
 
 impl<'a> StoreRepository<'a> {
@@ -13,55 +50,29 @@ impl<'a> StoreRepository<'a> {
         StoreRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::store::dsl::*;
-        diesel::insert_into(store)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
+    pub fn count(&self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter);
+        Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::store::dsl::*;
-        diesel::replace_into(store)
-            .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
+    pub fn query_by_filter(&self, filter: StoreFilter) -> Result<Vec<StoreRow>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::store::dsl::*;
-        diesel::insert_into(store)
-            .values(store_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<StoreFilter>,
+        _: Option<StoreSort>,
+    ) -> Result<Vec<StoreRow>, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
 
-    pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
-        use crate::schema::diesel_schema::store::dsl::*;
-        let result = store
-            .filter(id.eq(store_id))
-            .first(&self.connection.connection)
-            .optional()?;
-        Ok(result)
-    }
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<StoreRow>(&self.connection.connection)?;
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
-        use crate::schema::diesel_schema::store::dsl::*;
-        let result = store
-            .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
-        Ok(result)
-    }
-
-    pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {
-        use crate::schema::diesel_schema::store::dsl::*;
-        let result = store.load(&self.connection.connection)?;
         Ok(result)
     }
 }

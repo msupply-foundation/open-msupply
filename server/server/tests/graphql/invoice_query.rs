@@ -3,9 +3,20 @@ mod graphql {
     use domain::invoice::InvoiceStatus;
     use server::test_utils::setup_all;
 
-    use graphql::schema::types::InvoiceNodeStatus;
-    use repository::mock::MockDataInserts;
+    use graphql::schema::types::{InvoiceLineNodeType, InvoiceNodeStatus};
+    use repository::{mock::MockDataInserts, schema::InvoiceLineRowType};
     use serde_json::json;
+
+    // TODO remove when node will use database row vs domain
+    pub fn from_row_to_graphql_type(r#type: &InvoiceLineRowType) -> InvoiceLineNodeType {
+        use InvoiceLineNodeType::*;
+        match r#type {
+            InvoiceLineRowType::StockIn => StockIn,
+            InvoiceLineRowType::StockOut => StockOut,
+            InvoiceLineRowType::UnallocatedStock => UnallocatedStock,
+            InvoiceLineRowType::Service => Service,
+        }
+    }
 
     #[actix_rt::test]
     async fn test_graphql_invoice_query() {
@@ -31,6 +42,7 @@ mod graphql {
                             ... on InvoiceLineConnector {
                                 nodes {
                                     id
+                                    type
                                     stockLine {
                                         ... on StockLineNode {
                                             availableNumberOfPacks
@@ -58,8 +70,9 @@ mod graphql {
                         .iter()
                         .map(|line_and_stock| json!({
                             "id": line_and_stock.line.id,
+                            "type": from_row_to_graphql_type(&line_and_stock.line.r#type),
                             "stockLine": {
-                                "availableNumberOfPacks": line_and_stock.stock_line.available_number_of_packs
+                                "availableNumberOfPacks": line_and_stock.stock_line.available_number_of_packs,
                             }
                         })).collect::<Vec<serde_json::Value>>(),
                 },

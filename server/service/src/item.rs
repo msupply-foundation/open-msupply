@@ -1,8 +1,8 @@
 use domain::{
-    item::{Item, ItemFilter, ItemSort},
+    item::{Item, ItemSort},
     PaginationOption,
 };
-use repository::{ItemQueryRepository, StorageConnectionManager};
+use repository::{ItemFilter, ItemQueryRepository, StorageConnectionManager};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 

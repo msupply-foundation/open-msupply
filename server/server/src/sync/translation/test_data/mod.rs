@@ -13,7 +13,7 @@ use repository::{
     },
     ItemRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
     MasterListRowRepository, NameRepository, RepositoryError, StorageConnectionManager,
-    StoreRepository, UnitRowRepository,
+    StoreRowRepository, UnitRowRepository,
 };
 
 #[allow(dead_code)]
@@ -73,7 +73,7 @@ pub async fn check_records_against_database(
         match record.translated_record {
             TestSyncDataRecord::Store(comparison_record) => {
                 assert_eq!(
-                    StoreRepository::new(&connection)
+                    StoreRowRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .unwrap(),
                     comparison_record

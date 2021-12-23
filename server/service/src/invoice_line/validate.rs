@@ -19,6 +19,20 @@ pub fn check_line_does_not_exists(
     }
 }
 
+// TODO use this one instead of check_line_does_not_exists
+pub fn check_line_does_not_exists_new(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<bool, RepositoryError> {
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
+
+    match result {
+        Err(RepositoryError::NotFound) => Ok(true),
+        Err(error) => Err(error),
+        Ok(_) => Ok(false),
+    }
+}
+
 pub struct NumberOfPacksBelowOne;
 
 pub fn check_number_of_packs(
@@ -50,6 +64,20 @@ pub fn check_item(
     }
 }
 
+// TODO use this one instead of check_item
+pub fn check_item_exists_option(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<ItemRow>, RepositoryError> {
+    let result = ItemRepository::new(connection).find_one_by_id(id);
+
+    match result {
+        Ok(item) => Ok(Some(item)),
+        Err(RepositoryError::NotFound) => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
 pub struct LineDoesNotExist;
 
 pub fn check_line_exists(
@@ -62,6 +90,19 @@ pub fn check_line_exists(
         Ok(line) => Ok(line),
         Err(RepositoryError::NotFound) => Err(WithDBError::err(LineDoesNotExist)),
         Err(error) => Err(WithDBError::db(error)),
+    }
+}
+// TODO use this one instead of check_line_exists
+pub fn check_line_exists_option(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<InvoiceLineRow>, RepositoryError> {
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
+
+    match result {
+        Ok(line) => Ok(Some(line)),
+        Err(RepositoryError::NotFound) => Ok(None),
+        Err(error) => Err(error),
     }
 }
 

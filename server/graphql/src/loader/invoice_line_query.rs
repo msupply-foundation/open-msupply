@@ -1,10 +1,7 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use domain::{
-    invoice_line::{InvoiceLine, InvoiceLineFilter},
-    EqualFilter,
-};
-use repository::{InvoiceLineRepository, StorageConnectionManager};
+use domain::{invoice_line::InvoiceLine, EqualFilter};
+use repository::{InvoiceLineFilter, InvoiceLineRepository, StorageConnectionManager};
 use std::collections::HashMap;
 
 use service::ListError;

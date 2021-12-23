@@ -1,6 +1,9 @@
 use async_graphql::ErrorExtensions;
 use repository::RepositoryError;
-use service::permission_validation::{ValidationDeniedKind, ValidationError};
+use service::{
+    permission_validation::{ValidationDeniedKind, ValidationError},
+    ListError,
+};
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
@@ -51,6 +54,16 @@ impl From<ValidationError> for StandardGraphqlError {
                 }
             },
             ValidationError::InternalError(err) => StandardGraphqlError::InternalError(err),
+        }
+    }
+}
+
+impl From<ListError> for StandardGraphqlError {
+    fn from(err: ListError) -> Self {
+        match err {
+            ListError::DatabaseError(err) => err.into(),
+            ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
+            ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
         }
     }
 }

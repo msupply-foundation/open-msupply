@@ -1,4 +1,4 @@
-use repository::{RepositoryError, StorageConnection, StoreRepository};
+use repository::{RepositoryError, StorageConnection, StoreRowRepository};
 
 use crate::current_store_id;
 
@@ -17,7 +17,7 @@ pub fn check_store_exists(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<bool, RepositoryError> {
-    Ok(StoreRepository::new(&connection)
+    Ok(StoreRowRepository::new(&connection)
         .find_one_by_id(store_id)?
         .is_some())
 }
