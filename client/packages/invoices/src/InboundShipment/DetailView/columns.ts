@@ -15,16 +15,21 @@ export const useInboundShipmentColumns = (): Column<
 >[] =>
   useColumns<InvoiceLine | InboundShipmentItem>(
     [
-      {
-        ...getNotePopoverColumn(),
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            return rowData.lines[0].note;
-          } else {
-            return rowData.note;
-          }
+      [
+        getNotePopoverColumn(),
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              return rowData.lines.map(({ batch, note }) => ({
+                header: batch ?? '',
+                body: note ?? '',
+              }));
+            } else {
+              return { header: rowData.batch ?? '', body: rowData.note ?? '' };
+            }
+          },
         },
-      },
+      ],
       [
         'itemCode',
         {

@@ -453,10 +453,11 @@ const createStockLines = (items: Item[]) => {
             costPricePerPack,
             sellPricePerPack,
             onHold: faker.datatype.number(10) < 2,
-            note:
-              faker.datatype.number(10) < 4
-                ? faker.commerce.productDescription()
-                : null,
+            note: faker.commerce.productDescription(),
+            // note:
+            //   faker.datatype.number(10) < 4
+            //     ? faker.commerce.productDescription()
+            //     : null,
           };
 
           return stockLine;
