@@ -25,6 +25,7 @@ const resolvers = {
     ...Schema.Statistics.QueryResolvers,
     ...Schema.Requisition.QueryResolvers,
     ...Schema.Stocktake.QueryResolvers,
+    ...Schema.Location.QueryResolvers,
   },
   Mutations: {
     ...Schema.Invoice.MutationResolvers,
