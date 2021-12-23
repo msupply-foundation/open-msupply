@@ -6,12 +6,12 @@ import { BookIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
 const Template: ComponentStory<typeof ButtonWithIcon> = () => {
-  const t = useTranslation('common');
+  const t = useTranslation('app');
   return (
     <Box>
       <ButtonWithIcon
         Icon={<BookIcon />}
-        label={t('button.docs')}
+        label={t('docs')}
         onClick={() => {
           alert('clicked');
         }}

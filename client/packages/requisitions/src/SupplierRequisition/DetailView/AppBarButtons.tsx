@@ -1,14 +1,12 @@
 import React, { FC } from 'react';
 import {
   AppBarButtonsPortal,
-  BookIcon,
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ExternalURL } from '@openmsupply-client/config';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
@@ -30,11 +28,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
-        />
-        <ButtonWithIcon
-          Icon={<BookIcon />}
-          label={t('button.docs')}
-          onClick={() => (location.href = ExternalURL.PublicDocs)}
         />
         {OpenButton}
       </Grid>
