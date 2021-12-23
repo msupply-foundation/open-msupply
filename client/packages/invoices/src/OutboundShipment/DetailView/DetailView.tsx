@@ -109,10 +109,21 @@ export const DetailView: FC = () => {
 
   const columns = useColumns(
     [
-      {
-        ...getNotePopoverColumn<OutboundShipmentSummaryItem>(),
-        accessor: () => '',
-      },
+      [
+        getNotePopoverColumn<OutboundShipmentSummaryItem>(),
+        {
+          accessor: ({ rowData }) => {
+            const batches = Object.values(rowData.batches);
+            const noteSections = batches
+              .map(({ batch, note }) => ({
+                header: batch ?? '',
+                body: note ?? '',
+              }))
+              .filter(({ body }) => !!body);
+            return noteSections.length ? noteSections : null;
+          },
+        },
+      ],
       'itemCode',
       'itemName',
       'batch',

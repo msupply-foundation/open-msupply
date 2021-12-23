@@ -50,8 +50,8 @@ export const usePopover = (): UsePopoverControl => {
         left: e.clientX,
         bottom: e.clientY,
         right: e.clientX,
-        width: 0,
-        height: 0,
+        width: 25,
+        height: 25,
       } as DOMRect);
 
     setAnchorElCallback.current?.({ getBoundingClientRect });
