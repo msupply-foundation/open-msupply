@@ -297,10 +297,11 @@ mod test_insert {
         let context = service_provider.context().unwrap();
         let service = service_provider.outbound_shipment_line;
 
-        // Succesfull insert
+        // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
         let item = ItemRepository::new(&connection)
             .find_one_by_id(&mock_unallocated_line2().item_id)
+            .unwrap()
             .unwrap();
 
         let result = service
