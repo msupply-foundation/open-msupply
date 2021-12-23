@@ -213,6 +213,7 @@ export const AppDrawer: React.FC = () => {
             to={ExternalURL.PublicDocs}
             icon={<BookIcon fontSize="small" color="primary" />}
             text={t('docs')}
+            trustedSite={true}
           />
           <AppNavLink
             to={AppRoute.Admin}

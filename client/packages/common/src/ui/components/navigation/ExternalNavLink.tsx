@@ -33,14 +33,17 @@ export interface ExternalNavLinkProps {
   icon?: JSX.Element;
   text?: string;
   to: string;
+  trustedSite?: boolean; // only set this if you trust the destination site, eg is a site which you control
 }
 
 export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
-  const { icon = <span style={{ width: 2 }} />, text, to } = props;
+  const { icon = <span style={{ width: 2 }} />, text, to, trustedSite } = props;
 
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) => (
+        // rel should be set to 'noreferrer' when target="_blank", due to a security risk in older browsers
+        // eslint-disable-next-line react/jsx-no-target-blank
         <a
           {...linkProps}
           ref={ref}
@@ -48,6 +51,8 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
           role="link"
           aria-label={text}
           title={text}
+          target="_blank"
+          rel={trustedSite ? 'noopener' : 'noreferrer'}
         />
       )),
     [to]
