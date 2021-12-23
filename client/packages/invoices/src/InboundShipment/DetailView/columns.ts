@@ -20,12 +20,18 @@ export const useInboundShipmentColumns = (): Column<
         {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              return rowData.lines.map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }));
+              const noteSections = rowData.lines
+                .map(({ batch, note }) => ({
+                  header: batch ?? '',
+                  body: note ?? '',
+                }))
+                .filter(({ body }) => !!body);
+
+              return noteSections.length ? noteSections : null;
             } else {
-              return { header: rowData.batch ?? '', body: rowData.note ?? '' };
+              return rowData.note
+                ? { header: rowData.batch ?? '', body: rowData.note }
+                : null;
             }
           },
         },

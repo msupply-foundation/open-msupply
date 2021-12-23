@@ -114,11 +114,13 @@ export const DetailView: FC = () => {
         {
           accessor: ({ rowData }) => {
             const batches = Object.values(rowData.batches);
-
-            return batches.map(({ batch, note }) => ({
-              header: batch ?? '',
-              body: note ?? '',
-            }));
+            const noteSections = batches
+              .map(({ batch, note }) => ({
+                header: batch ?? '',
+                body: note ?? '',
+              }))
+              .filter(({ body }) => !!body);
+            return noteSections.length ? noteSections : null;
           },
         },
       ],
