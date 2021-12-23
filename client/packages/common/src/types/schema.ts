@@ -31,7 +31,7 @@ export type Scalars = {
   NaiveDate: string;
 };
 
-export type AccessDenied = LogoutErrorInterface & UserErrorInterface & {
+export type AccessDenied = LogoutErrorInterface & {
   __typename?: 'AccessDenied';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -206,7 +206,7 @@ export enum CustomerRequisitionNodeStatus {
   New = 'NEW'
 }
 
-export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
+export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -370,6 +370,12 @@ export type DeleteResponse = {
   __typename?: 'DeleteResponse';
   id: Scalars['String'];
 };
+
+export type DeleteStockTakeLineInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteStockTakeLineResponse = DeleteResponse;
 
 export type DeleteStocktakeInput = {
   id: Scalars['String'];
@@ -771,7 +777,7 @@ export type InsertSupplierRequisitionResponseWithId = {
   response?: Maybe<InsertSupplierRequisitionResponse>;
 };
 
-export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserErrorInterface & UserRegisterErrorInterface & {
+export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
   __typename?: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -1201,6 +1207,7 @@ export type Mutations = {
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
+  deleteStockTakeLine: DeleteStockTakeLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
   deleteSupplierRequisitionLine: DeleteSupplierRequisitionLineResponse;
@@ -1320,6 +1327,12 @@ export type MutationsDeleteOutboundShipmentLineArgs = {
 
 export type MutationsDeleteOutboundShipmentServiceLineArgs = {
   input: DeleteOutboundShipmentServiceLineInput;
+};
+
+
+export type MutationsDeleteStockTakeLineArgs = {
+  input: DeleteStockTakeLineInput;
+  storeId?: Maybe<Scalars['String']>;
 };
 
 
@@ -1617,6 +1630,7 @@ export type Queries = {
   stockCounts: StockCounts;
   stocktake: StocktakeResponse;
   stocktakes: StocktakesResponse;
+  stores: StoresResponse;
 };
 
 
@@ -1694,6 +1708,12 @@ export type QueriesStocktakeArgs = {
 
 export type QueriesStocktakesArgs = {
   params?: Maybe<StocktakeListParameters>;
+};
+
+
+export type QueriesStoresArgs = {
+  filter?: Maybe<StoreFilterInput>;
+  page?: Maybe<PaginationInput>;
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -1970,6 +1990,24 @@ export type StocktakeSortInput = {
 };
 
 export type StocktakesResponse = NodeError | StocktakeConnector;
+
+export type StoreConnector = {
+  __typename?: 'StoreConnector';
+  nodes: Array<StoreNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StoreFilterInput = {
+  id?: Maybe<SimpleStringFilterInput>;
+};
+
+export type StoreNode = {
+  __typename?: 'StoreNode';
+  code: Scalars['String'];
+  id: Scalars['String'];
+};
+
+export type StoresResponse = StoreConnector;
 
 export enum SupplierRequisitionNodeStatus {
   Draft = 'DRAFT',
@@ -2323,16 +2361,6 @@ export type User = {
   userId: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
-export type UserError = {
-  __typename?: 'UserError';
-  error: UserErrorInterface;
-};
-
-export type UserErrorInterface = {
-  description: Scalars['String'];
-};
-
 export type UserNameDoesNotExist = AuthTokenErrorInterface & {
   __typename?: 'UserNameDoesNotExist';
   description: Scalars['String'];
@@ -2356,7 +2384,7 @@ export type UserRegisterInput = {
 
 export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
-export type UserResponse = User | UserError;
+export type UserResponse = User;
 
 export type InvoiceQueryVariables = Exact<{
   id: Scalars['String'];
@@ -2615,6 +2643,11 @@ export type InsertInboundShipmentMutationVariables = Exact<{
 
 
 export type InsertInboundShipmentMutation = { __typename?: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+
+export type LocationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LocationsQuery = { __typename?: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
 
 
 export const InvoiceDocument = gql`
@@ -3714,6 +3747,45 @@ export const InsertInboundShipmentDocument = gql`
   }
 }
     `;
+export const LocationsDocument = gql`
+    query locations {
+  locations {
+    __typename
+    ... on LocationConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        name
+        onHold
+        code
+      }
+      totalCount
+    }
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -3817,6 +3889,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertInboundShipment(variables: InsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertInboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundShipmentMutation>(InsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundShipment');
+    },
+    locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
     }
   };
 }
@@ -4363,5 +4438,21 @@ export const mockDeleteInboundShipmentsMutation = (resolver: ResponseResolver<Gr
 export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertInboundShipmentMutationVariables>, GraphQLContext<InsertInboundShipmentMutation>, any>) =>
   graphql.mutation<InsertInboundShipmentMutation, InsertInboundShipmentMutationVariables>(
     'insertInboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLocationsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ locations })
+ *   )
+ * })
+ */
+export const mockLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<LocationsQueryVariables>, GraphQLContext<LocationsQuery>, any>) =>
+  graphql.query<LocationsQuery, LocationsQueryVariables>(
+    'locations',
     resolver
   )
