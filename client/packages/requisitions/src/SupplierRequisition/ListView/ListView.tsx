@@ -48,7 +48,7 @@ export const SupplierRequisitionListView: FC = () => {
 
   const columns = useColumns<RequisitionRow>(
     [
-      { ...getNameAndColorColumn(), setter: onUpdate },
+      [getNameAndColorColumn(), { setter: onUpdate }],
       {
         key: 'requisitionNumber',
         label: 'label.number',

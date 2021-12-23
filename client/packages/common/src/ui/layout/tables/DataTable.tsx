@@ -6,8 +6,6 @@ import {
   CircularProgress,
   TableBody,
   TableHead,
-  TableFooter,
-  TableRow,
   TableContainer,
   Table as MuiTable,
   Typography,
@@ -118,29 +116,28 @@ export const DataTable = <T extends DomainObject>({
             );
           })}
         </TableBody>
-        <TableFooter
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'sticky',
-            insetBlockEnd: 0,
-            backgroundColor: 'white',
-          }}
-        >
-          <TableRow>
-            {pagination && onChangePage && (
-              <PaginationRow
-                page={pagination.page}
-                offset={pagination.offset}
-                first={pagination.first}
-                total={pagination.total ?? 0}
-                onChange={onChangePage}
-              />
-            )}
-          </TableRow>
-        </TableFooter>
       </MuiTable>
+      <Box
+        sx={{
+          flex: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'sticky',
+          insetBlockEnd: 0,
+          backgroundColor: 'white',
+          justifyContent: 'flex-end',
+        }}
+      >
+        {pagination && onChangePage && (
+          <PaginationRow
+            page={pagination.page}
+            offset={pagination.offset}
+            first={pagination.first}
+            total={pagination.total ?? 0}
+            onChange={onChangePage}
+          />
+        )}
+      </Box>
     </TableContainer>
   );
 };

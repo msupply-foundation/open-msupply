@@ -20,7 +20,7 @@ import {
  */
 
 export interface InvoiceLine
-  extends Omit<InvoiceLineNode, 'item'>,
+  extends Omit<InvoiceLineNode, 'item' | 'type'>,
     DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
@@ -37,7 +37,7 @@ export interface InvoiceRow
       | 'otherPartyId'
       | 'otherPartyName'
       | 'status'
-      // | 'color'
+      | 'color'
       | 'theirReference'
       | 'type'
     >,

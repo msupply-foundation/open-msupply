@@ -34,6 +34,7 @@ import {
   StocktakeNodeStatus,
   RequisitionNodeType,
   SupplierRequisitionNodeStatus,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common/src/types/schema';
 
 const units = [
@@ -295,7 +296,7 @@ export const createInvoice = (
       totalBeforeTax: 0,
     },
 
-    // color: 'grey',
+    color: '#8f90a6',
     comment: takeRandomElementFrom(comments),
     onHold: false,
 
@@ -485,7 +486,10 @@ const createInvoiceLine = (
     stockLineId: stockLine.id,
     locationName: stockLine.locationName,
     location: stockLine.location,
-
+    type:
+      invoice.type === InvoiceNodeType.InboundShipment
+        ? InvoiceLineNodeType.StockIn
+        : InvoiceLineNodeType.StockOut,
     batch: stockLine.batch ?? '',
     expiryDate: stockLine.expiryDate as string,
 

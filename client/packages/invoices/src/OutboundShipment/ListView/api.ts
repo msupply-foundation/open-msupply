@@ -7,7 +7,6 @@ import {
   InvoicesQueryVariables,
   InvoicePriceResponse,
   OmSupplyApi,
-  UpdateOutboundShipmentStatusInput,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceRow } from '../../types';
 
@@ -99,12 +98,7 @@ const invoiceToInput = (
 ): UpdateOutboundShipmentInput => {
   return {
     id: patch.id,
-    // color: patch.color,
-    comment: patch.comment,
-    status: patch.status as unknown as UpdateOutboundShipmentStatusInput,
-    onHold: patch.onHold,
-    otherPartyId: patch.otherParty?.id,
-    theirReference: patch.theirReference,
+    color: patch.color,
   };
 };
 
