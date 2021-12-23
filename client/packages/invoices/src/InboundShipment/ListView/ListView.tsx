@@ -14,7 +14,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
-import { NameSearchModal } from '@openmsupply-client/system/src/Name';
+import { NameSearchModal } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { InvoiceRow } from '../../types';
@@ -24,7 +24,6 @@ export const InboundListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const { api } = useOmSupplyApi();
-
   const {
     totalCount,
     data,

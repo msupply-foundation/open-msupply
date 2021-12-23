@@ -41,8 +41,10 @@ import {
   RequisitionLine,
   Stocktake,
   StocktakeLine,
+  Location,
 } from './types';
 import {
+  LocationData,
   InvoiceData,
   InvoiceLineData,
   ItemData,
@@ -76,6 +78,23 @@ export const invoice = {
       ({
         ...InvoiceData.find(getFilter(invoiceNumber, 'invoiceNumber')),
       } as Invoice),
+  },
+};
+
+export const location = {
+  get: {
+    byId: (id: string): Location => {
+      const location = LocationData.find(getFilter(id, 'id'));
+
+      if (!location) {
+        throw new Error(`Location with id ${id} not found`);
+      }
+
+      return location;
+    },
+    all: (): Location[] => {
+      return LocationData;
+    },
   },
 };
 
@@ -546,6 +565,7 @@ export const insert = {
       expiryDate: invoiceLine?.expiryDate ?? '',
       type: InvoiceLineNodeType.StockIn,
       batch: '',
+      locationId: '',
       stockLineId: '',
       packSize: invoiceLine.packSize ?? 1,
       costPricePerPack: invoiceLine?.costPricePerPack ?? 0,
@@ -571,6 +591,7 @@ export const insert = {
       itemId: item.id,
       expiryDate: stockLine?.expiryDate ?? '',
       batch: '',
+      locationId: '',
       stockLineId: stockLine?.id ?? '',
       packSize: stockLine?.packSize ?? 1,
       costPricePerPack: stockLine?.costPricePerPack ?? 0,
@@ -622,4 +643,5 @@ export const db = {
   remove,
   stocktake,
   stocktakeLine,
+  location,
 };

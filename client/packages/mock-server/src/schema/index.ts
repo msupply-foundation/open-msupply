@@ -1,5 +1,4 @@
 import { Name } from './Name';
-// import { InvoiceLine } from './InvoiceLine';
 import { StockLine } from './StockLine';
 import { Item } from './Item';
 import { Invoice } from './Invoice';

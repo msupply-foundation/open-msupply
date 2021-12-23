@@ -11,6 +11,7 @@ import {
   RequisitionLine,
   Stocktake,
   StocktakeLine,
+  Location,
 } from './types';
 import {
   randomName,
@@ -117,13 +118,14 @@ export const adjustStockLineAvailableNumberOfPacks = (
   return newStockLine;
 };
 
-const locations = Array.from({ length: 50 }).map(() => ({
-  id: faker.datatype.uuid(),
-  name: `${alphaString(1)}${faker.datatype.number(9)}`,
-  code: `${alphaString(3)}${faker.datatype.number({ min: 100, max: 999 })}`,
-  onHold: false,
-  stock: { nodes: [], totalCount: 0 },
-}));
+const createLocations = () => {
+  return Array.from({ length: 50 }).map(() => ({
+    id: faker.datatype.uuid(),
+    name: `${alphaString(1)}${faker.datatype.number(9)}`,
+    code: `${alphaString(3)}${faker.datatype.number({ min: 100, max: 999 })}`,
+    onHold: false,
+  }));
+};
 
 export const getStockLinesForItem = (
   item: Item,
@@ -417,7 +419,7 @@ export const createSuppliers = (
   });
 };
 
-const createStockLines = (items: Item[]) => {
+const createStockLines = (items: Item[], locations: Location[]) => {
   return items
     .map(item => {
       // Update this to change the number of stock lines per item, per store.
@@ -443,7 +445,7 @@ const createStockLines = (items: Item[]) => {
             expiryDate: faker.date.future(1.5).toISOString(),
             batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
             locationName: `${alphaString(1)}${faker.datatype.number(9)}`,
-            location: takeRandomElementFrom(locations),
+            locationId: takeRandomElementFrom(locations).id,
 
             availableNumberOfPacks: 0,
             totalNumberOfPacks: 0,
@@ -486,7 +488,7 @@ const createInvoiceLine = (
 
     stockLineId: stockLine.id,
     locationName: stockLine.locationName,
-    location: stockLine.location,
+    locationId: stockLine.locationId,
     type:
       invoice.type === InvoiceNodeType.InboundShipment
         ? InvoiceLineNodeType.StockIn
@@ -764,7 +766,8 @@ export const removeElement = (source: any[], idx: number): void => {
 export let NameData = [...createCustomers(), ...createSuppliers()];
 export let ItemData = createItems();
 export let InvoiceData = createInvoices(NameData);
-export let StockLineData = createStockLines(ItemData);
+export let LocationData = createLocations();
+export let StockLineData = createStockLines(ItemData, LocationData);
 export let InvoiceLineData = createInvoicesLines(InvoiceData, StockLineData);
 export let RequisitionData = [
   ...createSupplierRequisitions(),
