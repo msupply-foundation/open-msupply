@@ -1,5 +1,4 @@
 import {
-  UpdateInboundShipmentStatusInput,
   UpdateInboundShipmentInput,
   InvoicesQuery,
   SortBy,
@@ -17,11 +16,6 @@ const invoiceToInput = (
   return {
     id: patch.id,
     color: patch.color,
-    comment: patch.comment,
-    status: patch.status as unknown as UpdateInboundShipmentStatusInput,
-    onHold: patch.onHold,
-    otherPartyId: patch.otherParty?.id,
-    theirReference: patch.theirReference,
   };
 };
 

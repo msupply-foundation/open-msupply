@@ -119,7 +119,7 @@ export const DataTable = <T extends DomainObject>({
       </MuiTable>
       <Box
         sx={{
-          flex: 1,
+          flex: 0,
           display: 'flex',
           flexDirection: 'column',
           position: 'sticky',
