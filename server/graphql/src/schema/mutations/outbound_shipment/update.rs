@@ -8,8 +8,8 @@ use crate::schema::{
         CannotReverseInvoiceStatus, ForeignKey, ForeignKeyError,
     },
     types::{
-        get_invoice_response, ErrorWrapper, InvoiceNode, InvoiceResponse, NameNode, NodeError,
-        RecordNotFound,
+        get_invoice_response, Connector, ErrorWrapper, InvoiceLineNode, InvoiceNode,
+        InvoiceResponse, NameNode, NodeError, RecordNotFound,
     },
 };
 use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};
@@ -116,6 +116,7 @@ pub enum UpdateOutboundShipmentErrorInterface {
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     DatabaseError(DatabaseError),
     InvalidInvoiceLine(InvoiceLineHasNoStockLineError),
+    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
 }
 
 impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
@@ -152,8 +153,26 @@ impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
             UpdateOutboundShipmentError::CannotChangeStatusOfInvoiceOnHold => {
                 OutError::CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold {})
             }
+            UpdateOutboundShipmentError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines) => {
+                OutError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(
+                    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines.into()),
+                )
+            }
         };
 
         UpdateOutboundShipmentResponse::Error(ErrorWrapper { error })
+    }
+}
+
+pub struct CanOnlyChangeToAllocatedWhenNoUnallocatedLines(pub Connector<InvoiceLineNode>);
+
+#[Object]
+impl CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
+    pub async fn description(&self) -> &'static str {
+        "Cannot change to allocated status when unallocated lines are present"
+    }
+
+    pub async fn invoice_lines(&self) -> &Connector<InvoiceLineNode> {
+        &self.0
     }
 }

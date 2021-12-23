@@ -6,13 +6,58 @@ use crate::{
             invoice_line, invoice_line::dsl as invoice_line_dsl,
             invoice_stats::dsl as invoice_stats_dsl, location, location::dsl as location_dsl,
         },
-        InvoiceLineRow, InvoiceStatsRow, LocationRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceStatsRow, LocationRow,
     },
 };
 use domain::{
-    invoice_line::{InvoiceLine, InvoiceLineFilter, InvoiceLineSort},
-    Pagination,
+    invoice_line::{InvoiceLine, InvoiceLineSort},
+    EqualFilter, Pagination,
 };
+
+pub struct InvoiceLineFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub invoice_id: Option<EqualFilter<String>>,
+    pub item_id: Option<EqualFilter<String>>,
+    pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
+    pub location_id: Option<EqualFilter<String>>,
+}
+
+impl InvoiceLineFilter {
+    pub fn new() -> InvoiceLineFilter {
+        InvoiceLineFilter {
+            id: None,
+            invoice_id: None,
+            r#type: None,
+            item_id: None,
+            location_id: None,
+        }
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.invoice_id = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<InvoiceLineRowType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_id = Some(filter);
+        self
+    }
+}
 
 use super::{DBType, StorageConnection};
 
@@ -84,6 +129,8 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, f.id, invoice_line_dsl::id);
         apply_equal_filter!(query, f.invoice_id, invoice_line_dsl::invoice_id);
         apply_equal_filter!(query, f.location_id, invoice_line_dsl::location_id);
+        apply_equal_filter!(query, f.item_id, invoice_line_dsl::item_id);
+        apply_equal_filter!(query, f.r#type, invoice_line_dsl::type_);
     }
 
     query
@@ -99,6 +146,7 @@ fn to_domain((invoice_line, location_row_option): InvoiceLineJoin) -> InvoiceLin
         item_name: invoice_line.item_name,
         item_code: invoice_line.item_code,
         pack_size: invoice_line.pack_size,
+        r#type: invoice_line.r#type.to_domain(),
         number_of_packs: invoice_line.number_of_packs,
         cost_price_per_pack: invoice_line.cost_price_per_pack,
         sell_price_per_pack: invoice_line.sell_price_per_pack,

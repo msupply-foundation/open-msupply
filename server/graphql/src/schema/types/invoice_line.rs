@@ -9,9 +9,30 @@ use crate::{
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use domain::invoice_line::InvoiceLine;
+use domain::invoice_line::{InvoiceLine, InvoiceLineType};
 use repository::StorageConnectionManager;
+use serde::Serialize;
 use service::invoice_line::get_invoice_line;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum InvoiceLineNodeType {
+    StockIn,
+    StockOut,
+    UnallocatedStock,
+    Service,
+}
+impl InvoiceLineNodeType {
+    pub fn from_domain(domain_type: &InvoiceLineType) -> Self {
+        use InvoiceLineNodeType::*;
+        match domain_type {
+            InvoiceLineType::StockIn => StockIn,
+            InvoiceLineType::StockOut => StockOut,
+            InvoiceLineType::UnallocatedStock => UnallocatedStock,
+            InvoiceLineType::Service => Service,
+        }
+    }
+}
 
 pub struct InvoiceLineNode {
     invoice_line: InvoiceLine,
@@ -73,6 +94,9 @@ impl InvoiceLineNode {
     }
     pub async fn location_id(&self) -> &Option<String> {
         &self.invoice_line.location_id
+    }
+    pub async fn r#type(&self) -> InvoiceLineNodeType {
+        InvoiceLineNodeType::from_domain(&self.invoice_line.r#type)
     }
     async fn location(&self, ctx: &Context<'_>) -> Option<LocationResponse> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();

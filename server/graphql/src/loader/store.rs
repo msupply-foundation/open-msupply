@@ -1,4 +1,4 @@
-use repository::{schema::StoreRow, RepositoryError, StorageConnectionManager, StoreRepository};
+use repository::{schema::StoreRow, RepositoryError, StorageConnectionManager, StoreRowRepository};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -15,7 +15,7 @@ impl Loader<String> for StoreLoader {
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = StoreRepository::new(&connection);
+        let repo = StoreRowRepository::new(&connection);
         Ok(repo
             .find_many_by_id(keys)
             .unwrap()

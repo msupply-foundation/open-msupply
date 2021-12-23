@@ -1,12 +1,12 @@
 use crate::WithDBError;
 use domain::{
     invoice::{InvoiceStatus, InvoiceType},
-    invoice_line::{InvoiceLine, InvoiceLineFilter},
+    invoice_line::InvoiceLine,
     EqualFilter,
 };
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
-    InvoiceLineRepository, InvoiceRepository, RepositoryError, StorageConnection,
+    InvoiceLineRepository, InvoiceRepository, RepositoryError, StorageConnection, InvoiceLineFilter,
 };
 
 pub struct WrongInvoiceType;
@@ -90,6 +90,20 @@ pub fn check_invoice_exists(
         Ok(invoice_row) => Ok(invoice_row),
         Err(RepositoryError::NotFound) => Err(WithDBError::err(InvoiceDoesNotExist)),
         Err(error) => Err(WithDBError::db(error)),
+    }
+}
+
+// TODO replace check_invoice_exists with this
+pub fn check_invoice_exists_option(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<Option<InvoiceRow>, RepositoryError> {
+    let result = InvoiceRepository::new(connection).find_one_by_id(id);
+
+    match result {
+        Ok(invoice_row) => Ok(Some(invoice_row)),
+        Err(RepositoryError::NotFound) => Ok(None),
+        Err(error) => Err(error),
     }
 }
 

@@ -80,6 +80,7 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax,
+        r#type,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -117,6 +118,7 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax,
+        r#type,
         note,
     };
 

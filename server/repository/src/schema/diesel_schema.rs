@@ -38,7 +38,7 @@ table! {
         name -> Text,
         code -> Text,
         unit_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::schema::item::ItemTypeMapping,
+        #[sql_name = "type"] type_ -> crate::schema::item::ItemRowTypeMapping,
     }
 }
 
@@ -148,6 +148,7 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax -> Nullable<Double>,
+        #[sql_name = "type"] type_ -> crate::schema::invoice_line::InvoiceLineRowTypeMapping,
         number_of_packs -> Integer,
         note -> Nullable<Text>,
     }
