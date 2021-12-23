@@ -1,9 +1,11 @@
 import React from 'react';
 import { Property } from 'csstype';
 import {
+  BookIcon,
   Box,
   DashboardIcon,
   Divider,
+  ExternalNavLink,
   List,
   MSupplyGuy,
   PowerIcon,
@@ -18,7 +20,7 @@ import {
   AppNavLink,
   useIsMediumScreen,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
@@ -206,6 +208,11 @@ export const AppDrawer: React.FC = () => {
             to={AppRoute.Sync}
             icon={<RadioIcon fontSize="small" color="primary" />}
             text={t('sync')}
+          />
+          <ExternalNavLink
+            to={ExternalURL.PublicDocs}
+            icon={<BookIcon fontSize="small" color="primary" />}
+            text={t('docs')}
           />
           <AppNavLink
             to={AppRoute.Admin}

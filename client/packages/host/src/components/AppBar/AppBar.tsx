@@ -1,19 +1,16 @@
 import React from 'react';
 import {
-  ArrowLeftIcon,
   styled,
   AppBarContent,
   Toolbar,
   Box,
-  IconButton,
   Breadcrumbs,
   useAppBarRect,
-  useTranslation,
   AppBarButtons,
   useMatch,
-  useNavigate,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { SectionIcon } from './SectionIcon';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   marginRight: 0,
@@ -25,8 +22,6 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const AppBar: React.FC = () => {
-  const t = useTranslation('app');
-  const navigate = useNavigate();
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
 
@@ -40,11 +35,9 @@ export const AppBar: React.FC = () => {
   ) : (
     <StyledContainer ref={ref} sx={{ boxShadow: theme => theme.shadows[2] }}>
       <Toolbar disableGutters>
-        <IconButton
-          icon={<ArrowLeftIcon color="primary" />}
-          label={t('button.go-back')}
-          onClick={() => navigate(-1)}
-        />
+        <Box style={{ paddingRight: 5 }}>
+          <SectionIcon />
+        </Box>
 
         <Breadcrumbs />
         <AppBarButtons />
