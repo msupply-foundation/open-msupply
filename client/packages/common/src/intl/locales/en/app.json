@@ -8,6 +8,7 @@
   "customers": "Customers",
   "dashboard": "Dashboard",
   "distribution": "Distribution",
+  "docs": "Docs",
   "inbound-shipment": "Inbound Shipment",
   "inbound-shipments": "Inbound Shipments",
   "intl.currency": "{{val, currency(NZD}}",

@@ -5,12 +5,10 @@ import {
   PrinterIcon,
   useNotification,
   AppBarButtonsPortal,
-  BookIcon,
   ButtonWithIcon,
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ExternalURL } from '@openmsupply-client/config';
 
 interface AppBarButtonsProps {
   onCreate: (toggle: boolean) => void;
@@ -37,11 +35,6 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
           Icon={<PrinterIcon />}
           label={t('button.print')}
           onClick={info('No printer detected')}
-        />
-        <ButtonWithIcon
-          Icon={<BookIcon />}
-          label={t('button.docs')}
-          onClick={() => (location.href = ExternalURL.PublicDocs)}
         />
       </Grid>
     </AppBarButtonsPortal>
