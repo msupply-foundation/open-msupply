@@ -3,6 +3,7 @@ import { toItem } from './DetailView';
 import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
+  MutateOptions,
   Item,
   UseMutationResult,
   DeleteInboundShipmentLinesMutation,
@@ -217,7 +218,6 @@ export const getInboundShipmentDetailViewApi = (
 
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
   const { id = '' } = useParams();
-
   const { api } = useOmSupplyApi();
   const queries = getInboundShipmentDetailViewApi(api);
   return useQuery(['invoice', id], () => {
@@ -278,8 +278,19 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
   timeout = 1000
 ): { [k in KeyOfInvoice]: Invoice[k] } & {
   update: (
-    patch: Partial<Invoice>
-  ) => Promise<Promise<UpdateInboundShipmentMutation>>;
+    variables: Partial<Invoice>,
+    options?:
+      | MutateOptions<
+          UpdateInboundShipmentMutation,
+          unknown,
+          Partial<Invoice>,
+          {
+            previous: Invoice | undefined;
+            patch: Partial<Invoice>;
+          }
+        >
+      | undefined
+  ) => Promise<void>;
 } => {
   const queryClient = useQueryClient();
   const { id = '' } = useParams();
@@ -303,7 +314,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
   );
   const { data } = useInboundShipmentSelector(select);
 
-  const { mutateAsync } = useMutation(
+  const { mutate } = useMutation(
     (patch: Partial<Invoice>) => getUpdateInbound(api)({ id, ...patch }),
     {
       onMutate: async (patch: Partial<Invoice>) => {
@@ -327,7 +338,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
     }
   );
 
-  const update = useDebounceCallback(mutateAsync, [], timeout);
+  const update = useDebounceCallback(mutate, [], timeout);
 
   // When data is undefined, just return an empty object instead of undefined.
   // This allows the caller to use, for example, const { comment } = useInboundFields('comment')

@@ -8,6 +8,7 @@ import {
   useNotification,
   AppFooterPortal,
   InvoiceNodeStatus,
+  useBufferState,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import {
@@ -16,15 +17,14 @@ import {
   inboundStatuses,
 } from '../../utils';
 import { Invoice } from '../../types';
-import { useInboundFields, useIsInboundEditable } from './api';
+import {
+  useInboundShipment,
+  useInboundFields,
+  useIsInboundEditable,
+} from './api';
 
-interface InboundDetailFooterProps {
-  draft: Invoice;
-  save: () => Promise<void>;
-}
-
-const createStatusLog = (draft: Invoice) => {
-  const statusIdx = inboundStatuses.findIndex(s => draft.status === s);
+const createStatusLog = (invoice: Invoice) => {
+  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
@@ -38,34 +38,37 @@ const createStatusLog = (draft: Invoice) => {
   statusLog;
 
   if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = draft.createdDatetime;
+    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
   }
   if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.pickedDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
   }
   if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = draft.shippedDatetime;
+    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
   if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.verifiedDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.verifiedDatetime;
   }
 
   return statusLog;
 };
 
-export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
+export const Footer: FC = () => {
   const t = useTranslation('common');
   const { success } = useNotification();
   const { onHold, status, update } = useInboundFields(['onHold', 'status']);
   const isEditable = useIsInboundEditable();
+  const { data: inbound } = useInboundShipment();
+  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
     <AppFooterPortal
       Content={
-        !!status && (
+        !!status &&
+        !!inbound && (
           <Box
             gap={2}
             display="flex"
@@ -75,17 +78,18 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
           >
             <ToggleButton
               disabled={!isEditable}
-              value={onHold}
-              selected={onHold}
+              value={onHoldBuffer}
+              selected={onHoldBuffer}
               onClick={(_, value) => {
-                update?.({ onHold: !value });
+                setOnHoldBuffer(!value);
+                update({ onHold: !value });
               }}
               label={t('label.hold')}
             />
 
             <StatusCrumbs
               statuses={inboundStatuses}
-              statusLog={createStatusLog(draft)}
+              statusLog={createStatusLog(inbound)}
               statusFormatter={getStatusTranslator(t)}
             />
 
@@ -94,7 +98,7 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
                 <>
                   <ButtonWithIcon
                     shrinkThreshold="lg"
-                    disabled={onHold}
+                    disabled={onHoldBuffer}
                     Icon={<ArrowRightIcon />}
                     label={t('button.save-and-confirm-status', {
                       status: t(getNextInboundStatusButtonTranslation(status)),
@@ -103,8 +107,15 @@ export const Footer: FC<InboundDetailFooterProps> = ({ draft, save }) => {
                     variant="contained"
                     color="secondary"
                     onClick={async () => {
-                      success('Saved invoice! 🥳 ')();
-                      save();
+                      update(
+                        {
+                          onHold: onHoldBuffer,
+                          status: InvoiceNodeStatus.Verified,
+                        },
+                        {
+                          onSuccess: success('Saved invoice! 🥳'),
+                        }
+                      );
                     }}
                   />
                 </>
