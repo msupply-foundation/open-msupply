@@ -44,9 +44,9 @@ async fn main() -> std::io::Result<()> {
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
-        // TODO: configure ssl
-        debug_no_ssl: true,
-        debug_no_access_control: false,
+        debug_no_ssl: false,
+        // TODO: disable once frontend supports auth!
+        debug_no_access_control: true,
     });
     let connection_manager = get_storage_connection_manager(&settings.database);
     let loaders: LoaderMap = get_loaders(&connection_manager).await;

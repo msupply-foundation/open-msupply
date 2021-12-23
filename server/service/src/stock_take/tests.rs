@@ -2,7 +2,10 @@
 mod stock_take_test {
     use chrono::Utc;
     use repository::{
-        mock::{mock_stock_take_a, mock_store_a, MockDataInserts},
+        mock::{
+            mock_stock_take_a, mock_stock_take_finalized_without_lines,
+            mock_stock_take_without_lines, mock_store_a, MockDataInserts,
+        },
         test_db::setup_all,
     };
 
@@ -23,15 +26,15 @@ mod stock_take_test {
         let context = service_provider.context().unwrap();
         let service = service_provider.stock_take_service;
 
-        // error: stock take exists
+        // error: stock take already exists
         let store_a = mock_store_a();
         let existing_stock_take = mock_stock_take_a();
         let error = service
             .insert_stock_take(
                 &context,
+                &store_a.id,
                 InsertStockTakeInput {
                     id: existing_stock_take.id,
-                    store_id: store_a.id,
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
@@ -44,27 +47,25 @@ mod stock_take_test {
         let error = service
             .insert_stock_take(
                 &context,
+                "invalid",
                 InsertStockTakeInput {
                     id: "new_stock_take".to_string(),
-                    store_id: "invalid".to_string(),
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
                 },
             )
             .unwrap_err();
-        assert_eq!(error, InsertStockTakeError::InvalidStoreId);
-
-        // TODO error: StockTakeLinesExist
+        assert_eq!(error, InsertStockTakeError::InvalidStore);
 
         // success
         let store_a = mock_store_a();
         service
             .insert_stock_take(
                 &context,
+                &store_a.id,
                 InsertStockTakeInput {
                     id: "new_stock_take".to_string(),
-                    store_id: store_a.id,
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
@@ -83,25 +84,47 @@ mod stock_take_test {
         let service = service_provider.stock_take_service;
 
         // error: stock does not exist
-        let store_a = mock_store_a();
+        let store_a = mock_stock_take_without_lines();
         let error = service
             .delete_stock_take(&context, &store_a.id, "invalid")
             .unwrap_err();
         assert_eq!(error, DeleteStockTakeError::StockTakeDoesNotExist);
 
-        // error: store does not exist
-        let existing_stock_take = mock_stock_take_a();
+        // error: invalid store
+        let existing_stock_take = mock_stock_take_without_lines();
         let error = service
             .delete_stock_take(&context, "invalid", &existing_stock_take.id)
             .unwrap_err();
-        assert_eq!(error, DeleteStockTakeError::InvalidStoreId);
+        assert_eq!(error, DeleteStockTakeError::InvalidStore);
+
+        // error: StockTakeLinesExist
+        let store_a = mock_store_a();
+        let stock_take_a = mock_stock_take_a();
+        let error = service
+            .delete_stock_take(&context, &store_a.id, &stock_take_a.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStockTakeError::StockTakeLinesExist);
+
+        // error: CannotEditFinalised
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_finalized_without_lines();
+        let error = service
+            .delete_stock_take(&context, &store_a.id, &stock_take.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStockTakeError::CannotEditFinalised);
 
         // success
         let store_a = mock_store_a();
-        let existing_stock_take = mock_stock_take_a();
+        let existing_stock_take = mock_stock_take_without_lines();
         let deleted_stock_take_id = service
             .delete_stock_take(&context, &store_a.id, &existing_stock_take.id)
             .unwrap();
         assert_eq!(existing_stock_take.id, deleted_stock_take_id);
+        assert_eq!(
+            service
+                .get_stock_take(&context, existing_stock_take.id)
+                .unwrap(),
+            None
+        );
     }
 }

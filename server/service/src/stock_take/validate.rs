@@ -1,7 +1,8 @@
 use domain::EqualFilter;
 use repository::{
-    schema::StockTakeRow, RepositoryError, StockTakeLineFilter, StockTakeLineRepository,
-    StockTakeRowRepository, StorageConnection,
+    schema::{StockTakeRow, StockTakeStatus},
+    RepositoryError, StockTakeLineFilter, StockTakeLineRepository, StockTakeRowRepository,
+    StorageConnection,
 };
 
 pub fn check_stock_take_exist(
@@ -9,6 +10,10 @@ pub fn check_stock_take_exist(
     id: &str,
 ) -> Result<Option<StockTakeRow>, RepositoryError> {
     Ok(StockTakeRowRepository::new(connection).find_one_by_id(id)?)
+}
+
+pub fn check_stock_take_not_finalized(status: &StockTakeStatus) -> bool {
+    *status != StockTakeStatus::Finalized
 }
 
 pub fn check_no_stock_take_lines_exist(
