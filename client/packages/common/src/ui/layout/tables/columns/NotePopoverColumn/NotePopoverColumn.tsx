@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { DomainObject } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
@@ -6,14 +6,28 @@ import { PaperPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { isProduction } from '@common/utils';
 
-interface ObjectWithNote {
-  note: string;
+interface NoteObject {
+  header: string;
+  body: string;
 }
 
-const isObjectWithANote = (
+const NoteSection: FC<{ header: string; body: string }> = ({
+  header,
+  body,
+}) => {
+  return (
+    <>
+      <b>{header}</b>
+      <span>{body}</span>
+    </>
+  );
+};
+
+const hasRequiredFields = (
   variableToCheck: unknown
-): variableToCheck is ObjectWithNote =>
-  (variableToCheck as ObjectWithNote).note !== undefined;
+): variableToCheck is NoteObject =>
+  (variableToCheck as NoteObject).header !== undefined &&
+  (variableToCheck as NoteObject).body !== undefined;
 
 export const getNotePopoverColumn = <T extends DomainObject>(
   label?: string
@@ -23,19 +37,23 @@ export const getNotePopoverColumn = <T extends DomainObject>(
   align: ColumnAlign.Center,
   width: 60,
   accessor: ({ rowData }) => {
-    if (isObjectWithANote(rowData)) {
-      return rowData.note;
+    if (hasRequiredFields(rowData)) {
+      return rowData;
     } else {
       if (!isProduction()) {
         // TODO: Bugsnag during prod
         throw new Error(`
-        The default accessor for the note popover column has been called with a row
-        that does not have a note field.
-        Have you forgotten to provide a custom accessor to return a value? i.e.
-        { ...getNotePopoverColumn(), accessor: ({rowData}) => rowData.comment }
+        The default accessor for the note popover column has been called with row data
+        that does not have the fields 'header' and 'body'.
+
+        This column requires the fields 'header' and 'body' to be present in the row data to render
+        correctly.
+
+        Have you forgotten to provide a custom accessor to return the right value? i.e.
+        [ getNotePopoverColumn(), { accessor: ({rowData}) => ({header: rowData.batch, body: rowData.note}) }]
         `);
       } else {
-        return '';
+        return { header: '', body: '' };
       }
     }
   },
@@ -47,13 +65,19 @@ export const getNotePopoverColumn = <T extends DomainObject>(
     const t = useTranslation('common');
     const value = column.accessor({ rowData, rows });
 
+    let content: NoteObject[] = value as NoteObject[];
+    if (!Array.isArray(value)) {
+      content = [value as NoteObject];
+    }
+
     return value ? (
       <PaperPopover
         width={400}
-        height={180}
         Content={
           <PaperPopoverSection label={label ?? t('label.notes')}>
-            {String(value)}
+            {content.map(({ header, body }) => (
+              <NoteSection key={body} {...{ header, body }} />
+            ))}
           </PaperPopoverSection>
         }
       >
