@@ -49,7 +49,7 @@ export const GeneralTab: FC<
   return (
     <Box flexDirection="column">
       {rows?.length !== 0 && (
-        <Box style={{ padding: 5, paddingLeft: 15 }}>
+        <Box style={{ padding: 5, marginInlineStart: 15 }}>
           <Switch
             label={t('label.group-by-item', { ns: 'replenishment' })}
             onChange={toggleIsGrouped}
