@@ -44,7 +44,6 @@ export const PricingTableComponent: FC<{
   batches: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }> = ({ batches, updateDraftLine }) => {
-  console.log('render');
   const columns = useColumns<DraftInboundLine>([
     [
       'sellPricePerPack',
