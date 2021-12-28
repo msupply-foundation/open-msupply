@@ -5,9 +5,6 @@ import {
   TabContext,
   TabList,
   Tab,
-  alpha,
-  TabPanel,
-  styled,
   useTranslation,
   useIsMediumScreen,
   ButtonWithIcon,
@@ -22,7 +19,7 @@ import {
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
 import { ModalMode } from '../../DetailView';
-import { BatchTable, PricingTable } from './TabTables';
+import { QuantityTable, PricingTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import {
   useInboundLines,
@@ -30,10 +27,7 @@ import {
   useSaveInboundLines,
   useNextItem,
 } from '../../api';
-
-const StyledTabPanel = styled(TabPanel)({
-  height: '100%',
-});
+import { InboundLineEditPanel } from './InboundLineEditPanel';
 
 interface InboundLineEditProps {
   item: Item | null;
@@ -106,17 +100,18 @@ const useDraftInboundLines = (itemId: string) => {
     setDraftLines([...draftLines, newLine]);
   };
 
-  const updateDraftLine = (
-    patch: Partial<DraftInboundLine> & { id: string }
-  ) => {
-    const batch = draftLines.find(line => line.id === patch.id);
-    if (batch) {
-      const newBatch = { ...batch, ...patch, isUpdated: true };
-      const index = draftLines.indexOf(batch);
-      draftLines[index] = newBatch;
-      setDraftLines([...draftLines]);
-    }
-  };
+  const updateDraftLine = React.useCallback(
+    (patch: Partial<DraftInboundLine> & { id: string }) => {
+      const batch = draftLines.find(line => line.id === patch.id);
+      if (batch) {
+        const newBatch = { ...batch, ...patch, isUpdated: true };
+        const index = draftLines.indexOf(batch);
+        draftLines[index] = newBatch;
+        setDraftLines([...draftLines]);
+      }
+    },
+    [draftLines, setDraftLines]
+  );
 
   const saveLines = async () => {
     await mutateAsync(draftLines);
@@ -235,29 +230,27 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                   borderRadius: '20px',
                 }}
               >
-                <Box
-                  sx={{
-                    width: 400,
-                    height: isMediumScreen ? 300 : 400,
-                    backgroundColor: theme =>
-                      alpha(theme.palette['background']['menu'], 0.4),
-                    position: 'absolute',
-                    borderRadius: '20px',
-                  }}
-                />
-                <StyledTabPanel value={Tabs.Batch}>
-                  <BatchTable
+                <InboundLineEditPanel
+                  value={Tabs.Batch}
+                  lines={draftLines}
+                  updateDraftLine={updateDraftLine}
+                >
+                  <QuantityTable
                     batches={draftLines}
                     updateDraftLine={updateDraftLine}
                   />
-                </StyledTabPanel>
+                </InboundLineEditPanel>
 
-                <StyledTabPanel value={Tabs.Pricing}>
+                <InboundLineEditPanel
+                  value={Tabs.Pricing}
+                  lines={draftLines}
+                  updateDraftLine={updateDraftLine}
+                >
                   <PricingTable
                     batches={draftLines}
                     updateDraftLine={updateDraftLine}
                   />
-                </StyledTabPanel>
+                </InboundLineEditPanel>
               </TableContainer>
             </TabContext>
           ) : (
