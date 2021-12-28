@@ -7,7 +7,7 @@ import {
   Box,
   DataTable,
   alpha,
-  Column,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './InboundLineEdit';
 
@@ -34,17 +34,19 @@ const StyledStaticArea = styled(Box)(({ theme }) => ({
 interface InboundLineEditPanel {
   value: string;
   lines: DraftInboundLine[];
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }
 
 export const InboundLineEditPanel: FC<InboundLineEditPanel> = ({
   lines,
   value,
+  updateDraftLine,
   children,
 }) => {
-  const columns = useColumns([
-    ['batch', { width: 100 }],
-    ['expiryDate', { width: 100 }],
-  ]) as [Column<DraftInboundLine>, Column<DraftInboundLine>];
+  const columns = useColumns<DraftInboundLine>([
+    ['batch', { width: 150, Cell: TextInputCell, setter: updateDraftLine }],
+    ['expiryDate', { width: 150 }],
+  ]);
 
   return (
     <StyledTabPanel value={value}>

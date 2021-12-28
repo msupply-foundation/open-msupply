@@ -230,14 +230,22 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                   borderRadius: '20px',
                 }}
               >
-                <InboundLineEditPanel value={Tabs.Batch} lines={draftLines}>
+                <InboundLineEditPanel
+                  value={Tabs.Batch}
+                  lines={draftLines}
+                  updateDraftLine={updateDraftLine}
+                >
                   <QuantityTable
                     batches={draftLines}
                     updateDraftLine={updateDraftLine}
                   />
                 </InboundLineEditPanel>
 
-                <InboundLineEditPanel value={Tabs.Pricing} lines={draftLines}>
+                <InboundLineEditPanel
+                  value={Tabs.Pricing}
+                  lines={draftLines}
+                  updateDraftLine={updateDraftLine}
+                >
                   <PricingTable
                     batches={draftLines}
                     updateDraftLine={updateDraftLine}
