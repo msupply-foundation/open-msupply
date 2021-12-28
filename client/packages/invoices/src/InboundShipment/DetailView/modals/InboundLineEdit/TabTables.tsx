@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './InboundLineEdit';
 
-export const QuantityTable: FC<{
+export const QuantityTableComponent: FC<{
   batches: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }> = ({ batches, updateDraftLine }) => {
@@ -38,10 +38,13 @@ export const QuantityTable: FC<{
   );
 };
 
-export const PricingTable: FC<{
+export const QuantityTable = React.memo(QuantityTableComponent);
+
+export const PricingTableComponent: FC<{
   batches: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }> = ({ batches, updateDraftLine }) => {
+  console.log('render');
   const columns = useColumns<DraftInboundLine>([
     [
       'sellPricePerPack',
@@ -73,3 +76,5 @@ export const PricingTable: FC<{
     />
   );
 };
+
+export const PricingTable = React.memo(PricingTableComponent);

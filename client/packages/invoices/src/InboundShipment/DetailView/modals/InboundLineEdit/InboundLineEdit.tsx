@@ -100,17 +100,18 @@ const useDraftInboundLines = (itemId: string) => {
     setDraftLines([...draftLines, newLine]);
   };
 
-  const updateDraftLine = (
-    patch: Partial<DraftInboundLine> & { id: string }
-  ) => {
-    const batch = draftLines.find(line => line.id === patch.id);
-    if (batch) {
-      const newBatch = { ...batch, ...patch, isUpdated: true };
-      const index = draftLines.indexOf(batch);
-      draftLines[index] = newBatch;
-      setDraftLines([...draftLines]);
-    }
-  };
+  const updateDraftLine = React.useCallback(
+    (patch: Partial<DraftInboundLine> & { id: string }) => {
+      const batch = draftLines.find(line => line.id === patch.id);
+      if (batch) {
+        const newBatch = { ...batch, ...patch, isUpdated: true };
+        const index = draftLines.indexOf(batch);
+        draftLines[index] = newBatch;
+        setDraftLines([...draftLines]);
+      }
+    },
+    [draftLines, setDraftLines]
+  );
 
   const saveLines = async () => {
     await mutateAsync(draftLines);

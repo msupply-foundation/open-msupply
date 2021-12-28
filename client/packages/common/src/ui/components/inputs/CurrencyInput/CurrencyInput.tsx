@@ -58,13 +58,16 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   // loses focus when the buffer is in this invalid state, the currency input will
   // append two zeros so will always result in a valid number.
   useEffect(() => {
+    // circuit break when the value is equal to the buffer - we don't need to do anything.
+    if (Number(buffer) === value) return;
+
     if (buffer == null) {
       return onChangeNumber(0);
     }
     if (!Number.isNaN(buffer)) {
       return onChangeNumber(Number(buffer));
     }
-  }, [buffer]);
+  }, [buffer, value]);
 
   return (
     <StyledCurrencyInput
