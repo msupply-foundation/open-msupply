@@ -1,3 +1,4 @@
+import { locationResolver } from './location';
 import { itemResolver } from './item';
 import { createListResponse } from './utils';
 import { ResolvedInvoiceLine, ListResponse } from './../../data/types';
@@ -8,11 +9,15 @@ export const invoiceLineResolver = {
   byId: (id: string): ResolvedInvoiceLine => {
     const invoiceLine = db.get.byId.invoiceLine(id);
     const item = itemResolver.byId(invoiceLine.itemId);
+    const location = invoiceLine.locationId
+      ? locationResolver.byId(invoiceLine.locationId)
+      : null;
 
     return {
       __typename: 'InvoiceLineNode',
       ...invoiceLine,
       item,
+      location,
       stockLine: invoiceLine.stockLineId
         ? stockLineResolver.byId(invoiceLine.stockLineId)
         : undefined,

@@ -33,9 +33,13 @@ export interface Store {
   nameId: string;
 }
 
-export type Item = Omit<ItemNode, 'availableBatches' | 'availableQuantity'>;
+export type Location = Omit<LocationNode, 'stock'>;
 
-export type Location = LocationNode;
+export type ResolvedLocation = LocationNode & {
+  __typename: 'LocationNode';
+};
+
+export type Item = Omit<ItemNode, 'availableBatches' | 'availableQuantity'>;
 
 export interface ResolvedItem extends Item {
   __typename: 'ItemNode';
@@ -56,19 +60,20 @@ export interface ResolvedName extends Name {
 }
 
 export interface StockLine extends Omit<StockLineNode, 'location'> {
-  location: Location;
+  locationId: string;
 }
 
 export interface ResolvedStockLine extends StockLine {
   __typename: 'StockLineNode';
   item: Item;
+  location?: ResolvedLocation | null;
 }
 
 export interface InvoiceLine
   extends Omit<InvoiceLineNode, 'location' | 'item'> {
   id: string;
+  locationId: string;
   itemName: string;
-  location?: Location;
   itemCode: string;
   itemUnit: string;
   batch?: string;
@@ -86,6 +91,7 @@ export interface InvoiceLine
 export interface ResolvedInvoiceLine extends InvoiceLine {
   __typename: 'InvoiceLineNode';
   stockLine?: ResolvedStockLine;
+  location?: ResolvedLocation | null;
   item: ResolvedItem;
 }
 
