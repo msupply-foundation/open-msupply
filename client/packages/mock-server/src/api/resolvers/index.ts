@@ -8,6 +8,7 @@ import { requisitionLineResolver } from './requisitionLine';
 import { invoiceLineResolver } from './invoiceLine';
 import { statisticsResolver } from './statistics';
 import { StocktakeResolver } from './stocktake';
+import { locationResolver } from './location';
 
 export const ResolverService = {
   invoice: invoiceResolver,
@@ -20,4 +21,5 @@ export const ResolverService = {
   statistics: statisticsResolver,
   stocktake: StocktakeResolver,
   stocktakeLine: StocktakeLineResolver,
+  location: locationResolver,
 };

@@ -1,11 +1,11 @@
 import { Name } from './Name';
-// import { InvoiceLine } from './InvoiceLine';
 import { StockLine } from './StockLine';
 import { Item } from './Item';
 import { Invoice } from './Invoice';
 import { Statistics } from './Statistics';
 import { Requisition } from './Requisition';
 import { Stocktake } from './Stocktake';
+import { Location } from './Location';
 
 export const Schema = {
   Invoice,
@@ -15,4 +15,5 @@ export const Schema = {
   Statistics,
   Requisition,
   Stocktake,
+  Location,
 };
