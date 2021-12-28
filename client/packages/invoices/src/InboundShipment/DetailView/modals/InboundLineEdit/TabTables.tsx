@@ -2,20 +2,16 @@ import React, { FC } from 'react';
 import {
   DataTable,
   useColumns,
-  TextInputCell,
-  getLineLabelColumn,
   NumberInputCell,
   CurrencyInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './InboundLineEdit';
 
-export const BatchTable: FC<{
+export const QuantityTable: FC<{
   batches: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }> = ({ batches, updateDraftLine }) => {
   const columns = useColumns<DraftInboundLine>([
-    getLineLabelColumn(),
-    ['batch', { Cell: TextInputCell, width: 200, setter: updateDraftLine }],
     [
       'numberOfPacks',
       {
@@ -30,7 +26,6 @@ export const BatchTable: FC<{
       'unitQuantity',
       { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
     ],
-    'expiryDate',
   ]);
 
   return (
@@ -48,8 +43,6 @@ export const PricingTable: FC<{
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }> = ({ batches, updateDraftLine }) => {
   const columns = useColumns<DraftInboundLine>([
-    getLineLabelColumn(),
-    ['batch', { Cell: TextInputCell, width: 200, setter: updateDraftLine }],
     [
       'sellPricePerPack',
       { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
