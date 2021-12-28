@@ -20,7 +20,7 @@ export enum ModalMode {
 }
 
 export const toItem = (line: InboundShipmentItem | InvoiceLine): Item => ({
-  id: 'lines' in line ? line.lines[0].id : line.itemId,
+  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
   name: 'lines' in line ? line.lines[0].itemName : line.itemName,
   code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
   isVisible: true,
