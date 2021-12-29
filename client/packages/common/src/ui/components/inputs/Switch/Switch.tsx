@@ -32,9 +32,9 @@ const getLabelStyle = (
   const margin = size === 'medium' ? '0' : '3px';
   switch (labelPlacement) {
     case 'end':
-      return { marginLeft: margin };
+      return { marginInlineStart: margin };
     case 'start':
-      return { marginRight: margin };
+      return { marginInlineEnd: margin };
     default:
       return {};
   }

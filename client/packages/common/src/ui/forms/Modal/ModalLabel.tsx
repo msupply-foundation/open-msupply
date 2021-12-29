@@ -9,7 +9,7 @@ export interface ModalLabelProps {
 
 const labelStyle = {
   fontSize: '12px',
-  paddingRight: '19px',
+  marginInlineEnd: '19px',
 };
 
 export const ModalLabel: React.FC<ModalLabelProps> = ({
