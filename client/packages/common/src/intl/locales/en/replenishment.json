@@ -8,5 +8,9 @@
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
   "message.deleted-lines": "Deleted {{number}} lines",
   "messages.deleted-invoices": "Deleted {{number}} invoices",
-  "label.group-by-item": "Group by Item"
+  "label.group-by-item": "Group by Item",
+  "label.pricing": "Pricing",
+  "label.location": "Location",
+  "label.quantities": "Quantities",
+  "label.add-batch": "Add Batch"
 }

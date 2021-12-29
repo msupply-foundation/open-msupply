@@ -135,7 +135,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<Item | null>(item);
   const nextItem = useNextItem(currentItem?.id ?? '');
@@ -208,9 +208,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     centered
                     onChange={(_, v) => setCurrentTab(v)}
                   >
-                    <Tab value={Tabs.Batch} label={Tabs.Batch} />
-                    <Tab value={Tabs.Pricing} label={Tabs.Pricing} />
-                    <Tab value={Tabs.Location} label={Tabs.Location} />
+                    <Tab value={Tabs.Batch} label={t('label.quantities')} />
+                    <Tab value={Tabs.Pricing} label={t('label.pricing')} />
+                    <Tab value={Tabs.Location} label={t('label.location')} />
                   </TabList>
                 </Box>
                 <Box flex={1} justifyContent="flex-end" display="flex">
