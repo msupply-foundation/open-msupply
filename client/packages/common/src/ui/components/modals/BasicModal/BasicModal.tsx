@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import Dialog, { DialogProps as MuiDialogProps } from '@mui/material/Dialog';
+import { useRtl } from '@common/intl';
 
 interface DialogProps extends MuiDialogProps {
   height?: number;
@@ -12,6 +13,7 @@ export const BasicModal: FC<DialogProps> = ({
   height = 400,
   ...dialogProps
 }) => {
+  const isRtl = useRtl();
   return (
     <Dialog
       PaperProps={{
@@ -19,6 +21,7 @@ export const BasicModal: FC<DialogProps> = ({
           borderRadius: '20px',
           minHeight: `${height}px`,
           minWidth: `${width}px`,
+          direction: isRtl ? 'rtl' : 'ltr',
         },
         ...PaperProps,
       }}
