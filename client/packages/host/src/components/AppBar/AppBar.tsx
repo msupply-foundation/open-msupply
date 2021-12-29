@@ -35,7 +35,7 @@ export const AppBar: React.FC = () => {
   ) : (
     <StyledContainer ref={ref} sx={{ boxShadow: theme => theme.shadows[2] }}>
       <Toolbar disableGutters>
-        <Box style={{ paddingRight: 5 }}>
+        <Box style={{ marginInlineEnd: 5 }}>
           <SectionIcon />
         </Box>
 
