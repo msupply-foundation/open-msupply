@@ -54,7 +54,9 @@ export const getInvoiceLine = (
   sellPricePerPack: stockLineOrPlaceholder.sellPricePerPack ?? 0,
   stockLineId: stockLineOrPlaceholder.id,
   packSize: stockLineOrPlaceholder.packSize ?? 1,
-  expiryDate: stockLineOrPlaceholder.expiryDate ?? null,
+  expiryDate: stockLineOrPlaceholder.expiryDate
+    ? new Date(stockLineOrPlaceholder.expiryDate)
+    : null,
   note: stockLineOrPlaceholder?.note ?? '',
 });
 

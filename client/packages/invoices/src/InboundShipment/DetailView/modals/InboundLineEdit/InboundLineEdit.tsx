@@ -74,6 +74,7 @@ const createDraftInvoiceLine = (
     packSize: 0,
     isCreated: seed ? false : true,
     location: undefined,
+    expiryDate: null,
     ...seed,
   };
 

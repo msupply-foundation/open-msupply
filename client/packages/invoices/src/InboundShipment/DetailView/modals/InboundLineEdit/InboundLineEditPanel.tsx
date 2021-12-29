@@ -8,6 +8,7 @@ import {
   DataTable,
   alpha,
   TextInputCell,
+  getExpiryDateInputColumn,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './InboundLineEdit';
 
@@ -45,7 +46,7 @@ export const InboundLineEditPanel: FC<InboundLineEditPanel> = ({
 }) => {
   const columns = useColumns<DraftInboundLine>([
     ['batch', { width: 150, Cell: TextInputCell, setter: updateDraftLine }],
-    ['expiryDate', { width: 150 }],
+    [getExpiryDateInputColumn(), { width: 150, setter: updateDraftLine }],
   ]);
 
   return (
