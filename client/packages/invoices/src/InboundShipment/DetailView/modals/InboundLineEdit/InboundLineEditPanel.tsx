@@ -44,10 +44,14 @@ export const InboundLineEditPanel: FC<InboundLineEditPanel> = ({
   updateDraftLine,
   children,
 }) => {
-  const columns = useColumns<DraftInboundLine>([
-    ['batch', { width: 150, Cell: TextInputCell, setter: updateDraftLine }],
-    [getExpiryDateInputColumn(), { width: 150, setter: updateDraftLine }],
-  ]);
+  const columns = useColumns<DraftInboundLine>(
+    [
+      ['batch', { width: 150, Cell: TextInputCell, setter: updateDraftLine }],
+      [getExpiryDateInputColumn(), { width: 150, setter: updateDraftLine }],
+    ],
+    {},
+    [updateDraftLine]
+  );
 
   return (
     <StyledTabPanel value={value}>

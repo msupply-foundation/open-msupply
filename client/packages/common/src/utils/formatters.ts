@@ -1,8 +1,10 @@
+import format from 'date-fns/format';
+
 export const formatDate = (date: Date): string =>
   `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 
 export const formatNaiveDate = (date: Date): string => {
-  return formatDate(date).replace(/\//g, '-');
+  return format(date, 'yyyy-MM-dd');
 };
 
 export class RouteBuilder {

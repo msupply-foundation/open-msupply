@@ -70,13 +70,14 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
 
-      <InboundLineEdit
-        key={modalState.item?.id}
-        isOpen={modalState.open}
-        onClose={onClose}
-        mode={modalState.mode}
-        item={modalState.item}
-      />
+      {modalState.open && (
+        <InboundLineEdit
+          isOpen={modalState.open}
+          onClose={onClose}
+          mode={modalState.mode}
+          item={modalState.item}
+        />
+      )}
     </TableProvider>
   );
 };
