@@ -1,12 +1,19 @@
 {
   "button.delete-lines": "Delete lines",
+  "button.new-shipment": "New Shipment",
+  "button.save-and-confirm-status": "Confirm {{status}}",
   "dev.log-draft": "Log draft",
+  "heading.related-documents": "Related documents",
+  "label.add-batch": "Add batch",
+  "label.group-by-item": "Group by Item",
+  "label.select-rows-to-delete-them": "Select rows to delete them",
+  "label.supplier-name": "Supplier Name",
+  "label.supplier-ref": "Supplier Ref",
   "message.cant-delete-invoices": "Can only delete invoices with a status of 'New'",
-  "message.deleted-invoices": "Deleted {{number}} invoices",
-  "message.select-rows-to-delete": "Select rows to delete",
   "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
-  "message.deleted-requisitions": "Deleted {{number}} requisitions",
+  "message.deleted-invoices": "Deleted {{number}} invoices",
   "message.deleted-lines": "Deleted {{number}} lines",
-  "messages.deleted-invoices": "Deleted {{number}} invoices",
-  "label.group-by-item": "Group by Item"
+  "message.deleted-requisitions": "Deleted {{number}} requisitions",
+  "message.select-rows-to-delete": "Select rows to delete",
+  "messages.deleted-invoices": "Deleted {{number}} invoices"
 }

@@ -63,7 +63,7 @@ const createStatusLog = (draft: OutboundShipment) => {
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
-  const t = useTranslation('common');
+  const t = useTranslation('distribution');
   const { success } = useNotification();
 
   return (

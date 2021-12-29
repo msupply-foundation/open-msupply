@@ -34,7 +34,7 @@ export const GeneralTab: FC<
   GeneralTabProps<InboundShipmentItem | InvoiceLine>
 > = React.memo(({ onRowClick }) => {
   const { pagination } = usePagination();
-  const t = useTranslation(['common', 'replenishment']);
+  const t = useTranslation('replenishment');
   const columns = useInboundShipmentColumns();
   const lines = useInboundLines();
   const { data: items } = useInboundItems();
@@ -51,7 +51,7 @@ export const GeneralTab: FC<
       {rows?.length !== 0 && (
         <Box style={{ padding: 5, paddingLeft: 15 }}>
           <Switch
-            label={t('label.group-by-item', { ns: 'replenishment' })}
+            label={t('label.group-by-item')}
             onChange={toggleIsGrouped}
             checked={isGrouped}
             size="small"

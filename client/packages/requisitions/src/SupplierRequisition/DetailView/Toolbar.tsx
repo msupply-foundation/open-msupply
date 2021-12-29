@@ -22,7 +22,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation(['replenishment', 'common']);
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => ({
