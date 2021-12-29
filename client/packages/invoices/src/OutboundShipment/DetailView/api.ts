@@ -92,11 +92,13 @@ export const onRead =
         ? stockLineGuard(line.stockLine)
         : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
+      const expiryDate = line.expiryDate ? new Date(line.expiryDate) : null;
 
       return {
         ...line,
         stockLine,
         location,
+        expiryDate,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
       };

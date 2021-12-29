@@ -21,12 +21,13 @@ import { Location } from '@openmsupply-client/system';
  */
 
 export interface InvoiceLine
-  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location'>,
+  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location' | 'expiryDate'>,
     DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
   invoiceId: string;
   location?: Location;
+  expiryDate?: Date | null;
 }
 
 export interface InvoiceRow
