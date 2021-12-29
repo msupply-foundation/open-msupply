@@ -16,6 +16,7 @@ module.exports = env => {
   return {
     entry: './src/index',
     mode: isProduction ? 'production' : 'development',
+    devtool: 'source-map',
     devServer: {
       hot: true,
       static: isProduction

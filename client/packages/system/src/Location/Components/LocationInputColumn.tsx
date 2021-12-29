@@ -1,15 +1,11 @@
 import React from 'react';
 import {
   DomainObject,
-  Autocomplete,
   ColumnDefinition,
-  useBufferState,
-  defaultOptionMapper,
-  getDefaultOptionRenderer,
   isProduction,
 } from '@openmsupply-client/common';
-import { useLocations } from './../hooks/useLocations';
 import { Location } from '../types';
+import { LocationSearchInput } from './LocationSearchInput';
 
 interface LocationObject extends DomainObject {
   location: Location;
@@ -50,28 +46,18 @@ export const getLocationInputColumn = <
   },
   Cell: ({ rowData, column, rows }) => {
     const value = column.accessor({ rowData, rows }) as Location | null;
-    const [buffer, setBuffer] = useBufferState(value);
-    const { data, isLoading } = useLocations();
 
-    return data ? (
-      <Autocomplete<Location>
-        width={`${column.width}px`}
-        clearable={false}
-        value={
-          buffer && {
-            ...buffer,
-            label: buffer.name,
-          }
-        }
-        loading={isLoading}
-        onChange={(_, location) => {
-          setBuffer(location);
-          location && column.setter({ ...rowData, location });
-        }}
-        options={defaultOptionMapper(data?.nodes ?? [], 'name')}
-        renderOption={getDefaultOptionRenderer('name')}
-        isOptionEqualToValue={(option, value) => option?.id === value?.id}
+    const onChange = (location: Location | null) => {
+      column.setter({ ...rowData, location });
+    };
+
+    return (
+      <LocationSearchInput
+        disabled={false}
+        value={value}
+        width={column.width}
+        onChange={onChange}
       />
-    ) : null;
+    );
   },
 });
