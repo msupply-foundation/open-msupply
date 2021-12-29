@@ -1,4 +1,5 @@
 import {
+  LocationResponse,
   InvoiceQuery,
   InvoiceLineConnector,
   InvoicePriceResponse,
@@ -14,7 +15,7 @@ import {
   UpdateOutboundShipmentLineInput,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-
+import { Location } from '@openmsupply-client/system';
 import {
   OutboundShipment,
   OutboundShipmentRow,
@@ -71,6 +72,14 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
   throw new Error('Unknown');
 };
 
+const locationGuard = (location: LocationResponse): Location => {
+  if (location.__typename === 'LocationNode') {
+    return location;
+  }
+
+  throw new Error('Unknown');
+};
+
 export const onRead =
   (api: OmSupplyApi) =>
   async (id: string): Promise<Invoice> => {
@@ -82,9 +91,12 @@ export const onRead =
       const stockLine = line.stockLine
         ? stockLineGuard(line.stockLine)
         : undefined;
+      const location = line.location ? locationGuard(line.location) : undefined;
+
       return {
         ...line,
         stockLine,
+        location,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
       };

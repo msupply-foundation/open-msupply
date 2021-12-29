@@ -15,7 +15,7 @@ const locationsGuard = (locationsQuery: LocationsQuery) => {
 };
 
 export const useLocations = (): UseQueryResult<
-  { nodes: LocationNode; totalCount: number },
+  { nodes: LocationNode[]; totalCount: number },
   unknown
 > => {
   const { api } = useOmSupplyApi();

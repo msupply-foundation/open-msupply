@@ -6,11 +6,17 @@ import {
   CurrencyInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './InboundLineEdit';
+import { getLocationInputColumn } from '@openmsupply-client/system';
 
-export const QuantityTableComponent: FC<{
-  batches: DraftInboundLine[];
+interface TableProps {
+  lines: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
-}> = ({ batches, updateDraftLine }) => {
+}
+
+export const QuantityTableComponent: FC<TableProps> = ({
+  lines,
+  updateDraftLine,
+}) => {
   const columns = useColumns<DraftInboundLine>([
     [
       'numberOfPacks',
@@ -31,7 +37,7 @@ export const QuantityTableComponent: FC<{
   return (
     <DataTable
       columns={columns}
-      data={batches}
+      data={lines}
       noDataMessage="Add a new line"
       dense
     />
@@ -40,10 +46,10 @@ export const QuantityTableComponent: FC<{
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<{
-  batches: DraftInboundLine[];
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
-}> = ({ batches, updateDraftLine }) => {
+export const PricingTableComponent: FC<TableProps> = ({
+  lines,
+  updateDraftLine,
+}) => {
   const columns = useColumns<DraftInboundLine>([
     [
       'sellPricePerPack',
@@ -69,7 +75,7 @@ export const PricingTableComponent: FC<{
   return (
     <DataTable
       columns={columns}
-      data={batches}
+      data={lines}
       noDataMessage="Add a new line"
       dense
     />
@@ -77,3 +83,19 @@ export const PricingTableComponent: FC<{
 };
 
 export const PricingTable = React.memo(PricingTableComponent);
+
+export const LocationTableComponent: FC<TableProps> = ({
+  lines,
+  updateDraftLine,
+}) => {
+  console.log('lines', lines);
+  const columns = useColumns(
+    [[getLocationInputColumn(), { setter: updateDraftLine }]],
+    {},
+    [updateDraftLine]
+  );
+
+  return <DataTable columns={columns} data={lines} dense />;
+};
+
+export const LocationTable = React.memo(LocationTableComponent);

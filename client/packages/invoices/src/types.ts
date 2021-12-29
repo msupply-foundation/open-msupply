@@ -8,6 +8,7 @@ import {
   Name,
   InvoiceLineNode,
 } from '@openmsupply-client/common';
+import { Location } from '@openmsupply-client/system';
 
 /**
  * Invoice, InvoiceRow and InvoiceLine extend the GQL types, mostly. GQL types for related entities
@@ -20,11 +21,12 @@ import {
  */
 
 export interface InvoiceLine
-  extends Omit<InvoiceLineNode, 'item' | 'type'>,
+  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location'>,
     DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
   invoiceId: string;
+  location?: Location;
 }
 
 export interface InvoiceRow

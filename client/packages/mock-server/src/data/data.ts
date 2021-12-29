@@ -438,14 +438,15 @@ const createStockLines = (items: Item[], locations: Location[]) => {
             }),
             2
           );
+          const location = takeRandomElementFrom(locations);
 
           const stockLine: StockLine = {
             id: `${itemId}-${stockLineIdx}`,
             packSize: takeRandomElementFrom(packSizes),
             expiryDate: faker.date.future(1.5).toISOString(),
             batch: `${alphaString(4)}${faker.datatype.number(1000)}`,
-            locationName: `${alphaString(1)}${faker.datatype.number(9)}`,
-            locationId: takeRandomElementFrom(locations).id,
+            locationName: location.name,
+            locationId: location.id,
 
             availableNumberOfPacks: 0,
             totalNumberOfPacks: 0,
