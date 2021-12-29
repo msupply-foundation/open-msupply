@@ -3,6 +3,7 @@ import { toItem } from './DetailView';
 import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
+  LocationResponse,
   MutateOptions,
   Item,
   UseMutationResult,
@@ -34,7 +35,7 @@ import {
   getDataSorter,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-
+import { Location } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { inboundLinesToSummaryItems } from '../../utils';
 
@@ -86,6 +87,14 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
   throw new Error('Unknown');
 };
 
+const locationGuard = (location: LocationResponse): Location => {
+  if (location.__typename === 'LocationNode') {
+    return location;
+  }
+
+  throw new Error('Unknown');
+};
+
 const getPatchStatus = (patch: Partial<Invoice>) => {
   switch (patch.status) {
     case InvoiceNodeStatus.Verified:
@@ -126,6 +135,7 @@ const createInsertLineInput = (
     totalAfterTax: 0,
     totalBeforeTax: 0,
     invoiceId: line.invoiceId,
+    locationId: line.location?.id,
   };
 };
 
@@ -143,6 +153,7 @@ const createUpdateLineInput = (
   packSize: line.packSize,
   numberOfPacks: line.numberOfPacks,
   invoiceId: line.invoiceId,
+  locationId: line.location?.id,
 });
 
 interface Api<ReadType, UpdateType> {
@@ -180,9 +191,12 @@ export const getInboundShipmentDetailViewApi = (
         ? stockLineGuard(line.stockLine)
         : undefined;
 
+      const location = line.location ? locationGuard(line.location) : undefined;
+
       return {
         ...line,
         stockLine,
+        location,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
       };

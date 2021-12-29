@@ -565,7 +565,7 @@ export const insert = {
       expiryDate: invoiceLine?.expiryDate ?? '',
       type: InvoiceLineNodeType.StockIn,
       batch: '',
-      locationId: '',
+      locationId: invoiceLine.locationId ?? '',
       stockLineId: '',
       packSize: invoiceLine.packSize ?? 1,
       costPricePerPack: invoiceLine?.costPricePerPack ?? 0,
