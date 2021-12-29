@@ -132,7 +132,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<Item | null>(item);
   const nextItem = useNextItem(currentItem?.id ?? '');

@@ -69,7 +69,7 @@ const createStatusLog = (
 
 export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   const navigate = useNavigate();
-  const t = useTranslation('common');
+  const t = useTranslation('replenishment');
   const { success } = useNotification();
 
   return (
