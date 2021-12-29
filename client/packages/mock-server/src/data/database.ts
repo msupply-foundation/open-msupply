@@ -1,6 +1,8 @@
 import { randomName } from './../utils';
+import parse from 'date-fns/parse';
 import faker from 'faker';
 import {
+  UpdateInboundShipmentLineInput,
   InvoiceLineNodeType,
   InvoiceNodeStatus,
   DeleteResponse,
@@ -22,7 +24,6 @@ import {
   DeleteStocktakeLineInput,
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
-  UpdateOutboundShipmentLineInput,
   InsertInboundShipmentLineInput,
   SupplierRequisitionNodeStatus,
   RequisitionNodeType,
@@ -531,10 +532,19 @@ export const update = {
     InvoiceData[idx] = newInvoice;
     return newInvoice;
   },
-  invoiceLine: (invoiceLine: UpdateOutboundShipmentLineInput): InvoiceLine => {
+  invoiceLine: (invoiceLine: UpdateInboundShipmentLineInput): InvoiceLine => {
     const idx = InvoiceLineData.findIndex(getFilter(invoiceLine.id, 'id'));
     if (idx < 0) throw new Error('Invalid invoice line id');
-    const newLine = { ...InvoiceLineData[idx], ...invoiceLine } as InvoiceLine;
+
+    const expiryDate = invoiceLine?.expiryDate
+      ? parse(invoiceLine.expiryDate, 'dd-MM-yyyy', new Date()).toISOString()
+      : '';
+
+    const newLine = {
+      ...InvoiceLineData[idx],
+      ...invoiceLine,
+      expiryDate,
+    } as InvoiceLine;
     InvoiceLineData[idx] = newLine;
     return newLine;
   },
@@ -563,7 +573,9 @@ export const insert = {
       itemCode: item.code,
       itemUnit: item.unitName ?? '',
       itemId: item.id,
-      expiryDate: invoiceLine?.expiryDate ?? '',
+      expiryDate: invoiceLine?.expiryDate
+        ? parse(invoiceLine.expiryDate, 'dd-MM-yyyy', new Date()).toISOString()
+        : '',
       type: InvoiceLineNodeType.StockIn,
       batch: '',
       locationId: location?.id ?? '',

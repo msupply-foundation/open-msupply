@@ -17,22 +17,26 @@ export const QuantityTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
 }) => {
-  const columns = useColumns<DraftInboundLine>([
+  const columns = useColumns<DraftInboundLine>(
     [
-      'numberOfPacks',
-      {
-        Cell: NumberInputCell,
-        width: 100,
-        label: 'label.num-packs',
-        setter: updateDraftLine,
-      },
+      [
+        'numberOfPacks',
+        {
+          Cell: NumberInputCell,
+          width: 100,
+          label: 'label.num-packs',
+          setter: updateDraftLine,
+        },
+      ],
+      ['packSize', { Cell: NumberInputCell, setter: updateDraftLine }],
+      [
+        'unitQuantity',
+        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+      ],
     ],
-    ['packSize', { Cell: NumberInputCell, setter: updateDraftLine }],
-    [
-      'unitQuantity',
-      { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
-    ],
-  ]);
+    {},
+    [updateDraftLine]
+  );
 
   return (
     <DataTable
@@ -50,27 +54,31 @@ export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
 }) => {
-  const columns = useColumns<DraftInboundLine>([
+  const columns = useColumns<DraftInboundLine>(
     [
-      'sellPricePerPack',
-      { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
+      [
+        'sellPricePerPack',
+        { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
+      ],
+      [
+        'costPricePerPack',
+        { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
+      ],
+      [
+        'unitQuantity',
+        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+      ],
+      [
+        'lineTotal',
+        {
+          accessor: ({ rowData }) =>
+            rowData.numberOfPacks * rowData.packSize * rowData.costPricePerPack,
+        },
+      ],
     ],
-    [
-      'costPricePerPack',
-      { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
-    ],
-    [
-      'unitQuantity',
-      { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
-    ],
-    [
-      'lineTotal',
-      {
-        accessor: ({ rowData }) =>
-          rowData.numberOfPacks * rowData.packSize * rowData.costPricePerPack,
-      },
-    ],
-  ]);
+    {},
+    [updateDraftLine]
+  );
 
   return (
     <DataTable
