@@ -71,6 +71,7 @@ export const DetailView: FC = () => {
       <SidePanel />
 
       <InboundLineEdit
+        key={modalState.item?.id}
         isOpen={modalState.open}
         onClose={onClose}
         mode={modalState.mode}

@@ -555,6 +555,7 @@ export const insert = {
   },
   inboundLine: (invoiceLine: InsertInboundShipmentLineInput): InvoiceLine => {
     const item = db.get.byId.item(invoiceLine.itemId);
+    const location = db.location.get.byId(invoiceLine.locationId ?? '');
 
     const newInvoiceLine: InvoiceLine = {
       ...invoiceLine,
@@ -565,7 +566,8 @@ export const insert = {
       expiryDate: invoiceLine?.expiryDate ?? '',
       type: InvoiceLineNodeType.StockIn,
       batch: '',
-      locationId: invoiceLine.locationId ?? '',
+      locationId: location?.id ?? '',
+      locationName: location?.name ?? '',
       stockLineId: '',
       packSize: invoiceLine.packSize ?? 1,
       costPricePerPack: invoiceLine?.costPricePerPack ?? 0,
