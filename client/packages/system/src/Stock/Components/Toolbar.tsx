@@ -11,7 +11,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ filterString, onChangeFilter }) => {
-  const t = useTranslation(['common']);
+  const t = useTranslation('inventory');
 
   return (
     <AppBarContentPortal
