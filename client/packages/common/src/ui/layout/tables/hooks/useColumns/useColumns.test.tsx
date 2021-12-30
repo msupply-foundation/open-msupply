@@ -13,7 +13,7 @@ describe('useColumns', () => {
 
     const defaults = {
       format: ColumnFormat.Text,
-      sortable: true,
+      sortable: false,
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Left,
@@ -35,7 +35,7 @@ describe('useColumns', () => {
 
     const defaults = {
       format: ColumnFormat.Integer,
-      sortable: true,
+      sortable: false,
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Right,
@@ -57,7 +57,7 @@ describe('useColumns', () => {
 
     const defaults = {
       format: ColumnFormat.Real,
-      sortable: true,
+      sortable: false,
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Right,
@@ -79,7 +79,7 @@ describe('useColumns', () => {
 
     const defaults = {
       format: ColumnFormat.Date,
-      sortable: true,
+      sortable: false,
       sortInverted: true,
       sortDescFirst: true,
       align: ColumnAlign.Right,
@@ -115,6 +115,18 @@ describe('useColumns', () => {
     const defaults = {
       width: 200,
       minWidth: 100,
+    };
+
+    expect(result.current[0]).toEqual(expect.objectContaining(defaults));
+  });
+
+  it('defaults to sortable when an onChangeSortBy is provided', () => {
+    const { result } = renderHook(() =>
+      useColumns<Test>([{ key: 'default' }], { onChangeSortBy: () => {} })
+    );
+
+    const defaults = {
+      sortable: true,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
