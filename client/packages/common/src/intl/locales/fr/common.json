@@ -1,10 +1,11 @@
 {
-  "button.close": "Fermer",
-  "button.export": "Exporter",
-  "button.language": "Langue",
-  "button.more": "Plus",
-  "button.print": "Imprimer",
-  "label.customer": "Client",
-  "label.line": "Ligne {number}",
-  "label.supplier": "Fournisseur"
+    "button.close": "Fermer",
+    "button.export": "Exporter",
+    "button.language": "Langue",
+    "button.more": "Plus",
+    "button.print": "Imprimer",
+    "label.customer": "Client",
+    "label.line": "Ligne {number}",
+    "label.supplier": "Fournisseur",
+    "app.items": "Articles"
 }

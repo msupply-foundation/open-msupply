@@ -49,11 +49,9 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 };
 
 const RelatedDocumentsSection: FC<SidePanelProps> = () => {
-  const t = useTranslation(['common', 'distribution']);
+  const t = useTranslation('distribution');
   return (
-    <DetailPanelSection
-      title={t('heading.related-documents', { ns: 'distribution' })}
-    >
+    <DetailPanelSection title={t('heading.related-documents')}>
       <Grid container gap={0.5} key="additional-info"></Grid>
     </DetailPanelSection>
   );
