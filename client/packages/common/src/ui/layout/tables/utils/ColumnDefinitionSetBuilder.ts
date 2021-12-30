@@ -87,9 +87,8 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   },
   expiryDate: {
     key: 'expiryDate',
-    format: ColumnFormat.Date,
     label: 'label.expiry',
-    width: 100,
+    width: 200,
   },
 
   itemCode: {

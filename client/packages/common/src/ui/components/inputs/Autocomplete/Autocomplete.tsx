@@ -33,6 +33,7 @@ export interface AutocompleteProps<T>
   clearable?: boolean;
   isOptionEqualToValue?: (option: T, value: T) => boolean;
   disabled?: boolean;
+  autoFocus?: boolean;
   onInputChange?: (
     event: React.SyntheticEvent,
     value: string,
@@ -59,6 +60,7 @@ export function Autocomplete<T>({
   disabled,
   onInputChange,
   inputValue,
+  autoFocus = false,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
@@ -66,6 +68,7 @@ export function Autocomplete<T>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      autoFocus={autoFocus}
       InputProps={{ disableUnderline: false, ...props.InputProps }}
       sx={{ width }}
     />

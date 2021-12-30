@@ -1,4 +1,5 @@
 import {
+  formatExpiryDate,
   getRowExpandColumn,
   GenericColumnKey,
   getSumOfKeyReducer,
@@ -81,9 +82,14 @@ export const useInboundShipmentColumns = (): Column<
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'expiryDate', '');
+              const expiryDate = ifTheSameElseDefault(
+                lines,
+                'expiryDate',
+                null
+              );
+              return formatExpiryDate(expiryDate);
             } else {
-              return rowData.expiryDate;
+              return formatExpiryDate(rowData.expiryDate);
             }
           },
         },

@@ -8,6 +8,8 @@ export const CurrencyInputCell = <T extends DomainObject>({
   rowData,
   rows,
   column,
+  rowIndex,
+  columnIndex,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     Number(Number(column.accessor({ rowData, rows })))
@@ -15,8 +17,11 @@ export const CurrencyInputCell = <T extends DomainObject>({
 
   const updater = useDebounceCallback(column.setter, [rowData], 250);
 
+  const autoFocus = rowIndex === 0 && columnIndex === 0;
+
   return (
     <CurrencyInput
+      autoFocus={autoFocus}
       maxWidth={column.width}
       value={buffer}
       onChangeNumber={newNumber => {

@@ -44,15 +44,18 @@ export const getLocationInputColumn = <
       }
     }
   },
-  Cell: ({ rowData, column, rows }) => {
+  Cell: ({ rowData, column, rows, columnIndex, rowIndex }) => {
     const value = column.accessor({ rowData, rows }) as Location | null;
 
     const onChange = (location: Location | null) => {
       column.setter({ ...rowData, location });
     };
 
+    const autoFocus = columnIndex === 0 && rowIndex === 0;
+
     return (
       <LocationSearchInput
+        autoFocus={autoFocus}
         disabled={false}
         value={value}
         width={column.width}
