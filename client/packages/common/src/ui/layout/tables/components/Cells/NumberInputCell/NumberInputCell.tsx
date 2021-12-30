@@ -8,14 +8,19 @@ export const NumberInputCell = <T extends DomainObject>({
   rowData,
   column,
   rows,
+  rowIndex,
+  columnIndex,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
   );
   const updater = useDebounceCallback(column.setter, [rowData], 250);
 
+  const autoFocus = rowIndex === 0 && columnIndex === 0;
+
   return (
     <BasicTextInput
+      autoFocus={autoFocus}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
       type="number"
       value={buffer}
