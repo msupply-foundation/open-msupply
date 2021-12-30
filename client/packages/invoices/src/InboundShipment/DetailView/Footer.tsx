@@ -57,7 +57,7 @@ const createStatusLog = (invoice: Invoice) => {
 };
 
 export const Footer: FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation('replenishment');
   const { success } = useNotification();
   const { onHold, status, update } = useInboundFields(['onHold', 'status']);
   const isEditable = useIsInboundEditable();

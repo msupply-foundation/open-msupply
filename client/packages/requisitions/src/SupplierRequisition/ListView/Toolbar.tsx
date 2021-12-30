@@ -18,7 +18,7 @@ export const Toolbar: FC<{
   filter: FilterController;
   data?: RequisitionRow[];
 }> = ({ onDelete, data, filter }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
 
   const { success, info } = useNotification();
 

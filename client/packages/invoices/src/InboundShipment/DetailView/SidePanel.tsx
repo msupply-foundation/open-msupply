@@ -78,11 +78,9 @@ const AdditionalInfoSection: FC = () => {
 // };
 
 const RelatedDocumentsSection: FC = () => {
-  const t = useTranslation(['common', 'distribution']);
+  const t = useTranslation('replenishment');
   return (
-    <DetailPanelSection
-      title={t('heading.related-documents', { ns: 'distribution' })}
-    >
+    <DetailPanelSection title={t('heading.related-documents')}>
       <Grid container gap={0.5} key="additional-info">
         {/* <RelatedDocumentsRow
           label={t('label.requisition')}
@@ -112,7 +110,7 @@ const RelatedDocumentsSection: FC = () => {
 export const SidePanel: FC = () => {
   const { data } = useInboundShipment();
   const { success } = useNotification();
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('common');
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');

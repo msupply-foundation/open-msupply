@@ -96,7 +96,6 @@ export const LocationTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
 }) => {
-  console.log('lines', lines);
   const columns = useColumns(
     [[getLocationInputColumn(), { setter: updateDraftLine }]],
     {},
