@@ -30,7 +30,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           color: 'gray.main',
           fontSize: '12px',
           fontWeight: 500,
-          marginLeft: '8px',
+          marginInlineStart: '8px',
         }}
       >
         {label}
@@ -51,7 +51,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
     >
       <Grid container>
         <Grid alignItems="center" display="flex">
-          <Grid item style={{ marginRight: 8 }}>
+          <Grid item style={{ marginInlineEnd: 8 }}>
             <StockIcon
               color="secondary"
               style={{

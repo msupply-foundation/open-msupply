@@ -3,6 +3,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
+import { useRtl } from '@common/intl';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -42,16 +43,22 @@ enum Direction {
   Down = 'down',
 }
 
-const useSlideAnimation = () => {
+const useSlideAnimation = (isRtl: boolean) => {
   const [slideConfig, setSlide] = useState({
     in: true,
-    direction: Direction.Right,
+    direction: isRtl ? Direction.Left : Direction.Right,
   });
 
   const onTriggerSlide = () => {
-    setSlide({ in: false, direction: Direction.Left });
+    setSlide({
+      in: false,
+      direction: isRtl ? Direction.Right : Direction.Left,
+    });
     setTimeout(() => {
-      setSlide({ in: true, direction: Direction.Right });
+      setSlide({
+        in: true,
+        direction: isRtl ? Direction.Left : Direction.Right,
+      });
     }, 500);
   };
 
@@ -63,6 +70,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
+  const isRtl = useRtl();
 
   useEffect(() => {
     if (isOpen != null) setOpen(isOpen);
@@ -84,7 +92,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
-    const { slideConfig, onTriggerSlide } = useSlideAnimation();
+    const { slideConfig, onTriggerSlide } = useSlideAnimation(isRtl);
 
     // TODO: If you want to disable the slide, add a prop `slidesOnNext` or something,
     // with a default of true and check before doing all this.
