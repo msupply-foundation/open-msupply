@@ -19,7 +19,7 @@ import {
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
 import { ModalMode } from '../../DetailView';
-import { QuantityTable, PricingTable } from './TabTables';
+import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import {
   useInboundLines,
@@ -39,6 +39,7 @@ interface InboundLineEditProps {
 enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
+  Location = 'Location',
 }
 
 export type DraftInboundLine = Pick<
@@ -72,6 +73,7 @@ const createDraftInvoiceLine = (
     numberOfPacks: 0,
     packSize: 0,
     isCreated: seed ? false : true,
+    location: undefined,
     ...seed,
   };
 
@@ -103,6 +105,7 @@ const useDraftInboundLines = (itemId: string) => {
   const updateDraftLine = React.useCallback(
     (patch: Partial<DraftInboundLine> & { id: string }) => {
       const batch = draftLines.find(line => line.id === patch.id);
+
       if (batch) {
         const newBatch = { ...batch, ...patch, isUpdated: true };
         const index = draftLines.indexOf(batch);
@@ -205,8 +208,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     centered
                     onChange={(_, v) => setCurrentTab(v)}
                   >
-                    <Tab value={Tabs.Batch} label={Tabs.Batch} />
-                    <Tab value={Tabs.Pricing} label={Tabs.Pricing} />
+                    <Tab value={Tabs.Batch} label={t('label.quantities')} />
+                    <Tab value={Tabs.Pricing} label={t('label.pricing')} />
+                    <Tab value={Tabs.Location} label={t('label.location')} />
                   </TabList>
                 </Box>
                 <Box flex={1} justifyContent="flex-end" display="flex">
@@ -236,7 +240,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                   updateDraftLine={updateDraftLine}
                 >
                   <QuantityTable
-                    batches={draftLines}
+                    lines={draftLines}
                     updateDraftLine={updateDraftLine}
                   />
                 </InboundLineEditPanel>
@@ -247,7 +251,18 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                   updateDraftLine={updateDraftLine}
                 >
                   <PricingTable
-                    batches={draftLines}
+                    lines={draftLines}
+                    updateDraftLine={updateDraftLine}
+                  />
+                </InboundLineEditPanel>
+
+                <InboundLineEditPanel
+                  value={Tabs.Location}
+                  lines={draftLines}
+                  updateDraftLine={updateDraftLine}
+                >
+                  <LocationTable
+                    lines={draftLines}
                     updateDraftLine={updateDraftLine}
                   />
                 </InboundLineEditPanel>

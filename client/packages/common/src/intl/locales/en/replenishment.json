@@ -13,6 +13,9 @@
   "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "message.deleted-invoices": "Deleted {{number}} invoices",
   "message.deleted-lines": "Deleted {{number}} lines",
+  "label.pricing": "Pricing",
+  "label.location": "Location",
+  "label.quantities": "Quantities",
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
   "message.select-rows-to-delete": "Select rows to delete",
   "messages.deleted-invoices": "Deleted {{number}} invoices"

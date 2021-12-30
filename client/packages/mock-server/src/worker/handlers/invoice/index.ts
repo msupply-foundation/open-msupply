@@ -24,6 +24,8 @@ const invoiceQuery = mockInvoiceQuery((req, res, ctx) => {
   const invoice = ResolverService.invoice.byId(req.variables.id);
   return res(
     ctx.data({
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       invoice: {
         ...invoice,
         otherParty: { ...invoice.otherParty, __typename: 'NameNode' },
