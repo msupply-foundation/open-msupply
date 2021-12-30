@@ -1,4 +1,5 @@
 {
-  "button.ok": "نعم",
-  "button.open-the-menu": "افتح القائمة"
+    "button.ok": "نعم",
+    "button.open-the-menu": "افتح القائمة",
+    "app.admin": "Admin"
 }
