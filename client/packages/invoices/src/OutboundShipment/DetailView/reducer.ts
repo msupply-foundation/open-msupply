@@ -79,7 +79,10 @@ export const recalculateSummary = (
     numberOfPacks,
     locationName,
     batch,
-    expiryDate: expiryDate ? new Date(expiryDate).toISOString() : null,
+    expiryDate:
+      expiryDate && typeof expiryDate !== 'string'
+        ? expiryDate.toISOString()
+        : null,
     sellPricePerPack,
     packSize,
   };
