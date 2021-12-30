@@ -16,7 +16,7 @@ interface AppBarButtonsProps {
 
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
   const { info, success } = useNotification();
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('replenishment');
 
   return (
     <AppBarButtonsPortal>

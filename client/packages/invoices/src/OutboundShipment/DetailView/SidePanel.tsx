@@ -21,7 +21,7 @@ interface SidePanelProps {
 }
 
 const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
-  const t = useTranslation(['common', 'distribution']);
+  const t = useTranslation('common');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -103,7 +103,7 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
 
 export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
   const { success } = useNotification();
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
