@@ -112,7 +112,9 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
                   sx={{
                     fontSize: 12,
                     fontWeight: 600,
-                    margin: '15px 0 10px 21px',
+                    marginTop: '15px',
+                    marginBottom: '10px',
+                    marginInlineStart: '15px',
                   }}
                 >
                   {t('heading.actions')}

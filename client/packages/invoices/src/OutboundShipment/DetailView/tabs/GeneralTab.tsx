@@ -86,7 +86,7 @@ export const GeneralTabComponent: FC<
   return (
     <Box flexDirection="column">
       {activeRows?.length !== 0 && (
-        <Box style={{ padding: 5, paddingLeft: 15 }}>
+        <Box style={{ padding: 5, marginInlineStart: 15 }}>
           <Switch
             label={t('label.group-by-item')}
             onChange={toggleIsGrouped}

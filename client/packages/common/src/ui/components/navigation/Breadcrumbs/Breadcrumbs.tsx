@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { styled } from '@mui/material/styles';
-import { Typography } from '@mui/material';
+import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import { useLocation, Link } from 'react-router-dom';
 
 import { LocaleKey, useTranslation } from '@common/intl';
@@ -51,16 +51,21 @@ export const Breadcrumbs: React.FC = () => {
     }
 
     return (
-      <span key={part.key}>
-        <Breadcrumb to={part.path}>{t(part.key)}</Breadcrumb>
-        {' / '}
-      </span>
+      <Breadcrumb to={part.path} key={part.key}>
+        {t(part.key)}
+      </Breadcrumb>
     );
   });
 
   return (
-    <Typography variant="h6" color="inherit" noWrap>
+    <MuiBreadcrumbs
+      sx={{
+        fontSize: '16px',
+        color: theme => theme.typography.body1.color,
+        fontWeight: 500,
+      }}
+    >
       {crumbs}
-    </Typography>
+    </MuiBreadcrumbs>
   );
 };

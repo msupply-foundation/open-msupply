@@ -15,7 +15,7 @@ export const Footer: React.FC = () => {
   const textStyles = {
     color: 'gray.main',
     fontSize: '12px',
-    paddingLeft: '8px',
+    marginInlineStart: '8px',
   };
 
   return (
