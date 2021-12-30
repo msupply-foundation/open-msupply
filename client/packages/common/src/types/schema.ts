@@ -2644,7 +2644,9 @@ export type InsertInboundShipmentMutationVariables = Exact<{
 
 export type InsertInboundShipmentMutation = { __typename?: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
-export type LocationsQueryVariables = Exact<{ [key: string]: never; }>;
+export type LocationsQueryVariables = Exact<{
+  sort?: Maybe<Array<LocationSortInput> | LocationSortInput>;
+}>;
 
 
 export type LocationsQuery = { __typename?: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
@@ -3802,8 +3804,8 @@ export const InsertInboundShipmentDocument = gql`
 }
     `;
 export const LocationsDocument = gql`
-    query locations {
-  locations {
+    query locations($sort: [LocationSortInput!]) {
+  locations(sort: $sort) {
     __typename
     ... on LocationConnector {
       __typename
@@ -4500,6 +4502,7 @@ export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockLocationsQuery((req, res, ctx) => {
+ *   const { sort } = req.variables;
  *   return res(
  *     ctx.data({ locations })
  *   )

@@ -1,5 +1,9 @@
 import { createListResponse } from './utils';
-import { StockLineConnector } from '@openmsupply-client/common/src/types';
+import {
+  LocationSortInput,
+  StockLineConnector,
+} from '@openmsupply-client/common/src/types';
+import { getDataSorter } from '@openmsupply-client/common/src/utils/arrays/sorters';
 import { ListResponse, ResolvedLocation } from './../../data/types';
 import { db } from './../../data/database';
 
@@ -14,13 +18,27 @@ export const locationResolver = {
 
     return { ...location, stock, __typename: 'LocationNode' };
   },
-  list: (): ListResponse<ResolvedLocation, 'LocationConnector'> => {
+  list: (vars: {
+    sort?: LocationSortInput | LocationSortInput[] | null;
+  }): ListResponse<ResolvedLocation, 'LocationConnector'> => {
     const locations = db.location.get.all();
     const resolved = locations.map(location =>
       locationResolver.byId(location.id)
     );
 
     const nodes = resolved.map(location => locationResolver.byId(location.id));
+
+    const { sort = [] } = vars;
+
+    const { key, desc = false } =
+      sort && Array.isArray(sort)
+        ? sort?.[0] ?? { key: 'name', desc: false }
+        : sort ?? { key: 'name', desc: false };
+
+    const sorted = nodes;
+    if (key) {
+      sorted.sort(getDataSorter(key, !!desc));
+    }
 
     return createListResponse(nodes.length, nodes, 'LocationConnector');
   },
