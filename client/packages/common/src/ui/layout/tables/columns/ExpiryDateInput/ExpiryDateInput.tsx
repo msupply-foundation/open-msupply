@@ -23,7 +23,7 @@ export const getExpiryDateInputColumn = <
         correctly.
 
         Have you forgotten to provide a custom accessor to return the expiry date? i.e.
-        [ getExpiryDateInputColumn(), { accessor: ({rowData}) => ({ location: rowData.stockLine.expiryDate }) }]
+        [ ExpiryDateInputColumn, { accessor: ({rowData}) => ({ location: rowData.stockLine.expiryDate }) }]
         `);
       } else {
         return null;
