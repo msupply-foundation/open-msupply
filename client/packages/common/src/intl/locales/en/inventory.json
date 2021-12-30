@@ -10,5 +10,6 @@
   "message.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'Suggested'",
   "message.deleted-stocktakes": "Deleted {{number}} stocktakes",
   "message.select-rows-to-delete": "Select rows to delete",
-  "messages.deleted-stocktakes": "Deleted {{number}} stocktakes"
+  "messages.deleted-stocktakes": "Deleted {{number}} stocktakes",
+  "placeholder.enter-an-item-code-or-name": "Enter item code or name"
 }

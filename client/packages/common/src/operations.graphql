@@ -94,7 +94,9 @@ query invoice($id: String!) {
             packSize
             note
             location {
+              __typename
               ... on LocationNode {
+                __typename
                 id
                 name
                 code

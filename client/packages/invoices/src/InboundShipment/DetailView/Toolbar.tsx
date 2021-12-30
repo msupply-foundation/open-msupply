@@ -36,7 +36,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
     'theirReference',
   ]);
 
-  const t = useTranslation(['replenishment', 'common']);
+  const t = useTranslation('replenishment');
   const { success, info } = useNotification();
 
   const { selectedRows } = useTableStore(state => {

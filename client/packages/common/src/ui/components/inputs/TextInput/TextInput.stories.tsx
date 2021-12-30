@@ -29,7 +29,7 @@ const Template: Story = () => (
           <StyledPaper>
             <Typography>BasicTextInput</Typography>
             <InputWithLabelRow
-              label="label.customer-name"
+              label="Customer Name"
               Input={<BasicTextInput />}
             />
           </StyledPaper>
