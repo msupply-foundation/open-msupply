@@ -14,3 +14,8 @@ export const generateUUID = (): UUID => v4();
 // environment while running jest, so easier to check !isProduction, generally.
 export const isProduction = (): boolean =>
   process.env['NODE_ENV'] === 'production';
+
+export const isTypeOf = <T>(
+  variableToCheck: unknown,
+  field: string
+): variableToCheck is T => field in (variableToCheck as T);

@@ -12,6 +12,7 @@ interface LocationSearchInputProps {
   width: number;
   onChange: (location: Location | null) => void;
   disabled: boolean;
+  autoFocus?: boolean;
 }
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
@@ -19,11 +20,13 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   width,
   onChange,
   disabled,
+  autoFocus = false,
 }) => {
   const { data, isLoading } = useLocations();
 
   return (
     <Autocomplete<Location>
+      autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
       clearable={false}

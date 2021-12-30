@@ -1,8 +1,17 @@
+import format from 'date-fns/format';
+import isValid from 'date-fns/isValid';
+
 export const formatDate = (date: Date): string =>
   `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 
-export const formatNaiveDate = (date: Date): string => {
-  return formatDate(date).replace(/\//g, '-');
+export const formatNaiveDate = (date?: Date | null): string | null => {
+  if (date && isValid(date)) return format(date, 'yyyy-MM-dd');
+  else return null;
+};
+
+export const formatExpiryDate = (date?: Date | null): string | null => {
+  if (date && isValid(date)) return format(date, 'MM/yyyy');
+  else return null;
 };
 
 export class RouteBuilder {

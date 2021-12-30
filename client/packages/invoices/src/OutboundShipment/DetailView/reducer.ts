@@ -79,7 +79,10 @@ export const recalculateSummary = (
     numberOfPacks,
     locationName,
     batch,
-    expiryDate,
+    expiryDate:
+      expiryDate && typeof expiryDate !== 'string'
+        ? expiryDate.toISOString()
+        : null,
     sellPricePerPack,
     packSize,
   };
@@ -153,7 +156,11 @@ export const createSummaryItem = (
     locationName: ifTheSameElseDefault(batches, 'locationName', undefined),
 
     batch: ifTheSameElseDefault(batches, 'batch', '[multiple]'),
-    expiryDate: ifTheSameElseDefault(batches, 'expiryDate', '[multiple]'),
+    expiryDate: ifTheSameElseDefault(
+      batches,
+      'expiryDate',
+      null
+    )?.toISOString(),
     // TODO: Likely should just be a string.
     sellPricePerPack: ifTheSameElseDefault(
       batches,

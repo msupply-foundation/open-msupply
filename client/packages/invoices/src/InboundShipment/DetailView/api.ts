@@ -129,7 +129,9 @@ const createInsertLineInput = (
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
     sellPricePerPack: line.sellPricePerPack,
-    expiryDate: line.expiryDate,
+    expiryDate: line.expiryDate
+      ? formatNaiveDate(new Date(line.expiryDate))
+      : null,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
     totalAfterTax: 0,
@@ -183,20 +185,22 @@ export const getInboundShipmentDetailViewApi = (
     const result = await api.invoice({ id });
 
     const invoice = invoiceGuard(result);
-
     const lineNodes = linesGuard(invoice.lines);
-
     const lines: InvoiceLine[] = lineNodes.map(line => {
       const stockLine = line.stockLine
         ? stockLineGuard(line.stockLine)
         : undefined;
 
+      const expiryDate = line.expiryDate
+        ? new Date(line.expiryDate)
+        : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
 
       return {
         ...line,
         stockLine,
         location,
+        expiryDate,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
       };
