@@ -150,7 +150,7 @@ export const createColumnWithDefaults = <T extends DomainObject>(
     Cell: BasicCell,
     Header: BasicHeader,
 
-    sortable: true,
+    sortable: !!options?.onChangeSortBy,
     sortInverted: column.format === ColumnFormat.Date,
     sortDescFirst: column.format === ColumnFormat.Date,
 
