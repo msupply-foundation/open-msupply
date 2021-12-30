@@ -38,6 +38,8 @@ interface InboundLineEditPanel {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }
 
+const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
+
 export const InboundLineEditPanel: FC<InboundLineEditPanel> = ({
   lines,
   value,
@@ -47,7 +49,7 @@ export const InboundLineEditPanel: FC<InboundLineEditPanel> = ({
   const columns = useColumns<DraftInboundLine>(
     [
       ['batch', { width: 150, Cell: TextInputCell, setter: updateDraftLine }],
-      [getExpiryDateInputColumn(), { width: 150, setter: updateDraftLine }],
+      [expiryInputColumn, { width: 150, setter: updateDraftLine }],
     ],
     {},
     [updateDraftLine]

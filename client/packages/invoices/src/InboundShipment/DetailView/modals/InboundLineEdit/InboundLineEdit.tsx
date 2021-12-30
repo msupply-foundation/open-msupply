@@ -151,6 +151,29 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem?.id ?? '');
 
+  useEffect(() => {
+    const keybindings = (e: KeyboardEvent) => {
+      if (e.code === 'Digit1' && e.shiftKey) {
+        e.preventDefault();
+        setCurrentTab(Tabs.Batch);
+      }
+      if (e.code === 'Digit2' && e.shiftKey) {
+        e.preventDefault();
+        setCurrentTab(Tabs.Pricing);
+      }
+      if (e.code === 'Digit3' && e.shiftKey) {
+        e.preventDefault();
+        setCurrentTab(Tabs.Location);
+      }
+    };
+
+    if (currentItem) {
+      window.addEventListener('keydown', keybindings);
+    }
+
+    return () => window.removeEventListener('keydown', keybindings);
+  }, [currentItem]);
+
   return (
     <Modal
       title={
@@ -209,9 +232,21 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     centered
                     onChange={(_, v) => setCurrentTab(v)}
                   >
-                    <Tab value={Tabs.Batch} label={t('label.quantities')} />
-                    <Tab value={Tabs.Pricing} label={t('label.pricing')} />
-                    <Tab value={Tabs.Location} label={t('label.location')} />
+                    <Tab
+                      value={Tabs.Batch}
+                      label={`${t('label.quantities')} (⇧+1)`}
+                      tabIndex={-1}
+                    />
+                    <Tab
+                      value={Tabs.Pricing}
+                      label={`${t('label.pricing')} (⇧+2)`}
+                      tabIndex={-1}
+                    />
+                    <Tab
+                      value={Tabs.Location}
+                      label={`${t('label.location')} (⇧+3)`}
+                      tabIndex={-1}
+                    />
                   </TabList>
                 </Box>
                 <Box flex={1} justifyContent="flex-end" display="flex">

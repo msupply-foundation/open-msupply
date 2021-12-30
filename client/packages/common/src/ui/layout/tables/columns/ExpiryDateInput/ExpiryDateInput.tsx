@@ -33,8 +33,8 @@ export const getExpiryDateInputColumn = <
   Cell: ({ rowData, column, rows }) => {
     const value = column.accessor({ rowData, rows }) as Date | null;
 
-    const onChange = (value: Date | null) => {
-      column.setter({ ...rowData, expiryDate: value });
+    const onChange = (newValue: Date | null) => {
+      column.setter({ ...rowData, expiryDate: newValue });
     };
 
     return <ExpiryDateInput value={value} onChange={onChange} />;
