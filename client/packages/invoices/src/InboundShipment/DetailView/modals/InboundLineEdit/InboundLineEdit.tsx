@@ -16,9 +16,9 @@ import {
   generateUUID,
   Item,
   useNotification,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
-import { ModalMode } from '../../DetailView';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import {
