@@ -121,8 +121,8 @@ export const adjustStockLineAvailableNumberOfPacks = (
 const createLocations = () => {
   return Array.from({ length: 50 }).map(() => ({
     id: faker.datatype.uuid(),
-    name: `${alphaString(1)}${faker.datatype.number(9)}`,
-    code: `${alphaString(3)}${faker.datatype.number({ min: 100, max: 999 })}`,
+    code: `${alphaString(1)}${faker.datatype.number(9)}`,
+    name: `${alphaString(3)}${faker.datatype.number({ min: 100, max: 999 })}`,
     onHold: false,
   }));
 };
