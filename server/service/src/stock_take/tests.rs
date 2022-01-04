@@ -266,6 +266,7 @@ mod stock_take_test {
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockOut);
 
         // TODO implement following tests:
+        // error: NoLines
 
         // no count change should not generate shipment line
 

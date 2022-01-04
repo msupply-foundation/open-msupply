@@ -34,6 +34,8 @@ pub enum UpdateStockTakeError {
     InvalidStore,
     StockTakeDoesNotExist,
     CannotEditFinalised,
+    /// Stock takes doesn't contain any lines
+    NoLines,
     /// Holds list of affected stock take line ids
     LinesNotCounted(Vec<String>),
     /// Holds list of affected stock take line ids
@@ -91,14 +93,20 @@ fn validate(
         StockTakeLineFilter::new().stock_take_id(EqualFilter::equal_to(&input.id)),
     )?;
 
-    if let Some(uncounted) = check_stock_take_lines_counted(&stock_take_lines) {
-        return Err(UpdateStockTakeError::LinesNotCounted(uncounted));
-    }
+    if let Some(StockTakeStatus::Finalized) = input.status {
+        if stock_take_lines.len() == 0 {
+            return Err(UpdateStockTakeError::NoLines);
+        }
 
-    if let Some(mismatches) = check_snapshot_matches_current_count(&stock_take_lines) {
-        return Err(UpdateStockTakeError::SnapshotCountCurrentCountMismatch(
-            mismatches,
-        ));
+        if let Some(uncounted) = check_stock_take_lines_counted(&stock_take_lines) {
+            return Err(UpdateStockTakeError::LinesNotCounted(uncounted));
+        }
+
+        if let Some(mismatches) = check_snapshot_matches_current_count(&stock_take_lines) {
+            return Err(UpdateStockTakeError::SnapshotCountCurrentCountMismatch(
+                mismatches,
+            ));
+        }
     }
 
     Ok((existing, stock_take_lines))
