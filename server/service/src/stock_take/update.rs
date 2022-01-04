@@ -107,9 +107,9 @@ fn validate(
 struct StockTakeGenerateJob {
     stock_take: StockTakeRow,
 
-    // new shipment
-    shipment: Option<InvoiceRow>,
-    shipment_lines: Vec<InvoiceLineRow>,
+    // new inventory adjustment
+    inventory_adjustment: Option<InvoiceRow>,
+    inventory_adjustment_lines: Vec<InvoiceLineRow>,
 
     // list of stock_line upserts
     stock_lines: Vec<StockLineRow>,
@@ -278,14 +278,14 @@ fn generate(
         };
         return Ok(StockTakeGenerateJob {
             stock_take,
-            shipment: None,
-            shipment_lines: vec![],
+            inventory_adjustment: None,
+            inventory_adjustment_lines: vec![],
             stock_lines: vec![],
         });
     }
 
     // finalize the stock take
-    let mut shipment_lines: Vec<InvoiceLineRow> = Vec::new();
+    let mut inventory_adjustment_lines: Vec<InvoiceLineRow> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
     let shipment_id = uuid();
     for stock_take_line in stock_take_lines {
@@ -319,7 +319,7 @@ fn generate(
         };
         stock_lines.push(stock_line);
         if let Some(shipment_line) = shipment_line {
-            shipment_lines.push(shipment_line);
+            inventory_adjustment_lines.push(shipment_line);
         }
     }
 
@@ -366,8 +366,8 @@ fn generate(
 
     Ok(StockTakeGenerateJob {
         stock_take,
-        shipment: Some(shipment),
-        shipment_lines,
+        inventory_adjustment: Some(shipment),
+        inventory_adjustment_lines,
         stock_lines,
     })
 }
@@ -385,16 +385,18 @@ pub fn update_stock_take(
             let result = generate(connection, input, existing, &stock_take_lines, store_id)?;
 
             // write data to the DB
+            // write new stock lines
             let stock_line_repo = StockLineRowRepository::new(connection);
             for stock_line in result.stock_lines {
                 stock_line_repo.upsert_one(&stock_line)?;
             }
-            if let Some(shipment) = result.shipment {
+            // write inventory adjustment
+            if let Some(inventory_adjustment) = result.inventory_adjustment {
                 let shipment_repo = InvoiceRepository::new(connection);
-                shipment_repo.upsert_one(&shipment)?;
+                shipment_repo.upsert_one(&inventory_adjustment)?;
             }
             let shipment_line_repo = InvoiceLineRowRepository::new(connection);
-            for line in result.shipment_lines {
+            for line in result.inventory_adjustment_lines {
                 shipment_line_repo.upsert_one(&line)?;
             }
             StockTakeRowRepository::new(connection).upsert_one(&result.stock_take)?;
