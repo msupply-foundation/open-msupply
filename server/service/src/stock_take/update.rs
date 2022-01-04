@@ -261,19 +261,24 @@ fn generate_new_stock_line(
 
 fn generate(
     connection: &StorageConnection,
-    input: UpdateStockTakeInput,
+    UpdateStockTakeInput {
+        id: _,
+        comment: input_comment,
+        description: input_description,
+        status: input_status,
+    }: UpdateStockTakeInput,
     existing: StockTakeRow,
     stock_take_lines: &Vec<StockTakeLine>,
     store_id: &str,
 ) -> Result<StockTakeGenerateJob, UpdateStockTakeError> {
-    if input.status != Some(StockTakeStatus::Finalized) {
+    if input_status != Some(StockTakeStatus::Finalized) {
         // just update the existing stock take
         let stock_take = StockTakeRow {
             id: existing.id,
             store_id: existing.store_id,
-            comment: input.comment.or(existing.comment),
-            description: input.description.or(existing.description),
-            status: input.status.unwrap_or(existing.status),
+            comment: input_comment.or(existing.comment),
+            description: input_description.or(existing.description),
+            status: input_status.unwrap_or(existing.status),
             created_datetime: existing.created_datetime,
             finalised_datetime: None,
             inventory_adjustment_id: None,
@@ -337,9 +342,9 @@ fn generate(
     let stock_take = StockTakeRow {
         id: existing.id,
         store_id: existing.store_id,
-        comment: input.comment.or(existing.comment),
-        description: input.description.or(existing.description),
-        status: input.status.unwrap_or(existing.status),
+        comment: input_comment.or(existing.comment),
+        description: input_description.or(existing.description),
+        status: input_status.unwrap_or(existing.status),
         created_datetime: existing.created_datetime,
         finalised_datetime: Some(now),
         inventory_adjustment_id: Some(shipment.id.clone()),
