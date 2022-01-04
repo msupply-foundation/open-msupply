@@ -48,7 +48,7 @@ pub enum UpdateStockTakeError {
 }
 
 fn check_snapshot_matches_current_count(
-    stock_take_lines: &Vec<StockTakeLine>,
+    stock_take_lines: &[StockTakeLine],
 ) -> Option<Vec<SnapshotCountCurrentCountMismatchData>> {
     let mut mismatches = Vec::new();
     for line in stock_take_lines {
@@ -191,7 +191,7 @@ fn generate_new_stock_line(
     connection: &StorageConnection,
     store_id: &str,
     invoice_id: &str,
-    stock_take_line: &StockTakeLine,
+    stock_take_line: StockTakeLine,
 ) -> Result<(StockLineRow, Option<InvoiceLineRow>), UpdateStockTakeError> {
     let item_id = stock_take_line
         .line
@@ -268,7 +268,7 @@ fn generate(
         status: input_status,
     }: UpdateStockTakeInput,
     existing: StockTakeRow,
-    stock_take_lines: &Vec<StockTakeLine>,
+    stock_take_lines: Vec<StockTakeLine>,
     store_id: &str,
 ) -> Result<StockTakeGenerateJob, UpdateStockTakeError> {
     if input_status != Some(StockTakeStatus::Finalized) {
@@ -298,7 +298,7 @@ fn generate(
     for stock_take_line in stock_take_lines {
         let (stock_line, shipment_line) = if let Some(ref stock_line) = stock_take_line.stock_line {
             // adjust existing stock line
-            generate_stock_line_update(connection, &shipment_id, stock_take_line, stock_line)?
+            generate_stock_line_update(connection, &shipment_id, &stock_take_line, stock_line)?
         } else {
             // create new stock line
             generate_new_stock_line(connection, store_id, &shipment_id, stock_take_line)?
@@ -369,7 +369,7 @@ pub fn update_stock_take(
         .transaction_sync(|connection| {
             let stock_take_id = input.id.clone();
             let (existing, stock_take_lines) = validate(connection, store_id, &input)?;
-            let result = generate(connection, input, existing, &stock_take_lines, store_id)?;
+            let result = generate(connection, input, existing, stock_take_lines, store_id)?;
 
             // write data to the DB
             // write new stock lines
