@@ -4,6 +4,7 @@ import { InvoiceLineMutation } from './invoiceLine';
 import { RequisitionMutation } from './requisition';
 import { RequisitionLineMutation } from './requisitionLine';
 import { StocktakeMutation } from './stocktake';
+import { LocationMutation } from './location';
 
 export const MutationService = {
   requisition: RequisitionMutation,
@@ -12,4 +13,5 @@ export const MutationService = {
   invoiceLine: InvoiceLineMutation,
   stocktake: StocktakeMutation,
   stocktakeLine: StocktakeLineMutation,
+  location: LocationMutation,
 };

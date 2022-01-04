@@ -1267,3 +1267,79 @@ query locations($sort: [LocationSortInput!]) {
     }
   }
 }
+
+mutation insertLocation($input: InsertLocationInput!) {
+  insertLocation(input: $input) {
+    ... on InsertLocationError {
+      __typename
+      error {
+        description
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+        ... on UniqueValueViolation {
+          __typename
+          description
+          field
+        }
+      }
+    }
+    ... on LocationNode {
+      id
+      name
+      code
+      onHold
+    }
+  }
+}
+
+mutation updateLocation($input: UpdateLocationInput!) {
+  updateLocation(input: $input) {
+    ... on UpdateLocationError {
+      __typename
+      error {
+        description
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordBelongsToAnotherStore {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on UniqueValueViolation {
+          __typename
+          description
+          field
+        }
+      }
+    }
+    ... on LocationNode {
+      id
+      name
+      onHold
+      code
+    }
+  }
+}
