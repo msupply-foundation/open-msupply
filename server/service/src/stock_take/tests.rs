@@ -17,7 +17,9 @@ mod stock_take_test {
         stock_take::{
             delete::DeleteStockTakeError,
             insert::{InsertStockTakeError, InsertStockTakeInput},
-            update::{UpdateStockTakeError, UpdateStockTakeInput},
+            update::{
+                SnapshotCountCurrentCountMismatchData, UpdateStockTakeError, UpdateStockTakeInput,
+            },
         },
     };
 
@@ -175,7 +177,10 @@ mod stock_take_test {
         assert_eq!(
             error,
             UpdateStockTakeError::SnapshotCountCurrentCountMismatch(vec![
-                mock_stock_take_line_a().id
+                SnapshotCountCurrentCountMismatchData {
+                    stock_take_line_id: mock_stock_take_line_a().id,
+                    stock_line,
+                }
             ])
         );
 
