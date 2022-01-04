@@ -193,8 +193,12 @@ fn generate_new_stock_line(
     invoice_id: &str,
     stock_take_line: StockTakeLine,
 ) -> Result<(StockLineRow, Option<InvoiceLineRow>), UpdateStockTakeError> {
-    let item_id = stock_take_line
-        .line
+    let counted_number_of_packs = stock_take_line.line.counted_number_of_packs.unwrap_or(0);
+    let row = stock_take_line.line;
+    let pack_size = row.pack_size.unwrap_or(0);
+    let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
+    let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
+    let item_id = row
         .item_id
         .clone()
         .ok_or(UpdateStockTakeError::InternalError(
@@ -202,11 +206,6 @@ fn generate_new_stock_line(
         ))?
         .clone();
 
-    let row = &stock_take_line.line;
-    let pack_size = row.pack_size.unwrap_or(0);
-    let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
-    let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
-    let counted_number_of_packs = stock_take_line.line.counted_number_of_packs.unwrap_or(0);
     let new_line = StockLineRow {
         id: uuid(),
         item_id: item_id.clone(),
@@ -237,12 +236,12 @@ fn generate_new_stock_line(
             id: uuid(),
             r#type: InvoiceLineRowType::StockIn,
             invoice_id: invoice_id.to_string(),
-            item_id: item_id,
+            item_id,
             item_name: item.name,
             item_code: item.code,
             stock_line_id: Some(new_line.id.clone()),
-            location_id: row.location_id.clone(),
-            batch: row.batch.clone(),
+            location_id: row.location_id,
+            batch: row.batch,
             expiry_date: row.expiry_date,
             pack_size,
             cost_price_per_pack,
@@ -251,7 +250,7 @@ fn generate_new_stock_line(
             total_after_tax: 0.0,
             tax: None,
             number_of_packs: counted_number_of_packs,
-            note: row.note.clone(),
+            note: row.note,
         })
     } else {
         None
