@@ -22,8 +22,9 @@
     "stocktake": "Inventaire",
     "replenishment": "Approvisionnement",
     "supplier-requisition": "Réquisitions",
-    "inbound-shipment": "Livraison de produits",
-    "inbound-shipments": "Livraisons de produits",
-    "outbound-shipment": "Expédition de produits",
-    "outbound-shipments": "Expéditions de produits"
+    "inbound-shipment": "Livraison",
+    "inbound-shipments": "Livraisons",
+    "outbound-shipment": "Expédition",
+    "outbound-shipments": "Expéditions",
+    "locations": "Emplacements"
 }
