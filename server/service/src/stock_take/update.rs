@@ -63,7 +63,7 @@ fn check_snapshot_matches_current_count(
             });
         }
     }
-    if mismatches.len() > 0 {
+    if !mismatches.is_empty() {
         return Some(mismatches);
     }
     None
