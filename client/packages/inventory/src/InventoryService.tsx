@@ -17,6 +17,7 @@ export const InventoryService: FC = () => {
     <Routes>
       <Route path={stocktakesRoute} element={<StocktakeListView />} />
       <Route path={stocktakeRoute} element={<StocktakeDetailView />} />
+      <Route path={stocktakeRoute} element={<StocktakeDetailView />} />
     </Routes>
   );
 };
