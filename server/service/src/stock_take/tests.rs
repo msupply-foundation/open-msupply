@@ -4,10 +4,8 @@ mod stock_take_test {
     use repository::{
         mock::{
             mock_stock_line_a, mock_stock_take_a, mock_stock_take_finalized_without_lines,
-            mock_stock_take_line_a, mock_stock_take_line_uncounted_a,
-            mock_stock_take_stock_deficit, mock_stock_take_stock_surplus,
-            mock_stock_take_uncounted_lines, mock_stock_take_without_lines, mock_store_a,
-            MockDataInserts,
+            mock_stock_take_line_a, mock_stock_take_stock_deficit, mock_stock_take_stock_surplus,
+            mock_stock_take_without_lines, mock_store_a, MockDataInserts,
         },
         schema::{InvoiceLineRowType, StockTakeStatus},
         test_db::setup_all,
@@ -154,26 +152,6 @@ mod stock_take_test {
             .unwrap_err();
         assert_eq!(error, UpdateStockTakeError::CannotEditFinalised);
 
-        // error: LinesNotCounted
-        let store_a = mock_store_a();
-        let stock_take = mock_stock_take_uncounted_lines();
-        let error = service
-            .update_stock_take(
-                &context,
-                &store_a.id,
-                UpdateStockTakeInput {
-                    id: stock_take.id,
-                    comment: Some("Comment".to_string()),
-                    description: None,
-                    status: Some(StockTakeStatus::Finalized),
-                },
-            )
-            .unwrap_err();
-        assert_eq!(
-            error,
-            UpdateStockTakeError::LinesNotCounted(vec![mock_stock_take_line_uncounted_a().id])
-        );
-
         // error: SnapshotCountCurrentCountMismatch
         let store_a = mock_store_a();
         let mut stock_line = mock_stock_line_a();
@@ -199,26 +177,6 @@ mod stock_take_test {
             UpdateStockTakeError::SnapshotCountCurrentCountMismatch(vec![
                 mock_stock_take_line_a().id
             ])
-        );
-
-        // error: LinesNotCounted
-        let store_a = mock_store_a();
-        let stock_take = mock_stock_take_uncounted_lines();
-        let error = service
-            .update_stock_take(
-                &context,
-                &store_a.id,
-                UpdateStockTakeInput {
-                    id: stock_take.id,
-                    comment: Some("Comment".to_string()),
-                    description: None,
-                    status: Some(StockTakeStatus::Finalized),
-                },
-            )
-            .unwrap_err();
-        assert_eq!(
-            error,
-            UpdateStockTakeError::LinesNotCounted(vec![mock_stock_take_line_uncounted_a().id])
         );
 
         // surplus should result in StockIn shipment line

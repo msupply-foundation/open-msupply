@@ -62,40 +62,6 @@ pub fn mock_stock_take_line_finalized() -> StockTakeLineRow {
     }
 }
 
-// error uncounted lines
-
-pub fn mock_stock_take_uncounted_lines() -> StockTakeRow {
-    StockTakeRow {
-        id: "mock_stock_take_uncounted_lines".to_string(),
-        store_id: "store_a".to_string(),
-        comment: None,
-        description: None,
-        status: StockTakeStatus::New,
-        created_datetime: NaiveDate::from_ymd(2021, 12, 22).and_hms_milli(12, 30, 0, 0),
-        finalised_datetime: None,
-        inventory_adjustment_id: None,
-    }
-}
-
-pub fn mock_stock_take_line_uncounted_a() -> StockTakeLineRow {
-    StockTakeLineRow {
-        id: "mock_stock_take_line_uncounted_a".to_string(),
-        stock_take_id: mock_stock_take_uncounted_lines().id,
-        stock_line_id: Some("item_a_line_a".to_string()),
-        location_id: None,
-        comment: None,
-        snapshot_number_of_packs: 11,
-        counted_number_of_packs: None,
-        item_id: None,
-        expiry_date: None,
-        batch: None,
-        pack_size: None,
-        cost_price_per_pack: None,
-        sell_price_per_pack: None,
-        note: None,
-    }
-}
-
 // stock surplus
 
 pub fn mock_stock_take_stock_surplus() -> StockTakeRow {
@@ -208,13 +174,11 @@ pub fn test_stock_take_data() -> MockData {
         mock_stock_take_without_lines(),
         mock_stock_take_finalized(),
         mock_stock_take_finalized_without_lines(),
-        mock_stock_take_uncounted_lines(),
         mock_stock_take_stock_surplus(),
         mock_stock_take_stock_deficit(),
     ];
     data.stock_take_lines = vec![
         mock_stock_take_line_finalized(),
-        mock_stock_take_line_uncounted_a(),
         mock_stock_take_line_stock_surplus(),
         mock_stock_take_line_stock_deficit(),
     ];

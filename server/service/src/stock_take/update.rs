@@ -37,22 +37,7 @@ pub enum UpdateStockTakeError {
     /// Stock takes doesn't contain any lines
     NoLines,
     /// Holds list of affected stock take line ids
-    LinesNotCounted(Vec<String>),
-    /// Holds list of affected stock take line ids
     SnapshotCountCurrentCountMismatch(Vec<String>),
-}
-
-/// returns uncounted stock take lines
-fn check_stock_take_lines_counted(stock_take_lines: &Vec<StockTakeLine>) -> Option<Vec<String>> {
-    let uncounted: Vec<String> = stock_take_lines
-        .into_iter()
-        .filter(|line| line.line.counted_number_of_packs.is_none())
-        .map(|line| line.line.id.clone())
-        .collect();
-    if uncounted.len() > 0 {
-        return Some(uncounted);
-    }
-    None
 }
 
 fn check_snapshot_matches_current_count(
@@ -98,10 +83,6 @@ fn validate(
             return Err(UpdateStockTakeError::NoLines);
         }
 
-        if let Some(uncounted) = check_stock_take_lines_counted(&stock_take_lines) {
-            return Err(UpdateStockTakeError::LinesNotCounted(uncounted));
-        }
-
         if let Some(mismatches) = check_snapshot_matches_current_count(&stock_take_lines) {
             return Err(UpdateStockTakeError::SnapshotCountCurrentCountMismatch(
                 mismatches,
@@ -129,8 +110,11 @@ fn generate_stock_line_update(
     invoice_id: &str,
     stock_take_line: &StockTakeLine,
     stock_line: &StockLineRow,
-    counted_number_of_packs: i32,
 ) -> Result<(StockLineRow, Option<InvoiceLineRow>), UpdateStockTakeError> {
+    let counted_number_of_packs = stock_take_line
+        .line
+        .counted_number_of_packs
+        .unwrap_or(stock_take_line.line.snapshot_number_of_packs);
     let delta = counted_number_of_packs - stock_take_line.line.snapshot_number_of_packs;
     let updated_line = StockLineRow {
         id: stock_line.id.clone(),
@@ -198,7 +182,6 @@ fn generate_new_stock_line(
     store_id: &str,
     invoice_id: &str,
     stock_take_line: &StockTakeLine,
-    counted_number_of_packs: i32,
 ) -> Result<(StockLineRow, Option<InvoiceLineRow>), UpdateStockTakeError> {
     let item_id = stock_take_line
         .line
@@ -213,6 +196,7 @@ fn generate_new_stock_line(
     let pack_size = row.pack_size.unwrap_or(0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
+    let counted_number_of_packs = stock_take_line.line.counted_number_of_packs.unwrap_or(0);
     let new_line = StockLineRow {
         id: uuid(),
         item_id: item_id.clone(),
@@ -297,33 +281,12 @@ fn generate(
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
     let shipment_id = uuid();
     for stock_take_line in stock_take_lines {
-        let counted_number_of_packs = match stock_take_line.line.counted_number_of_packs {
-            Some(count) => count,
-            None => {
-                return Err(UpdateStockTakeError::InternalError(
-                    "Uncounted stock take line".to_string(),
-                ))
-            }
-        };
-
         let (stock_line, shipment_line) = if let Some(ref stock_line) = stock_take_line.stock_line {
             // adjust existing stock line
-            generate_stock_line_update(
-                connection,
-                &shipment_id,
-                stock_take_line,
-                stock_line,
-                counted_number_of_packs,
-            )?
+            generate_stock_line_update(connection, &shipment_id, stock_take_line, stock_line)?
         } else {
             // create new stock line
-            generate_new_stock_line(
-                connection,
-                store_id,
-                &shipment_id,
-                stock_take_line,
-                counted_number_of_packs,
-            )?
+            generate_new_stock_line(connection, store_id, &shipment_id, stock_take_line)?
         };
         stock_lines.push(stock_line);
         if let Some(shipment_line) = shipment_line {
