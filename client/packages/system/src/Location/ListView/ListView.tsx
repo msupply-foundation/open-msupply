@@ -27,7 +27,7 @@ const useEditModal = <T extends unknown>(): EditModalState<T> => {
 
   const onOpen = (entity: T | null = null) => {
     setEntity(entity);
-    setMode(ModalMode.Update);
+    setMode(entity ? ModalMode.Update : ModalMode.Create);
     modalControl.toggleOn();
   };
 
@@ -47,13 +47,16 @@ const useEditModal = <T extends unknown>(): EditModalState<T> => {
 };
 
 export const LocationListView: FC = () => {
-  const { pagination, onChangePage, data, isLoading, onChangeSortBy } =
+  const { pagination, onChangePage, data, isLoading, onChangeSortBy, sortBy } =
     useLocationList();
 
   const columns = useColumns<Location>(
     ['code', 'name'],
-    { onChangeSortBy },
-    []
+    {
+      onChangeSortBy,
+      sortBy,
+    },
+    [onChangeSortBy, sortBy]
   );
   const { isOpen, entity, mode, onClose, onOpen } = useEditModal<Location>();
 
@@ -67,7 +70,7 @@ export const LocationListView: FC = () => {
           location={entity}
         />
       )}
-      <AppBarButtons onCreate={onOpen} />
+      <AppBarButtons onCreate={() => onOpen()} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}

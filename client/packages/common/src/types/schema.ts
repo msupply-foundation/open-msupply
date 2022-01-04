@@ -2651,6 +2651,20 @@ export type LocationsQueryVariables = Exact<{
 
 export type LocationsQuery = { __typename?: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
 
+export type InsertLocationMutationVariables = Exact<{
+  input: InsertLocationInput;
+}>;
+
+
+export type InsertLocationMutation = { __typename?: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } | { __typename?: 'LocationNode', id: string, name: string, code: string, onHold: boolean } };
+
+export type UpdateLocationMutationVariables = Exact<{
+  input: UpdateLocationInput;
+}>;
+
+
+export type UpdateLocationMutation = { __typename?: 'Mutations', updateLocation: { __typename?: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } };
+
 
 export const InvoiceDocument = gql`
     query invoice($id: String!) {
@@ -3842,6 +3856,84 @@ export const LocationsDocument = gql`
   }
 }
     `;
+export const InsertLocationDocument = gql`
+    mutation insertLocation($input: InsertLocationInput!) {
+  insertLocation(input: $input) {
+    ... on InsertLocationError {
+      __typename
+      error {
+        description
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+        ... on UniqueValueViolation {
+          __typename
+          description
+          field
+        }
+      }
+    }
+    ... on LocationNode {
+      id
+      name
+      code
+      onHold
+    }
+  }
+}
+    `;
+export const UpdateLocationDocument = gql`
+    mutation updateLocation($input: UpdateLocationInput!) {
+  updateLocation(input: $input) {
+    ... on UpdateLocationError {
+      __typename
+      error {
+        description
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordBelongsToAnotherStore {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on UniqueValueViolation {
+          __typename
+          description
+          field
+        }
+      }
+    }
+    ... on LocationNode {
+      id
+      name
+      onHold
+      code
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -3948,6 +4040,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
+    },
+    insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertLocationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertLocationMutation>(InsertLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLocation');
+    },
+    updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateLocationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation');
     }
   };
 }
@@ -4511,5 +4609,39 @@ export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<LocationsQueryVariables>, GraphQLContext<LocationsQuery>, any>) =>
   graphql.query<LocationsQuery, LocationsQueryVariables>(
     'locations',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertLocationMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertLocation })
+ *   )
+ * })
+ */
+export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLRequest<InsertLocationMutationVariables>, GraphQLContext<InsertLocationMutation>, any>) =>
+  graphql.mutation<InsertLocationMutation, InsertLocationMutationVariables>(
+    'insertLocation',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateLocationMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateLocation })
+ *   )
+ * })
+ */
+export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLocationMutationVariables>, GraphQLContext<UpdateLocationMutation>, any>) =>
+  graphql.mutation<UpdateLocationMutation, UpdateLocationMutationVariables>(
+    'updateLocation',
     resolver
   )

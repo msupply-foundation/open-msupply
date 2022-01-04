@@ -2,6 +2,8 @@ import { randomName } from './../utils';
 import parse from 'date-fns/parse';
 import faker from 'faker';
 import {
+  InsertLocationInput,
+  UpdateLocationInput,
   UpdateInboundShipmentLineInput,
   InvoiceLineNodeType,
   InvoiceNodeStatus,
@@ -96,6 +98,38 @@ export const location = {
     all: (): Location[] => {
       return LocationData;
     },
+  },
+  insert: (vars: InsertLocationInput): Location => {
+    const newLocation = {
+      onHold: vars?.onHold ?? false,
+      stock: [],
+      name: vars.name ?? '',
+      id: vars.id,
+      code: vars.code,
+    };
+
+    LocationData.push(newLocation);
+
+    return newLocation;
+  },
+  update: (vars: UpdateLocationInput): Location => {
+    const idx = LocationData.findIndex(getFilter(vars.id, 'id'));
+
+    if (idx === -1) {
+      throw new Error(`Location with id ${vars.id} not found`);
+    }
+
+    const updatedLocation = {
+      ...LocationData[idx],
+      ...vars,
+      name: vars.name ?? '',
+      code: vars.code ?? '',
+      onHold: vars.onHold ?? false,
+    };
+
+    LocationData[idx] = updatedLocation;
+
+    return updatedLocation;
   },
 };
 
