@@ -4,3 +4,8 @@
 export type KeyOf<T extends object> = Extract<keyof T, string & keyof T>;
 
 export type ObjectWithStringKeys = Record<string, unknown>;
+
+export enum ModalMode {
+  Create,
+  Update,
+}

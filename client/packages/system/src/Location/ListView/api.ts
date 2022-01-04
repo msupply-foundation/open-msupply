@@ -1,4 +1,9 @@
+import { useQueryClient } from 'react-query';
 import {
+  UpdateLocationInput,
+  InsertLocationInput,
+  UseMutationResult,
+  useMutation,
   useQueryParams,
   useQuery,
   useOmSupplyApi,
@@ -23,6 +28,56 @@ const locationsGuard = (locationsQuery: LocationsQuery) => {
   throw new Error(locationsQuery.locations.error.description);
 };
 
+const toInsertInput = (location: Location): InsertLocationInput => ({
+  id: location?.id,
+  name: location?.name,
+  code: location?.code,
+  onHold: location?.onHold,
+});
+
+export const useLocationInsert = (): UseMutationResult<
+  unknown,
+  unknown,
+  Location,
+  unknown
+> => {
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  return useMutation(
+    async (location: Location) => {
+      api.insertLocation({ input: toInsertInput(location) });
+    },
+    {
+      onSettled: () => queryClient.invalidateQueries(['location', 'list']),
+    }
+  );
+};
+
+const toUpdateInput = (location: Location): UpdateLocationInput => ({
+  id: location?.id,
+  name: location?.name,
+  code: location?.code,
+  onHold: location?.onHold,
+});
+
+export const useLocationUpdate = (): UseMutationResult<
+  unknown,
+  unknown,
+  Location,
+  unknown
+> => {
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  return useMutation(
+    async (location: Location) => {
+      api.updateLocation({ input: toUpdateInput(location) });
+    },
+    {
+      onSettled: () => queryClient.invalidateQueries(['location', 'list']),
+    }
+  );
+};
+
 export const useLocationList = (): UseQueryResult<
   { nodes: Location[]; totalCount: number },
   unknown
@@ -34,13 +89,27 @@ export const useLocationList = (): UseQueryResult<
     initialSortBy: { key: 'name' },
   });
 
-  const result = useQuery(['locations', 'list', queryParams], async () => {
-    const result = await api.locations({
+  const result = useQuery(['location', 'list', queryParams], async () => {
+    const response = await api.locations({
       sort: [toSortInput(queryParams.sortBy)],
     });
-    const locations = locationsGuard(result);
+    const locations = locationsGuard(response);
     return locations;
   });
 
   return { ...queryParams, ...result };
+};
+
+export const useNextLocation = (
+  currentLocation: Location | null
+): Location | null => {
+  const { data } = useLocationList();
+
+  const idx = data?.nodes.findIndex(l => l.id === currentLocation?.id);
+
+  if (idx == undefined) return null;
+
+  const next = data?.nodes[(idx + 1) % data?.nodes.length];
+
+  return next ?? null;
 };

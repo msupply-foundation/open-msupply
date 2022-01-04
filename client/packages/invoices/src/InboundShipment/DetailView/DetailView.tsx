@@ -3,6 +3,7 @@ import {
   TableProvider,
   createTableStore,
   Item,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { useDraftInbound } from './api';
 import { Toolbar } from './Toolbar';
@@ -13,11 +14,6 @@ import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 import { isInboundEditable } from '../../utils';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
-
-export enum ModalMode {
-  Create,
-  Update,
-}
 
 export const toItem = (line: InboundShipmentItem | InvoiceLine): Item => ({
   id: 'lines' in line ? line.lines[0].itemId : line.itemId,
