@@ -134,7 +134,6 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             value={draft.onHold}
             selected={draft.onHold}
             onClick={(_, val) => {
-              console.log(val);
               onUpdate({ onHold: !val });
             }}
           />
