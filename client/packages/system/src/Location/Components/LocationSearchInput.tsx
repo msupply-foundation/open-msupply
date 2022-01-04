@@ -4,8 +4,8 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
-import { useLocations } from '../hooks';
 import { Location } from '../types';
+import { useLocationList } from '../ListView/api';
 
 interface LocationSearchInputProps {
   value: Location | null;
@@ -22,7 +22,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const { data, isLoading } = useLocations();
+  const { data, isLoading } = useLocationList();
 
   return (
     <Autocomplete<Location>

@@ -1230,8 +1230,8 @@ mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
   }
 }
 
-query locations {
-  locations {
+query locations($sort: [LocationSortInput!]) {
+  locations(sort: $sort) {
     __typename
     ... on LocationConnector {
       __typename
