@@ -1,5 +1,7 @@
 import { useQueryClient } from 'react-query';
 import {
+  UpdateLocationInput,
+  InsertLocationInput,
   UseMutationResult,
   useMutation,
   useQueryParams,
@@ -26,6 +28,13 @@ const locationsGuard = (locationsQuery: LocationsQuery) => {
   throw new Error(locationsQuery.locations.error.description);
 };
 
+const toInsertInput = (location: Location): InsertLocationInput => ({
+  id: location?.id,
+  name: location?.name,
+  code: location?.code,
+  onHold: location?.onHold,
+});
+
 export const useLocationInsert = (): UseMutationResult<
   unknown,
   unknown,
@@ -36,13 +45,20 @@ export const useLocationInsert = (): UseMutationResult<
   const { api } = useOmSupplyApi();
   return useMutation(
     async (location: Location) => {
-      api.insertLocation({ input: location });
+      api.insertLocation({ input: toInsertInput(location) });
     },
     {
       onSettled: () => queryClient.invalidateQueries(['location', 'list']),
     }
   );
 };
+
+const toUpdateInput = (location: Location): UpdateLocationInput => ({
+  id: location?.id,
+  name: location?.name,
+  code: location?.code,
+  onHold: location?.onHold,
+});
 
 export const useLocationUpdate = (): UseMutationResult<
   unknown,
@@ -54,7 +70,7 @@ export const useLocationUpdate = (): UseMutationResult<
   const { api } = useOmSupplyApi();
   return useMutation(
     async (location: Location) => {
-      api.updateLocation({ input: location });
+      api.updateLocation({ input: toUpdateInput(location) });
     },
     {
       onSettled: () => queryClient.invalidateQueries(['location', 'list']),
