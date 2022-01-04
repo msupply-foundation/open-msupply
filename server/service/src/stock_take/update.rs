@@ -9,7 +9,7 @@ use repository::{
     RepositoryError, StockLineRowRepository, StockTake, StockTakeLine, StockTakeLineFilter,
     StockTakeLineRepository, StockTakeRowRepository, StorageConnection,
 };
-use util::uuid::uuid;
+use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 
 use crate::{
     number::next_number, service_provider::ServiceContext, validate::check_store_id_matches,
@@ -310,8 +310,9 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let name_result = NameQueryRepository::new(connection)
-        .query_by_filter(NameFilter::new().code(SimpleStringFilter::equal_to("invad")))?;
+    let name_result = NameQueryRepository::new(connection).query_by_filter(
+        NameFilter::new().code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
+    )?;
     let invad_name = name_result
         .first()
         .ok_or(UpdateStockTakeError::InternalError(
