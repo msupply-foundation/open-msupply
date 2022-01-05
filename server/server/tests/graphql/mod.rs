@@ -169,7 +169,7 @@ fn assert_gql_no_response_error(value: &serde_json::Value) {
     }
 }
 
-// TODO rename to assert_structured_error
+// TODO https://github.com/openmsupply/remote-server/issues/682
 async fn assert_gql_query(
     settings: &Settings,
     query: &str,
