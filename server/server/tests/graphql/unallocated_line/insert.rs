@@ -1,6 +1,8 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, assert_standard_graphql_error};
-    use domain::invoice_line::{InvoiceLine, InvoiceLineType};
+    use crate::graphql::{
+        assert_gql_query, assert_standard_graphql_error, unallocated_line::successfull_invoice_line,
+    };
+    use domain::invoice_line::InvoiceLine;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -214,27 +216,6 @@ mod graphql {
         );
     }
 
-    fn successfull_invoice_line() -> InvoiceLine {
-        InvoiceLine {
-            id: "test_id".to_owned(),
-            invoice_id: "invoice_id".to_owned(),
-            item_id: "item_id".to_owned(),
-            item_name: "item_name".to_owned(),
-            item_code: "item_code".to_owned(),
-            r#type: InvoiceLineType::UnallocatedStock,
-            pack_size: 1,
-            number_of_packs: 2,
-            cost_price_per_pack: 0.0,
-            sell_price_per_pack: 0.0,
-            batch: None,
-            expiry_date: None,
-            note: None,
-            stock_line_id: None,
-            location_id: None,
-            location_name: None,
-        }
-    }
-
     #[actix_rt::test]
     async fn test_graphql_insert_unallocated_line_success() {
         let (_, _, connection_manager, settings) = setup_all(
@@ -255,7 +236,7 @@ mod graphql {
           }
         "#;
 
-        // Record Already Exists
+        // Success
         let test_service = TestService(Box::new(|_| Ok(successfull_invoice_line())));
         let out_line = successfull_invoice_line();
         let expected = json!({
