@@ -318,7 +318,7 @@ fn generate(
             "Missing inventory adjustment name".to_string(),
         ))?;
 
-    // create a shipment even if there are now shipment lines
+    // create a shipment even if there are no shipment lines
     let now = Utc::now().naive_utc();
     let shipment = InvoiceRow {
         id: shipment_id,
