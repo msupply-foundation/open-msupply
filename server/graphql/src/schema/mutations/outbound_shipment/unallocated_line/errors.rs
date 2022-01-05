@@ -1,3 +1,4 @@
+use async_graphql::*;
 pub struct UnallocatedLinesOnlyEditableInNewInvoice;
 #[Object]
 impl UnallocatedLinesOnlyEditableInNewInvoice {
