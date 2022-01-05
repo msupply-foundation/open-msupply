@@ -1,8 +1,7 @@
 use chrono::NaiveDate;
-use domain::{stock_line::StockLineFilter, EqualFilter};
 use repository::{
-    schema::StockTakeLineRow, RepositoryError, StockLineRepository, StockTakeLine,
-    StockTakeLineRowRepository, StorageConnection,
+    schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
@@ -13,18 +12,16 @@ use crate::{
 
 use super::{
     query::get_stock_take_line,
-    validate::{check_item_exists, check_location_exists, check_stock_take_line_exist},
+    validate::{check_location_exists, check_stock_take_line_exist},
 };
 
 pub struct UpdateStockTakeLineInput {
     pub id: String,
-    pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
     pub comment: Option<String>,
     pub snapshot_number_of_packs: Option<i32>,
     pub counted_number_of_packs: Option<i32>,
 
-    pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<i32>,
@@ -39,28 +36,8 @@ pub enum UpdateStockTakeLineError {
     InternalError(String),
     InvalidStore,
     StockTakeLineDoesNotExist,
-    StockLineDoesNotExist,
     LocationDoesNotExist,
     CannotEditFinalised,
-    /// Either stock take line xor item must be set
-    StockTakeLineXOrItem,
-    ItemDoesNotExist,
-}
-
-fn check_stock_line_xor_item(input: &UpdateStockTakeLineInput) -> bool {
-    if input.stock_line_id.is_some() && input.item_id.is_some() {
-        return false;
-    }
-    true
-}
-
-fn check_stock_line_exists(
-    connection: &StorageConnection,
-    id: &str,
-) -> Result<bool, RepositoryError> {
-    let count = StockLineRepository::new(connection)
-        .count(Some(StockLineFilter::new().id(EqualFilter::equal_to(id))))?;
-    Ok(count == 1)
 }
 
 fn validate(
@@ -88,24 +65,9 @@ fn validate(
         return Err(UpdateStockTakeLineError::InvalidStore);
     }
 
-    if !check_stock_line_xor_item(input) {
-        return Err(UpdateStockTakeLineError::StockTakeLineXOrItem);
-    }
-
     if let Some(location_id) = &input.location_id {
         if !check_location_exists(connection, location_id)? {
             return Err(UpdateStockTakeLineError::LocationDoesNotExist);
-        }
-    }
-
-    if let Some(stock_line_id) = &input.stock_line_id {
-        if !check_stock_line_exists(connection, stock_line_id)? {
-            return Err(UpdateStockTakeLineError::StockLineDoesNotExist);
-        }
-    }
-    if let Some(item_id) = &input.item_id {
-        if !check_item_exists(connection, item_id)? {
-            return Err(UpdateStockTakeLineError::ItemDoesNotExist);
         }
     }
 
@@ -116,12 +78,10 @@ fn generate(
     existing: StockTakeLineRow,
     UpdateStockTakeLineInput {
         id: _,
-        stock_line_id,
         location_id,
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
-        item_id,
         batch,
         expiry_date,
         pack_size,
@@ -130,82 +90,25 @@ fn generate(
         note,
     }: UpdateStockTakeLineInput,
 ) -> Result<StockTakeLineRow, UpdateStockTakeLineError> {
-    let update_stock_line_id = if existing.stock_line_id != stock_line_id {
-        stock_line_id
-    } else {
-        None
-    };
-    let update_item_id = if existing.item_id != item_id {
-        item_id
-    } else {
-        None
-    };
-    match (update_stock_line_id, update_item_id) {
-        // normal update: (stock_line nor item_id have changed):
-        (None, None) => Ok(StockTakeLineRow {
-            id: existing.id,
-            stock_take_id: existing.stock_take_id,
-            stock_line_id: existing.stock_line_id,
-            location_id: location_id.or(existing.location_id),
-            comment: comment.or(existing.comment),
+    Ok(StockTakeLineRow {
+        id: existing.id,
+        stock_take_id: existing.stock_take_id,
+        stock_line_id: existing.stock_line_id,
+        location_id: location_id.or(existing.location_id),
+        comment: comment.or(existing.comment),
 
-            snapshot_number_of_packs: snapshot_number_of_packs
-                .unwrap_or(existing.snapshot_number_of_packs),
-            counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
+        snapshot_number_of_packs: snapshot_number_of_packs
+            .unwrap_or(existing.snapshot_number_of_packs),
+        counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
 
-            item_id: existing.item_id,
-            expiry_date: expiry_date.or(existing.expiry_date),
-            batch: batch.or(existing.batch),
-            pack_size: pack_size.or(existing.pack_size),
-            cost_price_per_pack: cost_price_per_pack.or(existing.cost_price_per_pack),
-            sell_price_per_pack: sell_price_per_pack.or(existing.sell_price_per_pack),
-            note: note.or(existing.note),
-        }),
-        // Reference to existing stock_line has been removed and now refers to an item (create new stock line):
-        (None, Some(item_id)) => Ok(StockTakeLineRow {
-            id: existing.id,
-            stock_take_id: existing.stock_take_id,
-            stock_line_id: None,
-            location_id: location_id.or(existing.location_id),
-            comment: comment.or(existing.comment),
-
-            snapshot_number_of_packs: snapshot_number_of_packs
-                .unwrap_or(existing.snapshot_number_of_packs),
-            counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
-
-            item_id: Some(item_id),
-            expiry_date: expiry_date.or(None),
-            batch: batch.or(None),
-            pack_size: pack_size.or(None),
-            cost_price_per_pack: cost_price_per_pack.or(None),
-            sell_price_per_pack: sell_price_per_pack.or(None),
-            note: note.or(None),
-        }),
-        // Reference to an item (create new stock line) has been removed and now refers to existing stock line:
-        (Some(stock_line_id), None) => Ok(StockTakeLineRow {
-            id: existing.id,
-            stock_take_id: existing.stock_take_id,
-            stock_line_id: Some(stock_line_id),
-            location_id: location_id.or(existing.location_id),
-            comment: comment.or(existing.comment),
-
-            snapshot_number_of_packs: snapshot_number_of_packs
-                .unwrap_or(existing.snapshot_number_of_packs),
-            counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
-
-            item_id: None,
-            expiry_date: expiry_date.or(None),
-            batch: batch.or(None),
-            pack_size: pack_size.or(None),
-            cost_price_per_pack: cost_price_per_pack.or(None),
-            sell_price_per_pack: sell_price_per_pack.or(None),
-            note: note.or(None),
-        }),
-        // Validate should have caught this case:
-        (Some(_), Some(_)) => Err(UpdateStockTakeLineError::InternalError(
-            "Stock line and item id specified at the same time".to_string(),
-        )),
-    }
+        item_id: existing.item_id,
+        expiry_date: expiry_date.or(existing.expiry_date),
+        batch: batch.or(existing.batch),
+        pack_size: pack_size.or(existing.pack_size),
+        cost_price_per_pack: cost_price_per_pack.or(existing.cost_price_per_pack),
+        sell_price_per_pack: sell_price_per_pack.or(existing.sell_price_per_pack),
+        note: note.or(existing.note),
+    })
 }
 
 pub fn update_stock_take_line(
