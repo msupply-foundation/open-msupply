@@ -15,7 +15,7 @@ pub enum DeleteOutboundShipmentUnallocatedLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     LineIsNotUnallocatedLine,
-    //NotThisStoreInvoice,
+    //TODO: NotThisStoreInvoice,
 }
 
 type OutError = DeleteOutboundShipmentUnallocatedLineError;
@@ -61,7 +61,7 @@ impl From<RepositoryError> for DeleteOutboundShipmentUnallocatedLineError {
 mod test_delete {
 
     use repository::{
-        mock::{mock_outbound_shipment_a_invoice_lines, MockDataInserts, mock_unallocated_line},
+        mock::{mock_outbound_shipment_a_invoice_lines, mock_unallocated_line, MockDataInserts},
         test_db::setup_all,
         InvoiceLineRowRepository, RepositoryError,
     };
