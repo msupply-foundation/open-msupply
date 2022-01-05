@@ -4,6 +4,7 @@ mod error;
 mod insert;
 mod line;
 mod service_line;
+mod unallocated_line;
 mod update;
 
 pub use batch::*;
@@ -12,4 +13,5 @@ pub use error::*;
 pub use insert::*;
 pub use line::*;
 pub use service_line::*;
+pub use unallocated_line::*;
 pub use update::*;
