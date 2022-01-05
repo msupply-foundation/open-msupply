@@ -1,7 +1,7 @@
 #![allow(where_clauses_object_safety)]
 
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use repository::{
         mock::{mock_outbound_shipment_number_store_a, MockDataInserts},
         InvoiceRepository,
@@ -62,7 +62,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // ForeignKeyError (OtherPartyIdNotFoundError)
         let foreign_key_query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
@@ -92,7 +92,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, foreign_key_query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, foreign_key_query, &variables, &expected, None);
 
         // Test succeeding insert
         let variables = Some(json!({
@@ -115,7 +115,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
         // make sure item has been inserted
         InvoiceRepository::new(&connection)
             .find_one_by_id("ci_insert_1")
@@ -144,7 +144,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // RecordAlreadyExist,
         let variables = Some(json!({
@@ -162,6 +162,6 @@ mod graphql {
           }
         );
 
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
     }
 }

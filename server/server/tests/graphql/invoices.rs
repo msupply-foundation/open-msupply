@@ -1,7 +1,7 @@
 #![allow(where_clauses_object_safety)]
 
 mod graphql {
-    use crate::graphql::{assert_gql_query, common::get_invoice_lines_inline};
+    use crate::graphql::{assert_graphql_query, common::get_invoice_lines_inline};
     use chrono::{DateTime, Utc};
     use domain::Pagination;
     use repository::{mock::MockDataInserts, InvoiceQueryRepository};
@@ -56,7 +56,7 @@ mod graphql {
            }
          }
         );
-        assert_gql_query(&settings, query, &None, &expected, None).await;
+        assert_graphql_query!(&settings, query, &None, &expected, None);
     }
 
     #[actix_rt::test]
@@ -100,7 +100,7 @@ mod graphql {
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
 
         // test invoice number filter
         let variables = Some(json!({
@@ -119,7 +119,7 @@ mod graphql {
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
     }
 
     macro_rules! sort_test {
@@ -179,7 +179,7 @@ mod graphql {
             invoices,
             true
         );
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
         let (query, variables, expected) = sort_test!(
             "invoiceNumber",
             invoice_number,
@@ -187,7 +187,7 @@ mod graphql {
             invoices,
             false
         );
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
         // other party name
         let (query, variables, expected) = sort_test!(
             "otherPartyName",
@@ -196,7 +196,7 @@ mod graphql {
             invoices,
             true
         );
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
         let (query, variables, expected) = sort_test!(
             "otherPartyName",
             other_party_name,
@@ -204,6 +204,6 @@ mod graphql {
             invoices,
             false
         );
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
     }
 }

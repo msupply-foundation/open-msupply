@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use domain::{
         invoice_line::{InvoiceLine, InvoiceLineType},
         location::DeleteLocation,
@@ -79,14 +79,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Not current store location
         let test_service = TestService(Box::new(|_| {
@@ -102,14 +101,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Location in use
         let mutation = r#"
@@ -192,14 +190,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -236,13 +233,12 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }

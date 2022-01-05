@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use repository::{
         get_storage_connection_manager, test_db,
         {
@@ -54,7 +54,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &None, &expected, None).await;
+        assert_graphql_query!(&settings, query, &None, &expected, None);
 
         // test sorting
         let query = r#"query Names($sort: [NameSortInput]) {
@@ -82,7 +82,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // test filtering
         let query = r#"query Names($filter: [NameFilterInput]) {
@@ -121,6 +121,6 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
     }
 }
