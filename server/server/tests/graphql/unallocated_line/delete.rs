@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::{assert_gql_query, assert_standard_graphql_error};
+    use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -75,14 +75,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &Some(empty_variables()),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -142,13 +141,12 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &Some(empty_variables()),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }

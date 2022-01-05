@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::{assert_gql_not_found, assert_gql_query};
+    use crate::graphql::{assert_gql_not_found, assert_graphql_query};
     use domain::invoice::InvoiceStatus;
     use server::test_utils::setup_all;
 
@@ -79,7 +79,7 @@ mod graphql {
                 "status": InvoiceNodeStatus::from(InvoiceStatus::from(full_invoice.invoice.status.clone())),
             },
         });
-        assert_gql_query(&settings, &query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
 
         // Test not found error
         assert_gql_not_found(

@@ -1,7 +1,7 @@
 #![allow(where_clauses_object_safety)]
 
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use repository::{mock::MockDataInserts, InvoiceRepository, RepositoryError};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -39,7 +39,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // CannotEditInvoice
         let variables = Some(json!({
@@ -53,7 +53,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // NotAnOutboundShipment
         let variables = Some(json!({
@@ -67,7 +67,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // CannotDeleteInvoiceWithLines
         let variables = Some(json!({
@@ -81,7 +81,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // Test succeeding delete
         let variables = Some(json!({
@@ -93,7 +93,7 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(&settings, query, &variables, &expected, None).await;
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
         // test entry has been deleted
         assert_eq!(
             InvoiceRepository::new(&connection)

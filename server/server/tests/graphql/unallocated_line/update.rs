@@ -1,6 +1,7 @@
 mod graphql {
     use crate::graphql::{
-        assert_gql_query, assert_standard_graphql_error, unallocated_line::successfull_invoice_line,
+        assert_graphql_query, assert_standard_graphql_error,
+        unallocated_line::successfull_invoice_line,
     };
     use domain::invoice_line::InvoiceLine;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
@@ -79,14 +80,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &Some(empty_variables()),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -151,13 +151,12 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &Some(empty_variables()),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }

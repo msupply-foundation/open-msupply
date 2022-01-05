@@ -1,7 +1,7 @@
 // #![allow(where_clauses_object_safety)]
 
 // mod graphql {
-//     use crate::graphql::assert_gql_query;
+//     use crate::graphql::assert_graphql_query;
 //     use server::{
 //         database::{
 //             mock::{mock_names, mock_requisitions, mock_stores},
@@ -61,6 +61,6 @@
 //             }
 //           }
 //         );
-//         assert_gql_query(&settings, query, &variables, &expected).await;
+//         assert_graphql_query!(&settings, query, &variables, &expected).await;
 //     }
 // }
