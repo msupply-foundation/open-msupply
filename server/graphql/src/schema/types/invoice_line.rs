@@ -43,6 +43,9 @@ impl InvoiceLineNode {
     pub async fn id(&self) -> &str {
         &self.invoice_line.id
     }
+    pub async fn invoice_id(&self) -> &str {
+        &self.invoice_line.invoice_id
+    }
     pub async fn item_id(&self) -> &str {
         &self.invoice_line.item_id
     }
