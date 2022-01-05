@@ -2,7 +2,7 @@
 mod stock_take_line_test {
     use repository::{
         mock::{
-            mock_item_a, mock_item_a_lines, mock_item_b_lines, mock_locations, mock_stock_take_a,
+            mock_item_a, mock_item_a_lines, mock_locations, mock_stock_take_a,
             mock_stock_take_finalized, mock_stock_take_line_a, mock_stock_take_line_finalized,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -54,32 +54,6 @@ mod stock_take_line_test {
             )
             .unwrap_err();
         assert_eq!(error, InsertStockTakeLineError::StockTakeDoesNotExist);
-
-        // error: StockLineDoesNotExist,
-        let store_a = mock_store_a();
-        let stock_take_a = mock_stock_take_a();
-        let error = service
-            .insert_stock_take_line(
-                &context,
-                &store_a.id,
-                InsertStockTakeLineInput {
-                    id: uuid(),
-                    stock_take_id: stock_take_a.id,
-                    stock_line_id: Some("invalid".to_string()),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::StockLineDoesNotExist);
 
         // error: InvalidStore,
         let stock_take_a = mock_stock_take_a();
@@ -189,84 +163,6 @@ mod stock_take_line_test {
             .unwrap_err();
         assert_eq!(error, InsertStockTakeLineError::CannotEditFinalised);
 
-        // error StockTakeLineXOrItem
-        let store_a = mock_store_a();
-        let stock_take_a = mock_stock_take_a();
-        let error = service
-            .insert_stock_take_line(
-                &context,
-                &store_a.id,
-                InsertStockTakeLineInput {
-                    id: uuid(),
-                    stock_take_id: stock_take_a.id,
-                    stock_line_id: None,
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::StockTakeLineXOrItem);
-        let store_a = mock_store_a();
-        let stock_take_a = mock_stock_take_a();
-        let stock_line_a = mock_item_a_lines()[0].clone();
-        let item_a = mock_item_a();
-        let error = service
-            .insert_stock_take_line(
-                &context,
-                &store_a.id,
-                InsertStockTakeLineInput {
-                    id: uuid(),
-                    stock_take_id: stock_take_a.id,
-                    stock_line_id: Some(stock_line_a.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: Some(item_a.id),
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::StockTakeLineXOrItem);
-
-        // error ItemDoesNotExist;
-        let store_a = mock_store_a();
-        let stock_take_a = mock_stock_take_a();
-        let error = service
-            .insert_stock_take_line(
-                &context,
-                &store_a.id,
-                InsertStockTakeLineInput {
-                    id: uuid(),
-                    stock_take_id: stock_take_a.id,
-                    stock_line_id: None,
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: Some("invalid".to_string()),
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, InsertStockTakeLineError::ItemDoesNotExist);
-
         // success with stock_line_id
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();
@@ -337,7 +233,6 @@ mod stock_take_line_test {
                 &store_a.id,
                 UpdateStockTakeLineInput {
                     id: "invalid".to_string(),
-                    stock_line_id: None,
                     location_id: None,
                     batch: None,
                     comment: None,
@@ -345,7 +240,6 @@ mod stock_take_line_test {
                     sell_price_per_pack: None,
                     snapshot_number_of_packs: None,
                     counted_number_of_packs: None,
-                    item_id: None,
                     expiry_date: None,
                     pack_size: None,
                     note: None,
@@ -362,7 +256,6 @@ mod stock_take_line_test {
                 "invalid",
                 UpdateStockTakeLineInput {
                     id: stock_take_line_a.id,
-                    stock_line_id: None,
                     location_id: None,
                     batch: None,
                     comment: None,
@@ -370,7 +263,6 @@ mod stock_take_line_test {
                     sell_price_per_pack: None,
                     snapshot_number_of_packs: None,
                     counted_number_of_packs: None,
-                    item_id: None,
                     expiry_date: None,
                     pack_size: None,
                     note: None,
@@ -378,32 +270,6 @@ mod stock_take_line_test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStockTakeLineError::InvalidStore);
-
-        // error: StockLineDoesNotExist
-        let store_a = mock_store_a();
-        let stock_take_line_a = mock_stock_take_line_a();
-        let error = service
-            .update_stock_take_line(
-                &context,
-                &store_a.id,
-                UpdateStockTakeLineInput {
-                    id: stock_take_line_a.id,
-                    stock_line_id: Some("invalid".to_string()),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    snapshot_number_of_packs: None,
-                    counted_number_of_packs: None,
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::StockLineDoesNotExist);
 
         // error: LocationDoesNotExist
         let store_a = mock_store_a();
@@ -414,7 +280,6 @@ mod stock_take_line_test {
                 &store_a.id,
                 UpdateStockTakeLineInput {
                     id: stock_take_line_a.id,
-                    stock_line_id: None,
                     location_id: Some("invalid".to_string()),
                     batch: None,
                     comment: None,
@@ -422,7 +287,6 @@ mod stock_take_line_test {
                     sell_price_per_pack: None,
                     snapshot_number_of_packs: None,
                     counted_number_of_packs: None,
-                    item_id: None,
                     expiry_date: None,
                     pack_size: None,
                     note: None,
@@ -440,7 +304,6 @@ mod stock_take_line_test {
                 &store_a.id,
                 UpdateStockTakeLineInput {
                     id: stock_take_line_a.id,
-                    stock_line_id: None,
                     location_id: None,
                     batch: None,
                     comment: Some(
@@ -450,7 +313,6 @@ mod stock_take_line_test {
                     sell_price_per_pack: None,
                     snapshot_number_of_packs: None,
                     counted_number_of_packs: None,
-                    item_id: None,
                     expiry_date: None,
                     pack_size: None,
                     note: None,
@@ -458,61 +320,6 @@ mod stock_take_line_test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStockTakeLineError::CannotEditFinalised);
-
-        // error: StockTakeLineXOrItem
-        let store_a = mock_store_a();
-        let stock_take_line_a = mock_stock_take_line_a();
-        let stock_line = mock_item_b_lines()[0].clone();
-        assert!(stock_take_line_a.stock_line_id.unwrap() != stock_line.id);
-        let item_a = mock_item_a();
-        let error = service
-            .update_stock_take_line(
-                &context,
-                &store_a.id,
-                UpdateStockTakeLineInput {
-                    id: stock_take_line_a.id.clone(),
-                    stock_line_id: Some(stock_line.id),
-                    location_id: None,
-                    batch: Some("test_batch".to_string()),
-                    comment: Some("test comment".to_string()),
-                    cost_price_per_pack: Some(20.0),
-                    sell_price_per_pack: Some(25.0),
-                    snapshot_number_of_packs: Some(10),
-                    counted_number_of_packs: Some(14),
-                    item_id: Some(item_a.id),
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::StockTakeLineXOrItem);
-
-        // error: ItemDoesNotExist,
-        let store_a = mock_store_a();
-        let stock_take_line_a = mock_stock_take_line_a();
-        let error = service
-            .update_stock_take_line(
-                &context,
-                &store_a.id,
-                UpdateStockTakeLineInput {
-                    id: stock_take_line_a.id.clone(),
-                    stock_line_id: None,
-                    location_id: None,
-                    batch: Some("test_batch".to_string()),
-                    comment: Some("test comment".to_string()),
-                    cost_price_per_pack: Some(20.0),
-                    sell_price_per_pack: Some(25.0),
-                    snapshot_number_of_packs: Some(10),
-                    counted_number_of_packs: Some(14),
-                    item_id: Some("invalid".to_string()),
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, UpdateStockTakeLineError::ItemDoesNotExist);
 
         // success: no update
         let store_a = mock_store_a();
@@ -523,7 +330,6 @@ mod stock_take_line_test {
                 &store_a.id,
                 UpdateStockTakeLineInput {
                     id: stock_take_line_a.id.clone(),
-                    stock_line_id: None,
                     location_id: None,
                     batch: None,
                     comment: None,
@@ -531,7 +337,6 @@ mod stock_take_line_test {
                     sell_price_per_pack: None,
                     snapshot_number_of_packs: None,
                     counted_number_of_packs: None,
-                    item_id: None,
                     expiry_date: None,
                     pack_size: None,
                     note: None,
@@ -543,16 +348,13 @@ mod stock_take_line_test {
         // success: full update
         let store_a = mock_store_a();
         let stock_take_line_a = mock_stock_take_line_a();
-        let stock_line = mock_item_b_lines()[0].clone();
         let location = mock_locations()[0].clone();
-        assert!(stock_take_line_a.stock_line_id.unwrap() != stock_line.id);
         let result = service
             .update_stock_take_line(
                 &context,
                 &store_a.id,
                 UpdateStockTakeLineInput {
                     id: stock_take_line_a.id.clone(),
-                    stock_line_id: Some(stock_line.id.clone()),
                     location_id: Some(location.id.clone()),
                     batch: Some("test_batch".to_string()),
                     comment: Some("test comment".to_string()),
@@ -560,7 +362,6 @@ mod stock_take_line_test {
                     sell_price_per_pack: Some(25.0),
                     snapshot_number_of_packs: Some(10),
                     counted_number_of_packs: Some(14),
-                    item_id: None,
                     expiry_date: None,
                     pack_size: None,
                     note: None,
@@ -572,7 +373,7 @@ mod stock_take_line_test {
             StockTakeLineRow {
                 id: stock_take_line_a.id,
                 stock_take_id: stock_take_line_a.stock_take_id,
-                stock_line_id: Some(stock_line.id),
+                stock_line_id: Some(stock_take_line_a.stock_line_id.unwrap()),
                 location_id: Some(location.id),
                 batch: Some("test_batch".to_string()),
                 comment: Some("test comment".to_string()),
