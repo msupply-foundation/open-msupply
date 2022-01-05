@@ -4,10 +4,12 @@ mod stock_take_test {
     use repository::{
         mock::{
             mock_stock_line_a, mock_stock_take_a, mock_stock_take_finalized_without_lines,
-            mock_stock_take_line_a, mock_stock_take_stock_deficit, mock_stock_take_stock_surplus,
+            mock_stock_take_full_edit, mock_stock_take_line_a, mock_stock_take_line_new_stock_line,
+            mock_stock_take_new_stock_line, mock_stock_take_no_count_change,
+            mock_stock_take_no_lines, mock_stock_take_stock_deficit, mock_stock_take_stock_surplus,
             mock_stock_take_without_lines, mock_store_a, MockDataInserts,
         },
-        schema::{InvoiceLineRowType, StockTakeStatus},
+        schema::{InvoiceLineRowType, StockTakeRow, StockTakeStatus},
         test_db::setup_all,
         InvoiceLineRowRepository, StockLineRowRepository,
     };
@@ -184,7 +186,24 @@ mod stock_take_test {
             ])
         );
 
-        // surplus should result in StockIn shipment line
+        // error: NoLines
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_no_lines();
+        let error = service
+            .update_stock_take(
+                &context,
+                &store_a.id,
+                UpdateStockTakeInput {
+                    id: stock_take.id,
+                    comment: Some("Comment".to_string()),
+                    description: None,
+                    status: Some(StockTakeStatus::Finalized),
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStockTakeError::NoLines);
+
+        // success surplus should result in StockIn shipment line
         let store_a = mock_store_a();
         let stock_take = mock_stock_take_stock_surplus();
         let result = service
@@ -206,7 +225,7 @@ mod stock_take_test {
             .unwrap();
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockIn);
 
-        // deficit should result in StockOut shipment line
+        // success deficit should result in StockOut shipment line
         let store_a = mock_store_a();
         let stock_take = mock_stock_take_stock_deficit();
         let result = service
@@ -228,18 +247,109 @@ mod stock_take_test {
             .unwrap();
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockOut);
 
-        // TODO implement following tests:
-        // error: NoLines
-
-        // no count change should not generate shipment line
+        // success: no count change should not generate shipment line
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_no_count_change();
+        let result = service
+            .update_stock_take(
+                &context,
+                &store_a.id,
+                UpdateStockTakeInput {
+                    id: stock_take.id,
+                    comment: None,
+                    description: None,
+                    status: Some(StockTakeStatus::Finalized),
+                },
+            )
+            .unwrap();
+        let shipment_lines = InvoiceLineRowRepository::new(&context.connection)
+            .find_many_by_invoice_id(&result.inventory_adjustment_id.unwrap())
+            .unwrap()
+            .pop();
+        assert_eq!(shipment_lines, None);
 
         // success: no changes (not finalized)
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_a();
+        let result = service
+            .update_stock_take(
+                &context,
+                &store_a.id,
+                UpdateStockTakeInput {
+                    id: stock_take.id,
+                    comment: None,
+                    description: None,
+                    status: Some(StockTakeStatus::New),
+                },
+            )
+            .unwrap();
+        assert_eq!(result, mock_stock_take_a());
 
         // success: all changes (not finalized)
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_full_edit();
+        let result = service
+            .update_stock_take(
+                &context,
+                &store_a.id,
+                UpdateStockTakeInput {
+                    id: stock_take.id.clone(),
+                    comment: Some("comment_1".to_string()),
+                    description: Some("description_1".to_string()),
+                    status: Some(StockTakeStatus::New),
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            result,
+            StockTakeRow {
+                id: stock_take.id,
+                store_id: store_a.id,
+                comment: Some("comment_1".to_string()),
+                description: Some("description_1".to_string()),
+                status: stock_take.status,
+                created_datetime: stock_take.created_datetime,
+                finalised_datetime: stock_take.finalised_datetime,
+                inventory_adjustment_id: stock_take.inventory_adjustment_id,
+            }
+        );
 
         // success: new stock line
-
-        // success: update stock line
+        let store_a = mock_store_a();
+        let stock_take = mock_stock_take_new_stock_line();
+        let result = service
+            .update_stock_take(
+                &context,
+                &store_a.id,
+                UpdateStockTakeInput {
+                    id: stock_take.id.clone(),
+                    comment: None,
+                    description: None,
+                    status: Some(StockTakeStatus::Finalized),
+                },
+            )
+            .unwrap();
+        let shipment_line = InvoiceLineRowRepository::new(&context.connection)
+            .find_many_by_invoice_id(&result.inventory_adjustment_id.unwrap())
+            .unwrap()
+            .pop()
+            .unwrap();
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&shipment_line.stock_line_id.unwrap())
+            .unwrap();
+        let stock_take_line = mock_stock_take_line_new_stock_line();
+        assert_eq!(stock_line.expiry_date, stock_take_line.expiry_date);
+        assert_eq!(stock_line.batch, stock_take_line.batch);
+        assert_eq!(stock_line.pack_size, stock_take_line.pack_size.unwrap());
+        assert_eq!(
+            stock_line.cost_price_per_pack,
+            stock_take_line.cost_price_per_pack.unwrap()
+        );
+        assert_eq!(
+            stock_line.sell_price_per_pack,
+            stock_take_line.sell_price_per_pack.unwrap()
+        );
+        assert_eq!(stock_line.note, stock_take_line.note);
     }
 
     #[actix_rt::test]
