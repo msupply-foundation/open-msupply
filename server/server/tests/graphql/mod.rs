@@ -210,7 +210,7 @@ macro_rules! assert_standard_graphql_error {
                 }]
             }
         );
-
+        // Inclusive means only match fields in rhs against lhs (lhs can have more fields)
         let config = assert_json_diff::Config::new(assert_json_diff::CompareMode::Inclusive);
 
         match assert_json_diff::assert_json_matches_no_panic(
