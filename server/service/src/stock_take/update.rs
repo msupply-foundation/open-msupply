@@ -147,7 +147,7 @@ fn generate_stock_line_update(
         Some(item) => item,
         None => {
             return Err(UpdateStockTakeError::InternalError(format!(
-                "Can't find item {} for new stock take line {}!",
+                "Can't find item {} for existing stock take line {}!",
                 &stock_line.item_id, stock_take_line.line.id
             )))
         }
@@ -390,7 +390,7 @@ pub fn update_stock_take(
             // return the updated stock take
             let stock_take = get_stock_take(ctx, stock_take_id)?;
             stock_take.ok_or(UpdateStockTakeError::InternalError(
-                "Failed to read the just inserted stock take!".to_string(),
+                "Failed to read the just updated stock take!".to_string(),
             ))
         })
         .map_err(|error| error.to_inner_error())?;
