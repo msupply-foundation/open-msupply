@@ -2,9 +2,9 @@
 mod stock_take_line_test {
     use repository::{
         mock::{
-            mock_item_a, mock_item_a_lines, mock_locations, mock_stock_take_a,
-            mock_stock_take_finalized, mock_stock_take_line_a, mock_stock_take_line_finalized,
-            mock_store_a, mock_store_b, MockDataInserts,
+            mock_item_a, mock_item_a_lines, mock_locations, mock_new_stock_line_for_stock_take_a,
+            mock_stock_take_a, mock_stock_take_finalized, mock_stock_take_line_a,
+            mock_stock_take_line_finalized, mock_store_a, mock_store_b, MockDataInserts,
         },
         schema::StockTakeLineRow,
         test_db::setup_all,
@@ -81,7 +81,7 @@ mod stock_take_line_test {
             .unwrap_err();
         assert_eq!(error, InsertStockTakeLineError::InvalidStore);
 
-        // error LocationDoesNotExist
+        // error StockLineAlreadyExistsInStockTake
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
@@ -93,6 +93,36 @@ mod stock_take_line_test {
                     id: uuid(),
                     stock_take_id: stock_take_a.id,
                     stock_line_id: Some(stock_line_a.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            InsertStockTakeLineError::StockLineAlreadyExistsInStockTake
+        );
+
+        // error LocationDoesNotExist
+        let store_a = mock_store_a();
+        let stock_take_a = mock_stock_take_a();
+        let stock_line = mock_new_stock_line_for_stock_take_a();
+        let error = service
+            .insert_stock_take_line(
+                &context,
+                &store_a.id,
+                InsertStockTakeLineInput {
+                    id: uuid(),
+                    stock_take_id: stock_take_a.id,
+                    stock_line_id: Some(stock_line.id),
                     location_id: Some("invalid".to_string()),
                     batch: None,
                     comment: None,
@@ -112,7 +142,7 @@ mod stock_take_line_test {
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();
         let stock_take_line_a = mock_stock_take_line_a();
-        let stock_line_a = mock_item_a_lines()[0].clone();
+        let stock_line = mock_new_stock_line_for_stock_take_a();
         let error = service
             .insert_stock_take_line(
                 &context,
@@ -120,7 +150,7 @@ mod stock_take_line_test {
                 InsertStockTakeLineInput {
                     id: stock_take_line_a.id,
                     stock_take_id: stock_take_a.id,
-                    stock_line_id: Some(stock_line_a.id),
+                    stock_line_id: Some(stock_line.id),
                     location_id: None,
                     batch: None,
                     comment: None,
@@ -139,7 +169,7 @@ mod stock_take_line_test {
         // check CannotEditFinalised
         let store_a = mock_store_a();
         let stock_take_finalized = mock_stock_take_finalized();
-        let stock_line_a = mock_item_a_lines()[0].clone();
+        let stock_line = mock_new_stock_line_for_stock_take_a();
         let error = service
             .insert_stock_take_line(
                 &context,
@@ -147,7 +177,7 @@ mod stock_take_line_test {
                 InsertStockTakeLineInput {
                     id: uuid(),
                     stock_take_id: stock_take_finalized.id,
-                    stock_line_id: Some(stock_line_a.id),
+                    stock_line_id: Some(stock_line.id),
                     location_id: None,
                     batch: None,
                     comment: None,
@@ -166,7 +196,7 @@ mod stock_take_line_test {
         // success with stock_line_id
         let store_a = mock_store_a();
         let stock_take_a = mock_stock_take_a();
-        let stock_line_a = mock_item_a_lines()[0].clone();
+        let stock_line = mock_new_stock_line_for_stock_take_a();
         service
             .insert_stock_take_line(
                 &context,
@@ -174,7 +204,7 @@ mod stock_take_line_test {
                 InsertStockTakeLineInput {
                     id: uuid(),
                     stock_take_id: stock_take_a.id,
-                    stock_line_id: Some(stock_line_a.id),
+                    stock_line_id: Some(stock_line.id),
                     location_id: None,
                     batch: None,
                     comment: None,

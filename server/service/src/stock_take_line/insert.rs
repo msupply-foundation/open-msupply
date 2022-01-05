@@ -44,6 +44,7 @@ pub enum InsertStockTakeLineError {
     StockTakeDoesNotExist,
     StockTakeLineAlreadyExists,
     StockLineDoesNotExist,
+    StockLineAlreadyExistsInStockTake,
     LocationDoesNotExist,
     CannotEditFinalised,
     /// Either stock take line xor item must be set
@@ -59,6 +60,29 @@ fn check_stock_take_line_does_not_exist(
         StockTakeLineFilter::new().id(EqualFilter::equal_to(id)),
     ))?;
     Ok(count == 0)
+}
+
+fn check_stock_line_is_unique(
+    connection: &StorageConnection,
+    id: &str,
+    stock_line_id: &str,
+) -> Result<bool, RepositoryError> {
+    let stock_take_lines = StockTakeLineRepository::new(connection)
+        .query_by_filter(StockTakeLineFilter::new().stock_take_id(EqualFilter::equal_to(id)))?;
+    let already_has_stock_line = stock_take_lines.iter().find(|line| {
+        if let Some(ref stock_line) = line.stock_line {
+            if stock_line.id == stock_line_id {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        false
+    });
+    match already_has_stock_line {
+        Some(_) => Ok(false),
+        None => Ok(true),
+    }
 }
 
 fn check_stock_line_xor_item(input: &InsertStockTakeLineInput) -> bool {
@@ -99,6 +123,11 @@ fn validate(
     }
     if !check_stock_line_xor_item(input) {
         return Err(InsertStockTakeLineError::StockTakeLineXOrItem);
+    }
+    if let Some(stock_line_id) = &input.stock_line_id {
+        if !check_stock_line_is_unique(connection, &input.stock_take_id, stock_line_id)? {
+            return Err(InsertStockTakeLineError::StockLineAlreadyExistsInStockTake);
+        }
     }
 
     let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
