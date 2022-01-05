@@ -151,6 +151,22 @@ impl Mutations {
         insert_outbound_shipment_unallocated_line(ctx, input)
     }
 
+    async fn update_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateOutboundShipmentUnallocatedLineInput,
+    ) -> Result<UpdateOutboundShipmentUnallocatedLineResponse> {
+        update_outbound_shipment_unallocated_line(ctx, input)
+    }
+
+    async fn delete_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        input: DeleteOutboundShipmentUnallocatedLineInput,
+    ) -> Result<DeleteOutboundShipmentUnallocatedLineResponse> {
+        delete_outbound_shipment_unallocated_line(ctx, input)
+    }
+
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
