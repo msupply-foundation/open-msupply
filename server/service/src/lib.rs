@@ -15,9 +15,9 @@ pub mod permission_validation;
 pub mod permissions;
 pub mod service_provider;
 pub mod stock_line;
-pub mod store;
 pub mod stock_take;
 pub mod stock_take_line;
+pub mod store;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
@@ -134,8 +134,12 @@ pub fn current_store_id(connection: &StorageConnection) -> Result<String, Reposi
     let repository = StoreRowRepository::new(connection);
 
     match repository.find_one_by_id("store_a") {
-        Ok(_) => Ok("store_a".to_owned()),
-        Err(RepositoryError::NotFound) => Ok(repository.all()?[0].id.clone()),
+        Ok(Some(_)) => Ok("store_a".to_owned()),
+        Ok(None) => Ok(repository
+            .all()?
+            .pop()
+            .ok_or(RepositoryError::as_db_error("No stores", ""))?
+            .id),
         Err(error) => Err(error),
     }
 }
