@@ -3,18 +3,8 @@ use async_graphql::*;
 mod insert;
 pub use insert::*;
 
-pub struct UnallocatedLinesOnlyEditableInNewInvoice;
-#[Object]
-impl UnallocatedLinesOnlyEditableInNewInvoice {
-    pub async fn description(&self) -> &'static str {
-        "Can only insert or edit unallocated lines in new invoice"
-    }
-}
+mod update;
+pub use update::*;
 
-pub struct UnallocatedLineForItemAlreadyExists;
-#[Object]
-impl UnallocatedLineForItemAlreadyExists {
-    pub async fn description(&self) -> &'static str {
-        "Unallocated line already exists for this item"
-    }
-}
+mod errors;
+pub use errors::*;
