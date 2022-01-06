@@ -28,13 +28,6 @@ pub struct UpdateStockTakeInput {
 }
 
 #[derive(Debug, PartialEq)]
-
-pub struct SnapshotCountCurrentCountMismatchData {
-    pub stock_take_line_id: String,
-    pub stock_line: StockLineRow,
-}
-
-#[derive(Debug, PartialEq)]
 pub enum UpdateStockTakeError {
     DatabaseError(RepositoryError),
     InternalError(String),
@@ -44,12 +37,12 @@ pub enum UpdateStockTakeError {
     /// Stock takes doesn't contain any lines
     NoLines,
     /// Holds list of affected stock lines
-    SnapshotCountCurrentCountMismatch(Vec<SnapshotCountCurrentCountMismatchData>),
+    SnapshotCountCurrentCountMismatch(Vec<StockTakeLine>),
 }
 
 fn check_snapshot_matches_current_count(
     stock_take_lines: &[StockTakeLine],
-) -> Option<Vec<SnapshotCountCurrentCountMismatchData>> {
+) -> Option<Vec<StockTakeLine>> {
     let mut mismatches = Vec::new();
     for line in stock_take_lines {
         let stock_line = match &line.stock_line {
@@ -57,10 +50,7 @@ fn check_snapshot_matches_current_count(
             None => continue,
         };
         if line.line.snapshot_number_of_packs != stock_line.total_number_of_packs {
-            mismatches.push(SnapshotCountCurrentCountMismatchData {
-                stock_take_line_id: line.line.id.clone(),
-                stock_line: stock_line.clone(),
-            });
+            mismatches.push(line.clone());
         }
     }
     if !mismatches.is_empty() {
