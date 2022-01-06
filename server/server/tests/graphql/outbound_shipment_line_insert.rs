@@ -285,6 +285,7 @@ mod graphql {
         let number_of_packs = 1;
         let item = ItemRepository::new(&connection)
             .find_one_by_id(&item_not_in_invoices_id)
+            .unwrap()
             .unwrap();
 
         let mut variables = base_variables.clone();
@@ -321,6 +322,7 @@ mod graphql {
         let number_of_packs = 3;
         let item = ItemRepository::new(&connection)
             .find_one_by_id(&item_not_in_invoices_id)
+            .unwrap()
             .unwrap();
 
         let mut variables = base_variables.clone();

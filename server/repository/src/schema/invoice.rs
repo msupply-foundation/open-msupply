@@ -7,6 +7,7 @@ use diesel_derive_enum::DbEnum;
 pub enum InvoiceRowType {
     OutboundShipment,
     InboundShipment,
+    InventoryAdjustment,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]

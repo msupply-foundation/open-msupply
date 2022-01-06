@@ -11,6 +11,5 @@ CREATE TABLE stock_take (
     status stock_take_status NOT NULL,
     created_datetime TIMESTAMP NOT NULL,
     finalised_datetime TIMESTAMP,
-    inventory_additions_id TEXT REFERENCES invoice(id),
-    inventory_reductions_id TEXT REFERENCES invoice(id)
+    inventory_adjustment_id TEXT REFERENCES invoice(id)
 )

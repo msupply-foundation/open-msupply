@@ -7,6 +7,7 @@ use super::diesel_schema::number;
 pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
+    InventoryAdjustment,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
