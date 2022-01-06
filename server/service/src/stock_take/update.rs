@@ -69,6 +69,15 @@ fn check_snapshot_matches_current_count(
     None
 }
 
+fn load_stock_take_lines(
+    connection: &StorageConnection,
+    stock_take_id: &str,
+) -> Result<Vec<StockTakeLine>, RepositoryError> {
+    StockTakeLineRepository::new(connection).query_by_filter(
+        StockTakeLineFilter::new().stock_take_id(EqualFilter::equal_to(stock_take_id)),
+    )
+}
+
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
@@ -84,9 +93,7 @@ fn validate(
     if !check_store_id_matches(store_id, &existing.store_id) {
         return Err(UpdateStockTakeError::InvalidStore);
     }
-    let stock_take_lines = StockTakeLineRepository::new(connection).query_by_filter(
-        StockTakeLineFilter::new().stock_take_id(EqualFilter::equal_to(&input.id)),
-    )?;
+    let stock_take_lines = load_stock_take_lines(connection, &input.id)?;
 
     if let Some(StockTakeStatus::Finalized) = input.status {
         if stock_take_lines.len() == 0 {
