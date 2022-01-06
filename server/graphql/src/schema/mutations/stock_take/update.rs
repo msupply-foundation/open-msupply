@@ -1,5 +1,7 @@
 use crate::{
-    schema::types::StockTakeLineNode, standard_graphql_error::StandardGraphqlError, ContextExt,
+    schema::types::StockTakeLineNode,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 
 use async_graphql::*;
@@ -62,52 +64,49 @@ pub fn update_stock_take(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateStockTakeInput,
-) -> Result<UpdateStockTakeResponse, StandardGraphqlError> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    service_provider.validation_service.validate(
-        &service_ctx,
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
+) -> Result<UpdateStockTakeResponse> {
+    validate_auth(
+        ctx,
         &ResourceAccessRequest {
             resource: Resource::UpdateStockTake,
             store_id: Some(store_id.to_string()),
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_service;
     match service.update_stock_take(&service_ctx, store_id, to_domain(input)) {
         Ok(stock_take) => Ok(UpdateStockTakeResponse::Response(UpdateStockTakeNode {
             stock_take: StockTakeNode { stock_take },
         })),
-        Err(err) => {
-            let error = match err {
-                ServiceError::DatabaseError(err) => Err(err.into()),
-                ServiceError::InternalError(err) => Err(StandardGraphqlError::InternalError(err)),
-                ServiceError::InvalidStore => {
-                    Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-                }
-                ServiceError::StockTakeDoesNotExist => {
-                    Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-                }
-                ServiceError::CannotEditFinalised => {
-                    Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-                }
-                ServiceError::NoLines => {
-                    Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-                }
-                ServiceError::SnapshotCountCurrentCountMismatch(lines) => Ok(
-                    UpdateStockTakeErrorInterface::SnapshotCountCurrentCountMismatch(
-                        SnapshotCountCurrentCountMismatch(lines),
-                    ),
-                ),
-            }?;
-            Ok(UpdateStockTakeResponse::Error(UpdateStockTakeError {
-                error,
-            }))
-        }
+        Err(err) => Ok(UpdateStockTakeResponse::Error(UpdateStockTakeError {
+            error: map_error(err)?,
+        })),
     }
+}
+
+fn map_error(err: ServiceError) -> Result<UpdateStockTakeErrorInterface> {
+    let formatted_error = format!("{:#?}", err);
+    let graphql_error = match err {
+        ServiceError::SnapshotCountCurrentCountMismatch(lines) => {
+            return Ok(
+                UpdateStockTakeErrorInterface::SnapshotCountCurrentCountMismatch(
+                    SnapshotCountCurrentCountMismatch(lines),
+                ),
+            )
+        }
+
+        // standard gql errors:
+        ServiceError::DatabaseError(err) => err.into(),
+        ServiceError::InternalError(err) => StandardGraphqlError::InternalError(err),
+        ServiceError::InvalidStore => StandardGraphqlError::BadUserInput(formatted_error),
+        ServiceError::StockTakeDoesNotExist => StandardGraphqlError::BadUserInput(formatted_error),
+        ServiceError::CannotEditFinalised => StandardGraphqlError::BadUserInput(formatted_error),
+        ServiceError::NoLines => StandardGraphqlError::BadUserInput(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 fn to_domain(

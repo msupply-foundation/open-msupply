@@ -1,5 +1,7 @@
 use crate::{
-    schema::types::StockTakeLineNode, standard_graphql_error::StandardGraphqlError, ContextExt,
+    schema::types::StockTakeLineNode,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 
 use async_graphql::*;
@@ -41,20 +43,17 @@ pub fn update_stock_take_line(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateStockTakeLineInput,
-) -> Result<UpdateStockTakeLineResponse, StandardGraphqlError> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    service_provider.validation_service.validate(
-        &service_ctx,
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
+) -> Result<UpdateStockTakeLineResponse> {
+    validate_auth(
+        ctx,
         &ResourceAccessRequest {
             resource: Resource::UpdateStockTakeLine,
             store_id: Some(store_id.to_string()),
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_line_service;
     match service.update_stock_take_line(&service_ctx, store_id, to_domain(input)) {
         Ok(line) => Ok(UpdateStockTakeLineResponse::Response(
@@ -62,24 +61,28 @@ pub fn update_stock_take_line(
                 stock_take_line: StockTakeLineNode { line },
             },
         )),
-        Err(err) => Err(match err {
-            UpdateStockTakeLineError::DatabaseError(err) => err.into(),
-            UpdateStockTakeLineError::InternalError(err) => {
-                StandardGraphqlError::InternalError(err)
-            }
-            UpdateStockTakeLineError::InvalidStore => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            UpdateStockTakeLineError::StockTakeLineDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            UpdateStockTakeLineError::LocationDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            UpdateStockTakeLineError::CannotEditFinalised => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-        }),
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                UpdateStockTakeLineError::DatabaseError(err) => err.into(),
+                UpdateStockTakeLineError::InternalError(err) => {
+                    StandardGraphqlError::InternalError(err)
+                }
+                UpdateStockTakeLineError::InvalidStore => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdateStockTakeLineError::StockTakeLineDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdateStockTakeLineError::LocationDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdateStockTakeLineError::CannotEditFinalised => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+            };
+            Err(graphql_error.extend())
+        }
     }
 }
 

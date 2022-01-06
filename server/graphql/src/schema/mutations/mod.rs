@@ -32,7 +32,7 @@ use self::{
 };
 
 use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
-use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use crate::ContextExt;
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
@@ -267,7 +267,7 @@ impl Mutations {
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: InsertStockTakeInput,
-    ) -> Result<InsertStockTakeResponse, StandardGraphqlError> {
+    ) -> Result<InsertStockTakeResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
@@ -280,7 +280,7 @@ impl Mutations {
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: UpdateStockTakeInput,
-    ) -> Result<UpdateStockTakeResponse, StandardGraphqlError> {
+    ) -> Result<UpdateStockTakeResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
@@ -293,7 +293,7 @@ impl Mutations {
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: DeleteStockTakeInput,
-    ) -> Result<DeleteStockTakeResponse, StandardGraphqlError> {
+    ) -> Result<DeleteStockTakeResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
@@ -306,7 +306,7 @@ impl Mutations {
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: InsertStockTakeLineInput,
-    ) -> Result<InsertStockTakeLineResponse, StandardGraphqlError> {
+    ) -> Result<InsertStockTakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
@@ -319,7 +319,7 @@ impl Mutations {
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: UpdateStockTakeLineInput,
-    ) -> Result<UpdateStockTakeLineResponse, StandardGraphqlError> {
+    ) -> Result<UpdateStockTakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
@@ -332,7 +332,7 @@ impl Mutations {
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: DeleteStockTakeLineInput,
-    ) -> Result<DeleteStockTakeLineResponse, StandardGraphqlError> {
+    ) -> Result<DeleteStockTakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
