@@ -195,13 +195,7 @@ fn generate_new_stock_line(
     let pack_size = row.pack_size.unwrap_or(0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
-    let item_id = row
-        .item_id
-        .clone()
-        .ok_or(UpdateStockTakeError::InternalError(
-            "Stock take line without stock line and without item id".to_string(),
-        ))?
-        .clone();
+    let item_id = row.item_id;
 
     let new_line = StockLineRow {
         id: uuid(),

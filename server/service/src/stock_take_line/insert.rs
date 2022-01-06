@@ -85,13 +85,22 @@ fn check_stock_line_is_unique(
     }
 }
 
-fn check_stock_line_xor_item(input: &InsertStockTakeLineInput) -> bool {
-    if (input.stock_line_id.is_none() && input.item_id.is_none())
-        || (input.stock_line_id.is_some() && input.item_id.is_some())
+/// If valid it returns the item_id it either from the stock_line or from input.item_id
+fn check_stock_line_xor_item(
+    stock_line: &Option<StockLine>,
+    input: &InsertStockTakeLineInput,
+) -> Option<String> {
+    if (stock_line.is_none() && input.item_id.is_none())
+        || (stock_line.is_some() && input.item_id.is_some())
     {
-        return false;
+        return None;
     }
-    true
+
+    // extract item_id
+    if let Some(stock_line) = stock_line {
+        return Some(stock_line.item_id.clone());
+    }
+    input.item_id.clone()
 }
 
 fn check_stock_line_exists(
@@ -107,7 +116,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertStockTakeLineInput,
-) -> Result<Option<StockLine>, InsertStockTakeLineError> {
+) -> Result<(Option<StockLine>, String), InsertStockTakeLineError> {
     let stock_take = match check_stock_take_exist(connection, &input.stock_take_id)? {
         Some(stock_take) => stock_take,
         None => return Err(InsertStockTakeLineError::StockTakeDoesNotExist),
@@ -121,24 +130,20 @@ fn validate(
     if !check_stock_take_line_does_not_exist(connection, &input.id)? {
         return Err(InsertStockTakeLineError::StockTakeLineAlreadyExists);
     }
-    if !check_stock_line_xor_item(input) {
-        return Err(InsertStockTakeLineError::StockTakeLineXOrItem);
-    }
-    if let Some(stock_line_id) = &input.stock_line_id {
-        if !check_stock_line_is_unique(connection, &input.stock_take_id, stock_line_id)? {
+
+    let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
+        check_stock_line_exists(connection, stock_line_id)?
+    } else {
+        None
+    };
+    if let Some(stock_line) = &stock_line {
+        if !check_stock_line_is_unique(connection, &input.stock_take_id, &stock_line.id)? {
             return Err(InsertStockTakeLineError::StockLineAlreadyExistsInStockTake);
         }
     }
 
-    let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
-        Some(
-            check_stock_line_exists(connection, stock_line_id)?
-                .ok_or(InsertStockTakeLineError::StockLineDoesNotExist)?,
-        )
-    } else {
-        None
-    };
-
+    let item_id = check_stock_line_xor_item(&stock_line, input)
+        .ok_or(InsertStockTakeLineError::StockTakeLineXOrItem)?;
     if let Some(item_id) = &input.item_id {
         if !check_item_exists(connection, &item_id)? {
             return Err(InsertStockTakeLineError::ItemDoesNotExist);
@@ -151,11 +156,12 @@ fn validate(
         }
     }
 
-    Ok(stock_line)
+    Ok((stock_line, item_id))
 }
 
 fn generate(
     stock_line: Option<StockLine>,
+    item_id: String,
     InsertStockTakeLineInput {
         id,
         stock_take_id,
@@ -163,7 +169,7 @@ fn generate(
         location_id,
         comment,
         counted_number_of_packs,
-        item_id,
+        item_id: _,
         batch,
         expiry_date,
         pack_size,
@@ -185,7 +191,7 @@ fn generate(
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
-        item_id,
+        item_id: item_id.to_string(),
         batch,
         expiry_date,
         pack_size,
@@ -203,8 +209,8 @@ pub fn insert_stock_take_line(
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let stock_line = validate(connection, store_id, &input)?;
-            let new_stock_take_line = generate(stock_line, input);
+            let (stock_line, item_id) = validate(connection, store_id, &input)?;
+            let new_stock_take_line = generate(stock_line, item_id, input);
             StockTakeLineRowRepository::new(&connection).upsert_one(&new_stock_take_line)?;
 
             let line = get_stock_take_line(ctx, new_stock_take_line.id)?;
