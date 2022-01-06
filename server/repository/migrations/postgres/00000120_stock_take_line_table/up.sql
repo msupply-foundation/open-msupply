@@ -6,7 +6,7 @@ CREATE TABLE stock_take_line (
     comment	TEXT,
     snapshot_number_of_packs INTEGER NOT NULL,
     counted_number_of_packs INTEGER,
-    item_id TEXT REFERENCES item(id),
+    item_id TEXT NOT NULL REFERENCES item(id),
     batch TEXT,
     expiry_date DATE,
     pack_size INTEGER,
