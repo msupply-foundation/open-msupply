@@ -201,7 +201,6 @@ macro_rules! assert_standard_graphql_error {
 
         let expected_with_message = serde_json::json!(
             {
-                "data": null,
                 "errors": [{
                     "message": $expected_message,
                     // Need to check that extensions are indeed present,
