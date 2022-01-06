@@ -12,18 +12,18 @@ pub struct DeleteStockTakeLineInput {
 }
 
 #[derive(SimpleObject)]
-pub struct DeleteResponse {
+pub struct DeleteStockTakeLineNode {
     pub id: String,
 }
 
 #[derive(Union)]
 pub enum DeleteStockTakeLineResponse {
-    Response(DeleteResponse),
+    Response(DeleteStockTakeLineNode),
 }
 
 pub fn delete_stock_take_line(
     ctx: &Context<'_>,
-    store_id: &String,
+    store_id: &str,
     input: &DeleteStockTakeLineInput,
 ) -> Result<DeleteStockTakeLineResponse, StandardGraphqlError> {
     let service_provider = ctx.service_provider();
@@ -41,7 +41,9 @@ pub fn delete_stock_take_line(
 
     let service = &service_provider.stock_take_line_service;
     match service.delete_stock_take_line(&service_ctx, store_id, &input.id) {
-        Ok(id) => Ok(DeleteStockTakeLineResponse::Response(DeleteResponse { id })),
+        Ok(id) => Ok(DeleteStockTakeLineResponse::Response(
+            DeleteStockTakeLineNode { id },
+        )),
         Err(err) => Err(match err {
             DeleteStockTakeLineError::DatabaseError(err) => err.into(),
             DeleteStockTakeLineError::InternalError(err) => {

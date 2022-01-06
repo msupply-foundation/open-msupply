@@ -38,6 +38,7 @@ mod outbound_shipment_line_update;
 mod outbound_shipment_update;
 mod pagination;
 mod requisition;
+mod stock_take_update;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
 where
