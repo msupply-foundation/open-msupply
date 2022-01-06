@@ -145,13 +145,16 @@ fn validate_resource_permissions(
 ) -> Result<(), String> {
     Ok(match resource_permission {
         PermissionDSL::HasApiRole(role) => {
+            if user_permissions.api.contains(&ApiRole::Admin) {
+                return Ok(());
+            }
             if !user_permissions.api.contains(role) {
                 return Err(format!("Missing api role: {:?}", role));
             }
         }
         PermissionDSL::HasStoreAccess(store_role) => {
             // give admin users access to any store
-            if !user_permissions.api.contains(&ApiRole::Admin) {
+            if user_permissions.api.contains(&ApiRole::Admin) {
                 return Ok(());
             }
             let store_id = match &resource_request.store_id {
