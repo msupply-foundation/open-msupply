@@ -8,7 +8,9 @@ use service::{
 };
 
 use crate::{
-    schema::types::StockTakeLineNode, standard_graphql_error::StandardGraphqlError, ContextExt,
+    schema::types::StockTakeLineNode,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 
 #[derive(InputObject)]
@@ -43,20 +45,17 @@ pub fn insert_stock_take_line(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertStockTakeLineInput,
-) -> Result<InsertStockTakeLineResponse, StandardGraphqlError> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    service_provider.validation_service.validate(
-        &service_ctx,
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
+) -> Result<InsertStockTakeLineResponse> {
+    validate_auth(
+        ctx,
         &ResourceAccessRequest {
             resource: Resource::InsertStockTakeLine,
             store_id: Some(store_id.to_string()),
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_line_service;
     match service.insert_stock_take_line(&service_ctx, store_id, to_domain(input)) {
         Ok(line) => Ok(InsertStockTakeLineResponse::Response(
@@ -64,39 +63,43 @@ pub fn insert_stock_take_line(
                 stock_take_line: StockTakeLineNode { line },
             },
         )),
-        Err(err) => Err(match err {
-            InsertStockTakeLineError::DatabaseError(err) => err.into(),
-            InsertStockTakeLineError::InternalError(err) => {
-                StandardGraphqlError::InternalError(err)
-            }
-            InsertStockTakeLineError::InvalidStore => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::StockTakeDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::StockTakeLineAlreadyExists => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::StockLineDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::StockLineAlreadyExistsInStockTake => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::LocationDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::CannotEditFinalised => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::StockTakeLineXOrItem => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            InsertStockTakeLineError::ItemDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-        }),
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                InsertStockTakeLineError::DatabaseError(err) => err.into(),
+                InsertStockTakeLineError::InternalError(err) => {
+                    StandardGraphqlError::InternalError(err)
+                }
+                InsertStockTakeLineError::InvalidStore => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::StockTakeDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::StockTakeLineAlreadyExists => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::StockLineDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::StockLineAlreadyExistsInStockTake => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::LocationDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::CannotEditFinalised => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::StockTakeLineXOrItem => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertStockTakeLineError::ItemDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+            };
+            Err(graphql_error.extend())
+        }
     }
 }
 

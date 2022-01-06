@@ -1,4 +1,7 @@
-use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use crate::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 
 use async_graphql::*;
 use chrono::NaiveDateTime;
@@ -33,35 +36,34 @@ pub fn insert_stock_take(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertStockTakeInput,
-) -> Result<InsertStockTakeResponse, StandardGraphqlError> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    service_provider.validation_service.validate(
-        &service_ctx,
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
+) -> Result<InsertStockTakeResponse> {
+    validate_auth(
+        ctx,
         &ResourceAccessRequest {
             resource: Resource::InsertStockTake,
             store_id: Some(store_id.to_string()),
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_service;
     match service.insert_stock_take(&service_ctx, store_id, to_domain(input)) {
         Ok(stock_take) => Ok(InsertStockTakeResponse::Response(InsertStockTakeNode {
             stock_take: StockTakeNode { stock_take },
         })),
-        Err(err) => match err {
-            ServiceError::DatabaseError(err) => Err(err.into()),
-            ServiceError::InternalError(err) => Err(StandardGraphqlError::InternalError(err)),
-            ServiceError::InvalidStore => {
-                Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-            }
-            ServiceError::StockTakeAlreadyExists => {
-                Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-            }
-        },
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                ServiceError::DatabaseError(err) => err.into(),
+                ServiceError::InternalError(err) => StandardGraphqlError::InternalError(err),
+                ServiceError::InvalidStore => StandardGraphqlError::BadUserInput(formatted_error),
+                ServiceError::StockTakeAlreadyExists => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+            };
+            Err(graphql_error.extend())
+        }
     }
 }
 

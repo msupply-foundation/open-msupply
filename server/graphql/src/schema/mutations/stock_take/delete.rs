@@ -1,4 +1,7 @@
-use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use crate::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 
 use async_graphql::*;
 use service::{
@@ -25,39 +28,38 @@ pub fn delete_stock_take(
     ctx: &Context<'_>,
     store_id: &str,
     input: DeleteStockTakeInput,
-) -> Result<DeleteStockTakeResponse, StandardGraphqlError> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    service_provider.validation_service.validate(
-        &service_ctx,
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
+) -> Result<DeleteStockTakeResponse> {
+    validate_auth(
+        ctx,
         &ResourceAccessRequest {
             resource: Resource::DeleteStockTake,
             store_id: Some(store_id.to_string()),
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_service;
     match service.delete_stock_take(&service_ctx, store_id, &input.id) {
         Ok(stock_take_id) => Ok(DeleteStockTakeResponse::Response(DeleteStockTakeNode {
             stock_take_id,
         })),
-        Err(err) => match err {
-            ServiceError::DatabaseError(err) => Err(err.into()),
-            ServiceError::InvalidStore => {
-                Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-            }
-            ServiceError::StockTakeDoesNotExist => {
-                Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-            }
-            ServiceError::StockTakeLinesExist => {
-                Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-            }
-            ServiceError::CannotEditFinalised => {
-                Err(StandardGraphqlError::BadUserInput(format!("{:?}", err)))
-            }
-        },
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                ServiceError::DatabaseError(err) => err.into(),
+                ServiceError::InvalidStore => StandardGraphqlError::BadUserInput(formatted_error),
+                ServiceError::StockTakeDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                ServiceError::StockTakeLinesExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                ServiceError::CannotEditFinalised => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+            };
+            Err(graphql_error.extend())
+        }
     }
 }
