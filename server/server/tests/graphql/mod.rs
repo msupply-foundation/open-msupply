@@ -38,6 +38,7 @@ mod outbound_shipment_line_update;
 mod outbound_shipment_update;
 mod pagination;
 mod requisition;
+mod unallocated_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
 where
@@ -168,6 +169,7 @@ fn assert_gql_no_response_error(value: &serde_json::Value) {
     }
 }
 
+// TODO https://github.com/openmsupply/remote-server/issues/682
 async fn assert_gql_query(
     settings: &Settings,
     query: &str,
@@ -185,6 +187,52 @@ async fn assert_gql_query(
     assert_json_eq!(&actual, expected_with_data);
     actual
 }
+
+macro_rules! assert_standard_graphql_error {
+    // expected_etensions should be an Option<serde_json::json>>
+    ($settings:expr, $query:expr, $variables:expr, $expected_message:expr, $expected_extensions:expr, $service_provider_override:expr) => {{
+        let actual = crate::graphql::run_gql_query(
+            $settings,
+            $query,
+            $variables,
+            $service_provider_override
+        )
+        .await;
+
+        let expected_with_message = serde_json::json!(
+            {
+                "data": null,
+                "errors": [{
+                    "message": $expected_message,
+                    // Need to check that extensions are indeed present,
+                    // and if expected_extensions is not, None check content of extensions
+                    "extensions": $expected_extensions.unwrap_or(serde_json::json!({}))
+                }]
+            }
+        );
+        // Inclusive means only match fields in rhs against lhs (lhs can have more fields)
+        let config = assert_json_diff::Config::new(assert_json_diff::CompareMode::Inclusive);
+
+        match assert_json_diff::assert_json_matches_no_panic(
+            &actual,
+            &expected_with_message,
+            config,
+        ) {
+            Ok(_) => assert!(true),
+            Err(error) => {
+                panic!(
+                    "\n{}\n**actual**\n{}\n**expected**\n{}\n**query**\n{}",
+                    error,
+                    serde_json::to_string_pretty(&actual).unwrap(),
+                    serde_json::to_string_pretty(&expected_with_message).unwrap(),
+                    $query
+                );
+            }
+        }
+    }};
+}
+
+pub(crate) use assert_standard_graphql_error;
 
 use chrono::{DateTime as ChronoDateTime, NaiveDate, Utc};
 use graphql_client::GraphQLQuery;

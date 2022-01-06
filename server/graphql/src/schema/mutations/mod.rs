@@ -143,6 +143,14 @@ impl Mutations {
         get_delete_outbound_shipment_service_line_response(connection_manager, input)
     }
 
+    async fn insert_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertOutboundShipmentUnallocatedLineInput,
+    ) -> Result<InsertOutboundShipmentUnallocatedLineResponse> {
+        insert_outbound_shipment_unallocated_line(ctx, input)
+    }
+
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
