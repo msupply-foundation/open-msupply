@@ -13,8 +13,21 @@ use self::{
         DeleteLocationResponse, InsertLocationInput, InsertLocationResponse, UpdateLocationInput,
         UpdateLocationResponse,
     },
-    stock_take::line::delete::{
-        delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+    stock_take::{
+        delete::{delete_stock_take, DeleteStockTakeInput, DeleteStockTakeResponse},
+        insert::{insert_stock_take, InsertStockTakeInput, InsertStockTakeResponse},
+        line::{
+            delete::{
+                delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+            },
+            insert::{
+                insert_stock_take_line, InsertStockTakeLineInput, InsertStockTakeLineResponse,
+            },
+            update::{
+                update_stock_take_line, UpdateStockTakeLineInput, UpdateStockTakeLineResponse,
+            },
+        },
+        update::{update_stock_take, UpdateStockTakeInput, UpdateStockTakeResponse},
     },
 };
 
@@ -247,6 +260,71 @@ impl Mutations {
             update_outbound_shipments,
             delete_outbound_shipments,
         )
+    }
+
+    async fn insert_stock_take(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: InsertStockTakeInput,
+    ) -> Result<InsertStockTakeResponse, StandardGraphqlError> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        insert_stock_take(ctx, &store_id, input)
+    }
+
+    async fn update_stock_take(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: UpdateStockTakeInput,
+    ) -> Result<UpdateStockTakeResponse, StandardGraphqlError> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        update_stock_take(ctx, &store_id, input)
+    }
+
+    async fn delete_stock_take(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: DeleteStockTakeInput,
+    ) -> Result<DeleteStockTakeResponse, StandardGraphqlError> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        delete_stock_take(ctx, &store_id, input)
+    }
+
+    async fn insert_stock_take_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: InsertStockTakeLineInput,
+    ) -> Result<InsertStockTakeLineResponse, StandardGraphqlError> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        insert_stock_take_line(ctx, &store_id, input)
+    }
+
+    async fn update_stock_take_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: UpdateStockTakeLineInput,
+    ) -> Result<UpdateStockTakeLineResponse, StandardGraphqlError> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        update_stock_take_line(ctx, &store_id, input)
     }
 
     async fn delete_stock_take_line(
