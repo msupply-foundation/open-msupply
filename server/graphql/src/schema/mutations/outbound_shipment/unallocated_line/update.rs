@@ -67,7 +67,7 @@ pub fn update_outbound_shipment_unallocated_line(
     Ok(response)
 }
 
-pub fn map_error(error: ServiceError) -> Result<ErrorInterface> {
+fn map_error(error: ServiceError) -> Result<ErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
