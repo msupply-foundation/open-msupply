@@ -31,6 +31,22 @@ pub enum InsertOutboundShipmentUnallocatedLineInterface {
     UnallocatedLineForItemAlreadyExists(UnallocatedLineForItemAlreadyExists),
 }
 
+pub struct UnallocatedLineForItemAlreadyExists;
+#[Object]
+impl UnallocatedLineForItemAlreadyExists {
+    pub async fn description(&self) -> &'static str {
+        "Unallocated line already exists for this item"
+    }
+}
+
+pub struct UnallocatedLinesOnlyEditableInNewInvoice;
+#[Object]
+impl UnallocatedLinesOnlyEditableInNewInvoice {
+    pub async fn description(&self) -> &'static str {
+        "Can only insert or edit unallocated lines in new invoice"
+    }
+}
+
 use InsertOutboundShipmentUnallocatedLineInterface as ErrorInterface;
 
 #[derive(SimpleObject)]
@@ -47,8 +63,6 @@ pub enum InsertOutboundShipmentUnallocatedLineResponse {
 }
 
 use InsertOutboundShipmentUnallocatedLineResponse as Response;
-
-use super::{UnallocatedLineForItemAlreadyExists, UnallocatedLinesOnlyEditableInNewInvoice};
 
 impl From<Input> for ServiceInput {
     fn from(
