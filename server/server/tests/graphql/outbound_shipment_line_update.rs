@@ -382,6 +382,7 @@ mod graphql {
             get_stock_line_inline!(&stock_line_not_in_invoices_id, &connection);
         let new_item = ItemRepository::new(&connection)
             .find_one_by_id(&item_not_in_invoices_id)
+            .unwrap()
             .unwrap();
         let start_number_of_packs = secondary_draft_line.number_of_packs;
         let new_number_of_packs = start_number_of_packs + 1;

@@ -1,17 +1,8 @@
-use domain::{location::LocationFilter, stock_line::StockLineFilter, EqualFilter};
+use domain::{location::LocationFilter, EqualFilter};
 use repository::{
-    schema::StockTakeLineRow, LocationRepository, RepositoryError, StockLineRepository,
+    schema::StockTakeLineRow, ItemFilter, ItemQueryRepository, LocationRepository, RepositoryError,
     StockTakeLineRowRepository, StorageConnection,
 };
-
-pub fn check_stock_line_exist(
-    connection: &StorageConnection,
-    id: &str,
-) -> Result<bool, RepositoryError> {
-    let count = StockLineRepository::new(connection)
-        .count(Some(StockLineFilter::new().id(EqualFilter::equal_to(id))))?;
-    Ok(count == 1)
-}
 
 pub fn check_stock_take_line_exist(
     connection: &StorageConnection,
@@ -26,5 +17,14 @@ pub fn check_location_exists(
 ) -> Result<bool, RepositoryError> {
     let count = LocationRepository::new(connection)
         .count(Some(LocationFilter::new().id(EqualFilter::equal_to(id))))?;
+    Ok(count == 1)
+}
+
+pub fn check_item_exists(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = ItemQueryRepository::new(connection)
+        .count(Some(ItemFilter::new().id(EqualFilter::equal_to(id))))?;
     Ok(count == 1)
 }

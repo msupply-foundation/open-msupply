@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use repository::{
     schema::StockTakeLineRow, RepositoryError, StockTakeLine, StockTakeLineRowRepository,
     StorageConnection,
@@ -11,19 +12,22 @@ use crate::{
 
 use super::{
     query::get_stock_take_line,
-    validate::{check_location_exists, check_stock_line_exist, check_stock_take_line_exist},
+    validate::{check_location_exists, check_stock_take_line_exist},
 };
 
 pub struct UpdateStockTakeLineInput {
     pub id: String,
-    pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
-    pub batch: Option<String>,
     pub comment: Option<String>,
-    pub cost_price_pack: Option<f64>,
-    pub sell_price_pack: Option<f64>,
     pub snapshot_number_of_packs: Option<i32>,
     pub counted_number_of_packs: Option<i32>,
+
+    pub batch: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
+    pub pack_size: Option<i32>,
+    pub cost_price_per_pack: Option<f64>,
+    pub sell_price_per_pack: Option<f64>,
+    pub note: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -32,7 +36,6 @@ pub enum UpdateStockTakeLineError {
     InternalError(String),
     InvalidStore,
     StockTakeLineDoesNotExist,
-    StockLineDoesNotExist,
     LocationDoesNotExist,
     CannotEditFinalised,
 }
@@ -62,12 +65,6 @@ fn validate(
         return Err(UpdateStockTakeLineError::InvalidStore);
     }
 
-    if let Some(stock_line_id) = &input.stock_line_id {
-        if !check_stock_line_exist(connection, stock_line_id)? {
-            return Err(UpdateStockTakeLineError::StockLineDoesNotExist);
-        }
-    }
-
     if let Some(location_id) = &input.location_id {
         if !check_location_exists(connection, location_id)? {
             return Err(UpdateStockTakeLineError::LocationDoesNotExist);
@@ -81,30 +78,37 @@ fn generate(
     existing: StockTakeLineRow,
     UpdateStockTakeLineInput {
         id: _,
-        stock_line_id,
         location_id,
-        batch,
         comment,
-        cost_price_pack,
-        sell_price_pack,
         snapshot_number_of_packs,
         counted_number_of_packs,
+        batch,
+        expiry_date,
+        pack_size,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        note,
     }: UpdateStockTakeLineInput,
-) -> StockTakeLineRow {
-    StockTakeLineRow {
+) -> Result<StockTakeLineRow, UpdateStockTakeLineError> {
+    Ok(StockTakeLineRow {
         id: existing.id,
         stock_take_id: existing.stock_take_id,
-        stock_line_id: stock_line_id.unwrap_or(existing.stock_line_id),
+        stock_line_id: existing.stock_line_id,
         location_id: location_id.or(existing.location_id),
-        batch: batch.or(existing.batch),
         comment: comment.or(existing.comment),
-        cost_price_pack: cost_price_pack.unwrap_or(existing.cost_price_pack),
-        sell_price_pack: sell_price_pack.unwrap_or(existing.sell_price_pack),
+
         snapshot_number_of_packs: snapshot_number_of_packs
             .unwrap_or(existing.snapshot_number_of_packs),
-        counted_number_of_packs: counted_number_of_packs
-            .unwrap_or(existing.counted_number_of_packs),
-    }
+        counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
+
+        item_id: existing.item_id,
+        expiry_date: expiry_date.or(existing.expiry_date),
+        batch: batch.or(existing.batch),
+        pack_size: pack_size.or(existing.pack_size),
+        cost_price_per_pack: cost_price_per_pack.or(existing.cost_price_per_pack),
+        sell_price_per_pack: sell_price_per_pack.or(existing.sell_price_per_pack),
+        note: note.or(existing.note),
+    })
 }
 
 pub fn update_stock_take_line(
@@ -116,7 +120,7 @@ pub fn update_stock_take_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, store_id, &input)?;
-            let new_stock_take_line = generate(existing, input);
+            let new_stock_take_line = generate(existing, input)?;
             StockTakeLineRowRepository::new(&connection).upsert_one(&new_stock_take_line)?;
 
             let line = get_stock_take_line(ctx, new_stock_take_line.id)?;

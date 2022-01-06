@@ -235,8 +235,7 @@ table! {
         status -> crate::schema::stock_take::StockTakeStatusMapping,
         created_datetime -> Timestamp,
         finalised_datetime -> Nullable<Timestamp>,
-        inventory_additions_id -> Nullable<Text>,
-        inventory_reductions_id -> Nullable<Text>,
+        inventory_adjustment_id -> Nullable<Text>,
     }
 }
 
@@ -244,14 +243,20 @@ table! {
     stock_take_line (id) {
         id -> Text,
         stock_take_id -> Text,
-        stock_line_id -> Text,
+        stock_line_id -> Nullable<Text>,
         location_id	-> Nullable<Text>,
-        batch -> Nullable<Text>,
         comment	-> Nullable<Text>,
-        cost_price_pack -> Double,
-        sell_price_pack -> Double,
         snapshot_number_of_packs -> Integer,
-        counted_number_of_packs -> Integer,
+        counted_number_of_packs -> Nullable<Integer>,
+
+        // stock line related fields:
+        item_id -> Nullable<Text>,
+        batch -> Nullable<Text>,
+        expiry_date -> Nullable<Date>,
+        pack_size -> Nullable<Integer>,
+        cost_price_per_pack -> Nullable<Double>,
+        sell_price_per_pack -> Nullable<Double>,
+        note -> Nullable<Text>,
     }
 }
 
