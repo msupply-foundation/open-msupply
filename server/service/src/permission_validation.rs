@@ -19,27 +19,36 @@ pub enum PermissionDSL {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
+    // stock take
+    InsertStockTake,
+    UpdateStockTake,
+    DeleteStockTake,
+    // stock take line
+    InsertStockTakeLine,
+    UpdateStockTakeLine,
     DeleteStockTakeLine,
+}
+
+fn default() -> PermissionDSL {
+    PermissionDSL::And(vec![
+        PermissionDSL::HasApiRole(ApiRole::User),
+        PermissionDSL::HasStoreAccess(StoreRole::User),
+    ])
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
-    // The purpose of the following match is to enforce every resource type is handled, i.e. that we
-    // don't forget to add permissions for a resource. Better way to do it?
-    match Resource::RouteMe {
-        Resource::RouteMe => {
-            map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
-        }
-        Resource::DeleteStockTakeLine => {
-            map.insert(
-                Resource::DeleteStockTakeLine,
-                PermissionDSL::And(vec![
-                    PermissionDSL::HasApiRole(ApiRole::User),
-                    PermissionDSL::HasStoreAccess(StoreRole::User),
-                ]),
-            );
-        }
-    }
+    // me
+    map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
+    // stock take
+    map.insert(Resource::InsertStockTake, default());
+    map.insert(Resource::UpdateStockTake, default());
+    map.insert(Resource::DeleteStockTake, default());
+    // stock take line
+    map.insert(Resource::InsertStockTakeLine, default());
+    map.insert(Resource::UpdateStockTakeLine, default());
+    map.insert(Resource::DeleteStockTakeLine, default());
+
     map
 }
 
