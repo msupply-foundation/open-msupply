@@ -18,6 +18,7 @@ mod store;
 mod test_invoice_count_service;
 mod test_outbound_shipment_update;
 mod test_stock_take;
+mod test_stock_take_line;
 mod test_unallocated_line;
 mod unit;
 mod user_account;
@@ -40,6 +41,7 @@ pub use store::*;
 pub use test_invoice_count_service::*;
 pub use test_outbound_shipment_update::*;
 pub use test_stock_take::*;
+pub use test_stock_take_line::*;
 pub use test_unallocated_line::*;
 pub use user_account::mock_user_accounts;
 
@@ -260,6 +262,7 @@ fn all_mock_data() -> MockDataCollection {
         "test_outbound_shipment_update_data",
         test_outbound_shipment_update_data(),
     );
+    data.insert("test_stock_take_line_data", test_stock_take_line_data());
     data.insert("test_stock_take_data", test_stock_take_data());
     data.insert("mock_test_unallocated_line", mock_test_unallocated_line());
     data

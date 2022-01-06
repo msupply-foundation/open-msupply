@@ -64,9 +64,8 @@ fn generate(
         description,
         status: StockTakeStatus::New,
         created_datetime,
-        inventory_additions_id: None,
-        inventory_reductions_id: None,
         finalised_datetime: None,
+        inventory_adjustment_id: None,
     }
 }
 

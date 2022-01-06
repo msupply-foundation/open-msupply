@@ -40,6 +40,11 @@ impl NameFilter {
         self
     }
 
+    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
     pub fn match_is_supplier(mut self, value: bool) -> Self {
         self.is_supplier = Some(value);
         self

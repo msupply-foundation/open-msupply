@@ -343,6 +343,7 @@ mod graphql {
         let deleted_stock_line_id = delivered_invoice_lines[0].stock_line_id.as_ref().unwrap();
         let new_item = ItemRepository::new(&connection)
             .find_one_by_id(&item_not_in_invoices_id)
+            .unwrap()
             .unwrap();
 
         let query = Update::build_query(variables.clone());
