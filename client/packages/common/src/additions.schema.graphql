@@ -324,6 +324,7 @@ input UpdateSupplierRequisitionInput {
   comment: String
   theirReference: String
   color: String
+  status: SupplierRequisitionNodeStatus
 }
 
 input UpdateSupplierRequisitionLineInput {

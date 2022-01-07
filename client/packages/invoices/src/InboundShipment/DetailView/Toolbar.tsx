@@ -38,7 +38,6 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
 
   const t = useTranslation('replenishment');
   const { success, info } = useNotification();
-
   const { selectedRows } = useTableStore(state => {
     const { isGrouped } = state;
 
