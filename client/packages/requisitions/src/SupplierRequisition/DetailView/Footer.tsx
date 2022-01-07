@@ -2,30 +2,27 @@ import {
   Box,
   ArrowRightIcon,
   ButtonWithIcon,
-  SaveIcon,
   StatusCrumbs,
   XCircleIcon,
   useTranslation,
   useNotification,
   AppFooterPortal,
   useNavigate,
+  SupplierRequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import {
   getSupplierRequisitionStatuses,
   getNextSupplierRequisitionStatus,
   getSupplierRequisitionTranslator,
-  isRequisitionEditable,
 } from '../../utils';
-import { SupplierRequisition } from '../../types';
+import {
+  useIsSupplierRequisitionDisabled,
+  useSupplierRequisitionFields,
+} from '../api';
 
-interface OutboundDetailFooterProps {
-  draft: SupplierRequisition;
-  save: () => Promise<void>;
-}
-
-const getNextStatusText = (draft: SupplierRequisition) => {
-  const nextStatus = getNextSupplierRequisitionStatus(draft.status);
+const getNextStatusText = (status: SupplierRequisitionNodeStatus) => {
+  const nextStatus = getNextSupplierRequisitionStatus(status);
   const translation = getSupplierRequisitionTranslator()(nextStatus);
   return translation;
 };
@@ -67,7 +64,9 @@ const createStatusLog = (
   };
 };
 
-export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
+export const Footer: FC = () => {
+  const { status, update } = useSupplierRequisitionFields('status');
+  const isDisabled = useIsSupplierRequisitionDisabled();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
   const { success } = useNotification();
@@ -75,7 +74,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
   return (
     <AppFooterPortal
       Content={
-        draft && (
+        status && (
           <Box
             gap={2}
             display="flex"
@@ -85,7 +84,7 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
           >
             <StatusCrumbs
               statuses={getSupplierRequisitionStatuses()}
-              statusLog={createStatusLog(draft.status)}
+              statusLog={createStatusLog(status)}
               statusFormatter={getSupplierRequisitionTranslator()}
             />
 
@@ -98,38 +97,23 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigate(-1)}
               />
-              {isRequisitionEditable(draft) && (
+              {!isDisabled && (
                 <>
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    Icon={<SaveIcon />}
-                    label={t('button.save')}
-                    variant="contained"
-                    color="secondary"
-                    sx={{ fontSize: '12px' }}
-                    onClick={() => {
-                      success('Saved invoice! 🥳 ')();
-                      save();
-                    }}
-                  />
                   <ButtonWithIcon
                     shrinkThreshold="lg"
                     // disabled={draft.onHold}
                     Icon={<ArrowRightIcon />}
                     label={t('button.save-and-confirm-status', {
-                      status: getNextStatusText(draft),
+                      status: getNextStatusText(status),
                     })}
                     sx={{ fontSize: '12px' }}
                     variant="contained"
                     color="secondary"
                     onClick={async () => {
                       success('Saved requisition! 🥳 ')();
-                      await draft.update?.(
-                        'status',
-                        getNextSupplierRequisitionStatus(draft.status)
-                      );
-
-                      save();
+                      await update({
+                        status: getNextSupplierRequisitionStatus(status),
+                      });
                     }}
                   />
                 </>

@@ -3,7 +3,7 @@ import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
-  BasicTextInput,
+  BufferedTextInput,
   Grid,
   DropdownMenu,
   DropdownMenuItem,
@@ -12,24 +12,34 @@ import {
   useNotification,
   useTableStore,
   DatePickerInput,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { SupplierRequisition, SupplierRequisitionLine } from '../../types';
-import { isRequisitionEditable } from '../../utils';
+import { RequisitionLine } from '../../types';
+import {
+  useSupplierRequisitionFields,
+  useIsSupplierRequisitionDisabled,
+} from '../api';
 
-interface ToolbarProps {
-  draft: SupplierRequisition;
-}
-
-export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+export const Toolbar: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
+
   const { success, info } = useNotification();
+  const isDisabled = useIsSupplierRequisitionDisabled();
+  const { lines, otherParty, requisitionDate, theirReference, update } =
+    useSupplierRequisitionFields([
+      'lines',
+      'otherParty',
+      'requisitionDate',
+      'theirReference',
+    ]);
+  const [bufferedDate, setBufferedDate] = useBufferState(requisitionDate);
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => draft.lines.find(({ id }) => selectedId === id))
-      .filter(Boolean) as SupplierRequisitionLine[],
+      .map(selectedId => lines?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as RequisitionLine[],
   }));
 
   const deleteAction = () => {
@@ -54,16 +64,16 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         <Grid item display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              {draft.otherParty && (
+              {otherParty && (
                 <InputWithLabelRow
                   label={t('label.supplier-name')}
                   Input={
                     <NameSearchInput
                       type="supplier"
-                      disabled={!isRequisitionEditable(draft)}
-                      value={draft.otherParty}
-                      onChange={name => {
-                        draft.updateOtherParty(name);
+                      disabled={isDisabled}
+                      value={otherParty ?? null}
+                      onChange={otherParty => {
+                        update({ otherParty });
                       }}
                     />
                   }
@@ -72,14 +82,12 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               <InputWithLabelRow
                 label={t('label.supplier-ref')}
                 Input={
-                  <BasicTextInput
-                    disabled={!isRequisitionEditable(draft)}
+                  <BufferedTextInput
+                    disabled={isDisabled}
                     size="small"
                     sx={{ width: 250 }}
-                    value={draft.theirReference}
-                    onChange={e =>
-                      draft.update('theirReference', e.target.value)
-                    }
+                    value={theirReference}
+                    onChange={e => update({ theirReference: e.target.value })}
                   />
                 }
               />
@@ -89,19 +97,19 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 label={t('label.requisition-date')}
                 Input={
                   <DatePickerInput
-                    disabled={!isRequisitionEditable(draft)}
-                    value={draft.requisitionDate}
-                    onChange={draft.updateRequisitionDate}
+                    disabled={isDisabled}
+                    value={bufferedDate ?? null}
+                    onChange={d => {
+                      setBufferedDate(d);
+                      update({ requisitionDate: d });
+                    }}
                   />
                 }
               />
             </Box>
           </Box>
         </Grid>
-        <DropdownMenu
-          disabled={!isRequisitionEditable(draft)}
-          label={t('label.select')}
-        >
+        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>

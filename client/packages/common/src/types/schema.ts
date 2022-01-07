@@ -2310,6 +2310,7 @@ export type UpdateSupplierRequisitionInput = {
   id: Scalars['String'];
   orderDate?: Maybe<Scalars['String']>;
   otherPartyId?: Maybe<Scalars['String']>;
+  status?: Maybe<SupplierRequisitionNodeStatus>;
   theirReference?: Maybe<Scalars['String']>;
 };
 

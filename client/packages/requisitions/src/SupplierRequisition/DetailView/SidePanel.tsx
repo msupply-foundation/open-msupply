@@ -7,21 +7,27 @@ import {
   DetailPanelPortal,
   DetailPanelSection,
   PanelLabel,
-  TextArea,
+  BufferedTextArea,
   useNotification,
   useTranslation,
   PanelRow,
   PanelField,
   ColorSelectButton,
+  useBufferState,
 } from '@openmsupply-client/common';
-import { isRequisitionEditable } from '../../utils';
-import { SupplierRequisition } from '../../types';
+import {
+  useIsSupplierRequisitionDisabled,
+  useSupplierRequisition,
+  useSupplierRequisitionFields,
+} from '../api';
 
-interface SidePanelProps {
-  draft: SupplierRequisition;
-}
-
-const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
+const AdditionalInfoSection: FC = () => {
+  const isDisabled = useIsSupplierRequisitionDisabled();
+  const { color, comment, update } = useSupplierRequisitionFields([
+    'color',
+    'comment',
+  ]);
+  const [bufferedColor, setBufferedColor] = useBufferState(color);
   const t = useTranslation('common');
 
   return (
@@ -31,24 +37,27 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
             <ColorSelectButton
-              disabled={!isRequisitionEditable(draft)}
-              onChange={color => draft.update('color', color.hex)}
-              color={draft?.color}
+              disabled={isDisabled}
+              onChange={color => {
+                setBufferedColor(color.hex);
+                update({ color: color.hex });
+              }}
+              color={bufferedColor ?? ''}
             />
           </PanelField>
         </PanelRow>
         <PanelLabel>{t('heading.comment')}</PanelLabel>
-        <TextArea
-          disabled={!isRequisitionEditable(draft)}
-          onChange={e => draft.update('comment', e.target.value)}
-          value={draft.comment}
+        <BufferedTextArea
+          disabled={isDisabled}
+          onChange={e => update({ comment: e.target.value })}
+          value={comment ?? ''}
         />
       </Grid>
     </DetailPanelSection>
   );
 };
 
-const RelatedDocumentsSection: FC<SidePanelProps> = () => {
+const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('replenishment');
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
@@ -57,42 +66,28 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
   );
 };
 
-export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
+export const SidePanel: FC = () => {
+  const { data } = useSupplierRequisition();
   const { success } = useNotification();
   const t = useTranslation(['replenishment', 'common']);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
+    navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
     success('Copied to clipboard successfully')();
   };
 
   return (
     <DetailPanelPortal
       Actions={
-        <>
-          {!process.env['NODE_ENV'] ||
-            (process.env['NODE_ENV'] === 'development' && (
-              <DetailPanelAction
-                icon={<CopyIcon />}
-                title={t('dev.log-draft')}
-                onClick={() => {
-                  console.table(draft);
-                  draft.lines.forEach(item => {
-                    console.table(item);
-                  });
-                }}
-              />
-            ))}
-          <DetailPanelAction
-            icon={<CopyIcon />}
-            title={t('link.copy-to-clipboard')}
-            onClick={copyToClipboard}
-          />
-        </>
+        <DetailPanelAction
+          icon={<CopyIcon />}
+          title={t('link.copy-to-clipboard')}
+          onClick={copyToClipboard}
+        />
       }
     >
-      <AdditionalInfoSection draft={draft} />
-      <RelatedDocumentsSection draft={draft} />
+      <AdditionalInfoSection />
+      <RelatedDocumentsSection />
     </DetailPanelPortal>
   );
 };

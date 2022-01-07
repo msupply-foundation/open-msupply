@@ -106,7 +106,22 @@ export const getSupplierRequisitionTranslator =
 export const getNextSupplierRequisitionStatus = (
   currentStatus: SupplierRequisitionNodeStatus
 ): SupplierRequisitionNodeStatus => {
-  return currentStatus;
+  const statuses = getSupplierRequisitionStatuses();
+  const currentIdx = statuses.findIndex(
+    requisitionStatus => requisitionStatus === currentStatus
+  );
+
+  if (currentIdx < 0) {
+    throw new Error('Cannot find index of current supplier requisition idx');
+  }
+
+  const nextStatus = statuses[currentIdx + 1];
+
+  if (!nextStatus) {
+    throw new Error('Cannot find next supplier requisition status');
+  }
+
+  return nextStatus;
 };
 
 export const getSupplierRequisitionStatuses =
