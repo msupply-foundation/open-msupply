@@ -48,13 +48,13 @@ impl UnallocatedLinesOnlyEditableInNewInvoice {
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "DeleteOutboundShipmentUnallocatedLineError")]
+#[graphql(name = "InsertOutboundShipmentUnallocatedLineError")]
 pub struct InsertError {
     pub error: InsertErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "DeleteOutboundShipmentUnallocatedLineError")]
+#[graphql(name = "InsertOutboundShipmentUnallocatedLineResponse")]
 pub enum InsertResponse {
     Error(InsertError),
     Response(InvoiceLineNode),
