@@ -90,8 +90,9 @@ pub async fn check_records_against_database(
             TestSyncDataRecord::Item(comparison_record) => {
                 assert_eq!(
                     ItemRepository::new(&connection)
-                        .find_one_by_id(&record.central_sync_buffer_row.record_id),
-                    from_option_to_db_result(comparison_record)
+                        .find_one_by_id(&record.central_sync_buffer_row.record_id)
+                        .unwrap(),
+                    comparison_record
                 )
             }
             TestSyncDataRecord::MasterList(comparison_record) => {

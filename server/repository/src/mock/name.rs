@@ -40,6 +40,17 @@ pub fn mock_name_a() -> NameRow {
     }
 }
 
+// Inventory adjustment name
+pub fn mock_name_invad() -> NameRow {
+    NameRow {
+        id: String::from("invad"),
+        name: String::from("Inventory adjustments"),
+        code: String::from("invad"),
+        is_customer: false,
+        is_supplier: false,
+    }
+}
+
 pub fn mock_name_master_list_filter_test() -> NameRow {
     NameRow {
         id: String::from("id_master_list_filter_test"),
@@ -56,6 +67,7 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_name_store_b(),
         mock_name_store_c(),
         mock_name_a(),
+        mock_name_invad(),
         mock_name_master_list_filter_test(),
     ]
 }

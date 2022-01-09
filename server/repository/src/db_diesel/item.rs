@@ -49,11 +49,12 @@ impl<'a> ItemRepository<'a> {
         Ok(result?)
     }
 
-    pub fn find_one_by_id(&self, item_id: &str) -> Result<ItemRow, RepositoryError> {
+    pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         use crate::schema::diesel_schema::item::dsl::*;
         let result = item
             .filter(id.eq(item_id))
-            .first(&self.connection.connection)?;
+            .first(&self.connection.connection)
+            .optional()?;
         Ok(result)
     }
 

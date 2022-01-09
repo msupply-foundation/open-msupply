@@ -6,6 +6,3 @@ pub use update::*;
 
 mod delete;
 pub use delete::*;
-
-mod errors;
-pub use errors::*;

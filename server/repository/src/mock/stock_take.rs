@@ -11,8 +11,7 @@ pub fn mock_stock_take_a() -> StockTakeRow {
         status: StockTakeStatus::New,
         created_datetime: NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 30, 0, 0),
         finalised_datetime: None,
-        inventory_additions_id: None,
-        inventory_reductions_id: None,
+        inventory_adjustment_id: None,
     }
 }
 
@@ -25,8 +24,7 @@ pub fn mock_stock_take_b() -> StockTakeRow {
         status: StockTakeStatus::New,
         created_datetime: NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(22, 15, 0, 0),
         finalised_datetime: None,
-        inventory_additions_id: None,
-        inventory_reductions_id: None,
+        inventory_adjustment_id: None,
     }
 }
 

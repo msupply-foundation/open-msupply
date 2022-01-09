@@ -288,7 +288,8 @@ mod graphql {
 
         // Success Draft
 
-        let variables = base_variables.clone();
+        let mut variables = base_variables.clone();
+        variables.location_id_option = Some("location_2".to_owned());
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -298,6 +299,7 @@ mod graphql {
             .find_one_by_id(&variables.id)
             .unwrap();
         assert_eq!(new_line, variables);
+        assert_eq!(new_line.location_id, Some("location_2".to_owned()));
         assert_eq!(new_line.stock_line_id, None);
         assert_eq!(
             new_line.total_after_tax,
@@ -343,6 +345,7 @@ mod graphql {
         let deleted_stock_line_id = delivered_invoice_lines[0].stock_line_id.as_ref().unwrap();
         let new_item = ItemRepository::new(&connection)
             .find_one_by_id(&item_not_in_invoices_id)
+            .unwrap()
             .unwrap();
 
         let query = Update::build_query(variables.clone());

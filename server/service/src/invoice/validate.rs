@@ -6,7 +6,8 @@ use domain::{
 };
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
-    InvoiceLineRepository, InvoiceRepository, RepositoryError, StorageConnection, InvoiceLineFilter,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    StorageConnection,
 };
 
 pub struct WrongInvoiceType;
@@ -43,6 +44,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNo
             InvoiceStatus::Picked => false,
             InvoiceStatus::Verified => false,
         },
+        InvoiceRowType::InventoryAdjustment => false,
     };
 
     if is_editable {

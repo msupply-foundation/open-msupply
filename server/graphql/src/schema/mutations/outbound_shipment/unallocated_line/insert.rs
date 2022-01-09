@@ -14,50 +14,60 @@ use crate::{
 };
 
 #[derive(InputObject)]
-pub struct InsertOutboundShipmentUnallocatedLineInput {
+#[graphql(name = "InsertOutboundShipmentUnallocatedLineInput")]
+pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
     pub quantity: u32,
 }
 
-use InsertOutboundShipmentUnallocatedLineInput as Input;
-
 #[derive(Interface)]
+#[graphql(name = "InsertOutboundShipmentUnallocatedLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
-pub enum InsertOutboundShipmentUnallocatedLineInterface {
+pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     UnallocatedLinesOnlyEditableInNewInvoice(UnallocatedLinesOnlyEditableInNewInvoice),
     UnallocatedLineForItemAlreadyExists(UnallocatedLineForItemAlreadyExists),
 }
 
-use InsertOutboundShipmentUnallocatedLineInterface as ErrorInterface;
-
-#[derive(SimpleObject)]
-pub struct InsertOutboundShipmentUnallocatedLineError {
-    pub error: ErrorInterface,
+pub struct UnallocatedLineForItemAlreadyExists;
+#[Object]
+impl UnallocatedLineForItemAlreadyExists {
+    pub async fn description(&self) -> &'static str {
+        "Unallocated line already exists for this item"
+    }
 }
 
-use InsertOutboundShipmentUnallocatedLineError as Error;
+pub struct UnallocatedLinesOnlyEditableInNewInvoice;
+#[Object]
+impl UnallocatedLinesOnlyEditableInNewInvoice {
+    pub async fn description(&self) -> &'static str {
+        "Can only insert or edit unallocated lines in new invoice"
+    }
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "InsertOutboundShipmentUnallocatedLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
 
 #[derive(Union)]
-pub enum InsertOutboundShipmentUnallocatedLineResponse {
-    Error(Error),
+#[graphql(name = "InsertOutboundShipmentUnallocatedLineResponse")]
+pub enum InsertResponse {
+    Error(InsertError),
     Response(InvoiceLineNode),
 }
 
-use InsertOutboundShipmentUnallocatedLineResponse as Response;
-
-use super::{UnallocatedLineForItemAlreadyExists, UnallocatedLinesOnlyEditableInNewInvoice};
-
-impl From<Input> for ServiceInput {
+impl From<InsertInput> for ServiceInput {
     fn from(
-        Input {
+        InsertInput {
             id,
             invoice_id,
             item_id,
             quantity,
-        }: Input,
+        }: InsertInput,
     ) -> Self {
         ServiceInput {
             id,
@@ -68,10 +78,7 @@ impl From<Input> for ServiceInput {
     }
 }
 
-pub fn insert_outbound_shipment_unallocated_line(
-    ctx: &Context<'_>,
-    input: Input,
-) -> Result<Response> {
+pub fn insert(ctx: &Context<'_>, input: InsertInput) -> Result<InsertResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
@@ -79,8 +86,8 @@ pub fn insert_outbound_shipment_unallocated_line(
         .outbound_shipment_line
         .insert_outbound_shipment_unallocated_line(&service_context, input.into())
     {
-        Ok(invoice_line) => Response::Response(invoice_line.into()),
-        Err(error) => Response::Error(Error {
+        Ok(invoice_line) => InsertResponse::Response(invoice_line.into()),
+        Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,
         }),
     };
@@ -88,24 +95,26 @@ pub fn insert_outbound_shipment_unallocated_line(
     Ok(response)
 }
 
-pub fn map_error(error: ServiceError) -> Result<ErrorInterface> {
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(ErrorInterface::ForeignKeyError(ForeignKeyError(
+            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
         ServiceError::CanOnlyAddLinesToNewOutboundShipment => {
-            return Ok(ErrorInterface::UnallocatedLinesOnlyEditableInNewInvoice(
-                UnallocatedLinesOnlyEditableInNewInvoice {},
-            ))
+            return Ok(
+                InsertErrorInterface::UnallocatedLinesOnlyEditableInNewInvoice(
+                    UnallocatedLinesOnlyEditableInNewInvoice {},
+                ),
+            )
         }
         ServiceError::UnallocatedLineForItemAlreadyExistsInInvoice => {
-            return Ok(ErrorInterface::UnallocatedLineForItemAlreadyExists(
+            return Ok(InsertErrorInterface::UnallocatedLineForItemAlreadyExists(
                 UnallocatedLineForItemAlreadyExists {},
             ))
         }

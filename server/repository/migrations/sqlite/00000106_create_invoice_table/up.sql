@@ -7,7 +7,7 @@ CREATE TABLE invoice (
     -- For inbound shipments, the id of the receiving store.
     store_id text NOT NULL REFERENCES store (id),
     invoice_number integer NOT NULL,
-    type TEXT CHECK (type IN ('OUTBOUND_SHIPMENT', 'INBOUND_SHIPMENT')) NOT NULL,
+    type TEXT CHECK (type IN ('OUTBOUND_SHIPMENT', 'INBOUND_SHIPMENT', 'INVENTORY_ADJUSTMENT')) NOT NULL,
     status text CHECK (status IN ('NEW','ALLOCATED', 'PICKED', 'SHIPPED',  'DELIVERED', 'VERIFIED')) NOT NULL,
     on_hold boolean NOT NULL,
     comment text,
