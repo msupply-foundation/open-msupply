@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use domain::{
         master_list::{MasterListFilter, MasterListSort},
         EqualFilter, PaginationOption, SimpleStringFilter,
@@ -127,14 +127,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &None,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Test no records
 
@@ -155,14 +154,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &None,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -235,13 +233,12 @@ mod graphql {
           }
         });
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &Some(variables),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }
