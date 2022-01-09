@@ -93,6 +93,7 @@ query invoice($id: String!) {
             numberOfPacks
             packSize
             note
+            invoiceId
             location {
               __typename
               ... on LocationNode {

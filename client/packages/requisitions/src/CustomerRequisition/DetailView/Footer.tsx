@@ -2,80 +2,34 @@ import {
   Box,
   ArrowRightIcon,
   ButtonWithIcon,
-  SaveIcon,
   StatusCrumbs,
-  XCircleIcon,
   useTranslation,
   useNotification,
   AppFooterPortal,
-  useNavigate,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import {
   getSupplierRequisitionStatuses,
   getNextSupplierRequisitionStatus,
   getSupplierRequisitionTranslator,
-  isRequisitionEditable,
+  createStatusLog,
+  getNextStatusText,
 } from '../../utils';
-import { CustomerRequisition } from '../../types';
+import {
+  useCustomerRequisitionFields,
+  useIsCustomerRequisitionDisabled,
+} from '../api';
 
-interface OutboundDetailFooterProps {
-  draft: CustomerRequisition;
-  save: () => Promise<void>;
-}
-
-const getNextStatusText = (draft: CustomerRequisition) => {
-  const nextStatus = getNextSupplierRequisitionStatus(draft.status);
-  const translation = getSupplierRequisitionTranslator()(nextStatus);
-  return translation;
-};
-
-const createStatusLog = (
-  status: 'DRAFT' | 'IN_PROGRESS' | 'FINALISED' | 'SENT'
-) => {
-  if (status === 'DRAFT') {
-    return {
-      DRAFT: new Date().toISOString(),
-      IN_PROGRESS: null,
-      FINALISED: null,
-      SENT: null,
-    };
-  }
-  if (status === 'IN_PROGRESS') {
-    return {
-      DRAFT: new Date().toISOString(),
-      IN_PROGRESS: new Date().toISOString(),
-      FINALISED: null,
-      SENT: null,
-    };
-  }
-
-  if (status === 'FINALISED') {
-    return {
-      DRAFT: new Date().toISOString(),
-      IN_PROGRESS: new Date().toISOString(),
-      FINALISED: new Date().toISOString(),
-      SENT: null,
-    };
-  }
-
-  return {
-    DRAFT: new Date().toISOString(),
-    IN_PROGRESS: new Date().toISOString(),
-    FINALISED: new Date().toISOString(),
-    SENT: new Date().toISOString(),
-  };
-};
-
-export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
-  const navigate = useNavigate();
+export const Footer: FC = () => {
+  const { status, update } = useCustomerRequisitionFields('status');
+  const isDisabled = useIsCustomerRequisitionDisabled();
   const t = useTranslation('distribution');
   const { success } = useNotification();
 
   return (
     <AppFooterPortal
       Content={
-        draft && (
+        status ? (
           <Box
             gap={2}
             display="flex"
@@ -85,58 +39,33 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
           >
             <StatusCrumbs
               statuses={getSupplierRequisitionStatuses()}
-              statusLog={createStatusLog(draft.status)}
+              statusLog={createStatusLog(status)}
               statusFormatter={getSupplierRequisitionTranslator()}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.cancel')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigate(-1)}
-              />
-              {isRequisitionEditable(draft) && (
-                <>
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    Icon={<SaveIcon />}
-                    label={t('button.save')}
-                    variant="contained"
-                    color="secondary"
-                    sx={{ fontSize: '12px' }}
-                    onClick={() => {
-                      success('Saved invoice! 🥳 ')();
-                      save();
-                    }}
-                  />
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    // disabled={draft.onHold}
-                    Icon={<ArrowRightIcon />}
-                    label={t('button.save-and-confirm-status', {
-                      status: getNextStatusText(draft),
-                    })}
-                    sx={{ fontSize: '12px' }}
-                    variant="contained"
-                    color="secondary"
-                    onClick={async () => {
-                      success('Saved requisition! 🥳 ')();
-                      await draft.update?.(
-                        'status',
-                        getNextSupplierRequisitionStatus(draft.status)
-                      );
-
-                      save();
-                    }}
-                  />
-                </>
+              {!isDisabled && (
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  disabled={isDisabled}
+                  Icon={<ArrowRightIcon />}
+                  label={t('button.save-and-confirm-status', {
+                    status: getNextStatusText(status),
+                  })}
+                  sx={{ fontSize: '12px' }}
+                  variant="contained"
+                  color="secondary"
+                  onClick={async () => {
+                    await update({
+                      status: getNextSupplierRequisitionStatus(status),
+                    });
+                    success('Saved requisition! 🥳 ')();
+                  }}
+                />
               )}
             </Box>
           </Box>
-        )
+        ) : null
       }
     />
   );

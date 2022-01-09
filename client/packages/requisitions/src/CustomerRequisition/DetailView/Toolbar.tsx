@@ -12,24 +12,41 @@ import {
   useNotification,
   useTableStore,
   DatePickerInput,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { CustomerRequisition, CustomerRequisitionLine } from '../../types';
-import { isRequisitionEditable } from '../../utils';
+import { RequisitionLine } from '../../types';
+import {
+  useCustomerRequisitionFields,
+  useIsCustomerRequisitionDisabled,
+} from '../api';
 
-interface ToolbarProps {
-  draft: CustomerRequisition;
-}
-
-export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
+  const isDisabled = useIsCustomerRequisitionDisabled();
+  const {
+    lines,
+    otherParty,
+    requisitionDate,
+    orderDate,
+    theirReference,
+    update,
+  } = useCustomerRequisitionFields([
+    'lines',
+    'otherParty',
+    'orderDate',
+    'requisitionDate',
+    'theirReference',
+  ]);
+  const [bufferedReqDate, setBufferedReqDate] = useBufferState(requisitionDate);
+  const [bufferedOrderDate, setBufferedOrderDate] = useBufferState(orderDate);
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => draft.lines.find(({ id }) => selectedId === id))
-      .filter(Boolean) as CustomerRequisitionLine[],
+      .map(selectedId => lines.find(({ id }) => selectedId === id))
+      .filter(Boolean) as RequisitionLine[],
   }));
 
   const deleteAction = () => {
@@ -54,16 +71,16 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
         <Grid item display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              {draft.otherParty && (
+              {otherParty && (
                 <InputWithLabelRow
                   label={t('label.customer-name')}
                   Input={
                     <NameSearchInput
                       type="customer"
-                      disabled={!isRequisitionEditable(draft)}
-                      value={draft.otherParty}
-                      onChange={name => {
-                        draft.updateOtherParty(name);
+                      disabled={isDisabled}
+                      value={otherParty}
+                      onChange={newOtherParty => {
+                        update({ otherParty: newOtherParty });
                       }}
                     />
                   }
@@ -73,13 +90,11 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 label={t('label.customer-ref')}
                 Input={
                   <BasicTextInput
-                    disabled={!isRequisitionEditable(draft)}
+                    disabled={isDisabled}
                     size="small"
                     sx={{ width: 250 }}
-                    value={draft.theirReference}
-                    onChange={e =>
-                      draft.update('theirReference', e.target.value)
-                    }
+                    value={theirReference}
+                    onChange={e => update({ theirReference: e.target.value })}
                   />
                 }
               />
@@ -89,9 +104,12 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 label={t('label.order-date')}
                 Input={
                   <DatePickerInput
-                    disabled={!isRequisitionEditable(draft)}
-                    value={draft.orderDate}
-                    onChange={draft.updateOrderDate}
+                    disabled={isDisabled}
+                    value={bufferedOrderDate}
+                    onChange={d => {
+                      setBufferedOrderDate(d);
+                      update({ orderDate: d });
+                    }}
                   />
                 }
               />
@@ -100,19 +118,19 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 label={t('label.requisition-date')}
                 Input={
                   <DatePickerInput
-                    disabled={!isRequisitionEditable(draft)}
-                    value={draft.requisitionDate}
-                    onChange={draft.updateRequisitionDate}
+                    disabled={isDisabled}
+                    value={bufferedReqDate}
+                    onChange={d => {
+                      setBufferedReqDate(d);
+                      update({ requisitionDate: d });
+                    }}
                   />
                 }
               />
             </Box>
           </Box>
         </Grid>
-        <DropdownMenu
-          disabled={!isRequisitionEditable(draft)}
-          label={t('label.select')}
-        >
+        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>

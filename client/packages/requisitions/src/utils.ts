@@ -134,3 +134,48 @@ export const getSupplierRequisitionStatuses =
 
 export const canDeleteRequisition = (requisitionRow: RequisitionRow): boolean =>
   requisitionRow.status === SupplierRequisitionNodeStatus.Draft;
+
+export const getNextStatusText = (
+  status: SupplierRequisitionNodeStatus
+): string => {
+  const nextStatus = getNextSupplierRequisitionStatus(status);
+  const translation = getSupplierRequisitionTranslator()(nextStatus);
+  return translation;
+};
+
+export const createStatusLog = (
+  status: 'DRAFT' | 'IN_PROGRESS' | 'FINALISED' | 'SENT'
+) => {
+  if (status === 'DRAFT') {
+    return {
+      DRAFT: new Date().toISOString(),
+      IN_PROGRESS: null,
+      FINALISED: null,
+      SENT: null,
+    };
+  }
+  if (status === 'IN_PROGRESS') {
+    return {
+      DRAFT: new Date().toISOString(),
+      IN_PROGRESS: new Date().toISOString(),
+      FINALISED: null,
+      SENT: null,
+    };
+  }
+
+  if (status === 'FINALISED') {
+    return {
+      DRAFT: new Date().toISOString(),
+      IN_PROGRESS: new Date().toISOString(),
+      FINALISED: new Date().toISOString(),
+      SENT: null,
+    };
+  }
+
+  return {
+    DRAFT: new Date().toISOString(),
+    IN_PROGRESS: new Date().toISOString(),
+    FINALISED: new Date().toISOString(),
+    SENT: new Date().toISOString(),
+  };
+};

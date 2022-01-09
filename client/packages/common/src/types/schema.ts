@@ -3,6 +3,7 @@ import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type Maybe<T> = T | null;
+export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
@@ -56,12 +57,12 @@ export type AuthTokenErrorInterface = {
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
 export type BatchCustomerRequisitionInput = {
-  deleteCustomerRequisitionLines?: Maybe<Array<DeleteCustomerRequisitionLineInput>>;
-  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionInput>>;
-  insertCustomerRequisitionLines?: Maybe<Array<InsertCustomerRequisitionLineInput>>;
-  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionInput>>;
-  updateCustomerRequisitionLines?: Maybe<Array<UpdateCustomerRequisitionLineInput>>;
-  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput>>;
+  deleteCustomerRequisitionLines?: InputMaybe<Array<DeleteCustomerRequisitionLineInput>>;
+  deleteCustomerRequisitions?: InputMaybe<Array<DeleteCustomerRequisitionInput>>;
+  insertCustomerRequisitionLines?: InputMaybe<Array<InsertCustomerRequisitionLineInput>>;
+  insertCustomerRequisitions?: InputMaybe<Array<InsertCustomerRequisitionInput>>;
+  updateCustomerRequisitionLines?: InputMaybe<Array<UpdateCustomerRequisitionLineInput>>;
+  updateCustomerRequisitions?: InputMaybe<Array<UpdateCustomerRequisitionInput>>;
 };
 
 export type BatchCustomerRequisitionResponse = {
@@ -75,12 +76,12 @@ export type BatchCustomerRequisitionResponse = {
 };
 
 export type BatchInboundShipmentInput = {
-  deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
-  deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentInput>>;
-  insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput>>;
-  insertOutboundShipments?: Maybe<Array<InsertInboundShipmentInput>>;
-  updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput>>;
-  updateInboundShipments?: Maybe<Array<UpdateInboundShipmentInput>>;
+  deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
+  deleteInboundShipments?: InputMaybe<Array<DeleteInboundShipmentInput>>;
+  insertInboundShipmentLines?: InputMaybe<Array<InsertInboundShipmentLineInput>>;
+  insertOutboundShipments?: InputMaybe<Array<InsertInboundShipmentInput>>;
+  updateInboundShipmentLines?: InputMaybe<Array<UpdateInboundShipmentLineInput>>;
+  updateInboundShipments?: InputMaybe<Array<UpdateInboundShipmentInput>>;
 };
 
 export type BatchInboundShipmentResponse = {
@@ -99,12 +100,12 @@ export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface & UpdateIn
 };
 
 export type BatchOutboundShipmentInput = {
-  deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineInput>>;
-  deleteOutboundShipments?: Maybe<Array<Scalars['String']>>;
-  insertOutboundShipmentLines?: Maybe<Array<InsertOutboundShipmentLineInput>>;
-  insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
-  updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
-  updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
+  deleteOutboundShipmentLines?: InputMaybe<Array<DeleteOutboundShipmentLineInput>>;
+  deleteOutboundShipments?: InputMaybe<Array<Scalars['String']>>;
+  insertOutboundShipmentLines?: InputMaybe<Array<InsertOutboundShipmentLineInput>>;
+  insertOutboundShipments?: InputMaybe<Array<InsertOutboundShipmentInput>>;
+  updateOutboundShipmentLines?: InputMaybe<Array<UpdateOutboundShipmentLineInput>>;
+  updateOutboundShipments?: InputMaybe<Array<UpdateOutboundShipmentInput>>;
 };
 
 export type BatchOutboundShipmentResponse = {
@@ -121,12 +122,12 @@ export type BatchOutboundShipmentResponse = {
 };
 
 export type BatchStocktakeInput = {
-  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineInput>>;
-  deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
-  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineInput>>;
-  insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
-  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineInput>>;
-  updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
+  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput>>;
+  deleteStocktakes?: InputMaybe<Array<DeleteStocktakeInput>>;
+  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput>>;
+  insertStocktakes?: InputMaybe<Array<InsertStocktakeInput>>;
+  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput>>;
+  updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput>>;
 };
 
 export type BatchStocktakeResponse = {
@@ -140,12 +141,12 @@ export type BatchStocktakeResponse = {
 };
 
 export type BatchSupplierRequisitionInput = {
-  deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput>>;
-  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
-  insertSupplierRequisitionLines?: Maybe<Array<InsertSupplierRequisitionLineInput>>;
-  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionInput>>;
-  updateSupplierRequisitionLines?: Maybe<Array<UpdateSupplierRequisitionLineInput>>;
-  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput>>;
+  deleteSupplierRequisitionLines?: InputMaybe<Array<DeleteSupplierRequisitionLineInput>>;
+  deleteSupplierRequisitions?: InputMaybe<Array<DeleteSupplierRequisitionInput>>;
+  insertSupplierRequisitionLines?: InputMaybe<Array<InsertSupplierRequisitionLineInput>>;
+  insertSupplierRequisitions?: InputMaybe<Array<InsertSupplierRequisitionInput>>;
+  updateSupplierRequisitionLines?: InputMaybe<Array<UpdateSupplierRequisitionLineInput>>;
+  updateSupplierRequisitions?: InputMaybe<Array<UpdateSupplierRequisitionInput>>;
 };
 
 export type BatchSupplierRequisitionResponse = {
@@ -213,9 +214,9 @@ export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & 
 };
 
 export type DatetimeFilterInput = {
-  afterOrEqualTo?: Maybe<Scalars['DateTime']>;
-  beforeOrEqualTo?: Maybe<Scalars['DateTime']>;
-  equalTo?: Maybe<Scalars['DateTime']>;
+  afterOrEqualTo?: InputMaybe<Scalars['DateTime']>;
+  beforeOrEqualTo?: InputMaybe<Scalars['DateTime']>;
+  equalTo?: InputMaybe<Scalars['DateTime']>;
 };
 
 export type DeleteCustomerRequisitionInput = {
@@ -426,33 +427,33 @@ export type DeleteSupplierRequisitionResponseWithId = {
 };
 
 export type EqualFilterBigNumberInput = {
-  equalAny?: Maybe<Array<Scalars['Int']>>;
-  equalTo?: Maybe<Scalars['Int']>;
-  notEqualTo?: Maybe<Scalars['Int']>;
+  equalAny?: InputMaybe<Array<Scalars['Int']>>;
+  equalTo?: InputMaybe<Scalars['Int']>;
+  notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
 export type EqualFilterBooleanInput = {
-  equalAny?: Maybe<Array<Scalars['Boolean']>>;
-  equalTo?: Maybe<Scalars['Boolean']>;
-  notEqualTo?: Maybe<Scalars['Boolean']>;
+  equalAny?: InputMaybe<Array<Scalars['Boolean']>>;
+  equalTo?: InputMaybe<Scalars['Boolean']>;
+  notEqualTo?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type EqualFilterInvoiceStatusInput = {
-  equalAny?: Maybe<Array<InvoiceNodeStatus>>;
-  equalTo?: Maybe<InvoiceNodeStatus>;
-  notEqualTo?: Maybe<InvoiceNodeStatus>;
+  equalAny?: InputMaybe<Array<InvoiceNodeStatus>>;
+  equalTo?: InputMaybe<InvoiceNodeStatus>;
+  notEqualTo?: InputMaybe<InvoiceNodeStatus>;
 };
 
 export type EqualFilterInvoiceTypeInput = {
-  equalAny?: Maybe<Array<InvoiceNodeType>>;
-  equalTo?: Maybe<InvoiceNodeType>;
-  notEqualTo?: Maybe<InvoiceNodeType>;
+  equalAny?: InputMaybe<Array<InvoiceNodeType>>;
+  equalTo?: InputMaybe<InvoiceNodeType>;
+  notEqualTo?: InputMaybe<InvoiceNodeType>;
 };
 
 export type EqualFilterStringInput = {
-  equalAny?: Maybe<Array<Scalars['String']>>;
-  equalTo?: Maybe<Scalars['String']>;
-  notEqualTo?: Maybe<Scalars['String']>;
+  equalAny?: InputMaybe<Array<Scalars['String']>>;
+  equalTo?: InputMaybe<Scalars['String']>;
+  notEqualTo?: InputMaybe<Scalars['String']>;
 };
 
 export enum ForeignKey {
@@ -463,7 +464,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename?: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -475,38 +476,38 @@ export type InboundInvoiceCounts = {
 };
 
 export type InsertCustomerRequisitionInput = {
-  comment?: Maybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  orderDate?: Maybe<Scalars['String']>;
+  orderDate?: InputMaybe<Scalars['String']>;
   otherPartyId: Scalars['String'];
-  theirReference?: Maybe<Scalars['String']>;
-  type?: Maybe<RequisitionNodeType>;
+  theirReference?: InputMaybe<Scalars['String']>;
+  type?: InputMaybe<RequisitionNodeType>;
 };
 
 export type InsertCustomerRequisitionLineInput = {
-  calculatedQuantity?: Maybe<Scalars['Float']>;
-  closingQuantity?: Maybe<Scalars['Int']>;
-  comment?: Maybe<Scalars['String']>;
-  expiredQuantity?: Maybe<Scalars['Float']>;
+  calculatedQuantity?: InputMaybe<Scalars['Float']>;
+  closingQuantity?: InputMaybe<Scalars['Int']>;
+  comment?: InputMaybe<Scalars['String']>;
+  expiredQuantity?: InputMaybe<Scalars['Float']>;
   id: Scalars['String'];
-  imprestQuantity?: Maybe<Scalars['Float']>;
-  issuedQuantity?: Maybe<Scalars['Float']>;
-  itemCode?: Maybe<Scalars['String']>;
+  imprestQuantity?: InputMaybe<Scalars['Float']>;
+  issuedQuantity?: InputMaybe<Scalars['Float']>;
+  itemCode?: InputMaybe<Scalars['String']>;
   itemId: Scalars['String'];
-  itemName?: Maybe<Scalars['String']>;
-  itemUnit?: Maybe<Scalars['String']>;
-  monthlyConsumption?: Maybe<Scalars['Float']>;
-  monthsOfSupply?: Maybe<Scalars['Float']>;
-  openingQuantity?: Maybe<Scalars['Float']>;
-  otherPartyClosingQuantity?: Maybe<Scalars['Int']>;
-  previousQuantity?: Maybe<Scalars['Float']>;
-  previousStockOnHand?: Maybe<Scalars['Float']>;
-  receivedQuantity?: Maybe<Scalars['Float']>;
-  requestedQuantity?: Maybe<Scalars['Float']>;
+  itemName?: InputMaybe<Scalars['String']>;
+  itemUnit?: InputMaybe<Scalars['String']>;
+  monthlyConsumption?: InputMaybe<Scalars['Float']>;
+  monthsOfSupply?: InputMaybe<Scalars['Float']>;
+  openingQuantity?: InputMaybe<Scalars['Float']>;
+  otherPartyClosingQuantity?: InputMaybe<Scalars['Int']>;
+  previousQuantity?: InputMaybe<Scalars['Float']>;
+  previousStockOnHand?: InputMaybe<Scalars['Float']>;
+  receivedQuantity?: InputMaybe<Scalars['Float']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']>;
   requisitionId: Scalars['String'];
-  stockAdditions?: Maybe<Scalars['Float']>;
-  stockLosses?: Maybe<Scalars['Float']>;
-  supplyQuantity?: Maybe<Scalars['Float']>;
+  stockAdditions?: InputMaybe<Scalars['Float']>;
+  stockLosses?: InputMaybe<Scalars['Float']>;
+  supplyQuantity?: InputMaybe<Scalars['Float']>;
 };
 
 export type InsertCustomerRequisitionLineResponse = NodeError | RequisitionLineNode;
@@ -536,12 +537,12 @@ export type InsertInboundShipmentErrorInterface = {
 };
 
 export type InsertInboundShipmentInput = {
-  color?: Maybe<Scalars['String']>;
-  comment?: Maybe<Scalars['String']>;
+  color?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  onHold?: Maybe<Scalars['Boolean']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
   otherPartyId: Scalars['String'];
-  theirReference?: Maybe<Scalars['String']>;
+  theirReference?: InputMaybe<Scalars['String']>;
 };
 
 /** Generic Error Wrapper */
@@ -555,17 +556,17 @@ export type InsertInboundShipmentLineErrorInterface = {
 };
 
 export type InsertInboundShipmentLineInput = {
-  batch?: Maybe<Scalars['String']>;
+  batch?: InputMaybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
-  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
-  locationId?: Maybe<Scalars['String']>;
+  locationId?: InputMaybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  tax?: Maybe<Scalars['Float']>;
+  tax?: InputMaybe<Scalars['Float']>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -598,8 +599,8 @@ export type InsertLocationErrorInterface = {
 export type InsertLocationInput = {
   code: Scalars['String'];
   id: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  onHold?: Maybe<Scalars['Boolean']>;
+  name?: InputMaybe<Scalars['String']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
@@ -615,15 +616,15 @@ export type InsertOutboundShipmentErrorInterface = {
 };
 
 export type InsertOutboundShipmentInput = {
-  color?: Maybe<Scalars['String']>;
-  comment?: Maybe<Scalars['String']>;
+  color?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   /** The new invoice id provided by the client */
   id: Scalars['String'];
-  onHold?: Maybe<Scalars['Boolean']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
   /** The other party must be an customer of the current store */
   otherPartyId: Scalars['String'];
-  status?: Maybe<InvoiceNodeStatus>;
-  theirReference?: Maybe<Scalars['String']>;
+  status?: InputMaybe<InvoiceNodeStatus>;
+  theirReference?: InputMaybe<Scalars['String']>;
 };
 
 /** Generic Error Wrapper */
@@ -642,7 +643,7 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Int'];
   stockLineId: Scalars['String'];
-  tax?: Maybe<Scalars['Float']>;
+  tax?: InputMaybe<Scalars['Float']>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -677,9 +678,9 @@ export type InsertOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  note?: Maybe<Scalars['String']>;
-  tax?: Maybe<Scalars['Float']>;
+  name?: InputMaybe<Scalars['String']>;
+  note?: InputMaybe<Scalars['String']>;
+  tax?: InputMaybe<Scalars['Float']>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -692,21 +693,39 @@ export type InsertOutboundShipmentServiceLineResponseWithId = {
   response: InsertOutboundShipmentServiceLineResponse;
 };
 
-export type InsertStocktakeInput = {
-  comment?: Maybe<Scalars['String']>;
-  description?: Maybe<Scalars['String']>;
+export type InsertOutboundShipmentUnallocatedLineError = {
+  __typename?: 'InsertOutboundShipmentUnallocatedLineError';
+  error: InsertOutboundShipmentUnallocatedLineInterface;
+};
+
+export type InsertOutboundShipmentUnallocatedLineInput = {
   id: Scalars['String'];
-  stocktakeDatetime?: Maybe<Scalars['String']>;
+  invoiceId: Scalars['String'];
+  itemId: Scalars['String'];
+  quantity: Scalars['Int'];
+};
+
+export type InsertOutboundShipmentUnallocatedLineInterface = {
+  description: Scalars['String'];
+};
+
+export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
+
+export type InsertStocktakeInput = {
+  comment?: InputMaybe<Scalars['String']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+  stocktakeDatetime?: InputMaybe<Scalars['String']>;
 };
 
 export type InsertStocktakeLineInput = {
-  batch?: Maybe<Scalars['String']>;
-  costPricePerPack?: Maybe<Scalars['Float']>;
-  countedNumPacks?: Maybe<Scalars['Int']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  batch?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  countedNumPacks?: InputMaybe<Scalars['Int']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId: Scalars['String'];
-  sellPricePerPack?: Maybe<Scalars['Float']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
   stocktakeId: Scalars['String'];
 };
 
@@ -727,38 +746,38 @@ export type InsertStocktakeResponseWithId = {
 };
 
 export type InsertSupplierRequisitionInput = {
-  comment?: Maybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  orderDate?: Maybe<Scalars['String']>;
+  orderDate?: InputMaybe<Scalars['String']>;
   otherPartyId: Scalars['String'];
-  theirReference?: Maybe<Scalars['String']>;
-  type?: Maybe<RequisitionNodeType>;
+  theirReference?: InputMaybe<Scalars['String']>;
+  type?: InputMaybe<RequisitionNodeType>;
 };
 
 export type InsertSupplierRequisitionLineInput = {
-  calculatedQuantity?: Maybe<Scalars['Float']>;
-  closingQuantity?: Maybe<Scalars['Int']>;
-  comment?: Maybe<Scalars['String']>;
-  expiredQuantity?: Maybe<Scalars['Float']>;
+  calculatedQuantity?: InputMaybe<Scalars['Float']>;
+  closingQuantity?: InputMaybe<Scalars['Int']>;
+  comment?: InputMaybe<Scalars['String']>;
+  expiredQuantity?: InputMaybe<Scalars['Float']>;
   id: Scalars['String'];
-  imprestQuantity?: Maybe<Scalars['Float']>;
-  issuedQuantity?: Maybe<Scalars['Float']>;
-  itemCode?: Maybe<Scalars['String']>;
+  imprestQuantity?: InputMaybe<Scalars['Float']>;
+  issuedQuantity?: InputMaybe<Scalars['Float']>;
+  itemCode?: InputMaybe<Scalars['String']>;
   itemId: Scalars['String'];
-  itemName?: Maybe<Scalars['String']>;
-  itemUnit?: Maybe<Scalars['String']>;
-  monthlyConsumption?: Maybe<Scalars['Float']>;
-  monthsOfSupply?: Maybe<Scalars['Float']>;
-  openingQuantity?: Maybe<Scalars['Float']>;
-  otherPartyClosingQuantity?: Maybe<Scalars['Int']>;
-  previousQuantity?: Maybe<Scalars['Float']>;
-  previousStockOnHand?: Maybe<Scalars['Float']>;
-  receivedQuantity?: Maybe<Scalars['Float']>;
-  requestedQuantity?: Maybe<Scalars['Float']>;
+  itemName?: InputMaybe<Scalars['String']>;
+  itemUnit?: InputMaybe<Scalars['String']>;
+  monthlyConsumption?: InputMaybe<Scalars['Float']>;
+  monthsOfSupply?: InputMaybe<Scalars['Float']>;
+  openingQuantity?: InputMaybe<Scalars['Float']>;
+  otherPartyClosingQuantity?: InputMaybe<Scalars['Int']>;
+  previousQuantity?: InputMaybe<Scalars['Float']>;
+  previousStockOnHand?: InputMaybe<Scalars['Float']>;
+  receivedQuantity?: InputMaybe<Scalars['Float']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']>;
   requisitionId: Scalars['String'];
-  stockAdditions?: Maybe<Scalars['Float']>;
-  stockLosses?: Maybe<Scalars['Float']>;
-  supplyQuantity?: Maybe<Scalars['Float']>;
+  stockAdditions?: InputMaybe<Scalars['Float']>;
+  stockLosses?: InputMaybe<Scalars['Float']>;
+  supplyQuantity?: InputMaybe<Scalars['Float']>;
 };
 
 export type InsertSupplierRequisitionLineResponse = NodeError | RequisitionLineNode;
@@ -818,19 +837,19 @@ export type InvoiceDoesNotBelongToCurrentStore = DeleteInboundShipmentErrorInter
 };
 
 export type InvoiceFilterInput = {
-  allocatedDatetime?: Maybe<DatetimeFilterInput>;
-  comment?: Maybe<SimpleStringFilterInput>;
-  createdDatetime?: Maybe<DatetimeFilterInput>;
-  deliveredDatetime?: Maybe<DatetimeFilterInput>;
-  invoiceNumber?: Maybe<EqualFilterBigNumberInput>;
-  nameId?: Maybe<EqualFilterStringInput>;
-  pickedDatetime?: Maybe<DatetimeFilterInput>;
-  shippedDatetime?: Maybe<DatetimeFilterInput>;
-  status?: Maybe<EqualFilterInvoiceStatusInput>;
-  storeId?: Maybe<EqualFilterStringInput>;
-  theirReference?: Maybe<EqualFilterStringInput>;
-  type?: Maybe<EqualFilterInvoiceTypeInput>;
-  verifiedDatetime?: Maybe<DatetimeFilterInput>;
+  allocatedDatetime?: InputMaybe<DatetimeFilterInput>;
+  comment?: InputMaybe<SimpleStringFilterInput>;
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  nameId?: InputMaybe<EqualFilterStringInput>;
+  pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  shippedDatetime?: InputMaybe<DatetimeFilterInput>;
+  status?: InputMaybe<EqualFilterInvoiceStatusInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  theirReference?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
 export type InvoiceIsNotEditable = UpdateOutboundShipmentErrorInterface & {
@@ -863,6 +882,7 @@ export type InvoiceLineNode = {
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
+  invoiceId: Scalars['String'];
   item: ItemResponse;
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
@@ -960,6 +980,7 @@ export enum InvoiceNodeStatus {
 
 export enum InvoiceNodeType {
   InboundShipment = 'INBOUND_SHIPMENT',
+  InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT'
 }
 
@@ -996,7 +1017,7 @@ export type InvoiceSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: InvoiceSortFieldInput;
 };
@@ -1020,9 +1041,9 @@ export type ItemError = {
 };
 
 export type ItemFilterInput = {
-  code?: Maybe<SimpleStringFilterInput>;
-  isVisible?: Maybe<EqualFilterBooleanInput>;
-  name?: Maybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  isVisible?: InputMaybe<EqualFilterBooleanInput>;
+  name?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type ItemNode = {
@@ -1049,7 +1070,7 @@ export type ItemSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: ItemSortFieldInput;
 };
@@ -1069,9 +1090,9 @@ export type LocationConnector = {
 };
 
 export type LocationFilterInput = {
-  code?: Maybe<EqualFilterStringInput>;
-  id?: Maybe<EqualFilterStringInput>;
-  name?: Maybe<EqualFilterStringInput>;
+  code?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type LocationInUse = DeleteLocationErrorInterface & {
@@ -1112,7 +1133,7 @@ export type LocationSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: LocationSortFieldInput;
 };
@@ -1144,12 +1165,12 @@ export type MasterListConnector = {
 };
 
 export type MasterListFilterInput = {
-  code?: Maybe<SimpleStringFilterInput>;
-  description?: Maybe<SimpleStringFilterInput>;
-  existsForName?: Maybe<SimpleStringFilterInput>;
-  existsForNameId?: Maybe<EqualFilterStringInput>;
-  id?: Maybe<EqualFilterStringInput>;
-  name?: Maybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  description?: InputMaybe<SimpleStringFilterInput>;
+  existsForName?: InputMaybe<SimpleStringFilterInput>;
+  existsForNameId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type MasterListLineConnector = {
@@ -1185,7 +1206,7 @@ export type MasterListSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: MasterListSortFieldInput;
 };
@@ -1219,6 +1240,7 @@ export type Mutations = {
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
+  insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertSupplierRequisition: InsertSupplierRequisitionResponse;
   insertSupplierRequisitionLine: InsertSupplierRequisitionLineResponse;
@@ -1238,55 +1260,55 @@ export type Mutations = {
 
 
 export type MutationsBatchCustomerRequisitionArgs = {
-  deleteCustomerRequisitionLines?: Maybe<Array<DeleteCustomerRequisitionLineInput>>;
-  deleteCustomerRequisitions?: Maybe<Array<DeleteCustomerRequisitionInput>>;
-  insertCustomerRequisitionLines?: Maybe<Array<InsertCustomerRequisitionLineInput>>;
-  insertCustomerRequisitions?: Maybe<Array<InsertCustomerRequisitionInput>>;
-  updateCustomerRequisitionLines?: Maybe<Array<UpdateCustomerRequisitionLineInput>>;
-  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput>>;
+  deleteCustomerRequisitionLines?: InputMaybe<Array<DeleteCustomerRequisitionLineInput>>;
+  deleteCustomerRequisitions?: InputMaybe<Array<DeleteCustomerRequisitionInput>>;
+  insertCustomerRequisitionLines?: InputMaybe<Array<InsertCustomerRequisitionLineInput>>;
+  insertCustomerRequisitions?: InputMaybe<Array<InsertCustomerRequisitionInput>>;
+  updateCustomerRequisitionLines?: InputMaybe<Array<UpdateCustomerRequisitionLineInput>>;
+  updateCustomerRequisitions?: InputMaybe<Array<UpdateCustomerRequisitionInput>>;
 };
 
 
 export type MutationsBatchInboundShipmentArgs = {
-  deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput>>;
-  deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentInput>>;
-  insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput>>;
-  insertInboundShipments?: Maybe<Array<InsertInboundShipmentInput>>;
-  updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput>>;
-  updateInboundShipments?: Maybe<Array<UpdateInboundShipmentInput>>;
+  deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
+  deleteInboundShipments?: InputMaybe<Array<DeleteInboundShipmentInput>>;
+  insertInboundShipmentLines?: InputMaybe<Array<InsertInboundShipmentLineInput>>;
+  insertInboundShipments?: InputMaybe<Array<InsertInboundShipmentInput>>;
+  updateInboundShipmentLines?: InputMaybe<Array<UpdateInboundShipmentLineInput>>;
+  updateInboundShipments?: InputMaybe<Array<UpdateInboundShipmentInput>>;
 };
 
 
 export type MutationsBatchOutboundShipmentArgs = {
-  deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineInput>>;
-  deleteOutboundShipmentServiceLines?: Maybe<Array<DeleteOutboundShipmentServiceLineInput>>;
-  deleteOutboundShipments?: Maybe<Array<Scalars['String']>>;
-  insertOutboundShipmentLines?: Maybe<Array<InsertOutboundShipmentLineInput>>;
-  insertOutboundShipmentServiceLines?: Maybe<Array<InsertOutboundShipmentServiceLineInput>>;
-  insertOutboundShipments?: Maybe<Array<InsertOutboundShipmentInput>>;
-  updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput>>;
-  updateOutboundShipmentServiceLines?: Maybe<Array<UpdateOutboundShipmentServiceLineInput>>;
-  updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput>>;
+  deleteOutboundShipmentLines?: InputMaybe<Array<DeleteOutboundShipmentLineInput>>;
+  deleteOutboundShipmentServiceLines?: InputMaybe<Array<DeleteOutboundShipmentServiceLineInput>>;
+  deleteOutboundShipments?: InputMaybe<Array<Scalars['String']>>;
+  insertOutboundShipmentLines?: InputMaybe<Array<InsertOutboundShipmentLineInput>>;
+  insertOutboundShipmentServiceLines?: InputMaybe<Array<InsertOutboundShipmentServiceLineInput>>;
+  insertOutboundShipments?: InputMaybe<Array<InsertOutboundShipmentInput>>;
+  updateOutboundShipmentLines?: InputMaybe<Array<UpdateOutboundShipmentLineInput>>;
+  updateOutboundShipmentServiceLines?: InputMaybe<Array<UpdateOutboundShipmentServiceLineInput>>;
+  updateOutboundShipments?: InputMaybe<Array<UpdateOutboundShipmentInput>>;
 };
 
 
 export type MutationsBatchStocktakeArgs = {
-  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineInput>>;
-  deleteStocktakes?: Maybe<Array<DeleteStocktakeInput>>;
-  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineInput>>;
-  insertStocktakes?: Maybe<Array<InsertStocktakeInput>>;
-  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineInput>>;
-  updateStocktakes?: Maybe<Array<UpdateStocktakeInput>>;
+  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput>>;
+  deleteStocktakes?: InputMaybe<Array<DeleteStocktakeInput>>;
+  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput>>;
+  insertStocktakes?: InputMaybe<Array<InsertStocktakeInput>>;
+  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput>>;
+  updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput>>;
 };
 
 
 export type MutationsBatchSupplierRequisitionArgs = {
-  deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput>>;
-  deleteSupplierRequisitions?: Maybe<Array<DeleteSupplierRequisitionInput>>;
-  insertSupplierRequisitionLines?: Maybe<Array<InsertSupplierRequisitionLineInput>>;
-  insertSupplierRequisitions?: Maybe<Array<InsertSupplierRequisitionInput>>;
-  updateSupplierRequisitionLines?: Maybe<Array<UpdateSupplierRequisitionLineInput>>;
-  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput>>;
+  deleteSupplierRequisitionLines?: InputMaybe<Array<DeleteSupplierRequisitionLineInput>>;
+  deleteSupplierRequisitions?: InputMaybe<Array<DeleteSupplierRequisitionInput>>;
+  insertSupplierRequisitionLines?: InputMaybe<Array<InsertSupplierRequisitionLineInput>>;
+  insertSupplierRequisitions?: InputMaybe<Array<InsertSupplierRequisitionInput>>;
+  updateSupplierRequisitionLines?: InputMaybe<Array<UpdateSupplierRequisitionLineInput>>;
+  updateSupplierRequisitions?: InputMaybe<Array<UpdateSupplierRequisitionInput>>;
 };
 
 
@@ -1332,7 +1354,7 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 
 export type MutationsDeleteStockTakeLineArgs = {
   input: DeleteStockTakeLineInput;
-  storeId?: Maybe<Scalars['String']>;
+  storeId?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1388,6 +1410,11 @@ export type MutationsInsertOutboundShipmentLineArgs = {
 
 export type MutationsInsertOutboundShipmentServiceLineArgs = {
   input: InsertOutboundShipmentServiceLineInput;
+};
+
+
+export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
+  input: InsertOutboundShipmentUnallocatedLineInput;
 };
 
 
@@ -1473,13 +1500,13 @@ export type NameConnector = {
 
 export type NameFilterInput = {
   /** Filter by code */
-  code?: Maybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by customer property */
-  isCustomer?: Maybe<Scalars['Boolean']>;
+  isCustomer?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
-  isSupplier?: Maybe<Scalars['Boolean']>;
+  isSupplier?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
-  name?: Maybe<SimpleStringFilterInput>;
+  name?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type NameNode = {
@@ -1503,7 +1530,7 @@ export type NameSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: NameSortFieldInput;
 };
@@ -1594,9 +1621,9 @@ export type PaginationError = ConnectorErrorInterface & {
  */
 export type PaginationInput = {
   /** Max number of returned items */
-  first?: Maybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
   /** First returned item is at the `offset` position in the full list */
-  offset?: Maybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
 };
 
 export type Queries = {
@@ -1646,42 +1673,42 @@ export type QueriesInvoiceArgs = {
 
 
 export type QueriesInvoiceCountsArgs = {
-  timezoneOffset?: Maybe<Scalars['Int']>;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
 };
 
 
 export type QueriesInvoicesArgs = {
-  filter?: Maybe<InvoiceFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<InvoiceSortInput>>;
+  filter?: InputMaybe<InvoiceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<InvoiceSortInput>>;
 };
 
 
 export type QueriesItemsArgs = {
-  filter?: Maybe<ItemFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<ItemSortInput>>;
+  filter?: InputMaybe<ItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ItemSortInput>>;
 };
 
 
 export type QueriesLocationsArgs = {
-  filter?: Maybe<LocationFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<LocationSortInput>>;
+  filter?: InputMaybe<LocationFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LocationSortInput>>;
 };
 
 
 export type QueriesMasterListsArgs = {
-  filter?: Maybe<MasterListFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<MasterListSortInput>>;
+  filter?: InputMaybe<MasterListFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<MasterListSortInput>>;
 };
 
 
 export type QueriesNamesArgs = {
-  filter?: Maybe<NameFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<NameSortInput>>;
+  filter?: InputMaybe<NameFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<NameSortInput>>;
 };
 
 
@@ -1691,13 +1718,13 @@ export type QueriesRequisitionArgs = {
 
 
 export type QueriesRequisitionsArgs = {
-  params?: Maybe<RequisitionListParameters>;
+  params?: InputMaybe<RequisitionListParameters>;
 };
 
 
 export type QueriesStockCountsArgs = {
-  daysTillExpired?: Maybe<Scalars['Int']>;
-  timezoneOffset?: Maybe<Scalars['Int']>;
+  daysTillExpired?: InputMaybe<Scalars['Int']>;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1707,13 +1734,13 @@ export type QueriesStocktakeArgs = {
 
 
 export type QueriesStocktakesArgs = {
-  params?: Maybe<StocktakeListParameters>;
+  params?: InputMaybe<StocktakeListParameters>;
 };
 
 
 export type QueriesStoresArgs = {
-  filter?: Maybe<StoreFilterInput>;
-  page?: Maybe<PaginationInput>;
+  filter?: InputMaybe<StoreFilterInput>;
+  page?: InputMaybe<PaginationInput>;
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -1777,8 +1804,8 @@ export type RequisitionConnector = {
 };
 
 export type RequisitionFilterInput = {
-  comment?: Maybe<SimpleStringFilterInput>;
-  type?: Maybe<SimpleStringFilterInput>;
+  comment?: InputMaybe<SimpleStringFilterInput>;
+  type?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type RequisitionLineConnector = {
@@ -1818,9 +1845,9 @@ export type RequisitionLineResponse = NodeError | RequisitionNode;
 export type RequisitionLinesResponse = ConnectorError | RequisitionLineConnector;
 
 export type RequisitionListParameters = {
-  filter?: Maybe<RequisitionFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<RequisitionSortInput>>;
+  filter?: InputMaybe<RequisitionFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<RequisitionSortInput>>;
 };
 
 export type RequisitionNode = {
@@ -1854,7 +1881,7 @@ export enum RequisitionSortFieldInput {
 }
 
 export type RequisitionSortInput = {
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   key: RequisitionSortFieldInput;
 };
 
@@ -1862,9 +1889,9 @@ export type RequisitionsResponse = ConnectorError | RequisitionConnector;
 
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
-  equalTo?: Maybe<Scalars['String']>;
+  equalTo?: InputMaybe<Scalars['String']>;
   /** Search term must be included in search candidate (case insensitive) */
-  like?: Maybe<Scalars['String']>;
+  like?: InputMaybe<Scalars['String']>;
 };
 
 export type StockCounts = {
@@ -1926,7 +1953,7 @@ export type StocktakeConnector = {
 };
 
 export type StocktakeFilterInput = {
-  description?: Maybe<SimpleStringFilterInput>;
+  description?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type StocktakeLineConnector = {
@@ -1954,9 +1981,9 @@ export type StocktakeLineNode = {
 export type StocktakeLinesResponse = ConnectorError | StocktakeLineConnector;
 
 export type StocktakeListParameters = {
-  filter?: Maybe<StocktakeFilterInput>;
-  page?: Maybe<PaginationInput>;
-  sort?: Maybe<Array<StocktakeSortInput>>;
+  filter?: InputMaybe<StocktakeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StocktakeSortInput>>;
 };
 
 export type StocktakeNode = {
@@ -1985,7 +2012,7 @@ export enum StocktakeSortFieldInput {
 }
 
 export type StocktakeSortInput = {
-  desc?: Maybe<Scalars['Boolean']>;
+  desc?: InputMaybe<Scalars['Boolean']>;
   key: StocktakeSortFieldInput;
 };
 
@@ -1998,7 +2025,7 @@ export type StoreConnector = {
 };
 
 export type StoreFilterInput = {
-  id?: Maybe<SimpleStringFilterInput>;
+  id?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type StoreNode = {
@@ -2018,11 +2045,21 @@ export enum SupplierRequisitionNodeStatus {
 
 export type TaxUpdate = {
   /** Set or unset the tax value (in percentage) */
-  percentage?: Maybe<Scalars['Float']>;
+  percentage?: InputMaybe<Scalars['Float']>;
 };
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename?: 'TokenExpired';
+  description: Scalars['String'];
+};
+
+export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineInterface & {
+  __typename?: 'UnallocatedLineForItemAlreadyExists';
+  description: Scalars['String'];
+};
+
+export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineInterface & {
+  __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String'];
 };
 
@@ -2037,37 +2074,38 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
 };
 
 export type UpdateCustomerRequisitionInput = {
-  color?: Maybe<Scalars['String']>;
-  comment?: Maybe<Scalars['String']>;
+  color?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  orderDate?: Maybe<Scalars['String']>;
-  otherPartyId?: Maybe<Scalars['String']>;
-  requisitionDate?: Maybe<Scalars['String']>;
-  theirReference?: Maybe<Scalars['String']>;
+  orderDate?: InputMaybe<Scalars['String']>;
+  otherPartyId?: InputMaybe<Scalars['String']>;
+  requisitionDate?: InputMaybe<Scalars['String']>;
+  status?: InputMaybe<SupplierRequisitionNodeStatus>;
+  theirReference?: InputMaybe<Scalars['String']>;
 };
 
 export type UpdateCustomerRequisitionLineInput = {
-  calculatedQuantity?: Maybe<Scalars['Float']>;
-  closingQuantity?: Maybe<Scalars['Int']>;
-  comment?: Maybe<Scalars['String']>;
-  expiredQuantity?: Maybe<Scalars['Float']>;
+  calculatedQuantity?: InputMaybe<Scalars['Float']>;
+  closingQuantity?: InputMaybe<Scalars['Int']>;
+  comment?: InputMaybe<Scalars['String']>;
+  expiredQuantity?: InputMaybe<Scalars['Float']>;
   id: Scalars['String'];
-  imprestQuantity?: Maybe<Scalars['Float']>;
-  issuedQuantity?: Maybe<Scalars['Float']>;
-  itemCode?: Maybe<Scalars['String']>;
-  itemName?: Maybe<Scalars['String']>;
-  itemUnit?: Maybe<Scalars['String']>;
-  monthlyConsumption?: Maybe<Scalars['Float']>;
-  monthsOfSupply?: Maybe<Scalars['Float']>;
-  openingQuantity?: Maybe<Scalars['Float']>;
-  otherPartyClosingQuantity?: Maybe<Scalars['Int']>;
-  previousQuantity?: Maybe<Scalars['Float']>;
-  previousStockOnHand?: Maybe<Scalars['Float']>;
-  receivedQuantity?: Maybe<Scalars['Float']>;
-  requestedQuantity?: Maybe<Scalars['Float']>;
-  stockAdditions?: Maybe<Scalars['Float']>;
-  stockLosses?: Maybe<Scalars['Float']>;
-  supplyQuantity?: Maybe<Scalars['Float']>;
+  imprestQuantity?: InputMaybe<Scalars['Float']>;
+  issuedQuantity?: InputMaybe<Scalars['Float']>;
+  itemCode?: InputMaybe<Scalars['String']>;
+  itemName?: InputMaybe<Scalars['String']>;
+  itemUnit?: InputMaybe<Scalars['String']>;
+  monthlyConsumption?: InputMaybe<Scalars['Float']>;
+  monthsOfSupply?: InputMaybe<Scalars['Float']>;
+  openingQuantity?: InputMaybe<Scalars['Float']>;
+  otherPartyClosingQuantity?: InputMaybe<Scalars['Int']>;
+  previousQuantity?: InputMaybe<Scalars['Float']>;
+  previousStockOnHand?: InputMaybe<Scalars['Float']>;
+  receivedQuantity?: InputMaybe<Scalars['Float']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']>;
+  stockAdditions?: InputMaybe<Scalars['Float']>;
+  stockLosses?: InputMaybe<Scalars['Float']>;
+  supplyQuantity?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateCustomerRequisitionLineResponse = NodeError | RequisitionLineNode;
@@ -2097,13 +2135,13 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
-  color?: Maybe<Scalars['String']>;
-  comment?: Maybe<Scalars['String']>;
+  color?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  onHold?: Maybe<Scalars['Boolean']>;
-  otherPartyId?: Maybe<Scalars['String']>;
-  status?: Maybe<UpdateInboundShipmentStatusInput>;
-  theirReference?: Maybe<Scalars['String']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
+  otherPartyId?: InputMaybe<Scalars['String']>;
+  status?: InputMaybe<UpdateInboundShipmentStatusInput>;
+  theirReference?: InputMaybe<Scalars['String']>;
 };
 
 /** Generic Error Wrapper */
@@ -2117,16 +2155,16 @@ export type UpdateInboundShipmentLineErrorInterface = {
 };
 
 export type UpdateInboundShipmentLineInput = {
-  batch?: Maybe<Scalars['String']>;
-  costPricePerPack?: Maybe<Scalars['Float']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  batch?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   invoiceId: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
-  locationId?: Maybe<Scalars['String']>;
-  numberOfPacks?: Maybe<Scalars['Int']>;
-  packSize?: Maybe<Scalars['Int']>;
-  sellPricePerPack?: Maybe<Scalars['Float']>;
+  itemId?: InputMaybe<Scalars['String']>;
+  locationId?: InputMaybe<Scalars['String']>;
+  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  packSize?: InputMaybe<Scalars['Int']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateInboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateInboundShipmentLineError;
@@ -2160,10 +2198,10 @@ export type UpdateLocationErrorInterface = {
 };
 
 export type UpdateLocationInput = {
-  code?: Maybe<Scalars['String']>;
+  code?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  onHold?: Maybe<Scalars['Boolean']>;
+  name?: InputMaybe<Scalars['String']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
@@ -2179,23 +2217,23 @@ export type UpdateOutboundShipmentErrorInterface = {
 };
 
 export type UpdateOutboundShipmentInput = {
-  color?: Maybe<Scalars['String']>;
-  comment?: Maybe<Scalars['String']>;
+  color?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   /** The new invoice id provided by the client */
   id: Scalars['String'];
-  onHold?: Maybe<Scalars['Boolean']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
   /**
    * The other party must be a customer of the current store.
    * This field can be used to change the other_party of an invoice
    */
-  otherPartyId?: Maybe<Scalars['String']>;
+  otherPartyId?: InputMaybe<Scalars['String']>;
   /**
    * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
    */
-  status?: Maybe<UpdateOutboundShipmentStatusInput>;
+  status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
   /** External invoice reference, e.g. purchase or shipment number */
-  theirReference?: Maybe<Scalars['String']>;
+  theirReference?: InputMaybe<Scalars['String']>;
 };
 
 /** Generic Error Wrapper */
@@ -2211,12 +2249,12 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
-  numberOfPacks?: Maybe<Scalars['Int']>;
-  stockLineId?: Maybe<Scalars['String']>;
-  tax?: Maybe<TaxUpdate>;
-  totalAfterTax?: Maybe<Scalars['Float']>;
-  totalBeforeTax?: Maybe<Scalars['Float']>;
+  itemId?: InputMaybe<Scalars['String']>;
+  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  stockLineId?: InputMaybe<Scalars['String']>;
+  tax?: InputMaybe<TaxUpdate>;
+  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateOutboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateOutboundShipmentLineError;
@@ -2248,12 +2286,12 @@ export type UpdateOutboundShipmentServiceLineErrorInterface = {
 export type UpdateOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
-  note?: Maybe<Scalars['String']>;
-  tax?: Maybe<TaxUpdate>;
-  totalAfterTax?: Maybe<Scalars['Float']>;
-  totalBeforeTax?: Maybe<Scalars['Float']>;
+  itemId?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  note?: InputMaybe<Scalars['String']>;
+  tax?: InputMaybe<TaxUpdate>;
+  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateOutboundShipmentServiceLineResponse = InvoiceLineNode | UpdateOutboundShipmentServiceLineError;
@@ -2271,21 +2309,21 @@ export enum UpdateOutboundShipmentStatusInput {
 }
 
 export type UpdateStocktakeInput = {
-  comment?: Maybe<Scalars['String']>;
-  description?: Maybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  onHold?: Maybe<Scalars['Boolean']>;
-  status?: Maybe<StocktakeNodeStatus>;
-  stocktakeDatetime?: Maybe<Scalars['String']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
+  status?: InputMaybe<StocktakeNodeStatus>;
+  stocktakeDatetime?: InputMaybe<Scalars['String']>;
 };
 
 export type UpdateStocktakeLineInput = {
-  batch?: Maybe<Scalars['String']>;
-  costPricePerPack?: Maybe<Scalars['Float']>;
-  countedNumPacks?: Maybe<Scalars['Int']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  batch?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  countedNumPacks?: InputMaybe<Scalars['Int']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
-  sellPricePerPack?: Maybe<Scalars['Float']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateStocktakeLineResponse = NodeError | StocktakeLineNode;
@@ -2305,37 +2343,37 @@ export type UpdateStocktakeResponseWithId = {
 };
 
 export type UpdateSupplierRequisitionInput = {
-  color?: Maybe<Scalars['String']>;
-  comment?: Maybe<Scalars['String']>;
+  color?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
-  orderDate?: Maybe<Scalars['String']>;
-  otherPartyId?: Maybe<Scalars['String']>;
-  status?: Maybe<SupplierRequisitionNodeStatus>;
-  theirReference?: Maybe<Scalars['String']>;
+  orderDate?: InputMaybe<Scalars['String']>;
+  otherPartyId?: InputMaybe<Scalars['String']>;
+  status?: InputMaybe<SupplierRequisitionNodeStatus>;
+  theirReference?: InputMaybe<Scalars['String']>;
 };
 
 export type UpdateSupplierRequisitionLineInput = {
-  calculatedQuantity?: Maybe<Scalars['Float']>;
-  closingQuantity?: Maybe<Scalars['Int']>;
-  comment?: Maybe<Scalars['String']>;
-  expiredQuantity?: Maybe<Scalars['Float']>;
+  calculatedQuantity?: InputMaybe<Scalars['Float']>;
+  closingQuantity?: InputMaybe<Scalars['Int']>;
+  comment?: InputMaybe<Scalars['String']>;
+  expiredQuantity?: InputMaybe<Scalars['Float']>;
   id: Scalars['String'];
-  imprestQuantity?: Maybe<Scalars['Float']>;
-  issuedQuantity?: Maybe<Scalars['Float']>;
-  itemCode?: Maybe<Scalars['String']>;
-  itemName?: Maybe<Scalars['String']>;
-  itemUnit?: Maybe<Scalars['String']>;
-  monthlyConsumption?: Maybe<Scalars['Float']>;
-  monthsOfSupply?: Maybe<Scalars['Float']>;
-  openingQuantity?: Maybe<Scalars['Float']>;
-  otherPartyClosingQuantity?: Maybe<Scalars['Int']>;
-  previousQuantity?: Maybe<Scalars['Float']>;
-  previousStockOnHand?: Maybe<Scalars['Float']>;
-  receivedQuantity?: Maybe<Scalars['Float']>;
-  requestedQuantity?: Maybe<Scalars['Float']>;
-  stockAdditions?: Maybe<Scalars['Float']>;
-  stockLosses?: Maybe<Scalars['Float']>;
-  supplyQuantity?: Maybe<Scalars['Float']>;
+  imprestQuantity?: InputMaybe<Scalars['Float']>;
+  issuedQuantity?: InputMaybe<Scalars['Float']>;
+  itemCode?: InputMaybe<Scalars['String']>;
+  itemName?: InputMaybe<Scalars['String']>;
+  itemUnit?: InputMaybe<Scalars['String']>;
+  monthlyConsumption?: InputMaybe<Scalars['Float']>;
+  monthsOfSupply?: InputMaybe<Scalars['Float']>;
+  openingQuantity?: InputMaybe<Scalars['Float']>;
+  otherPartyClosingQuantity?: InputMaybe<Scalars['Int']>;
+  previousQuantity?: InputMaybe<Scalars['Float']>;
+  previousStockOnHand?: InputMaybe<Scalars['Float']>;
+  receivedQuantity?: InputMaybe<Scalars['Float']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']>;
+  stockAdditions?: InputMaybe<Scalars['Float']>;
+  stockLosses?: InputMaybe<Scalars['Float']>;
+  supplyQuantity?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateSupplierRequisitionLineResponse = NodeError | RequisitionLineNode;
@@ -2378,7 +2416,7 @@ export type UserRegisterErrorInterface = {
 };
 
 export type UserRegisterInput = {
-  email?: Maybe<Scalars['String']>;
+  email?: InputMaybe<Scalars['String']>;
   password: Scalars['String'];
   username: Scalars['String'];
 };
@@ -2392,7 +2430,7 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, color?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename?: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, color?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, invoiceId: string, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename?: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type StocktakeQueryVariables = Exact<{
   stocktakeId: Scalars['String'];
@@ -2402,24 +2440,24 @@ export type StocktakeQueryVariables = Exact<{
 export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null | undefined, stocktakeDatetime?: string | null | undefined, status: StocktakeNodeStatus, description?: string | null | undefined, entryDatetime: string, enteredByName: string, onHold: boolean, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StocktakeLineConnector', totalCount: number, nodes?: Array<{ __typename: 'StocktakeLineNode', batch?: string | null | undefined, itemCode: string, itemName: string, itemId: string, id: string, expiryDate?: string | null | undefined, snapshotNumPacks?: number | null | undefined, snapshotPackSize?: number | null | undefined, countedNumPacks?: number | null | undefined, sellPricePerPack?: number | null | undefined, costPricePerPack?: number | null | undefined }> | null | undefined } } };
 
 export type UpsertStocktakeMutationVariables = Exact<{
-  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
-  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineInput> | InsertStocktakeLineInput>;
-  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineInput> | UpdateStocktakeLineInput>;
-  updateStocktakes?: Maybe<Array<UpdateStocktakeInput> | UpdateStocktakeInput>;
+  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
+  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput> | InsertStocktakeLineInput>;
+  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput> | UpdateStocktakeLineInput>;
+  updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput> | UpdateStocktakeInput>;
 }>;
 
 
 export type UpsertStocktakeMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', updateStocktakes?: Array<{ __typename: 'UpdateStocktakeResponseWithId', id: string }> | null | undefined, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null | undefined, deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null | undefined, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null | undefined } };
 
 export type StocktakesQueryVariables = Exact<{
-  params?: Maybe<StocktakeListParameters>;
+  params?: InputMaybe<StocktakeListParameters>;
 }>;
 
 
 export type StocktakesQuery = { __typename?: 'Queries', stocktakes: { __typename: 'NodeError' } | { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename?: 'StocktakeNode', id: string, comment?: string | null | undefined, description?: string | null | undefined, stocktakeDatetime?: string | null | undefined, stocktakeNumber: number, status: StocktakeNodeStatus }> } };
 
 export type DeleteStocktakesMutationVariables = Exact<{
-  ids?: Maybe<Array<DeleteStocktakeInput> | DeleteStocktakeInput>;
+  ids?: InputMaybe<Array<DeleteStocktakeInput> | DeleteStocktakeInput>;
 }>;
 
 
@@ -2440,14 +2478,14 @@ export type InsertStocktakeMutationVariables = Exact<{
 export type InsertStocktakeMutation = { __typename?: 'Mutations', insertStocktake: { __typename?: 'NodeError' } | { __typename: 'StocktakeNode', id: string } };
 
 export type RequisitionsQueryVariables = Exact<{
-  params?: Maybe<RequisitionListParameters>;
+  params?: InputMaybe<RequisitionListParameters>;
 }>;
 
 
 export type RequisitionsQuery = { __typename?: 'Queries', requisitions: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionNode', id: string, comment?: string | null | undefined, orderDate?: string | null | undefined, theirReference?: string | null | undefined, requisitionNumber: number, status: SupplierRequisitionNodeStatus, otherPartyName: string, otherPartyId: string, color?: string | null | undefined }> } };
 
 export type DeleteSupplierRequisitionsMutationVariables = Exact<{
-  ids?: Maybe<Array<DeleteSupplierRequisitionInput> | DeleteSupplierRequisitionInput>;
+  ids?: InputMaybe<Array<DeleteSupplierRequisitionInput> | DeleteSupplierRequisitionInput>;
 }>;
 
 
@@ -2468,7 +2506,7 @@ export type InsertSupplierRequisitionMutationVariables = Exact<{
 export type InsertSupplierRequisitionMutation = { __typename?: 'Mutations', insertSupplierRequisition: { __typename?: 'NodeError' } | { __typename: 'RequisitionNode', id: string } };
 
 export type DeleteCustomerRequisitionsMutationVariables = Exact<{
-  ids?: Maybe<Array<DeleteCustomerRequisitionInput> | DeleteCustomerRequisitionInput>;
+  ids?: InputMaybe<Array<DeleteCustomerRequisitionInput> | DeleteCustomerRequisitionInput>;
 }>;
 
 
@@ -2496,31 +2534,31 @@ export type RequisitionQueryVariables = Exact<{
 export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'NodeError' } | { __typename: 'RequisitionNode', id: string, orderDate?: string | null | undefined, requisitionDate?: string | null | undefined, comment?: string | null | undefined, theirReference?: string | null | undefined, type?: RequisitionNodeType | null | undefined, requisitionNumber: number, thresholdMOS?: number | null | undefined, maxMOS?: number | null | undefined, status: SupplierRequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemName?: string | null | undefined, itemCode?: string | null | undefined, itemUnit?: string | null | undefined, itemId: string, comment?: string | null | undefined, monthlyConsumption?: number | null | undefined, monthsOfSupply?: number | null | undefined, supplyQuantity?: number | null | undefined, openingQuantity?: number | null | undefined, issuedQuantity?: number | null | undefined, requestedQuantity?: number | null | undefined, receivedQuantity?: number | null | undefined, imprestQuantity?: number | null | undefined, previousQuantity?: number | null | undefined, calculatedQuantity?: number | null | undefined, previousStockOnHand?: number | null | undefined, closingQuantity?: number | null | undefined, stockAdditions?: number | null | undefined, stockLosses?: number | null | undefined, expiredQuantity?: number | null | undefined, otherPartyClosingQuantity?: number | null | undefined }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'RecordNotFound', description: string } } } };
 
 export type UpsertSupplierRequisitionMutationVariables = Exact<{
-  deleteSupplierRequisitionLines?: Maybe<Array<DeleteSupplierRequisitionLineInput> | DeleteSupplierRequisitionLineInput>;
-  insertSupplierRequisitionLines?: Maybe<Array<InsertSupplierRequisitionLineInput> | InsertSupplierRequisitionLineInput>;
-  updateSupplierRequisitionLines?: Maybe<Array<UpdateSupplierRequisitionLineInput> | UpdateSupplierRequisitionLineInput>;
-  updateSupplierRequisitions?: Maybe<Array<UpdateSupplierRequisitionInput> | UpdateSupplierRequisitionInput>;
+  deleteSupplierRequisitionLines?: InputMaybe<Array<DeleteSupplierRequisitionLineInput> | DeleteSupplierRequisitionLineInput>;
+  insertSupplierRequisitionLines?: InputMaybe<Array<InsertSupplierRequisitionLineInput> | InsertSupplierRequisitionLineInput>;
+  updateSupplierRequisitionLines?: InputMaybe<Array<UpdateSupplierRequisitionLineInput> | UpdateSupplierRequisitionLineInput>;
+  updateSupplierRequisitions?: InputMaybe<Array<UpdateSupplierRequisitionInput> | UpdateSupplierRequisitionInput>;
 }>;
 
 
 export type UpsertSupplierRequisitionMutation = { __typename?: 'Mutations', batchSupplierRequisition: { __typename: 'BatchSupplierRequisitionResponse', updateSupplierRequisitions?: Array<{ __typename: 'UpdateSupplierRequisitionResponseWithId', id: string }> | null | undefined, insertSupplierRequisitionLines?: Array<{ __typename: 'InsertSupplierRequisitionLineResponseWithId', id: string }> | null | undefined, deleteSupplierRequisitionLines?: Array<{ __typename: 'DeleteSupplierRequisitionLineResponseWithId', id: string }> | null | undefined, updateSupplierRequisitionLines?: Array<{ __typename: 'UpdateSupplierRequisitionLineResponseWithId', id: string }> | null | undefined } };
 
 export type UpsertCustomerRequisitionMutationVariables = Exact<{
-  deleteCustomerRequisitionLines?: Maybe<Array<DeleteCustomerRequisitionLineInput> | DeleteCustomerRequisitionLineInput>;
-  insertCustomerRequisitionLines?: Maybe<Array<InsertCustomerRequisitionLineInput> | InsertCustomerRequisitionLineInput>;
-  updateCustomerRequisitionLines?: Maybe<Array<UpdateCustomerRequisitionLineInput> | UpdateCustomerRequisitionLineInput>;
-  updateCustomerRequisitions?: Maybe<Array<UpdateCustomerRequisitionInput> | UpdateCustomerRequisitionInput>;
+  deleteCustomerRequisitionLines?: InputMaybe<Array<DeleteCustomerRequisitionLineInput> | DeleteCustomerRequisitionLineInput>;
+  insertCustomerRequisitionLines?: InputMaybe<Array<InsertCustomerRequisitionLineInput> | InsertCustomerRequisitionLineInput>;
+  updateCustomerRequisitionLines?: InputMaybe<Array<UpdateCustomerRequisitionLineInput> | UpdateCustomerRequisitionLineInput>;
+  updateCustomerRequisitions?: InputMaybe<Array<UpdateCustomerRequisitionInput> | UpdateCustomerRequisitionInput>;
 }>;
 
 
 export type UpsertCustomerRequisitionMutation = { __typename?: 'Mutations', batchCustomerRequisition: { __typename: 'BatchCustomerRequisitionResponse', updateCustomerRequisitions?: Array<{ __typename: 'UpdateCustomerRequisitionResponseWithId', id: string }> | null | undefined, insertCustomerRequisitionLines?: Array<{ __typename: 'InsertCustomerRequisitionLineResponseWithId', id: string }> | null | undefined, deleteCustomerRequisitionLines?: Array<{ __typename: 'DeleteCustomerRequisitionLineResponseWithId', id: string }> | null | undefined, updateCustomerRequisitionLines?: Array<{ __typename: 'UpdateCustomerRequisitionLineResponseWithId', id: string }> | null | undefined } };
 
 export type InvoicesQueryVariables = Exact<{
-  first?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
   key: InvoiceSortFieldInput;
-  desc?: Maybe<Scalars['Boolean']>;
-  filter?: Maybe<InvoiceFilterInput>;
+  desc?: InputMaybe<Scalars['Boolean']>;
+  filter?: InputMaybe<InvoiceFilterInput>;
 }>;
 
 
@@ -2528,32 +2566,32 @@ export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'C
 
 export type NamesQueryVariables = Exact<{
   key: NameSortFieldInput;
-  desc?: Maybe<Scalars['Boolean']>;
-  first?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
-  filter?: Maybe<NameFilterInput>;
+  desc?: InputMaybe<Scalars['Boolean']>;
+  first?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  filter?: InputMaybe<NameFilterInput>;
 }>;
 
 
 export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string }> } };
 
 export type ItemsWithStockLinesQueryVariables = Exact<{
-  first?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
   key: ItemSortFieldInput;
-  desc?: Maybe<Scalars['Boolean']>;
-  filter?: Maybe<ItemFilterInput>;
+  desc?: InputMaybe<Scalars['Boolean']>;
+  filter?: InputMaybe<ItemFilterInput>;
 }>;
 
 
 export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined, storeId: string }> } }> } };
 
 export type ItemsListViewQueryVariables = Exact<{
-  first?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
   key: ItemSortFieldInput;
-  desc?: Maybe<Scalars['Boolean']>;
-  filter?: Maybe<ItemFilterInput>;
+  desc?: InputMaybe<Scalars['Boolean']>;
+  filter?: InputMaybe<ItemFilterInput>;
 }>;
 
 
@@ -2575,49 +2613,49 @@ export type UpdateOutboundShipmentMutationVariables = Exact<{
 export type UpdateOutboundShipmentMutation = { __typename?: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename?: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceIsNotEditable', description: string } | { __typename?: 'InvoiceLineHasNoStockLineError', description: string } | { __typename?: 'NotAnOutboundShipmentError', description: string } | { __typename?: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename?: 'OtherPartyNotACustomerError', description: string } | { __typename?: 'RecordNotFound', description: string } } };
 
 export type DeleteOutboundShipmentsMutationVariables = Exact<{
-  ids?: Maybe<Array<Scalars['String']> | Scalars['String']>;
+  ids?: InputMaybe<Array<Scalars['String']> | Scalars['String']>;
 }>;
 
 
 export type DeleteOutboundShipmentsMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null | undefined } };
 
 export type InvoiceCountsQueryVariables = Exact<{
-  timezoneOffset?: Maybe<Scalars['Int']>;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
 }>;
 
 
 export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename?: 'InvoiceCounts', outbound: { __typename?: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename?: 'InboundInvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 export type StockCountsQueryVariables = Exact<{
-  daysTillExpired?: Maybe<Scalars['Int']>;
-  timezoneOffset?: Maybe<Scalars['Int']>;
+  daysTillExpired?: InputMaybe<Scalars['Int']>;
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
 }>;
 
 
 export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typename?: 'StockCounts', expired: number, expiringSoon: number } };
 
 export type UpsertOutboundShipmentMutationVariables = Exact<{
-  deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineInput> | DeleteOutboundShipmentLineInput>;
-  insertOutboundShipmentLines?: Maybe<Array<InsertOutboundShipmentLineInput> | InsertOutboundShipmentLineInput>;
-  updateOutboundShipmentLines?: Maybe<Array<UpdateOutboundShipmentLineInput> | UpdateOutboundShipmentLineInput>;
-  updateOutboundShipments?: Maybe<Array<UpdateOutboundShipmentInput> | UpdateOutboundShipmentInput>;
+  deleteOutboundShipmentLines?: InputMaybe<Array<DeleteOutboundShipmentLineInput> | DeleteOutboundShipmentLineInput>;
+  insertOutboundShipmentLines?: InputMaybe<Array<InsertOutboundShipmentLineInput> | InsertOutboundShipmentLineInput>;
+  updateOutboundShipmentLines?: InputMaybe<Array<UpdateOutboundShipmentLineInput> | UpdateOutboundShipmentLineInput>;
+  updateOutboundShipments?: InputMaybe<Array<UpdateOutboundShipmentInput> | UpdateOutboundShipmentInput>;
 }>;
 
 
 export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null | undefined } };
 
 export type DeleteInboundShipmentLinesMutationVariables = Exact<{
-  input?: Maybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
+  input?: InputMaybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
 }>;
 
 
 export type DeleteInboundShipmentLinesMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename?: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename?: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename?: 'BatchIsReserved', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null | undefined } };
 
 export type UpsertInboundShipmentMutationVariables = Exact<{
-  deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
-  insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineInput> | InsertInboundShipmentLineInput>;
-  updateInboundShipmentLines?: Maybe<Array<UpdateInboundShipmentLineInput> | UpdateInboundShipmentLineInput>;
-  updateInboundShipments?: Maybe<Array<UpdateInboundShipmentInput> | UpdateInboundShipmentInput>;
+  deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
+  insertInboundShipmentLines?: InputMaybe<Array<InsertInboundShipmentLineInput> | InsertInboundShipmentLineInput>;
+  updateInboundShipmentLines?: InputMaybe<Array<UpdateInboundShipmentLineInput> | UpdateInboundShipmentLineInput>;
+  updateInboundShipments?: InputMaybe<Array<UpdateInboundShipmentInput> | UpdateInboundShipmentInput>;
 }>;
 
 
@@ -2631,7 +2669,7 @@ export type UpdateInboundShipmentMutationVariables = Exact<{
 export type UpdateInboundShipmentMutation = { __typename?: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'OtherPartyNotASupplier', description: string } | { __typename?: 'RecordNotFound', description: string } } };
 
 export type DeleteInboundShipmentsMutationVariables = Exact<{
-  ids?: Maybe<Array<DeleteInboundShipmentInput> | DeleteInboundShipmentInput>;
+  ids?: InputMaybe<Array<DeleteInboundShipmentInput> | DeleteInboundShipmentInput>;
 }>;
 
 
@@ -2646,7 +2684,7 @@ export type InsertInboundShipmentMutationVariables = Exact<{
 export type InsertInboundShipmentMutation = { __typename?: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type LocationsQueryVariables = Exact<{
-  sort?: Maybe<Array<LocationSortInput> | LocationSortInput>;
+  sort?: InputMaybe<Array<LocationSortInput> | LocationSortInput>;
 }>;
 
 
@@ -2752,6 +2790,7 @@ export const InvoiceDocument = gql`
             numberOfPacks
             packSize
             note
+            invoiceId
             location {
               __typename
               ... on LocationNode {
