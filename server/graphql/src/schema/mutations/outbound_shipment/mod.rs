@@ -4,7 +4,7 @@ mod error;
 mod insert;
 mod line;
 mod service_line;
-mod unallocated_line;
+pub mod unallocated_line;
 mod update;
 
 pub use batch::*;
