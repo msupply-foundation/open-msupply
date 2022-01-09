@@ -50,11 +50,14 @@ fn generate_line(
     UpdateInboundShipmentLine {
         pack_size,
         batch,
-        expiry_date,
-        sell_price_per_pack,
         cost_price_per_pack,
+        sell_price_per_pack,
+        expiry_date,
         number_of_packs,
-        ..
+        location_id,
+        id: _,
+        invoice_id: _,
+        item_id: _,
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -63,6 +66,7 @@ fn generate_line(
 
     update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
+    update_line.location_id = location_id.or(update_line.location_id);
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);

@@ -5,51 +5,44 @@ use service::invoice_line::{
 };
 
 use crate::{
-    schema::mutations::{DeleteResponse, RecordDoesNotExist},
+    schema::mutations::{DeleteResponse as GenericDeleteResponse, RecordDoesNotExist},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
 #[derive(InputObject)]
-pub struct DeleteOutboundShipmentUnallocatedLineInput {
+#[graphql(name = "DeleteOutboundShipmentUnallocatedLineInput")]
+pub struct DeleteInput {
     pub id: String,
 }
 
-use DeleteOutboundShipmentUnallocatedLineInput as Input;
-
 #[derive(Interface)]
+#[graphql(name = "DeleteOutboundShipmentUnallocatedLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
-pub enum DeleteOutboundShipmentUnallocatedLineInterface {
+pub enum DeleteErrorInterface {
     RecordDoesNotExist(RecordDoesNotExist),
 }
 
-use DeleteOutboundShipmentUnallocatedLineInterface as ErrorInterface;
-
 #[derive(SimpleObject)]
-pub struct DeleteOutboundShipmentUnallocatedLineError {
-    pub error: ErrorInterface,
+#[graphql(name = "DeleteOutboundShipmentUnallocatedLineError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
 }
-
-use DeleteOutboundShipmentUnallocatedLineError as Error;
 
 #[derive(Union)]
-pub enum DeleteOutboundShipmentUnallocatedLineResponse {
-    Error(Error),
-    Response(DeleteResponse),
+#[graphql(name = "DeleteOutboundShipmentUnallocatedLineResponse")]
+pub enum DeleteResponse {
+    Error(DeleteError),
+    Response(GenericDeleteResponse),
 }
 
-use DeleteOutboundShipmentUnallocatedLineResponse as Response;
-
-impl From<Input> for ServiceInput {
-    fn from(Input { id }: Input) -> Self {
+impl From<DeleteInput> for ServiceInput {
+    fn from(DeleteInput { id }: DeleteInput) -> Self {
         ServiceInput { id }
     }
 }
 
-pub fn delete_outbound_shipment_unallocated_line(
-    ctx: &Context<'_>,
-    input: Input,
-) -> Result<Response> {
+pub fn delete(ctx: &Context<'_>, input: DeleteInput) -> Result<DeleteResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
@@ -57,8 +50,8 @@ pub fn delete_outbound_shipment_unallocated_line(
         .outbound_shipment_line
         .delete_outbound_shipment_unallocated_line(&service_context, input.into())
     {
-        Ok(id) => Response::Response(DeleteResponse(id)),
-        Err(error) => Response::Error(Error {
+        Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
+        Err(error) => DeleteResponse::Error(DeleteError {
             error: map_error(error)?,
         }),
     };
@@ -66,14 +59,16 @@ pub fn delete_outbound_shipment_unallocated_line(
     Ok(response)
 }
 
-pub fn map_error(error: ServiceError) -> Result<ErrorInterface> {
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(ErrorInterface::RecordDoesNotExist(RecordDoesNotExist {}))
+            return Ok(DeleteErrorInterface::RecordDoesNotExist(
+                RecordDoesNotExist {},
+            ))
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),

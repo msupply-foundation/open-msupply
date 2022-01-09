@@ -1,5 +1,5 @@
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
 use domain::{EqualFilter, Pagination, Sort};
@@ -51,12 +51,12 @@ impl StockTakeLineFilter {
 
 pub type StockTakeLineSort = Sort<()>;
 
-type StockTakeLineJoin = (StockTakeLineRow, StockLineRow, Option<LocationRow>);
+type StockTakeLineJoin = (StockTakeLineRow, Option<StockLineRow>, Option<LocationRow>);
 
 #[derive(Debug, PartialEq)]
 pub struct StockTakeLine {
     pub line: StockTakeLineRow,
-    pub stock_line: StockLineRow,
+    pub stock_line: Option<StockLineRow>,
     pub location: Option<LocationRow>,
 }
 
@@ -107,13 +107,13 @@ impl<'a> StockTakeLineRepository<'a> {
 
 type BoxedStockTakeLineQuery = IntoBoxed<
     'static,
-    LeftJoin<InnerJoin<stock_take_line::table, stock_line::table>, location::table>,
+    LeftJoin<LeftJoin<stock_take_line::table, stock_line::table>, location::table>,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<StockTakeLineFilter>) -> BoxedStockTakeLineQuery {
     let mut query = stock_take_line_dsl::stock_take_line
-        .inner_join(stock_line_dsl::stock_line)
+        .left_join(stock_line_dsl::stock_line)
         .left_join(location_dsl::location)
         .into_boxed();
 

@@ -11,46 +11,39 @@ use crate::{
 };
 
 #[derive(InputObject)]
-pub struct UpdateOutboundShipmentUnallocatedLineInput {
+#[graphql(name = "UpdateOutboundShipmentUnallocatedLineInput")]
+pub struct UpdateInput {
     pub id: String,
     pub quantity: u32,
 }
 
-use UpdateOutboundShipmentUnallocatedLineInput as Input;
-
 #[derive(Interface)]
+#[graphql(name = "UpdateOutboundShipmentUnallocatedLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
-pub enum UpdateOutboundShipmentUnallocatedLineInterface {
+pub enum UpdateErrorInterface {
     RecordDoesNotExist(RecordDoesNotExist),
 }
 
-use UpdateOutboundShipmentUnallocatedLineInterface as ErrorInterface;
-
 #[derive(SimpleObject)]
-pub struct UpdateOutboundShipmentUnallocatedLineError {
-    pub error: ErrorInterface,
+#[graphql(name = "UpdateOutboundShipmentUnallocatedLineError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
 }
 
-use UpdateOutboundShipmentUnallocatedLineError as Error;
-
 #[derive(Union)]
-pub enum UpdateOutboundShipmentUnallocatedLineResponse {
-    Error(Error),
+#[graphql(name = "UpdateOutboundShipmentUnallocatedLineResponse")]
+pub enum UpdateResponse {
+    Error(UpdateError),
     Response(InvoiceLineNode),
 }
 
-use UpdateOutboundShipmentUnallocatedLineResponse as Response;
-
-impl From<Input> for ServiceInput {
-    fn from(Input { id, quantity }: Input) -> Self {
+impl From<UpdateInput> for ServiceInput {
+    fn from(UpdateInput { id, quantity }: UpdateInput) -> Self {
         ServiceInput { id, quantity }
     }
 }
 
-pub fn update_outbound_shipment_unallocated_line(
-    ctx: &Context<'_>,
-    input: Input,
-) -> Result<Response> {
+pub fn update(ctx: &Context<'_>, input: UpdateInput) -> Result<UpdateResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
@@ -58,8 +51,8 @@ pub fn update_outbound_shipment_unallocated_line(
         .outbound_shipment_line
         .update_outbound_shipment_unallocated_line(&service_context, input.into())
     {
-        Ok(invoice_line) => Response::Response(invoice_line.into()),
-        Err(error) => Response::Error(Error {
+        Ok(invoice_line) => UpdateResponse::Response(invoice_line.into()),
+        Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
@@ -67,14 +60,16 @@ pub fn update_outbound_shipment_unallocated_line(
     Ok(response)
 }
 
-pub fn map_error(error: ServiceError) -> Result<ErrorInterface> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(ErrorInterface::RecordDoesNotExist(RecordDoesNotExist {}))
+            return Ok(UpdateErrorInterface::RecordDoesNotExist(
+                RecordDoesNotExist {},
+            ))
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),

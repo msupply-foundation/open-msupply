@@ -43,6 +43,7 @@ impl From<InvoiceRowType> for InvoiceType {
         match r#type {
             InvoiceRowType::OutboundShipment => OutboundShipment,
             InvoiceRowType::InboundShipment => InboundShipment,
+            InvoiceRowType::InventoryAdjustment => InventoryAdjustment,
         }
     }
 }
@@ -67,6 +68,7 @@ impl From<InvoiceType> for InvoiceRowType {
         match r#type {
             InvoiceType::OutboundShipment => OutboundShipment,
             InvoiceType::InboundShipment => InboundShipment,
+            InvoiceType::InventoryAdjustment => InventoryAdjustment,
         }
     }
 }

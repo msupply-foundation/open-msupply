@@ -2,8 +2,8 @@ use chrono::NaiveDate;
 
 use crate::schema::StockLineRow;
 
-pub fn mock_item_a_lines() -> Vec<StockLineRow> {
-    let mock_item_a_line_a: StockLineRow = StockLineRow {
+pub fn mock_stock_line_a() -> StockLineRow {
+    StockLineRow {
         id: String::from("item_a_line_a"),
         item_id: String::from("item_a"),
         location_id: None,
@@ -17,9 +17,11 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         expiry_date: None,
         on_hold: false,
         note: None,
-    };
+    }
+}
 
-    let mock_item_a_line_b: StockLineRow = StockLineRow {
+pub fn mock_stock_line_b() -> StockLineRow {
+    StockLineRow {
         id: String::from("item_a_line_b"),
         item_id: String::from("item_a"),
         location_id: None,
@@ -33,7 +35,13 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
         expiry_date: None,
         on_hold: false,
         note: None,
-    };
+    }
+}
+
+pub fn mock_item_a_lines() -> Vec<StockLineRow> {
+    let mock_item_a_line_a: StockLineRow = mock_stock_line_a();
+
+    let mock_item_a_line_b: StockLineRow = mock_stock_line_b();
 
     vec![mock_item_a_line_a, mock_item_a_line_b]
 }

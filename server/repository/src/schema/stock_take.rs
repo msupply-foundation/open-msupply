@@ -19,6 +19,6 @@ pub struct StockTakeRow {
     pub status: StockTakeStatus,
     pub created_datetime: NaiveDateTime,
     pub finalised_datetime: Option<NaiveDateTime>,
-    pub inventory_additions_id: Option<String>,
-    pub inventory_reductions_id: Option<String>,
+    /// reference to the inventory adjustment shipment
+    pub inventory_adjustment_id: Option<String>,
 }
