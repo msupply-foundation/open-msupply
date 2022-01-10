@@ -19,9 +19,9 @@ pub fn update_inbound_shipment(
 ) -> Result<String, UpdateInboundShipmentError> {
     let update_invoice = connection
         .transaction_sync(|connection| {
-            let invoice = validate(&patch, &connection)?;
+            let (invoice, other_party) = validate(&patch, &connection)?;
             let (lines_and_invoice_lines_option, update_invoice) =
-                generate(invoice, patch, &connection)?;
+                generate(invoice, other_party, patch, &connection)?;
 
             InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
 
