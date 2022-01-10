@@ -37,6 +37,9 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
+pub mod store;
+pub use self::store::*;
+
 use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 
 /// Generic Connector
