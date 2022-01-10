@@ -23,6 +23,11 @@ export interface StocktakeLine extends StocktakeLineNode {
   update?: (patch: Partial<StocktakeLine> & { id: string }) => void;
 }
 
+export interface StocktakeSummaryItem {
+  id: string;
+  itemId: string;
+  lines: [StocktakeLine, ...StocktakeLine[]];
+}
 export interface StocktakeItem {
   id: string;
   itemCode: () => string;
