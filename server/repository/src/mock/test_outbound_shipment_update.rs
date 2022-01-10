@@ -47,6 +47,7 @@ fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
         name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 3,
+        name_store_id: None,
         r#type: InvoiceRowType::OutboundShipment,
         status: InvoiceRowStatus::New,
         on_hold: false,
