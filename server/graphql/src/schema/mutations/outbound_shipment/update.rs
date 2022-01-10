@@ -7,9 +7,9 @@ use crate::schema::{
         },
         CannotReverseInvoiceStatus, ForeignKey, ForeignKeyError,
     },
+    queries::invoice::{self, InvoiceResponse},
     types::{
-        get_invoice_response, Connector, ErrorWrapper, InvoiceLineNode, InvoiceNode,
-        InvoiceResponse, NameNode, NodeError, RecordNotFound,
+        Connector, ErrorWrapper, InvoiceLineNode, InvoiceNode, NameNode, NodeError, RecordNotFound,
     },
 };
 use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};
@@ -93,7 +93,7 @@ pub fn get_update_outbound_shipment_response(
         }
     };
     match update_outbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice_response(connection_manager, id) {
+        Ok(id) => match invoice::get(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },

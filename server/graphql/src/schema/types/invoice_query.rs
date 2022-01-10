@@ -9,9 +9,8 @@ use domain::{
     invoice::{Invoice, InvoiceFilter},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
-use repository::{schema::InvoiceStatsRow, StorageConnectionManager};
+use repository::schema::InvoiceStatsRow;
 use serde::Serialize;
-use service::invoice::get_invoice;
 
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
@@ -252,22 +251,6 @@ impl InvoiceNode {
 pub enum InvoicesResponse {
     Error(ConnectorError),
     Response(Connector<InvoiceNode>),
-}
-
-#[derive(Union)]
-pub enum InvoiceResponse {
-    Error(NodeError),
-    Response(InvoiceNode),
-}
-
-pub fn get_invoice_response(
-    connection_manager: &StorageConnectionManager,
-    id: String,
-) -> InvoiceResponse {
-    match get_invoice(connection_manager, id) {
-        Ok(invoice) => InvoiceResponse::Response(invoice.into()),
-        Err(error) => InvoiceResponse::Error(error.into()),
-    }
 }
 
 impl From<Invoice> for InvoiceNode {
