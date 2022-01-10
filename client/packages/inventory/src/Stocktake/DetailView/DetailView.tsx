@@ -5,16 +5,16 @@ import {
   createTableStore,
   useOmSupplyApi,
   useDocument,
-  useColumns,
-  GenericColumnKey,
   DataTable,
   usePagination,
   useTranslation,
-  ColumnAlign,
   Box,
   Column,
   useDialog,
   DialogButton,
+  useColumns,
+  ColumnAlign,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { reducer, StocktakeActionCreator } from './reducer';
 import { getStocktakeDetailViewApi } from './api';
@@ -22,7 +22,6 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { isStocktakeEditable } from '../../utils';
 import { StocktakeItem } from '../../types';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit/StocktakeLineEdit';
 
@@ -70,7 +69,7 @@ export const DetailView: FC = () => {
   const { hideDialog, showDialog, Modal } = useDialog({
     onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
   });
-  const { draft, save, onChangeSortBy, sortBy } = useDraftStocktake();
+  const { draft, onChangeSortBy, sortBy } = useDraftStocktake();
 
   const onChangeItem = (item: StocktakeItem | null) => {
     setModalState(state => ({ ...state, item }));
@@ -127,11 +126,8 @@ export const DetailView: FC = () => {
 
   return (
     <TableProvider createStore={createTableStore}>
-      <AppBarButtons
-        isDisabled={!isStocktakeEditable(draft)}
-        onAddItem={onAddItem}
-      />
-      <Toolbar draft={draft} />
+      <AppBarButtons onAddItem={onAddItem} />
+      <Toolbar />
       <DataTable
         onRowClick={onRowClick}
         ExpandContent={Expand}
@@ -144,8 +140,8 @@ export const DetailView: FC = () => {
         onChangePage={pagination.onChangePage}
         noDataMessage={t('error.no-items')}
       />
-      <Footer draft={draft} save={save} />
-      <SidePanel draft={draft} />
+      <Footer />
+      <SidePanel />
 
       <Modal
         title={

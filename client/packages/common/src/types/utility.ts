@@ -1,7 +1,4 @@
-// This type ensures that the resulting value of a `keyof` is
-// a string.
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type KeyOf<T extends object> = Extract<keyof T, string & keyof T>;
+import { DomainObject } from './index';
 
 export type ObjectWithStringKeys = Record<string, unknown>;
 
@@ -9,3 +6,5 @@ export enum ModalMode {
   Create,
   Update,
 }
+
+export type RecordPatch<T extends DomainObject> = Partial<T> & { id: string };

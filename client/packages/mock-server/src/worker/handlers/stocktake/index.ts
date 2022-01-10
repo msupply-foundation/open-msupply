@@ -1,4 +1,5 @@
 import {
+  mockUpdateStocktakeMutation,
   mockStocktakeQuery,
   mockStocktakesQuery,
   mockDeleteStocktakesMutation,
@@ -10,6 +11,11 @@ import {
 import { ResolverService } from '../../../api/resolvers';
 import { MutationService } from '../../../api/mutations';
 import { Stocktake as StocktakeSchema } from '../../../schema/Stocktake';
+
+const updateStocktake = mockUpdateStocktakeMutation((req, res, ctx) => {
+  const result = MutationService.stocktake.update(req.variables.input);
+  return res(ctx.data({ updateStocktake: result }));
+});
 
 const stocktakeQuery = mockStocktakeQuery((req, res, ctx) => {
   return res(
@@ -164,4 +170,5 @@ export const StocktakeHandlers = [
   deleteStocktakesMutation,
   insertStocktakeMutation,
   upsertStocktakeMutation,
+  updateStocktake,
 ];
