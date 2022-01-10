@@ -1,0 +1,20 @@
+[package]
+name = "android"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+name = "remote_server_android"
+
+[dependencies]
+repository = { path = "../repository" }
+server = { path = "../server" }
+
+jni = { version = "0.19.0"}
+tokio = { version = "0.2", features = ["macros" ] } # Bumping to v1 requires actix-web >=v4 and reqwest >=0.11.
+
+[features]
+default = ["repository/sqlite"]
+postgres = ["repository/postgres"]
