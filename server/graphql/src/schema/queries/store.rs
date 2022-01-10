@@ -1,9 +1,9 @@
 use async_graphql::*;
 use domain::{PaginationOption, SimpleStringFilter};
-use repository::{schema::StoreRow, StoreFilter};
+use repository::StoreFilter;
 
 use crate::{
-    schema::types::{sort_filter_types::SimpleStringFilterInput, PaginationInput},
+    schema::types::{sort_filter_types::SimpleStringFilterInput, PaginationInput, StoreNode},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -18,22 +18,6 @@ impl From<StoreFilterInput> for StoreFilter {
         StoreFilter {
             id: f.id.map(SimpleStringFilter::from),
         }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct StoreNode {
-    store: StoreRow,
-}
-
-#[Object]
-impl StoreNode {
-    pub async fn id(&self) -> &str {
-        &self.store.id
-    }
-
-    pub async fn code(&self) -> &str {
-        &self.store.code
     }
 }
 
@@ -71,10 +55,4 @@ pub fn stores(
             nodes: result.rows.into_iter().map(StoreNode::from).collect(),
         }
     }))
-}
-
-impl From<StoreRow> for StoreNode {
-    fn from(store: StoreRow) -> Self {
-        StoreNode { store }
-    }
 }
