@@ -5,6 +5,7 @@ pub struct Name {
     pub id: String,
     pub name: String,
     pub code: String,
+    pub store_id: Option<String>,
     pub is_customer: bool,
     pub is_supplier: bool,
 }
