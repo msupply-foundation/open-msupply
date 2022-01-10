@@ -17,7 +17,7 @@ pub enum InvoiceType {
     InventoryAdjustment,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Invoice {
     pub id: String,
     pub other_party_name: String,
@@ -81,6 +81,11 @@ impl InvoiceFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<InvoiceType>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn invoice_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.invoice_number = Some(filter);
         self
     }
 
