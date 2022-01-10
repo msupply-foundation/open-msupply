@@ -114,6 +114,7 @@ table! {
     invoice (id) {
         id -> Text,
         name_id -> Text,
+        name_store_id -> Nullable<Text>,
         store_id -> Text,
         invoice_number -> BigInt,
         #[sql_name = "type"] type_ -> crate::schema::invoice::InvoiceRowTypeMapping,
