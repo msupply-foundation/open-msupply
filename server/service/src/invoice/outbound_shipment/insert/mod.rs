@@ -42,8 +42,8 @@ pub fn insert_outbound_shipment(
     input: InsertOutboundShipment,
 ) -> Result<String, InsertOutboundShipmentError> {
     let new_invoice_id = connection.transaction_sync(|connection| {
-        validate(&input, &connection)?;
-        let new_invoice = generate(input, connection)?;
+        let other_party = validate(&input, &connection)?;
+        let new_invoice = generate(input, other_party, connection)?;
         InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
 
         Ok(new_invoice.id)

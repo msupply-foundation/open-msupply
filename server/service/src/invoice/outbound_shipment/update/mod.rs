@@ -1,4 +1,4 @@
-use domain::{name::Name, outbound_shipment::UpdateOutboundShipment, invoice_line::InvoiceLine};
+use domain::{invoice_line::InvoiceLine, name::Name, outbound_shipment::UpdateOutboundShipment};
 use repository::{
     InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnection, TransactionError,
 };
@@ -14,9 +14,10 @@ pub fn update_outbound_shipment(
     patch: UpdateOutboundShipment,
 ) -> Result<String, UpdateOutboundShipmentError> {
     let updated_invoice_id = connection.transaction_sync(|connection| {
-        let invoice = validate(&patch, &connection)?;
+        let (invoice, other_party_option) = validate(&patch, &connection)?;
         let invoice_id = invoice.id.to_owned();
-        let (stock_lines_option, update_invoice) = generate(invoice, patch, &connection)?;
+        let (stock_lines_option, update_invoice) =
+            generate(invoice, other_party_option, patch, &connection)?;
 
         InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
         if let Some(stock_lines) = stock_lines_option {

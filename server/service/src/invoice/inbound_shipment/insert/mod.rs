@@ -8,16 +8,14 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-use super::OtherPartyError;
-
 pub fn insert_inbound_shipment(
     connection: &StorageConnection,
     input: InsertInboundShipment,
 ) -> Result<String, InsertInboundShipmentError> {
     let new_invoice = connection
         .transaction_sync(|connection| {
-            validate(&input, &connection)?;
-            let new_invoice = generate(input, connection)?;
+            let other_party = validate(&input, &connection)?;
+            let new_invoice = generate(input, other_party, connection)?;
             InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
             Ok(new_invoice)
         })
@@ -43,17 +41,6 @@ pub enum InsertInboundShipmentError {
 impl From<RepositoryError> for InsertInboundShipmentError {
     fn from(error: RepositoryError) -> Self {
         InsertInboundShipmentError::DatabaseError(error)
-    }
-}
-
-impl From<OtherPartyError> for InsertInboundShipmentError {
-    fn from(error: OtherPartyError) -> Self {
-        use InsertInboundShipmentError::*;
-        match error {
-            OtherPartyError::NotASupplier(name) => OtherPartyNotASupplier(name),
-            OtherPartyError::DoesNotExist => OtherPartyDoesNotExist,
-            OtherPartyError::DatabaseError(error) => DatabaseError(error),
-        }
     }
 }
 

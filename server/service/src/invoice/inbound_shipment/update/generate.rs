@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus};
+use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceStatus, name::Name};
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, StockLineRow},
     InvoiceLineRowRepository, StorageConnection,
@@ -18,6 +18,7 @@ pub struct LineAndStockLine {
 
 pub fn generate(
     existing_invoice: InvoiceRow,
+    other_party_option: Option<Name>,
     patch: UpdateInboundShipment,
     connection: &StorageConnection,
 ) -> Result<(Option<Vec<LineAndStockLine>>, InvoiceRow), UpdateInboundShipmentError> {
@@ -26,7 +27,6 @@ pub fn generate(
 
     set_new_status_datetime(&mut update_invoice, &patch);
 
-    update_invoice.name_id = patch.other_party_id.unwrap_or(update_invoice.name_id);
     update_invoice.comment = patch.comment.or(update_invoice.comment);
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
@@ -34,6 +34,11 @@ pub fn generate(
 
     if let Some(status) = patch.status {
         update_invoice.status = status.full_status().into()
+    }
+
+    if let Some(other_party) = other_party_option {
+        update_invoice.name_id = other_party.id;
+        update_invoice.name_store_id = other_party.store_id;
     }
 
     if !should_create_batches {
