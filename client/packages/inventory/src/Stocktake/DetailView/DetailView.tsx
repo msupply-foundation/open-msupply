@@ -15,6 +15,7 @@ import {
   useColumns,
   ColumnAlign,
   GenericColumnKey,
+  Item,
 } from '@openmsupply-client/common';
 import { reducer, StocktakeActionCreator } from './reducer';
 import { getStocktakeDetailViewApi } from './api';
@@ -65,18 +66,35 @@ export enum ModalMode {
   Update,
 }
 
+export const toItem = (line: StocktakeItem): Item => ({
+  // id: 'lines' in line ? line.lines[0].itemId : line.itemId,
+  // name: 'lines' in line ? line.lines[0].itemName : line.itemName,
+  // code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
+  // isVisible: true,
+  // availableBatches: [],
+  // availableQuantity: 0,
+  // unitName: 'bottle',
+  id: line.id,
+  name: line.itemName(),
+  code: line.itemCode(),
+  isVisible: true,
+  availableBatches: [],
+  availableQuantity: 0,
+  unitName: 'bottle',
+});
+
 export const DetailView: FC = () => {
+  const [modalState, setModalState] = React.useState<{
+    item: Item | null;
+    mode: ModalMode;
+  }>({ item: null, mode: ModalMode.Create });
   const { hideDialog, showDialog, Modal } = useDialog({
     onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
   });
   const { draft, onChangeSortBy, sortBy } = useDraftStocktake();
 
-  const onChangeItem = (item: StocktakeItem | null) => {
-    setModalState(state => ({ ...state, item }));
-  };
-
   const onRowClick = (item: StocktakeItem) => {
-    setModalState({ item, mode: ModalMode.Update });
+    setModalState({ item: toItem(item), mode: ModalMode.Update });
     showDialog();
   };
 
@@ -86,7 +104,6 @@ export const DetailView: FC = () => {
   };
 
   const onOK = () => {
-    modalState.item && draft.upsertItem(modalState.item);
     hideDialog();
   };
 
@@ -118,11 +135,6 @@ export const DetailView: FC = () => {
   const activeRows = draft.lines.filter(({ isDeleted }) => !isDeleted);
 
   const t = useTranslation('common');
-
-  const [modalState, setModalState] = React.useState<{
-    item: StocktakeItem | null;
-    mode: ModalMode;
-  }>({ item: null, mode: ModalMode.Create });
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -161,12 +173,7 @@ export const DetailView: FC = () => {
         height={600}
         width={1024}
       >
-        <StocktakeLineEdit
-          draft={draft}
-          mode={modalState.mode}
-          item={modalState.item}
-          onChangeItem={onChangeItem}
-        />
+        <StocktakeLineEdit mode={modalState.mode} item={modalState.item} />
       </Modal>
     </TableProvider>
   );
