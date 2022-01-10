@@ -1,9 +1,12 @@
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
+use crate::{
+    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    SingleRecordError,
+};
 use domain::{
-    invoice::{Invoice, InvoiceFilter, InvoiceSort},
+    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceType},
     EqualFilter, PaginationOption,
 };
-use repository::{InvoiceQueryRepository, StorageConnectionManager};
+use repository::{InvoiceQueryRepository, RepositoryError, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -37,5 +40,74 @@ pub fn get_invoice(
         Ok(record)
     } else {
         Err(SingleRecordError::NotFound(id))
+    }
+}
+
+pub fn get_by_number(
+    ctx: &ServiceContext,
+    invoice_number: u32,
+    r#type: InvoiceType,
+) -> Result<Option<Invoice>, RepositoryError> {
+    let mut result = InvoiceQueryRepository::new(&ctx.connection).query_by_filter(
+        InvoiceFilter::new()
+            .invoice_number(EqualFilter {
+                equal_to: Some(invoice_number as i64),
+                not_equal_to: None,
+                equal_any: None,
+            })
+            .r#type(r#type.equal_to()),
+    )?;
+
+    Ok(result.pop())
+}
+
+#[cfg(test)]
+mod test_query {
+    use domain::invoice::InvoiceType;
+    use repository::{
+        mock::{mock_unique_number_inbound_shipment, MockDataInserts},
+        test_db::setup_all,
+    };
+
+    use crate::service_provider::ServiceProvider;
+
+    #[actix_rt::test]
+    async fn get_invoice_by_number() {
+        let (_, _, connection_manager, _) =
+            setup_all("get_invoice_by_number", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // Not found
+        assert_eq!(
+            service.get_by_number(&context, 200, InvoiceType::OutboundShipment),
+            Ok(None)
+        );
+
+        let invoice_to_find = mock_unique_number_inbound_shipment();
+
+        // Not found - wrong type
+        assert_eq!(
+            service.get_by_number(
+                &context,
+                invoice_to_find.invoice_number as u32,
+                InvoiceType::OutboundShipment,
+            ),
+            Ok(None)
+        );
+
+        // Found
+        let found_invoice = service
+            .get_by_number(
+                &context,
+                invoice_to_find.invoice_number as u32,
+                InvoiceType::InboundShipment,
+            )
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(found_invoice.id, invoice_to_find.id);
     }
 }
