@@ -1,5 +1,5 @@
 use crate::{
-    loader::{InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader},
+    loader::{InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader, StoreLoader},
     ContextExt,
 };
 use async_graphql::*;
@@ -16,7 +16,7 @@ use service::invoice::get_invoice;
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
     EqualFilterStringInput, ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError,
-    NodeErrorInterface, SimpleStringFilterInput, SortInput,
+    NodeErrorInterface, SimpleStringFilterInput, SortInput, StoreNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -138,6 +138,19 @@ impl InvoiceNode {
 
     pub async fn other_party_id(&self) -> &str {
         &self.invoice.other_party_id
+    }
+
+    pub async fn other_party_store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let other_party_store_id = match &self.invoice.other_party_store_id {
+            Some(other_party_store_id) => other_party_store_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        Ok(loader
+            .load_one(other_party_store_id.clone())
+            .await?
+            .map(StoreNode::from))
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
