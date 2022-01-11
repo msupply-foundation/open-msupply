@@ -34,6 +34,7 @@ const stockLineToDraftLine = (line: StockLine): DraftStocktakeLine => {
     isCreated: false,
     isUpdated: false,
     ...line,
+    expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
     id: generateUUID(),
   };
 };

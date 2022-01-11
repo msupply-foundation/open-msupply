@@ -107,15 +107,14 @@ export const useStocktakeLines = (
   return useStocktakeSelector(selectLines);
 };
 
-export const useStocktakeItems = (): StocktakeSummaryItem[] => {
-  const { data } = useStocktakeLines();
-  const buildSummaryItems = (stocktakeLines: StocktakeLine[]) => {
-    return Object.entries(groupBy(stocktakeLines, 'itemId')).map(
-      ([itemId, lines]) => {
-        return { id: itemId, itemId, lines };
-      }
-    );
-  };
-  const items = data ? buildSummaryItems(data) : [];
-  return items;
+export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
+  const selectLines = useCallback((stocktake: Stocktake) => {
+    const { lines } = stocktake;
+
+    return Object.entries(groupBy(lines, 'itemId')).map(([itemId, lines]) => {
+      return { id: itemId, itemId, lines };
+    });
+  }, []);
+
+  return useStocktakeSelector(selectLines);
 };

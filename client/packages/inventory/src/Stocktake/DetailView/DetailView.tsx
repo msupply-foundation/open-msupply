@@ -1,82 +1,26 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
-  useParams,
   TableProvider,
   createTableStore,
-  useOmSupplyApi,
-  useDocument,
-  DataTable,
-  usePagination,
   useTranslation,
-  Box,
-  Column,
   useDialog,
   DialogButton,
-  useColumns,
-  ColumnAlign,
-  GenericColumnKey,
   Item,
+  ModalMode,
 } from '@openmsupply-client/common';
-import { reducer, StocktakeActionCreator } from './reducer';
-import { getStocktakeDetailViewApi } from './api';
+
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { StocktakeItem } from '../../types';
-import { StocktakeLineEdit } from './modal/StocktakeLineEdit/StocktakeLineEdit';
+import { StocktakeLine, StocktakeSummaryItem } from '../../types';
+import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
+import { ContentArea } from './ContentArea';
 
-const useDraftStocktake = () => {
-  const { id } = useParams();
-  const { api } = useOmSupplyApi();
-
-  const { draft, save, dispatch, state } = useDocument(
-    ['stocktake', id],
-    reducer,
-    getStocktakeDetailViewApi(api)
-  );
-
-  const onChangeSortBy = (column: Column<StocktakeItem>) => {
-    dispatch(StocktakeActionCreator.sortBy(column));
-  };
-
-  return { draft, save, dispatch, onChangeSortBy, sortBy: state.sortBy };
-};
-
-const Expand: FC<{ rowData: StocktakeItem }> = ({ rowData }) => {
-  return (
-    <Box p={1} height={300} style={{ overflow: 'scroll' }}>
-      <Box
-        flex={1}
-        display="flex"
-        height="100%"
-        borderRadius={4}
-        bgcolor="#c7c9d933"
-      >
-        <span style={{ whiteSpace: 'pre-wrap' }}>
-          {JSON.stringify(rowData, null, 2)}
-        </span>
-      </Box>
-    </Box>
-  );
-};
-
-export enum ModalMode {
-  Create,
-  Update,
-}
-
-export const toItem = (line: StocktakeItem): Item => ({
-  // id: 'lines' in line ? line.lines[0].itemId : line.itemId,
-  // name: 'lines' in line ? line.lines[0].itemName : line.itemName,
-  // code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
-  // isVisible: true,
-  // availableBatches: [],
-  // availableQuantity: 0,
-  // unitName: 'bottle',
-  id: line.id,
-  name: line.itemName(),
-  code: line.itemCode(),
+export const toItem = (line: StocktakeLine | StocktakeSummaryItem): Item => ({
+  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
+  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
+  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
   isVisible: true,
   availableBatches: [],
   availableQuantity: 0,
@@ -84,16 +28,15 @@ export const toItem = (line: StocktakeItem): Item => ({
 });
 
 export const DetailView: FC = () => {
-  const [modalState, setModalState] = React.useState<{
+  const [modalState, setModalState] = useState<{
     item: Item | null;
     mode: ModalMode;
   }>({ item: null, mode: ModalMode.Create });
   const { hideDialog, showDialog, Modal } = useDialog({
     onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
   });
-  const { draft, onChangeSortBy, sortBy } = useDraftStocktake();
 
-  const onRowClick = (item: StocktakeItem) => {
+  const onRowClick = (item: StocktakeLine | StocktakeSummaryItem) => {
     setModalState({ item: toItem(item), mode: ModalMode.Update });
     showDialog();
   };
@@ -107,51 +50,14 @@ export const DetailView: FC = () => {
     hideDialog();
   };
 
-  const columns = useColumns<StocktakeItem>(
-    [
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      {
-        key: 'countedNumPacks',
-        label: 'label.counted-num-of-packs',
-        width: 150,
-        align: ColumnAlign.Right,
-      },
-      {
-        key: 'snapshotNumPacks',
-        label: 'label.snapshot-num-of-packs',
-        align: ColumnAlign.Right,
-      },
-
-      GenericColumnKey.Selection,
-    ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
-  );
-
-  const { pagination } = usePagination();
-  const activeRows = draft.lines.filter(({ isDeleted }) => !isDeleted);
-
   const t = useTranslation('common');
 
   return (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons onAddItem={onAddItem} />
       <Toolbar />
-      <DataTable
-        onRowClick={onRowClick}
-        ExpandContent={Expand}
-        pagination={{ ...pagination, total: activeRows.length }}
-        columns={columns}
-        data={activeRows.slice(
-          pagination.offset,
-          pagination.offset + pagination.first
-        )}
-        onChangePage={pagination.onChangePage}
-        noDataMessage={t('error.no-items')}
-      />
+
+      <ContentArea onRowClick={onRowClick} />
       <Footer />
       <SidePanel />
 

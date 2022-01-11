@@ -6,9 +6,9 @@ import {
   Grid,
   useTranslation,
   BasicTextInput,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system';
-import { ModalMode } from '../../DetailView';
 
 interface InboundLineEditProps {
   item: Item | null;
