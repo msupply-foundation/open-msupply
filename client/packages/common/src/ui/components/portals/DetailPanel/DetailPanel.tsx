@@ -1,15 +1,10 @@
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
+import { Box, Grid, Theme, Typography, styled, Portal } from '@mui/material';
 import {
-  Box,
-  Grid,
-  Theme,
-  Typography,
-  styled,
-  useMediaQuery,
-  useTheme,
-  Portal,
-} from '@mui/material';
-import { useDetailPanelStore, useHostContext } from '@common/hooks';
+  useDetailPanelStore,
+  useHostContext,
+  useIsLargeScreen,
+} from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { FlatButton } from '../../buttons';
 import { CloseIcon } from '@common/icons';
@@ -66,15 +61,16 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
 }) => {
   const t = useTranslation('common');
   const { detailPanelRef } = useHostContext();
-  const { close, isOpen, open } = useDetailPanelStore();
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const { hasUserSet, isOpen, close } = useDetailPanelStore();
+  const isLargeScreen = useIsLargeScreen();
 
-  useEffect(() => {
-    if (isSmallScreen && isOpen) close();
-    if (!isSmallScreen && !isOpen) open();
-    return () => close();
-  }, [isSmallScreen]);
+  React.useEffect(() => {
+    if (hasUserSet) return;
+    if (isLargeScreen && isOpen)
+      useDetailPanelStore.setState(state => ({ ...state, isOpen: false }));
+    if (!isLargeScreen && !isOpen)
+      useDetailPanelStore.setState(state => ({ ...state, isOpen: true }));
+  }, [isLargeScreen]);
 
   if (!detailPanelRef) return null;
 

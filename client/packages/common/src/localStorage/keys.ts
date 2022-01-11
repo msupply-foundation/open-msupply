@@ -6,6 +6,7 @@ export type GroupByItem = {
 };
 export type LocalStorageRecord = {
   '/appdrawer/open': boolean;
+  '/detailpanel/open': boolean;
   '/localisation/locale': SupportedLocales;
   '/groupbyitem': GroupByItem;
 };
