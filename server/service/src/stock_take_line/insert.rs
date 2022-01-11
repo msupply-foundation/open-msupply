@@ -11,6 +11,7 @@ use repository::{
 use crate::{
     service_provider::ServiceContext,
     stock_take::validate::{check_stock_take_exist, check_stock_take_not_finalized},
+    u32_to_i32,
     validate::check_store_id_matches,
 };
 
@@ -25,12 +26,12 @@ pub struct InsertStockTakeLineInput {
     pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
     pub comment: Option<String>,
-    pub counted_number_of_packs: Option<i32>,
+    pub counted_number_of_packs: Option<u32>,
 
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: Option<i32>,
+    pub pack_size: Option<u32>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
@@ -190,11 +191,11 @@ fn generate(
         location_id,
         comment,
         snapshot_number_of_packs,
-        counted_number_of_packs,
+        counted_number_of_packs: counted_number_of_packs.map(u32_to_i32),
         item_id: item_id.to_string(),
         batch,
         expiry_date,
-        pack_size,
+        pack_size: pack_size.map(u32_to_i32),
         cost_price_per_pack,
         sell_price_per_pack,
         note,
