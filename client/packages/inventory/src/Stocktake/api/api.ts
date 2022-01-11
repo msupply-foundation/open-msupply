@@ -90,6 +90,7 @@ export const StocktakeApi = {
           entryDatetime: new Date(stocktake.entryDatetime),
           lines: lines.map(line => ({
             ...line,
+            expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
             countThisLine: true,
           })),
         };
