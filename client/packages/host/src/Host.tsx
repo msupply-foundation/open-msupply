@@ -29,7 +29,7 @@ import {
   AppFooter,
   OmSupplyApiProvider,
   IntlProvider,
-  BasicSpinner,
+  getRandomSpinner,
   useMatches,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -204,7 +204,7 @@ const CommandK: FC = ({ children }) => {
 };
 
 const Host: FC = () => (
-  <React.Suspense fallback={<BasicSpinner />}>
+  <React.Suspense fallback={getRandomSpinner()}>
     <IntlProvider>
       <ErrorBoundary Fallback={GenericErrorFallback}>
         <QueryClientProvider client={queryClient}>
