@@ -23,11 +23,6 @@ pub struct UpdateStockTakeInput {
     pub status: Option<StockTakeNodeStatus>,
 }
 
-#[derive(SimpleObject)]
-pub struct UpdateStockTakeNode {
-    pub stock_take: StockTakeNode,
-}
-
 pub struct SnapshotCountCurrentCountMismatch(Vec<StockTakeLine>);
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
@@ -56,7 +51,7 @@ pub struct UpdateStockTakeError {
 
 #[derive(Union)]
 pub enum UpdateStockTakeResponse {
-    Response(UpdateStockTakeNode),
+    Response(StockTakeNode),
     Error(UpdateStockTakeError),
 }
 
@@ -77,8 +72,8 @@ pub fn update_stock_take(
     let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_service;
     match service.update_stock_take(&service_ctx, store_id, to_domain(input)) {
-        Ok(stock_take) => Ok(UpdateStockTakeResponse::Response(UpdateStockTakeNode {
-            stock_take: StockTakeNode { stock_take },
+        Ok(stock_take) => Ok(UpdateStockTakeResponse::Response(StockTakeNode {
+            stock_take,
         })),
         Err(err) => Ok(UpdateStockTakeResponse::Error(UpdateStockTakeError {
             error: map_error(err)?,

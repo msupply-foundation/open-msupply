@@ -22,14 +22,9 @@ pub struct InsertStockTakeInput {
     pub created_datetime: NaiveDateTime,
 }
 
-#[derive(SimpleObject)]
-pub struct InsertStockTakeNode {
-    pub stock_take: StockTakeNode,
-}
-
 #[derive(Union)]
 pub enum InsertStockTakeResponse {
-    Response(InsertStockTakeNode),
+    Response(StockTakeNode),
 }
 
 pub fn insert_stock_take(
@@ -49,8 +44,8 @@ pub fn insert_stock_take(
     let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_service;
     match service.insert_stock_take(&service_ctx, store_id, to_domain(input)) {
-        Ok(stock_take) => Ok(InsertStockTakeResponse::Response(InsertStockTakeNode {
-            stock_take: StockTakeNode { stock_take },
+        Ok(stock_take) => Ok(InsertStockTakeResponse::Response(StockTakeNode {
+            stock_take,
         })),
         Err(err) => {
             let formatted_error = format!("{:#?}", err);
