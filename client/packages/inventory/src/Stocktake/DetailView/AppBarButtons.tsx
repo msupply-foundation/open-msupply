@@ -7,16 +7,16 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useIsStocktakeDisabled } from '../api';
 
 interface AppBarButtonProps {
-  isDisabled: boolean;
   onAddItem: (newState: boolean) => void;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  isDisabled,
   onAddItem,
 }) => {
+  const isDisabled = useIsStocktakeDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
 

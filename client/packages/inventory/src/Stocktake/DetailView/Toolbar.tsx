@@ -7,28 +7,31 @@ import {
   DeleteIcon,
   useTranslation,
   useNotification,
-  useTableStore,
-  BasicTextInput,
+  // useTableStore,
+  BufferedTextInput,
+  useBufferState,
   InputWithLabelRow,
   DatePickerInput,
 } from '@openmsupply-client/common';
-import { StocktakeController, StocktakeItem } from '../../types';
-import { isStocktakeEditable } from '../../utils';
+import { useStocktakeFields, useIsStocktakeDisabled } from '../api';
 
-interface ToolbarProps {
-  draft: StocktakeController;
-}
-
-export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common', 'inventory']);
   const { success, info } = useNotification();
+  const isDisabled = useIsStocktakeDisabled();
+  const { stocktakeDatetime, description, update } = useStocktakeFields([
+    'description',
+    'stocktakeDatetime',
+  ]);
+  const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => draft.lines.find(({ id }) => selectedId === id))
-      .filter(Boolean) as StocktakeItem[],
-  }));
+  // const { selectedRows } = useTableStore(state => ({
+  //   selectedRows: Object.keys(state.rowState)
+  //     .filter(id => state.rowState[id]?.isSelected)
+  //     .map(selectedId => draft.lines.find(({ id }) => selectedId === id))
+  //     .filter(Boolean) as StocktakeItem[],
+  // }));
+  const selectedRows: unknown[] = [];
 
   const deleteAction = () => {
     if (selectedRows && selectedRows?.length > 0) {
@@ -53,13 +56,14 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
           <InputWithLabelRow
             label={t('heading.description')}
             Input={
-              <BasicTextInput
-                disabled={!isStocktakeEditable(draft)}
+              <BufferedTextInput
+                disabled={isDisabled}
                 size="small"
                 sx={{ width: 220 }}
-                value={draft.description ?? ''}
+                value={descriptionBuffer ?? ''}
                 onChange={event => {
-                  draft.update('description', event.target.value);
+                  setDescriptionBuffer(event.target.value);
+                  update({ description: event.target.value });
                 }}
               />
             }
@@ -69,20 +73,17 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             label={t('label.stocktake-date', { ns: 'inventory' })}
             Input={
               <DatePickerInput
-                disabled={!isStocktakeEditable(draft)}
-                value={draft.stocktakeDatetime}
+                disabled={isDisabled}
+                value={stocktakeDatetime}
                 onChange={newDate => {
-                  draft.updateStocktakeDatetime(newDate);
+                  update({ stocktakeDatetime: newDate });
                 }}
               />
             }
           />
         </Grid>
         <Grid item>
-          <DropdownMenu
-            disabled={!isStocktakeEditable(draft)}
-            label={t('label.select')}
-          >
+          <DropdownMenu disabled={isDisabled} label={t('label.select')}>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
               {t('button.delete-lines', { ns: 'distribution' })}
             </DropdownMenuItem>
