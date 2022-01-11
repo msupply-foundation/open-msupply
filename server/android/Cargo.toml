@@ -12,8 +12,10 @@ name = "remote_server_android"
 repository = { path = "../repository" }
 server = { path = "../server" }
 
-jni = { version = "0.19.0"}
 actix-web = { version= "3.3.2", features = ["openssl"] } # Versions >=v4 depend on Tokio v1.
+android_logger = "0.10.1"
+jni = { version = "0.19.0"}
+log = "0.4.14"
 
 [features]
 default = ["repository/sqlite"]

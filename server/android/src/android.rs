@@ -14,6 +14,9 @@ pub mod android {
     use self::jni::sys::{jshort, jstring};
     use self::jni::JNIEnv;
 
+    use android_logger::Config;
+    use log::Level;
+
     #[no_mangle]
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_rustHelloWorld(
         env: JNIEnv,
@@ -32,6 +35,8 @@ pub mod android {
         port: jchar,
         db_path: JString,
     ) -> jshort {
+        android_logger::init_once(Config::default().with_min_level(Level::Trace));
+
         let db_path: String = env.get_string(db_path).unwrap().into();
         // run server in background thread
         thread::spawn(move || {
