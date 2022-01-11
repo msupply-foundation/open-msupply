@@ -17,7 +17,6 @@ const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
   height: 34.125,
   borderRadius: '8px',
   padding: '4px 8px',
-  backgroundColor: '#f2f2f5',
   textAlign: 'right',
   border: 'none',
   '&:focus': {
@@ -71,7 +70,13 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
 
   return (
     <StyledCurrencyInput
-      sx={{ maxWidth }}
+      sx={{
+        maxWidth,
+        backgroundColor: theme =>
+          restOfProps.disabled
+            ? theme.palette.background.toolbar
+            : theme.palette.background.menu,
+      }}
       value={buffer}
       onValueChange={newValue => {
         setBuffer(newValue);

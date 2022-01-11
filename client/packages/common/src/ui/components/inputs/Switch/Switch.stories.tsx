@@ -33,6 +33,20 @@ const Template: ComponentStory<typeof Switch> = args => {
         color="secondary"
         {...args}
       />
+      <Switch
+        label="disabled (off)"
+        onChange={() => {}}
+        checked={false}
+        disabled
+        {...args}
+      />
+      <Switch
+        label="disabled (on)"
+        onChange={() => {}}
+        checked={true}
+        disabled
+        {...args}
+      />
       <div style={{ marginTop: 50, fontStyle: 'italic' }}>
         Current state is {checked ? 'on' : 'off'}
       </div>
@@ -45,15 +59,9 @@ export const Small = Template.bind({});
 export const Bottom = Template.bind({});
 export const End = Template.bind({});
 export const Top = Template.bind({});
-export const Disabled = Template.bind({});
 
 Medium.args = { size: 'medium' };
 Small.args = { size: 'small' };
 Bottom.args = { labelPlacement: 'bottom' };
 End.args = { labelPlacement: 'end' };
 Top.args = { labelPlacement: 'top' };
-Disabled.args = { disabled: true };
-
-// .rtl-3z030n-MuiButtonBase-root-MuiSwitch-switchBase {
-
-//     /* right: 0; */

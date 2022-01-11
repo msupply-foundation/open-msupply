@@ -67,7 +67,7 @@ export const Switch: React.FC<SwitchProps> = ({
     width: isSmall ? '40px' : '70px',
     padding: isSmall ? '1px' : '6px 12px',
     '& .MuiSwitch-switchBase': {
-      paddingLeft: '3px',
+      paddingLeft: isSmall ? '3px' : '15px',
       right: 'auto', // emotion is setting this and making a mess
     },
     '& .MuiSwitch-thumb': {
