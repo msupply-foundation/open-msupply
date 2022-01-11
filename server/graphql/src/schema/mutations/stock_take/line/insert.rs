@@ -84,8 +84,11 @@ pub fn insert_stock_take_line(
                 InsertStockTakeLineError::CannotEditFinalised => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                InsertStockTakeLineError::StockTakeLineXOrItem => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
+                InsertStockTakeLineError::StockLineXOrItem => {
+                    StandardGraphqlError::BadUserInput(format!(
+                        "Either a stock line id or item id must be set (not both), {:#?}",
+                        err
+                    ))
                 }
                 InsertStockTakeLineError::ItemDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
