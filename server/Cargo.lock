@@ -384,10 +384,30 @@ dependencies = [
 name = "android"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
+ "android_logger",
  "jni",
+ "log",
  "repository",
  "server",
- "tokio 0.2.25",
+]
+
+[[package]]
+name = "android_log-sys"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85965b6739a430150bdd138e2374a98af0c3ee0d030b3bb7fc3bddff58d0102e"
+
+[[package]]
+name = "android_logger"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9ed09b18365ed295d722d0b5ed59c01b79a826ff2d2a8f73d5ecca8e6fb2f66"
+dependencies = [
+ "android_log-sys",
+ "env_logger",
+ "lazy_static",
+ "log",
 ]
 
 [[package]]
@@ -1897,7 +1917,7 @@ dependencies = [
  "serde 1.0.130",
  "serde_json",
  "serde_regex",
- "tokio 1.13.0",
+ "tokio 1.15.0",
 ]
 
 [[package]]
@@ -1947,7 +1967,7 @@ dependencies = [
  "itoa",
  "pin-project-lite 0.2.7",
  "socket2 0.4.2",
- "tokio 1.13.0",
+ "tokio 1.15.0",
  "tower-service",
  "tracing",
  "want",
@@ -3748,18 +3768,17 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.13.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "588b2d10a336da58d877567cd8fb8a14b463e2104910f8132cd054b4b96e29ee"
+checksum = "fbbf1c778ec206785635ce8ad57fe52b3009ae9e0c9f574a728f3049d3e55838"
 dependencies = [
- "autocfg",
  "libc",
  "mio 0.7.14",
  "num_cpus",
  "once_cell",
  "pin-project-lite 0.2.7",
  "signal-hook-registry",
- "tokio-macros 1.5.1",
+ "tokio-macros 1.7.0",
  "winapi 0.3.9",
 ]
 
@@ -3776,9 +3795,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.5.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "114383b041aa6212c579467afa0075fbbdd0718de036100bc0ba7961d8cb9095"
+checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
 dependencies = [
  "proc-macro2",
  "quote",
