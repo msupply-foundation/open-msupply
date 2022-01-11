@@ -1,3 +1,4 @@
+import { useParams } from 'react-router';
 import React, { useEffect, Dispatch, SetStateAction } from 'react';
 import { StocktakeLine } from '../../../../types';
 
@@ -16,18 +17,27 @@ export type DraftStocktakeLine = StocktakeLine & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;
+  stocktakeId: string;
 };
 
-const stocktakeLineToDraftLine = (line: StocktakeLine): DraftStocktakeLine => {
+const stocktakeLineToDraftLine = (
+  stocktakeId: string,
+  line: StocktakeLine
+): DraftStocktakeLine => {
   return {
     isCreated: false,
     isUpdated: false,
+    stocktakeId,
     ...line,
   };
 };
 
-const stockLineToDraftLine = (line: StockLine): DraftStocktakeLine => {
+const stockLineToDraftLine = (
+  stocktakeId: string,
+  line: StockLine
+): DraftStocktakeLine => {
   return {
+    stocktakeId,
     itemCode: '',
     itemName: '',
     countThisLine: false,
@@ -42,17 +52,16 @@ const stockLineToDraftLine = (line: StockLine): DraftStocktakeLine => {
 const useDraftStocktakeLines = (
   item: Item | null
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
+  const { id = '' } = useParams();
   const { data: stocktakeLines } = useStocktakeLines(item?.id);
   const { data: stockLines } = useStockLines(item?.code || '');
 
-  //   const [counted, setCounted] = useState<DraftStocktakeLine[]>([]);
-  //   const [uncounted, setUncounted] = useState<DraftStocktakeLine[]>([]);
   const [draftLines, setDraftLines] = React.useState<DraftStocktakeLine[]>([]);
 
-  // TODO: Might need to 'merge' these lines, instead of appending.
   useEffect(() => {
     if (item) {
-      const existing = stocktakeLines?.map(stocktakeLineToDraftLine) ?? [];
+      const existing =
+        stocktakeLines?.map(line => stocktakeLineToDraftLine(id, line)) ?? [];
       setDraftLines(existing);
     }
   }, [stocktakeLines, item]);
@@ -63,7 +72,9 @@ const useDraftStocktakeLines = (
         ({ id }) =>
           !stocktakeLines?.some(({ stockLineId }) => stockLineId === id)
       ) ?? [];
-    const uncounted = uncountedLines.map(stockLineToDraftLine);
+    const uncounted = uncountedLines.map(line =>
+      stockLineToDraftLine(id, line)
+    );
     setDraftLines(lines => [...lines, ...uncounted]);
   }, [stockLines]);
 
@@ -82,7 +93,7 @@ export const useStocktakeLineEdit = (
     setDraftLines(lines => {
       return lines.map(line => {
         if (line.id === patch.id) {
-          return { ...line, ...patch };
+          return { ...line, ...patch, isUpdated: true };
         }
         return line;
       });

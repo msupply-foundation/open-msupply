@@ -2,9 +2,6 @@ import React, { FC, useState } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useTranslation,
-  useDialog,
-  DialogButton,
   Item,
   ModalMode,
 } from '@openmsupply-client/common';
@@ -31,26 +28,20 @@ export const DetailView: FC = () => {
   const [modalState, setModalState] = useState<{
     item: Item | null;
     mode: ModalMode;
-  }>({ item: null, mode: ModalMode.Create });
-  const { hideDialog, showDialog, Modal } = useDialog({
-    onClose: () => setModalState({ item: null, mode: ModalMode.Create }),
-  });
+    isOpen: boolean;
+  }>({ item: null, mode: ModalMode.Create, isOpen: false });
 
   const onRowClick = (item: StocktakeLine | StocktakeSummaryItem) => {
-    setModalState({ item: toItem(item), mode: ModalMode.Update });
-    showDialog();
+    setModalState({ item: toItem(item), mode: ModalMode.Update, isOpen: true });
   };
 
   const onAddItem = () => {
-    setModalState({ item: null, mode: ModalMode.Create });
-    showDialog();
+    setModalState({ item: null, mode: ModalMode.Create, isOpen: true });
   };
 
-  const onOK = () => {
-    hideDialog();
+  const onClose = () => {
+    setModalState({ item: null, mode: ModalMode.Create, isOpen: false });
   };
-
-  const t = useTranslation('common');
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -61,26 +52,12 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
 
-      <Modal
-        title={
-          modalState.mode === ModalMode.Create
-            ? t('heading.add-item')
-            : t('heading.edit-item')
-        }
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        nextButton={
-          <DialogButton
-            variant="next"
-            onClick={() => {}}
-            disabled={modalState.mode === ModalMode.Update}
-          />
-        }
-        okButton={<DialogButton variant="ok" onClick={onOK} />}
-        height={600}
-        width={1024}
-      >
-        <StocktakeLineEdit mode={modalState.mode} item={modalState.item} />
-      </Modal>
+      <StocktakeLineEdit
+        isOpen={modalState.isOpen}
+        onClose={onClose}
+        mode={modalState.mode}
+        item={modalState.item}
+      />
     </TableProvider>
   );
 };

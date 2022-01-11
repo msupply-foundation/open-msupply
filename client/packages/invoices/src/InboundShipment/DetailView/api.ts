@@ -1,6 +1,3 @@
-import { InboundShipmentItem } from './../../types';
-import { toItem } from './DetailView';
-import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
   LocationResponse,
@@ -38,6 +35,9 @@ import {
 import { Location } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { inboundLinesToSummaryItems } from '../../utils';
+import { InboundShipmentItem } from './../../types';
+import { toItem } from './DetailView';
+import { DraftInboundLine } from './modals/InboundLineEdit';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
