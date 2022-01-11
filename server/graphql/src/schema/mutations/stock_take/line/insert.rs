@@ -31,14 +31,9 @@ pub struct InsertStockTakeLineInput {
     pub note: Option<String>,
 }
 
-#[derive(SimpleObject)]
-pub struct InsertStockTakeLineNode {
-    pub stock_take_line: StockTakeLineNode,
-}
-
 #[derive(Union)]
 pub enum InsertStockTakeLineResponse {
-    Response(InsertStockTakeLineNode),
+    Response(StockTakeLineNode),
 }
 
 pub fn insert_stock_take_line(
@@ -58,11 +53,9 @@ pub fn insert_stock_take_line(
     let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_line_service;
     match service.insert_stock_take_line(&service_ctx, store_id, to_domain(input)) {
-        Ok(line) => Ok(InsertStockTakeLineResponse::Response(
-            InsertStockTakeLineNode {
-                stock_take_line: StockTakeLineNode { line },
-            },
-        )),
+        Ok(line) => Ok(InsertStockTakeLineResponse::Response(StockTakeLineNode {
+            line,
+        })),
         Err(err) => {
             let formatted_error = format!("{:#?}", err);
             let graphql_error = match err {

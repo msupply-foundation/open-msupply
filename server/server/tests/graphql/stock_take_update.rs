@@ -56,10 +56,8 @@ mod graphql {
                     __typename
                   }
                 }
-                ... on UpdateStockTakeNode {
-                    stockTake {
+                ... on StockTakeNode {                    
                         id
-                    }
                 }
             }
         }"#;
