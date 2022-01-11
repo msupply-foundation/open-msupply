@@ -14,10 +14,10 @@ pub struct SyncServer {
 }
 
 impl SyncServer {
-    pub fn new(url: &str) -> SyncServer {
+    pub fn new(url: &str) -> anyhow::Result<SyncServer> {
         // TODO: add error handling.
-        let url = Url::parse(url).unwrap();
-        SyncServer { url }
+        let url = Url::parse(url)?;
+        Ok(SyncServer { url })
     }
 
     pub fn from_url(url: Url) -> SyncServer {
