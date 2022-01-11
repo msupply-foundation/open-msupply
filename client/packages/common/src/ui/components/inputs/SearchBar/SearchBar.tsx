@@ -3,6 +3,7 @@ import { BasicTextInput } from '../TextInput';
 import { SearchIcon } from '@common/icons';
 import { useDebounceCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
+import { Grid, Typography } from '@mui/material';
 
 interface SearchBarProps {
   value: string;
@@ -42,31 +43,62 @@ export const SearchBar: FC<SearchBarProps> = ({
   );
 
   return (
-    <>
-      <BasicTextInput
-        InputProps={{
-          startAdornment: (
-            <SearchIcon sx={{ color: 'gray.main' }} fontSize="small" />
-          ),
-          endAdornment: <Spin isLoading={isLoading || loading} />,
-          sx: {
-            paddingLeft: '6px',
-            alignItems: 'center',
-            transition: theme => theme.transitions.create('width'),
-            width: '220px',
-            '&.Mui-focused': {
-              width: '360px',
+    <Grid container spacing={5} flexDirection="column">
+      <Grid item>
+        <Typography>Search Bar</Typography>
+        <BasicTextInput
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: 'gray.main' }} fontSize="small" />
+            ),
+            endAdornment: <Spin isLoading={isLoading || loading} />,
+            sx: {
+              paddingLeft: '6px',
+              alignItems: 'center',
+              transition: theme => theme.transitions.create('width'),
+              width: '220px',
+              '&.Mui-focused': {
+                width: '360px',
+              },
             },
-          },
-        }}
-        value={buffer}
-        onChange={e => {
-          setBuffer(e.target.value);
-          debouncedOnChange(e.target.value);
-          setLoading(true);
-        }}
-        placeholder={placeholder}
-      />
-    </>
+          }}
+          value={buffer}
+          onChange={e => {
+            setBuffer(e.target.value);
+            debouncedOnChange(e.target.value);
+            setLoading(true);
+          }}
+          placeholder={placeholder}
+        />
+      </Grid>
+      <Grid item>
+        <Typography>Disabled Search Bar</Typography>
+        <BasicTextInput
+          disabled
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: 'gray.main' }} fontSize="small" />
+            ),
+            endAdornment: <Spin isLoading={isLoading || loading} />,
+            sx: {
+              paddingLeft: '6px',
+              alignItems: 'center',
+              transition: theme => theme.transitions.create('width'),
+              width: '220px',
+              '&.Mui-focused': {
+                width: '360px',
+              },
+            },
+          }}
+          value={buffer}
+          onChange={e => {
+            setBuffer(e.target.value);
+            debouncedOnChange(e.target.value);
+            setLoading(true);
+          }}
+          placeholder={placeholder}
+        />
+      </Grid>
+    </Grid>
   );
 };

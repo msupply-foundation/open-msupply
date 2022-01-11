@@ -4,6 +4,7 @@ import { Story } from '@storybook/react';
 import { styled } from '@mui/material/styles';
 import { Autocomplete } from './Autocomplete';
 import { AutocompleteList } from './AutocompleteList';
+import { AutocompleteOption } from '.';
 
 export default {
   title: 'Inputs/Autocomplete',
@@ -21,7 +22,7 @@ const options = Array.from({ length: 100 }).map((_, i) => ({
 }));
 
 // TODO: Currently the styles are broken for this only within storybook
-const Template: Story = () => (
+const BasicTemplate: Story = () => (
   <Grid container>
     <Grid item>
       <StyledPaper>
@@ -31,6 +32,22 @@ const Template: Story = () => (
     </Grid>
     <Grid item>
       <StyledPaper>
+        <Typography>Disabled</Typography>
+        <Autocomplete
+          options={options.map(({ name }) => name)}
+          width="300px"
+          disabled
+          defaultValue={'95' as AutocompleteOption<string>}
+        />
+      </StyledPaper>
+    </Grid>
+  </Grid>
+);
+
+const ListTemplate: Story = () => (
+  <Grid container>
+    <Grid item>
+      <StyledPaper>
         <Typography>Autocomplete List</Typography>
         <AutocompleteList options={options} optionKey="name" />
       </StyledPaper>
@@ -38,4 +55,5 @@ const Template: Story = () => (
   </Grid>
 );
 
-export const Primary = Template.bind({});
+export const Basic = BasicTemplate.bind({});
+export const List = ListTemplate.bind({});
