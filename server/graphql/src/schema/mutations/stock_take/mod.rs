@@ -44,12 +44,12 @@ impl StockTakeNode {
         &self.stock_take.store_id
     }
 
-    pub async fn comment(&self) -> Option<String> {
-        self.stock_take.comment.clone()
+    pub async fn comment(&self) -> &Option<String> {
+        &self.stock_take.comment
     }
 
-    pub async fn description(&self) -> Option<String> {
-        self.stock_take.description.clone()
+    pub async fn description(&self) -> &Option<String> {
+        &self.stock_take.description
     }
 
     pub async fn status(&self) -> StockTakeNodeStatus {
@@ -64,7 +64,7 @@ impl StockTakeNode {
         self.stock_take.finalised_datetime
     }
 
-    pub async fn inventory_adjustment_id(&self) -> Option<String> {
-        self.stock_take.inventory_adjustment_id.clone()
+    pub async fn inventory_adjustment_id(&self) -> &Option<String> {
+        &self.stock_take.inventory_adjustment_id
     }
 }
