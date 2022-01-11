@@ -213,7 +213,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
       width={1024}
     >
       {isLoading ? (
-        <BasicSpinner />
+        <BasicSpinner messageKey="saving" />
       ) : (
         <>
           <InboundLineEditForm
