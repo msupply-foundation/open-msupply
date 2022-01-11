@@ -13,7 +13,7 @@ repository = { path = "../repository" }
 server = { path = "../server" }
 
 jni = { version = "0.19.0"}
-tokio = { version = "0.2", features = ["macros" ] } # Bumping to v1 requires actix-web >=v4 and reqwest >=0.11.
+actix-web = { version= "3.3.2", features = ["openssl"] } # Versions >=v4 depend on Tokio v1.
 
 [features]
 default = ["repository/sqlite"]

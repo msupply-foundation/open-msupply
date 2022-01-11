@@ -6,7 +6,6 @@ pub mod android {
 
     use jni::sys::jchar;
     use repository::database_settings::DatabaseSettings;
-    use tokio::runtime::Runtime;
 
     use server::settings::{AuthSettings, ServerSettings, Settings, SyncSettings};
     use server::start_server;
@@ -16,7 +15,7 @@ pub mod android {
     use self::jni::JNIEnv;
 
     #[no_mangle]
-    pub unsafe extern "C" fn Java_org_openmsupply_mobile_RemoteServer_rustHelloWorld(
+    pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_rustHelloWorld(
         env: JNIEnv,
         _: JClass,
         name: JString,
@@ -27,18 +26,19 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn Java_org_openmsupply_mobile_RemoteServer_startServer(
-        _: JNIEnv,
+    pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
+        env: JNIEnv,
         _: JClass,
         port: jchar,
+        db_path: JString,
     ) -> jshort {
+        let db_path: String = env.get_string(db_path).unwrap().into();
         // run server in background thread
         thread::spawn(move || {
-            let mut runtime = Runtime::new().unwrap();
-            runtime.block_on(async move {
+            actix_web::rt::System::new("remote server runtime").block_on(async move {
                 let settings = Settings {
                     server: ServerSettings {
-                        host: "localhost".to_string(),
+                        host: "127.0.0.1".to_string(),
                         port,
                     },
                     database: DatabaseSettings {
@@ -46,7 +46,7 @@ pub mod android {
                         password: "n/a".to_string(),
                         port: 0,
                         host: "n/a".to_string(),
-                        database_name: "omsupply-database".to_string(),
+                        database_name: db_path,
                     },
                     sync: SyncSettings {
                         url: "localhost".to_string(),
