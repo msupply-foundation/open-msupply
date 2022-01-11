@@ -1,12 +1,15 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { BasicSpinner } from '../BasicSpinner';
+import { BasicSpinner as Spinner } from '../BasicSpinner';
 
-const Template: ComponentStory<typeof BasicSpinner> = () => <BasicSpinner />;
+const Template: ComponentStory<typeof Spinner> = args => <Spinner {...args} />;
 
-export const Primary = Template.bind({});
+export const BasicSpinner = Template.bind({});
+export const SavingSpinner = Template.bind({});
+
+SavingSpinner.args = { messageKey: 'saving' };
 
 export default {
-  title: 'Components/BasicSpinner',
-  component: BasicSpinner,
-} as ComponentMeta<typeof BasicSpinner>;
+  title: 'Components/Loading',
+  component: Spinner,
+} as ComponentMeta<typeof Spinner>;
