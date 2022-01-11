@@ -54,7 +54,7 @@ pub mod android {
                         database_name: db_path,
                     },
                     sync: SyncSettings {
-                        url: "localhost".to_string(),
+                        url: "http://localhost".to_string(),
                         username: "username".to_string(),
                         password: "password".to_string(),
                         interval: 300,
