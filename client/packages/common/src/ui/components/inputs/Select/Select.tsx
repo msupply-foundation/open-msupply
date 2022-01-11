@@ -32,7 +32,10 @@ export const Select: FC<SelectProps> = React.forwardRef(
         disableUnderline: true,
         ...InputProps,
         sx: {
-          backgroundColor: theme => theme.palette.background.menu,
+          backgroundColor: theme =>
+            props.disabled
+              ? theme.palette.background.toolbar
+              : theme.palette.background.menu,
           borderRadius: '8px',
           padding: '4px 8px',
           ...InputProps?.sx,
