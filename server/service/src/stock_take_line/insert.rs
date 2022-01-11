@@ -48,8 +48,8 @@ pub enum InsertStockTakeLineError {
     StockLineAlreadyExistsInStockTake,
     LocationDoesNotExist,
     CannotEditFinalised,
-    /// Either stock take line xor item must be set
-    StockTakeLineXOrItem,
+    /// Either stock line xor item must be set (not both)
+    StockLineXOrItem,
     ItemDoesNotExist,
 }
 
@@ -144,7 +144,7 @@ fn validate(
     }
 
     let item_id = check_stock_line_xor_item(&stock_line, input)
-        .ok_or(InsertStockTakeLineError::StockTakeLineXOrItem)?;
+        .ok_or(InsertStockTakeLineError::StockLineXOrItem)?;
     if let Some(item_id) = &input.item_id {
         if !check_item_exists(connection, &item_id)? {
             return Err(InsertStockTakeLineError::ItemDoesNotExist);
