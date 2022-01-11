@@ -71,20 +71,20 @@ pub struct SyncConnection {
 }
 
 impl SyncConnection {
-    pub fn new(settings: &SyncSettings) -> SyncConnection {
+    pub fn new(settings: &SyncSettings) -> anyhow::Result<SyncConnection> {
         let url = &settings.url;
         let username = &settings.username;
         let password = &settings.password;
 
         let client = Client::new();
-        let server = SyncServer::new(url);
+        let server = SyncServer::new(url)?;
         let credentials = SyncCredentials::new(username, password);
 
-        SyncConnection {
+        Ok(SyncConnection {
             client,
             server,
             credentials,
-        }
+        })
     }
 
     // Initialize remote sync queue.
@@ -258,7 +258,7 @@ mod tests {
             then.status(401);
         });
 
-        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth).unwrap();
         let initialise_result_with_auth =
             sync_connection_with_auth.initialise_remote_records().await;
 
@@ -268,7 +268,8 @@ mod tests {
             serde_json::to_string(&mock_initialise_body).unwrap()
         );
 
-        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let sync_connection_without_auth =
+            SyncConnection::new(&mock_sync_settings_without_auth).unwrap();
         let initialise_result_without_auth = sync_connection_without_auth
             .initialise_remote_records()
             .await;
@@ -340,7 +341,7 @@ mod tests {
             then.status(401);
         });
 
-        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth).unwrap();
         let pull_result_with_auth = sync_connection_with_auth.pull_remote_records().await;
 
         assert!(pull_result_with_auth.is_ok());
@@ -349,7 +350,8 @@ mod tests {
             serde_json::to_string(&mock_remote_records_body).unwrap()
         );
 
-        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let sync_connection_without_auth =
+            SyncConnection::new(&mock_sync_settings_without_auth).unwrap();
         let pull_result_without_auth = sync_connection_without_auth.pull_remote_records().await;
 
         assert!(pull_result_without_auth.is_err());
@@ -416,14 +418,15 @@ mod tests {
             then.status(401);
         });
 
-        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth).unwrap();
         let acknowledge_result_with_auth = sync_connection_with_auth
             .acknowledge_remote_records(&mock_acknowledge_records_data)
             .await;
 
         assert!(acknowledge_result_with_auth.is_ok());
 
-        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let sync_connection_without_auth =
+            SyncConnection::new(&mock_sync_settings_without_auth).unwrap();
         let acknowledge_result_without_auth = sync_connection_without_auth
             .acknowledge_remote_records(&mock_acknowledge_records_data)
             .await;
@@ -490,13 +493,14 @@ mod tests {
             then.status(401);
         });
 
-        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth);
+        let sync_connection_with_auth = SyncConnection::new(&mock_sync_settings_with_auth).unwrap();
         let pull_central_records_result_with_auth =
             sync_connection_with_auth.pull_central_records(0, 2).await;
 
         assert!(pull_central_records_result_with_auth.is_ok());
 
-        let sync_connection_without_auth = SyncConnection::new(&mock_sync_settings_without_auth);
+        let sync_connection_without_auth =
+            SyncConnection::new(&mock_sync_settings_without_auth).unwrap();
         let pull_central_records_result_without_auth = sync_connection_without_auth
             .pull_central_records(0, 2)
             .await;

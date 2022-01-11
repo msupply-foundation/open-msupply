@@ -85,10 +85,15 @@ pub async fn start_server(settings: Settings) -> std::io::Result<()> {
         }
     }
     let running_sever = http_server.run();
-
-    let connection = SyncConnection::new(&settings.sync);
+    let connection = match SyncConnection::new(&settings.sync) {
+        Ok(connection) => connection,
+        Err(err) => {
+            let err_msg = format!("Failed to initialize SyncConnection: {}", err);
+            error!("{}", err_msg);
+            panic!("{}", err_msg);
+        }
+    };
     let mut synchroniser = Synchroniser { connection };
-
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
     tokio::select! {
