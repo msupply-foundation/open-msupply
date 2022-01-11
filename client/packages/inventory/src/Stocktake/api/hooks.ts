@@ -1,19 +1,15 @@
 import {
   useQuerySelector,
   StocktakeNodeStatus,
+  useQueryClient,
   useParams,
   useOmSupplyApi,
+  useMutation,
   UseQueryResult,
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  // SortController,
-  // PaginationState,
   groupBy,
-  // uniqBy,
-  // useSortBy,
-  // usePagination,
-  // getDataSorter,
 } from '@openmsupply-client/common';
 import { Stocktake, StocktakeLine, StocktakeSummaryItem } from '../../types';
 import { StocktakeApi } from './api';
@@ -36,34 +32,6 @@ export const useStocktakeFields = <KeyOfStocktake extends keyof Stocktake>(
     keys
   );
 };
-
-// interface UseStocktakeLineController
-//   extends SortController<StocktakeLine>,
-//     PaginationState {
-//   lines: StocktakeLine[];
-// }
-
-// export const useStocktakeLines = (): UseStocktakeLineController => {
-//   const { sortBy, onChangeSortBy } = useSortBy<StocktakeLine>({
-//     key: 'itemName',
-//     isDesc: false,
-//   });
-//   const pagination = usePagination(20);
-//   const { lines } = useStocktakeFields('lines');
-
-//   const sorted = useMemo(() => {
-//     const sorted = [...(lines ?? [])].sort(
-//       getDataSorter(sortBy.key as keyof StocktakeLine, !!sortBy.isDesc)
-//     );
-
-//     return sorted.slice(
-//       pagination.offset,
-//       pagination.first + pagination.offset
-//     );
-//   }, [sortBy, lines, pagination]);
-
-//   return { lines: sorted, sortBy, onChangeSortBy, ...pagination };
-// };
 
 export const useIsStocktakeDisabled = (): boolean => {
   const { status } = useStocktakeFields('status');
@@ -94,7 +62,6 @@ export const useStocktakeLines = (
 ): UseQueryResult<StocktakeLine[], unknown> => {
   const selectLines = useCallback(
     (stocktake: Stocktake) => {
-      console.log('select lines');
       return itemId
         ? stocktake.lines.filter(
             ({ itemId: stocktakeLineItemId }) => itemId === stocktakeLineItemId
@@ -117,4 +84,15 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
   }, []);
 
   return useStocktakeSelector(selectLines);
+};
+
+export const useSaveStocktakeLines = () => {
+  const queryKey = useStocktakeDetailQueryKey();
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  return useMutation(StocktakeApi.updateLines(api), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(queryKey);
+    },
+  });
 };

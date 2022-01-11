@@ -367,6 +367,21 @@ export type DeleteOutboundShipmentServiceLineResponseWithId = {
   response: DeleteOutboundShipmentServiceLineResponse;
 };
 
+export type DeleteOutboundShipmentUnallocatedLineError = {
+  __typename?: 'DeleteOutboundShipmentUnallocatedLineError';
+  error: DeleteOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type DeleteOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type DeleteOutboundShipmentUnallocatedLineInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteOutboundShipmentUnallocatedLineResponse = DeleteOutboundShipmentUnallocatedLineError | DeleteResponse;
+
 export type DeleteResponse = {
   __typename?: 'DeleteResponse';
   id: Scalars['String'];
@@ -464,7 +479,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename?: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -695,7 +710,11 @@ export type InsertOutboundShipmentServiceLineResponseWithId = {
 
 export type InsertOutboundShipmentUnallocatedLineError = {
   __typename?: 'InsertOutboundShipmentUnallocatedLineError';
-  error: InsertOutboundShipmentUnallocatedLineInterface;
+  error: InsertOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type InsertOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
 };
 
 export type InsertOutboundShipmentUnallocatedLineInput = {
@@ -703,10 +722,6 @@ export type InsertOutboundShipmentUnallocatedLineInput = {
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
   quantity: Scalars['Int'];
-};
-
-export type InsertOutboundShipmentUnallocatedLineInterface = {
-  description: Scalars['String'];
 };
 
 export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
@@ -1228,6 +1243,7 @@ export type Mutations = {
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
+  deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deleteStockTakeLine: DeleteStockTakeLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
@@ -1253,6 +1269,7 @@ export type Mutations = {
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
+  updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateSupplierRequisition: UpdateSupplierRequisitionResponse;
   updateSupplierRequisitionLine: UpdateSupplierRequisitionLineResponse;
@@ -1349,6 +1366,11 @@ export type MutationsDeleteOutboundShipmentLineArgs = {
 
 export type MutationsDeleteOutboundShipmentServiceLineArgs = {
   input: DeleteOutboundShipmentServiceLineInput;
+};
+
+
+export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
+  input: DeleteOutboundShipmentUnallocatedLineInput;
 };
 
 
@@ -1475,6 +1497,11 @@ export type MutationsUpdateOutboundShipmentLineArgs = {
 
 export type MutationsUpdateOutboundShipmentServiceLineArgs = {
   input: UpdateOutboundShipmentServiceLineInput;
+};
+
+
+export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
+  input: UpdateOutboundShipmentUnallocatedLineInput;
 };
 
 
@@ -1767,6 +1794,11 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
+export type RecordDoesNotExist = DeleteOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & {
+  __typename?: 'RecordDoesNotExist';
+  description: Scalars['String'];
+};
+
 export type RecordNotFound = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename?: 'RecordNotFound';
   description: Scalars['String'];
@@ -2053,12 +2085,12 @@ export type TokenExpired = RefreshTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineInterface & {
+export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineErrorInterface & {
   __typename?: 'UnallocatedLineForItemAlreadyExists';
   description: Scalars['String'];
 };
 
-export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineInterface & {
+export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineErrorInterface & {
   __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String'];
 };
@@ -2308,6 +2340,22 @@ export enum UpdateOutboundShipmentStatusInput {
   Shipped = 'SHIPPED'
 }
 
+export type UpdateOutboundShipmentUnallocatedLineError = {
+  __typename?: 'UpdateOutboundShipmentUnallocatedLineError';
+  error: UpdateOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type UpdateOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateOutboundShipmentUnallocatedLineInput = {
+  id: Scalars['String'];
+  quantity: Scalars['Int'];
+};
+
+export type UpdateOutboundShipmentUnallocatedLineResponse = InvoiceLineNode | UpdateOutboundShipmentUnallocatedLineError;
+
 export type UpdateStocktakeInput = {
   comment?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
@@ -2446,15 +2494,14 @@ export type UpdateStocktakeMutationVariables = Exact<{
 
 export type UpdateStocktakeMutation = { __typename?: 'Mutations', updateStocktake: { __typename?: 'NodeError' } | { __typename: 'StocktakeNode', id: string } };
 
-export type UpsertStocktakeMutationVariables = Exact<{
+export type UpsertStocktakeLinesMutationVariables = Exact<{
   deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
   insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput> | InsertStocktakeLineInput>;
   updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput> | UpdateStocktakeLineInput>;
-  updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput> | UpdateStocktakeInput>;
 }>;
 
 
-export type UpsertStocktakeMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', updateStocktakes?: Array<{ __typename: 'UpdateStocktakeResponseWithId', id: string }> | null | undefined, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null | undefined, deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null | undefined, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null | undefined } };
+export type UpsertStocktakeLinesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', updateStocktakes?: Array<{ __typename: 'UpdateStocktakeResponseWithId', id: string }> | null | undefined, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null | undefined, deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null | undefined, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null | undefined } };
 
 export type StocktakesQueryVariables = Exact<{
   params?: InputMaybe<StocktakeListParameters>;
@@ -3016,13 +3063,12 @@ export const UpdateStocktakeDocument = gql`
   }
 }
     `;
-export const UpsertStocktakeDocument = gql`
-    mutation upsertStocktake($deleteStocktakeLines: [DeleteStocktakeLineInput!], $insertStocktakeLines: [InsertStocktakeLineInput!], $updateStocktakeLines: [UpdateStocktakeLineInput!], $updateStocktakes: [UpdateStocktakeInput!]) {
+export const UpsertStocktakeLinesDocument = gql`
+    mutation upsertStocktakeLines($deleteStocktakeLines: [DeleteStocktakeLineInput!], $insertStocktakeLines: [InsertStocktakeLineInput!], $updateStocktakeLines: [UpdateStocktakeLineInput!]) {
   batchStocktake(
     deleteStocktakeLines: $deleteStocktakeLines
     insertStocktakeLines: $insertStocktakeLines
     updateStocktakeLines: $updateStocktakeLines
-    updateStocktakes: $updateStocktakes
   ) {
     __typename
     updateStocktakes {
@@ -3991,8 +4037,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStocktakeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake');
     },
-    upsertStocktake(variables?: UpsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeMutation>(UpsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktake');
+    upsertStocktakeLines(variables?: UpsertStocktakeLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertStocktakeLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeLinesMutation>(UpsertStocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktakeLines');
     },
     stocktakes(variables?: StocktakesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StocktakesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StocktakesQuery>(StocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakes');
@@ -4146,16 +4192,16 @@ export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRe
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockUpsertStocktakeMutation((req, res, ctx) => {
- *   const { deleteStocktakeLines, insertStocktakeLines, updateStocktakeLines, updateStocktakes } = req.variables;
+ * mockUpsertStocktakeLinesMutation((req, res, ctx) => {
+ *   const { deleteStocktakeLines, insertStocktakeLines, updateStocktakeLines } = req.variables;
  *   return res(
  *     ctx.data({ batchStocktake })
  *   )
  * })
  */
-export const mockUpsertStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertStocktakeMutationVariables>, GraphQLContext<UpsertStocktakeMutation>, any>) =>
-  graphql.mutation<UpsertStocktakeMutation, UpsertStocktakeMutationVariables>(
-    'upsertStocktake',
+export const mockUpsertStocktakeLinesMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertStocktakeLinesMutationVariables>, GraphQLContext<UpsertStocktakeLinesMutation>, any>) =>
+  graphql.mutation<UpsertStocktakeLinesMutation, UpsertStocktakeLinesMutationVariables>(
+    'upsertStocktakeLines',
     resolver
   )
 
