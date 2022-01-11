@@ -11,6 +11,7 @@ use service::{
     stock_take::update::{
         UpdateStockTakeError as ServiceError, UpdateStockTakeInput as UpdateStockTake,
     },
+    usize_to_u32,
 };
 
 use super::{StockTakeNode, StockTakeNodeStatus};
@@ -23,6 +24,12 @@ pub struct UpdateStockTakeInput {
     pub status: Option<StockTakeNodeStatus>,
 }
 
+#[derive(SimpleObject)]
+pub struct StockTakeLineConnector {
+    total_count: u32,
+    nodes: Vec<StockTakeLineNode>,
+}
+
 pub struct SnapshotCountCurrentCountMismatch(Vec<StockTakeLine>);
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
@@ -30,11 +37,16 @@ impl SnapshotCountCurrentCountMismatch {
         "Snapshot count doesn't match the current stock count"
     }
 
-    pub async fn lines(&self) -> Vec<StockTakeLineNode> {
-        self.0
+    pub async fn lines(&self) -> StockTakeLineConnector {
+        let lines: Vec<StockTakeLineNode> = self
+            .0
             .iter()
             .map(|line| StockTakeLineNode { line: line.clone() })
-            .collect()
+            .collect();
+        StockTakeLineConnector {
+            total_count: usize_to_u32(lines.len()),
+            nodes: lines,
+        }
     }
 }
 
