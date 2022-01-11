@@ -15,5 +15,7 @@
   "message.select-rows-to-delete": "Select rows to delete",
   "messages.deleted-stocktakes": "Deleted {{number}} stocktakes",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
-  "button.save-and-confirm-status": "Confirm {{status}}"
+  "button.save-and-confirm-status": "Confirm {{status}}",
+  "label.group-by-item": "Group by item",
+  "error.no-items": "No items"
 }

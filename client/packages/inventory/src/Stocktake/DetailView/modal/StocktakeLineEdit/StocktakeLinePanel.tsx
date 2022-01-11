@@ -10,12 +10,14 @@ import {
   BasicTextInput,
   useTranslation,
   Column,
+  RecordPatch,
 } from '@openmsupply-client/common';
 import { StocktakeLine } from '../../../../types';
-
+import { DraftStocktakeLine } from './hooks';
 interface StocktakeLinePanelProps {
   value: string;
   batches: StocktakeLine[];
+  update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
 
 const StyledTabPanel = styled(TabPanel)({
@@ -43,6 +45,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
   value,
   batches,
   children,
+  update,
 }) => {
   const t = useTranslation();
   const [selectionColumn, batchColumn] = useColumns([
@@ -80,7 +83,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                     key={id}
                     checked={countThisLine}
                     onClick={() =>
-                      line.update?.({
+                      update({
                         id: line.id,
                         countThisLine: !countThisLine,
                       })
@@ -96,7 +99,12 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                   paddingLeft="16px"
                   paddingRight="16px"
                 >
-                  <BasicTextInput value={batch} />
+                  <BasicTextInput
+                    value={batch}
+                    onChange={e =>
+                      update({ id: line.id, batch: e.target.value })
+                    }
+                  />
                 </Box>
               </Box>
             );

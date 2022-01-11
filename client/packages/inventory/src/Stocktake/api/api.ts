@@ -1,13 +1,14 @@
+import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit/hooks';
 import {
+  formatNaiveDate,
+  InsertStocktakeLineInput,
+  UpdateStocktakeLineInput,
   ConnectorError,
   OmSupplyApi,
   StocktakeQuery,
   StocktakeLineNode,
   StocktakeLineConnector,
   UpdateStocktakeInput,
-  //   UpdateStocktakeLineInput,
-  //   InsertStocktakeLineInput,
-  //   DeleteStocktakeLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
 import { Stocktake } from '../../types';
@@ -47,30 +48,33 @@ const createUpdateStocktakeInput = (
   };
 };
 
-// const createUpdateStocktakeLineInput = (
-//   line: StocktakeLine
-// ): UpdateStocktakeLineInput => {
-//   return {
-//     ...line,
-//   };
-// };
+const createUpdateStocktakeLineInput = (
+  line: DraftStocktakeLine
+): UpdateStocktakeLineInput => {
+  return {
+    batch: line.batch ?? '',
+    costPricePerPack: line.costPricePerPack,
+    sellPricePerPack: line.sellPricePerPack,
+    id: line.id,
+    countedNumPacks: line.countedNumPacks,
+    expiryDate: line.expiryDate ? formatNaiveDate(line.expiryDate) : undefined,
+  };
+};
 
-// const createInsertStocktakeLineInput =
-//   (stocktake: StocktakeController) =>
-//   (line: StocktakeLine): InsertStocktakeLineInput => {
-//     return {
-//       stocktakeId: stocktake.id,
-//       ...line,
-//     };
-//   };
-
-// const createDeleteStocktakeLineInput = (
-//   line: StocktakeLine
-// ): DeleteStocktakeLineInput => {
-//   return {
-//     ...line,
-//   };
-// };
+const createInsertStocktakeLineInput = (
+  line: DraftStocktakeLine
+): InsertStocktakeLineInput => {
+  return {
+    batch: line.batch ?? '',
+    costPricePerPack: line.costPricePerPack,
+    countedNumPacks: line.countedNumPacks,
+    id: line.id,
+    itemId: line.itemId,
+    sellPricePerPack: line.sellPricePerPack,
+    stocktakeId: line.stocktakeId,
+    expiryDate: line.expiryDate ? formatNaiveDate(line.expiryDate) : undefined,
+  };
+};
 
 export const StocktakeApi = {
   get: {
@@ -90,11 +94,27 @@ export const StocktakeApi = {
           entryDatetime: new Date(stocktake.entryDatetime),
           lines: lines.map(line => ({
             ...line,
+            expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
             countThisLine: true,
           })),
         };
       },
   },
+  updateLines:
+    (api: OmSupplyApi) => async (draftStocktakeLines: DraftStocktakeLine[]) => {
+      const input = {
+        insertStocktakeLines: draftStocktakeLines
+          .filter(({ isCreated }) => isCreated)
+          .map(createInsertStocktakeLineInput),
+        updateStocktakeLines: draftStocktakeLines
+          .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
+          .map(createUpdateStocktakeLineInput),
+      };
+
+      const result = await api.upsertStocktakeLines(input);
+
+      return result;
+    },
   update:
     (api: OmSupplyApi) =>
     async (patch: RecordPatch<Stocktake>): Promise<UpdateStocktakeInput> => {

@@ -321,17 +321,15 @@ mutation updateStocktake($input: UpdateStocktakeInput!) {
   }
 }
 
-mutation upsertStocktake(
+mutation upsertStocktakeLines(
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
   $insertStocktakeLines: [InsertStocktakeLineInput!]
   $updateStocktakeLines: [UpdateStocktakeLineInput!]
-  $updateStocktakes: [UpdateStocktakeInput!]
 ) {
   batchStocktake(
     deleteStocktakeLines: $deleteStocktakeLines
     insertStocktakeLines: $insertStocktakeLines
     updateStocktakeLines: $updateStocktakeLines
-    updateStocktakes: $updateStocktakes
   ) {
     __typename
     updateStocktakes {
