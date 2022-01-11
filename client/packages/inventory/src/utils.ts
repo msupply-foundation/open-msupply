@@ -2,55 +2,7 @@ import {
   StocktakeNodeStatus,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  StocktakeItem,
-  StocktakeLine,
-  StocktakeController,
-  StocktakeRow,
-} from './types';
-
-export const placeholderStocktake: StocktakeController = {
-  id: '',
-  comment: '',
-  description: '',
-  lines: [],
-  status: StocktakeNodeStatus.Suggested,
-  stocktakeDatetime: null,
-  stocktakeNumber: 0,
-  enteredByName: '',
-  entryDatetime: new Date(),
-  onHold: false,
-  update: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  updateStocktakeDatetime: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  updateOnHold: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  updateStatus: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  sortBy: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  upsertItem: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-};
-
-export const isStocktakeEditable = (
-  stocktake: StocktakeController
-): boolean => {
-  return stocktake.status !== 'FINALISED';
-};
-
-export const flattenStocktakeItems = (
-  summaryItems: StocktakeItem[]
-): StocktakeLine[] => {
-  return summaryItems.map(({ lines }) => Object.values(lines)).flat();
-};
+import { StocktakeRow } from './types';
 
 export const getStocktakeStatuses = (): StocktakeNodeStatus[] => [
   StocktakeNodeStatus.Suggested,
