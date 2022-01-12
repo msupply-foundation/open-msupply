@@ -17,11 +17,7 @@ const StyledTabPanel = styled(TabPanel)({
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({
-  height: 300,
-  borderWidth: 1,
-  borderStyle: 'solid',
   borderColor: theme.palette.divider,
-  borderRadius: '20px',
   flexDirection: 'row',
   display: 'flex',
 }));

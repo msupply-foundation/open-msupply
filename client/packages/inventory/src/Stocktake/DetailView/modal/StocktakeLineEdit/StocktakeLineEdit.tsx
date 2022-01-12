@@ -44,7 +44,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
   const t = useTranslation(['common', 'inventory']);
-  const { draftLines, update } = useStocktakeLineEdit(item);
+  const { draftLines, update, addLine } = useStocktakeLineEdit(currentItem);
   const { mutate } = useSaveStocktakeLines();
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
           mode={mode}
         />
         <Divider margin={5} />
-        {item ? (
+        {currentItem ? (
           <TabContext value={currentTab}>
             <Box flex={1} display="flex" justifyContent="space-between">
               <Box flex={1} />
@@ -102,7 +102,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 <ButtonWithIcon
                   color="primary"
                   variant="outlined"
-                  onClick={() => {}}
+                  onClick={addLine}
                   label={t('label.add-batch', { ns: 'inventory' })}
                   Icon={<PlusCircleIcon />}
                 />
