@@ -1,7 +1,11 @@
-use async_graphql::ErrorExtensions;
+use crate::ContextExt;
+
+use async_graphql::{Context, ErrorExtensions, Result};
 use repository::RepositoryError;
 use service::{
-    permission_validation::{ValidationDeniedKind, ValidationError},
+    permission_validation::{
+        ResourceAccessRequest, ValidatedUser, ValidationDeniedKind, ValidationError,
+    },
     ListError,
 };
 use thiserror::Error;
@@ -39,9 +43,22 @@ impl From<RepositoryError> for StandardGraphqlError {
     }
 }
 
-impl From<ValidationError> for StandardGraphqlError {
-    fn from(err: ValidationError) -> Self {
-        match err {
+/// Validates current user is authenticated and authorized
+pub fn validate_auth(
+    ctx: &Context<'_>,
+    access_request: &ResourceAccessRequest,
+) -> Result<ValidatedUser> {
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
+
+    let result = service_provider.validation_service.validate(
+        &service_ctx,
+        ctx.get_auth_data(),
+        &ctx.get_auth_token(),
+        access_request,
+    );
+    result.map_err(|err| {
+        let graphql_error = match err {
             ValidationError::Denied(kind) => match kind {
                 ValidationDeniedKind::NotAuthenticated(_) => {
                     StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
@@ -51,16 +68,16 @@ impl From<ValidationError> for StandardGraphqlError {
                 }
             },
             ValidationError::InternalError(err) => StandardGraphqlError::InternalError(err),
-        }
-    }
+        };
+        graphql_error.extend()
+    })
 }
 
-impl From<ListError> for StandardGraphqlError {
-    fn from(err: ListError) -> Self {
-        match err {
-            ListError::DatabaseError(err) => err.into(),
-            ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
-            ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
-        }
-    }
+pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {
+    let gql_err = match err {
+        ListError::DatabaseError(err) => err.into(),
+        ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
+        ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
+    };
+    gql_err.extend()
 }

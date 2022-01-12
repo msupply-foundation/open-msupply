@@ -1,4 +1,3 @@
-use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
@@ -58,7 +57,7 @@ impl Queries {
         refresh_token(ctx)
     }
 
-    pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse, StandardGraphqlError> {
+    pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse> {
         me(ctx)
     }
 
@@ -79,7 +78,7 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<StoreFilterInput>,
-    ) -> Result<StoresResponse, StandardGraphqlError> {
+    ) -> Result<StoresResponse> {
         stores(ctx, page, filter)
     }
 

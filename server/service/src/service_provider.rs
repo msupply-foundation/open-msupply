@@ -10,11 +10,11 @@ use crate::{
     invoice_line::{OutboundShipmentLineService, OutboundShipmentLineServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
-    store::{StoreService, StoreServiceTrait},
     permission_validation::{ValidationService, ValidationServiceTrait},
     permissions::{PermissionService, PermissionServiceTrait},
     stock_take::{StockTakeService, StockTakeServiceTrait},
     stock_take_line::{StockTakeLineService, StockTakeLineServiceTrait},
+    store::{StoreService, StoreServiceTrait},
 };
 
 pub struct ServiceProvider {
@@ -55,12 +55,14 @@ impl ServiceProvider {
         }
     }
 
+    /// Creates a new service context with a new DB connection
     pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
         })
     }
 
+    /// Establishes a new DB connection
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
         self.connection_manager.connection()
     }
