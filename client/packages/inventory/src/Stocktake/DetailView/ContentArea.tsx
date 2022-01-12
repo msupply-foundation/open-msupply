@@ -5,11 +5,9 @@ import {
   Box,
   Switch,
   useIsGrouped,
-  useSortBy,
-  getDataSorter,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from './columns';
-import { useStocktakeLines, useStocktakeItems } from '../api';
+import { useStocktakeRows } from '../api';
 import { StocktakeSummaryItem, StocktakeLine } from '../../types';
 
 const Expand: FC<{ rowData: StocktakeSummaryItem | StocktakeLine }> = ({
@@ -30,26 +28,6 @@ const Expand: FC<{ rowData: StocktakeSummaryItem | StocktakeLine }> = ({
       </Box>
     </Box>
   );
-};
-
-const useStocktakeRows = (isGrouped: boolean) => {
-  const { sortBy, onChangeSortBy } = useSortBy<
-    StocktakeLine | StocktakeSummaryItem
-  >({
-    key: 'itemName',
-  });
-  const { data: lines } = useStocktakeLines();
-  const { data: items } = useStocktakeItems();
-
-  const rows = isGrouped
-    ? items?.sort(
-        getDataSorter(sortBy.key as keyof StocktakeSummaryItem, !!sortBy.isDesc)
-      )
-    : lines?.sort(
-        getDataSorter(sortBy.key as keyof StocktakeLine, !!sortBy.isDesc)
-      );
-
-  return { rows, onChangeSortBy, sortBy };
 };
 
 export const ContentArea: FC<{

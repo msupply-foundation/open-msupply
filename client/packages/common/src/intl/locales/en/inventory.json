@@ -17,5 +17,6 @@
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "label.group-by-item": "Group by item",
-  "error.no-items": "No items"
+  "error.no-items": "No items",
+  "error.cant-save": "There was a problem saving."
 }
