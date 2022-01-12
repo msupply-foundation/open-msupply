@@ -118,6 +118,7 @@ const usePackSizeController = (
     availableNumberOfPacks: number;
   }[]
 ) => {
+  const t = useTranslation('distribution');
   // Creating a sorted array of distinct pack sizes
   const packSizes = Array.from(
     new Set(
@@ -131,10 +132,17 @@ const usePackSizeController = (
     )
   );
 
-  const options = packSizes.map(packSize => ({
-    label: String(packSize),
-    value: packSize,
-  }));
+  const anySize = [];
+  if (packSizes.length > 1) {
+    anySize.push({ label: t('label.any'), value: 0 });
+  }
+
+  const options = anySize.concat(
+    packSizes.map(packSize => ({
+      label: String(packSize),
+      value: packSize,
+    }))
+  );
 
   const defaultPackSize = options[0] ?? { label: '', value: '' };
 
