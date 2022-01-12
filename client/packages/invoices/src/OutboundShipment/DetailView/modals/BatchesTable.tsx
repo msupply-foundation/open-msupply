@@ -181,7 +181,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
   return (
     <>
       <Divider margin={10} />
-      <TableContainer sx={{ height: 400, overflowX: 'hidden' }}>
+      <TableContainer sx={{ height: 375, overflowX: 'hidden' }}>
         <Table>
           <TableHead>
             <TableRow>
