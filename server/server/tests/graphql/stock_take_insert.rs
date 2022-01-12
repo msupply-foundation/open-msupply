@@ -4,35 +4,31 @@ mod graphql {
     use repository::{
         mock::MockDataInserts,
         schema::{StockTakeRow, StockTakeStatus},
-        StorageConnectionManager,
+        StockTake, StorageConnectionManager,
     };
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
         stock_take::{
-            update::{UpdateStockTakeError, UpdateStockTakeInput},
+            insert::{InsertStockTakeError, InsertStockTakeInput},
             StockTakeServiceTrait,
         },
     };
 
-    type UpdateMethod = dyn Fn(
-            &ServiceContext,
-            &str,
-            UpdateStockTakeInput,
-        ) -> Result<StockTakeRow, UpdateStockTakeError>
+    type ServiceMethod = dyn Fn(&ServiceContext, &str, InsertStockTakeInput) -> Result<StockTake, InsertStockTakeError>
         + Sync
         + Send;
 
-    pub struct TestService(pub Box<UpdateMethod>);
+    pub struct TestService(pub Box<ServiceMethod>);
 
     impl StockTakeServiceTrait for TestService {
-        fn update_stock_take(
+        fn insert_stock_take(
             &self,
             ctx: &ServiceContext,
             store_id: &str,
-            input: UpdateStockTakeInput,
-        ) -> Result<StockTakeRow, UpdateStockTakeError> {
+            input: InsertStockTakeInput,
+        ) -> Result<StockTake, InsertStockTakeError> {
             (self.0)(ctx, store_id, input)
         }
     }
@@ -47,20 +43,15 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_stock_take_update() {
+    async fn test_graphql_stock_take_insert() {
         let (_, _, connection_manager, settings) = setup_all(
-            "omsupply-database-gql-stock_take_update",
+            "omsupply-database-gql-stock_take_insert",
             MockDataInserts::all(),
         )
         .await;
 
-        let query = r#"mutation UpdateStockTake($storeId: String, $input: UpdateStockTakeInput!) {
-            updateStockTake(storeId: $storeId, input: $input) {
-                ... on UpdateStockTakeError {
-                  error {
-                    __typename
-                  }
-                }
+        let query = r#"mutation InsertStockTake($storeId: String, $input: InsertStockTakeInput!) {
+            insertStockTake(storeId: $storeId, input: $input) {
                 ... on StockTakeNode {                    
                         id
                         storeId
@@ -73,34 +64,6 @@ mod graphql {
                 }
             }
         }"#;
-
-        // SnapshotCountCurrentCountMismatch
-        let test_service = TestService(Box::new(|_, _, _| {
-            Err(UpdateStockTakeError::SnapshotCountCurrentCountMismatch(
-                vec![],
-            ))
-        }));
-        let variables = Some(json!({
-            "storeId": "store id",
-            "input": {
-                "id": "stock take id"
-            }
-        }));
-        let expected = json!({
-            "updateStockTake": {
-              "error": {
-                "__typename": "SnapshotCountCurrentCountMismatch"
-              }
-            }
-          }
-        );
-        assert_graphql_query!(
-            &settings,
-            query,
-            &variables,
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
 
         // success
         let test_service = TestService(Box::new(|_, _, _| {
@@ -118,11 +81,14 @@ mod graphql {
         let variables = Some(json!({
             "storeId": "store id",
             "input": {
-                "id": "id1"
+                "id": "id1",
+                "comment": "comment",
+                "description": "description",
+                "createdDatetime": "2022-01-22T15:16:00",
             }
         }));
         let expected = json!({
-            "updateStockTake": {
+            "insertStockTake": {
               "id": "id1",
               "storeId": "store id",
               "comment": "comment",
