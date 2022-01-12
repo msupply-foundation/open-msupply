@@ -10,7 +10,7 @@ use repository::{
 
 use crate::{
     service_provider::ServiceContext,
-    stock_take::validate::{check_stock_take_exist, check_stock_take_not_finalized},
+    stock_take::validate::{check_stock_take_exist, check_stock_take_not_finalised},
     u32_to_i32,
     validate::check_store_id_matches,
 };
@@ -122,7 +122,7 @@ fn validate(
         Some(stock_take) => stock_take,
         None => return Err(InsertStockTakeLineError::StockTakeDoesNotExist),
     };
-    if !check_stock_take_not_finalized(&stock_take.status) {
+    if !check_stock_take_not_finalised(&stock_take.status) {
         return Err(InsertStockTakeLineError::CannotEditFinalised);
     }
     if !check_store_id_matches(store_id, &stock_take.store_id) {

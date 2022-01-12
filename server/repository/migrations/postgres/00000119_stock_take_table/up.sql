@@ -1,6 +1,6 @@
 CREATE TYPE stock_take_status AS ENUM (
     'NEW',
-    'FINALIZED'
+    'FINALISED'
 );
 
 CREATE TABLE stock_take (

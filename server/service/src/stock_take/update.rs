@@ -17,7 +17,7 @@ use crate::{
 
 use super::{
     query::get_stock_take,
-    validate::{check_stock_take_exist, check_stock_take_not_finalized},
+    validate::{check_stock_take_exist, check_stock_take_not_finalised},
 };
 
 pub struct UpdateStockTakeInput {
@@ -77,7 +77,7 @@ fn validate(
         Some(existing) => existing,
         None => return Err(UpdateStockTakeError::StockTakeDoesNotExist),
     };
-    if !check_stock_take_not_finalized(&existing.status) {
+    if !check_stock_take_not_finalised(&existing.status) {
         return Err(UpdateStockTakeError::CannotEditFinalised);
     }
     if !check_store_id_matches(store_id, &existing.store_id) {
@@ -85,7 +85,7 @@ fn validate(
     }
     let stock_take_lines = load_stock_take_lines(connection, &input.id)?;
 
-    if let Some(StockTakeStatus::Finalized) = input.status {
+    if let Some(StockTakeStatus::Finalised) = input.status {
         if stock_take_lines.len() == 0 {
             return Err(UpdateStockTakeError::NoLines);
         }
@@ -261,7 +261,7 @@ fn generate(
     stock_take_lines: Vec<StockTakeLine>,
     store_id: &str,
 ) -> Result<StockTakeGenerateJob, UpdateStockTakeError> {
-    if input_status != Some(StockTakeStatus::Finalized) {
+    if input_status != Some(StockTakeStatus::Finalised) {
         // just update the existing stock take
         let stock_take = StockTakeRow {
             id: existing.id,
@@ -281,7 +281,7 @@ fn generate(
         });
     }
 
-    // finalize the stock take
+    // finalise the stock take
     let mut inventory_adjustment_lines: Vec<InvoiceLineRow> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
     let shipment_id = uuid();
