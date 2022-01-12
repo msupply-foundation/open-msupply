@@ -81,7 +81,7 @@ export const DataTable = <T extends DomainObject>({
       <MuiTable>
         <TableHead
           sx={{
-            backgroundColor: dense ? 'transparent' : 'background.white',
+            backgroundColor: 'background.white',
             flex: 1,
             display: 'flex',
             flexDirection: 'column',

@@ -32,6 +32,23 @@ const stocktakeLineToDraftLine = (
   };
 };
 
+const createDraftLine = (
+  stocktakeId: string,
+  item: Item
+): DraftStocktakeLine => {
+  return {
+    stocktakeId,
+    itemCode: item.code,
+    itemName: item.name,
+    countThisLine: true,
+    isCreated: true,
+    isUpdated: false,
+    id: generateUUID(),
+    expiryDate: null,
+    itemId: item.id,
+  };
+};
+
 const stockLineToDraftLine = (
   stocktakeId: string,
   line: StockLine
@@ -81,12 +98,16 @@ const useDraftStocktakeLines = (
   return [draftLines, setDraftLines];
 };
 
-export const useStocktakeLineEdit = (
-  item: Item | null
-): {
+interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<StocktakeLine>) => void;
-} => {
+  addLine: () => void;
+}
+
+export const useStocktakeLineEdit = (
+  item: Item | null
+): useStocktakeLineEditController => {
+  const { id = '' } = useParams();
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
 
   const update = (patch: RecordPatch<StocktakeLine>) => {
@@ -100,5 +121,11 @@ export const useStocktakeLineEdit = (
     });
   };
 
-  return { draftLines, update };
+  const addLine = () => {
+    if (item) {
+      setDraftLines(lines => [...lines, createDraftLine(id, item)]);
+    }
+  };
+
+  return { draftLines, update, addLine };
 };
