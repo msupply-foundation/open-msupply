@@ -134,7 +134,7 @@ const usePackSizeController = (
 
   const anySize = [];
   if (packSizes.length > 1) {
-    anySize.push({ label: t('label.any'), value: 0 });
+    anySize.push({ label: t('label.any'), value: -1 });
   }
 
   const options = anySize.concat(
@@ -145,7 +145,6 @@ const usePackSizeController = (
   );
 
   const defaultPackSize = options[0] ?? { label: '', value: '' };
-
   const [selected, setSelected] = useState(defaultPackSize);
 
   const setPackSize = (newValue: number) => {
@@ -264,6 +263,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     if (newValue < 1 || Number.isNaN(newValue)) {
       return;
     }
+
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
     if (batchRows.length === 1) {
@@ -289,10 +289,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
       const batchRow = newBatchRows[batchRowIdx];
       if (!batchRow) return null;
-      const currentAllocatedUnits = batchRow.numberOfPacks * batchRow.packSize;
-      const totalAvailableUnits =
+      const availableUnits =
         batchRow.availableNumberOfPacks * batchRow.packSize;
-      const availableUnits = totalAvailableUnits - currentAllocatedUnits;
       const allocatedUnits = Math.min(toAllocate, availableUnits);
       const allocatedNumberOfPacks = Math.floor(
         allocatedUnits / batchRow.packSize
@@ -302,7 +300,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
       newBatchRows[batchRowIdx] = {
         ...batchRow,
-        numberOfPacks: batchRow.numberOfPacks + allocatedNumberOfPacks,
+        numberOfPacks: allocatedNumberOfPacks,
       };
     });
 

@@ -41,12 +41,18 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   draft,
 }) => {
   const t = useTranslation(['distribution', 'common']);
-  const [issueType, setIssueType] = useState('packs');
+  const [issueType, setIssueType] = useState('units');
   const quantity =
-    issueType === 'packs'
-      ? allocatedQuantity / Number(packSizeController.selected.value)
-      : allocatedQuantity;
+    allocatedQuantity / Math.abs(Number(packSizeController.selected.value));
 
+  React.useEffect(
+    () =>
+      setIssueType(
+        packSizeController.selected.value === -1 ? 'units' : 'packs'
+      ),
+
+    [packSizeController.selected]
+  );
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -145,14 +151,9 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               inputProps={register('packSize')}
               options={packSizeController.options}
               value={packSizeController.selected.value}
-              onChange={e => {
-                const { value } = e.target;
-                const packSize = Number(value);
-                const issueType = packSize === 0 ? 'units' : 'packs';
-
-                setIssueType(issueType);
-                packSizeController.setPackSize(packSize);
-              }}
+              onChange={e =>
+                packSizeController.setPackSize(Number(e.target.value))
+              }
             />
 
             <Box marginLeft="auto" />
