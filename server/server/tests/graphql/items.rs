@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use repository::mock::MockDataInserts;
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -64,6 +64,6 @@ mod graphql {
               }
           }
         );
-        assert_gql_query(&settings, query, &Some(variables), &expected, None).await;
+        assert_graphql_query!(&settings, query, &Some(variables), &expected, None);
     }
 }

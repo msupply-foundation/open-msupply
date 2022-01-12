@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use domain::{
         location::{Location, LocationFilter, LocationSort, LocationSortField},
         EqualFilter, PaginationOption, Sort,
@@ -107,14 +107,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &None,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Test no records
 
@@ -135,14 +134,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &None,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -187,14 +185,13 @@ mod graphql {
           }]
         });
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &Some(variables),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Test sort by code with desc
         let test_service = TestService(Box::new(|_, _, sort| {
@@ -215,14 +212,13 @@ mod graphql {
           }]
         });
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &Some(variables),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Test filter
         let test_service = TestService(Box::new(|_, filter, _| {
@@ -239,13 +235,12 @@ mod graphql {
           }
         });
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &Some(variables),
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }
