@@ -11,18 +11,9 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { StocktakeLine, StocktakeSummaryItem } from '../../types';
+import { toItem } from '../../utils';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
-
-export const toItem = (line: StocktakeLine | StocktakeSummaryItem): Item => ({
-  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
-  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
-  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
-  isVisible: true,
-  availableBatches: [],
-  availableQuantity: 0,
-  unitName: 'bottle',
-});
 
 export const DetailView: FC = () => {
   const [modalState, setModalState] = useState<{

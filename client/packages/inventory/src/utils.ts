@@ -1,8 +1,9 @@
 import {
   StocktakeNodeStatus,
   useTranslation,
+  Item,
 } from '@openmsupply-client/common';
-import { StocktakeRow } from './types';
+import { StocktakeRow, StocktakeLine, StocktakeSummaryItem } from './types';
 
 export const getStocktakeStatuses = (): StocktakeNodeStatus[] => [
   StocktakeNodeStatus.Suggested,
@@ -38,3 +39,13 @@ export const getStocktakeTranslator =
 
 export const canDeleteStocktake = (row: StocktakeRow): boolean =>
   row.status === StocktakeNodeStatus.Suggested;
+
+export const toItem = (line: StocktakeLine | StocktakeSummaryItem): Item => ({
+  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
+  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
+  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
+  isVisible: true,
+  availableBatches: [],
+  availableQuantity: 0,
+  unitName: '',
+});
