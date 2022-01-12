@@ -52,63 +52,65 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
   return (
     <StyledTabPanel value={value}>
       <StyledTabContainer>
-        <StyledStaticArea>
-          <Box minHeight="40px" display="flex" alignItems="center">
-            <HeaderCell dense column={selectionColumn} />
-            <HeaderCell dense column={batchColumn} />
-          </Box>
+        {!!batches.length && (
+          <StyledStaticArea>
+            <Box minHeight="40px" display="flex" alignItems="center">
+              <HeaderCell dense column={selectionColumn} />
+              <HeaderCell dense column={batchColumn} />
+            </Box>
 
-          {batches.map((line, index) => {
-            const { id, batch, countThisLine } = line;
-            return (
-              <Box
-                flexDirection="row"
-                display="flex"
-                alignItems="center"
-                key={id}
-              >
-                <Box
-                  minHeight="42px"
-                  paddingLeft="16px"
-                  paddingRight="16px"
-                  width="125px"
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                >
-                  <Checkbox
-                    key={id}
-                    checked={countThisLine}
-                    onClick={() =>
-                      update({
-                        id: line.id,
-                        countThisLine: !countThisLine,
-                      })
-                    }
-                  />
-                  <Box width={100}>{`${t('label.line', {
-                    line: index + 1,
-                  })}`}</Box>
-                </Box>
-
+            {batches.map((line, index) => {
+              const { id, batch, countThisLine } = line;
+              return (
                 <Box
                   flexDirection="row"
                   display="flex"
                   alignItems="center"
-                  paddingLeft="16px"
-                  paddingRight="16px"
+                  key={id}
                 >
-                  <BasicTextInput
-                    value={batch}
-                    onChange={e =>
-                      update({ id: line.id, batch: e.target.value })
-                    }
-                  />
+                  <Box
+                    minHeight="42px"
+                    paddingLeft="16px"
+                    paddingRight="16px"
+                    width="125px"
+                    display="flex"
+                    flexDirection="row"
+                    alignItems="center"
+                  >
+                    <Checkbox
+                      key={id}
+                      checked={countThisLine}
+                      onClick={() =>
+                        update({
+                          id: line.id,
+                          countThisLine: !countThisLine,
+                        })
+                      }
+                    />
+                    <Box width={100}>{`${t('label.line', {
+                      line: index + 1,
+                    })}`}</Box>
+                  </Box>
+
+                  <Box
+                    flexDirection="row"
+                    display="flex"
+                    alignItems="center"
+                    paddingLeft="16px"
+                    paddingRight="16px"
+                  >
+                    <BasicTextInput
+                      value={batch}
+                      onChange={e =>
+                        update({ id: line.id, batch: e.target.value })
+                      }
+                    />
+                  </Box>
                 </Box>
-              </Box>
-            );
-          })}
-        </StyledStaticArea>
+              );
+            })}
+          </StyledStaticArea>
+        )}
         {children}
       </StyledTabContainer>
     </StyledTabPanel>
