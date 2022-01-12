@@ -299,9 +299,9 @@ query stocktake($stocktakeId: String!) {
             itemId
             id
             expiryDate
-            snapshotNumPacks
-            snapshotPackSize
-            countedNumPacks
+            packSize
+            snapshotNumberOfPacks
+            countedNumberOfPacks
             sellPricePerPack
             costPricePerPack
           }

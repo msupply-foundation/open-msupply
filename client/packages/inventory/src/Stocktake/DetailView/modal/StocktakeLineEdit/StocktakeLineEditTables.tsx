@@ -6,13 +6,15 @@ import {
   NumberInputCell,
   CurrencyInputCell,
   useTranslation,
+  getExpiryDateInputColumn,
 } from '@openmsupply-client/common';
-import { StocktakeLine } from '../../../../types';
 import { DraftStocktakeLine } from './hooks';
 interface StocktakeLineEditTableProps {
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
+
+const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
 
 export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
@@ -20,27 +22,27 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 }) => {
   const t = useTranslation('inventory');
 
-  const columns = useColumns<StocktakeLine>([
+  const columns = useColumns<DraftStocktakeLine>([
     {
-      key: 'snapshotNumPacks',
+      key: 'snapshotNumberOfPacks',
       label: 'label.num-packs',
       width: 100,
       setter: update,
     },
     {
-      key: 'snapshotPackSize',
+      key: 'packSize',
       label: 'label.pack-size',
       width: 100,
       setter: update,
     },
     {
-      key: 'countedNumPacks',
+      key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
       Cell: NumberInputCell,
       setter: update,
     },
-    'expiryDate',
+    [expiryDateColumn, { setter: update, width: 100 }],
   ]);
 
   return (
@@ -58,7 +60,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   update,
 }) => {
   const t = useTranslation('inventory');
-  const columns = useColumns<StocktakeLine>([
+  const columns = useColumns<DraftStocktakeLine>([
     [
       'sellPricePerPack',
       { Cell: CurrencyInputCell, width: 200, setter: update },
