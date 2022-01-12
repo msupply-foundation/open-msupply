@@ -7,6 +7,7 @@ import LocalStorage from '../localStorage/LocalStorage';
 type DetailPanelController = {
   hasUserSet: boolean;
   isOpen: boolean;
+  shouldPersist: boolean;
   open: () => void;
   close: () => void;
 };
@@ -16,9 +17,22 @@ export const useDetailPanelStore = create<DetailPanelController>(set => {
 
   return {
     hasUserSet: initialValue !== null,
-    isOpen: !!initialValue,
-    open: () => set(state => ({ ...state, isOpen: true, hasUserSet: true })),
-    close: () => set(state => ({ ...state, isOpen: false, hasUserSet: true })),
+    isOpen: false,
+    shouldPersist: true,
+    open: () =>
+      set(state => ({
+        ...state,
+        isOpen: true,
+        hasUserSet: true,
+        shouldPersist: true,
+      })),
+    close: () =>
+      set(state => ({
+        ...state,
+        isOpen: false,
+        hasUserSet: true,
+        shouldPersist: true,
+      })),
   };
 });
 
@@ -41,8 +55,9 @@ export const useDetailPanel = (): DetailPanel => {
   return { OpenButton, open, close };
 };
 
-useDetailPanelStore.subscribe(({ hasUserSet, isOpen }) => {
-  if (hasUserSet) LocalStorage.setItem('/detailpanel/open', isOpen);
+useDetailPanelStore.subscribe(({ hasUserSet, isOpen, shouldPersist }) => {
+  if (hasUserSet && shouldPersist)
+    LocalStorage.setItem('/detailpanel/open', isOpen);
 });
 
 LocalStorage.addListener<boolean>((key, value) => {

@@ -9,6 +9,7 @@ import { useTranslation } from '@common/intl';
 import { FlatButton } from '../../buttons';
 import { CloseIcon } from '@common/icons';
 import { Divider } from '../../divider/Divider';
+import { LocalStorage } from '../../../../localStorage';
 
 export interface DetailPanelPortalProps {
   Actions?: ReactNode;
@@ -64,13 +65,28 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
   const { hasUserSet, isOpen, close } = useDetailPanelStore();
   const isLargeScreen = useIsLargeScreen();
 
+  const setIsOpen = (isOpen: boolean) =>
+    useDetailPanelStore.setState(state => ({
+      ...state,
+      isOpen,
+      shouldPersist: false,
+    }));
+
   React.useEffect(() => {
-    if (hasUserSet) return;
-    if (isLargeScreen && isOpen)
-      useDetailPanelStore.setState(state => ({ ...state, isOpen: false }));
-    if (!isLargeScreen && !isOpen)
-      useDetailPanelStore.setState(state => ({ ...state, isOpen: true }));
-  }, [isLargeScreen]);
+    if (!hasUserSet) {
+      if (isLargeScreen && isOpen) setIsOpen(false);
+      if (!isLargeScreen && !isOpen) setIsOpen(true);
+    }
+  }, [isLargeScreen, hasUserSet, isOpen]);
+
+  React.useEffect(() => {
+    if (hasUserSet && !isOpen) {
+      setIsOpen(!!LocalStorage.getItem('/detailpanel/open'));
+    }
+    // set isOpen to false on unmounting, so that the open state
+    // is controlled by the portal and only shown if there is content
+    return () => setIsOpen(false);
+  }, []);
 
   if (!detailPanelRef) return null;
 
