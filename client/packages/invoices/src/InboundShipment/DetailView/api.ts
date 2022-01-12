@@ -32,11 +32,10 @@ import {
   getDataSorter,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { Location } from '@openmsupply-client/system';
+import { Location, toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { inboundLinesToSummaryItems } from '../../utils';
 import { InboundShipmentItem } from './../../types';
-import { toItem } from './DetailView';
 import { DraftInboundLine } from './modals/InboundLineEdit';
 
 const otherPartyGuard = (otherParty: NameResponse) => {

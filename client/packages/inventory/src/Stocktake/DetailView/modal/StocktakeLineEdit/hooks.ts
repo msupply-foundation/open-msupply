@@ -6,14 +6,13 @@ import {
   generateUUID,
   Item,
 } from '@openmsupply-client/common';
-import { useStockLines } from '@openmsupply-client/system';
+import { toItem, useStockLines } from '@openmsupply-client/system';
 import { StocktakeLine } from '../../../../types';
 import {
   useStocktakeRows,
   useStocktakeLines,
   useSaveStocktakeLines,
 } from '../../../api';
-import { toItem } from '../../../../utils';
 
 export type DraftStocktakeLine = StocktakeLine & {
   countThisLine: boolean;
@@ -141,7 +140,7 @@ export const useStocktakeLineEdit = (
     setDraftLines(lines => {
       return lines.map(line => {
         if (line.id === patch.id) {
-          return { ...line, ...patch, isUpdated: true };
+          return { ...line, ...patch, isUpdated: !line.isCreated };
         }
         return line;
       });
