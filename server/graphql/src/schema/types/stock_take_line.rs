@@ -52,10 +52,6 @@ impl StockTakeLineNode {
         }
     }
 
-    pub async fn location_id(&self) -> Option<String> {
-        self.line.line.location_id.clone()
-    }
-
     pub async fn location(&self) -> Option<LocationNode> {
         self.line.location.clone().map(|location| LocationNode {
             location: location_to_domain(location),
