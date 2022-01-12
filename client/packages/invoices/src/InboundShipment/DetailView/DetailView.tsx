@@ -5,6 +5,7 @@ import {
   Item,
   ModalMode,
 } from '@openmsupply-client/common';
+import { toItem } from '@openmsupply-client/system';
 import { useDraftInbound } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -14,16 +15,6 @@ import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 import { isInboundEditable } from '../../utils';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
-
-export const toItem = (line: InboundShipmentItem | InvoiceLine): Item => ({
-  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
-  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
-  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
-  isVisible: true,
-  availableBatches: [],
-  availableQuantity: 0,
-  unitName: 'bottle',
-});
 
 export const DetailView: FC = () => {
   const { draft } = useDraftInbound();
