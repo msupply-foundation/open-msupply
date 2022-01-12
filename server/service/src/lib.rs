@@ -15,9 +15,9 @@ pub mod permission_validation;
 pub mod permissions;
 pub mod service_provider;
 pub mod stock_line;
-pub mod store;
 pub mod stock_take;
 pub mod stock_take_line;
+pub mod store;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
@@ -115,6 +115,10 @@ pub fn get_default_pagination(
     };
 
     Ok(result)
+}
+
+pub fn i32_to_u32(num: i32) -> u32 {
+    num.try_into().unwrap_or(0)
 }
 
 pub fn i64_to_u32(num: i64) -> u32 {
