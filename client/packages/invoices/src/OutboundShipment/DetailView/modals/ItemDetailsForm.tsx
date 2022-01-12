@@ -151,9 +151,12 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               inputProps={register('packSize')}
               options={packSizeController.options}
               value={packSizeController.selected.value}
-              onChange={e =>
-                packSizeController.setPackSize(Number(e.target.value))
-              }
+              onChange={e => {
+                const { value } = e.target;
+                const packSize = Number(value);
+                packSizeController.setPackSize(packSize);
+                onChangeQuantity(quantity, packSize === -1 ? null : packSize);
+              }}
             />
 
             <Box marginLeft="auto" />

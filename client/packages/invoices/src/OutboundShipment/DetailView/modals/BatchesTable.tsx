@@ -19,9 +19,11 @@ import {
   ReadOnlyInput,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../../../types';
+import { PackSizeController } from './ItemDetailsModal';
 
 export interface BatchesTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
+  packSizeController: PackSizeController;
   register: UseFormRegister<FieldValues>;
   rows: BatchRow[];
 }
@@ -42,10 +44,14 @@ export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
 
 type BatchesRowProps = {
   batch: BatchRow;
-  label: string;
-  onChange: (key: string, value: number, packSize: number) => void;
+  disabled?: boolean;
+  onChange?: (key: string, value: number, packSize: number) => void;
 };
-const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
+const BatchesRow: React.FC<BatchesRowProps> = ({
+  batch,
+  disabled,
+  onChange,
+}) => {
   const { register } = useFormContext();
   const t = useTranslation('common');
   const d = useFormatDate();
@@ -54,7 +60,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
     const value = Math.max(Number(event.target.value), 0);
     const newValue = Math.min(value, batch.availableNumberOfPacks);
 
-    onChange(batch.id, newValue, batch.packSize);
+    onChange?.(batch.id, newValue, batch.packSize);
   };
 
   const stockLineInputProps = register(batch.id, {
@@ -68,12 +74,11 @@ const BatchesRow: React.FC<BatchesRowProps> = ({ batch, label, onChange }) => {
   });
 
   const expiryDate = new Date(batch.expiryDate ?? '');
-  const isDisabled = batch.availableNumberOfPacks === 0 || batch.onHold;
+  const isDisabled = !!disabled;
 
   // TODO format currency correctly
   return (
     <TableRow sx={{ color: isDisabled ? 'gray.main' : 'black' }}>
-      <BasicCell align="right">{label}</BasicCell>
       <BasicCell sx={{ width: '88px' }}>
         <ModalNumericInput
           value={batch.numberOfPacks}
@@ -138,6 +143,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
 
 export const BatchesTable: React.FC<BatchesTableProps> = ({
   onChange,
+  packSizeController,
   register,
   rows,
 }) => {
@@ -155,27 +161,30 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
 
   const rowsWithoutPlaceholder = rows.filter(({ id }) => id !== 'placeholder');
 
+  const isRequestedPackSize = (packSize: number) =>
+    packSizeController.selected.value === -1 ||
+    packSize === packSizeController.selected.value;
+
   const allocatableRows = rowsWithoutPlaceholder
     .filter(
-      ({ onHold, availableNumberOfPacks }) =>
-        !onHold && availableNumberOfPacks > 0
+      ({ onHold, availableNumberOfPacks, packSize }) =>
+        !onHold && availableNumberOfPacks > 0 && isRequestedPackSize(packSize)
     )
     .sort(sortByExpiry);
 
-  const nonAllocatableRows = rowsWithoutPlaceholder.filter(
-    ({ onHold, availableNumberOfPacks }) =>
-      onHold || availableNumberOfPacks === 0
-  );
-
-  const onHoldRows = nonAllocatableRows
+  const onHoldRows = rowsWithoutPlaceholder
     .filter(({ onHold }) => onHold)
     .sort(sortByExpiry);
 
-  const noStockRows = nonAllocatableRows
+  const noStockRows = rowsWithoutPlaceholder
     .filter(
       ({ availableNumberOfPacks, onHold }) =>
         availableNumberOfPacks === 0 && !onHold
     )
+    .sort(sortByExpiry);
+
+  const wrongPackSizeRows = rowsWithoutPlaceholder
+    .filter(({ packSize }) => !isRequestedPackSize(packSize))
     .sort(sortByExpiry);
 
   return (
@@ -185,7 +194,6 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
         <Table>
           <TableHead>
             <TableRow>
-              <HeaderCell></HeaderCell>
               <HeaderCell>{t('label.num-packs')}</HeaderCell>
               <HeaderCell>{t('label.pack')}</HeaderCell>
               <HeaderCell>{t('label.unit-quantity')}</HeaderCell>
@@ -199,38 +207,21 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody sx={{ overflowY: 'scroll' }}>
-            {allocatableRows.map((batch, index) => (
-              <BatchesRow
-                batch={batch}
-                key={batch.id}
-                label={t('label.line', { line: index + 1 })}
-                onChange={onChange}
-              />
+            {allocatableRows.map(batch => (
+              <BatchesRow batch={batch} key={batch.id} onChange={onChange} />
             ))}
             <TableRow
               sx={{ height: 1, border: '2px solid', borderColor: 'divider' }}
             />
-            {onHoldRows.map((batch, index) => (
-              <BatchesRow
-                batch={batch}
-                key={batch.id}
-                label={t('label.line', {
-                  line: allocatableRows.length + index + 1,
-                })}
-                onChange={onChange}
-              />
+            {wrongPackSizeRows.map(batch => (
+              <BatchesRow batch={batch} key={batch.id} disabled />
             ))}
-            {noStockRows.map((batch, index) => (
-              <BatchesRow
-                batch={batch}
-                key={batch.id}
-                label={t('label.line', {
-                  line: allocatableRows.length + onHoldRows.length + index + 1,
-                })}
-                onChange={onChange}
-              />
+            {onHoldRows.map(batch => (
+              <BatchesRow batch={batch} key={batch.id} disabled />
             ))}
-
+            {noStockRows.map(batch => (
+              <BatchesRow batch={batch} key={batch.id} disabled />
+            ))}
             <TableRow>
               <BasicCell align="right" sx={{ paddingTop: '3px' }}>
                 {t('label.placeholder')}

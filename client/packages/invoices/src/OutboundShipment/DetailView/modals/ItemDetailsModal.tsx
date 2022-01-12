@@ -275,7 +275,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     // calculations are normalised to units
     let toAllocate = newValue * (issuePackSize || 1);
 
-    const newBatchRows = [...batchRows];
+    const newBatchRows = batchRows.map(batch => ({
+      ...batch,
+      numberOfPacks: 0,
+    }));
     const validBatches = newBatchRows
       .filter(
         ({ packSize, onHold, availableNumberOfPacks }) =>
@@ -365,6 +368,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             {!!summaryItem ? (
               !isLoading ? (
                 <BatchesTable
+                  packSizeController={packSizeController}
                   onChange={onChangeRowQuantity}
                   register={register}
                   rows={batchRows}
