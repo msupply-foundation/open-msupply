@@ -302,6 +302,7 @@ mod stock_take_test {
             StockTakeRow {
                 id: stock_take.id,
                 store_id: store_a.id,
+                stock_take_number: stock_take.stock_take_number,
                 comment: Some("comment_1".to_string()),
                 description: Some("description_1".to_string()),
                 status: stock_take.status,

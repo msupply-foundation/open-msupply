@@ -15,6 +15,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 pub struct StockTakeFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub stock_take_number: Option<EqualFilter<i64>>,
     pub status: Option<EqualFilter<StockTakeStatus>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
@@ -25,6 +26,7 @@ impl StockTakeFilter {
         StockTakeFilter {
             id: None,
             store_id: None,
+            stock_take_number: None,
             status: None,
             created_datetime: None,
             finalised_datetime: None,
@@ -38,6 +40,11 @@ impl StockTakeFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn stock_take_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.stock_take_number = Some(filter);
         self
     }
 
@@ -75,6 +82,7 @@ pub fn create_filtered_query<'a>(filter: Option<StockTakeFilter>) -> BoxedStockT
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, stock_take::id);
         apply_equal_filter!(query, f.store_id, stock_take::store_id);
+        apply_equal_filter!(query, f.stock_take_number, stock_take::stock_take_number);
 
         if let Some(value) = f.status {
             if let Some(eq) = value.equal_to {

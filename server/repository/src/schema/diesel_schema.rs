@@ -230,6 +230,7 @@ table! {
     stock_take (id) {
         id -> Text,
         store_id -> Text,
+        stock_take_number -> BigInt,
         comment	-> Nullable<Text>,
         description -> Nullable<Text>,
         status -> crate::schema::stock_take::StockTakeStatusMapping,
