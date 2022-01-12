@@ -73,6 +73,9 @@ export function Autocomplete<T>({
       sx={{ width }}
     />
   );
+  const getOptionLabel = (option: { label?: string } & T): string => {
+    return option.label ?? '';
+  };
 
   return (
     <MuiAutocomplete
@@ -94,6 +97,7 @@ export function Autocomplete<T>({
       renderInput={renderInput || defaultRenderInput}
       renderOption={renderOption}
       onChange={onChange}
+      getOptionLabel={getOptionLabel}
     />
   );
 }
