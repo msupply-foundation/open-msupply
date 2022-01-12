@@ -1,6 +1,6 @@
 use crate::ContextExt;
 
-use async_graphql::{Context, Error as AsyncGQLError, ErrorExtensions, Result};
+use async_graphql::{Context, ErrorExtensions, Result};
 use repository::RepositoryError;
 use service::{
     permission_validation::{
@@ -73,7 +73,7 @@ pub fn validate_auth(
     })
 }
 
-pub fn list_error_to_gql_err(err: ListError) -> AsyncGQLError {
+pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {
     let gql_err = match err {
         ListError::DatabaseError(err) => err.into(),
         ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
