@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use repository::{mock::MockDataInserts, schema::StockTakeRow, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -82,13 +82,12 @@ mod graphql {
             }
           }
         );
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             query,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }

@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_gql_query;
+    use crate::graphql::assert_graphql_query;
     use domain::location::{InsertLocation, Location};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
@@ -75,14 +75,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Unique code violation
         let mutation = r#"
@@ -114,14 +113,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         // Created record does not exists (this shouldn't happen, but want to test internal error)
         let mutation = r#"
@@ -155,14 +153,13 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -215,13 +212,12 @@ mod graphql {
           }
         );
 
-        assert_gql_query(
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
             &expected,
-            Some(service_provider(test_service, &connection_manager)),
-        )
-        .await;
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }

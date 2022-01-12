@@ -156,6 +156,30 @@ impl Mutations {
         get_delete_outbound_shipment_service_line_response(connection_manager, input)
     }
 
+    async fn insert_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        input: outbound_shipment::unallocated_line::InsertInput,
+    ) -> Result<outbound_shipment::unallocated_line::InsertResponse> {
+        outbound_shipment::unallocated_line::insert(ctx, input)
+    }
+
+    async fn update_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        input: outbound_shipment::unallocated_line::UpdateInput,
+    ) -> Result<outbound_shipment::unallocated_line::UpdateResponse> {
+        outbound_shipment::unallocated_line::update(ctx, input)
+    }
+
+    async fn delete_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        input: outbound_shipment::unallocated_line::DeleteInput,
+    ) -> Result<outbound_shipment::unallocated_line::DeleteResponse> {
+        outbound_shipment::unallocated_line::delete(ctx, input)
+    }
+
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
