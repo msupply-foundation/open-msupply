@@ -55,6 +55,7 @@ mod graphql {
                 ... on StockTakeNode {                    
                         id
                         storeId
+                        stockTakeNumber
                         comment
                         description
                         status
@@ -69,6 +70,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(StockTakeRow {
                 id: "id1".to_string(),
+                stock_take_number: 123,
                 store_id: "store id".to_string(),
                 comment: Some("comment".to_string()),
                 description: Some("description".to_string()),
@@ -91,6 +93,7 @@ mod graphql {
             "insertStockTake": {
               "id": "id1",
               "storeId": "store id",
+              "stockTakeNumber": 123,
               "comment": "comment",
               "description": "description",
               "status": "FINALISED",

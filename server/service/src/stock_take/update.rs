@@ -266,6 +266,7 @@ fn generate(
         let stock_take = StockTakeRow {
             id: existing.id,
             store_id: existing.store_id,
+            stock_take_number: existing.stock_take_number,
             comment: input_comment.or(existing.comment),
             description: input_description.or(existing.description),
             status: input_status.unwrap_or(existing.status),
@@ -333,6 +334,7 @@ fn generate(
     let stock_take = StockTakeRow {
         id: existing.id,
         store_id: existing.store_id,
+        stock_take_number: existing.stock_take_number,
         comment: input_comment.or(existing.comment),
         description: input_description.or(existing.description),
         status: input_status.unwrap_or(existing.status),

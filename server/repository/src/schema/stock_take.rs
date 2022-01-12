@@ -14,6 +14,7 @@ pub enum StockTakeStatus {
 pub struct StockTakeRow {
     pub id: String,
     pub store_id: String,
+    pub stock_take_number: i64,
     pub comment: Option<String>,
     pub description: Option<String>,
     pub status: StockTakeStatus,
