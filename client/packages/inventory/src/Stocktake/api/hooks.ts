@@ -10,6 +10,8 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   groupBy,
+  getDataSorter,
+  useSortBy,
 } from '@openmsupply-client/common';
 import { Stocktake, StocktakeLine, StocktakeSummaryItem } from '../../types';
 import { StocktakeApi } from './api';
@@ -95,4 +97,24 @@ export const useSaveStocktakeLines = () => {
       queryClient.invalidateQueries(queryKey);
     },
   });
+};
+
+export const useStocktakeRows = (isGrouped = true) => {
+  const { sortBy, onChangeSortBy } = useSortBy<
+    StocktakeLine | StocktakeSummaryItem
+  >({
+    key: 'itemName',
+  });
+  const { data: lines } = useStocktakeLines();
+  const { data: items } = useStocktakeItems();
+
+  const rows = isGrouped
+    ? items?.sort(
+        getDataSorter(sortBy.key as keyof StocktakeSummaryItem, !!sortBy.isDesc)
+      )
+    : lines?.sort(
+        getDataSorter(sortBy.key as keyof StocktakeLine, !!sortBy.isDesc)
+      );
+
+  return { rows, lines, items, onChangeSortBy, sortBy };
 };
