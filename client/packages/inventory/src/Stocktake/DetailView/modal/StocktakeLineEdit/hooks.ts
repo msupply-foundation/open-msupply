@@ -47,6 +47,8 @@ const createDraftLine = (
     id: generateUUID(),
     expiryDate: null,
     itemId: item.id,
+    sellPricePerPack: 0,
+    costPricePerPack: 0,
   };
 };
 
@@ -62,6 +64,7 @@ const stockLineToDraftLine = (
     isCreated: false,
     isUpdated: false,
     ...line,
+    snapshotNumberOfPacks: line.totalNumberOfPacks,
     expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
     id: generateUUID(),
   };

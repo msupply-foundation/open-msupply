@@ -56,7 +56,7 @@ const createUpdateStocktakeLineInput = (
     costPricePerPack: line.costPricePerPack,
     sellPricePerPack: line.sellPricePerPack,
     id: line.id,
-    countedNumPacks: line.countedNumPacks,
+    countedNumPacks: line.countedNumberOfPacks,
     expiryDate: line.expiryDate ? formatNaiveDate(line.expiryDate) : undefined,
   };
 };
@@ -67,7 +67,7 @@ const createInsertStocktakeLineInput = (
   return {
     batch: line.batch ?? '',
     costPricePerPack: line.costPricePerPack,
-    countedNumPacks: line.countedNumPacks,
+    countedNumPacks: line.countedNumberOfPacks,
     id: line.id,
     itemId: line.itemId,
     sellPricePerPack: line.sellPricePerPack,

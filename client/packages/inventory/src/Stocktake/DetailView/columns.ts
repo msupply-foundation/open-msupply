@@ -1,4 +1,5 @@
 import {
+  getRowExpandColumn,
   GenericColumnKey,
   useColumns,
   ColumnAlign,
@@ -16,6 +17,8 @@ interface UseStocktakeColumnOptions {
     newSortRule: SortRule<StocktakeLine | StocktakeSummaryItem>
   ) => SortBy<StocktakeLine | StocktakeSummaryItem>;
 }
+
+const expandColumn = getRowExpandColumn<StocktakeLine | StocktakeSummaryItem>();
 
 export const useStocktakeColumns = ({
   sortBy,
@@ -114,52 +117,56 @@ export const useStocktakeColumns = ({
           },
         },
       ],
-
-      {
-        key: 'countedNumPacks',
-        label: 'label.counted-num-of-packs',
-        width: 150,
-        align: ColumnAlign.Right,
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            return ifTheSameElseDefault(lines, 'countedNumPacks', '') ?? '';
-          } else {
-            return row.countedNumPacks ?? '';
-          }
-        },
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ifTheSameElseDefault(lines, 'countedNumPacks', '');
-          } else {
-            return rowData.countedNumPacks;
-          }
-        },
-      },
-
+      ['packSize', { width: 125 }],
       {
         key: 'snapshotNumPacks',
+        width: 200,
         label: 'label.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            return ifTheSameElseDefault(lines, 'snapshotNumPacks', '') ?? '';
+            return (
+              ifTheSameElseDefault(lines, 'snapshotNumberOfPacks', '') ?? ''
+            );
           } else {
-            return row.snapshotNumPacks ?? '';
+            return row.snapshotNumberOfPacks ?? '';
           }
         },
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return ifTheSameElseDefault(lines, 'snapshotNumPacks', '');
+            return ifTheSameElseDefault(lines, 'snapshotNumberOfPacks', '');
           } else {
-            return rowData.snapshotNumPacks;
+            return rowData.snapshotNumberOfPacks;
           }
         },
       },
-
+      {
+        key: 'countedNumPacks',
+        label: 'label.counted-num-of-packs',
+        width: 200,
+        align: ColumnAlign.Right,
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            return (
+              ifTheSameElseDefault(lines, 'countedNumberOfPacks', '') ?? ''
+            );
+          } else {
+            return row.countedNumberOfPacks ?? '';
+          }
+        },
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ifTheSameElseDefault(lines, 'countedNumberOfPacks', '');
+          } else {
+            return rowData.countedNumberOfPacks;
+          }
+        },
+      },
+      expandColumn,
       GenericColumnKey.Selection,
     ],
     { sortBy, onChangeSortBy },
