@@ -172,3 +172,24 @@ export const useStocktakeColumns = ({
     { sortBy, onChangeSortBy },
     [sortBy, onChangeSortBy]
   );
+
+export const useExpansionColumns = (): Column<StocktakeLine>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    'packSize',
+    {
+      key: 'snapshotNumPacks',
+      width: 200,
+      label: 'label.snapshot-num-of-packs',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
+    },
+    {
+      key: 'countedNumPacks',
+      label: 'label.counted-num-of-packs',
+      width: 200,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks,
+    },
+  ]);

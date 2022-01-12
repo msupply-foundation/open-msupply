@@ -105,7 +105,7 @@ export const DataTable = <T extends DomainObject>({
           <TransitionGroup>
             {data.map((row, idx) => {
               return (
-                <Collapse key={row.id}>
+                <Collapse sx={{ flex: 1, display: 'flex' }} key={row.id}>
                   <DataRow
                     rows={data}
                     ExpandContent={ExpandContent}

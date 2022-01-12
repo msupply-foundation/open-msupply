@@ -5,29 +5,23 @@ import {
   Box,
   Switch,
   useIsGrouped,
+  MiniTable,
 } from '@openmsupply-client/common';
-import { useStocktakeColumns } from './columns';
+import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { useStocktakeRows } from '../api';
 import { StocktakeSummaryItem, StocktakeLine } from '../../types';
 
-const Expand: FC<{ rowData: StocktakeSummaryItem | StocktakeLine }> = ({
+const Expando = ({
   rowData,
+}: {
+  rowData: StocktakeLine | StocktakeSummaryItem;
 }) => {
-  return (
-    <Box p={1} height={300} style={{ overflow: 'scroll' }}>
-      <Box
-        flex={1}
-        display="flex"
-        height="100%"
-        borderRadius={4}
-        bgcolor="#c7c9d933"
-      >
-        <span style={{ whiteSpace: 'pre-wrap' }}>
-          {JSON.stringify(rowData, null, 2)}
-        </span>
-      </Box>
-    </Box>
-  );
+  const expandoColumns = useExpansionColumns();
+  if ('lines' in rowData && rowData.lines.length > 1) {
+    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
+  } else {
+    return null;
+  }
 };
 
 export const ContentArea: FC<{
@@ -54,7 +48,7 @@ export const ContentArea: FC<{
       </Box>
       <DataTable<StocktakeSummaryItem | StocktakeLine>
         onRowClick={onRowClick}
-        ExpandContent={Expand}
+        ExpandContent={Expando}
         columns={columns}
         data={rows}
         noDataMessage={t('error.no-items')}

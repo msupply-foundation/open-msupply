@@ -86,9 +86,20 @@ export const DataRow = <T extends DomainObject>({
           );
         })}
       </TableRow>
-      <tr>
-        <td style={{ display: 'flex' }}>
-          <Collapse sx={{ flex: 1 }} in={isExpanded}>
+      <tr style={{ display: 'flex' }}>
+        <td style={{ display: 'flex', flex: 1 }}>
+          <Collapse
+            sx={{
+              flex: 1,
+              display: 'flex',
+              '& .MuiCollapse-wrapperInner': {
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+              },
+            }}
+            in={isExpanded}
+          >
             {ExpandContent ? <ExpandContent rowData={rowData} /> : null}
           </Collapse>
         </td>
