@@ -53,7 +53,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
     <StyledTabPanel value={value}>
       <StyledTabContainer>
         <StyledStaticArea>
-          <Box height="40px" display="flex" alignItems="center">
+          <Box minHeight="40px" display="flex" alignItems="center">
             <HeaderCell dense column={selectionColumn} />
             <HeaderCell dense column={batchColumn} />
           </Box>
@@ -68,6 +68,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                 key={id}
               >
                 <Box
+                  minHeight="42px"
                   paddingLeft="16px"
                   paddingRight="16px"
                   width="125px"
@@ -85,7 +86,9 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                       })
                     }
                   />
-                  <Box>{`${t('label.line', { line: index + 1 })}`}</Box>
+                  <Box width={100}>{`${t('label.line', {
+                    line: index + 1,
+                  })}`}</Box>
                 </Box>
 
                 <Box

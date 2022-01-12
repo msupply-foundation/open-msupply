@@ -52,12 +52,14 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
 
-      <StocktakeLineEdit
-        isOpen={modalState.isOpen}
-        onClose={onClose}
-        mode={modalState.mode}
-        item={modalState.item}
-      />
+      {modalState.isOpen && (
+        <StocktakeLineEdit
+          isOpen={modalState.isOpen}
+          onClose={onClose}
+          mode={modalState.mode}
+          item={modalState.item}
+        />
+      )}
     </TableProvider>
   );
 };
