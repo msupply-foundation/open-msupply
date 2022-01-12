@@ -101,6 +101,12 @@ const useDraftStocktakeLines = (
     setDraftLines(lines => [...lines, ...uncounted]);
   }, [stockLines]);
 
+  useEffect(() => {
+    setDraftLines(lines => {
+      return lines.filter(({ itemId }) => itemId === item?.id);
+    });
+  }, [item]);
+
   return [draftLines, setDraftLines];
 };
 
