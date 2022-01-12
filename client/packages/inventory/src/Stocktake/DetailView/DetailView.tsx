@@ -5,13 +5,13 @@ import {
   Item,
   ModalMode,
 } from '@openmsupply-client/common';
-
+import { toItem } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { StocktakeLine, StocktakeSummaryItem } from '../../types';
-import { toItem } from '../../utils';
+
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 
