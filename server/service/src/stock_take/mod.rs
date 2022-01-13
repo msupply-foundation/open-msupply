@@ -23,11 +23,12 @@ pub trait StockTakeServiceTrait: Sync + Send {
     fn get_stock_takes(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<StockTakeFilter>,
         sort: Option<StockTakeSort>,
     ) -> Result<ListResult<StockTake>, ListError> {
-        get_stock_takes(ctx, pagination, filter, sort)
+        get_stock_takes(ctx, store_id, pagination, filter, sort)
     }
 
     fn get_stock_take(
