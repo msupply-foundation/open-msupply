@@ -58,23 +58,6 @@ mod graphql {
           updateStockTakeLine(storeId: $storeId, input: $input) {
               ... on StockTakeLineNode {                    
                       id
-                      stockTakeId
-                      stockLine {
-                        id
-                      }
-                      location {
-                        id
-                      }
-                      snapshotNumberOfPacks
-                      countedNumberOfPacks
-                      comment
-                      itemId
-                      batch
-                      expiryDate
-                      packSize
-                      costPricePerPack
-                      sellPricePerPack
-                      note
               }
           }
       }"#;
@@ -121,23 +104,6 @@ mod graphql {
         let expected = json!({
             "updateStockTakeLine": {
               "id": "id1",
-              "stockTakeId": "stock take id",
-              "stockLine": {
-                "id": mock_stock_line_a().id,
-              },
-              "location": {
-                "id": mock_loaction_1().id,
-              },
-              "snapshotNumberOfPacks": 10,
-              "countedNumberOfPacks": 20,
-              "comment": "comment",
-              "itemId": "item id",
-              "batch": "batch",
-              "expiryDate": "2023-01-22",
-              "packSize": 10,
-              "costPricePerPack": 10.0,
-              "sellPricePerPack": 12.0,
-              "note": "note"
             }
           }
         );
