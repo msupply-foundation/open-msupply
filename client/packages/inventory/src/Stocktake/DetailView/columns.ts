@@ -7,14 +7,13 @@ import {
   formatExpiryDate,
   Column,
   SortBy,
-  SortRule,
 } from '@openmsupply-client/common';
 import { StocktakeLine, StocktakeSummaryItem } from './../../types';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLine | StocktakeSummaryItem>;
   onChangeSortBy: (
-    newSortRule: SortRule<StocktakeLine | StocktakeSummaryItem>
+    column: Column<StocktakeLine | StocktakeSummaryItem>
   ) => SortBy<StocktakeLine | StocktakeSummaryItem>;
 }
 

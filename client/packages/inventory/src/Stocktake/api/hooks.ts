@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   useQuerySelector,
   StocktakeNodeStatus,
@@ -10,11 +11,12 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   groupBy,
-  getDataSorter,
+  getColumnSorter,
   useSortBy,
 } from '@openmsupply-client/common';
 import { Stocktake, StocktakeLine, StocktakeSummaryItem } from '../../types';
 import { StocktakeApi } from './api';
+import { useStocktakeColumns } from '../DetailView/columns';
 
 export const useStocktake = (): UseQueryResult<Stocktake> => {
   const { id = '' } = useParams();
@@ -107,14 +109,35 @@ export const useStocktakeRows = (isGrouped = true) => {
   });
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
+  const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
 
-  const rows = isGrouped
-    ? items?.sort(
-        getDataSorter(sortBy.key as keyof StocktakeSummaryItem, !!sortBy.isDesc)
-      )
-    : lines?.sort(
-        getDataSorter(sortBy.key as keyof StocktakeLine, !!sortBy.isDesc)
-      );
+  const sortedItems = useMemo(() => {
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return items;
+    const sorter = getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+    return items?.sort(sorter);
+  }, [items, sortBy.key, sortBy.isDesc]);
 
-  return { rows, lines, items, onChangeSortBy, sortBy };
+  const sortedLines = useMemo(() => {
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return items;
+    const sorter = getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+    return items?.sort(sorter);
+  }, [lines, sortBy.key, sortBy.isDesc]);
+
+  const rows = isGrouped ? sortedItems : sortedLines;
+
+  return {
+    rows,
+    lines: sortedLines,
+    items: sortedItems,
+    onChangeSortBy,
+    sortBy,
+  };
 };

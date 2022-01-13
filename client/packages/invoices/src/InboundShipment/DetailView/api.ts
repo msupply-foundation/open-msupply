@@ -9,7 +9,6 @@ import {
   UpdateInboundShipmentMutation,
   useParams,
   useOmSupplyApi,
-  Column,
   useQueryClient,
   useMutation,
   InvoiceLineConnector,
@@ -391,12 +390,7 @@ export const useInboundItems = () => {
   const { sortBy, onChangeSortBy } = useSortBy<InboundShipmentItem>({
     key: 'itemName',
   });
-  const onSort = (column: Column<InboundShipmentItem>) => {
-    onChangeSortBy({
-      key: column.key,
-      isDesc: sortBy.key === column.key ? !sortBy.isDesc : false,
-    });
-  };
+
   const selectItems = useCallback((invoice: Invoice) => {
     return inboundLinesToSummaryItems(invoice.lines).sort(
       getDataSorter(sortBy.key as keyof InboundShipmentItem, !!sortBy.isDesc)
@@ -405,7 +399,7 @@ export const useInboundItems = () => {
 
   const { data } = useInboundShipmentSelector(selectItems);
 
-  return { data, sortBy, onSort };
+  return { data, sortBy, onSort: onChangeSortBy };
 };
 
 export const useNextItem = (currentItemId: string): Item | null => {
