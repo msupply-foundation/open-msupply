@@ -40,7 +40,7 @@ impl From<LocationFilterInput> for LocationFilter {
 
 #[derive(PartialEq, Debug)]
 pub struct LocationNode {
-    location: Location,
+    pub location: Location,
 }
 
 #[Object]

@@ -17,7 +17,7 @@ pub struct StockTakeLineRow {
 
     // stock line related fields:
     /// When a creating a new stock line this field holds the required item id
-    pub item_id: Option<String>,
+    pub item_id: String,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<i32>,
