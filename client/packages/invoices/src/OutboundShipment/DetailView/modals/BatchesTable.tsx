@@ -205,7 +205,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
     <>
       <Divider margin={10} />
       <TableContainer sx={{ height: 375, overflowX: 'hidden' }}>
-        <Table>
+        <Table style={{ borderCollapse: 'separate', borderSpacing: '0 4px' }}>
           <TableHead>
             <TableRow>
               <HeaderCell>{t('label.num-packs')}</HeaderCell>
