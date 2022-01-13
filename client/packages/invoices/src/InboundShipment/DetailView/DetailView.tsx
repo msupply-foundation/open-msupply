@@ -3,7 +3,7 @@ import {
   TableProvider,
   createTableStore,
   Item,
-  ModalMode,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { useDraftInbound } from './api';
@@ -18,28 +18,15 @@ import { InvoiceLine, InboundShipmentItem } from '../../types';
 
 export const DetailView: FC = () => {
   const { draft } = useDraftInbound();
-
-  const [modalState, setModalState] = React.useState<{
-    item: Item | null;
-    mode: ModalMode;
-    open: boolean;
-  }>({ mode: ModalMode.Create, item: null, open: false });
+  const { onOpen, onClose, mode, entity, isOpen } = useEditModal<Item>();
 
   const onRowClick = React.useCallback(
     (line: InboundShipmentItem | InvoiceLine) => {
       const item = toItem(line);
-      setModalState({ mode: ModalMode.Update, item, open: true });
+      onOpen(item);
     },
-    [setModalState]
+    [onOpen]
   );
-
-  const onClose = () => {
-    setModalState({ mode: ModalMode.Create, item: null, open: false });
-  };
-
-  const onAddItem = () => {
-    setModalState({ mode: ModalMode.Create, item: null, open: true });
-  };
 
   if (!draft) return null;
 
@@ -47,7 +34,7 @@ export const DetailView: FC = () => {
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
         isDisabled={!isInboundEditable(draft)}
-        onAddItem={onAddItem}
+        onAddItem={() => onOpen()}
       />
 
       <Toolbar draft={draft} />
@@ -57,12 +44,12 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
 
-      {modalState.open && (
+      {isOpen && (
         <InboundLineEdit
-          isOpen={modalState.open}
+          isOpen={isOpen}
           onClose={onClose}
-          mode={modalState.mode}
-          item={modalState.item}
+          mode={mode}
+          item={entity}
         />
       )}
     </TableProvider>
