@@ -1,9 +1,9 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   TableProvider,
   createTableStore,
   Item,
-  ModalMode,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -16,39 +16,27 @@ import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 
 export const DetailView: FC = () => {
-  const [modalState, setModalState] = useState<{
-    item: Item | null;
-    mode: ModalMode;
-    isOpen: boolean;
-  }>({ item: null, mode: ModalMode.Create, isOpen: false });
+  const { isOpen, entity, onOpen, onClose, mode } = useEditModal<Item>();
 
   const onRowClick = (item: StocktakeLine | StocktakeSummaryItem) => {
-    setModalState({ item: toItem(item), mode: ModalMode.Update, isOpen: true });
-  };
-
-  const onAddItem = () => {
-    setModalState({ item: null, mode: ModalMode.Create, isOpen: true });
-  };
-
-  const onClose = () => {
-    setModalState({ item: null, mode: ModalMode.Create, isOpen: false });
+    onOpen(toItem(item));
   };
 
   return (
     <TableProvider createStore={createTableStore}>
-      <AppBarButtons onAddItem={onAddItem} />
+      <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
 
       <ContentArea onRowClick={onRowClick} />
       <Footer />
       <SidePanel />
 
-      {modalState.isOpen && (
+      {isOpen && (
         <StocktakeLineEdit
-          isOpen={modalState.isOpen}
+          isOpen={isOpen}
           onClose={onClose}
-          mode={modalState.mode}
-          item={modalState.item}
+          mode={mode}
+          item={entity}
         />
       )}
     </TableProvider>
