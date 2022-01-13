@@ -110,17 +110,38 @@ export const useStocktakeColumns = ({
                 'expiryDate',
                 null
               );
-              return formatExpiryDate(expiryDate);
+              return expiryDate;
             } else {
-              return formatExpiryDate(rowData.expiryDate);
+              return rowData.expiryDate;
             }
           },
         },
       ],
-      ['packSize', { width: 125 }],
+      [
+        'packSize',
+        {
+          width: 50,
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              return ifTheSameElseDefault(lines, 'packSize', '') ?? '';
+            } else {
+              return row.packSize ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ifTheSameElseDefault(lines, 'packSize', '');
+            } else {
+              return rowData.packSize;
+            }
+          },
+        },
+      ],
       {
         key: 'snapshotNumPacks',
-        width: 200,
+        width: 180,
         label: 'label.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         getSortValue: row => {
@@ -145,7 +166,7 @@ export const useStocktakeColumns = ({
       {
         key: 'countedNumPacks',
         label: 'label.counted-num-of-packs',
-        width: 200,
+        width: 180,
         align: ColumnAlign.Right,
         getSortValue: row => {
           if ('lines' in row) {
@@ -172,3 +193,24 @@ export const useStocktakeColumns = ({
     { sortBy, onChangeSortBy },
     [sortBy, onChangeSortBy]
   );
+
+export const useExpansionColumns = (): Column<StocktakeLine>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    'packSize',
+    {
+      key: 'snapshotNumPacks',
+      width: 200,
+      label: 'label.snapshot-num-of-packs',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
+    },
+    {
+      key: 'countedNumPacks',
+      label: 'label.counted-num-of-packs',
+      width: 200,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks,
+    },
+  ]);
