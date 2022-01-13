@@ -12,6 +12,7 @@ import {
   Box,
   useTranslation,
   InvoiceNodeStatus,
+  ifTheSameElseDefault,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { BatchesTable, sortByExpiry, sortByExpiryDesc } from './BatchesTable';
@@ -117,6 +118,7 @@ const usePackSizeController = (
     packSize: number;
     onHold: boolean;
     availableNumberOfPacks: number;
+    numberOfPacks: number;
   }[]
 ) => {
   const t = useTranslation('distribution');
@@ -145,7 +147,17 @@ const usePackSizeController = (
     }))
   );
 
-  const defaultPackSize = options[0] ?? { label: '', value: '' };
+  const selectedPackSize = ifTheSameElseDefault(
+    batches.filter(batch => batch.numberOfPacks > 0),
+    'packSize',
+    0
+  );
+  const defaultPackSize = (selectedPackSize === 0
+    ? options[0]
+    : options.find(option => option.value === selectedPackSize)) ?? {
+    label: '',
+    value: '',
+  };
   const [selected, setSelected] = useState(defaultPackSize);
 
   const setPackSize = (newValue: number) => {

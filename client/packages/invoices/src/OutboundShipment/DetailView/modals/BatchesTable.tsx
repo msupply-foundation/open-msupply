@@ -173,33 +173,37 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
 
   const placeholderRow = rows.find(({ id }) => id === 'placeholder');
 
-  const rowsWithoutPlaceholder = rows.filter(({ id }) => id !== 'placeholder');
+  const rowsWithoutPlaceholder = rows
+    .filter(({ id }) => id !== 'placeholder')
+    .sort(sortByExpiry);
 
   const isRequestedPackSize = (packSize: number) =>
     packSizeController.selected.value === -1 ||
     packSize === packSizeController.selected.value;
 
-  const allocatableRows = rowsWithoutPlaceholder
-    .filter(
-      ({ onHold, availableNumberOfPacks, packSize }) =>
-        !onHold && availableNumberOfPacks > 0 && isRequestedPackSize(packSize)
-    )
-    .sort(sortByExpiry);
+  const allocatableRows: BatchRow[] = [];
+  const onHoldRows: BatchRow[] = [];
+  const noStockRows: BatchRow[] = [];
+  const wrongPackSizeRows: BatchRow[] = [];
 
-  const onHoldRows = rowsWithoutPlaceholder
-    .filter(({ onHold }) => onHold)
-    .sort(sortByExpiry);
+  rowsWithoutPlaceholder.forEach(row => {
+    if (row.onHold) {
+      onHoldRows.push(row);
+      return;
+    }
 
-  const noStockRows = rowsWithoutPlaceholder
-    .filter(
-      ({ availableNumberOfPacks, onHold }) =>
-        availableNumberOfPacks === 0 && !onHold
-    )
-    .sort(sortByExpiry);
+    if (row.availableNumberOfPacks === 0) {
+      noStockRows.push(row);
+      return;
+    }
 
-  const wrongPackSizeRows = rowsWithoutPlaceholder
-    .filter(({ packSize }) => !isRequestedPackSize(packSize))
-    .sort(sortByExpiry);
+    if (!isRequestedPackSize(row.packSize)) {
+      wrongPackSizeRows.push(row);
+      return;
+    }
+
+    allocatableRows.push(row);
+  });
 
   return (
     <>
