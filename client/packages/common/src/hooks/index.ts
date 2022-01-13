@@ -25,7 +25,6 @@ export * from './usePagination';
 export * from './useQueryParams';
 export * from './useRowRenderCount';
 export * from './useSortBy';
-export * from './useSortedData';
 export * from './useWindowDimensions';
 export * from './useDebounce';
 export * from './useDocument';

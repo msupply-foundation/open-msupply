@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useSearchParameters } from '../useSearchParameters';
-
+import { Column } from '../../ui/layout/tables';
+import { DomainObject } from '../../types';
 export interface SortRule<T> {
   key: keyof T | string;
   isDesc?: boolean;
@@ -10,19 +11,19 @@ export interface SortBy<T> extends SortRule<T> {
   direction: 'asc' | 'desc';
   getSortValue?: (row: T) => string | number;
 }
-export interface SortController<T> {
+export interface SortController<T extends DomainObject> {
   sortBy: SortBy<T>;
-  onChangeSortBy: (newSortRule: SortRule<T>) => SortBy<T>;
+  onChangeSortBy: (newSortRule: Column<T>) => SortBy<T>;
 }
 
-export interface SortState<T> extends SortController<T> {
+export interface SortState<T extends DomainObject> extends SortController<T> {
   sort: SortController<T>;
 }
 
 const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
   isDesc ? 'desc' : 'asc';
 
-export const useSortBy = <T>({
+export const useSortBy = <T extends DomainObject>({
   key: initialSortKey,
   isDesc: initialIsDesc = false,
 }: SortRule<T>): SortState<T> => {
@@ -34,12 +35,13 @@ export const useSortBy = <T>({
     direction: getDirection(initialIsDesc),
   });
 
-  const onChangeSortBy = useCallback((newSortRule: SortRule<T>) => {
+  const onChangeSortBy = useCallback((newSortRule: Column<T>) => {
     let newSortBy = sortBy;
     setSortBy(({ key: prevSortKey, isDesc: prevIsDesc = false }) => {
-      const { key: newSortKey, isDesc: maybeNewIsDesc } = newSortRule;
+      const { key: newSortKey, sortBy: { isDesc: maybeNewIsDesc } = {} } =
+        newSortRule;
       const newIsDesc =
-        prevSortKey === newSortKey ? !prevIsDesc : maybeNewIsDesc ?? false;
+        prevSortKey === newSortKey ? !prevIsDesc : !!maybeNewIsDesc ?? false;
 
       newSortBy = {
         key: newSortKey,
