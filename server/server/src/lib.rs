@@ -10,7 +10,7 @@ use graphql::{
     config as graphql_config,
     loader::{get_loaders, LoaderMap, LoaderRegistry},
 };
-use log::{error, warn};
+use log::{error, info, warn};
 use repository::get_storage_connection_manager;
 use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};
 
@@ -21,6 +21,7 @@ use std::{
     sync::{Arc, Mutex, RwLock},
     time::Duration,
 };
+use tokio::sync::oneshot;
 
 pub mod actor_registry;
 pub mod configuration;
@@ -30,7 +31,13 @@ pub mod settings;
 pub mod sync;
 pub mod test_utils;
 
-pub async fn start_server(settings: Settings) -> std::io::Result<()> {
+/// Starts the server
+///
+/// This method doesn't return until a message is send to the off_switch.
+pub async fn start_server(
+    settings: Settings,
+    mut off_switch: oneshot::Receiver<()>,
+) -> std::io::Result<()> {
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
@@ -84,7 +91,7 @@ pub async fn start_server(settings: Settings) -> std::io::Result<()> {
             http_server = http_server.listen(listener)?;
         }
     }
-    let running_sever = http_server.run();
+    let mut running_sever = http_server.run();
     let connection = match SyncConnection::new(&settings.sync) {
         Ok(connection) => connection,
         Err(err) => {
@@ -93,18 +100,23 @@ pub async fn start_server(settings: Settings) -> std::io::Result<()> {
             panic!("{}", err_msg);
         }
     };
+
     let mut synchroniser = Synchroniser { connection };
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
-    tokio::select! {
-        result = running_sever => result,
+    let result = tokio::select! {
+        result = (&mut running_sever) => result,
+        _ = (&mut off_switch) => Ok(running_sever.stop(true).await),
         () = async {
           sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
         } => unreachable!("Sync receiver unexpectedly died!?"),
         () = async {
             sync_receiver.listen(&mut synchroniser, &connection_manager_data_sync).await;
         } => unreachable!("Sync scheduler unexpectedly died!?"),
-    }
+    };
+
+    info!("Remote server stopped");
+    result
 }
 
 fn load_certs() -> Result<SslAcceptorBuilder, anyhow::Error> {
