@@ -33,3 +33,4 @@ export * from './useContentAreaHeight';
 export * from './useFilterBy';
 export * from './useNotification';
 export * from './useBufferState';
+export * from './useEditModal';

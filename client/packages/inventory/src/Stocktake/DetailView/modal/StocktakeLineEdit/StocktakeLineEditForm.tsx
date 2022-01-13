@@ -13,7 +13,7 @@ import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
 
 interface InboundLineEditProps {
   item: Item | null;
-  mode: ModalMode;
+  mode: ModalMode | null;
   onChangeItem: (item: Item | null) => void;
 }
 
