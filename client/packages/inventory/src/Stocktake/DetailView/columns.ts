@@ -110,14 +110,35 @@ export const useStocktakeColumns = ({
                 'expiryDate',
                 null
               );
-              return formatExpiryDate(expiryDate);
+              return expiryDate;
             } else {
-              return formatExpiryDate(rowData.expiryDate);
+              return rowData.expiryDate;
             }
           },
         },
       ],
-      ['packSize', { width: 125 }],
+      [
+        'packSize',
+        {
+          width: 125,
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              return ifTheSameElseDefault(lines, 'packSize', '') ?? '';
+            } else {
+              return row.packSize ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ifTheSameElseDefault(lines, 'packSize', '');
+            } else {
+              return rowData.packSize;
+            }
+          },
+        },
+      ],
       {
         key: 'snapshotNumPacks',
         width: 200,
