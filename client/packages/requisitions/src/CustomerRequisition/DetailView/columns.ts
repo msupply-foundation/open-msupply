@@ -2,16 +2,13 @@ import {
   useColumns,
   GenericColumnKey,
   SortBy,
-  SortRule,
   Column,
 } from '@openmsupply-client/common';
 import { RequisitionLine } from '../../types';
 
 interface UseCustomerRequisitionColumnOptions {
   sortBy: SortBy<RequisitionLine>;
-  onChangeSortBy: (
-    newSortRule: SortRule<RequisitionLine>
-  ) => SortBy<RequisitionLine>;
+  onChangeSortBy: (column: Column<RequisitionLine>) => SortBy<RequisitionLine>;
 }
 
 export const useCustomerRequisitionColumns = ({
