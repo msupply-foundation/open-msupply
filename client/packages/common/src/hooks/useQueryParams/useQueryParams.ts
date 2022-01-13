@@ -1,13 +1,14 @@
+import { DomainObject } from './../../types/index';
 import { usePagination, PaginationState } from '../usePagination';
 import { useSortBy, SortState, SortRule } from '../useSortBy';
 import { useFilterBy, FilterState, FilterBy } from '../useFilterBy';
 
-export interface QueryParams<T>
+export interface QueryParams<T extends DomainObject>
   extends SortState<T>,
     FilterState,
     PaginationState {}
 
-export interface QueryParamsState<T>
+export interface QueryParamsState<T extends DomainObject>
   extends SortState<T>,
     FilterState,
     PaginationState {
@@ -17,7 +18,7 @@ export interface QueryParamsState<T>
   queryParams: QueryParams<T>;
 }
 
-export const useQueryParams = <T>({
+export const useQueryParams = <T extends DomainObject>({
   initialSortBy,
   initialFilterBy,
 }: {
