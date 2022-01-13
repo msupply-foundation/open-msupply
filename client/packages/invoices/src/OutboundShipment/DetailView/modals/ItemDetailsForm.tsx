@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   FieldValues,
   Grid,
@@ -41,18 +41,9 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   draft,
 }) => {
   const t = useTranslation(['distribution', 'common']);
-  const [issueType, setIssueType] = useState('units');
   const quantity =
     allocatedQuantity / Math.abs(Number(packSizeController.selected.value));
 
-  React.useEffect(
-    () =>
-      setIssueType(
-        packSizeController.selected.value === -1 ? 'units' : 'packs'
-      ),
-
-    [packSizeController.selected]
-  );
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -78,31 +69,31 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           />
         </Grid>
       </ModalRow>
+      {summaryItem && (
+        <ModalRow>
+          <ModalLabel label="" />
+          <Grid item display="flex">
+            <Typography
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}
+            >
+              {t('label.available-quantity', { number: availableQuantity })}
+            </Typography>
+          </Grid>
 
-      <ModalRow>
-        <ModalLabel label="" />
-        <Grid item display="flex">
-          <Typography
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            {t('label.available-quantity', { number: availableQuantity })}
-          </Typography>
-        </Grid>
-
-        <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
-          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-          <ModalInput
-            disabled
-            width={150}
-            value={summaryItem?.unitName ?? ''}
-          />
-        </Grid>
-      </ModalRow>
-
+          <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
+            <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+            <ModalInput
+              disabled
+              width={150}
+              value={summaryItem?.unitName ?? ''}
+            />
+          </Grid>
+        </ModalRow>
+      )}
       {summaryItem ? (
         <>
           <Divider margin={10} />
@@ -120,7 +111,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
                 onChange: event => {
                   onChangeQuantity(
                     Number(event.target.value),
-                    issueType === 'packs'
+                    packSizeController.selected.value === -1
                       ? Number(packSizeController.selected.value)
                       : null
                   );
@@ -138,7 +129,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               style={{ minWidth: 125 }}
             >
               <InputLabel sx={{ fontSize: '12px' }}>
-                {issueType === 'packs'
+                {packSizeController.selected.value === -1
                   ? t('label.packs-of')
                   : t('label.units-in-pack-size-of')}
               </InputLabel>
