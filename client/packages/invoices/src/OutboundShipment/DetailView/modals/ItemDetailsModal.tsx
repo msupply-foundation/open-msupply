@@ -11,9 +11,11 @@ import {
   InlineSpinner,
   Box,
   useTranslation,
+  InvoiceNodeStatus,
+  ifTheSameElseDefault,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
-import { BatchesTable, sortByExpiry } from './BatchesTable';
+import { BatchesTable, sortByExpiry, sortByExpiryDesc } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import {
   BatchRow,
@@ -116,8 +118,10 @@ const usePackSizeController = (
     packSize: number;
     onHold: boolean;
     availableNumberOfPacks: number;
+    numberOfPacks: number;
   }[]
 ) => {
+  const t = useTranslation('distribution');
   // Creating a sorted array of distinct pack sizes
   const packSizes = Array.from(
     new Set(
@@ -131,13 +135,29 @@ const usePackSizeController = (
     )
   );
 
-  const options = packSizes.map(packSize => ({
-    label: String(packSize),
-    value: packSize,
-  }));
+  const anySize = [];
+  if (packSizes.length > 1) {
+    anySize.push({ label: t('label.any'), value: -1 });
+  }
 
-  const defaultPackSize = options[0] ?? { label: '', value: '' };
+  const options = anySize.concat(
+    packSizes.map(packSize => ({
+      label: String(packSize),
+      value: packSize,
+    }))
+  );
 
+  const selectedPackSize = ifTheSameElseDefault(
+    batches.filter(batch => batch.numberOfPacks > 0),
+    'packSize',
+    0
+  );
+  const defaultPackSize = (selectedPackSize === 0
+    ? options[0]
+    : options.find(option => option.value === selectedPackSize)) ?? {
+    label: '',
+    value: '',
+  };
   const [selected, setSelected] = useState(defaultPackSize);
 
   const setPackSize = (newValue: number) => {
@@ -169,12 +189,10 @@ const sumAvailableQuantity = (batchRows: BatchRow[]) => {
 };
 
 const getAllocatedQuantity = (batchRows: BatchRow[]) => {
-  return batchRows
-    .filter(({ id }) => id !== 'placeholder')
-    .reduce(
-      (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-      0
-    );
+  return batchRows.reduce(
+    (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+    0
+  );
 };
 
 const issueStock = (
@@ -256,6 +274,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     if (newValue < 1 || Number.isNaN(newValue)) {
       return;
     }
+
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
     if (batchRows.length === 1) {
@@ -265,9 +284,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     }
 
     // calculations are normalised to units
-    let toAllocate = newValue * (issuePackSize || 1);
+    const totalToAllocate = newValue * (issuePackSize || 1);
+    let toAllocate = totalToAllocate;
 
-    const newBatchRows = [...batchRows];
+    const newBatchRows = batchRows.map(batch => ({
+      ...batch,
+      numberOfPacks: 0,
+    }));
     const validBatches = newBatchRows
       .filter(
         ({ packSize, onHold, availableNumberOfPacks }) =>
@@ -281,35 +304,62 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
       const batchRow = newBatchRows[batchRowIdx];
       if (!batchRow) return null;
-      const currentAllocatedUnits = batchRow.numberOfPacks * batchRow.packSize;
-      const totalAvailableUnits =
+      if (toAllocate < 0) return null;
+
+      const availableUnits =
         batchRow.availableNumberOfPacks * batchRow.packSize;
-      const availableUnits = totalAvailableUnits - currentAllocatedUnits;
-      const allocatedUnits = Math.min(toAllocate, availableUnits);
-      const allocatedNumberOfPacks = Math.floor(
-        allocatedUnits / batchRow.packSize
+      const unitsToAllocate = Math.min(toAllocate, availableUnits);
+      const allocatedNumberOfPacks = Math.ceil(
+        unitsToAllocate / batchRow.packSize
       );
 
-      toAllocate -= allocatedUnits;
+      toAllocate -= allocatedNumberOfPacks * batchRow.packSize;
 
       newBatchRows[batchRowIdx] = {
         ...batchRow,
-        numberOfPacks: batchRow.numberOfPacks + allocatedNumberOfPacks,
+        numberOfPacks: allocatedNumberOfPacks,
       };
     });
 
-    const placeholderIdx = newBatchRows.findIndex(
-      ({ id }) => id === 'placeholder'
-    );
-    const placeholder = newBatchRows[placeholderIdx];
+    // if over-allocated due to pack sizes available, reduce allocation as needed
+    if (toAllocate < 0) {
+      toAllocate *= -1;
+      validBatches.sort(sortByExpiryDesc).forEach(batch => {
+        const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
+        const batchRow = newBatchRows[batchRowIdx];
+        if (!batchRow) return null;
+        if (batchRow.packSize > toAllocate) return null;
+        if (batchRow.numberOfPacks === 0) return null;
 
-    if (!placeholder) throw new Error('No placeholder within item editing');
+        const allocatedUnits = batchRow.numberOfPacks * batchRow.packSize;
+        const unitsToReduce = Math.min(toAllocate, allocatedUnits);
+        const numberOfPacks = Math.floor(
+          (allocatedUnits - unitsToReduce) / batchRow.packSize
+        );
 
-    newBatchRows[placeholderIdx] = {
-      ...placeholder,
-      numberOfPacks:
-        placeholder.numberOfPacks + toAllocate * (issuePackSize || 1),
-    };
+        toAllocate -= unitsToReduce;
+
+        newBatchRows[batchRowIdx] = {
+          ...batchRow,
+          numberOfPacks: numberOfPacks,
+        };
+      });
+    }
+
+    if (draft.status === InvoiceNodeStatus.New) {
+      const placeholderIdx = newBatchRows.findIndex(
+        ({ id }) => id === 'placeholder'
+      );
+      const placeholder = newBatchRows[placeholderIdx];
+
+      if (!placeholder) throw new Error('No placeholder within item editing');
+
+      newBatchRows[placeholderIdx] = {
+        ...placeholder,
+        numberOfPacks:
+          placeholder.numberOfPacks + toAllocate * (issuePackSize || 1),
+      };
+    }
 
     setBatchRows(newBatchRows);
   };
@@ -359,9 +409,11 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             {!!summaryItem ? (
               !isLoading ? (
                 <BatchesTable
+                  packSizeController={packSizeController}
                   onChange={onChangeRowQuantity}
                   register={register}
                   rows={batchRows}
+                  invoiceStatus={draft.status}
                 />
               ) : (
                 <Box

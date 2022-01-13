@@ -21,7 +21,7 @@ const summaryItems: OutboundShipmentSummaryItem[] = [
     itemId: '1',
     itemName: '1',
     itemCode: '1',
-    itemUnit: '1',
+    unitName: '1',
     unitQuantity: 10,
     numberOfPacks: 10,
     packSize: 1,
