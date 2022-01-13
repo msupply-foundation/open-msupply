@@ -120,7 +120,7 @@ export const useStocktakeColumns = ({
       [
         'packSize',
         {
-          width: 125,
+          width: 50,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -141,7 +141,7 @@ export const useStocktakeColumns = ({
       ],
       {
         key: 'snapshotNumPacks',
-        width: 200,
+        width: 180,
         label: 'label.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         getSortValue: row => {
@@ -166,7 +166,7 @@ export const useStocktakeColumns = ({
       {
         key: 'countedNumPacks',
         label: 'label.counted-num-of-packs',
-        width: 200,
+        width: 180,
         align: ColumnAlign.Right,
         getSortValue: row => {
           if ('lines' in row) {
