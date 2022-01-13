@@ -25,6 +25,7 @@ export interface InvoiceLine
     DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
+  unitName?: string;
   invoiceId: string;
   location?: Location;
   expiryDate?: Date | null;
@@ -135,7 +136,7 @@ export type OutboundShipmentSummaryItem = {
   unitQuantity: number;
   numberOfPacks: number;
   locationName?: string | null;
-  itemUnit?: string;
+  unitName?: string;
   batch?: string | null;
   batches: Record<string, OutboundShipmentRow>;
   sellPricePerPack?: number | undefined;
