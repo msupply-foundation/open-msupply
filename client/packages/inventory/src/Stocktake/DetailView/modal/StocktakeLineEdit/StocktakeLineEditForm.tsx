@@ -9,6 +9,7 @@ import {
   ModalMode,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system';
+import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
 
 interface InboundLineEditProps {
   item: Item | null;
@@ -22,6 +23,7 @@ export const StocktakeLineEditForm: FC<InboundLineEditProps> = ({
   onChangeItem,
 }) => {
   const t = useTranslation(['common', 'inventory']);
+  const { items } = useStocktakeRows();
 
   return (
     <>
@@ -32,12 +34,12 @@ export const StocktakeLineEditForm: FC<InboundLineEditProps> = ({
             disabled={mode === ModalMode.Update}
             currentItem={item}
             onChange={onChangeItem}
-            // extraFilter={item => {
-            //   const itemAlreadyInStocktake = draft.lines.some(
-            //     ({ id, isDeleted }) => id === item.id && !isDeleted
-            //   );
-            //   return !itemAlreadyInShipment;
-            // }}
+            extraFilter={item => {
+              const itemAlreadyInStocktake = items?.some(
+                ({ itemId }) => item.id === itemId
+              );
+              return !itemAlreadyInStocktake;
+            }}
           />
         </Grid>
       </ModalRow>
