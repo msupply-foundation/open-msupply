@@ -31,6 +31,8 @@ pub mod store;
 use self::store::{stores, StoreFilterInput, StoresResponse};
 pub mod stock_take;
 pub use self::stock_take::*;
+pub mod stock_take_line;
+pub use self::stock_take_line::*;
 
 #[Object]
 impl Queries {
@@ -192,5 +194,20 @@ impl Queries {
             &ctx.get_connection_manager().connection()?,
         )?);
         stock_takes(ctx, &store_id, page, filter, sort)
+    }
+
+    pub async fn stock_take_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        stock_take_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<StockTakeLineFilterInput>,
+    ) -> Result<StockTakeLinesResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        stock_take_lines(ctx, &store_id, &stock_take_id, page, filter)
     }
 }
