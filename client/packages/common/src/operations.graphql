@@ -150,10 +150,12 @@ query invoice($id: String!) {
             }
             item {
               ... on ItemNode {
+                __typename
                 id
                 name
                 code
                 isVisible
+                unitName
                 availableBatches {
                   ... on StockLineConnector {
                     totalCount

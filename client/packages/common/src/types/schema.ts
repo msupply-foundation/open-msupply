@@ -30,6 +30,14 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
+  /**
+   * ISO 8601 combined date and time without timezone.
+   *
+   * # Examples
+   *
+   * * `2015-07-01T08:59:60.123`,
+   */
+  NaiveDateTime: any;
 };
 
 export type AccessDenied = LogoutErrorInterface & {
@@ -387,11 +395,27 @@ export type DeleteResponse = {
   id: Scalars['String'];
 };
 
+export type DeleteStockTakeInput = {
+  id: Scalars['String'];
+};
+
 export type DeleteStockTakeLineInput = {
   id: Scalars['String'];
 };
 
-export type DeleteStockTakeLineResponse = DeleteResponse;
+export type DeleteStockTakeLineNode = {
+  __typename?: 'DeleteStockTakeLineNode';
+  id: Scalars['String'];
+};
+
+export type DeleteStockTakeLineResponse = DeleteStockTakeLineNode;
+
+export type DeleteStockTakeNode = {
+  __typename?: 'DeleteStockTakeNode';
+  stockTakeId: Scalars['String'];
+};
+
+export type DeleteStockTakeResponse = DeleteStockTakeNode;
 
 export type DeleteStocktakeInput = {
   id: Scalars['String'];
@@ -725,6 +749,33 @@ export type InsertOutboundShipmentUnallocatedLineInput = {
 };
 
 export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
+
+export type InsertStockTakeInput = {
+  comment?: InputMaybe<Scalars['String']>;
+  createdDatetime: Scalars['NaiveDateTime'];
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+};
+
+export type InsertStockTakeLineInput = {
+  batch?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  itemId?: InputMaybe<Scalars['String']>;
+  locationId?: InputMaybe<Scalars['String']>;
+  note?: InputMaybe<Scalars['String']>;
+  packSize?: InputMaybe<Scalars['Int']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  stockLineId?: InputMaybe<Scalars['String']>;
+  stockTakeId: Scalars['String'];
+};
+
+export type InsertStockTakeLineResponse = StockTakeLineNode;
+
+export type InsertStockTakeResponse = StockTakeNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']>;
@@ -1244,6 +1295,7 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deleteStockTake: DeleteStockTakeResponse;
   deleteStockTakeLine: DeleteStockTakeLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
@@ -1257,6 +1309,8 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertStockTake: InsertStockTakeResponse;
+  insertStockTakeLine: InsertStockTakeLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertSupplierRequisition: InsertSupplierRequisitionResponse;
   insertSupplierRequisitionLine: InsertSupplierRequisitionLineResponse;
@@ -1270,6 +1324,8 @@ export type Mutations = {
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  updateStockTake: UpdateStockTakeResponse;
+  updateStockTakeLine: UpdateStockTakeLineResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateSupplierRequisition: UpdateSupplierRequisitionResponse;
   updateSupplierRequisitionLine: UpdateSupplierRequisitionLineResponse;
@@ -1374,6 +1430,12 @@ export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type MutationsDeleteStockTakeArgs = {
+  input: DeleteStockTakeInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
 export type MutationsDeleteStockTakeLineArgs = {
   input: DeleteStockTakeLineInput;
   storeId?: InputMaybe<Scalars['String']>;
@@ -1440,6 +1502,18 @@ export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type MutationsInsertStockTakeArgs = {
+  input: InsertStockTakeInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
+export type MutationsInsertStockTakeLineArgs = {
+  input: InsertStockTakeLineInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
 export type MutationsInsertStocktakeArgs = {
   input: InsertStocktakeInput;
 };
@@ -1502,6 +1576,18 @@ export type MutationsUpdateOutboundShipmentServiceLineArgs = {
 
 export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
   input: UpdateOutboundShipmentUnallocatedLineInput;
+};
+
+
+export type MutationsUpdateStockTakeArgs = {
+  input: UpdateStockTakeInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
+export type MutationsUpdateStockTakeLineArgs = {
+  input: UpdateStockTakeLineInput;
+  storeId?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1926,6 +2012,12 @@ export type SimpleStringFilterInput = {
   like?: InputMaybe<Scalars['String']>;
 };
 
+export type SnapshotCountCurrentCountMismatch = UpdateStockTakeErrorInterface & {
+  __typename?: 'SnapshotCountCurrentCountMismatch';
+  description: Scalars['String'];
+  lines: StockTakeLineConnector;
+};
+
 export type StockCounts = {
   __typename?: 'StockCounts';
   expired: Scalars['Int'];
@@ -1977,6 +2069,49 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
+
+export type StockTakeLineConnector = {
+  __typename?: 'StockTakeLineConnector';
+  nodes: Array<StockTakeLineNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StockTakeLineNode = {
+  __typename?: 'StockTakeLineNode';
+  batch?: Maybe<Scalars['String']>;
+  comment?: Maybe<Scalars['String']>;
+  costPricePerPack?: Maybe<Scalars['Float']>;
+  countedNumberOfPacks?: Maybe<Scalars['Int']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String'];
+  location?: Maybe<LocationNode>;
+  locationId?: Maybe<Scalars['String']>;
+  note?: Maybe<Scalars['String']>;
+  packSize?: Maybe<Scalars['Int']>;
+  sellPricePerPack?: Maybe<Scalars['Float']>;
+  snapshotNumberOfPacks: Scalars['Int'];
+  stockLine?: Maybe<StockLineNode>;
+  stockTakeId: Scalars['String'];
+};
+
+export type StockTakeNode = {
+  __typename?: 'StockTakeNode';
+  comment?: Maybe<Scalars['String']>;
+  createdDatetime: Scalars['NaiveDateTime'];
+  description?: Maybe<Scalars['String']>;
+  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']>;
+  id: Scalars['String'];
+  inventoryAdjustmentId?: Maybe<Scalars['String']>;
+  status: StockTakeNodeStatus;
+  storeId: Scalars['String'];
+};
+
+export enum StockTakeNodeStatus {
+  Finalized = 'FINALIZED',
+  New = 'NEW'
+}
 
 export type StocktakeConnector = {
   __typename?: 'StocktakeConnector';
@@ -2356,6 +2491,40 @@ export type UpdateOutboundShipmentUnallocatedLineInput = {
 
 export type UpdateOutboundShipmentUnallocatedLineResponse = InvoiceLineNode | UpdateOutboundShipmentUnallocatedLineError;
 
+export type UpdateStockTakeError = {
+  __typename?: 'UpdateStockTakeError';
+  error: UpdateStockTakeErrorInterface;
+};
+
+export type UpdateStockTakeErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateStockTakeInput = {
+  comment?: InputMaybe<Scalars['String']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+  status?: InputMaybe<StockTakeNodeStatus>;
+};
+
+export type UpdateStockTakeLineInput = {
+  batch?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  locationId?: InputMaybe<Scalars['String']>;
+  note?: InputMaybe<Scalars['String']>;
+  packSize?: InputMaybe<Scalars['Int']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  snapshotNumberOfPacks?: InputMaybe<Scalars['Int']>;
+};
+
+export type UpdateStockTakeLineResponse = StockTakeLineNode;
+
+export type UpdateStockTakeResponse = StockTakeNode | UpdateStockTakeError;
+
 export type UpdateStocktakeInput = {
   comment?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
@@ -2478,7 +2647,7 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, color?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, invoiceId: string, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename?: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, color?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, invoiceId: string, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type StocktakeQueryVariables = Exact<{
   stocktakeId: Scalars['String'];
@@ -2894,10 +3063,12 @@ export const InvoiceDocument = gql`
             }
             item {
               ... on ItemNode {
+                __typename
                 id
                 name
                 code
                 isVisible
+                unitName
                 availableBatches {
                   ... on StockLineConnector {
                     totalCount
