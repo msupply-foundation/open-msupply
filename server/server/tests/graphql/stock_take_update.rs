@@ -63,14 +63,6 @@ mod graphql {
                 }
                 ... on StockTakeNode {                    
                         id
-                        storeId
-                        stockTakeNumber
-                        comment
-                        description
-                        status
-                        createdDatetime
-                        finalisedDatetime
-                        inventoryAdjustmentId
                 }
             }
         }"#;
@@ -126,14 +118,6 @@ mod graphql {
         let expected = json!({
             "updateStockTake": {
               "id": "id1",
-              "storeId": "store id",
-              "stockTakeNumber": 123,
-              "comment": "comment",
-              "description": "description",
-              "status": "FINALISED",
-              "createdDatetime": "2022-01-22T15:16:00",
-              "finalisedDatetime": "2022-01-23T15:16:00",
-              "inventoryAdjustmentId": "inv id",
             }
           }
         );
