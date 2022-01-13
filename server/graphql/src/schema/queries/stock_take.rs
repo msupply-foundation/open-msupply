@@ -91,15 +91,11 @@ pub fn stock_takes(
     let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_service;
 
-    // ensure filter restrict results to store id
-    let filter = filter
-        .map(StockTakeFilter::from)
-        .unwrap_or(StockTakeFilter::new())
-        .store_id(EqualFilter::equal_to(store_id));
     match service.get_stock_takes(
         &service_ctx,
+        store_id,
         page.map(PaginationOption::from),
-        Some(filter),
+        filter.map(StockTakeFilter::from),
         convert_sort(sort),
     ) {
         Ok(stock_takes) => Ok(StockTakesResponse::Response(StockTakeConnector {

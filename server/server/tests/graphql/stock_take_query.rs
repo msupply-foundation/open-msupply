@@ -17,6 +17,7 @@ mod graphql {
 
     type ServiceMethod = dyn Fn(
             &ServiceContext,
+            &str,
             Option<PaginationOption>,
             Option<StockTakeFilter>,
             Option<StockTakeSort>,
@@ -30,11 +31,12 @@ mod graphql {
         fn get_stock_takes(
             &self,
             ctx: &ServiceContext,
+            store_id: &str,
             pagination: Option<PaginationOption>,
             filter: Option<StockTakeFilter>,
             sort: Option<StockTakeSort>,
         ) -> Result<ListResult<StockTake>, ListError> {
-            (self.0)(ctx, pagination, filter, sort)
+            (self.0)(ctx, store_id, pagination, filter, sort)
         }
     }
 
@@ -75,7 +77,7 @@ mod graphql {
         }"#;
 
         // success
-        let test_service = TestService(Box::new(|_, _, _, _| {
+        let test_service = TestService(Box::new(|_, _, _, _, _| {
             Ok(ListResult {
                 count: 1,
                 rows: vec![StockTakeRow {
