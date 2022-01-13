@@ -61,6 +61,7 @@ export function Autocomplete<T>({
   onInputChange,
   inputValue,
   autoFocus = false,
+  getOptionLabel,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
@@ -73,7 +74,7 @@ export function Autocomplete<T>({
       sx={{ width }}
     />
   );
-  const getOptionLabel = (option: { label?: string } & T): string => {
+  const defaultGetOptionLabel = (option: { label?: string } & T): string => {
     return option.label ?? '';
   };
 
@@ -97,7 +98,7 @@ export function Autocomplete<T>({
       renderInput={renderInput || defaultRenderInput}
       renderOption={renderOption}
       onChange={onChange}
-      getOptionLabel={getOptionLabel}
+      getOptionLabel={getOptionLabel || defaultGetOptionLabel}
     />
   );
 }

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Checkbox,
   Divider,
   FieldValues,
   isAlmostExpired,
@@ -17,11 +16,13 @@ import {
   useFormatDate,
   useTranslation,
   ReadOnlyInput,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { BatchRow } from '../../../types';
 import { PackSizeController } from './ItemDetailsModal';
 
 export interface BatchesTableProps {
+  invoiceStatus: InvoiceNodeStatus;
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
   register: UseFormRegister<FieldValues>;
@@ -37,6 +38,20 @@ export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
   }
   if (expiryA > expiryB) {
     return 1;
+  }
+
+  return 0;
+};
+
+export const sortByExpiryDesc = (a: BatchRow, b: BatchRow) => {
+  const expiryA = new Date(a.expiryDate ?? '');
+  const expiryB = new Date(b.expiryDate ?? '');
+
+  if (expiryA < expiryB) {
+    return 1;
+  }
+  if (expiryA > expiryB) {
+    return -1;
   }
 
   return 0;
@@ -104,9 +119,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
       </BasicCell>
       <BasicCell>{batch.locationName}</BasicCell>
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
-      <BasicCell align="center">
-        <Checkbox disabled checked={batch.onHold} />
-      </BasicCell>
+      <BasicCell align="center">{batch.onHold ? '✓' : ''}</BasicCell>
     </TableRow>
   );
 };
@@ -142,6 +155,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
 );
 
 export const BatchesTable: React.FC<BatchesTableProps> = ({
+  invoiceStatus,
   onChange,
   packSizeController,
   register,
@@ -230,6 +244,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                 <ModalNumericInput
                   value={placeholderRow?.numberOfPacks ?? 0}
                   inputProps={placeholderInputProps}
+                  disabled={invoiceStatus !== InvoiceNodeStatus.New}
                 />
               </BasicCell>
             </TableRow>
