@@ -98,7 +98,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           <ModalInput
             disabled
             width={150}
-            value={summaryItem?.itemUnit ?? ''}
+            value={summaryItem?.unitName ?? ''}
           />
         </Grid>
       </ModalRow>

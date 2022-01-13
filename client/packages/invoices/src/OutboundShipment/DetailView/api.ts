@@ -14,6 +14,8 @@ import {
   DeleteOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
   InvoiceNodeStatus,
+  ItemResponse,
+  ItemNode,
 } from '@openmsupply-client/common';
 import { Location } from '@openmsupply-client/system';
 import {
@@ -80,6 +82,14 @@ const locationGuard = (location: LocationResponse): Location => {
   throw new Error('Unknown');
 };
 
+const itemGuard = (item: ItemResponse): ItemNode => {
+  if (item.__typename === 'ItemNode') {
+    return item;
+  }
+
+  throw new Error('Unknown');
+};
+
 export const onRead =
   (api: OmSupplyApi) =>
   async (id: string): Promise<Invoice> => {
@@ -93,6 +103,7 @@ export const onRead =
         : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
       const expiryDate = line.expiryDate ? new Date(line.expiryDate) : null;
+      const item = line.item ? itemGuard(line.item) : undefined;
 
       return {
         ...line,
@@ -101,6 +112,7 @@ export const onRead =
         expiryDate,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
+        unitName: item?.unitName ?? '',
       };
     });
 
