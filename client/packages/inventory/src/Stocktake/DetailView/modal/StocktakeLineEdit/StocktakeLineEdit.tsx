@@ -24,7 +24,7 @@ import { useStocktakeLineEdit } from './hooks';
 
 interface StocktakeLineEditProps {
   item: Item | null;
-  mode: ModalMode;
+  mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
 }
