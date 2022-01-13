@@ -11,7 +11,6 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   groupBy,
-  getDataSorter,
   getColumnSorter,
   useSortBy,
 } from '@openmsupply-client/common';
@@ -132,18 +131,13 @@ export const useStocktakeRows = (isGrouped = true) => {
     return items?.sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
-  const rows = isGrouped
-    ? sortedItems
-    : lines?.sort(
-        getDataSorter(sortBy.key as keyof StocktakeLine, !!sortBy.isDesc)
-      );
+  const rows = isGrouped ? sortedItems : sortedLines;
 
   return {
     rows,
-    lines,
+    lines: sortedLines,
     items: sortedItems,
     onChangeSortBy,
     sortBy,
-    sortedLines,
   };
 };
