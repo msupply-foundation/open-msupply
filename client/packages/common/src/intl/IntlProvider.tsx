@@ -13,8 +13,8 @@ export const IntlProvider: React.FC = ({ children }) => {
     const expirationTime =
       process.env['NODE_ENV'] === 'development'
         ? 0
-        : 7 * 24 * 60 * minuteInMilliseconds;
-
+        : // TODO: change back to a week when things are stable
+          60 * minuteInMilliseconds; // 7 * 24 * 60 * minuteInMilliseconds;
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next
       .use(Backend)
