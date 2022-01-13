@@ -37,6 +37,9 @@ pub use self::invoice_line::*;
 pub mod sort_filter_types;
 pub use self::sort_filter_types::*;
 
+pub mod stock_take;
+pub use self::stock_take::*;
+
 pub mod stock_take_line;
 pub use self::stock_take_line::*;
 
