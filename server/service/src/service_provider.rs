@@ -58,12 +58,14 @@ impl ServiceProvider {
         }
     }
 
+    /// Creates a new service context with a new DB connection
     pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
         })
     }
 
+    /// Establishes a new DB connection
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
         self.connection_manager.connection()
     }

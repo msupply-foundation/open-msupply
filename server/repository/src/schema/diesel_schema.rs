@@ -250,7 +250,7 @@ table! {
         counted_number_of_packs -> Nullable<Integer>,
 
         // stock line related fields:
-        item_id -> Nullable<Text>,
+        item_id -> Text,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
         pack_size -> Nullable<Integer>,
