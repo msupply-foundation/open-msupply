@@ -5,7 +5,10 @@ import { CssBaseline } from '@mui/material';
 import { addDecorator } from '@storybook/react';
 import { initializeWorker, mswDecorator } from 'msw-storybook-addon';
 
-import { StoryProvider } from '../packages/common/src/utils/testing';
+import {
+  StoryProvider,
+  TestingRouterContext,
+} from '../packages/common/src/utils/testing';
 
 initializeWorker();
 addDecorator(mswDecorator);
@@ -13,8 +16,10 @@ addDecorator(mswDecorator);
 export const decorators = [
   Story => (
     <StoryProvider>
-      <CssBaseline />
-      <Story />
+      <TestingRouterContext>
+        <CssBaseline />
+        <Story />
+      </TestingRouterContext>
     </StoryProvider>
   ),
 ];

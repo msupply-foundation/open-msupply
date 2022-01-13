@@ -35,11 +35,11 @@ export const useSortBy = <T extends DomainObject>({
     direction: getDirection(initialIsDesc),
   });
 
-  const onChangeSortBy = useCallback((newSortRule: Column<T>) => {
+  const onChangeSortBy = useCallback((column: Column<T>) => {
     let newSortBy = sortBy;
     setSortBy(({ key: prevSortKey, isDesc: prevIsDesc = false }) => {
       const { key: newSortKey, sortBy: { isDesc: maybeNewIsDesc } = {} } =
-        newSortRule;
+        column;
       const newIsDesc =
         prevSortKey === newSortKey ? !prevIsDesc : !!maybeNewIsDesc ?? false;
 
