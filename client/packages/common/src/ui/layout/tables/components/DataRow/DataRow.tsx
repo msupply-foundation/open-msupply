@@ -4,7 +4,7 @@ import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
 import { DomainObject } from '@common/types';
 import { useExpanded, useDisabled } from '../../context';
-import { Collapse } from '@mui/material';
+import { Collapse, Fade } from '@mui/material';
 
 interface DataRowProps<T extends DomainObject> {
   columns: Column<T>[];
@@ -36,66 +36,65 @@ export const DataRow = <T extends DomainObject>({
 
   return (
     <>
-      <TableRow
-        sx={{
-          color: isDisabled ? 'gray.main' : 'black',
-          minWidth,
-          alignItems: 'center',
-          height: '40px',
-          maxHeight: '45px',
-          boxShadow: dense
-            ? 'none'
-            : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-          display: 'flex',
-          flex: '1 0 auto',
-        }}
-        onClick={onRowClick}
-        hover={hasOnClick}
-      >
-        {columns.map((column, columnIndex) => {
-          return (
-            <TableCell
-              key={`${rowKey}${column.key}`}
-              align={column.align}
-              sx={{
-                borderBottom: 'none',
-                justifyContent: 'flex-end',
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                paddingLeft: '16px',
-                paddingRight: '16px',
-                ...(hasOnClick && { cursor: 'pointer' }),
-                flex: `${column.width} 0 auto`,
-                minWidth: column.minWidth,
-                width: column.width,
-                color: 'inherit',
-                fontSize: dense ? '12px' : '14px',
-                padding: dense ? '12px' : undefined,
-              }}
-            >
-              <column.Cell
-                rows={rows}
-                rowData={rowData}
-                columns={columns}
-                column={column}
-                rowKey={rowKey}
-                columnIndex={columnIndex}
-                rowIndex={rowIndex}
-              />
-            </TableCell>
-          );
-        })}
-      </TableRow>
+      <Fade in={true} timeout={500}>
+        <TableRow
+          sx={{
+            color: isDisabled ? 'gray.main' : 'black',
+            minWidth,
+            alignItems: 'center',
+            height: '40px',
+            maxHeight: '45px',
+            boxShadow: dense
+              ? 'none'
+              : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
+            display: 'flex',
+            flex: '1 0 auto',
+          }}
+          onClick={onRowClick}
+          hover={hasOnClick}
+        >
+          {columns.map((column, columnIndex) => {
+            return (
+              <TableCell
+                key={`${rowKey}${column.key}`}
+                align={column.align}
+                sx={{
+                  borderBottom: 'none',
+                  justifyContent: 'flex-end',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  paddingLeft: '16px',
+                  paddingRight: '16px',
+                  ...(hasOnClick && { cursor: 'pointer' }),
+                  flex: `${column.width} 0 auto`,
+                  minWidth: column.minWidth,
+                  width: column.width,
+                  color: 'inherit',
+                  fontSize: dense ? '12px' : '14px',
+                  padding: dense ? '12px' : undefined,
+                }}
+              >
+                <column.Cell
+                  rows={rows}
+                  rowData={rowData}
+                  columns={columns}
+                  column={column}
+                  rowKey={rowKey}
+                  columnIndex={columnIndex}
+                  rowIndex={rowIndex}
+                />
+              </TableCell>
+            );
+          })}
+        </TableRow>
+      </Fade>
       <tr style={{ display: 'flex' }}>
         <td style={{ display: 'flex', flex: 1 }}>
           <Collapse
             sx={{
               flex: 1,
-              display: 'flex',
               '& .MuiCollapse-wrapperInner': {
-                flex: 1,
                 display: 'flex',
-                flexDirection: 'column',
               },
             }}
             in={isExpanded}

@@ -17,7 +17,7 @@ export const MiniTable = <T extends DomainObject>({
   JSXElementConstructor<MiniTableProps<T>>
 > => {
   return (
-    <Box p={1} style={{ padding: '0 100px', width: '100%' }}>
+    <Box p={1} style={{ padding: '0 100px 5px 100px', width: '100%' }}>
       <Box
         flex={1}
         display="flex"
@@ -25,6 +25,8 @@ export const MiniTable = <T extends DomainObject>({
         borderRadius={4}
         sx={{
           backgroundColor: theme => alpha(theme.palette.gray.light, 0.2),
+          border: theme => `1px solid ${alpha(theme.palette.gray.light, 0.2)}`,
+          '& .MuiTableHead-root': { borderRadius: '16px 16px 0 0' },
         }}
       >
         <DataTable dense columns={columns} data={rows} />
