@@ -1,48 +1,43 @@
 import React from 'react';
 import {
-  FieldValues,
   Grid,
   Item,
-  ModalInput,
+  BasicTextInput,
   ModalLabel,
   ModalRow,
-  UseFormRegister,
   Select,
   useTranslation,
   InputLabel,
-  ModalNumericInput,
+  NumericTextInput,
   Divider,
   Box,
   Typography,
 } from '@openmsupply-client/common';
-import { ItemSearchInput } from '@openmsupply-client/system/src/Item';
-import { OutboundShipment, OutboundShipmentSummaryItem } from '../../../types';
-import { PackSizeController } from './ItemDetailsModal';
+import { ItemSearchInput } from '@openmsupply-client/system';
+import { PackSizeController } from './hooks';
+import { useOutboundRows } from '../../api';
 
 interface ItemDetailsFormProps {
   allocatedQuantity: number;
-  register: UseFormRegister<FieldValues>;
-  summaryItem?: OutboundShipmentSummaryItem;
+  availableQuantity: number;
+  item: Item | null;
   onChangeItem: (newItem: Item | null) => void;
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
-  availableQuantity: number;
-  draft: OutboundShipment;
 }
 
 export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
   allocatedQuantity,
   onChangeItem,
   onChangeQuantity,
-  register,
-  summaryItem,
+  item,
   packSizeController,
   availableQuantity,
-  draft,
 }) => {
   const t = useTranslation(['distribution', 'common']);
   const quantity =
     allocatedQuantity / Math.abs(Number(packSizeController.selected.value));
+  const { items } = useOutboundRows();
 
   return (
     <Grid container gap="4px">
@@ -50,26 +45,13 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
-            currentItem={{
-              name: summaryItem?.itemName ?? '',
-              id: summaryItem?.itemId ?? '',
-              code: summaryItem?.itemCode ?? '',
-              isVisible: true,
-              availableBatches: [],
-              availableQuantity: 0,
-              unitName: '',
-            }}
+            currentItem={item}
             onChange={onChangeItem}
-            extraFilter={item => {
-              const itemAlreadyInShipment = draft.items.some(
-                ({ id, isDeleted }) => id === item.id && !isDeleted
-              );
-              return !itemAlreadyInShipment;
-            }}
+            extraFilter={item => !!items?.some(({ id }) => id === item.id)}
           />
         </Grid>
       </ModalRow>
-      {summaryItem && (
+      {item && (
         <ModalRow>
           <ModalLabel label="" />
           <Grid item display="flex">
@@ -86,37 +68,30 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 
           <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
             <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-            <ModalInput
+            <BasicTextInput
               disabled
-              width={150}
-              value={summaryItem?.unitName ?? ''}
+              sx={{ width: 150 }}
+              value={item?.unitName ?? ''}
             />
           </Grid>
         </ModalRow>
       )}
-      {summaryItem ? (
+      {item ? (
         <>
           <Divider margin={10} />
 
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <ModalNumericInput
+            <NumericTextInput
               value={quantity}
-              inputProps={register('quantity', {
-                min: { value: 1, message: t('error.invalid-value') },
-                pattern: {
-                  value: /^[0-9]+$/,
-                  message: t('error.invalid-value'),
-                },
-                onChange: event => {
-                  onChangeQuantity(
-                    Number(event.target.value),
-                    packSizeController.selected.value === -1
-                      ? null
-                      : Number(packSizeController.selected.value)
-                  );
-                },
-              })}
+              onChange={event => {
+                onChangeQuantity(
+                  Number(event.target.value),
+                  packSizeController.selected.value === -1
+                    ? null
+                    : Number(packSizeController.selected.value)
+                );
+              }}
             />
 
             <Box marginLeft={1} />
@@ -139,13 +114,11 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 
             <Select
               sx={{ width: 110 }}
-              inputProps={register('packSize')}
               options={packSizeController.options}
               value={packSizeController.selected.value}
               onChange={e => {
                 const { value } = e.target;
                 const packSize = Number(value);
-
                 packSizeController.setPackSize(packSize);
                 onChangeQuantity(quantity, packSize === -1 ? null : packSize);
               }}
