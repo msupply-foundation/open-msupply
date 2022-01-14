@@ -7,16 +7,16 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useIsOutboundDisabled } from '../api';
 
 interface AppBarButtonProps {
-  isDisabled: boolean;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  isDisabled,
   onAddItem,
 }) => {
+  const isDisabled = useIsOutboundDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
 
@@ -27,7 +27,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           disabled={isDisabled}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem(true)}
+          onClick={() => onAddItem()}
         />
         {OpenButton}
       </Grid>
