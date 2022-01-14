@@ -4,14 +4,12 @@ import React, { useEffect } from 'react';
 import {
   Box,
   CircularProgress,
-  Collapse,
   TableBody,
   TableHead,
   TableContainer,
   Table as MuiTable,
   Typography,
 } from '@mui/material';
-import { TransitionGroup } from 'react-transition-group';
 
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
@@ -102,24 +100,19 @@ export const DataTable = <T extends DomainObject>({
           </HeaderRow>
         </TableHead>
         <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <TransitionGroup>
-            {data.map((row, idx) => {
-              return (
-                <Collapse sx={{ flex: 1, display: 'flex' }} key={row.id}>
-                  <DataRow
-                    rows={data}
-                    ExpandContent={ExpandContent}
-                    rowIndex={idx}
-                    columns={columns}
-                    onClick={onRowClick}
-                    rowData={row}
-                    rowKey={String(idx)}
-                    dense={dense}
-                  />
-                </Collapse>
-              );
-            })}
-          </TransitionGroup>
+          {data.map((row, idx) => (
+            <DataRow
+              key={row.id}
+              rows={data}
+              ExpandContent={ExpandContent}
+              rowIndex={idx}
+              columns={columns}
+              onClick={onRowClick}
+              rowData={row}
+              rowKey={String(idx)}
+              dense={dense}
+            />
+          ))}
         </TableBody>
       </MuiTable>
       <Box
