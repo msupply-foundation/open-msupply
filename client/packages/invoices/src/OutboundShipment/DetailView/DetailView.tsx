@@ -10,8 +10,8 @@ import {
   Item,
   useEditModal,
 } from '@openmsupply-client/common';
-import { useItemsList, toItem } from '@openmsupply-client/system';
-import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
+import { toItem } from '@openmsupply-client/system';
+import { reducer, OutboundAction } from './reducer';
 import { getOutboundShipmentDetailViewApi } from './api';
 import { ContentArea } from './ContentArea';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
@@ -61,61 +61,9 @@ const useDraftOutbound = () => {
 export const DetailView: FC = () => {
   const { draft } = useDraftOutbound();
 
-  const { prefetchListByName } = useItemsList({
-    initialSortBy: { key: 'name' },
-  });
-
-  const [selectedItem, setSelectedItem] = React.useState<{
-    item: OutboundShipmentSummaryItem | null;
-    editing: boolean;
-  }>({ item: null, editing: false });
-
   const itemModalControl = useToggle();
 
-  const findNextItem = (currentItem: OutboundShipmentSummaryItem | null) => {
-    if (!currentItem) return null;
-    const currentItemIdx = draft.items.findIndex(
-      item => item.id === currentItem?.id
-    );
-
-    return draft.items[(currentItemIdx + 1) % draft.items.length];
-  };
-
-  const onNext = () => {
-    if (selectedItem.editing) {
-      const nextItem = findNextItem(selectedItem?.item);
-
-      if (nextItem) {
-        setSelectedItem({ item: nextItem, editing: true });
-
-        const toPrefetch = findNextItem(nextItem);
-        if (toPrefetch) prefetchListByName(toPrefetch.itemName);
-      }
-    } else {
-      setSelectedItem({ item: null, editing: false });
-    }
-
-    return true;
-  };
-
-  const onChangeSelectedItem = (newItem: Item | null) => {
-    if (!newItem) return setSelectedItem({ item: null, editing: false });
-
-    // Try and find the outbound summary row that matches the new item
-    const item = draft.items.find(
-      summaryItem => summaryItem.itemId === newItem.id
-    );
-
-    // If we found it, set the selected item.
-    if (item) {
-      setSelectedItem({ item, editing: true });
-    } else {
-      // otherwise, set the selected item to a newly created summary row.
-      setSelectedItem({ item: itemToSummaryItem(newItem), editing: false });
-    }
-  };
-
-  const { entity, onOpen, onClose, isOpen } = useEditModal<Item>();
+  const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Item>();
 
   const onRowClick = (item: InvoiceLine | InvoiceItem) => {
     onOpen(toItem(item));
@@ -127,15 +75,10 @@ export const DetailView: FC = () => {
 
       <ItemDetailsModal
         item={entity}
+        mode={mode}
         draft={draft}
-        isEditMode={selectedItem.editing}
-        onNext={onNext}
-        summaryItem={selectedItem?.item}
         isOpen={isOpen}
         onClose={onClose}
-        onChangeItem={onChangeSelectedItem}
-        upsertInvoiceLine={line => draft.upsertLine?.(line)}
-        isOnlyItem={draft.items.length === 1}
       />
 
       <Toolbar />

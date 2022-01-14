@@ -10,6 +10,7 @@ import {
   useFieldsSelector,
   groupBy,
   getColumnSorter,
+  getDataSorter,
   useSortBy,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
@@ -106,17 +107,15 @@ export const useOutboundRows = (isGrouped = true) => {
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
-    return items?.sort(sorter);
+    return [...(items ?? [])].sort(sorter);
   }, [items, sortBy.key, sortBy.isDesc]);
 
   const sortedLines = useMemo(() => {
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
-      currentColumn?.getSortValue,
+    const sorter = getDataSorter<InvoiceLine, keyof InvoiceLine>(
+      sortBy.key as keyof InvoiceLine,
       !!sortBy.isDesc
     );
-    return lines?.sort(sorter);
+    return [...(lines ?? [])].sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
   const rows = isGrouped ? sortedItems : sortedLines;
