@@ -154,6 +154,19 @@ npm run build
 npx cap copy
 ```
 
+Enable clear text traffic in `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.openmsupply.client">
+
+    <application
+      android:usesCleartextTraffic="true"
+      android:allowBackup="true"
+      ...
+```
+
 Open the `android` folder in Android studio and start the app.
 
 ### Java bits
