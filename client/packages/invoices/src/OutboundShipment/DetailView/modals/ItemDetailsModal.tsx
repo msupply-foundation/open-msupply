@@ -7,12 +7,12 @@ import {
   useForm,
   useDialog,
   FormProvider,
-  generateUUID,
   InlineSpinner,
   Box,
   useTranslation,
   InvoiceNodeStatus,
   ifTheSameElseDefault,
+  // useBufferState,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { BatchesTable, sortByExpiry, sortByExpiryDesc } from './BatchesTable';
@@ -35,6 +35,7 @@ interface ItemDetailsModalProps {
   isEditMode: boolean;
   isOnlyItem: boolean;
   draft: OutboundShipment;
+  item: Item | null;
 }
 
 export const getInvoiceLine = (
@@ -219,68 +220,13 @@ const issueStock = (
   return newBatchRows;
 };
 
-export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
-  isOpen,
-  onClose,
-  upsertInvoiceLine,
-  onChangeItem,
-  summaryItem,
-  onNext,
-  isEditMode,
-  isOnlyItem,
-  draft,
-}) => {
-  const t = useTranslation(['distribution']);
-  const methods = useForm({ mode: 'onBlur' });
-  const { reset, register } = methods;
-
-  const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
-  const packSizeController = usePackSizeController(batchRows);
-
-  const { hideDialog, showDialog, Modal } = useDialog({
-    onClose,
-  });
-
-  const onReset = () => {
-    packSizeController.reset();
-    reset();
-  };
-  const onCancel = () => {
-    onClose();
-    onReset();
-  };
-  const upsert = () => {
-    if (!summaryItem) return null;
-
-    // TODO: Handle placeholder upserting.
-    const invoiceLines = batchRows
-      .filter(({ id }) => id !== 'placeholder')
-      .map(batch =>
-        getInvoiceLine(generateUUID(), summaryItem, batch, batch.numberOfPacks)
-      );
-
-    // Upsert each line. Any lines which do no already exist and have no had any
-    // packs allocated, will not be created, but those which already exist and have
-    // their quantity reduced to 0 will be marked for deletion.
-    invoiceLines.forEach(upsertInvoiceLine);
-
-    onReset();
-  };
-  const upsertAndClose = () => {
-    upsert();
-    onClose();
-    onReset();
-    onChangeItem(null);
-  };
-  const next = () => {
-    packSizeController.reset();
-    onNext();
-  };
-
-  const allocateQuantities = (
-    newValue: number,
-    issuePackSize: number | null
-  ) => {
+const allocateQuantities =
+  (
+    draft: OutboundShipment,
+    batchRows: BatchRow[],
+    setBatchRows: React.Dispatch<React.SetStateAction<BatchRow[]>>
+  ) =>
+  (newValue: number, issuePackSize: number | null) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 1 || Number.isNaN(newValue)) {
       return;
@@ -375,30 +321,42 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     setBatchRows(newBatchRows);
   };
 
+export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  onChangeItem,
+  summaryItem,
+  onNext,
+  isEditMode,
+  isOnlyItem,
+  draft,
+  // item,
+}) => {
+  // const [currentItem, setCurrentItem] = useBufferState(item);
+  const t = useTranslation(['distribution']);
+  const methods = useForm({ mode: 'onBlur' });
+  const { register } = methods;
+
+  const { batchRows, setBatchRows, isLoading } = useBatchRows(summaryItem);
+  const packSizeController = usePackSizeController(batchRows);
+  const { Modal } = useDialog({ isOpen, onClose });
+
   const onChangeRowQuantity = (batchId: string, value: number) => {
     setBatchRows(issueStock(batchRows, batchId, value));
   };
 
-  React.useEffect(() => {
-    if (isOpen) showDialog();
-    else {
-      onChangeItem(null);
-      hideDialog();
-    }
-  }, [isOpen]);
-
   return (
     <Modal
       title={t(isEditMode ? 'heading.edit-item' : 'heading.add-item')}
-      cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
           disabled={isEditMode && isOnlyItem}
           variant="next"
-          onClick={next}
+          onClick={onNext}
         />
       }
-      okButton={<DialogButton variant="ok" onClick={upsertAndClose} />}
+      okButton={<DialogButton variant="ok" onClick={onClose} />}
       height={600}
       width={900}
     >
@@ -411,7 +369,11 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               packSizeController={packSizeController}
               onChangeItem={onChangeItem}
               onChangeQuantity={(newQuantity, newPackSize) =>
-                allocateQuantities(newQuantity, newPackSize)
+                allocateQuantities(
+                  draft,
+                  batchRows,
+                  setBatchRows
+                )(newQuantity, newPackSize)
               }
               register={register}
               allocatedQuantity={getAllocatedQuantity(batchRows)}

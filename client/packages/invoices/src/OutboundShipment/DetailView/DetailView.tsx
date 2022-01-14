@@ -8,8 +8,9 @@ import {
   useToggle,
   useOmSupplyApi,
   Item,
+  useEditModal,
 } from '@openmsupply-client/common';
-import { useItemsList } from '@openmsupply-client/system';
+import { useItemsList, toItem } from '@openmsupply-client/system';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
 import { getOutboundShipmentDetailViewApi } from './api';
 import { ContentArea } from './ContentArea';
@@ -114,8 +115,10 @@ export const DetailView: FC = () => {
     }
   };
 
+  const { entity, onOpen, onClose, isOpen } = useEditModal<Item>();
+
   const onRowClick = (item: InvoiceLine | InvoiceItem) => {
-    console.log(item);
+    onOpen(toItem(item));
   };
 
   return draft ? (
@@ -123,12 +126,13 @@ export const DetailView: FC = () => {
       <AppBarButtons onAddItem={itemModalControl.toggleOn} />
 
       <ItemDetailsModal
+        item={entity}
         draft={draft}
         isEditMode={selectedItem.editing}
         onNext={onNext}
         summaryItem={selectedItem?.item}
-        isOpen={itemModalControl.isOn}
-        onClose={itemModalControl.toggleOff}
+        isOpen={isOpen}
+        onClose={onClose}
         onChangeItem={onChangeSelectedItem}
         upsertInvoiceLine={line => draft.upsertLine?.(line)}
         isOnlyItem={draft.items.length === 1}
