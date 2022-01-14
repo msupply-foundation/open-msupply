@@ -59,13 +59,13 @@ export const GeneralTabComponent: FC<
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
 
-  const activeRows = useMemo(() => {
-    const x = data
-      .filter(({ isDeleted }) => !isDeleted)
-      .slice(pagination.offset, pagination.offset + pagination.first);
-
-    return x;
-  }, [data]);
+  const activeRows = useMemo(
+    () =>
+      data
+        .filter(({ isDeleted }) => !isDeleted)
+        .slice(pagination.offset, pagination.offset + pagination.first),
+    [data]
+  );
 
   // const toggleGrouped = () => {
   //   const outboundShipment = !isGroupedByItem?.outboundShipment;
