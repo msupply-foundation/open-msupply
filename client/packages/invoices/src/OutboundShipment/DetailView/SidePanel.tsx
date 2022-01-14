@@ -1,3 +1,4 @@
+import React, { FC } from 'react';
 import {
   Grid,
   CopyIcon,
@@ -7,21 +8,20 @@ import {
   PanelField,
   PanelLabel,
   PanelRow,
-  TextArea,
+  BufferedTextArea,
   useNotification,
   useTranslation,
   ColorSelectButton,
+  useBufferState,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
-import { isInvoiceEditable } from '../../utils';
-import { OutboundShipment } from '../../types';
+import { useOutboundFields, useOutbound, useIsOutboundDisabled } from '../api';
 
-interface SidePanelProps {
-  draft: OutboundShipment;
-}
-
-const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
+const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
+  const isDisabled = useIsOutboundDisabled();
+  const { color, comment, update } = useOutboundFields(['color', 'comment']);
+  const [colorBuffer, setColorBuffer] = useBufferState(color);
+  const [commentBuffer, setCommentBuffer] = useBufferState(comment);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -35,18 +35,24 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
             <ColorSelectButton
-              disabled={!isInvoiceEditable(draft)}
-              onChange={color => draft.update?.('color', color.hex)}
-              color={draft.color}
+              disabled={isDisabled}
+              onChange={color => {
+                setColorBuffer(color.hex);
+                update({ color: color.hex });
+              }}
+              color={colorBuffer}
             />
           </PanelField>
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
-        <TextArea
-          disabled={!isInvoiceEditable(draft)}
-          onChange={e => draft.update?.('comment', e.target.value)}
-          value={draft.comment}
+        <BufferedTextArea
+          disabled={isDisabled}
+          onChange={e => {
+            setCommentBuffer(e.target.value);
+            update({ comment: e.target.value });
+          }}
+          value={commentBuffer}
         />
       </Grid>
     </DetailPanelSection>
@@ -71,7 +77,7 @@ const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
 //   );
 // };
 
-const RelatedDocumentsSection: FC<SidePanelProps> = () => {
+const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('distribution');
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
@@ -101,45 +107,28 @@ const RelatedDocumentsSection: FC<SidePanelProps> = () => {
   );
 };
 
-export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
+export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
+  const { data } = useOutbound();
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
+    navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
     success('Copied to clipboard successfully')();
   };
 
   return (
     <DetailPanelPortal
       Actions={
-        <>
-          {!process.env['NODE_ENV'] ||
-            (process.env['NODE_ENV'] === 'development' && (
-              <DetailPanelAction
-                icon={<CopyIcon />}
-                title={t('dev.log-draft')}
-                onClick={() => {
-                  console.table(draft);
-                  draft.items.forEach(item => {
-                    console.table(item);
-                    Object.values(item.batches).forEach(batch => {
-                      console.table(batch);
-                    });
-                  });
-                }}
-              />
-            ))}
-          <DetailPanelAction
-            icon={<CopyIcon />}
-            title={t('link.copy-to-clipboard')}
-            onClick={copyToClipboard}
-          />
-        </>
+        <DetailPanelAction
+          icon={<CopyIcon />}
+          title={t('link.copy-to-clipboard')}
+          onClick={copyToClipboard}
+        />
       }
     >
-      <AdditionalInfoSection draft={draft} />
-      <RelatedDocumentsSection draft={draft} />
+      <AdditionalInfoSection />
+      <RelatedDocumentsSection />
     </DetailPanelPortal>
   );
 };

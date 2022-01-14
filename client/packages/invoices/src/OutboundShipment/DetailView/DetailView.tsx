@@ -61,7 +61,7 @@ const useDraftOutbound = () => {
 };
 
 export const DetailView: FC = () => {
-  const { draft, onChangeSortBy, save, sortBy, onFlattenRows, onGroupRows } =
+  const { draft, onChangeSortBy, sortBy, onFlattenRows, onGroupRows } =
     useDraftOutbound();
 
   const { prefetchListByName } = useItemsList({
@@ -218,7 +218,7 @@ export const DetailView: FC = () => {
       />
 
       <Footer />
-      <SidePanel draft={draft} />
+      <SidePanel />
     </TableProvider>
   ) : null;
 };
