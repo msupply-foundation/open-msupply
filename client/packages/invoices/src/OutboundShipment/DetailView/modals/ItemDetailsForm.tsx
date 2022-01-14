@@ -94,7 +94,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           </Grid>
         </ModalRow>
       )}
-      {summaryItem ? (
+      {summaryItem && availableQuantity ? (
         <>
           <Divider margin={10} />
 
