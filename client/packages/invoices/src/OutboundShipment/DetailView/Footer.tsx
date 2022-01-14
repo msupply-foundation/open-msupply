@@ -11,6 +11,7 @@ import {
   AppFooterPortal,
   InvoiceNodeStatus,
   useNavigate,
+  useBufferState,
 } from '@openmsupply-client/common';
 import {
   getNextOutboundStatus,
@@ -63,6 +64,7 @@ export const Footer: FC = () => {
   const { data } = useOutbound();
   const isDisabled = useIsOutboundDisabled();
   const { onHold, status, update } = useOutboundFields(['onHold', 'status']);
+  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
     <AppFooterPortal
@@ -77,9 +79,10 @@ export const Footer: FC = () => {
           >
             <ToggleButton
               disabled={isDisabled}
-              value={!!onHold}
-              selected={!!onHold}
+              value={!!onHoldBuffer}
+              selected={!!onHoldBuffer}
               onClick={(_, value) => {
+                setOnHoldBuffer(!value);
                 update({ onHold: !value });
               }}
               label={t('label.hold')}

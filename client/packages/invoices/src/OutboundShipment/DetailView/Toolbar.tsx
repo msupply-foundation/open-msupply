@@ -7,6 +7,7 @@ import {
   Grid,
   DropdownMenu,
   useTranslation,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system';
 import { useOutboundFields, useIsOutboundDisabled } from '../api';
@@ -16,6 +17,9 @@ export const Toolbar: FC = () => {
     'otherParty',
     'theirReference',
   ]);
+  const [theirReferenceBuffer, setTheirReferenceBuffer] =
+    useBufferState(theirReference);
+
   const isDisabled = useIsOutboundDisabled();
   const t = useTranslation('distribution');
 
@@ -52,8 +56,9 @@ export const Toolbar: FC = () => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference ?? ''}
+                  value={theirReferenceBuffer ?? ''}
                   onChange={event => {
+                    setTheirReferenceBuffer(event.target.value);
                     update({ theirReference: event.target.value });
                   }}
                 />
