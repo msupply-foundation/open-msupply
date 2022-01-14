@@ -93,11 +93,8 @@ export const DataRow = <T extends DomainObject>({
           <Collapse
             sx={{
               flex: 1,
-              display: 'flex',
               '& .MuiCollapse-wrapperInner': {
-                flex: 1,
                 display: 'flex',
-                flexDirection: 'column',
               },
             }}
             in={isExpanded}
