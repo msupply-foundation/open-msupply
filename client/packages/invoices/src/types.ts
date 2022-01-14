@@ -162,3 +162,9 @@ export type InboundShipmentItem = {
   itemId: string;
   lines: [InvoiceLine, ...InvoiceLine[]];
 };
+
+export type InvoiceItem = {
+  id: string;
+  itemId: string;
+  lines: [InvoiceLine, ...InvoiceLine[]];
+};
