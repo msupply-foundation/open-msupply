@@ -1,0 +1,6 @@
+{
+	"appId": "org.openmsupply.client",
+	"appName": "openmsupply-client",
+	"webDir": "packages/host/dist",
+	"bundledWebRuntime": false
+}
