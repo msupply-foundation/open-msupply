@@ -207,7 +207,7 @@ export const DetailView: FC = () => {
         isOnlyItem={draft.items.length === 1}
       />
 
-      <Toolbar draft={draft} />
+      <Toolbar />
 
       <GeneralTab
         columns={columns}
@@ -217,7 +217,7 @@ export const DetailView: FC = () => {
         onGroupRows={onGroupRows}
       />
 
-      <Footer draft={draft} save={save} />
+      <Footer />
       <SidePanel draft={draft} />
     </TableProvider>
   ) : null;
