@@ -147,18 +147,7 @@ const usePackSizeController = (
     }))
   );
 
-  const selectedPackSize = ifTheSameElseDefault(
-    batches.filter(batch => batch.numberOfPacks > 0),
-    'packSize',
-    0
-  );
-  const defaultPackSize = (selectedPackSize === 0
-    ? options[0]
-    : options.find(option => option.value === selectedPackSize)) ?? {
-    label: '',
-    value: '',
-  };
-  const [selected, setSelected] = useState(defaultPackSize);
+  const [selected, setSelected] = useState({ label: '', value: 0 });
 
   const setPackSize = (newValue: number) => {
     const packSizeOption = options.find(({ value }) => value === newValue);
@@ -167,15 +156,32 @@ const usePackSizeController = (
   };
 
   useEffect(() => {
+    if (selected.value !== 0) return;
+
+    const selectedPackSize = ifTheSameElseDefault(
+      batches.filter(batch => batch.numberOfPacks > 0),
+      'packSize',
+      0
+    );
+
+    const defaultPackSize = (selectedPackSize === 0
+      ? options[0]
+      : options.find(option => option.value === selectedPackSize)) ?? {
+      label: '',
+      value: '',
+    };
+
     if (defaultPackSize.value && typeof defaultPackSize.value == 'number') {
       setPackSize(defaultPackSize.value);
     }
     if (packSizes.length === 0) {
-      setSelected({ label: '', value: '' });
+      setSelected({ label: '', value: 0 });
     }
-  }, [defaultPackSize.value]);
+  }, [batches]);
 
-  return { selected, setPackSize, options };
+  const reset = () => setSelected({ label: '', value: 0 });
+
+  return { selected, setPackSize, options, reset };
 };
 
 const sumAvailableQuantity = (batchRows: BatchRow[]) => {
@@ -236,6 +242,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   });
 
   const onReset = () => {
+    packSizeController.reset();
     reset();
   };
   const onCancel = () => {
@@ -264,6 +271,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     onClose();
     onReset();
     onChangeItem(null);
+  };
+  const next = () => {
+    packSizeController.reset();
+    onNext();
   };
 
   const allocateQuantities = (
@@ -384,7 +395,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           disabled={isEditMode && isOnlyItem}
           variant="next"
-          onClick={onNext}
+          onClick={next}
         />
       }
       okButton={<DialogButton variant="ok" onClick={upsertAndClose} />}
