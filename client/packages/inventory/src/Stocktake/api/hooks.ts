@@ -123,12 +123,12 @@ export const useStocktakeRows = (isGrouped = true) => {
 
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return items;
+    if (!currentColumn?.getSortValue) return lines;
     const sorter = getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
-    return items?.sort(sorter);
+    return lines?.sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
   const rows = isGrouped ? sortedItems : sortedLines;

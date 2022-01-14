@@ -4,28 +4,25 @@ import {
   Column,
   TableProvider,
   createTableStore,
-  useColumns,
   useDocument,
   useToggle,
-  GenericColumnKey,
-  getNotePopoverColumn,
-  getRowExpandColumn,
   useOmSupplyApi,
   Item,
-  ColumnAlign,
-  ColumnFormat,
 } from '@openmsupply-client/common';
+import { useItemsList } from '@openmsupply-client/system';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
 import { getOutboundShipmentDetailViewApi } from './api';
-import { GeneralTab } from './tabs/GeneralTab';
+import { ContentArea } from './ContentArea';
 import { ItemDetailsModal } from './modals/ItemDetailsModal';
-
-import { OutboundShipmentSummaryItem } from '../../types';
+import {
+  OutboundShipmentSummaryItem,
+  InvoiceItem,
+  InvoiceLine,
+} from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useItemsList } from '@openmsupply-client/system';
 
 const useDraftOutbound = () => {
   const { id } = useParams();
@@ -61,8 +58,7 @@ const useDraftOutbound = () => {
 };
 
 export const DetailView: FC = () => {
-  const { draft, onChangeSortBy, sortBy, onFlattenRows, onGroupRows } =
-    useDraftOutbound();
+  const { draft } = useDraftOutbound();
 
   const { prefetchListByName } = useItemsList({
     initialSortBy: { key: 'name' },
@@ -74,11 +70,6 @@ export const DetailView: FC = () => {
   }>({ item: null, editing: false });
 
   const itemModalControl = useToggle();
-
-  const onRowClick = (item: OutboundShipmentSummaryItem) => {
-    setSelectedItem({ item, editing: true });
-    itemModalControl.toggle();
-  };
 
   const findNextItem = (currentItem: OutboundShipmentSummaryItem | null) => {
     if (!currentItem) return null;
@@ -106,74 +97,6 @@ export const DetailView: FC = () => {
     return true;
   };
 
-  const columns = useColumns(
-    [
-      [
-        getNotePopoverColumn<OutboundShipmentSummaryItem>(),
-        {
-          accessor: ({ rowData }) => {
-            const batches = Object.values(rowData.batches);
-            const noteSections = batches
-              .map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }))
-              .filter(({ body }) => !!body);
-            return noteSections.length ? noteSections : null;
-          },
-        },
-      ],
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      'locationName',
-      'itemUnit',
-      'numberOfPacks',
-      'packSize',
-      'unitQuantity',
-      {
-        label: 'label.unit-price',
-        key: 'sellPricePerUnit',
-        width: 100,
-        align: ColumnAlign.Right,
-        format: ColumnFormat.Currency,
-        accessor: ({ rowData }) =>
-          Object.values(rowData.batches).reduce(
-            (sum, batch) =>
-              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-            0
-          ),
-        getSortValue: row =>
-          Object.values(row.batches).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack / batch.packSize,
-            0
-          ),
-      },
-      {
-        label: 'label.line-total',
-        key: 'lineTotal',
-        width: 100,
-        align: ColumnAlign.Right,
-        format: ColumnFormat.Currency,
-        accessor: ({ rowData }) =>
-          Object.values(rowData.batches).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          ),
-        getSortValue: row =>
-          Object.values(row.batches).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          ),
-      },
-      getRowExpandColumn<OutboundShipmentSummaryItem>(),
-      GenericColumnKey.Selection,
-    ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
-  );
-
   const onChangeSelectedItem = (newItem: Item | null) => {
     if (!newItem) return setSelectedItem({ item: null, editing: false });
 
@@ -189,6 +112,10 @@ export const DetailView: FC = () => {
       // otherwise, set the selected item to a newly created summary row.
       setSelectedItem({ item: itemToSummaryItem(newItem), editing: false });
     }
+  };
+
+  const onRowClick = (item: InvoiceLine | InvoiceItem) => {
+    console.log(item);
   };
 
   return draft ? (
@@ -209,13 +136,7 @@ export const DetailView: FC = () => {
 
       <Toolbar />
 
-      <GeneralTab
-        columns={columns}
-        data={draft.items}
-        onRowClick={onRowClick}
-        onFlattenRows={onFlattenRows}
-        onGroupRows={onGroupRows}
-      />
+      <ContentArea onRowClick={onRowClick} />
 
       <Footer />
       <SidePanel />
