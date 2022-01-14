@@ -24,3 +24,10 @@ typings/
 
 # Package stats
 **/stats.json
+
+# Android
+NDK
+android/app/src/main/jniLibs
+android/.idea
+/build/*
+!/build/.npmkeep
