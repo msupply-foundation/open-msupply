@@ -13,7 +13,6 @@ import {
 } from '@openmsupply-client/common';
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
-import { OutboundShipment } from '../../../types';
 import {
   useDraftOutboundLines,
   usePackSizeController,
@@ -24,11 +23,10 @@ import {
   sumAvailableQuantity,
   getAllocatedQuantity,
 } from './utils';
-import { useSaveOutboundLines } from 'packages/invoices/src/OutboundShipment/api';
+import { useOutboundFields, useSaveOutboundLines } from '../../api';
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  draft: OutboundShipment;
   item: Item | null;
   mode: ModalMode | null;
 }
@@ -36,13 +34,13 @@ interface ItemDetailsModalProps {
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
-  draft,
   item,
   mode,
 }) => {
   const [currentItem, setCurrentItem] = useBufferState(item);
   const t = useTranslation(['distribution']);
   const { mutate } = useSaveOutboundLines();
+  const { status } = useOutboundFields('status');
   const {
     draftOutboundLines,
     updateQuantity,
@@ -58,7 +56,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   };
 
   const onAllocate = allocateQuantities(
-    draft,
+    status,
     draftOutboundLines,
     setDraftOutboundLines
   );
@@ -107,7 +105,6 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               packSizeController={packSizeController}
               onChange={updateQuantity}
               rows={draftOutboundLines}
-              invoiceStatus={draft.status}
             />
           ) : (
             <Box
