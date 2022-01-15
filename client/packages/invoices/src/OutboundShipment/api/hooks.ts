@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import {
+  useQueryClient,
   InvoiceNodeStatus,
   useQuerySelector,
   useParams,
@@ -12,6 +13,7 @@ import {
   getColumnSorter,
   getDataSorter,
   useSortBy,
+  useMutation,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -127,4 +129,15 @@ export const useOutboundRows = (isGrouped = true) => {
     onChangeSortBy,
     sortBy,
   };
+};
+
+export const useSaveOutboundLines = () => {
+  const queryKey = useOutboundDetailQueryKey();
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  return useMutation(OutboundApi.updateLines(api), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(queryKey);
+    },
+  });
 };

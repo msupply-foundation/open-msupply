@@ -1,7 +1,7 @@
 import { InvoiceNodeStatus } from '@openmsupply-client/common';
-import { BatchRow, OutboundShipment } from './../../../types';
+import { DraftOutboundLine, OutboundShipment } from './../../../types';
 
-export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
+export const sortByExpiry = (a: DraftOutboundLine, b: DraftOutboundLine) => {
   const expiryA = new Date(a.expiryDate ?? '');
   const expiryB = new Date(b.expiryDate ?? '');
 
@@ -15,7 +15,10 @@ export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
   return 0;
 };
 
-export const sortByExpiryDesc = (a: BatchRow, b: BatchRow) => {
+export const sortByExpiryDesc = (
+  a: DraftOutboundLine,
+  b: DraftOutboundLine
+) => {
   const expiryA = new Date(a.expiryDate ?? '');
   const expiryB = new Date(b.expiryDate ?? '');
 
@@ -29,8 +32,10 @@ export const sortByExpiryDesc = (a: BatchRow, b: BatchRow) => {
   return 0;
 };
 
-export const sumAvailableQuantity = (batchRows: BatchRow[]) => {
-  const sum = batchRows.reduce(
+export const sumAvailableQuantity = (
+  draftOutboundLines: DraftOutboundLine[]
+) => {
+  const sum = draftOutboundLines.reduce(
     (acc, { availableNumberOfPacks, packSize }) =>
       acc + availableNumberOfPacks * packSize,
     0
@@ -39,36 +44,42 @@ export const sumAvailableQuantity = (batchRows: BatchRow[]) => {
   return sum;
 };
 
-export const getAllocatedQuantity = (batchRows: BatchRow[]) => {
-  return batchRows.reduce(
+export const getAllocatedQuantity = (
+  draftOutboundLines: DraftOutboundLine[]
+) => {
+  return draftOutboundLines.reduce(
     (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
     0
   );
 };
 
 export const issueStock = (
-  batchRows: BatchRow[],
+  draftOutboundLines: DraftOutboundLine[],
   idToIssue: string,
   value: number
 ) => {
-  const foundRowIdx = batchRows.findIndex(({ id }) => id === idToIssue);
-  const foundRow = batchRows[foundRowIdx];
+  const foundRowIdx = draftOutboundLines.findIndex(
+    ({ id }) => id === idToIssue
+  );
+  const foundRow = draftOutboundLines[foundRowIdx];
   if (!foundRow) return [];
 
-  const newBatchRows = [...batchRows];
-  newBatchRows[foundRowIdx] = {
+  const newDraftOutboundLines = [...draftOutboundLines];
+  newDraftOutboundLines[foundRowIdx] = {
     ...foundRow,
     numberOfPacks: value,
   };
 
-  return newBatchRows;
+  return newDraftOutboundLines;
 };
 
 export const allocateQuantities =
   (
     draft: OutboundShipment,
-    batchRows: BatchRow[],
-    setBatchRows: React.Dispatch<React.SetStateAction<BatchRow[]>>
+    draftOutboundLines: DraftOutboundLine[],
+    setDraftOutboundLines: React.Dispatch<
+      React.SetStateAction<DraftOutboundLine[]>
+    >
   ) =>
   (newValue: number, issuePackSize: number | null) => {
     // if invalid quantity entered, don't allocate
@@ -78,9 +89,13 @@ export const allocateQuantities =
 
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
-    if (batchRows.length === 1) {
-      setBatchRows(
-        issueStock(batchRows, 'placeholder', newValue * (issuePackSize || 1))
+    if (draftOutboundLines.length === 1) {
+      setDraftOutboundLines(
+        issueStock(
+          draftOutboundLines,
+          'placeholder',
+          newValue * (issuePackSize || 1)
+        )
       );
     }
 
@@ -88,11 +103,11 @@ export const allocateQuantities =
     const totalToAllocate = newValue * (issuePackSize || 1);
     let toAllocate = totalToAllocate;
 
-    const newBatchRows = batchRows.map(batch => ({
+    const newDraftOutboundLines = draftOutboundLines.map(batch => ({
       ...batch,
       numberOfPacks: 0,
     }));
-    const validBatches = newBatchRows
+    const validBatches = newDraftOutboundLines
       .filter(
         ({ packSize, onHold, availableNumberOfPacks }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
@@ -102,22 +117,24 @@ export const allocateQuantities =
       .sort(sortByExpiry);
 
     validBatches.forEach(batch => {
-      const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
-      const batchRow = newBatchRows[batchRowIdx];
-      if (!batchRow) return null;
+      const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
+        ({ id }) => batch.id === id
+      );
+      const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
+      if (!draftOutboundLine) return null;
       if (toAllocate < 0) return null;
 
       const availableUnits =
-        batchRow.availableNumberOfPacks * batchRow.packSize;
+        draftOutboundLine.availableNumberOfPacks * draftOutboundLine.packSize;
       const unitsToAllocate = Math.min(toAllocate, availableUnits);
       const allocatedNumberOfPacks = Math.ceil(
-        unitsToAllocate / batchRow.packSize
+        unitsToAllocate / draftOutboundLine.packSize
       );
 
-      toAllocate -= allocatedNumberOfPacks * batchRow.packSize;
+      toAllocate -= allocatedNumberOfPacks * draftOutboundLine.packSize;
 
-      newBatchRows[batchRowIdx] = {
-        ...batchRow,
+      newDraftOutboundLines[draftOutboundLineIdx] = {
+        ...draftOutboundLine,
         numberOfPacks: allocatedNumberOfPacks,
       };
     });
@@ -126,41 +143,44 @@ export const allocateQuantities =
     if (toAllocate < 0) {
       toAllocate *= -1;
       validBatches.sort(sortByExpiryDesc).forEach(batch => {
-        const batchRowIdx = newBatchRows.findIndex(({ id }) => batch.id === id);
-        const batchRow = newBatchRows[batchRowIdx];
-        if (!batchRow) return null;
-        if (batchRow.packSize > toAllocate) return null;
-        if (batchRow.numberOfPacks === 0) return null;
+        const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
+          ({ id }) => batch.id === id
+        );
+        const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
+        if (!draftOutboundLine) return null;
+        if (draftOutboundLine.packSize > toAllocate) return null;
+        if (draftOutboundLine.numberOfPacks === 0) return null;
 
-        const allocatedUnits = batchRow.numberOfPacks * batchRow.packSize;
+        const allocatedUnits =
+          draftOutboundLine.numberOfPacks * draftOutboundLine.packSize;
         const unitsToReduce = Math.min(toAllocate, allocatedUnits);
         const numberOfPacks = Math.floor(
-          (allocatedUnits - unitsToReduce) / batchRow.packSize
+          (allocatedUnits - unitsToReduce) / draftOutboundLine.packSize
         );
 
         toAllocate -= unitsToReduce;
 
-        newBatchRows[batchRowIdx] = {
-          ...batchRow,
+        newDraftOutboundLines[draftOutboundLineIdx] = {
+          ...draftOutboundLine,
           numberOfPacks: numberOfPacks,
         };
       });
     }
 
     if (draft.status === InvoiceNodeStatus.New) {
-      const placeholderIdx = newBatchRows.findIndex(
+      const placeholderIdx = newDraftOutboundLines.findIndex(
         ({ id }) => id === 'placeholder'
       );
-      const placeholder = newBatchRows[placeholderIdx];
+      const placeholder = newDraftOutboundLines[placeholderIdx];
 
       if (!placeholder) throw new Error('No placeholder within item editing');
 
-      newBatchRows[placeholderIdx] = {
+      newDraftOutboundLines[placeholderIdx] = {
         ...placeholder,
         numberOfPacks:
           placeholder.numberOfPacks + toAllocate * (issuePackSize || 1),
       };
     }
 
-    setBatchRows(newBatchRows);
+    setDraftOutboundLines(newDraftOutboundLines);
   };

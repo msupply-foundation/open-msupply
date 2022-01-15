@@ -15,18 +15,18 @@ import {
   ReadOnlyInput,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { BatchRow } from '../../../types';
+import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
 import { sortByExpiry } from './utils';
 export interface BatchesTableProps {
   invoiceStatus: InvoiceNodeStatus;
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
-  rows: BatchRow[];
+  rows: DraftOutboundLine[];
 }
 
 type BatchesRowProps = {
-  batch: BatchRow;
+  batch: DraftOutboundLine;
   disabled?: boolean;
   onChange?: (key: string, value: number, packSize: number) => void;
 };
@@ -124,10 +124,10 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
     packSizeController.selected.value === -1 ||
     packSize === packSizeController.selected.value;
 
-  const allocatableRows: BatchRow[] = [];
-  const onHoldRows: BatchRow[] = [];
-  const noStockRows: BatchRow[] = [];
-  const wrongPackSizeRows: BatchRow[] = [];
+  const allocatableRows: DraftOutboundLine[] = [];
+  const onHoldRows: DraftOutboundLine[] = [];
+  const noStockRows: DraftOutboundLine[] = [];
+  const wrongPackSizeRows: DraftOutboundLine[] = [];
 
   rowsWithoutPlaceholder.forEach(row => {
     if (row.onHold) {
