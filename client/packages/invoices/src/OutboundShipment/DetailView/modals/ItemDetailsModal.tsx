@@ -14,7 +14,11 @@ import {
 import { BatchesTable } from './BatchesTable';
 import { ItemDetailsForm } from './ItemDetailsForm';
 import { OutboundShipment } from '../../../types';
-import { useBatchRows, usePackSizeController } from './hooks';
+import {
+  useDraftOutboundLines,
+  usePackSizeController,
+  useNextItem,
+} from './hooks';
 import {
   allocateQuantities,
   issueStock,
@@ -39,16 +43,24 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   const [currentItem, setCurrentItem] = useBufferState(item);
   const t = useTranslation(['distribution']);
 
-  const { batchRows, setBatchRows, isLoading } = useBatchRows(item);
-  const packSizeController = usePackSizeController(batchRows);
+  const { draftOutboundLines, setDraftOutboundLines, isLoading } =
+    useDraftOutboundLines(item);
+  const packSizeController = usePackSizeController(draftOutboundLines);
   const { Modal } = useDialog({ isOpen, onClose });
-
+  const nextItem = useNextItem();
   const onChangeRowQuantity = (batchId: string, value: number) => {
-    setBatchRows(issueStock(batchRows, batchId, value));
+    setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
   };
 
-  const onNext = () => {};
-  const onAllocate = allocateQuantities(draft, batchRows, setBatchRows);
+  const onNext = () => {
+    setCurrentItem(nextItem);
+  };
+
+  const onAllocate = allocateQuantities(
+    draft,
+    draftOutboundLines,
+    setDraftOutboundLines
+  );
 
   return (
     <Modal
@@ -72,8 +84,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           packSizeController={packSizeController}
           onChangeItem={setCurrentItem}
           item={currentItem}
-          allocatedQuantity={getAllocatedQuantity(batchRows)}
-          availableQuantity={sumAvailableQuantity(batchRows)}
+          allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
+          availableQuantity={sumAvailableQuantity(draftOutboundLines)}
           onChangeQuantity={onAllocate}
         />
         {!!currentItem ? (
@@ -81,7 +93,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             <BatchesTable
               packSizeController={packSizeController}
               onChange={onChangeRowQuantity}
-              rows={batchRows}
+              rows={draftOutboundLines}
               invoiceStatus={draft.status}
             />
           ) : (

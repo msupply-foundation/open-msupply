@@ -1,7 +1,7 @@
+import { DraftOutboundLine } from './../../types';
 import {
-  //   InsertOutboundShipmentLineInput,
   //   DeleteOutboundShipmentLineInput,
-  //   UpdateOutboundShipmentLineInput,
+
   RecordPatch,
   OmSupplyApi,
   UpdateOutboundShipmentInput,
@@ -17,6 +17,8 @@ import {
   LocationResponse,
   ItemNode,
   ItemResponse,
+  InsertOutboundShipmentLineInput,
+  UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
 import { Location } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
@@ -110,39 +112,30 @@ const invoiceToInput = (
   theirReference: patch.theirReference,
 });
 
-// const createInsertOutboundLineInput = (
-//   line: InvoiceLine
-// ): InsertOutboundShipmentLineInput => {
-//   return {
-//     id: line.id,
-//     itemId: line.itemId,
-//     numberOfPacks: line.numberOfPacks,
-//     stockLineId: line.stockLineId,
-//     invoiceId: line.invoiceId,
-//     totalAfterTax: 0,
-//     totalBeforeTax: 0,
-//   };
-// };
+const createInsertOutboundLineInput = (
+  line: DraftOutboundLine
+): InsertOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    itemId: line.itemId,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+    invoiceId: line.invoiceId,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
+  };
+};
 
-// const createDeleteOutboundLineInput = (
-//   line: InvoiceLine
-// ): DeleteOutboundShipmentLineInput => {
-//   return {
-//     id: line.id,
-//     invoiceId: line.invoiceId,
-//   };
-// };
-
-// const createUpdateOutboundLineInput = (
-//   line: InvoiceLine
-// ): UpdateOutboundShipmentLineInput => {
-//   return {
-//     id: line.id,
-//     invoiceId: line.invoiceId,
-//     numberOfPacks: line.numberOfPacks,
-//     stockLineId: line.stockLineId,
-//   };
-// };
+const createUpdateOutboundLineInput = (
+  line: DraftOutboundLine
+): UpdateOutboundShipmentLineInput => {
+  return {
+    id: line.id,
+    invoiceId: line.invoiceId,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+  };
+};
 
 export const OutboundApi = {
   get: {
@@ -205,5 +198,19 @@ export const OutboundApi = {
 
       throw new Error('Unable to update invoice');
     },
-  updateLine: {},
+  updateLines:
+    (api: OmSupplyApi) => async (draftStocktakeLines: DraftOutboundLine[]) => {
+      const input = {
+        insertOutboundShipmentLines: draftStocktakeLines
+          .filter(({ isCreated }) => isCreated)
+          .map(createInsertOutboundLineInput),
+        updateOutboundShipmentLines: draftStocktakeLines
+          .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
+          .map(createUpdateOutboundLineInput),
+      };
+
+      const result = await api.upsertOutboundShipment(input);
+
+      return result;
+    },
 };

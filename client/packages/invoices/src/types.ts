@@ -64,6 +64,13 @@ export interface BatchRow extends StockLine {
   numberOfPacks: number;
 }
 
+export interface DraftOutboundLine
+  extends InvoiceLine,
+    Omit<StockLine, 'expiryDate' | 'location'> {
+  isCreated: boolean;
+  isUpdated: boolean;
+}
+
 export interface InvoiceStatusLog {
   draft?: string;
   allocated?: string;
