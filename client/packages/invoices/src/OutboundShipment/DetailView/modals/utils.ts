@@ -1,5 +1,5 @@
 import { InvoiceNodeStatus } from '@openmsupply-client/common';
-import { DraftOutboundLine, OutboundShipment } from './../../../types';
+import { DraftOutboundLine } from './../../../types';
 
 export const sortByExpiry = (a: DraftOutboundLine, b: DraftOutboundLine) => {
   const expiryA = new Date(a.expiryDate ?? '');
@@ -76,7 +76,7 @@ export const issueStock = (
 
 export const allocateQuantities =
   (
-    draft: OutboundShipment,
+    status: InvoiceNodeStatus,
     draftOutboundLines: DraftOutboundLine[],
     setDraftOutboundLines: React.Dispatch<
       React.SetStateAction<DraftOutboundLine[]>
@@ -168,7 +168,7 @@ export const allocateQuantities =
       });
     }
 
-    if (draft.status === InvoiceNodeStatus.New) {
+    if (status === InvoiceNodeStatus.New) {
       const placeholderIdx = newDraftOutboundLines.findIndex(
         ({ id }) => id === 'placeholder'
       );

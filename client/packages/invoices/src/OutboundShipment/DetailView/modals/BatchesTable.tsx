@@ -18,8 +18,8 @@ import {
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
 import { sortByExpiry } from './utils';
+import { useOutboundFields } from '../../api';
 export interface BatchesTableProps {
-  invoiceStatus: InvoiceNodeStatus;
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
   rows: DraftOutboundLine[];
@@ -107,12 +107,12 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
 );
 
 export const BatchesTable: React.FC<BatchesTableProps> = ({
-  invoiceStatus,
   onChange,
   packSizeController,
   rows,
 }) => {
   const t = useTranslation(['distribution', 'common']);
+  const { status } = useOutboundFields('status');
 
   const placeholderRow = rows.find(({ id }) => id === 'placeholder');
 
@@ -193,7 +193,7 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                     onChange('placeholder', Number(event.target.value), 1);
                   }}
                   value={placeholderRow?.numberOfPacks ?? 0}
-                  disabled={invoiceStatus !== InvoiceNodeStatus.New}
+                  disabled={status !== InvoiceNodeStatus.New}
                 />
               </BasicCell>
             </TableRow>
