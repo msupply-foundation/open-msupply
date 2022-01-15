@@ -111,6 +111,12 @@ export const useDraftOutboundLines = (
     });
   }, [data, lines]);
 
+  useEffect(() => {
+    if (draftOutboundLines?.length === 0) {
+      draftOutboundLines.push(createPlaceholderRow(invoiceId));
+    }
+  }, [draftOutboundLines]);
+
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
       setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
