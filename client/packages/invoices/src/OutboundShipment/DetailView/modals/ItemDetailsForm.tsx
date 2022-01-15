@@ -36,7 +36,8 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 }) => {
   const t = useTranslation(['distribution', 'common']);
   const quantity =
-    allocatedQuantity / Math.abs(Number(packSizeController.selected.value));
+    allocatedQuantity /
+    Math.abs(Number(packSizeController.selected.value || 1));
   const { items } = useOutboundRows();
 
   return (
