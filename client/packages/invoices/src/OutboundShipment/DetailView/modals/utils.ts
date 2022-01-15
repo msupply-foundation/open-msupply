@@ -68,6 +68,7 @@ export const issueStock = (
   newDraftOutboundLines[foundRowIdx] = {
     ...foundRow,
     numberOfPacks: value,
+    isUpdated: true,
   };
 
   return newDraftOutboundLines;

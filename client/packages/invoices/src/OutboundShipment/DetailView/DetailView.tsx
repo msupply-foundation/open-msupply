@@ -73,13 +73,15 @@ export const DetailView: FC = () => {
     <TableProvider createStore={createTableStore}>
       <AppBarButtons onAddItem={itemModalControl.toggleOn} />
 
-      <ItemDetailsModal
-        item={entity}
-        mode={mode}
-        draft={draft}
-        isOpen={isOpen}
-        onClose={onClose}
-      />
+      {isOpen && (
+        <ItemDetailsModal
+          item={entity}
+          mode={mode}
+          draft={draft}
+          isOpen={isOpen}
+          onClose={onClose}
+        />
+      )}
 
       <Toolbar />
 

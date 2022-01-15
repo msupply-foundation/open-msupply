@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Item, StockLine, useParams } from '@openmsupply-client/common';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  generateUUID,
+  Item,
+  StockLine,
+  useParams,
+} from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { InvoiceLine, DraftOutboundLine } from '../../../../types';
-import { sortByExpiry } from '../utils';
+import { sortByExpiry, issueStock } from '../utils';
 import { useOutboundLines } from '../../../api';
 
 const createPlaceholderRow = (invoiceId: string): DraftOutboundLine => ({
@@ -36,12 +41,12 @@ const createDraftOutboundLine = ({
   stockLine,
   invoiceLine,
 }: DraftOutboundLineSeeds): DraftOutboundLine => ({
-  isCreated: false,
+  isCreated: !invoiceLine,
   isUpdated: false,
-
+  numberOfPacks: 0,
   ...stockLine,
   ...invoiceLine,
-  id: '',
+  id: invoiceLine?.id ?? generateUUID(),
   availableNumberOfPacks:
     stockLine.availableNumberOfPacks + (invoiceLine?.numberOfPacks || 0),
   invoiceId,
@@ -54,11 +59,11 @@ const createDraftOutboundLine = ({
   // used, so having an empty string is fine.
   itemCode: invoiceLine?.itemCode ?? '',
   itemName: invoiceLine?.itemName ?? '',
-  numberOfPacks: 0,
 });
 
 interface UseDraftOutboundLinesControl {
   draftOutboundLines: DraftOutboundLine[];
+  updateQuantity: (batchId: string, quantity: number) => void;
   isLoading: boolean;
   setDraftOutboundLines: React.Dispatch<
     React.SetStateAction<DraftOutboundLine[]>
@@ -106,9 +111,17 @@ export const useDraftOutboundLines = (
     });
   }, [data, lines]);
 
+  const onChangeRowQuantity = useCallback(
+    (batchId: string, value: number) => {
+      setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
+    },
+    [draftOutboundLines]
+  );
+
   return {
     draftOutboundLines,
     isLoading: isLoading || outboundLinesLoading,
     setDraftOutboundLines,
+    updateQuantity: onChangeRowQuantity,
   };
 };
