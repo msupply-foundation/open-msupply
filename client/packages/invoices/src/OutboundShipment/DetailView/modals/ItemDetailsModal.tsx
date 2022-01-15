@@ -21,10 +21,10 @@ import {
 } from './hooks';
 import {
   allocateQuantities,
-  issueStock,
   sumAvailableQuantity,
   getAllocatedQuantity,
 } from './utils';
+import { useSaveOutboundLines } from 'packages/invoices/src/OutboundShipment/api';
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,15 +42,16 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 }) => {
   const [currentItem, setCurrentItem] = useBufferState(item);
   const t = useTranslation(['distribution']);
-
-  const { draftOutboundLines, setDraftOutboundLines, isLoading } =
-    useDraftOutboundLines(item);
+  const { mutate } = useSaveOutboundLines();
+  const {
+    draftOutboundLines,
+    updateQuantity,
+    setDraftOutboundLines,
+    isLoading,
+  } = useDraftOutboundLines(item);
   const packSizeController = usePackSizeController(draftOutboundLines);
   const { Modal } = useDialog({ isOpen, onClose });
   const nextItem = useNextItem();
-  const onChangeRowQuantity = (batchId: string, value: number) => {
-    setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
-  };
 
   const onNext = () => {
     setCurrentItem(nextItem);
@@ -75,7 +76,19 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           onClick={onNext}
         />
       }
-      okButton={<DialogButton variant="ok" onClick={onClose} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            try {
+              await mutate(draftOutboundLines);
+              onClose();
+            } catch (e) {
+              console.log(e);
+            }
+          }}
+        />
+      }
       height={600}
       width={900}
     >
@@ -92,7 +105,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           !isLoading ? (
             <BatchesTable
               packSizeController={packSizeController}
-              onChange={onChangeRowQuantity}
+              onChange={updateQuantity}
               rows={draftOutboundLines}
               invoiceStatus={draft.status}
             />

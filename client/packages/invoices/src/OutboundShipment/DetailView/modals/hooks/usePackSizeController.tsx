@@ -1,44 +1,51 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   useTranslation,
   ifTheSameElseDefault,
 } from '@openmsupply-client/common';
+import { DraftOutboundLine } from '../../../../types';
 
 export type PackSizeController = ReturnType<typeof usePackSizeController>;
 
-export const usePackSizeController = (
-  batches: {
-    packSize: number;
-    onHold: boolean;
-    availableNumberOfPacks: number;
-    numberOfPacks: number;
-  }[]
-) => {
-  const t = useTranslation('distribution');
-  // Creating a sorted array of distinct pack sizes
-  const packSizes = Array.from(
+const distinctSortedPackSizes = (lines: DraftOutboundLine[]): number[] =>
+  Array.from(
     new Set(
-      batches
+      lines
         .filter(
           ({ onHold, availableNumberOfPacks }) =>
             availableNumberOfPacks > 0 && !onHold
         )
         .reduce((sizes, { packSize }) => [...sizes, packSize], [] as number[])
-        .sort((a, b) => a - b)
+        .sort((a: number, b: number) => a - b)
     )
   );
 
-  const anySize = [];
+const usePackSizeOptions = (
+  packSizes: number[]
+): { label: string; value: number }[] => {
+  const t = useTranslation('distribution');
+  const anySize: { label: string; value: number }[] = [];
   if (packSizes.length > 1) {
     anySize.push({ label: t('label.any'), value: -1 });
   }
 
-  const options = anySize.concat(
-    packSizes.map(packSize => ({
-      label: String(packSize),
-      value: packSize,
-    }))
+  const options = useMemo(
+    () =>
+      anySize.concat(
+        packSizes.map(packSize => ({
+          label: String(packSize),
+          value: packSize,
+        }))
+      ),
+    [packSizes, anySize]
   );
+
+  return options;
+};
+
+export const usePackSizeController = (lines: DraftOutboundLine[]) => {
+  const packSizes = useMemo(() => distinctSortedPackSizes(lines), [lines]);
+  const options = usePackSizeOptions(packSizes);
 
   const [selected, setSelected] = useState({ label: '', value: 0 });
 
@@ -49,10 +56,12 @@ export const usePackSizeController = (
   };
 
   useEffect(() => {
-    if (selected.value !== 0) return;
+    // if (selected.value !== 0) return;
+    if (packSizes.length < 1) return;
+    if (!lines?.length) return;
 
     const selectedPackSize = ifTheSameElseDefault(
-      batches.filter(batch => batch.numberOfPacks > 0),
+      lines.filter(batch => batch.numberOfPacks > 0),
       'packSize',
       0
     );
@@ -70,7 +79,7 @@ export const usePackSizeController = (
     if (packSizes.length === 0) {
       setSelected({ label: '', value: 0 });
     }
-  }, [batches]);
+  }, [packSizes, lines, options, setPackSize]);
 
   const reset = () => setSelected({ label: '', value: 0 });
 
