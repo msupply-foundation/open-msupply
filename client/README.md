@@ -102,7 +102,7 @@ You can also specify multiple namespaces when using the hook:
 
 The Android app needs the remote server build as a shared lib.
 
-To build the shared lib the cross compiler needs to be build:
+To build the shared lib the cross compiler needs to be built:
 Make sure the Android NDK is installed and the env var `NDK_HOME` is set.
 Then build the cross compilers using:
 
@@ -119,7 +119,7 @@ git clone git@github.com:openmsupply/remote-server.git
 
 Note, unfortunately the remote server source directory can't be linked into the rust directory since otherwise `cargo` will not find the NDK directory.
 
-Unsolved issued that will hopefully be fixed at some point:
+Unsolved issues that will hopefully be fixed at some point:
 
 1. The intel build fails at the moment. For this reason, in `rust/makefile`, change the line:
 
@@ -145,7 +145,7 @@ make android
 
 ### Run the Android app
 
-In `packages/host/public/config.js` change `API_URL` to `API_URL: 'http://localhost:8082/graphql'` to use the remotes server running on Android.
+In `packages/host/public/config.js` change `API_URL` to `API_URL: 'http://localhost:8082/graphql'` to use the remote server running on Android.
 
 After building the web app the output needs to be copied to the android project:
 
