@@ -1,6 +1,6 @@
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
-    queries::invoice::{self, InvoiceResponse},
+    queries::invoice::*,
     types::{DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, NameNode, NodeError},
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
@@ -59,7 +59,7 @@ pub fn get_insert_outbound_shipment_response(
         }
     };
     match insert_outbound_shipment(&connection, input.into()) {
-        Ok(id) => match invoice::get(connection_manager, id) {
+        Ok(id) => match get_invoice(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },

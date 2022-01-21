@@ -2,7 +2,7 @@ use async_graphql::*;
 
 pub mod delete;
 
-use crate::schema::queries::invoice::{self, InvoiceResponse};
+use crate::schema::queries::invoice::*;
 use crate::ContextExt;
 
 pub use self::delete::*;
@@ -31,6 +31,6 @@ impl InvoiceLineBelongsToAnotherInvoice {
     pub async fn invoice(&self, ctx: &Context<'_>) -> InvoiceResponse {
         let connection_manager = ctx.get_connection_manager();
 
-        invoice::get(connection_manager, self.0.clone())
+        get_invoice(connection_manager, self.0.clone())
     }
 }

@@ -32,10 +32,10 @@ use self::{
 };
 
 use super::{
-    queries::invoice,
+    queries::invoice::*,
     types::{Connector, InvoiceLineNode},
 };
-use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use crate::ContextExt;
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
@@ -500,10 +500,10 @@ impl InvoiceLineBelongsToAnotherInvoice {
         "Invoice line belongs to another invoice"
     }
 
-    pub async fn invoice(&self, ctx: &Context<'_>) -> invoice::InvoiceResponse {
+    pub async fn invoice(&self, ctx: &Context<'_>) -> InvoiceResponse {
         let connection_manager = ctx.get_connection_manager();
 
-        invoice::get(connection_manager, self.0.clone())
+        get_invoice(connection_manager, self.0.clone())
     }
 }
 

@@ -17,7 +17,7 @@ mod graphql {
     pub struct TestService(pub Box<GetInvoiceByNumber>);
 
     impl InvoiceServiceTrait for TestService {
-        fn get_by_number(
+        fn get_invoice_by_number(
             &self,
             _: &ServiceContext,
             invoice_number: u32,
