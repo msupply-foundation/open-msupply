@@ -14,24 +14,24 @@ CREATE TYPE invoice_status AS ENUM (
 );
 
 CREATE TABLE invoice (
-    id text NOT NULL PRIMARY KEY,
+    id TEXT NOT NULL PRIMARY KEY,
     -- For outbound shipments, the id of the receiving customer.
     -- For inbound shipments, the id of the sending supplier.
-    name_id text NOT NULL REFERENCES name(id),
-    name_store_id text REFERENCES store (id),
+    name_id TEXT NOT NULL REFERENCES name(id),
+    name_store_id TEXT REFERENCES store (id),
     -- For outbound shipments, the id of the issuing store.
     -- For inbound shipments, the id of the receiving store.
-    store_id text NOT NULL REFERENCES store (id),
+    store_id TEXT NOT NULL REFERENCES store (id),
     invoice_number BIGINT NOT NULL,
     type invoice_type NOT NULL,
     status invoice_status NOT NULL,
-    on_hold boolean NOT NULL,
-    comment text,
-    their_reference text,
-    created_datetime timestamp NOT NULL,
-    allocated_datetime timestamp,
-    picked_datetime timestamp,
-    shipped_datetime timestamp,
-    delivered_datetime timestamp,
-    verified_datetime timestamp,
-    color text)
+    on_hold BOOLEAN NOT NULL,
+    comment TEXT,
+    their_reference TEXT,
+    created_datetime TIMESTAMP NOT NULL,
+    allocated_datetime TIMESTAMP,
+    picked_datetime TIMESTAMP,
+    shipped_datetime TIMESTAMP,
+    delivered_datetime TIMESTAMP,
+    verified_datetime TIMESTAMP,
+    color TEXT)
