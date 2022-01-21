@@ -43,7 +43,7 @@ pub fn get_invoice(
     }
 }
 
-pub fn get_by_number(
+pub fn get_invoice_by_number(
     ctx: &ServiceContext,
     invoice_number: u32,
     r#type: InvoiceType,
@@ -82,7 +82,7 @@ mod test_query {
 
         // Not found
         assert_eq!(
-            service.get_by_number(&context, 200, InvoiceType::OutboundShipment),
+            service.get_invoice_by_number(&context, 200, InvoiceType::OutboundShipment),
             Ok(None)
         );
 
@@ -90,7 +90,7 @@ mod test_query {
 
         // Not found - wrong type
         assert_eq!(
-            service.get_by_number(
+            service.get_invoice_by_number(
                 &context,
                 invoice_to_find.invoice_number as u32,
                 InvoiceType::OutboundShipment,
@@ -100,7 +100,7 @@ mod test_query {
 
         // Found
         let found_invoice = service
-            .get_by_number(
+            .get_invoice_by_number(
                 &context,
                 invoice_to_find.invoice_number as u32,
                 InvoiceType::InboundShipment,
