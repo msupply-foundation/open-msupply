@@ -77,7 +77,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
     query
 }
 
-fn to_domain(
+pub fn to_domain(
     (
         StockLineRow {
             id,

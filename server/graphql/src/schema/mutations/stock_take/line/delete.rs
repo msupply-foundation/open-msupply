@@ -4,7 +4,10 @@ use service::{
     stock_take_line::delete::DeleteStockTakeLineError,
 };
 
-use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use crate::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 
 #[derive(InputObject)]
 pub struct DeleteStockTakeLineInput {
@@ -12,50 +15,53 @@ pub struct DeleteStockTakeLineInput {
 }
 
 #[derive(SimpleObject)]
-pub struct DeleteResponse {
+pub struct DeleteStockTakeLineNode {
     pub id: String,
 }
 
 #[derive(Union)]
 pub enum DeleteStockTakeLineResponse {
-    Response(DeleteResponse),
+    Response(DeleteStockTakeLineNode),
 }
 
 pub fn delete_stock_take_line(
     ctx: &Context<'_>,
-    store_id: &String,
+    store_id: &str,
     input: &DeleteStockTakeLineInput,
-) -> Result<DeleteStockTakeLineResponse, StandardGraphqlError> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    service_provider.validation_service.validate(
-        &service_ctx,
-        ctx.get_auth_data(),
-        &ctx.get_auth_token(),
+) -> Result<DeleteStockTakeLineResponse> {
+    validate_auth(
+        ctx,
         &ResourceAccessRequest {
             resource: Resource::DeleteStockTakeLine,
             store_id: Some(store_id.to_string()),
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
     let service = &service_provider.stock_take_line_service;
     match service.delete_stock_take_line(&service_ctx, store_id, &input.id) {
-        Ok(id) => Ok(DeleteStockTakeLineResponse::Response(DeleteResponse { id })),
-        Err(err) => Err(match err {
-            DeleteStockTakeLineError::DatabaseError(err) => err.into(),
-            DeleteStockTakeLineError::InternalError(err) => {
-                StandardGraphqlError::InternalError(err)
-            }
-            DeleteStockTakeLineError::StockTakeLineDoesNotExist => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            DeleteStockTakeLineError::InvalidStore => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-            DeleteStockTakeLineError::CannotEditFinalised => {
-                StandardGraphqlError::BadUserInput(format!("{:?}", err))
-            }
-        }),
+        Ok(id) => Ok(DeleteStockTakeLineResponse::Response(
+            DeleteStockTakeLineNode { id },
+        )),
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                DeleteStockTakeLineError::DatabaseError(err) => err.into(),
+                DeleteStockTakeLineError::InternalError(err) => {
+                    StandardGraphqlError::InternalError(err)
+                }
+                DeleteStockTakeLineError::StockTakeLineDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                DeleteStockTakeLineError::InvalidStore => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                DeleteStockTakeLineError::CannotEditFinalised => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+            };
+            Err(graphql_error.extend())
+        }
     }
 }

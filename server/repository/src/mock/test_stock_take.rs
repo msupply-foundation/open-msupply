@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 
 use crate::schema::{StockLineRow, StockTakeLineRow, StockTakeRow, StockTakeStatus};
 
-use super::{mock_item_a, mock_stock_line_b, MockData};
+use super::{mock_item_a, mock_stock_line_a, mock_stock_line_b, MockData};
 
 pub fn mock_stock_take_without_lines() -> StockTakeRow {
     StockTakeRow {
@@ -44,15 +44,16 @@ pub fn mock_stock_take_finalized_without_lines() -> StockTakeRow {
 }
 
 pub fn mock_stock_take_line_finalized() -> StockTakeLineRow {
+    let stock_line = mock_stock_line_a();
     StockTakeLineRow {
         id: "stock_take_line_finalized".to_string(),
         stock_take_id: mock_stock_take_finalized().id,
-        stock_line_id: Some("item_a_line_a".to_string()),
+        stock_line_id: Some(stock_line.id),
         location_id: None,
         comment: None,
         snapshot_number_of_packs: 11,
         counted_number_of_packs: Some(11),
-        item_id: None,
+        item_id: stock_line.item_id,
         expiry_date: None,
         batch: None,
         pack_size: None,
@@ -105,7 +106,7 @@ pub fn mock_stock_take_line_stock_surplus() -> StockTakeLineRow {
         comment: None,
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs + 10),
-        item_id: None,
+        item_id: stock_line.item_id,
         expiry_date: None,
         batch: None,
         pack_size: None,
@@ -158,7 +159,7 @@ pub fn mock_stock_take_line_stock_deficit() -> StockTakeLineRow {
         comment: None,
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs - 10),
-        item_id: None,
+        item_id: mock_stock_line_stock_take_deficit().item_id,
         expiry_date: None,
         batch: None,
         pack_size: None,
@@ -208,7 +209,7 @@ pub fn mock_stock_take_line_no_count_change() -> StockTakeLineRow {
         comment: None,
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs),
-        item_id: None,
+        item_id: stock_line.item_id,
         expiry_date: None,
         batch: None,
         pack_size: None,
@@ -256,7 +257,7 @@ pub fn mock_stock_take_line_new_stock_line() -> StockTakeLineRow {
         comment: None,
         snapshot_number_of_packs: 0,
         counted_number_of_packs: Some(55),
-        item_id: Some(mock_item_a().id),
+        item_id: mock_item_a().id,
         expiry_date: Some(NaiveDate::from_ymd(2022, 12, 14)),
         batch: Some("batch".to_string()),
         pack_size: Some(10),

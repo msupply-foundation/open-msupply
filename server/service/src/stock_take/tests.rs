@@ -11,7 +11,7 @@ mod stock_take_test {
         },
         schema::{InvoiceLineRowType, StockTakeRow, StockTakeStatus},
         test_db::setup_all,
-        InvoiceLineRowRepository, StockLineRowRepository,
+        InvoiceLineRowRepository, StockLineRowRepository, StockTakeLine,
     };
 
     use crate::{
@@ -19,9 +19,7 @@ mod stock_take_test {
         stock_take::{
             delete::DeleteStockTakeError,
             insert::{InsertStockTakeError, InsertStockTakeInput},
-            update::{
-                SnapshotCountCurrentCountMismatchData, UpdateStockTakeError, UpdateStockTakeInput,
-            },
+            update::{UpdateStockTakeError, UpdateStockTakeInput},
         },
     };
 
@@ -178,12 +176,11 @@ mod stock_take_test {
             .unwrap_err();
         assert_eq!(
             error,
-            UpdateStockTakeError::SnapshotCountCurrentCountMismatch(vec![
-                SnapshotCountCurrentCountMismatchData {
-                    stock_take_line_id: mock_stock_take_line_a().id,
-                    stock_line,
-                }
-            ])
+            UpdateStockTakeError::SnapshotCountCurrentCountMismatch(vec![StockTakeLine {
+                line: mock_stock_take_line_a(),
+                stock_line: Some(stock_line),
+                location: None,
+            }])
         );
 
         // error: NoLines

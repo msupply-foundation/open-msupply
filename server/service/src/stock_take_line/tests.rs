@@ -411,7 +411,7 @@ mod stock_take_line_test {
                 sell_price_per_pack: Some(25.0),
                 snapshot_number_of_packs: 10,
                 counted_number_of_packs: Some(14),
-                item_id: None,
+                item_id: stock_take_line_a.item_id,
                 expiry_date: None,
                 pack_size: None,
                 note: None,

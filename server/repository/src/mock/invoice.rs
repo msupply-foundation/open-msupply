@@ -268,6 +268,27 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
     }
 }
 
+pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
+    InvoiceRow {
+        id: String::from("mock_unique_number_inbound_shipment"),
+        name_id: String::from("name_store_c"),
+        store_id: String::from("store_a"),
+        invoice_number: 9999999,
+        r#type: InvoiceRowType::InboundShipment,
+        status: InvoiceRowStatus::New,
+        on_hold: false,
+        created_datetime: NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0),
+        comment: None,
+        their_reference: None,
+        allocated_datetime: None,
+        color: None,
+        picked_datetime: None,
+        shipped_datetime: None,
+        delivered_datetime: None,
+        verified_datetime: None,
+    }
+}
+
 pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
     vec![
         mock_outbound_shipment_a(),
@@ -287,6 +308,7 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
         mock_inbound_shipment_c(),
         mock_inbound_shipment_d(),
         mock_empty_draft_inbound_shipment(),
+        mock_unique_number_inbound_shipment(),
     ]
 }
 
