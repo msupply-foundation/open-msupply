@@ -4,7 +4,7 @@ use repository::StoreFilter;
 
 use crate::{
     schema::types::{sort_filter_types::SimpleStringFilterInput, PaginationInput, StoreNode},
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::list_error_to_gql_err,
     ContextExt,
 };
 
@@ -36,19 +36,21 @@ pub fn stores(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<StoreFilterInput>,
-) -> Result<StoresResponse, StandardGraphqlError> {
+) -> Result<StoresResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
     let service = &service_provider.store_service;
 
     // TODO add auth validation and restrict returned stores according to the user's permissions
 
-    let result = service.get_stores(
-        &service_context,
-        page.map(PaginationOption::from),
-        filter.map(StoreFilter::from),
-        None,
-    )?;
+    let result = service
+        .get_stores(
+            &service_context,
+            page.map(PaginationOption::from),
+            filter.map(StoreFilter::from),
+            None,
+        )
+        .map_err(list_error_to_gql_err)?;
     Ok(StoresResponse::Response({
         StoreConnector {
             total_count: result.count,

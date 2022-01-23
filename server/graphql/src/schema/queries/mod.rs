@@ -1,4 +1,3 @@
-use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
@@ -11,6 +10,8 @@ pub struct Queries;
 
 pub mod login;
 pub use self::login::*;
+pub mod invoice;
+pub use self::invoice::*;
 pub mod logout;
 pub use self::logout::*;
 pub mod me;
@@ -58,7 +59,7 @@ impl Queries {
         refresh_token(ctx)
     }
 
-    pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse, StandardGraphqlError> {
+    pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse> {
         me(ctx)
     }
 
@@ -79,7 +80,7 @@ impl Queries {
         ctx: &Context<'_>,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<StoreFilterInput>,
-    ) -> Result<StoresResponse, StandardGraphqlError> {
+    ) -> Result<StoresResponse> {
         stores(ctx, page, filter)
     }
 
@@ -139,7 +140,16 @@ impl Queries {
         #[graphql(desc = "id of the invoice")] id: String,
     ) -> InvoiceResponse {
         let connection_manager = ctx.get_connection_manager();
-        get_invoice_response(connection_manager, id)
+        get_invoice(connection_manager, id)
+    }
+
+    pub async fn invoice_by_number(
+        &self,
+        ctx: &Context<'_>,
+        invoice_number: u32,
+        r#type: InvoiceNodeType,
+    ) -> Result<InvoiceResponse> {
+        get_invoice_by_number(ctx, invoice_number, r#type)
     }
 
     pub async fn invoices(

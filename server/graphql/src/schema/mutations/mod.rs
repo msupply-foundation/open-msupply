@@ -13,13 +13,29 @@ use self::{
         DeleteLocationResponse, InsertLocationInput, InsertLocationResponse, UpdateLocationInput,
         UpdateLocationResponse,
     },
-    stock_take::line::delete::{
-        delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+    stock_take::{
+        delete::{delete_stock_take, DeleteStockTakeInput, DeleteStockTakeResponse},
+        insert::{insert_stock_take, InsertStockTakeInput, InsertStockTakeResponse},
+        line::{
+            delete::{
+                delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+            },
+            insert::{
+                insert_stock_take_line, InsertStockTakeLineInput, InsertStockTakeLineResponse,
+            },
+            update::{
+                update_stock_take_line, UpdateStockTakeLineInput, UpdateStockTakeLineResponse,
+            },
+        },
+        update::{update_stock_take, UpdateStockTakeInput, UpdateStockTakeResponse},
     },
 };
 
-use super::types::{get_invoice_response, Connector, InvoiceLineNode, InvoiceResponse};
-use crate::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use super::{
+    queries::invoice::*,
+    types::{Connector, InvoiceLineNode},
+};
+use crate::ContextExt;
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
@@ -273,12 +289,77 @@ impl Mutations {
         )
     }
 
+    async fn insert_stock_take(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: InsertStockTakeInput,
+    ) -> Result<InsertStockTakeResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        insert_stock_take(ctx, &store_id, input)
+    }
+
+    async fn update_stock_take(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: UpdateStockTakeInput,
+    ) -> Result<UpdateStockTakeResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        update_stock_take(ctx, &store_id, input)
+    }
+
+    async fn delete_stock_take(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: DeleteStockTakeInput,
+    ) -> Result<DeleteStockTakeResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        delete_stock_take(ctx, &store_id, input)
+    }
+
+    async fn insert_stock_take_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: InsertStockTakeLineInput,
+    ) -> Result<InsertStockTakeLineResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        insert_stock_take_line(ctx, &store_id, input)
+    }
+
+    async fn update_stock_take_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: UpdateStockTakeLineInput,
+    ) -> Result<UpdateStockTakeLineResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        update_stock_take_line(ctx, &store_id, input)
+    }
+
     async fn delete_stock_take_line(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
         input: DeleteStockTakeLineInput,
-    ) -> Result<DeleteStockTakeLineResponse, StandardGraphqlError> {
+    ) -> Result<DeleteStockTakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
@@ -422,7 +503,7 @@ impl InvoiceLineBelongsToAnotherInvoice {
     pub async fn invoice(&self, ctx: &Context<'_>) -> InvoiceResponse {
         let connection_manager = ctx.get_connection_manager();
 
-        get_invoice_response(connection_manager, self.0.clone())
+        get_invoice(connection_manager, self.0.clone())
     }
 }
 

@@ -78,7 +78,7 @@ fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
     query
 }
 
-fn to_domain(
+pub fn to_domain(
     LocationRow {
         id,
         name,

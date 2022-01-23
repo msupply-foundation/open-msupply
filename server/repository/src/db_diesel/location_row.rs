@@ -45,6 +45,12 @@ impl<'a> LocationRowRepository<'a> {
         }
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
+        Ok(location_dsl::location
+            .filter(location_dsl::id.eq_any(ids))
+            .load(&self.connection.connection)?)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;

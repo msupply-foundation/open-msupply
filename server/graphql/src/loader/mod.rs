@@ -17,7 +17,7 @@ pub use invoice_line::InvoiceLineLoader;
 pub use invoice_line_query::InvoiceLineQueryLoader;
 pub use item::ItemLoader;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
-pub use location::LocationByIdLoader;
+pub use location::{LocationByIdLoader, LocationRowByIdLoader};
 pub use master_list_line::MasterListLineByMasterListId;
 pub use name::NameByIdLoader;
 pub use requisition::RequisitionLoader;
