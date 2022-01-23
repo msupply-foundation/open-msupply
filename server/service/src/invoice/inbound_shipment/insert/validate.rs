@@ -1,5 +1,5 @@
-use crate::invoice::inbound_shipment::check_other_party;
-use domain::inbound_shipment::InsertInboundShipment;
+use crate::invoice::check_other_party_id;
+use domain::{inbound_shipment::InsertInboundShipment, name::Name};
 use repository::{InvoiceRepository, RepositoryError, StorageConnection};
 
 use super::InsertInboundShipmentError;
@@ -7,10 +7,17 @@ use super::InsertInboundShipmentError;
 pub fn validate(
     input: &InsertInboundShipment,
     connection: &StorageConnection,
-) -> Result<(), InsertInboundShipmentError> {
+) -> Result<Name, InsertInboundShipmentError> {
+    use InsertInboundShipmentError::*;
     check_invoice_does_not_exists(&input.id, connection)?;
-    check_other_party(Some(input.other_party_id.to_string()), connection)?;
-    Ok(())
+
+    let other_party = check_other_party_id(connection, &input.other_party_id)?
+        .ok_or(OtherPartyDoesNotExist {})?;
+
+    if !other_party.is_supplier {
+        return Err(OtherPartyNotASupplier(other_party));
+    }
+    Ok(other_party)
 }
 
 fn check_invoice_does_not_exists(
