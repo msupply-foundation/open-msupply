@@ -3,7 +3,7 @@ use repository::{RepositoryError, StockTakeRowRepository, StorageConnection, Tra
 use crate::{service_provider::ServiceContext, validate::check_store_id_matches};
 
 use super::validate::{
-    check_no_stock_take_lines_exist, check_stock_take_exist, check_stock_take_not_finalized,
+    check_no_stock_take_lines_exist, check_stock_take_exist, check_stock_take_not_finalised,
 };
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +31,7 @@ fn validate(
     if !check_store_id_matches(store_id, &existing.store_id) {
         return Err(DeleteStockTakeError::InvalidStore);
     }
-    if !check_stock_take_not_finalized(&existing.status) {
+    if !check_stock_take_not_finalised(&existing.status) {
         return Err(DeleteStockTakeError::CannotEditFinalised);
     }
     if !check_no_stock_take_lines_exist(connection, stock_take_id)? {

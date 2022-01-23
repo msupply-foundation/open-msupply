@@ -3,7 +3,7 @@ mod stock_take_test {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_stock_line_a, mock_stock_take_a, mock_stock_take_finalized_without_lines,
+            mock_stock_line_a, mock_stock_take_a, mock_stock_take_finalised_without_lines,
             mock_stock_take_full_edit, mock_stock_take_line_a, mock_stock_take_line_new_stock_line,
             mock_stock_take_new_stock_line, mock_stock_take_no_count_change,
             mock_stock_take_no_lines, mock_stock_take_stock_deficit, mock_stock_take_stock_surplus,
@@ -123,7 +123,7 @@ mod stock_take_test {
 
         // error: CannotEditFinalised
         let store_a = mock_store_a();
-        let stock_take = mock_stock_take_finalized_without_lines();
+        let stock_take = mock_stock_take_finalised_without_lines();
         let error = service
             .update_stock_take(
                 &context,
@@ -139,7 +139,7 @@ mod stock_take_test {
         assert_eq!(error, UpdateStockTakeError::CannotEditFinalised);
 
         let store_a = mock_store_a();
-        let stock_take = mock_stock_take_finalized_without_lines();
+        let stock_take = mock_stock_take_finalised_without_lines();
         let error = service
             .update_stock_take(
                 &context,
@@ -170,7 +170,7 @@ mod stock_take_test {
                     id: stock_take.id,
                     comment: Some("Comment".to_string()),
                     description: None,
-                    status: Some(StockTakeStatus::Finalized),
+                    status: Some(StockTakeStatus::Finalised),
                 },
             )
             .unwrap_err();
@@ -194,7 +194,7 @@ mod stock_take_test {
                     id: stock_take.id,
                     comment: Some("Comment".to_string()),
                     description: None,
-                    status: Some(StockTakeStatus::Finalized),
+                    status: Some(StockTakeStatus::Finalised),
                 },
             )
             .unwrap_err();
@@ -211,7 +211,7 @@ mod stock_take_test {
                     id: stock_take.id,
                     comment: None,
                     description: None,
-                    status: Some(StockTakeStatus::Finalized),
+                    status: Some(StockTakeStatus::Finalised),
                 },
             )
             .unwrap();
@@ -233,7 +233,7 @@ mod stock_take_test {
                     id: stock_take.id,
                     comment: None,
                     description: None,
-                    status: Some(StockTakeStatus::Finalized),
+                    status: Some(StockTakeStatus::Finalised),
                 },
             )
             .unwrap();
@@ -255,7 +255,7 @@ mod stock_take_test {
                     id: stock_take.id,
                     comment: None,
                     description: None,
-                    status: Some(StockTakeStatus::Finalized),
+                    status: Some(StockTakeStatus::Finalised),
                 },
             )
             .unwrap();
@@ -265,7 +265,7 @@ mod stock_take_test {
             .pop();
         assert_eq!(shipment_lines, None);
 
-        // success: no changes (not finalized)
+        // success: no changes (not finalised)
         let store_a = mock_store_a();
         let stock_take = mock_stock_take_a();
         let result = service
@@ -282,7 +282,7 @@ mod stock_take_test {
             .unwrap();
         assert_eq!(result, mock_stock_take_a());
 
-        // success: all changes (not finalized)
+        // success: all changes (not finalised)
         let store_a = mock_store_a();
         let stock_take = mock_stock_take_full_edit();
         let result = service
@@ -322,7 +322,7 @@ mod stock_take_test {
                     id: stock_take.id.clone(),
                     comment: None,
                     description: None,
-                    status: Some(StockTakeStatus::Finalized),
+                    status: Some(StockTakeStatus::Finalised),
                 },
             )
             .unwrap();
@@ -382,7 +382,7 @@ mod stock_take_test {
 
         // error: CannotEditFinalised
         let store_a = mock_store_a();
-        let stock_take = mock_stock_take_finalized_without_lines();
+        let stock_take = mock_stock_take_finalised_without_lines();
         let error = service
             .delete_stock_take(&context, &store_a.id, &stock_take.id)
             .unwrap_err();

@@ -12,8 +12,8 @@ pub fn check_stock_take_exist(
     Ok(StockTakeRowRepository::new(connection).find_one_by_id(id)?)
 }
 
-pub fn check_stock_take_not_finalized(status: &StockTakeStatus) -> bool {
-    *status != StockTakeStatus::Finalized
+pub fn check_stock_take_not_finalised(status: &StockTakeStatus) -> bool {
+    *status != StockTakeStatus::Finalised
 }
 
 pub fn check_no_stock_take_lines_exist(

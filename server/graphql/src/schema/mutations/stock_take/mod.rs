@@ -15,14 +15,14 @@ pub struct StockTakeNode {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum StockTakeNodeStatus {
     New,
-    Finalized,
+    Finalised,
 }
 
 impl StockTakeNodeStatus {
     pub fn to_domain(&self) -> StockTakeStatus {
         match self {
             StockTakeNodeStatus::New => StockTakeStatus::New,
-            StockTakeNodeStatus::Finalized => StockTakeStatus::Finalized,
+            StockTakeNodeStatus::Finalised => StockTakeStatus::Finalised,
         }
     }
 }
@@ -30,7 +30,7 @@ impl StockTakeNodeStatus {
 fn from_domain(status: &StockTakeStatus) -> StockTakeNodeStatus {
     match status {
         StockTakeStatus::New => StockTakeNodeStatus::New,
-        StockTakeStatus::Finalized => StockTakeNodeStatus::Finalized,
+        StockTakeStatus::Finalised => StockTakeNodeStatus::Finalised,
     }
 }
 

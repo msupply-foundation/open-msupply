@@ -17,37 +17,37 @@ pub fn mock_stock_take_without_lines() -> StockTakeRow {
     }
 }
 
-pub fn mock_stock_take_finalized() -> StockTakeRow {
+pub fn mock_stock_take_finalised() -> StockTakeRow {
     StockTakeRow {
-        id: "mock_stock_take_finalized".to_string(),
+        id: "mock_stock_take_finalised".to_string(),
         store_id: "store_a".to_string(),
         comment: None,
         description: None,
-        status: StockTakeStatus::Finalized,
+        status: StockTakeStatus::Finalised,
         created_datetime: NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 30, 0, 0),
         finalised_datetime: Some(NaiveDate::from_ymd(2021, 12, 20).and_hms_milli(10, 15, 10, 0)),
         inventory_adjustment_id: None,
     }
 }
 
-pub fn mock_stock_take_finalized_without_lines() -> StockTakeRow {
+pub fn mock_stock_take_finalised_without_lines() -> StockTakeRow {
     StockTakeRow {
-        id: "mock_stock_take_finalized_no_lines".to_string(),
+        id: "mock_stock_take_finalised_no_lines".to_string(),
         store_id: "store_a".to_string(),
         comment: None,
         description: None,
-        status: StockTakeStatus::Finalized,
+        status: StockTakeStatus::Finalised,
         created_datetime: NaiveDate::from_ymd(2021, 12, 15).and_hms_milli(12, 30, 0, 0),
         finalised_datetime: Some(NaiveDate::from_ymd(2021, 12, 21).and_hms_milli(10, 15, 10, 0)),
         inventory_adjustment_id: None,
     }
 }
 
-pub fn mock_stock_take_line_finalized() -> StockTakeLineRow {
+pub fn mock_stock_take_line_finalised() -> StockTakeLineRow {
     let stock_line = mock_stock_line_a();
     StockTakeLineRow {
-        id: "stock_take_line_finalized".to_string(),
-        stock_take_id: mock_stock_take_finalized().id,
+        id: "stock_take_line_finalised".to_string(),
+        stock_take_id: mock_stock_take_finalised().id,
         stock_line_id: Some(stock_line.id),
         location_id: None,
         comment: None,
@@ -271,8 +271,8 @@ pub fn test_stock_take_data() -> MockData {
     let mut data: MockData = Default::default();
     data.stock_takes = vec![
         mock_stock_take_without_lines(),
-        mock_stock_take_finalized(),
-        mock_stock_take_finalized_without_lines(),
+        mock_stock_take_finalised(),
+        mock_stock_take_finalised_without_lines(),
         mock_stock_take_stock_surplus(),
         mock_stock_take_stock_deficit(),
         mock_stock_take_no_lines(),
@@ -281,7 +281,7 @@ pub fn test_stock_take_data() -> MockData {
         mock_stock_take_new_stock_line(),
     ];
     data.stock_take_lines = vec![
-        mock_stock_take_line_finalized(),
+        mock_stock_take_line_finalised(),
         mock_stock_take_line_stock_surplus(),
         mock_stock_take_line_stock_deficit(),
         mock_stock_take_line_no_count_change(),
