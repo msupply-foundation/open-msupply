@@ -29,7 +29,7 @@ pub use full_master_list::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
-pub use location::mock_locations;
+pub use location::*;
 pub use name::{mock_name_store_a, mock_name_store_b, mock_names};
 pub use name_store_join::mock_name_store_joins;
 pub use number::*;

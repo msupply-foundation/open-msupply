@@ -6,7 +6,7 @@ use diesel_derive_enum::DbEnum;
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StockTakeStatus {
     New,
-    Finalized,
+    Finalised,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]

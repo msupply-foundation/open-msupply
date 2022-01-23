@@ -16,7 +16,8 @@ pub struct DeleteStockTakeInput {
 
 #[derive(SimpleObject)]
 pub struct DeleteStockTakeNode {
-    pub stock_take_id: String,
+    /// The id of the deleted stock take
+    pub id: String,
 }
 
 #[derive(Union)]
@@ -42,7 +43,7 @@ pub fn delete_stock_take(
     let service = &service_provider.stock_take_service;
     match service.delete_stock_take(&service_ctx, store_id, &input.id) {
         Ok(stock_take_id) => Ok(DeleteStockTakeResponse::Response(DeleteStockTakeNode {
-            stock_take_id,
+            id: stock_take_id,
         })),
         Err(err) => {
             let formatted_error = format!("{:#?}", err);

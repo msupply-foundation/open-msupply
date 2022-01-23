@@ -3,8 +3,8 @@ mod stock_take_line_test {
     use repository::{
         mock::{
             mock_item_a, mock_item_a_lines, mock_locations, mock_new_stock_line_for_stock_take_a,
-            mock_stock_take_a, mock_stock_take_finalized, mock_stock_take_line_a,
-            mock_stock_take_line_finalized, mock_store_a, mock_store_b, MockDataInserts,
+            mock_stock_take_a, mock_stock_take_finalised, mock_stock_take_line_a,
+            mock_stock_take_line_finalised, mock_store_a, mock_store_b, MockDataInserts,
         },
         schema::StockTakeLineRow,
         test_db::setup_all,
@@ -168,7 +168,7 @@ mod stock_take_line_test {
 
         // check CannotEditFinalised
         let store_a = mock_store_a();
-        let stock_take_finalized = mock_stock_take_finalized();
+        let stock_take_finalised = mock_stock_take_finalised();
         let stock_line = mock_new_stock_line_for_stock_take_a();
         let error = service
             .insert_stock_take_line(
@@ -176,7 +176,7 @@ mod stock_take_line_test {
                 &store_a.id,
                 InsertStockTakeLineInput {
                     id: uuid(),
-                    stock_take_id: stock_take_finalized.id,
+                    stock_take_id: stock_take_finalised.id,
                     stock_line_id: Some(stock_line.id),
                     location_id: None,
                     batch: None,
@@ -327,7 +327,7 @@ mod stock_take_line_test {
 
         // error CannotEditFinalised
         let store_a = mock_store_a();
-        let stock_take_line_a = mock_stock_take_line_finalized();
+        let stock_take_line_a = mock_stock_take_line_finalised();
         let error = service
             .update_stock_take_line(
                 &context,
@@ -451,7 +451,7 @@ mod stock_take_line_test {
 
         // error CannotEditFinalised
         let store_a = mock_store_a();
-        let existing_line = mock_stock_take_line_finalized();
+        let existing_line = mock_stock_take_line_finalised();
         let error = service
             .delete_stock_take_line(&context, &store_a.id, &existing_line.id)
             .unwrap_err();
