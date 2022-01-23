@@ -10,6 +10,8 @@ pub struct Queries;
 
 pub mod login;
 pub use self::login::*;
+pub mod invoice;
+pub use self::invoice::*;
 pub mod logout;
 pub use self::logout::*;
 pub mod me;
@@ -138,7 +140,16 @@ impl Queries {
         #[graphql(desc = "id of the invoice")] id: String,
     ) -> InvoiceResponse {
         let connection_manager = ctx.get_connection_manager();
-        get_invoice_response(connection_manager, id)
+        get_invoice(connection_manager, id)
+    }
+
+    pub async fn invoice_by_number(
+        &self,
+        ctx: &Context<'_>,
+        invoice_number: u32,
+        r#type: InvoiceNodeType,
+    ) -> Result<InvoiceResponse> {
+        get_invoice_by_number(ctx, invoice_number, r#type)
     }
 
     pub async fn invoices(

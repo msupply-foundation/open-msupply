@@ -2,10 +2,8 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
-    types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceResponse, NameNode,
-        NodeError,
-    },
+    queries::invoice::*,
+    types::{DatabaseError, ErrorWrapper, InvoiceNode, NameNode, NodeError},
 };
 use domain::inbound_shipment::InsertInboundShipment;
 use repository::StorageConnectionManager;
@@ -44,7 +42,7 @@ pub fn get_insert_inbound_shipment_response(
         }
     };
     match insert_inbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice_response(connection_manager, id) {
+        Ok(id) => match get_invoice(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },
