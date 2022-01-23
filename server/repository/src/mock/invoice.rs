@@ -273,6 +273,7 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
         id: String::from("mock_unique_number_inbound_shipment"),
         name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
+        name_store_id: Some(String::from("store_a")),
         invoice_number: 9999999,
         r#type: InvoiceRowType::InboundShipment,
         status: InvoiceRowStatus::New,

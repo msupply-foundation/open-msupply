@@ -82,6 +82,7 @@ mod graphql {
                 id: "test_id".to_owned(),
                 other_party_name: "na".to_owned(),
                 other_party_id: "na".to_owned(),
+                other_party_store_id: None,
                 status: InvoiceStatus::New,
                 on_hold: false,
                 invoice_number: 1,
