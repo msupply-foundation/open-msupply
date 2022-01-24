@@ -1,7 +1,14 @@
-use async_graphql::*;
+use async_graphql::{self, dataloader::DataLoader, Context, Enum, Object, Result};
 use chrono::NaiveDateTime;
 use repository::schema::StockTakeRow;
 use serde::Serialize;
+
+use crate::{
+    loader::StockTakeLineByStockTakeIdLoader,
+    ContextExt,
+};
+
+use super::StockTakeLineConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[graphql(remote = "repository::schema::StockTakeStatus")]
@@ -51,5 +58,18 @@ impl StockTakeNode {
 
     pub async fn inventory_adjustment_id(&self) -> &Option<String> {
         &self.stock_take.inventory_adjustment_id
+    }
+
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<StockTakeLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<StockTakeLineByStockTakeIdLoader>>();
+
+        let lines_option = loader.load_one(self.stock_take.id.clone()).await?;
+
+        let result = match lines_option {
+            None => StockTakeLineConnector::empty(),
+            Some(lines) => StockTakeLineConnector::from_domain_vec(lines),
+        };
+
+        Ok(result)
     }
 }

@@ -25,7 +25,6 @@ pub enum Resource {
     UpdateStockTake,
     DeleteStockTake,
     // stock take line
-    QueryStockTakeLines,
     InsertStockTakeLine,
     UpdateStockTakeLine,
     DeleteStockTakeLine,
@@ -48,7 +47,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::UpdateStockTake, default());
     map.insert(Resource::DeleteStockTake, default());
     // stock take line
-    map.insert(Resource::QueryStockTakeLines, default());
     map.insert(Resource::InsertStockTakeLine, default());
     map.insert(Resource::UpdateStockTakeLine, default());
     map.insert(Resource::DeleteStockTakeLine, default());
