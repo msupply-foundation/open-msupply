@@ -9,6 +9,7 @@ mod name;
 mod requisition;
 mod requisition_line;
 mod stock_line;
+mod stock_take_lines;
 mod store;
 mod user_account;
 
@@ -23,5 +24,6 @@ pub use name::NameByIdLoader;
 pub use requisition::RequisitionLoader;
 pub use requisition_line::RequisitionLineLoader;
 pub use stock_line::{StockLineByIdLoader, StockLineByItemIdLoader, StockLineByLocationIdLoader};
+pub use stock_take_lines::StockTakeLineByStockTakeIdLoader;
 pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
