@@ -31,6 +31,11 @@ declare module '@mui/material/styles/createMixins' {
         };
       };
     };
+    drawer: {
+      iconColor?: string;
+      selectedBackgroundColor?: string;
+      textColor?: string;
+    };
     icon: {
       medium: { width: number; height: number };
     };
@@ -69,11 +74,13 @@ declare module '@mui/material/styles/zIndex' {
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
+    drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
     form: TypeForm;
   }
   interface TypeBackground {
+    drawer: string;
     menu: string;
     toolbar: string;
     white: string;
@@ -117,6 +124,9 @@ export const themeOptions = {
         },
       },
     },
+    drawer: {
+      selectedBackgroundColor: '#fff',
+    },
     saveButtonRow: { height: 40 },
     footer: { height: 32 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
@@ -130,6 +140,7 @@ export const themeOptions = {
   palette: {
     outline: { main: '#555770' },
     divider: '#eaeaea',
+    drawerDivider: '#eaeaea',
     error: { main: '#e63535' },
     gray: {
       main: '#8f90a6',
@@ -141,6 +152,7 @@ export const themeOptions = {
     primary: { main: '#e95c30', light: '#fc8058', dark: '#c43c11' },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
+      drawer: '#f2f2f5',
       menu: '#f2f2f5',
       toolbar: '#fafafc',
       white: '#fff',

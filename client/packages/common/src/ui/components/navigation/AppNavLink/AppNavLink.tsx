@@ -37,7 +37,9 @@ const StyledListItem = styled<
   shouldForwardProp: prop => prop !== 'isSelected',
 })(({ theme, isSelected }) => ({
   ...getListItemCommonStyles(),
-  backgroundColor: isSelected ? theme.palette.background.white : 'transparent',
+  backgroundColor: isSelected
+    ? theme.mixins.drawer.selectedBackgroundColor
+    : 'transparent',
   boxShadow: isSelected ? theme.shadows[3] : 'none',
   marginTop: 5,
   '&:hover': {

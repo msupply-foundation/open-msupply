@@ -41,7 +41,7 @@ import {
   InventoryRouter,
   ReplenishmentRouter,
 } from './routers';
-import { Admin } from './Admin';
+import { Settings } from './Admin/Settings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -280,7 +280,7 @@ const Host: FC = () => (
                                 path={RouteBuilder.create(AppRoute.Admin)
                                   .addWildCard()
                                   .build()}
-                                element={<Admin />}
+                                element={<Settings />}
                               />
 
                               <Route
