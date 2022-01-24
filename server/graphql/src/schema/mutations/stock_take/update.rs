@@ -1,5 +1,5 @@
 use crate::{
-    schema::types::StockTakeLineNode,
+    schema::types::StockTakeLineConnector,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -11,7 +11,6 @@ use service::{
     stock_take::update::{
         UpdateStockTakeError as ServiceError, UpdateStockTakeInput as UpdateStockTake,
     },
-    usize_to_u32,
 };
 
 use super::{StockTakeNode, StockTakeNodeStatus};
@@ -24,12 +23,6 @@ pub struct UpdateStockTakeInput {
     pub status: Option<StockTakeNodeStatus>,
 }
 
-#[derive(SimpleObject)]
-pub struct StockTakeLineConnector {
-    total_count: u32,
-    nodes: Vec<StockTakeLineNode>,
-}
-
 pub struct SnapshotCountCurrentCountMismatch(Vec<StockTakeLine>);
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
@@ -38,15 +31,7 @@ impl SnapshotCountCurrentCountMismatch {
     }
 
     pub async fn lines(&self) -> StockTakeLineConnector {
-        let lines: Vec<StockTakeLineNode> = self
-            .0
-            .iter()
-            .map(|line| StockTakeLineNode { line: line.clone() })
-            .collect();
-        StockTakeLineConnector {
-            total_count: usize_to_u32(lines.len()),
-            nodes: lines,
-        }
+        StockTakeLineConnector::from_domain_vec(self.0.clone())
     }
 }
 

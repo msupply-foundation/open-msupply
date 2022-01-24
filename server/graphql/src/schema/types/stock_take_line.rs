@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use repository::{location_to_domain, stock_line_to_domain, StockTakeLine};
-use service::i32_to_u32;
+use service::{i32_to_u32, usize_to_u32};
 
 use crate::{
     loader::{ItemLoader, LocationRowByIdLoader},
@@ -110,5 +110,30 @@ impl StockTakeLineNode {
 
     pub async fn note(&self) -> &Option<String> {
         &self.line.line.note
+    }
+}
+
+#[derive(SimpleObject)]
+pub struct StockTakeLineConnector {
+    total_count: u32,
+    nodes: Vec<StockTakeLineNode>,
+}
+
+impl StockTakeLineConnector {
+    pub fn empty() -> StockTakeLineConnector {
+        StockTakeLineConnector {
+            total_count: 0,
+            nodes: Vec::new(),
+        }
+    }
+
+    pub fn from_domain_vec(from: Vec<StockTakeLine>) -> StockTakeLineConnector {
+        StockTakeLineConnector {
+            total_count: usize_to_u32(from.len()),
+            nodes: from
+                .into_iter()
+                .map(|line| StockTakeLineNode { line })
+                .collect(),
+        }
     }
 }
