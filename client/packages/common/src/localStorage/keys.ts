@@ -11,6 +11,7 @@ export type LocalStorageRecord = {
   '/localisation/locale': SupportedLocales;
   '/groupbyitem': GroupByItem;
   '/theme/custom': ThemeOptions;
+  '/theme/logo': string;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;
