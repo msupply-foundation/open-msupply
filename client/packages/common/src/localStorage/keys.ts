@@ -1,4 +1,5 @@
 import { SupportedLocales } from '@common/intl';
+import { ThemeOptions } from '@mui/material';
 
 export type GroupByItem = {
   outboundShipment?: boolean;
@@ -9,6 +10,7 @@ export type LocalStorageRecord = {
   '/detailpanel/open': boolean;
   '/localisation/locale': SupportedLocales;
   '/groupbyitem': GroupByItem;
+  '/theme/custom': ThemeOptions;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;

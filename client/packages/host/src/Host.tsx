@@ -33,14 +33,7 @@ import {
   useMatches,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import {
-  AppDrawer,
-  AppBar,
-  Viewport,
-  NotFound,
-  LanguageMenu,
-  Footer,
-} from './components';
+import { AppDrawer, AppBar, Viewport, NotFound, Footer } from './components';
 import {
   DashboardRouter,
   DistributionRouter,
@@ -48,6 +41,7 @@ import {
   InventoryRouter,
   ReplenishmentRouter,
 } from './routers';
+import { Admin } from './Admin';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -286,7 +280,7 @@ const Host: FC = () => (
                                 path={RouteBuilder.create(AppRoute.Admin)
                                   .addWildCard()
                                   .build()}
-                                element={<LanguageMenu />}
+                                element={<Admin />}
                               />
 
                               <Route
