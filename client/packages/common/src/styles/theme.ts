@@ -1,4 +1,8 @@
-import { createTheme, Direction } from '@mui/material/styles';
+import {
+  createTheme as createMuiTheme,
+  Direction,
+  ThemeOptions,
+} from '@mui/material/styles';
 
 /**
  * Our theme uses module augmentation when customising the theme to ensure
@@ -87,7 +91,7 @@ declare module '@mui/material/styles/createTypography' {
   }
 }
 
-const themeOptions = {
+export const themeOptions = {
   breakpoints: {
     values: {
       xs: 0,
@@ -175,13 +179,15 @@ const themeOptions = {
     },
   },
 };
-const theme = createTheme(themeOptions);
+export const createTheme = (themeOptions: ThemeOptions) => {
+  const theme = createMuiTheme(themeOptions);
 
-theme.shadows[1] =
-  '0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08)';
-theme.shadows[2] =
-  '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
-theme.shadows[3] =
-  '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
-
-export default theme;
+  theme.shadows[1] =
+    '0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08)';
+  theme.shadows[2] =
+    '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
+  theme.shadows[3] =
+    '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
+  return theme;
+};
+// export default theme;
