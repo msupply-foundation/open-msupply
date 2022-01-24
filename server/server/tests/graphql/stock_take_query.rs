@@ -71,6 +71,9 @@ mod graphql {
                         createdDatetime
                         finalisedDatetime
                         inventoryAdjustmentId
+                        lines {
+                            totalCount
+                        }
                     }                      
                 }
             }
@@ -110,6 +113,9 @@ mod graphql {
               "createdDatetime": "2022-01-22T15:16:00",
               "finalisedDatetime": "2022-01-23T15:16:00",
               "inventoryAdjustmentId": "inv id",
+              "lines": {
+                "totalCount": 0
+              }
             }]
           }
         });
