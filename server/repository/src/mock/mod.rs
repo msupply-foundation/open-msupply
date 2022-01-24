@@ -16,6 +16,7 @@ mod stock_take;
 mod stock_take_line;
 mod store;
 mod test_invoice_count_service;
+mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_stock_take;
 mod test_stock_take_line;
@@ -39,6 +40,7 @@ pub use stock_take::*;
 pub use stock_take_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
+pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_stock_take::*;
 pub use test_stock_take_line::*;
@@ -265,6 +267,7 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("test_stock_take_line_data", test_stock_take_line_data());
     data.insert("test_stock_take_data", test_stock_take_data());
     data.insert("mock_test_unallocated_line", mock_test_unallocated_line());
+    data.insert("mock_test_name_store_id", mock_test_name_store_id());
     data
 }
 

@@ -1,8 +1,10 @@
+use async_graphql::*;
+use dataloader::DataLoader;
 use domain::name::Name;
 
-use async_graphql::*;
+use crate::{loader::StoreLoader, ContextExt};
 
-use super::NodeError;
+use super::{NodeError, StoreNode};
 
 #[Object]
 impl NameNode {
@@ -24,6 +26,19 @@ impl NameNode {
 
     pub async fn is_supplier(&self) -> bool {
         self.name.is_supplier
+    }
+
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let store_id = match &self.name.store_id {
+            Some(store_id) => store_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        Ok(loader
+            .load_one(store_id.clone())
+            .await?
+            .map(StoreNode::from))
     }
 }
 

@@ -20,6 +20,7 @@ mod inbound_shipment_line_delete;
 mod inbound_shipment_line_insert;
 mod inbound_shipment_line_update;
 mod inbound_shipment_update;
+mod invoice_by_number;
 mod invoice_query;
 mod invoices;
 mod items;

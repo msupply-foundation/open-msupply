@@ -3,9 +3,12 @@
 mod graphql {
     use crate::graphql::assert_graphql_query;
     use repository::{
-        mock::{mock_new_invoice_with_unallocated_line, MockDataInserts},
+        mock::{
+            mock_name_linked_to_store, mock_name_not_linked_to_store,
+            mock_new_invoice_with_unallocated_line, mock_store_linked_to_name, MockDataInserts,
+        },
         schema::{InvoiceLineRow, StockLineRow},
-        InvoiceLineRowRepository, StockLineRowRepository,
+        InvoiceLineRowRepository, InvoiceRepository, StockLineRowRepository,
     };
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -28,6 +31,9 @@ mod graphql {
                 ... on InvoiceNode {
                   id
                   comment
+                  otherPartyStore {
+                    id
+                  }
                 }
             }
         }"#;
@@ -165,6 +171,57 @@ mod graphql {
           }
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
+
+        // Test Success name_store_id, linked to store
+        let variables = Some(json!({
+          "input": {
+            "id": "outbound_shipment_c",
+            "otherPartyId": mock_name_linked_to_store().id,
+          }
+        }));
+        let expected = json!({
+            "updateOutboundShipment": {
+              "id": "outbound_shipment_c",
+              "otherPartyStore": {
+                "id": mock_store_linked_to_name().id
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id("outbound_shipment_c")
+            .unwrap();
+
+        assert_eq!(
+            new_invoice.name_store_id,
+            Some(mock_store_linked_to_name().id)
+        );
+
+        // Test Success name_store_id, not linked to store
+        let variables = Some(json!({
+          "input": {
+            "id": "outbound_shipment_c",
+            "otherPartyId": mock_name_not_linked_to_store().id,
+          }
+        }));
+        let expected = json!({
+            "updateOutboundShipment": {
+              "id": "outbound_shipment_c",
+              "otherPartyStore": null
+            }
+          }
+        );
+
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id("outbound_shipment_c")
+            .unwrap();
+
+        assert_eq!(new_invoice.name_store_id, None);
 
         // Invoice
         let variables = Some(json!({

@@ -1,9 +1,7 @@
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
-    types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus,
-        InvoiceResponse, NameNode, NodeError,
-    },
+    queries::invoice::*,
+    types::{DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, NameNode, NodeError},
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
 use repository::StorageConnectionManager;
@@ -61,7 +59,7 @@ pub fn get_insert_outbound_shipment_response(
         }
     };
     match insert_outbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice_response(connection_manager, id) {
+        Ok(id) => match get_invoice(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },

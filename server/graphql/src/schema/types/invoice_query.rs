@@ -1,5 +1,5 @@
 use crate::{
-    loader::{InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader},
+    loader::{InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader, StoreLoader},
     ContextExt,
 };
 use async_graphql::*;
@@ -9,14 +9,13 @@ use domain::{
     invoice::{Invoice, InvoiceFilter},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
-use repository::{schema::InvoiceStatsRow, StorageConnectionManager};
+use repository::schema::InvoiceStatsRow;
 use serde::Serialize;
-use service::invoice::get_invoice;
 
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
     EqualFilterStringInput, ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError,
-    NodeErrorInterface, SimpleStringFilterInput, SortInput,
+    NodeErrorInterface, SimpleStringFilterInput, SortInput, StoreNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -140,6 +139,19 @@ impl InvoiceNode {
         &self.invoice.other_party_id
     }
 
+    pub async fn other_party_store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let other_party_store_id = match &self.invoice.other_party_store_id {
+            Some(other_party_store_id) => other_party_store_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        Ok(loader
+            .load_one(other_party_store_id.clone())
+            .await?
+            .map(StoreNode::from))
+    }
+
     pub async fn r#type(&self) -> InvoiceNodeType {
         self.invoice.r#type.clone().into()
     }
@@ -252,22 +264,6 @@ impl InvoiceNode {
 pub enum InvoicesResponse {
     Error(ConnectorError),
     Response(Connector<InvoiceNode>),
-}
-
-#[derive(Union)]
-pub enum InvoiceResponse {
-    Error(NodeError),
-    Response(InvoiceNode),
-}
-
-pub fn get_invoice_response(
-    connection_manager: &StorageConnectionManager,
-    id: String,
-) -> InvoiceResponse {
-    match get_invoice(connection_manager, id) {
-        Ok(invoice) => InvoiceResponse::Response(invoice.into()),
-        Err(error) => InvoiceResponse::Error(error.into()),
-    }
 }
 
 impl From<Invoice> for InvoiceNode {

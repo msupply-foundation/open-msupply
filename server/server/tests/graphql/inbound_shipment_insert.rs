@@ -7,7 +7,10 @@ mod graphql {
     use domain::{name::NameFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
-        mock::{mock_inbound_shipment_number_store_a, MockDataInserts},
+        mock::{
+            mock_inbound_shipment_number_store_a, mock_name_linked_to_store,
+            mock_name_not_linked_to_store, mock_store_linked_to_name, MockDataInserts,
+        },
         schema::{InvoiceRow, InvoiceRowType},
         InvoiceRepository,
     };
@@ -195,6 +198,47 @@ mod graphql {
         assert_eq!(new_invoice.verified_datetime, None);
 
         assert_eq!(new_invoice.invoice_number, starting_invoice_number + 3);
+
+        // Test Success name_store_id, linked to store
+        let variables = insert::Variables {
+            id: uuid(),
+            other_party_id: mock_name_linked_to_store().id,
+            on_hold_option: None,
+            comment_option: None,
+            their_reference_option: None,
+            color_option: None,
+        };
+
+        let query = Insert::build_query(variables.clone());
+        let _: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+
+        assert_eq!(
+            new_invoice.name_store_id,
+            Some(mock_store_linked_to_name().id)
+        );
+
+        // Test Success name_store_id, not_linked
+        let variables = insert::Variables {
+            id: uuid(),
+            other_party_id: mock_name_not_linked_to_store().id,
+            on_hold_option: None,
+            comment_option: None,
+            their_reference_option: None,
+            color_option: None,
+        };
+
+        let query = Insert::build_query(variables.clone());
+        let _: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+
+        assert_eq!(new_invoice.name_store_id, None)
     }
 
     impl PartialEq<insert::Variables> for InvoiceRow {

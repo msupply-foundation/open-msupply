@@ -166,6 +166,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         id: invoice_row.id.to_owned(),
         other_party_name: name_row.name,
         other_party_id: name_row.id,
+        other_party_store_id: invoice_row.name_store_id,
         status: InvoiceStatus::from(invoice_row.status),
         on_hold: invoice_row.on_hold,
         r#type: InvoiceType::from(invoice_row.r#type),
