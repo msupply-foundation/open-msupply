@@ -92,7 +92,7 @@ impl<'a> InvoiceQueryRepository<'a> {
     }
 
     pub fn query_by_filter(&self, filter: InvoiceFilter) -> Result<Vec<Invoice>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     /// Gets all invoices

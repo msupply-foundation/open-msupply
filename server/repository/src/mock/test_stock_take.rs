@@ -8,6 +8,7 @@ pub fn mock_stock_take_without_lines() -> StockTakeRow {
     StockTakeRow {
         id: "stock_take_without_lines".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 1,
         comment: None,
         description: None,
         status: StockTakeStatus::New,
@@ -21,6 +22,7 @@ pub fn mock_stock_take_finalised() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_finalised".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 2,
         comment: None,
         description: None,
         status: StockTakeStatus::Finalised,
@@ -34,6 +36,7 @@ pub fn mock_stock_take_finalised_without_lines() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_finalised_no_lines".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 3,
         comment: None,
         description: None,
         status: StockTakeStatus::Finalised,
@@ -69,6 +72,7 @@ pub fn mock_stock_take_stock_surplus() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_stock_surplus".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 4,
         comment: None,
         description: None,
         status: StockTakeStatus::New,
@@ -122,6 +126,7 @@ pub fn mock_stock_take_stock_deficit() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_stock_deficit".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 1,
         comment: None,
         description: None,
         status: StockTakeStatus::New,
@@ -175,6 +180,7 @@ pub fn mock_stock_take_no_lines() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_no_lines".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 5,
         comment: None,
         description: None,
         status: StockTakeStatus::New,
@@ -190,6 +196,7 @@ pub fn mock_stock_take_no_count_change() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_no_count_change".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 8,
         comment: None,
         description: None,
         status: StockTakeStatus::New,
@@ -225,6 +232,7 @@ pub fn mock_stock_take_full_edit() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_full_edit".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 6,
         comment: Some("comment_0".to_string()),
         description: Some("description_0".to_string()),
         status: StockTakeStatus::New,
@@ -240,6 +248,7 @@ pub fn mock_stock_take_new_stock_line() -> StockTakeRow {
     StockTakeRow {
         id: "mock_stock_take_new_stock_line".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 7,
         comment: None,
         description: None,
         status: StockTakeStatus::New,

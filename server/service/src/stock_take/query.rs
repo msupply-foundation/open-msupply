@@ -10,6 +10,7 @@ pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_stock_takes(
     ctx: &ServiceContext,
+    store_id: &str,
     pagination: Option<PaginationOption>,
     filter: Option<StockTakeFilter>,
     sort: Option<StockTakeSort>,
@@ -17,9 +18,14 @@ pub fn get_stock_takes(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = StockTakeRepository::new(&ctx.connection);
 
+    // ensure filter restrict results to store id
+    let filter = filter
+        .unwrap_or(StockTakeFilter::new())
+        .store_id(EqualFilter::equal_to(store_id));
+
     Ok(ListResult {
-        rows: repository.query(pagination, filter.clone(), sort)?,
-        count: i64_to_u32(repository.count(filter)?),
+        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        count: i64_to_u32(repository.count(Some(filter))?),
     })
 }
 

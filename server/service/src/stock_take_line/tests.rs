@@ -16,9 +16,52 @@ mod stock_take_line_test {
         stock_take_line::{
             delete::DeleteStockTakeLineError,
             insert::{InsertStockTakeLineError, InsertStockTakeLineInput},
+            query::GetStockTakeLinesError,
             update::{UpdateStockTakeLineError, UpdateStockTakeLineInput},
         },
     };
+
+    #[actix_rt::test]
+    async fn query_stock_take_line() {
+        let (_, _, connection_manager, _) =
+            setup_all("query_stock_take_line", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.stock_take_line_service;
+
+        // error: InvalidStore,
+        let error = service
+            .get_stock_take_lines(
+                &context,
+                "invalid store",
+                &mock_stock_take_a().id,
+                None,
+                None,
+                None,
+            )
+            .unwrap_err();
+        assert_eq!(error, GetStockTakeLinesError::InvalidStore);
+
+        // error: InvalidStockTake,
+        let error = service
+            .get_stock_take_lines(&context, &mock_store_a().id, "invalid", None, None, None)
+            .unwrap_err();
+        assert_eq!(error, GetStockTakeLinesError::InvalidStockTake);
+
+        // success
+        let result = service
+            .get_stock_take_lines(
+                &context,
+                &mock_store_a().id,
+                &mock_stock_take_a().id,
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+        assert!(result.count > 0);
+    }
 
     #[actix_rt::test]
     async fn insert_stock_take_line() {

@@ -6,6 +6,7 @@ pub fn mock_stock_take_a() -> StockTakeRow {
     StockTakeRow {
         id: "stock_take_a".to_string(),
         store_id: "store_a".to_string(),
+        stock_take_number: 9,
         comment: None,
         description: None,
         status: StockTakeStatus::New,
@@ -19,6 +20,7 @@ pub fn mock_stock_take_b() -> StockTakeRow {
     StockTakeRow {
         id: "stock_take_b".to_string(),
         store_id: "store_b".to_string(),
+        stock_take_number: 10,
         comment: Some("stock_take_comment_b".to_string()),
         description: Some("stock_take_description_b".to_string()),
         status: StockTakeStatus::New,
