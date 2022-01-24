@@ -17,7 +17,10 @@ mod graphql {
     };
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
-        mock::MockDataInserts,
+        mock::{
+            mock_name_linked_to_store, mock_name_not_linked_to_store, mock_store_linked_to_name,
+            MockDataInserts,
+        },
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
         InvoiceRepository, StockLineRowRepository,
     };
@@ -243,6 +246,50 @@ mod graphql {
             .unwrap();
 
         assert_eq!(start_invoice.id, end_invoice.id);
+
+        // Test Success name_store_id, linked to store
+        let variables = update::Variables {
+            id: draft_inbound_shipment.id.clone(),
+            other_party_id_option: Some(mock_name_linked_to_store().id),
+            update_inbound_status_option: None,
+            on_hold_option: None,
+            comment_option: None,
+            their_reference_option: None,
+            color_option: None,
+        };
+
+        let query = Update::build_query(variables.clone());
+        let _: Response<update::ResponseData> = get_gql_result(&settings, query).await;
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+
+        assert_eq!(
+            new_invoice.name_store_id,
+            Some(mock_store_linked_to_name().id)
+        );
+
+        // Test Success name_store_id, not_linked
+
+        let variables = update::Variables {
+            id: draft_inbound_shipment.id.clone(),
+            other_party_id_option: Some(mock_name_not_linked_to_store().id),
+            update_inbound_status_option: None,
+            on_hold_option: None,
+            comment_option: None,
+            their_reference_option: None,
+            color_option: None,
+        };
+
+        let query = Update::build_query(variables.clone());
+        let _: Response<update::ResponseData> = get_gql_result(&settings, query).await;
+
+        let new_invoice = InvoiceRepository::new(&connection)
+            .find_one_by_id(&variables.id)
+            .unwrap();
+
+        assert_eq!(new_invoice.name_store_id, None);
 
         // Test Finaized (while setting invoice status onHold to true)
 

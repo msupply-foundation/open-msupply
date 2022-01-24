@@ -7,6 +7,7 @@ use crate::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    invoice::{InvoiceServiceTrait, InvoiceService},
     invoice_line::{OutboundShipmentLineService, OutboundShipmentLineServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -23,6 +24,7 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn ValidationServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stock_take_service: Box<dyn StockTakeServiceTrait>,
     pub stock_take_line_service: Box<dyn StockTakeLineServiceTrait>,
@@ -49,6 +51,7 @@ impl ServiceProvider {
             store_service: Box::new(StoreService {}),
             outbound_shipment_line: Box::new(OutboundShipmentLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
+            invoice_service: Box::new(InvoiceService {}),
             stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
             stock_take_service: Box::new(StockTakeService {}),
             stock_take_line_service: Box::new(StockTakeLineService {}),

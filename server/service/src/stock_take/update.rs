@@ -317,6 +317,7 @@ fn generate(
         name_id: invad_name.id.to_owned(),
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
+        name_store_id: None,
         r#type: InvoiceRowType::InventoryAdjustment,
         status: InvoiceRowStatus::Verified,
         on_hold: false,

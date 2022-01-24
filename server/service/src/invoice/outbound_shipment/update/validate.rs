@@ -1,14 +1,12 @@
 use crate::invoice::{
-    check_invoice_is_editable, check_invoice_status, InvoiceIsNotEditable, InvoiceStatusError,
+    check_invoice_is_editable, check_invoice_status, check_other_party_id, InvoiceIsNotEditable,
+    InvoiceStatusError,
 };
-use domain::{
-    invoice::InvoiceStatus, name::NameFilter, outbound_shipment::UpdateOutboundShipment,
-    EqualFilter,
-};
+use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment, EqualFilter, name::Name};
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,
-    RepositoryError, StorageConnection,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    StorageConnection,
 };
 
 use super::UpdateOutboundShipmentError;
@@ -16,7 +14,8 @@ use super::UpdateOutboundShipmentError;
 pub fn validate(
     patch: &UpdateOutboundShipment,
     connection: &StorageConnection,
-) -> Result<InvoiceRow, UpdateOutboundShipmentError> {
+) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentError> {
+    use UpdateOutboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
     // TODO check that during allocated status change, all unallocated lines are fullfilled
@@ -24,10 +23,23 @@ pub fn validate(
     check_invoice_type(&invoice)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
-    check_other_party(&patch.other_party_id, connection)?;
+
+    let other_party_option = match &patch.other_party_id {
+        Some(other_party_id) => {
+            let other_party = check_other_party_id(connection, &other_party_id)?
+                .ok_or(OtherPartyDoesNotExists {})?;
+
+            if !other_party.is_customer {
+                return Err(OtherPartyNotACustomer(other_party));
+            };
+            Some(other_party)
+        }
+        None => None,
+    };
+
     check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
 
-    Ok(invoice)
+    Ok((invoice, other_party_option))
 }
 
 fn check_invoice_exists(
@@ -82,32 +94,6 @@ fn check_can_change_status_to_allocated(
 fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
     if invoice.r#type != InvoiceRowType::OutboundShipment {
         Err(UpdateOutboundShipmentError::NotAnOutboundShipment)
-    } else {
-        Ok(())
-    }
-}
-
-pub fn check_other_party(
-    id_option: &Option<String>,
-    connection: &StorageConnection,
-) -> Result<(), UpdateOutboundShipmentError> {
-    use UpdateOutboundShipmentError::*;
-
-    if let Some(id) = id_option {
-        let repository = NameQueryRepository::new(&connection);
-
-        let mut result =
-            repository.query_by_filter(NameFilter::new().id(EqualFilter::equal_to(&id)))?;
-
-        if let Some(name) = result.pop() {
-            if name.is_customer {
-                Ok(())
-            } else {
-                Err(OtherPartyNotACustomer(name))
-            }
-        } else {
-            Err(OtherPartyDoesNotExists)
-        }
     } else {
         Ok(())
     }

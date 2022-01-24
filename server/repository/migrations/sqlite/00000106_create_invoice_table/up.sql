@@ -1,21 +1,22 @@
 CREATE TABLE invoice (
-    id text NOT NULL PRIMARY KEY,
+    id TEXT NOT NULL PRIMARY KEY,
     -- For outbound shipments, the id of the receiving customer.
     -- For inbound shipments, the id of the sending supplier.
-    name_id text NOT NULL REFERENCES name(id),
+    name_id TEXT NOT NULL REFERENCES name(id),
+    name_store_id TEXT REFERENCES store (id),
     -- For outbound shipments, the id of the issuing store.
     -- For inbound shipments, the id of the receiving store.
-    store_id text NOT NULL REFERENCES store (id),
+    store_id TEXT NOT NULL REFERENCES store (id),
     invoice_number integer NOT NULL,
     type TEXT CHECK (type IN ('OUTBOUND_SHIPMENT', 'INBOUND_SHIPMENT', 'INVENTORY_ADJUSTMENT')) NOT NULL,
-    status text CHECK (status IN ('NEW','ALLOCATED', 'PICKED', 'SHIPPED',  'DELIVERED', 'VERIFIED')) NOT NULL,
-    on_hold boolean NOT NULL,
-    comment text,
-    their_reference text,
-    created_datetime text NOT NULL,
-    allocated_datetime text,
-    picked_datetime text,
-    shipped_datetime text,
-    delivered_datetime text,
-    verified_datetime text,
-    color text)
+    status TEXT CHECK (status IN ('NEW','ALLOCATED', 'PICKED', 'SHIPPED',  'DELIVERED', 'VERIFIED')) NOT NULL,
+    on_hold BOOLEAN NOT NULL,
+    comment TEXT,
+    their_reference TEXT,
+    created_datetime TEXT NOT NULL,
+    allocated_datetime TEXT,
+    picked_datetime TEXT,
+    shipped_datetime TEXT,
+    delivered_datetime TEXT,
+    verified_datetime TEXT,
+    color TEXT)

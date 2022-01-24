@@ -6,10 +6,8 @@ use crate::schema::{
         CannotReverseInvoiceStatus, ForeignKey, ForeignKeyError,
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
-    types::{
-        get_invoice_response, DatabaseError, ErrorWrapper, InvoiceNode, InvoiceResponse, NameNode,
-        NodeError, RecordNotFound,
-    },
+    queries::invoice::*,
+    types::{DatabaseError, ErrorWrapper, InvoiceNode, NameNode, NodeError, RecordNotFound},
 };
 use domain::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus};
 use repository::StorageConnectionManager;
@@ -65,7 +63,7 @@ pub fn get_update_inbound_shipment_response(
         }
     };
     match update_inbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice_response(connection_manager, id) {
+        Ok(id) => match get_invoice(connection_manager, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },

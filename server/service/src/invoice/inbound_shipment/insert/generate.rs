@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use domain::{inbound_shipment::InsertInboundShipment, invoice::InvoiceType};
+use domain::{inbound_shipment::InsertInboundShipment, invoice::InvoiceType, name::Name};
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, NumberRowType},
     RepositoryError, StorageConnection,
@@ -17,6 +17,7 @@ pub fn generate(
         their_reference,
         color,
     }: InsertInboundShipment,
+    other_party: Name,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -25,6 +26,7 @@ pub fn generate(
     let result = InvoiceRow {
         id,
         name_id: other_party_id,
+        name_store_id: other_party.store_id,
         r#type: InvoiceType::InboundShipment.into(),
         comment,
         their_reference,

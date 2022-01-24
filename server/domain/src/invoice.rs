@@ -22,6 +22,7 @@ pub struct Invoice {
     pub id: String,
     pub other_party_name: String,
     pub other_party_id: String,
+    pub other_party_store_id: Option<String>,
     pub status: InvoiceStatus,
     pub on_hold: bool,
     pub r#type: InvoiceType,
@@ -81,6 +82,11 @@ impl InvoiceFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<InvoiceType>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn invoice_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.invoice_number = Some(filter);
         self
     }
 

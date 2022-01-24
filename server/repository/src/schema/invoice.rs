@@ -22,10 +22,12 @@ pub enum InvoiceRowStatus {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice"]
 pub struct InvoiceRow {
     pub id: String,
     pub name_id: String,
+    pub name_store_id: Option<String>,
     pub store_id: String,
     pub invoice_number: i64,
     #[column_name = "type_"]

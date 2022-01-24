@@ -1,9 +1,9 @@
 use async_graphql::*;
-use domain::PaginationOption;
-use domain::{name::NameFilter, SimpleStringFilter};
+use domain::{name::NameFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+
 use service::name::get_names;
 
-use crate::schema::types::sort_filter_types::convert_sort;
+use crate::schema::types::sort_filter_types::{convert_sort, EqualFilterStringInput};
 use crate::schema::types::{name::NameNode, PaginationInput};
 use crate::ContextExt;
 
@@ -20,6 +20,7 @@ pub type NameSortInput = SortInput<NameSortFieldInput>;
 
 #[derive(InputObject, Clone)]
 pub struct NameFilterInput {
+    pub id: Option<EqualFilterStringInput>,
     /// Filter by name
     pub name: Option<SimpleStringFilterInput>,
     /// Filter by code
@@ -33,7 +34,7 @@ pub struct NameFilterInput {
 impl From<NameFilterInput> for NameFilter {
     fn from(f: NameFilterInput) -> Self {
         NameFilter {
-            id: None,
+            id: f.id.map(EqualFilter::from),
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
             is_customer: f.is_customer,

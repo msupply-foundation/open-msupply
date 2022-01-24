@@ -5,9 +5,9 @@ use crate::{
     schema::{
         diesel_schema::{
             name, name::dsl as name_dsl, name_store_join,
-            name_store_join::dsl as name_store_join_dsl,
+            name_store_join::dsl as name_store_join_dsl, store, store::dsl as store_dsl,
         },
-        NameRow, NameStoreJoinRow,
+        NameRow, NameStoreJoinRow, StoreRow,
     },
 };
 use domain::{
@@ -20,7 +20,7 @@ use diesel::{
     prelude::*,
 };
 
-type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>);
+type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>, Option<StoreRow>);
 
 pub struct NameQueryRepository<'a> {
     connection: &'a StorageConnection,
@@ -73,7 +73,7 @@ impl<'a> NameQueryRepository<'a> {
     }
 }
 
-fn to_domain((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Name {
+fn to_domain((name_row, name_store_join_row_option, store_option): NameAndNameStoreJoin) -> Name {
     let (is_customer, is_supplier) = match name_store_join_row_option {
         Some(name_store_join_row) => (
             name_store_join_row.name_is_customer,
@@ -86,16 +86,22 @@ fn to_domain((name_row, name_store_join_row_option): NameAndNameStoreJoin) -> Na
         id: name_row.id,
         name: name_row.name,
         code: name_row.code,
+        store_id: store_option.map(|store| store.id),
         is_customer,
         is_supplier,
     }
 }
 
-type BoxedNameQuery = IntoBoxed<'static, LeftJoin<name::table, name_store_join::table>, DBType>;
+type BoxedNameQuery = IntoBoxed<
+    'static,
+    LeftJoin<LeftJoin<name::table, name_store_join::table>, store::table>,
+    DBType,
+>;
 
 pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
     let mut query = name_dsl::name
         .left_join(name_store_join_dsl::name_store_join)
+        .left_join(store_dsl::store)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -146,6 +152,7 @@ mod tests {
                 id: format!("id{:05}", index),
                 name: format!("name{}", index),
                 code: format!("code{}", index),
+                store_id: None,
                 is_customer: false,
                 is_supplier: false,
             });
