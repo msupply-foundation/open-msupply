@@ -1,14 +1,15 @@
-use async_graphql::{self, dataloader::DataLoader, Context, Enum, Object, Result};
+use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::NaiveDateTime;
 use repository::schema::StockTakeRow;
 use serde::Serialize;
 
 use crate::{
-    loader::StockTakeLineByStockTakeIdLoader,
+    loader::{InvoiceQueryLoader, StockTakeLineByStockTakeIdLoader},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::StockTakeLineConnector;
+use super::{InvoiceNode, StockTakeLineConnector};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[graphql(remote = "repository::schema::StockTakeStatus")]
@@ -58,6 +59,22 @@ impl StockTakeNode {
 
     pub async fn inventory_adjustment_id(&self) -> &Option<String> {
         &self.stock_take.inventory_adjustment_id
+    }
+
+    pub async fn inventory_adjustment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        if let Some(ref adjustment_id) = self.stock_take.inventory_adjustment_id {
+            let loader = ctx.get_loader::<DataLoader<InvoiceQueryLoader>>();
+            let invoice = loader.load_one(adjustment_id.clone()).await?.ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find inventory adjustment {}",
+                    adjustment_id
+                ))
+                .extend(),
+            )?;
+            Ok(Some(InvoiceNode { invoice }))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<StockTakeLineConnector> {

@@ -123,7 +123,7 @@ pub enum InvoiceNodeStatus {
 }
 
 pub struct InvoiceNode {
-    invoice: Invoice,
+    pub invoice: Invoice,
 }
 
 #[Object]
