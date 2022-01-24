@@ -13,7 +13,7 @@ mod stock_take_lines;
 mod store;
 mod user_account;
 
-pub use invoice::{InvoiceLoader, InvoiceStatsLoader};
+pub use invoice::{InvoiceLoader, InvoiceQueryLoader, InvoiceStatsLoader};
 pub use invoice_line::InvoiceLineLoader;
 pub use invoice_line_query::InvoiceLineQueryLoader;
 pub use item::ItemLoader;

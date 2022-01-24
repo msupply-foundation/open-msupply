@@ -10,8 +10,8 @@ use repository::StorageConnectionManager;
 use async_graphql::dataloader::DataLoader;
 
 use super::{
-    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceStatsLoader, LocationByIdLoader,
-    MasterListLineByMasterListId, StockLineByIdLoader, StockLineByItemIdLoader,
+    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader,
+    LocationByIdLoader, MasterListLineByMasterListId, StockLineByIdLoader, StockLineByItemIdLoader,
     StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
 };
 
@@ -51,6 +51,10 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     });
 
     let invoice_loader = DataLoader::new(InvoiceLoader {
+        connection_manager: connection_manager.clone(),
+    });
+
+    let invoice_query_loader = DataLoader::new(InvoiceQueryLoader {
         connection_manager: connection_manager.clone(),
     });
 
@@ -104,6 +108,7 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
     loaders.insert(invoice_loader);
+    loaders.insert(invoice_query_loader);
     loaders.insert(invoice_line_loader);
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
