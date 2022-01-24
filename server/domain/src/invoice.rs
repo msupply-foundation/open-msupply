@@ -17,7 +17,7 @@ pub enum InvoiceType {
     InventoryAdjustment,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Invoice {
     pub id: String,
     pub other_party_name: String,
