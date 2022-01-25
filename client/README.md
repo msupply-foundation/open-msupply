@@ -102,34 +102,20 @@ You can also specify multiple namespaces when using the hook:
 
 The Android app needs the remote server build as a shared lib.
 
-To build the shared lib the cross compiler needs to be built:
-Make sure the Android NDK is installed and the env var `NDK_HOME` is set.
-Then build the cross compilers using:
+Make sure the Android NDK is installed and the env var `NDK_HOME` is set, for example to `~Android/Sdk/ndk/22.1.7171670`.
+Currently the build script requires the Android API 26, make sure this version is installed.
+
+The remote server source code should be located in the `../remote-server` directory.
+If not clone it by doing:
 
 ```
-./setup-ndk.sh
-```
-
-Building the remote server lib:
-
-```
-cd rust
+cd ..
 git clone git@github.com:openmsupply/remote-server.git
 ```
 
-Note, unfortunately the remote server source directory can't be linked into the rust directory since otherwise `cargo` will not find the NDK directory.
+Unsolved issue that will hopefully be fixed at some point:
 
-Unsolved issues that will hopefully be fixed at some point:
-
-1. The intel build fails at the moment. For this reason, in `rust/makefile`, change the line:
-
-   `ARCHS_ANDROID = aarch64-linux-android armv7-linux-androideabi i686-linux-android`
-
-   to:
-
-   `ARCHS_ANDROID = aarch64-linux-android armv7-linux-androideabi`
-
-2. in `rust/remote-server/Cargo.toml` add the "vendored" feature to openssl by changing the line:
+1. in `../remote-server/Cargo.toml` add the "vendored" feature to openssl by changing the line:
 
    `openssl = { version = "0.10", features = ["v110"] }`
 
@@ -137,10 +123,12 @@ Unsolved issues that will hopefully be fixed at some point:
 
    `openssl = { version = "0.10", features = ["v110", "vendored"] }`
 
-Then run:
+2. The x86 target seem to be broken and crashes when loading the server lib
+
+To build the remote server lib and copy it to the Android project run:
 
 ```
-make android
+npm run android:build-remote_server
 ```
 
 ### Run the Android app
