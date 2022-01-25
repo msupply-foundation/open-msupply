@@ -16,6 +16,15 @@ pub use self::name::*;
 pub mod item;
 pub use self::item::*;
 
+pub mod item_stats;
+pub use self::item_stats::*;
+
+pub mod requisition;
+pub use self::requisition::*;
+
+pub mod requisition_line;
+pub use self::requisition_line::*;
+
 pub mod stock_line;
 pub use self::stock_line::*;
 
