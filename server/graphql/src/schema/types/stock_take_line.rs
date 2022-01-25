@@ -1,11 +1,11 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{location_to_domain, stock_line_to_domain, StockTakeLine};
-use service::i32_to_u32;
+use repository::{location_to_domain, StockTakeLine};
+use service::{i32_to_u32, usize_to_u32};
 
 use crate::{
-    loader::{ItemLoader, LocationRowByIdLoader},
+    loader::{ItemLoader, StockLineByIdLoader},
     schema::types::{LocationNode, StockLineNode},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -29,24 +29,15 @@ impl StockTakeLineNode {
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         if let Some(ref stock_line) = self.line.stock_line {
-            let loader = ctx.get_loader::<DataLoader<LocationRowByIdLoader>>();
-            let location = if let Some(ref location_id) = stock_line.location_id {
-                let result = loader.load_one(location_id.clone()).await?;
-                Some(
-                    result.ok_or(
-                        StandardGraphqlError::InternalError(format!(
-                            "Cannot find location {}",
-                            location_id
-                        ))
-                        .extend(),
-                    )?,
-                )
-            } else {
-                None
-            };
-            Ok(Some(StockLineNode {
-                stock_line: stock_line_to_domain((stock_line.clone(), location)),
-            }))
+            let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
+            let stock_line = loader.load_one(stock_line.id.clone()).await?.ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find stock line {}",
+                    stock_line.id
+                ))
+                .extend(),
+            )?;
+            Ok(Some(StockLineNode { stock_line }))
         } else {
             Ok(None)
         }
@@ -110,5 +101,30 @@ impl StockTakeLineNode {
 
     pub async fn note(&self) -> &Option<String> {
         &self.line.line.note
+    }
+}
+
+#[derive(SimpleObject)]
+pub struct StockTakeLineConnector {
+    total_count: u32,
+    nodes: Vec<StockTakeLineNode>,
+}
+
+impl StockTakeLineConnector {
+    pub fn empty() -> StockTakeLineConnector {
+        StockTakeLineConnector {
+            total_count: 0,
+            nodes: Vec::new(),
+        }
+    }
+
+    pub fn from_domain_vec(from: Vec<StockTakeLine>) -> StockTakeLineConnector {
+        StockTakeLineConnector {
+            total_count: usize_to_u32(from.len()),
+            nodes: from
+                .into_iter()
+                .map(|line| StockTakeLineNode { line })
+                .collect(),
+        }
     }
 }

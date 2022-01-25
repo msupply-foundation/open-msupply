@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
 use domain::EqualFilter;
 use repository::{
-    schema::{StockTakeRow, StockTakeStatus},
+    schema::{NumberRowType, StockTakeRow, StockTakeStatus},
     RepositoryError, StockTake, StockTakeFilter, StockTakeRepository, StockTakeRowRepository,
     StorageConnection,
 };
 
-use crate::{service_provider::ServiceContext, validate::check_store_exists};
+use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
 
 use super::query::get_stock_take;
 
@@ -49,6 +49,7 @@ fn validate(
 }
 
 fn generate(
+    connection: &StorageConnection,
     store_id: &str,
     InsertStockTakeInput {
         id,
@@ -56,17 +57,20 @@ fn generate(
         description,
         created_datetime,
     }: InsertStockTakeInput,
-) -> StockTakeRow {
-    StockTakeRow {
+) -> Result<StockTakeRow, RepositoryError> {
+    let stock_take_number = next_number(connection, &NumberRowType::StockTake, store_id)?;
+
+    Ok(StockTakeRow {
         id,
         store_id: store_id.to_string(),
+        stock_take_number,
         comment,
         description,
         status: StockTakeStatus::New,
         created_datetime,
         finalised_datetime: None,
         inventory_adjustment_id: None,
-    }
+    })
 }
 
 pub fn insert_stock_take(
@@ -78,7 +82,7 @@ pub fn insert_stock_take(
         .connection
         .transaction_sync(|connection| {
             validate(connection, store_id, &input)?;
-            let new_stock_take = generate(store_id, input);
+            let new_stock_take = generate(connection, store_id, input)?;
             StockTakeRowRepository::new(&connection).upsert_one(&new_stock_take)?;
 
             let stock_take = get_stock_take(ctx, new_stock_take.id)?;

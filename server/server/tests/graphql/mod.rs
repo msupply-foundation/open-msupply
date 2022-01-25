@@ -43,6 +43,7 @@ mod stock_take_insert;
 mod stock_take_line_delete;
 mod stock_take_line_insert;
 mod stock_take_line_update;
+mod stock_take_query;
 mod stock_take_update;
 mod unallocated_line;
 
