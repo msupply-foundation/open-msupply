@@ -214,10 +214,13 @@ impl InvoiceNode {
         &self.invoice.color
     }
 
+    /// Response Requisition that is the origin of this Outbound Shipment
+    /// Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
     pub async fn requisition(&self) -> Result<Option<RequisitionNode>> {
         todo!()
     }
 
+    /// Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment
     pub async fn linked_shipment(&self) -> Result<Option<InvoiceNode>> {
         todo!()
     }
