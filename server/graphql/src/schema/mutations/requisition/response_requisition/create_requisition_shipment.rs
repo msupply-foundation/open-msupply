@@ -26,7 +26,7 @@ pub enum CreateRequisitionShipmentResponse {
     Response(RequisitionNode),
 }
 
-pub fn use_calculated_quantity(
+pub fn create_requisition_shipment(
     _ctx: &Context<'_>,
     _store_id: Option<String>,
     _input: CreateRequisitionShipmentInput,

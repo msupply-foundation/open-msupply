@@ -481,6 +481,20 @@ impl Mutations {
         // TODO remove and make store_id parameter required
         response_requisition::supply_requested_quantity(ctx, store_id, input)
     }
+
+    /// Create shipment for response requisition
+    /// Will create Outbound Shipment with placeholder lines for each requisition line
+    /// placeholder line quantity will be set to requisitionLine.supply - all linked outbound shipments
+    /// lines quantity (placeholder and filled) for requistionLine.item
+    async fn create_requisition_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: response_requisition::CreateRequisitionShipmentInput,
+    ) -> Result<response_requisition::CreateRequisitionShipmentResponse> {
+        // TODO remove and make store_id parameter required
+        response_requisition::create_requisition_shipment(ctx, store_id, input)
+    }
 }
 
 // Common Mutation Errors
