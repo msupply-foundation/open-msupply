@@ -14,6 +14,9 @@ pub enum RequisitionSortFieldInput {
     Type,
     Status,
     OtherPartyName,
+    SentDatetime,
+    CreatedDatetime,
+    FinalisedDatetime,
 }
 
 #[derive(InputObject)]
