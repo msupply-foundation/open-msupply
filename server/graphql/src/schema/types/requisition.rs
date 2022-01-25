@@ -106,8 +106,8 @@ impl RequisitionNode {
     }
 
     /// Response Requisition: Outbound Shipments linked requisition
-    /// Request Requisition: Inbound Shippments linked to requisition
-    pub async fn shippments(&self, _ctx: &Context<'_>) -> Result<Connector<InvoiceNode>> {
+    /// Request Requisition: Inbound Shipments linked to requisition
+    pub async fn shipments(&self, _ctx: &Context<'_>) -> Result<Connector<InvoiceNode>> {
         todo!()
     }
 
