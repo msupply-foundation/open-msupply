@@ -26,6 +26,8 @@ pub mod names;
 pub use self::names::*;
 pub mod item;
 pub use self::item::*;
+pub mod requisition;
+pub use self::requisition::*;
 pub mod stock_counts;
 pub use self::stock_counts::*;
 use self::store::{stores, StoreFilterInput, StoresResponse};
@@ -185,5 +187,35 @@ impl Queries {
         #[graphql(desc = "Expiring soon threshold")] days_till_expired: Option<i32>,
     ) -> Result<StockCounts> {
         stock_counts(timezone_offset, days_till_expired)
+    }
+
+    pub async fn requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        id: String,
+    ) -> Result<RequisitionResponse> {
+        get_requisition(ctx, store_id, id)
+    }
+
+    pub async fn requisitions(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        page: Option<PaginationInput>,
+        filter: Option<RequisitionFilterInput>,
+        sort: Option<Vec<RequisitionSortInput>>,
+    ) -> Result<RequisitionsResponse> {
+        get_requisitions(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn requisition_by_number(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        requisition_number: u32,
+        r#type: RequisitionNodeType,
+    ) -> Result<RequisitionResponse> {
+        get_requisition_by_number(ctx, store_id, requisition_number, r#type)
     }
 }
