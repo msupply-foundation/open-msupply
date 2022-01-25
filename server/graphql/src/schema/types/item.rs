@@ -3,7 +3,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use domain::item::Item;
 
-use super::{InternalError, StockLinesResponse};
+use super::{InternalError, ItemStats, StockLinesResponse};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -30,6 +30,10 @@ impl ItemNode {
 
     pub async fn unit_name(&self) -> &Option<String> {
         &self.item.unit_name
+    }
+
+    pub async fn stats(&self) -> Result<ItemStats> {
+        todo!()
     }
 
     async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {
