@@ -1,6 +1,9 @@
 use crate::schema::queries::{ItemSortFieldInput, NameSortFieldInput};
 
-use super::{InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, LocationSortFieldInput};
+use super::{
+    InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, LocationSortFieldInput,
+    RequisitionNodeStatus, RequisitionNodeType,
+};
 
 use domain::{
     invoice::{InvoiceStatus, InvoiceType},
@@ -75,6 +78,11 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
 #[graphql(concrete(name = "EqualFilterBigNumberInput", params(i64)))]
 #[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceNodeType)))]
 #[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceNodeStatus)))]
+#[graphql(concrete(
+    name = "EqualFilterRequisitionStatusInput",
+    params(RequisitionNodeStatus)
+))]
+#[graphql(concrete(name = "EqualFilterRequisitionTypeInput", params(RequisitionNodeType)))]
 pub struct EqualFilterInput<T: InputType> {
     pub equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
