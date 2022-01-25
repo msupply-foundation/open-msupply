@@ -63,13 +63,6 @@ mod graphql {
                 }
                 ... on StockTakeNode {                    
                         id
-                        storeId
-                        comment
-                        description
-                        status
-                        createdDatetime
-                        finalisedDatetime
-                        inventoryAdjustmentId
                 }
             }
         }"#;
@@ -106,6 +99,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(StockTakeRow {
                 id: "id1".to_string(),
+                stock_take_number: 123,
                 store_id: "store id".to_string(),
                 comment: Some("comment".to_string()),
                 description: Some("description".to_string()),
@@ -124,13 +118,6 @@ mod graphql {
         let expected = json!({
             "updateStockTake": {
               "id": "id1",
-              "storeId": "store id",
-              "comment": "comment",
-              "description": "description",
-              "status": "FINALISED",
-              "createdDatetime": "2022-01-22T15:16:00",
-              "finalisedDatetime": "2022-01-23T15:16:00",
-              "inventoryAdjustmentId": "inv id",
             }
           }
         );

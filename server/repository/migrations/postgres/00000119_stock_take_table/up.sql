@@ -6,6 +6,7 @@ CREATE TYPE stock_take_status AS ENUM (
 CREATE TABLE stock_take (
     id TEXT NOT NULL PRIMARY KEY,
     store_id TEXT NOT NULL REFERENCES store(id),
+    stock_take_number BIGINT NOT NULL,
     comment	TEXT,
     description TEXT,
     status stock_take_status NOT NULL,

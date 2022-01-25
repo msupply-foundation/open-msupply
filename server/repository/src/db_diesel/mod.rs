@@ -54,7 +54,7 @@ pub use name_store_join::NameStoreJoinRepository;
 pub use number_row::NumberRowRepository;
 pub use requisition::RequisitionRepository;
 pub use requisition_line::RequisitionLineRepository;
-pub use stock_line::{to_domain as stock_line_to_domain, StockLineRepository};
+pub use stock_line::StockLineRepository;
 pub use stock_line_row::StockLineRowRepository;
 pub use stock_take::*;
 pub use stock_take_line::*;

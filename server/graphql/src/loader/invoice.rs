@@ -1,8 +1,10 @@
+use domain::invoice::{Invoice, InvoiceFilter};
+use domain::EqualFilter;
 use repository::schema::InvoiceStatsRow;
-use repository::InvoiceLineRepository;
 use repository::{
     schema::InvoiceRow, InvoiceRepository, RepositoryError, StorageConnectionManager,
 };
+use repository::{InvoiceLineRepository, InvoiceQueryRepository};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -29,6 +31,26 @@ impl Loader<String> for InvoiceLoader {
                 let invoice = invoice.clone();
                 (invoice_id, invoice)
             })
+            .collect())
+    }
+}
+
+pub struct InvoiceQueryLoader {
+    pub connection_manager: StorageConnectionManager,
+}
+
+#[async_trait::async_trait]
+impl Loader<String> for InvoiceQueryLoader {
+    type Value = Invoice;
+    type Error = RepositoryError;
+
+    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let connection = self.connection_manager.connection()?;
+        let repo = InvoiceQueryRepository::new(&connection);
+        Ok(repo
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_any(keys.to_owned())))?
+            .into_iter()
+            .map(|invoice| (invoice.id.clone(), invoice))
             .collect())
     }
 }

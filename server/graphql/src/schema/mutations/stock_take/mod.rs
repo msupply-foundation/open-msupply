@@ -44,6 +44,10 @@ impl StockTakeNode {
         &self.stock_take.store_id
     }
 
+    pub async fn stock_take_number(&self) -> i64 {
+        self.stock_take.stock_take_number
+    }
+
     pub async fn comment(&self) -> &Option<String> {
         &self.stock_take.comment
     }
