@@ -14,7 +14,12 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
     pub threshold_months_of_stock: Option<f64>,
-    pub status: Option<RequisitionNodeStatus>,
+    pub status: Option<UpdateRequestRequisitionStatusInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateRequestRequisitionStatusInput {
+    Sent,
 }
 
 #[derive(Interface)]

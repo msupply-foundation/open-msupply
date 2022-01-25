@@ -12,7 +12,12 @@ pub struct UpdateInput {
     pub color: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub status: Option<RequisitionNodeStatus>,
+    pub status: Option<UpdateResponseRequisitionStatusInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateResponseRequisitionStatusInput {
+    Finalised,
 }
 
 #[derive(Interface)]
