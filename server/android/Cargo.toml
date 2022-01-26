@@ -20,5 +20,4 @@ once_cell = "1.9.0"
 tokio = { version = "0.2", features = ["macros" ] } # Bumping to v1 requires actix-web >=v4 and reqwest >=0.11.
 
 [features]
-default = ["repository/sqlite"]
-postgres = ["repository/postgres"]
+default = ["repository/sqlite", "server/android"]
