@@ -330,6 +330,8 @@ fn generate(
         delivered_datetime: None,
         verified_datetime: Some(now.clone()),
         color: None,
+        requisition_id: None,
+        linked_invoice_id: None,
     };
 
     let stock_take = StockTakeRow {

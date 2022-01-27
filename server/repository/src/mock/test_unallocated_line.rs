@@ -39,6 +39,8 @@ pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
         delivered_datetime: None,
         verified_datetime: None,
         color: None,
+        requisition_id: None,
+        linked_invoice_id: None,
     }
 }
 
@@ -86,6 +88,8 @@ pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
         delivered_datetime: None,
         verified_datetime: None,
         color: None,
+        requisition_id: None,
+        linked_invoice_id: None,
     }
 }
 
@@ -131,5 +135,7 @@ pub fn mock_allocated_invoice() -> InvoiceRow {
         delivered_datetime: None,
         verified_datetime: None,
         color: None,
+        requisition_id: None,
+        linked_invoice_id: None,
     }
 }

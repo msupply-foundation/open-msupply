@@ -143,54 +143,6 @@ mod repository_test {
             }
         }
 
-        pub fn requisition_1() -> RequisitionRow {
-            RequisitionRow {
-                id: "requisition1".to_string(),
-                name_id: name_1().id.to_string(),
-                store_id: store_1().id.to_string(),
-                type_of: RequisitionRowType::Imprest,
-            }
-        }
-
-        pub fn requisition_2() -> RequisitionRow {
-            RequisitionRow {
-                id: "requisition2".to_string(),
-                name_id: name_1().id.to_string(),
-                store_id: store_1().id.to_string(),
-                type_of: RequisitionRowType::Imprest,
-            }
-        }
-
-        pub fn requisition_line_1() -> RequisitionLineRow {
-            RequisitionLineRow {
-                id: "requisitionline1".to_string(),
-                requisition_id: requisition_1().id.to_string(),
-                item_id: item_1().id.to_string(),
-                actual_quantity: 0.4,
-                suggested_quantity: 5.0,
-            }
-        }
-
-        pub fn requisition_line_2() -> RequisitionLineRow {
-            RequisitionLineRow {
-                id: "requisitionline2".to_string(),
-                requisition_id: requisition_1().id.to_string(),
-                item_id: item_1().id.to_string(),
-                actual_quantity: 100.4,
-                suggested_quantity: 54.0,
-            }
-        }
-
-        pub fn requisition_line_3() -> RequisitionLineRow {
-            RequisitionLineRow {
-                id: "requisitionline3".to_string(),
-                requisition_id: requisition_2().id.to_string(),
-                item_id: item_2().id.to_string(),
-                actual_quantity: 100.4,
-                suggested_quantity: 54.0,
-            }
-        }
-
         pub fn invoice_1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
@@ -206,6 +158,8 @@ mod repository_test {
                 // Note: keep nsecs small enough for Postgres which has limited precision.
                 created_datetime: NaiveDateTime::from_timestamp(1000, 0),
                 color: None,
+                requisition_id: None,
+                linked_invoice_id: None,
                 allocated_datetime: None,
                 picked_datetime: None,
                 shipped_datetime: None,
@@ -228,6 +182,8 @@ mod repository_test {
                 their_reference: Some("".to_string()),
                 created_datetime: NaiveDateTime::from_timestamp(2000, 0),
                 color: None,
+                requisition_id: None,
+                linked_invoice_id: None,
                 allocated_datetime: None,
                 picked_datetime: None,
                 shipped_datetime: None,
@@ -374,9 +330,8 @@ mod repository_test {
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
         InvoiceRepository, ItemRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
-        NumberRowRepository, OutboundShipmentRepository, RequisitionLineRepository,
-        RequisitionRepository, StockLineRepository, StockLineRowRepository, StoreRowRepository,
-        UserAccountRepository,
+        NumberRowRepository, OutboundShipmentRepository, StockLineRepository,
+        StockLineRowRepository, StoreRowRepository, UserAccountRepository,
     };
     use chrono::Duration;
     use domain::{
@@ -735,71 +690,6 @@ mod repository_test {
             .await
             .unwrap();
         assert_eq!(master_list_name_join_1, loaded_item);
-    }
-
-    #[actix_rt::test]
-    async fn test_requisition_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-requisition-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
-        let connection = connection_manager.connection().unwrap();
-
-        // setup
-        let name_repo = NameRepository::new(&connection);
-        name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = StoreRowRepository::new(&connection);
-        store_repo.insert_one(&data::store_1()).await.unwrap();
-
-        let repo = RequisitionRepository::new(&connection);
-
-        let item1 = data::requisition_1();
-        repo.insert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
-        assert_eq!(item1, loaded_item);
-
-        let item2 = data::requisition_2();
-        repo.insert_one(&item2).unwrap();
-        let loaded_item = repo.find_one_by_id(item2.id.as_str()).unwrap();
-        assert_eq!(item2, loaded_item);
-    }
-
-    #[actix_rt::test]
-    async fn test_requisition_line_repository() {
-        let settings =
-            test_db::get_test_db_settings("omsupply-database-requisition-line-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
-        let connection = connection_manager.connection().unwrap();
-
-        // setup
-        let item_repo = ItemRepository::new(&connection);
-        item_repo.insert_one(&data::item_1()).await.unwrap();
-        item_repo.insert_one(&data::item_2()).await.unwrap();
-        let name_repo = NameRepository::new(&connection);
-        name_repo.insert_one(&data::name_1()).await.unwrap();
-        let store_repo = StoreRowRepository::new(&connection);
-        store_repo.insert_one(&data::store_1()).await.unwrap();
-        let requisition_repo = RequisitionRepository::new(&connection);
-        requisition_repo.insert_one(&data::requisition_1()).unwrap();
-        requisition_repo.insert_one(&data::requisition_2()).unwrap();
-
-        let repo = RequisitionLineRepository::new(&connection);
-        let item1 = data::requisition_line_1();
-        repo.insert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).await.unwrap();
-        assert_eq!(item1, loaded_item);
-
-        // find_many_by_requisition_id test:
-        let item2 = data::requisition_line_2();
-        repo.insert_one(&item2).unwrap();
-
-        // add some noise, i.e. item3 should not be in the results
-        let item3 = data::requisition_line_3();
-        repo.insert_one(&item3).unwrap();
-        let all_items = repo
-            .find_many_by_requisition_id(&item1.requisition_id)
-            .unwrap();
-        assert_eq!(2, all_items.len());
     }
 
     #[actix_rt::test]
