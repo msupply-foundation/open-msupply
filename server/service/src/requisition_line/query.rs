@@ -24,12 +24,16 @@ pub fn get_requisition_lines(
 #[cfg(test)]
 mod test {
     use domain::EqualFilter;
-    use repository::{mock::{MockDataInserts, mock_draft_request_requisition_line}, test_db::setup_all, RequisitionLineFilter};
+    use repository::{
+        mock::{mock_draft_request_requisition_line, MockDataInserts},
+        test_db::setup_all,
+        RequisitionLineFilter,
+    };
 
     use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
-    async fn requistion_line_service_queries() {
+    async fn requisition_line_service_queries() {
         let (_, _, connection_manager, _) =
             setup_all("test_requisition_line_filter", MockDataInserts::all()).await;
 
