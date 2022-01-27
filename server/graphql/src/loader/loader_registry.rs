@@ -1,9 +1,6 @@
 use anymap::{any::Any, Map};
 
-use crate::loader::{
-    InvoiceLineLoader, InvoiceLoader, ItemLoader, RequisitionLineLoader, RequisitionLoader,
-    StoreLoader, UserAccountLoader,
-};
+use crate::loader::{InvoiceLineLoader, InvoiceLoader, ItemLoader, StoreLoader, UserAccountLoader};
 
 use repository::StorageConnectionManager;
 
@@ -35,14 +32,6 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     let mut loaders: LoaderMap = LoaderMap::new();
 
     let item_loader = DataLoader::new(ItemLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let requisition_loader = DataLoader::new(RequisitionLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let requisition_line_loader = DataLoader::new(RequisitionLineLoader {
         connection_manager: connection_manager.clone(),
     });
 
@@ -103,8 +92,6 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     });
 
     loaders.insert(item_loader);
-    loaders.insert(requisition_loader);
-    loaders.insert(requisition_line_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
     loaders.insert(invoice_loader);
