@@ -18,6 +18,7 @@ mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_requisition_line_repository;
 mod test_requisition_repository;
+mod test_requisition_service;
 mod test_stock_take;
 mod test_stock_take_line;
 mod test_unallocated_line;
@@ -42,6 +43,7 @@ pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_requisition_line_repository::*;
 pub use test_requisition_repository::*;
+pub use test_requisition_service::*;
 pub use test_stock_take::*;
 pub use test_stock_take_line::*;
 pub use test_unallocated_line::*;
@@ -286,6 +288,10 @@ fn all_mock_data() -> MockDataCollection {
     data.insert(
         "mock_test_requisition_line_repository",
         mock_test_requistion_line_repository(),
+    );
+    data.insert(
+        "mock_test_requistion_service",
+        mock_test_requistion_service(),
     );
     data
 }
