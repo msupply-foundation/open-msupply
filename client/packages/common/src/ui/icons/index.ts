@@ -1,3 +1,4 @@
+export { AlertIcon } from './Alert';
 export { ArrowLeftIcon } from './ArrowLeft';
 export { ArrowRightIcon } from './ArrowRight';
 export { BarChartIcon } from './BarChart';

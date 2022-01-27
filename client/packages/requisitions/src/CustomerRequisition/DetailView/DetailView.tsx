@@ -3,6 +3,10 @@ import {
   TableProvider,
   createTableStore,
   DetailViewSkeleton,
+  useNavigate,
+  useTranslation,
+  AlertModal,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -13,10 +17,15 @@ import {
   useIsCustomerRequisitionDisabled,
   useCustomerRequisition,
 } from '../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
-  const { data } = useCustomerRequisition();
+  const { data, isLoading } = useCustomerRequisition();
   const isDisabled = useIsCustomerRequisitionDisabled();
+  const navigate = useNavigate();
+  const t = useTranslation('distribution');
+
+  if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
@@ -27,6 +36,17 @@ export const DetailView: FC = () => {
       <SidePanel />
     </TableProvider>
   ) : (
-    <DetailViewSkeleton />
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.CustomerRequisition)
+            .build()
+        )
+      }
+      title={t('error.requisition-not-found')}
+      message={t('messages.click-to-return-to-requisitions')}
+    />
   );
 };

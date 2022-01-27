@@ -3,9 +3,14 @@
   "button.new-shipment": "New Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "dev.log-draft": "Log draft",
+  "error.requisition-not-found": "Requisition not found",
+  "error.shipment-not-found": "Shipment not found",
   "heading.related-documents": "Related documents",
   "label.add-batch": "Add batch",
   "label.group-by-item": "Group by Item",
+  "label.location": "Location",
+  "label.pricing": "Pricing",
+  "label.quantities": "Quantities",
   "label.select-rows-to-delete-them": "Select rows to delete them",
   "label.supplier-name": "Supplier Name",
   "label.supplier-ref": "Supplier Ref",
@@ -13,10 +18,9 @@
   "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "message.deleted-invoices": "Deleted {{number}} invoices",
   "message.deleted-lines": "Deleted {{number}} lines",
-  "label.pricing": "Pricing",
-  "label.location": "Location",
-  "label.quantities": "Quantities",
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
   "message.select-rows-to-delete": "Select rows to delete",
-  "messages.deleted-invoices": "Deleted {{number}} invoices"
+  "messages.deleted-invoices": "Deleted {{number}} invoices",
+  "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
+  "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list"
 }
