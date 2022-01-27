@@ -5,6 +5,10 @@ import {
   Item,
   useEditModal,
   DetailViewSkeleton,
+  AlertModal,
+  useNavigate,
+  RouteBuilder,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { useDraftInbound } from './api';
@@ -16,10 +20,13 @@ import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
 import { isInboundEditable } from '../../utils';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
-  const { draft } = useDraftInbound();
+  const { draft, isLoading } = useDraftInbound();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<Item>();
+  const navigate = useNavigate();
+  const t = useTranslation('replenishment');
 
   const onRowClick = React.useCallback(
     (line: InboundShipmentItem | InvoiceLine) => {
@@ -28,6 +35,8 @@ export const DetailView: FC = () => {
     },
     [onOpen]
   );
+
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return (
     <React.Suspense
@@ -57,7 +66,18 @@ export const DetailView: FC = () => {
           )}
         </TableProvider>
       ) : (
-        <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
+        <AlertModal
+          open={true}
+          onOk={() =>
+            navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipment)
+                .build()
+            )
+          }
+          title={t('error.shipment-not-found')}
+          message={t('messages.click-to-return-to-shipments')}
+        />
       )}
     </React.Suspense>
   );
