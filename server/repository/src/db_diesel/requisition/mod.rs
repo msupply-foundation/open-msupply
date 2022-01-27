@@ -22,6 +22,7 @@ pub struct RequisitionFilter {
     pub color: Option<EqualFilter<String>>,
     pub their_reference: Option<EqualFilter<String>>,
     pub comment: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 pub enum RequisitionSortField {
@@ -51,6 +52,7 @@ impl RequisitionFilter {
             color: None,
             their_reference: None,
             comment: None,
+            store_id: None,
         }
     }
 
@@ -73,10 +75,35 @@ impl RequisitionFilter {
         self.comment = Some(filter);
         self
     }
+
+    pub fn requisition_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.requisition_number = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<RequisitionRowType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
 }
 
 impl RequisitionRowStatus {
     pub fn equal_to(&self) -> EqualFilter<RequisitionRowStatus> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+        }
+    }
+}
+
+impl RequisitionRowType {
+    pub fn equal_to(&self) -> EqualFilter<RequisitionRowType> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,

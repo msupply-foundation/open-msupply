@@ -41,6 +41,16 @@ pub struct EqualFilter<T> {
     pub equal_any: Option<Vec<T>>,
 }
 
+impl EqualFilter<i64> {
+    pub fn equal_to_i64(value: i64) -> Self {
+        EqualFilter {
+            equal_to: Some(value),
+            not_equal_to: None,
+            equal_any: None,
+        }
+    }
+}
+
 impl EqualFilter<String> {
     pub fn equal_to(value: &str) -> Self {
         EqualFilter {
