@@ -14,6 +14,7 @@ import {
   Item,
   ColumnAlign,
   ColumnFormat,
+  DetailViewSkeleton,
 } from '@openmsupply-client/common';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
 import { getOutboundShipmentDetailViewApi } from './api';
@@ -192,37 +193,45 @@ export const DetailView: FC = () => {
     }
   };
 
-  return draft ? (
-    <TableProvider createStore={createTableStore}>
-      <AppBarButtons
-        isDisabled={!isInvoiceEditable(draft)}
-        onAddItem={itemModalControl.toggleOn}
-      />
+  return (
+    <React.Suspense
+      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
+    >
+      {draft && draft.id ? (
+        <TableProvider createStore={createTableStore}>
+          <AppBarButtons
+            isDisabled={!isInvoiceEditable(draft)}
+            onAddItem={itemModalControl.toggleOn}
+          />
 
-      <ItemDetailsModal
-        draft={draft}
-        isEditMode={selectedItem.editing}
-        onNext={onNext}
-        summaryItem={selectedItem?.item}
-        isOpen={itemModalControl.isOn}
-        onClose={itemModalControl.toggleOff}
-        onChangeItem={onChangeSelectedItem}
-        upsertInvoiceLine={line => draft.upsertLine?.(line)}
-        isOnlyItem={draft.items.length === 1}
-      />
+          <ItemDetailsModal
+            draft={draft}
+            isEditMode={selectedItem.editing}
+            onNext={onNext}
+            summaryItem={selectedItem?.item}
+            isOpen={itemModalControl.isOn}
+            onClose={itemModalControl.toggleOff}
+            onChangeItem={onChangeSelectedItem}
+            upsertInvoiceLine={line => draft.upsertLine?.(line)}
+            isOnlyItem={draft.items.length === 1}
+          />
 
-      <Toolbar draft={draft} />
+          <Toolbar draft={draft} />
 
-      <GeneralTab
-        columns={columns}
-        data={draft.items}
-        onRowClick={onRowClick}
-        onFlattenRows={onFlattenRows}
-        onGroupRows={onGroupRows}
-      />
+          <GeneralTab
+            columns={columns}
+            data={draft.items}
+            onRowClick={onRowClick}
+            onFlattenRows={onFlattenRows}
+            onGroupRows={onGroupRows}
+          />
 
-      <Footer draft={draft} save={save} />
-      <SidePanel draft={draft} />
-    </TableProvider>
-  ) : null;
+          <Footer draft={draft} save={save} />
+          <SidePanel draft={draft} />
+        </TableProvider>
+      ) : (
+        <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
+      )}
+    </React.Suspense>
+  );
 };

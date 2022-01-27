@@ -4,6 +4,7 @@ import {
   createTableStore,
   Item,
   useEditModal,
+  DetailViewSkeleton,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { useDraftInbound } from './api';
@@ -28,30 +29,36 @@ export const DetailView: FC = () => {
     [onOpen]
   );
 
-  if (!draft) return null;
-
   return (
-    <TableProvider createStore={createTableStore}>
-      <AppBarButtons
-        isDisabled={!isInboundEditable(draft)}
-        onAddItem={() => onOpen()}
-      />
+    <React.Suspense
+      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
+    >
+      {draft ? (
+        <TableProvider createStore={createTableStore}>
+          <AppBarButtons
+            isDisabled={!isInboundEditable(draft)}
+            onAddItem={() => onOpen()}
+          />
 
-      <Toolbar draft={draft} />
+          <Toolbar draft={draft} />
 
-      <GeneralTab onRowClick={onRowClick} />
+          <GeneralTab onRowClick={onRowClick} />
 
-      <Footer />
-      <SidePanel />
+          <Footer />
+          <SidePanel />
 
-      {isOpen && (
-        <InboundLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
-        />
+          {isOpen && (
+            <InboundLineEdit
+              isOpen={isOpen}
+              onClose={onClose}
+              mode={mode}
+              item={entity}
+            />
+          )}
+        </TableProvider>
+      ) : (
+        <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
       )}
-    </TableProvider>
+    </React.Suspense>
   );
 };

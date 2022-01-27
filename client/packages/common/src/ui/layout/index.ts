@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import Portal from '@mui/material/Portal';
 import Toolbar from '@mui/material/Toolbar';
+export * from './skeletons';
 export * from './tables';
 
 export {

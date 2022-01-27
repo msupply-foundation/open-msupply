@@ -4,6 +4,7 @@ import {
   createTableStore,
   Item,
   useEditModal,
+  DetailViewSkeleton,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -14,15 +15,17 @@ import { StocktakeLine, StocktakeSummaryItem } from '../../types';
 
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
+import { useStocktake } from '../api/hooks';
 
 export const DetailView: FC = () => {
   const { isOpen, entity, onOpen, onClose, mode } = useEditModal<Item>();
+  const { data } = useStocktake();
 
   const onRowClick = (item: StocktakeLine | StocktakeSummaryItem) => {
     onOpen(toItem(item));
   };
 
-  return (
+  return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
@@ -40,5 +43,7 @@ export const DetailView: FC = () => {
         />
       )}
     </TableProvider>
+  ) : (
+    <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
   );
 };
