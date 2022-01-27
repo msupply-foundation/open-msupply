@@ -16,6 +16,8 @@ mod store;
 mod test_invoice_count_service;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
+mod test_requisition_line_repository;
+mod test_requisition_repository;
 mod test_stock_take;
 mod test_stock_take_line;
 mod test_unallocated_line;
@@ -38,13 +40,16 @@ pub use store::*;
 pub use test_invoice_count_service::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
+pub use test_requisition_line_repository::*;
+pub use test_requisition_repository::*;
 pub use test_stock_take::*;
 pub use test_stock_take_line::*;
 pub use test_unallocated_line::*;
 pub use user_account::mock_user_accounts;
 
 use crate::{
-    InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository, StockLineRowRepository,
+    InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository,
+    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
     StockTakeLineRowRepository, StockTakeRowRepository,
 };
 
@@ -75,6 +80,8 @@ pub struct MockData {
     pub full_invoices: HashMap<String, FullMockInvoice>,
     pub full_master_list: HashMap<String, FullMockMasterList>,
     pub numbers: Vec<NumberRow>,
+    pub requisitions: Vec<RequisitionRow>,
+    pub requisition_lines: Vec<RequisitionLineRow>,
     pub stock_takes: Vec<StockTakeRow>,
     pub stock_take_lines: Vec<StockTakeLineRow>,
 }
@@ -92,6 +99,8 @@ pub struct MockDataInserts {
     pub full_invoices: bool,
     pub full_master_list: bool,
     pub numbers: bool,
+    pub requisitions: bool,
+    pub requisition_lines: bool,
     pub stock_takes: bool,
     pub stock_take_lines: bool,
 }
@@ -111,6 +120,8 @@ impl MockDataInserts {
             full_invoices: true,
             full_master_list: true,
             numbers: true,
+            requisitions: true,
+            requisition_lines: true,
             stock_takes: true,
             stock_take_lines: true,
         }
@@ -130,6 +141,8 @@ impl MockDataInserts {
             full_invoices: false,
             full_master_list: false,
             numbers: false,
+            requisitions: false,
+            requisition_lines: false,
             stock_takes: false,
             stock_take_lines: false,
         }
@@ -250,6 +263,8 @@ fn all_mock_data() -> MockDataCollection {
             numbers: mock_numbers(),
             stock_takes: mock_stock_take_data(),
             stock_take_lines: mock_stock_take_line_data(),
+            requisitions: vec![],
+            requisition_lines: vec![],
         },
     );
     data.insert(
@@ -264,6 +279,14 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("test_stock_take_data", test_stock_take_data());
     data.insert("mock_test_unallocated_line", mock_test_unallocated_line());
     data.insert("mock_test_name_store_id", mock_test_name_store_id());
+    data.insert(
+        "mock_test_requistion_repository",
+        mock_test_requistion_repository(),
+    );
+    data.insert(
+        "mock_test_requisition_line_repository",
+        mock_test_requistion_line_repository(),
+    );
     data
 }
 
@@ -365,6 +388,20 @@ pub async fn insert_mock_data(
         if inserts.stock_take_lines {
             for row in &mock_data.stock_take_lines {
                 let repo = StockTakeLineRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.requisitions {
+            for row in &mock_data.requisitions {
+                let repo = RequisitionRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.requisition_lines {
+            for row in &mock_data.requisition_lines {
+                let repo = RequisitionLineRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
         }
