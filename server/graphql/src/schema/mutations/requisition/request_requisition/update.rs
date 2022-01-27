@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use crate::schema::{
     mutations::{requisition::errors::CannotEditRequisition, RecordDoesNotExist},
-    types::{RequisitionNode, RequisitionNodeStatus},
+    types::RequisitionNode,
 };
 
 #[derive(InputObject)]
