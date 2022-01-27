@@ -1,16 +1,33 @@
 import React, { FC } from 'react';
-import { TableProvider, createTableStore } from '@openmsupply-client/common';
+import {
+  TableProvider,
+  createTableStore,
+  DetailViewSkeleton,
+  useNavigate,
+  useTranslation,
+  AlertModal,
+  RouteBuilder,
+} from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useIsCustomerRequisitionDisabled } from '../api';
+import {
+  useIsCustomerRequisitionDisabled,
+  useCustomerRequisition,
+} from '../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
+  const { data, isLoading } = useCustomerRequisition();
   const isDisabled = useIsCustomerRequisitionDisabled();
+  const navigate = useNavigate();
+  const t = useTranslation('distribution');
 
-  return (
+  if (isLoading) return <DetailViewSkeleton />;
+
+  return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons isDisabled={isDisabled} onAddItem={() => {}} />
       <Toolbar />
@@ -18,5 +35,18 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
     </TableProvider>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.CustomerRequisition)
+            .build()
+        )
+      }
+      title={t('error.requisition-not-found')}
+      message={t('messages.click-to-return-to-requisitions')}
+    />
   );
 };
