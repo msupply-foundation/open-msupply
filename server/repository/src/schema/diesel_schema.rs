@@ -74,9 +74,20 @@ table! {
 table! {
     requisition (id) {
         id -> Text,
+        requisition_number -> Bigint,
         name_id -> Text,
         store_id -> Text,
-        type_of -> crate::schema::requisition::RequisitionRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::schema::requisition::RequisitionRowTypeMapping,
+        #[sql_name = "status"] status -> crate::schema::requisition::RequisitionRowStatusMapping,
+        created_datetime -> Timestamp,
+        sent_datetime -> Nullable<Timestamp>,
+        finalised_datetime -> Nullable<Timestamp>,
+        color -> Nullable<Text>,
+        comment -> Nullable<Text>,
+        their_reference -> Nullable<Text>,
+        max_months_of_stock -> Double,
+        threshold_months_of_stock -> Double,
+        linked_requisition_id -> Nullable<Text>,
     }
 }
 
@@ -85,8 +96,13 @@ table! {
         id -> Text,
         requisition_id -> Text,
         item_id -> Text,
-        actual_quantity -> Double,
-        suggested_quantity -> Double,
+        requested_quantity -> Double,
+        calculated_quantity -> Double,
+        supply_quantity -> Double,
+        request_stock_on_hand -> Integer ,
+        request_average_monthly_consumption -> Integer,
+        response_stock_on_hand -> Integer,
+        response_average_monthly_consumption -> Integer,
     }
 }
 
@@ -129,6 +145,8 @@ table! {
         delivered_datetime -> Nullable<Timestamp>,
         verified_datetime -> Nullable<Timestamp>,
         color -> Nullable<Text>,
+        requisition_id -> Nullable<Text>,
+        linked_invoice_id -> Nullable<Text>,
     }
 }
 
