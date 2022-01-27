@@ -1,16 +1,24 @@
 import React, { FC } from 'react';
-import { TableProvider, createTableStore } from '@openmsupply-client/common';
+import {
+  TableProvider,
+  createTableStore,
+  DetailViewSkeleton,
+} from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useIsCustomerRequisitionDisabled } from '../api';
+import {
+  useIsCustomerRequisitionDisabled,
+  useCustomerRequisition,
+} from '../api';
 
 export const DetailView: FC = () => {
+  const { data } = useCustomerRequisition();
   const isDisabled = useIsCustomerRequisitionDisabled();
 
-  return (
+  return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons isDisabled={isDisabled} onAddItem={() => {}} />
       <Toolbar />
@@ -18,5 +26,7 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
     </TableProvider>
+  ) : (
+    <DetailViewSkeleton />
   );
 };

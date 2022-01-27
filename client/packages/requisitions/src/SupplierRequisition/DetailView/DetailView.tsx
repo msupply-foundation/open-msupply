@@ -1,5 +1,9 @@
 import React, { FC } from 'react';
-import { TableProvider, createTableStore } from '@openmsupply-client/common';
+import {
+  TableProvider,
+  createTableStore,
+  DetailViewSkeleton,
+} from '@openmsupply-client/common';
 import { useSupplierRequisition } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -11,9 +15,7 @@ import { ContentArea } from './ContentArea';
 export const DetailView: FC = () => {
   const { data } = useSupplierRequisition();
 
-  if (!data) return null;
-
-  return (
+  return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
         isDisabled={!isRequisitionEditable(data)}
@@ -24,5 +26,7 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
     </TableProvider>
+  ) : (
+    <DetailViewSkeleton />
   );
 };
