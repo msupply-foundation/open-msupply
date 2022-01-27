@@ -962,7 +962,7 @@ mod repository_test {
             .unwrap();
 
         let raw_result = sql_query(&format!(
-            r#"SELECT id from requisition where id = '{}'"#,
+            r#"select id from requisition where id = '{}'"#,
             mock_request_draft_requisition2().id
         ))
         .load::<Id>(&connection.connection)
@@ -983,9 +983,15 @@ mod repository_test {
             .query_by_filter(RequisitionFilter::new().name(EqualFilter::equal_to("name_a")))
             .unwrap();
 
-        let raw_result = sql_query(r#"SELECT requisition.id from requisition join name on requisition.name_id = name.id where name.name = 'name_a'"#)
-            .load::<Id>(&connection.connection)
-            .unwrap();
+        let raw_result = sql_query(
+            r#"select requisition.id 
+                    from requisition 
+                    join name on requisition.name_id = name.id 
+                    where name.name = 'name_a'
+                    order by requisition.id asc"#,
+        )
+        .load::<Id>(&connection.connection)
+        .unwrap();
 
         assert_eq!(
             raw_result,
@@ -1007,7 +1013,7 @@ mod repository_test {
             .unwrap();
 
         let raw_result = sql_query(
-            r#"SELECT id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
+            r#"select id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
         )
         .load::<Id>(&connection.connection)
         .unwrap();
