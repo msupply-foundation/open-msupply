@@ -323,21 +323,27 @@ mod repository_test {
     use crate::{
         database_settings::get_storage_connection_manager,
         mock::{
-            mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
-            MockDataInserts,
+            mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
+            mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
+            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
+            mock_request_draft_requisition2, MockDataInserts,
         },
-        schema::{InvoiceStatsRow, NumberRowType},
+        schema::{InvoiceStatsRow, NumberRowType, RequisitionRowStatus},
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRepository, ItemRepository, MasterListLineRowRepository,
+        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
-        NumberRowRepository, OutboundShipmentRepository, StockLineRepository,
-        StockLineRowRepository, StoreRowRepository, UserAccountRepository,
+        NumberRowRepository, OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineRepository, StockLineRowRepository, StoreRowRepository,
+        UserAccountRepository,
     };
     use chrono::Duration;
+    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use domain::{
+        master_list_line::MasterListLineFilter,
         name::{NameFilter, NameSort, NameSortField},
         stock_line::StockLineFilter,
-        DateFilter, Pagination, SimpleStringFilter,
+        DateFilter, EqualFilter, Pagination, SimpleStringFilter,
     };
 
     #[actix_rt::test]
@@ -896,42 +902,199 @@ mod repository_test {
             .unwrap();
         assert_eq!(result, None);
     }
+    #[actix_rt::test]
+    async fn test_master_list_line_repository_filter() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_master_list_line_repository_filter",
+            MockDataInserts::all(),
+        )
+        .await;
 
-    #[cfg(test)]
-    mod test {
-        use domain::{master_list_line::MasterListLineFilter, EqualFilter};
+        let repo = MasterListLineRepository::new(&connection);
 
-        use crate::{
-            mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
-            test_db, MasterListLineRepository,
-        };
-
-        #[actix_rt::test]
-        async fn test_master_list_line_repository_filter() {
-            let (_, connection, _, _) = test_db::setup_all(
-                "test_master_list_line_repository_filter",
-                MockDataInserts::all(),
+        // Test filter by master_list_id
+        let lines = repo
+            .query_by_filter(
+                MasterListLineFilter::new().master_list_id(EqualFilter::equal_any(vec![
+                    "master_list_master_list_line_filter_test".to_string(),
+                ])),
             )
-            .await;
+            .unwrap();
 
-            let repo = MasterListLineRepository::new(&connection);
-
-            // Test filter by master_list_id
-            let lines = repo
-                .query_by_filter(MasterListLineFilter::new().master_list_id(
-                    EqualFilter::equal_any(vec![
-                        "master_list_master_list_line_filter_test".to_string(),
-                    ]),
-                ))
-                .unwrap();
-
-            for (count, line) in mock_master_list_master_list_line_filter_test()
-                .lines
-                .iter()
-                .enumerate()
-            {
-                assert_eq!(lines[count].id, line.id)
-            }
+        for (count, line) in mock_master_list_master_list_line_filter_test()
+            .lines
+            .iter()
+            .enumerate()
+        {
+            assert_eq!(lines[count].id, line.id)
         }
+    }
+
+    #[derive(QueryableByName, Queryable, PartialEq, Debug)]
+    struct Id {
+        #[sql_type = "Text"]
+        id: String,
+    }
+    #[actix_rt::test]
+    async fn test_requisition_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_requisition_repository", MockDataInserts::all()).await;
+
+        let row_repo = RequisitionRowRepository::new(&connection);
+        let repo = RequisitionRepository::new(&connection);
+
+        // Test insert
+        let mut update_test_row = mock_request_draft_requisition();
+        update_test_row.comment = Some("unique_comment".to_owned());
+        row_repo.upsert_one(&update_test_row).unwrap();
+
+        // Test delete
+        row_repo
+            .delete(&mock_request_draft_requisition2().id)
+            .unwrap();
+
+        // Test query by id
+        let result = repo
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .id(EqualFilter::equal_to(&mock_request_draft_requisition2().id)),
+            )
+            .unwrap();
+
+        let raw_result = sql_query(&format!(
+            r#"SELECT id from requisition where id = '{}'"#,
+            mock_request_draft_requisition2().id
+        ))
+        .load::<Id>(&connection.connection)
+        .unwrap();
+
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requistion| Id {
+                    id: requistion.requisition_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+
+        // Test query by name
+        let result = repo
+            .query_by_filter(RequisitionFilter::new().name(EqualFilter::equal_to("name_a")))
+            .unwrap();
+
+        let raw_result = sql_query(r#"SELECT requisition.id from requisition join name on requisition.name_id = name.id where name.name = 'name_a'"#)
+            .load::<Id>(&connection.connection)
+            .unwrap();
+
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requistion| Id {
+                    id: requistion.requisition_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+
+        // Test query by type and comment
+        let result = repo
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .status(RequisitionRowStatus::Draft.equal_to())
+                    .comment(EqualFilter::equal_to("unique_comment")),
+            )
+            .unwrap();
+
+        let raw_result = sql_query(
+            r#"SELECT id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
+        )
+        .load::<Id>(&connection.connection)
+        .unwrap();
+
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requistion| Id {
+                    id: requistion.requisition_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_requisition_line_repository", MockDataInserts::all()).await;
+
+        let row_repo = RequisitionLineRowRepository::new(&connection);
+        let repo = RequisitionLineRepository::new(&connection);
+
+        // Test insert
+        let mut update_test_row = mock_draft_request_requisition_line();
+        update_test_row.requested_quantity = 99;
+        row_repo.upsert_one(&update_test_row).unwrap();
+
+        // Test delete
+        row_repo
+            .delete(&mock_draft_request_requisition_line2().id)
+            .unwrap();
+
+        // Test query by id
+        let result = repo
+            .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(
+                &mock_draft_request_requisition_line2().id,
+            )))
+            .unwrap();
+
+        let raw_result = sql_query(&format!(
+            r#"SELECT id from requisition_line where id = '{}'"#,
+            mock_draft_request_requisition_line2().id
+        ))
+        .load::<Id>(&connection.connection)
+        .unwrap();
+
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requistion_line| Id {
+                    id: requistion_line.requisition_line_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+
+        // Test query by requisition_id and requested_quantity
+        let result = repo
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(
+                        &mock_draft_request_requisition_line().requisition_id,
+                    ))
+                    .requested_quantity(EqualFilter {
+                        equal_to: Some(99),
+                        not_equal_to: None,
+                        equal_any: None,
+                    }),
+            )
+            .unwrap();
+
+        let raw_result = sql_query(&format!(
+            r#"SELECT id from requisition_line where requisition_id = '{}' and requested_quantity = 99"#,
+            mock_draft_request_requisition_line().requisition_id
+        ))
+        .load::<Id>(&connection.connection)
+        .unwrap();
+
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requistion_line| Id {
+                    id: requistion_line.requisition_line_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
     }
 }
