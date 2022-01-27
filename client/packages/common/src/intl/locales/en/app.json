@@ -30,5 +30,22 @@
   "sync": "Sync",
   "tools": "Tools",
   "stocktake": "Stocktake",
-  "locations": "Locations"
+  "locations": "Locations",
+  "cmdk.navigation-actions": "Navigation actions",
+  "cmdk.go-back": "Go Back",
+  "cmdk.drawer-toggle": "Toggle Menu",
+  "cmdk.goto-outbound": "Go to: Outbound Shipments",
+  "cmdk.create-outbound": "Create: New Outbound Shipment",
+  "cmdk.goto-inbound": "Go to: Inbound Shipments",
+  "cmdk.create-inbound": "Create: New Inbound Shipment",
+  "cmdk.goto-dashboard": "Go to: Dashboard",
+  "cmdk.goto-customer-requisition": "Go to: Customer Requisition",
+  "cmdk.goto-supplier-requisition": "Go to: Supplier Requisition",
+  "cmdk.goto-stocktakes": "Go to: Stocktakes",
+  "cmdk.goto-stock": "Go to: Stock",
+  "cmdk.goto-locations": "Go to: Locations",
+  "cmdk.goto-items": "Go to: Items",
+  "cmdk.goto-customers": "Go to: Customers",
+  "cmdk.goto-suppliers": "Go to: Suppliers",
+  "cmdk.goto-reports": "Go to: Reports"
 }
