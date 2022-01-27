@@ -4,7 +4,6 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  useNavigate,
   Navigate,
   AppFooterPortal,
   Box,
@@ -17,20 +16,11 @@ import {
   RouteBuilder,
   ErrorBoundary,
   GenericErrorFallback,
-  KBarProvider,
-  KBarPortal,
-  KBarPositioner,
-  KBarAnimator,
-  KBarSearch,
-  KBarResults,
-  useDrawer,
-  styled,
   DetailPanel,
   AppFooter,
   OmSupplyApiProvider,
   IntlProvider,
   RandomLoader,
-  useMatches,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { AppDrawer, AppBar, Viewport, NotFound, Footer } from './components';
@@ -42,6 +32,7 @@ import {
   ReplenishmentRouter,
 } from './routers';
 import { Settings } from './Admin/Settings';
+import { CommandK } from './CommandK';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,146 +48,6 @@ const Heading: FC = ({ children }) => (
     <Typography>[ Placeholder page: {children} ]</Typography>
   </div>
 );
-
-const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
-  width: 500,
-  height: 50,
-  fontSize: 20,
-  backgroundColor: theme.palette.primary.main,
-  borderRadius: '5px',
-  ':focus-visible': {
-    outline: 'none',
-  },
-}));
-
-const StyledKBarResults = styled(KBarResults)({
-  width: 500,
-  fontSize: 16,
-  borderRadius: '5px',
-  boxShadow: '0px 6px 20px rgb(0 0 0 / 20%)',
-  ':focus-visible': {
-    outline: 'none',
-  },
-});
-
-const CustomKBarResults = () => {
-  const { results } = useMatches();
-
-  return (
-    <StyledKBarResults
-      items={results}
-      onRender={({ item, active }) =>
-        typeof item === 'string' ? (
-          <div>{item}</div>
-        ) : (
-          <div
-            style={{
-              background: active ? '#eee' : 'transparent',
-            }}
-          >
-            {item.name}
-          </div>
-        )
-      }
-    />
-  );
-};
-
-const CommandK: FC = ({ children }) => {
-  const navigate = useNavigate();
-  const drawer = useDrawer();
-
-  const actions = [
-    {
-      id: 'Navigate',
-      section: 'This is a subtitle hehe',
-      name: 'Navigation actions',
-      shortcut: ['c'],
-      keywords: 'navigation, back',
-      children: ['navigation:go-back', 'navigation:outbound-shipment'],
-    },
-
-    {
-      id: 'navigation:go-back',
-      name: 'Go back',
-      shortcut: ['c'],
-      keywords: 'navigation, back',
-      perform: () => navigate(-1),
-    },
-    {
-      id: 'navigation-drawer:close-drawer',
-      name: 'Navigation Drawer: Close',
-      shortcut: ['c'],
-      keywords: 'drawer, close',
-      perform: () => drawer.close(),
-    },
-    {
-      id: 'navigation-drawer:open-drawer',
-      name: 'Navigation Drawer: Open',
-      shortcut: ['o'],
-      keywords: 'drawer, open',
-      perform: () => drawer.open(),
-    },
-    {
-      id: 'navigation:outbound-shipment',
-      name: 'Go to: Outbound Shipments',
-      shortcut: ['c'],
-      keywords: 'shipment',
-      perform: () =>
-        navigate(
-          RouteBuilder.create(AppRoute.Distribution)
-            .addPart(AppRoute.OutboundShipment)
-            .build()
-        ),
-    },
-    {
-      id: 'navigation:outbound-shipment/new',
-      name: 'Create: New Outbound Shipment',
-      shortcut: ['o'],
-      keywords: 'distribution',
-      perform: () => navigate('/distribution/outbound-shipment/new'),
-    },
-    {
-      id: 'navigation:dashboard',
-      name: 'Go to: Dashboard',
-      shortcut: ['d'],
-      keywords: 'dashboard',
-      perform: () => navigate('/dashboard'),
-    },
-    {
-      id: 'navigation:customer-requisition',
-      name: 'Go to: Customer Requisition',
-      shortcut: ['r'],
-      keywords: 'distribution',
-      perform: () => navigate('/distribution/customer-requisition'),
-    },
-    {
-      id: 'navigation:reports',
-      name: 'Go to: Reports',
-      shortcut: ['r'],
-      keywords: 'reports',
-      perform: () => navigate('/reports'),
-    },
-  ];
-
-  return (
-    <KBarProvider actions={actions}>
-      <KBarPortal>
-        <KBarPositioner>
-          <KBarAnimator
-            style={{
-              boxShadow: '0px 6px 20px rgb(0 0 0 / 20%)',
-            }}
-          >
-            <CustomKBarSearch placeholder="Type a command or search" />
-            <CustomKBarResults />
-          </KBarAnimator>
-        </KBarPositioner>
-      </KBarPortal>
-      {children}
-    </KBarProvider>
-  );
-};
 
 const Host: FC = () => (
   <React.Suspense fallback={<RandomLoader />}>
