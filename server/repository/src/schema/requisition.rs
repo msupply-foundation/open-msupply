@@ -17,7 +17,7 @@ pub enum RequisitionRowStatus {
     Finalised,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "requisition"]
 pub struct RequisitionRow {
     pub id: String,
