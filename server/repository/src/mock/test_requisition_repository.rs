@@ -4,7 +4,7 @@ use crate::schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType};
 
 use super::MockData;
 
-pub fn mock_test_requistion_repository() -> MockData {
+pub fn mock_test_requisition_repository() -> MockData {
     let mut result = MockData::default();
     result.requisitions.push(mock_request_draft_requisition());
     result.requisitions.push(mock_request_draft_requisition2());

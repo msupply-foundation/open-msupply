@@ -972,8 +972,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion| Id {
-                    id: requistion.requisition_row.id
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -997,8 +997,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion| Id {
-                    id: requistion.requisition_row.id
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -1022,8 +1022,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion| Id {
-                    id: requistion.requisition_row.id
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -1065,8 +1065,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion_line| Id {
-                    id: requistion_line.requisition_line_row.id
+                .map(|requisition_line| Id {
+                    id: requisition_line.requisition_line_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -1097,8 +1097,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion_line| Id {
-                    id: requistion_line.requisition_line_row.id
+                .map(|requisition_line| Id {
+                    id: requisition_line.requisition_line_row.id
                 })
                 .collect::<Vec<Id>>()
         );

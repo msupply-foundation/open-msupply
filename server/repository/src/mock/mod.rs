@@ -282,16 +282,16 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("mock_test_unallocated_line", mock_test_unallocated_line());
     data.insert("mock_test_name_store_id", mock_test_name_store_id());
     data.insert(
-        "mock_test_requistion_repository",
-        mock_test_requistion_repository(),
+        "mock_test_requisition_repository",
+        mock_test_requisition_repository(),
     );
     data.insert(
         "mock_test_requisition_line_repository",
-        mock_test_requistion_line_repository(),
+        mock_test_requisition_line_repository(),
     );
     data.insert(
-        "mock_test_requistion_service",
-        mock_test_requistion_service(),
+        "mock_test_requisition_service",
+        mock_test_requisition_service(),
     );
     data
 }

@@ -56,8 +56,8 @@ impl RequisitionLineNode {
         todo!()
     }
 
-    /// Snapshot of item statistics from request requistion
-    /// For request requsition it's the same as stats
+    /// Snapshot of item statistics from request requisition
+    /// For request requisition it's the same as stats
     pub async fn request_stats(&self) -> Result<ItemStats> {
         todo!()
     }

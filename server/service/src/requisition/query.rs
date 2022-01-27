@@ -65,7 +65,7 @@ mod test {
     use repository::{
         mock::{
             mock_request_draft_requisition, mock_request_draft_requisition2,
-            mock_requistion_for_number_test, MockDataInserts,
+            mock_requisition_for_number_test, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionFilter,
@@ -74,7 +74,7 @@ mod test {
     use crate::{i64_to_u32, service_provider::ServiceProvider};
 
     #[actix_rt::test]
-    async fn requistion_service_queries() {
+    async fn requisition_service_queries() {
         let (_, _, connection_manager, _) =
             setup_all("test_requisition_filter", MockDataInserts::all()).await;
 
@@ -121,16 +121,16 @@ mod test {
         let result = service
             .get_requisition_by_number(
                 &context,
-                &mock_requistion_for_number_test().store_id,
-                i64_to_u32(mock_requistion_for_number_test().requisition_number),
-                mock_requistion_for_number_test().r#type,
+                &mock_requisition_for_number_test().store_id,
+                i64_to_u32(mock_requisition_for_number_test().requisition_number),
+                mock_requisition_for_number_test().r#type,
             )
             .unwrap()
             .unwrap();
 
         assert_eq!(
             result.requisition_row.id,
-            mock_requistion_for_number_test().id
+            mock_requisition_for_number_test().id
         );
     }
 }

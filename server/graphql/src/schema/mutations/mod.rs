@@ -485,7 +485,7 @@ impl Mutations {
     /// Create shipment for response requisition
     /// Will create Outbound Shipment with placeholder lines for each requisition line
     /// placeholder line quantity will be set to requisitionLine.supply - all linked outbound shipments
-    /// lines quantity (placeholder and filled) for requistionLine.item
+    /// lines quantity (placeholder and filled) for requisitionLine.item
     async fn create_requisition_shipment(
         &self,
         ctx: &Context<'_>,
