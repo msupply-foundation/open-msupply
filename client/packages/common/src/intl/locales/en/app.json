@@ -47,5 +47,6 @@
   "cmdk.goto-items": "Go to: Items",
   "cmdk.goto-customers": "Go to: Customers",
   "cmdk.goto-suppliers": "Go to: Suppliers",
-  "cmdk.goto-reports": "Go to: Reports"
+  "cmdk.goto-reports": "Go to: Reports",
+  "cmdk.placeholder": "Type a command or search"
 }

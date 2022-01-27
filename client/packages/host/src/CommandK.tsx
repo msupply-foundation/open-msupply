@@ -244,7 +244,7 @@ export const CommandK: FC = ({ children }) => {
       <KBarPortal>
         <KBarPositioner style={{ zIndex: 1001 }}>
           <StyledKBarAnimator>
-            <CustomKBarSearch placeholder="Type a command or search" />
+            <CustomKBarSearch placeholder={t('cmdk.placeholder')} />
             <CustomKBarResults />
           </StyledKBarAnimator>
         </KBarPositioner>
