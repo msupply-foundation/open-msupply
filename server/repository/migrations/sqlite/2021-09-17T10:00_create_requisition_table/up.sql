@@ -1,15 +1,12 @@
 -- Create requisition table.
 
-CREATE TYPE requisition_type AS ENUM ('REQUEST', 'RESPONSE');
-CREATE TYPE requisition_status AS ENUM ('DRAFT', 'NEW', 'SENT', 'FINALISED');
-
 CREATE TABLE requisition (
     id TEXT NOT NULL PRIMARY KEY,
     requisition_number BIGINT NOT NULL,
     store_id TEXT NOT NULL REFERENCES name(id),
     name_id TEXT NOT NULL REFERENCES store(id),
-    type requisition_type NOT NULL,
-    status requisition_status NOT NULL,
+    type TEXT CHECK (type IN ('REQUEST', 'RESPONSE')) NOT NULL,
+    status TEXT CHECK (status IN ('DRAFT', 'NEW', 'SENT', 'FINALISED')) NOT NULL,
     created_datetime TIMESTAMP NOT NULL,
     sent_datetime TIMESTAMP,
     finalised_datetime TIMESTAMP,
