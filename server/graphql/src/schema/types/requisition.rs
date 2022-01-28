@@ -63,7 +63,7 @@ impl RequisitionNode {
         todo!()
     }
 
-    pub async fn color(&self) -> &Option<String> {
+    pub async fn colour(&self) -> &Option<String> {
         todo!()
     }
 

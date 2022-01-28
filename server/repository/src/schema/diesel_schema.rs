@@ -82,7 +82,7 @@ table! {
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
-        color -> Nullable<Text>,
+        colour -> Nullable<Text>,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
         max_months_of_stock -> Double,
@@ -144,7 +144,7 @@ table! {
         shipped_datetime -> Nullable<Timestamp>,
         delivered_datetime -> Nullable<Timestamp>,
         verified_datetime -> Nullable<Timestamp>,
-        color -> Nullable<Text>,
+        colour -> Nullable<Text>,
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
     }

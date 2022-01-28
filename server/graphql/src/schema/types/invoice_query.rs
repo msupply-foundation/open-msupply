@@ -210,8 +210,8 @@ impl InvoiceNode {
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
-    pub async fn color(&self) -> &Option<String> {
-        &self.invoice.color
+    pub async fn colour(&self) -> &Option<String> {
+        &self.invoice.colour
     }
 
     /// Response Requisition that is the origin of this Outbound Shipment

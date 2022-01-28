@@ -157,7 +157,7 @@ mod repository_test {
                 their_reference: Some("".to_string()),
                 // Note: keep nsecs small enough for Postgres which has limited precision.
                 created_datetime: NaiveDateTime::from_timestamp(1000, 0),
-                color: None,
+                colour: None,
                 requisition_id: None,
                 linked_invoice_id: None,
                 allocated_datetime: None,
@@ -181,7 +181,7 @@ mod repository_test {
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
                 created_datetime: NaiveDateTime::from_timestamp(2000, 0),
-                color: None,
+                colour: None,
                 requisition_id: None,
                 linked_invoice_id: None,
                 allocated_datetime: None,
@@ -980,7 +980,7 @@ mod repository_test {
 
         // Test query by name
         let result = repo
-            .query_by_filter(RequisitionFilter::new().name(EqualFilter::equal_to("name_a")))
+            .query_by_filter(RequisitionFilter::new().name(SimpleStringFilter::equal_to("name_a")))
             .unwrap();
 
         let raw_result = sql_query(
@@ -993,6 +993,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -1008,7 +1009,7 @@ mod repository_test {
             .query_by_filter(
                 RequisitionFilter::new()
                     .status(RequisitionRowStatus::Draft.equal_to())
-                    .comment(EqualFilter::equal_to("unique_comment")),
+                    .comment(SimpleStringFilter::like("iquE_coMme")),
             )
             .unwrap();
 
@@ -1018,6 +1019,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -1061,6 +1063,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() == 0); // Record was deleted
         assert_eq!(
             raw_result,
             result
@@ -1093,6 +1096,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result

@@ -94,7 +94,7 @@ mod graphql {
                 shipped_datetime: None,
                 delivered_datetime: None,
                 verified_datetime: None,
-                color: None,
+                colour: None,
                 r#type: InvoiceType::OutboundShipment,
             }))
         }));
