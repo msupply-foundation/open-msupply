@@ -6,7 +6,7 @@ use server::{
     configuration,
     middleware::{compress as compress_middleware, logger as logger_middleware},
     settings::Settings,
-    sync::{self, SyncConnection, SyncReceiverActor, SyncSenderActor, Synchroniser},
+    sync::{self, SyncReceiverActor, SyncSenderActor, Synchroniser},
 };
 
 use graphql::{
@@ -96,8 +96,7 @@ async fn main() -> std::io::Result<()> {
     }
     let running_sever = http_server.run();
 
-    let connection = SyncConnection::new(&settings.sync);
-    let mut synchroniser = Synchroniser { connection };
+    let mut synchroniser = Synchroniser::new(&settings.sync).unwrap();
 
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
