@@ -34,7 +34,7 @@ CREATE TABLE invoice (
     shipped_datetime TIMESTAMP,
     delivered_datetime TIMESTAMP,
     verified_datetime TIMESTAMP,
-    color TEXT,
+    colour TEXT,
     requisition_id TEXT REFERENCES requisition(id),
     linked_invoice_id TEXT,
     FOREIGN KEY (linked_invoice_id) REFERENCES invoice(id)    
