@@ -21,7 +21,7 @@ pub fn mock_requisition_for_number_test() -> RequisitionRow {
         created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
         sent_datetime: None,
         finalised_datetime: None,
-        color: None,
+        colour: None,
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
