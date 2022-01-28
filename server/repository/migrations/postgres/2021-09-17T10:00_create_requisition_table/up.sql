@@ -6,7 +6,8 @@ CREATE TYPE requisition_status AS ENUM ('DRAFT', 'NEW', 'SENT', 'FINALISED');
 CREATE TABLE requisition (
     id TEXT NOT NULL PRIMARY KEY,
     requisition_number BIGINT NOT NULL,
-    store_id TEXT NOT NULL REFERENCES name(id),
+    store_id TEXT NOT NULL REFERENCES store(id),
+    name_id TEXT NOT NULL REFERENCES name(id),
     name_id TEXT NOT NULL REFERENCES store(id),
     type requisition_type NOT NULL,
     status requisition_status NOT NULL,
