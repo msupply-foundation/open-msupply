@@ -410,7 +410,7 @@ impl Mutations {
         request_requisition::use_calculated_quantity(ctx, store_id, input)
     }
 
-    /// Add i
+    /// Add requistion lines from master item master list
     async fn add_from_master_list(
         &self,
         ctx: &Context<'_>,

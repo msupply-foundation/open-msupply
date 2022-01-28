@@ -39,7 +39,7 @@ pub struct RequisitionFilterInput {
     pub finalised_datetime: Option<DatetimeFilterInput>,
     pub other_party_name: Option<EqualFilterStringInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
-    pub color: Option<EqualFilterStringInput>,
+    pub colour: Option<EqualFilterStringInput>,
     pub their_reference: Option<EqualFilterStringInput>,
     pub comment: Option<EqualFilterStringInput>,
 }

@@ -7,7 +7,7 @@ use crate::schema::types::{NameNode, RequisitionNode};
 pub struct InsertInput {
     pub id: String,
     pub other_party_id: String,
-    pub color: Option<String>,
+    pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub max_months_of_stock: f64,

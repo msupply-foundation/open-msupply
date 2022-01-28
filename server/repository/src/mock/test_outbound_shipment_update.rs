@@ -54,7 +54,7 @@ fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
         comment: Some("Sort comment test cA".to_owned()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
-        color: None,
+        colour: None,
         requisition_id: None,
         linked_invoice_id: None,
         allocated_datetime: None,

@@ -157,7 +157,7 @@ mod repository_test {
                 their_reference: Some("".to_string()),
                 // Note: keep nsecs small enough for Postgres which has limited precision.
                 created_datetime: NaiveDateTime::from_timestamp(1000, 0),
-                color: None,
+                colour: None,
                 requisition_id: None,
                 linked_invoice_id: None,
                 allocated_datetime: None,
@@ -181,7 +181,7 @@ mod repository_test {
                 comment: Some("".to_string()),
                 their_reference: Some("".to_string()),
                 created_datetime: NaiveDateTime::from_timestamp(2000, 0),
-                color: None,
+                colour: None,
                 requisition_id: None,
                 linked_invoice_id: None,
                 allocated_datetime: None,
