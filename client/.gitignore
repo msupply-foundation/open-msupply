@@ -26,7 +26,6 @@ typings/
 **/stats.json
 
 # Android
-NDK
 android/app/src/main/jniLibs
 android/.idea
 /build/*
