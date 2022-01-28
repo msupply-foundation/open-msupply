@@ -35,7 +35,7 @@ pub struct Invoice {
     pub shipped_datetime: Option<NaiveDateTime>,
     pub delivered_datetime: Option<NaiveDateTime>,
     pub verified_datetime: Option<NaiveDateTime>,
-    pub color: Option<String>,
+    pub colour: Option<String>,
 }
 #[derive(Clone)]
 pub struct InvoiceFilter {

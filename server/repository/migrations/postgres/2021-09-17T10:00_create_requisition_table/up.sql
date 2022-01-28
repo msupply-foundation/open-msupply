@@ -13,7 +13,7 @@ CREATE TABLE requisition (
     created_datetime TIMESTAMP NOT NULL,
     sent_datetime TIMESTAMP,
     finalised_datetime TIMESTAMP,
-    color TEXT,
+    colour TEXT,
     comment TEXT,
     their_reference TEXT,
     max_months_of_stock  DOUBLE PRECISION NOT NULL,

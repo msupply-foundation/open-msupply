@@ -1,3 +1,4 @@
+use domain::SimpleStringFilter;
 use domain::{DatetimeFilter, EqualFilter, Sort};
 
 use crate::schema::{RequisitionRowStatus, RequisitionRowType};
@@ -18,10 +19,10 @@ pub struct RequisitionFilter {
     pub sent_datetime: Option<DatetimeFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
     pub name_id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
-    pub color: Option<EqualFilter<String>>,
-    pub their_reference: Option<EqualFilter<String>>,
-    pub comment: Option<EqualFilter<String>>,
+    pub name: Option<SimpleStringFilter>,
+    pub colour: Option<EqualFilter<String>>,
+    pub their_reference: Option<SimpleStringFilter>,
+    pub comment: Option<SimpleStringFilter>,
     pub store_id: Option<EqualFilter<String>>,
 }
 
@@ -49,7 +50,7 @@ impl RequisitionFilter {
             finalised_datetime: None,
             name_id: None,
             name: None,
-            color: None,
+            colour: None,
             their_reference: None,
             comment: None,
             store_id: None,
@@ -61,7 +62,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
         self.name = Some(filter);
         self
     }
@@ -71,7 +72,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn comment(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn comment(mut self, filter: SimpleStringFilter) -> Self {
         self.comment = Some(filter);
         self
     }

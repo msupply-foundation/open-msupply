@@ -1,5 +1,8 @@
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
+        apply_sort_no_case,
+    },
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
@@ -111,7 +114,7 @@ fn create_filtered_query(
         finalised_datetime,
         name_id,
         name,
-        color,
+        colour,
         their_reference,
         comment,
         store_id,
@@ -135,10 +138,10 @@ fn create_filtered_query(
         );
 
         apply_equal_filter!(query, name_id, requisition_dsl::name_id);
-        apply_equal_filter!(query, name, name_dsl::name_);
-        apply_equal_filter!(query, color, requisition_dsl::color);
-        apply_equal_filter!(query, their_reference, requisition_dsl::their_reference);
-        apply_equal_filter!(query, comment, requisition_dsl::comment);
+        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_equal_filter!(query, colour, requisition_dsl::colour);
+        apply_simple_string_filter!(query, their_reference, requisition_dsl::their_reference);
+        apply_simple_string_filter!(query, comment, requisition_dsl::comment);
 
         apply_equal_filter!(query, store_id, requisition_dsl::store_id);
     }

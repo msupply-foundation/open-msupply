@@ -82,7 +82,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: Some("some comment_option".to_string()),
             their_reference_option: Some("some reference".to_string()),
-            color_option: Some("#FFFFFF".to_owned()),
+            colour_option: Some("#FFFFFF".to_owned()),
         };
 
         // Test ForeingKeyError
@@ -206,7 +206,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: None,
             their_reference_option: None,
-            color_option: None,
+            colour_option: None,
         };
 
         let query = Insert::build_query(variables.clone());
@@ -228,7 +228,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: None,
             their_reference_option: None,
-            color_option: None,
+            colour_option: None,
         };
 
         let query = Insert::build_query(variables.clone());
@@ -249,7 +249,7 @@ mod graphql {
                 on_hold_option,
                 comment_option,
                 their_reference_option,
-                color_option,
+                colour_option,
             } = other;
 
             *id == self.id
@@ -257,7 +257,7 @@ mod graphql {
                 && compare_option(on_hold_option, &self.on_hold)
                 && *comment_option == self.comment
                 && *their_reference_option == self.their_reference
-                && *color_option == self.color
+                && *colour_option == self.colour
         }
     }
 }
