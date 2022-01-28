@@ -114,7 +114,7 @@ git clone git@github.com:openmsupply/remote-server.git
 ```
 
 ```
-npm run android:build-remote_server
+yarn android:build-remote_server
 ```
 
 #### Unsolved issue that will hopefully be fixed at some point:
