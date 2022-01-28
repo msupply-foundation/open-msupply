@@ -1,5 +1,6 @@
 mod central_sync_buffer;
 mod central_sync_cursor;
+mod changelog;
 mod invoice;
 mod invoice_line;
 mod invoice_stats;
@@ -41,6 +42,7 @@ pub enum DatabaseRow {
 
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use central_sync_cursor::CentralSyncCursorRow;
+pub use changelog::*;
 pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 pub use invoice_line::{InvoiceLineRow, InvoiceLineRowType};
 pub use invoice_stats::InvoiceStatsRow;
