@@ -1,6 +1,10 @@
-use crate::sync::{
-    translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
-    CentralSyncBatch, RemoteSyncBatch, RemoteSyncRecord, SyncConnection, SyncConnectionError,
+use crate::{
+    settings::SyncSettings,
+    sync::{
+        sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
+        translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
+        SyncApiV5, SyncConnectionError,
+    },
 };
 use repository::{
     schema::CentralSyncBufferRow, CentralSyncBufferRepository, CentralSyncCursorRepository,
@@ -8,7 +12,10 @@ use repository::{
 };
 
 use log::info;
+use reqwest::{Client, Url};
 use thiserror::Error;
+
+use super::{sync_api_v5::RemoteSyncRecordV5, SyncCredentials};
 
 #[derive(Error, Debug)]
 pub enum CentralSyncError {
@@ -50,11 +57,20 @@ pub enum SyncError {
 }
 
 pub struct Synchroniser {
-    pub connection: SyncConnection,
+    sync_api_v5: SyncApiV5,
 }
 
 #[allow(unused_assignments)]
 impl Synchroniser {
+    pub fn new(settings: &SyncSettings) -> anyhow::Result<Self> {
+        let client = Client::new();
+        let url = Url::parse(&settings.url)?;
+        let credentials = SyncCredentials::new(&settings.username, &settings.password);
+        Ok(Synchroniser {
+            sync_api_v5: SyncApiV5::new(url, credentials, client),
+        })
+    }
+
     pub async fn pull_central_records(
         &mut self,
         connection_manager: &StorageConnectionManager,
@@ -78,13 +94,29 @@ impl Synchroniser {
 
         Ok(loop {
             info!("Pulling {} central sync records...", BATCH_SIZE);
-            let sync_batch: CentralSyncBatch = self
-                .connection
-                .pull_central_records(cursor, BATCH_SIZE)
+            let sync_batch: CentralSyncBatchV5 = self
+                .sync_api_v5
+                .get_central_records(cursor, BATCH_SIZE)
                 .await
                 .map_err(|source| CentralSyncError::PullCentralSyncRecordsError { source })?;
 
-            let central_sync_records = sync_batch.data.map_or(vec![], |records| records);
+            let central_sync_records: Result<Vec<CentralSyncBufferRow>, serde_json::Error> =
+                sync_batch
+                    .data
+                    .unwrap_or(vec![])
+                    .into_iter()
+                    .map(|record| {
+                        Ok(CentralSyncBufferRow {
+                            id: record.id,
+                            table_name: record.table_name,
+                            record_id: record.record_id,
+                            data: serde_json::to_string(&record.data)?,
+                        })
+                    })
+                    .collect();
+            let central_sync_records = central_sync_records.map_err(|err| {
+                CentralSyncError::PullCentralSyncRecordsError { source: err.into() }
+            })?;
 
             if central_sync_records.len() == 0 {
                 info!("Central sync buffer is up-to-date");
@@ -119,25 +151,27 @@ impl Synchroniser {
     }
 
     // Hacky method for pulling from sync_queue.
-    pub async fn pull_remote_records(&mut self) -> Result<Vec<RemoteSyncRecord>, RemoteSyncError> {
+    pub async fn pull_remote_records(
+        &mut self,
+    ) -> Result<Vec<RemoteSyncRecordV5>, RemoteSyncError> {
         // TODO: only initialize on initial sync.
         info!("Initialising remote sync records...");
-        let mut sync_batch: RemoteSyncBatch = self
-            .connection
-            .initialise_remote_records()
-            .await
-            .map_err(|source| RemoteSyncError {
-                msg: "Failed to initialise remote sync records",
-                source: anyhow::Error::from(source),
-            })?;
+        let mut sync_batch: RemoteSyncBatchV5 =
+            self.sync_api_v5
+                .post_initialise()
+                .await
+                .map_err(|source| RemoteSyncError {
+                    msg: "Failed to initialise remote sync records",
+                    source: anyhow::Error::from(source),
+                })?;
         info!("Initialised remote sync recordse");
 
-        let mut records: Vec<RemoteSyncRecord> = Vec::new();
+        let mut records: Vec<RemoteSyncRecordV5> = Vec::new();
         while sync_batch.queue_length > 0 {
             info!("Pulling {} remote sync records...", sync_batch.queue_length);
             sync_batch = self
-                .connection
-                .pull_remote_records()
+                .sync_api_v5
+                .get_queued_records()
                 .await
                 .map_err(|source| RemoteSyncError {
                     msg: "Failed to pull remote sync records",
@@ -149,8 +183,8 @@ impl Synchroniser {
             if let Some(data) = sync_batch.data {
                 records.append(&mut data.clone());
                 info!("Acknowledging remote sync records...");
-                self.connection
-                    .acknowledge_remote_records(&records)
+                self.sync_api_v5
+                    .post_acknowledge_records(&records)
                     .await
                     .map_err(|source| RemoteSyncError {
                         msg: "Failed to acknowledge remote sync records",
@@ -256,7 +290,7 @@ mod tests {
                 master_list_name_join::get_test_master_list_name_join_records,
                 name::get_test_name_records, store::get_test_store_records,
             },
-            SyncConnection, Synchroniser,
+            Synchroniser,
         },
         test_utils::get_test_settings,
     };
@@ -268,7 +302,6 @@ mod tests {
     #[actix_rt::test]
     async fn test_integrate_central_records() {
         let settings = get_test_settings("omsupply-database-integrate_central_records");
-        let sync_connection = SyncConnection::new(&settings.sync);
 
         test_db::setup(&settings.database).await;
         let connection_manager = get_storage_connection_manager(&settings.database);
@@ -290,10 +323,7 @@ mod tests {
             .insert_many(&central_records)
             .expect("Failed to insert central sync records into sync buffer");
 
-        let synchroniser = Synchroniser {
-            connection: sync_connection,
-        };
-
+        let synchroniser = Synchroniser::new(&settings.sync).unwrap();
         synchroniser
             .integrate_central_records(&connection_manager)
             .await
