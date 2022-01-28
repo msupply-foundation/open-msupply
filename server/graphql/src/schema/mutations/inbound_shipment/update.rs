@@ -23,7 +23,7 @@ pub struct UpdateInboundShipmentInput {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
-    pub color: Option<String>,
+    pub colour: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -94,7 +94,7 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             on_hold,
             comment,
             their_reference,
-            color,
+            colour,
         }: UpdateInboundShipmentInput,
     ) -> Self {
         UpdateInboundShipment {
@@ -104,7 +104,7 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             on_hold,
             comment,
             their_reference,
-            color,
+            colour,
         }
     }
 }

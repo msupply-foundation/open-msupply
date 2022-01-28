@@ -179,7 +179,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         shipped_datetime: invoice_row.shipped_datetime,
         delivered_datetime: invoice_row.delivered_datetime,
         verified_datetime: invoice_row.verified_datetime,
-        color: invoice_row.color,
+        colour: invoice_row.colour,
     }
 }
 
