@@ -30,7 +30,7 @@ pub struct RequisitionRow {
     pub created_datetime: NaiveDateTime,
     pub sent_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
-    pub color: Option<String>,
+    pub colour: Option<String>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub max_months_of_stock: f64,

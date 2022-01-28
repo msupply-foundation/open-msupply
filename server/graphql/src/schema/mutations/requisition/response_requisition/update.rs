@@ -8,7 +8,7 @@ use crate::schema::{
 #[graphql(name = "UpdateResponseRequisitionInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub color: Option<String>,
+    pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub status: Option<UpdateResponseRequisitionStatusInput>,
