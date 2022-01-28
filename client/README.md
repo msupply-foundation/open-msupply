@@ -113,23 +113,15 @@ cd ..
 git clone git@github.com:openmsupply/remote-server.git
 ```
 
-Unsolved issue that will hopefully be fixed at some point:
-
-1. in `../remote-server/Cargo.toml` add the "vendored" feature to openssl by changing the line:
-
-   `openssl = { version = "0.10", features = ["v110"] }`
-
-   to:
-
-   `openssl = { version = "0.10", features = ["v110", "vendored"] }`
-
-2. The x86 target seem to be broken and crashes when loading the server lib
-
 To build the remote server lib and copy it to the Android project run:
 
 ```
 npm run android:build-remote_server
 ```
+
+#### Unsolved issue that will hopefully be fixed at some point:
+
+1. The x86 target seem to be broken and crashes when loading the server lib
 
 ### Run the Android app
 
