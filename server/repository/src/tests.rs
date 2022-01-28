@@ -980,13 +980,14 @@ mod repository_test {
 
         // Test query by name
         let result = repo
-            .query_by_filter(RequisitionFilter::new().name(EqualFilter::equal_to("name_a")))
+            .query_by_filter(RequisitionFilter::new().name(SimpleStringFilter::equal_to("name_a")))
             .unwrap();
 
         let raw_result = sql_query(r#"SELECT requisition.id from requisition join name on requisition.name_id = name.id where name.name = 'name_a'"#)
             .load::<Id>(&connection.connection)
             .unwrap();
 
+        assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -1002,7 +1003,7 @@ mod repository_test {
             .query_by_filter(
                 RequisitionFilter::new()
                     .status(RequisitionRowStatus::Draft.equal_to())
-                    .comment(EqualFilter::equal_to("unique_comment")),
+                    .comment(SimpleStringFilter::like("iquE_coMme")),
             )
             .unwrap();
 
@@ -1012,6 +1013,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -1055,6 +1057,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() == 0); // Record was deleted
         assert_eq!(
             raw_result,
             result
@@ -1087,6 +1090,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
+        assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result
