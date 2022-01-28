@@ -5,7 +5,6 @@ CREATE TABLE requisition (
     requisition_number BIGINT NOT NULL,
     store_id TEXT NOT NULL REFERENCES store(id),
     name_id TEXT NOT NULL REFERENCES name(id),
-    name_id TEXT NOT NULL REFERENCES store(id),
     type TEXT CHECK (type IN ('REQUEST', 'RESPONSE')) NOT NULL,
     status TEXT CHECK (status IN ('DRAFT', 'NEW', 'SENT', 'FINALISED')) NOT NULL,
     created_datetime TIMESTAMP NOT NULL,

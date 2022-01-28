@@ -8,7 +8,7 @@ mutation insertInboundShipmentFull(
   $on_hold_option: Boolean
   $comment_option: String
   $theirReference_option: String
-  $color_option: String
+  $colour_option: String
 ) {
   insertInboundShipment(
     input: {
@@ -17,7 +17,7 @@ mutation insertInboundShipmentFull(
       onHold: $on_hold_option
       theirReference: $theirReference_option
       comment: $comment_option
-      color: $color_option
+      colour: $colour_option
     }
   ) {
     ...InsertInboundShipmentResponse
@@ -54,7 +54,7 @@ mutation updateInboundShipmentFull(
   $on_hold_option: Boolean
   $comment_option: String
   $theirReference_option: String
-  $color_option: String
+  $colour_option: String
 ) {
   updateInboundShipment(
     input: {
@@ -64,7 +64,7 @@ mutation updateInboundShipmentFull(
       onHold: $on_hold_option
       theirReference: $theirReference_option
       comment: $comment_option
-      color: $color_option
+      colour: $colour_option
     }
   ) {
     ...UpdateInboundShipmentResponse
