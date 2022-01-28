@@ -121,7 +121,7 @@ fn create_filtered_query(
 
         apply_equal_filter!(query, f.name_id, requisition_dsl::name_id);
         apply_equal_filter!(query, f.name, name_dsl::name_);
-        apply_equal_filter!(query, f.color, requisition_dsl::color);
+        apply_equal_filter!(query, f.colour, requisition_dsl::colour);
         apply_equal_filter!(query, f.their_reference, requisition_dsl::their_reference);
         apply_equal_filter!(query, f.comment, requisition_dsl::comment);
     }
