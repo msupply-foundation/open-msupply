@@ -8,7 +8,6 @@ CREATE TABLE requisition (
     requisition_number BIGINT NOT NULL,
     store_id TEXT NOT NULL REFERENCES store(id),
     name_id TEXT NOT NULL REFERENCES name(id),
-    name_id TEXT NOT NULL REFERENCES store(id),
     type requisition_type NOT NULL,
     status requisition_status NOT NULL,
     created_datetime TIMESTAMP NOT NULL,
