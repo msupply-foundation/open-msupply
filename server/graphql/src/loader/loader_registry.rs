@@ -11,8 +11,9 @@ use async_graphql::dataloader::DataLoader;
 use super::{
     invoice::InvoiceByRequisitionIdLoader, name::NameByIdLoader, InvoiceLineForRequisitionLine,
     InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, LinkedRequisitionLineLoader,
-    LocationByIdLoader, MasterListLineByMasterListId, RequisitionsByIdLoader, StockLineByIdLoader,
-    StockLineByItemIdLoader, StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
+    LocationByIdLoader, MasterListLineByMasterListId, RequisitionLinesByRequisitionIdLoader,
+    RequisitionsByIdLoader, StockLineByIdLoader, StockLineByItemIdLoader,
+    StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -65,7 +66,7 @@ pub async fn get_loaders(
         connection_manager: connection_manager.clone(),
     });
 
-    let invoice_line_for_requistion_line = DataLoader::new(InvoiceLineForRequisitionLine {
+    let invoice_line_for_requisition_line = DataLoader::new(InvoiceLineForRequisitionLine {
         connection_manager: connection_manager.clone(),
     });
 
@@ -109,7 +110,12 @@ pub async fn get_loaders(
         service_provider: service_provider.clone(),
     });
 
-    let requisition_line_by_linked_requistion_line_id_loader =
+    let requisition_line_by_requisiton_id_loader =
+        DataLoader::new(RequisitionLinesByRequisitionIdLoader {
+            service_provider: service_provider.clone(),
+        });
+
+    let requisition_line_by_linked_requisition_line_id_loader =
         DataLoader::new(LinkedRequisitionLineLoader {
             service_provider: service_provider.clone(),
         });
@@ -123,7 +129,7 @@ pub async fn get_loaders(
     loaders.insert(invoice_line_loader);
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
-    loaders.insert(invoice_line_for_requistion_line);
+    loaders.insert(invoice_line_for_requisition_line);
     loaders.insert(stock_line_by_item_id_loader);
     loaders.insert(stock_line_by_location_id_loader);
     loaders.insert(stock_line_by_id_loader);
@@ -132,8 +138,8 @@ pub async fn get_loaders(
     loaders.insert(master_list_line_by_master_list_id);
     loaders.insert(stock_take_line_loader);
     loaders.insert(requisitions_by_id_loader);
-
-    loaders.insert(requisition_line_by_linked_requistion_line_id_loader);
+    loaders.insert(requisition_line_by_requisiton_id_loader);
+    loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
 
     loaders
 }

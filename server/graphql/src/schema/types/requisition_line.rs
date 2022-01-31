@@ -77,13 +77,13 @@ impl RequisitionLineNode {
     ) -> Result<Connector<InvoiceLineNode>> {
         // Outbound shipments link to response requisition, so for request requisition
         // use linked requisition id
-        let requistion_row = &self.requisition_line.requisition_row;
-        let requisition_id = match requistion_row.r#type {
-            RequisitionRowType::Request => match &requistion_row.linked_requisition_id {
+        let requisition_row = &self.requisition_line.requisition_row;
+        let requisition_id = match requisition_row.r#type {
+            RequisitionRowType::Request => match &requisition_row.linked_requisition_id {
                 Some(linked_requisition_id) => linked_requisition_id,
                 None => return Ok(Connector::empty()),
             },
-            _ => &self.id,
+            _ => &self.requisition_id,
         };
 
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
@@ -106,13 +106,13 @@ impl RequisitionLineNode {
     ) -> Result<Connector<InvoiceLineNode>> {
         // Outbound shipments links to request requisition, so for response requisition
         // use linked requisition id
-        let requistion_row = &self.requisition_line.requisition_row;
-        let requisition_id = match requistion_row.r#type {
-            RequisitionRowType::Response => match &requistion_row.linked_requisition_id {
+        let requisition_row = &self.requisition_line.requisition_row;
+        let requisition_id = match requisition_row.r#type {
+            RequisitionRowType::Response => match &requisition_row.linked_requisition_id {
                 Some(linked_requisition_id) => linked_requisition_id,
                 None => return Ok(Connector::empty()),
             },
-            _ => &self.id,
+            _ => &self.requisition_id,
         };
 
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
@@ -129,14 +129,14 @@ impl RequisitionLineNode {
     }
 
     /// Snapshot Stats (when requisition was created)
-    pub async fn average_monthly_consumption(&self) -> ItemStats {
+    pub async fn item_stats(&self) -> ItemStats {
         ItemStats {
             average_monthly_consumption: *&self.average_monthly_consumption,
             stock_on_hand: *&self.stock_on_hand,
         }
     }
 
-    pub async fn linked_requisition_line_id(
+    pub async fn linked_requisition_line(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<RequisitionLineNode>> {
