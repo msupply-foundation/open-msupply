@@ -1,5 +1,6 @@
 use std::{collections::HashMap, ops::Index};
 
+mod common;
 mod full_invoice;
 mod full_master_list;
 mod invoice;
@@ -17,6 +18,7 @@ mod test_invoice_count_service;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_requisition_line_repository;
+mod test_requisition_queries;
 mod test_requisition_repository;
 mod test_requisition_service;
 mod test_stock_take;
@@ -25,13 +27,14 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+use common::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
 pub use location::*;
-pub use name::{mock_name_store_a, mock_name_store_b, mock_names};
+pub use name::*;
 pub use name_store_join::mock_name_store_joins;
 pub use number::*;
 pub use stock_line::*;
@@ -42,6 +45,7 @@ pub use test_invoice_count_service::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_requisition_line_repository::*;
+pub use test_requisition_queries::*;
 pub use test_requisition_repository::*;
 pub use test_requisition_service::*;
 pub use test_stock_take::*;
@@ -55,10 +59,7 @@ use crate::{
     StockTakeLineRowRepository, StockTakeRowRepository,
 };
 
-use self::{
-    full_invoice::{insert_full_mock_invoice, FullMockInvoice},
-    unit::mock_units,
-};
+use self::unit::mock_units;
 
 use super::{
     db_diesel::{
@@ -76,6 +77,7 @@ pub struct MockData {
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
+    pub full_requisitions: Vec<FullMockRequisition>,
     pub invoices: Vec<InvoiceRow>,
     pub stock_lines: Vec<StockLineRow>,
     pub invoice_lines: Vec<InvoiceLineRow>,
@@ -95,6 +97,7 @@ pub struct MockDataInserts {
     pub items: bool,
     pub locations: bool,
     pub name_store_joins: bool,
+    pub full_requisitions: bool,
     pub invoices: bool,
     pub stock_lines: bool,
     pub invoice_lines: bool,
@@ -116,6 +119,7 @@ impl MockDataInserts {
             items: true,
             locations: true,
             name_store_joins: true,
+            full_requisitions: true,
             invoices: true,
             stock_lines: true,
             invoice_lines: true,
@@ -137,6 +141,7 @@ impl MockDataInserts {
             items: false,
             locations: false,
             name_store_joins: false,
+            full_requisitions: false,
             invoices: false,
             stock_lines: false,
             invoice_lines: false,
@@ -257,6 +262,7 @@ fn all_mock_data() -> MockDataCollection {
             items: mock_items(),
             locations: mock_locations(),
             name_store_joins: mock_name_store_joins(),
+            full_requisitions: vec![],
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
             invoice_lines: mock_invoice_lines(),
@@ -292,6 +298,10 @@ fn all_mock_data() -> MockDataCollection {
     data.insert(
         "mock_test_requisition_service",
         mock_test_requisition_service(),
+    );
+    data.insert(
+        "mock_test_requisition_queries",
+        mock_test_requisition_queries(),
     );
     data
 }
@@ -341,6 +351,12 @@ pub async fn insert_mock_data(
             let repo = NameStoreJoinRepository::new(connection);
             for row in &mock_data.name_store_joins {
                 repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.full_requisitions {
+            for row in mock_data.full_requisitions.iter() {
+                insert_full_mock_requisition(&row, connection)
             }
         }
 
