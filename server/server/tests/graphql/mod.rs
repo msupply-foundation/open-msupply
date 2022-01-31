@@ -37,6 +37,7 @@ mod outbound_shipment_line_insert;
 mod outbound_shipment_line_update;
 mod outbound_shipment_update;
 mod pagination;
+mod requisition;
 mod stock_take_delete;
 mod stock_take_insert;
 mod stock_take_line_delete;
