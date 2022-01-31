@@ -77,7 +77,7 @@ impl EqualFilter<String> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
@@ -90,6 +90,30 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(from),
             before_or_equal_to: Some(to),
+        }
+    }
+
+    pub fn equal_to(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: Some(value.to_owned()),
+            after_or_equal_to: None,
+            before_or_equal_to: None,
+        }
+    }
+
+    pub fn after_or_equal_to(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: Some(value.to_owned()),
+            before_or_equal_to: None,
+        }
+    }
+
+    pub fn before_or_equal_to(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: None,
+            before_or_equal_to: Some(value),
         }
     }
 }

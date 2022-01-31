@@ -48,6 +48,8 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::InsertStockTake, default());
     map.insert(Resource::UpdateStockTake, default());
     map.insert(Resource::DeleteStockTake, default());
+    // requisition
+    map.insert(Resource::QueryRequisition, default());
     // stock take line
     map.insert(Resource::InsertStockTakeLine, default());
     map.insert(Resource::UpdateStockTakeLine, default());

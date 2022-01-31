@@ -30,7 +30,7 @@ pub use stock_take_lines::StockTakeLineByStockTakeIdLoader;
 pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
-#[derive(Hash, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct RequisitionAndItemId {
     pub requisition_id: String,
     pub item_id: String,
