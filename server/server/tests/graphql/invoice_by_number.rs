@@ -96,6 +96,7 @@ mod graphql {
                 verified_datetime: None,
                 colour: None,
                 r#type: InvoiceType::OutboundShipment,
+                requisition_id: None,
             }))
         }));
 

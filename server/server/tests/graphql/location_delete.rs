@@ -169,6 +169,7 @@ mod graphql {
                     batch: None,
                     expiry_date: None,
                     note: None,
+                    requisition_id: None,
                 }],
             }))
         }));
