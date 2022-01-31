@@ -99,10 +99,8 @@ table! {
         requested_quantity -> Integer,
         calculated_quantity -> Integer,
         supply_quantity -> Integer,
-        request_stock_on_hand -> Integer ,
-        request_average_monthly_consumption -> Integer,
-        response_stock_on_hand -> Integer,
-        response_average_monthly_consumption -> Integer,
+        stock_on_hand -> Integer ,
+        average_monthly_consumption -> Integer,
     }
 }
 
