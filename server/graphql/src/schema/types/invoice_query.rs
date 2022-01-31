@@ -71,6 +71,7 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
             shipped_datetime: f.shipped_datetime.map(DatetimeFilter::from),
             delivered_datetime: f.delivered_datetime.map(DatetimeFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
+            requisition_id: None,
         }
     }
 }
