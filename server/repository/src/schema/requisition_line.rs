@@ -9,8 +9,6 @@ pub struct RequisitionLineRow {
     pub requested_quantity: i32,
     pub calculated_quantity: i32,
     pub supply_quantity: i32,
-    pub request_stock_on_hand: i32,
-    pub request_average_monthly_consumption: i32,
-    pub response_stock_on_hand: i32,
-    pub response_average_monthly_consumption: i32,
+    pub stock_on_hand: i32,
+    pub average_monthly_consumption: i32,
 }

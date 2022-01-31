@@ -21,10 +21,8 @@ pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
         requested_quantity: 10,
         calculated_quantity: 3,
         supply_quantity: 0,
-        request_stock_on_hand: 1,
-        request_average_monthly_consumption: 10,
-        response_stock_on_hand: 1000,
-        response_average_monthly_consumption: 100000,
+        stock_on_hand: 1,
+        average_monthly_consumption: 10,
     }
 }
 
@@ -36,9 +34,7 @@ pub fn mock_draft_request_requisition_line2() -> RequisitionLineRow {
         requested_quantity: 10,
         calculated_quantity: 3,
         supply_quantity: 0,
-        request_stock_on_hand: 1,
-        request_average_monthly_consumption: 10,
-        response_stock_on_hand: 1000,
-        response_average_monthly_consumption: 100000,
+        stock_on_hand: 1,
+        average_monthly_consumption: 10,
     }
 }
