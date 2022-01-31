@@ -3,10 +3,11 @@ use crate::{
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
-            invoice_line, invoice_line::dsl as invoice_line_dsl,
-            invoice_stats::dsl as invoice_stats_dsl, location, location::dsl as location_dsl,
+            invoice, invoice::dsl as invoice_dsl, invoice_line,
+            invoice_line::dsl as invoice_line_dsl, invoice_stats::dsl as invoice_stats_dsl,
+            location, location::dsl as location_dsl,
         },
-        InvoiceLineRow, InvoiceLineRowType, InvoiceStatsRow, LocationRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceStatsRow, LocationRow,
     },
 };
 use domain::{
@@ -20,6 +21,7 @@ pub struct InvoiceLineFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
     pub location_id: Option<EqualFilter<String>>,
+    pub requisition_id: Option<EqualFilter<String>>,
 }
 
 impl InvoiceLineFilter {
@@ -30,6 +32,7 @@ impl InvoiceLineFilter {
             r#type: None,
             item_id: None,
             location_id: None,
+            requisition_id: None,
         }
     }
 
@@ -57,16 +60,21 @@ impl InvoiceLineFilter {
         self.location_id = Some(filter);
         self
     }
+
+    pub fn requisition_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.requisition_id = Some(filter);
+        self
+    }
 }
 
 use super::{DBType, StorageConnection};
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
-type InvoiceLineJoin = (InvoiceLineRow, Option<LocationRow>);
+type InvoiceLineJoin = (InvoiceLineRow, InvoiceRow, Option<LocationRow>);
 
 pub struct InvoiceLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -117,16 +125,21 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 }
 
-type BoxedInvoiceLineQuery =
-    IntoBoxed<'static, LeftJoin<invoice_line::table, location::table>, DBType>;
+type BoxedInvoiceLineQuery = IntoBoxed<
+    'static,
+    LeftJoin<InnerJoin<invoice_line::table, invoice::table>, location::table>,
+    DBType,
+>;
 
 fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
     let mut query = invoice_line_dsl::invoice_line
+        .inner_join(invoice_dsl::invoice)
         .left_join(location_dsl::location)
         .into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, invoice_line_dsl::id);
+        apply_equal_filter!(query, f.requisition_id, invoice_dsl::requisition_id);
         apply_equal_filter!(query, f.invoice_id, invoice_line_dsl::invoice_id);
         apply_equal_filter!(query, f.location_id, invoice_line_dsl::location_id);
         apply_equal_filter!(query, f.item_id, invoice_line_dsl::item_id);
@@ -136,7 +149,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     query
 }
 
-fn to_domain((invoice_line, location_row_option): InvoiceLineJoin) -> InvoiceLine {
+fn to_domain((invoice_line, invoice_row, location_row_option): InvoiceLineJoin) -> InvoiceLine {
     InvoiceLine {
         id: invoice_line.id,
         stock_line_id: invoice_line.stock_line_id,
@@ -154,5 +167,6 @@ fn to_domain((invoice_line, location_row_option): InvoiceLineJoin) -> InvoiceLin
         expiry_date: invoice_line.expiry_date,
         note: invoice_line.note,
         location_name: location_row_option.map(|location_row| location_row.name),
+        requisition_id: invoice_row.requisition_id,
     }
 }

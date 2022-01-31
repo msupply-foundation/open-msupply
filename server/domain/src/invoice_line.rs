@@ -26,6 +26,7 @@ pub struct InvoiceLine {
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub note: Option<String>,
+    pub requisition_id: Option<String>,
 }
 
 pub type InvoiceLineSort = Sort<()>;
