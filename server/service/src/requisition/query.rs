@@ -1,7 +1,7 @@
 use domain::{EqualFilter, PaginationOption};
 use repository::{
-    schema::RequisitionRowType, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionSort,
+    schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter,
+    RequisitionRepository, RequisitionSort,
 };
 
 use crate::{
@@ -13,7 +13,7 @@ pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_requisitions(
     ctx: &ServiceContext,
-    store_id: &str,
+    store_id_option: Option<&str>,
     pagination: Option<PaginationOption>,
     filter: Option<RequisitionFilter>,
     sort: Option<RequisitionSort>,
@@ -21,24 +21,24 @@ pub fn get_requisitions(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = RequisitionRepository::new(&ctx.connection);
 
-    let filter = filter.map(|filter| filter.store_id(EqualFilter::equal_to(store_id)));
+    let mut filter = filter.unwrap_or(RequisitionFilter::new());
+    filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
     Ok(ListResult {
-        rows: repository.query(pagination, filter.clone(), sort)?,
-        count: i64_to_u32(repository.count(filter)?),
+        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        count: i64_to_u32(repository.count(Some(filter))?),
     })
 }
 
 pub fn get_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
+    store_id_option: Option<&str>,
     id: &str,
-) -> Result<Option<Requisition>, ListError> {
-    let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(
-        RequisitionFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
-            .id(EqualFilter::equal_to(id)),
-    )?;
+) -> Result<Option<Requisition>, RepositoryError> {
+    let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id));
+    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+
+    let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(filter)?;
 
     Ok(result.pop())
 }
@@ -48,7 +48,7 @@ pub fn get_requisition_by_number(
     store_id: &str,
     requisition_number: u32,
     r#type: RequisitionRowType,
-) -> Result<Option<Requisition>, ListError> {
+) -> Result<Option<Requisition>, RepositoryError> {
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(
         RequisitionFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
@@ -86,7 +86,7 @@ mod test {
         let result = service
             .get_requisitions(
                 &context,
-                &mock_request_draft_requisition().store_id,
+                Some(&mock_request_draft_requisition().store_id),
                 None,
                 Some(
                     RequisitionFilter::new()
@@ -106,7 +106,7 @@ mod test {
         let result = service
             .get_requisition(
                 &context,
-                &mock_request_draft_requisition2().store_id,
+                Some(&mock_request_draft_requisition2().store_id),
                 &mock_request_draft_requisition2().id,
             )
             .unwrap()
