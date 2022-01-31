@@ -24,6 +24,8 @@ pub enum Resource {
     InsertStockTake,
     UpdateStockTake,
     DeleteStockTake,
+    // requisition
+    QueryRequisition,
     // stock take line
     InsertStockTakeLine,
     UpdateStockTakeLine,
