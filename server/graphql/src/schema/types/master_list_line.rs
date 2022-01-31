@@ -54,7 +54,7 @@ impl MasterListLineNode {
             .await?;
         let item = item_option.ok_or(
             StandardGraphqlError::InternalError(format!(
-                "Cannot find item_id {} for invoice_line_id {}",
+                "Cannot find item_id {} for master_list_line_id {}",
                 self.master_list_line.item_id, self.master_list_line.id
             ))
             .extend(),
