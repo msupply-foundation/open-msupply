@@ -180,6 +180,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         delivered_datetime: invoice_row.delivered_datetime,
         verified_datetime: invoice_row.verified_datetime,
         colour: invoice_row.colour,
+        requisition_id: invoice_row.requisition_id,
     }
 }
 
@@ -198,6 +199,7 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
         apply_equal_filter!(query, f.name_id, invoice_dsl::name_id);
         apply_equal_filter!(query, f.store_id, invoice_dsl::store_id);
         apply_equal_filter!(query, f.their_reference, invoice_dsl::their_reference);
+        apply_equal_filter!(query, f.requisition_id, invoice_dsl::requisition_id);
         apply_simple_string_filter!(query, f.comment, invoice_dsl::comment);
 
         if let Some(value) = f.r#type {
