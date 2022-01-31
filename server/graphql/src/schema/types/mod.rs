@@ -68,6 +68,15 @@ pub struct Connector<T: OutputType> {
     nodes: Vec<T>,
 }
 
+impl<T: OutputType> Connector<T> {
+    pub fn empty() -> Connector<T> {
+        Connector {
+            total_count: 0,
+            nodes: vec![],
+        }
+    }
+}
+
 /// Convert from ListResult (service return) to Generic Connector
 impl<DomainType, GQLType> From<ListResult<DomainType>> for Connector<GQLType>
 where
