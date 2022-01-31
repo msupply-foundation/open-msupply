@@ -22,5 +22,6 @@ pub fn successfull_invoice_line() -> InvoiceLine {
         stock_line_id: None,
         location_id: None,
         location_name: None,
+        requisition_id: None,
     }
 }
