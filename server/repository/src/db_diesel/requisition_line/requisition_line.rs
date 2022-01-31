@@ -2,20 +2,29 @@ use crate::{
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::{requisition_line, requisition_line::dsl as requisition_line_dsl},
-        ItemRow, RequisitionLineRow,
+        diesel_schema::{
+            requisition, requisition::dsl as requisition_dsl, requisition_line,
+            requisition_line::dsl as requisition_line_dsl,
+        },
+        RequisitionLineRow, RequisitionRow,
     },
     DBType, StorageConnection,
 };
 
-use diesel::prelude::*;
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
 use domain::Pagination;
 
 use super::RequisitionLineFilter;
 
-pub type RequisitionLineJoin = (RequisitionLineRow, ItemRow);
+pub type RequisitionLineJoin = (RequisitionLineRow, RequisitionRow);
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct RequisitionLine {
     pub requisition_line_row: RequisitionLineRow,
+    pub requisition_row: RequisitionRow,
 }
 
 pub struct RequisitionLineRepository<'a> {
@@ -51,23 +60,27 @@ impl<'a> RequisitionLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<RequisitionLineRow>(&self.connection.connection)?;
+            .load::<RequisitionLineJoin>(&self.connection.connection)?;
 
         Ok(result
             .into_iter()
-            .map(|requisition_line_row| RequisitionLine {
+            .map(|(requisition_line_row, requisition_row)| RequisitionLine {
                 requisition_line_row,
+                requisition_row,
             })
             .collect())
     }
 }
 
-type BoxedRequisitionLineQuery = requisition_line::BoxedQuery<'static, DBType>;
+type BoxedRequisitionLineQuery =
+    IntoBoxed<'static, InnerJoin<requisition_line::table, requisition::table>, DBType>;
 
 fn create_filtered_query(
     filter: Option<RequisitionLineFilter>,
 ) -> Result<BoxedRequisitionLineQuery, RepositoryError> {
-    let mut query = requisition_line_dsl::requisition_line.into_boxed();
+    let mut query = requisition_line_dsl::requisition_line
+        .inner_join(requisition_dsl::requisition)
+        .into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, requisition_line_dsl::id);
@@ -81,6 +94,7 @@ fn create_filtered_query(
             f.requested_quantity,
             requisition_line_dsl::requested_quantity
         );
+        apply_equal_filter!(query, f.item_id, requisition_line_dsl::item_id);
     }
 
     Ok(query)
