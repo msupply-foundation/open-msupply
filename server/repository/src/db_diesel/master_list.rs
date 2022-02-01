@@ -5,6 +5,7 @@ use crate::{
         diesel_schema::{
             master_list, master_list::dsl as master_list_dsl,
             master_list_name_join::dsl as master_list_name_join_dsl, name::dsl as name_dsl,
+            store::dsl as store_dsl,
         },
         MasterListRow,
     },
@@ -94,14 +95,18 @@ fn create_filtered_query(
         // Result master list should be unique, which would need extra logic if we were to join
         // name table through master_list_name_join, thus query seperatly and use resulting
         // master_list_ids in 'any' filter
-        if f.exists_for_name.is_some() || f.exists_for_name_id.is_some() {
+        if f.exists_for_name.is_some()
+            || f.exists_for_name_id.is_some()
+            || f.exists_for_store_id.is_some()
+        {
             let mut name_join_query = master_list_name_join_dsl::master_list_name_join
                 .select(master_list_name_join_dsl::master_list_id)
-                .left_join(name_dsl::name)
+                .left_join(name_dsl::name.left_join(store_dsl::store))
                 .into_boxed();
 
             apply_simple_string_filter!(name_join_query, f.exists_for_name, name_dsl::name_);
             apply_equal_filter!(name_join_query, f.exists_for_name_id, name_dsl::id);
+            apply_equal_filter!(name_join_query, f.exists_for_store_id, store_dsl::id);
 
             let master_list_ids = name_join_query.load::<String>(&connection.connection)?;
 

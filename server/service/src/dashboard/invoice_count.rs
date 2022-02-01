@@ -1,7 +1,7 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
 use domain::{
     invoice::{InvoiceFilter, InvoiceStatus, InvoiceType},
-    DatetimeFilter, EqualFilter,
+    DatetimeFilter,
 };
 use repository::{InvoiceQueryRepository, RepositoryError};
 
@@ -97,11 +97,7 @@ fn invoices_count(
     if let Some(earliest) = earliest {
         datetime_filter.before_or_equal_to = Some(earliest);
     }
-    let mut invoice_filter = InvoiceFilter::new().r#type(EqualFilter {
-        equal_to: Some(invoice_type.clone()),
-        not_equal_to: None,
-        equal_any: None,
-    });
+    let mut invoice_filter = InvoiceFilter::new().r#type(invoice_type.equal_to());
     match invoice_status {
         InvoiceStatus::New => invoice_filter = invoice_filter.created_datetime(datetime_filter),
         InvoiceStatus::Allocated => {
@@ -154,16 +150,8 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let repo = InvoiceQueryRepository::new(&ctx.connection);
         Ok(repo.count(Some(
             InvoiceFilter::new()
-                .r#type(EqualFilter {
-                    equal_to: Some(InvoiceType::OutboundShipment),
-                    not_equal_to: None,
-                    equal_any: None,
-                })
-                .status(EqualFilter {
-                    equal_to: Some(InvoiceStatus::Picked),
-                    not_equal_to: None,
-                    equal_any: None,
-                }),
+                .r#type(InvoiceType::OutboundShipment.equal_to())
+                .status(InvoiceStatus::Picked.equal_to()),
         ))?)
     }
 }

@@ -25,11 +25,9 @@ impl Loader<String> for RequisitionLinesByRequisitionIdLoader {
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let service_context = self.service_provider.context()?;
 
-        let filter = RequisitionLineFilter::new().requisition_id(EqualFilter {
-            equal_any: Some(requisition_ids.iter().map(String::clone).collect()),
-            equal_to: None,
-            not_equal_to: None,
-        });
+        let filter = RequisitionLineFilter::new().requisition_id(EqualFilter::equal_any(
+            requisition_ids.iter().map(String::clone).collect(),
+        ));
 
         let requisition_lines = self
             .service_provider

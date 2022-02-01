@@ -107,6 +107,7 @@ impl<I: InputType> EqualFilterInput<I> {
             equal_any: self
                 .equal_any
                 .map(|inputs| inputs.into_iter().map(&to_domain).collect()),
+            not_equal_all: None,
         }
     }
 }
@@ -126,6 +127,7 @@ where
             equal_to,
             equal_any,
             not_equal_to,
+            not_equal_all: None,
         }
     }
 }
@@ -142,6 +144,7 @@ impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
             equal_to: equal_to.map(InvoiceType::from),
             equal_any: equal_any.map(|types| types.into_iter().map(InvoiceType::from).collect()),
             not_equal_to: not_equal_to.map(InvoiceType::from),
+            not_equal_all: None,
         }
     }
 }
@@ -158,6 +161,7 @@ impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
             equal_to: equal_to.map(InvoiceStatus::from),
             equal_any: equal_any.map(|types| types.into_iter().map(InvoiceStatus::from).collect()),
             not_equal_to: not_equal_to.map(InvoiceStatus::from),
+            not_equal_all: None,
         }
     }
 }

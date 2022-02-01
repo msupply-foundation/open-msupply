@@ -156,6 +156,7 @@ impl InvoiceStatus {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -164,6 +165,7 @@ impl InvoiceStatus {
             equal_to: None,
             not_equal_to: Some(self.clone()),
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -172,6 +174,7 @@ impl InvoiceStatus {
             equal_to: None,
             not_equal_to: None,
             equal_any: Some(value),
+            not_equal_all: None,
         }
     }
 }
@@ -182,6 +185,7 @@ impl InvoiceType {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -190,6 +194,7 @@ impl InvoiceType {
             equal_to: None,
             not_equal_to: Some(self.clone()),
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -198,6 +203,7 @@ impl InvoiceType {
             equal_to: None,
             not_equal_to: None,
             equal_any: Some(value),
+            not_equal_all: None,
         }
     }
 }

@@ -100,6 +100,7 @@ impl RequisitionRowStatus {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 }
@@ -110,6 +111,7 @@ impl RequisitionRowType {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 }

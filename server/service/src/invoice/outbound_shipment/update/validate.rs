@@ -2,7 +2,9 @@ use crate::invoice::{
     check_invoice_is_editable, check_invoice_status, check_other_party_id, InvoiceIsNotEditable,
     InvoiceStatusError,
 };
-use domain::{invoice::InvoiceStatus, outbound_shipment::UpdateOutboundShipment, EqualFilter, name::Name};
+use domain::{
+    invoice::InvoiceStatus, name::Name, outbound_shipment::UpdateOutboundShipment, EqualFilter,
+};
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
@@ -76,6 +78,7 @@ fn check_can_change_status_to_allocated(
                     equal_to: Some(InvoiceLineRowType::UnallocatedStock),
                     not_equal_to: None,
                     equal_any: None,
+                    not_equal_all: None,
                 }),
         )?;
 

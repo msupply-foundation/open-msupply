@@ -98,11 +98,9 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let filter = InvoiceFilter::new().requisition_id(EqualFilter {
-            equal_any: Some(requisition_ids.iter().map(String::clone).collect()),
-            equal_to: None,
-            not_equal_to: None,
-        });
+        let filter = InvoiceFilter::new().requisition_id(EqualFilter::equal_any(
+            requisition_ids.iter().map(String::clone).collect(),
+        ));
 
         let invoices = get_invoices(&self.connection_manager, None, Some(filter), None)
             .map_err(StandardGraphqlError::from_list_error)?;

@@ -143,6 +143,7 @@ pub fn check_unallocated_line_does_not_exist(
                 equal_to: Some(InvoiceLineRowType::UnallocatedStock),
                 not_equal_to: None,
                 equal_any: None,
+                not_equal_all: None,
             }),
     ))?;
 
