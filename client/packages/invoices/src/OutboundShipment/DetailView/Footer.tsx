@@ -1,8 +1,8 @@
+import React, { FC } from 'react';
 import {
   Box,
   ArrowRightIcon,
   ButtonWithIcon,
-  SaveIcon,
   StatusCrumbs,
   ToggleButton,
   XCircleIcon,
@@ -11,24 +11,19 @@ import {
   AppFooterPortal,
   InvoiceNodeStatus,
   useNavigate,
+  useBufferState,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
 import {
   getNextOutboundStatus,
   getNextOutboundStatusButtonTranslation,
   getStatusTranslator,
-  isInvoiceEditable,
   outboundStatuses,
 } from '../../utils';
-import { OutboundShipment } from '../../types';
+import { useIsOutboundDisabled, useOutbound, useOutboundFields } from '../api';
+import { Invoice } from '../../types';
 
-interface OutboundDetailFooterProps {
-  draft: OutboundShipment;
-  save: () => Promise<void>;
-}
-
-const createStatusLog = (draft: OutboundShipment) => {
-  const statusIdx = outboundStatuses.findIndex(s => draft.status === s);
+const createStatusLog = (invoice: Invoice) => {
+  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
 
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
@@ -40,36 +35,41 @@ const createStatusLog = (draft: OutboundShipment) => {
   };
 
   if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = draft.createdDatetime;
+    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
   }
   if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Allocated] = draft.allocatedDatetime;
+    statusLog[InvoiceNodeStatus.Allocated] = invoice.allocatedDatetime;
   }
   if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Picked] = draft.pickedDatetime;
+    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
   }
   if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Shipped] = draft.shippedDatetime;
+    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Delivered] = draft.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = draft.verifiedDatetime;
+    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
 
   return statusLog;
 };
 
-export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
+export const Footer: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('distribution');
   const { success } = useNotification();
 
+  const { data } = useOutbound();
+  const isDisabled = useIsOutboundDisabled();
+  const { onHold, status, update } = useOutboundFields(['onHold', 'status']);
+  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
+
   return (
     <AppFooterPortal
       Content={
-        draft && (
+        data && (
           <Box
             gap={2}
             display="flex"
@@ -78,18 +78,19 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
             height={64}
           >
             <ToggleButton
-              disabled={!isInvoiceEditable(draft)}
-              value={!!draft.onHold}
-              selected={!!draft.onHold}
+              disabled={isDisabled}
+              value={!!onHoldBuffer}
+              selected={!!onHoldBuffer}
               onClick={(_, value) => {
-                draft.update?.('onHold', !value);
+                setOnHoldBuffer(!value);
+                update({ onHold: !value });
               }}
               label={t('label.hold')}
             />
 
             <StatusCrumbs
               statuses={outboundStatuses}
-              statusLog={createStatusLog(draft)}
+              statusLog={createStatusLog(data)}
               statusFormatter={getStatusTranslator(t)}
             />
 
@@ -102,43 +103,23 @@ export const Footer: FC<OutboundDetailFooterProps> = ({ draft, save }) => {
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigate(-1)}
               />
-              {isInvoiceEditable(draft) && (
-                <>
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    Icon={<SaveIcon />}
-                    label={t('button.save')}
-                    variant="contained"
-                    color="secondary"
-                    sx={{ fontSize: '12px' }}
-                    onClick={() => {
-                      success('Saved invoice! 🥳 ')();
-                      save();
-                    }}
-                  />
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    disabled={draft.onHold}
-                    Icon={<ArrowRightIcon />}
-                    label={t('button.save-and-confirm-status', {
-                      status: t(
-                        getNextOutboundStatusButtonTranslation(draft.status)
-                      ),
-                    })}
-                    sx={{ fontSize: '12px' }}
-                    variant="contained"
-                    color="secondary"
-                    onClick={async () => {
-                      success('Saved invoice! 🥳 ')();
-                      await draft.update?.(
-                        'status',
-                        getNextOutboundStatus(draft.status)
-                      );
 
-                      save();
-                    }}
-                  />
-                </>
+              {!isDisabled && (
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  disabled={!!onHold}
+                  Icon={<ArrowRightIcon />}
+                  label={t('button.save-and-confirm-status', {
+                    status: t(getNextOutboundStatusButtonTranslation(status)),
+                  })}
+                  sx={{ fontSize: '12px' }}
+                  variant="contained"
+                  color="secondary"
+                  onClick={async () => {
+                    success('Saved invoice! 🥳 ')();
+                    await update({ status: getNextOutboundStatus(status) });
+                  }}
+                />
               )}
             </Box>
           </Box>

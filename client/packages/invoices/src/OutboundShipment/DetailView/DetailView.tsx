@@ -23,7 +23,6 @@ import { ItemDetailsModal } from './modals/ItemDetailsModal';
 
 import { OutboundShipmentSummaryItem } from '../../types';
 import { Toolbar } from './Toolbar';
-import { isInvoiceEditable } from '../../utils';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
@@ -63,7 +62,7 @@ const useDraftOutbound = () => {
 };
 
 export const DetailView: FC = () => {
-  const { draft, onChangeSortBy, save, sortBy, onFlattenRows, onGroupRows } =
+  const { draft, onChangeSortBy, sortBy, onFlattenRows, onGroupRows } =
     useDraftOutbound();
 
   const { prefetchListByName } = useItemsList({
@@ -199,10 +198,7 @@ export const DetailView: FC = () => {
     >
       {draft && draft.id ? (
         <TableProvider createStore={createTableStore}>
-          <AppBarButtons
-            isDisabled={!isInvoiceEditable(draft)}
-            onAddItem={itemModalControl.toggleOn}
-          />
+          <AppBarButtons onAddItem={itemModalControl.toggleOn} />
 
           <ItemDetailsModal
             draft={draft}
@@ -216,7 +212,7 @@ export const DetailView: FC = () => {
             isOnlyItem={draft.items.length === 1}
           />
 
-          <Toolbar draft={draft} />
+          <Toolbar />
 
           <GeneralTab
             columns={columns}
@@ -226,8 +222,8 @@ export const DetailView: FC = () => {
             onGroupRows={onGroupRows}
           />
 
-          <Footer draft={draft} save={save} />
-          <SidePanel draft={draft} />
+          <Footer />
+          <SidePanel />
         </TableProvider>
       ) : (
         <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
