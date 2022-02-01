@@ -11,8 +11,8 @@ import {
   ModalMode,
   useBufferState,
 } from '@openmsupply-client/common';
-import { BatchesTable } from './BatchesTable';
-import { ItemDetailsForm } from './ItemDetailsForm';
+import { OutboundLineEditTable } from './OutboundLineEditTable';
+import { OutboundLineEditForm } from './OutboundLineEditForm';
 import {
   useDraftOutboundLines,
   usePackSizeController,
@@ -31,7 +31,7 @@ interface ItemDetailsModalProps {
   mode: ModalMode | null;
 }
 
-export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
+export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
   item,
@@ -93,7 +93,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       width={900}
     >
       <Grid container gap={0.5}>
-        <ItemDetailsForm
+        <OutboundLineEditForm
           packSizeController={packSizeController}
           onChangeItem={setCurrentItem}
           item={currentItem}
@@ -103,7 +103,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         />
         {!!currentItem ? (
           !isLoading ? (
-            <BatchesTable
+            <OutboundLineEditTable
               packSizeController={packSizeController}
               onChange={updateQuantity}
               rows={draftOutboundLines}

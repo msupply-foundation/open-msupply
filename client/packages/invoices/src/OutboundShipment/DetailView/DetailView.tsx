@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
-import { ItemDetailsModal } from './modals/ItemDetailsModal';
+import { OutboundLineEdit } from './modals/OutboundLineEdit';
 import { InvoiceItem, InvoiceLine } from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -33,7 +33,7 @@ export const DetailView: FC = () => {
           <AppBarButtons onAddItem={() => onOpen()} />
 
           {isOpen && (
-            <ItemDetailsModal
+            <OutboundLineEdit
               item={entity}
               mode={mode}
               isOpen={isOpen}

@@ -17,7 +17,7 @@ import { ItemSearchInput } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
 import { useOutboundRows } from '../../api';
 
-interface ItemDetailsFormProps {
+interface OutboundLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
   item: Item | null;
@@ -26,7 +26,7 @@ interface ItemDetailsFormProps {
   packSizeController: PackSizeController;
 }
 
-export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
+export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   allocatedQuantity,
   onChangeItem,
   onChangeQuantity,
