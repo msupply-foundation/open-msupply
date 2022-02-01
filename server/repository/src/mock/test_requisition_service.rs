@@ -7,8 +7,8 @@ use crate::schema::{
 
 use super::{
     common::{FullMockMasterList, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e, mock_item_f, mock_name_a,
-    mock_name_store_a, mock_store_a, MockData,
+    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_stats_item1,
+    mock_item_stats_item2, mock_name_a, mock_name_store_a, mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_service() -> MockData {
@@ -225,12 +225,12 @@ pub fn mock_test_add_from_master_list() -> FullMockMasterList {
             },
             MasterListLineRow {
                 id: line2.clone(),
-                item_id: mock_item_e().id,
+                item_id: mock_item_stats_item1().id,
                 master_list_id: id.clone(),
             },
             MasterListLineRow {
                 id: line3.clone(),
-                item_id: mock_item_f().id,
+                item_id: mock_item_stats_item2().id,
                 master_list_id: id.clone(),
             },
         ],
