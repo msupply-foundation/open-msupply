@@ -63,7 +63,6 @@ export const Footer: FC = () => {
                   }}
                 />
               </>
-              )
             </Box>
           </Box>
         )
