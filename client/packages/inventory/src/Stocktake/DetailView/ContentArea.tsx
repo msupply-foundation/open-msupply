@@ -6,6 +6,7 @@ import {
   Switch,
   useIsGrouped,
   MiniTable,
+  DataTableSkeleton,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { useStocktakeRows } from '../api';
@@ -32,7 +33,7 @@ export const ContentArea: FC<{
   const { rows, onChangeSortBy, sortBy } = useStocktakeRows(isGrouped);
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
 
-  if (!rows) return null;
+  if (!rows) return <DataTableSkeleton hasGroupBy={true} />;
 
   return (
     <Box flexDirection="column" flex={1}>

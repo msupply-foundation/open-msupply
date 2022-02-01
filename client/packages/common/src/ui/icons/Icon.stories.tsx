@@ -2,6 +2,7 @@ import React, { ChangeEvent, useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { SvgIconProps } from '.';
+import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
 import { BarChartIcon } from './BarChart';
@@ -72,6 +73,7 @@ type Icon = {
 
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
+    { icon: <AlertIcon {...args} />, name: 'Alert' },
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
     { icon: <BarChartIcon {...args} />, name: 'BarChart' },

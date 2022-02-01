@@ -8,6 +8,9 @@ import {
   useToggle,
   useOmSupplyApi,
   Item,
+  ColumnAlign,
+  ColumnFormat,
+  DetailViewSkeleton,
 } from '@openmsupply-client/common';
 import { useItemsList } from '@openmsupply-client/system';
 import { reducer, OutboundAction, itemToSummaryItem } from './reducer';
@@ -118,28 +121,36 @@ export const DetailView: FC = () => {
     console.log(item);
   };
 
-  return draft ? (
-    <TableProvider createStore={createTableStore}>
-      <AppBarButtons onAddItem={itemModalControl.toggleOn} />
+  return (
+    <React.Suspense
+      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
+    >
+      {draft && draft.id ? (
+        <TableProvider createStore={createTableStore}>
+          <AppBarButtons onAddItem={itemModalControl.toggleOn} />
 
-      <ItemDetailsModal
-        draft={draft}
-        isEditMode={selectedItem.editing}
-        onNext={onNext}
-        summaryItem={selectedItem?.item}
-        isOpen={itemModalControl.isOn}
-        onClose={itemModalControl.toggleOff}
-        onChangeItem={onChangeSelectedItem}
-        upsertInvoiceLine={line => draft.upsertLine?.(line)}
-        isOnlyItem={draft.items.length === 1}
-      />
+          <ItemDetailsModal
+            draft={draft}
+            isEditMode={selectedItem.editing}
+            onNext={onNext}
+            summaryItem={selectedItem?.item}
+            isOpen={itemModalControl.isOn}
+            onClose={itemModalControl.toggleOff}
+            onChangeItem={onChangeSelectedItem}
+            upsertInvoiceLine={line => draft.upsertLine?.(line)}
+            isOnlyItem={draft.items.length === 1}
+          />
 
-      <Toolbar />
+          <Toolbar />
 
-      <ContentArea onRowClick={onRowClick} />
+          <ContentArea onRowClick={onRowClick} />
 
-      <Footer />
-      <SidePanel />
-    </TableProvider>
-  ) : null;
+          <Footer />
+          <SidePanel />
+        </TableProvider>
+      ) : (
+        <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
+      )}
+    </React.Suspense>
+  );
 };
