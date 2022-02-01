@@ -278,6 +278,25 @@ table! {
     }
 }
 
+table! {
+    consumption (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        consumption_quantity -> Integer,
+        consumption_datetime -> Nullable<Timestamp>,
+    }
+}
+
+table! {
+    stock_info (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        stock_on_hand -> BigInt,
+    }
+}
+
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
