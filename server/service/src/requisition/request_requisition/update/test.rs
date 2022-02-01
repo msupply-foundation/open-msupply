@@ -136,7 +136,6 @@ mod test_update {
         let RequisitionRow {
             id,
             status,
-            created_datetime,
             sent_datetime,
             colour,
             comment,
@@ -154,7 +153,7 @@ mod test_update {
         assert_eq!(status, RequisitionRowStatus::Sent);
 
         let sent_datetime = sent_datetime.unwrap();
-        assert!(sent_datetime > before_update && created_datetime < after_update);
+        assert!(sent_datetime > before_update && sent_datetime < after_update);
 
         // Recalculate stock
 
