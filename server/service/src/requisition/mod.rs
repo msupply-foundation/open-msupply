@@ -1,13 +1,25 @@
-use self::query::{get_requisition, get_requisition_by_number, get_requisitions};
+use self::{
+    query::{get_requisition, get_requisition_by_number, get_requisitions},
+    request_requisition::{
+        add_from_master_list, delete_request_requisition, insert_request_requisition,
+        update_request_requisition, use_calculated_quantity, AddFromMasterList,
+        AddFromMasterListError, DeleteRequestRequisition, DeleteRequestRequisitionError,
+        InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
+        UpdateRequestRequisitionError, UseCalculatedQuantity, UseCalculatedQuantityError,
+    },
+};
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use domain::PaginationOption;
 use repository::{
-    schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter, RequisitionSort,
+    schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter, RequisitionLine,
+    RequisitionSort,
 };
 
+pub mod common;
 pub mod query;
+pub mod request_requisition;
 
 pub trait RequisitionServiceTrait: Sync + Send {
     fn get_requisitions(
@@ -38,6 +50,51 @@ pub trait RequisitionServiceTrait: Sync + Send {
         r#type: RequisitionRowType,
     ) -> Result<Option<Requisition>, RepositoryError> {
         get_requisition_by_number(ctx, store_id, requisition_number, r#type)
+    }
+
+    fn insert_request_requisition(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: InsertRequestRequisition,
+    ) -> Result<Requisition, InsertRequestRequisitionError> {
+        insert_request_requisition(ctx, store_id, input)
+    }
+
+    fn update_request_requisition(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateRequestRequisition,
+    ) -> Result<Requisition, UpdateRequestRequisitionError> {
+        update_request_requisition(ctx, store_id, input)
+    }
+
+    fn delete_request_requisition(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: DeleteRequestRequisition,
+    ) -> Result<String, DeleteRequestRequisitionError> {
+        delete_request_requisition(ctx, store_id, input)
+    }
+
+    fn use_calculated_quantity(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UseCalculatedQuantity,
+    ) -> Result<Vec<RequisitionLine>, UseCalculatedQuantityError> {
+        use_calculated_quantity(ctx, store_id, input)
+    }
+
+    fn add_from_master_list(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: AddFromMasterList,
+    ) -> Result<Vec<RequisitionLine>, AddFromMasterListError> {
+        add_from_master_list(ctx, store_id, input)
     }
 }
 
