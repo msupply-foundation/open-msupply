@@ -15,6 +15,12 @@ pub fn mock_test_requisition_service() -> MockData {
     let mut result = MockData::default();
     result.requisitions.push(mock_requisition_for_number_test());
     result
+        .requisition_lines
+        .push(mock_sent_request_requisition_line());
+    result
+        .requisition_lines
+        .push(mock_draft_response_requisition_for_update_test_line());
+    result
         .requisitions
         .push(mock_draft_request_requisition_for_update_test());
     result
@@ -94,6 +100,19 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
     }
 }
 
+pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
+    RequisitionLineRow {
+        id: "mock_sent_request_requisition_line".to_owned(),
+        requisition_id: mock_sent_request_requisition().id,
+        item_id: mock_item_a().id,
+        requested_quantity: 10,
+        calculated_quantity: 5,
+        supply_quantity: 0,
+        stock_on_hand: 1,
+        average_monthly_consumption: 1,
+    }
+}
+
 pub fn mock_draft_response_requisition_for_update_test() -> RequisitionRow {
     RequisitionRow {
         id: "mock_draft_response_requisition_for_update_test".to_owned(),
@@ -111,6 +130,19 @@ pub fn mock_draft_response_requisition_for_update_test() -> RequisitionRow {
         max_months_of_stock: 1.0,
         threshold_months_of_stock: 0.9,
         linked_requisition_id: None,
+    }
+}
+
+pub fn mock_draft_response_requisition_for_update_test_line() -> RequisitionLineRow {
+    RequisitionLineRow {
+        id: "mock_draft_response_requisition_for_update_test_line".to_owned(),
+        requisition_id: mock_draft_response_requisition_for_update_test().id,
+        item_id: mock_item_a().id,
+        requested_quantity: 10,
+        calculated_quantity: 5,
+        supply_quantity: 0,
+        stock_on_hand: 1,
+        average_monthly_consumption: 1,
     }
 }
 
