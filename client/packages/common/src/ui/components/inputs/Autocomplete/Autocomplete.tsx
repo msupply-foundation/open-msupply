@@ -6,6 +6,9 @@ import {
   CreateFilterOptionsConfig,
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
+  styled,
+  Popper,
+  PopperProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -40,7 +43,12 @@ export interface AutocompleteProps<T>
     reason: AutocompleteInputChangeReason
   ) => void;
   inputValue?: string;
+  autoWidthPopper?: boolean;
 }
+
+const StyledPopper = styled(Popper)(({ theme }) => ({
+  boxShadow: theme.shadows[2],
+}));
 
 export function Autocomplete<T>({
   defaultValue,
@@ -62,6 +70,7 @@ export function Autocomplete<T>({
   inputValue,
   autoFocus = false,
   getOptionLabel,
+  autoWidthPopper = false,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
@@ -77,6 +86,14 @@ export function Autocomplete<T>({
   const defaultGetOptionLabel = (option: { label?: string } & T): string => {
     return option.label ?? '';
   };
+
+  const CustomPopper: React.FC<PopperProps> = props => (
+    <StyledPopper
+      {...props}
+      placement="bottom-start"
+      style={{ minWidth: width, width: 'auto' }}
+    />
+  );
 
   return (
     <MuiAutocomplete
@@ -99,6 +116,7 @@ export function Autocomplete<T>({
       renderOption={renderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
+      PopperComponent={autoWidthPopper ? CustomPopper : StyledPopper}
     />
   );
 }

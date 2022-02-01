@@ -52,6 +52,7 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
       renderOption={getDefaultOptionRenderer('name')}
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      autoWidthPopper
     />
   );
 };
