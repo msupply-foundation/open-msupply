@@ -54,7 +54,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   };
 
   useEffect(() => {
-    // if (selected.value !== 0) return;
+    if (selected.value !== 0) return;
     if (packSizes.length < 1) return;
     if (!lines?.length) return;
 
