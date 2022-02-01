@@ -94,7 +94,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
           </Grid>
         </ModalRow>
       )}
-      {summaryItem ? (
+      {summaryItem && availableQuantity ? (
         <>
           <Divider margin={10} />
 
@@ -112,8 +112,8 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
                   onChangeQuantity(
                     Number(event.target.value),
                     packSizeController.selected.value === -1
-                      ? Number(packSizeController.selected.value)
-                      : null
+                      ? null
+                      : Number(packSizeController.selected.value)
                   );
                 },
               })}
@@ -145,6 +145,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
               onChange={e => {
                 const { value } = e.target;
                 const packSize = Number(value);
+
                 packSizeController.setPackSize(packSize);
                 onChangeQuantity(quantity, packSize === -1 ? null : packSize);
               }}

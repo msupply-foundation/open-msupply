@@ -7,7 +7,6 @@ import {
   Divider,
   ExternalNavLink,
   List,
-  MSupplyGuy,
   PowerIcon,
   RadioIcon,
   ReportsIcon,
@@ -27,6 +26,7 @@ import {
   InventoryNav,
   ReplenishmentNav,
 } from '../Navigation';
+import { AppDrawerIcon } from './AppDrawerIcon';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -56,7 +56,6 @@ const UpperListContainer = styled(Box)({
 });
 
 const StyledDivider = styled(Divider)({
-  backgroundColor: '#555770',
   marginLeft: 8,
   width: 152,
 });
@@ -64,7 +63,7 @@ const StyledDivider = styled(Divider)({
 const drawerWidth = 240;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
-  backgroundColor: theme.palette.background.menu,
+  backgroundColor: theme.palette.background.drawer,
   overflow: 'hidden',
 });
 
@@ -96,10 +95,16 @@ const StyledDrawer = styled(Box, {
   display: 'flex',
   flexDirection: 'column',
   height: '100vh',
-  borderRadius: 8,
+  borderRadius: '0 8px 8px 0',
   overflow: 'hidden',
   boxShadow: theme.shadows[7],
   zIndex: theme.zIndex.drawer,
+  '& .MuiSvgIcon-root': {
+    color: theme.mixins.drawer?.iconColor,
+  },
+  '& .navLinkText .MuiTypography-root': {
+    color: theme.mixins.drawer?.textColor,
+  },
   ...(isOpen && {
     ...openedMixin(theme),
     '& .MuiDrawer-paper': openedMixin(theme),
@@ -163,7 +168,7 @@ export const AppDrawer: React.FC = () => {
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
           )}
           onClick={drawer.toggle}
-          icon={<MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />}
+          icon={<AppDrawerIcon />}
         />
       </ToolbarIconContainer>
       <UpperListContainer>
@@ -203,7 +208,7 @@ export const AppDrawer: React.FC = () => {
       </UpperListContainer>
       <LowerListContainer>
         <List>
-          {drawer.isOpen && <StyledDivider />}
+          {drawer.isOpen && <StyledDivider color="drawerDivider" />}
           <AppNavLink
             to={AppRoute.Sync}
             icon={<RadioIcon fontSize="small" color="primary" />}

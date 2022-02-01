@@ -1,4 +1,8 @@
-import { createTheme, Direction } from '@mui/material/styles';
+import {
+  createTheme as createMuiTheme,
+  Direction,
+  ThemeOptions,
+} from '@mui/material/styles';
 
 /**
  * Our theme uses module augmentation when customising the theme to ensure
@@ -26,6 +30,11 @@ declare module '@mui/material/styles/createMixins' {
           color: string;
         };
       };
+    };
+    drawer: {
+      iconColor?: string;
+      selectedBackgroundColor?: string;
+      textColor?: string;
     };
     icon: {
       medium: { width: number; height: number };
@@ -65,11 +74,13 @@ declare module '@mui/material/styles/zIndex' {
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
+    drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
     form: TypeForm;
   }
   interface TypeBackground {
+    drawer: string;
     menu: string;
     toolbar: string;
     white: string;
@@ -87,7 +98,7 @@ declare module '@mui/material/styles/createTypography' {
   }
 }
 
-const themeOptions = {
+export const themeOptions = {
   breakpoints: {
     values: {
       xs: 0,
@@ -113,6 +124,9 @@ const themeOptions = {
         },
       },
     },
+    drawer: {
+      selectedBackgroundColor: '#fff',
+    },
     saveButtonRow: { height: 40 },
     footer: { height: 32 },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
@@ -126,6 +140,7 @@ const themeOptions = {
   palette: {
     outline: { main: '#555770' },
     divider: '#eaeaea',
+    drawerDivider: '#eaeaea',
     error: { main: '#e63535' },
     gray: {
       main: '#8f90a6',
@@ -137,6 +152,7 @@ const themeOptions = {
     primary: { main: '#e95c30', light: '#fc8058', dark: '#c43c11' },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
+      drawer: '#f2f2f5',
       menu: '#f2f2f5',
       toolbar: '#fafafc',
       white: '#fff',
@@ -175,13 +191,15 @@ const themeOptions = {
     },
   },
 };
-const theme = createTheme(themeOptions);
+export const createTheme = (themeOptions: ThemeOptions) => {
+  const theme = createMuiTheme(themeOptions);
 
-theme.shadows[1] =
-  '0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08)';
-theme.shadows[2] =
-  '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
-theme.shadows[3] =
-  '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
-
-export default theme;
+  theme.shadows[1] =
+    '0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08)';
+  theme.shadows[2] =
+    '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
+  theme.shadows[3] =
+    '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
+  return theme;
+};
+// export default theme;

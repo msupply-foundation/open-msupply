@@ -112,7 +112,7 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled={disabled}
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      label={label}
+      label={label ?? <span />}
       labelPlacement={labelPlacement}
       onChange={onChange}
       sx={labelStyle}

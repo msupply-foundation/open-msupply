@@ -147,18 +147,7 @@ const usePackSizeController = (
     }))
   );
 
-  const selectedPackSize = ifTheSameElseDefault(
-    batches.filter(batch => batch.numberOfPacks > 0),
-    'packSize',
-    0
-  );
-  const defaultPackSize = (selectedPackSize === 0
-    ? options[0]
-    : options.find(option => option.value === selectedPackSize)) ?? {
-    label: '',
-    value: '',
-  };
-  const [selected, setSelected] = useState(defaultPackSize);
+  const [selected, setSelected] = useState({ label: '', value: 0 });
 
   const setPackSize = (newValue: number) => {
     const packSizeOption = options.find(({ value }) => value === newValue);
@@ -166,16 +155,32 @@ const usePackSizeController = (
     setSelected(packSizeOption);
   };
 
-  useEffect(() => {
+  const setDefaultPackSize = () => {
+    const selectedPackSize = ifTheSameElseDefault(
+      batches.filter(batch => batch.numberOfPacks > 0),
+      'packSize',
+      0
+    );
+
+    const defaultPackSize = (selectedPackSize === 0
+      ? options[0]
+      : options.find(option => option.value === selectedPackSize)) ?? {
+      label: '',
+      value: '',
+    };
+
     if (defaultPackSize.value && typeof defaultPackSize.value == 'number') {
       setPackSize(defaultPackSize.value);
     }
-    if (packSizes.length === 0) {
-      setSelected({ label: '', value: '' });
-    }
-  }, [defaultPackSize.value]);
+  };
 
-  return { selected, setPackSize, options };
+  useEffect(() => {
+    if (packSizes.length === 0) {
+      setSelected({ label: '', value: 0 });
+    }
+  }, [batches]);
+
+  return { selected, setPackSize, options, setDefaultPackSize };
 };
 
 const sumAvailableQuantity = (batchRows: BatchRow[]) => {
@@ -368,6 +373,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     setBatchRows(issueStock(batchRows, batchId, value));
   };
 
+  useEffect(() => packSizeController.setDefaultPackSize(), [batchRows]);
+
   React.useEffect(() => {
     if (isOpen) showDialog();
     else {
@@ -376,6 +383,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     }
   }, [isOpen]);
 
+  const availableQuantity = sumAvailableQuantity(batchRows);
   return (
     <Modal
       title={t(isEditMode ? 'heading.edit-item' : 'heading.add-item')}
@@ -396,7 +404,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           <Grid container gap={0.5}>
             <ItemDetailsForm
               draft={draft}
-              availableQuantity={sumAvailableQuantity(batchRows)}
+              availableQuantity={availableQuantity}
               packSizeController={packSizeController}
               onChangeItem={onChangeItem}
               onChangeQuantity={(newQuantity, newPackSize) =>
@@ -406,7 +414,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
               allocatedQuantity={getAllocatedQuantity(batchRows)}
               summaryItem={summaryItem || undefined}
             />
-            {!!summaryItem ? (
+            {!!summaryItem && availableQuantity ? (
               !isLoading ? (
                 <BatchesTable
                   packSizeController={packSizeController}
