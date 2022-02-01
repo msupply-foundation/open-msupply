@@ -7,11 +7,16 @@ use self::{
         InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
         UpdateRequestRequisitionError, UseCalculatedQuantity, UseCalculatedQuantityError,
     },
+    response_requisition::{
+        create_requisition_shipment, supply_requested_quantity, update_response_requisition,
+        CreateRequisitionShipment, CreateRequisitionShipmentError, SupplyRequestedQuantity,
+        SupplyRequestedQuantityError, UpdateResponseRequisition, UpdateResponseRequisitionError,
+    },
 };
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
-use domain::PaginationOption;
+use domain::{PaginationOption, invoice::Invoice};
 use repository::{
     schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter, RequisitionLine,
     RequisitionSort,
@@ -20,6 +25,7 @@ use repository::{
 pub mod common;
 pub mod query;
 pub mod request_requisition;
+pub mod response_requisition;
 
 pub trait RequisitionServiceTrait: Sync + Send {
     fn get_requisitions(
@@ -95,6 +101,33 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: AddFromMasterList,
     ) -> Result<Vec<RequisitionLine>, AddFromMasterListError> {
         add_from_master_list(ctx, store_id, input)
+    }
+
+    fn update_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateResponseRequisition,
+    ) -> Result<Requisition, UpdateResponseRequisitionError> {
+        update_response_requisition(ctx, store_id, input)
+    }
+
+    fn supply_requested_quantity(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: SupplyRequestedQuantity,
+    ) -> Result<Vec<RequisitionLine>, SupplyRequestedQuantityError> {
+        supply_requested_quantity(ctx, store_id, input)
+    }
+
+    fn create_requisition_shipment(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: CreateRequisitionShipment,
+    ) -> Result<Invoice, CreateRequisitionShipmentError> {
+        create_requisition_shipment(ctx, store_id, input)
     }
 }
 
