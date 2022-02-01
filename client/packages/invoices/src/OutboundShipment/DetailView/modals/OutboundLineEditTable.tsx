@@ -19,7 +19,8 @@ import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
 import { sortByExpiry } from './utils';
 import { useOutboundFields } from '../../api';
-export interface BatchesTableProps {
+
+export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
   rows: DraftOutboundLine[];
@@ -111,7 +112,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
   />
 );
 
-export const BatchesTable: React.FC<BatchesTableProps> = ({
+export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   onChange,
   packSizeController,
   rows,
