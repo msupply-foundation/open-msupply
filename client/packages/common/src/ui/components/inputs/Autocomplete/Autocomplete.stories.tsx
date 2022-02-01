@@ -18,23 +18,89 @@ const StyledPaper = styled(Paper)({
 });
 
 const options = Array.from({ length: 100 }).map((_, i) => ({
-  name: `${i}`,
+  label: `${i}`,
 }));
 
+const longOptions = [
+  {
+    label: 'SAINT JOSEPH MOSCATI (HÔPITAL CATHOLIQUE)',
+  },
+  {
+    label: 'CAFOP de YAMOUSSOUKRO (INF-LC PUBLIC)',
+  },
+  {
+    label: 'SAINT VINCENT DE PAUL DE YAMOUSSOUKRO (HÔPITAL PSY',
+  },
+  {
+    label: 'Lycée BAD de YAMOUSSOUKRO (INF-LC PUBLIC)',
+  },
+  {
+    label: 'Lycée Mami Adjoua de YAMOUSSOUKRO (INF-LC PUBLIC)',
+  },
+  {
+    label: 'Lycée Scientifique de YAMOUSSOUKRO (INF-LC PUBLIC)',
+  },
+  {
+    label: 'Garde Republicaine de YAMOUSSOUKRO (INF-M PUBLIC)',
+  },
+  {
+    label: 'GSPM de YAMOUSSOUKRO (INF-M PUBLIC)',
+  },
+  {
+    label: 'Nouvelle Clinique Saint Augustin',
+  },
+  {
+    label: 'INPHB-CENTRE PUBLIC de YAMASSOUKRO',
+  },
+  {
+    label: 'Pharmacie Centrale CHR PUBLIC DE YAMOUSSOUKRO',
+  },
+  {
+    label: 'Dispensation CHR PUBLIC DE YAMOUSSOUKRO',
+  },
+  {
+    label: 'Caisse CHR PUBLIC DE YAMOUSSOUKRO',
+  },
+  {
+    label: 'CHU COCODY central  (Main Warehouse)',
+  },
+  {
+    label: 'Pharmacie Centrale CHU COCODY - ABIDJAN (Main Phar',
+  },
+  {
+    label: 'Pediatrie CHU COCODY - ABIDJAN (Pediatrics)',
+  },
+  {
+    label: 'Maternity CHU COCODY - ABIDJAN',
+  },
+  {
+    label: 'Consultations Externes CHU COCODY',
+  },
+  {
+    label: 'PRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+  },
+];
+
 // TODO: Currently the styles are broken for this only within storybook
-const BasicTemplate: Story = () => (
+const BasicTemplate: Story = ({ options }) => (
   <Grid container>
     <Grid item>
       <StyledPaper>
         <Typography>Basic autocomplete</Typography>
-        <Autocomplete options={options.map(({ name }) => name)} width="300px" />
+        <Autocomplete options={options} width="300px" />
+      </StyledPaper>
+    </Grid>
+    <Grid item>
+      <StyledPaper>
+        <Typography>Auto Width Popper</Typography>
+        <Autocomplete options={options} width="300px" autoWidthPopper />
       </StyledPaper>
     </Grid>
     <Grid item>
       <StyledPaper>
         <Typography>Disabled</Typography>
         <Autocomplete
-          options={options.map(({ name }) => name)}
+          options={options}
           width="300px"
           disabled
           defaultValue={'95' as AutocompleteOption<string>}
@@ -49,7 +115,7 @@ const ListTemplate: Story = () => (
     <Grid item>
       <StyledPaper>
         <Typography>Autocomplete List</Typography>
-        <AutocompleteList options={options} optionKey="name" />
+        <AutocompleteList options={options} optionKey="label" />
       </StyledPaper>
     </Grid>
   </Grid>
@@ -57,3 +123,7 @@ const ListTemplate: Story = () => (
 
 export const Basic = BasicTemplate.bind({});
 export const List = ListTemplate.bind({});
+export const LongOptions = BasicTemplate.bind({});
+
+Basic.args = { options: options };
+LongOptions.args = { options: longOptions, autoWidthPopper: true };
