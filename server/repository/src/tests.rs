@@ -326,20 +326,24 @@ mod repository_test {
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
             mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
-            mock_request_draft_requisition2, MockDataInserts,
+            mock_request_draft_requisition2, mock_test_master_list_name1,
+            mock_test_master_list_name2, mock_test_master_list_name_filter1,
+            mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
+            mock_test_master_list_store1, MockDataInserts,
         },
         schema::{InvoiceStatsRow, NumberRowType, RequisitionRowStatus},
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
         InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
-        NumberRowRepository, OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
-        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
-        RequisitionRowRepository, StockLineRepository, StockLineRowRepository, StoreRowRepository,
-        UserAccountRepository,
+        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
+        NameQueryRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
+        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineRepository, StockLineRowRepository, StoreRowRepository, UserAccountRepository,
     };
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use domain::{
+        master_list::MasterListFilter,
         master_list_line::MasterListLineFilter,
         name::{NameFilter, NameSort, NameSortField},
         stock_line::StockLineFilter,
@@ -612,8 +616,8 @@ mod repository_test {
     }
 
     #[actix_rt::test]
-    async fn test_master_list_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-master-list-repository");
+    async fn test_master_list_row_repository() {
+        let settings = test_db::get_test_db_settings("test_master_list_row_repository");
         test_db::setup(&settings).await;
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
@@ -635,6 +639,87 @@ mod repository_test {
             .await
             .unwrap();
         assert_eq!(master_list_upsert_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
+
+        let repo = MasterListRepository::new(&connection);
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(&mock_test_master_list_name1().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(&mock_test_master_list_name2().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter2().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_store_id(EqualFilter::equal_to(&mock_test_master_list_store1().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter2().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name(SimpleStringFilter::like("test_master_list_name")),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter2().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        )
     }
 
     #[actix_rt::test]
@@ -1085,6 +1170,7 @@ mod repository_test {
                         equal_to: Some(99),
                         not_equal_to: None,
                         equal_any: None,
+                        not_equal_all: None,
                     }),
             )
             .unwrap();
