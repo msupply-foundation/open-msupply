@@ -2,10 +2,11 @@ use self::{
     query::get_requisition_lines,
     request_requisition_line::{
         delete_request_requisition_line, insert_request_requisition_line,
-        update_request_requisition_line, InsertRequestRequisitionLine,
+        update_request_requisition_line, DeleteRequestRequisitionLine,
+        DeleteRequestRequisitionLineError, InsertRequestRequisitionLine,
         InsertRequestRequisitionLineError, UpdateRequestRequisitionLine,
-        UpdateRequestRequisitionLineError, DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError,
-    },
+        UpdateRequestRequisitionLineError,
+    }, response_requisition_line::{update_response_requisition_line, UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError},
 };
 
 use super::{ListError, ListResult};
@@ -17,6 +18,7 @@ use repository::{RequisitionLine, RequisitionLineFilter};
 pub mod common;
 pub mod query;
 pub mod request_requisition_line;
+pub mod response_requisition_line;
 
 pub trait RequisitionLineServiceTrait: Sync + Send {
     fn get_requisition_lines(
@@ -53,6 +55,15 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         input: DeleteRequestRequisitionLine,
     ) -> Result<String, DeleteRequestRequisitionLineError> {
         delete_request_requisition_line(ctx, store_id, input)
+    }
+
+    fn update_response_requisition_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateResponseRequisitionLine,
+    ) -> Result<RequisitionLine, UpdateResponseRequisitionLineError> {
+        update_response_requisition_line(ctx, store_id, input)
     }
 }
 
