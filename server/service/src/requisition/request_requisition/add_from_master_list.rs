@@ -4,12 +4,13 @@ use crate::{
 };
 use domain::{master_list::MasterListFilter, master_list_line::MasterListLineFilter, EqualFilter};
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
+    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     MasterList, MasterListLineRepository, MasterListRepository, RepositoryError, RequisitionLine,
     RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
     StorageConnection,
 };
-use util::uuid::uuid;
+
+use super::generate_requisition_lines;
 
 pub struct AddFromMasterList {
     pub request_requisition_id: String,
@@ -37,8 +38,9 @@ pub fn add_from_master_list(
     let requisition_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
-            let new_requisition_line_rows = generate(connection, &input)?;
+            let requisition_row = validate(connection, store_id, &input)?;
+            let new_requisition_line_rows =
+                generate(connection, store_id, requisition_row, &input)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
 
@@ -62,7 +64,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &AddFromMasterList,
-) -> Result<(), OutError> {
+) -> Result<RequisitionRow, OutError> {
     let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
         .ok_or(OutError::RequistionDoesNotExist)?;
 
@@ -81,11 +83,13 @@ fn validate(
     check_master_list_for_store(connection, store_id, &input.master_list_id)?
         .ok_or(OutError::MasterListNotFoundForThisStore)?;
 
-    Ok(())
+    Ok(requisition_row)
 }
 
 fn generate(
     connection: &StorageConnection,
+    store_id: &str,
+    requistion_row: RequisitionRow,
     input: &AddFromMasterList,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let requisition_lines = get_lines_for_requisition(connection, &input.request_requisition_id)?;
@@ -102,24 +106,17 @@ fn generate(
                 .item_id(EqualFilter::not_equal_all(item_ids_in_requisition)),
         )?;
 
-    let result: Vec<RequisitionLineRow> = master_list_lines_not_in_requisition
+    let items_ids_not_in_requisition: Vec<String> = master_list_lines_not_in_requisition
         .into_iter()
-        .map(|master_list_line| {
-            // TODO add values when ItemStats is done
-            RequisitionLineRow {
-                id: uuid(),
-                requisition_id: input.request_requisition_id.clone(),
-                item_id: master_list_line.item_id,
-                requested_quantity: 0,
-                calculated_quantity: 0,
-                supply_quantity: 0,
-                stock_on_hand: 0,
-                average_monthly_consumption: 0,
-            }
-        })
+        .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    Ok(result)
+    Ok(generate_requisition_lines(
+        connection,
+        store_id,
+        &requistion_row,
+        items_ids_not_in_requisition,
+    )?)
 }
 
 pub fn check_master_list_for_store(
@@ -147,9 +144,9 @@ mod test {
         mock::{
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_item_a, mock_item_b, mock_item_c,
-            mock_item_d, mock_item_e, mock_item_f, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, mock_test_add_from_master_list,
-            mock_test_not_store_a_master_list, MockDataInserts,
+            mock_item_d, mock_item_stats_item1, mock_item_stats_item2,
+            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
+            mock_test_add_from_master_list, mock_test_not_store_a_master_list, MockDataInserts,
         },
         test_db::setup_all,
     };
@@ -270,6 +267,7 @@ mod test {
         assert_eq!(result, lines);
 
         let mut item_ids: Vec<String> = lines
+            .clone()
             .into_iter()
             .map(|requisition_line| requisition_line.requisition_line_row.item_id)
             .collect();
@@ -283,9 +281,27 @@ mod test {
                 mock_item_b().id,
                 mock_item_c().id,
                 mock_item_d().id,
-                mock_item_e().id,
-                mock_item_f().id
+                mock_item_stats_item1().id,
+                mock_item_stats_item2().id
             ]
         );
+        // Check calculated and stats, as per test_item_stats_repository test
+        let line = lines
+            .iter()
+            .find(|line| line.requisition_line_row.item_id == mock_item_stats_item1().id)
+            .unwrap();
+
+        assert_eq!(line.requisition_line_row.stock_on_hand, 210);
+        assert_eq!(line.requisition_line_row.average_monthly_consumption, 15);
+        assert_eq!(line.requisition_line_row.calculated_quantity, 0);
+
+        let line = lines
+            .iter()
+            .find(|line| line.requisition_line_row.item_id == mock_item_stats_item2().id)
+            .unwrap();
+
+        assert_eq!(line.requisition_line_row.stock_on_hand, 22);
+        assert_eq!(line.requisition_line_row.average_monthly_consumption, 5);
+        assert_eq!(line.requisition_line_row.calculated_quantity, 10 * 5 - 22);
     }
 }
