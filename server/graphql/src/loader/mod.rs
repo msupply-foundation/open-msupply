@@ -2,6 +2,7 @@ mod invoice;
 mod invoice_line;
 mod invoice_line_query;
 mod item;
+mod item_stats;
 mod loader_registry;
 mod location;
 mod master_list_line;
@@ -13,12 +14,14 @@ mod stock_take_lines;
 mod store;
 mod user_account;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, hash::Hasher};
 
+use chrono::NaiveDateTime;
 pub use invoice::*;
 pub use invoice_line::InvoiceLineLoader;
 pub use invoice_line_query::*;
 pub use item::ItemLoader;
+pub use item_stats::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
 pub use location::LocationByIdLoader;
 pub use master_list_line::MasterListLineByMasterListId;
@@ -55,4 +58,17 @@ fn extract_unique_requisition_and_item_id(
         requisition_ids.into_iter().collect(),
         item_ids.into_iter().collect(),
     )
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ItemStatsLoaderInput {
+    pub item_id: String,
+    pub store_id: String,
+    pub look_back_datetime: Option<NaiveDateTime>,
+}
+
+impl std::hash::Hash for ItemStatsLoaderInput {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.item_id.hash(state);
+    }
 }

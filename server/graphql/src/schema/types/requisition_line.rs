@@ -17,7 +17,7 @@ use crate::{
     ContextExt,
 };
 
-use super::{Connector, InvoiceLineNode, ItemNode, ItemStats};
+use super::{Connector, InvoiceLineNode, ItemNode, ItemStatsNode};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -129,8 +129,8 @@ impl RequisitionLineNode {
     }
 
     /// Snapshot Stats (when requisition was created)
-    pub async fn item_stats(&self) -> ItemStats {
-        ItemStats {
+    pub async fn item_stats(&self) -> ItemStatsNode {
+        ItemStatsNode {
             average_monthly_consumption: *&self.average_monthly_consumption,
             stock_on_hand: *&self.stock_on_hand,
         }
