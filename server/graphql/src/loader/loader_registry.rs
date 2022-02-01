@@ -10,10 +10,10 @@ use async_graphql::dataloader::DataLoader;
 
 use super::{
     invoice::InvoiceByRequisitionIdLoader, name::NameByIdLoader, InvoiceLineForRequisitionLine,
-    InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, LinkedRequisitionLineLoader,
-    LocationByIdLoader, MasterListLineByMasterListId, RequisitionLinesByRequisitionIdLoader,
-    RequisitionsByIdLoader, StockLineByIdLoader, StockLineByItemIdLoader,
-    StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
+    InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
+    LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
+    RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
+    StockLineByItemIdLoader, StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -120,6 +120,10 @@ pub async fn get_loaders(
             service_provider: service_provider.clone(),
         });
 
+    let item_stats_for_item_loader = DataLoader::new(ItemsStatsForItemLoader {
+        service_provider: service_provider.clone(),
+    });
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
@@ -140,6 +144,7 @@ pub async fn get_loaders(
     loaders.insert(requisitions_by_id_loader);
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
+    loaders.insert(item_stats_for_item_loader);
 
     loaders
 }

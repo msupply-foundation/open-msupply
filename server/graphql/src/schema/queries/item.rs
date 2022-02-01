@@ -1,12 +1,13 @@
 use async_graphql::*;
-use domain::{PaginationOption, SimpleStringFilter};
+use domain::{PaginationOption, SimpleStringFilter, EqualFilter};
 use repository::ItemFilter;
 use service::item::get_items;
 
 use crate::{
     schema::types::{
         sort_filter_types::{
-            convert_sort, EqualFilterBoolInput, SimpleStringFilterInput, SortInput,
+            convert_sort, EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput,
+            SortInput,
         },
         ConnectorError, ItemNode, PaginationInput,
     },
@@ -24,6 +25,7 @@ pub type ItemSortInput = SortInput<ItemSortFieldInput>;
 
 #[derive(InputObject, Clone)]
 pub struct ItemFilterInput {
+    pub id: Option<EqualFilterStringInput>,
     pub name: Option<SimpleStringFilterInput>,
     pub code: Option<SimpleStringFilterInput>,
     pub is_visible: Option<EqualFilterBoolInput>,
@@ -32,7 +34,7 @@ pub struct ItemFilterInput {
 impl From<ItemFilterInput> for ItemFilter {
     fn from(f: ItemFilterInput) -> Self {
         ItemFilter {
-            id: None,
+            id: f.id.map(EqualFilter::from),
             name: f.name.map(SimpleStringFilter::from),
             code: f.code.map(SimpleStringFilter::from),
             is_visible: f.is_visible.and_then(|filter| filter.equal_to),
