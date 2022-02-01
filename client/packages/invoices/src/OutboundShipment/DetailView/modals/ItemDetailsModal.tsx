@@ -37,8 +37,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   item,
   mode,
 }) => {
-  const [currentItem, setCurrentItem] = useBufferState(item);
   const t = useTranslation(['distribution']);
+  const { Modal } = useDialog({ isOpen, onClose });
+  const [currentItem, setCurrentItem] = useBufferState(item);
+
   const { mutate } = useSaveOutboundLines();
   const { status } = useOutboundFields('status');
   const {
@@ -46,13 +48,13 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
     updateQuantity,
     setDraftOutboundLines,
     isLoading,
-  } = useDraftOutboundLines(item);
+  } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
-  const { Modal } = useDialog({ isOpen, onClose });
-  const nextItem = useNextItem();
+  const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
 
   const onNext = () => {
-    setCurrentItem(nextItem);
+    setCurrentItem(next);
+    return true;
   };
 
   const onAllocate = allocateQuantities(
@@ -69,7 +71,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={mode === ModalMode.Create}
+          disabled={mode === ModalMode.Create || nextDisabled}
           variant="next"
           onClick={onNext}
         />

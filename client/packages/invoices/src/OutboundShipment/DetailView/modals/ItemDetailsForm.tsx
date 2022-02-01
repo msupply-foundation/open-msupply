@@ -113,17 +113,19 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 
             <Box marginLeft={1} />
 
-            <Select
-              sx={{ width: 110 }}
-              options={packSizeController.options}
-              value={packSizeController.selected.value}
-              onChange={e => {
-                const { value } = e.target;
-                const packSize = Number(value);
-                packSizeController.setPackSize(packSize);
-                onChangeQuantity(quantity, packSize === -1 ? null : packSize);
-              }}
-            />
+            {packSizeController.options.length && (
+              <Select
+                sx={{ width: 110 }}
+                options={packSizeController.options}
+                value={packSizeController.selected.value}
+                onChange={e => {
+                  const { value } = e.target;
+                  const packSize = Number(value);
+                  packSizeController.setPackSize(packSize);
+                  onChangeQuantity(quantity, packSize === -1 ? null : packSize);
+                }}
+              />
+            )}
 
             <Box marginLeft="auto" />
           </Grid>
