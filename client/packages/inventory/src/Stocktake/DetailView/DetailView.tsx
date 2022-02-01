@@ -4,6 +4,11 @@ import {
   createTableStore,
   Item,
   useEditModal,
+  DetailViewSkeleton,
+  AlertModal,
+  RouteBuilder,
+  useNavigate,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -14,15 +19,22 @@ import { StocktakeLine, StocktakeSummaryItem } from '../../types';
 
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
+import { useStocktake } from '../api/hooks';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
   const { isOpen, entity, onOpen, onClose, mode } = useEditModal<Item>();
+  const { data, isLoading } = useStocktake();
+  const navigate = useNavigate();
+  const t = useTranslation('inventory');
 
   const onRowClick = (item: StocktakeLine | StocktakeSummaryItem) => {
     onOpen(toItem(item));
   };
 
-  return (
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+
+  return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
@@ -40,5 +52,18 @@ export const DetailView: FC = () => {
         />
       )}
     </TableProvider>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stocktake)
+            .build()
+        )
+      }
+      title={t('error.stocktake-not-found')}
+      message={t('messages.click-to-return')}
+    />
   );
 };

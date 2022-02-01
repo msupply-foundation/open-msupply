@@ -424,7 +424,7 @@ export const useSaveInboundLines = () => {
 };
 
 export const useDraftInbound = () => {
-  const { data } = useInboundShipment();
+  const { data, isLoading } = useInboundShipment();
 
   const { mutateAsync: optimisticUpdate } = useOptimisticInboundUpdate();
 
@@ -436,6 +436,7 @@ export const useDraftInbound = () => {
   return {
     updateInvoice,
     draft: data,
+    isLoading,
   };
 };
 

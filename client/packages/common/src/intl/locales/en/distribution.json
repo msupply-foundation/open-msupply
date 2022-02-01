@@ -5,10 +5,10 @@
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.select-a-color": "Select a color",
   "dev.log-draft": "Log draft",
+  "error.requisition-not-found": "Requisition not found",
   "heading.edit-item": "Edit Item",
   "heading.related-documents": "Related documents",
   "label.add-batch": "Add batch",
-  "label.issue": "Issue",
   "label.allocated": "Allocated",
   "label.allocation": "Allocation",
   "label.any": "Any",
@@ -18,6 +18,7 @@
   "label.customer-ref": "Customer Ref",
   "label.group-by-item": "Group by Item",
   "label.in-store": "In store",
+  "label.issue": "Issue",
   "label.order-date": "Order date",
   "label.packs-of": "packs of",
   "label.placeholder": "Placeholder",
@@ -27,5 +28,6 @@
   "message.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "message.deleted-invoices": "Deleted {{number}} invoices",
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
-  "message.select-rows-to-delete": "Select rows to delete"
+  "message.select-rows-to-delete": "Select rows to delete",
+  "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list"
 }
