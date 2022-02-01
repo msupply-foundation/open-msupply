@@ -15,6 +15,7 @@ mod stock_take;
 mod stock_take_line;
 mod store;
 mod test_invoice_count_service;
+mod test_item_stats_repository;
 mod test_master_list_repository;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
@@ -43,6 +44,7 @@ pub use stock_take::*;
 pub use stock_take_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
+pub use test_item_stats_repository::*;
 pub use test_master_list_repository::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
@@ -298,6 +300,10 @@ fn all_mock_data() -> MockDataCollection {
         mock_test_requisition_line_repository(),
     );
     data.insert(
+        "mock_test_item_stats_repository",
+        mock_test_item_stats_repository(),
+    );
+    data.insert(
         "mock_test_requisition_service",
         mock_test_requisition_service(),
     );
@@ -309,6 +315,7 @@ fn all_mock_data() -> MockDataCollection {
         "mock_test_master_list_repository",
         mock_test_master_list_repository(),
     );
+
     data
 }
 
