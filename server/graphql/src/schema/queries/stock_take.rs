@@ -54,6 +54,7 @@ impl From<StockTakeFilterInput> for StockTakeFilter {
                     .equal_any
                     .map(|types| types.into_iter().map(StockTakeStatus::from).collect()),
                 not_equal_to: status.not_equal_to.map(StockTakeStatus::from),
+                not_equal_all: None,
             }),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),

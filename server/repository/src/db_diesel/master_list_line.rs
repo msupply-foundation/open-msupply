@@ -65,6 +65,7 @@ fn create_filtered_query(
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, master_list_line_dsl::id);
+        apply_equal_filter!(query, f.item_id, master_list_line_dsl::item_id);
         apply_equal_filter!(
             query,
             f.master_list_id,
