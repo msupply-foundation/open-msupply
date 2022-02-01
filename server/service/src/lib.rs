@@ -7,6 +7,7 @@ pub mod dashboard;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
+pub mod item_stats;
 pub mod location;
 pub mod master_list;
 pub mod name;
