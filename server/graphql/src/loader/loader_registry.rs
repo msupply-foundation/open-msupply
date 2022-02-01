@@ -110,7 +110,7 @@ pub async fn get_loaders(
         service_provider: service_provider.clone(),
     });
 
-    let requisition_line_by_requisiton_id_loader =
+    let requisition_line_by_requisition_id_loader =
         DataLoader::new(RequisitionLinesByRequisitionIdLoader {
             service_provider: service_provider.clone(),
         });
@@ -138,7 +138,7 @@ pub async fn get_loaders(
     loaders.insert(master_list_line_by_master_list_id);
     loaders.insert(stock_take_line_loader);
     loaders.insert(requisitions_by_id_loader);
-    loaders.insert(requisition_line_by_requisiton_id_loader);
+    loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
 
     loaders
