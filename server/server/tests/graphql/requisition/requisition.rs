@@ -52,7 +52,7 @@ mod graphql {
     #[actix_rt::test]
     async fn test_graphql_get_requisition() {
         let (_, _, connection_manager, settings) =
-            setup_all("test_graphql_get_requisitions", MockDataInserts::all()).await;
+            setup_all("test_graphql_get_requisition", MockDataInserts::all()).await;
 
         let query = r#"
         query($page: PaginationInput, $filter: RequisitionFilterInput, $sort: [RequisitionSortInput!]) {
