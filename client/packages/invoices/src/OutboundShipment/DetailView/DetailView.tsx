@@ -8,8 +8,6 @@ import {
   useToggle,
   useOmSupplyApi,
   Item,
-  ColumnAlign,
-  ColumnFormat,
   DetailViewSkeleton,
 } from '@openmsupply-client/common';
 import { useItemsList } from '@openmsupply-client/system';
