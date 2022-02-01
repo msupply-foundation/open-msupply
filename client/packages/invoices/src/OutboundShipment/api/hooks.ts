@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import {
+  useQueryClient,
   InvoiceNodeStatus,
   useQuerySelector,
   useParams,
@@ -10,7 +11,9 @@ import {
   useFieldsSelector,
   groupBy,
   getColumnSorter,
+  getDataSorter,
   useSortBy,
+  useMutation,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -106,17 +109,15 @@ export const useOutboundRows = (isGrouped = true) => {
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
-    return items?.sort(sorter);
+    return [...(items ?? [])].sort(sorter);
   }, [items, sortBy.key, sortBy.isDesc]);
 
   const sortedLines = useMemo(() => {
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
-      currentColumn?.getSortValue,
+    const sorter = getDataSorter<InvoiceLine, keyof InvoiceLine>(
+      sortBy.key as keyof InvoiceLine,
       !!sortBy.isDesc
     );
-    return lines?.sort(sorter);
+    return [...(lines ?? [])].sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
   const rows = isGrouped ? sortedItems : sortedLines;
@@ -128,4 +129,15 @@ export const useOutboundRows = (isGrouped = true) => {
     onChangeSortBy,
     sortBy,
   };
+};
+
+export const useSaveOutboundLines = () => {
+  const queryKey = useOutboundDetailQueryKey();
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  return useMutation(OutboundApi.updateLines(api), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(queryKey);
+    },
+  });
 };

@@ -1,9 +1,8 @@
 import React from 'react';
 import {
+  NumericTextInput,
   Divider,
-  FieldValues,
   isAlmostExpired,
-  ModalNumericInput,
   Table,
   TableBody,
   TableCell,
@@ -11,54 +10,23 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  UseFormRegister,
-  useFormContext,
   useFormatDate,
   useTranslation,
   ReadOnlyInput,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { BatchRow } from '../../../types';
-import { PackSizeController } from './ItemDetailsModal';
-
+import { DraftOutboundLine } from '../../../types';
+import { PackSizeController } from './hooks';
+import { sortByExpiry } from './utils';
+import { useOutboundFields } from '../../api';
 export interface BatchesTableProps {
-  invoiceStatus: InvoiceNodeStatus;
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
-  register: UseFormRegister<FieldValues>;
-  rows: BatchRow[];
+  rows: DraftOutboundLine[];
 }
 
-export const sortByExpiry = (a: BatchRow, b: BatchRow) => {
-  const expiryA = new Date(a.expiryDate ?? '');
-  const expiryB = new Date(b.expiryDate ?? '');
-
-  if (expiryA < expiryB) {
-    return -1;
-  }
-  if (expiryA > expiryB) {
-    return 1;
-  }
-
-  return 0;
-};
-
-export const sortByExpiryDesc = (a: BatchRow, b: BatchRow) => {
-  const expiryA = new Date(a.expiryDate ?? '');
-  const expiryB = new Date(b.expiryDate ?? '');
-
-  if (expiryA < expiryB) {
-    return 1;
-  }
-  if (expiryA > expiryB) {
-    return -1;
-  }
-
-  return 0;
-};
-
 type BatchesRowProps = {
-  batch: BatchRow;
+  batch: DraftOutboundLine;
   disabled?: boolean;
   onChange?: (key: string, value: number, packSize: number) => void;
 };
@@ -67,26 +35,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
   disabled,
   onChange,
 }) => {
-  const { register } = useFormContext();
-  const t = useTranslation('common');
   const d = useFormatDate();
-
-  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event => {
-    const value = Math.max(Number(event.target.value), 0);
-    const newValue = Math.min(value, batch.availableNumberOfPacks);
-
-    onChange?.(batch.id, newValue, batch.packSize);
-  };
-
-  const stockLineInputProps = register(batch.id, {
-    min: { value: 0, message: t('error.invalid-value') },
-    max: {
-      value: batch.availableNumberOfPacks,
-      message: t('error.invalid-value'),
-    },
-    pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
-    onChange: onChangeValue,
-  });
 
   const expiryDate = new Date(batch.expiryDate ?? '');
   const isDisabled = !!disabled;
@@ -95,9 +44,13 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
   return (
     <TableRow sx={{ color: isDisabled ? 'gray.main' : 'black' }}>
       <BasicCell sx={{ width: '88px' }}>
-        <ModalNumericInput
+        <NumericTextInput
+          onChange={event => {
+            const value = Math.max(Number(event.target.value), 0);
+            const newValue = Math.min(value, batch.availableNumberOfPacks);
+            onChange?.(batch.id, newValue, batch.packSize);
+          }}
           value={batch.numberOfPacks}
-          inputProps={stockLineInputProps}
           disabled={isDisabled}
         />
       </BasicCell>
@@ -106,7 +59,6 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
         <ReadOnlyInput
           number
           value={String(batch.numberOfPacks * batch.packSize)}
-          {...register(`${batch.id}_total`)}
         />
       </BasicCell>
       <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>
@@ -155,21 +107,12 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
 );
 
 export const BatchesTable: React.FC<BatchesTableProps> = ({
-  invoiceStatus,
   onChange,
   packSizeController,
-  register,
   rows,
 }) => {
   const t = useTranslation(['distribution', 'common']);
-  const onChangeValue: React.ChangeEventHandler<HTMLInputElement> = event =>
-    onChange('placeholder', Number(event.target.value), 1);
-
-  const placeholderInputProps = register('placeholder', {
-    min: { value: 0, message: t('error.invalid-value') },
-    pattern: { value: /^[0-9]+$/, message: t('error.invalid-value') },
-    onChange: onChangeValue,
-  });
+  const { status } = useOutboundFields('status');
 
   const placeholderRow = rows.find(({ id }) => id === 'placeholder');
 
@@ -181,10 +124,10 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
     packSizeController.selected.value === -1 ||
     packSize === packSizeController.selected.value;
 
-  const allocatableRows: BatchRow[] = [];
-  const onHoldRows: BatchRow[] = [];
-  const noStockRows: BatchRow[] = [];
-  const wrongPackSizeRows: BatchRow[] = [];
+  const allocatableRows: DraftOutboundLine[] = [];
+  const onHoldRows: DraftOutboundLine[] = [];
+  const noStockRows: DraftOutboundLine[] = [];
+  const wrongPackSizeRows: DraftOutboundLine[] = [];
 
   rowsWithoutPlaceholder.forEach(row => {
     if (row.onHold) {
@@ -245,10 +188,12 @@ export const BatchesTable: React.FC<BatchesTableProps> = ({
                 {t('label.placeholder')}
               </BasicCell>
               <BasicCell sx={{ paddingTop: '3px' }}>
-                <ModalNumericInput
+                <NumericTextInput
+                  onChange={event => {
+                    onChange('placeholder', Number(event.target.value), 1);
+                  }}
                   value={placeholderRow?.numberOfPacks ?? 0}
-                  inputProps={placeholderInputProps}
-                  disabled={invoiceStatus !== InvoiceNodeStatus.New}
+                  disabled={status !== InvoiceNodeStatus.New}
                 />
               </BasicCell>
             </TableRow>
