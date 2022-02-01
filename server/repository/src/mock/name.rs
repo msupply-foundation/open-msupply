@@ -16,7 +16,7 @@ pub fn mock_name_store_b() -> NameRow {
         name: String::from("Store B"),
         code: String::from("code"),
         is_customer: false,
-        is_supplier: true,
+        is_supplier: false,
     }
 }
 

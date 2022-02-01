@@ -15,6 +15,7 @@ mod stock_take;
 mod stock_take_line;
 mod store;
 mod test_invoice_count_service;
+mod test_master_list_repository;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_requisition_line_repository;
@@ -42,6 +43,7 @@ pub use stock_take::*;
 pub use stock_take_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
+pub use test_master_list_repository::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_requisition_line_repository::*;
@@ -82,7 +84,7 @@ pub struct MockData {
     pub stock_lines: Vec<StockLineRow>,
     pub invoice_lines: Vec<InvoiceLineRow>,
     pub full_invoices: HashMap<String, FullMockInvoice>,
-    pub full_master_list: HashMap<String, FullMockMasterList>,
+    pub full_master_lists: Vec<FullMockMasterList>,
     pub numbers: Vec<NumberRow>,
     pub requisitions: Vec<RequisitionRow>,
     pub requisition_lines: Vec<RequisitionLineRow>,
@@ -102,7 +104,7 @@ pub struct MockDataInserts {
     pub stock_lines: bool,
     pub invoice_lines: bool,
     pub full_invoices: bool,
-    pub full_master_list: bool,
+    pub full_master_lists: bool,
     pub numbers: bool,
     pub requisitions: bool,
     pub requisition_lines: bool,
@@ -124,7 +126,7 @@ impl MockDataInserts {
             stock_lines: true,
             invoice_lines: true,
             full_invoices: true,
-            full_master_list: true,
+            full_master_lists: true,
             numbers: true,
             requisitions: true,
             requisition_lines: true,
@@ -146,7 +148,7 @@ impl MockDataInserts {
             stock_lines: false,
             invoice_lines: false,
             full_invoices: false,
-            full_master_list: false,
+            full_master_lists: false,
             numbers: false,
             requisitions: false,
             requisition_lines: false,
@@ -206,7 +208,7 @@ impl MockDataInserts {
     }
 
     pub fn full_master_list(mut self) -> Self {
-        self.full_master_list = true;
+        self.full_master_lists = true;
         self
     }
 
@@ -267,7 +269,7 @@ fn all_mock_data() -> MockDataCollection {
             stock_lines: mock_stock_lines(),
             invoice_lines: mock_invoice_lines(),
             full_invoices: mock_full_invoices(),
-            full_master_list: mock_full_master_list(),
+            full_master_lists: mock_full_master_lists(),
             numbers: mock_numbers(),
             stock_takes: mock_stock_take_data(),
             stock_take_lines: mock_stock_take_line_data(),
@@ -302,6 +304,10 @@ fn all_mock_data() -> MockDataCollection {
     data.insert(
         "mock_test_requisition_queries",
         mock_test_requisition_queries(),
+    );
+    data.insert(
+        "mock_test_master_list_repository",
+        mock_test_master_list_repository(),
     );
     data
 }
@@ -387,8 +393,8 @@ pub async fn insert_mock_data(
             }
         }
 
-        if inserts.full_master_list {
-            for row in mock_data.full_master_list.values() {
+        if inserts.full_master_lists {
+            for row in mock_data.full_master_lists.iter() {
                 insert_full_mock_master_list(row, connection)
             }
         }
