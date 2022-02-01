@@ -109,7 +109,7 @@ export const useDraftOutboundLines = (
       rows.push(createPlaceholderRow(invoiceId));
       return rows;
     });
-  }, [data, lines]);
+  }, [data, lines, item]);
 
   useEffect(() => {
     if (draftOutboundLines?.length === 0) {
