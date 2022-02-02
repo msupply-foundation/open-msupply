@@ -454,11 +454,11 @@ impl Mutations {
     async fn update_response_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::UpdateInput,
     ) -> Result<response_requisition::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::update(ctx, store_id, input)
+        response_requisition::update(ctx, &store_id, input)
     }
 
     async fn update_response_requisition_line(
@@ -475,11 +475,11 @@ impl Mutations {
     async fn supply_requested_quantity(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::SupplyRequestedQuantityInput,
     ) -> Result<response_requisition::SupplyRequestedQuantityResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::supply_requested_quantity(ctx, store_id, input)
+        response_requisition::supply_requested_quantity(ctx, &store_id, input)
     }
 
     /// Create shipment for response requisition
@@ -489,11 +489,11 @@ impl Mutations {
     async fn create_requisition_shipment(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::CreateRequisitionShipmentInput,
     ) -> Result<response_requisition::CreateRequisitionShipmentResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::create_requisition_shipment(ctx, store_id, input)
+        response_requisition::create_requisition_shipment(ctx, &store_id, input)
     }
 }
 
