@@ -48,5 +48,11 @@
   "cmdk.goto-customers": "Go to: Customers",
   "cmdk.goto-suppliers": "Go to: Suppliers",
   "cmdk.goto-reports": "Go to: Reports",
-  "cmdk.placeholder": "Type a command or search"
+  "cmdk.placeholder": "Type a command or search",
+  "login.heading": "Simple. Powerful. Pharmaceutical Management.",
+  "login.body": "Whether you run a pharmaceutical distribution warehouse, or are a manufacturer needing dozens of connected users, or a small dispensary, mSupply is a valuable partner.",
+  "heading.username": "Username",
+  "heading.password": "Password",
+  "heading.store": "Store",
+  "button.login": "Log in"
 }
