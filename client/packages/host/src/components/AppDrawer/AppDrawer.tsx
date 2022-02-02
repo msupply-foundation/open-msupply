@@ -226,7 +226,7 @@ export const AppDrawer: React.FC = () => {
             text={t('admin')}
           />
           <AppNavLink
-            to={AppRoute.Logout}
+            to={AppRoute.Login}
             icon={<PowerIcon fontSize="small" color="primary" />}
             text={t('logout')}
           />
