@@ -21,6 +21,7 @@ pub mod stock_line;
 pub mod stock_take;
 pub mod stock_take_line;
 pub mod store;
+pub mod sync_processor;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
