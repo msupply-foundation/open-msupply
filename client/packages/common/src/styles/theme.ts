@@ -36,6 +36,9 @@ declare module '@mui/material/styles/createMixins' {
       selectedBackgroundColor?: string;
       textColor?: string;
     };
+    gradient: {
+      primary: string;
+    };
     icon: {
       medium: { width: number; height: number };
     };
@@ -84,7 +87,7 @@ declare module '@mui/material/styles/createPalette' {
     menu: string;
     toolbar: string;
     white: string;
-    gradient: { from: string; to: string };
+    login: string;
   }
 
   interface TypeForm {
@@ -130,6 +133,9 @@ export const themeOptions = {
     },
     saveButtonRow: { height: 40 },
     footer: { height: 32 },
+    gradient: {
+      primary: 'linear-gradient(156deg, #f80 4%, #e63535 96%)',
+    },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },
     table: {
@@ -157,7 +163,7 @@ export const themeOptions = {
       menu: '#f2f2f5',
       toolbar: '#fafafc',
       white: '#fff',
-      gradient: { from: '#f80', to: '#e63535' },
+      login: '#f2f2f5',
     },
 
     form: {

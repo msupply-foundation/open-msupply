@@ -1,9 +1,7 @@
 import React, { FC } from 'react';
-import { StandardTextFieldProps, TextField } from '@mui/material';
+import { StandardTextFieldProps, TextField } from '@openmsupply-client/common';
 
-export type LoginTextInputProps = StandardTextFieldProps;
-
-export const LoginTextInput: FC<LoginTextInputProps> = React.forwardRef(
+export const LoginTextInput: FC<StandardTextFieldProps> = React.forwardRef(
   ({ sx, InputProps, error, ...props }, ref) => (
     <TextField
       ref={ref}
