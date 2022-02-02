@@ -9,12 +9,14 @@ import {
   Typography,
   useNavigate,
   Autocomplete,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AutocompleteRenderInputParams } from '@mui/material/Autocomplete';
 
 export const Login: React.FC = ({}) => {
   const navigate = useNavigate();
+  const t = useTranslation('app');
   const onLogin = () => {
     navigate(`/${AppRoute.Dashboard}`);
   };
@@ -28,7 +30,7 @@ export const Login: React.FC = ({}) => {
       {...props}
       InputProps={{ ...props.InputProps }}
       style={{ width: 282 }}
-      label="Store"
+      label={t('heading.store')}
     />
   );
 
@@ -37,7 +39,8 @@ export const Login: React.FC = ({}) => {
       <Box
         flex="1 0 50%"
         sx={{
-          backgroundImage: 'linear-gradient(156deg, #f80 4%, #e63535 96%)',
+          backgroundImage: theme =>
+            `linear-gradient(156deg, ${theme.palette.background.gradient.from} 4%, ${theme.palette.background.gradient.to} 96%)`,
           padding: '0 80px 7% 80px',
         }}
         display="flex"
@@ -48,24 +51,25 @@ export const Login: React.FC = ({}) => {
         <Box>
           <Typography
             sx={{
-              color: '#fafafa',
+              color: theme => theme.typography.body2.color,
               fontSize: '64px',
               fontWeight: 'bold',
               lineHeight: 'normal',
+              maxWidth: '525px',
             }}
           >
-            Simple.
-            <br />
-            Powerful. Pharmaceutical Management.
+            {t('login.heading')}
           </Typography>
         </Box>
         <Box style={{ marginTop: 45 }}>
           <Typography
-            sx={{ fontSize: '20px', color: '#fafafa', fontWeight: 600 }}
+            sx={{
+              fontSize: theme => theme.typography.body2.fontSize,
+              color: theme => theme.typography.body2.color,
+              fontWeight: theme => theme.typography.body2.fontWeight,
+            }}
           >
-            Whether you run a pharmaceutical distribution warehouse, or are a
-            manufacturer needing dozens of connected users, or a small
-            dispensary, mSupply is a valuable partner.
+            {t('login.body')}
           </Typography>
         </Box>
       </Box>
@@ -83,8 +87,12 @@ export const Login: React.FC = ({}) => {
             <Box display="flex" justifyContent="center">
               <MSupplyGuyGradient style={{ width: 122, height: 180 }} />
             </Box>
-            <LoginTextInput fullWidth label="Username" />
-            <LoginTextInput fullWidth label="Password" type="password" />
+            <LoginTextInput fullWidth label={t('heading.username')} />
+            <LoginTextInput
+              fullWidth
+              label={t('heading.password')}
+              type="password"
+            />
             <Autocomplete
               options={stores}
               width="282px"
@@ -96,7 +104,7 @@ export const Login: React.FC = ({}) => {
                 variant="outlined"
                 endIcon={<ArrowRightIcon />}
               >
-                Log in
+                {t('button.login')}
               </BaseButton>
             </Box>
           </Stack>
