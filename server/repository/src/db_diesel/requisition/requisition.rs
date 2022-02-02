@@ -50,6 +50,13 @@ impl<'a> RequisitionRepository<'a> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
+    pub fn query_one(
+        &self,
+        filter: RequisitionFilter,
+    ) -> Result<Option<Requisition>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     pub fn query(
         &self,
         pagination: Pagination,
@@ -118,9 +125,15 @@ fn create_filtered_query(
         their_reference,
         comment,
         store_id,
+        linked_requisition_id,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition_dsl::id);
+        apply_equal_filter!(
+            query,
+            linked_requisition_id,
+            requisition_dsl::linked_requisition_id
+        );
         apply_equal_filter!(
             query,
             requisition_number,
