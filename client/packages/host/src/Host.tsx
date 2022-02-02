@@ -17,8 +17,7 @@ import {
   RandomLoader,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { Viewport } from './components';
-import { Login } from './Login';
+import { Login, Viewport } from './components';
 import { Site } from './Site';
 
 const queryClient = new QueryClient({

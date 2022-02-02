@@ -18,6 +18,7 @@
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/requisitions": "^0.0.0",
     "date-fns": "^2.27.0",
+    "dompurify": "^2.3.5",
     "graphql-import-node": "^0.0.4",
     "graphql-request": "^3.7.0",
     "history": "^5.1.0",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@types/css-mediaquery": "^0.1.1",
+    "@types/dompurify": "^2.3.3",
     "@types/material-ui": "^0.21.12",
     "@types/react-table": "^7.7.2",
     "@types/uuid": "^8.3.1",
