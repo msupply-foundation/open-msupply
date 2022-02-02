@@ -27,6 +27,7 @@ export const HeaderCell = <T extends DomainObject>({
   dense = false,
 }: HeaderCellProps<T>): JSX.Element => {
   const {
+    maxWidth,
     minWidth,
     width,
     onChangeSortBy,
@@ -60,6 +61,7 @@ export const HeaderCell = <T extends DomainObject>({
         paddingRight: '16px',
         width,
         minWidth,
+        maxWidth,
         flex: `${width} 0 auto`,
         fontWeight: 'bold',
         fontSize: dense ? '12px' : '14px',
