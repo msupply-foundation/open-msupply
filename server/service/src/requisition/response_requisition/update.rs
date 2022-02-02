@@ -22,7 +22,7 @@ pub struct UpdateResponseRequisition {
 #[derive(Debug, PartialEq)]
 
 pub enum UpdateResponseRequisitionError {
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotAResponseRequisition,
@@ -59,8 +59,8 @@ pub fn validate(
     store_id: &str,
     input: &UpdateResponseRequisition,
 ) -> Result<RequisitionRow, OutError> {
-    let requisition_row =
-        check_requisition_exists(connection, &input.id)?.ok_or(OutError::RequistionDoesNotExist)?;
+    let requisition_row = check_requisition_exists(connection, &input.id)?
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -168,7 +168,7 @@ mod test_update {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.update_response_requisition(
                 &context,
@@ -181,7 +181,7 @@ mod test_update {
                     comment: None,
                 },
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition

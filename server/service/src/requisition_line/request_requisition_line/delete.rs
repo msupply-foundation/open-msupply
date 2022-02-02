@@ -18,7 +18,7 @@ pub enum DeleteRequestRequisitionLineError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -51,7 +51,7 @@ fn validate(
 
     let requisition_row =
         check_requisition_exists(connection, &requisition_line_row.requisition_id)?
-            .ok_or(OutError::RequistionDoesNotExist)?;
+            .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);

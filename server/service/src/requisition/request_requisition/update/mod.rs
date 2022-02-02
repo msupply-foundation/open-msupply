@@ -10,10 +10,12 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
+#[derive(Debug, PartialEq)]
 pub enum UpdateRequestRequstionStatus {
     Sent,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct UpdateRequestRequisition {
     pub id: String,
     pub colour: Option<String>,
@@ -27,7 +29,7 @@ pub struct UpdateRequestRequisition {
 #[derive(Debug, PartialEq)]
 
 pub enum UpdateRequestRequisitionError {
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use domain::EqualFilter;
 use repository::{
-    schema::{RequisitionRowStatus, RequisitionRowType, RequisitionRow},
+    schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnection,
 };
 
@@ -16,7 +16,7 @@ pub fn validate(
     input: &CreateRequisitionShipment,
 ) -> Result<(RequisitionRow, Vec<ItemFulFillment>), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.response_requisition_id)?
-        .ok_or(OutError::RequistionDoesNotExist)?;
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);

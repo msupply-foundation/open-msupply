@@ -13,6 +13,7 @@ use repository::{
     NameQueryRepository, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub struct InsertRequestRequisition {
     pub id: String,
     pub other_party_id: String,

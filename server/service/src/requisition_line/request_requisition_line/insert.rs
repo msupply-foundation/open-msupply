@@ -26,7 +26,7 @@ pub struct InsertRequestRequisitionLine {
 pub enum InsertRequestRequisitionLineError {
     RequisitionLineAlreadyExists,
     ItemAlreadyExistInRequisition,
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
@@ -68,7 +68,7 @@ fn validate(
     }
 
     let requisition_row = check_requisition_exists(connection, &input.requisition_id)?
-        .ok_or(OutError::RequistionDoesNotExist)?;
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -92,7 +92,7 @@ fn validate(
 fn generate(
     connection: &StorageConnection,
     store_id: &str,
-    requistion_row: RequisitionRow,
+    requisition_row: RequisitionRow,
     InsertRequestRequisitionLine {
         id,
         requisition_id: _,
@@ -101,7 +101,7 @@ fn generate(
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut new_requisition_line =
-        generate_requisition_lines(connection, store_id, &requistion_row, vec![item_id])?
+        generate_requisition_lines(connection, store_id, &requisition_row, vec![item_id])?
             .pop()
             .ok_or(OutError::ProblemCreatingRequisitionLine)?;
 
@@ -185,7 +185,7 @@ mod test {
             Err(ServiceError::ItemAlreadyExistInRequisition)
         );
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
@@ -197,7 +197,7 @@ mod test {
                     requested_quantity: None,
                 },
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition
