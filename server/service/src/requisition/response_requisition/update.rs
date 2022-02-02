@@ -8,9 +8,11 @@ use repository::{
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub enum UpdateResponseRequstionStatus {
     Finalised,
 }
+#[derive(Debug, PartialEq)]
 pub struct UpdateResponseRequisition {
     pub id: String,
     pub colour: Option<String>,

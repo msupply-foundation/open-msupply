@@ -14,6 +14,7 @@ mod validate;
 use generate::*;
 use validate::*;
 
+#[derive(Debug, PartialEq)]
 pub struct CreateRequisitionShipment {
     pub response_requisition_id: String,
 }

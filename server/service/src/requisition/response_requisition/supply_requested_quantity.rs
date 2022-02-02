@@ -9,6 +9,7 @@ use repository::{
     RequisitionLineRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub struct SupplyRequestedQuantity {
     pub response_requisition_id: String,
 }
