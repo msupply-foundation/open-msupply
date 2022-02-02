@@ -10,9 +10,40 @@ import {
   useNavigate,
   Autocomplete,
   useTranslation,
+  useLocalStorage,
+  useTheme,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AutocompleteRenderInputParams } from '@mui/material/Autocomplete';
+
+const LoginIcon: React.FC = () => {
+  const [customLogo] = useLocalStorage('/theme/logo');
+  const logoStyle = { width: 122, height: 180 };
+  const theme = useTheme();
+
+  if (!customLogo) return <MSupplyGuyGradient style={logoStyle} />;
+
+  const matches = customLogo.match(/<svg([^>]*)>([\w\W]*)<\/svg>/i);
+  if (matches?.length || 0 > 2) {
+    const paths = matches?.[2] || '';
+    const viewBox = (matches?.[1] || '').match(/viewBox=['"]([^'"]+)['"]/i);
+    const style = {
+      ...logoStyle,
+      fill: theme.palette.background.gradient.from,
+    };
+
+    return viewBox && viewBox.length > 1 ? (
+      <svg
+        dangerouslySetInnerHTML={{ __html: paths }}
+        viewBox={viewBox[1]}
+        style={style}
+      />
+    ) : (
+      <svg dangerouslySetInnerHTML={{ __html: customLogo }} style={style} />
+    );
+  }
+  return null;
+};
 
 export const Login: React.FC = ({}) => {
   const navigate = useNavigate();
@@ -76,7 +107,7 @@ export const Login: React.FC = ({}) => {
       <Box
         flex="1 0 50%"
         sx={{
-          backgroundColor: 'background.drawer',
+          backgroundColor: 'background.menu',
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -85,7 +116,7 @@ export const Login: React.FC = ({}) => {
         <Box style={{ width: 285 }}>
           <Stack spacing={5}>
             <Box display="flex" justifyContent="center">
-              <MSupplyGuyGradient style={{ width: 122, height: 180 }} />
+              <LoginIcon />
             </Box>
             <LoginTextInput fullWidth label={t('heading.username')} />
             <LoginTextInput
