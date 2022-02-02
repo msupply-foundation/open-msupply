@@ -169,6 +169,7 @@ mod graphql {
                 their_reference,
                 comment,
                 store_id: _,
+                linked_requisition_id: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
