@@ -5,6 +5,7 @@ import { Story } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
 import { InputWithLabelRow } from './InputWithLabelRow';
 import { NumericTextInput } from './NumericTextInput';
+import { LoginTextInput } from './LoginTextInput';
 
 export default {
   title: 'Inputs/TextInputs',
@@ -44,6 +45,10 @@ const Template: Story = () => (
               label="Name"
               Input={<BasicTextInput value="Some content" disabled />}
             />
+          </StyledPaper>
+          <StyledPaper style={{ backgroundColor: '#eee' }}>
+            <Typography>Login</Typography>
+            <LoginTextInput label="Username" />
           </StyledPaper>
         </Grid>
       </Grid>
