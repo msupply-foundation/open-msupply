@@ -9,6 +9,7 @@ use repository::{
     RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub struct UpdateRequestRequisitionLine {
     pub id: String,
     pub requested_quantity: Option<u32>,
