@@ -395,6 +395,7 @@ mod repository_test {
                     code: None,
                     is_customer: None,
                     is_supplier: None,
+                    store_id: None,
                 }),
                 None,
             )
@@ -414,6 +415,7 @@ mod repository_test {
                     code: None,
                     is_customer: None,
                     is_supplier: None,
+                    store_id: None,
                 }),
                 None,
             )
@@ -433,6 +435,7 @@ mod repository_test {
                     code: None,
                     is_customer: None,
                     is_supplier: None,
+                    store_id: None,
                 }),
                 None,
             )
@@ -473,6 +476,7 @@ mod repository_test {
                     }),
                     is_customer: None,
                     is_supplier: None,
+                    store_id: None,
                 }),
                 None,
             )
