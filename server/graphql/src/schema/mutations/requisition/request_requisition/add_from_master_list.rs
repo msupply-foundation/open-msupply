@@ -1,39 +1,126 @@
+use crate::{
+    schema::{
+        mutations::{requisition::errors::CannotEditRequisition, RecordDoesNotExist},
+        types::RequisitionLineConnector,
+    },
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use async_graphql::*;
-
-use crate::schema::{
-    mutations::{requisition::errors::CannotEditRequisition, RecordDoesNotExist},
-    types::RequisitionNode,
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    requisition::request_requisition::{
+        AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
+    },
 };
 
 #[derive(InputObject)]
 pub struct AddFromMasterListInput {
-    pub response_requisition_id: String,
+    pub request_requisition_id: String,
     pub master_list_id: String,
 }
 
 #[derive(Interface)]
+#[graphql(name = "AddFromMasterListErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
-pub enum AddFromMasterListErrorInterface {
+pub enum DeleteErrorInterface {
     RecordDoesNotExist(RecordDoesNotExist),
-    // TODO master list visible in current store
+    MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),
     CannotEditRequisition(CannotEditRequisition),
 }
 
 #[derive(SimpleObject)]
-pub struct AddFromMasterListError {
-    pub error: AddFromMasterListErrorInterface,
+#[graphql(name = "AddFromMasterListError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
 }
 
 #[derive(Union)]
+#[graphql(name = "AddFromMasterListResponse")]
 pub enum AddFromMasterListResponse {
-    Error(AddFromMasterListError),
-    Response(RequisitionNode),
+    Error(DeleteError),
+    Response(RequisitionLineConnector),
 }
 
 pub fn add_from_master_list(
-    _ctx: &Context<'_>,
-    _store_id: Option<String>,
-    _input: AddFromMasterListInput,
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: AddFromMasterListInput,
 ) -> Result<AddFromMasterListResponse> {
-    todo!()
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::EditRequisition,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider.requisition_service.add_from_master_list(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ) {
+        Ok(requisition_lines) => AddFromMasterListResponse::Response(
+            RequisitionLineConnector::from_vec(requisition_lines),
+        ),
+        Err(error) => AddFromMasterListResponse::Error(DeleteError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(response)
+}
+
+impl AddFromMasterListInput {
+    fn to_domain(self) -> ServiceInput {
+        let AddFromMasterListInput {
+            request_requisition_id,
+            master_list_id,
+        } = self;
+        ServiceInput {
+            request_requisition_id,
+            master_list_id,
+        }
+    }
+}
+
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::RequisitionDoesNotExist => {
+            return Ok(DeleteErrorInterface::RecordDoesNotExist(
+                RecordDoesNotExist {},
+            ))
+        }
+        ServiceError::CannotEditRequisition => {
+            return Ok(DeleteErrorInterface::CannotEditRequisition(
+                CannotEditRequisition {},
+            ))
+        }
+        ServiceError::MasterListNotFoundForThisStore => {
+            return Ok(DeleteErrorInterface::MasterListNotFoundForThisStore(
+                MasterListNotFoundForThisStore {},
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
+        ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
+}
+
+pub struct MasterListNotFoundForThisStore;
+#[Object]
+impl MasterListNotFoundForThisStore {
+    pub async fn description(&self) -> &'static str {
+        "Master list for this store is not found (might not be visible in this store)"
+    }
 }

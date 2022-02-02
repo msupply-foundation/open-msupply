@@ -372,53 +372,53 @@ impl Mutations {
     async fn insert_request_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::InsertInput,
     ) -> Result<request_requisition::InsertResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::insert(ctx, store_id, input)
+        request_requisition::insert(ctx, &store_id, input)
     }
 
     async fn update_request_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::UpdateInput,
     ) -> Result<request_requisition::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::update(ctx, store_id, input)
+        request_requisition::update(ctx, &store_id, input)
     }
 
     async fn delete_request_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::DeleteInput,
     ) -> Result<request_requisition::DeleteResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::delete(ctx, store_id, input)
+        request_requisition::delete(ctx, &store_id, input)
     }
 
     /// Set requested for each line in request requisition to calculated
     async fn use_calculated_quantity(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::UseCalculatedQuantityInput,
     ) -> Result<request_requisition::UseCalculatedQuantityResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::use_calculated_quantity(ctx, store_id, input)
+        request_requisition::use_calculated_quantity(ctx, &store_id, input)
     }
 
     /// Add requisition lines from master item master list
     async fn add_from_master_list(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::AddFromMasterListInput,
     ) -> Result<request_requisition::AddFromMasterListResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::add_from_master_list(ctx, store_id, input)
+        request_requisition::add_from_master_list(ctx, &store_id, input)
     }
 
     async fn insert_request_requisition_line(

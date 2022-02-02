@@ -1,6 +1,15 @@
+use crate::{
+    schema::types::RequisitionNode,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use async_graphql::*;
-
-use crate::schema::types::{NameNode, RequisitionNode};
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    requisition::request_requisition::{
+        InsertRequestRequisition as ServiceInput, InsertRequestRequisitionError as ServiceError,
+    },
+};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertRequestRequisitionInput")]
@@ -18,19 +27,7 @@ pub struct InsertInput {
 #[graphql(name = "InsertRequestRequisitionErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
-    OtherPartyNotASupplierStore(OtherPartyNotASupplierStore),
-}
-
-pub struct OtherPartyNotASupplierStore(NameNode);
-#[Object]
-impl OtherPartyNotASupplierStore {
-    pub async fn description(&self) -> &'static str {
-        "Other party name is not a supplier store"
-    }
-
-    pub async fn other_party(&self) -> &NameNode {
-        &self.0
-    }
+    OtherPartyNotASupplier(OtherPartyNotASupplier),
 }
 
 #[derive(SimpleObject)]
@@ -46,10 +43,82 @@ pub enum InsertResponse {
     Response(RequisitionNode),
 }
 
-pub fn insert(
-    _ctx: &Context<'_>,
-    _store_id: Option<String>,
-    _input: InsertInput,
-) -> Result<InsertResponse> {
-    todo!();
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::EditRequisition,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider
+        .requisition_service
+        .insert_request_requisition(&service_context, store_id, input.to_domain())
+    {
+        Ok(requisition) => InsertResponse::Response(RequisitionNode::from_domain(requisition)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(response)
+}
+
+impl InsertInput {
+    fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            other_party_id,
+            colour,
+            their_reference,
+            comment,
+            max_months_of_stock,
+            threshold_months_of_stock,
+        } = self;
+
+        ServiceInput {
+            id,
+            other_party_id,
+            colour,
+            their_reference,
+            comment,
+            max_months_of_stock,
+            threshold_months_of_stock,
+        }
+    }
+}
+
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::OtherPartyNotASupplier => {
+            return Ok(InsertErrorInterface::OtherPartyNotASupplier(
+                OtherPartyNotASupplier {},
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::OtherPartyIsThisStore => BadUserInput(formatted_error),
+        ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
+        ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
+}
+
+pub struct OtherPartyNotASupplier;
+#[Object]
+impl OtherPartyNotASupplier {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a supplier"
+    }
 }
