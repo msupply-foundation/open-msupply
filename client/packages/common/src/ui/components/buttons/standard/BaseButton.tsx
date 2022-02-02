@@ -14,7 +14,7 @@ export const StyledBaseButton = styled(MuiButton)(
       }
 
       if (color === 'primary') {
-        return 'rgb(163, 64, 33)';
+        return theme.palette.primary.main;
       }
 
       if (color === 'secondary') {
