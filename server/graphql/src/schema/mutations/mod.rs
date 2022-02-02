@@ -424,31 +424,31 @@ impl Mutations {
     async fn insert_request_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::line::InsertInput,
     ) -> Result<request_requisition::line::InsertResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::line::insert(ctx, store_id, input)
+        request_requisition::line::insert(ctx, &store_id, input)
     }
 
     async fn update_request_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::line::UpdateInput,
     ) -> Result<request_requisition::line::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::line::update(ctx, store_id, input)
+        request_requisition::line::update(ctx, &store_id, input)
     }
 
     async fn delete_request_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::line::DeleteInput,
     ) -> Result<request_requisition::line::DeleteResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::line::delete(ctx, store_id, input)
+        request_requisition::line::delete(ctx, &store_id, input)
     }
 
     async fn update_response_requisition(
@@ -464,11 +464,11 @@ impl Mutations {
     async fn update_response_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::line::UpdateInput,
     ) -> Result<response_requisition::line::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::line::update(ctx, store_id, input)
+        response_requisition::line::update(ctx, &store_id, input)
     }
 
     /// Set supply quantity to requested quantity
