@@ -34,6 +34,17 @@ impl<'a> ItemStatsRepository<'a> {
         ItemStatsRepository { connection }
     }
 
+    pub fn query_one(
+        &self,
+        store_id: &str,
+        look_back_datetime: Option<NaiveDateTime>,
+        filter: ItemStatsFilter,
+    ) -> Result<Option<ItemStats>, RepositoryError> {
+        Ok(self
+            .query(store_id, look_back_datetime, Some(filter))?
+            .pop())
+    }
+
     pub fn query(
         &self,
         store_id: &str,
