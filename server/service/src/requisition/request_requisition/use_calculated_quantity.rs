@@ -9,6 +9,7 @@ use repository::{
     RequisitionLineRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub struct UseCalculatedQuantity {
     pub request_requisition_id: String,
 }
