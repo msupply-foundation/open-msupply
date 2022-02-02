@@ -33,6 +33,8 @@ export const DataRow = <T extends DomainObject>({
 
   const onRowClick = () => onClick && onClick(rowData);
   const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
+  const paddingX = dense ? '12px' : '16px';
+  const paddingY = dense ? '4px' : undefined;
 
   return (
     <>
@@ -63,15 +65,18 @@ export const DataRow = <T extends DomainObject>({
                   justifyContent: 'flex-end',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
-                  paddingLeft: '16px',
-                  paddingRight: '16px',
+                  paddingLeft: paddingX,
+                  paddingRight: paddingX,
+                  paddingTop: paddingY,
+                  paddingBottom: paddingY,
                   ...(hasOnClick && { cursor: 'pointer' }),
                   flex: `${column.width} 0 auto`,
                   minWidth: column.minWidth,
+                  maxWidth: column.maxWidth,
                   width: column.width,
                   color: 'inherit',
                   fontSize: dense ? '12px' : '14px',
-                  padding: dense ? '12px' : undefined,
+                  backgroundColor: column.backgroundColor,
                 }}
               >
                 <column.Cell
