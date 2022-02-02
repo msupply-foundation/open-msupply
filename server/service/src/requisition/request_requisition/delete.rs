@@ -7,6 +7,7 @@ use repository::{
     RepositoryError, RequisitionRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub struct DeleteRequestRequisition {
     pub id: String,
 }
@@ -14,10 +15,10 @@ pub struct DeleteRequestRequisition {
 #[derive(Debug, PartialEq)]
 
 pub enum DeleteRequestRequisitionError {
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
-    CannotDeleteRequistionWithLines,
+    CannotDeleteRequisitionWithLines,
     NotARequestRequisition,
     DatabaseError(RepositoryError),
 }
@@ -48,8 +49,8 @@ fn validate(
     store_id: &str,
     input: &DeleteRequestRequisition,
 ) -> Result<(), OutError> {
-    let requisition_row =
-        check_requisition_exists(connection, &input.id)?.ok_or(OutError::RequistionDoesNotExist)?;
+    let requisition_row = check_requisition_exists(connection, &input.id)?
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -64,7 +65,7 @@ fn validate(
     }
 
     if !get_lines_for_requisition(connection, &input.id)?.is_empty() {
-        return Err(OutError::CannotDeleteRequistionWithLines);
+        return Err(OutError::CannotDeleteRequisitionWithLines);
     }
 
     Ok(())
@@ -106,7 +107,7 @@ mod test_delete {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.delete_request_requisition(
                 &context,
@@ -115,7 +116,7 @@ mod test_delete {
                     id: "invalid".to_owned(),
                 },
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition
@@ -154,7 +155,7 @@ mod test_delete {
             Err(ServiceError::NotARequestRequisition)
         );
 
-        // CannotDeleteRequistionWithLines
+        // CannotDeleteRequisitionWithLines
         assert_eq!(
             service.delete_request_requisition(
                 &context,
@@ -165,7 +166,7 @@ mod test_delete {
                         .id,
                 },
             ),
-            Err(ServiceError::CannotDeleteRequistionWithLines)
+            Err(ServiceError::CannotDeleteRequisitionWithLines)
         );
     }
 

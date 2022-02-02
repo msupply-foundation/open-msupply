@@ -10,8 +10,8 @@ pub fn validate(
     store_id: &str,
     input: &UpdateRequestRequisition,
 ) -> Result<RequisitionRow, OutError> {
-    let requisition_row =
-        check_requisition_exists(connection, &input.id)?.ok_or(OutError::RequistionDoesNotExist)?;
+    let requisition_row = check_requisition_exists(connection, &input.id)?
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);

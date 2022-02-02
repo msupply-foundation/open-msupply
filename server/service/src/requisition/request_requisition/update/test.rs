@@ -30,7 +30,7 @@ mod test_update {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.update_request_requisition(
                 &context,
@@ -45,7 +45,7 @@ mod test_update {
                     threshold_months_of_stock: None,
                 },
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition

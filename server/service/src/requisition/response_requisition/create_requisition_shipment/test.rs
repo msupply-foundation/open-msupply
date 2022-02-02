@@ -27,7 +27,7 @@ mod test_update {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
@@ -36,7 +36,7 @@ mod test_update {
                     response_requisition_id: "invalid".to_owned(),
                 },
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition

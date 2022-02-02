@@ -16,7 +16,7 @@ pub struct SupplyRequestedQuantity {
 #[derive(Debug, PartialEq)]
 
 pub enum SupplyRequestedQuantityError {
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotAResponseRequisition,
@@ -61,7 +61,7 @@ fn validate(
     input: &SupplyRequestedQuantity,
 ) -> Result<(), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.response_requisition_id)?
-        .ok_or(OutError::RequistionDoesNotExist)?;
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -136,7 +136,7 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.supply_requested_quantity(
                 &context,
@@ -145,7 +145,7 @@ mod test {
                     response_requisition_id: "invalid".to_owned(),
                 }
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition

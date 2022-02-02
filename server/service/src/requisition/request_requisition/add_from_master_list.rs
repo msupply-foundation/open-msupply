@@ -12,6 +12,7 @@ use repository::{
 
 use super::generate_requisition_lines;
 
+#[derive(Debug, PartialEq)]
 pub struct AddFromMasterList {
     pub request_requisition_id: String,
     pub master_list_id: String,
@@ -20,7 +21,7 @@ pub struct AddFromMasterList {
 #[derive(Debug, PartialEq)]
 
 pub enum AddFromMasterListError {
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
     MasterListNotFoundForThisStore,
@@ -66,7 +67,7 @@ fn validate(
     input: &AddFromMasterList,
 ) -> Result<RequisitionRow, OutError> {
     let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
-        .ok_or(OutError::RequistionDoesNotExist)?;
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -89,7 +90,7 @@ fn validate(
 fn generate(
     connection: &StorageConnection,
     store_id: &str,
-    requistion_row: RequisitionRow,
+    requisition_row: RequisitionRow,
     input: &AddFromMasterList,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let requisition_lines = get_lines_for_requisition(connection, &input.request_requisition_id)?;
@@ -114,7 +115,7 @@ fn generate(
     Ok(generate_requisition_lines(
         connection,
         store_id,
-        &requistion_row,
+        &requisition_row,
         items_ids_not_in_requisition,
     )?)
 }
@@ -168,7 +169,7 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
-        // RequistionDoesNotExist
+        // RequisitionDoesNotExist
         assert_eq!(
             service.add_from_master_list(
                 &context,
@@ -178,7 +179,7 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::RequistionDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
         // NotThisStoreRequisition

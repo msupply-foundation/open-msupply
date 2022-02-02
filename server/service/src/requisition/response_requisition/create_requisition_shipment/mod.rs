@@ -25,7 +25,7 @@ pub struct ItemFulFillment {
 
 #[derive(Debug, PartialEq)]
 pub enum CreateRequisitionShipmentError {
-    RequistionDoesNotExist,
+    RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotAResponseRequisition,
