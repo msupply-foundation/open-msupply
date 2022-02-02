@@ -7,6 +7,7 @@ use crate::{
         query::get_requisition_line,
     },
     service_provider::ServiceContext,
+    stock_take_line::validate::check_item_exists,
 };
 
 use repository::{
@@ -14,6 +15,7 @@ use repository::{
     RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
 };
 
+#[derive(Debug, PartialEq)]
 pub struct InsertRequestRequisitionLine {
     pub id: String,
     pub item_id: String,
@@ -26,6 +28,8 @@ pub struct InsertRequestRequisitionLine {
 pub enum InsertRequestRequisitionLineError {
     RequisitionLineAlreadyExists,
     ItemAlreadyExistInRequisition,
+    ItemDoesNotExist,
+    // TODO  ItemIsNotVisibleInThisStore,
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
@@ -84,6 +88,10 @@ fn validate(
 
     if let Some(_) = check_item_exists_in_requisition(connection, &input.item_id)? {
         return Err(OutError::ItemAlreadyExistInRequisition);
+    }
+
+    if !check_item_exists(connection, &input.item_id)? {
+        return Err(OutError::ItemDoesNotExist);
     }
 
     Ok(requisition_row)
@@ -243,6 +251,23 @@ mod test {
                 },
             ),
             Err(ServiceError::NotARequestRequisition)
+        );
+
+        // ItemDoesNotExist
+        assert_eq!(
+            service.insert_request_requisition_line(
+                &context,
+                "store_a",
+                InsertRequestRequisitionLine {
+                    requisition_id: mock_request_draft_requisition_calculation_test()
+                        .requisition
+                        .id,
+                    id: "n/a".to_owned(),
+                    item_id: "invalid".to_owned(),
+                    requested_quantity: None,
+                },
+            ),
+            Err(ServiceError::ItemDoesNotExist)
         );
     }
 
