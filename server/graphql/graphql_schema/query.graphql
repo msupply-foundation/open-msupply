@@ -4,6 +4,7 @@
 
 mutation insertInboundShipmentFull(
   $id: String!
+  $storeId: String!
   $otherPartyId: String!
   $on_hold_option: Boolean
   $comment_option: String
@@ -11,6 +12,7 @@ mutation insertInboundShipmentFull(
   $colour_option: String
 ) {
   insertInboundShipment(
+    storeId: $storeId
     input: {
       id: $id
       otherPartyId: $otherPartyId

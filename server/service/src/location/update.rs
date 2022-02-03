@@ -2,10 +2,7 @@ use super::{
     query::get_location,
     validate::{check_location_code_is_unique, check_location_exists},
 };
-use crate::{
-    service_provider::ServiceContext, validate::check_record_belongs_to_current_store,
-    SingleRecordError,
-};
+use crate::{service_provider::ServiceContext, SingleRecordError};
 use domain::location::{Location, UpdateLocation};
 use repository::{schema::LocationRow, LocationRowRepository, RepositoryError, StorageConnection};
 
@@ -20,12 +17,13 @@ pub enum UpdateLocationError {
 
 pub fn update_location(
     ctx: &ServiceContext,
+    store_id: &str,
     input: UpdateLocation,
 ) -> Result<Location, UpdateLocationError> {
     let location = ctx
         .connection
         .transaction_sync(|connection| {
-            let location_row = validate(&input, &connection)?;
+            let location_row = validate(connection, store_id, &input)?;
             let updated_location_row = generate(input, location_row);
             LocationRowRepository::new(&connection).upsert_one(&updated_location_row)?;
 
@@ -36,8 +34,9 @@ pub fn update_location(
 }
 
 pub fn validate(
-    input: &UpdateLocation,
     connection: &StorageConnection,
+    store_id: &str,
+    input: &UpdateLocation,
 ) -> Result<LocationRow, UpdateLocationError> {
     let location_row = match check_location_exists(&input.id, connection)? {
         Some(location_row) => location_row,
@@ -48,7 +47,7 @@ pub fn validate(
         return Err(UpdateLocationError::CodeAlreadyExists);
     }
 
-    if !check_record_belongs_to_current_store(&location_row.store_id, &connection)? {
+    if location_row.store_id != store_id {
         return Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore);
     }
 

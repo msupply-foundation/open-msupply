@@ -18,6 +18,7 @@ mod graphql {
         fn insert_location(
             &self,
             _: &ServiceContext,
+            _: &str,
             input: InsertLocation,
         ) -> Result<Location, InsertLocationError> {
             (self.0)(input)
@@ -43,7 +44,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertLocationInput!) {
-            insertLocation(input: $input) {
+            insertLocation(input: $input, storeId: \"store_a\") {
               ... on InsertLocationError {
                 error {
                   __typename
@@ -86,7 +87,7 @@ mod graphql {
         // Unique code violation
         let mutation = r#"
               mutation ($input: InsertLocationInput!) {
-                  insertLocation(input: $input) {
+                  insertLocation(input: $input, storeId: \"store_a\") {
                     ... on InsertLocationError {
                       error {
                         ... on UniqueValueViolation {
@@ -124,7 +125,7 @@ mod graphql {
         // Created record does not exists (this shouldn't happen, but want to test internal error)
         let mutation = r#"
          mutation ($input: InsertLocationInput!) {
-             insertLocation(input: $input) {
+             insertLocation(input: $input, storeId: \"store_a\") {
                ... on InsertLocationError {
                  error {
                    ... on InternalError {
@@ -172,7 +173,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertLocationInput!) {
-            insertLocation(input: $input) {
+            insertLocation(input: $input, storeId: \"store_a\") {
               ... on LocationNode {
                 id
                 code

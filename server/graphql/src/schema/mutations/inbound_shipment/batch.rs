@@ -33,6 +33,7 @@ pub struct BatchInboundShipmentResponse {
 
 pub fn get_batch_inbound_shipment_response(
     connection_manager: &StorageConnectionManager,
+    store_id: &str,
     insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
     insert_inbound_shipment_lines: Option<Vec<InsertInboundShipmentLineInput>>,
     update_inbound_shipment_lines: Option<Vec<UpdateInboundShipmentLineInput>>,
@@ -50,7 +51,8 @@ pub fn get_batch_inbound_shipment_response(
     };
 
     if let Some(inputs) = insert_inbound_shipments {
-        let (has_errors, responses) = do_insert_inbound_shipments(connection_manager, inputs);
+        let (has_errors, responses) =
+            do_insert_inbound_shipments(connection_manager, store_id, inputs);
         result.insert_inbound_shipments = Some(responses);
         if has_errors {
             return result;
@@ -102,6 +104,7 @@ pub fn get_batch_inbound_shipment_response(
 
 pub fn do_insert_inbound_shipments(
     connection: &StorageConnectionManager,
+    store_id: &str,
     inputs: Vec<InsertInboundShipmentInput>,
 ) -> (bool, Vec<MutationWithId<InsertInboundShipmentResponse>>) {
     let mut responses = Vec::new();
@@ -109,7 +112,7 @@ pub fn do_insert_inbound_shipments(
         let id = input.id.clone();
         responses.push(MutationWithId {
             id,
-            response: get_insert_inbound_shipment_response(connection, input),
+            response: get_insert_inbound_shipment_response(connection, store_id, input),
         });
     }
     let has_errors = responses.iter().any(|mutation_with_id| {

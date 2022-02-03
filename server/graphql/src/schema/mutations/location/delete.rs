@@ -13,17 +13,22 @@ use crate::{
     ContextExt,
 };
 
-pub fn delete_location(ctx: &Context<'_>, input: DeleteLocationInput) -> DeleteLocationResponse {
+pub fn delete_location(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: DeleteLocationInput,
+) -> DeleteLocationResponse {
     let service_provider = ctx.service_provider();
     let service_context = match service_provider.context() {
         Ok(service) => service,
         Err(error) => return DeleteLocationResponse::Error(error.into()),
     };
 
-    match service_provider
-        .location_service
-        .delete_location(&service_context, input.into())
-    {
+    match service_provider.location_service.delete_location(
+        &service_context,
+        store_id,
+        input.into(),
+    ) {
         Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
         Err(error) => DeleteLocationResponse::Error(error.into()),
     }
