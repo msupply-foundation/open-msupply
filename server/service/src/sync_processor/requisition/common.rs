@@ -1,19 +1,18 @@
-use chrono::Utc;
-use domain::{name::NameFilter, EqualFilter};
-use repository::{
-    schema::{
-        NumberRowType, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,
-    },
-    ItemStats, ItemStatsFilter, ItemStatsRepository, NameQueryRepository,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreRowRepository,
-};
-use util::uuid::uuid;
-
 use crate::{
     number::next_number,
     requisition::common::get_lines_for_requisition,
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
+use chrono::Utc;
+use domain::EqualFilter;
+use repository::{
+    schema::{
+        NumberRowType, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,
+    },
+    ItemStats, ItemStatsFilter, ItemStatsRepository, RequisitionLineRowRepository,
+    RequisitionRowRepository, StorageConnection,
+};
+use util::uuid::uuid;
 
 pub fn can_create_response_requisition(
     source_requisition: &RequisitionRow,
@@ -41,8 +40,10 @@ pub fn can_create_response_requisition(
 pub fn generate_and_integrate_linked_requisition(
     connection: &StorageConnection,
     source_requisition: &RequisitionRow,
+    record_for_processing: &RecordForProcessing,
 ) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), ProcessRecordError> {
-    let requisition_row = generate_linked_requisition(connection, &source_requisition)?;
+    let requisition_row =
+        generate_linked_requisition(connection, &source_requisition, record_for_processing)?;
     let requisition_line_rows =
         generate_linked_requisition_lines(connection, &requisition_row, &source_requisition)?;
 
@@ -60,9 +61,17 @@ pub fn generate_and_integrate_linked_requisition(
 pub fn generate_linked_requisition(
     connection: &StorageConnection,
     source_requisition: &RequisitionRow,
+    record_for_processing: &RecordForProcessing,
 ) -> Result<RequisitionRow, ProcessRecordError> {
-    let store_id = get_destination_store_id_for_requisition(connection, &source_requisition)?;
-    let name_id = get_source_name_id_for_requisition(connection, &source_requisition)?;
+    let store_id = record_for_processing
+        .other_party_store
+        .clone()
+        .ok_or(ProcessRecordError::StringError(
+            "other party store is not found".to_string(),
+        ))?
+        .id;
+
+    let name_id = record_for_processing.source_name.id.clone();
 
     let result = RequisitionRow {
         id: uuid(),
@@ -87,36 +96,6 @@ pub fn generate_linked_requisition(
     };
 
     Ok(result)
-}
-
-fn get_destination_store_id_for_requisition(
-    connection: &StorageConnection,
-    source_requisition: &RequisitionRow,
-) -> Result<String, ProcessRecordError> {
-    let name = NameQueryRepository::new(connection)
-        .query_one(NameFilter::new().id(EqualFilter::equal_to(&source_requisition.name_id)))?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find name for source requisition".to_string(),
-        ))?;
-
-    let store_id = name.store_id.ok_or(ProcessRecordError::StringError(
-        "cannot find store for name in source requisition".to_string(),
-    ))?;
-
-    Ok(store_id.clone())
-}
-
-fn get_source_name_id_for_requisition(
-    connection: &StorageConnection,
-    source_requisition: &RequisitionRow,
-) -> Result<String, ProcessRecordError> {
-    let store = StoreRowRepository::new(connection)
-        .find_one_by_id(&source_requisition.store_id)?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find store for name in source requisition".to_string(),
-        ))?;
-
-    Ok(store.name_id)
 }
 
 fn generate_linked_requisition_lines(
