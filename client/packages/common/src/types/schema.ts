@@ -412,7 +412,8 @@ export type DeleteStockTakeLineResponse = DeleteStockTakeLineNode;
 
 export type DeleteStockTakeNode = {
   __typename?: 'DeleteStockTakeNode';
-  stockTakeId: Scalars['String'];
+  /** The id of the deleted stock take */
+  id: Scalars['String'];
 };
 
 export type DeleteStockTakeResponse = DeleteStockTakeNode;
@@ -487,6 +488,12 @@ export type EqualFilterInvoiceTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeType>>;
   equalTo?: InputMaybe<InvoiceNodeType>;
   notEqualTo?: InputMaybe<InvoiceNodeType>;
+};
+
+export type EqualFilterStockTakeStatusInput = {
+  equalAny?: InputMaybe<Array<StockTakeNodeStatus>>;
+  equalTo?: InputMaybe<StockTakeNodeStatus>;
+  notEqualTo?: InputMaybe<StockTakeNodeStatus>;
 };
 
 export type EqualFilterStringInput = {
@@ -989,6 +996,7 @@ export type InvoiceNode = {
   otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  otherPartyStore?: Maybe<StoreNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: InvoicePriceResponse;
   shippedDatetime?: Maybe<Scalars['DateTime']>;
@@ -1614,6 +1622,7 @@ export type NameConnector = {
 export type NameFilterInput = {
   /** Filter by code */
   code?: InputMaybe<SimpleStringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
@@ -1629,6 +1638,7 @@ export type NameNode = {
   isCustomer: Scalars['Boolean'];
   isSupplier: Scalars['Boolean'];
   name: Scalars['String'];
+  store?: Maybe<StoreNode>;
 };
 
 export type NameResponse = NameNode | NodeError;
@@ -1748,6 +1758,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   invoice: InvoiceResponse;
+  invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
@@ -1768,6 +1779,7 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCounts;
+  stockTakes: StockTakesResponse;
   stocktake: StocktakeResponse;
   stocktakes: StocktakesResponse;
   stores: StoresResponse;
@@ -1782,6 +1794,12 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesInvoiceArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueriesInvoiceByNumberArgs = {
+  invoiceNumber: Scalars['Int'];
+  type: InvoiceNodeType;
 };
 
 
@@ -1838,6 +1856,14 @@ export type QueriesRequisitionsArgs = {
 export type QueriesStockCountsArgs = {
   daysTillExpired?: InputMaybe<Scalars['Int']>;
   timezoneOffset?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueriesStockTakesArgs = {
+  filter?: InputMaybe<StockTakeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StockTakeSortInput>>;
+  storeId?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -2070,6 +2096,20 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
 
+export type StockTakeConnector = {
+  __typename?: 'StockTakeConnector';
+  nodes: Array<StockTakeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StockTakeFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterStockTakeStatusInput>;
+  stockTakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
+};
+
 export type StockTakeLineConnector = {
   __typename?: 'StockTakeLineConnector';
   nodes: Array<StockTakeLineNode>;
@@ -2087,7 +2127,6 @@ export type StockTakeLineNode = {
   item?: Maybe<ItemNode>;
   itemId: Scalars['String'];
   location?: Maybe<LocationNode>;
-  locationId?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   sellPricePerPack?: Maybe<Scalars['Float']>;
@@ -2103,15 +2142,36 @@ export type StockTakeNode = {
   description?: Maybe<Scalars['String']>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']>;
   id: Scalars['String'];
+  inventoryAdjustment?: Maybe<InvoiceNode>;
   inventoryAdjustmentId?: Maybe<Scalars['String']>;
+  lines: StockTakeLineConnector;
   status: StockTakeNodeStatus;
+  stockTakeNumber: Scalars['Int'];
   storeId: Scalars['String'];
 };
 
 export enum StockTakeNodeStatus {
-  Finalized = 'FINALIZED',
+  Finalised = 'FINALISED',
   New = 'NEW'
 }
+
+export enum StockTakeSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  FinalisedDatetime = 'finalisedDatetime',
+  Status = 'status'
+}
+
+export type StockTakeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: StockTakeSortFieldInput;
+};
+
+export type StockTakesResponse = StockTakeConnector;
 
 export type StocktakeConnector = {
   __typename?: 'StocktakeConnector';
@@ -2919,6 +2979,23 @@ export type UpdateLocationMutationVariables = Exact<{
 
 
 export type UpdateLocationMutation = { __typename?: 'Mutations', updateLocation: { __typename?: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } };
+
+export type StoresQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  filter?: InputMaybe<StoreFilterInput>;
+}>;
+
+
+export type StoresQuery = { __typename?: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename?: 'StoreNode', code: string, id: string }> } };
+
+export type AuthTokenQueryVariables = Exact<{
+  username: Scalars['String'];
+  password: Scalars['String'];
+}>;
+
+
+export type AuthTokenQuery = { __typename?: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
 
 
 export const InvoiceDocument = gql`
@@ -4191,6 +4268,54 @@ export const UpdateLocationDocument = gql`
   }
 }
     `;
+export const StoresDocument = gql`
+    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(page: {first: $first, offset: $offset}, filter: $filter) {
+    ... on StoreConnector {
+      __typename
+      nodes {
+        code
+        id
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const AuthTokenDocument = gql`
+    query authToken($username: String!, $password: String!) {
+  authToken(password: $password, username: $username) {
+    ... on AuthToken {
+      __typename
+      token
+    }
+    ... on AuthTokenError {
+      __typename
+      error {
+        ... on UserNameDoesNotExist {
+          __typename
+          description
+        }
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        description
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -4303,6 +4428,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateLocationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation');
+    },
+    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores');
+    },
+    authToken(variables: AuthTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AuthTokenQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken');
     }
   };
 }
@@ -4900,5 +5031,39 @@ export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLReq
 export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLocationMutationVariables>, GraphQLContext<UpdateLocationMutation>, any>) =>
   graphql.mutation<UpdateLocationMutation, UpdateLocationMutationVariables>(
     'updateLocation',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockStoresQuery((req, res, ctx) => {
+ *   const { first, offset, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ stores })
+ *   )
+ * })
+ */
+export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
+  graphql.query<StoresQuery, StoresQueryVariables>(
+    'stores',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAuthTokenQuery((req, res, ctx) => {
+ *   const { username, password } = req.variables;
+ *   return res(
+ *     ctx.data({ authToken })
+ *   )
+ * })
+ */
+export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<AuthTokenQueryVariables>, GraphQLContext<AuthTokenQuery>, any>) =>
+  graphql.query<AuthTokenQuery, AuthTokenQueryVariables>(
+    'authToken',
     resolver
   )
