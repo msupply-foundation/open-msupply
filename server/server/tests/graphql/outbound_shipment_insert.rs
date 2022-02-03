@@ -27,7 +27,7 @@ mod graphql {
         let starting_invoice_number = mock_outbound_shipment_number_store_a().value;
 
         let query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
-            insertOutboundShipment(input: $input) {
+            insertOutboundShipment(input: $input, storeId: \"store_a\") {
                 ... on InsertOutboundShipmentError {
                   error {
                     __typename
@@ -73,7 +73,7 @@ mod graphql {
 
         // ForeignKeyError (OtherPartyIdNotFoundError)
         let foreign_key_query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
-          insertOutboundShipment(input: $input) {
+          insertOutboundShipment(input: $input, storeId: \"store_a\") {
               ... on InsertOutboundShipmentError {
                 error {
                   ... on ForeignKeyError {

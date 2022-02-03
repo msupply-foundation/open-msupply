@@ -25,6 +25,7 @@ mod graphql {
         fn delete_location(
             &self,
             _: &ServiceContext,
+            _: &str,
             input: DeleteLocation,
         ) -> Result<String, DeleteLocationError> {
             (self.0)(input)
@@ -50,7 +51,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: DeleteLocationInput!) {
-            deleteLocation(input: $input) {
+            deleteLocation(input: $input, storeId: \"store_a\") {
               ... on DeleteLocationError {
                 error {
                   __typename
@@ -112,7 +113,7 @@ mod graphql {
         // Location in use
         let mutation = r#"
         mutation ($input: DeleteLocationInput!) {
-            deleteLocation(input: $input) {
+            deleteLocation(input: $input, storeId: \"store_a\") {
               ... on DeleteLocationError {
                 error {
                   __typename
@@ -210,7 +211,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: DeleteLocationInput!) {
-            deleteLocation(input: $input) {
+            deleteLocation(input: $input, storeId: \"store_a\") {
               ... on DeleteResponse {
                 id
               }

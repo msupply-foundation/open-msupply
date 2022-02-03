@@ -18,6 +18,7 @@ mod graphql {
         fn update_location(
             &self,
             _: &ServiceContext,
+            _: &str,
             input: UpdateLocation,
         ) -> Result<Location, UpdateLocationError> {
             (self.0)(input)
@@ -43,7 +44,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateLocationInput!) {
-            updateLocation(input: $input) {
+            updateLocation(input: $input, storeId: \"store_a\") {
               ... on UpdateLocationError {
                 error {
                   __typename
@@ -107,7 +108,7 @@ mod graphql {
         // Unique code violation
         let mutation = r#"
               mutation ($input: UpdateLocationInput!) {
-                  updateLocation(input: $input) {
+                  updateLocation(input: $input, storeId: \"store_a\") {
                     ... on UpdateLocationError {
                       error {
                         ... on UniqueValueViolation {
@@ -142,7 +143,7 @@ mod graphql {
         // Created record does not exists (this shouldn't happen, but want to test internal error)
         let mutation = r#"
          mutation ($input: UpdateLocationInput!) {
-             updateLocation(input: $input) {
+             updateLocation(input: $input, storeId: \"store_a\") {
                ... on UpdateLocationError {
                  error {
                    ... on InternalError {
@@ -190,7 +191,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateLocationInput!) {
-            updateLocation(input: $input) {
+            updateLocation(input: $input, storeId: \"store_a\") {
               ... on LocationNode {
                 id
                 code
@@ -204,7 +205,6 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": "n/a",
-
           }
         }));
 
@@ -223,7 +223,6 @@ mod graphql {
                 "name": "name",
                 "code": "code",
                 "onHold": true
-
             }
           }
         );
