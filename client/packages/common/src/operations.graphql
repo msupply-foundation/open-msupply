@@ -1353,3 +1353,49 @@ mutation updateLocation($input: UpdateLocationInput!) {
     }
   }
 }
+
+query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(page: { first: $first, offset: $offset }, filter: $filter) {
+    ... on StoreConnector {
+      __typename
+      nodes {
+        code
+        id
+      }
+      totalCount
+    }
+  }
+}
+
+query authToken($username: String!, $password: String!) {
+  authToken(password: $password, username: $username) {
+    ... on AuthToken {
+      __typename
+      token
+    }
+    ... on AuthTokenError {
+      __typename
+      error {
+        ... on UserNameDoesNotExist {
+          __typename
+          description
+        }
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        description
+      }
+    }
+  }
+}

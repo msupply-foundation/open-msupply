@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
     <Box gap={2} display="flex" flex={1} alignItems="center">
       <PaddedCell>
         <HomeIcon sx={iconStyles} />
-        <Typography sx={textStyles}>{store.name}</Typography>
+        <Typography sx={textStyles}>{store.code}</Typography>
       </PaddedCell>
       <PaddedCell>
         <UserIcon sx={iconStyles} />

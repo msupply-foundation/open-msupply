@@ -9,10 +9,16 @@ import {
   Autocomplete,
   useTranslation,
   AutocompleteRenderInputParams,
+  defaultOptionMapper,
+  Store,
+  // useHostContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { LoginIcon } from './LoginIcon';
 import { LoginTextInput } from './LoginTextInput';
+import { useStores } from '@openmsupply-client/system';
+import create from 'zustand';
+import { useAuthToken } from './api';
 
 const StoreAutocompleteInput: React.FC<AutocompleteRenderInputParams> =
   props => {
@@ -27,17 +33,53 @@ const StoreAutocompleteInput: React.FC<AutocompleteRenderInputParams> =
     );
   };
 
+const storeSorter = (a: Store, b: Store) => {
+  if (a.code < b.code) return -1;
+  if (a.code > b.code) return 1;
+  return 0;
+};
+
+interface LoginForm {
+  password: string;
+  storeId?: string;
+  username: string;
+  setPassword: (password: string) => void;
+  setStoreId: (storeId?: string) => void;
+  setUsername: (username: string) => void;
+}
+const useLoginForm = create<LoginForm>(set => ({
+  password: '',
+  storeId: undefined,
+  username: '',
+  setPassword: (password: string) => set(state => ({ ...state, password })),
+  setStoreId: (storeId?: string) => set(state => ({ ...state, storeId })),
+  setUsername: (username: string) => set(state => ({ ...state, username })),
+}));
+
 export const Login: React.FC = ({}) => {
   const navigate = useNavigate();
   const t = useTranslation('app');
-  const onLogin = () => {
-    navigate(`/${AppRoute.Dashboard}`);
-  };
+  const { password, setPassword, storeId, setStoreId, username, setUsername } =
+    useLoginForm();
+  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
 
-  const stores = [
-    { label: 'Store 1', value: 'store1' },
-    { label: 'Store 2', value: 'store2' },
-  ];
+  const onLogin = () => {
+    setIsLoggingIn(true);
+  };
+  const { data, isLoading } = useStores();
+  const { data: authToken } = useAuthToken({ username, password }, isLoggingIn);
+
+  const stores = defaultOptionMapper(
+    (data?.nodes ?? []).sort(storeSorter),
+    'code'
+  );
+
+  React.useEffect(() => {
+    setIsLoggingIn(false);
+    if (authToken) {
+      navigate(`/${AppRoute.Dashboard}`);
+    }
+  }, [authToken]);
 
   return (
     <Box display="flex">
@@ -91,21 +133,32 @@ export const Login: React.FC = ({}) => {
             <Box display="flex" justifyContent="center">
               <LoginIcon />
             </Box>
-            <LoginTextInput fullWidth label={t('heading.username')} />
+            <LoginTextInput
+              fullWidth
+              label={t('heading.username')}
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+            />
             <LoginTextInput
               fullWidth
               label={t('heading.password')}
               type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
             />
             <Autocomplete
               renderInput={StoreAutocompleteInput}
+              loading={isLoading}
               options={stores}
+              onChange={(_, value) => setStoreId(value?.id)}
+              value={stores.find(store => store.id === storeId)}
             />
             <Box display="flex" justifyContent="flex-end">
               <BaseButton
                 onClick={onLogin}
                 variant="outlined"
                 endIcon={<ArrowRightIcon />}
+                disabled={!username || !password || !storeId || isLoggingIn}
               >
                 {t('button.login')}
               </BaseButton>
