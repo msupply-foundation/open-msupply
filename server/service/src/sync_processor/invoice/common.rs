@@ -5,7 +5,6 @@ use crate::{
 use chrono::Utc;
 use domain::{
     invoice_line::{InvoiceLine, InvoiceLineType},
-    name::{Name, NameFilter},
     EqualFilter,
 };
 use repository::{
@@ -14,8 +13,7 @@ use repository::{
         NumberRowType,
     },
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository,
-    NameQueryRepository, RepositoryError, RequisitionFilter, RequisitionRepository,
-    StorageConnection,
+    RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -47,8 +45,9 @@ pub fn can_create_inbound_invoice(
 pub fn generate_and_integrate_linked_invoice(
     connection: &StorageConnection,
     source_invoice: &InvoiceRow,
+    record_for_processing: &RecordForProcessing,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), ProcessRecordError> {
-    let invoice_row = generate_linked_invoice(connection, &source_invoice)?;
+    let invoice_row = generate_linked_invoice(connection, &source_invoice, record_for_processing)?;
     let (lines_to_delete, invoice_line_rows) =
         re_generate_linked_invoice_lines(connection, &invoice_row, &source_invoice)?;
 
@@ -69,9 +68,17 @@ pub fn generate_and_integrate_linked_invoice(
 pub fn generate_linked_invoice(
     connection: &StorageConnection,
     source_invoice: &InvoiceRow,
+    record_for_processing: &RecordForProcessing,
 ) -> Result<InvoiceRow, ProcessRecordError> {
-    let name = get_source_name_for_invoice(connection, &source_invoice)?;
-    let store_id = get_destination_store_id_for_invoice(connection, &source_invoice)?;
+    let store_id = record_for_processing
+        .other_party_store
+        .clone()
+        .ok_or(ProcessRecordError::StringError(
+            "other party store is not found".to_string(),
+        ))?
+        .id;
+
+    let name_id = record_for_processing.source_name.id.clone();
 
     let status = match &source_invoice.status {
         InvoiceRowStatus::Picked => InvoiceRowStatus::Picked,
@@ -86,9 +93,9 @@ pub fn generate_linked_invoice(
         id: uuid(),
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
         r#type: InvoiceRowType::InboundShipment,
-        name_id: name.id,
+        name_id,
         store_id,
-        name_store_id: name.store_id,
+        name_store_id: Some(source_invoice.store_id.clone()),
         status,
         created_datetime: Utc::now().naive_utc(),
         colour: None,
@@ -123,36 +130,6 @@ fn get_request_requisition_id_from_inbound_shipment(
     };
 
     Ok(result)
-}
-
-fn get_destination_store_id_for_invoice(
-    connection: &StorageConnection,
-    source_invoice: &InvoiceRow,
-) -> Result<String, ProcessRecordError> {
-    let name = NameQueryRepository::new(connection)
-        .query_one(NameFilter::new().id(EqualFilter::equal_to(&source_invoice.name_id)))?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find name for source invoice".to_string(),
-        ))?;
-
-    let store_id = name.store_id.ok_or(ProcessRecordError::StringError(
-        "cannot find store for name in source invoice".to_string(),
-    ))?;
-
-    Ok(store_id.clone())
-}
-
-fn get_source_name_for_invoice(
-    connection: &StorageConnection,
-    source_invoice: &InvoiceRow,
-) -> Result<Name, ProcessRecordError> {
-    let name = NameQueryRepository::new(connection)
-        .query_one(NameFilter::new().store_id(EqualFilter::equal_to(&source_invoice.store_id)))?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find name for source invoice".to_string(),
-        ))?;
-
-    Ok(name)
 }
 
 pub fn find_delete_lines(

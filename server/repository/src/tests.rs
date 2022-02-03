@@ -361,7 +361,7 @@ mod repository_test {
         let repo = NameRepository::new(&connection);
         let name_1 = data::name_1();
         repo.insert_one(&name_1).await.unwrap();
-        let loaded_item = repo.find_one_by_id(name_1.id.as_str()).await.unwrap();
+        let loaded_item = repo.find_one_by_id(name_1.id.as_str()).unwrap().unwrap();
         assert_eq!(name_1, loaded_item);
     }
 
