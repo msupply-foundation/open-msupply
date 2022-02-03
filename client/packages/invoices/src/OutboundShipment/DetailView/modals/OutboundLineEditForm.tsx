@@ -24,6 +24,7 @@ interface OutboundLineEditFormProps {
   onChangeItem: (newItem: Item | null) => void;
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
+  disabled: boolean;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -33,6 +34,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   item,
   packSizeController,
   availableQuantity,
+  disabled,
 }) => {
   const t = useTranslation(['distribution', 'common']);
   const quantity =
@@ -46,6 +48,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
+            disabled={disabled}
             currentItem={item}
             onChange={onChangeItem}
             extraFilter={item => !!items?.some(({ id }) => id === item.id)}

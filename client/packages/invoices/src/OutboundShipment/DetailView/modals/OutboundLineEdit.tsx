@@ -23,7 +23,11 @@ import {
   sumAvailableQuantity,
   getAllocatedQuantity,
 } from './utils';
-import { useOutboundFields, useSaveOutboundLines } from '../../api';
+import {
+  useIsOutboundDisabled,
+  useOutboundFields,
+  useSaveOutboundLines,
+} from '../../api';
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,6 +47,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
   const { mutate } = useSaveOutboundLines();
   const { status } = useOutboundFields('status');
+  const isDisabled = useIsOutboundDisabled();
   const {
     draftOutboundLines,
     updateQuantity,
@@ -94,6 +99,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     >
       <Grid container gap={0.5}>
         <OutboundLineEditForm
+          disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
           onChangeItem={setCurrentItem}
           item={currentItem}
