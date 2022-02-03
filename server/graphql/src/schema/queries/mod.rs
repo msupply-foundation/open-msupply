@@ -142,24 +142,27 @@ impl Queries {
     pub async fn invoice(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         #[graphql(desc = "id of the invoice")] id: String,
     ) -> InvoiceResponse {
         let connection_manager = ctx.get_connection_manager();
-        get_invoice(connection_manager, id)
+        get_invoice(connection_manager, Some(&store_id), id)
     }
 
     pub async fn invoice_by_number(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         invoice_number: u32,
         r#type: InvoiceNodeType,
     ) -> Result<InvoiceResponse> {
-        get_invoice_by_number(ctx, invoice_number, r#type)
+        get_invoice_by_number(ctx, &store_id, invoice_number, r#type)
     }
 
     pub async fn invoices(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -168,6 +171,7 @@ impl Queries {
         let connection_manager = ctx.get_connection_manager();
         match get_invoices(
             connection_manager,
+            Some(&store_id),
             page.map(PaginationOption::from),
             filter.map(InvoiceFilter::from),
             convert_sort(sort),

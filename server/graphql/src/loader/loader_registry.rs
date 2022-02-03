@@ -13,7 +13,7 @@ use super::{
     InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
     LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
     RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
-    StockLineByItemIdLoader, StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
+    StockLineByItemAndStoreIdLoader, StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -70,9 +70,10 @@ pub async fn get_loaders(
         connection_manager: connection_manager.clone(),
     });
 
-    let stock_line_by_item_id_loader = DataLoader::new(StockLineByItemIdLoader {
-        connection_manager: connection_manager.clone(),
-    });
+    let stock_line_by_item_id_and_store_id_loader =
+        DataLoader::new(StockLineByItemAndStoreIdLoader {
+            connection_manager: connection_manager.clone(),
+        });
 
     let stock_line_by_location_id_loader = DataLoader::new(StockLineByLocationIdLoader {
         connection_manager: connection_manager.clone(),
@@ -129,7 +130,7 @@ pub async fn get_loaders(
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
     loaders.insert(invoice_line_for_requisition_line);
-    loaders.insert(stock_line_by_item_id_loader);
+    loaders.insert(stock_line_by_item_id_and_store_id_loader);
     loaders.insert(stock_line_by_location_id_loader);
     loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);
