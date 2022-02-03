@@ -11,8 +11,8 @@ import {
   ModalMode,
   useBufferState,
 } from '@openmsupply-client/common';
-import { BatchesTable } from './BatchesTable';
-import { ItemDetailsForm } from './ItemDetailsForm';
+import { OutboundLineEditTable } from './OutboundLineEditTable';
+import { OutboundLineEditForm } from './OutboundLineEditForm';
 import {
   useDraftOutboundLines,
   usePackSizeController,
@@ -23,7 +23,11 @@ import {
   sumAvailableQuantity,
   getAllocatedQuantity,
 } from './utils';
-import { useOutboundFields, useSaveOutboundLines } from '../../api';
+import {
+  useIsOutboundDisabled,
+  useOutboundFields,
+  useSaveOutboundLines,
+} from '../../api';
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,28 +35,31 @@ interface ItemDetailsModalProps {
   mode: ModalMode | null;
 }
 
-export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
+export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
   item,
   mode,
 }) => {
-  const [currentItem, setCurrentItem] = useBufferState(item);
   const t = useTranslation(['distribution']);
+  const { Modal } = useDialog({ isOpen, onClose });
+  const [currentItem, setCurrentItem] = useBufferState(item);
+
   const { mutate } = useSaveOutboundLines();
   const { status } = useOutboundFields('status');
+  const isDisabled = useIsOutboundDisabled();
   const {
     draftOutboundLines,
     updateQuantity,
     setDraftOutboundLines,
     isLoading,
-  } = useDraftOutboundLines(item);
+  } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
-  const { Modal } = useDialog({ isOpen, onClose });
-  const nextItem = useNextItem();
+  const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
 
   const onNext = () => {
-    setCurrentItem(nextItem);
+    setCurrentItem(next);
+    return true;
   };
 
   const onAllocate = allocateQuantities(
@@ -69,7 +76,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={mode === ModalMode.Create}
+          disabled={mode === ModalMode.Create || nextDisabled}
           variant="next"
           onClick={onNext}
         />
@@ -91,7 +98,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
       width={900}
     >
       <Grid container gap={0.5}>
-        <ItemDetailsForm
+        <OutboundLineEditForm
+          disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
           onChangeItem={setCurrentItem}
           item={currentItem}
@@ -101,7 +109,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         />
         {!!currentItem ? (
           !isLoading ? (
-            <BatchesTable
+            <OutboundLineEditTable
               packSizeController={packSizeController}
               onChange={updateQuantity}
               rows={draftOutboundLines}

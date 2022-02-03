@@ -19,7 +19,8 @@ import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
 import { sortByExpiry } from './utils';
 import { useOutboundFields } from '../../api';
-export interface BatchesTableProps {
+
+export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
   rows: DraftOutboundLine[];
@@ -37,7 +38,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
 }) => {
   const d = useFormatDate();
 
-  const expiryDate = new Date(batch.expiryDate ?? '');
+  const expiryDate = batch.expiryDate ? d(new Date(batch.expiryDate)) : '';
   const isDisabled = !!disabled;
 
   // TODO format currency correctly
@@ -65,9 +66,14 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
       <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
       <BasicCell
-        sx={{ color: isAlmostExpired(expiryDate) ? 'error.main' : 'inherit' }}
+        sx={{
+          color:
+            batch.expiryDate && isAlmostExpired(new Date(batch.expiryDate))
+              ? 'error.main'
+              : 'inherit',
+        }}
       >
-        {d(expiryDate)}
+        {expiryDate}
       </BasicCell>
       <BasicCell>{batch.locationName}</BasicCell>
       <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
@@ -106,7 +112,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
   />
 );
 
-export const BatchesTable: React.FC<BatchesTableProps> = ({
+export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   onChange,
   packSizeController,
   rows,

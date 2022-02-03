@@ -24,21 +24,19 @@ const usePackSizeOptions = (
   packSizes: number[]
 ): { label: string; value: number }[] => {
   const t = useTranslation('distribution');
-  const anySize: { label: string; value: number }[] = [];
-  if (packSizes.length > 1) {
-    anySize.push({ label: t('label.any'), value: -1 });
-  }
 
-  const options = useMemo(
-    () =>
-      anySize.concat(
-        packSizes.map(packSize => ({
-          label: String(packSize),
-          value: packSize,
-        }))
-      ),
-    [packSizes, anySize]
-  );
+  const options = useMemo(() => {
+    const anySize: { label: string; value: number }[] = [];
+    if (packSizes.length > 1) {
+      anySize.push({ label: t('label.any'), value: -1 });
+    }
+    return anySize.concat(
+      packSizes.map(packSize => ({
+        label: String(packSize),
+        value: packSize,
+      }))
+    );
+  }, [packSizes]);
 
   return options;
 };
@@ -47,7 +45,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   const packSizes = useMemo(() => distinctSortedPackSizes(lines), [lines]);
   const options = usePackSizeOptions(packSizes);
 
-  const [selected, setSelected] = useState({ label: '', value: 0 });
+  const [selected, setSelected] = useState({ label: '', value: -1 });
 
   const setPackSize = (newValue: number) => {
     const packSizeOption = options.find(({ value }) => value === newValue);
@@ -56,7 +54,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   };
 
   useEffect(() => {
-    // if (selected.value !== 0) return;
+    if (selected.value !== 0) return;
     if (packSizes.length < 1) return;
     if (!lines?.length) return;
 

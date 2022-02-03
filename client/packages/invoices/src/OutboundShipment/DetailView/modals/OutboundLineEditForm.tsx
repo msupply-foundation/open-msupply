@@ -17,22 +17,24 @@ import { ItemSearchInput } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
 import { useOutboundRows } from '../../api';
 
-interface ItemDetailsFormProps {
+interface OutboundLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
   item: Item | null;
   onChangeItem: (newItem: Item | null) => void;
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
+  disabled: boolean;
 }
 
-export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
+export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   allocatedQuantity,
   onChangeItem,
   onChangeQuantity,
   item,
   packSizeController,
   availableQuantity,
+  disabled,
 }) => {
   const t = useTranslation(['distribution', 'common']);
   const quantity =
@@ -46,6 +48,7 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
+            disabled={disabled}
             currentItem={item}
             onChange={onChangeItem}
             extraFilter={item => !!items?.some(({ id }) => id === item.id)}
@@ -113,17 +116,19 @@ export const ItemDetailsForm: React.FC<ItemDetailsFormProps> = ({
 
             <Box marginLeft={1} />
 
-            <Select
-              sx={{ width: 110 }}
-              options={packSizeController.options}
-              value={packSizeController.selected.value}
-              onChange={e => {
-                const { value } = e.target;
-                const packSize = Number(value);
-                packSizeController.setPackSize(packSize);
-                onChangeQuantity(quantity, packSize === -1 ? null : packSize);
-              }}
-            />
+            {packSizeController.options.length && (
+              <Select
+                sx={{ width: 110 }}
+                options={packSizeController.options}
+                value={packSizeController.selected.value}
+                onChange={e => {
+                  const { value } = e.target;
+                  const packSize = Number(value);
+                  packSizeController.setPackSize(packSize);
+                  onChangeQuantity(quantity, packSize === -1 ? null : packSize);
+                }}
+              />
+            )}
 
             <Box marginLeft="auto" />
           </Grid>
