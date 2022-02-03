@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use service::service_provider::ServiceProvider;
 
-use crate::loader::{InvoiceLineLoader, InvoiceLoader, ItemLoader, StoreLoader, UserAccountLoader};
+use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
 
 use repository::StorageConnectionManager;
 
@@ -43,10 +43,6 @@ pub async fn get_loaders(
     });
 
     let store_loader = DataLoader::new(StoreLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let invoice_loader = DataLoader::new(InvoiceLoader {
         connection_manager: connection_manager.clone(),
     });
 
@@ -127,7 +123,6 @@ pub async fn get_loaders(
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
-    loaders.insert(invoice_loader);
     loaders.insert(invoice_query_loader);
     loaders.insert(invoice_by_requisition_id_loader);
     loaders.insert(invoice_line_loader);
