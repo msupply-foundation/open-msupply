@@ -74,7 +74,7 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
             requisition_ids.iter().map(String::clone).collect(),
         ));
 
-        let invoices = get_invoices(&self.connection_manager, None, Some(filter), None)
+        let invoices = get_invoices(&self.connection_manager, None, None, Some(filter), None)
             .map_err(StandardGraphqlError::from_list_error)?;
 
         let mut result: HashMap<String, Vec<Invoice>> = HashMap::new();

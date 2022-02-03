@@ -17,7 +17,7 @@ mod graphql {
                       code
                       isVisible
                       unitName
-                      availableBatches {
+                      availableBatches(storeId: \"store_a\") {
                          ... on StockLineConnector {
                             nodes {
                                 id

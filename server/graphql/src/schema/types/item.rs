@@ -1,5 +1,8 @@
 use crate::{
-    loader::{ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemIdLoader},
+    loader::{
+        IdAndStoreId, ItemStatsLoaderInput, ItemsStatsForItemLoader,
+        StockLineByItemAndStoreIdLoader,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -62,9 +65,15 @@ impl ItemNode {
         Ok(ItemStatsNode::from_domain(result))
     }
 
-    async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {
-        let loader = ctx.get_loader::<DataLoader<StockLineByItemIdLoader>>();
-        match loader.load_one(self.item.id.to_string()).await {
+    async fn available_batches(&self, ctx: &Context<'_>, store_id: String) -> StockLinesResponse {
+        let loader = ctx.get_loader::<DataLoader<StockLineByItemAndStoreIdLoader>>();
+        match loader
+            .load_one(IdAndStoreId {
+                id: self.item.id.clone(),
+                store_id,
+            })
+            .await
+        {
             Ok(result_option) => {
                 StockLinesResponse::Response(result_option.unwrap_or(Vec::new()).into())
             }

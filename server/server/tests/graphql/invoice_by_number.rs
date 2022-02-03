@@ -20,6 +20,7 @@ mod graphql {
         fn get_invoice_by_number(
             &self,
             _: &ServiceContext,
+            _: &str,
             invoice_number: u32,
             r#type: InvoiceType,
         ) -> Result<Option<Invoice>, RepositoryError> {
@@ -43,7 +44,7 @@ mod graphql {
 
         let query = r#"
         query {
-            invoiceByNumber(invoiceNumber: 0, type: INBOUND_SHIPMENT) {
+            invoiceByNumber(invoiceNumber: 0, type: INBOUND_SHIPMENT, storeId: \"store_a\") {
               ... on NodeError {
                 error {
                   __typename

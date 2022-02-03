@@ -14,7 +14,7 @@ mod graphql {
 
         let query = r#"
         query($filter: InvoiceFilterInput) {
-          invoices(filter: $filter) {
+          invoices(filter: $filter, storeId: \"store_a\") {
             ... on InvoiceConnector {
               nodes {
                 id
