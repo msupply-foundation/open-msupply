@@ -9,13 +9,14 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::sync_processor::{process_records, Record};
+
 pub fn update_outbound_shipment(
     connection: &StorageConnection,
     patch: UpdateOutboundShipment,
 ) -> Result<String, UpdateOutboundShipmentError> {
-    let updated_invoice_id = connection.transaction_sync(|connection| {
+    let update_invoice = connection.transaction_sync(|connection| {
         let (invoice, other_party_option) = validate(&patch, &connection)?;
-        let invoice_id = invoice.id.to_owned();
         let (stock_lines_option, update_invoice) =
             generate(invoice, other_party_option, patch, &connection)?;
 
@@ -26,10 +27,16 @@ pub fn update_outbound_shipment(
                 repository.upsert_one(&stock_line)?;
             }
         }
-        Ok(invoice_id)
+        Ok(update_invoice)
     })?;
 
-    Ok(updated_invoice_id)
+    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
+    println!(
+        "{:#?}",
+        process_records(connection, vec![Record::InvoiceRow(update_invoice.clone())],)
+    );
+
+    Ok(update_invoice.id)
 }
 
 #[derive(Debug)]
