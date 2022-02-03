@@ -184,6 +184,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         delivered_datetime: invoice_row.delivered_datetime,
         verified_datetime: invoice_row.verified_datetime,
         colour: invoice_row.colour,
+        linked_invoice_id: invoice_row.linked_invoice_id,
         requisition_id: invoice_row.requisition_id,
     }
 }
