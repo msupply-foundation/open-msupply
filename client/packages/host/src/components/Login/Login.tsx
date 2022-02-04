@@ -4,7 +4,6 @@ import {
   Box,
   Stack,
   Typography,
-  useNavigate,
   Autocomplete,
   useTranslation,
   AutocompleteRenderInputParams,
@@ -13,12 +12,10 @@ import {
   LoadingButton,
   AlertIcon,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { LoginIcon } from './LoginIcon';
 import { LoginTextInput } from './LoginTextInput';
 import { useStores } from '@openmsupply-client/system';
-import create from 'zustand';
-import { useAuthToken } from './api';
+import { useLoginForm } from './hooks';
 
 const StoreAutocompleteInput: React.FC<AutocompleteRenderInputParams> =
   props => {
@@ -39,49 +36,23 @@ const storeSorter = (a: Store, b: Store) => {
   return 0;
 };
 
-interface LoginForm {
-  isLoggingIn: boolean;
-  password: string;
-  storeId?: string;
-  username: string;
-  setIsLoggingIn: (isLoggingIn: boolean) => void;
-  setPassword: (password: string) => void;
-  setStoreId: (storeId?: string) => void;
-  setUsername: (username: string) => void;
-}
-const useLoginForm = create<LoginForm>(set => ({
-  isLoggingIn: false,
-  password: '',
-  storeId: undefined,
-  username: '',
-  setIsLoggingIn: (isLoggingIn: boolean) =>
-    set(state => ({ ...state, isLoggingIn })),
-  setPassword: (password: string) => set(state => ({ ...state, password })),
-  setStoreId: (storeId?: string) => set(state => ({ ...state, storeId })),
-  setUsername: (username: string) => set(state => ({ ...state, username })),
-}));
-
 export const Login: React.FC = ({}) => {
-  const navigate = useNavigate();
   const t = useTranslation('app');
+  const passwordRef = React.useRef(null);
   const {
+    isValid,
     password,
     setPassword,
-    storeId,
-    setStoreId,
+    store,
+    setStore,
     username,
     setUsername,
     isLoggingIn,
-    setIsLoggingIn,
-  } = useLoginForm();
+    onLogin,
+    authenticationResponse,
+  } = useLoginForm(passwordRef);
 
-  const onLogin = () => {
-    setIsLoggingIn(true);
-  };
   const { data, isLoading } = useStores();
-  const { data: authenticationResponse, isLoading: isAuthenticating } =
-    useAuthToken({ username, password }, isLoggingIn);
-
   const undefinedStore = {
     label: '',
     id: '',
@@ -92,16 +63,12 @@ export const Login: React.FC = ({}) => {
     ...defaultOptionMapper((data?.nodes ?? []).sort(storeSorter), 'code'),
   ];
 
-  const currentStore =
-    stores.find(store => store.id === storeId) || undefinedStore;
-
-  React.useEffect(() => {
-    setIsLoggingIn(isAuthenticating);
-    if (authenticationResponse?.token) {
-      setPassword('');
-      navigate(`/${AppRoute.Dashboard}`);
+  const currentStore = stores.find(s => s.id === store?.id) || undefinedStore;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter' && isValid) {
+      onLogin();
     }
-  }, [authenticationResponse, isAuthenticating]);
+  };
 
   return (
     <Box display="flex">
@@ -151,7 +118,7 @@ export const Login: React.FC = ({}) => {
         display="flex"
       >
         <Box style={{ width: 285 }}>
-          <form onSubmit={onLogin}>
+          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
             <Stack spacing={5}>
               <Box display="flex" justifyContent="center">
                 <LoginIcon />
@@ -164,6 +131,7 @@ export const Login: React.FC = ({}) => {
                 inputProps={{
                   autoComplete: 'username',
                 }}
+                autoFocus
               />
               <LoginTextInput
                 fullWidth
@@ -174,12 +142,13 @@ export const Login: React.FC = ({}) => {
                 inputProps={{
                   autoComplete: 'current-password',
                 }}
+                inputRef={passwordRef}
               />
               <Autocomplete
                 renderInput={StoreAutocompleteInput}
                 loading={isLoading}
                 options={stores}
-                onChange={(_, value) => setStoreId(value?.id)}
+                onChange={(_, value) => setStore(value || undefined)}
                 value={currentStore}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
               />
@@ -202,7 +171,7 @@ export const Login: React.FC = ({}) => {
                   onClick={onLogin}
                   variant="outlined"
                   endIcon={<ArrowRightIcon />}
-                  disabled={!username || !password || !storeId}
+                  disabled={!isValid}
                 >
                   {t('button.login')}
                 </LoadingButton>
