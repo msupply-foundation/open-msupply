@@ -18,6 +18,7 @@ import {
   useTranslation,
   AppNavLink,
   useIsMediumScreen,
+  useLocalStorage,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -147,8 +148,10 @@ const StyledDrawer = styled(Box, {
 export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
-
   const drawer = useDrawer();
+  const [, setAuthToken] = useLocalStorage('/authentication/token');
+
+  const onLogout = () => setAuthToken('');
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -229,6 +232,7 @@ export const AppDrawer: React.FC = () => {
             to={AppRoute.Login}
             icon={<PowerIcon fontSize="small" color="primary" />}
             text={t('logout')}
+            onClick={onLogout}
           />
         </List>
       </LowerListContainer>

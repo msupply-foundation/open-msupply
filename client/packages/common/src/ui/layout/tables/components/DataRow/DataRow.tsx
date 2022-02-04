@@ -77,6 +77,7 @@ export const DataRow = <T extends DomainObject>({
                   color: 'inherit',
                   fontSize: dense ? '12px' : '14px',
                   backgroundColor: column.backgroundColor,
+                  fontWeight: 'normal',
                 }}
               >
                 <column.Cell
