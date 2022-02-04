@@ -19,6 +19,7 @@ export type LocalStorageRecord = {
   '/theme/custom': ThemeOptions;
   '/theme/logo': string;
   '/authentication/previous': AuthenticationCredentials;
+  '/authentication/token': string;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;

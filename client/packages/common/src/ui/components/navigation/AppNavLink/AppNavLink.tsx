@@ -53,6 +53,7 @@ export interface AppNavLinkProps {
   expandOnHover?: boolean;
   text?: string;
   to: string;
+  onClick?: () => void;
 }
 
 export const AppNavLink: FC<AppNavLinkProps> = props => {
@@ -62,6 +63,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     expandOnHover,
     text,
     to,
+    onClick,
   } = props;
   const drawer = useDrawer();
 
@@ -89,7 +91,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
-            onClick={debouncedClearHoverActive}
+            onClick={onClick || debouncedClearHoverActive}
           />
         )
       ),

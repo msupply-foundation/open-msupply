@@ -77,6 +77,11 @@ export const PaginationRow: FC<PaginationRowProps> = ({
             page={displayPage}
             onChange={onChangePage}
             count={Math.ceil(total / first)}
+            sx={{
+              '& .MuiPaginationItem-root': {
+                fontSize: theme => theme.typography.body1.fontSize,
+              },
+            }}
           />
         </>
       )}

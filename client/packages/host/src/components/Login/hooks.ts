@@ -6,6 +6,7 @@ import {
   Store,
   useHostContext,
   useLocalStorage,
+  useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
 import { useAuthToken } from './api';
@@ -37,10 +38,12 @@ export const useLoginForm = (
 ) => {
   const state = useLoginFormState();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setStore: setHostStore, setUser } = useHostContext();
   const [previousAuth, setPreviousAuth] = useLocalStorage(
     '/authentication/previous'
   );
+  const [, setAuthToken] = useLocalStorage('/authentication/token');
   const {
     isLoggingIn,
     password,
@@ -59,6 +62,17 @@ export const useLoginForm = (
   };
 
   const isValid = !!username && !!password && !!store?.id;
+  const onAuthenticated = (token: string) => {
+    setPassword('');
+    setAuthToken(token);
+    setPreviousAuth({ username: username, store: store });
+    setUser({ id: '', name: username });
+    if (store) setHostStore(store);
+    // navigate back, if redirected by the <RequireAuthentication /> component
+    // or to the dashboard as a default
+    const from = location.state?.from?.pathname || `/${AppRoute.Dashboard}`;
+    navigate(from, { replace: true });
+  };
 
   React.useEffect(() => {
     if (previousAuth?.store && !store) {
@@ -72,12 +86,9 @@ export const useLoginForm = (
 
   React.useEffect(() => {
     setIsLoggingIn(isAuthenticating);
+
     if (authenticationResponse?.token) {
-      setPassword('');
-      setPreviousAuth({ username: username, store: store });
-      setUser({ id: '', name: username });
-      if (store) setHostStore(store);
-      navigate(`/${AppRoute.Dashboard}`);
+      onAuthenticated(authenticationResponse.token);
     }
   }, [authenticationResponse, isAuthenticating]);
 
