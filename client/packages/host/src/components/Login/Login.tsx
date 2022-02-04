@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   ArrowRightIcon,
-  BaseButton,
   Box,
   Stack,
   Typography,
@@ -11,7 +10,8 @@ import {
   AutocompleteRenderInputParams,
   defaultOptionMapper,
   Store,
-  // useHostContext,
+  LoadingButton,
+  AlertIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { LoginIcon } from './LoginIcon';
@@ -40,17 +40,22 @@ const storeSorter = (a: Store, b: Store) => {
 };
 
 interface LoginForm {
+  isLoggingIn: boolean;
   password: string;
   storeId?: string;
   username: string;
+  setIsLoggingIn: (isLoggingIn: boolean) => void;
   setPassword: (password: string) => void;
   setStoreId: (storeId?: string) => void;
   setUsername: (username: string) => void;
 }
 const useLoginForm = create<LoginForm>(set => ({
+  isLoggingIn: false,
   password: '',
   storeId: undefined,
   username: '',
+  setIsLoggingIn: (isLoggingIn: boolean) =>
+    set(state => ({ ...state, isLoggingIn })),
   setPassword: (password: string) => set(state => ({ ...state, password })),
   setStoreId: (storeId?: string) => set(state => ({ ...state, storeId })),
   setUsername: (username: string) => set(state => ({ ...state, username })),
@@ -59,27 +64,44 @@ const useLoginForm = create<LoginForm>(set => ({
 export const Login: React.FC = ({}) => {
   const navigate = useNavigate();
   const t = useTranslation('app');
-  const { password, setPassword, storeId, setStoreId, username, setUsername } =
-    useLoginForm();
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
+  const {
+    password,
+    setPassword,
+    storeId,
+    setStoreId,
+    username,
+    setUsername,
+    isLoggingIn,
+    setIsLoggingIn,
+  } = useLoginForm();
 
   const onLogin = () => {
     setIsLoggingIn(true);
   };
   const { data, isLoading } = useStores();
-  const { data: authToken } = useAuthToken({ username, password }, isLoggingIn);
+  const { data: authenticationResponse, isLoading: isAuthenticating } =
+    useAuthToken({ username, password }, isLoggingIn);
 
-  const stores = defaultOptionMapper(
-    (data?.nodes ?? []).sort(storeSorter),
-    'code'
-  );
+  const undefinedStore = {
+    label: '',
+    id: '',
+    code: '',
+  };
+  const stores = [
+    undefinedStore,
+    ...defaultOptionMapper((data?.nodes ?? []).sort(storeSorter), 'code'),
+  ];
+
+  const currentStore =
+    stores.find(store => store.id === storeId) || undefinedStore;
 
   React.useEffect(() => {
-    setIsLoggingIn(false);
-    if (authToken) {
+    setIsLoggingIn(isAuthenticating);
+    if (authenticationResponse?.token) {
+      setPassword('');
       navigate(`/${AppRoute.Dashboard}`);
     }
-  }, [authToken]);
+  }, [authenticationResponse, isAuthenticating]);
 
   return (
     <Box display="flex">
@@ -129,41 +151,64 @@ export const Login: React.FC = ({}) => {
         display="flex"
       >
         <Box style={{ width: 285 }}>
-          <Stack spacing={5}>
-            <Box display="flex" justifyContent="center">
-              <LoginIcon />
-            </Box>
-            <LoginTextInput
-              fullWidth
-              label={t('heading.username')}
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-            />
-            <LoginTextInput
-              fullWidth
-              label={t('heading.password')}
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-            <Autocomplete
-              renderInput={StoreAutocompleteInput}
-              loading={isLoading}
-              options={stores}
-              onChange={(_, value) => setStoreId(value?.id)}
-              value={stores.find(store => store.id === storeId)}
-            />
-            <Box display="flex" justifyContent="flex-end">
-              <BaseButton
-                onClick={onLogin}
-                variant="outlined"
-                endIcon={<ArrowRightIcon />}
-                disabled={!username || !password || !storeId || isLoggingIn}
-              >
-                {t('button.login')}
-              </BaseButton>
-            </Box>
-          </Stack>
+          <form onSubmit={onLogin}>
+            <Stack spacing={5}>
+              <Box display="flex" justifyContent="center">
+                <LoginIcon />
+              </Box>
+              <LoginTextInput
+                fullWidth
+                label={t('heading.username')}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                inputProps={{
+                  autoComplete: 'username',
+                }}
+              />
+              <LoginTextInput
+                fullWidth
+                label={t('heading.password')}
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                inputProps={{
+                  autoComplete: 'current-password',
+                }}
+              />
+              <Autocomplete
+                renderInput={StoreAutocompleteInput}
+                loading={isLoading}
+                options={stores}
+                onChange={(_, value) => setStoreId(value?.id)}
+                value={currentStore}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+              />
+              {authenticationResponse?.error && (
+                <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
+                  <Box>
+                    <AlertIcon />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ color: 'inherit' }}>
+                      {authenticationResponse?.error.message ||
+                        t('error.login')}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+              <Box display="flex" justifyContent="flex-end">
+                <LoadingButton
+                  isLoading={isLoggingIn}
+                  onClick={onLogin}
+                  variant="outlined"
+                  endIcon={<ArrowRightIcon />}
+                  disabled={!username || !password || !storeId}
+                >
+                  {t('button.login')}
+                </LoadingButton>
+              </Box>
+            </Stack>
+          </form>
         </Box>
       </Box>
     </Box>

@@ -5,12 +5,30 @@ import {
   AuthTokenQuery,
 } from '@openmsupply-client/common';
 
-const tokenGuard = (authTokenQuery: AuthTokenQuery): string => {
+interface AuthenticationResponse {
+  token: string;
+  error?: {
+    message: string;
+  };
+}
+
+const tokenGuard = (authTokenQuery: AuthTokenQuery): AuthenticationResponse => {
   if (authTokenQuery.authToken.__typename === 'AuthToken') {
-    return authTokenQuery.authToken.token;
-  } else {
-    throw new Error(authTokenQuery.authToken.error.description);
+    return { token: authTokenQuery.authToken.token };
   }
+
+  if (authTokenQuery.authToken.__typename === 'AuthTokenError') {
+    switch (authTokenQuery.authToken.error.__typename) {
+      case 'DatabaseError':
+      case 'InternalError':
+        return {
+          token: '',
+          error: { message: authTokenQuery.authToken.error.description },
+        };
+    }
+  }
+
+  return { token: '', error: { message: '' } };
 };
 
 interface LoginCredentials {
@@ -21,7 +39,7 @@ interface LoginCredentials {
 export const useAuthToken = (
   credentials: LoginCredentials,
   login: boolean
-): UseQueryResult<string> => {
+): UseQueryResult<AuthenticationResponse> => {
   const { api } = useOmSupplyApi();
 
   return useQuery(

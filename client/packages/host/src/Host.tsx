@@ -30,30 +30,32 @@ const queryClient = new QueryClient({
 });
 
 const Host: FC = () => (
-  <React.Suspense fallback={<RandomLoader />}>
+  <React.Suspense fallback={<div />}>
     <IntlProvider>
-      <ErrorBoundary Fallback={GenericErrorFallback}>
-        <QueryClientProvider client={queryClient}>
-          <OmSupplyApiProvider url={Environment.API_URL}>
-            <AppThemeProvider>
-              <BrowserRouter>
-                <Viewport>
-                  <Box display="flex" style={{ minHeight: '100%' }}>
-                    <Routes>
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Login).build()}
-                        element={<Login />}
-                      />
-                      <Route path="*" element={<Site />} />
-                    </Routes>
-                  </Box>
-                </Viewport>
-              </BrowserRouter>
-            </AppThemeProvider>
-            <ReactQueryDevtools initialIsOpen />
-          </OmSupplyApiProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
+      <React.Suspense fallback={<RandomLoader />}>
+        <ErrorBoundary Fallback={GenericErrorFallback}>
+          <QueryClientProvider client={queryClient}>
+            <OmSupplyApiProvider url={Environment.API_URL}>
+              <AppThemeProvider>
+                <BrowserRouter>
+                  <Viewport>
+                    <Box display="flex" style={{ minHeight: '100%' }}>
+                      <Routes>
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Login).build()}
+                          element={<Login />}
+                        />
+                        <Route path="*" element={<Site />} />
+                      </Routes>
+                    </Box>
+                  </Viewport>
+                </BrowserRouter>
+              </AppThemeProvider>
+              <ReactQueryDevtools initialIsOpen />
+            </OmSupplyApiProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </React.Suspense>
     </IntlProvider>
   </React.Suspense>
 );
