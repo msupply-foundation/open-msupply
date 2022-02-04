@@ -46,8 +46,8 @@ export const useHostContext = create<HostContext>(set => ({
   detailPanelRef: null,
 
   setStore: store => set(state => ({ ...state, store })),
-  store: { id: '4321dcba', code: 'Central Warehouse' },
+  store: { id: '', code: '' },
 
   setUser: user => set(state => ({ ...state, user })),
-  user: { id: 'abcd1234', name: 'Administrator' },
+  user: { id: '', name: '' },
 }));

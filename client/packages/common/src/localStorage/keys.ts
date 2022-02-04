@@ -1,10 +1,16 @@
 import { SupportedLocales } from '@common/intl';
+import { Store } from '@common/types';
 import { ThemeOptions } from '@mui/material';
 
 export type GroupByItem = {
   outboundShipment?: boolean;
   inboundShipment?: boolean;
 };
+type AuthenticationCredentials = {
+  store?: Store;
+  username: string;
+};
+
 export type LocalStorageRecord = {
   '/appdrawer/open': boolean;
   '/detailpanel/open': boolean;
@@ -12,6 +18,7 @@ export type LocalStorageRecord = {
   '/groupbyitem': GroupByItem;
   '/theme/custom': ThemeOptions;
   '/theme/logo': string;
+  '/authentication/previous': AuthenticationCredentials;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;

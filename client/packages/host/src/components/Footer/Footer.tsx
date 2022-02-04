@@ -20,14 +20,18 @@ export const Footer: React.FC = () => {
 
   return (
     <Box gap={2} display="flex" flex={1} alignItems="center">
-      <PaddedCell>
-        <HomeIcon sx={iconStyles} />
-        <Typography sx={textStyles}>{store.code}</Typography>
-      </PaddedCell>
-      <PaddedCell>
-        <UserIcon sx={iconStyles} />
-        <Typography sx={textStyles}>{user.name}</Typography>
-      </PaddedCell>
+      {store.code && (
+        <PaddedCell>
+          <HomeIcon sx={iconStyles} />
+          <Typography sx={textStyles}>{store.code}</Typography>
+        </PaddedCell>
+      )}
+      {user.name && (
+        <PaddedCell>
+          <UserIcon sx={iconStyles} />
+          <Typography sx={textStyles}>{user.name}</Typography>
+        </PaddedCell>
+      )}
     </Box>
   );
 };
