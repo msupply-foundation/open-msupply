@@ -268,7 +268,10 @@ interface IsGroupedControl {
 }
 
 export const useIsGrouped = (key: keyof GroupByItem): IsGroupedControl => {
-  const { setIsGrouped } = useTableStore();
+  const selector = useCallback(({ setIsGrouped }: TableStore) => {
+    return { setIsGrouped };
+  }, []);
+  const { setIsGrouped } = useTableStore(selector);
   const [groupByItem, setGroupByItem] = useLocalStorage('/groupbyitem', {
     outboundShipment: false,
     inboundShipment: false,
