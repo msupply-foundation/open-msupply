@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -20,9 +20,12 @@ export const DetailView: FC = () => {
   const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Item>();
   const { data } = useOutbound();
 
-  const onRowClick = (item: InvoiceLine | InvoiceItem) => {
-    onOpen(toItem(item));
-  };
+  const onRowClick = useCallback(
+    (item: InvoiceLine | InvoiceItem) => {
+      onOpen(toItem(item));
+    },
+    [toItem, onOpen]
+  );
 
   return (
     <React.Suspense
@@ -31,7 +34,6 @@ export const DetailView: FC = () => {
       {data && data.id ? (
         <TableProvider createStore={createTableStore}>
           <AppBarButtons onAddItem={() => onOpen()} />
-
           {isOpen && (
             <OutboundLineEdit
               item={entity}
