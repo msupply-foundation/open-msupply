@@ -7,15 +7,16 @@ use crate::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
-    invoice::{InvoiceServiceTrait, InvoiceService},
+    invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{OutboundShipmentLineService, OutboundShipmentLineServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     permission_validation::{ValidationService, ValidationServiceTrait},
     permissions::{PermissionService, PermissionServiceTrait},
+    requisition::{RequisitionService, RequisitionServiceTrait},
     stock_take::{StockTakeService, StockTakeServiceTrait},
     stock_take_line::{StockTakeLineService, StockTakeLineServiceTrait},
-    store::{StoreService, StoreServiceTrait},
+    store::{StoreService, StoreServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
 };
 
 pub struct ServiceProvider {
@@ -30,6 +31,8 @@ pub struct ServiceProvider {
     pub stock_take_line_service: Box<dyn StockTakeLineServiceTrait>,
     pub store_service: Box<dyn StoreServiceTrait>,
     pub outbound_shipment_line: Box<dyn OutboundShipmentLineServiceTrait>,
+    pub requisition_service: Box<dyn RequisitionServiceTrait>,
+    pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -55,6 +58,8 @@ impl ServiceProvider {
             stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
             stock_take_service: Box::new(StockTakeService {}),
             stock_take_line_service: Box::new(StockTakeLineService {}),
+            requisition_service: Box::new(RequisitionService {}),
+            requisition_line_service: Box::new(RequisitionLineService {}),
         }
     }
 

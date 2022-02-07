@@ -962,7 +962,7 @@ mod repository_test {
             .unwrap();
 
         let raw_result = sql_query(&format!(
-            r#"SELECT id from requisition where id = '{}'"#,
+            r#"select id from requisition where id = '{}'"#,
             mock_request_draft_requisition2().id
         ))
         .load::<Id>(&connection.connection)
@@ -972,8 +972,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion| Id {
-                    id: requistion.requisition_row.id
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -983,17 +983,23 @@ mod repository_test {
             .query_by_filter(RequisitionFilter::new().name(SimpleStringFilter::equal_to("name_a")))
             .unwrap();
 
-        let raw_result = sql_query(r#"SELECT requisition.id from requisition join name on requisition.name_id = name.id where name.name = 'name_a'"#)
-            .load::<Id>(&connection.connection)
-            .unwrap();
+        let raw_result = sql_query(
+            r#"select requisition.id 
+                    from requisition 
+                    join name on requisition.name_id = name.id 
+                    where name.name = 'name_a'
+                    order by requisition.id asc"#,
+        )
+        .load::<Id>(&connection.connection)
+        .unwrap();
 
         assert!(raw_result.len() > 0); // Sanity check
         assert_eq!(
             raw_result,
             result
                 .into_iter()
-                .map(|requistion| Id {
-                    id: requistion.requisition_row.id
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -1008,7 +1014,7 @@ mod repository_test {
             .unwrap();
 
         let raw_result = sql_query(
-            r#"SELECT id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
+            r#"select id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
         )
         .load::<Id>(&connection.connection)
         .unwrap();
@@ -1018,8 +1024,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion| Id {
-                    id: requistion.requisition_row.id
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -1062,8 +1068,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion_line| Id {
-                    id: requistion_line.requisition_line_row.id
+                .map(|requisition_line| Id {
+                    id: requisition_line.requisition_line_row.id
                 })
                 .collect::<Vec<Id>>()
         );
@@ -1095,8 +1101,8 @@ mod repository_test {
             raw_result,
             result
                 .into_iter()
-                .map(|requistion_line| Id {
-                    id: requistion_line.requisition_line_row.id
+                .map(|requisition_line| Id {
+                    id: requisition_line.requisition_line_row.id
                 })
                 .collect::<Vec<Id>>()
         );

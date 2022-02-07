@@ -104,29 +104,46 @@ fn create_filtered_query(
         .inner_join(name_dsl::name)
         .into_boxed();
 
-    if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, requisition_dsl::id);
+    if let Some(RequisitionFilter {
+        id,
+        requisition_number,
+        r#type,
+        status,
+        created_datetime,
+        sent_datetime,
+        finalised_datetime,
+        name_id,
+        name,
+        colour,
+        their_reference,
+        comment,
+        store_id,
+    }) = filter
+    {
+        apply_equal_filter!(query, id, requisition_dsl::id);
         apply_equal_filter!(
             query,
-            f.requisition_number,
+            requisition_number,
             requisition_dsl::requisition_number
         );
-        apply_equal_filter!(query, f.r#type, requisition_dsl::type_);
-        apply_equal_filter!(query, f.status, requisition_dsl::status);
+        apply_equal_filter!(query, r#type, requisition_dsl::type_);
+        apply_equal_filter!(query, status, requisition_dsl::status);
 
-        apply_date_time_filter!(query, f.created_datetime, requisition_dsl::created_datetime);
-        apply_date_time_filter!(query, f.sent_datetime, requisition_dsl::sent_datetime);
+        apply_date_time_filter!(query, created_datetime, requisition_dsl::created_datetime);
+        apply_date_time_filter!(query, sent_datetime, requisition_dsl::sent_datetime);
         apply_date_time_filter!(
             query,
-            f.finalised_datetime,
+            finalised_datetime,
             requisition_dsl::finalised_datetime
         );
 
-        apply_equal_filter!(query, f.name_id, requisition_dsl::name_id);
-        apply_simple_string_filter!(query, f.name, name_dsl::name_);
-        apply_equal_filter!(query, f.colour, requisition_dsl::colour);
-        apply_simple_string_filter!(query, f.their_reference, requisition_dsl::their_reference);
-        apply_simple_string_filter!(query, f.comment, requisition_dsl::comment);
+        apply_equal_filter!(query, name_id, requisition_dsl::name_id);
+        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_equal_filter!(query, colour, requisition_dsl::colour);
+        apply_simple_string_filter!(query, their_reference, requisition_dsl::their_reference);
+        apply_simple_string_filter!(query, comment, requisition_dsl::comment);
+
+        apply_equal_filter!(query, store_id, requisition_dsl::store_id);
     }
 
     Ok(query)
