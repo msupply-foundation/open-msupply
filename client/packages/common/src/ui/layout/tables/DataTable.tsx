@@ -19,7 +19,7 @@ import { DomainObject } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
-export const DataTable = <T extends DomainObject>({
+export const DataTableComponent = <T extends DomainObject>({
   columns,
   data = [],
   isLoading = false,
@@ -139,3 +139,12 @@ export const DataTable = <T extends DomainObject>({
     </TableContainer>
   );
 };
+
+// This is a hack!
+// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087
+// Using generic types while using `react.memo` doesn't work well.
+// There are a few alternatives for some situations. However they didn't
+// work for this one!
+export const DataTable = React.memo(
+  DataTableComponent
+) as typeof DataTableComponent;
