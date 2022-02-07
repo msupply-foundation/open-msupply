@@ -15,7 +15,7 @@ use serde::Serialize;
 use super::{
     Connector, ConnectorError, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
     EqualFilterStringInput, ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError,
-    NodeErrorInterface, SimpleStringFilterInput, SortInput, StoreNode,
+    NodeErrorInterface, RequisitionNode, SimpleStringFilterInput, SortInput, StoreNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -212,6 +212,17 @@ impl InvoiceNode {
 
     pub async fn color(&self) -> &Option<String> {
         &self.invoice.color
+    }
+
+    /// Response Requisition that is the origin of this Outbound Shipment
+    /// Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
+    pub async fn requisition(&self) -> Result<Option<RequisitionNode>> {
+        todo!()
+    }
+
+    /// Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment
+    pub async fn linked_shipment(&self) -> Result<Option<InvoiceNode>> {
+        todo!()
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> InvoiceLinesResponse {
