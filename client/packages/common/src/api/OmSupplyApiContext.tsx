@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState, useCallback } from 'react';
+import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
 import { createContext } from 'react';
 import { GraphQLClient } from 'graphql-request';
 import { getSdk } from '../types';
@@ -59,9 +59,17 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
     setApi(createOmSupplyApi(url));
   }, [url]);
 
-  return (
-    <Provider value={{ api, client, setUrl, setHeader }}>{children}</Provider>
+  const val = useMemo(
+    () => ({
+      api,
+      client,
+      setUrl,
+      setHeader,
+    }),
+    [api, client, setUrl, setHeader]
   );
+
+  return <Provider value={val}>{children}</Provider>;
 };
 
 export const OmSupplyApiConsumer = Consumer;
