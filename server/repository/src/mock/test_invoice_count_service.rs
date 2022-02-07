@@ -22,7 +22,9 @@ pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        color: None,
+        colour: None,
+        requisition_id: None,
+        linked_invoice_id: None,
     }
 }
 
@@ -44,7 +46,9 @@ pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        color: None,
+        colour: None,
+        requisition_id: None,
+        linked_invoice_id: None,
     }
 }
 

@@ -32,12 +32,14 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         on_hold: input.on_hold.unwrap_or(false),
-        color: input.color,
+        colour: input.colour,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        linked_invoice_id: None,
+        requisition_id: None,
     };
 
     Ok(result)

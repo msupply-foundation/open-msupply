@@ -49,7 +49,7 @@ mod graphql {
                     comment
                     theirReference
                     onHold
-                    color
+                    colour
                 }
             }
         }"#;
@@ -118,7 +118,7 @@ mod graphql {
               "comment": "ci comment",
               "theirReference": null,
               "onHold": false,
-              "color": null,
+              "colour": null,
             }
           }
         );
@@ -135,7 +135,7 @@ mod graphql {
             "otherPartyId": other_party_customer.id,
             "theirReference": "reference",
             "onHold": true,
-            "color": "#FFFFFF"
+            "colour": "#FFFFFF"
           }
         }));
         let expected = json!({
@@ -147,7 +147,7 @@ mod graphql {
               "comment": null,
               "theirReference":"reference",
               "onHold": true,
-              "color": "#FFFFFF"
+              "colour": "#FFFFFF"
             }
           }
         );

@@ -42,5 +42,7 @@ pub struct InvoiceRow {
     pub shipped_datetime: Option<NaiveDateTime>,
     pub delivered_datetime: Option<NaiveDateTime>,
     pub verified_datetime: Option<NaiveDateTime>,
-    pub color: Option<String>,
+    pub colour: Option<String>,
+    pub requisition_id: Option<String>,
+    pub linked_invoice_id: Option<String>,
 }

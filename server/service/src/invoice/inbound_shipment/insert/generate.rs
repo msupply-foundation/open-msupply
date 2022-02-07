@@ -15,7 +15,7 @@ pub fn generate(
         on_hold,
         comment,
         their_reference,
-        color,
+        colour,
     }: InsertInboundShipment,
     other_party: Name,
     connection: &StorageConnection,
@@ -39,12 +39,14 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         on_hold: on_hold.unwrap_or(false),
-        color,
+        colour,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        linked_invoice_id: None,
+        requisition_id: None,
     };
 
     Ok(result)

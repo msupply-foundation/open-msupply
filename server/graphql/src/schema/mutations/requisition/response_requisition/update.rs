@@ -1,15 +1,14 @@
 use async_graphql::*;
 
 use crate::schema::{
-    mutations::requisition::errors::CannotEditRequisition,
-    types::{RequisitionNode, RequisitionNodeStatus},
+    mutations::requisition::errors::CannotEditRequisition, types::RequisitionNode,
 };
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateResponseRequisitionInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub color: Option<String>,
+    pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub status: Option<UpdateResponseRequisitionStatusInput>,

@@ -125,7 +125,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: Some("some comment".to_string()),
             their_reference_option: Some("some reference".to_string()),
-            color_option: None,
+            colour_option: None,
         };
 
         // Test RecordNotFound
@@ -255,7 +255,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: None,
             their_reference_option: None,
-            color_option: None,
+            colour_option: None,
         };
 
         let query = Update::build_query(variables.clone());
@@ -279,7 +279,7 @@ mod graphql {
             on_hold_option: None,
             comment_option: None,
             their_reference_option: None,
-            color_option: None,
+            colour_option: None,
         };
 
         let query = Update::build_query(variables.clone());
@@ -297,7 +297,7 @@ mod graphql {
         variables.update_inbound_status_option =
             Some(update::UpdateInboundShipmentStatusInput::Verified);
         variables.on_hold_option = Some(true);
-        variables.color_option = Some("#FFFFFF".to_owned());
+        variables.colour_option = Some("#FFFFFF".to_owned());
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -443,7 +443,7 @@ mod graphql {
                 other_party_id_option,
                 update_inbound_status_option,
                 on_hold_option,
-                color_option: _,           // Nullable option ?
+                colour_option: _,          // Nullable option ?
                 comment_option: _,         // Nullable option ?
                 their_reference_option: _, // Nullable option ?
             } = other;

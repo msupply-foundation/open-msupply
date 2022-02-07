@@ -21,7 +21,7 @@ pub struct InsertOutboundShipmentInput {
     on_hold: Option<bool>,
     comment: Option<String>,
     their_reference: Option<String>,
-    color: Option<String>,
+    colour: Option<String>,
 }
 
 impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
@@ -33,7 +33,7 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
             on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,
-            color: input.color,
+            colour: input.colour,
         }
     }
 }
