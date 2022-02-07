@@ -1,5 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
-import { useSearchParameters } from '../useSearchParameters';
+import { useCallback, useState } from 'react';
 import { Column } from '../../ui/layout/tables';
 import { DomainObject } from '../../types';
 export interface SortRule<T> {
@@ -27,11 +26,9 @@ export const useSortBy = <T extends DomainObject>({
   key: initialSortKey,
   isDesc: initialIsDesc = false,
 }: SortRule<T>): SortState<T> => {
-  const searchParams = useSearchParameters();
-  const descParam = searchParams.get('desc');
   const [sortBy, setSortBy] = useState<SortBy<T>>({
-    key: searchParams.get('sort') ?? initialSortKey,
-    isDesc: descParam ? descParam === 'true' : initialIsDesc,
+    key: initialSortKey,
+    isDesc: initialIsDesc ?? false,
     direction: getDirection(initialIsDesc),
   });
 
@@ -54,22 +51,6 @@ export const useSortBy = <T extends DomainObject>({
 
     return { ...newSortBy, direction: getDirection(!!newSortBy?.isDesc) };
   }, []);
-
-  useEffect(() => {
-    searchParams.set({
-      sort: String(sortBy.key),
-      desc: String(!!sortBy.isDesc),
-    });
-  }, [sortBy]);
-
-  useEffect(() => {
-    if (!searchParams.get('sort')) {
-      searchParams.set({
-        sort: String(initialSortKey),
-        desc: String(!!initialIsDesc),
-      });
-    }
-  }, [initialSortKey, initialIsDesc]);
 
   return { sortBy, onChangeSortBy, sort: { sortBy, onChangeSortBy } };
 };
