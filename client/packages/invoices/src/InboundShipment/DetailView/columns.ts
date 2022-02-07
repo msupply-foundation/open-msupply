@@ -87,9 +87,17 @@ export const useInboundShipmentColumns = (): Column<
                 'expiryDate',
                 null
               );
-              return formatExpiryDate(expiryDate);
+              const formatted =
+                expiryDate == null
+                  ? ''
+                  : formatExpiryDate(new Date(expiryDate));
+              return formatted;
             } else {
-              return formatExpiryDate(rowData.expiryDate);
+              const formatted =
+                rowData.expiryDate == null
+                  ? ''
+                  : formatExpiryDate(new Date(rowData.expiryDate));
+              return formatted;
             }
           },
         },

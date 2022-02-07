@@ -188,17 +188,12 @@ export const getInboundShipmentDetailViewApi = (
       const stockLine = line.stockLine
         ? stockLineGuard(line.stockLine)
         : undefined;
-
-      const expiryDate = line.expiryDate
-        ? new Date(line.expiryDate)
-        : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
 
       return {
         ...line,
         stockLine,
         location,
-        expiryDate,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
       };

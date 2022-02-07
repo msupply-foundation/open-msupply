@@ -120,9 +120,15 @@ export const useOutboundColumns = ({
               const { lines } = row;
               const expiryDate =
                 ifTheSameElseDefault(lines, 'expiryDate', null) ?? '';
-              return (expiryDate && formatExpiryDate(expiryDate)) || '';
+              return (
+                (expiryDate && formatExpiryDate(new Date(expiryDate))) || ''
+              );
             } else {
-              return formatExpiryDate(row.expiryDate) ?? '';
+              return (
+                formatExpiryDate(
+                  row.expiryDate == null ? null : new Date(row.expiryDate)
+                ) ?? ''
+              );
             }
           },
           accessor: ({ rowData }) => {
