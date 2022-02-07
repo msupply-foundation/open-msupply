@@ -571,7 +571,7 @@ export const update = {
     if (idx < 0) throw new Error('Invalid invoice line id');
 
     const expiryDate = invoiceLine?.expiryDate
-      ? parse(invoiceLine.expiryDate, 'dd-MM-yyyy', new Date()).toISOString()
+      ? parse(invoiceLine.expiryDate, 'yyyy-MM-dd', new Date()).toISOString()
       : '';
 
     const newLine = {
@@ -608,7 +608,7 @@ export const insert = {
       itemUnit: item.unitName ?? '',
       itemId: item.id,
       expiryDate: invoiceLine?.expiryDate
-        ? parse(invoiceLine.expiryDate, 'dd-MM-yyyy', new Date()).toISOString()
+        ? parse(invoiceLine.expiryDate, 'yyyy-MM-dd', new Date()).toISOString()
         : '',
       type: InvoiceLineNodeType.StockIn,
       batch: '',

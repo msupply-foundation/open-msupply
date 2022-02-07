@@ -153,14 +153,12 @@ export const OutboundApi = {
           const location = line.location
             ? locationGuard(line.location)
             : undefined;
-          const expiryDate = line.expiryDate ? new Date(line.expiryDate) : null;
           const item = line.item ? itemGuard(line.item) : undefined;
 
           return {
             ...line,
             stockLine,
             location,
-            expiryDate,
             stockLineId: stockLine?.id ?? '',
             invoiceId: invoice.id,
             unitName: item?.unitName ?? '',
