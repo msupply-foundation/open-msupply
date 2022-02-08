@@ -4,30 +4,29 @@ import {
   Button as MuiButton,
   ButtonProps as MuiButtonProps,
   styled,
+  Theme,
 } from '@mui/material';
+
+const translateColor = (theme: Theme, color?: string) => {
+  switch (color) {
+    case 'secondary':
+      return theme.palette.secondary.main;
+    default:
+      return theme.palette.primary.main;
+  }
+};
 
 export const StyledBaseButton = styled(MuiButton)(
   ({ theme, color, variant }) => {
-    const getHoverBgColor = () => {
-      if (variant === 'contained') {
-        return 'white';
-      }
+    const getHoverBgColor = () =>
+      variant === 'contained'
+        ? theme.palette.background.white
+        : translateColor(theme, color);
 
-      if (color === 'primary') {
-        return theme.palette.primary.main;
-      }
-
-      if (color === 'secondary') {
-        return theme.palette.secondary.main;
-      }
-    };
-
-    const getHoverColor = () => {
-      if (variant === 'contained') {
-        return theme.palette.secondary.main;
-      }
-      return 'white';
-    };
+    const getHoverColor = () =>
+      variant === 'contained'
+        ? translateColor(theme, color)
+        : theme.palette.background.white;
 
     const hoverBgColor = getHoverBgColor();
     const hoverColor = getHoverColor();

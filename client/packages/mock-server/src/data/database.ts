@@ -45,6 +45,7 @@ import {
   Stocktake,
   StocktakeLine,
   Location,
+  Store,
 } from './types';
 import {
   LocationData,
@@ -60,6 +61,7 @@ import {
   StocktakeData,
   StocktakeLineData,
   createStocktakeLine,
+  StoreData,
 } from './data';
 
 import {
@@ -472,6 +474,10 @@ export const get = {
       ({
         ...NameData.find(getFilter(id, 'id')),
       } as Name),
+    store: (id: string): Store =>
+      ({
+        ...StoreData.find(getFilter(id, 'id')),
+      } as Store),
   },
 
   all: {
@@ -480,6 +486,7 @@ export const get = {
     invoice: (): Invoice[] => InvoiceData.slice(),
     invoiceLine: (): InvoiceLine[] => InvoiceLineData.slice(),
     name: (): Name[] => NameData.slice(),
+    store: (): Store[] => StoreData.slice(),
   },
 
   stockLines: {
