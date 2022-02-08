@@ -1,4 +1,5 @@
 import {
+  formatExpiryDateString,
   useColumns,
   getRowExpandColumn,
   getNotePopoverColumn,
@@ -7,7 +8,6 @@ import {
   GenericColumnKey,
   SortBy,
   Column,
-  formatExpiryDate,
   ifTheSameElseDefault,
 } from '@openmsupply-client/common';
 import { InvoiceLine, InvoiceItem } from '../../types';
@@ -120,15 +120,9 @@ export const useOutboundColumns = ({
               const { lines } = row;
               const expiryDate =
                 ifTheSameElseDefault(lines, 'expiryDate', null) ?? '';
-              return (
-                (expiryDate && formatExpiryDate(new Date(expiryDate))) || ''
-              );
+              return formatExpiryDateString(expiryDate);
             } else {
-              return (
-                formatExpiryDate(
-                  row.expiryDate == null ? null : new Date(row.expiryDate)
-                ) ?? ''
-              );
+              return formatExpiryDateString(row.expiryDate);
             }
           },
           accessor: ({ rowData }) => {
@@ -139,9 +133,9 @@ export const useOutboundColumns = ({
                 'expiryDate',
                 null
               );
-              return expiryDate;
+              return formatExpiryDateString(expiryDate);
             } else {
-              return rowData.expiryDate;
+              return formatExpiryDateString(rowData.expiryDate);
             }
           },
         },
