@@ -64,9 +64,11 @@ pub fn processors() -> Vec<Box<dyn ProcessRecord>> {
         Box::new(UpdateRequisitionStatusProcessor {}),
         Box::new(CreateAndLinkInvoiceProcessor {}),
         Box::new(CreateInvoiceProcessor {}),
-        // TODO delete picked outbound shipment ?
         Box::new(UpdateInboundShipmentProcessor {}),
         Box::new(UpdateOutboundShipmentStatusProcessor {}),
+        // TODO delete picked outbound shipment ?
+        // https://github.com/openmsupply/remote-server/issues/706 (bulletpoint 7)
+        // https://github.com/openmsupply/remote-server/issues/706 (bulletpoint 8)
     ]
 }
 
