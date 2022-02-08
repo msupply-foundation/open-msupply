@@ -40,9 +40,8 @@ export const useLoginForm = (
   const navigate = useNavigate();
   const location = useLocation();
   const { setStore: setHostStore, setUser } = useHostContext();
-  const [previousAuth, setPreviousAuth] = useLocalStorage(
-    '/authentication/previous'
-  );
+  const [mostRecentlyUsedCredentials, setMRUCredentials] =
+    useLocalStorage('/mru/credentials');
   const [, setAuthToken] = useLocalStorage('/authentication/token');
   const {
     isLoggingIn,
@@ -65,7 +64,7 @@ export const useLoginForm = (
   const onAuthenticated = (token: string) => {
     setPassword('');
     setAuthToken(token);
-    setPreviousAuth({ username: username, store: store });
+    setMRUCredentials({ username: username, store: store });
     setUser({ id: '', name: username });
     if (store) setHostStore(store);
     // navigate back, if redirected by the <RequireAuthentication /> component
@@ -75,14 +74,14 @@ export const useLoginForm = (
   };
 
   React.useEffect(() => {
-    if (previousAuth?.store && !store) {
-      setStore(previousAuth.store);
+    if (mostRecentlyUsedCredentials?.store && !store) {
+      setStore(mostRecentlyUsedCredentials.store);
     }
-    if (previousAuth?.username && !username) {
-      setUsername(previousAuth.username);
+    if (mostRecentlyUsedCredentials?.username && !username) {
+      setUsername(mostRecentlyUsedCredentials.username);
       setTimeout(() => passwordRef.current?.focus(), 100);
     }
-  }, [previousAuth]);
+  }, [mostRecentlyUsedCredentials]);
 
   React.useEffect(() => {
     setIsLoggingIn(isAuthenticating);

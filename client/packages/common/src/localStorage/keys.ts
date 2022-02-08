@@ -18,7 +18,7 @@ export type LocalStorageRecord = {
   '/groupbyitem': GroupByItem;
   '/theme/custom': ThemeOptions;
   '/theme/logo': string;
-  '/authentication/previous': AuthenticationCredentials;
+  '/mru/credentials': AuthenticationCredentials;
   '/authentication/token': string;
 };
 
