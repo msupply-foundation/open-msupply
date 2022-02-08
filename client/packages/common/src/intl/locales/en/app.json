@@ -54,5 +54,6 @@
   "heading.username": "Username",
   "heading.password": "Password",
   "heading.store": "Store",
-  "button.login": "Log in"
+  "button.login": "Log in",
+  "error.login": "Invalid username or password"
 }

@@ -1,18 +1,21 @@
 import React from 'react';
 import {
   ArrowRightIcon,
-  BaseButton,
   Box,
   Stack,
   Typography,
-  useNavigate,
   Autocomplete,
   useTranslation,
   AutocompleteRenderInputParams,
+  defaultOptionMapper,
+  Store,
+  LoadingButton,
+  AlertIcon,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { LoginIcon } from './LoginIcon';
 import { LoginTextInput } from './LoginTextInput';
+import { useStores } from '@openmsupply-client/system';
+import { useLoginForm } from './hooks';
 
 const StoreAutocompleteInput: React.FC<AutocompleteRenderInputParams> =
   props => {
@@ -27,17 +30,45 @@ const StoreAutocompleteInput: React.FC<AutocompleteRenderInputParams> =
     );
   };
 
-export const Login: React.FC = ({}) => {
-  const navigate = useNavigate();
-  const t = useTranslation('app');
-  const onLogin = () => {
-    navigate(`/${AppRoute.Dashboard}`);
-  };
+const storeSorter = (a: Store, b: Store) => {
+  if (a.code < b.code) return -1;
+  if (a.code > b.code) return 1;
+  return 0;
+};
 
+export const Login: React.FC = ({}) => {
+  const t = useTranslation('app');
+  const passwordRef = React.useRef(null);
+  const {
+    isValid,
+    password,
+    setPassword,
+    store,
+    setStore,
+    username,
+    setUsername,
+    isLoggingIn,
+    onLogin,
+    authenticationResponse,
+  } = useLoginForm(passwordRef);
+
+  const { data, isLoading } = useStores();
+  const undefinedStore = {
+    label: '',
+    id: '',
+    code: '',
+  };
   const stores = [
-    { label: 'Store 1', value: 'store1' },
-    { label: 'Store 2', value: 'store2' },
+    undefinedStore,
+    ...defaultOptionMapper((data?.nodes ?? []).sort(storeSorter), 'code'),
   ];
+
+  const currentStore = stores.find(s => s.id === store?.id) || undefinedStore;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter' && isValid) {
+      onLogin();
+    }
+  };
 
   return (
     <Box display="flex">
@@ -87,30 +118,66 @@ export const Login: React.FC = ({}) => {
         display="flex"
       >
         <Box style={{ width: 285 }}>
-          <Stack spacing={5}>
-            <Box display="flex" justifyContent="center">
-              <LoginIcon />
-            </Box>
-            <LoginTextInput fullWidth label={t('heading.username')} />
-            <LoginTextInput
-              fullWidth
-              label={t('heading.password')}
-              type="password"
-            />
-            <Autocomplete
-              renderInput={StoreAutocompleteInput}
-              options={stores}
-            />
-            <Box display="flex" justifyContent="flex-end">
-              <BaseButton
-                onClick={onLogin}
-                variant="outlined"
-                endIcon={<ArrowRightIcon />}
-              >
-                {t('button.login')}
-              </BaseButton>
-            </Box>
-          </Stack>
+          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+            <Stack spacing={5}>
+              <Box display="flex" justifyContent="center">
+                <LoginIcon />
+              </Box>
+              <LoginTextInput
+                fullWidth
+                label={t('heading.username')}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                inputProps={{
+                  autoComplete: 'username',
+                }}
+                autoFocus
+              />
+              <LoginTextInput
+                fullWidth
+                label={t('heading.password')}
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                inputProps={{
+                  autoComplete: 'current-password',
+                }}
+                inputRef={passwordRef}
+              />
+              <Autocomplete
+                renderInput={StoreAutocompleteInput}
+                loading={isLoading}
+                options={stores}
+                onChange={(_, value) => setStore(value || undefined)}
+                value={currentStore}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+              />
+              {authenticationResponse?.error && (
+                <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
+                  <Box>
+                    <AlertIcon />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ color: 'inherit' }}>
+                      {authenticationResponse?.error.message ||
+                        t('error.login')}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+              <Box display="flex" justifyContent="flex-end">
+                <LoadingButton
+                  isLoading={isLoggingIn}
+                  onClick={onLogin}
+                  variant="outlined"
+                  endIcon={<ArrowRightIcon />}
+                  disabled={!isValid}
+                >
+                  {t('button.login')}
+                </LoadingButton>
+              </Box>
+            </Stack>
+          </form>
         </Box>
       </Box>
     </Box>

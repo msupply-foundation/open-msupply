@@ -1104,3 +1104,17 @@ type UpdateOutboundShipmentResponseWithId {
 union UserRegisterResponse = UserRegisterError | RegisteredUser
 
 union UserResponse = UserError | User
+
+input StoreFilterInput {
+  id: SimpleStringFilterInput
+}
+
+type StoreNode {
+  code: String!
+  id: String!
+};
+
+type StoreConnector {
+  nodes: [StoreNode!]!
+  totalCount: Int!
+}

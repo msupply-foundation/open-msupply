@@ -48,7 +48,7 @@ export type User = {
   name: string;
 };
 
-export type Store = {
+export interface Store extends DomainObject {
   id: string;
-  name: string;
-};
+  code: string;
+}
