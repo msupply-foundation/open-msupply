@@ -104,9 +104,7 @@ export const DataRow = <T extends DomainObject>({
             }}
             in={isExpanded}
           >
-            {ExpandContent && isExpanded ? (
-              <ExpandContent rowData={rowData} />
-            ) : null}
+            {ExpandContent ? <ExpandContent rowData={rowData} /> : null}
           </Collapse>
         </td>
       </tr>
