@@ -1,6 +1,7 @@
 use async_graphql::*;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
+    service_provider::{ServiceContext, ServiceProvider},
     stock_take_line::delete::DeleteStockTakeLineError,
 };
 
@@ -27,7 +28,7 @@ pub enum DeleteStockTakeLineResponse {
 pub fn delete_stock_take_line(
     ctx: &Context<'_>,
     store_id: &str,
-    input: &DeleteStockTakeLineInput,
+    input: DeleteStockTakeLineInput,
 ) -> Result<DeleteStockTakeLineResponse> {
     validate_auth(
         ctx,
@@ -39,6 +40,15 @@ pub fn delete_stock_take_line(
 
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
+    do_delete_stock_take_line(&service_ctx, service_provider, store_id, input)
+}
+
+pub fn do_delete_stock_take_line(
+    service_ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    store_id: &str,
+    input: DeleteStockTakeLineInput,
+) -> Result<DeleteStockTakeLineResponse> {
     let service = &service_provider.stock_take_line_service;
     match service.delete_stock_take_line(&service_ctx, store_id, &input.id) {
         Ok(id) => Ok(DeleteStockTakeLineResponse::Response(

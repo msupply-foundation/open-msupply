@@ -3,6 +3,7 @@ use repository::{schema::StockTakeStatus, StockTake};
 
 use async_graphql::*;
 
+pub mod batch;
 pub mod delete;
 pub mod insert;
 pub mod line;

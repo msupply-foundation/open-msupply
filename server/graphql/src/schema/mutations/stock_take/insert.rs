@@ -7,6 +7,7 @@ use async_graphql::*;
 use chrono::NaiveDateTime;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
+    service_provider::{ServiceContext, ServiceProvider},
     stock_take::insert::{
         InsertStockTakeError as ServiceError, InsertStockTakeInput as InsertStockTake,
     },
@@ -42,6 +43,15 @@ pub fn insert_stock_take(
 
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
+    do_insert_stock_take(&service_ctx, service_provider, store_id, input)
+}
+
+pub fn do_insert_stock_take(
+    service_ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    store_id: &str,
+    input: InsertStockTakeInput,
+) -> Result<InsertStockTakeResponse> {
     let service = &service_provider.stock_take_service;
     match service.insert_stock_take(&service_ctx, store_id, to_domain(input)) {
         Ok(stock_take) => Ok(InsertStockTakeResponse::Response(StockTakeNode {
