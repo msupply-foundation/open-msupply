@@ -1,5 +1,5 @@
 import {
-  formatExpiryDate,
+  formatExpiryDateString,
   getRowExpandColumn,
   GenericColumnKey,
   getSumOfKeyReducer,
@@ -87,9 +87,10 @@ export const useInboundShipmentColumns = (): Column<
                 'expiryDate',
                 null
               );
-              return formatExpiryDate(expiryDate);
+
+              return formatExpiryDateString(expiryDate);
             } else {
-              return formatExpiryDate(rowData.expiryDate);
+              return formatExpiryDateString(rowData.expiryDate);
             }
           },
         },

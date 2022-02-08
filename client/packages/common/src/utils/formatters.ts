@@ -14,6 +14,14 @@ export const formatExpiryDate = (date?: Date | null): string | null => {
   else return null;
 };
 
+// Date needs to be in the format yyyy-MM-dd
+export const formatExpiryDateString = (
+  date?: string | null | undefined
+): string => {
+  const expiryDate = date ? formatExpiryDate(new Date(date)) : null;
+  return expiryDate ?? '';
+};
+
 export class RouteBuilder {
   parts: string[];
 
