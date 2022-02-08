@@ -6,6 +6,7 @@ use crate::{
 use async_graphql::*;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
+    service_provider::{ServiceContext, ServiceProvider},
     stock_take::delete::DeleteStockTakeError as ServiceError,
 };
 
@@ -40,6 +41,15 @@ pub fn delete_stock_take(
 
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
+    do_delete_stock_take(&service_ctx, service_provider, store_id, input)
+}
+
+pub fn do_delete_stock_take(
+    service_ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    store_id: &str,
+    input: DeleteStockTakeInput,
+) -> Result<DeleteStockTakeResponse> {
     let service = &service_provider.stock_take_service;
     match service.delete_stock_take(&service_ctx, store_id, &input.id) {
         Ok(stock_take_id) => Ok(DeleteStockTakeResponse::Response(DeleteStockTakeNode {

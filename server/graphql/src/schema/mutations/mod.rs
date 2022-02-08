@@ -15,6 +15,7 @@ use self::{
         UpdateLocationResponse,
     },
     stock_take::{
+        batch::{batch_stocktake, BatchStocktakeInput, BatchStocktakeResponse},
         delete::{delete_stock_take, DeleteStockTakeInput, DeleteStockTakeResponse},
         insert::{insert_stock_take, InsertStockTakeInput, InsertStockTakeResponse},
         line::{
@@ -366,7 +367,16 @@ impl Mutations {
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        delete_stock_take_line(ctx, &store_id, &input)
+        delete_stock_take_line(ctx, &store_id, input)
+    }
+
+    async fn batch_stocktake(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BatchStocktakeInput,
+    ) -> Result<BatchStocktakeResponse> {
+        batch_stocktake(ctx, &store_id, input)
     }
 
     async fn insert_request_requisition(
@@ -697,10 +707,6 @@ impl InvoiceLineBelongsToAnotherInvoice {
 #[graphql(concrete(
     name = "DeleteOutboundShipmentServiceLineResponseWithId",
     params(DeleteOutboundShipmentServiceLineResponse)
-))]
-#[graphql(concrete(
-    name = "DeleteStockTakeLineResponseWithId",
-    params(DeleteStockTakeLineResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,

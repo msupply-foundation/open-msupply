@@ -2,6 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
+    service_provider::{ServiceContext, ServiceProvider},
     stock_take_line::insert::{
         InsertStockTakeLineError, InsertStockTakeLineInput as InsertStockTakeLine,
     },
@@ -51,6 +52,16 @@ pub fn insert_stock_take_line(
 
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
+
+    do_insert_stock_take_line(&service_ctx, service_provider, store_id, input)
+}
+
+pub fn do_insert_stock_take_line(
+    service_ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    store_id: &str,
+    input: InsertStockTakeLineInput,
+) -> Result<InsertStockTakeLineResponse> {
     let service = &service_provider.stock_take_line_service;
     match service.insert_stock_take_line(&service_ctx, store_id, to_domain(input)) {
         Ok(line) => Ok(InsertStockTakeLineResponse::Response(StockTakeLineNode {

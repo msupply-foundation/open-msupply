@@ -8,6 +8,7 @@ use async_graphql::*;
 use repository::StockTakeLine;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
+    service_provider::{ServiceContext, ServiceProvider},
     stock_take::update::{
         UpdateStockTakeError as ServiceError, UpdateStockTakeInput as UpdateStockTake,
     },
@@ -67,6 +68,15 @@ pub fn update_stock_take(
 
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
+    do_update_stock_take(&service_ctx, service_provider, store_id, input)
+}
+
+pub fn do_update_stock_take(
+    service_ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    store_id: &str,
+    input: UpdateStockTakeInput,
+) -> Result<UpdateStockTakeResponse> {
     let service = &service_provider.stock_take_service;
     match service.update_stock_take(&service_ctx, store_id, to_domain(input)) {
         Ok(stock_take) => Ok(UpdateStockTakeResponse::Response(StockTakeNode {
