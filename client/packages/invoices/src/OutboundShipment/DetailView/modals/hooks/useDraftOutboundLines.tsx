@@ -32,11 +32,11 @@ const createPlaceholderRow = (invoiceId: string): DraftOutboundLine => ({
 
 interface DraftOutboundLineSeeds {
   invoiceId: string;
-  stockLine: StockLine;
-  invoiceLine?: InvoiceLine | null;
+  stockLine?: Partial<StockLine> | null;
+  invoiceLine?: Partial<InvoiceLine> | null;
 }
 
-const createDraftOutboundLine = ({
+export const createDraftOutboundLine = ({
   invoiceId,
   stockLine,
   invoiceLine,
@@ -48,11 +48,19 @@ const createDraftOutboundLine = ({
   ...invoiceLine,
   id: invoiceLine?.id ?? generateUUID(),
   availableNumberOfPacks:
-    stockLine.availableNumberOfPacks + (invoiceLine?.numberOfPacks || 0),
+    (stockLine?.availableNumberOfPacks || 0) +
+    (invoiceLine?.numberOfPacks || 0),
   invoiceId,
-  stockLineId: stockLine.id,
+  stockLineId: stockLine?.id ?? '',
   location: invoiceLine?.location,
   expiryDate: invoiceLine?.expiryDate,
+  costPricePerPack: stockLine?.costPricePerPack ?? 0,
+  sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
+  itemId: stockLine?.itemId ?? '',
+  packSize: stockLine?.packSize ?? 0,
+  onHold: stockLine?.onHold ?? false,
+  storeId: stockLine?.storeId ?? '',
+  totalNumberOfPacks: stockLine?.totalNumberOfPacks ?? 0,
 
   // TODO: When small changes to the API don't take weeks: Add itemCode and itemName
   // to StockLineNode so these are accurate. These currently aren't actually
