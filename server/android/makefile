@@ -2,12 +2,9 @@
 # The makefile requires that the Android NDK_HOME directory is set correctly in order to find the
 # correct cross compilers.
 
-ARCHS_IOS = i386-apple-ios x86_64-apple-ios armv7-apple-ios armv7s-apple-ios aarch64-apple-ios
 ARCHS_ANDROID = aarch64-linux-android armv7-linux-androideabi i686-linux-android
-LIB=libsigner.a
-
+# host tag for the host platform that does the build
 HOST_TAG := $(shell ./host.sh)
-
 ANDROID_ABI=26
 
 # Some dependencies need env vars to find CC and AR: (TODO is AR needed?)
@@ -28,19 +25,10 @@ CARGO_LINKER_ENV_aarch64-linux-android=CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER
 CARGO_LINKER_ENV_i686-linux-android=CARGO_TARGET_I686_LINUX_ANDROID_LINKER
 
 
-all: ios android
-
-ios: $(LIB)
+all: android
 
 android: $(ARCHS_ANDROID)
-
-.PHONY: $(ARCHS_IOS)
-$(ARCHS_IOS): %:
-	cargo build --target $@ --release
 
 .PHONY: $(ARCHS_ANDROID)
 $(ARCHS_ANDROID): %:
 	$(CARGO_LINKER_ENV_$@)="$(CC_$@)" CC="$(CC_$@)" AR="$(AR_$@)" cargo build --target $@ --release
-
-$(LIB): $(ARCHS_IOS)
-	lipo -create -output $@ $(foreach arch,$(ARCHS_IOS),$(wildcard target/$(arch)/release/$(LIB)))
