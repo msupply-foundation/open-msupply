@@ -49,11 +49,11 @@ pub use self::sort_filter_types::*;
 pub mod store;
 pub use self::store::*;
 
-pub mod stock_take;
-pub use self::stock_take::*;
+pub mod stocktake;
+pub use self::stocktake::*;
 
-pub mod stock_take_line;
-pub use self::stock_take_line::*;
+pub mod stocktake_line;
+pub use self::stocktake_line::*;
 
 use super::mutations::{inbound_shipment::*, outbound_shipment::*};
 
