@@ -45,7 +45,13 @@ const usePackSizes = (
 export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   const { options, packSizes } = usePackSizes(lines);
 
-  const [selected, setSelected] = useState({ label: 'label.any', value: -1 });
+  const [selected, setSelected] = useState<
+    | {
+        label: string;
+        value: number;
+      }
+    | undefined
+  >();
 
   const setPackSize = useCallback(
     (newValue: number) => {
@@ -57,31 +63,14 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   );
 
   useEffect(() => {
-    if (packSizes.length < 1) return;
-    if (!lines?.length) return;
+    // When selected is null, set a default value - either
+    // 'any' when there are multiple unique pack sizes
+    // in the set of options, or the only option if there is only
+    // one.
+    if (selected) return;
+    const selectedPackSize = ifTheSameElseDefault(options, 'value', -1);
+    setPackSize(selectedPackSize);
+  }, [options, setPackSize, selected]);
 
-    const selectedPackSize = ifTheSameElseDefault(
-      lines.filter(batch => batch.numberOfPacks > 0),
-      'packSize',
-      0
-    );
-
-    const defaultPackSize = (selectedPackSize === 0
-      ? options[0]
-      : options.find(option => option.value === selectedPackSize)) ?? {
-      label: '',
-      value: '',
-    };
-
-    if (defaultPackSize.value && typeof defaultPackSize.value == 'number') {
-      setPackSize(defaultPackSize.value);
-    }
-    if (packSizes.length === 0) {
-      setSelected({ label: '', value: 0 });
-    }
-  }, [packSizes, lines, options, setPackSize]);
-
-  const reset = () => setSelected({ label: '', value: 0 });
-
-  return { selected, setPackSize, options, reset, packSizes };
+  return { selected, setPackSize, options, packSizes };
 };

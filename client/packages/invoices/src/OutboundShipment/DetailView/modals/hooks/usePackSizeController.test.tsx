@@ -116,6 +116,30 @@ describe('usePackSizeController', () => {
     expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
   });
 
+  it('sets the pack size to any when selected', async () => {
+    const { result } = renderHook(() =>
+      usePackSizeController(multiplePackSizeLines)
+    );
+
+    act(() => {
+      result.current.setPackSize(1);
+    });
+
+    expect(result.current.selected).toEqual({
+      label: '1',
+      value: 1,
+    });
+
+    act(() => {
+      result.current.setPackSize(-1);
+    });
+
+    expect(result.current.selected).toEqual({
+      label: 'label.any',
+      value: -1,
+    });
+  });
+
   it('sets the initial pack size of a set of lines which all have the same pack size, to the only available pack size', () => {
     const { result } = renderHook(() =>
       usePackSizeController(singlePackSizeLines)
@@ -127,12 +151,9 @@ describe('usePackSizeController', () => {
     });
   });
 
-  it('has an initial value of any when the array is empty', () => {
+  it('has an initial value of undefined when the array is empty', () => {
     const { result } = renderHook(() => usePackSizeController([]));
 
-    expect(result.current.selected).toEqual({
-      label: 'label.any',
-      value: -1,
-    });
+    expect(result.current.selected).toEqual(undefined);
   });
 });
