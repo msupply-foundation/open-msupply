@@ -19,16 +19,16 @@ pub enum PermissionDSL {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
-    // stock take
-    QueryStockTakes,
-    InsertStockTake,
-    UpdateStockTake,
-    DeleteStockTake,
-    BatchStockTake,
-    // stock take line
-    InsertStockTakeLine,
-    UpdateStockTakeLine,
-    DeleteStockTakeLine,
+    // stocktake
+    QueryStocktakes,
+    InsertStocktake,
+    UpdateStocktake,
+    DeleteStocktake,
+    BatchStocktake,
+    // stocktake line
+    InsertStocktakeLine,
+    UpdateStocktakeLine,
+    DeleteStocktakeLine,
 }
 
 fn default() -> PermissionDSL {
@@ -42,16 +42,16 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
     // me
     map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
-    // stock take
-    map.insert(Resource::QueryStockTakes, default());
-    map.insert(Resource::InsertStockTake, default());
-    map.insert(Resource::UpdateStockTake, default());
-    map.insert(Resource::DeleteStockTake, default());
-    map.insert(Resource::BatchStockTake, default());
-    // stock take line
-    map.insert(Resource::InsertStockTakeLine, default());
-    map.insert(Resource::UpdateStockTakeLine, default());
-    map.insert(Resource::DeleteStockTakeLine, default());
+    // stocktake
+    map.insert(Resource::QueryStocktakes, default());
+    map.insert(Resource::InsertStocktake, default());
+    map.insert(Resource::UpdateStocktake, default());
+    map.insert(Resource::DeleteStocktake, default());
+    map.insert(Resource::BatchStocktake, default());
+    // stocktake line
+    map.insert(Resource::InsertStocktakeLine, default());
+    map.insert(Resource::UpdateStocktakeLine, default());
+    map.insert(Resource::DeleteStocktakeLine, default());
 
     map
 }

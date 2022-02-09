@@ -9,7 +9,7 @@ use async_graphql::dataloader::DataLoader;
 use super::{
     name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader,
     LocationByIdLoader, MasterListLineByMasterListId, StockLineByIdLoader, StockLineByItemIdLoader,
-    StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
+    StockLineByLocationIdLoader, StocktakeLineByStocktakeIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -87,7 +87,7 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
         connection_manager: connection_manager.clone(),
     });
 
-    let stock_take_line_loader = DataLoader::new(StockTakeLineByStockTakeIdLoader {
+    let stocktake_line_loader = DataLoader::new(StocktakeLineByStocktakeIdLoader {
         connection_manager: connection_manager.clone(),
     });
 
@@ -105,7 +105,7 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
     loaders.insert(user_account_loader);
     loaders.insert(location_by_id_loader);
     loaders.insert(master_list_line_by_master_list_id);
-    loaders.insert(stock_take_line_loader);
+    loaders.insert(stocktake_line_loader);
 
     loaders
 }
