@@ -1,3 +1,7 @@
+# Makefile to build the remote server for various Android target architectures
+# The makefile requires that the Android NDK_HOME directory is set correctly in order to find the
+# correct cross compilers.
+
 ARCHS_IOS = i386-apple-ios x86_64-apple-ios armv7-apple-ios armv7s-apple-ios aarch64-apple-ios
 ARCHS_ANDROID = aarch64-linux-android armv7-linux-androideabi i686-linux-android
 LIB=libsigner.a

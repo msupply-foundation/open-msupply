@@ -1,3 +1,4 @@
+/// This module exports some "C" methods that can directly be called from the Java runtime.
 #[allow(non_snake_case)]
 pub mod android {
     extern crate jni;
@@ -21,12 +22,17 @@ pub mod android {
 
     use once_cell::sync::Lazy;
 
+    /// Handle for a running remote_server instance
     struct RunningServerHandle {
-        thread: JoinHandle<()>,
+        /// Channel to signal the remote_server to exit
         off_switch: oneshot::Sender<()>,
+        /// JoinHandle for the running remote_server thread
+        thread: JoinHandle<()>,
     }
 
-    /// Manage a mapping of integer handle (to be passed to Java) and RunningServerHandle.
+    /// Manages a set of RunningServerHandle
+    /// Each running server is associated with an integer handle which can be passed to the Java
+    /// world, e.g. the handle can be used to shutdown the server from Java.
     struct ServerBucket {
         // next handle ready to be used
         next_handle: i64,
@@ -34,7 +40,7 @@ pub mod android {
     }
 
     impl ServerBucket {
-        /// Returns handle to the running server
+        /// Returns an integer handle to the running server
         fn insert(&mut self, server: RunningServerHandle) -> i64 {
             let handle = self.next_handle;
             self.next_handle = handle + 1;
@@ -50,6 +56,7 @@ pub mod android {
         })
     });
 
+    /// Bindings test method. TODO: remove when not needed anymore
     #[no_mangle]
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_rustHelloWorld(
         env: JNIEnv,
@@ -94,6 +101,7 @@ pub mod android {
                         interval: 300,
                     },
                     auth: AuthSettings {
+                        // TODO:
                         token_secret: "Make me configurable".to_string(),
                     },
                 };
