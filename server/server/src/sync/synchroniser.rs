@@ -102,10 +102,10 @@ impl Synchroniser {
                 .get_central_records(cursor, BATCH_SIZE)
                 .await
                 .map_err(|source| CentralSyncError::PullCentralSyncRecordsError { source })?;
-            let central_sync_records = central_sync_batch_records_to_buffer_row(sync_batch.data)
-                .map_err(|err| CentralSyncError::PullCentralSyncRecordsError {
-                    source: err.into(),
-                })?;
+            let central_sync_records = central_sync_batch_records_to_buffer_rows(sync_batch.data)
+                .map_err(|err| {
+                CentralSyncError::PullCentralSyncRecordsError { source: err.into() }
+            })?;
 
             if central_sync_records.len() == 0 {
                 info!("Central sync buffer is up-to-date");
@@ -268,7 +268,7 @@ impl Synchroniser {
     }
 }
 
-fn central_sync_batch_records_to_buffer_row(
+fn central_sync_batch_records_to_buffer_rows(
     records: Option<Vec<CentralSyncRecordV5>>,
 ) -> Result<Vec<CentralSyncBufferRow>, serde_json::Error> {
     let central_sync_records: Result<Vec<CentralSyncBufferRow>, serde_json::Error> = records
