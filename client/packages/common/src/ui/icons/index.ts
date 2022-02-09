@@ -19,6 +19,7 @@ export { DashboardIcon } from './Dashboard';
 export { DeleteIcon } from './Delete';
 export { DownloadIcon } from './Download';
 export { EditIcon } from './Edit';
+export { FilterIcon } from './Filter';
 export { HomeIcon } from './Home';
 export { InfoIcon } from './Info';
 export { InvoiceIcon } from './Invoice';

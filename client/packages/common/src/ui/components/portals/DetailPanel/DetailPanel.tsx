@@ -107,7 +107,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
               color="inherit"
               label={t('button.close')}
               onClick={close}
-              icon={<CloseIcon color="inherit" />}
+              startIcon={<CloseIcon color="inherit" />}
             />
           </Box>
         </Grid>
