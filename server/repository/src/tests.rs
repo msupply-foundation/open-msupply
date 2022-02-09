@@ -320,13 +320,16 @@ mod repository_test {
         }
     }
 
+    use std::convert::TryInto;
+
     use crate::{
         database_settings::get_storage_connection_manager,
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
             mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
-            mock_request_draft_requisition2, mock_stock_take_a, mock_stock_take_b, MockDataInserts,
+            mock_request_draft_requisition2, mock_stock_take_a, mock_stock_take_b,
+            mock_stock_take_no_line_a, mock_stock_take_no_line_b, MockDataInserts,
         },
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, NumberRowType,
@@ -1014,6 +1017,57 @@ mod repository_test {
             ]
         );
     }
+
+    #[actix_rt::test]
+    async fn test_changelog_iteration() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
+
+        // use stock take entries to populate the changelog (via the trigger)
+        let stock_take_repo = StockTakeRowRepository::new(&connection);
+        let repo = ChangelogRepository::new(&connection);
+
+        let stock_take_a = mock_stock_take_a();
+        let stock_take_b = mock_stock_take_no_line_a();
+        let stock_take_c = mock_stock_take_no_line_b();
+        let stock_take_d = mock_stock_take_b();
+
+        stock_take_repo.upsert_one(&stock_take_a).unwrap();
+        stock_take_repo.upsert_one(&stock_take_b).unwrap();
+        stock_take_repo.upsert_one(&stock_take_c).unwrap();
+        stock_take_repo.upsert_one(&stock_take_d).unwrap();
+        stock_take_repo.delete(&stock_take_b.id).unwrap();
+        stock_take_repo.upsert_one(&stock_take_c).unwrap();
+        stock_take_repo.upsert_one(&stock_take_a).unwrap();
+        stock_take_repo.upsert_one(&stock_take_c).unwrap();
+        stock_take_repo.delete(&stock_take_c.id).unwrap();
+
+        // test iterating through the change log
+        let changelogs = repo.changelogs(0, 3).unwrap();
+        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
+        assert_eq!(
+            changelogs
+                .into_iter()
+                .map(|it| it.row_id)
+                .collect::<Vec<String>>(),
+            vec![stock_take_d.id, stock_take_b.id, stock_take_a.id]
+        );
+
+        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
+        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
+
+        assert_eq!(
+            changelogs
+                .into_iter()
+                .map(|it| it.row_id)
+                .collect::<Vec<String>>(),
+            vec![stock_take_c.id]
+        );
+
+        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
+        assert_eq!(changelogs.len(), 0);
+    }
+
     #[actix_rt::test]
     async fn test_master_list_line_repository_filter() {
         let (_, connection, _, _) = test_db::setup_all(
