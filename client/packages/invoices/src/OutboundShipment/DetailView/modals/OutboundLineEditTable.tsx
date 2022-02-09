@@ -127,8 +127,8 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     .sort(sortByExpiry);
 
   const isRequestedPackSize = (packSize: number) =>
-    packSizeController.selected.value === -1 ||
-    packSize === packSizeController.selected.value;
+    packSizeController.selected?.value === -1 ||
+    packSize === packSizeController.selected?.value;
 
   const allocatableRows: DraftOutboundLine[] = [];
   const onHoldRows: DraftOutboundLine[] = [];
