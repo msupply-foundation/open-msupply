@@ -21,5 +21,5 @@ export const useNextItem = (
     return { next, disabled };
   }
 
-  return { next: toItem(nextItem), disabled: nextIdx === numberOfItems - 1 };
+  return { next: toItem(nextItem), disabled: currentIdx === numberOfItems - 1 };
 };

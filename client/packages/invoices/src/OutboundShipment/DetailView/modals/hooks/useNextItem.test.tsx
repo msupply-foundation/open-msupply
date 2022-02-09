@@ -137,29 +137,6 @@ describe('useNextItem', () => {
     });
   });
 
-  it('eventually equals an object where if the next item is the last, disabled is true', async () => {
-    const lines = getLines();
-    const handler = graphql.query('invoice', (_, res, ctx) => {
-      const invoice = getInvoice();
-      invoice.lines.nodes = getLines();
-      return res(ctx.data({ invoice }));
-    });
-
-    server.use(handler);
-    const result = renderHook(() => useNextItem('b'), {
-      wrapper: TestingProvider,
-    });
-
-    return result.waitForNextUpdate().then(() => {
-      expect(result.result.current.next).toEqual(
-        expect.objectContaining({ id: lines[2]?.id })
-      );
-      expect(result.result.current).toEqual(
-        expect.objectContaining({ disabled: true })
-      );
-    });
-  });
-
   it('returns a null item and a disabled state when the current item is the "last" of the sorted list of items.', async () => {
     const handler = graphql.query('invoice', (_, res, ctx) => {
       const invoice = getInvoice();
