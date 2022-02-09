@@ -15,7 +15,7 @@ export const useNextItem = (
   const numberOfItems = items.length;
   const currentIdx = items.findIndex(({ itemId }) => itemId === currentItemId);
   const nextIdx = currentIdx + 1;
-  const nextItem = items[nextIdx % numberOfItems];
+  const nextItem = items[nextIdx];
 
   if (currentIdx === -1 || !nextItem) {
     return { next, disabled };

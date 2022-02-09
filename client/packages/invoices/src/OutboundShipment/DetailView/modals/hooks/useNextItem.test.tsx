@@ -103,22 +103,22 @@ const getLines = (): InvoiceLineNode[] => [
   },
 ];
 
-const server = setupServer();
-
-beforeAll(() => {
-  server.listen();
-});
-
-afterEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
-
 describe('useNextItem', () => {
-  it.only('eventually equals an object where the next item is equal to the next item in sorted order.', () => {
+  const server = setupServer();
+
+  beforeAll(() => {
+    server.listen();
+  });
+
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
+  it('eventually equals an object where the next item is equal to the next item in sorted order.', () => {
     const invoice = getInvoice();
     invoice.lines.nodes = getLines();
     const handler = graphql.query('invoice', (_, res, ctx) => {
