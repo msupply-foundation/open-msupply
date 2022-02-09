@@ -82,7 +82,7 @@ pub fn stocktakes(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryStocktakes,
+            resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -106,6 +106,42 @@ pub fn stocktakes(
                 .map(|stocktake| StocktakeNode { stocktake })
                 .collect(),
         })),
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                ListError::DatabaseError(err) => err.into(),
+                ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
+                ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(formatted_error),
+            };
+            Err(graphql_error.extend())
+        }
+    }
+}
+
+pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Option<StocktakeNode>> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryStocktake,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
+    let service = &service_provider.stocktake_service;
+
+    match service.get_stocktakes(
+        &service_ctx,
+        store_id,
+        None,
+        Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))),
+        None,
+    ) {
+        Ok(mut stocktakes) => Ok(stocktakes
+            .rows
+            .pop()
+            .map(|stocktake| StocktakeNode { stocktake })),
         Err(err) => {
             let formatted_error = format!("{:#?}", err);
             let graphql_error = match err {
