@@ -15,7 +15,10 @@ use log::info;
 use reqwest::{Client, Url};
 use thiserror::Error;
 
-use super::{sync_api_v5::RemoteSyncRecordV5, SyncCredentials};
+use super::{
+    sync_api_v5::{CentralSyncRecordV5, RemoteSyncRecordV5},
+    SyncCredentials,
+};
 
 #[derive(Error, Debug)]
 pub enum CentralSyncError {
@@ -99,24 +102,10 @@ impl Synchroniser {
                 .get_central_records(cursor, BATCH_SIZE)
                 .await
                 .map_err(|source| CentralSyncError::PullCentralSyncRecordsError { source })?;
-
-            let central_sync_records: Result<Vec<CentralSyncBufferRow>, serde_json::Error> =
-                sync_batch
-                    .data
-                    .unwrap_or(vec![])
-                    .into_iter()
-                    .map(|record| {
-                        Ok(CentralSyncBufferRow {
-                            id: record.id,
-                            table_name: record.table_name,
-                            record_id: record.record_id,
-                            data: serde_json::to_string(&record.data)?,
-                        })
-                    })
-                    .collect();
-            let central_sync_records = central_sync_records.map_err(|err| {
-                CentralSyncError::PullCentralSyncRecordsError { source: err.into() }
-            })?;
+            let central_sync_records = central_sync_batch_records_to_buffer_row(sync_batch.data)
+                .map_err(|err| CentralSyncError::PullCentralSyncRecordsError {
+                    source: err.into(),
+                })?;
 
             if central_sync_records.len() == 0 {
                 info!("Central sync buffer is up-to-date");
@@ -277,6 +266,24 @@ impl Synchroniser {
 
         Ok(())
     }
+}
+
+fn central_sync_batch_records_to_buffer_row(
+    records: Option<Vec<CentralSyncRecordV5>>,
+) -> Result<Vec<CentralSyncBufferRow>, serde_json::Error> {
+    let central_sync_records: Result<Vec<CentralSyncBufferRow>, serde_json::Error> = records
+        .unwrap_or(vec![])
+        .into_iter()
+        .map(|record| {
+            Ok(CentralSyncBufferRow {
+                id: record.id,
+                table_name: record.table_name,
+                record_id: record.record_id,
+                data: serde_json::to_string(&record.data)?,
+            })
+        })
+        .collect();
+    central_sync_records
 }
 
 #[cfg(test)]
