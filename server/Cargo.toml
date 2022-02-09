@@ -2,6 +2,7 @@
 [workspace]
 
 members = [
+    "android",
     "domain",
     "repository",
     "graphql",
