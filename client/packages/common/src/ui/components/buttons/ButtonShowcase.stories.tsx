@@ -142,7 +142,7 @@ const Template: Story = () => {
 
         <Wrapper text="Flat button">
           <FlatButton
-            icon={<BookIcon />}
+            startIcon={<BookIcon />}
             label="Docs"
             onClick={() => console.info('clicked')}
           />

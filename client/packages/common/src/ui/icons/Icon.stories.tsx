@@ -23,6 +23,7 @@ import { DashboardIcon } from './Dashboard';
 import { DeleteIcon } from './Delete';
 import { DownloadIcon } from './Download';
 import { EditIcon } from './Edit';
+import { FilterIcon } from './Filter';
 import { HomeIcon } from './Home';
 import { InfoIcon } from './Info';
 import { InvoiceIcon } from './Invoice';
@@ -97,6 +98,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <DeleteIcon {...args} />, name: 'Delete' },
     { icon: <DownloadIcon {...args} />, name: 'Download' },
     { icon: <EditIcon {...args} />, name: 'Edit' },
+    { icon: <FilterIcon {...args} />, name: 'Filter' },
     { icon: <HomeIcon {...args} />, name: 'Home' },
     { icon: <InfoIcon {...args} />, name: 'Info' },
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },

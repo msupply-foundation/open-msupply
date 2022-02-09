@@ -15,7 +15,7 @@ export const DetailPanelAction: FC<DetailPanelActionProps> = ({
 }) => {
   return (
     <Box sx={{ marginLeft: '11px' }}>
-      <FlatButton onClick={onClick} icon={icon} label={title} />
+      <FlatButton onClick={onClick} startIcon={icon} label={title} />
     </Box>
   );
 };
